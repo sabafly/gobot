@@ -7,11 +7,11 @@
         }
     },
     {
-        "id": "command.ban.message",
-        "translation": "{{.Target}} has been banned"
+        "id":"command.ban.message",
+        "translation":"{{.Target}} has been banned"
     },
     {
-        "id": "error.0",
-        "translation": "An error has occurred{{.Error}}"
+        "id":"error.0",
+        "translation":"An error has occurred{{.Error}}"
     }
 ]
