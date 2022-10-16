@@ -39,8 +39,9 @@ func init() {
 
 var (
 	// integerOptionMinValue          = 1.0
-	// dmPermission                   = false
+	dmPermission = false
 	// defaultMemberPermissions int64 = discordgo.PermissionManageServer
+	PermissionBanMenber int64 = discordgo.PermissionBanMembers
 
 	commands = []*discordgo.ApplicationCommand{
 		{
@@ -77,6 +78,8 @@ var (
 					Type: discordgo.ApplicationCommandOptionString,
 				},
 			},
+			DefaultMemberPermissions: &PermissionBanMenber,
+			DMPermission:             &dmPermission,
 		},
 	}
 
