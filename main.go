@@ -42,9 +42,55 @@ var (
 	// dmPermission                   = false
 	// defaultMemberPermissions int64 = discordgo.PermissionManageServer
 
-	commands = []*discordgo.ApplicationCommand{}
+	commands = []*discordgo.ApplicationCommand{
+		{
+			Name:        "ban",
+			Description: "ban the selected user",
+			NameLocalizations: &map[discordgo.Locale]string{
+				discordgo.Japanese: "追放",
+			},
+			DescriptionLocalizations: &map[discordgo.Locale]string{
+				discordgo.Japanese: "選択したユーザーをbanする",
+			},
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        "target",
+					Description: "user to ban",
+					NameLocalizations: map[discordgo.Locale]string{
+						discordgo.Japanese: "対象",
+					},
+					DescriptionLocalizations: map[discordgo.Locale]string{
+						discordgo.Japanese: "banするユーザー",
+					},
+					Type:     discordgo.ApplicationCommandOptionUser,
+					Required: true,
+				},
+				{
+					Name:        "reason",
+					Description: "reason for ban",
+					NameLocalizations: map[discordgo.Locale]string{
+						discordgo.Japanese: "理由",
+					},
+					DescriptionLocalizations: map[discordgo.Locale]string{
+						discordgo.Japanese: "banする理由",
+					},
+					Type: discordgo.ApplicationCommandOptionString,
+				},
+			},
+		},
+	}
 
-	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){}
+	commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
+		"ban": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: commandBan(&i.Locale, i.ApplicationCommandData(), i.GuildID),
+			})
+			if err != nil {
+				log.Panicf("例外: %v", err)
+			}
+		},
+	}
 )
 
 func init() {
