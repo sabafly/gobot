@@ -19,7 +19,7 @@ func commandBan(locale *discordgo.Locale, option discordgo.ApplicationCommandInt
 	}
 	res.Content = "<@" + banId + "> をbanしました"
 	if banReason != "" {
-		res.Content = res.Content + "\r理由: " + banReason
+		res.Content = res.Content + "\r" + banReason
 		err := s.GuildBanCreateWithReason(gid, banId, banReason, 7)
 		if err != nil {
 			res.Content = "エラーが発生しました\r" + fmt.Sprint(err)
