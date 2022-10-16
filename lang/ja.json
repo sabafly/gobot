@@ -1,14 +1,17 @@
 [
     {
         "id": "command.ban.reason",
-        "translation": "理由: {{.Reason}}"
+        "translation": {
+            "one": "Reason: {{.Reason}}",
+            "other": "Reasons: {{.Reason}}"
+        }
     },
     {
-        "id":"command.ban.message",
-        "translation":"{{.Target}}をbanしました"
+        "id": "command.ban.message",
+        "translation": "{{.Target}}をbanしました"
     },
     {
-        "id":"error.0",
-        "translation":"エラーが発生しました: {{.Error}}"
+        "id": "error.0",
+        "translation": "エラーが発生しました: {{.Error}}"
     }
 ]
