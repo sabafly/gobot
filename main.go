@@ -45,6 +45,16 @@ var (
 
 	commands = []*discordgo.ApplicationCommand{
 		{
+			Name:        "ping",
+			Description: "pong!",
+			NameLocalizations: &map[discordgo.Locale]string{
+				discordgo.Japanese: "ピング",
+			},
+			DescriptionLocalizations: &map[discordgo.Locale]string{
+				discordgo.Japanese: "ポング！",
+			},
+		},
+		{
 			Name:        "ban",
 			Description: "ban the selected user",
 			NameLocalizations: &map[discordgo.Locale]string{
@@ -88,6 +98,25 @@ var (
 			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: commandBan(&i.Locale, i.ApplicationCommandData(), i.GuildID),
+			})
+			if err != nil {
+				log.Panicf("例外: %v", err)
+			}
+		},
+		"ping": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			contents := map[discordgo.Locale]string{
+				discordgo.Japanese: "ポング！",
+			}
+			content := "pong!"
+			if c, ok := contents[i.Locale]; ok {
+				content = c
+			}
+
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: content,
+				},
 			})
 			if err != nil {
 				log.Panicf("例外: %v", err)

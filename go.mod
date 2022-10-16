@@ -5,6 +5,8 @@ go 1.19
 require (
 	github.com/bwmarrin/discordgo v0.26.1
 	github.com/joho/godotenv v1.4.0
+	github.com/nicksnyder/go-i18n/v2 v2.2.0
+	golang.org/x/text v0.3.7
 )
 
 require (
