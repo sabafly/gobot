@@ -44,7 +44,7 @@ var (
 	// integerOptionMinValue          = 1.0
 	dmPermission = false
 	// defaultMemberPermissions int64 = discordgo.PermissionManageServer
-	PermissionBanMenber int64 = discordgo.PermissionBanMembers
+	PermissionBanMember int64 = discordgo.PermissionBanMembers
 
 	commands = []*discordgo.ApplicationCommand{
 		{
@@ -91,7 +91,33 @@ var (
 					Type: discordgo.ApplicationCommandOptionString,
 				},
 			},
-			DefaultMemberPermissions: &PermissionBanMenber,
+			DefaultMemberPermissions: &PermissionBanMember,
+			DMPermission:             &dmPermission,
+		},
+		{
+			Name:        "unban",
+			Description: "pardon the selected user",
+			NameLocalizations: &map[discordgo.Locale]string{
+				discordgo.Japanese: "許す",
+			},
+			DescriptionLocalizations: &map[discordgo.Locale]string{
+				discordgo.Japanese: "指定したユーザーのbanを解除します",
+			},
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        "target",
+					Description: "user to pardon",
+					NameLocalizations: map[discordgo.Locale]string{
+						discordgo.Japanese: "対象",
+					},
+					DescriptionLocalizations: map[discordgo.Locale]string{
+						discordgo.Japanese: "banを解除するユーザー",
+					},
+					Type:     discordgo.ApplicationCommandOptionUser,
+					Required: true,
+				},
+			},
+			DefaultMemberPermissions: &PermissionBanMember,
 			DMPermission:             &dmPermission,
 		},
 	}
@@ -103,7 +129,16 @@ var (
 				Data: commandBan(&i.Locale, i.ApplicationCommandData(), i.GuildID),
 			})
 			if err != nil {
-				log.Panicf("例外: %v", err)
+				log.Printf("例外: %v", err)
+			}
+		},
+		"unban": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: commandUnBan(&i.Locale, i.ApplicationCommandData(), i.GuildID),
+			})
+			if err != nil {
+				log.Printf("例外: %v", err)
 			}
 		},
 		"ping": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -122,7 +157,7 @@ var (
 				},
 			})
 			if err != nil {
-				log.Panicf("例外: %v", err)
+				log.Printf("例外: %v", err)
 			}
 		},
 	}

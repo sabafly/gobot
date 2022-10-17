@@ -3,6 +3,8 @@ one = "Reason: {{.Reason}}"
 other = "Reasons: {{.Reason}}"
 [command.ban.message]
 other="{{.Target}} has been banned"
+[command.unban.message]
+other="{{.Target}} has been unbanned"
 [error.0]
 other="An error has occurred{{.Error}}"
 [error.TargetIsBot]

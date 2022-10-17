@@ -42,3 +42,28 @@ func commandBan(locale *discordgo.Locale, option discordgo.ApplicationCommandInt
 	}
 	return
 }
+
+func commandUnBan(locale *discordgo.Locale, option discordgo.ApplicationCommandInteractionData, gid string) (res *discordgo.InteractionResponseData) {
+	res = &discordgo.InteractionResponseData{}
+	var unbanId string
+	for _, d := range option.Options {
+		if d.Name == "target" {
+			unbanId = d.UserValue(s).ID
+		}
+	}
+
+	if unbanId != *ApplicationId {
+		res.Content = translate(*locale, "command.unban.message", map[string]interface{}{
+			"Target": "<@" + unbanId + ">",
+		})
+		err := s.GuildBanDelete(*GuildID, unbanId)
+		if err != nil {
+			res.Content = translate(*locale, "error.0", map[string]interface{}{
+				"Error": err,
+			})
+		}
+	} else {
+		res.Content = translate(*locale, "error.TargetIsBot", map[string]interface{}{})
+	}
+	return
+}
