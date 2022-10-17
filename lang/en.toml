@@ -1,0 +1,7 @@
+[command.ban.reason]
+one = "Reason: {{.Reason}}"
+other = "Reasons: {{.Reason}}"
+[command.ban.message]
+translation="{{.Target}} has been banned"
+[error.0]
+translation="An error has occurred{{.Error}}"

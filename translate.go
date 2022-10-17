@@ -1,11 +1,11 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"os"
 	"path/filepath"
 
+	"github.com/BurntSushi/toml"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"golang.org/x/text/language"
 )
@@ -24,12 +24,12 @@ func init() {
 func loadTranslations() error {
 	dir := filepath.Join("lang")
 	bundle := i18n.NewBundle(defaultLang)
-	bundle.RegisterUnmarshalFunc("json", json.Unmarshal)
+	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if info.IsDir() || filepath.Ext(path) != ".json" {
+		if info.IsDir() || filepath.Ext(path) != ".toml" {
 			return nil
 		}
 		_, err = bundle.LoadMessageFile(path)
