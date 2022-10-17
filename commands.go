@@ -2,12 +2,10 @@ package main
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
 func commandBan(locale *discordgo.Locale, option discordgo.ApplicationCommandInteractionData, gid string) (res *discordgo.InteractionResponseData) {
 	res = &discordgo.InteractionResponseData{}
-	defaultLocalizer = i18n.NewLocalizer(translations, locale.String())
 	var banId string
 	var banReason string
 	for _, d := range option.Options {

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -43,12 +42,11 @@ func loadTranslations() error {
 
 	translations = bundle
 	defaultLocalizer = i18n.NewLocalizer(bundle, defaultLang.String())
-	log.Printf("%v", defaultLang.String())
 	return nil
 }
 
 func translate(locale discordgo.Locale, messageId string, templateData interface{}) (res string) {
-	defaultLocalizer = i18n.NewLocalizer(translations, locale.String())
+	defaultLocalizer = i18n.NewLocalizer(translations, string(locale))
 	res, err := defaultLocalizer.Localize(&i18n.LocalizeConfig{
 		MessageID:    messageId,
 		TemplateData: templateData,
@@ -60,7 +58,7 @@ func translate(locale discordgo.Locale, messageId string, templateData interface
 }
 
 func translates(locale discordgo.Locale, messageId string, templateData interface{}, pluralCount int) (res string) {
-	defaultLocalizer = i18n.NewLocalizer(translations, locale.String())
+	defaultLocalizer := i18n.NewLocalizer(translations, string(locale))
 	res, err := defaultLocalizer.Localize(&i18n.LocalizeConfig{
 		MessageID:    messageId,
 		TemplateData: templateData,
