@@ -1,12 +1,12 @@
 [command.ban.reason]
-one = "Reason: {{.Reason}}"
-other = "Reasons: {{.Reason}}"
+one = "理由： {{.Reason}}"
+other = "理由： {{.Reason}}"
 
 [command.ban.message]
-other = "{{.Target}} has been banned"
+other = "{{.Target}}を追放しました"
 
 [error.0]
-other = "An error has occurred{{.Error}}"
+other = "エラーが発生しました: {{.Error}}"
 
 [error.TargetIsBot]
-other = "Cannot select this bot as target!"
+other = "このボットをターゲットとして選択できません！"
