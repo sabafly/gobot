@@ -15,6 +15,7 @@ var (
 	GuildID        = flag.String("guild", "", "テストサーバーID")
 	BotToken       = flag.String("Token", "", "botアクセストークン")
 	RemoveCommands = flag.Bool("rmcmd", true, "停止時にコマンドを登録解除するか")
+	ApplicationId  = flag.String("Application", "", "botのsnowflake")
 )
 
 func init() {
@@ -24,6 +25,7 @@ func init() {
 	}
 	*BotToken = os.Getenv("TOKEN")
 	*GuildID = os.Getenv("GUILD_ID")
+	*ApplicationId = os.Getenv("APPLICATION_ID")
 }
 
 var s *discordgo.Session

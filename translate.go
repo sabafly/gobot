@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/BurntSushi/toml"
+	"github.com/bwmarrin/discordgo"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"golang.org/x/text/language"
 )
@@ -43,4 +45,29 @@ func loadTranslations() error {
 	defaultLocalizer = i18n.NewLocalizer(bundle, defaultLang.String())
 	log.Printf("%v", defaultLang.String())
 	return nil
+}
+
+func translate(locale discordgo.Locale, messageId string, templateData interface{}) (res string) {
+	defaultLocalizer = i18n.NewLocalizer(translations, locale.String())
+	res, err := defaultLocalizer.Localize(&i18n.LocalizeConfig{
+		MessageID:    messageId,
+		TemplateData: templateData,
+	})
+	if err != nil {
+		res = fmt.Sprintf("Translate error: %v", err)
+	}
+	return
+}
+
+func translates(locale discordgo.Locale, messageId string, templateData interface{}, pluralCount int) (res string) {
+	defaultLocalizer = i18n.NewLocalizer(translations, locale.String())
+	res, err := defaultLocalizer.Localize(&i18n.LocalizeConfig{
+		MessageID:    messageId,
+		TemplateData: templateData,
+		PluralCount:  pluralCount,
+	})
+	if err != nil {
+		res = fmt.Sprintf("Translate error: %v", err)
+	}
+	return
 }

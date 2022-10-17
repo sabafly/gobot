@@ -10,63 +10,37 @@ func commandBan(locale *discordgo.Locale, option discordgo.ApplicationCommandInt
 	defaultLocalizer = i18n.NewLocalizer(translations, locale.String())
 	var banId string
 	var banReason string
-	var err error
 	for _, d := range option.Options {
 		if d.Name == "target" {
 			banId = d.UserValue(s).ID
 		} else if d.Name == "reason" {
-			banReason, err = defaultLocalizer.Localize(&i18n.LocalizeConfig{
-				MessageID: "command.ban.reason",
-				TemplateData: map[string]interface{}{
-					"Reason": d.StringValue(),
-				},
-				PluralCount: 1,
-			})
+			banReason = translates(*locale, "command.ban.reason", map[string]interface{}{"Reason": d.StringValue()}, 1)
+		}
+	}
+
+	// メッセージ&banの処理
+	if banId != *ApplicationId {
+		res.Content = translate(*locale, "command.ban.message", map[string]interface{}{
+			"Target": "<@" + banId + ">",
+		})
+		if banReason != "" {
+			res.Content += "\r" + banReason
+			err := s.GuildBanCreateWithReason(gid, banId, banReason, 7)
 			if err != nil {
-				res.Content, _ = defaultLocalizer.Localize(&i18n.LocalizeConfig{
-					MessageID: "error.0",
-					TemplateData: map[string]interface{}{
-						"Error": err,
-					},
+				res.Content = translate(*locale, "error.0", map[string]interface{}{
+					"Error": err,
+				})
+			}
+		} else {
+			err := s.GuildBanCreate(gid, banId, 7)
+			if err != nil {
+				res.Content = translate(*locale, "error.0", map[string]interface{}{
+					"Error": err,
 				})
 			}
 		}
-	}
-	res.Content, err = defaultLocalizer.Localize(&i18n.LocalizeConfig{
-		MessageID: "command.ban.message",
-		TemplateData: map[string]interface{}{
-			"Target": "<@" + banId + ">",
-		},
-	})
-	if err != nil {
-		res.Content, _ = defaultLocalizer.Localize(&i18n.LocalizeConfig{
-			MessageID: "error.0",
-			TemplateData: map[string]interface{}{
-				"Error": err,
-			},
-		})
-	}
-	if banReason != "" {
-		res.Content += "\r" + banReason
-		err := s.GuildBanCreateWithReason(gid, banId, banReason, 7)
-		if err != nil {
-			res.Content, _ = defaultLocalizer.Localize(&i18n.LocalizeConfig{
-				MessageID: "error.0",
-				TemplateData: map[string]interface{}{
-					"Error": err,
-				},
-			})
-		}
 	} else {
-		err := s.GuildBanCreate(gid, banId, 7)
-		if err != nil {
-			res.Content, _ = defaultLocalizer.Localize(&i18n.LocalizeConfig{
-				MessageID: "error.0",
-				TemplateData: map[string]interface{}{
-					"Error": err,
-				},
-			})
-		}
+		res.Content = translate(*locale, "error.TargetIsBot", map[string]interface{}{})
 	}
 	return
 }
