@@ -23,6 +23,7 @@ func init() {
 		fmt.Printf("Failed to load .env:%v", err)
 	}
 	*BotToken = os.Getenv("TOKEN")
+	*GuildID = os.Getenv("GUILD_ID")
 }
 
 var s *discordgo.Session
