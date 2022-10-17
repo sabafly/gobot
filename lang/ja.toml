@@ -5,6 +5,9 @@ other = "理由： {{.Reason}}"
 [command.ban.message]
 other = "{{.Target}}を追放しました"
 
+[command.unban.message]
+other = "{{.Target}} has been unbanned"
+
 [error.0]
 other = "エラーが発生しました: {{.Error}}"
 
