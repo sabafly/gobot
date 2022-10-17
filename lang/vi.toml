@@ -1,0 +1,12 @@
+[command.ban.reason]
+one = "Reason: {{.Reason}}"
+other = "Reasons: {{.Reason}}"
+
+[command.ban.message]
+other = "{{.Target}} has been banned"
+
+[error.0]
+other = "An error has occurred{{.Error}}"
+
+[error.TargetIsBot]
+other = "Cannot select this bot as target!"
