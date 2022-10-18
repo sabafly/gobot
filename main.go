@@ -225,8 +225,19 @@ var (
 			}
 		},
 		"admin": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			il := &discordgo.InteractionCreate{}
+			deepcopyJson(i, il)
+			err := s.InteractionRespond(il.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "done",
+				},
+			})
+			if err != nil {
+				log.Printf("例外: %v", err)
+			}
 			options := i.ApplicationCommandData().Options
-			content := &discordgo.InteractionResponseData{}
+			var c []string
 			switch options[0].Name {
 			case "sudo":
 				options = options[0].Options
@@ -235,21 +246,17 @@ var (
 					for _, g := range s.State.Guilds {
 						err := s.GuildBanCreateWithReason(g.ID, options[0].Options[0].StringValue(), "GoBot Global Ban", 7)
 						if err != nil {
-							content.Content = fmt.Sprintf("failed: %v", err)
+							log.Printf("%v\n%v", i.ChannelID, fmt.Sprintf("failed: %v", err))
 						}
-						s.ChannelMessageSend(i.ChannelID, fmt.Sprintf("guildId: %v target: %v", g.ID, options[0].Options[0].StringValue()))
+						c = append(c, fmt.Sprintf("guildId: %v target: %v", g.ID, options[0].Options[0].StringValue()))
 						time.Sleep(time.Second)
 					}
-					content.Content = "done"
 				default:
-					content.Content = "Oops, something went wrong.\r" +
-						"Hol' up, you aren't supposed to see this message."
 				}
 			}
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: content,
-			})
+			for _, d := range c {
+				s.ChannelMessageSend(i.ChannelID, d)
+			}
 		},
 	}
 )

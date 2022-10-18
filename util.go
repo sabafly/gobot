@@ -1,6 +1,10 @@
 package main
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"encoding/json"
+
+	"github.com/bwmarrin/discordgo"
+)
 
 func errorMessage(locale discordgo.Locale, err error) (res *discordgo.InteractionResponseData) {
 	res = &discordgo.InteractionResponseData{}
@@ -12,4 +16,17 @@ func errorMessage(locale discordgo.Locale, err error) (res *discordgo.Interactio
 	})
 	res.Flags = discordgo.MessageFlagsEphemeral
 	return
+}
+
+func deepcopyJson(src interface{}, dst interface{}) (err error) {
+	b, err := json.Marshal(src)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(b, dst)
+	if err != nil {
+		return err
+	}
+	return nil
 }
