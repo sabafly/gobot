@@ -16,7 +16,6 @@ var (
 )
 
 var translations *i18n.Bundle
-var defaultLocalizer *i18n.Localizer
 
 func init() {
 	loadTranslations()
@@ -41,7 +40,6 @@ func loadTranslations() error {
 	}
 
 	translations = bundle
-	defaultLocalizer = i18n.NewLocalizer(bundle, defaultLang.String())
 	return nil
 }
 

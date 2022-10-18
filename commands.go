@@ -85,12 +85,9 @@ func commandKick(locale *discordgo.Locale, option discordgo.ApplicationCommandIn
 		if err != nil {
 			res.Content = ""
 			res.Embeds = append(res.Embeds, &discordgo.MessageEmbed{
-				Fields: []*discordgo.MessageEmbedField{
-					{
-						Name:  message(*locale, "error.message"),
-						Value: err.Error(),
-					},
-				},
+				Title:       message(*locale, "error.message"),
+				Description: err.Error(),
+				Color:       0xff0000,
 			})
 		}
 	} else {
