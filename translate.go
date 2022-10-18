@@ -45,15 +45,13 @@ func loadTranslations() error {
 	return nil
 }
 
+func message(locale discordgo.Locale, messageId string) (res string) {
+	res = translate(locale, messageId, map[string]interface{}{})
+	return
+}
+
 func translate(locale discordgo.Locale, messageId string, templateData interface{}) (res string) {
-	defaultLocalizer = i18n.NewLocalizer(translations, string(locale))
-	res, err := defaultLocalizer.Localize(&i18n.LocalizeConfig{
-		MessageID:    messageId,
-		TemplateData: templateData,
-	})
-	if err != nil {
-		res = fmt.Sprintf("Translate error: %v", err)
-	}
+	res = translates(locale, messageId, templateData, 2)
 	return
 }
 

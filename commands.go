@@ -38,7 +38,7 @@ func commandBan(locale *discordgo.Locale, option discordgo.ApplicationCommandInt
 			}
 		}
 	} else {
-		res.Content = translate(*locale, "error.TargetIsBot", map[string]interface{}{})
+		res.Content = message(*locale, "error.TargetIsBot")
 	}
 	return
 }
@@ -63,13 +63,13 @@ func commandUnBan(locale *discordgo.Locale, option discordgo.ApplicationCommandI
 			})
 		}
 	} else {
-		res.Content = translate(*locale, "error.TargetIsBot", map[string]interface{}{})
+		res.Content = message(*locale, "error.TargetIsBot")
 	}
 	return
 }
 
 func commandKick(locale *discordgo.Locale, option discordgo.ApplicationCommandInteractionData, gid string) (res *discordgo.InteractionResponseData) {
-	res = &discordgo.InteractionResponseData{}
+	res = &discordgo.InteractionResponseData{Content: "ERR"}
 	var kickId string
 	for _, d := range option.Options {
 		if d.Name == "target" {
@@ -83,12 +83,18 @@ func commandKick(locale *discordgo.Locale, option discordgo.ApplicationCommandIn
 		})
 		err := s.GuildMemberDelete(*GuildID, kickId)
 		if err != nil {
-			res.Content = translate(*locale, "error.0", map[string]interface{}{
-				"Error": err,
+			res.Content = ""
+			res.Embeds = append(res.Embeds, &discordgo.MessageEmbed{
+				Fields: []*discordgo.MessageEmbedField{
+					{
+						Name:  message(*locale, "error.message"),
+						Value: err.Error(),
+					},
+				},
 			})
 		}
 	} else {
-		res.Content = translate(*locale, "error.TargetIsBot", map[string]interface{}{})
+		res.Content = message(*locale, "error.TargetIsBot")
 	}
 	return
 }

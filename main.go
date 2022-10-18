@@ -139,7 +139,8 @@ var (
 					DescriptionLocalizations: map[discordgo.Locale]string{
 						discordgo.Japanese: "キックするユーザー",
 					},
-					Type: discordgo.ApplicationCommandOptionUser,
+					Type:     discordgo.ApplicationCommandOptionUser,
+					Required: true,
 				},
 			},
 		},
@@ -186,7 +187,7 @@ var (
 		"kick": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: commandUnBan(&i.Locale, i.ApplicationCommandData(), i.GuildID),
+				Data: commandKick(&i.Locale, i.ApplicationCommandData(), i.GuildID),
 			})
 			if err != nil {
 				log.Printf("例外: %v", err)
