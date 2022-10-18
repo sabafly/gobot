@@ -5,14 +5,17 @@ other = "Reasons: {{.Reason}}"
 [command.ban.message]
 other = "{{.Target}} has been banned"
 
-[command.unban.message]
-other = "{{.Target}} has been unbanned"
-
 [command.kick.message]
 other = "{{.Target}} has been kicked"
 
+[command.unban.message]
+other = "{{.Target}} has been unbanned"
+
 [error.0]
-other = "An error has occurred{{.Error}}"
+other = "An error has occurred {{.Error}}"
+
+[error.message]
+other = "An error has occurred"
 
 [error.TargetIsBot]
 other = "Cannot select this bot as target!"
