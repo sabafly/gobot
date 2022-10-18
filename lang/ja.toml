@@ -5,14 +5,17 @@ other = "理由： {{.Reason}}"
 [command.ban.message]
 other = "{{.Target}}をbanしました"
 
-[command.unban.message]
-other = "{{.Target}}のbanを解除しました"
-
 [command.kick.message]
 other = "{{.Target}} has been kicked"
 
+[command.unban.message]
+other = "{{.Target}}のbanを解除しました"
+
 [error.0]
-other = "エラーが発生しました: {{.Error}}"
+other = "An error has occurred {{.Error}}"
+
+[error.message]
+other = "An error has occurred"
 
 [error.TargetIsBot]
 other = "このボットをターゲットとして選択できません！"
