@@ -35,6 +35,7 @@ func commandBan(locale *discordgo.Locale, option discordgo.ApplicationCommandInt
 		}
 	} else {
 		res.Content = message(*locale, "error.TargetIsBot")
+		res.Flags = discordgo.MessageFlagsEphemeral
 	}
 	return
 }
@@ -58,6 +59,7 @@ func commandUnBan(locale *discordgo.Locale, option discordgo.ApplicationCommandI
 		}
 	} else {
 		res.Content = message(*locale, "error.TargetIsBot")
+		res.Flags = discordgo.MessageFlagsEphemeral
 	}
 	return
 }
