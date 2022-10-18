@@ -8,6 +8,9 @@ other = "{{.Target}} has been banned"
 [command.unban.message]
 other = "{{.Target}} has been unbanned"
 
+[command.kick.message]
+other = "{{.Target}} has been kicked"
+
 [error.0]
 other = "An error has occurred{{.Error}}"
 
