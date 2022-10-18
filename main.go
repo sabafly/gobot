@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/joho/godotenv"
@@ -44,7 +45,8 @@ var (
 	// integerOptionMinValue          = 1.0
 	dmPermission = false
 	// defaultMemberPermissions int64 = discordgo.PermissionManageServer
-	PermissionBanMember int64 = discordgo.PermissionBanMembers
+	PermissionBanMembers  int64 = discordgo.PermissionBanMembers
+	PermissionKickMembers int64 = discordgo.PermissionKickMembers
 
 	commands = []*discordgo.ApplicationCommand{
 		{
@@ -91,7 +93,7 @@ var (
 					Type: discordgo.ApplicationCommandOptionString,
 				},
 			},
-			DefaultMemberPermissions: &PermissionBanMember,
+			DefaultMemberPermissions: &PermissionBanMembers,
 			DMPermission:             &dmPermission,
 		},
 		{
@@ -117,7 +119,7 @@ var (
 					Required: true,
 				},
 			},
-			DefaultMemberPermissions: &PermissionBanMember,
+			DefaultMemberPermissions: &PermissionBanMembers,
 			DMPermission:             &dmPermission,
 		},
 		{
@@ -141,6 +143,35 @@ var (
 					},
 					Type:     discordgo.ApplicationCommandOptionUser,
 					Required: true,
+				},
+			},
+			DefaultMemberPermissions: &PermissionKickMembers,
+			DMPermission:             &dmPermission,
+		},
+		{
+			Name:        "admin",
+			Description: "for only admins",
+			GuildID:     "1005139879799291936",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        "sudo",
+					Description: "for only admins",
+					Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Name:        "ban",
+							Description: "for only admins",
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+							Options: []*discordgo.ApplicationCommandOption{
+								{
+									Name:        "target",
+									Description: "for only admins",
+									Type:        discordgo.ApplicationCommandOptionString,
+									Required:    true,
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -193,6 +224,33 @@ var (
 				log.Printf("例外: %v", err)
 			}
 		},
+		"admin": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			options := i.ApplicationCommandData().Options
+			content := &discordgo.InteractionResponseData{}
+			switch options[0].Name {
+			case "sudo":
+				options = options[0].Options
+				switch options[0].Name {
+				case "ban":
+					for _, g := range s.State.Guilds {
+						err := s.GuildBanCreateWithReason(g.ID, options[0].Options[0].StringValue(), "GoBot Global Ban", 7)
+						if err != nil {
+							content.Content = fmt.Sprintf("failed: %v", err)
+						}
+						s.ChannelMessageSend(i.ChannelID, fmt.Sprintf("guildId: %v target: %v", g.ID, options[0].Options[0].StringValue()))
+						time.Sleep(time.Second)
+					}
+					content.Content = "done"
+				default:
+					content.Content = "Oops, something went wrong.\r" +
+						"Hol' up, you aren't supposed to see this message."
+				}
+			}
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: content,
+			})
+		},
 	}
 )
 
@@ -225,6 +283,8 @@ func main() {
 
 	defer s.Close()
 
+	go updateStatus()
+
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
 	log.Println("Ctrl + C で終了")
@@ -250,4 +310,22 @@ func main() {
 	}
 
 	log.Println("正常にシャットダウンしました")
+}
+
+func updateStatus() {
+	for {
+		err := s.UpdateStatusComplex(discordgo.UpdateStatusData{
+			Status: fmt.Sprintf("Shards %v / %v", s.ShardID+1, s.ShardCount),
+			Activities: []*discordgo.Activity{
+				{
+					Name: fmt.Sprintf("Servers: %v,Shards: %v / %v", len(s.State.Guilds), s.ShardID+1, s.ShardCount),
+					Type: discordgo.ActivityTypeWatching,
+				},
+			},
+		})
+		if err != nil {
+			log.Printf("Error on update status: %v", err)
+		}
+		time.Sleep(time.Minute * 10)
+	}
 }
