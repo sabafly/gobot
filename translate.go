@@ -63,7 +63,15 @@ func translates(locale discordgo.Locale, messageId string, templateData interfac
 		PluralCount:  pluralCount,
 	})
 	if err != nil {
-		res = fmt.Sprintf("Translate error: %v", err)
+		defaultLocalizer = i18n.NewLocalizer(translations, "en")
+		res, err = defaultLocalizer.Localize(&i18n.LocalizeConfig{
+			MessageID:    messageId,
+			TemplateData: templateData,
+			PluralCount:  pluralCount,
+		})
+		if err != nil {
+			res = fmt.Sprintf("Translate error: %v", err)
+		}
 	}
 	return
 }
