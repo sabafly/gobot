@@ -6,16 +6,16 @@ other = "理由： {{.Reason}}"
 other = "{{.Target}}をbanしました"
 
 [command.kick.message]
-other = "{{.Target}} has been kicked"
+other = "{{.Target}}をキックしました"
 
 [command.unban.message]
 other = "{{.Target}}のbanを解除しました"
 
 [error.0]
-other = "An error has occurred {{.Error}}"
+other = "エラーが発生しました： {{.Error}}"
 
 [error.message]
-other = "An error has occurred"
+other = "エラーが発生しました"
 
 [error.TargetIsBot]
 other = "このボットをターゲットとして選択できません！"
