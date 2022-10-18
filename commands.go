@@ -25,16 +25,12 @@ func commandBan(locale *discordgo.Locale, option discordgo.ApplicationCommandInt
 			res.Content += "\r" + banReason
 			err := s.GuildBanCreateWithReason(gid, banId, banReason, 7)
 			if err != nil {
-				res.Content = translate(*locale, "error.0", map[string]interface{}{
-					"Error": err,
-				})
+				res = errorMessage(*locale, err)
 			}
 		} else {
 			err := s.GuildBanCreate(gid, banId, 7)
 			if err != nil {
-				res.Content = translate(*locale, "error.0", map[string]interface{}{
-					"Error": err,
-				})
+				res = errorMessage(*locale, err)
 			}
 		}
 	} else {
@@ -58,9 +54,7 @@ func commandUnBan(locale *discordgo.Locale, option discordgo.ApplicationCommandI
 		})
 		err := s.GuildBanDelete(*GuildID, kickId)
 		if err != nil {
-			res.Content = translate(*locale, "error.0", map[string]interface{}{
-				"Error": err,
-			})
+			res = errorMessage(*locale, err)
 		}
 	} else {
 		res.Content = message(*locale, "error.TargetIsBot")
@@ -83,15 +77,11 @@ func commandKick(locale *discordgo.Locale, option discordgo.ApplicationCommandIn
 		})
 		err := s.GuildMemberDelete(*GuildID, kickId)
 		if err != nil {
-			res.Content = ""
-			res.Embeds = append(res.Embeds, &discordgo.MessageEmbed{
-				Title:       message(*locale, "error.message"),
-				Description: err.Error(),
-				Color:       0xff0000,
-			})
+			res = errorMessage(*locale, err)
 		}
 	} else {
 		res.Content = message(*locale, "error.TargetIsBot")
+		res.Flags = discordgo.MessageFlagsEphemeral
 	}
 	return
 }
