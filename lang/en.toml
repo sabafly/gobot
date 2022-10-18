@@ -9,3 +9,5 @@ other="{{.Target}} has been unbanned"
 other="An error has occurred{{.Error}}"
 [error.TargetIsBot]
 other="Cannot select this bot as target!"
+[command.kick.message]
+other="{{.Target}} has been kicked"

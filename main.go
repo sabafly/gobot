@@ -98,7 +98,7 @@ var (
 			Name:        "unban",
 			Description: "pardon the selected user",
 			NameLocalizations: &map[discordgo.Locale]string{
-				discordgo.Japanese: "許す",
+				discordgo.Japanese: "免罪",
 			},
 			DescriptionLocalizations: &map[discordgo.Locale]string{
 				discordgo.Japanese: "指定したユーザーのbanを解除します",
@@ -119,6 +119,29 @@ var (
 			},
 			DefaultMemberPermissions: &PermissionBanMember,
 			DMPermission:             &dmPermission,
+		},
+		{
+			Name:        "kick",
+			Description: "kick the selected user",
+			NameLocalizations: &map[discordgo.Locale]string{
+				discordgo.Japanese: "切断",
+			},
+			DescriptionLocalizations: &map[discordgo.Locale]string{
+				discordgo.Japanese: "指定したユーザーをキックする",
+			},
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        "target",
+					Description: "user to kick",
+					NameLocalizations: map[discordgo.Locale]string{
+						discordgo.Japanese: "対象",
+					},
+					DescriptionLocalizations: map[discordgo.Locale]string{
+						discordgo.Japanese: "キックするユーザー",
+					},
+					Type: discordgo.ApplicationCommandOptionUser,
+				},
+			},
 		},
 	}
 
@@ -155,6 +178,15 @@ var (
 				Data: &discordgo.InteractionResponseData{
 					Content: content,
 				},
+			})
+			if err != nil {
+				log.Printf("例外: %v", err)
+			}
+		},
+		"kick": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: commandUnBan(&i.Locale, i.ApplicationCommandData(), i.GuildID),
 			})
 			if err != nil {
 				log.Printf("例外: %v", err)

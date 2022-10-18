@@ -45,18 +45,43 @@ func commandBan(locale *discordgo.Locale, option discordgo.ApplicationCommandInt
 
 func commandUnBan(locale *discordgo.Locale, option discordgo.ApplicationCommandInteractionData, gid string) (res *discordgo.InteractionResponseData) {
 	res = &discordgo.InteractionResponseData{}
-	var unbanId string
+	var kickId string
 	for _, d := range option.Options {
 		if d.Name == "target" {
-			unbanId = d.UserValue(s).ID
+			kickId = d.UserValue(s).ID
 		}
 	}
 
-	if unbanId != *ApplicationId {
+	if kickId != *ApplicationId {
 		res.Content = translate(*locale, "command.unban.message", map[string]interface{}{
-			"Target": "<@" + unbanId + ">",
+			"Target": "<@" + kickId + ">",
 		})
-		err := s.GuildBanDelete(*GuildID, unbanId)
+		err := s.GuildBanDelete(*GuildID, kickId)
+		if err != nil {
+			res.Content = translate(*locale, "error.0", map[string]interface{}{
+				"Error": err,
+			})
+		}
+	} else {
+		res.Content = translate(*locale, "error.TargetIsBot", map[string]interface{}{})
+	}
+	return
+}
+
+func commandKick(locale *discordgo.Locale, option discordgo.ApplicationCommandInteractionData, gid string) (res *discordgo.InteractionResponseData) {
+	res = &discordgo.InteractionResponseData{}
+	var kickId string
+	for _, d := range option.Options {
+		if d.Name == "target" {
+			kickId = d.UserValue(s).ID
+		}
+	}
+
+	if kickId != *ApplicationId {
+		res.Content = translate(*locale, "command.kick.message", map[string]interface{}{
+			"Target": "<@" + kickId + ">",
+		})
+		err := s.GuildMemberDelete(*GuildID, kickId)
 		if err != nil {
 			res.Content = translate(*locale, "error.0", map[string]interface{}{
 				"Error": err,
