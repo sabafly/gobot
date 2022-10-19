@@ -1,0 +1,14 @@
+version: '3'
+services:
+  gobot:
+    container_name: gobot
+    build:
+      context: .
+      dockerfile: ./build/Dockerfile
+    volumes: # マウントディレクトリ
+      - ./:/go/src/gobot/
+    tty: true # コンテナの永続化
+    env_file: # .envファイル
+      - ./build/.go-env
+    environment:
+      - TZ=Asia/Tokyo
