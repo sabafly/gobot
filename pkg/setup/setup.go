@@ -20,13 +20,13 @@ var (
 	ApplicationId  = flag.String("Application", "", "botのsnowflake")
 )
 
-func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, RemoveCommands *bool, GuildID *string) {
+func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, RemoveCommands bool, GuildID string) {
 	err := godotenv.Load()
 	if err != nil {
 		fmt.Printf("Failed to load .env:%v", err)
 	}
 	*BotToken = os.Getenv("TOKEN")
-	*GuildID = os.Getenv("GUILD_ID")
+	// *GuildID = os.Getenv("GUILD_ID")
 	*ApplicationId = os.Getenv("APPLICATION_ID")
 
 	flag.Parse()

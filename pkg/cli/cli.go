@@ -12,8 +12,20 @@ import (
 )
 
 var (
-	s, commands, RemoveCommands, GuildID = setup.Setup()
+	s              *discordgo.Session
+	commands       = []*discordgo.ApplicationCommand{}
+	GuildID        string
+	RemoveCommands bool
 )
+
+func init() {
+	s = &discordgo.Session{}
+	commands = []*discordgo.ApplicationCommand{}
+	GuildID = ""
+	RemoveCommands = false
+
+	s, commands, RemoveCommands, GuildID = setup.Setup()
+}
 
 func Run() {
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
@@ -27,7 +39,7 @@ func Run() {
 	log.Println("コマンドを追加中...")
 	registeredCommands := make([]*discordgo.ApplicationCommand, len(commands))
 	for i, v := range commands {
-		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, *GuildID, v)
+		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, GuildID, v)
 		if err != nil {
 			log.Panicf("'%v'コマンドを追加できません: %v", v.Name, err)
 		}
@@ -43,7 +55,7 @@ func Run() {
 	log.Println("Ctrl + C で終了")
 	<-stop
 
-	if *RemoveCommands {
+	if RemoveCommands {
 		log.Println("コマンドを登録解除中...")
 		// // We need to fetch the commands, since deleting requires the command ID.
 		// // We are doing this from the returned commands on line 375, because using
@@ -55,7 +67,7 @@ func Run() {
 		// }
 
 		for _, v := range registeredCommands {
-			err := s.ApplicationCommandDelete(s.State.User.ID, *GuildID, v.ID)
+			err := s.ApplicationCommandDelete(s.State.User.ID, GuildID, v.ID)
 			if err != nil {
 				log.Panicf("'%v'コマンドを解除できません: %v", v.Name, err)
 			}
