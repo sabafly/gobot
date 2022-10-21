@@ -1,4 +1,4 @@
-package main
+package translate
 
 import (
 	"fmt"
@@ -43,17 +43,17 @@ func loadTranslations() error {
 	return nil
 }
 
-func message(locale discordgo.Locale, messageId string) (res string) {
-	res = translate(locale, messageId, map[string]interface{}{})
+func Message(locale discordgo.Locale, messageId string) (res string) {
+	res = Translate(locale, messageId, map[string]interface{}{})
 	return
 }
 
-func translate(locale discordgo.Locale, messageId string, templateData interface{}) (res string) {
-	res = translates(locale, messageId, templateData, 2)
+func Translate(locale discordgo.Locale, messageId string, templateData interface{}) (res string) {
+	res = Translates(locale, messageId, templateData, 2)
 	return
 }
 
-func translates(locale discordgo.Locale, messageId string, templateData interface{}, pluralCount int) (res string) {
+func Translates(locale discordgo.Locale, messageId string, templateData interface{}, pluralCount int) (res string) {
 	defaultLocalizer := i18n.NewLocalizer(translations, string(locale))
 	res, err := defaultLocalizer.Localize(&i18n.LocalizeConfig{
 		MessageID:    messageId,

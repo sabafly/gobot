@@ -1,16 +1,17 @@
-package main
+package util
 
 import (
 	"encoding/json"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/ikafly144/gobot/pkg/translate"
 )
 
-func errorMessage(locale discordgo.Locale, err error) (res *discordgo.InteractionResponseData) {
+func ErrorMessage(locale discordgo.Locale, err error) (res *discordgo.InteractionResponseData) {
 	res = &discordgo.InteractionResponseData{}
 	res.Content = ""
 	res.Embeds = append(res.Embeds, &discordgo.MessageEmbed{
-		Title:       message(locale, "error.message"),
+		Title:       translate.Message(locale, "error.message"),
 		Description: err.Error(),
 		Color:       0xff0000,
 	})
@@ -18,7 +19,7 @@ func errorMessage(locale discordgo.Locale, err error) (res *discordgo.Interactio
 	return
 }
 
-func deepcopyJson(src interface{}, dst interface{}) (err error) {
+func DeepcopyJson(src interface{}, dst interface{}) (err error) {
 	b, err := json.Marshal(src)
 	if err != nil {
 		return err
