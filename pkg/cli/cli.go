@@ -28,6 +28,9 @@ func init() {
 }
 
 func Run() {
+	log.Printf("%v", s.Identify.Shard)
+	s.ShardID = 0
+	s.ShardCount = 1
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 		log.Printf("%v#%v としてログインしました", s.State.User.Username, s.State.User.Discriminator)
 	})
@@ -82,7 +85,7 @@ func updateStatus() {
 		err := s.UpdateStatusComplex(discordgo.UpdateStatusData{
 			Activities: []*discordgo.Activity{
 				{
-					Name: fmt.Sprintf("Servers: %v", len(s.State.Guilds)),
+					Name: fmt.Sprintf("/help | %v Servers | Shard %v/%v", len(s.State.Guilds), s.ShardID+1, s.ShardCount),
 					Type: discordgo.ActivityTypeGame,
 				},
 			},
