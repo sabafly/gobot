@@ -80,17 +80,16 @@ func Run() {
 func updateStatus() {
 	for {
 		err := s.UpdateStatusComplex(discordgo.UpdateStatusData{
-			Status: fmt.Sprintf("Shards %v / %v", s.ShardID+1, s.ShardCount),
 			Activities: []*discordgo.Activity{
 				{
-					Name: fmt.Sprintf("Servers: %v,Shards: %v / %v", len(s.State.Guilds), s.ShardID+1, s.ShardCount),
-					Type: discordgo.ActivityTypeWatching,
+					Name: fmt.Sprintf("Servers: %v", len(s.State.Guilds)),
+					Type: discordgo.ActivityTypeGame,
 				},
 			},
 		})
 		if err != nil {
 			log.Printf("Error on update status: %v", err)
 		}
-		time.Sleep(time.Minute * 10)
+		time.Sleep(time.Second)
 	}
 }
