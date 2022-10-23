@@ -77,7 +77,10 @@ func Run() {
 		}
 		c, _ := s.ApplicationCommands(s.State.User.ID, "")
 		for _, v := range c {
-			s.ApplicationCommandDelete(s.State.User.ID, "", v.ID)
+			err := s.ApplicationCommandDelete(s.State.User.ID, "", v.ID)
+			if err != nil {
+				log.Panicf("'%v'コマンドを解除できません: %v", v.Name, err)
+			}
 		}
 
 	}
