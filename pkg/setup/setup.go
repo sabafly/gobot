@@ -18,6 +18,7 @@ var (
 	BotToken       = flag.String("Token", "", "botアクセストークン")
 	RemoveCommands = flag.Bool("rmcmd", true, "停止時にコマンドを登録解除するか")
 	ApplicationId  = flag.String("Application", "", "botのsnowflake")
+	SupportGuildID = flag.String("SupportServer", "", "サポートサーバーのID")
 )
 
 func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, RemoveCommands bool, GuildID string) {
@@ -27,6 +28,7 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 	}
 	*BotToken = os.Getenv("TOKEN")
 	GuildID = os.Getenv("GUILD_ID")
+	*SupportGuildID = os.Getenv("SUPPORT_ID")
 	RemoveCommands, err = strconv.ParseBool(os.Getenv("REMOVE_COMMANDS"))
 	if err != nil {
 		RemoveCommands = true
@@ -138,7 +140,7 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 		{
 			Name:        "admin",
 			Description: "only for bot admins",
-			GuildID:     GuildID,
+			GuildID:     *SupportGuildID,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:        "sudo",
@@ -212,7 +214,7 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 				}
 			},
 			"admin": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				if i.GuildID != GuildID {
+				if i.GuildID != *SupportGuildID {
 					il := &discordgo.InteractionCreate{}
 					util.DeepcopyJson(i, il)
 					err := s.InteractionRespond(il.Interaction, &discordgo.InteractionResponse{
