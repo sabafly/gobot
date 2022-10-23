@@ -45,9 +45,10 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 	var (
 		// integerOptionMinValue          = 1.0
 		dmPermission = false
-		// defaultMemberPermissions int64 = discordgo.PermissionManageServer
-		PermissionBanMembers  int64 = discordgo.PermissionBanMembers
-		PermissionKickMembers int64 = discordgo.PermissionKickMembers
+		// PermissionAll          int64 = discordgo.PermissionAll
+		PermissionBanMembers   int64 = discordgo.PermissionBanMembers
+		PermissionKickMembers  int64 = discordgo.PermissionKickMembers
+		PermissionAdminMembers int64 = discordgo.PermissionAdministrator
 	)
 	commands = []*discordgo.ApplicationCommand{
 		{
@@ -56,6 +57,7 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 			DescriptionLocalizations: &map[discordgo.Locale]string{
 				discordgo.Japanese: "ポング！",
 			},
+			Version: "1",
 		},
 		{
 			Name:        "ban",
@@ -90,6 +92,7 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 			},
 			DefaultMemberPermissions: &PermissionBanMembers,
 			DMPermission:             &dmPermission,
+			Version:                  "1",
 		},
 		{
 			Name:        "unban",
@@ -113,6 +116,7 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 			},
 			DefaultMemberPermissions: &PermissionBanMembers,
 			DMPermission:             &dmPermission,
+			Version:                  "1",
 		},
 		{
 			Name:        "kick",
@@ -136,11 +140,14 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 			},
 			DefaultMemberPermissions: &PermissionKickMembers,
 			DMPermission:             &dmPermission,
+			Version:                  "1",
 		},
 		{
-			Name:        "admin",
-			Description: "only for bot admins",
-			GuildID:     *SupportGuildID,
+			Name:                     "admin",
+			Description:              "only for bot admins",
+			GuildID:                  *SupportGuildID,
+			DMPermission:             &dmPermission,
+			DefaultMemberPermissions: &PermissionAdminMembers,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:        "sudo",
@@ -163,6 +170,7 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 					},
 				},
 			},
+			Version: "1",
 		},
 	}
 	var (
