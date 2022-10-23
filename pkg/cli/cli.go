@@ -22,7 +22,7 @@ func init() {
 	s = &discordgo.Session{}
 	commands = []*discordgo.ApplicationCommand{}
 	GuildID = ""
-	RemoveCommands = false
+	RemoveCommands = true
 
 	s, commands, RemoveCommands, GuildID = setup.Setup()
 }
@@ -75,6 +75,8 @@ func Run() {
 				log.Panicf("'%v'コマンドを解除できません: %v", v.Name, err)
 			}
 		}
+		s.ApplicationCommandDelete(s.State.User.ID, "", "1033010471034421248")
+
 	}
 
 	log.Println("正常にシャットダウンしました")

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -14,7 +15,6 @@ import (
 )
 
 var (
-	GuildID        = flag.String("guild", "", "テストサーバーID")
 	BotToken       = flag.String("Token", "", "botアクセストークン")
 	RemoveCommands = flag.Bool("rmcmd", true, "停止時にコマンドを登録解除するか")
 	ApplicationId  = flag.String("Application", "", "botのsnowflake")
@@ -26,7 +26,11 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 		fmt.Printf("Failed to load .env:%v", err)
 	}
 	*BotToken = os.Getenv("TOKEN")
-	// *GuildID = os.Getenv("GUILD_ID")
+	GuildID = os.Getenv("GUILD_ID")
+	RemoveCommands, err = strconv.ParseBool(os.Getenv("REMOVE_COMMANDS"))
+	if err != nil {
+		RemoveCommands = true
+	}
 	*ApplicationId = os.Getenv("APPLICATION_ID")
 
 	flag.Parse()
@@ -47,9 +51,6 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 		{
 			Name:        "ping",
 			Description: "pong!",
-			NameLocalizations: &map[discordgo.Locale]string{
-				discordgo.Japanese: "ピング",
-			},
 			DescriptionLocalizations: &map[discordgo.Locale]string{
 				discordgo.Japanese: "ポング！",
 			},
@@ -57,9 +58,6 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 		{
 			Name:        "ban",
 			Description: "ban the selected user",
-			NameLocalizations: &map[discordgo.Locale]string{
-				discordgo.Japanese: "追放",
-			},
 			DescriptionLocalizations: &map[discordgo.Locale]string{
 				discordgo.Japanese: "選択したユーザーをbanする",
 			},
@@ -94,9 +92,6 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 		{
 			Name:        "unban",
 			Description: "pardon the selected user",
-			NameLocalizations: &map[discordgo.Locale]string{
-				discordgo.Japanese: "免罪",
-			},
 			DescriptionLocalizations: &map[discordgo.Locale]string{
 				discordgo.Japanese: "指定したユーザーのbanを解除します",
 			},
@@ -120,9 +115,6 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 		{
 			Name:        "kick",
 			Description: "kick the selected user",
-			NameLocalizations: &map[discordgo.Locale]string{
-				discordgo.Japanese: "切断",
-			},
 			DescriptionLocalizations: &map[discordgo.Locale]string{
 				discordgo.Japanese: "指定したユーザーをキックする",
 			},
@@ -145,8 +137,8 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 		},
 		{
 			Name:        "admin",
-			Description: "for only admins",
-			GuildID:     "1005139879799291936",
+			Description: "only for bot admins",
+			GuildID:     GuildID,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:        "sudo",
@@ -220,37 +212,49 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 				}
 			},
 			"admin": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				il := &discordgo.InteractionCreate{}
-				util.DeepcopyJson(i, il)
-				err := s.InteractionRespond(il.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: "done",
-					},
-				})
-				if err != nil {
-					log.Printf("例外: %v", err)
-				}
-				options := i.ApplicationCommandData().Options
-				var c []string
-				switch options[0].Name {
-				case "sudo":
-					options = options[0].Options
-					switch options[0].Name {
-					case "ban":
-						for _, g := range s.State.Guilds {
-							err := s.GuildBanCreateWithReason(g.ID, options[0].Options[0].StringValue(), "GoBot Global Ban", 7)
-							if err != nil {
-								log.Printf("%v\n%v", i.ChannelID, fmt.Sprintf("failed: %v", err))
-							}
-							c = append(c, fmt.Sprintf("guildId: %v target: %v", g.ID, options[0].Options[0].StringValue()))
-							time.Sleep(time.Second)
-						}
-					default:
+				if i.GuildID != GuildID {
+					il := &discordgo.InteractionCreate{}
+					util.DeepcopyJson(i, il)
+					err := s.InteractionRespond(il.Interaction, &discordgo.InteractionResponse{
+						Type: discordgo.InteractionResponseChannelMessageWithSource,
+						Data: &discordgo.InteractionResponseData{
+							Content: "done",
+						},
+					})
+					if err != nil {
+						log.Printf("例外: %v", err)
 					}
-				}
-				for _, d := range c {
-					s.ChannelMessageSend(i.ChannelID, d)
+					options := i.ApplicationCommandData().Options
+					var c []string
+					switch options[0].Name {
+					case "sudo":
+						options = options[0].Options
+						switch options[0].Name {
+						case "ban":
+							for _, g := range s.State.Guilds {
+								err := s.GuildBanCreateWithReason(g.ID, options[0].Options[0].StringValue(), "GoBot Global Ban", 7)
+								if err != nil {
+									log.Printf("%v\n%v", i.ChannelID, fmt.Sprintf("failed: %v", err))
+								}
+								c = append(c, fmt.Sprintf("guildId: %v target: %v", g.ID, options[0].Options[0].StringValue()))
+								time.Sleep(time.Second)
+							}
+						default:
+						}
+					}
+					for _, d := range c {
+						s.ChannelMessageSend(i.ChannelID, d)
+					}
+				} else {
+					err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+						Type: discordgo.InteractionResponseChannelMessageWithSource,
+						Data: &discordgo.InteractionResponseData{
+							Content: "done",
+						},
+					})
+					if err != nil {
+						log.Printf("%v", err)
+					}
 				}
 			},
 		}
