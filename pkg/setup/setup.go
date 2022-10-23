@@ -249,7 +249,8 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 					err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 						Type: discordgo.InteractionResponseChannelMessageWithSource,
 						Data: &discordgo.InteractionResponseData{
-							Content: "done",
+							Content: "You can't use this command!",
+							Flags:   discordgo.MessageFlagsEphemeral,
 						},
 					})
 					if err != nil {
