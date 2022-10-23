@@ -214,7 +214,7 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 				}
 			},
 			"admin": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				if i.GuildID != *SupportGuildID {
+				if i.GuildID == *SupportGuildID {
 					il := &discordgo.InteractionCreate{}
 					util.DeepcopyJson(i, il)
 					err := s.InteractionRespond(il.Interaction, &discordgo.InteractionResponse{
