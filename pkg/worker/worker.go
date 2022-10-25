@@ -40,7 +40,7 @@ func deleteBan(id string) {
 
 func DeleteBanListener() {
 	http.HandleFunc("/ban/delete", deleteBanHandler)
-	log.Print(http.ListenAndServe(":8192", nil))
+	go log.Print(http.ListenAndServe(":8192", nil))
 }
 
 func deleteBanHandler(w http.ResponseWriter, r *http.Request) {
