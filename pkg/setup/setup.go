@@ -1,18 +1,14 @@
 package setup
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"strconv"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/ikafly144/gobot/pkg/api"
 	"github.com/ikafly144/gobot/pkg/command"
-	"github.com/ikafly144/gobot/pkg/util"
 	"github.com/joho/godotenv"
 )
 
@@ -22,17 +18,18 @@ var (
 	ApplicationId  = flag.String("Application", "", "botのsnowflake")
 	SupportGuildID = flag.String("SupportServer", "", "サポートサーバーのID")
 	APIServer      = flag.String("APIAddress", "", "APIサーバーのip")
+	s              *discordgo.Session
 )
 
-func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, RemoveCommands bool, GuildID string) {
+func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string) {
 	err := godotenv.Load()
 	if err != nil {
 		fmt.Printf("Failed to load .env:%v", err)
 	}
 	*BotToken = os.Getenv("TOKEN")
-	GuildID = os.Getenv("GUILD_ID")
+	GuildID := os.Getenv("GUILD_ID")
 	*SupportGuildID = os.Getenv("SUPPORT_ID")
-	RemoveCommands, err = strconv.ParseBool(os.Getenv("REMOVE_COMMANDS"))
+	RemoveCommands, err := strconv.ParseBool(os.Getenv("REMOVE_COMMANDS"))
 	*APIServer = os.Getenv("API_SERVER")
 	if err != nil {
 		RemoveCommands = true
@@ -54,7 +51,7 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 		PermissionKickMembers  int64 = discordgo.PermissionKickMembers
 		PermissionAdminMembers int64 = discordgo.PermissionAdministrator
 	)
-	commands = []*discordgo.ApplicationCommand{
+	commands := []*discordgo.ApplicationCommand{
 		{
 			Name:        "ping",
 			Description: "pong!",
@@ -250,145 +247,7 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 				}
 			},
 			"admin": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				if i.GuildID == *SupportGuildID {
-					il := &discordgo.InteractionCreate{}
-					util.DeepcopyJson(i, il)
-					err := s.InteractionRespond(il.Interaction, &discordgo.InteractionResponse{
-						Type: discordgo.InteractionResponseChannelMessageWithSource,
-						Data: &discordgo.InteractionResponseData{
-							Content: "OK",
-						},
-					})
-					if err != nil {
-						log.Printf("例外: %v", err)
-					}
-					options := i.ApplicationCommandData().Options
-					switch options[0].Name {
-					case "ban":
-						options = options[0].Options
-						switch options[0].Name {
-						case "add":
-							options = options[0].Options
-							var id string
-							var reason string
-							for _, v := range options {
-								switch v.Name {
-								case "target":
-									id = v.StringValue()
-								case "reason":
-									reason = v.StringValue()
-								}
-							}
-							resp, err := api.GetApi("/api/ban/create?id=" + id + "&reason=" + reason)
-							if err != nil {
-								log.Printf("APIサーバーへのリクエストに失敗: %v", err)
-								message := "Failed to create request"
-								m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-									Content: &message,
-								})
-								log.Printf("message: %v", m.ID)
-								if err != nil {
-									log.Printf("例外: %v", err)
-								}
-								break
-							}
-							util.LogResp(resp)
-							m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-								Content: util.MessageResp(resp),
-							})
-							log.Printf("message: %v", m.ID)
-							if err != nil {
-								log.Printf("例外: %v", err)
-							}
-						case "remove":
-							options = options[0].Options
-							var id string
-							for _, v := range options {
-								switch v.Name {
-								case "target":
-									id = v.StringValue()
-								}
-							}
-							resp, err := api.GetApi("/api/ban/remove?id=" + id)
-							if err != nil {
-								log.Printf("APIサーバーへのリクエスト送信に失敗: %v", err)
-								message := "Failed request to API server"
-								m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-									Content: &message,
-								})
-								log.Printf("message: %v", m.ID)
-								if err != nil {
-									log.Printf("例外: %v", err)
-								}
-								break
-							}
-							util.LogResp(resp)
-							defer resp.Body.Close()
-							m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-								Content: util.MessageResp(resp),
-							})
-							log.Printf("message: %v", m.ID)
-							if err != nil {
-								log.Printf("例外: %v", err)
-							}
-						case "get":
-							resp, err := api.GetApi("/api/ban")
-							if err != nil {
-								log.Printf("APIサーバーへのリクエスト送信に失敗: %v", err)
-								message := "Failed request to API server"
-								m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-									Content: &message,
-								})
-								log.Printf("message: %v", m.ID)
-								if err != nil {
-									log.Printf("例外: %v", err)
-								}
-								break
-							}
-							util.LogResp(resp)
-							defer resp.Body.Close()
-							byteArray, _ := io.ReadAll(resp.Body)
-							jsonBytes := ([]byte)(byteArray)
-							data := &globalBan{}
-							err = json.Unmarshal(jsonBytes, data)
-							if err != nil {
-								log.Printf("JSONデコードに失敗: %v", err)
-								message := "Failed unmarshal json objects"
-								m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-									Content: &message,
-								})
-								log.Printf("message: %v", m.ID)
-								if err != nil {
-									log.Printf("例外: %v", err)
-								}
-								break
-							}
-							var str string
-							for i, v := range data.Content {
-								str += fmt.Sprintf("%3v: <@%v>\r	Reason: %v\r", i+1, v.ID, v.Reason)
-							}
-							message := fmt.Sprintf("succeed %v %v \r%v", resp.Request.Method, resp.StatusCode, str)
-							m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-								Content: &message,
-							})
-							log.Printf("message: %v", m.ID)
-							if err != nil {
-								log.Printf("例外: %v", err)
-							}
-						}
-					}
-				} else {
-					err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-						Type: discordgo.InteractionResponseChannelMessageWithSource,
-						Data: &discordgo.InteractionResponseData{
-							Content: "You can't use this command!",
-							Flags:   discordgo.MessageFlagsEphemeral,
-						},
-					})
-					if err != nil {
-						log.Printf("例外: %v", err)
-					}
-				}
+				command.Admin(s, i)
 			},
 		}
 	)
@@ -397,5 +256,9 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 			h(s, i)
 		}
 	})
-	return
+	return s, commands, RemoveCommands, GuildID
+}
+
+func GetSession() *discordgo.Session {
+	return s
 }

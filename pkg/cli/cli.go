@@ -9,6 +9,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/setup"
+	"github.com/ikafly144/gobot/pkg/worker"
 )
 
 var (
@@ -52,6 +53,7 @@ func Run() {
 	defer s.Close()
 
 	go updateStatus()
+	go autoBans()
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
@@ -101,6 +103,14 @@ func updateStatus() {
 		if err != nil {
 			log.Printf("Error on update status: %v", err)
 		}
-		time.Sleep(time.Second)
+		time.Sleep(time.Second * 30)
+	}
+}
+
+func autoBans() {
+	go worker.DeleteBanListener()
+	for {
+		worker.MakeBan(s)
+		time.Sleep(time.Minute)
 	}
 }

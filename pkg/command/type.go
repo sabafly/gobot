@@ -1,12 +1,12 @@
-package setup
+package command
 
-type globalBan struct {
+type GlobalBan struct {
 	Code    int64     `json:"code"`
 	Status  string    `json:"status"`
-	Content []content `json:"content"`
+	Content []Content `json:"content"`
 }
 
-type content struct {
+type Content struct {
 	ID        int64       `json:"ID"`
 	CreatedAt string      `json:"CreatedAt"`
 	UpdatedAt string      `json:"UpdatedAt"`
