@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/ikafly144/gobot/pkg/api"
 	"github.com/ikafly144/gobot/pkg/command"
 	"github.com/ikafly144/gobot/pkg/util"
 	"github.com/joho/godotenv"
@@ -279,9 +279,9 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 									reason = v.StringValue()
 								}
 							}
-							req, err := http.NewRequest("GET", "http://"+*APIServer+"/api/ban/create?id="+id+"&reason="+reason, http.NoBody)
+							resp, err := api.GetApi("/api/ban/create?id=" + id + "&reason=" + reason)
 							if err != nil {
-								log.Printf("リクエスト作成に失敗: %v", err)
+								log.Printf("APIサーバーへのリクエストに失敗: %v", err)
 								message := "Failed to create request"
 								m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 									Content: &message,
@@ -292,27 +292,9 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 								}
 								break
 							}
-							client := http.Client{}
-							resp, err := client.Do(req)
-							if err != nil {
-								log.Printf("APIサーバーへのリクエスト送信に失敗: %v", err)
-								message := "Failed to create request"
-								m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-									Content: &message,
-								})
-								log.Printf("message: %v", m.ID)
-								if err != nil {
-									log.Printf("例外: %v", err)
-								}
-								break
-							}
-							defer resp.Body.Close()
-							byteArray, _ := io.ReadAll(resp.Body)
-							jsonBytes := ([]byte)(byteArray)
-							log.Printf("succeed %v %v %v", resp.Request.Method, resp.StatusCode, resp.Request.URL)
-							message := fmt.Sprintf("succeed %v %v ```json\r%v```", resp.Request.Method, resp.StatusCode, string(jsonBytes))
+							util.LogResp(resp)
 							m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-								Content: &message,
+								Content: util.MessageResp(resp),
 							})
 							log.Printf("message: %v", m.ID)
 							if err != nil {
@@ -327,24 +309,10 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 									id = v.StringValue()
 								}
 							}
-							req, err := http.NewRequest("GET", "http://"+*APIServer+"/api/ban/remove?id="+id, http.NoBody)
-							if err != nil {
-								log.Printf("リクエスト作成に失敗: %v", err)
-								message := "Failed to create request"
-								m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-									Content: &message,
-								})
-								log.Printf("message: %v", m.ID)
-								if err != nil {
-									log.Printf("例外: %v", err)
-								}
-								break
-							}
-							client := http.Client{}
-							resp, err := client.Do(req)
+							resp, err := api.GetApi("/api/ban/remove?id=" + id)
 							if err != nil {
 								log.Printf("APIサーバーへのリクエスト送信に失敗: %v", err)
-								message := "Failed to create request"
+								message := "Failed request to API server"
 								m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 									Content: &message,
 								})
@@ -354,37 +322,20 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 								}
 								break
 							}
+							util.LogResp(resp)
 							defer resp.Body.Close()
-							byteArray, _ := io.ReadAll(resp.Body)
-							jsonBytes := ([]byte)(byteArray)
-							log.Printf("succeed %v %v %v", resp.Request.Method, resp.StatusCode, resp.Request.URL)
-							message := fmt.Sprintf("succeed %v %v ```json\r%v```", resp.Request.Method, resp.StatusCode, string(jsonBytes))
 							m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-								Content: &message,
+								Content: util.MessageResp(resp),
 							})
 							log.Printf("message: %v", m.ID)
 							if err != nil {
 								log.Printf("例外: %v", err)
 							}
 						case "get":
-							req, err := http.NewRequest("GET", "http://"+*APIServer+"/api/ban", http.NoBody)
-							if err != nil {
-								log.Printf("リクエスト作成に失敗: %v", err)
-								message := "Failed to create request"
-								m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-									Content: &message,
-								})
-								log.Printf("message: %v", m.ID)
-								if err != nil {
-									log.Printf("例外: %v", err)
-								}
-								break
-							}
-							client := http.Client{}
-							resp, err := client.Do(req)
+							resp, err := api.GetApi("/api/ban")
 							if err != nil {
 								log.Printf("APIサーバーへのリクエスト送信に失敗: %v", err)
-								message := "Failed to create request"
+								message := "Failed request to API server"
 								m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 									Content: &message,
 								})
@@ -394,10 +345,10 @@ func Setup() (s *discordgo.Session, commands []*discordgo.ApplicationCommand, Re
 								}
 								break
 							}
+							util.LogResp(resp)
 							defer resp.Body.Close()
 							byteArray, _ := io.ReadAll(resp.Body)
 							jsonBytes := ([]byte)(byteArray)
-							log.Printf("succeed %v %v %v", resp.Request.Method, resp.StatusCode, resp.Request.URL)
 							data := &globalBan{}
 							err = json.Unmarshal(jsonBytes, data)
 							if err != nil {

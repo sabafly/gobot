@@ -2,6 +2,10 @@ package util
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/translate"
@@ -30,4 +34,16 @@ func DeepcopyJson(src interface{}, dst interface{}) (err error) {
 		return err
 	}
 	return nil
+}
+
+func LogResp(resp *http.Response) {
+	log.Printf("succeed %v %v %v", resp.Request.Method, resp.StatusCode, resp.Request.URL)
+}
+
+func MessageResp(resp *http.Response) *string {
+	defer resp.Body.Close()
+	byteArray, _ := io.ReadAll(resp.Body)
+	jsonBytes := ([]byte)(byteArray)
+	str := fmt.Sprintf("succeed %v %v ```json\r%v```", resp.Request.Method, resp.StatusCode, string(jsonBytes))
+	return &str
 }
