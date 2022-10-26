@@ -23,7 +23,10 @@ func MakeBan(s *discordgo.Session) {
 		json.Unmarshal(j, data)
 		for _, v := range s.State.Guilds {
 			for _, d := range data.Content {
-				s.GuildBanCreateWithReason(v.ID, strconv.Itoa(int(d.ID)), "GoBot Global Ban | Reason "+d.Reason, 7)
+				_, err := s.GuildBan(v.ID, strconv.Itoa(int(d.ID)))
+				if err == nil {
+					s.GuildBanCreateWithReason(v.ID, strconv.Itoa(int(d.ID)), "GoBot Global Ban | Reason "+d.Reason, 7)
+				}
 			}
 			time.Sleep(time.Second)
 		}
