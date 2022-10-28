@@ -2,7 +2,6 @@ package translate
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -19,6 +18,10 @@ var (
 var translations *i18n.Bundle
 
 func init() {
+	loadTranslations()
+}
+
+func loadTranslations() error {
 	dir := filepath.Join("lang")
 	bundle := i18n.NewBundle(defaultLang)
 	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
@@ -33,10 +36,11 @@ func init() {
 		return err
 	})
 	if err != nil {
-		log.Printf("%v", err)
+		return err
 	}
 
 	translations = bundle
+	return nil
 }
 
 func Message(locale discordgo.Locale, messageId string) (res string) {
@@ -49,7 +53,7 @@ func Translate(locale discordgo.Locale, messageId string, templateData interface
 	return
 }
 
-func Translates(locale discordgo.Locale, messageId string, templateData interface{}, pluralCount int) (res string) {
+func Translates(locale discordgo.Locale, messageId string, templateData interface{}, pluralCount int) string {
 	defaultLocalizer := i18n.NewLocalizer(translations, string(locale))
 	res, err := defaultLocalizer.Localize(&i18n.LocalizeConfig{
 		MessageID:    messageId,
@@ -57,7 +61,7 @@ func Translates(locale discordgo.Locale, messageId string, templateData interfac
 		PluralCount:  pluralCount,
 	})
 	if err != nil {
-		defaultLocalizer = i18n.NewLocalizer(translations, "message")
+		defaultLocalizer = i18n.NewLocalizer(translations, "en")
 		res, err = defaultLocalizer.Localize(&i18n.LocalizeConfig{
 			MessageID:    messageId,
 			TemplateData: templateData,
@@ -67,7 +71,7 @@ func Translates(locale discordgo.Locale, messageId string, templateData interfac
 			res = fmt.Sprintf("Translate error: %v", err)
 		}
 	}
-	return
+	return res
 }
 
 func MessageMap(key string) *map[discordgo.Locale]string {
