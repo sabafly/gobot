@@ -1,16 +1,36 @@
 [command]
 [command.ban]
+[command.ban.description]
+other = "ban the selected user"
+[command.ban.option.target]
+other = "target"
+[command.ban.option.target.description]
+other = "user to ban"
+[command.ban.option.reason]
+other = "reason"
+[command.ban.option.reason.description]
+other = "reason for ban"
 [command.ban.message]
 other = "{{.Target}} has been banned"
-[command.ban.name]
-other = "ban"
 [command.ban.reason]
 one = "Reason: {{.Reason}}"
 other = "Reasons: {{.Reason}}"
 [command.kick]
+[command.kick.description]
+other = "kick the selected user"
+[command.kick.option.target]
+other = "target"
+[command.kick.option.target.description]
+other = "user to kick"
 [command.kick.message]
 other = "{{.Target}} has been kicked"
 [command.unban]
+[command.unban.description]
+other = "pardon the selected user"
+[command.unban.option.target]
+other = "target"
+[command.unban.option.target.description]
+other = "user to unban"
 [command.unban.message]
 other = "{{.Target}} has been unbanned"
 [error]

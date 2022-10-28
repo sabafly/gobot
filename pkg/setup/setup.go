@@ -9,6 +9,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/command"
+	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/joho/godotenv"
 )
 
@@ -61,34 +62,24 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			Version: "1",
 		},
 		{
-			Name:        "ban",
-			Description: "ban the selected user",
-			DescriptionLocalizations: &map[discordgo.Locale]string{
-				discordgo.Japanese: "選択したユーザーをbanする",
-			},
+			Name:                     "ban",
+			Description:              "ban the selected user",
+			DescriptionLocalizations: translate.MessageMap("command.ban.description"),
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Name:        "target",
-					Description: "user to ban",
-					NameLocalizations: map[discordgo.Locale]string{
-						discordgo.Japanese: "対象",
-					},
-					DescriptionLocalizations: map[discordgo.Locale]string{
-						discordgo.Japanese: "banするユーザー",
-					},
-					Type:     discordgo.ApplicationCommandOptionUser,
-					Required: true,
+					Name:                     "target",
+					Description:              "user to ban",
+					NameLocalizations:        *translate.MessageMap("command.ban.option.target"),
+					DescriptionLocalizations: *translate.MessageMap("command.ban.option.target.description"),
+					Type:                     discordgo.ApplicationCommandOptionUser,
+					Required:                 true,
 				},
 				{
-					Name:        "reason",
-					Description: "reason for ban",
-					NameLocalizations: map[discordgo.Locale]string{
-						discordgo.Japanese: "理由",
-					},
-					DescriptionLocalizations: map[discordgo.Locale]string{
-						discordgo.Japanese: "banする理由",
-					},
-					Type: discordgo.ApplicationCommandOptionString,
+					Name:                     "reason",
+					Description:              "reason for ban",
+					NameLocalizations:        *translate.MessageMap("command.ban.option.reason"),
+					DescriptionLocalizations: *translate.MessageMap("command.ban.option.reason.description"),
+					Type:                     discordgo.ApplicationCommandOptionString,
 				},
 			},
 			DefaultMemberPermissions: &PermissionBanMembers,
@@ -96,23 +87,17 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			Version:                  "1",
 		},
 		{
-			Name:        "unban",
-			Description: "pardon the selected user",
-			DescriptionLocalizations: &map[discordgo.Locale]string{
-				discordgo.Japanese: "指定したユーザーのbanを解除します",
-			},
+			Name:                     "unban",
+			Description:              "pardon the selected user",
+			DescriptionLocalizations: translate.MessageMap("command.unban.description"),
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Name:        "target",
-					Description: "user to pardon",
-					NameLocalizations: map[discordgo.Locale]string{
-						discordgo.Japanese: "対象",
-					},
-					DescriptionLocalizations: map[discordgo.Locale]string{
-						discordgo.Japanese: "banを解除するユーザー",
-					},
-					Type:     discordgo.ApplicationCommandOptionUser,
-					Required: true,
+					Name:                     "target",
+					Description:              "user to pardon",
+					NameLocalizations:        *translate.MessageMap("command.unban.option.target"),
+					DescriptionLocalizations: *translate.MessageMap("command.unban.option.target.description"),
+					Type:                     discordgo.ApplicationCommandOptionUser,
+					Required:                 true,
 				},
 			},
 			DefaultMemberPermissions: &PermissionBanMembers,
@@ -120,23 +105,17 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			Version:                  "1",
 		},
 		{
-			Name:        "kick",
-			Description: "kick the selected user",
-			DescriptionLocalizations: &map[discordgo.Locale]string{
-				discordgo.Japanese: "指定したユーザーをキックする",
-			},
+			Name:                     "kick",
+			Description:              "kick the selected user",
+			DescriptionLocalizations: translate.MessageMap("command.kick.description"),
 			Options: []*discordgo.ApplicationCommandOption{
 				{
-					Name:        "target",
-					Description: "user to kick",
-					NameLocalizations: map[discordgo.Locale]string{
-						discordgo.Japanese: "対象",
-					},
-					DescriptionLocalizations: map[discordgo.Locale]string{
-						discordgo.Japanese: "キックするユーザー",
-					},
-					Type:     discordgo.ApplicationCommandOptionUser,
-					Required: true,
+					Name:                     "target",
+					Description:              "user to kick",
+					NameLocalizations:        *translate.MessageMap("command.kick.option.target"),
+					DescriptionLocalizations: *translate.MessageMap("command.kick.option.target.description"),
+					Type:                     discordgo.ApplicationCommandOptionUser,
+					Required:                 true,
 				},
 			},
 			DefaultMemberPermissions: &PermissionKickMembers,
