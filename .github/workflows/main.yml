@@ -19,9 +19,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASS }}
           script: |
-            sudo systemctl stop gobot
-            admin
+            echo ${{ secrets.SSH_PASSWORD}} | sudo -S systemctl stop gobot
             cd ${{ secrets.SERVER_DEPLOY_DIR }}
             git pull origin main
             go build
-            sudo systemct; start gobot
+            echo ${{ secrets.SSH_PASSWORD}} | sudo -S systemct; start gobot
