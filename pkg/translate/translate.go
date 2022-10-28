@@ -53,7 +53,7 @@ func Translate(locale discordgo.Locale, messageId string, templateData interface
 	return
 }
 
-func Translates(locale discordgo.Locale, messageId string, templateData interface{}, pluralCount int) (res string) {
+func Translates(locale discordgo.Locale, messageId string, templateData interface{}, pluralCount int) string {
 	defaultLocalizer := i18n.NewLocalizer(translations, string(locale))
 	res, err := defaultLocalizer.Localize(&i18n.LocalizeConfig{
 		MessageID:    messageId,
@@ -71,5 +71,41 @@ func Translates(locale discordgo.Locale, messageId string, templateData interfac
 			res = fmt.Sprintf("Translate error: %v", err)
 		}
 	}
-	return
+	return res
+}
+
+func MessageMap(key string) *map[discordgo.Locale]string {
+	res := &map[discordgo.Locale]string{
+		discordgo.Bulgarian:    Message(discordgo.Bulgarian, key),
+		discordgo.ChineseCN:    Message(discordgo.ChineseCN, key),
+		discordgo.ChineseTW:    Message(discordgo.ChineseTW, key),
+		discordgo.Croatian:     Message(discordgo.Croatian, key),
+		discordgo.Czech:        Message(discordgo.Czech, key),
+		discordgo.Danish:       Message(discordgo.Danish, key),
+		discordgo.Dutch:        Message(discordgo.Dutch, key),
+		discordgo.EnglishGB:    Message(discordgo.EnglishGB, key),
+		discordgo.EnglishUS:    Message(discordgo.EnglishUS, key),
+		discordgo.Finnish:      Message(discordgo.Finnish, key),
+		discordgo.French:       Message(discordgo.French, key),
+		discordgo.German:       Message(discordgo.German, key),
+		discordgo.Greek:        Message(discordgo.Greek, key),
+		discordgo.Hindi:        Message(discordgo.Hindi, key),
+		discordgo.Hungarian:    Message(discordgo.Hungarian, key),
+		discordgo.Italian:      Message(discordgo.Italian, key),
+		discordgo.Japanese:     Message(discordgo.Japanese, key),
+		discordgo.Korean:       Message(discordgo.Korean, key),
+		discordgo.Lithuanian:   Message(discordgo.Lithuanian, key),
+		discordgo.Norwegian:    Message(discordgo.Norwegian, key),
+		discordgo.Polish:       Message(discordgo.Polish, key),
+		discordgo.PortugueseBR: Message(discordgo.PortugueseBR, key),
+		discordgo.Romanian:     Message(discordgo.Romanian, key),
+		discordgo.Russian:      Message(discordgo.Russian, key),
+		discordgo.SpanishES:    Message(discordgo.SpanishES, key),
+		discordgo.Swedish:      Message(discordgo.Swedish, key),
+		discordgo.Thai:         Message(discordgo.Thai, key),
+		discordgo.Turkish:      Message(discordgo.Turkish, key),
+		discordgo.Ukrainian:    Message(discordgo.Ukrainian, key),
+		discordgo.Vietnamese:   Message(discordgo.Vietnamese, key),
+	}
+	return res
 }
