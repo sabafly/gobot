@@ -1,6 +1,7 @@
 package api
 
 import (
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -15,8 +16,8 @@ func init() {
 	APIserver = os.Getenv("API_SERVER")
 }
 
-func GetApi(URI string) (*http.Response, error) {
-	req, err := http.NewRequest("GET", "http://"+APIserver+URI, http.NoBody)
+func GetApi(URI string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequest("GET", "http://"+APIserver+URI, body)
 	if err != nil {
 		log.Printf("error on api: %v", err)
 		return &http.Response{}, err

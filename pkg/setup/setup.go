@@ -1,6 +1,7 @@
 package setup
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -176,6 +177,44 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			},
 			Version: "1",
 		},
+		{
+			Name:        "panel",
+			Description: "manage or create panel",
+			GuildID:     *SupportGuildID,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        "role",
+					Description: "role panel",
+					Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Name:        "create",
+							Description: "create role panel",
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+							Options: []*discordgo.ApplicationCommandOption{
+								{
+									Name:        "name",
+									Description: "test",
+									Type:        discordgo.ApplicationCommandOptionString,
+									Required:    true,
+								},
+								{
+									Name:        "role",
+									Description: "test",
+									Type:        discordgo.ApplicationCommandOptionRole,
+									Required:    true,
+								},
+								{
+									Name:        "description",
+									Description: "test",
+									Type:        discordgo.ApplicationCommandOptionString,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	var (
 		commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
@@ -199,9 +238,9 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			},
 			"ping": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				contents := map[discordgo.Locale]string{
-					discordgo.Japanese: "ポング！",
+					discordgo.Japanese: "ポング！\r" + s.HeartbeatLatency().String(),
 				}
-				content := "pong!"
+				content := "pong!\r" + s.HeartbeatLatency().String()
 				if c, ok := contents[i.Locale]; ok {
 					content = c
 				}
@@ -228,11 +267,135 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			"admin": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				command.Admin(s, i)
 			},
+			"panel": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Content: "OK",
+						Flags:   discordgo.MessageFlagsEphemeral,
+					},
+				})
+				options := i.ApplicationCommandData().Options
+				switch options[0].Name {
+				case "role":
+					options = options[0].Options
+					switch options[0].Name {
+					case "create":
+						options = options[0].Options
+						var content discordgo.MessageSend
+						gid := i.GuildID
+						cid := i.ChannelID
+						var name string
+						var description string
+						var role *discordgo.Role
+						for _, v := range options {
+							switch v.Name {
+							case "name":
+								name = v.StringValue()
+							case "description":
+								description = v.StringValue()
+							case "role":
+								role = v.RoleValue(s, gid)
+							}
+						}
+						zero := 0
+						content = discordgo.MessageSend{
+							Embeds: []*discordgo.MessageEmbed{
+								{
+									Title:       name,
+									Description: description,
+									Fields: []*discordgo.MessageEmbedField{
+										{
+											Name:  "roles",
+											Value: role.Mention(),
+										},
+									},
+								},
+							},
+							Components: []discordgo.MessageComponent{
+								discordgo.ActionsRow{
+									Components: []discordgo.MessageComponent{
+										discordgo.SelectMenu{
+											CustomID:  "role_panel",
+											MinValues: &zero,
+											Options: []discordgo.SelectMenuOption{
+												{
+													Label: role.Name,
+													Value: role.ID,
+												},
+											},
+										},
+									},
+								},
+							},
+						}
+						_, err := s.ChannelMessageSendComplex(cid, &content)
+						if err != nil {
+							s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+								Type: discordgo.InteractionResponseChannelMessageWithSource,
+								Data: &discordgo.InteractionResponseData{
+									Content: fmt.Sprint(err),
+									Flags:   discordgo.MessageFlagsEphemeral,
+								},
+							})
+						}
+						str := "ロールを追加するにはメッセージを右クリックまたは長押しして「アプリ」から「編集」を押してください"
+						s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+							Content: &str,
+						})
+					}
+				}
+			},
 		}
 	)
+
+	messageComponentHandlers := map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
+		"role_panel": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			component := i.Message.Components
+			var content string
+			bytes, _ := component[0].MarshalJSON()
+			gid := i.GuildID
+			uid := i.Member.User.ID
+			if component[0].Type() == discordgo.ActionsRowComponent {
+				data := &discordgo.ActionsRow{}
+				json.Unmarshal(bytes, data)
+				bytes, _ := data.Components[0].MarshalJSON()
+				if data.Components[0].Type() == discordgo.SelectMenuComponent {
+					data := &discordgo.SelectMenu{}
+					json.Unmarshal(bytes, data)
+					for _, v := range data.Options {
+						for _, m := range i.Member.Roles {
+							if v.Value == m {
+								s.GuildMemberRoleRemove(gid, uid, v.Value)
+								content += "はく奪 <@&" + v.Value + ">\r"
+							}
+						}
+					}
+					for _, r := range i.MessageComponentData().Values {
+						s.GuildMemberRoleAdd(gid, uid, r)
+						content += "付与 <@&" + r + ">\r"
+					}
+				}
+			}
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: content,
+					Flags:   discordgo.MessageFlagsEphemeral,
+				},
+			})
+		},
+	}
+
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
-			h(s, i)
+		if i.Type == discordgo.InteractionApplicationCommand {
+			if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
+				h(s, i)
+			}
+		} else if i.Type == discordgo.InteractionMessageComponent {
+			if c, ok := messageComponentHandlers[i.MessageComponentData().CustomID]; ok {
+				c(s, i)
+			}
 		}
 	})
 	return s, commands, RemoveCommands, GuildID

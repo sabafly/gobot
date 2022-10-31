@@ -15,7 +15,7 @@ import (
 )
 
 func MakeBan(s *discordgo.Session) {
-	resp, err := api.GetApi("/api/ban")
+	resp, err := api.GetApi("/api/ban", http.NoBody)
 	if err == nil {
 		b, _ := io.ReadAll(resp.Body)
 		j := ([]byte)(b)

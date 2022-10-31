@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/bwmarrin/discordgo"
@@ -128,7 +129,7 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 						reason = v.StringValue()
 					}
 				}
-				resp, err := api.GetApi("/api/ban/create?id=" + id + "&reason=" + reason)
+				resp, err := api.GetApi("/api/ban/create?id="+id+"&reason="+reason, http.NoBody)
 				if err != nil {
 					log.Printf("APIサーバーへのリクエストに失敗: %v", err)
 					message := "Failed to create request"
@@ -158,7 +159,7 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 						id = v.StringValue()
 					}
 				}
-				resp, err := api.GetApi("/api/ban/remove?id=" + id)
+				resp, err := api.GetApi("/api/ban/remove?id="+id, http.NoBody)
 				if err != nil {
 					log.Printf("APIサーバーへのリクエスト送信に失敗: %v", err)
 					message := "Failed request to API server"
@@ -181,7 +182,7 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 					log.Printf("例外: %v", err)
 				}
 			case "get":
-				resp, err := api.GetApi("/api/ban")
+				resp, err := api.GetApi("/api/ban", http.NoBody)
 				if err != nil {
 					log.Printf("APIサーバーへのリクエスト送信に失敗: %v", err)
 					message := "Failed request to API server"
