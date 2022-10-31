@@ -50,7 +50,7 @@ func Run() {
 		registeredCommands[i] = cmd
 	}
 
-	defer s.Close()
+	defer end(registeredCommands)
 
 	go updateStatus()
 	go autoBans()
@@ -60,6 +60,10 @@ func Run() {
 	log.Println("Ctrl + C で終了")
 	<-stop
 
+	log.Println("正常にシャットダウンしました")
+}
+
+func end(registeredCommands []*discordgo.ApplicationCommand) {
 	if RemoveCommands {
 		log.Println("コマンドを登録解除中...")
 
@@ -78,8 +82,7 @@ func Run() {
 		}
 
 	}
-
-	log.Println("正常にシャットダウンしました")
+	s.Close()
 }
 
 func updateStatus() {
