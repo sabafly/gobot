@@ -29,7 +29,6 @@ func init() {
 }
 
 func Run() {
-	log.Printf("%v", s.Identify.Shard)
 	s.ShardID = 0
 	s.ShardCount = 1
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
