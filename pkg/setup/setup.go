@@ -1,7 +1,6 @@
 package setup
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -272,256 +271,20 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 				command.Admin(s, i)
 			},
 			"panel": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: "OK",
-						Flags:   discordgo.MessageFlagsEphemeral,
-					},
-				})
-				options := i.ApplicationCommandData().Options
-				switch options[0].Name {
-				case "role":
-					options = options[0].Options
-					switch options[0].Name {
-					case "create":
-						options = options[0].Options
-						var content discordgo.MessageSend
-						gid := i.GuildID
-						cid := i.ChannelID
-						var name string
-						var description string
-						var role *discordgo.Role
-						for _, v := range options {
-							switch v.Name {
-							case "name":
-								name = v.StringValue()
-							case "description":
-								description = v.StringValue()
-							case "role":
-								role = v.RoleValue(s, gid)
-							}
-						}
-						zero := 0
-						content = discordgo.MessageSend{
-							Embeds: []*discordgo.MessageEmbed{
-								{
-									Title:       name,
-									Description: description,
-									Fields: []*discordgo.MessageEmbedField{
-										{
-											Name:  "roles",
-											Value: role.Mention(),
-										},
-									},
-								},
-							},
-							Components: []discordgo.MessageComponent{
-								discordgo.ActionsRow{
-									Components: []discordgo.MessageComponent{
-										discordgo.SelectMenu{
-											CustomID:  "gobot_panel_role",
-											MinValues: &zero,
-											Options: []discordgo.SelectMenuOption{
-												{
-													Label: role.Name,
-													Value: role.ID,
-												},
-											},
-										},
-									},
-								},
-							},
-						}
-						_, err := s.ChannelMessageSendComplex(cid, &content)
-						if err != nil {
-							str := fmt.Sprint(err)
-							s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-								Content: &str,
-							})
-						} else {
-							str := "ロールを追加するにはメッセージを右クリックまたは長押しして「アプリ」から「編集」を押してください"
-							s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-								Content: &str,
-							})
-						}
-					}
-				}
+				command.Panel(s, i)
 			},
 			"modify": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				data := &discordgo.ApplicationCommandInteractionData{}
-				byte, _ := json.Marshal(i.Interaction.Data)
-				json.Unmarshal(byte, data)
-				mes, err := s.ChannelMessage(i.ChannelID, data.TargetID)
-				if err != nil {
-					log.Print(err)
-				}
-				if len(mes.Components) != 0 {
-					for _, v := range mes.Components {
-						if v.Type() == discordgo.ActionsRowComponent {
-							byte, _ := v.MarshalJSON()
-							data := &discordgo.ActionsRow{}
-							json.Unmarshal(byte, data)
-							for _, v := range data.Components {
-								if v.Type() == discordgo.SelectMenuComponent {
-									byte, _ := v.MarshalJSON()
-									data := &discordgo.SelectMenu{}
-									json.Unmarshal(byte, data)
-									if data.CustomID == "gobot_panel_role" {
-										roles, _ := s.GuildRoles(i.GuildID)
-										options := []discordgo.SelectMenuOption{}
-										me, _ := s.GuildMember(i.GuildID, *ApplicationId)
-										var highestPosition int
-										for _, v := range me.Roles {
-											r, _ := s.State.Role(i.GuildID, v)
-											if r.Position > highestPosition {
-												highestPosition = r.Position
-											}
-										}
-										for _, v := range roles {
-											if v.Position < highestPosition && !v.Managed && v.ID != i.GuildID {
-												options = append(options, discordgo.SelectMenuOption{
-													Label: v.Name,
-													Value: v.ID,
-												})
-											}
-										}
-										zero := 0
-										s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-											Type: discordgo.InteractionResponseChannelMessageWithSource,
-											Data: &discordgo.InteractionResponseData{
-												Content: "追加するロールを選んでください",
-												Embeds: []*discordgo.MessageEmbed{
-													{
-														Title: mes.ID,
-													},
-												},
-												Flags: discordgo.MessageFlagsEphemeral,
-												Components: []discordgo.MessageComponent{
-													discordgo.ActionsRow{
-														Components: []discordgo.MessageComponent{
-															discordgo.SelectMenu{
-																CustomID:  "gobot_panel_role_add",
-																MinValues: &zero,
-																MaxValues: len(options),
-																Options:   options,
-															},
-														},
-													},
-												},
-											},
-										})
-									}
-								}
-							}
-						}
-					}
-				}
-				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: "そのメッセージには使用できません",
-						Flags:   discordgo.MessageFlagsEphemeral,
-					},
-				})
+				command.Mmodify(s, i)
 			},
 		}
 	)
 
 	messageComponentHandlers := map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
 		"gobot_panel_role": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			component := i.Message.Components
-			var content string
-			bytes, _ := component[0].MarshalJSON()
-			gid := i.GuildID
-			uid := i.Member.User.ID
-			if component[0].Type() == discordgo.ActionsRowComponent {
-				data := &discordgo.ActionsRow{}
-				json.Unmarshal(bytes, data)
-				bytes, _ := data.Components[0].MarshalJSON()
-				if data.Components[0].Type() == discordgo.SelectMenuComponent {
-					data := &discordgo.SelectMenu{}
-					json.Unmarshal(bytes, data)
-					for _, v := range data.Options {
-						for _, m := range i.Member.Roles {
-							if v.Value == m {
-								s.GuildMemberRoleRemove(gid, uid, v.Value)
-								content += "はく奪 <@&" + v.Value + ">\r"
-							}
-						}
-					}
-					for _, r := range i.MessageComponentData().Values {
-						s.GuildMemberRoleAdd(gid, uid, r)
-						content += "付与 <@&" + r + ">\r"
-					}
-				}
-			}
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: content,
-					Flags:   discordgo.MessageFlagsEphemeral,
-				},
-			})
+			command.MCpanelRole(s, i)
 		},
 		"gobot_panel_role_add": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			mid := i.Message.Embeds[0].Title
-			gid := i.GuildID
-			cid := i.ChannelID
-			mes, _ := s.ChannelMessage(cid, mid)
-			rv := i.MessageComponentData().Values
-			roles := []discordgo.Role{}
-			for _, v := range rv {
-				role, _ := s.State.Role(gid, v)
-				roles = append(roles, *role)
-			}
-			options := []discordgo.SelectMenuOption{}
-			for _, r := range roles {
-				options = append(options, discordgo.SelectMenuOption{
-					Label: r.Name,
-					Value: r.ID,
-				})
-			}
-			var fields string
-			for _, r := range roles {
-				fields += r.Mention() + "\r"
-			}
-			zero := 0
-			content := discordgo.MessageEdit{
-				ID:      mid,
-				Channel: cid,
-				Embeds: []*discordgo.MessageEmbed{
-					{
-						Title: mes.Embeds[0].Title,
-						Fields: []*discordgo.MessageEmbedField{
-							{
-								Name:  "roles",
-								Value: fields,
-							},
-						},
-					},
-				},
-				Components: []discordgo.MessageComponent{
-					discordgo.ActionsRow{
-						Components: []discordgo.MessageComponent{
-							discordgo.SelectMenu{
-								CustomID:  "gobot_panel_role",
-								MinValues: &zero,
-								MaxValues: len(options),
-								Options:   options,
-							},
-						},
-					},
-				},
-			}
-			s.ChannelMessageEditComplex(&content)
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: "OK",
-					Flags:   discordgo.MessageFlagsEphemeral,
-				},
-			})
+			command.MCpanelRoleAdd(s, i)
 		},
 	}
 

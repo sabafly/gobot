@@ -240,3 +240,81 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	}
 }
+
+func Panel(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "OK",
+			Flags:   discordgo.MessageFlagsEphemeral,
+		},
+	})
+	options := i.ApplicationCommandData().Options
+	switch options[0].Name {
+	case "role":
+		options = options[0].Options
+		switch options[0].Name {
+		case "create":
+			options = options[0].Options
+			var content discordgo.MessageSend
+			gid := i.GuildID
+			cid := i.ChannelID
+			var name string
+			var description string
+			var role *discordgo.Role
+			for _, v := range options {
+				switch v.Name {
+				case "name":
+					name = v.StringValue()
+				case "description":
+					description = v.StringValue()
+				case "role":
+					role = v.RoleValue(s, gid)
+				}
+			}
+			zero := 0
+			content = discordgo.MessageSend{
+				Embeds: []*discordgo.MessageEmbed{
+					{
+						Title:       name,
+						Description: description,
+						Fields: []*discordgo.MessageEmbedField{
+							{
+								Name:  "roles",
+								Value: role.Mention(),
+							},
+						},
+					},
+				},
+				Components: []discordgo.MessageComponent{
+					discordgo.ActionsRow{
+						Components: []discordgo.MessageComponent{
+							discordgo.SelectMenu{
+								CustomID:  "gobot_panel_role",
+								MinValues: &zero,
+								Options: []discordgo.SelectMenuOption{
+									{
+										Label: role.Name,
+										Value: role.ID,
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+			_, err := s.ChannelMessageSendComplex(cid, &content)
+			if err != nil {
+				str := fmt.Sprint(err)
+				s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+					Content: &str,
+				})
+			} else {
+				str := "ロールを追加するにはメッセージを右クリックまたは長押しして「アプリ」から「編集」を押してください"
+				s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+					Content: &str,
+				})
+			}
+		}
+	}
+}
