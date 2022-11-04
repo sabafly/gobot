@@ -19,8 +19,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASS }}
           script: |
-            echo ${{ secrets.SSH_PASSWORD }} | sudo -S systemctl stop gobot
             cd ${{ secrets.SERVER_DEPLOY_DIR }}
             git pull origin main
             /usr/local/go/bin/go build
-            echo ${{ secrets.SSH_PASSWORD }} | sudo -S systemctl start gobot
+            echo ${{ secrets.SSH_PASSWORD }} | sudo -S systemctl restart gobot
