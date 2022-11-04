@@ -179,9 +179,11 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			Version: "1",
 		},
 		{
-			Name:        "panel",
-			Description: "manage or create panel",
-			GuildID:     *SupportGuildID,
+			Name:                     "panel",
+			Description:              "manage or create panel",
+			GuildID:                  *SupportGuildID,
+			DefaultMemberPermissions: &PermissionAdminMembers,
+			DMPermission:             &dmPermission,
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:        "role",
@@ -265,8 +267,10 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			},
 		},
 		{
-			Name: "modify",
-			Type: discordgo.MessageApplicationCommand,
+			Name:                     "modify",
+			Type:                     discordgo.MessageApplicationCommand,
+			DMPermission:             &dmPermission,
+			DefaultMemberPermissions: &PermissionAdminMembers,
 		},
 	}
 	var (
