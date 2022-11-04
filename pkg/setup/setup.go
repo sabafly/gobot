@@ -1,11 +1,13 @@
 package setup
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/command"
@@ -212,6 +214,54 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 						},
 					},
 				},
+				{
+					Name:        "minecraft",
+					Description: "test",
+					Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Name:        "create",
+							Description: "test",
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+							Options: []*discordgo.ApplicationCommandOption{
+								{
+									Name:        "name",
+									Description: "test",
+									Type:        discordgo.ApplicationCommandOptionString,
+									Required:    true,
+								},
+								{
+									Name:        "servername",
+									Description: "test",
+									Type:        discordgo.ApplicationCommandOptionString,
+									Required:    true,
+								},
+								{
+									Name:        "address",
+									Description: "test",
+									Type:        discordgo.ApplicationCommandOptionString,
+									Required:    true,
+								},
+								{
+									Name:        "port",
+									Description: "test",
+									Type:        discordgo.ApplicationCommandOptionInteger,
+									Required:    true,
+								},
+								{
+									Name:        "description",
+									Description: "test",
+									Type:        discordgo.ApplicationCommandOptionString,
+								},
+								{
+									Name:        "showip",
+									Description: "test",
+									Type:        discordgo.ApplicationCommandOptionBoolean,
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 		{
@@ -286,6 +336,96 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		"gobot_panel_role_add": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			command.MCpanelRoleAdd(s, i)
 		},
+		"gobot_panel_minecraft": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			command.MCpanelMinecraft(s, i)
+		},
+	}
+
+	modalSubmitHandlers := map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, mid string){
+		"gobot_panel_minecraft_add_modal": func(s *discordgo.Session, i *discordgo.InteractionCreate, mid string) {
+			var name string
+			var address string
+			var port int
+			for _, mc := range i.ModalSubmitData().Components {
+				if mc.Type() == discordgo.ActionsRowComponent {
+					bytes, _ := mc.MarshalJSON()
+					data := &discordgo.ActionsRow{}
+					json.Unmarshal(bytes, data)
+					bytes, _ = data.Components[0].MarshalJSON()
+					text := &discordgo.TextInput{}
+					json.Unmarshal(bytes, text)
+					switch text.CustomID {
+					case "gobot_panel_minecraft_add_servername":
+						name = text.Value
+					case "gobot_panel_minecraft_add_address":
+						address = text.Value
+					case "gobot_panel_minecraft_add_port":
+						i, _ := strconv.Atoi(text.Value)
+						port = i
+					}
+				}
+			}
+			mes, _ := s.ChannelMessage(i.ChannelID, mid)
+			bytes, _ := mes.Components[0].MarshalJSON()
+			data := &discordgo.ActionsRow{}
+			json.Unmarshal(bytes, data)
+			bytes, _ = data.Components[0].MarshalJSON()
+			text := &discordgo.SelectMenu{}
+			json.Unmarshal(bytes, text)
+			options := text.Options
+			str := strings.Split(options[0].Value, ":")
+			bl, _ := strconv.ParseBool(str[3])
+			options = append(options, discordgo.SelectMenuOption{
+				Label: name,
+				Value: name + ":" + address + ":" + strconv.Itoa(port) + ":" + strconv.FormatBool(bl),
+			})
+			if len(strings.Split(name, ":")) != 1 || len(strings.Split(address, ":")) != 1 {
+				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Content: "`:`を使用しないでください",
+						Flags:   discordgo.MessageFlagsEphemeral,
+					},
+				})
+				return
+			}
+			zero := 0
+			res := discordgo.MessageEdit{
+				Channel: i.ChannelID,
+				ID:      mid,
+				Embeds:  mes.Embeds,
+				Components: []discordgo.MessageComponent{
+					discordgo.ActionsRow{
+						Components: []discordgo.MessageComponent{
+							discordgo.SelectMenu{
+								CustomID:  "gobot_panel_minecraft",
+								Options:   options,
+								MinValues: &zero,
+								MaxValues: 1,
+							},
+						},
+					},
+				},
+			}
+			_, err := s.ChannelMessageEditComplex(&res)
+			if err != nil {
+				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Content: fmt.Sprint(err),
+						Flags:   discordgo.MessageFlagsEphemeral,
+					},
+				})
+			}
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: "OK",
+					Flags:   discordgo.MessageFlagsEphemeral,
+				},
+			})
+			log.Print(name + address + strconv.Itoa(port))
+		},
 	}
 
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -296,6 +436,21 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		} else if i.Type == discordgo.InteractionMessageComponent {
 			if c, ok := messageComponentHandlers[i.MessageComponentData().CustomID]; ok {
 				c(s, i)
+			}
+		} else if i.Type == discordgo.InteractionModalSubmit {
+			ids := strings.Split(i.ModalSubmitData().CustomID, ":")
+			var customID string
+			var mid string
+			for i2, v := range ids {
+				switch i2 {
+				case 0:
+					customID = v
+				case 1:
+					mid = v
+				}
+			}
+			if m, ok := modalSubmitHandlers[customID]; ok {
+				m(s, i, mid)
 			}
 		}
 	})

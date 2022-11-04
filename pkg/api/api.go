@@ -7,7 +7,14 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"gorm.io/gorm"
 )
+
+type ImagePngHash struct {
+	gorm.Model
+	Hash string `gorm:"primarykey"`
+	Data string `gorm:"primarykey"`
+}
 
 var APIserver string
 

@@ -7,6 +7,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/api"
@@ -255,66 +257,160 @@ func Panel(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		options = options[0].Options
 		switch options[0].Name {
 		case "create":
-			options = options[0].Options
-			var content discordgo.MessageSend
-			gid := i.GuildID
-			cid := i.ChannelID
-			var name string
-			var description string
-			var role *discordgo.Role
-			for _, v := range options {
-				switch v.Name {
-				case "name":
-					name = v.StringValue()
-				case "description":
-					description = v.StringValue()
-				case "role":
-					role = v.RoleValue(s, gid)
-				}
-			}
-			zero := 0
-			content = discordgo.MessageSend{
-				Embeds: []*discordgo.MessageEmbed{
-					{
-						Title:       name,
-						Description: description,
-						Fields: []*discordgo.MessageEmbedField{
-							{
-								Name:  "roles",
-								Value: role.Mention(),
-							},
-						},
-					},
-				},
-				Components: []discordgo.MessageComponent{
-					discordgo.ActionsRow{
-						Components: []discordgo.MessageComponent{
-							discordgo.SelectMenu{
-								CustomID:  "gobot_panel_role",
-								MinValues: &zero,
-								Options: []discordgo.SelectMenuOption{
-									{
-										Label: role.Name,
-										Value: role.ID,
-									},
-								},
-							},
-						},
-					},
-				},
-			}
-			_, err := s.ChannelMessageSendComplex(cid, &content)
-			if err != nil {
-				str := fmt.Sprint(err)
-				s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-					Content: &str,
-				})
-			} else {
-				str := "ロールを追加するにはメッセージを右クリックまたは長押しして「アプリ」から「編集」を押してください"
-				s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-					Content: &str,
-				})
-			}
+			panelRoleCreate(s, i, options)
 		}
+	case "minecraft":
+		options = options[0].Options
+		switch options[0].Name {
+		case "create":
+			panelMinecraftCreate(s, i, options)
+		}
+	}
+}
+
+func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {
+	options = options[0].Options
+	var content discordgo.MessageSend
+	gid := i.GuildID
+	cid := i.ChannelID
+	var name string
+	var description string
+	var role *discordgo.Role
+	for _, v := range options {
+		switch v.Name {
+		case "name":
+			name = v.StringValue()
+		case "description":
+			description = v.StringValue()
+		case "role":
+			role = v.RoleValue(s, gid)
+		}
+	}
+	zero := 0
+	content = discordgo.MessageSend{
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title:       name,
+				Description: description,
+				Fields: []*discordgo.MessageEmbedField{
+					{
+						Name:  "roles",
+						Value: role.Mention(),
+					},
+				},
+			},
+		},
+		Components: []discordgo.MessageComponent{
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.SelectMenu{
+						CustomID:  "gobot_panel_role",
+						MinValues: &zero,
+						Options: []discordgo.SelectMenuOption{
+							{
+								Label: role.Name,
+								Value: role.ID,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	_, err := s.ChannelMessageSendComplex(cid, &content)
+	if err != nil {
+		str := fmt.Sprint(err)
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Content: &str,
+		})
+	} else {
+		str := "ロールを追加するにはメッセージを右クリックまたは長押しして「アプリ」から「編集」を押してください"
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Content: &str,
+		})
+	}
+}
+
+func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "OK",
+			Flags:   discordgo.MessageFlagsEphemeral,
+		},
+	})
+	options = options[0].Options
+	var content discordgo.MessageSend
+	cid := i.ChannelID
+	var name string
+	var description string
+	var serverName string
+	var address string
+	var showIp bool
+	port := 25565
+	for _, o := range options {
+		switch o.Name {
+		case "name":
+			name = o.StringValue()
+		case "description":
+			description = o.StringValue()
+		case "servername":
+			serverName = o.StringValue()
+		case "address":
+			address = o.StringValue()
+		case "port":
+			port = int(o.IntValue())
+		case "showip":
+			showIp = o.BoolValue()
+		}
+	}
+	if len(strings.Split(name, ":")) != 1 || len(strings.Split(address, ":")) != 1 {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "`:`を使用しないでください",
+				Flags:   discordgo.MessageFlagsEphemeral,
+			},
+		})
+		return
+	}
+	serverAddress := name + ":" + address + ":" + strconv.Itoa(port) + ":" + strconv.FormatBool(showIp)
+	option := []discordgo.SelectMenuOption{}
+	option = append(option, discordgo.SelectMenuOption{
+		Label: serverName,
+		Value: serverAddress,
+	})
+	zero := 0
+	content = discordgo.MessageSend{
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title:       name,
+				Description: description,
+			},
+		},
+		Components: []discordgo.MessageComponent{
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.SelectMenu{
+						CustomID:  "gobot_panel_minecraft",
+						Options:   option,
+						MinValues: &zero,
+						MaxValues: 1,
+					},
+				},
+			},
+		},
+	}
+	_, err := s.ChannelMessageSendComplex(cid, &content)
+	if err != nil {
+		str := fmt.Sprint(err)
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Content: &str,
+		})
+	} else {
+		str := "サーバーを追加するにはメッセージを右クリックまたは長押しして「アプリ」から「編集」を押してください"
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Content: &str,
+		})
 	}
 }
