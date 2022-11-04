@@ -374,7 +374,7 @@ func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		})
 		return
 	}
-	serverAddress := name + ":" + address + ":" + strconv.Itoa(port) + ":" + strconv.FormatBool(showIp)
+	serverAddress := serverName + ":" + address + ":" + strconv.Itoa(port) + ":" + strconv.FormatBool(showIp)
 	option := []discordgo.SelectMenuOption{}
 	option = append(option, discordgo.SelectMenuOption{
 		Label: serverName,
