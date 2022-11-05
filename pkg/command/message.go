@@ -64,6 +64,7 @@ func Mmodify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 														Label:       "ポート",
 														Placeholder: "25565",
 														Style:       discordgo.TextInputShort,
+														Value:       "25565",
 														MaxLength:   5,
 														Required:    true,
 													},
