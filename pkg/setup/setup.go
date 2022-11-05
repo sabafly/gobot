@@ -383,15 +383,10 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 				Label: name,
 				Value: name + ":" + address + ":" + strconv.Itoa(port) + ":" + strconv.FormatBool(bl),
 			})
-			if len(strings.Split(name, ":")) != 1 || len(strings.Split(address, ":")) != 1 {
-				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: "`:`を使用しないでください",
-						Flags:   discordgo.MessageFlagsEphemeral,
-					},
-				})
-				return
+			name = strings.ReplaceAll(name, ":", ";")
+			address = strings.ReplaceAll(address, ":", ";")
+			if port > 65535 || 1 > port {
+				port = 25565
 			}
 			zero := 0
 			res := discordgo.MessageEdit{
