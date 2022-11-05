@@ -387,10 +387,11 @@ func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, 
 			discordgo.ActionsRow{
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
-						CustomID:  "gobot_panel_minecraft",
-						Options:   option,
-						MinValues: &zero,
-						MaxValues: 1,
+						CustomID:    "gobot_panel_minecraft",
+						Options:     option,
+						Placeholder: "サーバーを選択",
+						MinValues:   &zero,
+						MaxValues:   1,
 					},
 				},
 			},
