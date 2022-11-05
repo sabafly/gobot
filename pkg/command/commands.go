@@ -364,15 +364,10 @@ func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, 
 			showIp = o.BoolValue()
 		}
 	}
-	if len(strings.Split(name, ":")) != 1 || len(strings.Split(address, ":")) != 1 {
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "`:`を使用しないでください",
-				Flags:   discordgo.MessageFlagsEphemeral,
-			},
-		})
-		return
+	serverName = strings.ReplaceAll(serverName, ":", ";")
+	address = strings.ReplaceAll(address, ":", ";")
+	if port > 65535 || 1 > port {
+		port = 25565
 	}
 	serverAddress := serverName + ":" + address + ":" + strconv.Itoa(port) + ":" + strconv.FormatBool(showIp)
 	option := []discordgo.SelectMenuOption{}
