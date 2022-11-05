@@ -29,53 +29,9 @@ func Mmodify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 							json.Unmarshal(byte, data)
 							switch data.CustomID {
 							case "gobot_panel_role":
-								gobotPanelRole(s, i, *mes)
+								gobotPanelRole(s, i, mes)
 							case "gobot_panel_minecraft":
-								err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-									Type: discordgo.InteractionResponseModal,
-									Data: &discordgo.InteractionResponseData{
-										Components: []discordgo.MessageComponent{
-											discordgo.ActionsRow{
-												Components: []discordgo.MessageComponent{
-													discordgo.TextInput{
-														CustomID:    "gobot_panel_minecraft_add_servername",
-														Label:       "表示名",
-														Placeholder: "マイサーバー",
-														Style:       discordgo.TextInputShort,
-														Required:    true,
-													},
-												},
-											},
-											discordgo.ActionsRow{
-												Components: []discordgo.MessageComponent{
-													discordgo.TextInput{
-														CustomID:    "gobot_panel_minecraft_add_address",
-														Label:       "アドレス",
-														Placeholder: "example.com",
-														Required:    true,
-														Style:       discordgo.TextInputShort,
-													},
-												},
-											},
-											discordgo.ActionsRow{
-												Components: []discordgo.MessageComponent{
-													discordgo.TextInput{
-														CustomID:    "gobot_panel_minecraft_add_port",
-														Label:       "ポート",
-														Placeholder: "25565",
-														Style:       discordgo.TextInputShort,
-														Value:       "25565",
-														MaxLength:   5,
-														Required:    true,
-													},
-												},
-											},
-										},
-										CustomID: "gobot_panel_minecraft_add_modal:" + mes.ID,
-										Title:    "サーバー追加",
-									},
-								})
-								log.Print(err)
+								gobotPanelMinecraft(s, i, mes)
 							}
 						}
 					}
@@ -92,7 +48,7 @@ func Mmodify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 }
 
-func gobotPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes discordgo.Message) {
+func gobotPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *discordgo.Message) {
 	roles, _ := s.GuildRoles(i.GuildID)
 	options := []discordgo.SelectMenuOption{}
 	me, _ := s.GuildMember(i.GuildID, s.State.User.ID)
@@ -136,4 +92,52 @@ func gobotPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes di
 			},
 		},
 	})
+}
+
+func gobotPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate, mes *discordgo.Message) {
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseModal,
+		Data: &discordgo.InteractionResponseData{
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{
+					Components: []discordgo.MessageComponent{
+						discordgo.TextInput{
+							CustomID:    "gobot_panel_minecraft_add_servername",
+							Label:       "表示名",
+							Placeholder: "マイサーバー",
+							Style:       discordgo.TextInputShort,
+							Required:    true,
+						},
+					},
+				},
+				discordgo.ActionsRow{
+					Components: []discordgo.MessageComponent{
+						discordgo.TextInput{
+							CustomID:    "gobot_panel_minecraft_add_address",
+							Label:       "アドレス",
+							Placeholder: "example.com",
+							Required:    true,
+							Style:       discordgo.TextInputShort,
+						},
+					},
+				},
+				discordgo.ActionsRow{
+					Components: []discordgo.MessageComponent{
+						discordgo.TextInput{
+							CustomID:    "gobot_panel_minecraft_add_port",
+							Label:       "ポート",
+							Placeholder: "25565",
+							Style:       discordgo.TextInputShort,
+							Value:       "25565",
+							MaxLength:   5,
+							Required:    true,
+						},
+					},
+				},
+			},
+			CustomID: "gobot_panel_minecraft_add_modal:" + mes.ID,
+			Title:    "サーバー追加",
+		},
+	})
+	log.Print(err)
 }
