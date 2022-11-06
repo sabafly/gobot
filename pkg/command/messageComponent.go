@@ -189,6 +189,7 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 	b, _ := json.Marshal(bd)
 	api.GetApi("/api/image/png/add", bytes.NewBuffer(b))
+	log.Print(q.Version.Protocol)
 	log.Print("https://sabafly.net/api/decode?s=" + code)
 	embeds := []*discordgo.MessageEmbed{
 		{
