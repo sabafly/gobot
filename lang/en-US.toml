@@ -14,7 +14,7 @@ other = "reason for ban"
 other = "reason"
 
 [command.ban.message]
-other = "{{.Target}} has been banned"
+other = "{{.Target}}has been banned"
 
 [command.ban.reason]
 one = "Reason: {{.Reason}}"
@@ -30,7 +30,7 @@ other = "target"
 other = "user to kick"
 
 [command.kick.message]
-other = "{{.Target}} has been kicked"
+other = "{{.Target}}has been kicked"
 
 [command.unban.description]
 other = "pardon the selected user"
@@ -39,7 +39,7 @@ other = "pardon the selected user"
 other = "target"
 
 [command.unban.option.description.target]
-other = "user to unban"
+other = "user to ban"
 
 [command.unban.message]
 other = "{{.Target}} has been unbanned"
