@@ -1,17 +1,17 @@
 [command.ban.description]
-other = "ban the selected user"
+other = "選択したユーザーをBANします"
 
 [command.ban.option.target]
-other = "target"
+other = "ターゲット"
 
 [command.ban.option.description.target]
-other = "user to ban"
+other = "ユーザーをBANします"
 
 [command.ban.option.description.reason]
-other = "reason for ban"
+other = "banした理由"
 
 [command.ban.option.reason]
-other = "reason"
+other = "理由"
 
 [command.ban.message]
 other = "{{.Target}}をbanしました"
@@ -21,25 +21,25 @@ one = "理由： {{.Reason}}"
 other = "理由： {{.Reason}}"
 
 [command.kick.description]
-other = "kick the selected user"
+other = "選択したユーザーをBANします"
 
 [command.kick.option.target]
-other = "target"
+other = "ターゲット"
 
 [command.kick.option.description.target]
-other = "user to kick"
+other = "キックをするユーザー"
 
 [command.kick.message]
 other = "{{.Target}}をキックしました"
 
 [command.unban.description]
-other = "pardon the selected user"
+other = "banを解除するユーザーを選択します"
 
 [command.unban.option.target]
-other = "target"
+other = "ターゲット"
 
 [command.unban.option.description.target]
-other = "user to unban"
+other = "banを解除したいユーザー"
 
 [command.unban.message]
 other = "{{.Target}}のbanを解除しました"
