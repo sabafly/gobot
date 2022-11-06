@@ -1,6 +1,9 @@
 package command
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -409,4 +412,66 @@ func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, 
 			Content: &str,
 		})
 	}
+}
+
+func Feed(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+	options := i.ApplicationCommandData().Options
+	switch options[0].Name {
+	case "minecraft":
+		options = options[0].Options
+		switch options[0].Name {
+		case "create":
+			feedMinecraftCreate(s, i, options)
+		}
+	}
+}
+
+func feedMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {
+	gid := i.GuildID
+	cid := i.ChannelID
+	var name string
+	var address string
+	var port int
+	var role discordgo.Role
+	options = options[0].Options
+	for _, v := range options {
+		switch v.Name {
+		case "name":
+			name = v.StringValue()
+		case "address":
+			address = v.StringValue()
+		case "port":
+			port = int(v.IntValue())
+		case "role":
+			role = *v.RoleValue(s, gid)
+		}
+	}
+	hash := sha256.New()
+	io.WriteString(hash, address+":"+strconv.Itoa(port))
+	st := hash.Sum(nil)
+	code := hex.EncodeToString(st)
+	data := &api.TransMCServer{
+		Address: address,
+		Port:    uint16(port),
+		FeedMCServer: api.FeedMCServer{
+			Hash:      code,
+			Name:      name,
+			GuildID:   gid,
+			ChannelID: cid,
+			RoleID:    role.ID,
+		},
+	}
+	log.Print(data.Address, data.Port)
+	body, _ := json.Marshal(data)
+	api.GetApi("/api/feed/mc/add", bytes.NewBuffer(body))
+	str := "OK"
+	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content: &str,
+	})
 }

@@ -12,7 +12,19 @@ import (
 	"github.com/ikafly144/gobot/pkg/api"
 	"github.com/ikafly144/gobot/pkg/command"
 	"github.com/ikafly144/gobot/pkg/setup"
+	"gorm.io/gorm"
 )
+
+type FeedMCServer struct {
+	gorm.Model
+	Hash      string `gorm:"uniqueIndex"`
+	GuildID   string
+	ChannelID string
+	RoleID    string
+	Name      string
+}
+
+type FeedMCServers []FeedMCServer
 
 func MakeBan(s *discordgo.Session) {
 	resp, err := api.GetApi("/api/ban", http.NoBody)
@@ -40,6 +52,7 @@ func deleteBan(id string) {
 
 func DeleteBanListener() {
 	http.HandleFunc("/ban/delete", deleteBanHandler)
+	http.HandleFunc("/feed/mc", feedMinecraftHandler)
 	go log.Print(http.ListenAndServe(":8192", nil))
 }
 
@@ -52,5 +65,77 @@ func deleteBanHandler(w http.ResponseWriter, r *http.Request) {
 		deleteBan(r.URL.Query().Get("id"))
 	} else {
 		json.NewEncoder(w).Encode(map[string]interface{}{"Status": "400 Bad Request", "Content": "missing id"})
+	}
+}
+
+func feedMinecraftHandler(w http.ResponseWriter, r *http.Request) {
+	log.Print("OK")
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"Status": "200 OK"})
+	body, _ := io.ReadAll(r.Body)
+	data := FeedMCServers{}
+	json.Unmarshal(body, &data)
+	s := setup.GetSession()
+	for _, v := range data {
+		ws, _ := s.ChannelWebhooks(v.ChannelID)
+		var wid string
+		var wToken string
+		var hasWB bool
+		for _, w := range ws {
+			if w.User.ID == s.State.User.ID {
+				wid = w.ID
+				wToken = w.Token
+				hasWB = true
+				break
+			}
+		}
+		if !hasWB {
+			w, err := s.WebhookCreate(v.ChannelID, "gobot-webhook", s.State.User.AvatarURL("1024"))
+			if err != nil {
+				log.Print(err)
+				return
+			}
+			wid = w.ID
+			wToken = w.Token
+		}
+		var ctx string
+		var embed []*discordgo.MessageEmbed
+		online, err := strconv.ParseBool(r.URL.Query().Get("online"))
+		if err == nil && online {
+			if v.RoleID != "" {
+				ctx = "<@&" + v.RoleID + ">"
+			}
+			embed = []*discordgo.MessageEmbed{
+				{
+					Title: v.Name + "が起動しました",
+					Color: 0x00ff00,
+					Footer: &discordgo.MessageEmbedFooter{
+						Text: time.Now().Format("2006/01/02 15:04:05") + " - gobot",
+					},
+				},
+			}
+		} else if err == nil && !online {
+			embed = []*discordgo.MessageEmbed{
+				{
+					Title: v.Name + "が停止しました",
+					Color: 0xff0000,
+					Footer: &discordgo.MessageEmbedFooter{
+						Text: time.Now().Format("2006/01/02 15:04:05") + " - gobot",
+					},
+				},
+			}
+		} else {
+			log.Print(err)
+			return
+		}
+		_, err = s.WebhookExecute(wid, wToken, true, &discordgo.WebhookParams{
+			Content:   ctx,
+			Username:  "サーバー起動通知",
+			AvatarURL: "",
+			Embeds:    embed,
+		})
+		if err != nil {
+			log.Print(err)
+		}
 	}
 }

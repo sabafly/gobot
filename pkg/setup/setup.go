@@ -266,6 +266,51 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			},
 		},
 		{
+			Name:                     "feed",
+			Description:              "test",
+			DefaultMemberPermissions: &PermissionAdminMembers,
+			DMPermission:             &dmPermission,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        "minecraft",
+					Description: "test",
+					Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Name:        "create",
+							Description: "test",
+							Type:        discordgo.ApplicationCommandOptionSubCommand,
+							Options: []*discordgo.ApplicationCommandOption{
+								{
+									Name:        "name",
+									Description: "test",
+									Type:        discordgo.ApplicationCommandOptionString,
+									Required:    true,
+								},
+								{
+									Name:        "address",
+									Description: "test",
+									Type:        discordgo.ApplicationCommandOptionString,
+									Required:    true,
+								},
+								{
+									Name:        "port",
+									Description: "test",
+									Type:        discordgo.ApplicationCommandOptionInteger,
+									Required:    true,
+								},
+								{
+									Name:        "role",
+									Description: "test",
+									Type:        discordgo.ApplicationCommandOptionRole,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			Name:                     "modify",
 			Type:                     discordgo.MessageApplicationCommand,
 			DMPermission:             &dmPermission,
@@ -325,6 +370,9 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			},
 			"panel": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				command.Panel(s, i)
+			},
+			"feed": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+				command.Feed(s, i)
 			},
 			"modify": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				command.Mmodify(s, i)
