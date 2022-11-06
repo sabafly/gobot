@@ -20,6 +20,6 @@ jobs:
           passphrase: ${{ secrets.SSH_PASS }}
           script: |
             cd ${{ secrets.SERVER_DEPLOY_DIR }}
-            git pull origin main
-            /usr/local/go/bin/go build
+            echo ${{ secrets.SSH_PASSWORD }} | git pull origin main
+            echo ${{ secrets.SSH_PASSWORD }} | /usr/local/go/bin/go build
             echo ${{ secrets.SSH_PASSWORD }} | sudo -S systemctl restart gobot
