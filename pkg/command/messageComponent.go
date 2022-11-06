@@ -131,19 +131,18 @@ func MCpanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
 	if fmt.Sprint(i.MessageComponentData().Values) == "[]" {
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "OK",
-				Flags:   discordgo.MessageFlagsEphemeral,
-			},
-		})
 		s.InteractionResponseDelete(i.Interaction)
 		return
 	}
-	initialTimeOut := time.Second * 2
-	ioTimeOut := time.Second * 2
+	initialTimeOut := time.Second * 10
+	ioTimeOut := time.Second * 30
 	data := i.MessageComponentData()
 	addresses := strings.Split(data.Values[0], ":")
 	name := addresses[0]
@@ -151,12 +150,9 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	port, err := strconv.Atoi(addresses[2])
 	if err != nil {
 		log.Print(err)
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "ポート値が不正です",
-				Flags:   discordgo.MessageFlagsEphemeral,
-			},
+		str := "ポート値が不正です"
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Content: &str,
 		})
 		return
 	}
@@ -167,12 +163,9 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	q, err := mcstatusgo.Status(address, uint16(port), initialTimeOut, ioTimeOut)
 	if err != nil {
 		log.Print(err)
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "サーバーの状況を取得できませんでした\r" + fmt.Sprint(err),
-				Flags:   discordgo.MessageFlagsEphemeral,
-			},
+		str := "サーバーの状況を取得できませんでした\r" + fmt.Sprint(err)
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Content: &str,
 		})
 		return
 	}
@@ -236,12 +229,8 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				Inline: true,
 			})
 	}
-	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Embeds: embeds,
-			Flags:  discordgo.MessageFlagsEphemeral,
-		},
+	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Embeds: &embeds,
 	})
 	if err != nil {
 		log.Print(err)
