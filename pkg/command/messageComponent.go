@@ -191,10 +191,15 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	api.GetApi("/api/image/png/add", bytes.NewBuffer(b))
 	log.Print(q.Version.Protocol)
 	log.Print("https://sabafly.net/api/decode?s=" + code)
+	color := 0x00ff00
+	if q.Version.Protocol == 46 {
+		color = 0xff0000
+	}
 	embeds := []*discordgo.MessageEmbed{
 		{
 			Title:       name,
-			Description: message.ClearString(),
+			Description: "```ansi\r" + message.String() + "```",
+			Color:       color,
 			Thumbnail: &discordgo.MessageEmbedThumbnail{
 				URL:    "https://sabafly.net/api/decode?s=" + code,
 				Width:  64,
@@ -203,17 +208,17 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			Fields: []*discordgo.MessageEmbedField{
 				{
 					Name:   "プレイヤー",
-					Value:  strconv.Itoa(q.Players.Online) + "/" + strconv.Itoa(q.Players.Max),
+					Value:  "```" + strconv.Itoa(q.Players.Online) + "/" + strconv.Itoa(q.Players.Max) + "```",
 					Inline: true,
 				},
 				{
 					Name:   "レイテンシ",
-					Value:  strconv.Itoa(int(q.Latency.Abs().Milliseconds())) + "ms",
+					Value:  "```" + strconv.Itoa(int(q.Latency.Abs().Milliseconds())) + "ms" + "```",
 					Inline: true,
 				},
 				{
 					Name:   "バージョン",
-					Value:  q.Version.Name,
+					Value:  "```ansi\r" + chat.Text(q.Version.Name).String() + "```",
 					Inline: true,
 				},
 			},
@@ -222,9 +227,14 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if showIp {
 		embeds[0].Fields = append(embeds[0].Fields, &discordgo.MessageEmbedField{
 			Name:   "アドレス",
-			Value:  address + ":" + strconv.Itoa(int(q.Port)),
+			Value:  "```" + address + "```",
 			Inline: true,
-		})
+		},
+			&discordgo.MessageEmbedField{
+				Name:   "ポート",
+				Value:  "```" + strconv.Itoa(int(q.Port)) + "```",
+				Inline: true,
+			})
 	}
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
