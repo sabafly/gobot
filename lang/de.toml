@@ -11,7 +11,7 @@ other = "gebannter Benutzer"
 other = "Grund für Bann"
 
 [command.ban.option.reason]
-other = "Grund"
+other = "grund"
 
 [command.ban.message]
 other = "{{.Target}} wurde gebannt"
