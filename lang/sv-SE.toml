@@ -1,36 +1,36 @@
 [command.ban.description]
-other = "ban the selected user"
+other = "bannlysa den valda användaren"
 
 [command.ban.option.target]
 other = "target"
 
 [command.ban.option.description.target]
-other = "user to ban"
+other = "användare att bannlysa"
 
 [command.ban.option.description.reason]
-other = "reason for ban"
+other = "anledning till bannlysning"
 
 [command.ban.option.reason]
-other = "reason"
+other = "anledning"
 
 [command.ban.message]
-other = "{{.Target}} has been banned"
+other = "{{.Target}} har blivit bannlyst"
 
 [command.ban.reason]
-one = "Reason: {{.Reason}}"
-other = "Reasons: {{.Reason}}"
+one = "Orsak: {{.Reason}}"
+other = "Anledningar: {{.Reason}}"
 
 [command.kick.description]
-other = "kick the selected user"
+other = "sparka den valda användaren"
 
 [command.kick.option.target]
 other = "target"
 
 [command.kick.option.description.target]
-other = "user to kick"
+other = "användare att sparka"
 
 [command.kick.message]
-other = "{{.Target}} has been kicked"
+other = "{{.Target}} har blivit sparkad"
 
 [command.unban.description]
 other = "pardon the selected user"
@@ -39,16 +39,16 @@ other = "pardon the selected user"
 other = "target"
 
 [command.unban.option.description.target]
-other = "user to unban"
+other = "användare att ta bort bannlysning"
 
 [command.unban.message]
-other = "{{.Target}} has been unbanned"
+other = "{{.Target}} har blivit bannlyst"
 
 [error.0]
-other = "An error has occurred {{.Error}}"
+other = "Ett fel har inträffat {{.Error}}"
 
 [error.TargetIsBot]
-other = "Cannot select this bot as target!"
+other = "Kan inte välja denna bot som mål!"
 
 [error.message]
-other = "An error has occurred"
+other = "Ett fel har uppstått"

@@ -1,36 +1,36 @@
 [command.ban.description]
-other = "ban the selected user"
+other = "封禁所选用户"
 
 [command.ban.option.target]
 other = "target"
 
 [command.ban.option.description.target]
-other = "user to ban"
+other = "要禁止的用户"
 
 [command.ban.option.description.reason]
-other = "reason for ban"
+other = "禁止的原因"
 
 [command.ban.option.reason]
-other = "reason"
+other = "原因"
 
 [command.ban.message]
-other = "{{.Target}} has been banned"
+other = "{{.Target}} 已被封禁"
 
 [command.ban.reason]
-one = "Reason: {{.Reason}}"
-other = "Reasons: {{.Reason}}"
+one = "原因： {{.Reason}}"
+other = "原因： {{.Reason}}"
 
 [command.kick.description]
-other = "kick the selected user"
+other = "踢出选中的用户"
 
 [command.kick.option.target]
 other = "target"
 
 [command.kick.option.description.target]
-other = "user to kick"
+other = "要踢出的用户"
 
 [command.kick.message]
-other = "{{.Target}} has been kicked"
+other = "{{.Target}} 已被踢出"
 
 [command.unban.description]
 other = "pardon the selected user"
@@ -39,16 +39,16 @@ other = "pardon the selected user"
 other = "target"
 
 [command.unban.option.description.target]
-other = "user to unban"
+other = "要解除封禁的用户"
 
 [command.unban.message]
-other = "{{.Target}} has been unbanned"
+other = "{{.Target}} 已被解除封禁"
 
 [error.0]
-other = "An error has occurred {{.Error}}"
+other = "发生错误 {{.Error}}"
 
 [error.TargetIsBot]
-other = "Cannot select this bot as target!"
+other = "无法选择此机器人为目标！"
 
 [error.message]
-other = "An error has occurred"
+other = "发生错误"
