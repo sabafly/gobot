@@ -51,7 +51,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		// PermissionAll          int64 = discordgo.PermissionAll
 		PermissionBanMembers   int64 = discordgo.PermissionBanMembers
 		PermissionKickMembers  int64 = discordgo.PermissionKickMembers
-		PermissionAdminMembers int64 = discordgo.PermissionAdministrator
+		PermissionAdminMembers int64 = discordgo.PermissionManageServer
 	)
 	commands := []*discordgo.ApplicationCommand{
 		{
