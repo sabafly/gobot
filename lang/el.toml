@@ -1,36 +1,36 @@
 [command.ban.description]
-other = "ban the selected user"
+other = "απαγόρευση του επιλεγμένου χρήστη"
 
 [command.ban.option.target]
 other = "target"
 
 [command.ban.option.description.target]
-other = "user to ban"
+other = "χρήστης να απαγορεύσει"
 
 [command.ban.option.description.reason]
-other = "reason for ban"
+other = "λόγος απαγόρευσης"
 
 [command.ban.option.reason]
-other = "reason"
+other = "λόγος"
 
 [command.ban.message]
-other = "{{.Target}} has been banned"
+other = "{{.Target}} έχει αποκλειστεί"
 
 [command.ban.reason]
-one = "Reason: {{.Reason}}"
-other = "Reasons: {{.Reason}}"
+one = "Αιτία: {{.Reason}}"
+other = "Λόγοι: {{.Reason}}"
 
 [command.kick.description]
-other = "kick the selected user"
+other = "κλώτσησε τον επιλεγμένο χρήστη"
 
 [command.kick.option.target]
 other = "target"
 
 [command.kick.option.description.target]
-other = "user to kick"
+other = "χρήστης για να κλωτσήσει"
 
 [command.kick.message]
-other = "{{.Target}} has been kicked"
+other = "{{.Target}} έχει διώξει"
 
 [command.unban.description]
 other = "pardon the selected user"
@@ -39,16 +39,16 @@ other = "pardon the selected user"
 other = "target"
 
 [command.unban.option.description.target]
-other = "user to unban"
+other = "χρήστης για κατάργηση αποκλεισμού"
 
 [command.unban.message]
-other = "{{.Target}} has been unbanned"
+other = "{{.Target}} έχει καταργηθεί"
 
 [error.0]
-other = "An error has occurred {{.Error}}"
+other = "Παρουσιάστηκε ένα σφάλμα {{.Error}}"
 
 [error.TargetIsBot]
-other = "Cannot select this bot as target!"
+other = "Δεν μπορείτε να επιλέξετε αυτό το bot ως στόχο!"
 
 [error.message]
-other = "An error has occurred"
+other = "Παρουσιάστηκε ένα σφάλμα"
