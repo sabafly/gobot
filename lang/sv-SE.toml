@@ -1,20 +1,20 @@
 [command.ban.description]
 other = "bannlysa den valda användaren"
 
-[command.ban.option.target]
-other = "target"
-
-[command.ban.option.description.target]
-other = "användare att bannlysa"
+[command.ban.message]
+other = "{{.Target}} har blivit bannlyst"
 
 [command.ban.option.description.reason]
 other = "anledning till bannlysning"
 
+[command.ban.option.description.target]
+other = "användare att bannlysa"
+
 [command.ban.option.reason]
 other = "anledning"
 
-[command.ban.message]
-other = "{{.Target}} har blivit bannlyst"
+[command.ban.option.target]
+other = "target"
 
 [command.ban.reason]
 one = "Orsak: {{.Reason}}"
@@ -23,26 +23,59 @@ other = "Anledningar: {{.Reason}}"
 [command.kick.description]
 other = "sparka den valda användaren"
 
-[command.kick.option.target]
-other = "target"
+[command.kick.message]
+other = "{{.Target}} har blivit sparkad"
 
 [command.kick.option.description.target]
 other = "användare att sparka"
 
-[command.kick.message]
-other = "{{.Target}} har blivit sparkad"
+[command.kick.option.target]
+other = "target"
+
+[command.panel.description]
+other = "manage or create panel"
+
+[command.panel.option.description.role]
+other = "manage role panel"
+
+[command.panel.option.role]
+other = "role"
+
+[command.panel.option.role.option.crate.option.desc]
+other = "description"
+
+[command.panel.option.role.option.create]
+other = "create"
+
+[command.panel.option.role.option.create.option.description.desc]
+other = "description of panel"
+
+[command.panel.option.role.option.create.option.description.name]
+other = "name of panel"
+
+[command.panel.option.role.option.create.option.description.role]
+other = "role that add to the panel"
+
+[command.panel.option.role.option.create.option.name]
+other = "name"
+
+[command.panel.option.role.option.create.option.role]
+other = "role"
+
+[command.panel.option.role.option.description.create]
+other = "create role panel"
 
 [command.unban.description]
 other = "pardon the selected user"
 
-[command.unban.option.target]
-other = "target"
+[command.unban.message]
+other = "{{.Target}} har blivit bannlyst"
 
 [command.unban.option.description.target]
 other = "användare att ta bort bannlysning"
 
-[command.unban.message]
-other = "{{.Target}} har blivit bannlyst"
+[command.unban.option.target]
+other = "target"
 
 [error.0]
 other = "Ett fel har inträffat {{.Error}}"
