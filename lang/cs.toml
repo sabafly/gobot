@@ -1,36 +1,36 @@
 [command.ban.description]
-other = "ban the selected user"
+other = "zakázat vybraného uživatele"
 
 [command.ban.option.target]
 other = "target"
 
 [command.ban.option.description.target]
-other = "user to ban"
+other = "zabanovat uživatele"
 
 [command.ban.option.description.reason]
-other = "reason for ban"
+other = "důvod zákazu"
 
 [command.ban.option.reason]
-other = "reason"
+other = "důvod"
 
 [command.ban.message]
-other = "{{.Target}} has been banned"
+other = "{{.Target}} byl zabanován"
 
 [command.ban.reason]
-one = "Reason: {{.Reason}}"
-other = "Reasons: {{.Reason}}"
+one = "Důvod: {{.Reason}}"
+other = "Důvody: {{.Reason}}"
 
 [command.kick.description]
-other = "kick the selected user"
+other = "vyhodit vybraného uživatele"
 
 [command.kick.option.target]
 other = "target"
 
 [command.kick.option.description.target]
-other = "user to kick"
+other = "vykopnout uživatele"
 
 [command.kick.message]
-other = "{{.Target}} has been kicked"
+other = "{{.Target}} byl vyhozen"
 
 [command.unban.description]
 other = "pardon the selected user"
@@ -39,16 +39,16 @@ other = "pardon the selected user"
 other = "target"
 
 [command.unban.option.description.target]
-other = "user to unban"
+other = "odblokovat uživatele"
 
 [command.unban.message]
-other = "{{.Target}} has been unbanned"
+other = "{{.Target}} byl odblokován"
 
 [error.0]
-other = "An error has occurred {{.Error}}"
+other = "Došlo k chybě {{.Error}}"
 
 [error.TargetIsBot]
-other = "Cannot select this bot as target!"
+other = "Tohoto bota nelze vybrat jako cíl!"
 
 [error.message]
-other = "An error has occurred"
+other = "Došlo k chybě"
