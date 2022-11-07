@@ -21,13 +21,13 @@ one = "理由： {{.Reason}}"
 other = "理由： {{.Reason}}"
 
 [command.kick.description]
-other = "選択したユーザーをBANします"
+other = "選択したユーザーをキックします"
 
 [command.kick.option.target]
 other = "ターゲット"
 
 [command.kick.option.description.target]
-other = "キックをするユーザー"
+other = "キックするユーザー"
 
 [command.kick.message]
 other = "{{.Target}}をキックしました"
