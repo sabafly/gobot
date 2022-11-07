@@ -1,36 +1,36 @@
 [command.ban.description]
-other = "ban the selected user"
+other = "interzice utilizatorul selectat"
 
 [command.ban.option.target]
 other = "target"
 
 [command.ban.option.description.target]
-other = "user to ban"
+other = "utilizator pentru a interzice"
 
 [command.ban.option.description.reason]
-other = "reason for ban"
+other = "motiv pentru interdicție"
 
 [command.ban.option.reason]
-other = "reason"
+other = "motiv"
 
 [command.ban.message]
-other = "{{.Target}} has been banned"
+other = "{{.Target}} a fost banat"
 
 [command.ban.reason]
-one = "Reason: {{.Reason}}"
-other = "Reasons: {{.Reason}}"
+one = "Motiv: {{.Reason}}"
+other = "Motive: {{.Reason}}"
 
 [command.kick.description]
-other = "kick the selected user"
+other = "exclude utilizatorul selectat"
 
 [command.kick.option.target]
 other = "target"
 
 [command.kick.option.description.target]
-other = "user to kick"
+other = "utilizator de dat afară"
 
 [command.kick.message]
-other = "{{.Target}} has been kicked"
+other = "{{.Target}} a fost dat afară"
 
 [command.unban.description]
 other = "pardon the selected user"
@@ -39,16 +39,16 @@ other = "pardon the selected user"
 other = "target"
 
 [command.unban.option.description.target]
-other = "user to unban"
+other = "utilizator pentru a debloca"
 
 [command.unban.message]
-other = "{{.Target}} has been unbanned"
+other = "{{.Target}} a fost debanat"
 
 [error.0]
-other = "An error has occurred {{.Error}}"
+other = "S-a produs o eroare {{.Error}}"
 
 [error.TargetIsBot]
-other = "Cannot select this bot as target!"
+other = "Nu se poate selecta acest bot ca țintă!"
 
 [error.message]
-other = "An error has occurred"
+other = "A apărut o eroare"
