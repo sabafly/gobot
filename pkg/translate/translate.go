@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/BurntSushi/toml"
 	"github.com/bwmarrin/discordgo"
@@ -71,7 +72,7 @@ func Translates(locale discordgo.Locale, messageId string, templateData interfac
 			res = fmt.Sprintf("Translate error: %v", err)
 		}
 	}
-	return res
+	return strings.ToLower(res)
 }
 
 func MessageMap(key string) *map[discordgo.Locale]string {
