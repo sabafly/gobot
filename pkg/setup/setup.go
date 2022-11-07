@@ -124,60 +124,6 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			Version:                  "1",
 		},
 		{
-			Name:                     "admin",
-			Description:              "only for bot admins",
-			GuildID:                  *SupportGuildID,
-			DMPermission:             &dmPermission,
-			DefaultMemberPermissions: &PermissionAdminMembers,
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Name:        "ban",
-					Description: "only for bot admins",
-					Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
-					Options: []*discordgo.ApplicationCommandOption{
-						{
-							Name:        "add",
-							Description: "only for bot admins",
-							Type:        discordgo.ApplicationCommandOptionSubCommand,
-							Options: []*discordgo.ApplicationCommandOption{
-								{
-									Name:        "target",
-									Description: "only for bot admins",
-									Type:        discordgo.ApplicationCommandOptionString,
-									Required:    true,
-								},
-								{
-									Name:        "reason",
-									Description: "only for bot admins",
-									Type:        discordgo.ApplicationCommandOptionString,
-									Required:    false,
-								},
-							},
-						},
-						{
-							Name:        "remove",
-							Description: "only for bot admins",
-							Type:        discordgo.ApplicationCommandOptionSubCommand,
-							Options: []*discordgo.ApplicationCommandOption{
-								{
-									Name:        "target",
-									Description: "only for bot admins",
-									Type:        discordgo.ApplicationCommandOptionString,
-									Required:    true,
-								},
-							},
-						},
-						{
-							Name:        "get",
-							Description: "only for admins",
-							Type:        discordgo.ApplicationCommandOptionSubCommand,
-						},
-					},
-				},
-			},
-			Version: "1",
-		},
-		{
 			Name:                     "panel",
 			Description:              "manage or create panel",
 			GuildID:                  *SupportGuildID,

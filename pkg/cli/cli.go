@@ -48,6 +48,63 @@ func Run() {
 		}
 		registeredCommands[i] = cmd
 	}
+	var (
+		dmPermission                 = false
+		PermissionAdminMembers int64 = discordgo.PermissionManageServer
+	)
+	s.ApplicationCommandCreate(s.State.User.ID, *setup.SupportGuildID, &discordgo.ApplicationCommand{
+		Name:                     "admin",
+		Description:              "only for bot admins",
+		DMPermission:             &dmPermission,
+		DefaultMemberPermissions: &PermissionAdminMembers,
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Name:        "ban",
+				Description: "only for bot admins",
+				Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Name:        "add",
+						Description: "only for bot admins",
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Name:        "target",
+								Description: "only for bot admins",
+								Type:        discordgo.ApplicationCommandOptionString,
+								Required:    true,
+							},
+							{
+								Name:        "reason",
+								Description: "only for bot admins",
+								Type:        discordgo.ApplicationCommandOptionString,
+								Required:    false,
+							},
+						},
+					},
+					{
+						Name:        "remove",
+						Description: "only for bot admins",
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Name:        "target",
+								Description: "only for bot admins",
+								Type:        discordgo.ApplicationCommandOptionString,
+								Required:    true,
+							},
+						},
+					},
+					{
+						Name:        "get",
+						Description: "only for admins",
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+					},
+				},
+			},
+		},
+		Version: "1",
+	})
 
 	defer end(registeredCommands)
 
