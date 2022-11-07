@@ -1,36 +1,36 @@
 [command.ban.description]
-other = "ban the selected user"
+other = "zbanuj wybranego użytkownika"
 
 [command.ban.option.target]
 other = "target"
 
 [command.ban.option.description.target]
-other = "user to ban"
+other = "użytkownik do zbanowania"
 
 [command.ban.option.description.reason]
-other = "reason for ban"
+other = "powód zakazu"
 
 [command.ban.option.reason]
-other = "reason"
+other = "powód"
 
 [command.ban.message]
-other = "{{.Target}} has been banned"
+other = "{{.Target}} został zbanowany"
 
 [command.ban.reason]
-one = "Reason: {{.Reason}}"
-other = "Reasons: {{.Reason}}"
+one = "Powód: {{.Reason}}"
+other = "Powody: {{.Reason}}"
 
 [command.kick.description]
-other = "kick the selected user"
+other = "wyrzuć wybranego użytkownika"
 
 [command.kick.option.target]
 other = "target"
 
 [command.kick.option.description.target]
-other = "user to kick"
+other = "użytkownik do wyrzucenia"
 
 [command.kick.message]
-other = "{{.Target}} has been kicked"
+other = "{{.Target}} został wyrzucony"
 
 [command.unban.description]
 other = "pardon the selected user"
@@ -39,16 +39,16 @@ other = "pardon the selected user"
 other = "target"
 
 [command.unban.option.description.target]
-other = "user to unban"
+other = "użytkownik do odblokowania"
 
 [command.unban.message]
-other = "{{.Target}} has been unbanned"
+other = "{{.Target}} został odbanowany"
 
 [error.0]
-other = "An error has occurred {{.Error}}"
+other = "Wystąpił błąd {{.Error}}"
 
 [error.TargetIsBot]
-other = "Cannot select this bot as target!"
+other = "Nie można wybrać tego bota jako celu!"
 
 [error.message]
-other = "An error has occurred"
+other = "Wystąpił błąd"
