@@ -33,37 +33,37 @@ other = "käyttäjä potkia"
 other = "target"
 
 [command.panel.description]
-other = "manage or create panel"
+other = "hallitse tai luo paneeli"
 
 [command.panel.option.description.role]
-other = "manage role panel"
+other = "hallitse roolipaneelia"
 
 [command.panel.option.role]
-other = "role"
+other = "rooli"
 
 [command.panel.option.role.option.crate.option.desc]
-other = "description"
+other = "kuvaus"
 
 [command.panel.option.role.option.create]
-other = "create"
+other = "luo"
 
 [command.panel.option.role.option.create.option.description.desc]
-other = "description of panel"
+other = "paneelin kuvaus"
 
 [command.panel.option.role.option.create.option.description.name]
-other = "name of panel"
+other = "paneelin nimi"
 
 [command.panel.option.role.option.create.option.description.role]
-other = "role that add to the panel"
+other = "rooli, joka lisää paneeliin"
 
 [command.panel.option.role.option.create.option.name]
-other = "name"
+other = "nimi"
 
 [command.panel.option.role.option.create.option.role]
-other = "role"
+other = "rooli"
 
 [command.panel.option.role.option.description.create]
-other = "create role panel"
+other = "luo roolipaneeli"
 
 [command.unban.description]
 other = "pardon the selected user"
