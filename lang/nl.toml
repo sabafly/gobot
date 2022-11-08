@@ -33,37 +33,37 @@ other = "uit te zetten gebruiker"
 other = "target"
 
 [command.panel.description]
-other = "manage or create panel"
+other = "beheren of maken van paneel"
 
 [command.panel.option.description.role]
-other = "manage role panel"
+other = "beheer rolpaneel"
 
 [command.panel.option.role]
-other = "role"
+other = "rol"
 
 [command.panel.option.role.option.crate.option.desc]
-other = "description"
+other = "beschrijving"
 
 [command.panel.option.role.option.create]
-other = "create"
+other = "aanmaken"
 
 [command.panel.option.role.option.create.option.description.desc]
-other = "description of panel"
+other = "beschrijving van paneel"
 
 [command.panel.option.role.option.create.option.description.name]
-other = "name of panel"
+other = "naam van paneel"
 
 [command.panel.option.role.option.create.option.description.role]
-other = "role that add to the panel"
+other = "rol die aan het paneel toegevoegd wordt"
 
 [command.panel.option.role.option.create.option.name]
-other = "name"
+other = "Naam"
 
 [command.panel.option.role.option.create.option.role]
-other = "role"
+other = "rol"
 
 [command.panel.option.role.option.description.create]
-other = "create role panel"
+other = "maak rolpaneel"
 
 [command.unban.description]
 other = "pardon the selected user"
