@@ -33,37 +33,37 @@ other = "χρήστης για να κλωτσήσει"
 other = "target"
 
 [command.panel.description]
-other = "manage or create panel"
+other = "διαχείριση ή δημιουργία πίνακα"
 
 [command.panel.option.description.role]
-other = "manage role panel"
+other = "διαχείριση ρόλου πίνακα"
 
 [command.panel.option.role]
-other = "role"
+other = "ρόλος"
 
 [command.panel.option.role.option.crate.option.desc]
-other = "description"
+other = "περιγραφή"
 
 [command.panel.option.role.option.create]
-other = "create"
+other = "δημιουργία"
 
 [command.panel.option.role.option.create.option.description.desc]
-other = "description of panel"
+other = "περιγραφή του πίνακα"
 
 [command.panel.option.role.option.create.option.description.name]
-other = "name of panel"
+other = "όνομα του πίνακα"
 
 [command.panel.option.role.option.create.option.description.role]
-other = "role that add to the panel"
+other = "ρόλος που προσθέτει στον πίνακα"
 
 [command.panel.option.role.option.create.option.name]
-other = "name"
+other = "όνομα"
 
 [command.panel.option.role.option.create.option.role]
-other = "role"
+other = "ρόλος"
 
 [command.panel.option.role.option.description.create]
-other = "create role panel"
+other = "δημιουργία πίνακα ρόλου"
 
 [command.unban.description]
 other = "pardon the selected user"
