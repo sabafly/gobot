@@ -1,87 +1,104 @@
-[command.ban.description]
-other = "bannir l'utilisateur sélectionné"
+command = { }
+command_ban = { }
+command_ban_option = { }
+command_ban_option_desc = { }
+command_kick = { }
+command_kick_option = { }
+command_kick_option_desc = { }
+command_panel = { }
+command_panel_option = { }
+command_panel_option_desc = { }
+command_panel_option_role_option_create_option = { }
+command_panel_option_role_option_desc = { }
+command_unban = { }
+command_unban_option = { }
+command_unban_option_desc = { }
+error = { }
 
-[command.ban.message]
-other = "{{.Target}} a été banni"
+[command_ban_desc]
+other = "ban the selected user"
 
-[command.ban.option.description.reason]
-other = "raison du bannissement"
+[command_ban_message]
+other = "{{.Target}} has been banned"
 
-[command.ban.option.description.target]
-other = "utilisateur à bannir"
+[command_ban_option_desc_reason]
+other = "reason for ban"
 
-[command.ban.option.reason]
-other = "Raison"
+[command_ban_option_desc_target]
+other = "user to ban"
 
-[command.ban.option.target]
+[command_ban_option_reason]
+other = "reason"
+
+[command_ban_option_target]
 other = "target"
 
-[command.ban.reason]
-one = "Raison : {{.Reason}}"
-other = "Raisons : {{.Reason}}"
+[command_ban_reason]
+one = "Reason: {{.Reason}}"
+other = "Reasons: {{.Reason}}"
 
-[command.kick.description]
-other = "expulser l'utilisateur sélectionné"
+[command_kick_desc]
+other = "kick the selected user"
 
-[command.kick.message]
-other = "{{.Target}} a été éjecté"
+[command_kick_message]
+other = "{{.Target}} has been kicked"
 
-[command.kick.option.description.target]
-other = "utilisateur à expulser"
+[command_kick_option_desc_target]
+other = "user to kick"
 
-[command.kick.option.target]
+[command_kick_option_target]
 other = "target"
 
-[command.panel.description]
-other = "gérer ou créer un panneau"
+[command_panel_desc]
+other = "manage or create panel"
 
-[command.panel.option.description.role]
-other = "gérer le panneau des rôles"
+[command_panel_option_desc_role]
+other = "manage role panel"
 
-[command.panel.option.role]
-other = "Rôle"
+[command_panel_option_role]
+other = "role"
 
-[command.panel.option.role.option.crate.option.desc]
-other = "Libellé"
+[command_panel_option_role_option_create]
+other = "create"
 
-[command.panel.option.role.option.create]
-other = "créer"
+[command_panel_option_role_option_create_option_desc]
+other = "desc"
 
-[command.panel.option.role.option.create.option.description.desc]
-other = "description du panneau"
+[command_panel_option_role_option_create_option_desc_desc]
+other = "desc of panel"
 
-[command.panel.option.role.option.create.option.description.name]
-other = "nom du panneau"
+[command_panel_option_role_option_create_option_desc_name]
+other = "name of panel"
 
-[command.panel.option.role.option.create.option.description.role]
-other = "rôle qui s'ajoute au panneau"
+[command_panel_option_role_option_create_option_desc_role]
+other = "role that add to the panel"
 
-[command.panel.option.role.option.create.option.name]
-other = "Nom"
+[command_panel_option_role_option_create_option_name]
+other = "name"
 
-[command.panel.option.role.option.create.option.role]
-other = "Rôle"
+[command_panel_option_role_option_create_option_role]
+other = "role"
 
-[command.panel.option.role.option.description.create]
-other = "créer un panneau de rôle"
+[command_panel_option_role_option_desc_create]
+other = "create role panel"
 
-[command.unban.description]
-other = "pardon the selected user"
+[command_unban_desc]
+other = "unban the selected user"
 
-[command.unban.message]
-other = "{{.Target}} a été débanni"
+[command_unban_message]
+other = "{{.Target}} has been unbanned"
 
-[command.unban.option.description.target]
-other = "utilisateur à débannir"
+[command_unban_option_desc_target]
+other = "user to unban"
 
-[command.unban.option.target]
+[command_unban_option_target]
 other = "target"
 
-[error.0]
-other = "Une erreur s'est produite {{.Error}}"
+[error_0]
+other = "An error has occurred {{.Error}}"
 
-[error.TargetIsBot]
-other = "Impossible de sélectionner ce bot comme cible !"
+[error_TargetIsBot]
+other = "Cannot select this bot as target!"
 
-[error.message]
-other = "Une erreur est survenue"
+[error_message]
+other = "An error has occurred"
