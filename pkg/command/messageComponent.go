@@ -229,6 +229,7 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				Inline: true,
 			})
 	}
+	s.ChannelMessageEditComplex(discordgo.NewMessageEdit(i.ChannelID, i.Message.ID))
 	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Embeds: &embeds,
 	})
