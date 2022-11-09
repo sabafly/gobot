@@ -16,89 +16,89 @@ command_unban_option_desc = { }
 error = { }
 
 [command_ban_desc]
-other = "ban the selected user"
+other = "utesteng den valgte brukeren"
 
 [command_ban_message]
-other = "{{.Target}} has been banned"
+other = "{{.Target}} har blitt utestengt"
 
 [command_ban_option_desc_reason]
-other = "reason for ban"
+other = "årsak til utestengelsen"
 
 [command_ban_option_desc_target]
-other = "user to ban"
+other = "bruker å utestenge"
 
 [command_ban_option_reason]
-other = "reason"
+other = "grunn"
 
 [command_ban_option_target]
 other = "target"
 
 [command_ban_reason]
-one = "Reason: {{.Reason}}"
-other = "Reasons: {{.Reason}}"
+one = "Årsak: {{.Reason}}"
+other = "Årsak: {{.Reason}}"
 
 [command_kick_desc]
-other = "kick the selected user"
+other = "spark den valgte brukeren"
 
 [command_kick_message]
-other = "{{.Target}} has been kicked"
+other = "{{.Target}} har blitt sparket ut"
 
 [command_kick_option_desc_target]
-other = "user to kick"
+other = "bruker som skal sparke"
 
 [command_kick_option_target]
 other = "target"
 
 [command_panel_desc]
-other = "manage or create panel"
+other = "administrer eller opprett panel"
 
 [command_panel_option_desc_role]
-other = "manage role panel"
+other = "administrere rollepanelet"
 
 [command_panel_option_role]
-other = "role"
+other = "rolle"
 
 [command_panel_option_role_option_create]
-other = "create"
+other = "Opprett"
 
 [command_panel_option_role_option_create_option_desc]
 other = "desc"
 
 [command_panel_option_role_option_create_option_desc_desc]
-other = "desc of panel"
+other = "Beskrivelse av panel"
 
 [command_panel_option_role_option_create_option_desc_name]
-other = "name of panel"
+other = "navn på panelet"
 
 [command_panel_option_role_option_create_option_desc_role]
-other = "role that add to the panel"
+other = "rolle som legger til i panelet"
 
 [command_panel_option_role_option_create_option_name]
-other = "name"
+other = "navn"
 
 [command_panel_option_role_option_create_option_role]
-other = "role"
+other = "rolle"
 
 [command_panel_option_role_option_desc_create]
-other = "create role panel"
+other = "opprett rollepanel"
 
 [command_unban_desc]
-other = "unban the selected user"
+other = "opphev bannlysningen av valgte bruker"
 
 [command_unban_message]
-other = "{{.Target}} has been unbanned"
+other = "{{.Target}} har blitt utestengt"
 
 [command_unban_option_desc_target]
-other = "user to unban"
+other = "bruker som opphever utestengelsen"
 
 [command_unban_option_target]
 other = "target"
 
 [error_0]
-other = "An error has occurred {{.Error}}"
+other = "En feil har oppstått {{.Error}}"
 
 [error_TargetIsBot]
-other = "Cannot select this bot as target!"
+other = "Kan ikke velge denne botten som mål!"
 
 [error_message]
-other = "An error has occurred"
+other = "En feil har oppstått"

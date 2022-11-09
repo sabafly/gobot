@@ -16,89 +16,89 @@ command_unban_option_desc = { }
 error = { }
 
 [command_ban_desc]
-other = "ban the selected user"
+other = "封禁所选用户"
 
 [command_ban_message]
-other = "{{.Target}} has been banned"
+other = "{{.Target}} 已被封禁"
 
 [command_ban_option_desc_reason]
-other = "reason for ban"
+other = "禁止的原因"
 
 [command_ban_option_desc_target]
-other = "user to ban"
+other = "要禁止的用户"
 
 [command_ban_option_reason]
-other = "reason"
+other = "原因"
 
 [command_ban_option_target]
 other = "target"
 
 [command_ban_reason]
-one = "Reason: {{.Reason}}"
-other = "Reasons: {{.Reason}}"
+one = "原因： {{.Reason}}"
+other = "原因： {{.Reason}}"
 
 [command_kick_desc]
-other = "kick the selected user"
+other = "踢出选中的用户"
 
 [command_kick_message]
-other = "{{.Target}} has been kicked"
+other = "{{.Target}} 已被踢出"
 
 [command_kick_option_desc_target]
-other = "user to kick"
+other = "要踢出的用户"
 
 [command_kick_option_target]
 other = "target"
 
 [command_panel_desc]
-other = "manage or create panel"
+other = "管理或创建面板"
 
 [command_panel_option_desc_role]
-other = "manage role panel"
+other = "管理角色面板"
 
 [command_panel_option_role]
-other = "role"
+other = "角色"
 
 [command_panel_option_role_option_create]
-other = "create"
+other = "创建"
 
 [command_panel_option_role_option_create_option_desc]
 other = "desc"
 
 [command_panel_option_role_option_create_option_desc_desc]
-other = "desc of panel"
+other = "面板降序排列"
 
 [command_panel_option_role_option_create_option_desc_name]
-other = "name of panel"
+other = "面板名称"
 
 [command_panel_option_role_option_create_option_desc_role]
-other = "role that add to the panel"
+other = "添加到面板的角色"
 
 [command_panel_option_role_option_create_option_name]
-other = "name"
+other = "名称"
 
 [command_panel_option_role_option_create_option_role]
-other = "role"
+other = "角色"
 
 [command_panel_option_role_option_desc_create]
-other = "create role panel"
+other = "创建角色面板"
 
 [command_unban_desc]
-other = "unban the selected user"
+other = "取消封禁所选用户"
 
 [command_unban_message]
-other = "{{.Target}} has been unbanned"
+other = "{{.Target}} 已被解除封禁"
 
 [command_unban_option_desc_target]
-other = "user to unban"
+other = "要解除封禁的用户"
 
 [command_unban_option_target]
 other = "target"
 
 [error_0]
-other = "An error has occurred {{.Error}}"
+other = "发生错误 {{.Error}}"
 
 [error_TargetIsBot]
-other = "Cannot select this bot as target!"
+other = "无法选择此机器人为目标！"
 
 [error_message]
-other = "An error has occurred"
+other = "发生错误"

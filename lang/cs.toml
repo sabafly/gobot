@@ -16,89 +16,89 @@ command_unban_option_desc = { }
 error = { }
 
 [command_ban_desc]
-other = "ban the selected user"
+other = "zakázat vybraného uživatele"
 
 [command_ban_message]
-other = "{{.Target}} has been banned"
+other = "{{.Target}} byl zabanován"
 
 [command_ban_option_desc_reason]
-other = "reason for ban"
+other = "důvod zákazu"
 
 [command_ban_option_desc_target]
-other = "user to ban"
+other = "zabanovat uživatele"
 
 [command_ban_option_reason]
-other = "reason"
+other = "důvod"
 
 [command_ban_option_target]
 other = "target"
 
 [command_ban_reason]
-one = "Reason: {{.Reason}}"
-other = "Reasons: {{.Reason}}"
+one = "Důvod: {{.Reason}}"
+other = "Důvody: {{.Reason}}"
 
 [command_kick_desc]
-other = "kick the selected user"
+other = "vyhodit vybraného uživatele"
 
 [command_kick_message]
-other = "{{.Target}} has been kicked"
+other = "{{.Target}} byl vyhozen"
 
 [command_kick_option_desc_target]
-other = "user to kick"
+other = "vykopnout uživatele"
 
 [command_kick_option_target]
 other = "target"
 
 [command_panel_desc]
-other = "manage or create panel"
+other = "spravovat nebo vytvářet panel"
 
 [command_panel_option_desc_role]
-other = "manage role panel"
+other = "spravovat panel rolí"
 
 [command_panel_option_role]
 other = "role"
 
 [command_panel_option_role_option_create]
-other = "create"
+other = "vytvořit"
 
 [command_panel_option_role_option_create_option_desc]
 other = "desc"
 
 [command_panel_option_role_option_create_option_desc_desc]
-other = "desc of panel"
+other = "sesta dílce"
 
 [command_panel_option_role_option_create_option_desc_name]
-other = "name of panel"
+other = "název dílce"
 
 [command_panel_option_role_option_create_option_desc_role]
-other = "role that add to the panel"
+other = "role, která přidává do panelu"
 
 [command_panel_option_role_option_create_option_name]
-other = "name"
+other = "jméno"
 
 [command_panel_option_role_option_create_option_role]
 other = "role"
 
 [command_panel_option_role_option_desc_create]
-other = "create role panel"
+other = "vytvořit panel role"
 
 [command_unban_desc]
-other = "unban the selected user"
+other = "odblokovat vybraného uživatele"
 
 [command_unban_message]
-other = "{{.Target}} has been unbanned"
+other = "{{.Target}} byl odblokován"
 
 [command_unban_option_desc_target]
-other = "user to unban"
+other = "odblokovat uživatele"
 
 [command_unban_option_target]
 other = "target"
 
 [error_0]
-other = "An error has occurred {{.Error}}"
+other = "Došlo k chybě {{.Error}}"
 
 [error_TargetIsBot]
-other = "Cannot select this bot as target!"
+other = "Tohoto bota nelze vybrat jako cíl!"
 
 [error_message]
-other = "An error has occurred"
+other = "Došlo k chybě"
