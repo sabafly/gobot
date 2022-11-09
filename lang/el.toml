@@ -16,89 +16,89 @@ command_unban_option_desc = { }
 error = { }
 
 [command_ban_desc]
-other = "ban the selected user"
+other = "απαγόρευση του επιλεγμένου χρήστη"
 
 [command_ban_message]
-other = "{{.Target}} has been banned"
+other = "{{.Target}} έχει αποκλειστεί"
 
 [command_ban_option_desc_reason]
-other = "reason for ban"
+other = "λόγος απαγόρευσης"
 
 [command_ban_option_desc_target]
-other = "user to ban"
+other = "χρήστης να απαγορεύσει"
 
 [command_ban_option_reason]
-other = "reason"
+other = "λόγος"
 
 [command_ban_option_target]
 other = "target"
 
 [command_ban_reason]
-one = "Reason: {{.Reason}}"
-other = "Reasons: {{.Reason}}"
+one = "Αιτία: {{.Reason}}"
+other = "Λόγοι: {{.Reason}}"
 
 [command_kick_desc]
-other = "kick the selected user"
+other = "κλώτσησε τον επιλεγμένο χρήστη"
 
 [command_kick_message]
-other = "{{.Target}} has been kicked"
+other = "{{.Target}} έχει διώξει"
 
 [command_kick_option_desc_target]
-other = "user to kick"
+other = "χρήστης για να κλωτσήσει"
 
 [command_kick_option_target]
 other = "target"
 
 [command_panel_desc]
-other = "manage or create panel"
+other = "διαχείριση ή δημιουργία πίνακα"
 
 [command_panel_option_desc_role]
-other = "manage role panel"
+other = "διαχείριση ρόλου πίνακα"
 
 [command_panel_option_role]
-other = "role"
+other = "ρόλος"
 
 [command_panel_option_role_option_create]
-other = "create"
+other = "δημιουργία"
 
 [command_panel_option_role_option_create_option_desc]
 other = "desc"
 
 [command_panel_option_role_option_create_option_desc_desc]
-other = "desc of panel"
+other = "πίνακας του πίνακα"
 
 [command_panel_option_role_option_create_option_desc_name]
-other = "name of panel"
+other = "όνομα του πίνακα"
 
 [command_panel_option_role_option_create_option_desc_role]
-other = "role that add to the panel"
+other = "ρόλος που προσθέτει στον πίνακα"
 
 [command_panel_option_role_option_create_option_name]
-other = "name"
+other = "όνομα"
 
 [command_panel_option_role_option_create_option_role]
-other = "role"
+other = "ρόλος"
 
 [command_panel_option_role_option_desc_create]
-other = "create role panel"
+other = "δημιουργία πίνακα ρόλου"
 
 [command_unban_desc]
-other = "unban the selected user"
+other = "κατάργηση αποκλεισμού του επιλεγμένου χρήστη"
 
 [command_unban_message]
-other = "{{.Target}} has been unbanned"
+other = "{{.Target}} έχει καταργηθεί"
 
 [command_unban_option_desc_target]
-other = "user to unban"
+other = "χρήστης για κατάργηση αποκλεισμού"
 
 [command_unban_option_target]
 other = "target"
 
 [error_0]
-other = "An error has occurred {{.Error}}"
+other = "Παρουσιάστηκε ένα σφάλμα {{.Error}}"
 
 [error_TargetIsBot]
-other = "Cannot select this bot as target!"
+other = "Δεν μπορείτε να επιλέξετε αυτό το bot ως στόχο!"
 
 [error_message]
-other = "An error has occurred"
+other = "Παρουσιάστηκε ένα σφάλμα"
