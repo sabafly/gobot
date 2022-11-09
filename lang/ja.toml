@@ -16,89 +16,89 @@ command_unban_option_desc = { }
 error = { }
 
 [command_ban_desc]
-other = "ban the selected user"
+other = "選択した利用者をBANする"
 
 [command_ban_message]
-other = "{{.Target}} has been banned"
+other = "{{.Target}} はBANされました"
 
 [command_ban_option_desc_reason]
-other = "reason for ban"
+other = "BANの理由"
 
 [command_ban_option_desc_target]
-other = "user to ban"
+other = "禁止するユーザー"
 
 [command_ban_option_reason]
-other = "reason"
+other = "理由"
 
 [command_ban_option_target]
 other = "target"
 
 [command_ban_reason]
-one = "Reason: {{.Reason}}"
-other = "Reasons: {{.Reason}}"
+one = "理由: {{.Reason}}"
+other = "理由: {{.Reason}}"
 
 [command_kick_desc]
-other = "kick the selected user"
+other = "選択したユーザーをキックする"
 
 [command_kick_message]
-other = "{{.Target}} has been kicked"
+other = "{{.Target}} がキックされました"
 
 [command_kick_option_desc_target]
-other = "user to kick"
+other = "キックするユーザー"
 
 [command_kick_option_target]
 other = "target"
 
 [command_panel_desc]
-other = "manage or create panel"
+other = "管理またはパネルの作成"
 
 [command_panel_option_desc_role]
-other = "manage role panel"
+other = "役割パネルの管理"
 
 [command_panel_option_role]
-other = "role"
+other = "ロール"
 
 [command_panel_option_role_option_create]
-other = "create"
+other = "作成"
 
 [command_panel_option_role_option_create_option_desc]
 other = "desc"
 
 [command_panel_option_role_option_create_option_desc_desc]
-other = "desc of panel"
+other = "パネルのdesc"
 
 [command_panel_option_role_option_create_option_desc_name]
-other = "name of panel"
+other = "パネル名"
 
 [command_panel_option_role_option_create_option_desc_role]
-other = "role that add to the panel"
+other = "パネルに追加するロール"
 
 [command_panel_option_role_option_create_option_name]
-other = "name"
+other = "名前"
 
 [command_panel_option_role_option_create_option_role]
-other = "role"
+other = "ロール"
 
 [command_panel_option_role_option_desc_create]
-other = "create role panel"
+other = "役割パネルを作成"
 
 [command_unban_desc]
-other = "unban the selected user"
+other = "選択した利用者のBANを解除"
 
 [command_unban_message]
-other = "{{.Target}} has been unbanned"
+other = "{{.Target}} のBANが解除されました"
 
 [command_unban_option_desc_target]
-other = "user to unban"
+other = "BANを解除するユーザー"
 
 [command_unban_option_target]
 other = "target"
 
 [error_0]
-other = "An error has occurred {{.Error}}"
+other = "エラーが発生しました {{.Error}}"
 
 [error_TargetIsBot]
-other = "Cannot select this bot as target!"
+other = "このボットをターゲットとして選択できません！"
 
 [error_message]
-other = "An error has occurred"
+other = "エラーが発生しました"
