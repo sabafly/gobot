@@ -1,54 +1,104 @@
-[command.ban.description]
+command = { }
+command_ban = { }
+command_ban_option = { }
+command_ban_option_desc = { }
+command_kick = { }
+command_kick_option = { }
+command_kick_option_desc = { }
+command_panel = { }
+command_panel_option = { }
+command_panel_option_desc = { }
+command_panel_option_role_option_create_option = { }
+command_panel_option_role_option_desc = { }
+command_unban = { }
+command_unban_option = { }
+command_unban_option_desc = { }
+error = { }
+
+[command_ban_desc]
 other = "ban the selected user"
 
-[command.ban.option.target]
-other = "target"
+[command_ban_message]
+other = "{{.Target}} has been banned"
 
-[command.ban.option.description.target]
-other = "user to ban"
-
-[command.ban.option.description.reason]
+[command_ban_option_desc_reason]
 other = "reason for ban"
 
-[command.ban.option.reason]
+[command_ban_option_desc_target]
+other = "user to ban"
+
+[command_ban_option_reason]
 other = "reason"
 
-[command.ban.message]
-other = "{{.Target}}has been banned"
+[command_ban_option_target]
+other = "target"
 
-[command.ban.reason]
+[command_ban_reason]
 one = "Reason: {{.Reason}}"
 other = "Reasons: {{.Reason}}"
 
-[command.kick.description]
+[command_kick_desc]
 other = "kick the selected user"
 
-[command.kick.option.target]
-other = "target"
+[command_kick_message]
+other = "{{.Target}} has been kicked"
 
-[command.kick.option.description.target]
+[command_kick_option_desc_target]
 other = "user to kick"
 
-[command.kick.message]
-other = "{{.Target}}has been kicked"
-
-[command.unban.description]
-other = "pardon the selected user"
-
-[command.unban.option.target]
+[command_kick_option_target]
 other = "target"
 
-[command.unban.option.description.target]
-other = "user to ban"
+[command_panel_desc]
+other = "manage or create panel"
 
-[command.unban.message]
+[command_panel_option_desc_role]
+other = "manage role panel"
+
+[command_panel_option_role]
+other = "role"
+
+[command_panel_option_role_option_create]
+other = "create"
+
+[command_panel_option_role_option_create_option_desc]
+other = "desc"
+
+[command_panel_option_role_option_create_option_desc_desc]
+other = "desc of panel"
+
+[command_panel_option_role_option_create_option_desc_name]
+other = "name of panel"
+
+[command_panel_option_role_option_create_option_desc_role]
+other = "role that add to the panel"
+
+[command_panel_option_role_option_create_option_name]
+other = "name"
+
+[command_panel_option_role_option_create_option_role]
+other = "role"
+
+[command_panel_option_role_option_desc_create]
+other = "create role panel"
+
+[command_unban_desc]
+other = "unban the selected user"
+
+[command_unban_message]
 other = "{{.Target}} has been unbanned"
 
-[error.0]
+[command_unban_option_desc_target]
+other = "user to unban"
+
+[command_unban_option_target]
+other = "target"
+
+[error_0]
 other = "An error has occurred {{.Error}}"
 
-[error.TargetIsBot]
+[error_TargetIsBot]
 other = "Cannot select this bot as target!"
 
-[error.message]
+[error_message]
 other = "An error has occurred"
