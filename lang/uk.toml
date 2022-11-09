@@ -1,87 +1,104 @@
-[command.ban.description]
-other = "забанити вибраного користувача"
+command = { }
+command_ban = { }
+command_ban_option = { }
+command_ban_option_desc = { }
+command_kick = { }
+command_kick_option = { }
+command_kick_option_desc = { }
+command_panel = { }
+command_panel_option = { }
+command_panel_option_desc = { }
+command_panel_option_role_option_create_option = { }
+command_panel_option_role_option_desc = { }
+command_unban = { }
+command_unban_option = { }
+command_unban_option_desc = { }
+error = { }
 
-[command.ban.message]
-other = "{{.Target}} був забанений"
+[command_ban_desc]
+other = "ban the selected user"
 
-[command.ban.option.description.reason]
-other = "причина для бану"
+[command_ban_message]
+other = "{{.Target}} has been banned"
 
-[command.ban.option.description.target]
-other = "користувач для блокування"
+[command_ban_option_desc_reason]
+other = "reason for ban"
 
-[command.ban.option.reason]
-other = "причина"
+[command_ban_option_desc_target]
+other = "user to ban"
 
-[command.ban.option.target]
+[command_ban_option_reason]
+other = "reason"
+
+[command_ban_option_target]
 other = "target"
 
-[command.ban.reason]
-one = "Причина: {{.Reason}}"
-other = "Причини: {{.Reason}}"
+[command_ban_reason]
+one = "Reason: {{.Reason}}"
+other = "Reasons: {{.Reason}}"
 
-[command.kick.description]
-other = "вилучити вибраного користувача"
+[command_kick_desc]
+other = "kick the selected user"
 
-[command.kick.message]
-other = "{{.Target}} був вигнаний"
+[command_kick_message]
+other = "{{.Target}} has been kicked"
 
-[command.kick.option.description.target]
-other = "користувача для вилучення"
+[command_kick_option_desc_target]
+other = "user to kick"
 
-[command.kick.option.target]
+[command_kick_option_target]
 other = "target"
 
-[command.panel.description]
-other = "керування або створити панель"
+[command_panel_desc]
+other = "manage or create panel"
 
-[command.panel.option.description.role]
-other = "керувати панеллю ролей"
+[command_panel_option_desc_role]
+other = "manage role panel"
 
-[command.panel.option.role]
-other = "роль"
+[command_panel_option_role]
+other = "role"
 
-[command.panel.option.role.option.crate.option.desc]
-other = "опис"
+[command_panel_option_role_option_create]
+other = "create"
 
-[command.panel.option.role.option.create]
-other = "створити"
+[command_panel_option_role_option_create_option_desc]
+other = "desc"
 
-[command.panel.option.role.option.create.option.description.desc]
-other = "опис панелі"
+[command_panel_option_role_option_create_option_desc_desc]
+other = "desc of panel"
 
-[command.panel.option.role.option.create.option.description.name]
-other = "назва панелі"
+[command_panel_option_role_option_create_option_desc_name]
+other = "name of panel"
 
-[command.panel.option.role.option.create.option.description.role]
-other = "роль, що додає до панелі"
+[command_panel_option_role_option_create_option_desc_role]
+other = "role that add to the panel"
 
-[command.panel.option.role.option.create.option.name]
-other = "ім'я"
+[command_panel_option_role_option_create_option_name]
+other = "name"
 
-[command.panel.option.role.option.create.option.role]
-other = "роль"
+[command_panel_option_role_option_create_option_role]
+other = "role"
 
-[command.panel.option.role.option.description.create]
-other = "створити панель ролі"
+[command_panel_option_role_option_desc_create]
+other = "create role panel"
 
-[command.unban.description]
-other = "pardon the selected user"
+[command_unban_desc]
+other = "unban the selected user"
 
-[command.unban.message]
-other = "{{.Target}} був розблокований"
+[command_unban_message]
+other = "{{.Target}} has been unbanned"
 
-[command.unban.option.description.target]
-other = "користувача для розблокування"
+[command_unban_option_desc_target]
+other = "user to unban"
 
-[command.unban.option.target]
+[command_unban_option_target]
 other = "target"
 
-[error.0]
-other = "Відбулася помилка {{.Error}}"
+[error_0]
+other = "An error has occurred {{.Error}}"
 
-[error.TargetIsBot]
-other = "Не вдається вибрати цього бота як ціль!"
+[error_TargetIsBot]
+other = "Cannot select this bot as target!"
 
-[error.message]
-other = "Сталася помилка"
+[error_message]
+other = "An error has occurred"
