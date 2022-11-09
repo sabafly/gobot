@@ -16,7 +16,7 @@ command_unban_option_desc = { }
 error = { }
 
 [command_ban_desc]
-other = "選択した利用者をBANする"
+other = "選択したユーザーをBANします"
 
 [command_ban_message]
 other = "{{.Target}} はBANされました"
@@ -92,7 +92,7 @@ other = "{{.Target}} のBANが解除されました"
 other = "BANを解除するユーザー"
 
 [command_unban_option_target]
-other = "target"
+other = "ターゲット"
 
 [error_0]
 other = "エラーが発生しました {{.Error}}"
