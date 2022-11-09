@@ -65,21 +65,21 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		{
 			Name:                     "ban",
 			Description:              "ban the selected user",
-			DescriptionLocalizations: translate.MessageMap("command.ban.description"),
+			DescriptionLocalizations: translate.MessageMap("command_ban_desc"),
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:                     "target",
 					Description:              "user to ban",
-					NameLocalizations:        *translate.MessageMap("command.ban.option.target"),
-					DescriptionLocalizations: *translate.MessageMap("command.ban.option.description.target"),
+					NameLocalizations:        *translate.MessageMap("command_ban_option_target"),
+					DescriptionLocalizations: *translate.MessageMap("command_ban_option_desc_target"),
 					Type:                     discordgo.ApplicationCommandOptionUser,
 					Required:                 true,
 				},
 				{
 					Name:                     "reason",
 					Description:              "reason for ban",
-					NameLocalizations:        *translate.MessageMap("command.ban.option.reason"),
-					DescriptionLocalizations: *translate.MessageMap("command.ban.option.description.reason"),
+					NameLocalizations:        *translate.MessageMap("command_ban_option_reason"),
+					DescriptionLocalizations: *translate.MessageMap("command_ban_option_desc_reason"),
 					Type:                     discordgo.ApplicationCommandOptionString,
 				},
 			},
@@ -90,13 +90,13 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		{
 			Name:                     "unban",
 			Description:              "pardon the selected user",
-			DescriptionLocalizations: translate.MessageMap("command.unban.description"),
+			DescriptionLocalizations: translate.MessageMap("command_unban_desc"),
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:                     "target",
 					Description:              "user to pardon",
-					NameLocalizations:        *translate.MessageMap("command.unban.option.target"),
-					DescriptionLocalizations: *translate.MessageMap("command.unban.option.description.target"),
+					NameLocalizations:        *translate.MessageMap("command_unban_option_target"),
+					DescriptionLocalizations: *translate.MessageMap("command_unban_option_desc_target"),
 					Type:                     discordgo.ApplicationCommandOptionUser,
 					Required:                 true,
 				},
@@ -108,13 +108,13 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		{
 			Name:                     "kick",
 			Description:              "kick the selected user",
-			DescriptionLocalizations: translate.MessageMap("command.kick.description"),
+			DescriptionLocalizations: translate.MessageMap("command_kick_desc"),
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Name:                     "target",
 					Description:              "user to kick",
-					NameLocalizations:        *translate.MessageMap("command.kick.option.target"),
-					DescriptionLocalizations: *translate.MessageMap("command.kick.option.description.target"),
+					NameLocalizations:        *translate.MessageMap("command_kick_option_target"),
+					DescriptionLocalizations: *translate.MessageMap("command_kick_option_desc_target"),
 					Type:                     discordgo.ApplicationCommandOptionUser,
 					Required:                 true,
 				},
@@ -126,7 +126,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		{
 			Name:                     "panel",
 			Description:              "manage or create panel",
-			DescriptionLocalizations: translate.MessageMap("command.panel.description"),
+			DescriptionLocalizations: translate.MessageMap("command_panel_desc"),
 			GuildID:                  *SupportGuildID,
 			DefaultMemberPermissions: &PermissionAdminMembers,
 			DMPermission:             &dmPermission,
@@ -134,38 +134,38 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 				{
 					Name:                     "role",
 					Description:              "manage role panel",
-					NameLocalizations:        *translate.MessageMap("command.panel.option.role"),
-					DescriptionLocalizations: *translate.MessageMap("command.panel.option.description.role"),
+					NameLocalizations:        *translate.MessageMap("command_panel_option_role"),
+					DescriptionLocalizations: *translate.MessageMap("command_panel_option_desc_role"),
 					Type:                     discordgo.ApplicationCommandOptionSubCommandGroup,
 					Options: []*discordgo.ApplicationCommandOption{
 						{
 							Name:                     "create",
 							Description:              "create role panel",
-							NameLocalizations:        *translate.MessageMap("command.panel.option.role.option.create"),
-							DescriptionLocalizations: *translate.MessageMap("command.panel.option.role.option.description.crate"),
+							NameLocalizations:        *translate.MessageMap("command_panel_option_role_option_create"),
+							DescriptionLocalizations: *translate.MessageMap("command_panel_option_role_option_desc_create"),
 							Type:                     discordgo.ApplicationCommandOptionSubCommand,
 							Options: []*discordgo.ApplicationCommandOption{
 								{
 									Name:                     "name",
 									Description:              "name of panel",
-									NameLocalizations:        *translate.MessageMap("command.panel.option.role.option.create.option.name"),
-									DescriptionLocalizations: *translate.MessageMap("command.panel.option.role.option.create.option.description.name"),
+									NameLocalizations:        *translate.MessageMap("command_panel_option_role_option_create_option_name"),
+									DescriptionLocalizations: *translate.MessageMap("command_panel_option_role_option_create_option_desc_name"),
 									Type:                     discordgo.ApplicationCommandOptionString,
 									Required:                 true,
 								},
 								{
 									Name:                     "role",
 									Description:              "role that add to the panel",
-									NameLocalizations:        *translate.MessageMap("command.panel.option.role.option.create.option.role"),
-									DescriptionLocalizations: *translate.MessageMap("command.panel.option.role.option.create.option.description.role"),
+									NameLocalizations:        *translate.MessageMap("command_panel_option_role_option_create_option_role"),
+									DescriptionLocalizations: *translate.MessageMap("command_panel_option_role_option_create_option_desc_role"),
 									Type:                     discordgo.ApplicationCommandOptionRole,
 									Required:                 true,
 								},
 								{
 									Name:                     "description",
 									Description:              "description of panel",
-									NameLocalizations:        *translate.MessageMap("command.panel.option.role.option.crate.option.desc"),
-									DescriptionLocalizations: *translate.MessageMap("command.panel.option.role.option.create.option.description.desc"),
+									NameLocalizations:        *translate.MessageMap("command_panel_option_role_option_create_option_desc"),
+									DescriptionLocalizations: *translate.MessageMap("command_panel_option_role_option_create_option_desc_desc"),
 									Type:                     discordgo.ApplicationCommandOptionString,
 								},
 							},
