@@ -16,89 +16,89 @@ command_unban_option_desc = { }
 error = { }
 
 [command_ban_desc]
-other = "ban the selected user"
+other = "bandisce l'utente selezionato"
 
 [command_ban_message]
-other = "{{.Target}} has been banned"
+other = "{{.Target}} è stato bannato"
 
 [command_ban_option_desc_reason]
-other = "reason for ban"
+other = "motivo del divieto"
 
 [command_ban_option_desc_target]
-other = "user to ban"
+other = "utente da bandire"
 
 [command_ban_option_reason]
-other = "reason"
+other = "motivo"
 
 [command_ban_option_target]
 other = "target"
 
 [command_ban_reason]
-one = "Reason: {{.Reason}}"
-other = "Reasons: {{.Reason}}"
+one = "Motivo: {{.Reason}}"
+other = "Motivi: {{.Reason}}"
 
 [command_kick_desc]
-other = "kick the selected user"
+other = "espulso l'utente selezionato"
 
 [command_kick_message]
-other = "{{.Target}} has been kicked"
+other = "{{.Target}} è stato espulso"
 
 [command_kick_option_desc_target]
-other = "user to kick"
+other = "utente da espellere"
 
 [command_kick_option_target]
 other = "target"
 
 [command_panel_desc]
-other = "manage or create panel"
+other = "gestire o creare un pannello"
 
 [command_panel_option_desc_role]
-other = "manage role panel"
+other = "gestire il pannello ruoli"
 
 [command_panel_option_role]
-other = "role"
+other = "ruolo"
 
 [command_panel_option_role_option_create]
-other = "create"
+other = "crea"
 
 [command_panel_option_role_option_create_option_desc]
 other = "desc"
 
 [command_panel_option_role_option_create_option_desc_desc]
-other = "desc of panel"
+other = "desc del pannello"
 
 [command_panel_option_role_option_create_option_desc_name]
-other = "name of panel"
+other = "nome del pannello"
 
 [command_panel_option_role_option_create_option_desc_role]
-other = "role that add to the panel"
+other = "ruolo che si aggiunge al pannello"
 
 [command_panel_option_role_option_create_option_name]
-other = "name"
+other = "nome"
 
 [command_panel_option_role_option_create_option_role]
-other = "role"
+other = "ruolo"
 
 [command_panel_option_role_option_desc_create]
-other = "create role panel"
+other = "crea pannello ruolo"
 
 [command_unban_desc]
-other = "unban the selected user"
+other = "disattiva l'utente selezionato"
 
 [command_unban_message]
-other = "{{.Target}} has been unbanned"
+other = "{{.Target}} è stato sbannato"
 
 [command_unban_option_desc_target]
-other = "user to unban"
+other = "utente da sbloccare"
 
 [command_unban_option_target]
 other = "target"
 
 [error_0]
-other = "An error has occurred {{.Error}}"
+other = "Si è verificato un errore {{.Error}}"
 
 [error_TargetIsBot]
-other = "Cannot select this bot as target!"
+other = "Non è possibile selezionare questo bot come obiettivo!"
 
 [error_message]
-other = "An error has occurred"
+other = "Si è verificato un errore"
