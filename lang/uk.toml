@@ -16,89 +16,89 @@ command_unban_option_desc = { }
 error = { }
 
 [command_ban_desc]
-other = "ban the selected user"
+other = "забанити вибраного користувача"
 
 [command_ban_message]
-other = "{{.Target}} has been banned"
+other = "{{.Target}} був забанений"
 
 [command_ban_option_desc_reason]
-other = "reason for ban"
+other = "причина для бану"
 
 [command_ban_option_desc_target]
-other = "user to ban"
+other = "користувач для блокування"
 
 [command_ban_option_reason]
-other = "reason"
+other = "причина"
 
 [command_ban_option_target]
 other = "target"
 
 [command_ban_reason]
-one = "Reason: {{.Reason}}"
-other = "Reasons: {{.Reason}}"
+one = "Причина: {{.Reason}}"
+other = "Причини: {{.Reason}}"
 
 [command_kick_desc]
-other = "kick the selected user"
+other = "вилучити вибраного користувача"
 
 [command_kick_message]
-other = "{{.Target}} has been kicked"
+other = "{{.Target}} був вигнаний"
 
 [command_kick_option_desc_target]
-other = "user to kick"
+other = "користувача для вилучення"
 
 [command_kick_option_target]
 other = "target"
 
 [command_panel_desc]
-other = "manage or create panel"
+other = "керування або створити панель"
 
 [command_panel_option_desc_role]
-other = "manage role panel"
+other = "керувати панеллю ролей"
 
 [command_panel_option_role]
-other = "role"
+other = "роль"
 
 [command_panel_option_role_option_create]
-other = "create"
+other = "створити"
 
 [command_panel_option_role_option_create_option_desc]
 other = "desc"
 
 [command_panel_option_role_option_create_option_desc_desc]
-other = "desc of panel"
+other = "панель"
 
 [command_panel_option_role_option_create_option_desc_name]
-other = "name of panel"
+other = "назва панелі"
 
 [command_panel_option_role_option_create_option_desc_role]
-other = "role that add to the panel"
+other = "роль, що додає до панелі"
 
 [command_panel_option_role_option_create_option_name]
-other = "name"
+other = "ім'я"
 
 [command_panel_option_role_option_create_option_role]
-other = "role"
+other = "роль"
 
 [command_panel_option_role_option_desc_create]
-other = "create role panel"
+other = "створити панель ролі"
 
 [command_unban_desc]
-other = "unban the selected user"
+other = "розблокувати вибраного користувача"
 
 [command_unban_message]
-other = "{{.Target}} has been unbanned"
+other = "{{.Target}} був розблокований"
 
 [command_unban_option_desc_target]
-other = "user to unban"
+other = "користувача для розблокування"
 
 [command_unban_option_target]
 other = "target"
 
 [error_0]
-other = "An error has occurred {{.Error}}"
+other = "Відбулася помилка {{.Error}}"
 
 [error_TargetIsBot]
-other = "Cannot select this bot as target!"
+other = "Не вдається вибрати цього бота як ціль!"
 
 [error_message]
-other = "An error has occurred"
+other = "Сталася помилка"
