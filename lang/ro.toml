@@ -1,87 +1,104 @@
-[command.ban.description]
-other = "interzice utilizatorul selectat"
+command = { }
+command_ban = { }
+command_ban_option = { }
+command_ban_option_desc = { }
+command_kick = { }
+command_kick_option = { }
+command_kick_option_desc = { }
+command_panel = { }
+command_panel_option = { }
+command_panel_option_desc = { }
+command_panel_option_role_option_create_option = { }
+command_panel_option_role_option_desc = { }
+command_unban = { }
+command_unban_option = { }
+command_unban_option_desc = { }
+error = { }
 
-[command.ban.message]
-other = "{{.Target}} a fost banat"
+[command_ban_desc]
+other = "ban the selected user"
 
-[command.ban.option.description.reason]
-other = "motiv pentru interdicție"
+[command_ban_message]
+other = "{{.Target}} has been banned"
 
-[command.ban.option.description.target]
-other = "utilizator pentru a interzice"
+[command_ban_option_desc_reason]
+other = "reason for ban"
 
-[command.ban.option.reason]
-other = "motiv"
+[command_ban_option_desc_target]
+other = "user to ban"
 
-[command.ban.option.target]
+[command_ban_option_reason]
+other = "reason"
+
+[command_ban_option_target]
 other = "target"
 
-[command.ban.reason]
-one = "Motiv: {{.Reason}}"
-other = "Motive: {{.Reason}}"
+[command_ban_reason]
+one = "Reason: {{.Reason}}"
+other = "Reasons: {{.Reason}}"
 
-[command.kick.description]
-other = "exclude utilizatorul selectat"
+[command_kick_desc]
+other = "kick the selected user"
 
-[command.kick.message]
-other = "{{.Target}} a fost dat afară"
+[command_kick_message]
+other = "{{.Target}} has been kicked"
 
-[command.kick.option.description.target]
-other = "utilizator de dat afară"
+[command_kick_option_desc_target]
+other = "user to kick"
 
-[command.kick.option.target]
+[command_kick_option_target]
 other = "target"
 
-[command.panel.description]
-other = "gestionare sau creare panou"
+[command_panel_desc]
+other = "manage or create panel"
 
-[command.panel.option.description.role]
-other = "gestionează panoul de rol"
+[command_panel_option_desc_role]
+other = "manage role panel"
 
-[command.panel.option.role]
-other = "rol"
+[command_panel_option_role]
+other = "role"
 
-[command.panel.option.role.option.crate.option.desc]
-other = "descriere"
+[command_panel_option_role_option_create]
+other = "create"
 
-[command.panel.option.role.option.create]
-other = "crează"
+[command_panel_option_role_option_create_option_desc]
+other = "desc"
 
-[command.panel.option.role.option.create.option.description.desc]
-other = "descrierea panoului"
+[command_panel_option_role_option_create_option_desc_desc]
+other = "desc of panel"
 
-[command.panel.option.role.option.create.option.description.name]
-other = "numele panoului"
+[command_panel_option_role_option_create_option_desc_name]
+other = "name of panel"
 
-[command.panel.option.role.option.create.option.description.role]
-other = "rol care adaugă la panou"
+[command_panel_option_role_option_create_option_desc_role]
+other = "role that add to the panel"
 
-[command.panel.option.role.option.create.option.name]
-other = "nume"
+[command_panel_option_role_option_create_option_name]
+other = "name"
 
-[command.panel.option.role.option.create.option.role]
-other = "rol"
+[command_panel_option_role_option_create_option_role]
+other = "role"
 
-[command.panel.option.role.option.description.create]
-other = "creează panou de rol"
+[command_panel_option_role_option_desc_create]
+other = "create role panel"
 
-[command.unban.description]
-other = "pardon the selected user"
+[command_unban_desc]
+other = "unban the selected user"
 
-[command.unban.message]
-other = "{{.Target}} a fost debanat"
+[command_unban_message]
+other = "{{.Target}} has been unbanned"
 
-[command.unban.option.description.target]
-other = "utilizator pentru a debloca"
+[command_unban_option_desc_target]
+other = "user to unban"
 
-[command.unban.option.target]
+[command_unban_option_target]
 other = "target"
 
-[error.0]
-other = "S-a produs o eroare {{.Error}}"
+[error_0]
+other = "An error has occurred {{.Error}}"
 
-[error.TargetIsBot]
-other = "Nu se poate selecta acest bot ca țintă!"
+[error_TargetIsBot]
+other = "Cannot select this bot as target!"
 
-[error.message]
-other = "A apărut o eroare"
+[error_message]
+other = "An error has occurred"
