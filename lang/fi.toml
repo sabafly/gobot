@@ -16,89 +16,89 @@ command_unban_option_desc = { }
 error = { }
 
 [command_ban_desc]
-other = "ban the selected user"
+other = "porttikielto valitulle käyttäjälle"
 
 [command_ban_message]
-other = "{{.Target}} has been banned"
+other = "{{.Target}} on estetty"
 
 [command_ban_option_desc_reason]
-other = "reason for ban"
+other = "kiellon syy"
 
 [command_ban_option_desc_target]
-other = "user to ban"
+other = "käyttäjä jolle porttikielto"
 
 [command_ban_option_reason]
-other = "reason"
+other = "syy"
 
 [command_ban_option_target]
 other = "target"
 
 [command_ban_reason]
-one = "Reason: {{.Reason}}"
-other = "Reasons: {{.Reason}}"
+one = "Syy: {{.Reason}}"
+other = "Syyt: {{.Reason}}"
 
 [command_kick_desc]
-other = "kick the selected user"
+other = "potkia valittu käyttäjä"
 
 [command_kick_message]
-other = "{{.Target}} has been kicked"
+other = "{{.Target}} on potkittu"
 
 [command_kick_option_desc_target]
-other = "user to kick"
+other = "käyttäjä potkia"
 
 [command_kick_option_target]
 other = "target"
 
 [command_panel_desc]
-other = "manage or create panel"
+other = "hallitse tai luo paneeli"
 
 [command_panel_option_desc_role]
-other = "manage role panel"
+other = "hallitse roolipaneelia"
 
 [command_panel_option_role]
-other = "role"
+other = "rooli"
 
 [command_panel_option_role_option_create]
-other = "create"
+other = "luo"
 
 [command_panel_option_role_option_create_option_desc]
 other = "desc"
 
 [command_panel_option_role_option_create_option_desc_desc]
-other = "desc of panel"
+other = "paneelin desc"
 
 [command_panel_option_role_option_create_option_desc_name]
-other = "name of panel"
+other = "paneelin nimi"
 
 [command_panel_option_role_option_create_option_desc_role]
-other = "role that add to the panel"
+other = "rooli, joka lisää paneeliin"
 
 [command_panel_option_role_option_create_option_name]
-other = "name"
+other = "nimi"
 
 [command_panel_option_role_option_create_option_role]
-other = "role"
+other = "rooli"
 
 [command_panel_option_role_option_desc_create]
-other = "create role panel"
+other = "luo roolipaneeli"
 
 [command_unban_desc]
-other = "unban the selected user"
+other = "poista porttikielto valitulle käyttäjälle"
 
 [command_unban_message]
-other = "{{.Target}} has been unbanned"
+other = "{{.Target}} on poistettu porttikielto"
 
 [command_unban_option_desc_target]
-other = "user to unban"
+other = "poista porttikielto"
 
 [command_unban_option_target]
 other = "target"
 
 [error_0]
-other = "An error has occurred {{.Error}}"
+other = "Tapahtui virhe {{.Error}}"
 
 [error_TargetIsBot]
-other = "Cannot select this bot as target!"
+other = "Botti ei voi valita kohteeksi!"
 
 [error_message]
-other = "An error has occurred"
+other = "Virhe on tapahtunut"
