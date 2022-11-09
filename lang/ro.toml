@@ -16,89 +16,89 @@ command_unban_option_desc = { }
 error = { }
 
 [command_ban_desc]
-other = "ban the selected user"
+other = "interzice utilizatorul selectat"
 
 [command_ban_message]
-other = "{{.Target}} has been banned"
+other = "{{.Target}} a fost banat"
 
 [command_ban_option_desc_reason]
-other = "reason for ban"
+other = "motiv pentru interdicție"
 
 [command_ban_option_desc_target]
-other = "user to ban"
+other = "utilizator pentru a interzice"
 
 [command_ban_option_reason]
-other = "reason"
+other = "motiv"
 
 [command_ban_option_target]
 other = "target"
 
 [command_ban_reason]
-one = "Reason: {{.Reason}}"
-other = "Reasons: {{.Reason}}"
+one = "Motiv: {{.Reason}}"
+other = "Motive: {{.Reason}}"
 
 [command_kick_desc]
-other = "kick the selected user"
+other = "exclude utilizatorul selectat"
 
 [command_kick_message]
-other = "{{.Target}} has been kicked"
+other = "{{.Target}} a fost dat afară"
 
 [command_kick_option_desc_target]
-other = "user to kick"
+other = "utilizator de dat afară"
 
 [command_kick_option_target]
 other = "target"
 
 [command_panel_desc]
-other = "manage or create panel"
+other = "gestionare sau creare panou"
 
 [command_panel_option_desc_role]
-other = "manage role panel"
+other = "gestionează panoul de rol"
 
 [command_panel_option_role]
-other = "role"
+other = "rol"
 
 [command_panel_option_role_option_create]
-other = "create"
+other = "crează"
 
 [command_panel_option_role_option_create_option_desc]
 other = "desc"
 
 [command_panel_option_role_option_create_option_desc_desc]
-other = "desc of panel"
+other = "descoperirea panoului"
 
 [command_panel_option_role_option_create_option_desc_name]
-other = "name of panel"
+other = "numele panoului"
 
 [command_panel_option_role_option_create_option_desc_role]
-other = "role that add to the panel"
+other = "rol care adaugă la panou"
 
 [command_panel_option_role_option_create_option_name]
-other = "name"
+other = "nume"
 
 [command_panel_option_role_option_create_option_role]
-other = "role"
+other = "rol"
 
 [command_panel_option_role_option_desc_create]
-other = "create role panel"
+other = "creează panou de rol"
 
 [command_unban_desc]
-other = "unban the selected user"
+other = "deblochează utilizatorul selectat"
 
 [command_unban_message]
-other = "{{.Target}} has been unbanned"
+other = "{{.Target}} a fost debanat"
 
 [command_unban_option_desc_target]
-other = "user to unban"
+other = "utilizator pentru a debloca"
 
 [command_unban_option_target]
 other = "target"
 
 [error_0]
-other = "An error has occurred {{.Error}}"
+other = "S-a produs o eroare {{.Error}}"
 
 [error_TargetIsBot]
-other = "Cannot select this bot as target!"
+other = "Nu se poate selecta acest bot ca țintă!"
 
 [error_message]
-other = "An error has occurred"
+other = "A apărut o eroare"
