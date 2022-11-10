@@ -1,5 +1,5 @@
 [address]
-other = "address"
+other = "Endereço"
 
 [command_ban_desc]
 other = "banir o usuário selecionado"
@@ -42,52 +42,52 @@ other = "gerenciar ou criar painel"
 other = "gerenciar painel de funções"
 
 [command_panel_option_minecraft]
-other = "minecraft"
+other = "Minecraft"
 
 [command_panel_option_minecraft_desc]
-other = "manage minecraft panel"
+other = "gerenciar painel do minecraft"
 
 [command_panel_option_minecraft_option_create]
-other = "create"
+other = "criar"
 
 [command_panel_option_minecraft_option_create_desc]
-other = "create minecraft panel"
+other = "criar painel de minecraft"
 
 [command_panel_option_minecraft_option_create_option_address]
-other = "address"
+other = "Endereço"
 
 [command_panel_option_minecraft_option_create_option_address_desc]
-other = "address of server"
+other = "endereço do servidor"
 
 [command_panel_option_minecraft_option_create_option_description]
-other = "description"
+other = "Descrição"
 
 [command_panel_option_minecraft_option_create_option_description_desc]
-other = "description of panel"
+other = "descrição do painel"
 
 [command_panel_option_minecraft_option_create_option_name]
-other = "name"
+other = "Nome"
 
 [command_panel_option_minecraft_option_create_option_name_desc]
-other = "name of panel"
+other = "nome do painel"
 
 [command_panel_option_minecraft_option_create_option_port]
-other = "port"
+other = "Porta"
 
 [command_panel_option_minecraft_option_create_option_port_desc]
-other = "port of server"
+other = "porta do servidor"
 
 [command_panel_option_minecraft_option_create_option_servername]
-other = "servername"
+other = "nomedoServidor"
 
 [command_panel_option_minecraft_option_create_option_servername_desc]
-other = "name of server"
+other = "nome do servidor"
 
 [command_panel_option_minecraft_option_create_option_showip]
 other = "showip"
 
 [command_panel_option_minecraft_option_create_option_showip_desc]
-other = "show ip or not"
+other = "mostrar o IP ou não"
 
 [command_panel_option_role]
 other = "Função"
@@ -117,46 +117,46 @@ other = "Função"
 other = "criar painel de função"
 
 [command_tracker]
-other = "tracker"
+other = "rastreador"
 
 [command_tracker_desc]
-other = "manage or create tracker"
+other = "gerenciar ou criar rastreador"
 
 [command_tracker_option_minecraft]
-other = "minecraft"
+other = "Minecraft"
 
 [command_tracker_option_minecraft_desc]
-other = "manage minecraft server tracker"
+other = "gerenciar rastreador de servidores do minecraft"
 
 [command_tracker_option_minecraft_option_create]
-other = "create"
+other = "criar"
 
 [command_tracker_option_minecraft_option_create_desc]
-other = "minecraft server tracker"
+other = "minecraft rastreador de servidores"
 
 [command_tracker_option_minecraft_option_create_option_address]
-other = "address"
+other = "Endereço"
 
 [command_tracker_option_minecraft_option_create_option_address_desc]
-other = "address of server"
+other = "endereço do servidor"
 
 [command_tracker_option_minecraft_option_create_option_name]
-other = "name"
+other = "Nome"
 
 [command_tracker_option_minecraft_option_create_option_name_desc]
-other = "name of server"
+other = "nome do servidor"
 
 [command_tracker_option_minecraft_option_create_option_port]
-other = "port"
+other = "Porta"
 
 [command_tracker_option_minecraft_option_create_option_port_desc]
-other = "port of server"
+other = "porta do servidor"
 
 [command_tracker_option_minecraft_option_create_option_role]
-other = "role"
+other = "Função"
 
 [command_tracker_option_minecraft_option_create_option_role_desc]
-other = "role to mention"
+other = "função para mencionar"
 
 [command_unban_desc]
 other = "desbanir o usuário selecionado"
@@ -180,43 +180,43 @@ other = "Ocorreu um erro {{.Error}}"
 other = "Não é possível selecionar este bot como destino!"
 
 [error_failed_to_connect_api]
-other = "failed to connect api server error"
+other = "falha ao conectar erro do servidor api"
 
 [error_failed_to_ping_server]
-other = "failed to ping server"
+other = "falha ao fazer ping no servidor"
 
 [error_invalid_port_value]
-other = "invalid port value"
+other = "valor de porta inválida"
 
 [error_message]
 other = "Ocorreu um erro"
 
 [feed_minecraft_webhook_name]
-other = "server notifier"
+other = "notificador do servidor"
 
 [latency]
-other = "latency"
+other = "latência"
 
 [message_command_modify]
-other = "modify"
+other = "Modificar"
 
 [panel_minecraft_message_boot]
-other = "booted {{.Name}} server"
+other = "servidor {{.Name}} inicializado"
 
 [panel_minecraft_message_stop]
-other = "stopped {{.Name}} server"
+other = "parou {{.Name}} servidor"
 
 [panel_role_message_added]
-other = "added"
+other = "adicionado"
 
 [panel_role_message_removed]
-other = "removed"
+other = "removido"
 
 [players]
-other = "players"
+other = "Jogadores"
 
 [port]
-other = "port"
+other = "Porta"
 
 [version]
-other = "version"
+other = "Versão"
