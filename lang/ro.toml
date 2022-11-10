@@ -1,5 +1,5 @@
 [address]
-other = "address"
+other = "adresă"
 
 [command_ban_desc]
 other = "interzice utilizatorul selectat"
@@ -45,49 +45,49 @@ other = "gestionează panoul de rol"
 other = "minecraft"
 
 [command_panel_option_minecraft_desc]
-other = "manage minecraft panel"
+other = "Gestionează panoul de minecraft"
 
 [command_panel_option_minecraft_option_create]
-other = "create"
+other = "crează"
 
 [command_panel_option_minecraft_option_create_desc]
-other = "create minecraft panel"
+other = "creează panou de minecraft"
 
 [command_panel_option_minecraft_option_create_option_address]
-other = "address"
+other = "adresă"
 
 [command_panel_option_minecraft_option_create_option_address_desc]
-other = "address of server"
+other = "adresa serverului"
 
 [command_panel_option_minecraft_option_create_option_description]
-other = "description"
+other = "descriere"
 
 [command_panel_option_minecraft_option_create_option_description_desc]
-other = "description of panel"
+other = "descrierea panoului"
 
 [command_panel_option_minecraft_option_create_option_name]
-other = "name"
+other = "nume"
 
 [command_panel_option_minecraft_option_create_option_name_desc]
-other = "name of panel"
+other = "numele panoului"
 
 [command_panel_option_minecraft_option_create_option_port]
 other = "port"
 
 [command_panel_option_minecraft_option_create_option_port_desc]
-other = "port of server"
+other = "portul de server"
 
 [command_panel_option_minecraft_option_create_option_servername]
-other = "servername"
+other = "nume server"
 
 [command_panel_option_minecraft_option_create_option_servername_desc]
-other = "name of server"
+other = "numele serverului"
 
 [command_panel_option_minecraft_option_create_option_showip]
 other = "showip"
 
 [command_panel_option_minecraft_option_create_option_showip_desc]
-other = "show ip or not"
+other = "arată ip sau nu"
 
 [command_panel_option_role]
 other = "rol"
@@ -117,46 +117,46 @@ other = "rol"
 other = "creează panou de rol"
 
 [command_tracker]
-other = "tracker"
+other = "urmăritor"
 
 [command_tracker_desc]
-other = "manage or create tracker"
+other = "gestionează sau creează tracker"
 
 [command_tracker_option_minecraft]
 other = "minecraft"
 
 [command_tracker_option_minecraft_desc]
-other = "manage minecraft server tracker"
+other = "gestionează trackerul serverului de minecraft"
 
 [command_tracker_option_minecraft_option_create]
-other = "create"
+other = "crează"
 
 [command_tracker_option_minecraft_option_create_desc]
-other = "minecraft server tracker"
+other = "tracker server minecraft"
 
 [command_tracker_option_minecraft_option_create_option_address]
-other = "address"
+other = "adresă"
 
 [command_tracker_option_minecraft_option_create_option_address_desc]
-other = "address of server"
+other = "adresa serverului"
 
 [command_tracker_option_minecraft_option_create_option_name]
-other = "name"
+other = "nume"
 
 [command_tracker_option_minecraft_option_create_option_name_desc]
-other = "name of server"
+other = "numele serverului"
 
 [command_tracker_option_minecraft_option_create_option_port]
 other = "port"
 
 [command_tracker_option_minecraft_option_create_option_port_desc]
-other = "port of server"
+other = "portul de server"
 
 [command_tracker_option_minecraft_option_create_option_role]
-other = "role"
+other = "rol"
 
 [command_tracker_option_minecraft_option_create_option_role_desc]
-other = "role to mention"
+other = "rol de menționat"
 
 [command_unban_desc]
 other = "deblochează utilizatorul selectat"
@@ -180,43 +180,43 @@ other = "S-a produs o eroare {{.Error}}"
 other = "Nu se poate selecta acest bot ca țintă!"
 
 [error_failed_to_connect_api]
-other = "failed to connect api server error"
+other = "Eroare la conectarea serverului APi"
 
 [error_failed_to_ping_server]
-other = "failed to ping server"
+other = "Eșec la ping-ul serverului"
 
 [error_invalid_port_value]
-other = "invalid port value"
+other = "valoare port nevalidă"
 
 [error_message]
 other = "A apărut o eroare"
 
 [feed_minecraft_webhook_name]
-other = "server notifier"
+other = "notificatorul serverului"
 
 [latency]
-other = "latency"
+other = "latență"
 
 [message_command_modify]
-other = "modify"
+other = "modifică"
 
 [panel_minecraft_message_boot]
-other = "booted {{.Name}} server"
+other = "{{.Name}} server oprit"
 
 [panel_minecraft_message_stop]
-other = "stopped {{.Name}} server"
+other = "a oprit {{.Name}} server"
 
 [panel_role_message_added]
-other = "added"
+other = "adăugat"
 
 [panel_role_message_removed]
-other = "removed"
+other = "eliminat"
 
 [players]
-other = "players"
+other = "jucători"
 
 [port]
 other = "port"
 
 [version]
-other = "version"
+other = "versiune"
