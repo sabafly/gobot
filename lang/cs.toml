@@ -1,5 +1,5 @@
 [address]
-other = "address"
+other = "Adresa"
 
 [command_ban_desc]
 other = "zakázat vybraného uživatele"
@@ -42,52 +42,52 @@ other = "spravovat nebo vytvářet panel"
 other = "spravovat panel rolí"
 
 [command_panel_option_minecraft]
-other = "minecraft"
+other = "těžební plošina"
 
 [command_panel_option_minecraft_desc]
-other = "manage minecraft panel"
+other = "Spravovat panel minecraft"
 
 [command_panel_option_minecraft_option_create]
-other = "create"
+other = "vytvořit"
 
 [command_panel_option_minecraft_option_create_desc]
-other = "create minecraft panel"
+other = "vytvořit panel minecraft"
 
 [command_panel_option_minecraft_option_create_option_address]
-other = "address"
+other = "Adresa"
 
 [command_panel_option_minecraft_option_create_option_address_desc]
-other = "address of server"
+other = "adresa serveru"
 
 [command_panel_option_minecraft_option_create_option_description]
-other = "description"
+other = "Popis"
 
 [command_panel_option_minecraft_option_create_option_description_desc]
-other = "description of panel"
+other = "popis poradní skupiny"
 
 [command_panel_option_minecraft_option_create_option_name]
-other = "name"
+other = "jméno"
 
 [command_panel_option_minecraft_option_create_option_name_desc]
-other = "name of panel"
+other = "název dílce"
 
 [command_panel_option_minecraft_option_create_option_port]
-other = "port"
+other = "přístav"
 
 [command_panel_option_minecraft_option_create_option_port_desc]
-other = "port of server"
+other = "port serveru"
 
 [command_panel_option_minecraft_option_create_option_servername]
-other = "servername"
+other = "jméno serveru"
 
 [command_panel_option_minecraft_option_create_option_servername_desc]
-other = "name of server"
+other = "jméno serveru"
 
 [command_panel_option_minecraft_option_create_option_showip]
 other = "showip"
 
 [command_panel_option_minecraft_option_create_option_showip_desc]
-other = "show ip or not"
+other = "zobrazit IP nebo ne"
 
 [command_panel_option_role]
 other = "role"
@@ -120,43 +120,43 @@ other = "vytvořit panel role"
 other = "tracker"
 
 [command_tracker_desc]
-other = "manage or create tracker"
+other = "spravovat nebo vytvářet tracker"
 
 [command_tracker_option_minecraft]
-other = "minecraft"
+other = "těžební plošina"
 
 [command_tracker_option_minecraft_desc]
-other = "manage minecraft server tracker"
+other = "spravovat tracker serveru minecraft"
 
 [command_tracker_option_minecraft_option_create]
-other = "create"
+other = "vytvořit"
 
 [command_tracker_option_minecraft_option_create_desc]
-other = "minecraft server tracker"
+other = "tracker serveru minecraft"
 
 [command_tracker_option_minecraft_option_create_option_address]
-other = "address"
+other = "Adresa"
 
 [command_tracker_option_minecraft_option_create_option_address_desc]
-other = "address of server"
+other = "adresa serveru"
 
 [command_tracker_option_minecraft_option_create_option_name]
-other = "name"
+other = "jméno"
 
 [command_tracker_option_minecraft_option_create_option_name_desc]
-other = "name of server"
+other = "jméno serveru"
 
 [command_tracker_option_minecraft_option_create_option_port]
-other = "port"
+other = "přístav"
 
 [command_tracker_option_minecraft_option_create_option_port_desc]
-other = "port of server"
+other = "port serveru"
 
 [command_tracker_option_minecraft_option_create_option_role]
 other = "role"
 
 [command_tracker_option_minecraft_option_create_option_role_desc]
-other = "role to mention"
+other = "role ke zmínění"
 
 [command_unban_desc]
 other = "odblokovat vybraného uživatele"
@@ -180,43 +180,43 @@ other = "Došlo k chybě {{.Error}}"
 other = "Tohoto bota nelze vybrat jako cíl!"
 
 [error_failed_to_connect_api]
-other = "failed to connect api server error"
+other = "chyba api serveru se nezdařila"
 
 [error_failed_to_ping_server]
-other = "failed to ping server"
+other = "pingový server selhal"
 
 [error_invalid_port_value]
-other = "invalid port value"
+other = "neplatná hodnota portu"
 
 [error_message]
 other = "Došlo k chybě"
 
 [feed_minecraft_webhook_name]
-other = "server notifier"
+other = "oznámení serveru"
 
 [latency]
-other = "latency"
+other = "odezva"
 
 [message_command_modify]
-other = "modify"
+other = "upravit"
 
 [panel_minecraft_message_boot]
-other = "booted {{.Name}} server"
+other = "Spouštěn {{.Name}} server"
 
 [panel_minecraft_message_stop]
-other = "stopped {{.Name}} server"
+other = "zastavil {{.Name}} server"
 
 [panel_role_message_added]
-other = "added"
+other = "přidáno"
 
 [panel_role_message_removed]
-other = "removed"
+other = "odstraněno"
 
 [players]
-other = "players"
+other = "hráči"
 
 [port]
-other = "port"
+other = "přístav"
 
 [version]
-other = "version"
+other = "verze"
