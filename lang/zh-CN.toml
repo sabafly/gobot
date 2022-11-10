@@ -1,19 +1,5 @@
-command = { }
-command_ban = { }
-command_ban_option = { }
-command_ban_option_desc = { }
-command_kick = { }
-command_kick_option = { }
-command_kick_option_desc = { }
-command_panel = { }
-command_panel_option = { }
-command_panel_option_desc = { }
-command_panel_option_role_option_create_option = { }
-command_panel_option_role_option_desc = { }
-command_unban = { }
-command_unban_option = { }
-command_unban_option_desc = { }
-error = { }
+[address]
+other = "address"
 
 [command_ban_desc]
 other = "封禁所选用户"
@@ -55,6 +41,54 @@ other = "管理或创建面板"
 [command_panel_option_desc_role]
 other = "管理角色面板"
 
+[command_panel_option_minecraft]
+other = "minecraft"
+
+[command_panel_option_minecraft_desc]
+other = "manage minecraft panel"
+
+[command_panel_option_minecraft_option_create]
+other = "create"
+
+[command_panel_option_minecraft_option_create_desc]
+other = "create minecraft panel"
+
+[command_panel_option_minecraft_option_create_option_address]
+other = "address"
+
+[command_panel_option_minecraft_option_create_option_address_desc]
+other = "address of server"
+
+[command_panel_option_minecraft_option_create_option_description]
+other = "description"
+
+[command_panel_option_minecraft_option_create_option_description_desc]
+other = "description of panel"
+
+[command_panel_option_minecraft_option_create_option_name]
+other = "name"
+
+[command_panel_option_minecraft_option_create_option_name_desc]
+other = "name of panel"
+
+[command_panel_option_minecraft_option_create_option_port]
+other = "port"
+
+[command_panel_option_minecraft_option_create_option_port_desc]
+other = "port of server"
+
+[command_panel_option_minecraft_option_create_option_servername]
+other = "servername"
+
+[command_panel_option_minecraft_option_create_option_servername_desc]
+other = "name of server"
+
+[command_panel_option_minecraft_option_create_option_showip]
+other = "showip"
+
+[command_panel_option_minecraft_option_create_option_showip_desc]
+other = "show ip or not"
+
 [command_panel_option_role]
 other = "角色"
 
@@ -82,6 +116,48 @@ other = "角色"
 [command_panel_option_role_option_desc_create]
 other = "创建角色面板"
 
+[command_tracker]
+other = "tracker"
+
+[command_tracker_desc]
+other = "manage or create tracker"
+
+[command_tracker_option_minecraft]
+other = "minecraft"
+
+[command_tracker_option_minecraft_desc]
+other = "manage minecraft server tracker"
+
+[command_tracker_option_minecraft_option_create]
+other = "create"
+
+[command_tracker_option_minecraft_option_create_desc]
+other = "minecraft server tracker"
+
+[command_tracker_option_minecraft_option_create_option_address]
+other = "address"
+
+[command_tracker_option_minecraft_option_create_option_address_desc]
+other = "address of server"
+
+[command_tracker_option_minecraft_option_create_option_name]
+other = "name"
+
+[command_tracker_option_minecraft_option_create_option_name_desc]
+other = "name of server"
+
+[command_tracker_option_minecraft_option_create_option_port]
+other = "port"
+
+[command_tracker_option_minecraft_option_create_option_port_desc]
+other = "port of server"
+
+[command_tracker_option_minecraft_option_create_option_role]
+other = "role"
+
+[command_tracker_option_minecraft_option_create_option_role_desc]
+other = "role to mention"
+
 [command_unban_desc]
 other = "取消封禁所选用户"
 
@@ -94,11 +170,53 @@ other = "要解除封禁的用户"
 [command_unban_option_target]
 other = "target"
 
+[error]
+other = "{{.Error}}"
+
 [error_0]
 other = "发生错误 {{.Error}}"
 
 [error_TargetIsBot]
 other = "无法选择此机器人为目标！"
 
+[error_failed_to_connect_api]
+other = "failed to connect api server error"
+
+[error_failed_to_ping_server]
+other = "failed to ping server"
+
+[error_invalid_port_value]
+other = "invalid port value"
+
 [error_message]
 other = "发生错误"
+
+[feed_minecraft_webhook_name]
+other = "server notifier"
+
+[latency]
+other = "latency"
+
+[message_command_modify]
+other = "modify"
+
+[panel_minecraft_message_boot]
+other = "booted {{.Name}} server"
+
+[panel_minecraft_message_stop]
+other = "stopped {{.Name}} server"
+
+[panel_role_message_added]
+other = "added"
+
+[panel_role_message_removed]
+other = "removed"
+
+[players]
+other = "players"
+
+[port]
+other = "port"
+
+[version]
+other = "version"
