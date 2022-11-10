@@ -1,5 +1,5 @@
 [address]
-other = "address"
+other = "адреса"
 
 [command_ban_desc]
 other = "забанити вибраного користувача"
@@ -42,52 +42,52 @@ other = "керування або створити панель"
 other = "керувати панеллю ролей"
 
 [command_panel_option_minecraft]
-other = "minecraft"
+other = "вагонетка"
 
 [command_panel_option_minecraft_desc]
-other = "manage minecraft panel"
+other = "керувати панеллю minecraft"
 
 [command_panel_option_minecraft_option_create]
-other = "create"
+other = "створити"
 
 [command_panel_option_minecraft_option_create_desc]
-other = "create minecraft panel"
+other = "створити панель minecraft"
 
 [command_panel_option_minecraft_option_create_option_address]
-other = "address"
+other = "адреса"
 
 [command_panel_option_minecraft_option_create_option_address_desc]
-other = "address of server"
+other = "адреса сервера"
 
 [command_panel_option_minecraft_option_create_option_description]
-other = "description"
+other = "опис"
 
 [command_panel_option_minecraft_option_create_option_description_desc]
-other = "description of panel"
+other = "опис панелі"
 
 [command_panel_option_minecraft_option_create_option_name]
-other = "name"
+other = "ім'я"
 
 [command_panel_option_minecraft_option_create_option_name_desc]
-other = "name of panel"
+other = "назва панелі"
 
 [command_panel_option_minecraft_option_create_option_port]
-other = "port"
+other = "порт"
 
 [command_panel_option_minecraft_option_create_option_port_desc]
-other = "port of server"
+other = "порт сервера"
 
 [command_panel_option_minecraft_option_create_option_servername]
-other = "servername"
+other = "ім'я серверу"
 
 [command_panel_option_minecraft_option_create_option_servername_desc]
-other = "name of server"
+other = "ім'я сервера"
 
 [command_panel_option_minecraft_option_create_option_showip]
 other = "showip"
 
 [command_panel_option_minecraft_option_create_option_showip_desc]
-other = "show ip or not"
+other = "показати ip чи ні"
 
 [command_panel_option_role]
 other = "роль"
@@ -117,46 +117,46 @@ other = "роль"
 other = "створити панель ролі"
 
 [command_tracker]
-other = "tracker"
+other = "трекер"
 
 [command_tracker_desc]
-other = "manage or create tracker"
+other = "керування або створити трекер"
 
 [command_tracker_option_minecraft]
-other = "minecraft"
+other = "вагонетка"
 
 [command_tracker_option_minecraft_desc]
-other = "manage minecraft server tracker"
+other = "керувати відстежувачем сервера minecraft"
 
 [command_tracker_option_minecraft_option_create]
-other = "create"
+other = "створити"
 
 [command_tracker_option_minecraft_option_create_desc]
-other = "minecraft server tracker"
+other = "minecraft сервер трекер"
 
 [command_tracker_option_minecraft_option_create_option_address]
-other = "address"
+other = "адреса"
 
 [command_tracker_option_minecraft_option_create_option_address_desc]
-other = "address of server"
+other = "адреса сервера"
 
 [command_tracker_option_minecraft_option_create_option_name]
-other = "name"
+other = "ім'я"
 
 [command_tracker_option_minecraft_option_create_option_name_desc]
-other = "name of server"
+other = "ім'я сервера"
 
 [command_tracker_option_minecraft_option_create_option_port]
-other = "port"
+other = "порт"
 
 [command_tracker_option_minecraft_option_create_option_port_desc]
-other = "port of server"
+other = "порт сервера"
 
 [command_tracker_option_minecraft_option_create_option_role]
-other = "role"
+other = "роль"
 
 [command_tracker_option_minecraft_option_create_option_role_desc]
-other = "role to mention"
+other = "роль для згадування"
 
 [command_unban_desc]
 other = "розблокувати вибраного користувача"
@@ -180,43 +180,43 @@ other = "Відбулася помилка {{.Error}}"
 other = "Не вдається вибрати цього бота як ціль!"
 
 [error_failed_to_connect_api]
-other = "failed to connect api server error"
+other = "помилка підключення до сервера API"
 
 [error_failed_to_ping_server]
-other = "failed to ping server"
+other = "помилка пінгування серверу"
 
 [error_invalid_port_value]
-other = "invalid port value"
+other = "неприпустиме значення порту"
 
 [error_message]
 other = "Сталася помилка"
 
 [feed_minecraft_webhook_name]
-other = "server notifier"
+other = "сповіщення сервера"
 
 [latency]
-other = "latency"
+other = "затримка"
 
 [message_command_modify]
-other = "modify"
+other = "змінити"
 
 [panel_minecraft_message_boot]
-other = "booted {{.Name}} server"
+other = "запущено сервер {{.Name}}"
 
 [panel_minecraft_message_stop]
-other = "stopped {{.Name}} server"
+other = "зупинено сервер {{.Name}}"
 
 [panel_role_message_added]
-other = "added"
+other = "додано"
 
 [panel_role_message_removed]
-other = "removed"
+other = "видалено"
 
 [players]
-other = "players"
+other = "гравців"
 
 [port]
-other = "port"
+other = "порт"
 
 [version]
-other = "version"
+other = "версія"
