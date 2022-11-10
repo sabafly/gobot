@@ -1,5 +1,5 @@
 [address]
-other = "address"
+other = "adresse"
 
 [command_ban_desc]
 other = "bannir l'utilisateur sélectionné"
@@ -45,49 +45,49 @@ other = "gérer le panneau des rôles"
 other = "minecraft"
 
 [command_panel_option_minecraft_desc]
-other = "manage minecraft panel"
+other = "gérer le panneau minecraft"
 
 [command_panel_option_minecraft_option_create]
-other = "create"
+other = "créer"
 
 [command_panel_option_minecraft_option_create_desc]
-other = "create minecraft panel"
+other = "créer un panneau minecraft"
 
 [command_panel_option_minecraft_option_create_option_address]
-other = "address"
+other = "adresse"
 
 [command_panel_option_minecraft_option_create_option_address_desc]
-other = "address of server"
+other = "adresse du serveur"
 
 [command_panel_option_minecraft_option_create_option_description]
-other = "description"
+other = "Libellé"
 
 [command_panel_option_minecraft_option_create_option_description_desc]
-other = "description of panel"
+other = "description du panneau"
 
 [command_panel_option_minecraft_option_create_option_name]
-other = "name"
+other = "Nom"
 
 [command_panel_option_minecraft_option_create_option_name_desc]
-other = "name of panel"
+other = "nom du panneau"
 
 [command_panel_option_minecraft_option_create_option_port]
 other = "port"
 
 [command_panel_option_minecraft_option_create_option_port_desc]
-other = "port of server"
+other = "port du serveur"
 
 [command_panel_option_minecraft_option_create_option_servername]
-other = "servername"
+other = "nom du serveur"
 
 [command_panel_option_minecraft_option_create_option_servername_desc]
-other = "name of server"
+other = "nom du serveur"
 
 [command_panel_option_minecraft_option_create_option_showip]
 other = "showip"
 
 [command_panel_option_minecraft_option_create_option_showip_desc]
-other = "show ip or not"
+other = "afficher l'IP ou pas"
 
 [command_panel_option_role]
 other = "Rôle"
@@ -120,43 +120,43 @@ other = "créer un panneau de rôle"
 other = "tracker"
 
 [command_tracker_desc]
-other = "manage or create tracker"
+other = "gérer ou créer un tracker"
 
 [command_tracker_option_minecraft]
 other = "minecraft"
 
 [command_tracker_option_minecraft_desc]
-other = "manage minecraft server tracker"
+other = "gérer le tracker de serveur minecraft"
 
 [command_tracker_option_minecraft_option_create]
-other = "create"
+other = "créer"
 
 [command_tracker_option_minecraft_option_create_desc]
-other = "minecraft server tracker"
+other = "tracker serveur minecraft"
 
 [command_tracker_option_minecraft_option_create_option_address]
-other = "address"
+other = "adresse"
 
 [command_tracker_option_minecraft_option_create_option_address_desc]
-other = "address of server"
+other = "adresse du serveur"
 
 [command_tracker_option_minecraft_option_create_option_name]
-other = "name"
+other = "Nom"
 
 [command_tracker_option_minecraft_option_create_option_name_desc]
-other = "name of server"
+other = "nom du serveur"
 
 [command_tracker_option_minecraft_option_create_option_port]
 other = "port"
 
 [command_tracker_option_minecraft_option_create_option_port_desc]
-other = "port of server"
+other = "port du serveur"
 
 [command_tracker_option_minecraft_option_create_option_role]
-other = "role"
+other = "Rôle"
 
 [command_tracker_option_minecraft_option_create_option_role_desc]
-other = "role to mention"
+other = "rôle à mentionner"
 
 [command_unban_desc]
 other = "dé-bannir l'utilisateur sélectionné"
@@ -180,40 +180,40 @@ other = "Une erreur s'est produite {{.Error}}"
 other = "Impossible de sélectionner ce bot comme cible !"
 
 [error_failed_to_connect_api]
-other = "failed to connect api server error"
+other = "impossible de se connecter au serveur api"
 
 [error_failed_to_ping_server]
-other = "failed to ping server"
+other = "échec du ping du serveur"
 
 [error_invalid_port_value]
-other = "invalid port value"
+other = "valeur de port invalide"
 
 [error_message]
 other = "Une erreur est survenue"
 
 [feed_minecraft_webhook_name]
-other = "server notifier"
+other = "serveur de notification"
 
 [latency]
-other = "latency"
+other = "latence"
 
 [message_command_modify]
-other = "modify"
+other = "modifier"
 
 [panel_minecraft_message_boot]
-other = "booted {{.Name}} server"
+other = "a démarré le serveur {{.Name}}"
 
 [panel_minecraft_message_stop]
-other = "stopped {{.Name}} server"
+other = "serveur {{.Name}} arrêté"
 
 [panel_role_message_added]
-other = "added"
+other = "Ajouté"
 
 [panel_role_message_removed]
-other = "removed"
+other = "enlevé"
 
 [players]
-other = "players"
+other = "joueurs"
 
 [port]
 other = "port"
