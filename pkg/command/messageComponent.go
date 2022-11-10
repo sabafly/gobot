@@ -15,6 +15,7 @@ import (
 	"github.com/Tnze/go-mc/chat"
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/api"
+	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/millkhan/mcstatusgo/v2"
 )
 
@@ -42,7 +43,7 @@ func MCpanelRole(s *discordgo.Session, i *discordgo.InteractionCreate) {
 						}
 						if t {
 							s.GuildMemberRoleRemove(gid, uid, v.Value)
-							content += "はく奪 <@&" + v.Value + ">\r"
+							content += translate.Message(i.Locale, "panel_role_message_removed") + "<@&" + v.Value + ">\r"
 						}
 					}
 				}
@@ -56,7 +57,7 @@ func MCpanelRole(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				}
 				if t {
 					s.GuildMemberRoleAdd(gid, uid, r)
-					content += "付与 <@&" + r + ">\r"
+					content += translate.Message(i.Locale, "panel_role_message_added") + " <@&" + r + ">\r"
 				}
 			}
 		}
@@ -150,9 +151,9 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	port, err := strconv.Atoi(addresses[2])
 	if err != nil {
 		log.Print(err)
-		str := "ポート値が不正です"
+		e := translate.ErrorEmbed(i.Locale, "error_invalid_port_value")
 		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-			Content: &str,
+			Embeds: &e,
 		})
 		return
 	}
@@ -163,9 +164,9 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	q, err := mcstatusgo.Status(address, uint16(port), initialTimeOut, ioTimeOut)
 	if err != nil {
 		log.Print(err)
-		str := "サーバーの状況を取得できませんでした\r" + fmt.Sprint(err)
+		e := translate.ErrorEmbed(i.Locale, "error_failed_to_ping_server")
 		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-			Content: &str,
+			Embeds: &e,
 		})
 		return
 	}
@@ -198,19 +199,21 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				Width:  64,
 				Height: 64,
 			},
+			Timestamp: time.Now().UTC().Format(time.RFC3339),
+			Footer:    &discordgo.MessageEmbedFooter{Text: "gobot"},
 			Fields: []*discordgo.MessageEmbedField{
 				{
-					Name:   "プレイヤー",
+					Name:   translate.Message(i.Locale, "players"),
 					Value:  "```" + strconv.Itoa(q.Players.Online) + "/" + strconv.Itoa(q.Players.Max) + "```",
 					Inline: true,
 				},
 				{
-					Name:   "レイテンシ",
+					Name:   translate.Message(i.Locale, "latency"),
 					Value:  "```" + strconv.Itoa(int(q.Latency.Abs().Milliseconds())) + "ms" + "```",
 					Inline: true,
 				},
 				{
-					Name:   "バージョン",
+					Name:   translate.Message(i.Locale, "version"),
 					Value:  "```ansi\r" + chat.Text(q.Version.Name).String() + "```",
 					Inline: true,
 				},
@@ -219,12 +222,12 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 	if showIp {
 		embeds[0].Fields = append(embeds[0].Fields, &discordgo.MessageEmbedField{
-			Name:   "アドレス",
+			Name:   translate.Message(i.Locale, "address"),
 			Value:  "```" + address + "```",
 			Inline: true,
 		},
 			&discordgo.MessageEmbedField{
-				Name:   "ポート",
+				Name:   translate.Message(i.Locale, "port"),
 				Value:  "```" + strconv.Itoa(int(q.Port)) + "```",
 				Inline: true,
 			})

@@ -12,6 +12,7 @@ import (
 	"github.com/ikafly144/gobot/pkg/api"
 	"github.com/ikafly144/gobot/pkg/command"
 	"github.com/ikafly144/gobot/pkg/setup"
+	"github.com/ikafly144/gobot/pkg/translate"
 	"gorm.io/gorm"
 )
 
@@ -22,6 +23,7 @@ type FeedMCServer struct {
 	ChannelID string
 	RoleID    string
 	Name      string
+	Locale    discordgo.Locale
 }
 
 type FeedMCServers []FeedMCServer
@@ -77,6 +79,9 @@ func feedMinecraftHandler(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(body, &data)
 	s := setup.GetSession()
 	for _, v := range data {
+		if v.Locale == "" {
+			v.Locale = discordgo.Japanese
+		}
 		ws, _ := s.ChannelWebhooks(v.ChannelID)
 		var wid string
 		var wToken string
@@ -107,21 +112,27 @@ func feedMinecraftHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			embed = []*discordgo.MessageEmbed{
 				{
-					Title: v.Name + "が起動しました",
+					Title: translate.Translate(v.Locale, "panel_minecraft_message_boot", map[string]interface{}{
+						"Name": v.Name,
+					}),
 					Color: 0x00ff00,
 					Footer: &discordgo.MessageEmbedFooter{
-						Text: time.Now().Format("2006/01/02 15:04:05") + " - gobot",
+						Text: "gobot",
 					},
+					Timestamp: time.Now().UTC().Format(time.RFC3339),
 				},
 			}
 		} else if err == nil && !online {
 			embed = []*discordgo.MessageEmbed{
 				{
-					Title: v.Name + "が停止しました",
+					Title: translate.Translate(v.Locale, "panel_minecraft_message_stop", map[string]interface{}{
+						"Name": v.Name,
+					}),
 					Color: 0xff0000,
 					Footer: &discordgo.MessageEmbedFooter{
-						Text: time.Now().Format("2006/01/02 15:04:05") + " - gobot",
+						Text: "gobot",
 					},
+					Timestamp: time.Now().UTC().Format(time.RFC3339),
 				},
 			}
 		} else {
@@ -130,7 +141,7 @@ func feedMinecraftHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		_, err = s.WebhookExecute(wid, wToken, true, &discordgo.WebhookParams{
 			Content:   ctx,
-			Username:  "サーバー起動通知",
+			Username:  translate.Message(v.Locale, "feed_minecraft_webhook_name"),
 			AvatarURL: "",
 			Embeds:    embed,
 		})

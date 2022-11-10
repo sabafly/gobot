@@ -137,9 +137,9 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				resp, err := api.GetApi("/api/ban/create?id="+id+"&reason="+reason, http.NoBody)
 				if err != nil {
 					log.Printf("APIサーバーへのリクエストに失敗: %v", err)
-					message := "Failed to create request"
+					e := translate.ErrorEmbed(i.Locale, "error_failed_to_connect_api")
 					m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-						Content: &message,
+						Embeds: &e,
 					})
 					log.Printf("message: %v", m.ID)
 					if err != nil {
@@ -148,8 +148,11 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 					break
 				}
 				util.LogResp(resp)
+				e := translate.ErrorEmbed(i.Locale, "error", map[string]interface{}{
+					"Error": util.MessageResp(resp),
+				})
 				m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-					Content: util.MessageResp(resp),
+					Embeds: &e,
 				})
 				log.Printf("message: %v", m.ID)
 				if err != nil {
@@ -179,8 +182,11 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				}
 				util.LogResp(resp)
 				defer resp.Body.Close()
+				e := translate.ErrorEmbed(i.Locale, "error", map[string]interface{}{
+					"Error": util.MessageResp(resp),
+				})
 				m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-					Content: util.MessageResp(resp),
+					Embeds: &e,
 				})
 				log.Printf("message: %v", m.ID)
 				if err != nil {
@@ -190,9 +196,9 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				resp, err := api.GetApi("/api/ban", http.NoBody)
 				if err != nil {
 					log.Printf("APIサーバーへのリクエスト送信に失敗: %v", err)
-					message := "Failed request to API server"
+					e := translate.ErrorEmbed(i.Locale, "error_failed_to_connect_api")
 					m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-						Content: &message,
+						Embeds: &e,
 					})
 					log.Printf("message: %v", m.ID)
 					if err != nil {
@@ -208,9 +214,9 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				err = json.Unmarshal(jsonBytes, data)
 				if err != nil {
 					log.Printf("JSONデコードに失敗: %v", err)
-					message := "Failed unmarshal json objects"
+					e := translate.ErrorEmbed(i.Locale, "error_failed_to_connect_api")
 					m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-						Content: &message,
+						Embeds: &e,
 					})
 					log.Printf("message: %v", m.ID)
 					if err != nil {
@@ -222,7 +228,7 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				for i, v := range data.Content {
 					str += fmt.Sprintf("%3v: <@%v>\r	Reason: %v\r", i+1, v.ID, v.Reason)
 				}
-				message := fmt.Sprintf("succeed %v %v \r%v", resp.Request.Method, resp.StatusCode, str)
+				message := fmt.Sprintf("OK %v %v \r%v", resp.Request.Method, resp.StatusCode, str)
 				m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 					Content: &message,
 				})
