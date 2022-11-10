@@ -116,7 +116,7 @@ func Run() {
 	log.Println("Ctrl + C で終了")
 	<-stop
 
-	log.Println("正常にシャットダウンしました")
+	log.Println("\r正常にシャットダウンしました")
 }
 
 func end(registeredCommands []*discordgo.ApplicationCommand) {
