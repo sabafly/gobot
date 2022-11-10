@@ -123,7 +123,7 @@ other = "トラッカー"
 other = "トラッカーを管理または作成する"
 
 [command_tracker_option_minecraft]
-other = "Minecraft"
+other = "Minecraft:"
 
 [command_tracker_option_minecraft_desc]
 other = "Minecraftサーバートラッカーを管理する"
