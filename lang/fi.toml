@@ -1,5 +1,5 @@
 [address]
-other = "address"
+other = "osoite"
 
 [command_ban_desc]
 other = "porttikielto valitulle käyttäjälle"
@@ -45,49 +45,49 @@ other = "hallitse roolipaneelia"
 other = "minecraft"
 
 [command_panel_option_minecraft_desc]
-other = "manage minecraft panel"
+other = "hallitse minecraft-paneelia"
 
 [command_panel_option_minecraft_option_create]
-other = "create"
+other = "luo"
 
 [command_panel_option_minecraft_option_create_desc]
-other = "create minecraft panel"
+other = "luo minecraft paneeli"
 
 [command_panel_option_minecraft_option_create_option_address]
-other = "address"
+other = "osoite"
 
 [command_panel_option_minecraft_option_create_option_address_desc]
-other = "address of server"
+other = "palvelimen osoite"
 
 [command_panel_option_minecraft_option_create_option_description]
-other = "description"
+other = "kuvaus"
 
 [command_panel_option_minecraft_option_create_option_description_desc]
-other = "description of panel"
+other = "paneelin kuvaus"
 
 [command_panel_option_minecraft_option_create_option_name]
-other = "name"
+other = "nimi"
 
 [command_panel_option_minecraft_option_create_option_name_desc]
-other = "name of panel"
+other = "paneelin nimi"
 
 [command_panel_option_minecraft_option_create_option_port]
-other = "port"
+other = "portti"
 
 [command_panel_option_minecraft_option_create_option_port_desc]
-other = "port of server"
+other = "palvelimen portti"
 
 [command_panel_option_minecraft_option_create_option_servername]
-other = "servername"
+other = "palvelimen nimi"
 
 [command_panel_option_minecraft_option_create_option_servername_desc]
-other = "name of server"
+other = "palvelimen nimi"
 
 [command_panel_option_minecraft_option_create_option_showip]
 other = "showip"
 
 [command_panel_option_minecraft_option_create_option_showip_desc]
-other = "show ip or not"
+other = "näytä ip tai ei"
 
 [command_panel_option_role]
 other = "rooli"
@@ -117,46 +117,46 @@ other = "rooli"
 other = "luo roolipaneeli"
 
 [command_tracker]
-other = "tracker"
+other = "seurantapalvelin"
 
 [command_tracker_desc]
-other = "manage or create tracker"
+other = "hallitse tai luo seurantapalvelin"
 
 [command_tracker_option_minecraft]
 other = "minecraft"
 
 [command_tracker_option_minecraft_desc]
-other = "manage minecraft server tracker"
+other = "hallitse minecraft palvelimen seuraajaa"
 
 [command_tracker_option_minecraft_option_create]
-other = "create"
+other = "luo"
 
 [command_tracker_option_minecraft_option_create_desc]
-other = "minecraft server tracker"
+other = "minecraft palvelimen seuranta"
 
 [command_tracker_option_minecraft_option_create_option_address]
-other = "address"
+other = "osoite"
 
 [command_tracker_option_minecraft_option_create_option_address_desc]
-other = "address of server"
+other = "palvelimen osoite"
 
 [command_tracker_option_minecraft_option_create_option_name]
-other = "name"
+other = "nimi"
 
 [command_tracker_option_minecraft_option_create_option_name_desc]
-other = "name of server"
+other = "palvelimen nimi"
 
 [command_tracker_option_minecraft_option_create_option_port]
-other = "port"
+other = "portti"
 
 [command_tracker_option_minecraft_option_create_option_port_desc]
-other = "port of server"
+other = "palvelimen portti"
 
 [command_tracker_option_minecraft_option_create_option_role]
-other = "role"
+other = "rooli"
 
 [command_tracker_option_minecraft_option_create_option_role_desc]
-other = "role to mention"
+other = "maininnan rooli"
 
 [command_unban_desc]
 other = "poista porttikielto valitulle käyttäjälle"
@@ -180,43 +180,43 @@ other = "Tapahtui virhe {{.Error}}"
 other = "Botti ei voi valita kohteeksi!"
 
 [error_failed_to_connect_api]
-other = "failed to connect api server error"
+other = "API-palvelimeen yhdistäminen epäonnistui"
 
 [error_failed_to_ping_server]
-other = "failed to ping server"
+other = "palvelimen pingäys epäonnistui"
 
 [error_invalid_port_value]
-other = "invalid port value"
+other = "virheellinen portin arvo"
 
 [error_message]
 other = "Virhe on tapahtunut"
 
 [feed_minecraft_webhook_name]
-other = "server notifier"
+other = "palvelimen ilmoittaja"
 
 [latency]
-other = "latency"
+other = "latenssi"
 
 [message_command_modify]
-other = "modify"
+other = "muokkaa"
 
 [panel_minecraft_message_boot]
-other = "booted {{.Name}} server"
+other = "käynnistetty {{.Name}} palvelin"
 
 [panel_minecraft_message_stop]
-other = "stopped {{.Name}} server"
+other = "pysäytti {{.Name}} palvelimen"
 
 [panel_role_message_added]
-other = "added"
+other = "lisätty"
 
 [panel_role_message_removed]
-other = "removed"
+other = "poistettu"
 
 [players]
-other = "players"
+other = "pelaajat"
 
 [port]
-other = "port"
+other = "portti"
 
 [version]
-other = "version"
+other = "versio"
