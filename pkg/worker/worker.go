@@ -10,30 +10,17 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/api"
-	"github.com/ikafly144/gobot/pkg/command"
 	"github.com/ikafly144/gobot/pkg/setup"
 	"github.com/ikafly144/gobot/pkg/translate"
-	"gorm.io/gorm"
+	"github.com/ikafly144/gobot/pkg/types"
 )
-
-type FeedMCServer struct {
-	gorm.Model
-	Hash      string `gorm:"uniqueIndex"`
-	GuildID   string
-	ChannelID string
-	RoleID    string
-	Name      string
-	Locale    discordgo.Locale
-}
-
-type FeedMCServers []FeedMCServer
 
 func MakeBan(s *discordgo.Session) {
 	resp, err := api.GetApi("/api/ban", http.NoBody)
 	if err == nil {
 		b, _ := io.ReadAll(resp.Body)
 		j := ([]byte)(b)
-		data := &command.GlobalBan{}
+		data := &types.GlobalBan{}
 		json.Unmarshal(j, data)
 		for _, v := range s.State.Guilds {
 			for _, d := range data.Content {
@@ -75,7 +62,7 @@ func feedMinecraftHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{"Status": "200 OK"})
 	body, _ := io.ReadAll(r.Body)
-	data := FeedMCServers{}
+	data := types.FeedMCServers{}
 	json.Unmarshal(body, &data)
 	s := setup.GetSession()
 	for _, v := range data {

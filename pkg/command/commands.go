@@ -16,6 +16,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/api"
 	"github.com/ikafly144/gobot/pkg/translate"
+	"github.com/ikafly144/gobot/pkg/types"
 	"github.com/ikafly144/gobot/pkg/util"
 	"github.com/joho/godotenv"
 )
@@ -210,7 +211,7 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				defer resp.Body.Close()
 				byteArray, _ := io.ReadAll(resp.Body)
 				jsonBytes := ([]byte)(byteArray)
-				data := &GlobalBan{}
+				data := &types.GlobalBan{}
 				err = json.Unmarshal(jsonBytes, data)
 				if err != nil {
 					log.Printf("JSONデコードに失敗: %v", err)
@@ -462,15 +463,16 @@ func feedMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, o
 	io.WriteString(hash, address+":"+strconv.Itoa(port))
 	st := hash.Sum(nil)
 	code := hex.EncodeToString(st)
-	data := &api.TransMCServer{
+	data := &types.TransMCServer{
 		Address: address,
 		Port:    uint16(port),
-		FeedMCServer: api.FeedMCServer{
+		FeedMCServer: types.FeedMCServer{
 			Hash:      code,
 			Name:      name,
 			GuildID:   gid,
 			ChannelID: cid,
 			RoleID:    role.ID,
+			Locale:    i.Locale,
 		},
 	}
 	log.Print(data.Address, data.Port)

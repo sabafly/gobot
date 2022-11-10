@@ -16,6 +16,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/api"
 	"github.com/ikafly144/gobot/pkg/translate"
+	"github.com/ikafly144/gobot/pkg/types"
 	"github.com/millkhan/mcstatusgo/v2"
 )
 
@@ -177,7 +178,7 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	io.WriteString(hash, thumb)
 	str := hash.Sum(nil)
 	code := hex.EncodeToString(str)
-	bd := &api.ImagePngHash{
+	bd := &types.ImagePngHash{
 		Data: thumb,
 		Hash: code,
 	}
