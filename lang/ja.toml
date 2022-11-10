@@ -42,7 +42,7 @@ other = "管理またはパネルの作成"
 other = "役割パネルの管理"
 
 [command_panel_option_minecraft]
-other = "Minecraft:"
+other = "Minecraft"
 
 [command_panel_option_minecraft_desc]
 other = "Minecraftパネルを管理"
