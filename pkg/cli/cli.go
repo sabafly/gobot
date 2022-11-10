@@ -50,7 +50,7 @@ func Run() {
 	}
 	var (
 		dmPermission                 = false
-		PermissionAdminMembers int64 = discordgo.PermissionManageServer
+		PermissionAdminMembers int64 = discordgo.PermissionAdministrator
 	)
 	s.ApplicationCommandCreate(s.State.User.ID, *setup.SupportGuildID, &discordgo.ApplicationCommand{
 		Name:                     "admin",
