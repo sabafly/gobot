@@ -359,7 +359,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			"panel": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				command.Panel(s, i)
 			},
-			"feed": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			"tracker": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				command.Feed(s, i)
 			},
 			"modify": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
