@@ -1,5 +1,5 @@
 [address]
-other = "address"
+other = "adress"
 
 [command_ban_desc]
 other = "bannlysa den valda användaren"
@@ -45,49 +45,49 @@ other = "hantera rollpanel"
 other = "minecraft"
 
 [command_panel_option_minecraft_desc]
-other = "manage minecraft panel"
+other = "hantera minecraft panel"
 
 [command_panel_option_minecraft_option_create]
-other = "create"
+other = "skapa"
 
 [command_panel_option_minecraft_option_create_desc]
-other = "create minecraft panel"
+other = "skapa minecraft panel"
 
 [command_panel_option_minecraft_option_create_option_address]
-other = "address"
+other = "adress"
 
 [command_panel_option_minecraft_option_create_option_address_desc]
-other = "address of server"
+other = "adressen till servern"
 
 [command_panel_option_minecraft_option_create_option_description]
-other = "description"
+other = "beskrivning"
 
 [command_panel_option_minecraft_option_create_option_description_desc]
-other = "description of panel"
+other = "beskrivning av panel"
 
 [command_panel_option_minecraft_option_create_option_name]
-other = "name"
+other = "namn"
 
 [command_panel_option_minecraft_option_create_option_name_desc]
-other = "name of panel"
+other = "namn på panel"
 
 [command_panel_option_minecraft_option_create_option_port]
 other = "port"
 
 [command_panel_option_minecraft_option_create_option_port_desc]
-other = "port of server"
+other = "port för server"
 
 [command_panel_option_minecraft_option_create_option_servername]
-other = "servername"
+other = "servernamn"
 
 [command_panel_option_minecraft_option_create_option_servername_desc]
-other = "name of server"
+other = "namn på servern"
 
 [command_panel_option_minecraft_option_create_option_showip]
 other = "showip"
 
 [command_panel_option_minecraft_option_create_option_showip_desc]
-other = "show ip or not"
+other = "visa ip eller inte"
 
 [command_panel_option_role]
 other = "roll"
@@ -117,46 +117,46 @@ other = "roll"
 other = "skapa rollpanel"
 
 [command_tracker]
-other = "tracker"
+other = "spårare"
 
 [command_tracker_desc]
-other = "manage or create tracker"
+other = "hantera eller skapa spårare"
 
 [command_tracker_option_minecraft]
 other = "minecraft"
 
 [command_tracker_option_minecraft_desc]
-other = "manage minecraft server tracker"
+other = "hantera minecraft server tracker"
 
 [command_tracker_option_minecraft_option_create]
-other = "create"
+other = "skapa"
 
 [command_tracker_option_minecraft_option_create_desc]
 other = "minecraft server tracker"
 
 [command_tracker_option_minecraft_option_create_option_address]
-other = "address"
+other = "adress"
 
 [command_tracker_option_minecraft_option_create_option_address_desc]
-other = "address of server"
+other = "adressen till servern"
 
 [command_tracker_option_minecraft_option_create_option_name]
-other = "name"
+other = "namn"
 
 [command_tracker_option_minecraft_option_create_option_name_desc]
-other = "name of server"
+other = "namn på servern"
 
 [command_tracker_option_minecraft_option_create_option_port]
 other = "port"
 
 [command_tracker_option_minecraft_option_create_option_port_desc]
-other = "port of server"
+other = "port för server"
 
 [command_tracker_option_minecraft_option_create_option_role]
-other = "role"
+other = "roll"
 
 [command_tracker_option_minecraft_option_create_option_role_desc]
-other = "role to mention"
+other = "roll att nämna"
 
 [command_unban_desc]
 other = "obannlysa den valda användaren"
@@ -180,40 +180,40 @@ other = "Ett fel har inträffat {{.Error}}"
 other = "Kan inte välja denna bot som mål!"
 
 [error_failed_to_connect_api]
-other = "failed to connect api server error"
+other = "Fel vid anslutning av api server"
 
 [error_failed_to_ping_server]
-other = "failed to ping server"
+other = "Det gick inte att pinga servern"
 
 [error_invalid_port_value]
-other = "invalid port value"
+other = "ogiltigt portvärde"
 
 [error_message]
 other = "Ett fel har uppstått"
 
 [feed_minecraft_webhook_name]
-other = "server notifier"
+other = "server avisering"
 
 [latency]
-other = "latency"
+other = "latens"
 
 [message_command_modify]
-other = "modify"
+other = "modifiera"
 
 [panel_minecraft_message_boot]
-other = "booted {{.Name}} server"
+other = "startade {{.Name}} -servern"
 
 [panel_minecraft_message_stop]
-other = "stopped {{.Name}} server"
+other = "stoppade {{.Name}} -servern"
 
 [panel_role_message_added]
-other = "added"
+other = "tillagd"
 
 [panel_role_message_removed]
-other = "removed"
+other = "borttagen"
 
 [players]
-other = "players"
+other = "spelare"
 
 [port]
 other = "port"
