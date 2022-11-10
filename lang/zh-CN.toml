@@ -1,5 +1,5 @@
 [address]
-other = "address"
+other = "地址"
 
 [command_ban_desc]
 other = "封禁所选用户"
@@ -42,52 +42,52 @@ other = "管理或创建面板"
 other = "管理角色面板"
 
 [command_panel_option_minecraft]
-other = "minecraft"
+other = "Minecraft"
 
 [command_panel_option_minecraft_desc]
-other = "manage minecraft panel"
+other = "管理Minecraft面板"
 
 [command_panel_option_minecraft_option_create]
-other = "create"
+other = "创建"
 
 [command_panel_option_minecraft_option_create_desc]
-other = "create minecraft panel"
+other = "创建我的世界面板"
 
 [command_panel_option_minecraft_option_create_option_address]
-other = "address"
+other = "地址"
 
 [command_panel_option_minecraft_option_create_option_address_desc]
-other = "address of server"
+other = "服务器地址"
 
 [command_panel_option_minecraft_option_create_option_description]
-other = "description"
+other = "描述"
 
 [command_panel_option_minecraft_option_create_option_description_desc]
-other = "description of panel"
+other = "面板描述"
 
 [command_panel_option_minecraft_option_create_option_name]
-other = "name"
+other = "名称"
 
 [command_panel_option_minecraft_option_create_option_name_desc]
-other = "name of panel"
+other = "面板名称"
 
 [command_panel_option_minecraft_option_create_option_port]
-other = "port"
+other = "端口"
 
 [command_panel_option_minecraft_option_create_option_port_desc]
-other = "port of server"
+other = "服务器端口"
 
 [command_panel_option_minecraft_option_create_option_servername]
-other = "servername"
+other = "服务器名称"
 
 [command_panel_option_minecraft_option_create_option_servername_desc]
-other = "name of server"
+other = "服务器名称"
 
 [command_panel_option_minecraft_option_create_option_showip]
 other = "showip"
 
 [command_panel_option_minecraft_option_create_option_showip_desc]
-other = "show ip or not"
+other = "是否显示 ip"
 
 [command_panel_option_role]
 other = "角色"
@@ -117,46 +117,46 @@ other = "角色"
 other = "创建角色面板"
 
 [command_tracker]
-other = "tracker"
+other = "追踪器"
 
 [command_tracker_desc]
-other = "manage or create tracker"
+other = "管理或创建跟踪器"
 
 [command_tracker_option_minecraft]
-other = "minecraft"
+other = "Minecraft"
 
 [command_tracker_option_minecraft_desc]
-other = "manage minecraft server tracker"
+other = "管理Minecraft服务器跟踪器"
 
 [command_tracker_option_minecraft_option_create]
-other = "create"
+other = "创建"
 
 [command_tracker_option_minecraft_option_create_desc]
-other = "minecraft server tracker"
+other = "Minecraft服务器跟踪器"
 
 [command_tracker_option_minecraft_option_create_option_address]
-other = "address"
+other = "地址"
 
 [command_tracker_option_minecraft_option_create_option_address_desc]
-other = "address of server"
+other = "服务器地址"
 
 [command_tracker_option_minecraft_option_create_option_name]
-other = "name"
+other = "名称"
 
 [command_tracker_option_minecraft_option_create_option_name_desc]
-other = "name of server"
+other = "服务器名称"
 
 [command_tracker_option_minecraft_option_create_option_port]
-other = "port"
+other = "端口"
 
 [command_tracker_option_minecraft_option_create_option_port_desc]
-other = "port of server"
+other = "服务器端口"
 
 [command_tracker_option_minecraft_option_create_option_role]
-other = "role"
+other = "角色"
 
 [command_tracker_option_minecraft_option_create_option_role_desc]
-other = "role to mention"
+other = "要提及的角色"
 
 [command_unban_desc]
 other = "取消封禁所选用户"
@@ -180,43 +180,43 @@ other = "发生错误 {{.Error}}"
 other = "无法选择此机器人为目标！"
 
 [error_failed_to_connect_api]
-other = "failed to connect api server error"
+other = "连接 api 服务器失败"
 
 [error_failed_to_ping_server]
-other = "failed to ping server"
+other = "Ping 服务器失败"
 
 [error_invalid_port_value]
-other = "invalid port value"
+other = "无效端口值"
 
 [error_message]
 other = "发生错误"
 
 [feed_minecraft_webhook_name]
-other = "server notifier"
+other = "服务器通知器"
 
 [latency]
-other = "latency"
+other = "延迟"
 
 [message_command_modify]
-other = "modify"
+other = "修改"
 
 [panel_minecraft_message_boot]
-other = "booted {{.Name}} server"
+other = "启动 {{.Name}} 服务器"
 
 [panel_minecraft_message_stop]
-other = "stopped {{.Name}} server"
+other = "停止 {{.Name}} 服务器"
 
 [panel_role_message_added]
-other = "added"
+other = "已添加"
 
 [panel_role_message_removed]
-other = "removed"
+other = "已删除"
 
 [players]
-other = "players"
+other = "玩家"
 
 [port]
-other = "port"
+other = "端口"
 
 [version]
-other = "version"
+other = "版本"
