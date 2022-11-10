@@ -146,7 +146,7 @@ func updateStatus() {
 		err := s.UpdateStatusComplex(discordgo.UpdateStatusData{
 			Activities: []*discordgo.Activity{
 				{
-					Name: fmt.Sprintf("/help | %v Servers | Shard %v/%v", len(s.State.Guilds), s.ShardID+1, s.ShardCount),
+					Name: fmt.Sprintf("WIP | %v Servers | Shard %v/%v", len(s.State.Guilds), s.ShardID+1, s.ShardCount),
 					Type: discordgo.ActivityTypeGame,
 				},
 			},
