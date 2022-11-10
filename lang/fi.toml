@@ -1,19 +1,5 @@
-command = { }
-command_ban = { }
-command_ban_option = { }
-command_ban_option_desc = { }
-command_kick = { }
-command_kick_option = { }
-command_kick_option_desc = { }
-command_panel = { }
-command_panel_option = { }
-command_panel_option_desc = { }
-command_panel_option_role_option_create_option = { }
-command_panel_option_role_option_desc = { }
-command_unban = { }
-command_unban_option = { }
-command_unban_option_desc = { }
-error = { }
+[address]
+other = "osoite"
 
 [command_ban_desc]
 other = "porttikielto valitulle käyttäjälle"
@@ -55,6 +41,54 @@ other = "hallitse tai luo paneeli"
 [command_panel_option_desc_role]
 other = "hallitse roolipaneelia"
 
+[command_panel_option_minecraft]
+other = "minecraft"
+
+[command_panel_option_minecraft_desc]
+other = "hallitse minecraft-paneelia"
+
+[command_panel_option_minecraft_option_create]
+other = "luo"
+
+[command_panel_option_minecraft_option_create_desc]
+other = "luo minecraft paneeli"
+
+[command_panel_option_minecraft_option_create_option_address]
+other = "osoite"
+
+[command_panel_option_minecraft_option_create_option_address_desc]
+other = "palvelimen osoite"
+
+[command_panel_option_minecraft_option_create_option_description]
+other = "kuvaus"
+
+[command_panel_option_minecraft_option_create_option_description_desc]
+other = "paneelin kuvaus"
+
+[command_panel_option_minecraft_option_create_option_name]
+other = "nimi"
+
+[command_panel_option_minecraft_option_create_option_name_desc]
+other = "paneelin nimi"
+
+[command_panel_option_minecraft_option_create_option_port]
+other = "portti"
+
+[command_panel_option_minecraft_option_create_option_port_desc]
+other = "palvelimen portti"
+
+[command_panel_option_minecraft_option_create_option_servername]
+other = "palvelimen nimi"
+
+[command_panel_option_minecraft_option_create_option_servername_desc]
+other = "palvelimen nimi"
+
+[command_panel_option_minecraft_option_create_option_showip]
+other = "showip"
+
+[command_panel_option_minecraft_option_create_option_showip_desc]
+other = "näytä ip tai ei"
+
 [command_panel_option_role]
 other = "rooli"
 
@@ -82,6 +116,48 @@ other = "rooli"
 [command_panel_option_role_option_desc_create]
 other = "luo roolipaneeli"
 
+[command_tracker]
+other = "seurantapalvelin"
+
+[command_tracker_desc]
+other = "hallitse tai luo seurantapalvelin"
+
+[command_tracker_option_minecraft]
+other = "minecraft"
+
+[command_tracker_option_minecraft_desc]
+other = "hallitse minecraft palvelimen seuraajaa"
+
+[command_tracker_option_minecraft_option_create]
+other = "luo"
+
+[command_tracker_option_minecraft_option_create_desc]
+other = "minecraft palvelimen seuranta"
+
+[command_tracker_option_minecraft_option_create_option_address]
+other = "osoite"
+
+[command_tracker_option_minecraft_option_create_option_address_desc]
+other = "palvelimen osoite"
+
+[command_tracker_option_minecraft_option_create_option_name]
+other = "nimi"
+
+[command_tracker_option_minecraft_option_create_option_name_desc]
+other = "palvelimen nimi"
+
+[command_tracker_option_minecraft_option_create_option_port]
+other = "portti"
+
+[command_tracker_option_minecraft_option_create_option_port_desc]
+other = "palvelimen portti"
+
+[command_tracker_option_minecraft_option_create_option_role]
+other = "rooli"
+
+[command_tracker_option_minecraft_option_create_option_role_desc]
+other = "maininnan rooli"
+
 [command_unban_desc]
 other = "poista porttikielto valitulle käyttäjälle"
 
@@ -94,11 +170,53 @@ other = "poista porttikielto"
 [command_unban_option_target]
 other = "target"
 
+[error]
+other = "{{.Error}}"
+
 [error_0]
 other = "Tapahtui virhe {{.Error}}"
 
 [error_TargetIsBot]
 other = "Botti ei voi valita kohteeksi!"
 
+[error_failed_to_connect_api]
+other = "API-palvelimeen yhdistäminen epäonnistui"
+
+[error_failed_to_ping_server]
+other = "palvelimen pingäys epäonnistui"
+
+[error_invalid_port_value]
+other = "virheellinen portin arvo"
+
 [error_message]
 other = "Virhe on tapahtunut"
+
+[feed_minecraft_webhook_name]
+other = "palvelimen ilmoittaja"
+
+[latency]
+other = "latenssi"
+
+[message_command_modify]
+other = "muokkaa"
+
+[panel_minecraft_message_boot]
+other = "käynnistetty {{.Name}} palvelin"
+
+[panel_minecraft_message_stop]
+other = "pysäytti {{.Name}} palvelimen"
+
+[panel_role_message_added]
+other = "lisätty"
+
+[panel_role_message_removed]
+other = "poistettu"
+
+[players]
+other = "pelaajat"
+
+[port]
+other = "portti"
+
+[version]
+other = "versio"

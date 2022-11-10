@@ -1,19 +1,5 @@
-command = { }
-command_ban = { }
-command_ban_option = { }
-command_ban_option_desc = { }
-command_kick = { }
-command_kick_option = { }
-command_kick_option_desc = { }
-command_panel = { }
-command_panel_option = { }
-command_panel_option_desc = { }
-command_panel_option_role_option_create_option = { }
-command_panel_option_role_option_desc = { }
-command_unban = { }
-command_unban_option = { }
-command_unban_option_desc = { }
-error = { }
+[address]
+other = "адреса"
 
 [command_ban_desc]
 other = "забанити вибраного користувача"
@@ -55,6 +41,54 @@ other = "керування або створити панель"
 [command_panel_option_desc_role]
 other = "керувати панеллю ролей"
 
+[command_panel_option_minecraft]
+other = "вагонетка"
+
+[command_panel_option_minecraft_desc]
+other = "керувати панеллю minecraft"
+
+[command_panel_option_minecraft_option_create]
+other = "створити"
+
+[command_panel_option_minecraft_option_create_desc]
+other = "створити панель minecraft"
+
+[command_panel_option_minecraft_option_create_option_address]
+other = "адреса"
+
+[command_panel_option_minecraft_option_create_option_address_desc]
+other = "адреса сервера"
+
+[command_panel_option_minecraft_option_create_option_description]
+other = "опис"
+
+[command_panel_option_minecraft_option_create_option_description_desc]
+other = "опис панелі"
+
+[command_panel_option_minecraft_option_create_option_name]
+other = "ім'я"
+
+[command_panel_option_minecraft_option_create_option_name_desc]
+other = "назва панелі"
+
+[command_panel_option_minecraft_option_create_option_port]
+other = "порт"
+
+[command_panel_option_minecraft_option_create_option_port_desc]
+other = "порт сервера"
+
+[command_panel_option_minecraft_option_create_option_servername]
+other = "ім'я серверу"
+
+[command_panel_option_minecraft_option_create_option_servername_desc]
+other = "ім'я сервера"
+
+[command_panel_option_minecraft_option_create_option_showip]
+other = "showip"
+
+[command_panel_option_minecraft_option_create_option_showip_desc]
+other = "показати ip чи ні"
+
 [command_panel_option_role]
 other = "роль"
 
@@ -82,6 +116,48 @@ other = "роль"
 [command_panel_option_role_option_desc_create]
 other = "створити панель ролі"
 
+[command_tracker]
+other = "трекер"
+
+[command_tracker_desc]
+other = "керування або створити трекер"
+
+[command_tracker_option_minecraft]
+other = "вагонетка"
+
+[command_tracker_option_minecraft_desc]
+other = "керувати відстежувачем сервера minecraft"
+
+[command_tracker_option_minecraft_option_create]
+other = "створити"
+
+[command_tracker_option_minecraft_option_create_desc]
+other = "minecraft сервер трекер"
+
+[command_tracker_option_minecraft_option_create_option_address]
+other = "адреса"
+
+[command_tracker_option_minecraft_option_create_option_address_desc]
+other = "адреса сервера"
+
+[command_tracker_option_minecraft_option_create_option_name]
+other = "ім'я"
+
+[command_tracker_option_minecraft_option_create_option_name_desc]
+other = "ім'я сервера"
+
+[command_tracker_option_minecraft_option_create_option_port]
+other = "порт"
+
+[command_tracker_option_minecraft_option_create_option_port_desc]
+other = "порт сервера"
+
+[command_tracker_option_minecraft_option_create_option_role]
+other = "роль"
+
+[command_tracker_option_minecraft_option_create_option_role_desc]
+other = "роль для згадування"
+
 [command_unban_desc]
 other = "розблокувати вибраного користувача"
 
@@ -94,11 +170,53 @@ other = "користувача для розблокування"
 [command_unban_option_target]
 other = "target"
 
+[error]
+other = "{{.Error}}"
+
 [error_0]
 other = "Відбулася помилка {{.Error}}"
 
 [error_TargetIsBot]
 other = "Не вдається вибрати цього бота як ціль!"
 
+[error_failed_to_connect_api]
+other = "помилка підключення до сервера API"
+
+[error_failed_to_ping_server]
+other = "помилка пінгування серверу"
+
+[error_invalid_port_value]
+other = "неприпустиме значення порту"
+
 [error_message]
 other = "Сталася помилка"
+
+[feed_minecraft_webhook_name]
+other = "сповіщення сервера"
+
+[latency]
+other = "затримка"
+
+[message_command_modify]
+other = "змінити"
+
+[panel_minecraft_message_boot]
+other = "запущено сервер {{.Name}}"
+
+[panel_minecraft_message_stop]
+other = "зупинено сервер {{.Name}}"
+
+[panel_role_message_added]
+other = "додано"
+
+[panel_role_message_removed]
+other = "видалено"
+
+[players]
+other = "гравців"
+
+[port]
+other = "порт"
+
+[version]
+other = "версія"
