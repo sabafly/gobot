@@ -1,5 +1,5 @@
 [address]
-other = "address"
+other = "Adres"
 
 [command_ban_desc]
 other = "verbannen de geselecteerde gebruiker"
@@ -45,49 +45,49 @@ other = "beheer rolpaneel"
 other = "minecraft"
 
 [command_panel_option_minecraft_desc]
-other = "manage minecraft panel"
+other = "Beheer minecraft paneel"
 
 [command_panel_option_minecraft_option_create]
-other = "create"
+other = "aanmaken"
 
 [command_panel_option_minecraft_option_create_desc]
-other = "create minecraft panel"
+other = "Maak minecraft paneel"
 
 [command_panel_option_minecraft_option_create_option_address]
-other = "address"
+other = "Adres"
 
 [command_panel_option_minecraft_option_create_option_address_desc]
-other = "address of server"
+other = "adres van de server"
 
 [command_panel_option_minecraft_option_create_option_description]
-other = "description"
+other = "beschrijving"
 
 [command_panel_option_minecraft_option_create_option_description_desc]
-other = "description of panel"
+other = "beschrijving van paneel"
 
 [command_panel_option_minecraft_option_create_option_name]
-other = "name"
+other = "Naam"
 
 [command_panel_option_minecraft_option_create_option_name_desc]
-other = "name of panel"
+other = "naam van paneel"
 
 [command_panel_option_minecraft_option_create_option_port]
-other = "port"
+other = "poort"
 
 [command_panel_option_minecraft_option_create_option_port_desc]
-other = "port of server"
+other = "poort van de server"
 
 [command_panel_option_minecraft_option_create_option_servername]
-other = "servername"
+other = "servernaam"
 
 [command_panel_option_minecraft_option_create_option_servername_desc]
-other = "name of server"
+other = "naam van de server"
 
 [command_panel_option_minecraft_option_create_option_showip]
 other = "showip"
 
 [command_panel_option_minecraft_option_create_option_showip_desc]
-other = "show ip or not"
+other = "Toon IP of niet"
 
 [command_panel_option_role]
 other = "rol"
@@ -120,43 +120,43 @@ other = "maak rolpaneel"
 other = "tracker"
 
 [command_tracker_desc]
-other = "manage or create tracker"
+other = "tracker beheren of maken"
 
 [command_tracker_option_minecraft]
 other = "minecraft"
 
 [command_tracker_option_minecraft_desc]
-other = "manage minecraft server tracker"
+other = "Beheer minecraft server tracker"
 
 [command_tracker_option_minecraft_option_create]
-other = "create"
+other = "aanmaken"
 
 [command_tracker_option_minecraft_option_create_desc]
 other = "minecraft server tracker"
 
 [command_tracker_option_minecraft_option_create_option_address]
-other = "address"
+other = "Adres"
 
 [command_tracker_option_minecraft_option_create_option_address_desc]
-other = "address of server"
+other = "adres van de server"
 
 [command_tracker_option_minecraft_option_create_option_name]
-other = "name"
+other = "Naam"
 
 [command_tracker_option_minecraft_option_create_option_name_desc]
-other = "name of server"
+other = "naam van de server"
 
 [command_tracker_option_minecraft_option_create_option_port]
-other = "port"
+other = "poort"
 
 [command_tracker_option_minecraft_option_create_option_port_desc]
-other = "port of server"
+other = "poort van de server"
 
 [command_tracker_option_minecraft_option_create_option_role]
-other = "role"
+other = "rol"
 
 [command_tracker_option_minecraft_option_create_option_role_desc]
-other = "role to mention"
+other = "rol om te vermelden"
 
 [command_unban_desc]
 other = "deblokkeer de geselecteerde gebruiker"
@@ -180,43 +180,43 @@ other = "Er is een fout opgetreden {{.Error}}"
 other = "Kan deze bot niet selecteren als doel!"
 
 [error_failed_to_connect_api]
-other = "failed to connect api server error"
+other = "Kan geen verbinding maken met de API server fout"
 
 [error_failed_to_ping_server]
-other = "failed to ping server"
+other = "Kon server niet pingen"
 
 [error_invalid_port_value]
-other = "invalid port value"
+other = "ongeldige poort waarde"
 
 [error_message]
 other = "Er is een fout opgetreden"
 
 [feed_minecraft_webhook_name]
-other = "server notifier"
+other = "server notificatie"
 
 [latency]
-other = "latency"
+other = "latentie"
 
 [message_command_modify]
-other = "modify"
+other = "wijzigen"
 
 [panel_minecraft_message_boot]
-other = "booted {{.Name}} server"
+other = "{{.Name}} server is opgestart"
 
 [panel_minecraft_message_stop]
-other = "stopped {{.Name}} server"
+other = "{{.Name}} server gestopt"
 
 [panel_role_message_added]
-other = "added"
+other = "toegevoegd"
 
 [panel_role_message_removed]
-other = "removed"
+other = "verwijderd"
 
 [players]
-other = "players"
+other = "spelers"
 
 [port]
-other = "port"
+other = "poort"
 
 [version]
-other = "version"
+other = "Versie"
