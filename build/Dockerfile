@@ -1,5 +1,5 @@
 # goバージョン
-FROM golang:1.19.2-alpine
+FROM golang:1.19.3-alpine
 # アップデートとgitのインストール
 RUN apk update && apk add git
 # gobotディレクトリの作成
