@@ -57,6 +57,7 @@ func Translates(locale discordgo.Locale, messageId string, templateData interfac
 	if err != nil {
 		panic(err)
 	}
+	messageId = strings.ReplaceAll(messageId, ".", "_")
 	defaultLocalizer := i18n.NewLocalizer(&translations, string(locale))
 	res, err := defaultLocalizer.Localize(&i18n.LocalizeConfig{
 		MessageID:    messageId,
