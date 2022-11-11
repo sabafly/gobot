@@ -66,8 +66,12 @@ func feedMinecraftHandler(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(body, &data)
 	s := setup.GetSession()
 	for _, v := range data {
+		var locale discordgo.Locale
 		if v.Locale == "" {
-			v.Locale = discordgo.Japanese
+			locale = discordgo.Japanese
+		}
+		if l, ok := types.StL[string(v.Locale)]; ok {
+			locale = l
 		}
 		ws, _ := s.ChannelWebhooks(v.ChannelID)
 		var wid string
@@ -99,7 +103,7 @@ func feedMinecraftHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			embed = []*discordgo.MessageEmbed{
 				{
-					Title: translate.Translate(v.Locale, "panel_minecraft_message_boot", map[string]interface{}{
+					Title: translate.Translate(locale, "panel_minecraft_message_boot", map[string]interface{}{
 						"Name": v.Name,
 					}),
 					Color: 0x00ff00,
@@ -112,7 +116,7 @@ func feedMinecraftHandler(w http.ResponseWriter, r *http.Request) {
 		} else if err == nil && !online {
 			embed = []*discordgo.MessageEmbed{
 				{
-					Title: translate.Translate(v.Locale, "panel_minecraft_message_stop", map[string]interface{}{
+					Title: translate.Translate(locale, "panel_minecraft_message_stop", map[string]interface{}{
 						"Name": v.Name,
 					}),
 					Color: 0xff0000,
@@ -128,7 +132,7 @@ func feedMinecraftHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		_, err = s.WebhookExecute(wid, wToken, true, &discordgo.WebhookParams{
 			Content:   ctx,
-			Username:  translate.Message(v.Locale, "feed_minecraft_webhook_name"),
+			Username:  translate.Message(locale, "feed_minecraft_webhook_name"),
 			AvatarURL: "",
 			Embeds:    embed,
 		})

@@ -475,7 +475,7 @@ func feedMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, o
 			Locale:    i.Locale,
 		},
 	}
-	log.Print(data.Address, data.Port)
+	log.Print(data.Address, data.Port, i.Locale)
 	body, _ := json.Marshal(data)
 	api.GetApi("/api/feed/mc/add", bytes.NewBuffer(body))
 	str := "OK"

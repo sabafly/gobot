@@ -42,3 +42,36 @@ type ImagePngHash struct {
 	Hash string `gorm:"primarykey"`
 	Data string `gorm:"primarykey"`
 }
+
+var StL = map[string]discordgo.Locale{
+	"English (Great Britain)": discordgo.EnglishGB,
+	"Bulgarian":               discordgo.Bulgarian,
+	"Chinese (China)":         discordgo.ChineseCN,
+	"Chinese (Taiwan)":        discordgo.ChineseTW,
+	"Croatian":                discordgo.Croatian,
+	"Czech":                   discordgo.Czech,
+	"Danish":                  discordgo.Danish,
+	"Dutch":                   discordgo.Dutch,
+	"Finnish":                 discordgo.Finnish,
+	"French":                  discordgo.French,
+	"German":                  discordgo.German,
+	"Greek":                   discordgo.Greek,
+	"Hindi":                   discordgo.Hindi,
+	"Hungarian":               discordgo.Hungarian,
+	"Italian":                 discordgo.Italian,
+	"Japanese":                discordgo.Japanese,
+	"Korean":                  discordgo.Korean,
+	"Lithuanian":              discordgo.Lithuanian,
+	"Norwegian":               discordgo.Norwegian,
+	"Polish":                  discordgo.Polish,
+	"Portuguese (Brazil)":     discordgo.PortugueseBR,
+	"Romanian":                discordgo.Romanian,
+	"Russian":                 discordgo.Russian,
+	"Spanish (Spain)":         discordgo.SpanishES,
+	"Swedish":                 discordgo.Swedish,
+	"Thai":                    discordgo.Thai,
+	"Turkish":                 discordgo.Turkish,
+	"Ukrainian":               discordgo.Ukrainian,
+	"Vietnamese":              discordgo.Vietnamese,
+	"unknown":                 discordgo.Unknown,
+}
