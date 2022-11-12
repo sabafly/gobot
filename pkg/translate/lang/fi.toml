@@ -222,22 +222,22 @@ other = "portti"
 other = "versio"
 
 [command_tracker_option_minecraft_option_get]
-other = "get"
+other = "hae"
 
 [command_tracker_option_minecraft_option_get_desc]
-other = "get minecraft trackers"
+other = "hae minecraft trackers"
 
 [command_tracker_option_minecraft_option_remove]
-other = "remove"
+other = "poista"
 
 [command_tracker_option_minecraft_option_remove_desc]
-other = "remove minecraft trackers"
+other = "poista minecraftin jäljittäjät"
 
 [channel]
-other = "channel"
+other = "kanava"
 
 [command_tracker_option_minecraft_option_remove_option_name]
-other = "name"
+other = "nimi"
 
 [command_tracker_option_minecraft_option_remove_option_name_desc]
-other = "name of tracker"
+other = "seurantapalvelimen nimi"
