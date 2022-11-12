@@ -222,22 +222,22 @@ other = "θύρα"
 other = "έκδοση"
 
 [command_tracker_option_minecraft_option_get]
-other = "get"
+other = "πάρε"
 
 [command_tracker_option_minecraft_option_get_desc]
-other = "get minecraft trackers"
+other = "πάρε minecraft trackers"
 
 [command_tracker_option_minecraft_option_remove]
-other = "remove"
+other = "Κατάργηση"
 
 [command_tracker_option_minecraft_option_remove_desc]
-other = "remove minecraft trackers"
+other = "αφαίρεσε ιχνηλάτες minecraft"
 
 [channel]
-other = "channel"
+other = "κανάλι"
 
 [command_tracker_option_minecraft_option_remove_option_name]
-other = "name"
+other = "όνομα"
 
 [command_tracker_option_minecraft_option_remove_option_name_desc]
-other = "name of tracker"
+other = "όνομα του ιχνηλάτη"
