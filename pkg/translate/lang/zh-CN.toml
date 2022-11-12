@@ -222,22 +222,22 @@ other = "端口"
 other = "版本"
 
 [command_tracker_option_minecraft_option_get]
-other = "get"
+other = "获取"
 
 [command_tracker_option_minecraft_option_get_desc]
-other = "get minecraft trackers"
+other = "获取Minecraft跟踪器"
 
 [command_tracker_option_minecraft_option_remove]
-other = "remove"
+other = "移除"
 
 [command_tracker_option_minecraft_option_remove_desc]
-other = "remove minecraft trackers"
+other = "移除Minecraft Tracker"
 
 [channel]
-other = "channel"
+other = "频道"
 
 [command_tracker_option_minecraft_option_remove_option_name]
-other = "name"
+other = "名称"
 
 [command_tracker_option_minecraft_option_remove_option_name_desc]
-other = "name of tracker"
+other = "Tracker 名称"
