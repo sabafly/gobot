@@ -1,0 +1,243 @@
+[address]
+other = "adresse"
+
+[command_ban_desc]
+other = "den ausgewählten Benutzer bannen"
+
+[command_ban_message]
+other = "{{.Target}} wurde gebannt"
+
+[command_ban_option_desc_reason]
+other = "Grund für Bann"
+
+[command_ban_option_desc_target]
+other = "gebannter Benutzer"
+
+[command_ban_option_reason]
+other = "Grund"
+
+[command_ban_option_target]
+other = "target"
+
+[command_ban_reason]
+one = "Grund: {{.Reason}}"
+other = "Gründe: {{.Reason}}"
+
+[command_kick_desc]
+other = "den ausgewählten Benutzer kicken"
+
+[command_kick_message]
+other = "{{.Target}} wurde gekickt"
+
+[command_kick_option_desc_target]
+other = "Benutzer zum kicken"
+
+[command_kick_option_target]
+other = "target"
+
+[command_panel_desc]
+other = "verwalten oder Panel erstellen"
+
+[command_panel_option_desc_role]
+other = "verwalte Rollen"
+
+[command_panel_option_minecraft]
+other = "minecraft"
+
+[command_panel_option_minecraft_desc]
+other = "minecraft-Panel verwalten"
+
+[command_panel_option_minecraft_option_create]
+other = "erstellen"
+
+[command_panel_option_minecraft_option_create_desc]
+other = "erstelle Minecraft-Panel"
+
+[command_panel_option_minecraft_option_create_option_address]
+other = "adresse"
+
+[command_panel_option_minecraft_option_create_option_address_desc]
+other = "Adresse des Servers"
+
+[command_panel_option_minecraft_option_create_option_description]
+other = "beschreibung"
+
+[command_panel_option_minecraft_option_create_option_description_desc]
+other = "Beschreibung des Panels"
+
+[command_panel_option_minecraft_option_create_option_name]
+other = "name"
+
+[command_panel_option_minecraft_option_create_option_name_desc]
+other = "Name des Panels"
+
+[command_panel_option_minecraft_option_create_option_port]
+other = "port"
+
+[command_panel_option_minecraft_option_create_option_port_desc]
+other = "port des Servers"
+
+[command_panel_option_minecraft_option_create_option_servername]
+other = "servername"
+
+[command_panel_option_minecraft_option_create_option_servername_desc]
+other = "Name des Servers"
+
+[command_panel_option_minecraft_option_create_option_showip]
+other = "showip"
+
+[command_panel_option_minecraft_option_create_option_showip_desc]
+other = "zeige ip oder nicht"
+
+[command_panel_option_role]
+other = "rolle"
+
+[command_panel_option_role_option_create]
+other = "erstellen"
+
+[command_panel_option_role_option_create_option_desc]
+other = "desc"
+
+[command_panel_option_role_option_create_option_desc_desc]
+other = "desc des Panels"
+
+[command_panel_option_role_option_create_option_desc_name]
+other = "Name des Panels"
+
+[command_panel_option_role_option_create_option_desc_role]
+other = "Rolle, die dem Panel hinzugefügt wird"
+
+[command_panel_option_role_option_create_option_name]
+other = "name"
+
+[command_panel_option_role_option_create_option_role]
+other = "rolle"
+
+[command_panel_option_role_option_desc_create]
+other = "erstelle Rollen-Panel"
+
+[command_tracker]
+other = "tracker"
+
+[command_tracker_desc]
+other = "verwalten oder Tracker erstellen"
+
+[command_tracker_option_minecraft]
+other = "minecraft"
+
+[command_tracker_option_minecraft_desc]
+other = "minecraft Server Tracker verwalten"
+
+[command_tracker_option_minecraft_option_create]
+other = "erstellen"
+
+[command_tracker_option_minecraft_option_create_desc]
+other = "minecraft Server Tracker"
+
+[command_tracker_option_minecraft_option_create_option_address]
+other = "adresse"
+
+[command_tracker_option_minecraft_option_create_option_address_desc]
+other = "Adresse des Servers"
+
+[command_tracker_option_minecraft_option_create_option_name]
+other = "name"
+
+[command_tracker_option_minecraft_option_create_option_name_desc]
+other = "Name des Servers"
+
+[command_tracker_option_minecraft_option_create_option_port]
+other = "port"
+
+[command_tracker_option_minecraft_option_create_option_port_desc]
+other = "port des Servers"
+
+[command_tracker_option_minecraft_option_create_option_role]
+other = "rolle"
+
+[command_tracker_option_minecraft_option_create_option_role_desc]
+other = "zu nennende Rolle"
+
+[command_unban_desc]
+other = "den ausgewählten Benutzer entbannen"
+
+[command_unban_message]
+other = "{{.Target}} wurde entbannt"
+
+[command_unban_option_desc_target]
+other = "entbannen"
+
+[command_unban_option_target]
+other = "target"
+
+[error]
+other = "{{.Error}}"
+
+[error_0]
+other = "Ein Fehler ist aufgetreten {{.Error}}"
+
+[error_TargetIsBot]
+other = "Dieser Bot kann nicht als Ziel ausgewählt werden!"
+
+[error_failed_to_connect_api]
+other = "konnte Api-Server nicht verbinden"
+
+[error_failed_to_ping_server]
+other = "konnte Server nicht pingen"
+
+[error_invalid_port_value]
+other = "ungültiger Port-Wert"
+
+[error_message]
+other = "Ein Fehler ist aufgetreten"
+
+[feed_minecraft_webhook_name]
+other = "server notifier"
+
+[latency]
+other = "latenz"
+
+[message_command_modify]
+other = "ändern"
+
+[panel_minecraft_message_boot]
+other = "bootete {{.Name}} Server"
+
+[panel_minecraft_message_stop]
+other = "gestoppt {{.Name}} Server"
+
+[panel_role_message_added]
+other = "hinzugefügt"
+
+[panel_role_message_removed]
+other = "entfernt"
+
+[players]
+other = "spieler"
+
+[port]
+other = "port"
+
+[version]
+other = "version"
+
+[command_tracker_option_minecraft_option_get]
+other = "get"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "get minecraft trackers"
+
+[command_tracker_option_minecraft_option_remove]
+other = "remove"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "remove minecraft trackers"
+
+[channel]
+other = "channel"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "name"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "name of tracker"
