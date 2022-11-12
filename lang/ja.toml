@@ -5,13 +5,13 @@ other = "アドレス"
 other = "選択したユーザーをBANします"
 
 [command_ban_message]
-other = "{{.Target}} はBANされました"
+other = "{{.Target}} をBANしました"
 
 [command_ban_option_desc_reason]
 other = "banの理由"
 
 [command_ban_option_desc_target]
-other = "禁止するユーザー"
+other = "BANするユーザー"
 
 [command_ban_option_reason]
 other = "理由"
