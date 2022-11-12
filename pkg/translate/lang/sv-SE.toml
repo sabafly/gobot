@@ -1,0 +1,243 @@
+[address]
+other = "adress"
+
+[command_ban_desc]
+other = "bannlysa den valda användaren"
+
+[command_ban_message]
+other = "{{.Target}} har blivit bannlyst"
+
+[command_ban_option_desc_reason]
+other = "anledning till bannlysning"
+
+[command_ban_option_desc_target]
+other = "användare att bannlysa"
+
+[command_ban_option_reason]
+other = "anledning"
+
+[command_ban_option_target]
+other = "target"
+
+[command_ban_reason]
+one = "Orsak: {{.Reason}}"
+other = "Anledningar: {{.Reason}}"
+
+[command_kick_desc]
+other = "sparka den valda användaren"
+
+[command_kick_message]
+other = "{{.Target}} har blivit sparkad"
+
+[command_kick_option_desc_target]
+other = "användare att sparka"
+
+[command_kick_option_target]
+other = "target"
+
+[command_panel_desc]
+other = "hantera eller skapa panel"
+
+[command_panel_option_desc_role]
+other = "hantera rollpanel"
+
+[command_panel_option_minecraft]
+other = "minecraft"
+
+[command_panel_option_minecraft_desc]
+other = "hantera minecraft panel"
+
+[command_panel_option_minecraft_option_create]
+other = "skapa"
+
+[command_panel_option_minecraft_option_create_desc]
+other = "skapa minecraft panel"
+
+[command_panel_option_minecraft_option_create_option_address]
+other = "adress"
+
+[command_panel_option_minecraft_option_create_option_address_desc]
+other = "adressen till servern"
+
+[command_panel_option_minecraft_option_create_option_description]
+other = "beskrivning"
+
+[command_panel_option_minecraft_option_create_option_description_desc]
+other = "beskrivning av panel"
+
+[command_panel_option_minecraft_option_create_option_name]
+other = "namn"
+
+[command_panel_option_minecraft_option_create_option_name_desc]
+other = "namn på panel"
+
+[command_panel_option_minecraft_option_create_option_port]
+other = "port"
+
+[command_panel_option_minecraft_option_create_option_port_desc]
+other = "port för server"
+
+[command_panel_option_minecraft_option_create_option_servername]
+other = "servernamn"
+
+[command_panel_option_minecraft_option_create_option_servername_desc]
+other = "namn på servern"
+
+[command_panel_option_minecraft_option_create_option_showip]
+other = "showip"
+
+[command_panel_option_minecraft_option_create_option_showip_desc]
+other = "visa ip eller inte"
+
+[command_panel_option_role]
+other = "roll"
+
+[command_panel_option_role_option_create]
+other = "skapa"
+
+[command_panel_option_role_option_create_option_desc]
+other = "desc"
+
+[command_panel_option_role_option_create_option_desc_desc]
+other = "desc av panelen"
+
+[command_panel_option_role_option_create_option_desc_name]
+other = "namn på panel"
+
+[command_panel_option_role_option_create_option_desc_role]
+other = "roll som lägger till i panelen"
+
+[command_panel_option_role_option_create_option_name]
+other = "namn"
+
+[command_panel_option_role_option_create_option_role]
+other = "roll"
+
+[command_panel_option_role_option_desc_create]
+other = "skapa rollpanel"
+
+[command_tracker]
+other = "spårare"
+
+[command_tracker_desc]
+other = "hantera eller skapa spårare"
+
+[command_tracker_option_minecraft]
+other = "minecraft"
+
+[command_tracker_option_minecraft_desc]
+other = "hantera minecraft server tracker"
+
+[command_tracker_option_minecraft_option_create]
+other = "skapa"
+
+[command_tracker_option_minecraft_option_create_desc]
+other = "minecraft server tracker"
+
+[command_tracker_option_minecraft_option_create_option_address]
+other = "adress"
+
+[command_tracker_option_minecraft_option_create_option_address_desc]
+other = "adressen till servern"
+
+[command_tracker_option_minecraft_option_create_option_name]
+other = "namn"
+
+[command_tracker_option_minecraft_option_create_option_name_desc]
+other = "namn på servern"
+
+[command_tracker_option_minecraft_option_create_option_port]
+other = "port"
+
+[command_tracker_option_minecraft_option_create_option_port_desc]
+other = "port för server"
+
+[command_tracker_option_minecraft_option_create_option_role]
+other = "roll"
+
+[command_tracker_option_minecraft_option_create_option_role_desc]
+other = "roll att nämna"
+
+[command_unban_desc]
+other = "obannlysa den valda användaren"
+
+[command_unban_message]
+other = "{{.Target}} har blivit bannlyst"
+
+[command_unban_option_desc_target]
+other = "användare att ta bort bannlysning"
+
+[command_unban_option_target]
+other = "target"
+
+[error]
+other = "{{.Error}}"
+
+[error_0]
+other = "Ett fel har inträffat {{.Error}}"
+
+[error_TargetIsBot]
+other = "Kan inte välja denna bot som mål!"
+
+[error_failed_to_connect_api]
+other = "Fel vid anslutning av api server"
+
+[error_failed_to_ping_server]
+other = "Det gick inte att pinga servern"
+
+[error_invalid_port_value]
+other = "ogiltigt portvärde"
+
+[error_message]
+other = "Ett fel har uppstått"
+
+[feed_minecraft_webhook_name]
+other = "server avisering"
+
+[latency]
+other = "latens"
+
+[message_command_modify]
+other = "modifiera"
+
+[panel_minecraft_message_boot]
+other = "startade {{.Name}} -servern"
+
+[panel_minecraft_message_stop]
+other = "stoppade {{.Name}} -servern"
+
+[panel_role_message_added]
+other = "tillagd"
+
+[panel_role_message_removed]
+other = "borttagen"
+
+[players]
+other = "spelare"
+
+[port]
+other = "port"
+
+[version]
+other = "version"
+
+[command_tracker_option_minecraft_option_get]
+other = "get"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "get minecraft trackers"
+
+[command_tracker_option_minecraft_option_remove]
+other = "remove"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "remove minecraft trackers"
+
+[channel]
+other = "channel"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "name"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "name of tracker"
