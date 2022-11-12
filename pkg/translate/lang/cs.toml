@@ -222,22 +222,22 @@ other = "přístav"
 other = "verze"
 
 [command_tracker_option_minecraft_option_get]
-other = "get"
+other = "získej"
 
 [command_tracker_option_minecraft_option_get_desc]
-other = "get minecraft trackers"
+other = "získat trackery minecraft"
 
 [command_tracker_option_minecraft_option_remove]
-other = "remove"
+other = "odstranit"
 
 [command_tracker_option_minecraft_option_remove_desc]
-other = "remove minecraft trackers"
+other = "odstranit minecraft trackery"
 
 [channel]
-other = "channel"
+other = "kanál"
 
 [command_tracker_option_minecraft_option_remove_option_name]
-other = "name"
+other = "jméno"
 
 [command_tracker_option_minecraft_option_remove_option_name_desc]
-other = "name of tracker"
+other = "název trackeru"
