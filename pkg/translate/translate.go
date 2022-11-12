@@ -1,10 +1,9 @@
 package translate
 
 import (
+	"embed"
 	"fmt"
 	"log"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -12,6 +11,10 @@ import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"golang.org/x/text/language"
 )
+
+//go:embed lang/*
+//go:embed en.toml
+var f embed.FS
 
 var (
 	defaultLang = language.English
@@ -22,22 +25,37 @@ func init() {
 }
 
 func loadTranslations() (i18n.Bundle, error) {
-	dir := filepath.Join("lang")
+	// dir := filepath.Join("lang")
 	bundle := i18n.NewBundle(defaultLang)
 	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() || filepath.Ext(path) != ".toml" {
-			return nil
-		}
-		_, err = bundle.LoadMessageFile(path)
-		return err
+	ff, err := f.ReadFile("en.toml")
+	if err != nil {
+		panic(err)
+	}
+	ln, err := i18n.ParseMessageFileBytes(ff, "en.toml", map[string]i18n.UnmarshalFunc{
+		"toml": toml.Unmarshal,
 	})
 	if err != nil {
-		return i18n.Bundle{}, err
+		panic(err)
 	}
+	bundle.AddMessages(ln.Tag, ln.Messages...)
+	fd, _ := f.ReadDir("lang")
+	for _, de := range fd {
+		bundle.LoadMessageFileFS(f, "lang/"+de.Name())
+	}
+	// err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	if info.IsDir() || filepath.Ext(path) != ".toml" {
+	// 		return nil
+	// 	}
+	// 	_, err = bundle.LoadMessageFile(path)
+	// 	return err
+	// })
+	// if err != nil {
+	// 	return i18n.Bundle{}, err
+	// }
 
 	return *bundle, nil
 }
@@ -57,6 +75,7 @@ func Translates(locale discordgo.Locale, messageId string, templateData interfac
 	if err != nil {
 		panic(err)
 	}
+	messageId = strings.ReplaceAll(messageId, ".", "_")
 	defaultLocalizer := i18n.NewLocalizer(&translations, string(locale))
 	res, err := defaultLocalizer.Localize(&i18n.LocalizeConfig{
 		MessageID:    messageId,
@@ -152,7 +171,7 @@ func MessageMap(key string, replace bool) *map[discordgo.Locale]string {
 
 func ErrorEmbed(locale discordgo.Locale, key string, any ...interface{}) (embed []*discordgo.MessageEmbed) {
 	var trs string
-	if any[0] != nil {
+	if len(any) != 0 {
 		trs = Translate(locale, key, any[0])
 	} else if key != "" {
 		trs = Message(locale, key)
@@ -160,6 +179,7 @@ func ErrorEmbed(locale discordgo.Locale, key string, any ...interface{}) (embed 
 	embed = append(embed, &discordgo.MessageEmbed{
 		Title:       Message(locale, "error_message"),
 		Description: trs,
+		Color:       0xff0000,
 	})
 	return
 }

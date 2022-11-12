@@ -6,12 +6,12 @@ import (
 )
 
 type GlobalBan struct {
-	Code    int64     `json:"code"`
-	Status  string    `json:"status"`
-	Content []Content `json:"content"`
+	Code    int64  `json:"code"`
+	Status  string `json:"status"`
+	Content []Ban  `json:"content"`
 }
 
-type Content struct {
+type Ban struct {
 	ID        int64       `json:"ID"`
 	CreatedAt string      `json:"CreatedAt"`
 	UpdatedAt string      `json:"UpdatedAt"`
@@ -41,4 +41,53 @@ type ImagePngHash struct {
 	gorm.Model
 	Hash string `gorm:"primarykey"`
 	Data string `gorm:"primarykey"`
+}
+
+type Res struct {
+	Code    int64       `json:"code"`
+	Status  string      `json:"status"`
+	Content interface{} `json:"content"`
+}
+
+type MCServer struct {
+	gorm.Model
+	Hash    string `gorm:"uniqueIndex"`
+	Address string
+	Port    uint16
+	Online  bool
+}
+
+type MCServers []MCServer
+
+var StL = map[string]discordgo.Locale{
+	"English (Great Britain)": discordgo.EnglishGB,
+	"Bulgarian":               discordgo.Bulgarian,
+	"Chinese (China)":         discordgo.ChineseCN,
+	"Chinese (Taiwan)":        discordgo.ChineseTW,
+	"Croatian":                discordgo.Croatian,
+	"Czech":                   discordgo.Czech,
+	"Danish":                  discordgo.Danish,
+	"Dutch":                   discordgo.Dutch,
+	"Finnish":                 discordgo.Finnish,
+	"French":                  discordgo.French,
+	"German":                  discordgo.German,
+	"Greek":                   discordgo.Greek,
+	"Hindi":                   discordgo.Hindi,
+	"Hungarian":               discordgo.Hungarian,
+	"Italian":                 discordgo.Italian,
+	"Japanese":                discordgo.Japanese,
+	"Korean":                  discordgo.Korean,
+	"Lithuanian":              discordgo.Lithuanian,
+	"Norwegian":               discordgo.Norwegian,
+	"Polish":                  discordgo.Polish,
+	"Portuguese (Brazil)":     discordgo.PortugueseBR,
+	"Romanian":                discordgo.Romanian,
+	"Russian":                 discordgo.Russian,
+	"Spanish (Spain)":         discordgo.SpanishES,
+	"Swedish":                 discordgo.Swedish,
+	"Thai":                    discordgo.Thai,
+	"Turkish":                 discordgo.Turkish,
+	"Ukrainian":               discordgo.Ukrainian,
+	"Vietnamese":              discordgo.Vietnamese,
+	"unknown":                 discordgo.Unknown,
 }
