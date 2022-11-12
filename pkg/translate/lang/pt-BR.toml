@@ -220,3 +220,24 @@ other = "Porta"
 
 [version]
 other = "Versão"
+
+[command_tracker_option_minecraft_option_get]
+other = "obtenha"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "obter rastreadores de minecraft"
+
+[command_tracker_option_minecraft_option_remove]
+other = "Remover"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "remover rastreadores de minecraft"
+
+[channel]
+other = "Canal"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "Nome"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "nome do rastreador"

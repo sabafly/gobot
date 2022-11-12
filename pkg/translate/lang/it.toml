@@ -220,3 +220,24 @@ other = "porta"
 
 [version]
 other = "versione"
+
+[command_tracker_option_minecraft_option_get]
+other = "ottieni"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "ottieni tracker minecraft"
+
+[command_tracker_option_minecraft_option_remove]
+other = "rimuovi"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "rimuovi minecraft trackers"
+
+[channel]
+other = "canale"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "nome"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "nome del tracker"

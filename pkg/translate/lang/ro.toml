@@ -220,3 +220,24 @@ other = "port"
 
 [version]
 other = "versiune"
+
+[command_tracker_option_minecraft_option_get]
+other = "obține"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "obține trackere minecraft"
+
+[command_tracker_option_minecraft_option_remove]
+other = "elimină"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "elimină trackere minecraft"
+
+[channel]
+other = "canal"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "nume"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "numele trackerului"

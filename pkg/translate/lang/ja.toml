@@ -8,16 +8,16 @@ other = "選択したユーザーをBANします"
 other = "{{.Target}} はBANされました"
 
 [command_ban_option_desc_reason]
-other = "banの理由"
+other = "BANの理由"
 
 [command_ban_option_desc_target]
-other = "禁止するユーザー"
+other = "BANするユーザー"
 
 [command_ban_option_reason]
 other = "理由"
 
 [command_ban_option_target]
-other = "target"
+other = "対象"
 
 [command_ban_reason]
 one = "理由: {{.Reason}}"
@@ -33,25 +33,25 @@ other = "{{.Target}} がキックされました"
 other = "キックするユーザー"
 
 [command_kick_option_target]
-other = "target"
+other = "対象"
 
 [command_panel_desc]
-other = "管理またはパネルの作成"
+other = "パネルの管理または作成"
 
 [command_panel_option_desc_role]
 other = "役割パネルの管理"
 
 [command_panel_option_minecraft]
-other = "Minecraft"
+other = "マインクラフト"
 
 [command_panel_option_minecraft_desc]
-other = "Minecraftパネルを管理"
+other = "マインクラフトパネルを管理"
 
 [command_panel_option_minecraft_option_create]
 other = "作成"
 
 [command_panel_option_minecraft_option_create_desc]
-other = "Minecraftパネルを作成"
+other = "マインクラフトパネルを作成"
 
 [command_panel_option_minecraft_option_create_option_address]
 other = "アドレス"
@@ -84,7 +84,7 @@ other = "サーバー名"
 other = "サーバー名"
 
 [command_panel_option_minecraft_option_create_option_showip]
-other = "showip"
+other = "ipを表示"
 
 [command_panel_option_minecraft_option_create_option_showip_desc]
 other = "IPを表示するかどうか"
@@ -96,10 +96,10 @@ other = "ロール"
 other = "作成"
 
 [command_panel_option_role_option_create_option_desc]
-other = "desc"
+other = "説明"
 
 [command_panel_option_role_option_create_option_desc_desc]
-other = "パネルのdesc"
+other = "パネルの説明"
 
 [command_panel_option_role_option_create_option_desc_name]
 other = "パネル名"
@@ -123,16 +123,16 @@ other = "トラッカー"
 other = "トラッカーを管理または作成する"
 
 [command_tracker_option_minecraft]
-other = "Minecraft"
+other = "マインクラフト"
 
 [command_tracker_option_minecraft_desc]
-other = "Minecraftサーバートラッカーを管理する"
+other = "マインクラフトサーバートラッカーを管理する"
 
 [command_tracker_option_minecraft_option_create]
 other = "作成"
 
 [command_tracker_option_minecraft_option_create_desc]
-other = "Minecraftサーバートラッカー"
+other = "マインクラフトサーバートラッカー"
 
 [command_tracker_option_minecraft_option_create_option_address]
 other = "アドレス"
@@ -159,31 +159,31 @@ other = "ロール"
 other = "メンションするロール"
 
 [command_unban_desc]
-other = "選択した利用者のBANを解除"
+other = "選択したユーザーのBANを解除"
 
 [command_unban_message]
-other = "{{.Target}} のBANが解除されました"
+other = "{{.Target}} のBANを解除しました"
 
 [command_unban_option_desc_target]
-other = "banを解除するユーザー"
+other = "BANを解除するユーザー"
 
 [command_unban_option_target]
-other = "ターゲット"
+other = "対象"
 
 [error]
 other = "{{.Error}}"
 
 [error_0]
-other = "エラーが発生しました {{.Error}}"
+other = "エラーが発生しました： {{.Error}}"
 
 [error_TargetIsBot]
 other = "このボットをターゲットとして選択できません！"
 
 [error_failed_to_connect_api]
-other = "APIサーバーエラーの接続に失敗しました"
+other = "APIサーバーの接続に失敗しました"
 
 [error_failed_to_ping_server]
-other = "Pingサーバーに失敗しました"
+other = "サーバーへの接続に失敗しました"
 
 [error_invalid_port_value]
 other = "不正なポート値"
@@ -195,22 +195,22 @@ other = "エラーが発生しました"
 other = "サーバ通知"
 
 [latency]
-other = "レイテンシー"
+other = "レイテンシ"
 
 [message_command_modify]
 other = "変更"
 
 [panel_minecraft_message_boot]
-other = "{{.Name}} サーバーを起動しました"
+other = "{{.Name}} サーバーが起動しました"
 
 [panel_minecraft_message_stop]
-other = "{{.Name}} サーバーを停止しました"
+other = "{{.Name}} サーバーが停止しました"
 
 [panel_role_message_added]
 other = "追加"
 
 [panel_role_message_removed]
-other = "removed"
+other = "剥奪"
 
 [players]
 other = "プレイヤー"
@@ -220,3 +220,24 @@ other = "ポート"
 
 [version]
 other = "バージョン"
+
+[command_tracker_option_minecraft_option_get]
+other = "取得"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "マインクラフトのトラッカーを取得します"
+
+[command_tracker_option_minecraft_option_remove]
+other = "削除"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "マインクラフトのトラッカーを削除します"
+
+[channel]
+other = "チャンネル"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "名前"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "トラッカーの名前"

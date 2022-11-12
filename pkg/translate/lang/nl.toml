@@ -220,3 +220,24 @@ other = "poort"
 
 [version]
 other = "Versie"
+
+[command_tracker_option_minecraft_option_get]
+other = "pak"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "krijg minecraft trackers"
+
+[command_tracker_option_minecraft_option_remove]
+other = "verwijderen"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "verwijder minecraft trackers"
+
+[channel]
+other = "kanaal"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "Naam"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "naam van de tracker"

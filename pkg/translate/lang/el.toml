@@ -220,3 +220,24 @@ other = "θύρα"
 
 [version]
 other = "έκδοση"
+
+[command_tracker_option_minecraft_option_get]
+other = "πάρε"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "πάρε minecraft trackers"
+
+[command_tracker_option_minecraft_option_remove]
+other = "Κατάργηση"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "αφαίρεσε ιχνηλάτες minecraft"
+
+[channel]
+other = "κανάλι"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "όνομα"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "όνομα του ιχνηλάτη"

@@ -220,3 +220,24 @@ other = "port"
 
 [version]
 other = "wersja"
+
+[command_tracker_option_minecraft_option_get]
+other = "pobierz"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "pobierz tropiciele minecraft"
+
+[command_tracker_option_minecraft_option_remove]
+other = "usuń"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "usuń tropiciele minecraft"
+
+[channel]
+other = "kanał"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "Nazwa"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "nazwa trackera"

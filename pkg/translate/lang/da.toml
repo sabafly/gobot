@@ -220,3 +220,24 @@ other = "port"
 
 [version]
 other = "version"
+
+[command_tracker_option_minecraft_option_get]
+other = "hent"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "hent minecraft trackere"
+
+[command_tracker_option_minecraft_option_remove]
+other = "fjern"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "fjern minecraft trackers"
+
+[channel]
+other = "kanal"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "navn"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "navn på tracker"

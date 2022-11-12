@@ -220,3 +220,24 @@ other = "přístav"
 
 [version]
 other = "verze"
+
+[command_tracker_option_minecraft_option_get]
+other = "získej"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "získat trackery minecraft"
+
+[command_tracker_option_minecraft_option_remove]
+other = "odstranit"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "odstranit minecraft trackery"
+
+[channel]
+other = "kanál"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "jméno"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "název trackeru"

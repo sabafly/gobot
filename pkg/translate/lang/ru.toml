@@ -220,3 +220,24 @@ other = "порт"
 
 [version]
 other = "версия"
+
+[command_tracker_option_minecraft_option_get]
+other = "получить"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "получить майнекратные трекеры"
+
+[command_tracker_option_minecraft_option_remove]
+other = "удалить"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "удалить minecraft трекеры"
+
+[channel]
+other = "канал"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "имя"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "название трекера"
