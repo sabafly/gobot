@@ -1,0 +1,243 @@
+[address]
+other = "адрес"
+
+[command_ban_desc]
+other = "забанить выбранного пользователя"
+
+[command_ban_message]
+other = "{{.Target}} был забанен"
+
+[command_ban_option_desc_reason]
+other = "причина бана"
+
+[command_ban_option_desc_target]
+other = "забанить пользователя"
+
+[command_ban_option_reason]
+other = "причина"
+
+[command_ban_option_target]
+other = "target"
+
+[command_ban_reason]
+one = "Причина: {{.Reason}}"
+other = "Причины: {{.Reason}}"
+
+[command_kick_desc]
+other = "выгнать выбранного пользователя"
+
+[command_kick_message]
+other = "{{.Target}} был кикнут"
+
+[command_kick_option_desc_target]
+other = "выгнать пользователя"
+
+[command_kick_option_target]
+other = "target"
+
+[command_panel_desc]
+other = "управление или создание панели"
+
+[command_panel_option_desc_role]
+other = "управление панелью ролей"
+
+[command_panel_option_minecraft]
+other = "манекфт"
+
+[command_panel_option_minecraft_desc]
+other = "управление панелью minecraft"
+
+[command_panel_option_minecraft_option_create]
+other = "создать"
+
+[command_panel_option_minecraft_option_create_desc]
+other = "создать панель minecraft"
+
+[command_panel_option_minecraft_option_create_option_address]
+other = "адрес"
+
+[command_panel_option_minecraft_option_create_option_address_desc]
+other = "адрес сервера"
+
+[command_panel_option_minecraft_option_create_option_description]
+other = "описание"
+
+[command_panel_option_minecraft_option_create_option_description_desc]
+other = "описание панели"
+
+[command_panel_option_minecraft_option_create_option_name]
+other = "имя"
+
+[command_panel_option_minecraft_option_create_option_name_desc]
+other = "название панели"
+
+[command_panel_option_minecraft_option_create_option_port]
+other = "порт"
+
+[command_panel_option_minecraft_option_create_option_port_desc]
+other = "порт сервера"
+
+[command_panel_option_minecraft_option_create_option_servername]
+other = "имя сервера"
+
+[command_panel_option_minecraft_option_create_option_servername_desc]
+other = "имя сервера"
+
+[command_panel_option_minecraft_option_create_option_showip]
+other = "showip"
+
+[command_panel_option_minecraft_option_create_option_showip_desc]
+other = "показать ip или нет"
+
+[command_panel_option_role]
+other = "роль"
+
+[command_panel_option_role_option_create]
+other = "создать"
+
+[command_panel_option_role_option_create_option_desc]
+other = "desc"
+
+[command_panel_option_role_option_create_option_desc_desc]
+other = "описание панели"
+
+[command_panel_option_role_option_create_option_desc_name]
+other = "название панели"
+
+[command_panel_option_role_option_create_option_desc_role]
+other = "роль, добавляемая к панели"
+
+[command_panel_option_role_option_create_option_name]
+other = "имя"
+
+[command_panel_option_role_option_create_option_role]
+other = "роль"
+
+[command_panel_option_role_option_desc_create]
+other = "создать панель ролей"
+
+[command_tracker]
+other = "трекер"
+
+[command_tracker_desc]
+other = "управление или создание трекера"
+
+[command_tracker_option_minecraft]
+other = "манекфт"
+
+[command_tracker_option_minecraft_desc]
+other = "управление трекером серверов minecraft"
+
+[command_tracker_option_minecraft_option_create]
+other = "создать"
+
+[command_tracker_option_minecraft_option_create_desc]
+other = "трекер серверов minecraft"
+
+[command_tracker_option_minecraft_option_create_option_address]
+other = "адрес"
+
+[command_tracker_option_minecraft_option_create_option_address_desc]
+other = "адрес сервера"
+
+[command_tracker_option_minecraft_option_create_option_name]
+other = "имя"
+
+[command_tracker_option_minecraft_option_create_option_name_desc]
+other = "имя сервера"
+
+[command_tracker_option_minecraft_option_create_option_port]
+other = "порт"
+
+[command_tracker_option_minecraft_option_create_option_port_desc]
+other = "порт сервера"
+
+[command_tracker_option_minecraft_option_create_option_role]
+other = "роль"
+
+[command_tracker_option_minecraft_option_create_option_role_desc]
+other = "упоминание роли"
+
+[command_unban_desc]
+other = "разбанить выбранного пользователя"
+
+[command_unban_message]
+other = "{{.Target}} был разбанен"
+
+[command_unban_option_desc_target]
+other = "пользователь для разблокировки"
+
+[command_unban_option_target]
+other = "target"
+
+[error]
+other = "{{.Error}}"
+
+[error_0]
+other = "Произошла ошибка {{.Error}}"
+
+[error_TargetIsBot]
+other = "Невозможно выбрать этого бота в качестве цели!"
+
+[error_failed_to_connect_api]
+other = "не удалось подключиться к серверу api"
+
+[error_failed_to_ping_server]
+other = "не удалось выполнить запрос сервера"
+
+[error_invalid_port_value]
+other = "неверное значение порта"
+
+[error_message]
+other = "Произошла ошибка"
+
+[feed_minecraft_webhook_name]
+other = "извещение сервера"
+
+[latency]
+other = "задержка"
+
+[message_command_modify]
+other = "изменить"
+
+[panel_minecraft_message_boot]
+other = "сервер {{.Name}} загружен"
+
+[panel_minecraft_message_stop]
+other = "остановлен сервер {{.Name}}"
+
+[panel_role_message_added]
+other = "добавлено"
+
+[panel_role_message_removed]
+other = "удалён"
+
+[players]
+other = "игроков"
+
+[port]
+other = "порт"
+
+[version]
+other = "версия"
+
+[command_tracker_option_minecraft_option_get]
+other = "get"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "get minecraft trackers"
+
+[command_tracker_option_minecraft_option_remove]
+other = "remove"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "remove minecraft trackers"
+
+[channel]
+other = "channel"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "name"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "name of tracker"
