@@ -1,0 +1,243 @@
+[address]
+other = "地址"
+
+[command_ban_desc]
+other = "封禁所选用户"
+
+[command_ban_message]
+other = "{{.Target}} 已被封禁"
+
+[command_ban_option_desc_reason]
+other = "禁止的原因"
+
+[command_ban_option_desc_target]
+other = "要禁止的用户"
+
+[command_ban_option_reason]
+other = "原因"
+
+[command_ban_option_target]
+other = "target"
+
+[command_ban_reason]
+one = "原因： {{.Reason}}"
+other = "原因： {{.Reason}}"
+
+[command_kick_desc]
+other = "踢出选中的用户"
+
+[command_kick_message]
+other = "{{.Target}} 已被踢出"
+
+[command_kick_option_desc_target]
+other = "要踢出的用户"
+
+[command_kick_option_target]
+other = "target"
+
+[command_panel_desc]
+other = "管理或创建面板"
+
+[command_panel_option_desc_role]
+other = "管理角色面板"
+
+[command_panel_option_minecraft]
+other = "Minecraft"
+
+[command_panel_option_minecraft_desc]
+other = "管理Minecraft面板"
+
+[command_panel_option_minecraft_option_create]
+other = "创建"
+
+[command_panel_option_minecraft_option_create_desc]
+other = "创建我的世界面板"
+
+[command_panel_option_minecraft_option_create_option_address]
+other = "地址"
+
+[command_panel_option_minecraft_option_create_option_address_desc]
+other = "服务器地址"
+
+[command_panel_option_minecraft_option_create_option_description]
+other = "描述"
+
+[command_panel_option_minecraft_option_create_option_description_desc]
+other = "面板描述"
+
+[command_panel_option_minecraft_option_create_option_name]
+other = "名称"
+
+[command_panel_option_minecraft_option_create_option_name_desc]
+other = "面板名称"
+
+[command_panel_option_minecraft_option_create_option_port]
+other = "端口"
+
+[command_panel_option_minecraft_option_create_option_port_desc]
+other = "服务器端口"
+
+[command_panel_option_minecraft_option_create_option_servername]
+other = "服务器名称"
+
+[command_panel_option_minecraft_option_create_option_servername_desc]
+other = "服务器名称"
+
+[command_panel_option_minecraft_option_create_option_showip]
+other = "showip"
+
+[command_panel_option_minecraft_option_create_option_showip_desc]
+other = "是否显示 ip"
+
+[command_panel_option_role]
+other = "角色"
+
+[command_panel_option_role_option_create]
+other = "创建"
+
+[command_panel_option_role_option_create_option_desc]
+other = "desc"
+
+[command_panel_option_role_option_create_option_desc_desc]
+other = "面板降序排列"
+
+[command_panel_option_role_option_create_option_desc_name]
+other = "面板名称"
+
+[command_panel_option_role_option_create_option_desc_role]
+other = "添加到面板的角色"
+
+[command_panel_option_role_option_create_option_name]
+other = "名称"
+
+[command_panel_option_role_option_create_option_role]
+other = "角色"
+
+[command_panel_option_role_option_desc_create]
+other = "创建角色面板"
+
+[command_tracker]
+other = "追踪器"
+
+[command_tracker_desc]
+other = "管理或创建跟踪器"
+
+[command_tracker_option_minecraft]
+other = "Minecraft"
+
+[command_tracker_option_minecraft_desc]
+other = "管理Minecraft服务器跟踪器"
+
+[command_tracker_option_minecraft_option_create]
+other = "创建"
+
+[command_tracker_option_minecraft_option_create_desc]
+other = "Minecraft服务器跟踪器"
+
+[command_tracker_option_minecraft_option_create_option_address]
+other = "地址"
+
+[command_tracker_option_minecraft_option_create_option_address_desc]
+other = "服务器地址"
+
+[command_tracker_option_minecraft_option_create_option_name]
+other = "名称"
+
+[command_tracker_option_minecraft_option_create_option_name_desc]
+other = "服务器名称"
+
+[command_tracker_option_minecraft_option_create_option_port]
+other = "端口"
+
+[command_tracker_option_minecraft_option_create_option_port_desc]
+other = "服务器端口"
+
+[command_tracker_option_minecraft_option_create_option_role]
+other = "角色"
+
+[command_tracker_option_minecraft_option_create_option_role_desc]
+other = "要提及的角色"
+
+[command_unban_desc]
+other = "取消封禁所选用户"
+
+[command_unban_message]
+other = "{{.Target}} 已被解除封禁"
+
+[command_unban_option_desc_target]
+other = "要解除封禁的用户"
+
+[command_unban_option_target]
+other = "target"
+
+[error]
+other = "{{.Error}}"
+
+[error_0]
+other = "发生错误 {{.Error}}"
+
+[error_TargetIsBot]
+other = "无法选择此机器人为目标！"
+
+[error_failed_to_connect_api]
+other = "连接 api 服务器失败"
+
+[error_failed_to_ping_server]
+other = "Ping 服务器失败"
+
+[error_invalid_port_value]
+other = "无效端口值"
+
+[error_message]
+other = "发生错误"
+
+[feed_minecraft_webhook_name]
+other = "服务器通知器"
+
+[latency]
+other = "延迟"
+
+[message_command_modify]
+other = "修改"
+
+[panel_minecraft_message_boot]
+other = "启动 {{.Name}} 服务器"
+
+[panel_minecraft_message_stop]
+other = "停止 {{.Name}} 服务器"
+
+[panel_role_message_added]
+other = "已添加"
+
+[panel_role_message_removed]
+other = "已删除"
+
+[players]
+other = "玩家"
+
+[port]
+other = "端口"
+
+[version]
+other = "版本"
+
+[command_tracker_option_minecraft_option_get]
+other = "get"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "get minecraft trackers"
+
+[command_tracker_option_minecraft_option_remove]
+other = "remove"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "remove minecraft trackers"
+
+[channel]
+other = "channel"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "name"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "name of tracker"
