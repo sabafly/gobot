@@ -1,0 +1,243 @@
+[address]
+other = "adresă"
+
+[command_ban_desc]
+other = "interzice utilizatorul selectat"
+
+[command_ban_message]
+other = "{{.Target}} a fost banat"
+
+[command_ban_option_desc_reason]
+other = "motiv pentru interdicție"
+
+[command_ban_option_desc_target]
+other = "utilizator pentru a interzice"
+
+[command_ban_option_reason]
+other = "motiv"
+
+[command_ban_option_target]
+other = "target"
+
+[command_ban_reason]
+one = "Motiv: {{.Reason}}"
+other = "Motive: {{.Reason}}"
+
+[command_kick_desc]
+other = "exclude utilizatorul selectat"
+
+[command_kick_message]
+other = "{{.Target}} a fost dat afară"
+
+[command_kick_option_desc_target]
+other = "utilizator de dat afară"
+
+[command_kick_option_target]
+other = "target"
+
+[command_panel_desc]
+other = "gestionare sau creare panou"
+
+[command_panel_option_desc_role]
+other = "gestionează panoul de rol"
+
+[command_panel_option_minecraft]
+other = "minecraft"
+
+[command_panel_option_minecraft_desc]
+other = "Gestionează panoul de minecraft"
+
+[command_panel_option_minecraft_option_create]
+other = "crează"
+
+[command_panel_option_minecraft_option_create_desc]
+other = "creează panou de minecraft"
+
+[command_panel_option_minecraft_option_create_option_address]
+other = "adresă"
+
+[command_panel_option_minecraft_option_create_option_address_desc]
+other = "adresa serverului"
+
+[command_panel_option_minecraft_option_create_option_description]
+other = "descriere"
+
+[command_panel_option_minecraft_option_create_option_description_desc]
+other = "descrierea panoului"
+
+[command_panel_option_minecraft_option_create_option_name]
+other = "nume"
+
+[command_panel_option_minecraft_option_create_option_name_desc]
+other = "numele panoului"
+
+[command_panel_option_minecraft_option_create_option_port]
+other = "port"
+
+[command_panel_option_minecraft_option_create_option_port_desc]
+other = "portul de server"
+
+[command_panel_option_minecraft_option_create_option_servername]
+other = "nume server"
+
+[command_panel_option_minecraft_option_create_option_servername_desc]
+other = "numele serverului"
+
+[command_panel_option_minecraft_option_create_option_showip]
+other = "showip"
+
+[command_panel_option_minecraft_option_create_option_showip_desc]
+other = "arată ip sau nu"
+
+[command_panel_option_role]
+other = "rol"
+
+[command_panel_option_role_option_create]
+other = "crează"
+
+[command_panel_option_role_option_create_option_desc]
+other = "desc"
+
+[command_panel_option_role_option_create_option_desc_desc]
+other = "descoperirea panoului"
+
+[command_panel_option_role_option_create_option_desc_name]
+other = "numele panoului"
+
+[command_panel_option_role_option_create_option_desc_role]
+other = "rol care adaugă la panou"
+
+[command_panel_option_role_option_create_option_name]
+other = "nume"
+
+[command_panel_option_role_option_create_option_role]
+other = "rol"
+
+[command_panel_option_role_option_desc_create]
+other = "creează panou de rol"
+
+[command_tracker]
+other = "urmăritor"
+
+[command_tracker_desc]
+other = "gestionează sau creează tracker"
+
+[command_tracker_option_minecraft]
+other = "minecraft"
+
+[command_tracker_option_minecraft_desc]
+other = "gestionează trackerul serverului de minecraft"
+
+[command_tracker_option_minecraft_option_create]
+other = "crează"
+
+[command_tracker_option_minecraft_option_create_desc]
+other = "tracker server minecraft"
+
+[command_tracker_option_minecraft_option_create_option_address]
+other = "adresă"
+
+[command_tracker_option_minecraft_option_create_option_address_desc]
+other = "adresa serverului"
+
+[command_tracker_option_minecraft_option_create_option_name]
+other = "nume"
+
+[command_tracker_option_minecraft_option_create_option_name_desc]
+other = "numele serverului"
+
+[command_tracker_option_minecraft_option_create_option_port]
+other = "port"
+
+[command_tracker_option_minecraft_option_create_option_port_desc]
+other = "portul de server"
+
+[command_tracker_option_minecraft_option_create_option_role]
+other = "rol"
+
+[command_tracker_option_minecraft_option_create_option_role_desc]
+other = "rol de menționat"
+
+[command_unban_desc]
+other = "deblochează utilizatorul selectat"
+
+[command_unban_message]
+other = "{{.Target}} a fost debanat"
+
+[command_unban_option_desc_target]
+other = "utilizator pentru a debloca"
+
+[command_unban_option_target]
+other = "target"
+
+[error]
+other = "{{.Error}}"
+
+[error_0]
+other = "S-a produs o eroare {{.Error}}"
+
+[error_TargetIsBot]
+other = "Nu se poate selecta acest bot ca țintă!"
+
+[error_failed_to_connect_api]
+other = "Eroare la conectarea serverului APi"
+
+[error_failed_to_ping_server]
+other = "Eșec la ping-ul serverului"
+
+[error_invalid_port_value]
+other = "valoare port nevalidă"
+
+[error_message]
+other = "A apărut o eroare"
+
+[feed_minecraft_webhook_name]
+other = "notificatorul serverului"
+
+[latency]
+other = "latență"
+
+[message_command_modify]
+other = "modifică"
+
+[panel_minecraft_message_boot]
+other = "{{.Name}} server oprit"
+
+[panel_minecraft_message_stop]
+other = "a oprit {{.Name}} server"
+
+[panel_role_message_added]
+other = "adăugat"
+
+[panel_role_message_removed]
+other = "eliminat"
+
+[players]
+other = "jucători"
+
+[port]
+other = "port"
+
+[version]
+other = "versiune"
+
+[command_tracker_option_minecraft_option_get]
+other = "get"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "get minecraft trackers"
+
+[command_tracker_option_minecraft_option_remove]
+other = "remove"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "remove minecraft trackers"
+
+[channel]
+other = "channel"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "name"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "name of tracker"
