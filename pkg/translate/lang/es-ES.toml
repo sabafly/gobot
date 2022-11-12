@@ -222,22 +222,22 @@ other = "puerto"
 other = "versión"
 
 [command_tracker_option_minecraft_option_get]
-other = "get"
+other = "obtener"
 
 [command_tracker_option_minecraft_option_get_desc]
-other = "get minecraft trackers"
+other = "obtener rastreadores de minecraft"
 
 [command_tracker_option_minecraft_option_remove]
-other = "remove"
+other = "eliminar"
 
 [command_tracker_option_minecraft_option_remove_desc]
-other = "remove minecraft trackers"
+other = "eliminar rastreadores de minecraft"
 
 [channel]
-other = "channel"
+other = "canal"
 
 [command_tracker_option_minecraft_option_remove_option_name]
-other = "name"
+other = "nombre"
 
 [command_tracker_option_minecraft_option_remove_option_name_desc]
-other = "name of tracker"
+other = "nombre del rastreador"
