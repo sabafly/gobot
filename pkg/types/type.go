@@ -6,12 +6,12 @@ import (
 )
 
 type GlobalBan struct {
-	Code    int64     `json:"code"`
-	Status  string    `json:"status"`
-	Content []Content `json:"content"`
+	Code    int64  `json:"code"`
+	Status  string `json:"status"`
+	Content []Ban  `json:"content"`
 }
 
-type Content struct {
+type Ban struct {
 	ID        int64       `json:"ID"`
 	CreatedAt string      `json:"CreatedAt"`
 	UpdatedAt string      `json:"UpdatedAt"`
@@ -42,6 +42,22 @@ type ImagePngHash struct {
 	Hash string `gorm:"primarykey"`
 	Data string `gorm:"primarykey"`
 }
+
+type Res struct {
+	Code    int64       `json:"code"`
+	Status  string      `json:"status"`
+	Content interface{} `json:"content"`
+}
+
+type MCServer struct {
+	gorm.Model
+	Hash    string `gorm:"uniqueIndex"`
+	Address string
+	Port    uint16
+	Online  bool
+}
+
+type MCServers []MCServer
 
 var StL = map[string]discordgo.Locale{
 	"English (Great Britain)": discordgo.EnglishGB,

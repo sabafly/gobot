@@ -280,7 +280,7 @@ func Panel(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {
 	options = options[0].Options
-	var content discordgo.MessageSend
+	var content2 discordgo.MessageSend
 	gid := i.GuildID
 	cid := i.ChannelID
 	var name string
@@ -297,7 +297,7 @@ func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, optio
 		}
 	}
 	zero := 0
-	content = discordgo.MessageSend{
+	content2 = discordgo.MessageSend{
 		Embeds: []*discordgo.MessageEmbed{
 			{
 				Title:       name,
@@ -327,7 +327,7 @@ func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, optio
 			},
 		},
 	}
-	_, err := s.ChannelMessageSendComplex(cid, &content)
+	_, err := s.ChannelMessageSendComplex(cid, &content2)
 	if err != nil {
 		str := fmt.Sprint(err)
 		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
@@ -350,7 +350,7 @@ func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		},
 	})
 	options = options[0].Options
-	var content discordgo.MessageSend
+	var content2 discordgo.MessageSend
 	cid := i.ChannelID
 	var name string
 	var description string
@@ -386,7 +386,7 @@ func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		Value: serverAddress,
 	})
 	zero := 0
-	content = discordgo.MessageSend{
+	content2 = discordgo.MessageSend{
 		Embeds: []*discordgo.MessageEmbed{
 			{
 				Title:       name,
@@ -407,7 +407,7 @@ func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, 
 			},
 		},
 	}
-	_, err := s.ChannelMessageSendComplex(cid, &content)
+	_, err := s.ChannelMessageSendComplex(cid, &content2)
 	if err != nil {
 		str := fmt.Sprint(err)
 		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
@@ -435,6 +435,10 @@ func Feed(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		switch options[0].Name {
 		case "create":
 			feedMinecraftCreate(s, i, options)
+		case "get":
+			feedMinecraftGet(s, i)
+		case "remove":
+			feedMinecraftRemove(s, i, options)
 		}
 	}
 }
@@ -482,4 +486,116 @@ func feedMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, o
 	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: &str,
 	})
+}
+
+func feedMinecraftGet(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	resp, err := api.GetApi("/api/feed/mc", http.NoBody)
+	if err != nil {
+		log.Print(err)
+		embed := translate.ErrorEmbed(i.Locale, "error_failed_to_connect_api")
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Embeds: &embed,
+		})
+		return
+	}
+	body, _ := io.ReadAll(resp.Body)
+	content := types.Res{}
+	data := types.FeedMCServers{}
+	json.Unmarshal(body, &content)
+	b, _ := json.Marshal(content.Content)
+	json.Unmarshal(b, &data)
+	array := []*discordgo.MessageEmbed{}
+	var server types.FeedMCServers
+	var locales []discordgo.Locale
+	for _, v := range data {
+		var locale discordgo.Locale
+		if v.Locale == "" {
+			locale = discordgo.Japanese
+		}
+		if l, ok := types.StL[string(v.Locale)]; ok {
+			locale = l
+		}
+		if v.GuildID == i.GuildID {
+			server = append(server, v)
+			locales = append(locales, locale)
+		}
+	}
+	resp2, err := api.GetApi("/api/feed/mc/hash", http.NoBody)
+	if err != nil {
+		log.Print(err)
+		embed := translate.ErrorEmbed(i.Locale, "error_failed_to_connect_api")
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Embeds: &embed,
+		})
+		return
+	}
+	body, _ = io.ReadAll(resp2.Body)
+	content2 := types.Res{}
+	json.Unmarshal(body, &content2)
+	b, _ = json.Marshal(content2.Content)
+	hash := types.MCServers{}
+	json.Unmarshal(b, &hash)
+	log.Printf("commands:538: %v | %v", len(server), len(hash))
+	for n, v := range server {
+		var address string
+		var port uint16
+		for _, v2 := range hash {
+			if v2.Hash == v.Hash {
+				address = v2.Address
+				port = v2.Port
+				break
+			}
+		}
+		array = append(array, &discordgo.MessageEmbed{
+			Title: v.Name,
+			Fields: []*discordgo.MessageEmbedField{
+				{
+					Name:   translate.Message(locales[n], "address"),
+					Value:  address,
+					Inline: true,
+				},
+				{
+					Name:   translate.Message(locales[n], "port"),
+					Value:  strconv.Itoa(int(port)),
+					Inline: true,
+				},
+				{
+					Name:  translate.Message(locales[n], "channel"),
+					Value: "<#" + v.ChannelID + ">",
+				},
+			},
+		})
+	}
+	if len(array) != 0 {
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Embeds: &array,
+		})
+	} else {
+		str := "no data"
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Content: &str,
+		})
+	}
+}
+
+func feedMinecraftRemove(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {
+	var name string
+	options = options[0].Options
+	for _, v := range options {
+		switch v.Name {
+		case "name":
+			name = v.StringValue()
+		}
+		data := &types.FeedMCServer{
+			Name:    name,
+			GuildID: i.GuildID,
+		}
+		body, _ := json.Marshal(data)
+		api.GetApi("/api/feed/mc/remove", bytes.NewBuffer(body))
+		str := "OK"
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Content: &str,
+		})
+
+	}
 }
