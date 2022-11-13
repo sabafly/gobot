@@ -34,15 +34,15 @@ func MCpanelRole(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			data := &discordgo.SelectMenu{}
 			json.Unmarshal(bytes, data)
 			for _, v := range data.Options {
-				for _, m := range i.Member.Roles {
-					if v.Value == m {
-						t := true
-						for _, v2 := range i.MessageComponentData().Values {
-							if v2 != v.Value {
-								t = false
-							}
-						}
-						if t {
+				t := true
+				for _, v2 := range i.MessageComponentData().Values {
+					if v2 == v.Value {
+						t = false
+					}
+				}
+				if t {
+					for _, v2 := range i.Member.Roles {
+						if v.Value == v2 {
 							s.GuildMemberRoleRemove(gid, uid, v.Value)
 							content += translate.Message(i.Locale, "panel_role_message_removed") + "<@&" + v.Value + ">\r"
 						}
