@@ -195,6 +195,13 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if q.Version.Protocol == 46 {
 		color = 0xff0000
 	}
+	var player string
+	for _, v := range q.Players.Sample {
+		player += v["name"] + "\r"
+	}
+	if player != "" {
+		player = "```" + player + "```"
+	}
 	embeds := []*discordgo.MessageEmbed{
 		{
 			Title:       name,
@@ -210,7 +217,7 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			Fields: []*discordgo.MessageEmbedField{
 				{
 					Name:   translate.Message(i.Locale, "players"),
-					Value:  "```" + strconv.Itoa(q.Players.Online) + "/" + strconv.Itoa(q.Players.Max) + "```",
+					Value:  "```" + strconv.Itoa(q.Players.Online) + "/" + strconv.Itoa(q.Players.Max) + "```\r" + player,
 					Inline: true,
 				},
 				{
