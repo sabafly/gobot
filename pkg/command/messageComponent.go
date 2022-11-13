@@ -17,6 +17,7 @@ import (
 	"github.com/ikafly144/gobot/pkg/api"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
+	"github.com/ikafly144/gobot/pkg/util"
 	"github.com/millkhan/mcstatusgo/v2"
 )
 
@@ -34,15 +35,15 @@ func MCpanelRole(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			data := &discordgo.SelectMenu{}
 			json.Unmarshal(bytes, data)
 			for _, v := range data.Options {
-				for _, m := range i.Member.Roles {
-					if v.Value == m {
-						t := true
-						for _, v2 := range i.MessageComponentData().Values {
-							if v2 != v.Value {
-								t = false
-							}
-						}
-						if t {
+				t := true
+				for _, v2 := range i.MessageComponentData().Values {
+					if v2 == v.Value {
+						t = false
+					}
+				}
+				if t {
+					for _, v2 := range i.Member.Roles {
+						if v.Value == v2 {
 							s.GuildMemberRoleRemove(gid, uid, v.Value)
 							content += translate.Message(i.Locale, "panel_role_message_removed") + "<@&" + v.Value + ">\r"
 						}
@@ -84,15 +85,19 @@ func MCpanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		roles = append(roles, *role)
 	}
 	options := []discordgo.SelectMenuOption{}
-	for _, r := range roles {
+	for n, r := range roles {
 		options = append(options, discordgo.SelectMenuOption{
 			Label: r.Name,
 			Value: r.ID,
+			Emoji: discordgo.ComponentEmoji{
+				ID:   "",
+				Name: util.ToEmojiA(n + 1),
+			},
 		})
 	}
 	var fields string
-	for _, r := range roles {
-		fields += r.Mention() + "\r"
+	for n, r := range roles {
+		fields += util.ToEmojiA(n+1) + " | " + r.Mention() + "\r"
 	}
 	zero := 0
 	content := discordgo.MessageEdit{

@@ -305,7 +305,7 @@ func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, optio
 				Fields: []*discordgo.MessageEmbedField{
 					{
 						Name:  "roles",
-						Value: role.Mention(),
+						Value: "🇦 | " + role.Mention(),
 					},
 				},
 			},
@@ -320,6 +320,10 @@ func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, optio
 							{
 								Label: role.Name,
 								Value: role.ID,
+								Emoji: discordgo.ComponentEmoji{
+									ID:   "",
+									Name: "🇦",
+								},
 							},
 						},
 					},
