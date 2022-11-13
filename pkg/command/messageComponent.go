@@ -17,6 +17,7 @@ import (
 	"github.com/ikafly144/gobot/pkg/api"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
+	"github.com/ikafly144/gobot/pkg/util"
 	"github.com/millkhan/mcstatusgo/v2"
 )
 
@@ -84,15 +85,19 @@ func MCpanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		roles = append(roles, *role)
 	}
 	options := []discordgo.SelectMenuOption{}
-	for _, r := range roles {
+	for n, r := range roles {
 		options = append(options, discordgo.SelectMenuOption{
 			Label: r.Name,
 			Value: r.ID,
+			Emoji: discordgo.ComponentEmoji{
+				ID:   "",
+				Name: util.ToEmojiA(n + 1),
+			},
 		})
 	}
 	var fields string
-	for _, r := range roles {
-		fields += r.Mention() + "\r"
+	for n, r := range roles {
+		fields += util.ToEmojiA(n+1) + " | " + r.Mention() + "\r"
 	}
 	zero := 0
 	content := discordgo.MessageEdit{
