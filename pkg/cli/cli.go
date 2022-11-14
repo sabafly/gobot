@@ -38,6 +38,14 @@ func Run() {
 	if err != nil {
 		log.Fatalf("セッションを開始できません: %v", err)
 	}
+	s.UpdateStatusComplex(discordgo.UpdateStatusData{
+		Activities: []*discordgo.Activity{
+			{
+				Name: fmt.Sprintf("起動準備 | %v Servers | Shard %v/%v", len(s.State.Guilds), s.ShardID+1, s.ShardCount),
+				Type: discordgo.ActivityTypeGame,
+			},
+		},
+	})
 
 	log.Println("コマンドを追加中...")
 	registeredCommands := make([]*discordgo.ApplicationCommand, len(commands))
