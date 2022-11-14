@@ -111,12 +111,13 @@ func Run() {
 	go updateStatus()
 	go autoBans()
 
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
-	log.Println("Ctrl + C で終了")
-	<-stop
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh)
+	log.Println("Ctrl+Cで終了")
 
-	log.Println("\r正常にシャットダウンしました")
+	s := <-sigCh
+
+	log.Printf("受信: %v\n", s.String())
 }
 
 func end(registeredCommands []*discordgo.ApplicationCommand) {
@@ -139,6 +140,7 @@ func end(registeredCommands []*discordgo.ApplicationCommand) {
 
 	}
 	s.Close()
+	log.Println("正常にシャットダウンしました")
 }
 
 func updateStatus() {
