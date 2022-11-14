@@ -22,4 +22,4 @@ jobs:
             cd ${{ secrets.SERVER_DEPLOY_DIR }}
             git pull origin main
             /usr/local/go/bin/go build
-            echo ${{ secrets.SSH_PASSWORD }} | sudo killall -SIGINT gobot
+            echo ${{ secrets.SSH_PASSWORD }} | sudo -S killall -SIGINT gobot
