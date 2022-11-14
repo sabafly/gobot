@@ -120,7 +120,7 @@ func Run() {
 	go autoBans()
 
 	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh)
+	signal.Notify(sigCh, os.Interrupt)
 	log.Println("Ctrl+Cで終了")
 
 	s := <-sigCh
