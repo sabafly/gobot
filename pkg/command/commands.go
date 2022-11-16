@@ -338,7 +338,7 @@ func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, optio
 			Content: &str,
 		})
 	} else {
-		str := "ロールを追加するにはメッセージを右クリックまたは長押しして「アプリ」から「編集」を押してください"
+		str := translate.Message(i.Locale, "command_panel_option_role_message")
 		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Content: &str,
 		})
@@ -403,7 +403,7 @@ func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, 
 					discordgo.SelectMenu{
 						CustomID:    "gobot_panel_minecraft",
 						Options:     option,
-						Placeholder: "サーバーを選択",
+						Placeholder: translate.Message(i.Locale, "command_panel_option_minecraft_placeholder"),
 						MinValues:   &zero,
 						MaxValues:   1,
 					},
@@ -418,7 +418,7 @@ func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, 
 			Content: &str,
 		})
 	} else {
-		str := "サーバーを追加するにはメッセージを右クリックまたは長押しして「アプリ」から「編集」を押してください"
+		str := translate.Message(i.Locale, "command_panel_option_minecraft_message")
 		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Content: &str,
 		})
