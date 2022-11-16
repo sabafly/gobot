@@ -43,20 +43,6 @@ func loadTranslations() (i18n.Bundle, error) {
 	for _, de := range fd {
 		bundle.LoadMessageFileFS(f, "lang/"+de.Name())
 	}
-	// err = filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	if info.IsDir() || filepath.Ext(path) != ".toml" {
-	// 		return nil
-	// 	}
-	// 	_, err = bundle.LoadMessageFile(path)
-	// 	return err
-	// })
-	// if err != nil {
-	// 	return i18n.Bundle{}, err
-	// }
-
 	return *bundle, nil
 }
 
