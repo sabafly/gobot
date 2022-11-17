@@ -110,6 +110,18 @@ func Run() {
 					},
 				},
 			},
+			{
+				Name:        "servers",
+				Description: "only for admins",
+				Type:        discordgo.ApplicationCommandOptionSubCommandGroup,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Name:        "get",
+						Description: "only for admins",
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+					},
+				},
+			},
 		},
 		Version: "1",
 	})

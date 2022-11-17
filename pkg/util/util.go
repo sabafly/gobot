@@ -48,10 +48,6 @@ func MessageResp(resp *http.Response) string {
 	return str
 }
 
-func ToChar(i int) string {
-	return string(rune('a' - 1 + i))
-}
-
 func ToEmojiA(i int) string {
 	return string(rune('🇦' - 1 + i))
 }

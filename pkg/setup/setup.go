@@ -44,6 +44,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 	if err != nil {
 		log.Fatalf("無効なbotパラメータ: %v", err)
 	}
+	s.Identify.Intents = discordgo.IntentsAll
 
 	var (
 		// integerOptionMinValue          = 1.0

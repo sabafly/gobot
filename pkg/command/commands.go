@@ -110,10 +110,7 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		il := &discordgo.InteractionCreate{}
 		util.DeepcopyJson(i, il)
 		err := s.InteractionRespond(il.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "OK",
-			},
+			Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		})
 		if err != nil {
 			log.Printf("例外: %v", err)
@@ -149,11 +146,9 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 					break
 				}
 				util.LogResp(resp)
-				e := translate.ErrorEmbed(i.Locale, "error", map[string]interface{}{
-					"Error": util.MessageResp(resp),
-				})
+				str := util.MessageResp(resp)
 				m, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-					Embeds: &e,
+					Content: &str,
 				})
 				log.Printf("message: %v", m.ID)
 				if err != nil {
@@ -236,6 +231,91 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				log.Printf("message: %v", m.ID)
 				if err != nil {
 					log.Printf("例外: %v", err)
+				}
+			}
+		case "servers":
+			options = options[0].Options
+			switch options[0].Name {
+			case "get":
+				guilds := s.State.Guilds
+				log.Print(len(guilds))
+				var embeds []*discordgo.MessageEmbed
+				for _, ug := range guilds {
+					g, err := s.Guild(ug.ID)
+					if err != nil {
+						log.Print(err)
+					}
+					o, err := s.User(g.OwnerID)
+					if err != nil {
+						log.Print(err)
+					}
+					var str string
+					for _, gf := range ug.Features {
+						str += string(gf) + "\r"
+					}
+					embeds = append(embeds, &discordgo.MessageEmbed{
+						Title: ug.Name,
+						Thumbnail: &discordgo.MessageEmbedThumbnail{
+							URL:    g.IconURL(),
+							Width:  512,
+							Height: 512,
+						},
+						Fields: []*discordgo.MessageEmbedField{
+							{
+								Name:   "Owner",
+								Value:  o.Username + "#" + o.Discriminator + "\r" + o.Mention(),
+								Inline: true,
+							},
+							{
+								Name:   "Description",
+								Value:  "desc\r" + g.Description,
+								Inline: true,
+							},
+							{
+								Name:   "Locale",
+								Value:  "loc\r" + g.PreferredLocale,
+								Inline: true,
+							},
+							{
+								Name:   "Boosts",
+								Value:  strconv.Itoa(g.PremiumSubscriptionCount),
+								Inline: true,
+							},
+							{
+								Name:   "Members",
+								Value:  strconv.Itoa(len(g.Members)) + "/" + strconv.Itoa(g.MaxMembers),
+								Inline: true,
+							},
+							{
+								Name:   "Channels",
+								Value:  strconv.Itoa(len(g.Channels)),
+								Inline: true,
+							},
+							{
+								Name:   "Roles",
+								Value:  strconv.Itoa(len(g.Roles)),
+								Inline: true,
+							},
+							{
+								Name:   "Permissions",
+								Value:  strconv.FormatInt(g.Permissions, 10),
+								Inline: true,
+							},
+							{
+								Name:   "Features",
+								Value:  str,
+								Inline: true,
+							},
+						},
+					})
+				}
+				str := "OK"
+				_, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+					Content: &str,
+					Embeds:  &embeds,
+				})
+				if err != nil {
+					log.Print(err)
 				}
 			}
 		}
