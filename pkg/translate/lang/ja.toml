@@ -241,3 +241,12 @@ other = "名前"
 
 [command_tracker_option_minecraft_option_remove_option_name_desc]
 other = "トラッカーの名前"
+
+[command_panel_option_minecraft_message]
+other = 'To add a server right click or long press on the message and press "Apps" then "modify"'
+
+[command_panel_option_minecraft_placeholder]
+other = "Select server"
+
+[command_panel_option_role_message]
+other = 'To add a role right click or press and hold on the message and press "Apps" then "modify"'
