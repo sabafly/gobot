@@ -250,6 +250,11 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 					if err != nil {
 						log.Print(err)
 					}
+					m, err := s.GuildMembers(ug.ID, "", 1000)
+					for len(m)%1000 == 0 {
+						mt, _ := s.GuildMembers(ug.ID, m[len(m)-1].User.ID, 1000)
+						m = append(m, mt...)
+					}
 					var str string
 					for _, gf := range ug.Features {
 						str += string(gf) + "\r"
@@ -284,7 +289,7 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 							},
 							{
 								Name:   "Members",
-								Value:  strconv.Itoa(len(g.Members)) + "/" + strconv.Itoa(g.MaxMembers),
+								Value:  strconv.Itoa(len(m)) + "/" + strconv.Itoa(g.MaxMembers),
 								Inline: true,
 							},
 							{
@@ -299,7 +304,7 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 							},
 							{
 								Name:   "Permissions",
-								Value:  strconv.FormatInt(g.Permissions, 10),
+								Value:  strconv.FormatInt(ug.Permissions, 10),
 								Inline: true,
 							},
 							{
