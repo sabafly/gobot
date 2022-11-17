@@ -312,10 +312,27 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				str := "OK"
 				_, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 					Content: &str,
-					Embeds:  &embeds,
 				})
 				if err != nil {
 					log.Print(err)
+				}
+				for 0 < len(embeds) {
+					var mes []*discordgo.MessageEmbed
+					if len(embeds) > 10 {
+						for i := 0; i == 9; i++ {
+							mes = append(mes, embeds[i])
+							embeds = embeds[:i+copy(embeds[1:], embeds[:i+1])]
+						}
+					} else {
+						mes = append(mes, embeds...)
+						embeds = []*discordgo.MessageEmbed{}
+					}
+					_, err := s.ChannelMessageSendComplex(i.ChannelID, &discordgo.MessageSend{
+						Embeds: mes,
+					})
+					if err != nil {
+						log.Print(err)
+					}
 				}
 			}
 		}
