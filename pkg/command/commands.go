@@ -314,7 +314,7 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 								Inline: true,
 							},
 							{
-								Name:   "Permissions",
+								Name:   "Joined at",
 								Value:  p.JoinedAt.Format("2006-01-02 15:04:05 MST"),
 								Inline: true,
 							},
