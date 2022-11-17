@@ -251,9 +251,20 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 						log.Print(err)
 					}
 					m, err := s.GuildMembers(ug.ID, "", 1000)
+					if err != nil {
+						log.Print(err)
+					}
 					for len(m)%1000 == 0 {
 						mt, _ := s.GuildMembers(ug.ID, m[len(m)-1].User.ID, 1000)
 						m = append(m, mt...)
+					}
+					c, err := s.GuildChannels(ug.ID)
+					if err != nil {
+						log.Print(err)
+					}
+					p, err := s.GuildMember(ug.ID, s.State.User.ID)
+					if err != nil {
+						log.Print(err)
 					}
 					var str string
 					for _, gf := range ug.Features {
@@ -294,7 +305,7 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 							},
 							{
 								Name:   "Channels",
-								Value:  strconv.Itoa(len(g.Channels)),
+								Value:  strconv.Itoa(len(c)),
 								Inline: true,
 							},
 							{
@@ -304,7 +315,7 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 							},
 							{
 								Name:   "Permissions",
-								Value:  strconv.FormatInt(ug.Permissions, 10),
+								Value:  p.JoinedAt.Format("2006-01-02 15:04:05 MST"),
 								Inline: true,
 							},
 							{
