@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/api"
@@ -319,8 +320,8 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				for 0 < len(embeds) {
 					var mes []*discordgo.MessageEmbed
 					if len(embeds) > 10 {
-						mes = append(mes, embeds[10:]...)
-						embeds = append(embeds, embeds[:9]...)
+						mes = append(mes, embeds[:10]...)
+						embeds = append(embeds, embeds[9:]...)
 					} else {
 						mes = append(mes, embeds...)
 						embeds = []*discordgo.MessageEmbed{}
@@ -331,6 +332,7 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 					if err != nil {
 						log.Print(err)
 					}
+					time.Sleep(time.Second)
 				}
 			}
 		}
