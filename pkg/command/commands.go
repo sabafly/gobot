@@ -319,10 +319,8 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				for 0 < len(embeds) {
 					var mes []*discordgo.MessageEmbed
 					if len(embeds) > 10 {
-						for i := 0; i == 9; i++ {
-							mes = append(mes, embeds[i])
-							embeds = embeds[:i+copy(embeds[1:], embeds[:i+1])]
-						}
+						mes = append(mes, embeds[10:]...)
+						embeds = append(embeds, embeds[:9]...)
 					} else {
 						mes = append(mes, embeds...)
 						embeds = []*discordgo.MessageEmbed{}
