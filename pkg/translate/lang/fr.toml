@@ -250,3 +250,27 @@ other = "Select server"
 
 [command_panel_option_role_message]
 other = 'To add a role right click or press and hold on the message and press "Apps" then "modify"'
+
+[command_role]
+other = "role"
+
+[command_role_desc]
+other = "manage role"
+
+[command_role_option_color]
+other = "color"
+
+[command_role_option_color_desc]
+other = "create color role"
+
+[command_role_option_color_option_rgb]
+other = "rgb"
+
+[command_role_option_color_option_rgb_desc]
+other = "rgb color code"
+
+[command_role_option_color_option_name]
+other = "name"
+
+[command_role_option_color_option_name_desc]
+other = "name of role"
