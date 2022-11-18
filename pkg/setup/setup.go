@@ -323,6 +323,40 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			},
 		},
 		{
+			Name:                     "role",
+			Description:              "manage role",
+			NameLocalizations:        translate.MessageMap("command_role", true),
+			DescriptionLocalizations: translate.MessageMap("command_role_desc", false),
+			DefaultMemberPermissions: &PermissionAdminMembers,
+			DMPermission:             &dmPermission,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:                     "color",
+					Description:              "create color role",
+					NameLocalizations:        *translate.MessageMap("command_role_option_color", true),
+					DescriptionLocalizations: *translate.MessageMap("command_role_option_color_desc", false),
+					Type:                     discordgo.ApplicationCommandOptionSubCommand,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Name:                     "rgb",
+							Description:              "rgb color code",
+							NameLocalizations:        *translate.MessageMap("command_role_option_color_option_rgb", true),
+							DescriptionLocalizations: *translate.MessageMap("command_role_option_color_option_rgb_desc", false),
+							Type:                     discordgo.ApplicationCommandOptionString,
+							Required:                 true,
+						},
+						{
+							Name:                     "name",
+							Description:              "name of role",
+							NameLocalizations:        *translate.MessageMap("command_role_option_color_option_name", true),
+							DescriptionLocalizations: *translate.MessageMap("command_role_option_color_option_name_desc", false),
+							Type:                     discordgo.ApplicationCommandOptionString,
+						},
+					},
+				},
+			},
+		},
+		{
 			Name:                     "modify",
 			NameLocalizations:        translate.MessageMap("message_command_modify", true),
 			Type:                     discordgo.MessageApplicationCommand,
@@ -386,6 +420,9 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			},
 			"tracker": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				command.Feed(s, i)
+			},
+			"role": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+				command.Role(s, i)
 			},
 			"modify": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				command.Mmodify(s, i)

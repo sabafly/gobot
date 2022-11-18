@@ -716,3 +716,61 @@ func feedMinecraftRemove(s *discordgo.Session, i *discordgo.InteractionCreate, o
 
 	}
 }
+
+func Role(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+	options := i.ApplicationCommandData().Options
+	switch options[0].Name {
+	case "color":
+		roleColor(s, i, options)
+	}
+}
+
+func roleColor(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {
+	options = options[0].Options
+	var raw string
+	var name string
+	for _, o := range options {
+		switch o.Name {
+		case "rgb":
+			raw = "0x" + o.StringValue()
+		case "name":
+			name = o.StringValue()
+		}
+	}
+	col, err := strconv.ParseInt(raw, 0, 32)
+	if name == "" {
+		name = strconv.FormatInt(col, 16)
+	}
+	if err != nil {
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Embeds: &[]*discordgo.MessageEmbed{
+				util.ErrorMessage(i.Locale, err).Embeds[0],
+			},
+		})
+		return
+	}
+	colInt := int(col)
+	r, err := s.GuildRoleCreate(i.GuildID, &discordgo.RoleParams{
+		Name:  name,
+		Color: &colInt,
+	})
+	if err != nil {
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Embeds: &[]*discordgo.MessageEmbed{
+				util.ErrorMessage(i.Locale, err).Embeds[0],
+			},
+		})
+		return
+	}
+	s.GuildMemberRoleAdd(i.GuildID, i.Member.User.ID, r.ID)
+	str := "OK " + r.Mention()
+	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content: &str,
+	})
+}
