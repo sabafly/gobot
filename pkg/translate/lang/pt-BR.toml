@@ -5,7 +5,7 @@ other = "Endereço"
 other = "Canal"
 
 [command_ban]
-other = "ban"
+other = "banir"
 
 [command_ban_desc]
 other = "banir o usuário selecionado"
@@ -30,7 +30,7 @@ one = "Motivo: {{.Reason}}"
 other = "Motivos: {{.Reason}}"
 
 [command_kick]
-other = "kick"
+other = "expulsar"
 
 [command_kick_desc]
 other = "expulsar o usuário selecionado"
@@ -45,7 +45,7 @@ other = "usuário para expulsar"
 other = "target"
 
 [command_panel]
-other = "panel"
+other = "painel"
 
 [command_panel_desc]
 other = "gerenciar ou criar painel"
@@ -60,7 +60,7 @@ other = "Minecraft"
 other = "gerenciar painel do minecraft"
 
 [command_panel_option_minecraft_message]
-other = 'To add a server right click or long press on the message and press "Apps" then "modify"'
+other = 'Para adicionar um servidor clique com o botão direito ou mantenha pressionado na mensagem e pressione "Apps" e "Modificar"'
 
 [command_panel_option_minecraft_option_create]
 other = "criar"
@@ -105,13 +105,13 @@ other = "showip"
 other = "mostrar o IP ou não"
 
 [command_panel_option_minecraft_placeholder]
-other = "Select server"
+other = "Selecionar servidor"
 
 [command_panel_option_role]
 other = "Função"
 
 [command_panel_option_role_message]
-other = 'To add a role right click or press and hold on the message and press "Apps" then "modify"'
+other = 'Para adicionar um papel clique com o botão direito ou pressione e segure na mensagem e pressione "Apps" e "Modificar"'
 
 [command_panel_option_role_option_create]
 other = "criar"
@@ -138,28 +138,28 @@ other = "Função"
 other = "criar painel de função"
 
 [command_role]
-other = "role"
+other = "Função"
 
 [command_role_desc]
-other = "manage role"
+other = "gerenciar função"
 
 [command_role_option_color]
-other = "color"
+other = "cor"
 
 [command_role_option_color_desc]
-other = "create color role"
+other = "criar função de cor"
 
 [command_role_option_color_option_name]
-other = "name"
+other = "Nome"
 
 [command_role_option_color_option_name_desc]
-other = "name of role"
+other = "nome da função"
 
 [command_role_option_color_option_rgb]
 other = "rgb"
 
 [command_role_option_color_option_rgb_desc]
-other = "rgb color code"
+other = "Código de cor RGB"
 
 [command_tracker]
 other = "rastreador"
@@ -222,7 +222,7 @@ other = "Nome"
 other = "nome do rastreador"
 
 [command_unban]
-other = "unban"
+other = "desbanir"
 
 [command_unban_desc]
 other = "desbanir o usuário selecionado"
@@ -267,25 +267,25 @@ other = "latência"
 other = "Modificar"
 
 [message_command_user_info]
-other = "info"
+other = "informações"
 
 [message_command_user_info_color_code]
-other = "Color Code"
+other = "Código de cor"
 
 [message_command_user_info_id]
 other = "ID"
 
 [message_command_user_info_joined_at]
-other = "Joined at"
+other = "Entrou em"
 
 [message_command_user_info_nick]
-other = "Nick"
+other = "Apelido"
 
 [message_command_user_info_none]
-other = "none"
+other = "nenhuma"
 
 [message_command_user_info_roles]
-other = "Roles"
+other = "Papéis"
 
 [panel_minecraft_message_boot]
 other = "servidor {{.Name}} inicializado"
@@ -309,10 +309,10 @@ other = "Porta"
 other = "Versão"
 
 [message_modify_cant_use_this_message_error]
-other = "not available for that message"
+other = "não disponível para essa mensagem"
 
 [message_modify_role_add_message]
-other = "Choose a role to add"
+other = "Escolha um cargo para adicionar"
 
 [message_modify_role_create_message]
-other = "Coose a role to create panel"
+other = "Codir uma função para criar um painel"
