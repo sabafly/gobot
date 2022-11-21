@@ -439,7 +439,7 @@ func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, optio
 					discordgo.SelectMenu{
 						CustomID:  "gobot_panel_role_create",
 						MinValues: &zero,
-						MaxValues: len(options),
+						MaxValues: len(option),
 						Options:   option,
 					},
 				},
