@@ -309,10 +309,10 @@ other = "poort"
 other = "Versie"
 
 [message_modify_cant_use_this_message_error]
-other = "not available for that message"
+other = "niet beschikbaar voor dat bericht"
 
 [message_modify_role_add_message]
-other = "Choose a role to add"
+other = "Kies een toe te voegen rol"
 
 [message_modify_role_create_message]
-other = "Coose a role to create panel"
+other = "Maak een rol vrij om een paneel aan te maken"
