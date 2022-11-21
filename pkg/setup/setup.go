@@ -66,6 +66,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		{
 			Name:                     "ban",
 			Description:              "ban the selected user",
+			NameLocalizations:        translate.MessageMap("command_ban", true),
 			DescriptionLocalizations: translate.MessageMap("command_ban_desc", false),
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -91,6 +92,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		{
 			Name:                     "unban",
 			Description:              "pardon the selected user",
+			NameLocalizations:        translate.MessageMap("command_unban", true),
 			DescriptionLocalizations: translate.MessageMap("command_unban_desc", false),
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -109,6 +111,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		{
 			Name:                     "kick",
 			Description:              "kick the selected user",
+			NameLocalizations:        translate.MessageMap("command_kick", true),
 			DescriptionLocalizations: translate.MessageMap("command_kick_desc", false),
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -127,6 +130,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		{
 			Name:                     "panel",
 			Description:              "manage or create panel",
+			NameLocalizations:        translate.MessageMap("command_panel", true),
 			DescriptionLocalizations: translate.MessageMap("command_panel_desc", false),
 			GuildID:                  *SupportGuildID,
 			DefaultMemberPermissions: &PermissionAdminMembers,
