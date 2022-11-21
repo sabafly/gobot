@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/ikafly144/gobot/pkg/translate"
 )
 
 func Mmodify(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -42,7 +43,7 @@ func Mmodify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: "そのメッセージには使用できません",
+			Content: translate.Message(i.Locale, "message_modify_cant_use_this_message_error"),
 			Flags:   discordgo.MessageFlagsEphemeral,
 		},
 	})
@@ -71,7 +72,7 @@ func gobotPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *d
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: "追加するロールを選んでください",
+			Content: translate.Message(i.Locale, "message_modify_role_add_message"),
 			Embeds: []*discordgo.MessageEmbed{
 				{
 					Title: mes.ID,

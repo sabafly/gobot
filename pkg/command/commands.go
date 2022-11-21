@@ -393,70 +393,59 @@ func Panel(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {
+	log.Print("ok")
 	options = options[0].Options
-	var content2 discordgo.MessageSend
-	gid := i.GuildID
-	cid := i.ChannelID
 	var name string
 	var description string
-	var role *discordgo.Role
 	for _, v := range options {
 		switch v.Name {
 		case "name":
 			name = v.StringValue()
 		case "description":
 			description = v.StringValue()
-		case "role":
-			role = v.RoleValue(s, gid)
+		}
+	}
+	roles, _ := s.GuildRoles(i.GuildID)
+	option := []discordgo.SelectMenuOption{}
+	me, _ := s.GuildMember(i.GuildID, s.State.User.ID)
+	var highestPosition int
+	for _, v := range me.Roles {
+		r, _ := s.State.Role(i.GuildID, v)
+		if r.Position > highestPosition {
+			highestPosition = r.Position
+		}
+	}
+	for _, v := range roles {
+		if v.Position < highestPosition && !v.Managed && v.ID != i.GuildID {
+			option = append(option, discordgo.SelectMenuOption{
+				Label: v.Name,
+				Value: v.ID,
+			})
 		}
 	}
 	zero := 0
-	content2 = discordgo.MessageSend{
-		Embeds: []*discordgo.MessageEmbed{
+	content := translate.Message(i.Locale, "message_modify_role_create_message")
+	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content: &content,
+		Embeds: &[]*discordgo.MessageEmbed{
 			{
 				Title:       name,
 				Description: description,
-				Fields: []*discordgo.MessageEmbedField{
-					{
-						Name:  "roles",
-						Value: "🇦 | " + role.Mention(),
-					},
-				},
 			},
 		},
-		Components: []discordgo.MessageComponent{
+		Components: &[]discordgo.MessageComponent{
 			discordgo.ActionsRow{
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
-						CustomID:  "gobot_panel_role",
+						CustomID:  "gobot_panel_role_create",
 						MinValues: &zero,
-						Options: []discordgo.SelectMenuOption{
-							{
-								Label: role.Name,
-								Value: role.ID,
-								Emoji: discordgo.ComponentEmoji{
-									ID:   "",
-									Name: "🇦",
-								},
-							},
-						},
+						MaxValues: len(options),
+						Options:   option,
 					},
 				},
 			},
 		},
-	}
-	_, err := s.ChannelMessageSendComplex(cid, &content2)
-	if err != nil {
-		str := fmt.Sprint(err)
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-			Content: &str,
-		})
-	} else {
-		str := translate.Message(i.Locale, "command_panel_option_role_message")
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-			Content: &str,
-		})
-	}
+	})
 }
 
 func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {

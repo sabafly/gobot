@@ -159,14 +159,6 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 									Required:                 true,
 								},
 								{
-									Name:                     "role",
-									Description:              "role that add to the panel",
-									NameLocalizations:        *translate.MessageMap("command_panel_option_role_option_create_option_role", true),
-									DescriptionLocalizations: *translate.MessageMap("command_panel_option_role_option_create_option_desc_role", false),
-									Type:                     discordgo.ApplicationCommandOptionRole,
-									Required:                 true,
-								},
-								{
 									Name:                     "description",
 									Description:              "description of panel",
 									NameLocalizations:        *translate.MessageMap("command_panel_option_role_option_create_option_desc", true),
@@ -450,6 +442,9 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		},
 		"gobot_panel_role_add": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			command.MCpanelRoleAdd(s, i)
+		},
+		"gobot_panel_role_create": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			command.MCpanelRoleCreate(s, i)
 		},
 		"gobot_panel_minecraft": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			command.MCpanelMinecraft(s, i)
