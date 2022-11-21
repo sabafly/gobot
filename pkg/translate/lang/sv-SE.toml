@@ -5,7 +5,7 @@ other = "adress"
 other = "kanal"
 
 [command_ban]
-other = "ban"
+other = "förbud"
 
 [command_ban_desc]
 other = "bannlysa den valda användaren"
@@ -30,7 +30,7 @@ one = "Orsak: {{.Reason}}"
 other = "Anledningar: {{.Reason}}"
 
 [command_kick]
-other = "kick"
+other = "sparka"
 
 [command_kick_desc]
 other = "sparka den valda användaren"
@@ -60,7 +60,7 @@ other = "minecraft"
 other = "hantera minecraft panel"
 
 [command_panel_option_minecraft_message]
-other = 'To add a server right click or long press on the message and press "Apps" then "modify"'
+other = 'För att lägga till en server högerklicka eller långtryck på meddelandet och tryck på "appar" och sedan "modifiera"'
 
 [command_panel_option_minecraft_option_create]
 other = "skapa"
@@ -105,13 +105,13 @@ other = "showip"
 other = "visa ip eller inte"
 
 [command_panel_option_minecraft_placeholder]
-other = "Select server"
+other = "Välj server"
 
 [command_panel_option_role]
 other = "roll"
 
 [command_panel_option_role_message]
-other = 'To add a role right click or press and hold on the message and press "Apps" then "modify"'
+other = 'För att lägga till en roll högerklicka eller tryck och håll kvar på meddelandet och tryck på "appar" och sedan "ändra"'
 
 [command_panel_option_role_option_create]
 other = "skapa"
@@ -138,28 +138,28 @@ other = "roll"
 other = "skapa rollpanel"
 
 [command_role]
-other = "role"
+other = "roll"
 
 [command_role_desc]
-other = "manage role"
+other = "hantera roll"
 
 [command_role_option_color]
-other = "color"
+other = "färg"
 
 [command_role_option_color_desc]
-other = "create color role"
+other = "skapa färgroll"
 
 [command_role_option_color_option_name]
-other = "name"
+other = "namn"
 
 [command_role_option_color_option_name_desc]
-other = "name of role"
+other = "namn på roll"
 
 [command_role_option_color_option_rgb]
 other = "rgb"
 
 [command_role_option_color_option_rgb_desc]
-other = "rgb color code"
+other = "rgb färgkod"
 
 [command_tracker]
 other = "spårare"
@@ -267,25 +267,25 @@ other = "latens"
 other = "modifiera"
 
 [message_command_user_info]
-other = "info"
+other = "information"
 
 [message_command_user_info_color_code]
-other = "Color Code"
+other = "Färg kod"
 
 [message_command_user_info_id]
 other = "ID"
 
 [message_command_user_info_joined_at]
-other = "Joined at"
+other = "Gick med vid"
 
 [message_command_user_info_nick]
-other = "Nick"
+other = "Smeknamn"
 
 [message_command_user_info_none]
-other = "none"
+other = "ingen"
 
 [message_command_user_info_roles]
-other = "Roles"
+other = "Roller"
 
 [panel_minecraft_message_boot]
 other = "startade {{.Name}} -servern"
@@ -309,10 +309,10 @@ other = "port"
 other = "version"
 
 [message_modify_cant_use_this_message_error]
-other = "not available for that message"
+other = "inte tillgängligt för det meddelandet"
 
 [message_modify_role_add_message]
-other = "Choose a role to add"
+other = "Välj en roll att lägga till"
 
 [message_modify_role_create_message]
-other = "Coose a role to create panel"
+other = "Coose en roll för att skapa panel"
