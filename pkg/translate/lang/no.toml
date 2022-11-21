@@ -309,10 +309,10 @@ other = "port"
 other = "versjon"
 
 [message_modify_cant_use_this_message_error]
-other = "not available for that message"
+other = "ikke tilgjengelig for den meldingen"
 
 [message_modify_role_add_message]
-other = "Choose a role to add"
+other = "Velg en rolle å legge til"
 
 [message_modify_role_create_message]
-other = "Coose a role to create panel"
+other = "Kos en rolle for å opprette panel"
