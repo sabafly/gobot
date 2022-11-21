@@ -363,6 +363,13 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			DMPermission:             &dmPermission,
 			DefaultMemberPermissions: &PermissionAdminMembers,
 		},
+		{
+			Name:                     "info",
+			NameLocalizations:        translate.MessageMap("message_command_user_info", true),
+			Type:                     discordgo.UserApplicationCommand,
+			DMPermission:             &dmPermission,
+			DefaultMemberPermissions: &PermissionAdminMembers,
+		},
 	}
 	var (
 		commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
@@ -426,6 +433,9 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			},
 			"modify": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				command.Mmodify(s, i)
+			},
+			"info": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+				command.Uinfo(s, i)
 			},
 		}
 	)
