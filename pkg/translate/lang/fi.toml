@@ -309,10 +309,10 @@ other = "portti"
 other = "versio"
 
 [message_modify_cant_use_this_message_error]
-other = "not available for that message"
+other = "ei saatavilla tuossa viestissä"
 
 [message_modify_role_add_message]
-other = "Choose a role to add"
+other = "Valitse lisättävä rooli"
 
 [message_modify_role_create_message]
-other = "Coose a role to create panel"
+other = "Coose rooli luoda paneeli"
