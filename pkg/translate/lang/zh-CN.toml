@@ -5,7 +5,7 @@ other = "地址"
 other = "频道"
 
 [command_ban]
-other = "ban"
+other = "封禁"
 
 [command_ban_desc]
 other = "封禁所选用户"
@@ -30,7 +30,7 @@ one = "原因： {{.Reason}}"
 other = "原因： {{.Reason}}"
 
 [command_kick]
-other = "kick"
+other = "踢出"
 
 [command_kick_desc]
 other = "踢出选中的用户"
@@ -45,7 +45,7 @@ other = "要踢出的用户"
 other = "target"
 
 [command_panel]
-other = "panel"
+other = "面板"
 
 [command_panel_desc]
 other = "管理或创建面板"
@@ -60,7 +60,7 @@ other = "Minecraft"
 other = "管理Minecraft面板"
 
 [command_panel_option_minecraft_message]
-other = 'To add a server right click or long press on the message and press "Apps" then "modify"'
+other = "若要添加服务器，请点击或长按消息并按“应用”然后按“修改”"
 
 [command_panel_option_minecraft_option_create]
 other = "创建"
@@ -105,13 +105,13 @@ other = "showip"
 other = "是否显示 ip"
 
 [command_panel_option_minecraft_placeholder]
-other = "Select server"
+other = "选择服务器"
 
 [command_panel_option_role]
 other = "角色"
 
 [command_panel_option_role_message]
-other = 'To add a role right click or press and hold on the message and press "Apps" then "modify"'
+other = '若要添加角色，请点击或按住消息并按住"应用"然后按"修改"'
 
 [command_panel_option_role_option_create]
 other = "创建"
@@ -138,28 +138,28 @@ other = "角色"
 other = "创建角色面板"
 
 [command_role]
-other = "role"
+other = "角色"
 
 [command_role_desc]
-other = "manage role"
+other = "管理角色"
 
 [command_role_option_color]
-other = "color"
+other = "颜色"
 
 [command_role_option_color_desc]
-other = "create color role"
+other = "创建颜色角色"
 
 [command_role_option_color_option_name]
-other = "name"
+other = "名称"
 
 [command_role_option_color_option_name_desc]
-other = "name of role"
+other = "角色名称"
 
 [command_role_option_color_option_rgb]
 other = "rgb"
 
 [command_role_option_color_option_rgb_desc]
-other = "rgb color code"
+other = "rgb 颜色代码"
 
 [command_tracker]
 other = "追踪器"
@@ -222,7 +222,7 @@ other = "名称"
 other = "Tracker 名称"
 
 [command_unban]
-other = "unban"
+other = "取消封禁"
 
 [command_unban_desc]
 other = "取消封禁所选用户"
@@ -267,25 +267,25 @@ other = "延迟"
 other = "修改"
 
 [message_command_user_info]
-other = "info"
+other = "信息"
 
 [message_command_user_info_color_code]
-other = "Color Code"
+other = "颜色代码"
 
 [message_command_user_info_id]
 other = "ID"
 
 [message_command_user_info_joined_at]
-other = "Joined at"
+other = "加入于"
 
 [message_command_user_info_nick]
-other = "Nick"
+other = "昵称"
 
 [message_command_user_info_none]
-other = "none"
+other = "无"
 
 [message_command_user_info_roles]
-other = "Roles"
+other = "角色"
 
 [panel_minecraft_message_boot]
 other = "启动 {{.Name}} 服务器"
@@ -309,10 +309,10 @@ other = "端口"
 other = "版本"
 
 [message_modify_cant_use_this_message_error]
-other = "not available for that message"
+other = "该消息不可用"
 
 [message_modify_role_add_message]
-other = "Choose a role to add"
+other = "选择要添加的角色"
 
 [message_modify_role_create_message]
-other = "Coose a role to create panel"
+other = "为创建面板配置一个角色"
