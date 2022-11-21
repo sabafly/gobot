@@ -309,10 +309,10 @@ other = "порт"
 other = "версия"
 
 [message_modify_cant_use_this_message_error]
-other = "not available for that message"
+other = "недоступен для этого сообщения"
 
 [message_modify_role_add_message]
-other = "Choose a role to add"
+other = "Выберите роль для добавления"
 
 [message_modify_role_create_message]
-other = "Coose a role to create panel"
+other = "Выберите роль для создания панели"
