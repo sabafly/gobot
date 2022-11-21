@@ -5,7 +5,7 @@ other = "アドレス"
 other = "チャンネル"
 
 [command_ban]
-other = "ban"
+other = "バン"
 
 [command_ban_desc]
 other = "選択したユーザーをBANします"
@@ -30,7 +30,7 @@ one = "理由: {{.Reason}}"
 other = "理由: {{.Reason}}"
 
 [command_kick]
-other = "kick"
+other = "キック"
 
 [command_kick_desc]
 other = "選択したユーザーをキックする"
@@ -45,7 +45,7 @@ other = "キックするユーザー"
 other = "対象"
 
 [command_panel]
-other = "panel"
+other = "パネル"
 
 [command_panel_desc]
 other = "パネルの管理または作成"
@@ -60,7 +60,7 @@ other = "マインクラフト"
 other = "マインクラフトパネルを管理"
 
 [command_panel_option_minecraft_message]
-other = 'To add a server right click or long press on the message and press "Apps" then "modify"'
+other = "サーバーを追加するには、メッセージを右クリックまたは長押しして「アプリ」と「変更」を押します"
 
 [command_panel_option_minecraft_option_create]
 other = "作成"
@@ -105,13 +105,13 @@ other = "ipを表示"
 other = "IPを表示するかどうか"
 
 [command_panel_option_minecraft_placeholder]
-other = "Select server"
+other = "サーバーを選択"
 
 [command_panel_option_role]
 other = "ロール"
 
 [command_panel_option_role_message]
-other = 'To add a role right click or press and hold on the message and press "Apps" then "modify"'
+other = "ロールを追加するには、右クリックまたはメッセージを長押しして「アプリ」と「変更」を押します"
 
 [command_panel_option_role_option_create]
 other = "作成"
@@ -138,28 +138,28 @@ other = "ロール"
 other = "役割パネルを作成"
 
 [command_role]
-other = "role"
+other = "ロール"
 
 [command_role_desc]
-other = "manage role"
+other = "ロール管理"
 
 [command_role_option_color]
-other = "color"
+other = "カラー"
 
 [command_role_option_color_desc]
-other = "create color role"
+other = "カラーロールを作成"
 
 [command_role_option_color_option_name]
-other = "name"
+other = "名前"
 
 [command_role_option_color_option_name_desc]
-other = "name of role"
+other = "ロールの名前"
 
 [command_role_option_color_option_rgb]
 other = "rgb"
 
 [command_role_option_color_option_rgb_desc]
-other = "rgb color code"
+other = "RGBカラーコード"
 
 [command_tracker]
 other = "トラッカー"
@@ -222,7 +222,7 @@ other = "名前"
 other = "トラッカーの名前"
 
 [command_unban]
-other = "unban"
+other = "バン解除"
 
 [command_unban_desc]
 other = "選択したユーザーのBANを解除"
@@ -267,25 +267,25 @@ other = "レイテンシ"
 other = "変更"
 
 [message_command_user_info]
-other = "info"
+other = "情報"
 
 [message_command_user_info_color_code]
-other = "Color Code"
+other = "カラーコード"
 
 [message_command_user_info_id]
 other = "ID"
 
 [message_command_user_info_joined_at]
-other = "Joined at"
+other = "参加日時"
 
 [message_command_user_info_nick]
-other = "Nick"
+other = "ニックネーム"
 
 [message_command_user_info_none]
-other = "none"
+other = "無し"
 
 [message_command_user_info_roles]
-other = "Roles"
+other = "ロール"
 
 [panel_minecraft_message_boot]
 other = "{{.Name}} サーバーが起動しました"
@@ -309,10 +309,10 @@ other = "ポート"
 other = "バージョン"
 
 [message_modify_cant_use_this_message_error]
-other = "not available for that message"
+other = "そのメッセージでは利用できません"
 
 [message_modify_role_add_message]
-other = "Choose a role to add"
+other = "追加するロールを選択してください"
 
 [message_modify_role_create_message]
-other = "Coose a role to create panel"
+other = "作成するパネルに追加するロールを選んで下さい"
