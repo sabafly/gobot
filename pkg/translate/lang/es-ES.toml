@@ -309,10 +309,10 @@ other = "puerto"
 other = "versión"
 
 [message_modify_cant_use_this_message_error]
-other = "not available for that message"
+other = "no disponible para ese mensaje"
 
 [message_modify_role_add_message]
-other = "Choose a role to add"
+other = "Elegir un rol a añadir"
 
 [message_modify_role_create_message]
-other = "Coose a role to create panel"
+other = "Oculta un rol para crear el panel"
