@@ -1,6 +1,12 @@
 [address]
 other = "διεύθυνση"
 
+[channel]
+other = "κανάλι"
+
+[command_ban]
+other = "απαγόρευση"
+
 [command_ban_desc]
 other = "απαγόρευση του επιλεγμένου χρήστη"
 
@@ -23,6 +29,9 @@ other = "target"
 one = "Αιτία: {{.Reason}}"
 other = "Λόγοι: {{.Reason}}"
 
+[command_kick]
+other = "κλωτσιά"
+
 [command_kick_desc]
 other = "κλώτσησε τον επιλεγμένο χρήστη"
 
@@ -35,6 +44,9 @@ other = "χρήστης για να κλωτσήσει"
 [command_kick_option_target]
 other = "target"
 
+[command_panel]
+other = "πίνακας"
+
 [command_panel_desc]
 other = "διαχείριση ή δημιουργία πίνακα"
 
@@ -46,6 +58,9 @@ other = "minecraft"
 
 [command_panel_option_minecraft_desc]
 other = "διαχείριση πάνελ minecraft"
+
+[command_panel_option_minecraft_message]
+other = 'Για να προσθέσετε ένα διακομιστή κάντε δεξί κλικ ή πατήστε παρατεταμένα το μήνυμα και πατήστε "Εφαρμογές" και μετά "Τροποποίηση"'
 
 [command_panel_option_minecraft_option_create]
 other = "δημιουργία"
@@ -89,8 +104,14 @@ other = "showip"
 [command_panel_option_minecraft_option_create_option_showip_desc]
 other = "εμφάνιση ip ή όχι"
 
+[command_panel_option_minecraft_placeholder]
+other = "Επιλογή διακομιστή"
+
 [command_panel_option_role]
 other = "ρόλος"
+
+[command_panel_option_role_message]
+other = 'Για να προσθέσετε ένα ρόλο κάντε δεξί κλικ ή πατήστε παρατεταμένα το μήνυμα και πατήστε "Εφαρμογές" και μετά "τροποποιήστε"'
 
 [command_panel_option_role_option_create]
 other = "δημιουργία"
@@ -115,6 +136,30 @@ other = "ρόλος"
 
 [command_panel_option_role_option_desc_create]
 other = "δημιουργία πίνακα ρόλου"
+
+[command_role]
+other = "ρόλος"
+
+[command_role_desc]
+other = "διαχείριση ρόλου"
+
+[command_role_option_color]
+other = "χρώμα"
+
+[command_role_option_color_desc]
+other = "δημιουργία ρόλου χρώματος"
+
+[command_role_option_color_option_name]
+other = "όνομα"
+
+[command_role_option_color_option_name_desc]
+other = "όνομα του ρόλου"
+
+[command_role_option_color_option_rgb]
+other = "rgb"
+
+[command_role_option_color_option_rgb_desc]
+other = "κωδικός χρώματος rgb"
 
 [command_tracker]
 other = "ιχνηλάτης"
@@ -158,6 +203,27 @@ other = "ρόλος"
 [command_tracker_option_minecraft_option_create_option_role_desc]
 other = "ρόλος να αναφέρουμε"
 
+[command_tracker_option_minecraft_option_get]
+other = "πάρε"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "πάρε minecraft trackers"
+
+[command_tracker_option_minecraft_option_remove]
+other = "Κατάργηση"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "αφαίρεσε ιχνηλάτες minecraft"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "όνομα"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "όνομα του ιχνηλάτη"
+
+[command_unban]
+other = "ακύρωση"
+
 [command_unban_desc]
 other = "κατάργηση αποκλεισμού του επιλεγμένου χρήστη"
 
@@ -200,6 +266,27 @@ other = "λανθάνουσα κατάσταση"
 [message_command_modify]
 other = "τροποποίηση"
 
+[message_command_user_info]
+other = "πληροφορίες"
+
+[message_command_user_info_color_code]
+other = "Κωδικός Χρώματος"
+
+[message_command_user_info_id]
+other = "ID"
+
+[message_command_user_info_joined_at]
+other = "Έγινε μέλος στις"
+
+[message_command_user_info_nick]
+other = "Ψευδώνυμο"
+
+[message_command_user_info_none]
+other = "κανένα"
+
+[message_command_user_info_roles]
+other = "Ρόλοι"
+
 [panel_minecraft_message_boot]
 other = "εκκινήθηκε {{.Name}} διακομιστής"
 
@@ -221,23 +308,11 @@ other = "θύρα"
 [version]
 other = "έκδοση"
 
-[command_tracker_option_minecraft_option_get]
-other = "πάρε"
+[message_modify_cant_use_this_message_error]
+other = "δεν είναι διαθέσιμο για αυτό το μήνυμα"
 
-[command_tracker_option_minecraft_option_get_desc]
-other = "πάρε minecraft trackers"
+[message_modify_role_add_message]
+other = "Επιλέξτε ένα ρόλο για προσθήκη"
 
-[command_tracker_option_minecraft_option_remove]
-other = "Κατάργηση"
-
-[command_tracker_option_minecraft_option_remove_desc]
-other = "αφαίρεσε ιχνηλάτες minecraft"
-
-[channel]
-other = "κανάλι"
-
-[command_tracker_option_minecraft_option_remove_option_name]
-other = "όνομα"
-
-[command_tracker_option_minecraft_option_remove_option_name_desc]
-other = "όνομα του ιχνηλάτη"
+[message_modify_role_create_message]
+other = "Χτυπήστε ένα ρόλο για να δημιουργήσετε πίνακα"

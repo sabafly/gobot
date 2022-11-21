@@ -1,6 +1,12 @@
 [address]
 other = "adresse"
 
+[channel]
+other = "canal"
+
+[command_ban]
+other = "bannir"
+
 [command_ban_desc]
 other = "bannir l'utilisateur sélectionné"
 
@@ -23,6 +29,9 @@ other = "target"
 one = "Raison : {{.Reason}}"
 other = "Raisons : {{.Reason}}"
 
+[command_kick]
+other = "expulser"
+
 [command_kick_desc]
 other = "expulser l'utilisateur sélectionné"
 
@@ -35,6 +44,9 @@ other = "utilisateur à expulser"
 [command_kick_option_target]
 other = "target"
 
+[command_panel]
+other = "panneau"
+
 [command_panel_desc]
 other = "gérer ou créer un panneau"
 
@@ -46,6 +58,9 @@ other = "minecraft"
 
 [command_panel_option_minecraft_desc]
 other = "gérer le panneau minecraft"
+
+[command_panel_option_minecraft_message]
+other = 'Pour ajouter un serveur cliquez avec le bouton droit de la souris ou appuyez longuement sur le message et appuyez sur "Apps" puis "modifier"'
 
 [command_panel_option_minecraft_option_create]
 other = "créer"
@@ -89,8 +104,14 @@ other = "showip"
 [command_panel_option_minecraft_option_create_option_showip_desc]
 other = "afficher l'IP ou pas"
 
+[command_panel_option_minecraft_placeholder]
+other = "Sélectionnez le serveur"
+
 [command_panel_option_role]
 other = "Rôle"
+
+[command_panel_option_role_message]
+other = 'Pour ajouter un rôle cliquez avec le bouton droit de la souris ou maintenez appuyé sur le message et appuyez sur "Apps" puis "modifier"'
 
 [command_panel_option_role_option_create]
 other = "créer"
@@ -115,6 +136,30 @@ other = "Rôle"
 
 [command_panel_option_role_option_desc_create]
 other = "créer un panneau de rôle"
+
+[command_role]
+other = "Rôle"
+
+[command_role_desc]
+other = "gérer le rôle"
+
+[command_role_option_color]
+other = "couleur"
+
+[command_role_option_color_desc]
+other = "créer un rôle de couleur"
+
+[command_role_option_color_option_name]
+other = "Nom"
+
+[command_role_option_color_option_name_desc]
+other = "nom du rôle"
+
+[command_role_option_color_option_rgb]
+other = "rgb"
+
+[command_role_option_color_option_rgb_desc]
+other = "code couleur rgb"
 
 [command_tracker]
 other = "tracker"
@@ -158,6 +203,27 @@ other = "Rôle"
 [command_tracker_option_minecraft_option_create_option_role_desc]
 other = "rôle à mentionner"
 
+[command_tracker_option_minecraft_option_get]
+other = "obtenir"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "obtenir des traqueurs de minecraft"
+
+[command_tracker_option_minecraft_option_remove]
+other = "Enlever"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "supprimer les traceurs de minecraft"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "Nom"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "nom du tracker"
+
+[command_unban]
+other = "dé-bannir"
+
 [command_unban_desc]
 other = "dé-bannir l'utilisateur sélectionné"
 
@@ -200,6 +266,27 @@ other = "latence"
 [message_command_modify]
 other = "modifier"
 
+[message_command_user_info]
+other = "Infos"
+
+[message_command_user_info_color_code]
+other = "Code de couleur"
+
+[message_command_user_info_id]
+other = "ID"
+
+[message_command_user_info_joined_at]
+other = "Inscrit le"
+
+[message_command_user_info_nick]
+other = "Pseudo"
+
+[message_command_user_info_none]
+other = "aucun"
+
+[message_command_user_info_roles]
+other = "Rôles"
+
 [panel_minecraft_message_boot]
 other = "a démarré le serveur {{.Name}}"
 
@@ -221,23 +308,11 @@ other = "port"
 [version]
 other = "version"
 
-[command_tracker_option_minecraft_option_get]
-other = "obtenir"
+[message_modify_cant_use_this_message_error]
+other = "non disponible pour ce message"
 
-[command_tracker_option_minecraft_option_get_desc]
-other = "obtenir des traqueurs de minecraft"
+[message_modify_role_add_message]
+other = "Choisissez un rôle à ajouter"
 
-[command_tracker_option_minecraft_option_remove]
-other = "Enlever"
-
-[command_tracker_option_minecraft_option_remove_desc]
-other = "supprimer les traceurs de minecraft"
-
-[channel]
-other = "canal"
-
-[command_tracker_option_minecraft_option_remove_option_name]
-other = "Nom"
-
-[command_tracker_option_minecraft_option_remove_option_name_desc]
-other = "nom du tracker"
+[message_modify_role_create_message]
+other = "Coose un rôle pour créer un panneau"

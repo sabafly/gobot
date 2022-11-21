@@ -1,6 +1,12 @@
 [address]
 other = "adress"
 
+[channel]
+other = "kanal"
+
+[command_ban]
+other = "förbud"
+
 [command_ban_desc]
 other = "bannlysa den valda användaren"
 
@@ -23,6 +29,9 @@ other = "target"
 one = "Orsak: {{.Reason}}"
 other = "Anledningar: {{.Reason}}"
 
+[command_kick]
+other = "sparka"
+
 [command_kick_desc]
 other = "sparka den valda användaren"
 
@@ -35,6 +44,9 @@ other = "användare att sparka"
 [command_kick_option_target]
 other = "target"
 
+[command_panel]
+other = "panel"
+
 [command_panel_desc]
 other = "hantera eller skapa panel"
 
@@ -46,6 +58,9 @@ other = "minecraft"
 
 [command_panel_option_minecraft_desc]
 other = "hantera minecraft panel"
+
+[command_panel_option_minecraft_message]
+other = 'För att lägga till en server högerklicka eller långtryck på meddelandet och tryck på "appar" och sedan "modifiera"'
 
 [command_panel_option_minecraft_option_create]
 other = "skapa"
@@ -89,8 +104,14 @@ other = "showip"
 [command_panel_option_minecraft_option_create_option_showip_desc]
 other = "visa ip eller inte"
 
+[command_panel_option_minecraft_placeholder]
+other = "Välj server"
+
 [command_panel_option_role]
 other = "roll"
+
+[command_panel_option_role_message]
+other = 'För att lägga till en roll högerklicka eller tryck och håll kvar på meddelandet och tryck på "appar" och sedan "ändra"'
 
 [command_panel_option_role_option_create]
 other = "skapa"
@@ -115,6 +136,30 @@ other = "roll"
 
 [command_panel_option_role_option_desc_create]
 other = "skapa rollpanel"
+
+[command_role]
+other = "roll"
+
+[command_role_desc]
+other = "hantera roll"
+
+[command_role_option_color]
+other = "färg"
+
+[command_role_option_color_desc]
+other = "skapa färgroll"
+
+[command_role_option_color_option_name]
+other = "namn"
+
+[command_role_option_color_option_name_desc]
+other = "namn på roll"
+
+[command_role_option_color_option_rgb]
+other = "rgb"
+
+[command_role_option_color_option_rgb_desc]
+other = "rgb färgkod"
 
 [command_tracker]
 other = "spårare"
@@ -158,6 +203,27 @@ other = "roll"
 [command_tracker_option_minecraft_option_create_option_role_desc]
 other = "roll att nämna"
 
+[command_tracker_option_minecraft_option_get]
+other = "hämta"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "hämta minecraft trackers"
+
+[command_tracker_option_minecraft_option_remove]
+other = "ta bort"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "ta bort minecraft trackers"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "namn"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "namn på tracker"
+
+[command_unban]
+other = "unban"
+
 [command_unban_desc]
 other = "obannlysa den valda användaren"
 
@@ -200,6 +266,27 @@ other = "latens"
 [message_command_modify]
 other = "modifiera"
 
+[message_command_user_info]
+other = "information"
+
+[message_command_user_info_color_code]
+other = "Färg kod"
+
+[message_command_user_info_id]
+other = "ID"
+
+[message_command_user_info_joined_at]
+other = "Gick med vid"
+
+[message_command_user_info_nick]
+other = "Smeknamn"
+
+[message_command_user_info_none]
+other = "ingen"
+
+[message_command_user_info_roles]
+other = "Roller"
+
 [panel_minecraft_message_boot]
 other = "startade {{.Name}} -servern"
 
@@ -221,23 +308,11 @@ other = "port"
 [version]
 other = "version"
 
-[command_tracker_option_minecraft_option_get]
-other = "hämta"
+[message_modify_cant_use_this_message_error]
+other = "inte tillgängligt för det meddelandet"
 
-[command_tracker_option_minecraft_option_get_desc]
-other = "hämta minecraft trackers"
+[message_modify_role_add_message]
+other = "Välj en roll att lägga till"
 
-[command_tracker_option_minecraft_option_remove]
-other = "ta bort"
-
-[command_tracker_option_minecraft_option_remove_desc]
-other = "ta bort minecraft trackers"
-
-[channel]
-other = "kanal"
-
-[command_tracker_option_minecraft_option_remove_option_name]
-other = "namn"
-
-[command_tracker_option_minecraft_option_remove_option_name_desc]
-other = "namn på tracker"
+[message_modify_role_create_message]
+other = "Coose en roll för att skapa panel"

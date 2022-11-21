@@ -1,6 +1,12 @@
 [address]
 other = "adresă"
 
+[channel]
+other = "canal"
+
+[command_ban]
+other = "interdicție"
+
 [command_ban_desc]
 other = "interzice utilizatorul selectat"
 
@@ -23,6 +29,9 @@ other = "target"
 one = "Motiv: {{.Reason}}"
 other = "Motive: {{.Reason}}"
 
+[command_kick]
+other = "exclus"
+
 [command_kick_desc]
 other = "exclude utilizatorul selectat"
 
@@ -35,6 +44,9 @@ other = "utilizator de dat afară"
 [command_kick_option_target]
 other = "target"
 
+[command_panel]
+other = "panou"
+
 [command_panel_desc]
 other = "gestionare sau creare panou"
 
@@ -46,6 +58,9 @@ other = "minecraft"
 
 [command_panel_option_minecraft_desc]
 other = "Gestionează panoul de minecraft"
+
+[command_panel_option_minecraft_message]
+other = 'Pentru a adăuga un server la dreapta faceţi clic sau apăsaţi lung pe mesaj şi apăsaţi "Aplicaţii", apoi "Modificaţi"'
 
 [command_panel_option_minecraft_option_create]
 other = "crează"
@@ -89,8 +104,14 @@ other = "showip"
 [command_panel_option_minecraft_option_create_option_showip_desc]
 other = "arată ip sau nu"
 
+[command_panel_option_minecraft_placeholder]
+other = "Selectează server"
+
 [command_panel_option_role]
 other = "rol"
+
+[command_panel_option_role_message]
+other = 'Pentru a adăuga un rol la dreapta, apăsați și țineți apăsat mesajul și apăsați "Aplicații", apoi "Modificați"'
 
 [command_panel_option_role_option_create]
 other = "crează"
@@ -115,6 +136,30 @@ other = "rol"
 
 [command_panel_option_role_option_desc_create]
 other = "creează panou de rol"
+
+[command_role]
+other = "rol"
+
+[command_role_desc]
+other = "gestionează rolul"
+
+[command_role_option_color]
+other = "culoare"
+
+[command_role_option_color_desc]
+other = "creează rol de culoare"
+
+[command_role_option_color_option_name]
+other = "nume"
+
+[command_role_option_color_option_name_desc]
+other = "numele rolului"
+
+[command_role_option_color_option_rgb]
+other = "rgb"
+
+[command_role_option_color_option_rgb_desc]
+other = "cod de culoare rgb"
 
 [command_tracker]
 other = "urmăritor"
@@ -158,6 +203,27 @@ other = "rol"
 [command_tracker_option_minecraft_option_create_option_role_desc]
 other = "rol de menționat"
 
+[command_tracker_option_minecraft_option_get]
+other = "obține"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "obține trackere minecraft"
+
+[command_tracker_option_minecraft_option_remove]
+other = "elimină"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "elimină trackere minecraft"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "nume"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "numele trackerului"
+
+[command_unban]
+other = "deblochează"
+
 [command_unban_desc]
 other = "deblochează utilizatorul selectat"
 
@@ -200,6 +266,27 @@ other = "latență"
 [message_command_modify]
 other = "modifică"
 
+[message_command_user_info]
+other = "informaţii"
+
+[message_command_user_info_color_code]
+other = "Cod culoare"
+
+[message_command_user_info_id]
+other = "ID"
+
+[message_command_user_info_joined_at]
+other = "S-a alăturat la"
+
+[message_command_user_info_nick]
+other = "Nick"
+
+[message_command_user_info_none]
+other = "niciunul"
+
+[message_command_user_info_roles]
+other = "Roluri"
+
 [panel_minecraft_message_boot]
 other = "{{.Name}} server oprit"
 
@@ -221,23 +308,11 @@ other = "port"
 [version]
 other = "versiune"
 
-[command_tracker_option_minecraft_option_get]
-other = "obține"
+[message_modify_cant_use_this_message_error]
+other = "nu este disponibil pentru acel mesaj"
 
-[command_tracker_option_minecraft_option_get_desc]
-other = "obține trackere minecraft"
+[message_modify_role_add_message]
+other = "Alege un rol de adăugat"
 
-[command_tracker_option_minecraft_option_remove]
-other = "elimină"
-
-[command_tracker_option_minecraft_option_remove_desc]
-other = "elimină trackere minecraft"
-
-[channel]
-other = "canal"
-
-[command_tracker_option_minecraft_option_remove_option_name]
-other = "nume"
-
-[command_tracker_option_minecraft_option_remove_option_name_desc]
-other = "numele trackerului"
+[message_modify_role_create_message]
+other = "Alege un rol pentru a crea panoul"

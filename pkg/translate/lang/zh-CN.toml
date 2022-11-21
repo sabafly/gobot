@@ -1,6 +1,12 @@
 [address]
 other = "地址"
 
+[channel]
+other = "频道"
+
+[command_ban]
+other = "封禁"
+
 [command_ban_desc]
 other = "封禁所选用户"
 
@@ -23,6 +29,9 @@ other = "target"
 one = "原因： {{.Reason}}"
 other = "原因： {{.Reason}}"
 
+[command_kick]
+other = "踢出"
+
 [command_kick_desc]
 other = "踢出选中的用户"
 
@@ -35,6 +44,9 @@ other = "要踢出的用户"
 [command_kick_option_target]
 other = "target"
 
+[command_panel]
+other = "面板"
+
 [command_panel_desc]
 other = "管理或创建面板"
 
@@ -46,6 +58,9 @@ other = "Minecraft"
 
 [command_panel_option_minecraft_desc]
 other = "管理Minecraft面板"
+
+[command_panel_option_minecraft_message]
+other = "若要添加服务器，请点击或长按消息并按“应用”然后按“修改”"
 
 [command_panel_option_minecraft_option_create]
 other = "创建"
@@ -89,8 +104,14 @@ other = "showip"
 [command_panel_option_minecraft_option_create_option_showip_desc]
 other = "是否显示 ip"
 
+[command_panel_option_minecraft_placeholder]
+other = "选择服务器"
+
 [command_panel_option_role]
 other = "角色"
+
+[command_panel_option_role_message]
+other = '若要添加角色，请点击或按住消息并按住"应用"然后按"修改"'
 
 [command_panel_option_role_option_create]
 other = "创建"
@@ -115,6 +136,30 @@ other = "角色"
 
 [command_panel_option_role_option_desc_create]
 other = "创建角色面板"
+
+[command_role]
+other = "角色"
+
+[command_role_desc]
+other = "管理角色"
+
+[command_role_option_color]
+other = "颜色"
+
+[command_role_option_color_desc]
+other = "创建颜色角色"
+
+[command_role_option_color_option_name]
+other = "名称"
+
+[command_role_option_color_option_name_desc]
+other = "角色名称"
+
+[command_role_option_color_option_rgb]
+other = "rgb"
+
+[command_role_option_color_option_rgb_desc]
+other = "rgb 颜色代码"
 
 [command_tracker]
 other = "追踪器"
@@ -158,6 +203,27 @@ other = "角色"
 [command_tracker_option_minecraft_option_create_option_role_desc]
 other = "要提及的角色"
 
+[command_tracker_option_minecraft_option_get]
+other = "获取"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "获取Minecraft跟踪器"
+
+[command_tracker_option_minecraft_option_remove]
+other = "移除"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "移除Minecraft Tracker"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "名称"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "Tracker 名称"
+
+[command_unban]
+other = "取消封禁"
+
 [command_unban_desc]
 other = "取消封禁所选用户"
 
@@ -200,6 +266,27 @@ other = "延迟"
 [message_command_modify]
 other = "修改"
 
+[message_command_user_info]
+other = "信息"
+
+[message_command_user_info_color_code]
+other = "颜色代码"
+
+[message_command_user_info_id]
+other = "ID"
+
+[message_command_user_info_joined_at]
+other = "加入于"
+
+[message_command_user_info_nick]
+other = "昵称"
+
+[message_command_user_info_none]
+other = "无"
+
+[message_command_user_info_roles]
+other = "角色"
+
 [panel_minecraft_message_boot]
 other = "启动 {{.Name}} 服务器"
 
@@ -221,23 +308,11 @@ other = "端口"
 [version]
 other = "版本"
 
-[command_tracker_option_minecraft_option_get]
-other = "获取"
+[message_modify_cant_use_this_message_error]
+other = "该消息不可用"
 
-[command_tracker_option_minecraft_option_get_desc]
-other = "获取Minecraft跟踪器"
+[message_modify_role_add_message]
+other = "选择要添加的角色"
 
-[command_tracker_option_minecraft_option_remove]
-other = "移除"
-
-[command_tracker_option_minecraft_option_remove_desc]
-other = "移除Minecraft Tracker"
-
-[channel]
-other = "频道"
-
-[command_tracker_option_minecraft_option_remove_option_name]
-other = "名称"
-
-[command_tracker_option_minecraft_option_remove_option_name_desc]
-other = "Tracker 名称"
+[message_modify_role_create_message]
+other = "为创建面板配置一个角色"

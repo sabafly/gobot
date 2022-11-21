@@ -1,6 +1,12 @@
 [address]
 other = "dirección"
 
+[channel]
+other = "canal"
+
+[command_ban]
+other = "banear"
+
 [command_ban_desc]
 other = "banear al usuario seleccionado"
 
@@ -23,6 +29,9 @@ other = "target"
 one = "Razón: {{.Reason}}"
 other = "Razones: {{.Reason}}"
 
+[command_kick]
+other = "patear"
+
 [command_kick_desc]
 other = "expulsar al usuario seleccionado"
 
@@ -35,6 +44,9 @@ other = "usuario a expulsar"
 [command_kick_option_target]
 other = "target"
 
+[command_panel]
+other = "panel"
+
 [command_panel_desc]
 other = "administrar o crear panel"
 
@@ -46,6 +58,9 @@ other = "minecraft"
 
 [command_panel_option_minecraft_desc]
 other = "administrar panel de minecraft"
+
+[command_panel_option_minecraft_message]
+other = 'Para añadir un servidor haga clic derecho o mantenga presionado el mensaje y pulse "Aplicaciones" y luego "modificar"'
 
 [command_panel_option_minecraft_option_create]
 other = "crear"
@@ -89,8 +104,14 @@ other = "showip"
 [command_panel_option_minecraft_option_create_option_showip_desc]
 other = "mostrar ip o no"
 
+[command_panel_option_minecraft_placeholder]
+other = "Seleccionar servidor"
+
 [command_panel_option_role]
 other = "rol"
+
+[command_panel_option_role_message]
+other = 'Para añadir un rol haga clic derecho o presione y mantenga pulsado el mensaje y pulse "Aplicaciones" y luego "modificar"'
 
 [command_panel_option_role_option_create]
 other = "crear"
@@ -115,6 +136,30 @@ other = "rol"
 
 [command_panel_option_role_option_desc_create]
 other = "crear panel de roles"
+
+[command_role]
+other = "rol"
+
+[command_role_desc]
+other = "administrar rol"
+
+[command_role_option_color]
+other = "color"
+
+[command_role_option_color_desc]
+other = "crear rol de color"
+
+[command_role_option_color_option_name]
+other = "nombre"
+
+[command_role_option_color_option_name_desc]
+other = "nombre del rol"
+
+[command_role_option_color_option_rgb]
+other = "rgb"
+
+[command_role_option_color_option_rgb_desc]
+other = "código de color rgb"
 
 [command_tracker]
 other = "rastreador"
@@ -158,6 +203,27 @@ other = "rol"
 [command_tracker_option_minecraft_option_create_option_role_desc]
 other = "rol a mencionar"
 
+[command_tracker_option_minecraft_option_get]
+other = "obtener"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "obtener rastreadores de minecraft"
+
+[command_tracker_option_minecraft_option_remove]
+other = "eliminar"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "eliminar rastreadores de minecraft"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "nombre"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "nombre del rastreador"
+
+[command_unban]
+other = "desbanear"
+
 [command_unban_desc]
 other = "desbanear al usuario seleccionado"
 
@@ -200,6 +266,27 @@ other = "latencia"
 [message_command_modify]
 other = "modificar"
 
+[message_command_user_info]
+other = "info"
+
+[message_command_user_info_color_code]
+other = "Código de color"
+
+[message_command_user_info_id]
+other = "ID"
+
+[message_command_user_info_joined_at]
+other = "Se unió en"
+
+[message_command_user_info_nick]
+other = "Apodo"
+
+[message_command_user_info_none]
+other = "ninguno"
+
+[message_command_user_info_roles]
+other = "Roles"
+
 [panel_minecraft_message_boot]
 other = "servidor {{.Name}} iniciado"
 
@@ -221,23 +308,11 @@ other = "puerto"
 [version]
 other = "versión"
 
-[command_tracker_option_minecraft_option_get]
-other = "obtener"
+[message_modify_cant_use_this_message_error]
+other = "no disponible para ese mensaje"
 
-[command_tracker_option_minecraft_option_get_desc]
-other = "obtener rastreadores de minecraft"
+[message_modify_role_add_message]
+other = "Elegir un rol a añadir"
 
-[command_tracker_option_minecraft_option_remove]
-other = "eliminar"
-
-[command_tracker_option_minecraft_option_remove_desc]
-other = "eliminar rastreadores de minecraft"
-
-[channel]
-other = "canal"
-
-[command_tracker_option_minecraft_option_remove_option_name]
-other = "nombre"
-
-[command_tracker_option_minecraft_option_remove_option_name_desc]
-other = "nombre del rastreador"
+[message_modify_role_create_message]
+other = "Oculta un rol para crear el panel"

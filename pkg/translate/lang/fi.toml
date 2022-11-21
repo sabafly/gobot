@@ -1,6 +1,12 @@
 [address]
 other = "osoite"
 
+[channel]
+other = "kanava"
+
+[command_ban]
+other = "porttikielto"
+
 [command_ban_desc]
 other = "porttikielto valitulle käyttäjälle"
 
@@ -23,6 +29,9 @@ other = "target"
 one = "Syy: {{.Reason}}"
 other = "Syyt: {{.Reason}}"
 
+[command_kick]
+other = "potku"
+
 [command_kick_desc]
 other = "potkia valittu käyttäjä"
 
@@ -35,6 +44,9 @@ other = "käyttäjä potkia"
 [command_kick_option_target]
 other = "target"
 
+[command_panel]
+other = "paneeli"
+
 [command_panel_desc]
 other = "hallitse tai luo paneeli"
 
@@ -46,6 +58,9 @@ other = "minecraft"
 
 [command_panel_option_minecraft_desc]
 other = "hallitse minecraft-paneelia"
+
+[command_panel_option_minecraft_message]
+other = 'Jos haluat lisätä palvelimen oikealle, paina viestiä pitkään ja paina "Sovellukset" ja "muokata"'
 
 [command_panel_option_minecraft_option_create]
 other = "luo"
@@ -89,8 +104,14 @@ other = "showip"
 [command_panel_option_minecraft_option_create_option_showip_desc]
 other = "näytä ip tai ei"
 
+[command_panel_option_minecraft_placeholder]
+other = "Valitse palvelin"
+
 [command_panel_option_role]
 other = "rooli"
+
+[command_panel_option_role_message]
+other = 'Voit lisätä roolin oikealle painamalla tai pitämällä viestiä pohjassa ja painamalla "Sovellukset" ja "muokata"'
 
 [command_panel_option_role_option_create]
 other = "luo"
@@ -115,6 +136,30 @@ other = "rooli"
 
 [command_panel_option_role_option_desc_create]
 other = "luo roolipaneeli"
+
+[command_role]
+other = "rooli"
+
+[command_role_desc]
+other = "hallitse roolia"
+
+[command_role_option_color]
+other = "väri"
+
+[command_role_option_color_desc]
+other = "luo värirooli"
+
+[command_role_option_color_option_name]
+other = "nimi"
+
+[command_role_option_color_option_name_desc]
+other = "roolin nimi"
+
+[command_role_option_color_option_rgb]
+other = "rgb"
+
+[command_role_option_color_option_rgb_desc]
+other = "rgb värikoodi"
 
 [command_tracker]
 other = "seurantapalvelin"
@@ -158,6 +203,27 @@ other = "rooli"
 [command_tracker_option_minecraft_option_create_option_role_desc]
 other = "maininnan rooli"
 
+[command_tracker_option_minecraft_option_get]
+other = "hae"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "hae minecraft trackers"
+
+[command_tracker_option_minecraft_option_remove]
+other = "poista"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "poista minecraftin jäljittäjät"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "nimi"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "seurantapalvelimen nimi"
+
+[command_unban]
+other = "unban"
+
 [command_unban_desc]
 other = "poista porttikielto valitulle käyttäjälle"
 
@@ -200,6 +266,27 @@ other = "latenssi"
 [message_command_modify]
 other = "muokkaa"
 
+[message_command_user_info]
+other = "tiedot"
+
+[message_command_user_info_color_code]
+other = "Värin Koodi"
+
+[message_command_user_info_id]
+other = "ID"
+
+[message_command_user_info_joined_at]
+other = "Liittyi klo"
+
+[message_command_user_info_nick]
+other = "Nick"
+
+[message_command_user_info_none]
+other = "ei"
+
+[message_command_user_info_roles]
+other = "Roolit"
+
 [panel_minecraft_message_boot]
 other = "käynnistetty {{.Name}} palvelin"
 
@@ -221,23 +308,11 @@ other = "portti"
 [version]
 other = "versio"
 
-[command_tracker_option_minecraft_option_get]
-other = "hae"
+[message_modify_cant_use_this_message_error]
+other = "ei saatavilla tuossa viestissä"
 
-[command_tracker_option_minecraft_option_get_desc]
-other = "hae minecraft trackers"
+[message_modify_role_add_message]
+other = "Valitse lisättävä rooli"
 
-[command_tracker_option_minecraft_option_remove]
-other = "poista"
-
-[command_tracker_option_minecraft_option_remove_desc]
-other = "poista minecraftin jäljittäjät"
-
-[channel]
-other = "kanava"
-
-[command_tracker_option_minecraft_option_remove_option_name]
-other = "nimi"
-
-[command_tracker_option_minecraft_option_remove_option_name_desc]
-other = "seurantapalvelimen nimi"
+[message_modify_role_create_message]
+other = "Coose rooli luoda paneeli"

@@ -1,6 +1,12 @@
 [address]
 other = "адреса"
 
+[channel]
+other = "канал"
+
+[command_ban]
+other = "бан"
+
 [command_ban_desc]
 other = "забанити вибраного користувача"
 
@@ -23,6 +29,9 @@ other = "target"
 one = "Причина: {{.Reason}}"
 other = "Причини: {{.Reason}}"
 
+[command_kick]
+other = "кік"
+
 [command_kick_desc]
 other = "вилучити вибраного користувача"
 
@@ -35,6 +44,9 @@ other = "користувача для вилучення"
 [command_kick_option_target]
 other = "target"
 
+[command_panel]
+other = "панель"
+
 [command_panel_desc]
 other = "керування або створити панель"
 
@@ -46,6 +58,9 @@ other = "вагонетка"
 
 [command_panel_option_minecraft_desc]
 other = "керувати панеллю minecraft"
+
+[command_panel_option_minecraft_message]
+other = 'Щоб додати сервер правою кнопкою або тривалим натисканням на повідомлення та натисніть "Додатки" потім "змінити"'
 
 [command_panel_option_minecraft_option_create]
 other = "створити"
@@ -89,8 +104,14 @@ other = "showip"
 [command_panel_option_minecraft_option_create_option_showip_desc]
 other = "показати ip чи ні"
 
+[command_panel_option_minecraft_placeholder]
+other = "Виберіть сервер"
+
 [command_panel_option_role]
 other = "роль"
+
+[command_panel_option_role_message]
+other = 'Щоб додати роль правою кнопкою миші або утримуючи повідомлення і натисніть "Додатки", тоді "змінити"'
 
 [command_panel_option_role_option_create]
 other = "створити"
@@ -115,6 +136,30 @@ other = "роль"
 
 [command_panel_option_role_option_desc_create]
 other = "створити панель ролі"
+
+[command_role]
+other = "роль"
+
+[command_role_desc]
+other = "керувати роллю"
+
+[command_role_option_color]
+other = "колір"
+
+[command_role_option_color_desc]
+other = "створити роль кольору"
+
+[command_role_option_color_option_name]
+other = "ім'я"
+
+[command_role_option_color_option_name_desc]
+other = "ім'я ролі"
+
+[command_role_option_color_option_rgb]
+other = "rgb"
+
+[command_role_option_color_option_rgb_desc]
+other = "код кольору rgb"
 
 [command_tracker]
 other = "трекер"
@@ -158,6 +203,27 @@ other = "роль"
 [command_tracker_option_minecraft_option_create_option_role_desc]
 other = "роль для згадування"
 
+[command_tracker_option_minecraft_option_get]
+other = "отримати"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "отримати вагонетку трекери"
+
+[command_tracker_option_minecraft_option_remove]
+other = "видалити"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "видалити трекери minecraft"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "ім'я"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "ім'я трекера"
+
+[command_unban]
+other = "розблокування"
+
 [command_unban_desc]
 other = "розблокувати вибраного користувача"
 
@@ -200,6 +266,27 @@ other = "затримка"
 [message_command_modify]
 other = "змінити"
 
+[message_command_user_info]
+other = "інформація"
+
+[message_command_user_info_color_code]
+other = "Код кольору"
+
+[message_command_user_info_id]
+other = "ID"
+
+[message_command_user_info_joined_at]
+other = "Приєднався"
+
+[message_command_user_info_nick]
+other = "Псевдонім"
+
+[message_command_user_info_none]
+other = "нічого"
+
+[message_command_user_info_roles]
+other = "Ролі"
+
 [panel_minecraft_message_boot]
 other = "запущено сервер {{.Name}}"
 
@@ -221,23 +308,11 @@ other = "порт"
 [version]
 other = "версія"
 
-[command_tracker_option_minecraft_option_get]
-other = "отримати"
+[message_modify_cant_use_this_message_error]
+other = "недоступно для цього повідомлення"
 
-[command_tracker_option_minecraft_option_get_desc]
-other = "отримати вагонетку трекери"
+[message_modify_role_add_message]
+other = "Виберіть роль для додавання"
 
-[command_tracker_option_minecraft_option_remove]
-other = "видалити"
-
-[command_tracker_option_minecraft_option_remove_desc]
-other = "видалити трекери minecraft"
-
-[channel]
-other = "канал"
-
-[command_tracker_option_minecraft_option_remove_option_name]
-other = "ім'я"
-
-[command_tracker_option_minecraft_option_remove_option_name_desc]
-other = "ім'я трекера"
+[message_modify_role_create_message]
+other = "Вибрати роль для створення панелі"
