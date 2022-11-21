@@ -5,7 +5,7 @@ other = "адреса"
 other = "канал"
 
 [command_ban]
-other = "ban"
+other = "бан"
 
 [command_ban_desc]
 other = "забанити вибраного користувача"
@@ -30,7 +30,7 @@ one = "Причина: {{.Reason}}"
 other = "Причини: {{.Reason}}"
 
 [command_kick]
-other = "kick"
+other = "кік"
 
 [command_kick_desc]
 other = "вилучити вибраного користувача"
@@ -45,7 +45,7 @@ other = "користувача для вилучення"
 other = "target"
 
 [command_panel]
-other = "panel"
+other = "панель"
 
 [command_panel_desc]
 other = "керування або створити панель"
@@ -60,7 +60,7 @@ other = "вагонетка"
 other = "керувати панеллю minecraft"
 
 [command_panel_option_minecraft_message]
-other = 'To add a server right click or long press on the message and press "Apps" then "modify"'
+other = 'Щоб додати сервер правою кнопкою або тривалим натисканням на повідомлення та натисніть "Додатки" потім "змінити"'
 
 [command_panel_option_minecraft_option_create]
 other = "створити"
@@ -105,13 +105,13 @@ other = "showip"
 other = "показати ip чи ні"
 
 [command_panel_option_minecraft_placeholder]
-other = "Select server"
+other = "Виберіть сервер"
 
 [command_panel_option_role]
 other = "роль"
 
 [command_panel_option_role_message]
-other = 'To add a role right click or press and hold on the message and press "Apps" then "modify"'
+other = 'Щоб додати роль правою кнопкою миші або утримуючи повідомлення і натисніть "Додатки", тоді "змінити"'
 
 [command_panel_option_role_option_create]
 other = "створити"
@@ -138,28 +138,28 @@ other = "роль"
 other = "створити панель ролі"
 
 [command_role]
-other = "role"
+other = "роль"
 
 [command_role_desc]
-other = "manage role"
+other = "керувати роллю"
 
 [command_role_option_color]
-other = "color"
+other = "колір"
 
 [command_role_option_color_desc]
-other = "create color role"
+other = "створити роль кольору"
 
 [command_role_option_color_option_name]
-other = "name"
+other = "ім'я"
 
 [command_role_option_color_option_name_desc]
-other = "name of role"
+other = "ім'я ролі"
 
 [command_role_option_color_option_rgb]
 other = "rgb"
 
 [command_role_option_color_option_rgb_desc]
-other = "rgb color code"
+other = "код кольору rgb"
 
 [command_tracker]
 other = "трекер"
@@ -222,7 +222,7 @@ other = "ім'я"
 other = "ім'я трекера"
 
 [command_unban]
-other = "unban"
+other = "розблокування"
 
 [command_unban_desc]
 other = "розблокувати вибраного користувача"
@@ -267,25 +267,25 @@ other = "затримка"
 other = "змінити"
 
 [message_command_user_info]
-other = "info"
+other = "інформація"
 
 [message_command_user_info_color_code]
-other = "Color Code"
+other = "Код кольору"
 
 [message_command_user_info_id]
 other = "ID"
 
 [message_command_user_info_joined_at]
-other = "Joined at"
+other = "Приєднався"
 
 [message_command_user_info_nick]
-other = "Nick"
+other = "Псевдонім"
 
 [message_command_user_info_none]
-other = "none"
+other = "нічого"
 
 [message_command_user_info_roles]
-other = "Roles"
+other = "Ролі"
 
 [panel_minecraft_message_boot]
 other = "запущено сервер {{.Name}}"
@@ -309,10 +309,10 @@ other = "порт"
 other = "версія"
 
 [message_modify_cant_use_this_message_error]
-other = "not available for that message"
+other = "недоступно для цього повідомлення"
 
 [message_modify_role_add_message]
-other = "Choose a role to add"
+other = "Виберіть роль для додавання"
 
 [message_modify_role_create_message]
-other = "Coose a role to create panel"
+other = "Вибрати роль для створення панелі"
