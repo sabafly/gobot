@@ -1,6 +1,12 @@
 [address]
 other = "Adres"
 
+[channel]
+other = "kanaal"
+
+[command_ban]
+other = "verbannen"
+
 [command_ban_desc]
 other = "verbannen de geselecteerde gebruiker"
 
@@ -23,6 +29,9 @@ other = "target"
 one = "Reden: {{.Reason}}"
 other = "Reden: {{.Reason}}"
 
+[command_kick]
+other = "uitzetten"
+
 [command_kick_desc]
 other = "Kick de geselecteerde gebruiker"
 
@@ -35,6 +44,9 @@ other = "uit te zetten gebruiker"
 [command_kick_option_target]
 other = "target"
 
+[command_panel]
+other = "paneel"
+
 [command_panel_desc]
 other = "beheren of maken van paneel"
 
@@ -46,6 +58,9 @@ other = "minecraft"
 
 [command_panel_option_minecraft_desc]
 other = "Beheer minecraft paneel"
+
+[command_panel_option_minecraft_message]
+other = 'Om een server met de rechtermuisknop toe te voegen of druk lang op het bericht en druk op "Apps" en druk op "wijzigen"'
 
 [command_panel_option_minecraft_option_create]
 other = "aanmaken"
@@ -89,8 +104,14 @@ other = "showip"
 [command_panel_option_minecraft_option_create_option_showip_desc]
 other = "Toon IP of niet"
 
+[command_panel_option_minecraft_placeholder]
+other = "Selecteer server"
+
 [command_panel_option_role]
 other = "rol"
+
+[command_panel_option_role_message]
+other = 'Om een rol toe te voegen klik of druk op het bericht en druk op "Apps" en druk op "Wijzigen"'
 
 [command_panel_option_role_option_create]
 other = "aanmaken"
@@ -115,6 +136,30 @@ other = "rol"
 
 [command_panel_option_role_option_desc_create]
 other = "maak rolpaneel"
+
+[command_role]
+other = "rol"
+
+[command_role_desc]
+other = "rol beheren"
+
+[command_role_option_color]
+other = "kleur"
+
+[command_role_option_color_desc]
+other = "kleurenrol aanmaken"
+
+[command_role_option_color_option_name]
+other = "Naam"
+
+[command_role_option_color_option_name_desc]
+other = "naam van de rol"
+
+[command_role_option_color_option_rgb]
+other = "rgb"
+
+[command_role_option_color_option_rgb_desc]
+other = "rgb kleurcode"
 
 [command_tracker]
 other = "tracker"
@@ -158,6 +203,27 @@ other = "rol"
 [command_tracker_option_minecraft_option_create_option_role_desc]
 other = "rol om te vermelden"
 
+[command_tracker_option_minecraft_option_get]
+other = "pak"
+
+[command_tracker_option_minecraft_option_get_desc]
+other = "krijg minecraft trackers"
+
+[command_tracker_option_minecraft_option_remove]
+other = "verwijderen"
+
+[command_tracker_option_minecraft_option_remove_desc]
+other = "verwijder minecraft trackers"
+
+[command_tracker_option_minecraft_option_remove_option_name]
+other = "Naam"
+
+[command_tracker_option_minecraft_option_remove_option_name_desc]
+other = "naam van de tracker"
+
+[command_unban]
+other = "uitsluiten"
+
 [command_unban_desc]
 other = "deblokkeer de geselecteerde gebruiker"
 
@@ -200,6 +266,27 @@ other = "latentie"
 [message_command_modify]
 other = "wijzigen"
 
+[message_command_user_info]
+other = "info"
+
+[message_command_user_info_color_code]
+other = "Kleur Code"
+
+[message_command_user_info_id]
+other = "ID"
+
+[message_command_user_info_joined_at]
+other = "Geregistreerd op"
+
+[message_command_user_info_nick]
+other = "Bijnaam"
+
+[message_command_user_info_none]
+other = "Geen"
+
+[message_command_user_info_roles]
+other = "Rollen"
+
 [panel_minecraft_message_boot]
 other = "{{.Name}} server is opgestart"
 
@@ -221,77 +308,11 @@ other = "poort"
 [version]
 other = "Versie"
 
-[command_tracker_option_minecraft_option_get]
-other = "pak"
+[message_modify_cant_use_this_message_error]
+other = "not available for that message"
 
-[command_tracker_option_minecraft_option_get_desc]
-other = "krijg minecraft trackers"
+[message_modify_role_add_message]
+other = "Choose a role to add"
 
-[command_tracker_option_minecraft_option_remove]
-other = "verwijderen"
-
-[command_tracker_option_minecraft_option_remove_desc]
-other = "verwijder minecraft trackers"
-
-[channel]
-other = "kanaal"
-
-[command_tracker_option_minecraft_option_remove_option_name]
-other = "Naam"
-
-[command_tracker_option_minecraft_option_remove_option_name_desc]
-other = "naam van de tracker"
-
-[command_panel_option_minecraft_message]
-other = 'To add a server right click or long press on the message and press "Apps" then "modify"'
-
-[command_panel_option_minecraft_placeholder]
-other = "Select server"
-
-[command_panel_option_role_message]
-other = 'To add a role right click or press and hold on the message and press "Apps" then "modify"'
-
-[command_role]
-other = "role"
-
-[command_role_desc]
-other = "manage role"
-
-[command_role_option_color]
-other = "color"
-
-[command_role_option_color_desc]
-other = "create color role"
-
-[command_role_option_color_option_rgb]
-other = "rgb"
-
-[command_role_option_color_option_rgb_desc]
-other = "rgb color code"
-
-[command_role_option_color_option_name]
-other = "name"
-
-[command_role_option_color_option_name_desc]
-other = "name of role"
-
-[message_command_user_info]
-other = "info"
-
-[message_command_user_info_none]
-other = "none"
-
-[message_command_user_info_nick]
-other = "Nick"
-
-[message_command_user_info_id]
-other = "ID"
-
-[message_command_user_info_roles]
-other = "Roles"
-
-[message_command_user_info_joined_at]
-other = "Joined at"
-
-[message_command_user_info_color_code]
-other = "Color Code"
+[message_modify_role_create_message]
+other = "Coose a role to create panel"
