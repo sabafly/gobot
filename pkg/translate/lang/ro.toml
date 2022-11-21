@@ -309,10 +309,10 @@ other = "port"
 other = "versiune"
 
 [message_modify_cant_use_this_message_error]
-other = "not available for that message"
+other = "nu este disponibil pentru acel mesaj"
 
 [message_modify_role_add_message]
-other = "Choose a role to add"
+other = "Alege un rol de adăugat"
 
 [message_modify_role_create_message]
-other = "Coose a role to create panel"
+other = "Alege un rol pentru a crea panoul"
