@@ -274,3 +274,24 @@ other = "name"
 
 [command_role_option_color_option_name_desc]
 other = "name of role"
+
+[message_command_user_info]
+other = "info"
+
+[message_command_user_info_none]
+other = "none"
+
+[message_command_user_info_nick]
+other = "Nick"
+
+[message_command_user_info_id]
+other = "ID"
+
+[message_command_user_info_roles]
+other = "Roles"
+
+[message_command_user_info_joined_at]
+other = "Joined at"
+
+[message_command_user_info_color_code]
+other = "Color Code"
