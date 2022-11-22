@@ -21,6 +21,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASS }}
           script: |
-            cd ${{ secrets.SERVER_DEPLOY_DIR }} | git pull origin main
-            cd ${{ secrets.SERVER_DEPLOY_DIR }} | /usr/local/go/bin/go build
+            cd ${{ secrets.SERVER_DEPLOY_DIR }} 
+            git pull
+            /usr/local/go/bin/go build
             echo ${{ secrets.SSH_PASSWORD }} | sudo -S killall -SIGINT gobot
