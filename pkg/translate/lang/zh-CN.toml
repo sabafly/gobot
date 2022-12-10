@@ -318,22 +318,22 @@ other = "选择要添加的角色"
 other = "为创建面板配置一个角色"
 
 [message_command_select_message]
-other = "selected"
+other = "已选择"
 
 [message_command_select]
-other = "select"
+other = "选择"
 
 [command_panel_option_config]
-other = "config"
+other = "配置"
 
 [command_panel_option_config_desc]
-other = "configure proprties"
+other = "配置代理"
 
 [command_panel_option_config_option_emoji]
 other = "emoji"
 
 [command_panel_option_config_option_emoji_desc]
-other = "Set custom emoji in select menu"
+other = "在选择菜单中设置自定义表情"
 
 [command_panel_option_config_option_emoji_message]
-other = "Please send emoji in this channel"
+other = "请在此频道中发送表情"
