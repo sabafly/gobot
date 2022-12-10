@@ -10,6 +10,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/command"
+	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/joho/godotenv"
 )
@@ -66,6 +67,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		{
 			Name:                     "ban",
 			Description:              "ban the selected user",
+			NameLocalizations:        translate.MessageMap("command_ban", true),
 			DescriptionLocalizations: translate.MessageMap("command_ban_desc", false),
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -91,6 +93,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		{
 			Name:                     "unban",
 			Description:              "pardon the selected user",
+			NameLocalizations:        translate.MessageMap("command_unban", true),
 			DescriptionLocalizations: translate.MessageMap("command_unban_desc", false),
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -109,6 +112,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		{
 			Name:                     "kick",
 			Description:              "kick the selected user",
+			NameLocalizations:        translate.MessageMap("command_kick", true),
 			DescriptionLocalizations: translate.MessageMap("command_kick_desc", false),
 			Options: []*discordgo.ApplicationCommandOption{
 				{
@@ -127,6 +131,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		{
 			Name:                     "panel",
 			Description:              "manage or create panel",
+			NameLocalizations:        translate.MessageMap("command_panel", true),
 			DescriptionLocalizations: translate.MessageMap("command_panel_desc", false),
 			GuildID:                  *SupportGuildID,
 			DefaultMemberPermissions: &PermissionAdminMembers,
@@ -152,14 +157,6 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 									NameLocalizations:        *translate.MessageMap("command_panel_option_role_option_create_option_name", true),
 									DescriptionLocalizations: *translate.MessageMap("command_panel_option_role_option_create_option_desc_name", false),
 									Type:                     discordgo.ApplicationCommandOptionString,
-									Required:                 true,
-								},
-								{
-									Name:                     "role",
-									Description:              "role that add to the panel",
-									NameLocalizations:        *translate.MessageMap("command_panel_option_role_option_create_option_role", true),
-									DescriptionLocalizations: *translate.MessageMap("command_panel_option_role_option_create_option_desc_role", false),
-									Type:                     discordgo.ApplicationCommandOptionRole,
 									Required:                 true,
 								},
 								{
@@ -234,6 +231,22 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 									Type:                     discordgo.ApplicationCommandOptionBoolean,
 								},
 							},
+						},
+					},
+				},
+				{
+					Name:                     "config",
+					Description:              "test",
+					NameLocalizations:        *translate.MessageMap("command_panel_option_config", true),
+					DescriptionLocalizations: *translate.MessageMap("command_panel_option_config_desc", false),
+					Type:                     discordgo.ApplicationCommandOptionSubCommandGroup,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Name:                     "emoji",
+							Description:              "test",
+							NameLocalizations:        *translate.MessageMap("command_panel_option_config_option_emoji", true),
+							DescriptionLocalizations: *translate.MessageMap("command_panel_option_config_option_emoji_desc", false),
+							Type:                     discordgo.ApplicationCommandOptionSubCommand,
 						},
 					},
 				},
@@ -323,11 +336,57 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			},
 		},
 		{
+			Name:                     "role",
+			Description:              "manage role",
+			NameLocalizations:        translate.MessageMap("command_role", true),
+			DescriptionLocalizations: translate.MessageMap("command_role_desc", false),
+			DefaultMemberPermissions: &PermissionAdminMembers,
+			DMPermission:             &dmPermission,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:                     "color",
+					Description:              "create color role",
+					NameLocalizations:        *translate.MessageMap("command_role_option_color", true),
+					DescriptionLocalizations: *translate.MessageMap("command_role_option_color_desc", false),
+					Type:                     discordgo.ApplicationCommandOptionSubCommand,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Name:                     "rgb",
+							Description:              "rgb color code",
+							NameLocalizations:        *translate.MessageMap("command_role_option_color_option_rgb", true),
+							DescriptionLocalizations: *translate.MessageMap("command_role_option_color_option_rgb_desc", false),
+							Type:                     discordgo.ApplicationCommandOptionString,
+							Required:                 true,
+						},
+						{
+							Name:                     "name",
+							Description:              "name of role",
+							NameLocalizations:        *translate.MessageMap("command_role_option_color_option_name", true),
+							DescriptionLocalizations: *translate.MessageMap("command_role_option_color_option_name_desc", false),
+							Type:                     discordgo.ApplicationCommandOptionString,
+						},
+					},
+				},
+			},
+		},
+		{
 			Name:                     "modify",
 			NameLocalizations:        translate.MessageMap("message_command_modify", true),
 			Type:                     discordgo.MessageApplicationCommand,
 			DMPermission:             &dmPermission,
 			DefaultMemberPermissions: &PermissionAdminMembers,
+		},
+		{
+			Name:              "info",
+			NameLocalizations: translate.MessageMap("message_command_user_info", true),
+			Type:              discordgo.UserApplicationCommand,
+			DMPermission:      &dmPermission,
+		},
+		{
+			Name:              "select",
+			NameLocalizations: translate.MessageMap("message_command_select", true),
+			Type:              discordgo.MessageApplicationCommand,
+			DMPermission:      &dmPermission,
 		},
 	}
 	var (
@@ -387,8 +446,17 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			"tracker": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				command.Feed(s, i)
 			},
+			"role": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+				command.Role(s, i)
+			},
 			"modify": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				command.Mmodify(s, i)
+				command.MModify(s, i)
+			},
+			"select": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+				command.MSelect(s, i)
+			},
+			"info": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+				command.UInfo(s, i)
 			},
 		}
 	)
@@ -399,6 +467,9 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		},
 		"gobot_panel_role_add": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			command.MCpanelRoleAdd(s, i)
+		},
+		"gobot_panel_role_create": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			command.MCpanelRoleCreate(s, i)
 		},
 		"gobot_panel_minecraft": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			command.MCpanelMinecraft(s, i)
@@ -437,6 +508,21 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			}
 		}
 	})
+
+	s.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
+		if m.Author.ID == s.State.User.ID {
+			return
+		}
+		str, err := m.ContentWithMoreMentionsReplaced(s)
+		if err != nil {
+			str = m.Content
+		}
+		g, _ := s.Guild(m.GuildID)
+		c, _ := s.Channel(m.ChannelID)
+		log.Printf("[Message Created] : %v(%v) #%v(%v) <%v#%v>\n                 >> %v", g.Name, g.ID, c.Name, c.ID, m.Author.Username, m.Author.Discriminator, str)
+		session.HandleExec(s, m)
+	})
+
 	return s, commands, RemoveCommands, GuildID
 }
 

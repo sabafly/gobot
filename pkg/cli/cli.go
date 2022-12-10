@@ -45,6 +45,7 @@ func Run() {
 				Type: discordgo.ActivityTypeGame,
 			},
 		},
+		Status: string(discordgo.StatusDoNotDisturb),
 	})
 
 	log.Println("コマンドを追加中...")
@@ -172,6 +173,7 @@ func updateStatus() {
 					Type: discordgo.ActivityTypeGame,
 				},
 			},
+			Status: string(discordgo.StatusOnline),
 		})
 		if err != nil {
 			log.Printf("Error on update status: %v", err)

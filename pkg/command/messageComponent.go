@@ -137,6 +137,69 @@ func MCpanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 }
 
+func MCpanelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	title := i.Message.Embeds[0].Title
+	description := i.Message.Embeds[0].Description
+	gid := i.GuildID
+	cid := i.ChannelID
+	rv := i.MessageComponentData().Values
+	roles := []discordgo.Role{}
+	for _, v := range rv {
+		role, _ := s.State.Role(gid, v)
+		roles = append(roles, *role)
+	}
+	options := []discordgo.SelectMenuOption{}
+	for n, r := range roles {
+		options = append(options, discordgo.SelectMenuOption{
+			Label: r.Name,
+			Value: r.ID,
+			Emoji: discordgo.ComponentEmoji{
+				ID:   "",
+				Name: util.ToEmojiA(n + 1),
+			},
+		})
+	}
+	var fields string
+	for n, r := range roles {
+		fields += util.ToEmojiA(n+1) + " | " + r.Mention() + "\r"
+	}
+	zero := 0
+	content := discordgo.MessageSend{
+		Embeds: []*discordgo.MessageEmbed{
+			{
+				Title:       title,
+				Description: description,
+				Fields: []*discordgo.MessageEmbedField{
+					{
+						Name:  "roles",
+						Value: fields,
+					},
+				},
+			},
+		},
+		Components: []discordgo.MessageComponent{
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.SelectMenu{
+						CustomID:  "gobot_panel_role",
+						MinValues: &zero,
+						MaxValues: len(options),
+						Options:   options,
+					},
+				},
+			},
+		},
+	}
+	s.ChannelMessageSendComplex(cid, &content)
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: translate.Message(i.Locale, "command_panel_option_role_message"),
+			Flags:   discordgo.MessageFlagsEphemeral,
+		},
+	})
+}
+
 func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,

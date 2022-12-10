@@ -51,3 +51,25 @@ func MessageResp(resp *http.Response) string {
 func ToEmojiA(i int) string {
 	return string(rune('🇦' - 1 + i))
 }
+
+func EmojiFormat(e *discordgo.ComponentEmoji) string {
+	if e.ID != "" && e.Name != "" {
+		if e.Animated {
+			return "<a:" + APIName(e) + ">"
+		}
+
+		return "<:" + APIName(e) + ">"
+	}
+
+	return APIName(e)
+}
+
+func APIName(e *discordgo.ComponentEmoji) string {
+	if e.ID != "" && e.Name != "" {
+		return e.Name + ":" + e.ID
+	}
+	if e.Name != "" {
+		return e.Name
+	}
+	return e.ID
+}

@@ -12,9 +12,12 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
+	"unicode/utf8"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/api"
+	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
 	"github.com/ikafly144/gobot/pkg/util"
@@ -249,6 +252,22 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 					if err != nil {
 						log.Print(err)
 					}
+					m, err := s.GuildMembers(ug.ID, "", 1000)
+					if err != nil {
+						log.Print(err)
+					}
+					for len(m)%1000 == 0 {
+						mt, _ := s.GuildMembers(ug.ID, m[len(m)-1].User.ID, 1000)
+						m = append(m, mt...)
+					}
+					c, err := s.GuildChannels(ug.ID)
+					if err != nil {
+						log.Print(err)
+					}
+					p, err := s.GuildMember(ug.ID, s.State.User.ID)
+					if err != nil {
+						log.Print(err)
+					}
 					var str string
 					for _, gf := range ug.Features {
 						str += string(gf) + "\r"
@@ -283,12 +302,12 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 							},
 							{
 								Name:   "Members",
-								Value:  strconv.Itoa(len(g.Members)) + "/" + strconv.Itoa(g.MaxMembers),
+								Value:  strconv.Itoa(len(m)) + "/" + strconv.Itoa(g.MaxMembers),
 								Inline: true,
 							},
 							{
 								Name:   "Channels",
-								Value:  strconv.Itoa(len(g.Channels)),
+								Value:  strconv.Itoa(len(c)),
 								Inline: true,
 							},
 							{
@@ -297,8 +316,8 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 								Inline: true,
 							},
 							{
-								Name:   "Permissions",
-								Value:  strconv.FormatInt(g.Permissions, 10),
+								Name:   "Joined at",
+								Value:  p.JoinedAt.Local().Format("2006-01-02 15:04:05 MST"),
 								Inline: true,
 							},
 							{
@@ -312,10 +331,26 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				str := "OK"
 				_, err := s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 					Content: &str,
-					Embeds:  &embeds,
 				})
 				if err != nil {
 					log.Print(err)
+				}
+				for 0 < len(embeds) {
+					var mes []*discordgo.MessageEmbed
+					if len(embeds) > 10 {
+						mes = append(mes, embeds[:10]...)
+						embeds = embeds[10:]
+					} else {
+						mes = append(mes, embeds...)
+						embeds = []*discordgo.MessageEmbed{}
+					}
+					_, err := s.ChannelMessageSendComplex(i.ChannelID, &discordgo.MessageSend{
+						Embeds: mes,
+					})
+					if err != nil {
+						log.Print(err)
+					}
+					time.Sleep(time.Second)
 				}
 			}
 		}
@@ -335,10 +370,9 @@ func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 func Panel(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: "OK",
-			Flags:   discordgo.MessageFlagsEphemeral,
+			Flags: discordgo.MessageFlagsEphemeral,
 		},
 	})
 	options := i.ApplicationCommandData().Options
@@ -355,74 +389,69 @@ func Panel(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		case "create":
 			panelMinecraftCreate(s, i, options)
 		}
+	case "config":
+		options = options[0].Options
+		switch options[0].Name {
+		case "emoji":
+			panelConfigEmoji(s, i, options)
+		}
 	}
 }
 
 func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {
+	log.Print("ok")
 	options = options[0].Options
-	var content2 discordgo.MessageSend
-	gid := i.GuildID
-	cid := i.ChannelID
 	var name string
 	var description string
-	var role *discordgo.Role
 	for _, v := range options {
 		switch v.Name {
 		case "name":
 			name = v.StringValue()
 		case "description":
 			description = v.StringValue()
-		case "role":
-			role = v.RoleValue(s, gid)
+		}
+	}
+	roles, _ := s.GuildRoles(i.GuildID)
+	option := []discordgo.SelectMenuOption{}
+	me, _ := s.GuildMember(i.GuildID, s.State.User.ID)
+	var highestPosition int
+	for _, v := range me.Roles {
+		r, _ := s.State.Role(i.GuildID, v)
+		if r.Position > highestPosition {
+			highestPosition = r.Position
+		}
+	}
+	for _, v := range roles {
+		if v.Position < highestPosition && !v.Managed && v.ID != i.GuildID {
+			option = append(option, discordgo.SelectMenuOption{
+				Label: v.Name,
+				Value: v.ID,
+			})
 		}
 	}
 	zero := 0
-	content2 = discordgo.MessageSend{
-		Embeds: []*discordgo.MessageEmbed{
+	content := translate.Message(i.Locale, "message_modify_role_create_message")
+	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content: &content,
+		Embeds: &[]*discordgo.MessageEmbed{
 			{
 				Title:       name,
 				Description: description,
-				Fields: []*discordgo.MessageEmbedField{
-					{
-						Name:  "roles",
-						Value: "🇦 | " + role.Mention(),
-					},
-				},
 			},
 		},
-		Components: []discordgo.MessageComponent{
+		Components: &[]discordgo.MessageComponent{
 			discordgo.ActionsRow{
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
-						CustomID:  "gobot_panel_role",
+						CustomID:  "gobot_panel_role_create",
 						MinValues: &zero,
-						Options: []discordgo.SelectMenuOption{
-							{
-								Label: role.Name,
-								Value: role.ID,
-								Emoji: discordgo.ComponentEmoji{
-									ID:   "",
-									Name: "🇦",
-								},
-							},
-						},
+						MaxValues: len(option),
+						Options:   option,
 					},
 				},
 			},
 		},
-	}
-	_, err := s.ChannelMessageSendComplex(cid, &content2)
-	if err != nil {
-		str := fmt.Sprint(err)
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-			Content: &str,
-		})
-	} else {
-		str := translate.Message(i.Locale, "command_panel_option_role_message")
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-			Content: &str,
-		})
-	}
+	})
 }
 
 func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {
@@ -503,6 +532,142 @@ func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, 
 			Content: &str,
 		})
 	}
+}
+
+func panelConfigEmoji(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {
+	uid := i.Member.User.ID
+	mes, err := GetSelectingMessage(uid, i.GuildID)
+	if err != nil {
+		embed := translate.ErrorEmbed(i.Locale, "error", map[string]interface{}{
+			"Error": err,
+		})
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Embeds: &embed,
+		})
+		return
+	}
+	var data discordgo.SelectMenu
+	for _, mc := range mes.Components {
+		if mc.Type() == discordgo.ActionsRowComponent {
+
+			var a discordgo.ActionsRow
+
+			b, err := mc.MarshalJSON()
+			if err != nil {
+				log.Print(err)
+				continue
+			}
+			err = json.Unmarshal(b, &a)
+			if err != nil {
+				log.Print(err)
+				continue
+			}
+			for _, smo := range a.Components {
+				if smo.Type() == discordgo.SelectMenuComponent {
+					b, err := smo.MarshalJSON()
+					if err != nil {
+						log.Print(err)
+						continue
+					}
+					err = json.Unmarshal(b, &data)
+					if err != nil {
+						log.Print(err)
+						continue
+					}
+					break
+				}
+			}
+			break
+		}
+	}
+	switch data.CustomID {
+	case "gobot_panel_minecraft", "gobot_panel_role":
+		session.RemoveSession(session.SessionID{ID: uid})
+		panelSession, _ := session.NewSession(session.SessionID{ID: uid}, session.RolePanelEdit)
+		panelSession.Data = types.PanelEmojiConfig{
+			Message:     mes.ID,
+			Emojis:      []*discordgo.ComponentEmoji{},
+			MessageData: mes,
+			SelectMenu:  data,
+		}
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Embeds: &[]*discordgo.MessageEmbed{
+				{
+					Description: translate.Message(i.Locale, "command_panel_option_config_option_emoji_message"),
+				},
+			},
+		})
+		return
+	}
+	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Embeds: &[]*discordgo.MessageEmbed{
+			{
+				Description: "Error",
+			},
+		},
+	})
+}
+
+func init() { session.AddHandler(session.RolePanelEdit, panelConfigEmojiHandler) }
+
+func panelConfigEmojiHandler(s *discordgo.Session, m *discordgo.MessageCreate, session *session.Session) {
+	data, _ := session.Data.(types.PanelEmojiConfig)
+	if data.MessageData.ChannelID != m.ChannelID {
+		return
+	}
+	emojis := m.GetCustomEmojis()
+	emoji := &discordgo.ComponentEmoji{}
+	if len(emojis) != 0 {
+		emoji = &discordgo.ComponentEmoji{
+			Name:     emojis[0].Name,
+			ID:       emojis[0].ID,
+			Animated: emojis[0].Animated,
+		}
+	} else {
+		r := []rune(m.Content)
+		if _, ok := types.Twemoji[string(r)]; ok {
+			emoji = &discordgo.ComponentEmoji{
+				Name: string(r),
+				ID:   "",
+			}
+		}
+	}
+	data.Emojis = append(data.Emojis, emoji)
+	session.Data = data
+	s.ChannelMessageDelete(m.ChannelID, m.ID)
+	if len(data.Emojis) == len(data.SelectMenu.Options) {
+		if data.SelectMenu.CustomID == "gobot_panel_role" {
+			var value string
+			str := strings.Split(data.MessageData.Embeds[0].Fields[0].Value, "\r")
+			for i, v := range str {
+				str1 := strings.Split(v, "|")
+				log.Print(util.EmojiFormat(data.Emojis[i]))
+				str1[0] = util.EmojiFormat(data.Emojis[i]) + " | "
+				var str2 string
+				for _, v1 := range str1 {
+					str2 += v1
+				}
+				value += str2 + "\r"
+			}
+			data.MessageData.Embeds[0].Fields[0].Value = value
+		}
+		updateEmoji(s, data)
+	}
+}
+
+func updateEmoji(s *discordgo.Session, o types.PanelEmojiConfig) {
+	for i, e := range o.Emojis {
+		o.SelectMenu.Options[i].Emoji = *e
+	}
+	e := discordgo.NewMessageEdit(o.MessageData.ChannelID, o.Message)
+	e.Components = append(e.Components, discordgo.ActionsRow{
+		Components: []discordgo.MessageComponent{
+			o.SelectMenu,
+		},
+	})
+	e.Content = &o.MessageData.Content
+	e.Embeds = o.MessageData.Embeds
+	s.ChannelMessageEditComplex(e)
 }
 
 func Feed(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -681,5 +846,159 @@ func feedMinecraftRemove(s *discordgo.Session, i *discordgo.InteractionCreate, o
 			Content: &str,
 		})
 
+	}
+}
+
+func Role(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+	options := i.ApplicationCommandData().Options
+	switch options[0].Name {
+	case "color":
+		roleColor(s, i, options)
+	}
+}
+
+func roleColor(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {
+	options = options[0].Options
+	var raw string
+	var name string
+	for _, o := range options {
+		switch o.Name {
+		case "rgb":
+			raw = "0x" + o.StringValue()
+		case "name":
+			name = o.StringValue()
+		}
+	}
+	col, err := strconv.ParseInt(raw, 0, 32)
+	if name == "" {
+		name = strconv.FormatInt(col, 16)
+	}
+	if err != nil {
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Embeds: &[]*discordgo.MessageEmbed{
+				util.ErrorMessage(i.Locale, err).Embeds[0],
+			},
+		})
+		return
+	}
+	colInt := int(col)
+	r, err := s.GuildRoleCreate(i.GuildID, &discordgo.RoleParams{
+		Name:  name,
+		Color: &colInt,
+	})
+	if err != nil {
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Embeds: &[]*discordgo.MessageEmbed{
+				util.ErrorMessage(i.Locale, err).Embeds[0],
+			},
+		})
+		return
+	}
+	s.GuildMemberRoleAdd(i.GuildID, i.Member.User.ID, r.ID)
+	str := "OK " + r.Mention()
+	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content: &str,
+	})
+}
+
+func UInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+	uid := i.ApplicationCommandData().TargetID
+	m, err := s.State.Member(i.GuildID, uid)
+	if err != nil {
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Embeds: &[]*discordgo.MessageEmbed{
+				util.ErrorMessage(i.Locale, err).Embeds[0],
+			},
+		})
+		return
+	}
+	u, err := s.User(uid)
+	if err != nil {
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Embeds: &[]*discordgo.MessageEmbed{
+				util.ErrorMessage(i.Locale, err).Embeds[0],
+			},
+		})
+		return
+	}
+	var roles string
+	var r []*discordgo.Role
+	var color int = 0x000000
+	for _, v := range m.Roles {
+		roles += "<@&" + v + "> "
+		rt, _ := s.State.Role(i.GuildID, v)
+		r = append(r, rt)
+	}
+	if roles == "" {
+		roles = "`" + translate.Message(i.Locale, "message_command_user_info_none") + "`"
+	}
+	for i2, j := 0, len(r)-1; i2 < j; i2, j = i2+1, j-1 {
+		r[i2], r[j] = r[j], r[i2]
+	}
+	for _, v := range r {
+		if v.Color != 0x000000 {
+			color = v.Color
+		}
+	}
+	sColor := strconv.FormatInt(int64(color), 16)
+	for utf8.RuneCountInString(sColor) < 6 {
+		sColor = "0" + sColor
+	}
+
+	if m.Nick == "" {
+		m.Nick = "`" + translate.Message(i.Locale, "message_command_user_info_none") + "`"
+	}
+	embed := discordgo.MessageEmbed{
+		Title: u.Username + "#" + u.Discriminator,
+		Thumbnail: &discordgo.MessageEmbedThumbnail{
+			URL:    m.AvatarURL("512"),
+			Width:  512,
+			Height: 512,
+		},
+		Fields: []*discordgo.MessageEmbedField{
+			{
+				Name:   translate.Message(i.Locale, "message_command_user_info_nick"),
+				Value:  m.Nick,
+				Inline: true,
+			},
+			{
+				Name:   translate.Message(i.Locale, "message_command_user_info_id"),
+				Value:  m.User.ID,
+				Inline: true,
+			},
+			{
+				Name:   translate.Message(i.Locale, "message_command_user_info_roles"),
+				Value:  roles,
+				Inline: true,
+			},
+			{
+				Name:   translate.Message(i.Locale, "message_command_user_info_joined_at"),
+				Value:  "<t:" + strconv.FormatInt(m.JoinedAt.Unix(), 10) + ":F>",
+				Inline: true,
+			},
+			{
+				Name:   translate.Message(i.Locale, "message_command_user_info_color_code"),
+				Value:  sColor,
+				Inline: true,
+			},
+		},
+	}
+	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Embeds: &[]*discordgo.MessageEmbed{&embed},
+	})
+	if err != nil {
+		log.Print(err)
 	}
 }
