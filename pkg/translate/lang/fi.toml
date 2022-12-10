@@ -288,10 +288,10 @@ other = "ei"
 other = "Roolit"
 
 [panel_minecraft_message_boot]
-other = "käynnistetty {{.Name}} palvelin"
+other = "booted {{.Name}}"
 
 [panel_minecraft_message_stop]
-other = "pysäytti {{.Name}} palvelimen"
+other = "stopped {{.Name}}"
 
 [panel_role_message_added]
 other = "lisätty"
