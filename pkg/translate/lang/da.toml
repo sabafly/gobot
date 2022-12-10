@@ -318,22 +318,22 @@ other = "Vælg en rolle at tilføje"
 other = "Coose en rolle at oprette panel"
 
 [message_command_select_message]
-other = "selected"
+other = "valgt"
 
 [message_command_select]
-other = "select"
+other = "vælg"
 
 [command_panel_option_config]
 other = "config"
 
 [command_panel_option_config_desc]
-other = "configure proprties"
+other = "konfigurér proprties"
 
 [command_panel_option_config_option_emoji]
 other = "emoji"
 
 [command_panel_option_config_option_emoji_desc]
-other = "Set custom emoji in select menu"
+other = "Indstil brugerdefineret emoji i vælg menu"
 
 [command_panel_option_config_option_emoji_message]
-other = "Please send emoji in this channel"
+other = "Send venligst emoji i denne kanal"
