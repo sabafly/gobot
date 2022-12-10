@@ -316,3 +316,24 @@ other = "Escolha um cargo para adicionar"
 
 [message_modify_role_create_message]
 other = "Codir uma função para criar um painel"
+
+[message_command_select_message]
+other = "Selecionado"
+
+[message_command_select]
+other = "selecionar"
+
+[command_panel_option_config]
+other = "configuração"
+
+[command_panel_option_config_desc]
+other = "configurar perfis"
+
+[command_panel_option_config_option_emoji]
+other = "emoji"
+
+[command_panel_option_config_option_emoji_desc]
+other = "Definir emojis personalizados no menu de seleção"
+
+[command_panel_option_config_option_emoji_message]
+other = "Por favor, envie emojis neste canal"

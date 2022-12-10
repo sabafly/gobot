@@ -316,3 +316,24 @@ other = "Velg en rolle å legge til"
 
 [message_modify_role_create_message]
 other = "Kos en rolle for å opprette panel"
+
+[message_command_select_message]
+other = "valgt"
+
+[message_command_select]
+other = "velg"
+
+[command_panel_option_config]
+other = "Konfigurasjon"
+
+[command_panel_option_config_desc]
+other = "Konfigurer proprties"
+
+[command_panel_option_config_option_emoji]
+other = "emoji"
+
+[command_panel_option_config_option_emoji_desc]
+other = "Sett egendefinerte emoji i velg meny"
+
+[command_panel_option_config_option_emoji_message]
+other = "Vennligst send emoji i denne kanalen"

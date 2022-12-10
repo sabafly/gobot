@@ -316,3 +316,24 @@ other = "Kies een toe te voegen rol"
 
 [message_modify_role_create_message]
 other = "Maak een rol vrij om een paneel aan te maken"
+
+[message_command_select_message]
+other = "Geselecteerd"
+
+[message_command_select]
+other = "selecteren"
+
+[command_panel_option_config]
+other = "configuratie"
+
+[command_panel_option_config_desc]
+other = "proprties configureren"
+
+[command_panel_option_config_option_emoji]
+other = "emoji"
+
+[command_panel_option_config_option_emoji_desc]
+other = "Aangepaste emoji instellen in selectiemenu"
+
+[command_panel_option_config_option_emoji_message]
+other = "Stuur alsjeblieft emoji in dit kanaal"

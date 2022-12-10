@@ -316,3 +316,24 @@ other = "Rolle zum Hinzufügen auswählen"
 
 [message_modify_role_create_message]
 other = "Rolle kochen, um Panel zu erstellen"
+
+[message_command_select_message]
+other = "ausgewählt"
+
+[message_command_select]
+other = "wählen"
+
+[command_panel_option_config]
+other = "Konfiguration"
+
+[command_panel_option_config_desc]
+other = "konfiguriere Proprties"
+
+[command_panel_option_config_option_emoji]
+other = "emoji"
+
+[command_panel_option_config_option_emoji_desc]
+other = "Eigene Emoji im Auswahlmenü festlegen"
+
+[command_panel_option_config_option_emoji_message]
+other = "Bitte sende Emoji in diesem Kanal"

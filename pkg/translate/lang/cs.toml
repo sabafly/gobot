@@ -316,3 +316,24 @@ other = "Vyberte roli pro přidání"
 
 [message_modify_role_create_message]
 other = "Přetáhni roli pro vytvoření panelu"
+
+[message_command_select_message]
+other = "vybráno"
+
+[message_command_select]
+other = "vybrat"
+
+[command_panel_option_config]
+other = "konfigurace"
+
+[command_panel_option_config_desc]
+other = "konfigurovat propruty"
+
+[command_panel_option_config_option_emoji]
+other = "emoji"
+
+[command_panel_option_config_option_emoji_desc]
+other = "Nastavit vlastní emoji ve vybrané nabídce"
+
+[command_panel_option_config_option_emoji_message]
+other = "Zašlete prosím emoji do tohoto kanálu"

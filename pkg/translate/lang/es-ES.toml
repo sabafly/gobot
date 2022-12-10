@@ -316,3 +316,24 @@ other = "Elegir un rol a añadir"
 
 [message_modify_role_create_message]
 other = "Oculta un rol para crear el panel"
+
+[message_command_select_message]
+other = "seleccionado"
+
+[message_command_select]
+other = "seleccionar"
+
+[command_panel_option_config]
+other = "configuración"
+
+[command_panel_option_config_desc]
+other = "configurar propiedades"
+
+[command_panel_option_config_option_emoji]
+other = "emoji"
+
+[command_panel_option_config_option_emoji_desc]
+other = "Establecer emoji personalizado en el menú de selección"
+
+[command_panel_option_config_option_emoji_message]
+other = "Por favor, envía emoji en este canal"

@@ -316,3 +316,24 @@ other = "Виберіть роль для додавання"
 
 [message_modify_role_create_message]
 other = "Вибрати роль для створення панелі"
+
+[message_command_select_message]
+other = "обрано"
+
+[message_command_select]
+other = "вибрати"
+
+[command_panel_option_config]
+other = "конфігурація"
+
+[command_panel_option_config_desc]
+other = "налаштувати броні"
+
+[command_panel_option_config_option_emoji]
+other = "emoji"
+
+[command_panel_option_config_option_emoji_desc]
+other = "Встановити користувацькі емодзі в меню"
+
+[command_panel_option_config_option_emoji_message]
+other = "Будь ласка, надішліть emoji на цьому каналі"

@@ -156,7 +156,7 @@ other = "名前"
 other = "ロールの名前"
 
 [command_role_option_color_option_rgb]
-other = "rgb"
+other = "RGB"
 
 [command_role_option_color_option_rgb_desc]
 other = "RGBカラーコード"
@@ -316,3 +316,24 @@ other = "追加するロールを選択してください"
 
 [message_modify_role_create_message]
 other = "作成するパネルに追加するロールを選んで下さい"
+
+[message_command_select_message]
+other = "選択済み"
+
+[message_command_select]
+other = "選択"
+
+[command_panel_option_config]
+other = "設定"
+
+[command_panel_option_config_desc]
+other = "プロパティを設定"
+
+[command_panel_option_config_option_emoji]
+other = "絵文字"
+
+[command_panel_option_config_option_emoji_desc]
+other = "セレクトメニューにカスタム絵文字を設定"
+
+[command_panel_option_config_option_emoji_message]
+other = "このチャンネルに絵文字を送信してください"

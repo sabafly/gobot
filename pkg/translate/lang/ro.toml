@@ -316,3 +316,24 @@ other = "Alege un rol de adăugat"
 
 [message_modify_role_create_message]
 other = "Alege un rol pentru a crea panoul"
+
+[message_command_select_message]
+other = "selectat"
+
+[message_command_select]
+other = "selectează"
+
+[command_panel_option_config]
+other = "configurare"
+
+[command_panel_option_config_desc]
+other = "configurare proprties"
+
+[command_panel_option_config_option_emoji]
+other = "emoji"
+
+[command_panel_option_config_option_emoji_desc]
+other = "Setați emoji particularizate în meniul selectare"
+
+[command_panel_option_config_option_emoji_message]
+other = "Te rugăm să trimiți emoji în acest canal"
