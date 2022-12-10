@@ -318,22 +318,22 @@ other = "Valitse lisättävä rooli"
 other = "Coose rooli luoda paneeli"
 
 [message_command_select_message]
-other = "selected"
+other = "valittu"
 
 [message_command_select]
-other = "select"
+other = "valitse"
 
 [command_panel_option_config]
 other = "config"
 
 [command_panel_option_config_desc]
-other = "configure proprties"
+other = "konfiguroi proprties"
 
 [command_panel_option_config_option_emoji]
 other = "emoji"
 
 [command_panel_option_config_option_emoji_desc]
-other = "Set custom emoji in select menu"
+other = "Aseta mukautetut emojit valikossa"
 
 [command_panel_option_config_option_emoji_message]
-other = "Please send emoji in this channel"
+other = "Lähetä emojeja tällä kanavalla"
