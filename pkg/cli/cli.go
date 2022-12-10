@@ -173,6 +173,7 @@ func updateStatus() {
 					Type: discordgo.ActivityTypeGame,
 				},
 			},
+			Status: string(discordgo.StatusOnline),
 		})
 		if err != nil {
 			log.Printf("Error on update status: %v", err)
