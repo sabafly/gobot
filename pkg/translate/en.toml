@@ -192,9 +192,9 @@ other = "none"
 [message_command_user_info_roles]
 other = "Roles"
 [panel_minecraft_message_boot]
-other = "booted {{.Name}} server"
+other = "booted {{.Name}}"
 [panel_minecraft_message_stop]
-other = "stopped {{.Name}} server"
+other = "stopped {{.Name}}"
 [panel_role_message_added]
 other = "added"
 [panel_role_message_removed]
