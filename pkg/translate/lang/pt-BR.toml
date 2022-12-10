@@ -318,22 +318,22 @@ other = "Escolha um cargo para adicionar"
 other = "Codir uma função para criar um painel"
 
 [message_command_select_message]
-other = "selected"
+other = "Selecionado"
 
 [message_command_select]
-other = "select"
+other = "selecionar"
 
 [command_panel_option_config]
-other = "config"
+other = "configuração"
 
 [command_panel_option_config_desc]
-other = "configure proprties"
+other = "configurar perfis"
 
 [command_panel_option_config_option_emoji]
 other = "emoji"
 
 [command_panel_option_config_option_emoji_desc]
-other = "Set custom emoji in select menu"
+other = "Definir emojis personalizados no menu de seleção"
 
 [command_panel_option_config_option_emoji_message]
-other = "Please send emoji in this channel"
+other = "Por favor, envie emojis neste canal"
