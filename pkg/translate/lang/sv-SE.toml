@@ -318,22 +318,22 @@ other = "Välj en roll att lägga till"
 other = "Coose en roll för att skapa panel"
 
 [message_command_select_message]
-other = "selected"
+other = "vald"
 
 [message_command_select]
-other = "select"
+other = "välj"
 
 [command_panel_option_config]
-other = "config"
+other = "konfiguration"
 
 [command_panel_option_config_desc]
-other = "configure proprties"
+other = "konfigurera prties"
 
 [command_panel_option_config_option_emoji]
 other = "emoji"
 
 [command_panel_option_config_option_emoji_desc]
-other = "Set custom emoji in select menu"
+other = "Ange anpassad emoji i vald meny"
 
 [command_panel_option_config_option_emoji_message]
-other = "Please send emoji in this channel"
+other = "Vänligen skicka emoji i denna kanal"
