@@ -318,22 +318,22 @@ other = "Выберите роль для добавления"
 other = "Выберите роль для создания панели"
 
 [message_command_select_message]
-other = "selected"
+other = "выбрано"
 
 [message_command_select]
-other = "select"
+other = "выбрать"
 
 [command_panel_option_config]
-other = "config"
+other = "настройки"
 
 [command_panel_option_config_desc]
-other = "configure proprties"
+other = "настроить proprties"
 
 [command_panel_option_config_option_emoji]
 other = "emoji"
 
 [command_panel_option_config_option_emoji_desc]
-other = "Set custom emoji in select menu"
+other = "Установить пользовательские эмодзи в меню выбора"
 
 [command_panel_option_config_option_emoji_message]
-other = "Please send emoji in this channel"
+other = "Пожалуйста, отправьте эмодзи в этом канале"
