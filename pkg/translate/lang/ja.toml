@@ -288,10 +288,10 @@ other = "無し"
 other = "ロール"
 
 [panel_minecraft_message_boot]
-other = "{{.Name}} サーバーが起動しました"
+other = "booted {{.Name}}"
 
 [panel_minecraft_message_stop]
-other = "{{.Name}} サーバーが停止しました"
+other = "stopped {{.Name}}"
 
 [panel_role_message_added]
 other = "追加"
