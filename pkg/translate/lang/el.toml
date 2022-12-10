@@ -288,10 +288,10 @@ other = "κανένα"
 other = "Ρόλοι"
 
 [panel_minecraft_message_boot]
-other = "εκκινήθηκε {{.Name}} διακομιστής"
+other = "booted {{.Name}}"
 
 [panel_minecraft_message_stop]
-other = "σταμάτησε τον {{.Name}} διακομιστή"
+other = "stopped {{.Name}}"
 
 [panel_role_message_added]
 other = "προστέθηκε"
