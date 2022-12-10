@@ -2,13 +2,15 @@ package command
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/translate"
+	"github.com/ikafly144/gobot/pkg/types"
 )
 
-func Mmodify(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func MModify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := &discordgo.ApplicationCommandInteractionData{}
 	byte, _ := json.Marshal(i.Interaction.Data)
 	json.Unmarshal(byte, data)
@@ -141,4 +143,42 @@ func gobotPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate, m
 		},
 	})
 	log.Print(err)
+}
+
+var selects map[types.MessageSelect]*discordgo.Message = make(map[types.MessageSelect]*discordgo.Message)
+
+func GetSelectingMessage(uid string, gid string) (mes *discordgo.Message, err error) {
+	id := types.MessageSelect{
+		MemberID: uid,
+		GuildID:  gid,
+	}
+	if m, ok := selects[id]; ok {
+		mes = m
+		return
+	} else {
+		err = errors.New("no message is selected")
+		return
+	}
+}
+
+func MSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	data := &discordgo.ApplicationCommandInteractionData{}
+	byte, _ := json.Marshal(i.Interaction.Data)
+	json.Unmarshal(byte, data)
+	mes, err := s.ChannelMessage(i.ChannelID, data.TargetID)
+	if err != nil {
+		log.Print(err)
+	}
+	id := types.MessageSelect{
+		MemberID: i.Member.User.ID,
+		GuildID:  i.GuildID,
+	}
+	selects[id] = mes
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: translate.Message(i.Locale, "message_command_select_message"),
+			Flags:   discordgo.MessageFlagsEphemeral,
+		},
+	})
 }

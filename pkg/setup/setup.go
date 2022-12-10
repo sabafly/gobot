@@ -10,6 +10,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/command"
+	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/joho/godotenv"
 )
@@ -233,6 +234,22 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 						},
 					},
 				},
+				{
+					Name:                     "config",
+					Description:              "test",
+					NameLocalizations:        *translate.MessageMap("command_panel_option_config", true),
+					DescriptionLocalizations: *translate.MessageMap("command_panel_option_config_desc", false),
+					Type:                     discordgo.ApplicationCommandOptionSubCommandGroup,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Name:                     "emoji",
+							Description:              "test",
+							NameLocalizations:        *translate.MessageMap("command_panel_option_config_option_emoji", true),
+							DescriptionLocalizations: *translate.MessageMap("command_panel_option_config_option_emoji_desc", false),
+							Type:                     discordgo.ApplicationCommandOptionSubCommand,
+						},
+					},
+				},
 			},
 		},
 		{
@@ -360,11 +377,16 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			DefaultMemberPermissions: &PermissionAdminMembers,
 		},
 		{
-			Name:                     "info",
-			NameLocalizations:        translate.MessageMap("message_command_user_info", true),
-			Type:                     discordgo.UserApplicationCommand,
-			DMPermission:             &dmPermission,
-			DefaultMemberPermissions: &PermissionAdminMembers,
+			Name:              "info",
+			NameLocalizations: translate.MessageMap("message_command_user_info", true),
+			Type:              discordgo.UserApplicationCommand,
+			DMPermission:      &dmPermission,
+		},
+		{
+			Name:              "select",
+			NameLocalizations: translate.MessageMap("message_command_select", true),
+			Type:              discordgo.MessageApplicationCommand,
+			DMPermission:      &dmPermission,
 		},
 	}
 	var (
@@ -428,10 +450,13 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 				command.Role(s, i)
 			},
 			"modify": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				command.Mmodify(s, i)
+				command.MModify(s, i)
+			},
+			"select": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+				command.MSelect(s, i)
 			},
 			"info": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				command.Uinfo(s, i)
+				command.UInfo(s, i)
 			},
 		}
 	)
@@ -483,6 +508,21 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			}
 		}
 	})
+
+	s.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
+		if m.Author.ID == s.State.User.ID {
+			return
+		}
+		str, err := m.ContentWithMoreMentionsReplaced(s)
+		if err != nil {
+			str = m.Content
+		}
+		g, _ := s.Guild(m.GuildID)
+		c, _ := s.Channel(m.ChannelID)
+		log.Printf("[Message Created] : %v(%v) #%v(%v) <%v#%v>\n                 >> %v", g.Name, g.ID, c.Name, c.ID, m.Author.Username, m.Author.Discriminator, str)
+		session.HandleExec(s, m)
+	})
+
 	return s, commands, RemoveCommands, GuildID
 }
 
