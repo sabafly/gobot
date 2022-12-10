@@ -45,6 +45,7 @@ func Run() {
 				Type: discordgo.ActivityTypeGame,
 			},
 		},
+		Status: string(discordgo.StatusDoNotDisturb),
 	})
 
 	log.Println("コマンドを追加中...")
