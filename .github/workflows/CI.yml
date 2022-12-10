@@ -22,6 +22,7 @@ jobs:
           passphrase: ${{ secrets.SSH_PASS }}
           script: |
             cd ${{ secrets.SERVER_DEPLOY_DIR }} 
-            git pull
+            echo ${{ secrets.SSH_PASSWORD }} | sudo git stash
+            echo ${{ secrets.SSH_PASSWORD }} | sudo git pull
             /usr/local/go/bin/go build
             echo ${{ secrets.SSH_PASSWORD }} | sudo -S killall -SIGINT gobot
