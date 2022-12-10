@@ -69,12 +69,11 @@ func AddHandler(s SessionType, h func(s *discordgo.Session, m *discordgo.Message
 }
 
 func HandleExec(s *discordgo.Session, m *discordgo.MessageCreate) {
-	log.Print("OK1")
 	d, ok := sessionManager[SessionID{ID: m.Author.ID}]
 	if !ok {
-		log.Print("no session")
 		return
 	}
+	log.Print("session")
 	log.Print(d.Type)
 	switch d.Type {
 	case RolePanelEdit:

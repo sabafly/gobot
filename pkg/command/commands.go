@@ -610,12 +610,13 @@ func panelConfigEmoji(s *discordgo.Session, i *discordgo.InteractionCreate, opti
 
 func init() { session.AddHandler(session.RolePanelEdit, panelConfigEmojiHandler) }
 
-func panelConfigEmojiHandler(s *discordgo.Session, m *discordgo.MessageCreate, session *session.Session) {
-	data, _ := session.Data.(types.PanelEmojiConfig)
+func panelConfigEmojiHandler(s *discordgo.Session, m *discordgo.MessageCreate, ses *session.Session) {
+	data, _ := ses.Data.(types.PanelEmojiConfig)
 	if data.MessageData.ChannelID != m.ChannelID {
 		return
 	}
-	emojis := m.GetCustomEmojis()
+	emojis := util.GetCustomEmojis(m)
+	log.Print(util.GetCustomEmojis(m))
 	emoji := &discordgo.ComponentEmoji{}
 	if len(emojis) != 0 {
 		emoji = &discordgo.ComponentEmoji{
@@ -633,7 +634,7 @@ func panelConfigEmojiHandler(s *discordgo.Session, m *discordgo.MessageCreate, s
 		}
 	}
 	data.Emojis = append(data.Emojis, emoji)
-	session.Data = data
+	ses.Data = data
 	s.ChannelMessageDelete(m.ChannelID, m.ID)
 	if len(data.Emojis) == len(data.SelectMenu.Options) {
 		if data.SelectMenu.CustomID == "gobot_panel_role" {
@@ -652,6 +653,7 @@ func panelConfigEmojiHandler(s *discordgo.Session, m *discordgo.MessageCreate, s
 			data.MessageData.Embeds[0].Fields[0].Value = value
 		}
 		updateEmoji(s, data)
+		session.RemoveSession(ses.ID())
 	}
 }
 
