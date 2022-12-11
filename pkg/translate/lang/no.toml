@@ -288,10 +288,10 @@ other = "ingen"
 other = "Roller"
 
 [panel_minecraft_message_boot]
-other = "booted {{.Name}}"
+other = "startet {{.Name}}"
 
 [panel_minecraft_message_stop]
-other = "stopped {{.Name}}"
+other = "stoppet {{.Name}}"
 
 [panel_role_message_added]
 other = "lagt til"
