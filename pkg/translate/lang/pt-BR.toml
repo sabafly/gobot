@@ -288,10 +288,10 @@ other = "nenhuma"
 other = "Papéis"
 
 [panel_minecraft_message_boot]
-other = "booted {{.Name}}"
+other = "inicializado em {{.Name}}"
 
 [panel_minecraft_message_stop]
-other = "stopped {{.Name}}"
+other = "parou {{.Name}}"
 
 [panel_role_message_added]
 other = "adicionado"
