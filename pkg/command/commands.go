@@ -654,6 +654,7 @@ func panelConfigEmojiHandler(s *discordgo.Session, m *discordgo.MessageCreate, s
 		}
 		updateEmoji(s, data)
 		session.RemoveSession(ses.ID())
+		RemoveSelect(ses.ID().ID, data.MessageData.GuildID)
 	}
 }
 

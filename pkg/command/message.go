@@ -182,3 +182,11 @@ func MSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	})
 }
+
+func RemoveSelect(uid string, gid string) {
+	id := types.MessageSelect{
+		MemberID: uid,
+		GuildID:  gid,
+	}
+	delete(selects, id)
+}

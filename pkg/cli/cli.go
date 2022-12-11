@@ -162,6 +162,7 @@ func end(registeredCommands []*discordgo.ApplicationCommand) {
 	}
 	s.Close()
 	log.Println("正常にシャットダウンしました")
+	os.Exit(0)
 }
 
 func updateStatus() {
