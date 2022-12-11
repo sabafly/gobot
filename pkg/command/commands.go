@@ -417,7 +417,7 @@ func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, optio
 	var highestPosition int
 	for _, v := range me.Roles {
 		r, _ := s.State.Role(i.GuildID, v)
-		if r.Position > highestPosition {
+		if r.Position >= highestPosition {
 			highestPosition = r.Position
 		}
 	}
