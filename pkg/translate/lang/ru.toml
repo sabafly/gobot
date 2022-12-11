@@ -288,10 +288,10 @@ other = "нет"
 other = "Роли"
 
 [panel_minecraft_message_boot]
-other = "booted {{.Name}}"
+other = "загружено {{.Name}}"
 
 [panel_minecraft_message_stop]
-other = "stopped {{.Name}}"
+other = "остановил {{.Name}}"
 
 [panel_role_message_added]
 other = "добавлено"
