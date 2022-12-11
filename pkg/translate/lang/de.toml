@@ -288,10 +288,10 @@ other = "keine"
 other = "Rollen"
 
 [panel_minecraft_message_boot]
-other = "booted {{.Name}}"
+other = "{{.Name}} gebootet"
 
 [panel_minecraft_message_stop]
-other = "stopped {{.Name}}"
+other = "gestoppt {{.Name}}"
 
 [panel_role_message_added]
 other = "hinzugefügt"
