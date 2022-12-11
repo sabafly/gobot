@@ -615,6 +615,11 @@ func panelConfigEmojiHandler(s *discordgo.Session, m *discordgo.MessageCreate, s
 	if data.MessageData.ChannelID != m.ChannelID {
 		return
 	}
+	if m.Content == "cancel" {
+		session.RemoveSession(ses.ID())
+		RemoveSelect(ses.ID().ID, data.MessageData.GuildID)
+		return
+	}
 	emojis := util.GetCustomEmojis(m)
 	log.Print(util.GetCustomEmojis(m))
 	emoji := &discordgo.ComponentEmoji{}
