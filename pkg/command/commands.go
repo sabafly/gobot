@@ -429,7 +429,7 @@ func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, optio
 			})
 		}
 	}
-	zero := 0
+	one := 1
 	content := translate.Message(i.Locale, "message_modify_role_create_message")
 	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: &content,
@@ -444,7 +444,7 @@ func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, optio
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
 						CustomID:  "gobot_panel_role_create",
-						MinValues: &zero,
+						MinValues: &one,
 						MaxValues: len(option),
 						Options:   option,
 					},
