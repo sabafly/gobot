@@ -20,8 +20,6 @@ github.com/millkhan/mcstatusgo/v2 v2.2.0 h1:uRyHiOvqlK+6Oz3za4hMWAktSLjaqD/QzyQC
 github.com/millkhan/mcstatusgo/v2 v2.2.0/go.mod h1:YUJHhrJzsQP4PoDXFo++7JzPU7TjdztFM519CPqKe5M=
 github.com/nicksnyder/go-i18n/v2 v2.2.0 h1:MNXbyPvd141JJqlU6gJKrczThxJy+kdCNivxZpBQFkw=
 github.com/nicksnyder/go-i18n/v2 v2.2.0/go.mod h1:4OtLfzqyAxsscyCb//3gfqSvBc81gImX91LrZzczN1o=
-github.com/wangii/emoji v0.0.0-20150519084846-d15b69a4831e h1:a7lE8LID0v/k4ynbeRje+FgkA3S+UpgR6+WVoDAaVtM=
-github.com/wangii/emoji v0.0.0-20150519084846-d15b69a4831e/go.mod h1:PJTAD5jrQq75HpWxl2bfGTHfZp9nHUOQXAjyDuJUGC4=
 golang.org/x/crypto v0.0.0-20210421170649-83a5a9bb288b/go.mod h1:T9bdIzuCu7OtxOm1hfPfRQxPLYneinmdGuTeoZ9dtd4=
 golang.org/x/crypto v0.1.0 h1:MDRAIl0xIo9Io2xV565hzXHw3zVseKrJKodhohM5CjU=
 golang.org/x/crypto v0.1.0/go.mod h1:RecgLatLF4+eUMCP1PoPZQb+cVrJcOPbHkTkbkB9sbw=
