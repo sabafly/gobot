@@ -99,7 +99,7 @@ func MCpanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	for n, r := range roles {
 		fields += util.ToEmojiA(n+1) + " | " + r.Mention() + "\r"
 	}
-	one := 1
+	zero := 0
 	content := discordgo.MessageEdit{
 		ID:      mid,
 		Channel: cid,
@@ -119,7 +119,7 @@ func MCpanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
 						CustomID:  "gobot_panel_role",
-						MinValues: &one,
+						MinValues: &zero,
 						MaxValues: len(options),
 						Options:   options,
 					},

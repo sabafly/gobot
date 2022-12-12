@@ -70,7 +70,7 @@ func gobotPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *d
 			})
 		}
 	}
-	zero := 0
+	one := 1
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
@@ -86,7 +86,7 @@ func gobotPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *d
 					Components: []discordgo.MessageComponent{
 						discordgo.SelectMenu{
 							CustomID:  "gobot_panel_role_add",
-							MinValues: &zero,
+							MinValues: &one,
 							MaxValues: len(options),
 							Options:   options,
 						},
