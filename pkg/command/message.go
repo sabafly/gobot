@@ -47,11 +47,11 @@ func MModify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				}
 			}
 		}
-	}
-	str := translate.Message(i.Locale, "message_modify_cant_use_this_message_error")
-	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-		Content: &str,
-	})
+	} else {
+		str := translate.Message(i.Locale, "message_modify_cant_use_this_message_error")
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Content: &str,
+		})
 }
 
 func gobotPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *discordgo.Message) {
