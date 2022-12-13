@@ -1,6 +1,8 @@
 package types
 
 import (
+	"regexp"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/dlclark/regexp2"
 	"gorm.io/gorm"

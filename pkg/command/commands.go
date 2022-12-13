@@ -620,28 +620,26 @@ func panelConfigEmojiHandler(s *discordgo.Session, m *discordgo.MessageCreate, s
 		RemoveSelect(ses.ID().ID, data.MessageData.GuildID)
 		return
 	}
-	emojis := util.GetCustomEmojis(m)
-	log.Print(util.GetCustomEmojis(m))
-	emoji := &discordgo.ComponentEmoji{}
-	if len(emojis) != 0 {
-		emoji = &discordgo.ComponentEmoji{
-			Name:     emojis[0].Name,
-			ID:       emojis[0].ID,
-			Animated: emojis[0].Animated,
-		}
-	} else {
-		r := []rune(m.Content)
-		if _, ok := types.Twemoji[string(r)]; ok {
-			emoji = &discordgo.ComponentEmoji{
-				Name: string(r),
-				ID:   "",
-			}
+	emojiString := util.Regexp2FindAllString(types.Twemoji, m.Content)
+	log.Print(emojiString)
+	var e []*discordgo.ComponentEmoji
+	for i, v := range emojiString {
+		if types.CustomEmojiRegex.MatchString(v) {
+			log.Printf("Custom  %v, %v", i, v)
+			e = append(e, util.GetCustomEmojis(v)...)
+		} else {
+			log.Printf("Default %v, %v", i, v)
+			e = append(e, &discordgo.ComponentEmoji{
+				Name:     v,
+				ID:       "",
+				Animated: false,
+			})
 		}
 	}
-	data.Emojis = append(data.Emojis, emoji)
+	data.Emojis = append(data.Emojis, e...)
 	ses.Data = data
 	s.ChannelMessageDelete(m.ChannelID, m.ID)
-	if len(data.Emojis) == len(data.SelectMenu.Options) {
+	if len(data.Emojis) >= len(data.SelectMenu.Options) {
 		if data.SelectMenu.CustomID == "gobot_panel_role" {
 			var value string
 			str := strings.Split(data.MessageData.Embeds[0].Fields[0].Value, "\r")
@@ -656,6 +654,7 @@ func panelConfigEmojiHandler(s *discordgo.Session, m *discordgo.MessageCreate, s
 				value += str2 + "\r"
 			}
 			data.MessageData.Embeds[0].Fields[0].Value = value
+			log.Print(value)
 		}
 		updateEmoji(s, data)
 		session.RemoveSession(ses.ID())
@@ -664,8 +663,9 @@ func panelConfigEmojiHandler(s *discordgo.Session, m *discordgo.MessageCreate, s
 }
 
 func updateEmoji(s *discordgo.Session, o types.PanelEmojiConfig) {
-	for i, e := range o.Emojis {
-		o.SelectMenu.Options[i].Emoji = *e
+	for i := range o.SelectMenu.Options {
+		o.SelectMenu.Options[i].Emoji = *o.Emojis[i]
+		log.Print(*o.Emojis[i])
 	}
 	e := discordgo.NewMessageEdit(o.MessageData.ChannelID, o.Message)
 	e.Components = append(e.Components, discordgo.ActionsRow{
@@ -675,7 +675,10 @@ func updateEmoji(s *discordgo.Session, o types.PanelEmojiConfig) {
 	})
 	e.Content = &o.MessageData.Content
 	e.Embeds = o.MessageData.Embeds
-	s.ChannelMessageEditComplex(e)
+	_, err := s.ChannelMessageEditComplex(e)
+	if err != nil {
+		log.Print(err)
+	}
 }
 
 func Feed(s *discordgo.Session, i *discordgo.InteractionCreate) {

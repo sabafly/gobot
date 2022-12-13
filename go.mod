@@ -6,6 +6,7 @@ require (
 	github.com/BurntSushi/toml v1.2.1
 	github.com/Tnze/go-mc v1.18.2
 	github.com/bwmarrin/discordgo v0.26.1
+	github.com/dlclark/regexp2 v1.7.0
 	github.com/joho/godotenv v1.4.0
 	github.com/millkhan/mcstatusgo/v2 v2.2.0
 	github.com/nicksnyder/go-i18n/v2 v2.2.0

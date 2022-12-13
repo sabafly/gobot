@@ -74,7 +74,7 @@ func HandleExec(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	log.Print("session")
-	log.Print(d.Type)
+	log.Printf("%+v", d.Type)
 	switch d.Type {
 	case RolePanelEdit:
 		data, _ := d.Data.(types.PanelEmojiConfig)

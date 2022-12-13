@@ -6,11 +6,12 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"regexp"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/dlclark/regexp2"
 	"github.com/ikafly144/gobot/pkg/translate"
+	"github.com/ikafly144/gobot/pkg/types"
 )
 
 func ErrorMessage(locale discordgo.Locale, err error) (res *discordgo.InteractionResponseData) {
@@ -54,19 +55,15 @@ func ToEmojiA(i int) string {
 	return string(rune('🇦' - 1 + i))
 }
 
-var (
-	EmojiRegex = regexp.MustCompile(`<(a|):[A-z0-9_~]+:[0-9].*>`)
-)
-
-func GetCustomEmojis(m *discordgo.MessageCreate) []*discordgo.Emoji {
-	var toReturn []*discordgo.Emoji
-	emojis := EmojiRegex.FindAllString(m.Content, -1)
+func GetCustomEmojis(s string) []*discordgo.ComponentEmoji {
+	var toReturn []*discordgo.ComponentEmoji
+	emojis := types.CustomEmojiRegex.FindAllString(s, -1)
 	if len(emojis) < 1 {
 		return toReturn
 	}
 	for _, em := range emojis {
 		parts := strings.Split(em, ":")
-		toReturn = append(toReturn, &discordgo.Emoji{
+		toReturn = append(toReturn, &discordgo.ComponentEmoji{
 			ID:       parts[2][:len(parts[2])-1],
 			Name:     parts[1],
 			Animated: strings.HasPrefix(em, "<a:"),
@@ -95,4 +92,14 @@ func APIName(e *discordgo.ComponentEmoji) string {
 		return e.Name
 	}
 	return e.ID
+}
+
+func Regexp2FindAllString(re *regexp2.Regexp, s string) []string {
+	var matches []string
+	m, _ := re.FindStringMatch(s)
+	for m != nil {
+		matches = append(matches, m.String())
+		m, _ = re.FindNextMatch(m)
+	}
+	return matches
 }

@@ -52,6 +52,7 @@ func MModify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Content: &str,
 		})
+	}
 }
 
 func gobotPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *discordgo.Message) {
