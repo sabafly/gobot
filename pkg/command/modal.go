@@ -11,6 +11,12 @@ import (
 )
 
 func MSminecraftPanel(s *discordgo.Session, i *discordgo.InteractionCreate, mid string) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
 	var name string
 	var address string
 	var port int
@@ -80,12 +86,6 @@ func MSminecraftPanel(s *discordgo.Session, i *discordgo.InteractionCreate, mid 
 			},
 		})
 	}
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: "OK",
-			Flags:   discordgo.MessageFlagsEphemeral,
-		},
-	})
+	s.InteractionResponseDelete(i.Interaction)
 	log.Print(name + address + strconv.Itoa(port))
 }

@@ -11,6 +11,12 @@ import (
 )
 
 func MModify(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
 	data := &discordgo.ApplicationCommandInteractionData{}
 	byte, _ := json.Marshal(i.Interaction.Data)
 	json.Unmarshal(byte, data)
@@ -42,16 +48,19 @@ func MModify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			}
 		}
 	}
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: translate.Message(i.Locale, "message_modify_cant_use_this_message_error"),
-			Flags:   discordgo.MessageFlagsEphemeral,
-		},
+	str := translate.Message(i.Locale, "message_modify_cant_use_this_message_error")
+	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content: &str,
 	})
 }
 
 func gobotPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *discordgo.Message) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
 	roles, _ := s.GuildRoles(i.GuildID)
 	options := []discordgo.SelectMenuOption{}
 	me, _ := s.GuildMember(i.GuildID, s.State.User.ID)
@@ -71,25 +80,22 @@ func gobotPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *d
 		}
 	}
 	one := 1
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: translate.Message(i.Locale, "message_modify_role_add_message"),
-			Embeds: []*discordgo.MessageEmbed{
-				{
-					Title: mes.ID,
-				},
+	str := translate.Message(i.Locale, "message_modify_role_add_message")
+	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content: &str,
+		Embeds: &[]*discordgo.MessageEmbed{
+			{
+				Title: mes.ID,
 			},
-			Flags: discordgo.MessageFlagsEphemeral,
-			Components: []discordgo.MessageComponent{
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						discordgo.SelectMenu{
-							CustomID:  "gobot_panel_role_add",
-							MinValues: &one,
-							MaxValues: len(options),
-							Options:   options,
-						},
+		},
+		Components: &[]discordgo.MessageComponent{
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.SelectMenu{
+						CustomID:  "gobot_panel_role_add",
+						MinValues: &one,
+						MaxValues: len(options),
+						Options:   options,
 					},
 				},
 			},
@@ -140,6 +146,7 @@ func gobotPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate, m
 			},
 			CustomID: "gobot_panel_minecraft_add_modal:" + mes.ID,
 			Title:    "サーバー追加",
+			Flags:    discordgo.MessageFlagsEphemeral,
 		},
 	})
 	log.Print(err)
@@ -162,6 +169,12 @@ func GetSelectingMessage(uid string, gid string) (mes *discordgo.Message, err er
 }
 
 func MSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
 	data := &discordgo.ApplicationCommandInteractionData{}
 	byte, _ := json.Marshal(i.Interaction.Data)
 	json.Unmarshal(byte, data)
@@ -174,12 +187,9 @@ func MSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		GuildID:  i.GuildID,
 	}
 	selects[id] = mes
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: translate.Message(i.Locale, "message_command_select_message"),
-			Flags:   discordgo.MessageFlagsEphemeral,
-		},
+	str := translate.Message(i.Locale, "message_command_select_message")
+	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content: &str,
 	})
 }
 

@@ -22,6 +22,12 @@ import (
 )
 
 func MCpanelRole(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
 	component := i.Message.Components
 	var content string
 	bytes, _ := component[0].MarshalJSON()
@@ -64,16 +70,22 @@ func MCpanelRole(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			}
 		}
 	}
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: content,
-			Flags:   discordgo.MessageFlagsEphemeral,
-		},
-	})
+	if content != "" {
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Content: &content,
+		})
+	} else {
+		s.InteractionResponseDelete(i.Interaction)
+	}
 }
 
 func MCpanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
 	mid := i.Message.Embeds[0].Title
 	gid := i.GuildID
 	cid := i.ChannelID
@@ -128,16 +140,16 @@ func MCpanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	}
 	s.ChannelMessageEditComplex(&content)
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: "OK",
-			Flags:   discordgo.MessageFlagsEphemeral,
-		},
-	})
+	s.InteractionResponseDelete(i.Interaction)
 }
 
 func MCpanelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
 	title := i.Message.Embeds[0].Title
 	description := i.Message.Embeds[0].Description
 	gid := i.GuildID
@@ -191,12 +203,9 @@ func MCpanelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	}
 	s.ChannelMessageSendComplex(cid, &content)
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: translate.Message(i.Locale, "command_panel_option_role_message"),
-			Flags:   discordgo.MessageFlagsEphemeral,
-		},
+	str := translate.Message(i.Locale, "command_panel_option_role_message")
+	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content: &str,
 	})
 }
 
@@ -280,7 +289,7 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			Fields: []*discordgo.MessageEmbedField{
 				{
 					Name:   translate.Message(i.Locale, "players"),
-					Value:  "```" + strconv.Itoa(q.Players.Online) + "/" + strconv.Itoa(q.Players.Max) + "```\r" + player,
+					Value:  "```" + strconv.Itoa(q.Players.Online) + "/" + strconv.Itoa(q.Players.Max) + "```" + player,
 					Inline: true,
 				},
 				{
