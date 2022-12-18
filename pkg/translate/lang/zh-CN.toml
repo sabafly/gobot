@@ -339,16 +339,16 @@ other = "在选择菜单中设置自定义表情"
 other = "请在此频道中发送表情"
 
 [panel_minecraft_display_name]
-other = "Display Name"
+other = "显示名称"
 
 [panel_minecraft_address]
-other = "Address"
+other = "地址"
 
 [panel_minecraft_my_server]
-other = "My server"
+other = "我的服务器"
 
 [panel_minecraft_port]
-other = "Port"
+other = "端口"
 
 [panel_minecraft_add_server]
-other = "Add a server"
+other = "添加服务器"
