@@ -339,16 +339,16 @@ other = "Aseta mukautetut emojit valikossa"
 other = "Lähetä emojeja tällä kanavalla"
 
 [panel_minecraft_display_name]
-other = "Display Name"
+other = "Näytön Nimi"
 
 [panel_minecraft_address]
-other = "Address"
+other = "Osoite"
 
 [panel_minecraft_my_server]
-other = "My server"
+other = "Oma palvelin"
 
 [panel_minecraft_port]
-other = "Port"
+other = "Portti"
 
 [panel_minecraft_add_server]
-other = "Add a server"
+other = "Lisää palvelin"
