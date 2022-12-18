@@ -339,16 +339,16 @@ other = "Nastavit vlastní emoji ve vybrané nabídce"
 other = "Zašlete prosím emoji do tohoto kanálu"
 
 [panel_minecraft_display_name]
-other = "Display Name"
+other = "Zobrazované jméno"
 
 [panel_minecraft_address]
-other = "Address"
+other = "Adresa"
 
 [panel_minecraft_my_server]
-other = "My server"
+other = "Můj server"
 
 [panel_minecraft_port]
-other = "Port"
+other = "Přístav"
 
 [panel_minecraft_add_server]
-other = "Add a server"
+other = "Přidat server"
