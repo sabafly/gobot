@@ -339,16 +339,16 @@ other = "Aangepaste emoji instellen in selectiemenu"
 other = "Stuur alsjeblieft emoji in dit kanaal"
 
 [panel_minecraft_display_name]
-other = "Display Name"
+other = "Toon naam"
 
 [panel_minecraft_address]
-other = "Address"
+other = "Adres:"
 
 [panel_minecraft_my_server]
-other = "My server"
+other = "Mijn server"
 
 [panel_minecraft_port]
-other = "Port"
+other = "Poort"
 
 [panel_minecraft_add_server]
-other = "Add a server"
+other = "Voeg een server toe"
