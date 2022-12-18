@@ -337,3 +337,18 @@ other = "Aseta mukautetut emojit valikossa"
 
 [command_panel_option_config_option_emoji_message]
 other = "Lähetä emojeja tällä kanavalla"
+
+[panel_minecraft_display_name]
+other = "Display Name"
+
+[panel_minecraft_address]
+other = "Address"
+
+[panel_minecraft_my_server]
+other = "My server"
+
+[panel_minecraft_port]
+other = "Port"
+
+[panel_minecraft_add_server]
+other = "Add a server"
