@@ -23,4 +23,4 @@ require (
 	golang.org/x/sys v0.1.0 // indirect
 )
 
-replace github.com/bwmarrin/discordgo => ./pkg/discordgo
+replace github.com/bwmarrin/discordgo => ./discordgo
