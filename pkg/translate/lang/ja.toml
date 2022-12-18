@@ -339,16 +339,16 @@ other = "セレクトメニューにカスタム絵文字を設定"
 other = "このチャンネルに絵文字を送信してください"
 
 [panel_minecraft_display_name]
-other = "Display Name"
+other = "表示名"
 
 [panel_minecraft_address]
-other = "Address"
+other = "住所"
 
 [panel_minecraft_my_server]
-other = "My server"
+other = "私のサーバー"
 
 [panel_minecraft_port]
-other = "Port"
+other = "ポート"
 
 [panel_minecraft_add_server]
-other = "Add a server"
+other = "サーバーを追加"
