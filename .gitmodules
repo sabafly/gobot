@@ -1,3 +1,4 @@
 [submodule "discordgo"]
 	path = discordgo
-	url = https://github.com/bwmarrin/discordgo
+	url = git@github.com/bwmarrin/discordgo.git
+        branch = master
