@@ -1,4 +1,5 @@
 name: Update submodules
+run-name: Update submodules
 on:
   schedule:
     - cron:  '0 * * * *'
