@@ -107,8 +107,8 @@ func gobotPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate, m
 					Components: []discordgo.MessageComponent{
 						discordgo.TextInput{
 							CustomID:    "gobot_panel_minecraft_add_servername",
-							Label:       "表示名",
-							Placeholder: "マイサーバー",
+							Label:       translate.Message(i.Locale, "panel_minecraft_display_name"),
+							Placeholder: translate.Message(i.Locale, "panel_minecraft_my_server"),
 							Style:       discordgo.TextInputShort,
 							Required:    true,
 						},
@@ -118,7 +118,7 @@ func gobotPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate, m
 					Components: []discordgo.MessageComponent{
 						discordgo.TextInput{
 							CustomID:    "gobot_panel_minecraft_add_address",
-							Label:       "アドレス",
+							Label:       translate.Message(i.Locale, "panel_minecraft_address"),
 							Placeholder: "example.com",
 							Required:    true,
 							Style:       discordgo.TextInputShort,
@@ -129,7 +129,7 @@ func gobotPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate, m
 					Components: []discordgo.MessageComponent{
 						discordgo.TextInput{
 							CustomID:    "gobot_panel_minecraft_add_port",
-							Label:       "ポート",
+							Label:       translate.Message(i.Locale, "panel_minecraft_port"),
 							Placeholder: "25565",
 							Style:       discordgo.TextInputShort,
 							Value:       "25565",
@@ -140,7 +140,7 @@ func gobotPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate, m
 				},
 			},
 			CustomID: "gobot_panel_minecraft_add_modal:" + mes.ID,
-			Title:    "サーバー追加",
+			Title:    translate.Message(i.Locale, "panel_minecraft_add_server"),
 			Flags:    discordgo.MessageFlagsEphemeral,
 		},
 	})
