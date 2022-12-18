@@ -1,0 +1,3 @@
+[submodule "discordgo"]
+	path = discordgo
+	url = ./discordgo
