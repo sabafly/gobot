@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -945,18 +946,36 @@ func UInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		return
 	}
 	var roles string
-	var r []*discordgo.Role
 	var color int = 0x000000
-	for _, v := range m.Roles {
-		roles += "<@&" + v + "> "
-		rt, _ := s.State.Role(i.GuildID, v)
-		r = append(r, rt)
+	role, _ := s.GuildRoles(i.GuildID)
+	me, _ := s.GuildMember(i.GuildID, uid)
+	var highestPosition int
+	for _, v := range me.Roles {
+		r, _ := s.State.Role(i.GuildID, v)
+		if r.Position >= highestPosition {
+			highestPosition = r.Position
+		}
+	}
+	var r []*discordgo.Role
+	for _, r2 := range role {
+		for _, v := range me.Roles {
+			if r2.ID == v {
+				r = append(r, r2)
+			}
+		}
+	}
+	sort.Slice(r, func(i2, j int) bool {
+		return r[i2].Position < r[j].Position
+	})
+	for i2, j := 0, len(r)-1; i2 < j; i2, j = i2+1, j-1 {
+		r[i2], r[j] = r[j], r[i2]
+	}
+
+	for _, v := range r {
+		roles += v.Mention()
 	}
 	if roles == "" {
 		roles = "`" + translate.Message(i.Locale, "message_command_user_info_none") + "`"
-	}
-	for i2, j := 0, len(r)-1; i2 < j; i2, j = i2+1, j-1 {
-		r[i2], r[j] = r[j], r[i2]
 	}
 	for _, v := range r {
 		if v.Color != 0x000000 {
