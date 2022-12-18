@@ -339,16 +339,16 @@ other = "Ustaw niestandardowe emoji w menu wyboru"
 other = "Proszę wysłać emoji na tym kanale"
 
 [panel_minecraft_display_name]
-other = "Display Name"
+other = "Wyświetlana nazwa"
 
 [panel_minecraft_address]
-other = "Address"
+other = "Adres"
 
 [panel_minecraft_my_server]
-other = "My server"
+other = "Mój serwer"
 
 [panel_minecraft_port]
 other = "Port"
 
 [panel_minecraft_add_server]
-other = "Add a server"
+other = "Dodaj serwer"
