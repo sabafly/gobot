@@ -1,0 +1,3 @@
+[submodule "--force"]
+	path = pkg/discordgo
+	url = https://github.com/bwmarrin/discordgo

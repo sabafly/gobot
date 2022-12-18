@@ -625,7 +625,7 @@ func panelConfigEmojiHandler(s *discordgo.Session, m *discordgo.MessageCreate, s
 	log.Print(emojiString)
 	var e []*discordgo.ComponentEmoji
 	for i, v := range emojiString {
-		if types.CustomEmojiRegex.MatchString(v) {
+		if discordgo.EmojiRegex.MatchString(v) {
 			log.Printf("Custom  %v, %v", i, v)
 			e = append(e, util.GetCustomEmojis(v)...)
 		} else {

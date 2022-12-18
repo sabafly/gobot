@@ -11,7 +11,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/dlclark/regexp2"
 	"github.com/ikafly144/gobot/pkg/translate"
-	"github.com/ikafly144/gobot/pkg/types"
 )
 
 func ErrorMessage(locale discordgo.Locale, err error) (res *discordgo.InteractionResponseData) {
@@ -57,7 +56,7 @@ func ToEmojiA(i int) string {
 
 func GetCustomEmojis(s string) []*discordgo.ComponentEmoji {
 	var toReturn []*discordgo.ComponentEmoji
-	emojis := types.CustomEmojiRegex.FindAllString(s, -1)
+	emojis := discordgo.EmojiRegex.FindAllString(s, -1)
 	if len(emojis) < 1 {
 		return toReturn
 	}
