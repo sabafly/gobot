@@ -3,6 +3,7 @@ package command
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -252,6 +253,7 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	message.UnmarshalJSON([]byte(q.Description))
 	hash := sha256.New()
 	thumb := strings.ReplaceAll(q.Favicon, "data:image/png;base64,", "")
+	res, _ := base64.RawStdEncoding.DecodeString(thumb)
 	io.WriteString(hash, thumb)
 	str := hash.Sum(nil)
 	code := hex.EncodeToString(str)
@@ -278,9 +280,7 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			Description: "```ansi\r" + message.String() + "```",
 			Color:       color,
 			Thumbnail: &discordgo.MessageEmbedThumbnail{
-				URL:    "https://sabafly.net/api/mc/image/" + code,
-				Width:  64,
-				Height: 64,
+				URL: "attachment://" + code + ".png",
 			},
 			Timestamp: time.Now().UTC().Format(time.RFC3339),
 			Footer:    &discordgo.MessageEmbedFooter{Text: "gobot"},
@@ -318,6 +318,13 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	s.ChannelMessageEditComplex(discordgo.NewMessageEdit(i.ChannelID, i.Message.ID))
 	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Embeds: &embeds,
+		Files: []*discordgo.File{
+			{
+				Name:        code + ".png",
+				ContentType: "image/png",
+				Reader:      bytes.NewReader(res),
+			},
+		},
 	})
 	if err != nil {
 		log.Print(err)
