@@ -261,8 +261,6 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 	b, _ := json.Marshal(bd)
 	api.GetApi("/api/image/png/add", bytes.NewBuffer(b))
-	log.Print(q.Version.Protocol)
-	log.Print("https://sabafly.net/api/decode?s=" + code)
 	color := 0x00ff00
 	if q.Version.Protocol == 46 {
 		color = 0xff0000
@@ -280,7 +278,7 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			Description: "```ansi\r" + message.String() + "```",
 			Color:       color,
 			Thumbnail: &discordgo.MessageEmbedThumbnail{
-				URL:    "https://sabafly.net/api/decode?s=" + code,
+				URL:    "https://sabafly.net/api/mc/image/" + code,
 				Width:  64,
 				Height: 64,
 			},
