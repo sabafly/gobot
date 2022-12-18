@@ -339,16 +339,16 @@ other = "Sett egendefinerte emoji i velg meny"
 other = "Vennligst send emoji i denne kanalen"
 
 [panel_minecraft_display_name]
-other = "Display Name"
+other = "Vis navn"
 
 [panel_minecraft_address]
-other = "Address"
+other = "Adresse"
 
 [panel_minecraft_my_server]
-other = "My server"
+other = "Min server"
 
 [panel_minecraft_port]
 other = "Port"
 
 [panel_minecraft_add_server]
-other = "Add a server"
+other = "Legg til server"
