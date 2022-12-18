@@ -288,10 +288,10 @@ other = "无"
 other = "角色"
 
 [panel_minecraft_message_boot]
-other = "启动 {{.Name}} 服务器"
+other = "启动 {{.Name}}"
 
 [panel_minecraft_message_stop]
-other = "停止 {{.Name}} 服务器"
+other = "停止 {{.Name}}"
 
 [panel_role_message_added]
 other = "已添加"

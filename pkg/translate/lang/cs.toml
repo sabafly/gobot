@@ -288,10 +288,10 @@ other = "žádný"
 other = "Role"
 
 [panel_minecraft_message_boot]
-other = "Spouštěn {{.Name}} server"
+other = "spuštěno {{.Name}}"
 
 [panel_minecraft_message_stop]
-other = "zastavil {{.Name}} server"
+other = "zastavil {{.Name}}"
 
 [panel_role_message_added]
 other = "přidáno"

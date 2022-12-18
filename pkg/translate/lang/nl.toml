@@ -288,10 +288,10 @@ other = "Geen"
 other = "Rollen"
 
 [panel_minecraft_message_boot]
-other = "{{.Name}} server is opgestart"
+other = "{{.Name}} is opgestart"
 
 [panel_minecraft_message_stop]
-other = "{{.Name}} server gestopt"
+other = "stopte {{.Name}}"
 
 [panel_role_message_added]
 other = "toegevoegd"
