@@ -339,16 +339,16 @@ other = "Definir emojis personalizados no menu de seleção"
 other = "Por favor, envie emojis neste canal"
 
 [panel_minecraft_display_name]
-other = "Display Name"
+other = "Nome para exibição"
 
 [panel_minecraft_address]
-other = "Address"
+other = "Endereço"
 
 [panel_minecraft_my_server]
-other = "My server"
+other = "Meu servidor"
 
 [panel_minecraft_port]
-other = "Port"
+other = "Porta"
 
 [panel_minecraft_add_server]
-other = "Add a server"
+other = "Adicionar um servidor"
