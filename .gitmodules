@@ -1,3 +1,3 @@
 [submodule "discordgo"]
 	path = discordgo
-	url = https://github.com/bwmarrin/discordgo,git
+	url = https://github.com/bwmarrin/discordgo
