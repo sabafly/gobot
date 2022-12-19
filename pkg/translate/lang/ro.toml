@@ -255,10 +255,10 @@ other = "Eșec la ping-ul serverului"
 other = "valoare port nevalidă"
 
 [error_invalid_roles]
-other = "Invalid role(s)"
+other = "Roluri nevalide"
 
 [error_cannot_use_roles]
-other = "The following roles cannot be used"
+other = "Următoarele roluri nu pot fi utilizate"
 
 [error_message]
 other = "A apărut o eroare"
