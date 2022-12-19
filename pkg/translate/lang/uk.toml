@@ -254,6 +254,12 @@ other = "помилка пінгування серверу"
 [error_invalid_port_value]
 other = "неприпустиме значення порту"
 
+[error_invalid_roles]
+other = "Invalid role(s)"
+
+[error_cannot_use_roles]
+other = "The following roles cannot be used"
+
 [error_message]
 other = "Сталася помилка"
 
