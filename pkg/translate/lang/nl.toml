@@ -254,6 +254,12 @@ other = "Kon server niet pingen"
 [error_invalid_port_value]
 other = "ongeldige poort waarde"
 
+[error_invalid_roles]
+other = "Invalid role(s)"
+
+[error_cannot_use_roles]
+other = "The following roles cannot be used"
+
 [error_message]
 other = "Er is een fout opgetreden"
 
