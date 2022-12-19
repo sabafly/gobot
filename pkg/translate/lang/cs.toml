@@ -255,10 +255,10 @@ other = "pingový server selhal"
 other = "neplatná hodnota portu"
 
 [error_invalid_roles]
-other = "Invalid role(s)"
+other = "Neplatná role"
 
 [error_cannot_use_roles]
-other = "The following roles cannot be used"
+other = "Následující role nelze použít"
 
 [error_message]
 other = "Došlo k chybě"
