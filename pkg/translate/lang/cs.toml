@@ -254,6 +254,12 @@ other = "pingový server selhal"
 [error_invalid_port_value]
 other = "neplatná hodnota portu"
 
+[error_invalid_roles]
+other = "Neplatná role"
+
+[error_cannot_use_roles]
+other = "Následující role nelze použít"
+
 [error_message]
 other = "Došlo k chybě"
 
@@ -339,16 +345,16 @@ other = "Nastavit vlastní emoji ve vybrané nabídce"
 other = "Zašlete prosím emoji do tohoto kanálu"
 
 [panel_minecraft_display_name]
-other = "Display Name"
+other = "Zobrazované jméno"
 
 [panel_minecraft_address]
-other = "Address"
+other = "Adresa"
 
 [panel_minecraft_my_server]
-other = "My server"
+other = "Můj server"
 
 [panel_minecraft_port]
-other = "Port"
+other = "Přístav"
 
 [panel_minecraft_add_server]
-other = "Add a server"
+other = "Přidat server"

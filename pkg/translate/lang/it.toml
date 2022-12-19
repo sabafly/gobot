@@ -254,6 +254,12 @@ other = "ping del server non riuscito"
 [error_invalid_port_value]
 other = "valore porta non valido"
 
+[error_invalid_roles]
+other = "Ruoli non validi"
+
+[error_cannot_use_roles]
+other = "I seguenti ruoli non possono essere utilizzati"
+
 [error_message]
 other = "Si è verificato un errore"
 
@@ -339,16 +345,16 @@ other = "Imposta emoji personalizzate nel menu di selezione"
 other = "Invia emoji in questo canale"
 
 [panel_minecraft_display_name]
-other = "Display Name"
+other = "Nome Visualizzato"
 
 [panel_minecraft_address]
-other = "Address"
+other = "Indirizzo"
 
 [panel_minecraft_my_server]
-other = "My server"
+other = "Il mio server"
 
 [panel_minecraft_port]
-other = "Port"
+other = "Porta"
 
 [panel_minecraft_add_server]
-other = "Add a server"
+other = "Aggiungi un server"

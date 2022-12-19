@@ -254,6 +254,12 @@ other = "помилка пінгування серверу"
 [error_invalid_port_value]
 other = "неприпустиме значення порту"
 
+[error_invalid_roles]
+other = "Невірна роль(и)"
+
+[error_cannot_use_roles]
+other = "Наступні ролі не можна використовувати"
+
 [error_message]
 other = "Сталася помилка"
 
@@ -339,16 +345,16 @@ other = "Встановити користувацькі емодзі в мен�
 other = "Будь ласка, надішліть emoji на цьому каналі"
 
 [panel_minecraft_display_name]
-other = "Display Name"
+other = "Ім'я для відображення"
 
 [panel_minecraft_address]
-other = "Address"
+other = "Адреса"
 
 [panel_minecraft_my_server]
-other = "My server"
+other = "Мій сервер"
 
 [panel_minecraft_port]
-other = "Port"
+other = "Порт"
 
 [panel_minecraft_add_server]
-other = "Add a server"
+other = "Додати сервер"

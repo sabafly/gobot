@@ -254,6 +254,12 @@ other = "не удалось выполнить запрос сервера"
 [error_invalid_port_value]
 other = "неверное значение порта"
 
+[error_invalid_roles]
+other = "Неверная роль(ы)"
+
+[error_cannot_use_roles]
+other = "Нельзя использовать следующие роли"
+
 [error_message]
 other = "Произошла ошибка"
 
@@ -339,16 +345,16 @@ other = "Установить пользовательские эмодзи в �
 other = "Пожалуйста, отправьте эмодзи в этом канале"
 
 [panel_minecraft_display_name]
-other = "Display Name"
+other = "Показать имя"
 
 [panel_minecraft_address]
-other = "Address"
+other = "Адрес"
 
 [panel_minecraft_my_server]
-other = "My server"
+other = "Мой сервер"
 
 [panel_minecraft_port]
-other = "Port"
+other = "Порт"
 
 [panel_minecraft_add_server]
-other = "Add a server"
+other = "Добавить сервер"

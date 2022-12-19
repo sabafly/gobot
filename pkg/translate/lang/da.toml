@@ -254,6 +254,12 @@ other = "kunne ikke ping af server"
 [error_invalid_port_value]
 other = "ugyldig portværdi"
 
+[error_invalid_roles]
+other = "Ugyldig rolle(r)"
+
+[error_cannot_use_roles]
+other = "Følgende roller kan ikke bruges"
+
 [error_message]
 other = "Der opstod en fejl"
 
@@ -339,16 +345,16 @@ other = "Indstil brugerdefineret emoji i vælg menu"
 other = "Send venligst emoji i denne kanal"
 
 [panel_minecraft_display_name]
-other = "Display Name"
+other = "Vis Navn"
 
 [panel_minecraft_address]
-other = "Address"
+other = "Adresse"
 
 [panel_minecraft_my_server]
-other = "My server"
+other = "Min server"
 
 [panel_minecraft_port]
 other = "Port"
 
 [panel_minecraft_add_server]
-other = "Add a server"
+other = "Tilføj en server"

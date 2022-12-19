@@ -254,6 +254,12 @@ other = "Eșec la ping-ul serverului"
 [error_invalid_port_value]
 other = "valoare port nevalidă"
 
+[error_invalid_roles]
+other = "Roluri nevalide"
+
+[error_cannot_use_roles]
+other = "Următoarele roluri nu pot fi utilizate"
+
 [error_message]
 other = "A apărut o eroare"
 
@@ -339,16 +345,16 @@ other = "Setați emoji particularizate în meniul selectare"
 other = "Te rugăm să trimiți emoji în acest canal"
 
 [panel_minecraft_display_name]
-other = "Display Name"
+other = "Nume afișat"
 
 [panel_minecraft_address]
-other = "Address"
+other = "Adresa"
 
 [panel_minecraft_my_server]
-other = "My server"
+other = "Serverul meu"
 
 [panel_minecraft_port]
-other = "Port"
+other = "Portul"
 
 [panel_minecraft_add_server]
-other = "Add a server"
+other = "Adaugă un server"

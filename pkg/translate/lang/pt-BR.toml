@@ -254,6 +254,12 @@ other = "falha ao fazer ping no servidor"
 [error_invalid_port_value]
 other = "valor de porta inválida"
 
+[error_invalid_roles]
+other = "Papéis inválidos"
+
+[error_cannot_use_roles]
+other = "Não é possível usar as seguintes funções"
+
 [error_message]
 other = "Ocorreu um erro"
 
@@ -339,16 +345,16 @@ other = "Definir emojis personalizados no menu de seleção"
 other = "Por favor, envie emojis neste canal"
 
 [panel_minecraft_display_name]
-other = "Display Name"
+other = "Nome para exibição"
 
 [panel_minecraft_address]
-other = "Address"
+other = "Endereço"
 
 [panel_minecraft_my_server]
-other = "My server"
+other = "Meu servidor"
 
 [panel_minecraft_port]
-other = "Port"
+other = "Porta"
 
 [panel_minecraft_add_server]
-other = "Add a server"
+other = "Adicionar um servidor"
