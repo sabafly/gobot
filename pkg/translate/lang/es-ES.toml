@@ -254,6 +254,12 @@ other = "fallo en el servidor ping"
 [error_invalid_port_value]
 other = "valor de puerto inválido"
 
+[error_invalid_roles]
+other = "Invalid role(s)"
+
+[error_cannot_use_roles]
+other = "The following roles cannot be used"
+
 [error_message]
 other = "Ha ocurrido un error"
 
