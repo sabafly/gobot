@@ -254,6 +254,12 @@ other = "pingový server selhal"
 [error_invalid_port_value]
 other = "neplatná hodnota portu"
 
+[error_invalid_roles]
+other = "Invalid role(s)"
+
+[error_cannot_use_roles]
+other = "The following roles cannot be used"
+
 [error_message]
 other = "Došlo k chybě"
 
