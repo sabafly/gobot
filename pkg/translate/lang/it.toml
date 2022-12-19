@@ -254,6 +254,12 @@ other = "ping del server non riuscito"
 [error_invalid_port_value]
 other = "valore porta non valido"
 
+[error_invalid_roles]
+other = "Invalid role(s)"
+
+[error_cannot_use_roles]
+other = "The following roles cannot be used"
+
 [error_message]
 other = "Si è verificato un errore"
 
