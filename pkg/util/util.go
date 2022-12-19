@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 
@@ -39,7 +38,6 @@ func DeepcopyJson(src interface{}, dst interface{}) (err error) {
 }
 
 func LogResp(resp *http.Response) {
-	log.Printf("succeed %v %v %v", resp.Request.Method, resp.StatusCode, resp.Request.URL)
 }
 
 func MessageResp(resp *http.Response) string {

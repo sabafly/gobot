@@ -227,7 +227,7 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	addresses := strings.Split(data.Values[0], ":")
 	name := addresses[0]
 	address := addresses[1]
-	port, err := strconv.Atoi(addresses[2])
+	port, err := strconv.ParseUint(addresses[2], 10, 16)
 	if err != nil {
 		log.Print(err)
 		e := translate.ErrorEmbed(i.Locale, "error_invalid_port_value")
