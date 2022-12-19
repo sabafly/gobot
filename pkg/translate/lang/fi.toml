@@ -255,10 +255,10 @@ other = "palvelimen pingäys epäonnistui"
 other = "virheellinen portin arvo"
 
 [error_invalid_roles]
-other = "Invalid role(s)"
+other = "Virheellinen rooli(t)"
 
 [error_cannot_use_roles]
-other = "The following roles cannot be used"
+other = "Seuraavia rooleja ei voi käyttää"
 
 [error_message]
 other = "Virhe on tapahtunut"
