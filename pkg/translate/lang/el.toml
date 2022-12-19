@@ -254,6 +254,12 @@ other = "αποτυχία στο διακομιστή ping"
 [error_invalid_port_value]
 other = "μη έγκυρη τιμή θύρας"
 
+[error_invalid_roles]
+other = "Invalid role(s)"
+
+[error_cannot_use_roles]
+other = "The following roles cannot be used"
+
 [error_message]
 other = "Παρουσιάστηκε ένα σφάλμα"
 
