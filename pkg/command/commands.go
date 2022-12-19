@@ -400,7 +400,6 @@ func Panel(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {
-	log.Print("ok")
 	options = options[0].Options
 	var name string
 	var description string
@@ -410,24 +409,6 @@ func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, optio
 			name = v.StringValue()
 		case "description":
 			description = v.StringValue()
-		}
-	}
-	roles, _ := s.GuildRoles(i.GuildID)
-	option := []discordgo.SelectMenuOption{}
-	me, _ := s.GuildMember(i.GuildID, s.State.User.ID)
-	var highestPosition int
-	for _, v := range me.Roles {
-		r, _ := s.State.Role(i.GuildID, v)
-		if r.Position >= highestPosition {
-			highestPosition = r.Position
-		}
-	}
-	for _, v := range roles {
-		if v.Position < highestPosition && !v.Managed && v.ID != i.GuildID {
-			option = append(option, discordgo.SelectMenuOption{
-				Label: v.Name,
-				Value: v.ID,
-			})
 		}
 	}
 	one := 1
@@ -444,10 +425,10 @@ func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, optio
 			discordgo.ActionsRow{
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
+						MenuType:  discordgo.RoleSelectMenu,
 						CustomID:  "gobot_panel_role_create",
 						MinValues: &one,
-						MaxValues: len(option),
-						Options:   option,
+						MaxValues: 25,
 					},
 				},
 			},

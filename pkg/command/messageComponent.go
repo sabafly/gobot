@@ -91,11 +91,31 @@ func MCpanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	gid := i.GuildID
 	cid := i.ChannelID
 	mes, _ := s.ChannelMessage(cid, mid)
-	rv := i.MessageComponentData().Values
+	var unused string
+	rv := i.Interaction.MessageComponentData().Values
+	me, _ := s.GuildMember(i.GuildID, s.State.User.ID)
+	var highestPosition int
+	for _, v := range me.Roles {
+		r, _ := s.State.Role(i.GuildID, v)
+		if r.Position > highestPosition {
+			highestPosition = r.Position
+		}
+	}
 	roles := []discordgo.Role{}
 	for _, v := range rv {
 		role, _ := s.State.Role(gid, v)
-		roles = append(roles, *role)
+		if role.Position < highestPosition && !role.Managed && role.ID != gid {
+			roles = append(roles, *role)
+		} else {
+			unused += role.Mention() + " "
+		}
+	}
+	if len(roles) == 0 {
+		embeds := translate.ErrorEmbed(i.Locale, "error_invalid_roles")
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Embeds: &embeds,
+		})
+		return
 	}
 	options := []discordgo.SelectMenuOption{}
 	for n, r := range roles {
@@ -141,7 +161,18 @@ func MCpanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		},
 	}
 	s.ChannelMessageEditComplex(&content)
-	s.InteractionResponseDelete(i.Interaction)
+	var embed []*discordgo.MessageEmbed
+	if unused != "" {
+		embed = append(embed, &discordgo.MessageEmbed{
+			Title:       translate.Message(i.Locale, "error_cannot_use_roles"),
+			Description: unused,
+		})
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Embeds: &embed,
+		})
+	} else {
+		s.InteractionResponseDelete(i.Interaction)
+	}
 }
 
 func MCpanelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -155,11 +186,31 @@ func MCpanelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	description := i.Message.Embeds[0].Description
 	gid := i.GuildID
 	cid := i.ChannelID
-	rv := i.MessageComponentData().Values
+	var unused string
+	rv := i.Interaction.MessageComponentData().Values
+	me, _ := s.GuildMember(i.GuildID, s.State.User.ID)
+	var highestPosition int
+	for _, v := range me.Roles {
+		r, _ := s.State.Role(i.GuildID, v)
+		if r.Position > highestPosition {
+			highestPosition = r.Position
+		}
+	}
 	roles := []discordgo.Role{}
 	for _, v := range rv {
 		role, _ := s.State.Role(gid, v)
-		roles = append(roles, *role)
+		if role.Position < highestPosition && !role.Managed && role.ID != gid {
+			roles = append(roles, *role)
+		} else {
+			unused += role.Mention() + " "
+		}
+	}
+	if len(roles) == 0 {
+		embeds := translate.ErrorEmbed(i.Locale, "error_invalid_roles")
+		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+			Embeds: &embeds,
+		})
+		return
 	}
 	options := []discordgo.SelectMenuOption{}
 	for n, r := range roles {
@@ -203,10 +254,18 @@ func MCpanelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			},
 		},
 	}
+	var embed []*discordgo.MessageEmbed
+	if unused != "" {
+		embed = append(embed, &discordgo.MessageEmbed{
+			Title:       translate.Message(i.Locale, "error_cannot_use_roles"),
+			Description: unused,
+		})
+	}
 	s.ChannelMessageSendComplex(cid, &content)
 	str := translate.Message(i.Locale, "command_panel_option_role_message")
 	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: &str,
+		Embeds:  &embed,
 	})
 }
 

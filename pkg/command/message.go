@@ -56,24 +56,6 @@ func gobotPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *d
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
 	})
-	roles, _ := s.GuildRoles(i.GuildID)
-	options := []discordgo.SelectMenuOption{}
-	me, _ := s.GuildMember(i.GuildID, s.State.User.ID)
-	var highestPosition int
-	for _, v := range me.Roles {
-		r, _ := s.State.Role(i.GuildID, v)
-		if r.Position > highestPosition {
-			highestPosition = r.Position
-		}
-	}
-	for _, v := range roles {
-		if v.Position < highestPosition && !v.Managed && v.ID != i.GuildID {
-			options = append(options, discordgo.SelectMenuOption{
-				Label: v.Name,
-				Value: v.ID,
-			})
-		}
-	}
 	one := 1
 	str := translate.Message(i.Locale, "message_modify_role_add_message")
 	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
@@ -87,10 +69,10 @@ func gobotPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *d
 			discordgo.ActionsRow{
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
+						MenuType:  discordgo.RoleSelectMenu,
 						CustomID:  "gobot_panel_role_add",
 						MinValues: &one,
-						MaxValues: len(options),
-						Options:   options,
+						MaxValues: 25,
 					},
 				},
 			},

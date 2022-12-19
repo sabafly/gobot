@@ -18,7 +18,6 @@ import (
 var (
 	BotToken       = flag.String("Token", "", "botアクセストークン")
 	RemoveCommands = flag.Bool("rmcmd", true, "停止時にコマンドを登録解除するか")
-	ApplicationId  = flag.String("Application", "", "botのsnowflake")
 	SupportGuildID = flag.String("SupportServer", "", "サポートサーバーのID")
 	APIServer      = flag.String("APIAddress", "", "APIサーバーのip")
 	s              *discordgo.Session
@@ -37,7 +36,6 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 	if err != nil {
 		RemoveCommands = true
 	}
-	*ApplicationId = os.Getenv("APPLICATION_ID")
 
 	flag.Parse()
 

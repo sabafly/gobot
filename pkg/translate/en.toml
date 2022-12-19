@@ -169,6 +169,10 @@ other = "failed to connect api server error"
 other = "failed to ping server"
 [error_invalid_port_value]
 other = "invalid port value"
+[error_invalid_roles]
+other = "Invalid role(s)"
+[error_cannot_use_roles]
+other = "The following roles cannot be used"
 [error_message]
 other = "An error has occurred"
 [feed_minecraft_webhook_name]
