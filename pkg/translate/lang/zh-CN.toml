@@ -255,10 +255,10 @@ other = "Ping 服务器失败"
 other = "无效端口值"
 
 [error_invalid_roles]
-other = "Invalid role(s)"
+other = "无效的角色(s)"
 
 [error_cannot_use_roles]
-other = "The following roles cannot be used"
+other = "以下角色不能被使用"
 
 [error_message]
 other = "发生错误"
