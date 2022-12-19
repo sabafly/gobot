@@ -254,6 +254,12 @@ other = "Ping 服务器失败"
 [error_invalid_port_value]
 other = "无效端口值"
 
+[error_invalid_roles]
+other = "Invalid role(s)"
+
+[error_cannot_use_roles]
+other = "The following roles cannot be used"
+
 [error_message]
 other = "发生错误"
 
