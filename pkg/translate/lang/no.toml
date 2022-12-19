@@ -255,10 +255,10 @@ other = "kunne ikke ping av server"
 other = "ugyldig port-verdi"
 
 [error_invalid_roles]
-other = "Invalid role(s)"
+other = "Ugyldige rolle(r)"
 
 [error_cannot_use_roles]
-other = "The following roles cannot be used"
+other = "Følgende roller kan ikke brukes"
 
 [error_message]
 other = "En feil har oppstått"
