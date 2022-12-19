@@ -254,6 +254,12 @@ other = "konnte Server nicht pingen"
 [error_invalid_port_value]
 other = "ungültiger Port-Wert"
 
+[error_invalid_roles]
+other = "Invalid role(s)"
+
+[error_cannot_use_roles]
+other = "The following roles cannot be used"
+
 [error_message]
 other = "Ein Fehler ist aufgetreten"
 
