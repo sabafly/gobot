@@ -255,10 +255,10 @@ other = "помилка пінгування серверу"
 other = "неприпустиме значення порту"
 
 [error_invalid_roles]
-other = "Invalid role(s)"
+other = "Невірна роль(и)"
 
 [error_cannot_use_roles]
-other = "The following roles cannot be used"
+other = "Наступні ролі не можна використовувати"
 
 [error_message]
 other = "Сталася помилка"
