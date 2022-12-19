@@ -254,6 +254,12 @@ other = "Eșec la ping-ul serverului"
 [error_invalid_port_value]
 other = "valoare port nevalidă"
 
+[error_invalid_roles]
+other = "Invalid role(s)"
+
+[error_cannot_use_roles]
+other = "The following roles cannot be used"
+
 [error_message]
 other = "A apărut o eroare"
 
