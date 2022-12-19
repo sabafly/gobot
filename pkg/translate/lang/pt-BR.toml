@@ -255,10 +255,10 @@ other = "falha ao fazer ping no servidor"
 other = "valor de porta inválida"
 
 [error_invalid_roles]
-other = "Invalid role(s)"
+other = "Papéis inválidos"
 
 [error_cannot_use_roles]
-other = "The following roles cannot be used"
+other = "Não é possível usar as seguintes funções"
 
 [error_message]
 other = "Ocorreu um erro"
