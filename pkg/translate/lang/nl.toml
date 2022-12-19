@@ -255,10 +255,10 @@ other = "Kon server niet pingen"
 other = "ongeldige poort waarde"
 
 [error_invalid_roles]
-other = "Invalid role(s)"
+other = "Ongeldige rol(en)"
 
 [error_cannot_use_roles]
-other = "The following roles cannot be used"
+other = "De volgende rollen kunnen niet worden gebruikt"
 
 [error_message]
 other = "Er is een fout opgetreden"
