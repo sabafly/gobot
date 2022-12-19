@@ -255,10 +255,10 @@ other = "サーバーへの接続に失敗しました"
 other = "不正なポート値"
 
 [error_invalid_roles]
-other = "Invalid role(s)"
+other = "無効な役割です"
 
 [error_cannot_use_roles]
-other = "The following roles cannot be used"
+other = "次のロールは使用できません"
 
 [error_message]
 other = "エラーが発生しました"
