@@ -255,10 +255,10 @@ other = "nie udało się wyczyścić serwera"
 other = "nieprawidłowa wartość portu"
 
 [error_invalid_roles]
-other = "Invalid role(s)"
+other = "Nieprawidłowe role"
 
 [error_cannot_use_roles]
-other = "The following roles cannot be used"
+other = "Nie można użyć następujących ról"
 
 [error_message]
 other = "Wystąpił błąd"
