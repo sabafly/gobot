@@ -254,6 +254,12 @@ other = "не удалось выполнить запрос сервера"
 [error_invalid_port_value]
 other = "неверное значение порта"
 
+[error_invalid_roles]
+other = "Invalid role(s)"
+
+[error_cannot_use_roles]
+other = "The following roles cannot be used"
+
 [error_message]
 other = "Произошла ошибка"
 
