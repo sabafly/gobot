@@ -255,10 +255,10 @@ other = "не удалось выполнить запрос сервера"
 other = "неверное значение порта"
 
 [error_invalid_roles]
-other = "Invalid role(s)"
+other = "Неверная роль(ы)"
 
 [error_cannot_use_roles]
-other = "The following roles cannot be used"
+other = "Нельзя использовать следующие роли"
 
 [error_message]
 other = "Произошла ошибка"
