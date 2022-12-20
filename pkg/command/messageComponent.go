@@ -106,7 +106,7 @@ func MCpanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	cid := i.ChannelID
 	mes, _ := s.ChannelMessage(cid, mid)
 	var unused string
-	rv := i.Interaction.MessageComponentData().Values
+	rv := i.Interaction.MessageComponentData().Resolved.Roles
 	me, _ := s.GuildMember(i.GuildID, s.State.User.ID)
 	var highestPosition int
 	for _, v := range me.Roles {
@@ -116,8 +116,7 @@ func MCpanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	}
 	roles := []discordgo.Role{}
-	for _, v := range rv {
-		role, _ := s.State.Role(gid, v)
+	for _, role := range rv {
 		if role.Position < highestPosition && !role.Managed && role.ID != gid {
 			roles = append(roles, *role)
 		} else {
@@ -201,7 +200,7 @@ func MCpanelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	gid := i.GuildID
 	cid := i.ChannelID
 	var unused string
-	rv := i.Interaction.MessageComponentData().Values
+	rv := i.Interaction.MessageComponentData().Resolved.Roles
 	me, _ := s.GuildMember(i.GuildID, s.State.User.ID)
 	var highestPosition int
 	for _, v := range me.Roles {
@@ -211,8 +210,7 @@ func MCpanelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		}
 	}
 	roles := []discordgo.Role{}
-	for _, v := range rv {
-		role, _ := s.State.Role(gid, v)
+	for _, role := range rv {
 		if role.Position < highestPosition && !role.Managed && role.ID != gid {
 			roles = append(roles, *role)
 		} else {
