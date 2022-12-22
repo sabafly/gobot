@@ -360,16 +360,16 @@ other = "Θύρα"
 other = "Προσθήκη διακομιστή"
 
 [client_desktop]
-other = "Desktop"
+other = "Επιφάνεια Εργασίας"
 
 [client_mobile]
-other = "Mobile"
+other = "Κινητό"
 
 [client_web]
-other = "Web"
+other = "Ιστός"
 
 [online_status]
-other = "Status"
+other = "Κατάσταση"
 
 [message_command_user_info_status]
-other = "Status"
+other = "Κατάσταση"
