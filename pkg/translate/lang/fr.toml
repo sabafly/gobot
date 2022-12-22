@@ -360,16 +360,16 @@ other = "Port"
 other = "Ajouter un serveur"
 
 [client_desktop]
-other = "Desktop"
+other = "Bureau"
 
 [client_mobile]
-other = "Mobile"
+other = "Téléphone mobile"
 
 [client_web]
 other = "Web"
 
 [online_status]
-other = "Status"
+other = "Statut"
 
 [message_command_user_info_status]
-other = "Status"
+other = "Statut"
