@@ -360,16 +360,16 @@ other = "Portti"
 other = "Lisää palvelin"
 
 [client_desktop]
-other = "Desktop"
+other = "Työpöytä"
 
 [client_mobile]
-other = "Mobile"
+other = "Mobiili"
 
 [client_web]
-other = "Web"
+other = "Verkko"
 
 [online_status]
-other = "Status"
+other = "Tila"
 
 [message_command_user_info_status]
-other = "Status"
+other = "Tila"
