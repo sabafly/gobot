@@ -360,10 +360,10 @@ other = "Portul"
 other = "Adaugă un server"
 
 [client_desktop]
-other = "Desktop"
+other = "Birou"
 
 [client_mobile]
-other = "Mobile"
+other = "Mobil"
 
 [client_web]
 other = "Web"
