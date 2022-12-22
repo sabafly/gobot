@@ -358,3 +358,18 @@ other = "Port"
 
 [panel_minecraft_add_server]
 other = "Ajouter un serveur"
+
+[client_desktop]
+other = "Desktop"
+
+[client_mobile]
+other = "Mobile"
+
+[client_web]
+other = "Web"
+
+[online_status]
+other = "Status"
+
+[message_command_user_info_status]
+other = "Status"
