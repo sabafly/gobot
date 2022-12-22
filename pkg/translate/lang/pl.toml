@@ -360,10 +360,10 @@ other = "Port"
 other = "Dodaj serwer"
 
 [client_desktop]
-other = "Desktop"
+other = "Pulpit"
 
 [client_mobile]
-other = "Mobile"
+other = "Komórka"
 
 [client_web]
 other = "Web"
