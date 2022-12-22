@@ -363,7 +363,7 @@ other = "Server hinzufügen"
 other = "Desktop"
 
 [client_mobile]
-other = "Mobile"
+other = "Mobil"
 
 [client_web]
 other = "Web"
