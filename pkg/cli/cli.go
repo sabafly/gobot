@@ -175,6 +175,11 @@ func end(registeredCommands []*discordgo.ApplicationCommand) {
 			}
 		}
 
+		cs, _ := s.ApplicationCommands(s.State.User.ID, *setup.SupportGuildID)
+		for _, v := range cs {
+			s.ApplicationCommandDelete(s.State.User.ID, v.GuildID, v.ID)
+		}
+
 	}
 	s.Close()
 	log.Println("正常にシャットダウンしました")

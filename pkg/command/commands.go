@@ -923,6 +923,7 @@ func UInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
 	})
+	gid := i.GuildID
 	uid := i.ApplicationCommandData().TargetID
 	m, err := s.State.Member(i.GuildID, uid)
 	if err != nil {
@@ -932,6 +933,26 @@ func UInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			},
 		})
 		return
+	}
+	var status string
+	p, err := s.State.Presence(gid, uid)
+	if err != nil {
+		status = "Status: " + util.StatusString(discordgo.StatusOffline)
+	} else {
+		if p.Status != discordgo.StatusOffline {
+			if str := util.StatusString(p.ClientStatus.Web); str != "" {
+				status += translate.Message(i.Locale, "client_web") + ": " + str + "\r"
+			}
+			if str := util.StatusString(p.ClientStatus.Desktop); str != "" {
+				status += translate.Message(i.Locale, "client_desktop") + ": " + str + "\r"
+			}
+			if str := util.StatusString(p.ClientStatus.Mobile); str != "" {
+				status += translate.Message(i.Locale, "client_mobile") + ": " + str + "\r"
+			}
+		}
+		if status == "" {
+			status += translate.Message(i.Locale, "online_status") + ": " + util.StatusString(p.Status) + "\r"
+		}
 	}
 	u, err := s.User(uid)
 	if err != nil {
@@ -1018,6 +1039,11 @@ func UInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			{
 				Name:   translate.Message(i.Locale, "message_command_user_info_color_code"),
 				Value:  sColor,
+				Inline: true,
+			},
+			{
+				Name:   translate.Message(i.Locale, "message_command_user_info_status"),
+				Value:  status,
 				Inline: true,
 			},
 		},

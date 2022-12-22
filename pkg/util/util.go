@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -115,4 +116,24 @@ func Regexp2FindAllString(re *regexp2.Regexp, s string) []string {
 		m, _ = re.FindNextMatch(m)
 	}
 	return matches
+}
+
+func StatusString(status discordgo.Status) (str string) {
+	switch status {
+	case discordgo.StatusOnline:
+		return "<:online:1055430359363354644>"
+	case discordgo.StatusDoNotDisturb:
+		return "<:dnd:1055434290629980220>"
+	case discordgo.StatusIdle:
+		return "<:idle:1055433789020586035> "
+	case discordgo.StatusInvisible:
+		return "<:offline:1055434315514785792>"
+	case discordgo.StatusOffline:
+		return "<:offline:1055434315514785792>"
+	}
+	return
+}
+
+func IsNil[T any](v T) bool {
+	return reflect.ValueOf(v).IsNil()
 }

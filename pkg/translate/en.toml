@@ -224,32 +224,42 @@ other = "port"
 [version]
 other = "version"
 [message_modify_cant_use_this_message_error]
-other="not available for that message"
+other = "not available for that message"
 [message_modify_role_add_message]
-other="Choose a role to add"
+other = "Choose a role to add"
 [message_modify_role_create_message]
-other="Coose a role to create panel"
+other = "Coose a role to create panel"
 [message_command_select_message]
-other="selected"
+other = "selected"
 [message_command_select]
-other="select"
+other = "select"
 [command_panel_option_config]
-other="config"
+other = "config"
 [command_panel_option_config_desc]
-other="configure proprties"
+other = "configure proprties"
 [command_panel_option_config_option_emoji]
-other="emoji"
+other = "emoji"
 [command_panel_option_config_option_emoji_desc]
-other="Set custom emoji in select menu"
+other = "Set custom emoji in select menu"
 [command_panel_option_config_option_emoji_message]
-other="Please send emoji in this channel"
+other = "Please send emoji in this channel"
 [panel_minecraft_display_name]
-other="Display Name"
+other = "Display Name"
 [panel_minecraft_address]
-other="Address"
+other = "Address"
 [panel_minecraft_my_server]
-other="My server"
+other = "My server"
 [panel_minecraft_port]
-other="Port"
+other = "Port"
 [panel_minecraft_add_server]
-other="Add a server"
+other = "Add a server"
+[client_desktop]
+other = "Desktop"
+[client_mobile]
+other = "Mobile"
+[client_web]
+other = "Web"
+[online_status]
+other = "Status"
+[message_command_user_info_status]
+other = "Status"
