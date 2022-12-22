@@ -360,16 +360,16 @@ other = "Poort"
 other = "Voeg een server toe"
 
 [client_desktop]
-other = "Desktop"
+other = "Startscherm"
 
 [client_mobile]
-other = "Mobile"
+other = "Mobiel"
 
 [client_web]
-other = "Web"
+other = "Internet"
 
 [online_status]
-other = "Status"
+other = "status"
 
 [message_command_user_info_status]
-other = "Status"
+other = "status"
