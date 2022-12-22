@@ -358,3 +358,18 @@ other = "Přístav"
 
 [panel_minecraft_add_server]
 other = "Přidat server"
+
+[client_desktop]
+other = "Stolní počítače"
+
+[client_mobile]
+other = "Mobil"
+
+[client_web]
+other = "Webová"
+
+[online_status]
+other = "Stav"
+
+[message_command_user_info_status]
+other = "Stav"

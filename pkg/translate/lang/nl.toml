@@ -358,3 +358,18 @@ other = "Poort"
 
 [panel_minecraft_add_server]
 other = "Voeg een server toe"
+
+[client_desktop]
+other = "Startscherm"
+
+[client_mobile]
+other = "Mobiel"
+
+[client_web]
+other = "Internet"
+
+[online_status]
+other = "status"
+
+[message_command_user_info_status]
+other = "status"

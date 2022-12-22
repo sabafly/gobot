@@ -358,3 +358,18 @@ other = "Port"
 
 [panel_minecraft_add_server]
 other = "Lägg till en server"
+
+[client_desktop]
+other = "Skrivbord"
+
+[client_mobile]
+other = "Mobil"
+
+[client_web]
+other = "Webb"
+
+[online_status]
+other = "Status"
+
+[message_command_user_info_status]
+other = "Status"

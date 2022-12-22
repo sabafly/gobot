@@ -358,3 +358,18 @@ other = "Порт"
 
 [panel_minecraft_add_server]
 other = "Додати сервер"
+
+[client_desktop]
+other = "Стільниця"
+
+[client_mobile]
+other = "Мобільний"
+
+[client_web]
+other = "Веб"
+
+[online_status]
+other = "Статус"
+
+[message_command_user_info_status]
+other = "Статус"

@@ -358,3 +358,18 @@ other = "Θύρα"
 
 [panel_minecraft_add_server]
 other = "Προσθήκη διακομιστή"
+
+[client_desktop]
+other = "Επιφάνεια Εργασίας"
+
+[client_mobile]
+other = "Κινητό"
+
+[client_web]
+other = "Ιστός"
+
+[online_status]
+other = "Κατάσταση"
+
+[message_command_user_info_status]
+other = "Κατάσταση"

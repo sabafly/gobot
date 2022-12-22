@@ -358,3 +358,18 @@ other = "ポート"
 
 [panel_minecraft_add_server]
 other = "サーバーを追加"
+
+[client_desktop]
+other = "デスクトップ"
+
+[client_mobile]
+other = "モバイル"
+
+[client_web]
+other = "ウェブ"
+
+[online_status]
+other = "ステータス"
+
+[message_command_user_info_status]
+other = "ステータス"

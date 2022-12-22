@@ -358,3 +358,18 @@ other = "Puerto"
 
 [panel_minecraft_add_server]
 other = "Añadir un servidor"
+
+[client_desktop]
+other = "Escritorio"
+
+[client_mobile]
+other = "Móvil"
+
+[client_web]
+other = "Web"
+
+[online_status]
+other = "Estado"
+
+[message_command_user_info_status]
+other = "Estado"

@@ -358,3 +358,18 @@ other = "端口"
 
 [panel_minecraft_add_server]
 other = "添加服务器"
+
+[client_desktop]
+other = "桌面"
+
+[client_mobile]
+other = "移动设备"
+
+[client_web]
+other = "Web"
+
+[online_status]
+other = "状态"
+
+[message_command_user_info_status]
+other = "状态"

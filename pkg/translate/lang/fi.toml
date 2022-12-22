@@ -358,3 +358,18 @@ other = "Portti"
 
 [panel_minecraft_add_server]
 other = "Lisää palvelin"
+
+[client_desktop]
+other = "Työpöytä"
+
+[client_mobile]
+other = "Mobiili"
+
+[client_web]
+other = "Verkko"
+
+[online_status]
+other = "Tila"
+
+[message_command_user_info_status]
+other = "Tila"
