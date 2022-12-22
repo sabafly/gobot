@@ -360,13 +360,13 @@ other = "Port"
 other = "Lägg till en server"
 
 [client_desktop]
-other = "Desktop"
+other = "Skrivbord"
 
 [client_mobile]
-other = "Mobile"
+other = "Mobil"
 
 [client_web]
-other = "Web"
+other = "Webb"
 
 [online_status]
 other = "Status"
