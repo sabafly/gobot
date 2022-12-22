@@ -360,16 +360,16 @@ other = "Порт"
 other = "Добавить сервер"
 
 [client_desktop]
-other = "Desktop"
+other = "Рабочий стол"
 
 [client_mobile]
-other = "Mobile"
+other = "Мобильный"
 
 [client_web]
-other = "Web"
+other = "Веб"
 
 [online_status]
-other = "Status"
+other = "Статус"
 
 [message_command_user_info_status]
-other = "Status"
+other = "Статус"
