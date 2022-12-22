@@ -363,13 +363,13 @@ other = "Aggiungi un server"
 other = "Desktop"
 
 [client_mobile]
-other = "Mobile"
+other = "Cellulare"
 
 [client_web]
 other = "Web"
 
 [online_status]
-other = "Status"
+other = "Stato"
 
 [message_command_user_info_status]
-other = "Status"
+other = "Stato"
