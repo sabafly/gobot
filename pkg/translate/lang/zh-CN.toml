@@ -360,16 +360,16 @@ other = "端口"
 other = "添加服务器"
 
 [client_desktop]
-other = "Desktop"
+other = "桌面"
 
 [client_mobile]
-other = "Mobile"
+other = "移动设备"
 
 [client_web]
 other = "Web"
 
 [online_status]
-other = "Status"
+other = "状态"
 
 [message_command_user_info_status]
-other = "Status"
+other = "状态"
