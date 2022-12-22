@@ -360,16 +360,16 @@ other = "Port"
 other = "Legg til server"
 
 [client_desktop]
-other = "Desktop"
+other = "Skrivebord"
 
 [client_mobile]
-other = "Mobile"
+other = "Mobil"
 
 [client_web]
-other = "Web"
+other = "Nett"
 
 [online_status]
-other = "Status"
+other = "Status:"
 
 [message_command_user_info_status]
-other = "Status"
+other = "Status:"
