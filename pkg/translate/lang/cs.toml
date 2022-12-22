@@ -360,16 +360,16 @@ other = "Přístav"
 other = "Přidat server"
 
 [client_desktop]
-other = "Desktop"
+other = "Stolní počítače"
 
 [client_mobile]
-other = "Mobile"
+other = "Mobil"
 
 [client_web]
-other = "Web"
+other = "Webová"
 
 [online_status]
-other = "Status"
+other = "Stav"
 
 [message_command_user_info_status]
-other = "Status"
+other = "Stav"
