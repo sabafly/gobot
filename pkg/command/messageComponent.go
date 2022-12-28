@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -132,6 +133,9 @@ func MCpanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		})
 		return
 	}
+	sort.Slice(roles, func(i, j int) bool {
+		return roles[i].Position > roles[j].Position
+	})
 	options := []discordgo.SelectMenuOption{}
 	for n, r := range roles {
 		options = append(options, discordgo.SelectMenuOption{
@@ -226,6 +230,9 @@ func MCpanelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		})
 		return
 	}
+	sort.Slice(roles, func(i, j int) bool {
+		return roles[i].Position > roles[j].Position
+	})
 	options := []discordgo.SelectMenuOption{}
 	for n, r := range roles {
 		options = append(options, discordgo.SelectMenuOption{
