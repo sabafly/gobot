@@ -26,7 +26,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/command"
-	"github.com/ikafly144/gobot/pkg/session"
+	"github.com/ikafly144/gobot/pkg/message"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/joho/godotenv"
 )
@@ -475,17 +475,17 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		}
 	)
 
-	messageComponentHandlers := map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-		"gobot_panel_role": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	messageComponentHandlers := map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string){
+		"gobot_panel_role": func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
 			command.MCpanelRole(s, i)
 		},
-		"gobot_panel_role_add": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			command.MCpanelRoleAdd(s, i)
+		"gobot_panel_role_add": func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
+			command.MCpanelRoleAdd(s, i, sessionID)
 		},
-		"gobot_panel_role_create": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			command.MCpanelRoleCreate(s, i)
+		"gobot_panel_role_create": func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
+			command.MCpanelRoleCreate(s, i, sessionID)
 		},
-		"gobot_panel_minecraft": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		"gobot_panel_minecraft": func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
 			command.MCpanelMinecraft(s, i)
 		},
 	}
@@ -502,8 +502,19 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 				h(s, i)
 			}
 		} else if i.Type == discordgo.InteractionMessageComponent {
-			if c, ok := messageComponentHandlers[i.MessageComponentData().CustomID]; ok {
-				c(s, i)
+			ids := strings.Split(i.MessageComponentData().CustomID, ":")
+			var customID string
+			var sessionID string
+			for i2, v := range ids {
+				switch i2 {
+				case 0:
+					customID = v
+				case 1:
+					sessionID = v
+				}
+			}
+			if c, ok := messageComponentHandlers[customID]; ok {
+				c(s, i, sessionID)
 			}
 		} else if i.Type == discordgo.InteractionModalSubmit {
 			ids := strings.Split(i.ModalSubmitData().CustomID, ":")
@@ -534,7 +545,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		g, _ := s.Guild(m.GuildID)
 		c, _ := s.Channel(m.ChannelID)
 		log.Printf("[Message Created] : %v(%v) #%v(%v) <%v#%v>\n                 >> %v", g.Name, g.ID, c.Name, c.ID, m.Author.Username, m.Author.Discriminator, str)
-		session.HandleExec(s, m)
+		message.HandleExec(s, m)
 	})
 
 	return s, commands, RemoveCommands, GuildID

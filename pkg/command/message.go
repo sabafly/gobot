@@ -86,7 +86,7 @@ func gobotPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *d
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
 						MenuType:  discordgo.RoleSelectMenu,
-						CustomID:  "gobot_panel_role_add",
+						CustomID:  "gobot_panel_role_add:" + interactionSave(i),
 						MinValues: &one,
 						MaxValues: 25,
 					},

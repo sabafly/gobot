@@ -97,7 +97,7 @@ func MCpanelRole(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 }
 
-func MCpanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func MCpanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate, id string) {
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
@@ -192,9 +192,12 @@ func MCpanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	} else {
 		s.InteractionResponseDelete(i.Interaction)
 	}
+	i2, _ := interactionLoad(id)
+	s.InteractionResponseDelete(i2.Data().Interaction)
+	interactionRemove(id)
 }
 
-func MCpanelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func MCpanelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, id string) {
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
@@ -288,6 +291,9 @@ func MCpanelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		Content: &str,
 		Embeds:  &embed,
 	})
+	i2, _ := interactionLoad(id)
+	s.InteractionResponseDelete(i2.Data().Interaction)
+	interactionRemove(id)
 }
 
 func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {

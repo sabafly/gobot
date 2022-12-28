@@ -34,7 +34,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/api"
-	"github.com/ikafly144/gobot/pkg/session"
+	"github.com/ikafly144/gobot/pkg/message"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
 	"github.com/ikafly144/gobot/pkg/util"
@@ -442,7 +442,7 @@ func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, optio
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
 						MenuType:  discordgo.RoleSelectMenu,
-						CustomID:  "gobot_panel_role_create",
+						CustomID:  "gobot_panel_role_create:" + interactionSave(i),
 						MinValues: &one,
 						MaxValues: 25,
 					},
@@ -580,8 +580,8 @@ func panelConfigEmoji(s *discordgo.Session, i *discordgo.InteractionCreate, opti
 	}
 	switch data.CustomID {
 	case "gobot_panel_minecraft", "gobot_panel_role":
-		session.RemoveSession(session.SessionID{ID: uid})
-		panelSession, _ := session.NewSession(session.SessionID{ID: uid}, session.RolePanelEdit)
+		message.RemoveSession(message.SessionID{ID: uid})
+		panelSession, _ := message.NewSession(message.SessionID{ID: uid}, message.RolePanelEdit)
 		panelSession.Data = types.PanelEmojiConfig{
 			Message:     mes.ID,
 			Emojis:      []*discordgo.ComponentEmoji{},
@@ -606,15 +606,15 @@ func panelConfigEmoji(s *discordgo.Session, i *discordgo.InteractionCreate, opti
 	})
 }
 
-func init() { session.AddHandler(session.RolePanelEdit, panelConfigEmojiHandler) }
+func init() { message.AddHandler(message.RolePanelEdit, panelConfigEmojiHandler) }
 
-func panelConfigEmojiHandler(s *discordgo.Session, m *discordgo.MessageCreate, ses *session.Session) {
+func panelConfigEmojiHandler(s *discordgo.Session, m *discordgo.MessageCreate, ses *message.Session) {
 	data, _ := ses.Data.(types.PanelEmojiConfig)
 	if data.MessageData.ChannelID != m.ChannelID {
 		return
 	}
 	if m.Content == "cancel" {
-		session.RemoveSession(ses.ID())
+		message.RemoveSession(ses.ID())
 		RemoveSelect(ses.ID().ID, data.MessageData.GuildID)
 		return
 	}
@@ -655,7 +655,7 @@ func panelConfigEmojiHandler(s *discordgo.Session, m *discordgo.MessageCreate, s
 			log.Print(value)
 		}
 		updateEmoji(s, data)
-		session.RemoveSession(ses.ID())
+		message.RemoveSession(ses.ID())
 		RemoveSelect(ses.ID().ID, data.MessageData.GuildID)
 	}
 }
