@@ -62,11 +62,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 	s.Identify.Intents = discordgo.IntentsAll
 
 	var (
-		// integerOptionMinValue          = 1.0
-		dmPermission = false
-		// PermissionAll          int64 = discordgo.PermissionAll
-		PermissionBanMembers   int64 = discordgo.PermissionBanMembers
-		PermissionKickMembers  int64 = discordgo.PermissionKickMembers
+		dmPermission                 = false
 		PermissionAdminMembers int64 = discordgo.PermissionManageServer
 	)
 	commands := []*discordgo.ApplicationCommand{
@@ -77,70 +73,6 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 				discordgo.Japanese: "ポング！",
 			},
 			Version: "1",
-		},
-		{
-			Name:                     "ban",
-			Description:              "ban the selected user",
-			NameLocalizations:        translate.MessageMap("command_ban", true),
-			DescriptionLocalizations: translate.MessageMap("command_ban_desc", false),
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Name:                     "target",
-					Description:              "user to ban",
-					NameLocalizations:        *translate.MessageMap("command_ban_option_target", true),
-					DescriptionLocalizations: *translate.MessageMap("command_ban_option_desc_target", false),
-					Type:                     discordgo.ApplicationCommandOptionUser,
-					Required:                 true,
-				},
-				{
-					Name:                     "reason",
-					Description:              "reason for ban",
-					NameLocalizations:        *translate.MessageMap("command_ban_option_reason", true),
-					DescriptionLocalizations: *translate.MessageMap("command_ban_option_desc_reason", false),
-					Type:                     discordgo.ApplicationCommandOptionString,
-				},
-			},
-			DefaultMemberPermissions: &PermissionBanMembers,
-			DMPermission:             &dmPermission,
-			Version:                  "1",
-		},
-		{
-			Name:                     "unban",
-			Description:              "pardon the selected user",
-			NameLocalizations:        translate.MessageMap("command_unban", true),
-			DescriptionLocalizations: translate.MessageMap("command_unban_desc", false),
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Name:                     "target",
-					Description:              "user to pardon",
-					NameLocalizations:        *translate.MessageMap("command_unban_option_target", true),
-					DescriptionLocalizations: *translate.MessageMap("command_unban_option_desc_target", false),
-					Type:                     discordgo.ApplicationCommandOptionUser,
-					Required:                 true,
-				},
-			},
-			DefaultMemberPermissions: &PermissionBanMembers,
-			DMPermission:             &dmPermission,
-			Version:                  "1",
-		},
-		{
-			Name:                     "kick",
-			Description:              "kick the selected user",
-			NameLocalizations:        translate.MessageMap("command_kick", true),
-			DescriptionLocalizations: translate.MessageMap("command_kick_desc", false),
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Name:                     "target",
-					Description:              "user to kick",
-					NameLocalizations:        *translate.MessageMap("command_kick_option_target", true),
-					DescriptionLocalizations: *translate.MessageMap("command_kick_option_desc_target", false),
-					Type:                     discordgo.ApplicationCommandOptionUser,
-					Required:                 true,
-				},
-			},
-			DefaultMemberPermissions: &PermissionKickMembers,
-			DMPermission:             &dmPermission,
-			Version:                  "1",
 		},
 		{
 			Name:                     "panel",
@@ -405,24 +337,6 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 	}
 	var (
 		commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-			"ban": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: command.Ban(s, &i.Locale, i.ApplicationCommandData(), i.GuildID),
-				})
-				if err != nil {
-					log.Printf("例外: %v", err)
-				}
-			},
-			"unban": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: command.UnBan(s, &i.Locale, i.ApplicationCommandData(), i.GuildID),
-				})
-				if err != nil {
-					log.Printf("例外: %v", err)
-				}
-			},
 			"ping": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				contents := map[discordgo.Locale]string{
 					discordgo.Japanese: "ポング！\r" + s.HeartbeatLatency().String(),
@@ -437,15 +351,6 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 					Data: &discordgo.InteractionResponseData{
 						Content: content,
 					},
-				})
-				if err != nil {
-					log.Printf("例外: %v", err)
-				}
-			},
-			"kick": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: command.Kick(s, &i.Locale, i.ApplicationCommandData(), i.GuildID),
 				})
 				if err != nil {
 					log.Printf("例外: %v", err)
