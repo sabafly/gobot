@@ -215,7 +215,7 @@ other = "Tapahtui virhe {{.Error}}"
 other = "Botti ei voi valita kohteeksi!"
 
 [error_bot_does_not_have_permissions]
-other = "Insufficient bot permissions!\rIt must be given administrator permission by the server admin to work!"
+other = "Riittämätön botin käyttöoikeudet!\rPalvelimen ylläpitäjän täytyy antaa järjestelmänvalvojalle lupa toimiakseen!"
 
 [error_cannot_use_roles]
 other = "Seuraavia rooleja ei voi käyttää"
