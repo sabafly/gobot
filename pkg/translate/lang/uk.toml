@@ -4,51 +4,35 @@ other = "адреса"
 [channel]
 other = "канал"
 
-[command_ban]
-other = "бан"
+[client_desktop]
+other = "Стільниця"
 
-[command_ban_desc]
-other = "забанити вибраного користувача"
+[client_mobile]
+other = "Мобільний"
 
-[command_ban_message]
-other = "{{.Target}} був забанений"
-
-[command_ban_option_desc_reason]
-other = "причина для бану"
-
-[command_ban_option_desc_target]
-other = "користувач для блокування"
-
-[command_ban_option_reason]
-other = "причина"
-
-[command_ban_option_target]
-other = "target"
-
-[command_ban_reason]
-one = "Причина: {{.Reason}}"
-other = "Причини: {{.Reason}}"
-
-[command_kick]
-other = "кік"
-
-[command_kick_desc]
-other = "вилучити вибраного користувача"
-
-[command_kick_message]
-other = "{{.Target}} був вигнаний"
-
-[command_kick_option_desc_target]
-other = "користувача для вилучення"
-
-[command_kick_option_target]
-other = "target"
+[client_web]
+other = "Веб"
 
 [command_panel]
 other = "панель"
 
 [command_panel_desc]
 other = "керування або створити панель"
+
+[command_panel_option_config]
+other = "конфігурація"
+
+[command_panel_option_config_desc]
+other = "налаштувати броні"
+
+[command_panel_option_config_option_emoji]
+other = "emoji"
+
+[command_panel_option_config_option_emoji_desc]
+other = "Встановити користувацькі емодзі в меню"
+
+[command_panel_option_config_option_emoji_message]
+other = "Будь ласка, надішліть emoji на цьому каналі"
 
 [command_panel_option_desc_role]
 other = "керувати панеллю ролей"
@@ -221,21 +205,6 @@ other = "ім'я"
 [command_tracker_option_minecraft_option_remove_option_name_desc]
 other = "ім'я трекера"
 
-[command_unban]
-other = "розблокування"
-
-[command_unban_desc]
-other = "розблокувати вибраного користувача"
-
-[command_unban_message]
-other = "{{.Target}} був розблокований"
-
-[command_unban_option_desc_target]
-other = "користувача для розблокування"
-
-[command_unban_option_target]
-other = "target"
-
 [error]
 other = "{{.Error}}"
 
@@ -244,6 +213,9 @@ other = "Відбулася помилка {{.Error}}"
 
 [error_TargetIsBot]
 other = "Не вдається вибрати цього бота як ціль!"
+
+[error_cannot_use_roles]
+other = "Наступні ролі не можна використовувати"
 
 [error_failed_to_connect_api]
 other = "помилка підключення до сервера API"
@@ -257,9 +229,6 @@ other = "неприпустиме значення порту"
 [error_invalid_roles]
 other = "Невірна роль(и)"
 
-[error_cannot_use_roles]
-other = "Наступні ролі не можна використовувати"
-
 [error_message]
 other = "Сталася помилка"
 
@@ -271,6 +240,12 @@ other = "затримка"
 
 [message_command_modify]
 other = "змінити"
+
+[message_command_select]
+other = "вибрати"
+
+[message_command_select_message]
+other = "обрано"
 
 [message_command_user_info]
 other = "інформація"
@@ -293,11 +268,41 @@ other = "нічого"
 [message_command_user_info_roles]
 other = "Ролі"
 
+[message_command_user_info_status]
+other = "Статус"
+
+[message_modify_cant_use_this_message_error]
+other = "недоступно для цього повідомлення"
+
+[message_modify_role_add_message]
+other = "Виберіть роль для додавання"
+
+[message_modify_role_create_message]
+other = "Вибрати роль для створення панелі"
+
+[online_status]
+other = "Статус"
+
+[panel_minecraft_add_server]
+other = "Додати сервер"
+
+[panel_minecraft_address]
+other = "Адреса"
+
+[panel_minecraft_display_name]
+other = "Ім'я для відображення"
+
 [panel_minecraft_message_boot]
 other = "стартував {{.Name}}"
 
 [panel_minecraft_message_stop]
 other = "зупинено {{.Name}}"
+
+[panel_minecraft_my_server]
+other = "Мій сервер"
+
+[panel_minecraft_port]
+other = "Порт"
 
 [panel_role_message_added]
 other = "додано"
@@ -313,63 +318,3 @@ other = "порт"
 
 [version]
 other = "версія"
-
-[message_modify_cant_use_this_message_error]
-other = "недоступно для цього повідомлення"
-
-[message_modify_role_add_message]
-other = "Виберіть роль для додавання"
-
-[message_modify_role_create_message]
-other = "Вибрати роль для створення панелі"
-
-[message_command_select_message]
-other = "обрано"
-
-[message_command_select]
-other = "вибрати"
-
-[command_panel_option_config]
-other = "конфігурація"
-
-[command_panel_option_config_desc]
-other = "налаштувати броні"
-
-[command_panel_option_config_option_emoji]
-other = "emoji"
-
-[command_panel_option_config_option_emoji_desc]
-other = "Встановити користувацькі емодзі в меню"
-
-[command_panel_option_config_option_emoji_message]
-other = "Будь ласка, надішліть emoji на цьому каналі"
-
-[panel_minecraft_display_name]
-other = "Ім'я для відображення"
-
-[panel_minecraft_address]
-other = "Адреса"
-
-[panel_minecraft_my_server]
-other = "Мій сервер"
-
-[panel_minecraft_port]
-other = "Порт"
-
-[panel_minecraft_add_server]
-other = "Додати сервер"
-
-[client_desktop]
-other = "Стільниця"
-
-[client_mobile]
-other = "Мобільний"
-
-[client_web]
-other = "Веб"
-
-[online_status]
-other = "Статус"
-
-[message_command_user_info_status]
-other = "Статус"
