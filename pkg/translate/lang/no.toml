@@ -215,7 +215,7 @@ other = "En feil har oppstått {{.Error}}"
 other = "Kan ikke velge denne botten som mål!"
 
 [error_bot_does_not_have_permissions]
-other = "Insufficient bot permissions!\rIt must be given administrator permission by the server admin to work!"
+other = "Utilstrekkelige bot tillatelser!\rDet må gis administratorrettigheter av serveradministratoren til å virke!"
 
 [error_cannot_use_roles]
 other = "Følgende roller kan ikke brukes"
