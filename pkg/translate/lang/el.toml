@@ -4,51 +4,35 @@ other = "διεύθυνση"
 [channel]
 other = "κανάλι"
 
-[command_ban]
-other = "απαγόρευση"
+[client_desktop]
+other = "Επιφάνεια Εργασίας"
 
-[command_ban_desc]
-other = "απαγόρευση του επιλεγμένου χρήστη"
+[client_mobile]
+other = "Κινητό"
 
-[command_ban_message]
-other = "{{.Target}} έχει αποκλειστεί"
-
-[command_ban_option_desc_reason]
-other = "λόγος απαγόρευσης"
-
-[command_ban_option_desc_target]
-other = "χρήστης να απαγορεύσει"
-
-[command_ban_option_reason]
-other = "λόγος"
-
-[command_ban_option_target]
-other = "target"
-
-[command_ban_reason]
-one = "Αιτία: {{.Reason}}"
-other = "Λόγοι: {{.Reason}}"
-
-[command_kick]
-other = "κλωτσιά"
-
-[command_kick_desc]
-other = "κλώτσησε τον επιλεγμένο χρήστη"
-
-[command_kick_message]
-other = "{{.Target}} έχει διώξει"
-
-[command_kick_option_desc_target]
-other = "χρήστης για να κλωτσήσει"
-
-[command_kick_option_target]
-other = "target"
+[client_web]
+other = "Ιστός"
 
 [command_panel]
 other = "πίνακας"
 
 [command_panel_desc]
 other = "διαχείριση ή δημιουργία πίνακα"
+
+[command_panel_option_config]
+other = "διαμόρφωση"
+
+[command_panel_option_config_desc]
+other = "ρύθμιση proprties"
+
+[command_panel_option_config_option_emoji]
+other = "emoji"
+
+[command_panel_option_config_option_emoji_desc]
+other = "Ορισμός προσαρμοσμένων emoji στο μενού επιλογής"
+
+[command_panel_option_config_option_emoji_message]
+other = "Παρακαλώ στείλτε emoji σε αυτό το κανάλι"
 
 [command_panel_option_desc_role]
 other = "διαχείριση ρόλου πίνακα"
@@ -221,21 +205,6 @@ other = "όνομα"
 [command_tracker_option_minecraft_option_remove_option_name_desc]
 other = "όνομα του ιχνηλάτη"
 
-[command_unban]
-other = "ακύρωση"
-
-[command_unban_desc]
-other = "κατάργηση αποκλεισμού του επιλεγμένου χρήστη"
-
-[command_unban_message]
-other = "{{.Target}} έχει καταργηθεί"
-
-[command_unban_option_desc_target]
-other = "χρήστης για κατάργηση αποκλεισμού"
-
-[command_unban_option_target]
-other = "target"
-
 [error]
 other = "{{.Error}}"
 
@@ -244,6 +213,12 @@ other = "Παρουσιάστηκε ένα σφάλμα {{.Error}}"
 
 [error_TargetIsBot]
 other = "Δεν μπορείτε να επιλέξετε αυτό το bot ως στόχο!"
+
+[error_bot_does_not_have_permissions]
+other = "Ανεπαρκή δικαιώματα bot !\rΠρέπει να του δοθεί άδεια διαχειριστή από τον διαχειριστή για να λειτουργήσει!"
+
+[error_cannot_use_roles]
+other = "Οι ακόλουθοι ρόλοι δεν μπορούν να χρησιμοποιηθούν"
 
 [error_failed_to_connect_api]
 other = "αποτυχία σύνδεσης στο σφάλμα διακομιστή api"
@@ -257,9 +232,6 @@ other = "μη έγκυρη τιμή θύρας"
 [error_invalid_roles]
 other = "Μη έγκυρος ρόλος"
 
-[error_cannot_use_roles]
-other = "Οι ακόλουθοι ρόλοι δεν μπορούν να χρησιμοποιηθούν"
-
 [error_message]
 other = "Παρουσιάστηκε ένα σφάλμα"
 
@@ -271,6 +243,12 @@ other = "λανθάνουσα κατάσταση"
 
 [message_command_modify]
 other = "τροποποίηση"
+
+[message_command_select]
+other = "επιλογή"
+
+[message_command_select_message]
+other = "επιλεγμένα"
 
 [message_command_user_info]
 other = "πληροφορίες"
@@ -293,11 +271,41 @@ other = "κανένα"
 [message_command_user_info_roles]
 other = "Ρόλοι"
 
+[message_command_user_info_status]
+other = "Κατάσταση"
+
+[message_modify_cant_use_this_message_error]
+other = "δεν είναι διαθέσιμο για αυτό το μήνυμα"
+
+[message_modify_role_add_message]
+other = "Επιλέξτε ένα ρόλο για προσθήκη"
+
+[message_modify_role_create_message]
+other = "Χτυπήστε ένα ρόλο για να δημιουργήσετε πίνακα"
+
+[online_status]
+other = "Κατάσταση"
+
+[panel_minecraft_add_server]
+other = "Προσθήκη διακομιστή"
+
+[panel_minecraft_address]
+other = "Διεύθυνση"
+
+[panel_minecraft_display_name]
+other = "Εμφανιζόμενο Όνομα"
+
 [panel_minecraft_message_boot]
 other = "εκκινήθηκε {{.Name}}"
 
 [panel_minecraft_message_stop]
 other = "σταμάτησε {{.Name}}"
+
+[panel_minecraft_my_server]
+other = "Ο διακομιστής μου"
+
+[panel_minecraft_port]
+other = "Θύρα"
 
 [panel_role_message_added]
 other = "προστέθηκε"
@@ -313,63 +321,3 @@ other = "θύρα"
 
 [version]
 other = "έκδοση"
-
-[message_modify_cant_use_this_message_error]
-other = "δεν είναι διαθέσιμο για αυτό το μήνυμα"
-
-[message_modify_role_add_message]
-other = "Επιλέξτε ένα ρόλο για προσθήκη"
-
-[message_modify_role_create_message]
-other = "Χτυπήστε ένα ρόλο για να δημιουργήσετε πίνακα"
-
-[message_command_select_message]
-other = "επιλεγμένα"
-
-[message_command_select]
-other = "επιλογή"
-
-[command_panel_option_config]
-other = "διαμόρφωση"
-
-[command_panel_option_config_desc]
-other = "ρύθμιση proprties"
-
-[command_panel_option_config_option_emoji]
-other = "emoji"
-
-[command_panel_option_config_option_emoji_desc]
-other = "Ορισμός προσαρμοσμένων emoji στο μενού επιλογής"
-
-[command_panel_option_config_option_emoji_message]
-other = "Παρακαλώ στείλτε emoji σε αυτό το κανάλι"
-
-[panel_minecraft_display_name]
-other = "Εμφανιζόμενο Όνομα"
-
-[panel_minecraft_address]
-other = "Διεύθυνση"
-
-[panel_minecraft_my_server]
-other = "Ο διακομιστής μου"
-
-[panel_minecraft_port]
-other = "Θύρα"
-
-[panel_minecraft_add_server]
-other = "Προσθήκη διακομιστή"
-
-[client_desktop]
-other = "Επιφάνεια Εργασίας"
-
-[client_mobile]
-other = "Κινητό"
-
-[client_web]
-other = "Ιστός"
-
-[online_status]
-other = "Κατάσταση"
-
-[message_command_user_info_status]
-other = "Κατάσταση"

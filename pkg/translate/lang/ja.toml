@@ -4,51 +4,35 @@ other = "アドレス"
 [channel]
 other = "チャンネル"
 
-[command_ban]
-other = "バン"
+[client_desktop]
+other = "デスクトップ"
 
-[command_ban_desc]
-other = "選択したユーザーをBANします"
+[client_mobile]
+other = "モバイル"
 
-[command_ban_message]
-other = "{{.Target}} はBANされました"
-
-[command_ban_option_desc_reason]
-other = "BANの理由"
-
-[command_ban_option_desc_target]
-other = "BANするユーザー"
-
-[command_ban_option_reason]
-other = "理由"
-
-[command_ban_option_target]
-other = "対象"
-
-[command_ban_reason]
-one = "理由: {{.Reason}}"
-other = "理由: {{.Reason}}"
-
-[command_kick]
-other = "キック"
-
-[command_kick_desc]
-other = "選択したユーザーをキックする"
-
-[command_kick_message]
-other = "{{.Target}} がキックされました"
-
-[command_kick_option_desc_target]
-other = "キックするユーザー"
-
-[command_kick_option_target]
-other = "対象"
+[client_web]
+other = "ウェブ"
 
 [command_panel]
 other = "パネル"
 
 [command_panel_desc]
 other = "パネルの管理または作成"
+
+[command_panel_option_config]
+other = "設定"
+
+[command_panel_option_config_desc]
+other = "プロパティを設定"
+
+[command_panel_option_config_option_emoji]
+other = "絵文字"
+
+[command_panel_option_config_option_emoji_desc]
+other = "セレクトメニューにカスタム絵文字を設定"
+
+[command_panel_option_config_option_emoji_message]
+other = "このチャンネルに絵文字を送信してください"
 
 [command_panel_option_desc_role]
 other = "役割パネルの管理"
@@ -221,21 +205,6 @@ other = "名前"
 [command_tracker_option_minecraft_option_remove_option_name_desc]
 other = "トラッカーの名前"
 
-[command_unban]
-other = "バン解除"
-
-[command_unban_desc]
-other = "選択したユーザーのBANを解除"
-
-[command_unban_message]
-other = "{{.Target}} のBANを解除しました"
-
-[command_unban_option_desc_target]
-other = "BANを解除するユーザー"
-
-[command_unban_option_target]
-other = "対象"
-
 [error]
 other = "{{.Error}}"
 
@@ -244,6 +213,12 @@ other = "エラーが発生しました： {{.Error}}"
 
 [error_TargetIsBot]
 other = "このボットをターゲットとして選択できません！"
+
+[error_bot_does_not_have_permissions]
+other = "Botの権限が不足しています！\r管理者権限を与える必要があります！"
+
+[error_cannot_use_roles]
+other = "次のロールは使用できません"
 
 [error_failed_to_connect_api]
 other = "APIサーバーの接続に失敗しました"
@@ -257,9 +232,6 @@ other = "不正なポート値"
 [error_invalid_roles]
 other = "無効な役割です"
 
-[error_cannot_use_roles]
-other = "次のロールは使用できません"
-
 [error_message]
 other = "エラーが発生しました"
 
@@ -271,6 +243,12 @@ other = "レイテンシ"
 
 [message_command_modify]
 other = "変更"
+
+[message_command_select]
+other = "選択"
+
+[message_command_select_message]
+other = "選択済み"
 
 [message_command_user_info]
 other = "情報"
@@ -293,11 +271,41 @@ other = "無し"
 [message_command_user_info_roles]
 other = "ロール"
 
+[message_command_user_info_status]
+other = "ステータス"
+
+[message_modify_cant_use_this_message_error]
+other = "そのメッセージでは利用できません"
+
+[message_modify_role_add_message]
+other = "追加するロールを選択してください"
+
+[message_modify_role_create_message]
+other = "作成するパネルに追加するロールを選んで下さい"
+
+[online_status]
+other = "ステータス"
+
+[panel_minecraft_add_server]
+other = "サーバーを追加"
+
+[panel_minecraft_address]
+other = "住所"
+
+[panel_minecraft_display_name]
+other = "表示名"
+
 [panel_minecraft_message_boot]
 other = "{{.Name}} が起動しました"
 
 [panel_minecraft_message_stop]
 other = "{{.Name}} が停止しました"
+
+[panel_minecraft_my_server]
+other = "私のサーバー"
+
+[panel_minecraft_port]
+other = "ポート"
 
 [panel_role_message_added]
 other = "追加"
@@ -313,63 +321,3 @@ other = "ポート"
 
 [version]
 other = "バージョン"
-
-[message_modify_cant_use_this_message_error]
-other = "そのメッセージでは利用できません"
-
-[message_modify_role_add_message]
-other = "追加するロールを選択してください"
-
-[message_modify_role_create_message]
-other = "作成するパネルに追加するロールを選んで下さい"
-
-[message_command_select_message]
-other = "選択済み"
-
-[message_command_select]
-other = "選択"
-
-[command_panel_option_config]
-other = "設定"
-
-[command_panel_option_config_desc]
-other = "プロパティを設定"
-
-[command_panel_option_config_option_emoji]
-other = "絵文字"
-
-[command_panel_option_config_option_emoji_desc]
-other = "セレクトメニューにカスタム絵文字を設定"
-
-[command_panel_option_config_option_emoji_message]
-other = "このチャンネルに絵文字を送信してください"
-
-[panel_minecraft_display_name]
-other = "表示名"
-
-[panel_minecraft_address]
-other = "住所"
-
-[panel_minecraft_my_server]
-other = "私のサーバー"
-
-[panel_minecraft_port]
-other = "ポート"
-
-[panel_minecraft_add_server]
-other = "サーバーを追加"
-
-[client_desktop]
-other = "デスクトップ"
-
-[client_mobile]
-other = "モバイル"
-
-[client_web]
-other = "ウェブ"
-
-[online_status]
-other = "ステータス"
-
-[message_command_user_info_status]
-other = "ステータス"

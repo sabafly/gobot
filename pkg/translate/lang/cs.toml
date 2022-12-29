@@ -4,51 +4,35 @@ other = "Adresa"
 [channel]
 other = "kanál"
 
-[command_ban]
-other = "zakázat"
+[client_desktop]
+other = "Stolní počítače"
 
-[command_ban_desc]
-other = "zakázat vybraného uživatele"
+[client_mobile]
+other = "Mobil"
 
-[command_ban_message]
-other = "{{.Target}} byl zabanován"
-
-[command_ban_option_desc_reason]
-other = "důvod zákazu"
-
-[command_ban_option_desc_target]
-other = "zabanovat uživatele"
-
-[command_ban_option_reason]
-other = "důvod"
-
-[command_ban_option_target]
-other = "target"
-
-[command_ban_reason]
-one = "Důvod: {{.Reason}}"
-other = "Důvody: {{.Reason}}"
-
-[command_kick]
-other = "vykopnout"
-
-[command_kick_desc]
-other = "vyhodit vybraného uživatele"
-
-[command_kick_message]
-other = "{{.Target}} byl vyhozen"
-
-[command_kick_option_desc_target]
-other = "vykopnout uživatele"
-
-[command_kick_option_target]
-other = "target"
+[client_web]
+other = "Webová"
 
 [command_panel]
 other = "panel"
 
 [command_panel_desc]
 other = "spravovat nebo vytvářet panel"
+
+[command_panel_option_config]
+other = "konfigurace"
+
+[command_panel_option_config_desc]
+other = "konfigurovat propruty"
+
+[command_panel_option_config_option_emoji]
+other = "emoji"
+
+[command_panel_option_config_option_emoji_desc]
+other = "Nastavit vlastní emoji ve vybrané nabídce"
+
+[command_panel_option_config_option_emoji_message]
+other = "Zašlete prosím emoji do tohoto kanálu"
 
 [command_panel_option_desc_role]
 other = "spravovat panel rolí"
@@ -221,21 +205,6 @@ other = "jméno"
 [command_tracker_option_minecraft_option_remove_option_name_desc]
 other = "název trackeru"
 
-[command_unban]
-other = "odbanovat"
-
-[command_unban_desc]
-other = "odblokovat vybraného uživatele"
-
-[command_unban_message]
-other = "{{.Target}} byl odblokován"
-
-[command_unban_option_desc_target]
-other = "odblokovat uživatele"
-
-[command_unban_option_target]
-other = "target"
-
 [error]
 other = "{{.Error}}"
 
@@ -244,6 +213,12 @@ other = "Došlo k chybě {{.Error}}"
 
 [error_TargetIsBot]
 other = "Tohoto bota nelze vybrat jako cíl!"
+
+[error_bot_does_not_have_permissions]
+other = "Nedostatečná oprávnění bota!\rMusí být správcem serveru uděleno oprávnění správce!"
+
+[error_cannot_use_roles]
+other = "Následující role nelze použít"
 
 [error_failed_to_connect_api]
 other = "chyba api serveru se nezdařila"
@@ -257,9 +232,6 @@ other = "neplatná hodnota portu"
 [error_invalid_roles]
 other = "Neplatná role"
 
-[error_cannot_use_roles]
-other = "Následující role nelze použít"
-
 [error_message]
 other = "Došlo k chybě"
 
@@ -271,6 +243,12 @@ other = "odezva"
 
 [message_command_modify]
 other = "upravit"
+
+[message_command_select]
+other = "vybrat"
+
+[message_command_select_message]
+other = "vybráno"
 
 [message_command_user_info]
 other = "informace"
@@ -293,11 +271,41 @@ other = "žádný"
 [message_command_user_info_roles]
 other = "Role"
 
+[message_command_user_info_status]
+other = "Stav"
+
+[message_modify_cant_use_this_message_error]
+other = "není k dispozici pro tuto zprávu"
+
+[message_modify_role_add_message]
+other = "Vyberte roli pro přidání"
+
+[message_modify_role_create_message]
+other = "Přetáhni roli pro vytvoření panelu"
+
+[online_status]
+other = "Stav"
+
+[panel_minecraft_add_server]
+other = "Přidat server"
+
+[panel_minecraft_address]
+other = "Adresa"
+
+[panel_minecraft_display_name]
+other = "Zobrazované jméno"
+
 [panel_minecraft_message_boot]
 other = "spuštěno {{.Name}}"
 
 [panel_minecraft_message_stop]
 other = "zastavil {{.Name}}"
+
+[panel_minecraft_my_server]
+other = "Můj server"
+
+[panel_minecraft_port]
+other = "Přístav"
 
 [panel_role_message_added]
 other = "přidáno"
@@ -313,63 +321,3 @@ other = "přístav"
 
 [version]
 other = "verze"
-
-[message_modify_cant_use_this_message_error]
-other = "není k dispozici pro tuto zprávu"
-
-[message_modify_role_add_message]
-other = "Vyberte roli pro přidání"
-
-[message_modify_role_create_message]
-other = "Přetáhni roli pro vytvoření panelu"
-
-[message_command_select_message]
-other = "vybráno"
-
-[message_command_select]
-other = "vybrat"
-
-[command_panel_option_config]
-other = "konfigurace"
-
-[command_panel_option_config_desc]
-other = "konfigurovat propruty"
-
-[command_panel_option_config_option_emoji]
-other = "emoji"
-
-[command_panel_option_config_option_emoji_desc]
-other = "Nastavit vlastní emoji ve vybrané nabídce"
-
-[command_panel_option_config_option_emoji_message]
-other = "Zašlete prosím emoji do tohoto kanálu"
-
-[panel_minecraft_display_name]
-other = "Zobrazované jméno"
-
-[panel_minecraft_address]
-other = "Adresa"
-
-[panel_minecraft_my_server]
-other = "Můj server"
-
-[panel_minecraft_port]
-other = "Přístav"
-
-[panel_minecraft_add_server]
-other = "Přidat server"
-
-[client_desktop]
-other = "Stolní počítače"
-
-[client_mobile]
-other = "Mobil"
-
-[client_web]
-other = "Webová"
-
-[online_status]
-other = "Stav"
-
-[message_command_user_info_status]
-other = "Stav"

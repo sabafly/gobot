@@ -4,51 +4,35 @@ other = "address"
 [channel]
 other = "channel"
 
-[command_ban]
-other = "ban"
+[client_desktop]
+other = "Desktop"
 
-[command_ban_desc]
-other = "ban the selected user"
+[client_mobile]
+other = "Mobile"
 
-[command_ban_message]
-other = "{{.Target}} has been banned"
-
-[command_ban_option_desc_reason]
-other = "reason for ban"
-
-[command_ban_option_desc_target]
-other = "user to ban"
-
-[command_ban_option_reason]
-other = "reason"
-
-[command_ban_option_target]
-other = "target"
-
-[command_ban_reason]
-one = "Reason: {{.Reason}}"
-other = "Reasons: {{.Reason}}"
-
-[command_kick]
-other = "kick"
-
-[command_kick_desc]
-other = "kick the selected user"
-
-[command_kick_message]
-other = "{{.Target}} has been kicked"
-
-[command_kick_option_desc_target]
-other = "user to kick"
-
-[command_kick_option_target]
-other = "target"
+[client_web]
+other = "Web"
 
 [command_panel]
 other = "panel"
 
 [command_panel_desc]
 other = "manage or create panel"
+
+[command_panel_option_config]
+other = "config"
+
+[command_panel_option_config_desc]
+other = "configure proprties"
+
+[command_panel_option_config_option_emoji]
+other = "emoji"
+
+[command_panel_option_config_option_emoji_desc]
+other = "Set custom emoji in select menu"
+
+[command_panel_option_config_option_emoji_message]
+other = "Please send emoji in this channel"
 
 [command_panel_option_desc_role]
 other = "manage role panel"
@@ -221,21 +205,6 @@ other = "name"
 [command_tracker_option_minecraft_option_remove_option_name_desc]
 other = "name of tracker"
 
-[command_unban]
-other = "unban"
-
-[command_unban_desc]
-other = "unban the selected user"
-
-[command_unban_message]
-other = "{{.Target}} has been unbanned"
-
-[command_unban_option_desc_target]
-other = "user to unban"
-
-[command_unban_option_target]
-other = "target"
-
 [error]
 other = "{{.Error}}"
 
@@ -244,6 +213,12 @@ other = "An error has occurred {{.Error}}"
 
 [error_TargetIsBot]
 other = "Cannot select this bot as target!"
+
+[error_bot_does_not_have_permissions]
+other = "Insufficient bot permissions!\rIt must be given administrator permission by the server admin to work!"
+
+[error_cannot_use_roles]
+other = "The following roles cannot be used"
 
 [error_failed_to_connect_api]
 other = "failed to connect api server error"
@@ -257,9 +232,6 @@ other = "invalid port value"
 [error_invalid_roles]
 other = "Invalid role(s)"
 
-[error_cannot_use_roles]
-other = "The following roles cannot be used"
-
 [error_message]
 other = "An error has occurred"
 
@@ -271,6 +243,12 @@ other = "latency"
 
 [message_command_modify]
 other = "modify"
+
+[message_command_select]
+other = "select"
+
+[message_command_select_message]
+other = "selected"
 
 [message_command_user_info]
 other = "info"
@@ -293,11 +271,41 @@ other = "none"
 [message_command_user_info_roles]
 other = "Roles"
 
+[message_command_user_info_status]
+other = "Status"
+
+[message_modify_cant_use_this_message_error]
+other = "not available for that message"
+
+[message_modify_role_add_message]
+other = "Choose a role to add"
+
+[message_modify_role_create_message]
+other = "Coose a role to create panel"
+
+[online_status]
+other = "Status"
+
+[panel_minecraft_add_server]
+other = "Add a server"
+
+[panel_minecraft_address]
+other = "Address"
+
+[panel_minecraft_display_name]
+other = "Display Name"
+
 [panel_minecraft_message_boot]
 other = "booted {{.Name}}"
 
 [panel_minecraft_message_stop]
 other = "stopped {{.Name}}"
+
+[panel_minecraft_my_server]
+other = "My server"
+
+[panel_minecraft_port]
+other = "Port"
 
 [panel_role_message_added]
 other = "added"
@@ -313,63 +321,3 @@ other = "port"
 
 [version]
 other = "version"
-
-[message_modify_cant_use_this_message_error]
-other = "not available for that message"
-
-[message_modify_role_add_message]
-other = "Choose a role to add"
-
-[message_modify_role_create_message]
-other = "Coose a role to create panel"
-
-[message_command_select_message]
-other = "selected"
-
-[message_command_select]
-other = "select"
-
-[command_panel_option_config]
-other = "config"
-
-[command_panel_option_config_desc]
-other = "configure proprties"
-
-[command_panel_option_config_option_emoji]
-other = "emoji"
-
-[command_panel_option_config_option_emoji_desc]
-other = "Set custom emoji in select menu"
-
-[command_panel_option_config_option_emoji_message]
-other = "Please send emoji in this channel"
-
-[panel_minecraft_display_name]
-other = "Display Name"
-
-[panel_minecraft_address]
-other = "Address"
-
-[panel_minecraft_my_server]
-other = "My server"
-
-[panel_minecraft_port]
-other = "Port"
-
-[panel_minecraft_add_server]
-other = "Add a server"
-
-[client_desktop]
-other = "Desktop"
-
-[client_mobile]
-other = "Mobile"
-
-[client_web]
-other = "Web"
-
-[online_status]
-other = "Status"
-
-[message_command_user_info_status]
-other = "Status"

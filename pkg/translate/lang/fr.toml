@@ -4,51 +4,35 @@ other = "adresse"
 [channel]
 other = "canal"
 
-[command_ban]
-other = "bannir"
+[client_desktop]
+other = "Bureau"
 
-[command_ban_desc]
-other = "bannir l'utilisateur sélectionné"
+[client_mobile]
+other = "Téléphone mobile"
 
-[command_ban_message]
-other = "{{.Target}} a été banni"
-
-[command_ban_option_desc_reason]
-other = "raison du bannissement"
-
-[command_ban_option_desc_target]
-other = "utilisateur à bannir"
-
-[command_ban_option_reason]
-other = "Raison"
-
-[command_ban_option_target]
-other = "target"
-
-[command_ban_reason]
-one = "Raison : {{.Reason}}"
-other = "Raisons : {{.Reason}}"
-
-[command_kick]
-other = "expulser"
-
-[command_kick_desc]
-other = "expulser l'utilisateur sélectionné"
-
-[command_kick_message]
-other = "{{.Target}} a été éjecté"
-
-[command_kick_option_desc_target]
-other = "utilisateur à expulser"
-
-[command_kick_option_target]
-other = "target"
+[client_web]
+other = "Web"
 
 [command_panel]
 other = "panneau"
 
 [command_panel_desc]
 other = "gérer ou créer un panneau"
+
+[command_panel_option_config]
+other = "Configuration"
+
+[command_panel_option_config_desc]
+other = "configurer les proprties"
+
+[command_panel_option_config_option_emoji]
+other = "emoji"
+
+[command_panel_option_config_option_emoji_desc]
+other = "Définir les émojis personnalisés dans le menu de sélection"
+
+[command_panel_option_config_option_emoji_message]
+other = "Veuillez envoyer des émojis dans ce canal"
 
 [command_panel_option_desc_role]
 other = "gérer le panneau des rôles"
@@ -221,21 +205,6 @@ other = "Nom"
 [command_tracker_option_minecraft_option_remove_option_name_desc]
 other = "nom du tracker"
 
-[command_unban]
-other = "dé-bannir"
-
-[command_unban_desc]
-other = "dé-bannir l'utilisateur sélectionné"
-
-[command_unban_message]
-other = "{{.Target}} a été débanni"
-
-[command_unban_option_desc_target]
-other = "utilisateur à débannir"
-
-[command_unban_option_target]
-other = "target"
-
 [error]
 other = "{{.Error}}"
 
@@ -244,6 +213,12 @@ other = "Une erreur s'est produite {{.Error}}"
 
 [error_TargetIsBot]
 other = "Impossible de sélectionner ce bot comme cible !"
+
+[error_bot_does_not_have_permissions]
+other = "Permissions de bot insuffisantes !\rIl doit être donné à l'administrateur par l'administrateur du serveur pour fonctionner !"
+
+[error_cannot_use_roles]
+other = "Les rôles suivants ne peuvent pas être utilisés"
 
 [error_failed_to_connect_api]
 other = "impossible de se connecter au serveur api"
@@ -257,9 +232,6 @@ other = "valeur de port invalide"
 [error_invalid_roles]
 other = "Rôle(s) non valide"
 
-[error_cannot_use_roles]
-other = "Les rôles suivants ne peuvent pas être utilisés"
-
 [error_message]
 other = "Une erreur est survenue"
 
@@ -271,6 +243,12 @@ other = "latence"
 
 [message_command_modify]
 other = "modifier"
+
+[message_command_select]
+other = "sélectionner"
+
+[message_command_select_message]
+other = "slectionns"
 
 [message_command_user_info]
 other = "Infos"
@@ -293,11 +271,41 @@ other = "aucun"
 [message_command_user_info_roles]
 other = "Rôles"
 
+[message_command_user_info_status]
+other = "Statut"
+
+[message_modify_cant_use_this_message_error]
+other = "non disponible pour ce message"
+
+[message_modify_role_add_message]
+other = "Choisissez un rôle à ajouter"
+
+[message_modify_role_create_message]
+other = "Coose un rôle pour créer un panneau"
+
+[online_status]
+other = "Statut"
+
+[panel_minecraft_add_server]
+other = "Ajouter un serveur"
+
+[panel_minecraft_address]
+other = "Adresses"
+
+[panel_minecraft_display_name]
+other = "Nom affiché"
+
 [panel_minecraft_message_boot]
 other = "a démarré {{.Name}}"
 
 [panel_minecraft_message_stop]
 other = "arrêté {{.Name}}"
+
+[panel_minecraft_my_server]
+other = "Mon serveur"
+
+[panel_minecraft_port]
+other = "Port"
 
 [panel_role_message_added]
 other = "Ajouté"
@@ -313,63 +321,3 @@ other = "port"
 
 [version]
 other = "version"
-
-[message_modify_cant_use_this_message_error]
-other = "non disponible pour ce message"
-
-[message_modify_role_add_message]
-other = "Choisissez un rôle à ajouter"
-
-[message_modify_role_create_message]
-other = "Coose un rôle pour créer un panneau"
-
-[message_command_select_message]
-other = "slectionns"
-
-[message_command_select]
-other = "sélectionner"
-
-[command_panel_option_config]
-other = "Configuration"
-
-[command_panel_option_config_desc]
-other = "configurer les proprties"
-
-[command_panel_option_config_option_emoji]
-other = "emoji"
-
-[command_panel_option_config_option_emoji_desc]
-other = "Définir les émojis personnalisés dans le menu de sélection"
-
-[command_panel_option_config_option_emoji_message]
-other = "Veuillez envoyer des émojis dans ce canal"
-
-[panel_minecraft_display_name]
-other = "Nom affiché"
-
-[panel_minecraft_address]
-other = "Adresses"
-
-[panel_minecraft_my_server]
-other = "Mon serveur"
-
-[panel_minecraft_port]
-other = "Port"
-
-[panel_minecraft_add_server]
-other = "Ajouter un serveur"
-
-[client_desktop]
-other = "Bureau"
-
-[client_mobile]
-other = "Téléphone mobile"
-
-[client_web]
-other = "Web"
-
-[online_status]
-other = "Statut"
-
-[message_command_user_info_status]
-other = "Statut"

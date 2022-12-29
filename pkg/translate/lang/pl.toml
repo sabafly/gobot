@@ -4,51 +4,35 @@ other = "adres"
 [channel]
 other = "kanał"
 
-[command_ban]
-other = "zbanuj"
+[client_desktop]
+other = "Pulpit"
 
-[command_ban_desc]
-other = "zbanuj wybranego użytkownika"
+[client_mobile]
+other = "Komórka"
 
-[command_ban_message]
-other = "{{.Target}} został zbanowany"
-
-[command_ban_option_desc_reason]
-other = "powód zakazu"
-
-[command_ban_option_desc_target]
-other = "użytkownik do zbanowania"
-
-[command_ban_option_reason]
-other = "powód"
-
-[command_ban_option_target]
-other = "target"
-
-[command_ban_reason]
-one = "Powód: {{.Reason}}"
-other = "Powody: {{.Reason}}"
-
-[command_kick]
-other = "wyrzuć"
-
-[command_kick_desc]
-other = "wyrzuć wybranego użytkownika"
-
-[command_kick_message]
-other = "{{.Target}} został wyrzucony"
-
-[command_kick_option_desc_target]
-other = "użytkownik do wyrzucenia"
-
-[command_kick_option_target]
-other = "target"
+[client_web]
+other = "Web"
 
 [command_panel]
 other = "panele"
 
 [command_panel_desc]
 other = "zarządzaj lub utwórz panel"
+
+[command_panel_option_config]
+other = "konfiguracja"
+
+[command_panel_option_config_desc]
+other = "skonfiguruj proprity"
+
+[command_panel_option_config_option_emoji]
+other = "emoji"
+
+[command_panel_option_config_option_emoji_desc]
+other = "Ustaw niestandardowe emoji w menu wyboru"
+
+[command_panel_option_config_option_emoji_message]
+other = "Proszę wysłać emoji na tym kanale"
 
 [command_panel_option_desc_role]
 other = "zarządzanie panelem ról"
@@ -221,21 +205,6 @@ other = "Nazwa"
 [command_tracker_option_minecraft_option_remove_option_name_desc]
 other = "nazwa trackera"
 
-[command_unban]
-other = "odblokuj"
-
-[command_unban_desc]
-other = "odbanuj wybranego użytkownika"
-
-[command_unban_message]
-other = "{{.Target}} został odbanowany"
-
-[command_unban_option_desc_target]
-other = "użytkownik do odblokowania"
-
-[command_unban_option_target]
-other = "target"
-
 [error]
 other = "{{.Error}}"
 
@@ -244,6 +213,12 @@ other = "Wystąpił błąd {{.Error}}"
 
 [error_TargetIsBot]
 other = "Nie można wybrać tego bota jako celu!"
+
+[error_bot_does_not_have_permissions]
+other = "Niewystarczające uprawnienia bota!\rAdministrator musi otrzymać uprawnienia administratora serwera do pracy!"
+
+[error_cannot_use_roles]
+other = "Nie można użyć następujących ról"
 
 [error_failed_to_connect_api]
 other = "błąd połączenia z serwerem api"
@@ -257,9 +232,6 @@ other = "nieprawidłowa wartość portu"
 [error_invalid_roles]
 other = "Nieprawidłowe role"
 
-[error_cannot_use_roles]
-other = "Nie można użyć następujących ról"
-
 [error_message]
 other = "Wystąpił błąd"
 
@@ -271,6 +243,12 @@ other = "opóźnienie"
 
 [message_command_modify]
 other = "modyfikacja"
+
+[message_command_select]
+other = "wybierz"
+
+[message_command_select_message]
+other = "zaznaczone"
 
 [message_command_user_info]
 other = "informacje"
@@ -293,11 +271,41 @@ other = "brak"
 [message_command_user_info_roles]
 other = "Role"
 
+[message_command_user_info_status]
+other = "Status"
+
+[message_modify_cant_use_this_message_error]
+other = "niedostępne dla tej wiadomości"
+
+[message_modify_role_add_message]
+other = "Wybierz rolę do dodania"
+
+[message_modify_role_create_message]
+other = "Przypomnij rolę do utworzenia panelu"
+
+[online_status]
+other = "Status"
+
+[panel_minecraft_add_server]
+other = "Dodaj serwer"
+
+[panel_minecraft_address]
+other = "Adres"
+
+[panel_minecraft_display_name]
+other = "Wyświetlana nazwa"
+
 [panel_minecraft_message_boot]
 other = "uruchomiono {{.Name}}"
 
 [panel_minecraft_message_stop]
 other = "zatrzymano {{.Name}}"
+
+[panel_minecraft_my_server]
+other = "Mój serwer"
+
+[panel_minecraft_port]
+other = "Port"
 
 [panel_role_message_added]
 other = "dodany"
@@ -313,63 +321,3 @@ other = "port"
 
 [version]
 other = "wersja"
-
-[message_modify_cant_use_this_message_error]
-other = "niedostępne dla tej wiadomości"
-
-[message_modify_role_add_message]
-other = "Wybierz rolę do dodania"
-
-[message_modify_role_create_message]
-other = "Przypomnij rolę do utworzenia panelu"
-
-[message_command_select_message]
-other = "zaznaczone"
-
-[message_command_select]
-other = "wybierz"
-
-[command_panel_option_config]
-other = "konfiguracja"
-
-[command_panel_option_config_desc]
-other = "skonfiguruj proprity"
-
-[command_panel_option_config_option_emoji]
-other = "emoji"
-
-[command_panel_option_config_option_emoji_desc]
-other = "Ustaw niestandardowe emoji w menu wyboru"
-
-[command_panel_option_config_option_emoji_message]
-other = "Proszę wysłać emoji na tym kanale"
-
-[panel_minecraft_display_name]
-other = "Wyświetlana nazwa"
-
-[panel_minecraft_address]
-other = "Adres"
-
-[panel_minecraft_my_server]
-other = "Mój serwer"
-
-[panel_minecraft_port]
-other = "Port"
-
-[panel_minecraft_add_server]
-other = "Dodaj serwer"
-
-[client_desktop]
-other = "Pulpit"
-
-[client_mobile]
-other = "Komórka"
-
-[client_web]
-other = "Web"
-
-[online_status]
-other = "Status"
-
-[message_command_user_info_status]
-other = "Status"
