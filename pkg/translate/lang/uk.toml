@@ -215,7 +215,7 @@ other = "Відбулася помилка {{.Error}}"
 other = "Не вдається вибрати цього бота як ціль!"
 
 [error_bot_does_not_have_permissions]
-other = "Insufficient bot permissions!\rIt must be given administrator permission by the server admin to work!"
+other = "Недостатньо прав для бота!\rАдміністратор повинен бути наданий адміністратору на роботу!"
 
 [error_cannot_use_roles]
 other = "Наступні ролі не можна використовувати"
