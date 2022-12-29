@@ -4,51 +4,35 @@ other = "адрес"
 [channel]
 other = "канал"
 
-[command_ban]
-other = "бан"
+[client_desktop]
+other = "Рабочий стол"
 
-[command_ban_desc]
-other = "забанить выбранного пользователя"
+[client_mobile]
+other = "Мобильный"
 
-[command_ban_message]
-other = "{{.Target}} был забанен"
-
-[command_ban_option_desc_reason]
-other = "причина бана"
-
-[command_ban_option_desc_target]
-other = "забанить пользователя"
-
-[command_ban_option_reason]
-other = "причина"
-
-[command_ban_option_target]
-other = "target"
-
-[command_ban_reason]
-one = "Причина: {{.Reason}}"
-other = "Причины: {{.Reason}}"
-
-[command_kick]
-other = "кик"
-
-[command_kick_desc]
-other = "выгнать выбранного пользователя"
-
-[command_kick_message]
-other = "{{.Target}} был кикнут"
-
-[command_kick_option_desc_target]
-other = "выгнать пользователя"
-
-[command_kick_option_target]
-other = "target"
+[client_web]
+other = "Веб"
 
 [command_panel]
 other = "панель"
 
 [command_panel_desc]
 other = "управление или создание панели"
+
+[command_panel_option_config]
+other = "настройки"
+
+[command_panel_option_config_desc]
+other = "настроить proprties"
+
+[command_panel_option_config_option_emoji]
+other = "emoji"
+
+[command_panel_option_config_option_emoji_desc]
+other = "Установить пользовательские эмодзи в меню выбора"
+
+[command_panel_option_config_option_emoji_message]
+other = "Пожалуйста, отправьте эмодзи в этом канале"
 
 [command_panel_option_desc_role]
 other = "управление панелью ролей"
@@ -221,21 +205,6 @@ other = "имя"
 [command_tracker_option_minecraft_option_remove_option_name_desc]
 other = "название трекера"
 
-[command_unban]
-other = "разбанить"
-
-[command_unban_desc]
-other = "разбанить выбранного пользователя"
-
-[command_unban_message]
-other = "{{.Target}} был разбанен"
-
-[command_unban_option_desc_target]
-other = "пользователь для разблокировки"
-
-[command_unban_option_target]
-other = "target"
-
 [error]
 other = "{{.Error}}"
 
@@ -244,6 +213,9 @@ other = "Произошла ошибка {{.Error}}"
 
 [error_TargetIsBot]
 other = "Невозможно выбрать этого бота в качестве цели!"
+
+[error_cannot_use_roles]
+other = "Нельзя использовать следующие роли"
 
 [error_failed_to_connect_api]
 other = "не удалось подключиться к серверу api"
@@ -257,9 +229,6 @@ other = "неверное значение порта"
 [error_invalid_roles]
 other = "Неверная роль(ы)"
 
-[error_cannot_use_roles]
-other = "Нельзя использовать следующие роли"
-
 [error_message]
 other = "Произошла ошибка"
 
@@ -271,6 +240,12 @@ other = "задержка"
 
 [message_command_modify]
 other = "изменить"
+
+[message_command_select]
+other = "выбрать"
+
+[message_command_select_message]
+other = "выбрано"
 
 [message_command_user_info]
 other = "инфо"
@@ -293,11 +268,41 @@ other = "нет"
 [message_command_user_info_roles]
 other = "Роли"
 
+[message_command_user_info_status]
+other = "Статус"
+
+[message_modify_cant_use_this_message_error]
+other = "недоступен для этого сообщения"
+
+[message_modify_role_add_message]
+other = "Выберите роль для добавления"
+
+[message_modify_role_create_message]
+other = "Выберите роль для создания панели"
+
+[online_status]
+other = "Статус"
+
+[panel_minecraft_add_server]
+other = "Добавить сервер"
+
+[panel_minecraft_address]
+other = "Адрес"
+
+[panel_minecraft_display_name]
+other = "Показать имя"
+
 [panel_minecraft_message_boot]
 other = "загружено {{.Name}}"
 
 [panel_minecraft_message_stop]
 other = "остановил {{.Name}}"
+
+[panel_minecraft_my_server]
+other = "Мой сервер"
+
+[panel_minecraft_port]
+other = "Порт"
 
 [panel_role_message_added]
 other = "добавлено"
@@ -313,63 +318,3 @@ other = "порт"
 
 [version]
 other = "версия"
-
-[message_modify_cant_use_this_message_error]
-other = "недоступен для этого сообщения"
-
-[message_modify_role_add_message]
-other = "Выберите роль для добавления"
-
-[message_modify_role_create_message]
-other = "Выберите роль для создания панели"
-
-[message_command_select_message]
-other = "выбрано"
-
-[message_command_select]
-other = "выбрать"
-
-[command_panel_option_config]
-other = "настройки"
-
-[command_panel_option_config_desc]
-other = "настроить proprties"
-
-[command_panel_option_config_option_emoji]
-other = "emoji"
-
-[command_panel_option_config_option_emoji_desc]
-other = "Установить пользовательские эмодзи в меню выбора"
-
-[command_panel_option_config_option_emoji_message]
-other = "Пожалуйста, отправьте эмодзи в этом канале"
-
-[panel_minecraft_display_name]
-other = "Показать имя"
-
-[panel_minecraft_address]
-other = "Адрес"
-
-[panel_minecraft_my_server]
-other = "Мой сервер"
-
-[panel_minecraft_port]
-other = "Порт"
-
-[panel_minecraft_add_server]
-other = "Добавить сервер"
-
-[client_desktop]
-other = "Рабочий стол"
-
-[client_mobile]
-other = "Мобильный"
-
-[client_web]
-other = "Веб"
-
-[online_status]
-other = "Статус"
-
-[message_command_user_info_status]
-other = "Статус"
