@@ -215,7 +215,7 @@ other = "Παρουσιάστηκε ένα σφάλμα {{.Error}}"
 other = "Δεν μπορείτε να επιλέξετε αυτό το bot ως στόχο!"
 
 [error_bot_does_not_have_permissions]
-other = "Insufficient bot permissions!\rIt must be given administrator permission by the server admin to work!"
+other = "Ανεπαρκή δικαιώματα bot !\rΠρέπει να του δοθεί άδεια διαχειριστή από τον διαχειριστή για να λειτουργήσει!"
 
 [error_cannot_use_roles]
 other = "Οι ακόλουθοι ρόλοι δεν μπορούν να χρησιμοποιηθούν"
