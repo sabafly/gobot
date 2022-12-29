@@ -214,6 +214,9 @@ other = "An error has occurred {{.Error}}"
 [error_TargetIsBot]
 other = "Cannot select this bot as target!"
 
+[error_bot_does_not_have_permissions]
+other = "Insufficient bot permissions!\rIt must be given administrator permission by the server admin to work!"
+
 [error_cannot_use_roles]
 other = "The following roles cannot be used"
 
