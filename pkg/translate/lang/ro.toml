@@ -214,6 +214,9 @@ other = "S-a produs o eroare {{.Error}}"
 [error_TargetIsBot]
 other = "Nu se poate selecta acest bot ca țintă!"
 
+[error_bot_does_not_have_permissions]
+other = "Insufficient bot permissions!\rIt must be given administrator permission by the server admin to work!"
+
 [error_cannot_use_roles]
 other = "Următoarele roluri nu pot fi utilizate"
 
