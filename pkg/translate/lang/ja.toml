@@ -215,7 +215,7 @@ other = "エラーが発生しました： {{.Error}}"
 other = "このボットをターゲットとして選択できません！"
 
 [error_bot_does_not_have_permissions]
-other = "Insufficient bot permissions!\rIt must be given administrator permission by the server admin to work!"
+other = "Botの権限が不足しています！\r管理者権限を与える必要があります！"
 
 [error_cannot_use_roles]
 other = "次のロールは使用できません"
