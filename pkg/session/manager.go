@@ -18,15 +18,16 @@ package session
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"github.com/ikafly144/gobot/pkg/types"
 )
 
-var interactionSessions *session[*discordgo.InteractionCreate] = new[*discordgo.InteractionCreate]()
+var interactionSessions *session[discordgo.InteractionCreate] = new[discordgo.InteractionCreate]()
 
 func InteractionSave(i *discordgo.InteractionCreate) (id string) {
 	return interactionSessions.add(i)
 }
 
-func InteractionLoad(id string) (data sessionData[*discordgo.InteractionCreate], err error) {
+func InteractionLoad(id string) (data *sessionData[discordgo.InteractionCreate], err error) {
 	return interactionSessions.get(id)
 }
 
@@ -34,16 +35,16 @@ func InteractionRemove(id string) {
 	interactionSessions.remove(id)
 }
 
-var messageSessions *session[*discordgo.MessageCreate] = new[*discordgo.MessageCreate]()
+var messageSessions *session[types.MessageSessionData[types.MessagePanelConfigEmojiData]] = new[types.MessageSessionData[types.MessagePanelConfigEmojiData]]()
 
-func MessageSave(m *discordgo.MessageCreate) (id string) {
-	return messageSessions.add(m)
+func MessagePanelConfigEmojiSave(m *types.MessageSessionData[types.MessagePanelConfigEmojiData], id string) {
+	messageSessions.addWithID(m, id)
 }
 
-func MessageLoad(id string) (data sessionData[*discordgo.MessageCreate], err error) {
+func MessagePanelConfigEmojiLoad(id string) (data *sessionData[types.MessageSessionData[types.MessagePanelConfigEmojiData]], err error) {
 	return messageSessions.get(id)
 }
 
-func MessageRemove(id string) {
+func MessagePanelConfigEmojiRemove(id string) {
 	messageSessions.remove(id)
 }

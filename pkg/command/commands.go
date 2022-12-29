@@ -34,7 +34,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/api"
-	"github.com/ikafly144/gobot/pkg/message"
 	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
@@ -581,14 +580,16 @@ func panelConfigEmoji(s *discordgo.Session, i *discordgo.InteractionCreate, opti
 	}
 	switch data.CustomID {
 	case "gobot_panel_minecraft", "gobot_panel_role":
-		message.RemoveSession(uid)
-		panelSession, _ := message.NewSession(uid, message.RolePanelEdit)
-		panelSession.Data = types.PanelEmojiConfig{
-			Message:     mes.ID,
-			Emojis:      []*discordgo.ComponentEmoji{},
-			MessageData: mes,
-			SelectMenu:  data,
-		}
+		session.MessagePanelConfigEmojiRemove(uid)
+		session.MessagePanelConfigEmojiSave(&types.MessageSessionData[types.MessagePanelConfigEmojiData]{
+			Message: mes,
+			Data: types.MessagePanelConfigEmojiData{
+				UserID:     uid,
+				Emojis:     []*discordgo.ComponentEmoji{},
+				SelectMenu: data,
+			},
+			Handler: panelConfigEmojiHandler,
+		}, uid)
 		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Embeds: &[]*discordgo.MessageEmbed{
 				{
@@ -607,16 +608,14 @@ func panelConfigEmoji(s *discordgo.Session, i *discordgo.InteractionCreate, opti
 	})
 }
 
-func init() { message.AddHandler(message.RolePanelEdit, panelConfigEmojiHandler) }
-
-func panelConfigEmojiHandler(s *discordgo.Session, m *discordgo.MessageCreate, ses *message.Session) {
-	data, _ := ses.Data.(types.PanelEmojiConfig)
-	if data.MessageData.ChannelID != m.ChannelID {
+func panelConfigEmojiHandler(t types.MessageSessionData[types.MessagePanelConfigEmojiData], s *discordgo.Session, m *discordgo.MessageCreate) {
+	mid := t.Data.UserID
+	if t.Message.ChannelID != m.ChannelID {
 		return
 	}
 	if m.Content == "cancel" {
-		message.RemoveSession(ses.ID())
-		RemoveSelect(ses.ID(), data.MessageData.GuildID)
+		session.MessagePanelConfigEmojiRemove(mid)
+		RemoveSelect(mid, t.Message.GuildID)
 		return
 	}
 	emojiString := util.Regexp2FindAllString(types.Twemoji, m.Content)
@@ -635,45 +634,46 @@ func panelConfigEmojiHandler(s *discordgo.Session, m *discordgo.MessageCreate, s
 			})
 		}
 	}
-	data.Emojis = append(data.Emojis, e...)
-	ses.Data = data
+	t.Data.Emojis = append(t.Data.Emojis, e...)
+	session.MessagePanelConfigEmojiSave(&t, mid)
 	s.ChannelMessageDelete(m.ChannelID, m.ID)
-	if len(data.Emojis) >= len(data.SelectMenu.Options) {
-		if data.SelectMenu.CustomID == "gobot_panel_role" {
+	if len(t.Data.Emojis) >= len(t.Data.SelectMenu.Options) {
+		session.MessagePanelConfigEmojiRemove(mid)
+		RemoveSelect(mid, t.Message.GuildID)
+		if t.Data.SelectMenu.CustomID == "gobot_panel_role" {
 			var value string
-			str := strings.Split(data.MessageData.Embeds[0].Fields[0].Value, "\r")
+			str := strings.Split(t.Message.Embeds[0].Fields[0].Value, "\r")
 			for i, v := range str {
 				str1 := strings.Split(v, "|")
-				log.Print(util.EmojiFormat(data.Emojis[i]))
-				str1[0] = util.EmojiFormat(data.Emojis[i]) + " | "
+				log.Print(util.EmojiFormat(t.Data.Emojis[i]))
+				str1[0] = util.EmojiFormat(t.Data.Emojis[i]) + " | "
 				var str2 string
 				for _, v1 := range str1 {
 					str2 += v1
 				}
 				value += str2 + "\r"
 			}
-			data.MessageData.Embeds[0].Fields[0].Value = value
+			t.Message.Embeds[0].Fields[0].Value = value
 			log.Print(value)
 		}
-		updateEmoji(s, data)
-		message.RemoveSession(ses.ID())
-		RemoveSelect(ses.ID(), data.MessageData.GuildID)
+		go updateEmoji(s, t)
+		return
 	}
 }
 
-func updateEmoji(s *discordgo.Session, o types.PanelEmojiConfig) {
-	for i := range o.SelectMenu.Options {
-		o.SelectMenu.Options[i].Emoji = *o.Emojis[i]
-		log.Print(*o.Emojis[i])
+func updateEmoji(s *discordgo.Session, o types.MessageSessionData[types.MessagePanelConfigEmojiData]) {
+	for i := range o.Data.SelectMenu.Options {
+		o.Data.SelectMenu.Options[i].Emoji = *o.Data.Emojis[i]
+		log.Print(*o.Data.Emojis[i])
 	}
-	e := discordgo.NewMessageEdit(o.MessageData.ChannelID, o.Message)
+	e := discordgo.NewMessageEdit(o.Message.ChannelID, o.Message.ID)
 	e.Components = append(e.Components, discordgo.ActionsRow{
 		Components: []discordgo.MessageComponent{
-			o.SelectMenu,
+			o.Data.SelectMenu,
 		},
 	})
-	e.Content = &o.MessageData.Content
-	e.Embeds = o.MessageData.Embeds
+	e.Content = &o.Message.Content
+	e.Embeds = o.Message.Embeds
 	_, err := s.ChannelMessageEditComplex(e)
 	if err != nil {
 		log.Print(err)

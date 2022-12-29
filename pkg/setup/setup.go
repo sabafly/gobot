@@ -26,7 +26,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/command"
-	"github.com/ikafly144/gobot/pkg/message"
+	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/joho/godotenv"
 )
@@ -545,7 +545,14 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		g, _ := s.Guild(m.GuildID)
 		c, _ := s.Channel(m.ChannelID)
 		log.Printf("[Message Created] : %v(%v) #%v(%v) <%v#%v>\n                 >> %v", g.Name, g.ID, c.Name, c.ID, m.Author.Username, m.Author.Discriminator, str)
-		message.HandleExec(s, m)
+		data, err := session.MessagePanelConfigEmojiLoad(m.Author.ID)
+		if err != nil {
+			log.Print(err)
+			return
+		} else {
+			d := data.Data()
+			data.Data().Handler(d, s, m)
+		}
 	})
 
 	return s, commands, RemoveCommands, GuildID

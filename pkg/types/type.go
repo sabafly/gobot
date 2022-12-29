@@ -76,12 +76,23 @@ type MCServer struct {
 
 type MCServers []MCServer
 
-type PanelEmojiConfig struct {
-	Message     string
-	Emojis      []*discordgo.ComponentEmoji
-	MessageData *discordgo.Message
-	SelectMenu  discordgo.SelectMenu
+type MessageSessionData[T any] struct {
+	Message *discordgo.Message
+	Data    T
+	Handler func(MessageSessionData[T], *discordgo.Session, *discordgo.MessageCreate)
 }
+
+type MessagePanelConfigEmojiData struct {
+	UserID     string
+	Emojis     []*discordgo.ComponentEmoji
+	SelectMenu discordgo.SelectMenu
+}
+
+type MessageSessionType int
+
+const (
+	MessagePanelConfigEmoji MessageSessionType = 1
+)
 
 type MessageSelect struct {
 	MemberID string

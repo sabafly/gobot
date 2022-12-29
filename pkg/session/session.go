@@ -24,25 +24,31 @@ import (
 
 func new[T any]() (s *session[T]) {
 	s = &session[T]{}
-	s.sessionData = map[string]sessionData[T]{}
+	s.sessionData = map[string]*sessionData[T]{}
 	return
 }
 
 type session[T any] struct {
-	sessionData map[string]sessionData[T]
+	sessionData map[string]*sessionData[T]
 }
 
-func (s *session[T]) get(id string) (sessionData[T], error) {
+func (s *session[T]) get(id string) (*sessionData[T], error) {
 	if d, ok := s.sessionData[id]; ok {
 		return d, nil
 	}
-	return sessionData[T]{}, errors.New("not found")
+	return &sessionData[T]{}, errors.New("not found")
 }
 
-func (s *session[T]) add(data T) (id string) {
+func (s *session[T]) add(data *T) (id string) {
 	id = uuid.New().String()
-	s.sessionData[id] = sessionData[T]{id: id, data: data}
+	delete(s.sessionData, id)
+	s.sessionData[id] = &sessionData[T]{id: &id, data: data}
 	return id
+}
+
+func (s *session[T]) addWithID(data *T, id string) {
+	delete(s.sessionData, id)
+	s.sessionData[id] = &sessionData[T]{id: &id, data: data}
 }
 
 func (s *session[T]) remove(id string) {
@@ -50,14 +56,14 @@ func (s *session[T]) remove(id string) {
 }
 
 type sessionData[T any] struct {
-	id   string
-	data T
+	id   *string
+	data *T
 }
 
 func (sd *sessionData[T]) ID() (res string) {
-	return sd.id
+	return *sd.id
 }
 
 func (sd *sessionData[T]) Data() (res T) {
-	return sd.data
+	return *sd.data
 }
