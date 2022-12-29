@@ -4,51 +4,35 @@ other = "adresă"
 [channel]
 other = "canal"
 
-[command_ban]
-other = "interdicție"
+[client_desktop]
+other = "Birou"
 
-[command_ban_desc]
-other = "interzice utilizatorul selectat"
+[client_mobile]
+other = "Mobil"
 
-[command_ban_message]
-other = "{{.Target}} a fost banat"
-
-[command_ban_option_desc_reason]
-other = "motiv pentru interdicție"
-
-[command_ban_option_desc_target]
-other = "utilizator pentru a interzice"
-
-[command_ban_option_reason]
-other = "motiv"
-
-[command_ban_option_target]
-other = "target"
-
-[command_ban_reason]
-one = "Motiv: {{.Reason}}"
-other = "Motive: {{.Reason}}"
-
-[command_kick]
-other = "exclus"
-
-[command_kick_desc]
-other = "exclude utilizatorul selectat"
-
-[command_kick_message]
-other = "{{.Target}} a fost dat afară"
-
-[command_kick_option_desc_target]
-other = "utilizator de dat afară"
-
-[command_kick_option_target]
-other = "target"
+[client_web]
+other = "Web"
 
 [command_panel]
 other = "panou"
 
 [command_panel_desc]
 other = "gestionare sau creare panou"
+
+[command_panel_option_config]
+other = "configurare"
+
+[command_panel_option_config_desc]
+other = "configurare proprties"
+
+[command_panel_option_config_option_emoji]
+other = "emoji"
+
+[command_panel_option_config_option_emoji_desc]
+other = "Setați emoji particularizate în meniul selectare"
+
+[command_panel_option_config_option_emoji_message]
+other = "Te rugăm să trimiți emoji în acest canal"
 
 [command_panel_option_desc_role]
 other = "gestionează panoul de rol"
@@ -221,21 +205,6 @@ other = "nume"
 [command_tracker_option_minecraft_option_remove_option_name_desc]
 other = "numele trackerului"
 
-[command_unban]
-other = "deblochează"
-
-[command_unban_desc]
-other = "deblochează utilizatorul selectat"
-
-[command_unban_message]
-other = "{{.Target}} a fost debanat"
-
-[command_unban_option_desc_target]
-other = "utilizator pentru a debloca"
-
-[command_unban_option_target]
-other = "target"
-
 [error]
 other = "{{.Error}}"
 
@@ -244,6 +213,9 @@ other = "S-a produs o eroare {{.Error}}"
 
 [error_TargetIsBot]
 other = "Nu se poate selecta acest bot ca țintă!"
+
+[error_cannot_use_roles]
+other = "Următoarele roluri nu pot fi utilizate"
 
 [error_failed_to_connect_api]
 other = "Eroare la conectarea serverului APi"
@@ -257,9 +229,6 @@ other = "valoare port nevalidă"
 [error_invalid_roles]
 other = "Roluri nevalide"
 
-[error_cannot_use_roles]
-other = "Următoarele roluri nu pot fi utilizate"
-
 [error_message]
 other = "A apărut o eroare"
 
@@ -271,6 +240,12 @@ other = "latență"
 
 [message_command_modify]
 other = "modifică"
+
+[message_command_select]
+other = "selectează"
+
+[message_command_select_message]
+other = "selectat"
 
 [message_command_user_info]
 other = "informaţii"
@@ -293,11 +268,41 @@ other = "niciunul"
 [message_command_user_info_roles]
 other = "Roluri"
 
+[message_command_user_info_status]
+other = "Status"
+
+[message_modify_cant_use_this_message_error]
+other = "nu este disponibil pentru acel mesaj"
+
+[message_modify_role_add_message]
+other = "Alege un rol de adăugat"
+
+[message_modify_role_create_message]
+other = "Alege un rol pentru a crea panoul"
+
+[online_status]
+other = "Status"
+
+[panel_minecraft_add_server]
+other = "Adaugă un server"
+
+[panel_minecraft_address]
+other = "Adresa"
+
+[panel_minecraft_display_name]
+other = "Nume afișat"
+
 [panel_minecraft_message_boot]
 other = "{{.Name}} pornit"
 
 [panel_minecraft_message_stop]
 other = "s-a oprit {{.Name}}"
+
+[panel_minecraft_my_server]
+other = "Serverul meu"
+
+[panel_minecraft_port]
+other = "Portul"
 
 [panel_role_message_added]
 other = "adăugat"
@@ -313,63 +318,3 @@ other = "port"
 
 [version]
 other = "versiune"
-
-[message_modify_cant_use_this_message_error]
-other = "nu este disponibil pentru acel mesaj"
-
-[message_modify_role_add_message]
-other = "Alege un rol de adăugat"
-
-[message_modify_role_create_message]
-other = "Alege un rol pentru a crea panoul"
-
-[message_command_select_message]
-other = "selectat"
-
-[message_command_select]
-other = "selectează"
-
-[command_panel_option_config]
-other = "configurare"
-
-[command_panel_option_config_desc]
-other = "configurare proprties"
-
-[command_panel_option_config_option_emoji]
-other = "emoji"
-
-[command_panel_option_config_option_emoji_desc]
-other = "Setați emoji particularizate în meniul selectare"
-
-[command_panel_option_config_option_emoji_message]
-other = "Te rugăm să trimiți emoji în acest canal"
-
-[panel_minecraft_display_name]
-other = "Nume afișat"
-
-[panel_minecraft_address]
-other = "Adresa"
-
-[panel_minecraft_my_server]
-other = "Serverul meu"
-
-[panel_minecraft_port]
-other = "Portul"
-
-[panel_minecraft_add_server]
-other = "Adaugă un server"
-
-[client_desktop]
-other = "Birou"
-
-[client_mobile]
-other = "Mobil"
-
-[client_web]
-other = "Web"
-
-[online_status]
-other = "Status"
-
-[message_command_user_info_status]
-other = "Status"
