@@ -4,51 +4,35 @@ other = "osoite"
 [channel]
 other = "kanava"
 
-[command_ban]
-other = "porttikielto"
+[client_desktop]
+other = "Työpöytä"
 
-[command_ban_desc]
-other = "porttikielto valitulle käyttäjälle"
+[client_mobile]
+other = "Mobiili"
 
-[command_ban_message]
-other = "{{.Target}} on estetty"
-
-[command_ban_option_desc_reason]
-other = "kiellon syy"
-
-[command_ban_option_desc_target]
-other = "käyttäjä jolle porttikielto"
-
-[command_ban_option_reason]
-other = "syy"
-
-[command_ban_option_target]
-other = "target"
-
-[command_ban_reason]
-one = "Syy: {{.Reason}}"
-other = "Syyt: {{.Reason}}"
-
-[command_kick]
-other = "potku"
-
-[command_kick_desc]
-other = "potkia valittu käyttäjä"
-
-[command_kick_message]
-other = "{{.Target}} on potkittu"
-
-[command_kick_option_desc_target]
-other = "käyttäjä potkia"
-
-[command_kick_option_target]
-other = "target"
+[client_web]
+other = "Verkko"
 
 [command_panel]
 other = "paneeli"
 
 [command_panel_desc]
 other = "hallitse tai luo paneeli"
+
+[command_panel_option_config]
+other = "config"
+
+[command_panel_option_config_desc]
+other = "konfiguroi proprties"
+
+[command_panel_option_config_option_emoji]
+other = "emoji"
+
+[command_panel_option_config_option_emoji_desc]
+other = "Aseta mukautetut emojit valikossa"
+
+[command_panel_option_config_option_emoji_message]
+other = "Lähetä emojeja tällä kanavalla"
 
 [command_panel_option_desc_role]
 other = "hallitse roolipaneelia"
@@ -221,21 +205,6 @@ other = "nimi"
 [command_tracker_option_minecraft_option_remove_option_name_desc]
 other = "seurantapalvelimen nimi"
 
-[command_unban]
-other = "unban"
-
-[command_unban_desc]
-other = "poista porttikielto valitulle käyttäjälle"
-
-[command_unban_message]
-other = "{{.Target}} on poistettu porttikielto"
-
-[command_unban_option_desc_target]
-other = "poista porttikielto"
-
-[command_unban_option_target]
-other = "target"
-
 [error]
 other = "{{.Error}}"
 
@@ -244,6 +213,9 @@ other = "Tapahtui virhe {{.Error}}"
 
 [error_TargetIsBot]
 other = "Botti ei voi valita kohteeksi!"
+
+[error_cannot_use_roles]
+other = "Seuraavia rooleja ei voi käyttää"
 
 [error_failed_to_connect_api]
 other = "API-palvelimeen yhdistäminen epäonnistui"
@@ -257,9 +229,6 @@ other = "virheellinen portin arvo"
 [error_invalid_roles]
 other = "Virheellinen rooli(t)"
 
-[error_cannot_use_roles]
-other = "Seuraavia rooleja ei voi käyttää"
-
 [error_message]
 other = "Virhe on tapahtunut"
 
@@ -271,6 +240,12 @@ other = "latenssi"
 
 [message_command_modify]
 other = "muokkaa"
+
+[message_command_select]
+other = "valitse"
+
+[message_command_select_message]
+other = "valittu"
 
 [message_command_user_info]
 other = "tiedot"
@@ -293,11 +268,41 @@ other = "ei"
 [message_command_user_info_roles]
 other = "Roolit"
 
+[message_command_user_info_status]
+other = "Tila"
+
+[message_modify_cant_use_this_message_error]
+other = "ei saatavilla tuossa viestissä"
+
+[message_modify_role_add_message]
+other = "Valitse lisättävä rooli"
+
+[message_modify_role_create_message]
+other = "Coose rooli luoda paneeli"
+
+[online_status]
+other = "Tila"
+
+[panel_minecraft_add_server]
+other = "Lisää palvelin"
+
+[panel_minecraft_address]
+other = "Osoite"
+
+[panel_minecraft_display_name]
+other = "Näytön Nimi"
+
 [panel_minecraft_message_boot]
 other = "käynnistetty {{.Name}}"
 
 [panel_minecraft_message_stop]
 other = "pysäytettiin {{.Name}}"
+
+[panel_minecraft_my_server]
+other = "Oma palvelin"
+
+[panel_minecraft_port]
+other = "Portti"
 
 [panel_role_message_added]
 other = "lisätty"
@@ -313,63 +318,3 @@ other = "portti"
 
 [version]
 other = "versio"
-
-[message_modify_cant_use_this_message_error]
-other = "ei saatavilla tuossa viestissä"
-
-[message_modify_role_add_message]
-other = "Valitse lisättävä rooli"
-
-[message_modify_role_create_message]
-other = "Coose rooli luoda paneeli"
-
-[message_command_select_message]
-other = "valittu"
-
-[message_command_select]
-other = "valitse"
-
-[command_panel_option_config]
-other = "config"
-
-[command_panel_option_config_desc]
-other = "konfiguroi proprties"
-
-[command_panel_option_config_option_emoji]
-other = "emoji"
-
-[command_panel_option_config_option_emoji_desc]
-other = "Aseta mukautetut emojit valikossa"
-
-[command_panel_option_config_option_emoji_message]
-other = "Lähetä emojeja tällä kanavalla"
-
-[panel_minecraft_display_name]
-other = "Näytön Nimi"
-
-[panel_minecraft_address]
-other = "Osoite"
-
-[panel_minecraft_my_server]
-other = "Oma palvelin"
-
-[panel_minecraft_port]
-other = "Portti"
-
-[panel_minecraft_add_server]
-other = "Lisää palvelin"
-
-[client_desktop]
-other = "Työpöytä"
-
-[client_mobile]
-other = "Mobiili"
-
-[client_web]
-other = "Verkko"
-
-[online_status]
-other = "Tila"
-
-[message_command_user_info_status]
-other = "Tila"
