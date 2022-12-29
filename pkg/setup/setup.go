@@ -402,40 +402,50 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 	}
 
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if i.Type == discordgo.InteractionApplicationCommand {
-			if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
-				h(s, i)
-			}
-		} else if i.Type == discordgo.InteractionMessageComponent {
-			ids := strings.Split(i.MessageComponentData().CustomID, ":")
-			var customID string
-			var sessionID string
-			for i2, v := range ids {
-				switch i2 {
-				case 0:
-					customID = v
-				case 1:
-					sessionID = v
+		p, err := s.State.UserChannelPermissions(s.State.User.ID, i.ChannelID)
+		if err == nil && p&int64(discordgo.PermissionAdministrator) != 0 {
+			if i.Type == discordgo.InteractionApplicationCommand {
+				if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
+					h(s, i)
+				}
+			} else if i.Type == discordgo.InteractionMessageComponent {
+				ids := strings.Split(i.MessageComponentData().CustomID, ":")
+				var customID string
+				var sessionID string
+				for i2, v := range ids {
+					switch i2 {
+					case 0:
+						customID = v
+					case 1:
+						sessionID = v
+					}
+				}
+				if c, ok := messageComponentHandlers[customID]; ok {
+					c(s, i, sessionID)
+				}
+			} else if i.Type == discordgo.InteractionModalSubmit {
+				ids := strings.Split(i.ModalSubmitData().CustomID, ":")
+				var customID string
+				var mid string
+				for i2, v := range ids {
+					switch i2 {
+					case 0:
+						customID = v
+					case 1:
+						mid = v
+					}
+				}
+				if m, ok := modalSubmitHandlers[customID]; ok {
+					m(s, i, mid)
 				}
 			}
-			if c, ok := messageComponentHandlers[customID]; ok {
-				c(s, i, sessionID)
-			}
-		} else if i.Type == discordgo.InteractionModalSubmit {
-			ids := strings.Split(i.ModalSubmitData().CustomID, ":")
-			var customID string
-			var mid string
-			for i2, v := range ids {
-				switch i2 {
-				case 0:
-					customID = v
-				case 1:
-					mid = v
-				}
-			}
-			if m, ok := modalSubmitHandlers[customID]; ok {
-				m(s, i, mid)
-			}
+		} else {
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: translate.Message(i.Locale, "error_bot_does_not_have_permissions"),
+				},
+			})
 		}
 	})
 
@@ -450,13 +460,16 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 		g, _ := s.Guild(m.GuildID)
 		c, _ := s.Channel(m.ChannelID)
 		log.Printf("[Message Created] : %v(%v) #%v(%v) <%v#%v>\n                 >> %v", g.Name, g.ID, c.Name, c.ID, m.Author.Username, m.Author.Discriminator, str)
-		data, err := session.MessagePanelConfigEmojiLoad(m.Author.ID)
-		if err != nil {
-			log.Print(err)
-			return
-		} else {
-			d := data.Data()
-			data.Data().Handler(d, s, m)
+		p, err := s.State.UserChannelPermissions(s.State.User.ID, m.ChannelID)
+		if err == nil && p&int64(discordgo.PermissionAdministrator) == 0 {
+			data, err := session.MessagePanelConfigEmojiLoad(m.Author.ID)
+			if err != nil {
+				log.Print(err)
+				return
+			} else {
+				d := data.Data()
+				data.Data().Handler(d, s, m)
+			}
 		}
 	})
 
