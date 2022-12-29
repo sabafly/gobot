@@ -214,6 +214,9 @@ other = "Došlo k chybě {{.Error}}"
 [error_TargetIsBot]
 other = "Tohoto bota nelze vybrat jako cíl!"
 
+[error_bot_does_not_have_permissions]
+other = "Insufficient bot permissions!\rIt must be given administrator permission by the server admin to work!"
+
 [error_cannot_use_roles]
 other = "Následující role nelze použít"
 
