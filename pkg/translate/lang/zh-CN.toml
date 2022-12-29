@@ -214,6 +214,9 @@ other = "发生错误 {{.Error}}"
 [error_TargetIsBot]
 other = "无法选择此机器人为目标！"
 
+[error_bot_does_not_have_permissions]
+other = "Insufficient bot permissions!\rIt must be given administrator permission by the server admin to work!"
+
 [error_cannot_use_roles]
 other = "以下角色不能被使用"
 
