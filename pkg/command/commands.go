@@ -35,6 +35,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/api"
 	"github.com/ikafly144/gobot/pkg/message"
+	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
 	"github.com/ikafly144/gobot/pkg/util"
@@ -442,7 +443,7 @@ func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, optio
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
 						MenuType:  discordgo.RoleSelectMenu,
-						CustomID:  "gobot_panel_role_create:" + interactionSave(i),
+						CustomID:  "gobot_panel_role_create:" + session.InteractionSave(i),
 						MinValues: &one,
 						MaxValues: 25,
 					},
@@ -580,8 +581,8 @@ func panelConfigEmoji(s *discordgo.Session, i *discordgo.InteractionCreate, opti
 	}
 	switch data.CustomID {
 	case "gobot_panel_minecraft", "gobot_panel_role":
-		message.RemoveSession(message.SessionID{ID: uid})
-		panelSession, _ := message.NewSession(message.SessionID{ID: uid}, message.RolePanelEdit)
+		message.RemoveSession(uid)
+		panelSession, _ := message.NewSession(uid, message.RolePanelEdit)
 		panelSession.Data = types.PanelEmojiConfig{
 			Message:     mes.ID,
 			Emojis:      []*discordgo.ComponentEmoji{},
@@ -615,7 +616,7 @@ func panelConfigEmojiHandler(s *discordgo.Session, m *discordgo.MessageCreate, s
 	}
 	if m.Content == "cancel" {
 		message.RemoveSession(ses.ID())
-		RemoveSelect(ses.ID().ID, data.MessageData.GuildID)
+		RemoveSelect(ses.ID(), data.MessageData.GuildID)
 		return
 	}
 	emojiString := util.Regexp2FindAllString(types.Twemoji, m.Content)
@@ -656,7 +657,7 @@ func panelConfigEmojiHandler(s *discordgo.Session, m *discordgo.MessageCreate, s
 		}
 		updateEmoji(s, data)
 		message.RemoveSession(ses.ID())
-		RemoveSelect(ses.ID().ID, data.MessageData.GuildID)
+		RemoveSelect(ses.ID(), data.MessageData.GuildID)
 	}
 }
 

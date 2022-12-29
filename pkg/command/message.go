@@ -22,6 +22,7 @@ import (
 	"log"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
 )
@@ -86,7 +87,7 @@ func gobotPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *d
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
 						MenuType:  discordgo.RoleSelectMenu,
-						CustomID:  "gobot_panel_role_add:" + interactionSave(i),
+						CustomID:  "gobot_panel_role_add:" + session.InteractionSave(i),
 						MinValues: &one,
 						MaxValues: 25,
 					},

@@ -7,6 +7,7 @@ require (
 	github.com/Tnze/go-mc v1.18.2
 	github.com/bwmarrin/discordgo v0.26.1
 	github.com/dlclark/regexp2 v1.7.0
+	github.com/google/uuid v1.1.1
 	github.com/joho/godotenv v1.4.0
 	github.com/millkhan/mcstatusgo/v2 v2.2.0
 	github.com/nicksnyder/go-i18n/v2 v2.2.0
@@ -15,7 +16,6 @@ require (
 )
 
 require (
-	github.com/google/uuid v1.1.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.4 // indirect

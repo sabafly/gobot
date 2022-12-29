@@ -22,42 +22,42 @@ import (
 	"github.com/google/uuid"
 )
 
-func New[T any]() (s *Session[T]) {
-	s = &Session[T]{}
-	s.sessionData = map[string]SessionData[T]{}
+func new[T any]() (s *session[T]) {
+	s = &session[T]{}
+	s.sessionData = map[string]sessionData[T]{}
 	return
 }
 
-type Session[T any] struct {
-	sessionData map[string]SessionData[T]
+type session[T any] struct {
+	sessionData map[string]sessionData[T]
 }
 
-func (s *Session[T]) Get(id string) (SessionData[T], error) {
+func (s *session[T]) get(id string) (sessionData[T], error) {
 	if d, ok := s.sessionData[id]; ok {
 		return d, nil
 	}
-	return SessionData[T]{}, errors.New("not found")
+	return sessionData[T]{}, errors.New("not found")
 }
 
-func (s *Session[T]) Add(data T) (id string) {
+func (s *session[T]) add(data T) (id string) {
 	id = uuid.New().String()
-	s.sessionData[id] = SessionData[T]{id: id, data: data}
+	s.sessionData[id] = sessionData[T]{id: id, data: data}
 	return id
 }
 
-func (s *Session[T]) Remove(id string) {
+func (s *session[T]) remove(id string) {
 	delete(s.sessionData, id)
 }
 
-type SessionData[T any] struct {
+type sessionData[T any] struct {
 	id   string
 	data T
 }
 
-func (sd *SessionData[T]) ID() (res string) {
+func (sd *sessionData[T]) ID() (res string) {
 	return sd.id
 }
 
-func (sd *SessionData[T]) Data() (res T) {
+func (sd *sessionData[T]) Data() (res T) {
 	return sd.data
 }

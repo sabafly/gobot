@@ -26,17 +26,13 @@ import (
 	"github.com/ikafly144/gobot/pkg/types"
 )
 
-type SessionID struct {
-	ID string
-}
-
 type Session struct {
-	id   SessionID
+	id   string
 	Data interface{}
 	Type SessionType
 }
 
-func (s *Session) ID() SessionID {
+func (s *Session) ID() string {
 	return s.id
 }
 
@@ -46,9 +42,9 @@ const (
 	RolePanelEdit SessionType = 1
 )
 
-var sessionManager map[SessionID]*Session = make(map[SessionID]*Session)
+var sessionManager map[string]*Session = make(map[string]*Session)
 
-func NewSession(id SessionID, t SessionType) (*Session, error) {
+func NewSession(id string, t SessionType) (*Session, error) {
 
 	if s, ok := sessionManager[id]; ok && s.Type == t {
 		return s, nil
@@ -64,7 +60,7 @@ func NewSession(id SessionID, t SessionType) (*Session, error) {
 	return s, nil
 }
 
-func GetSession(id SessionID) (*Session, error) {
+func GetSession(id string) (*Session, error) {
 
 	if s, ok := sessionManager[id]; ok {
 		return s, nil
@@ -73,7 +69,7 @@ func GetSession(id SessionID) (*Session, error) {
 	return &Session{}, errors.New("no session found")
 }
 
-func RemoveSession(id SessionID) error {
+func RemoveSession(id string) error {
 
 	delete(sessionManager, id)
 
@@ -87,7 +83,7 @@ func AddHandler(s SessionType, h func(s *discordgo.Session, m *discordgo.Message
 }
 
 func HandleExec(s *discordgo.Session, m *discordgo.MessageCreate) {
-	d, ok := sessionManager[SessionID{ID: m.Author.ID}]
+	d, ok := sessionManager[string(m.Author.ID)]
 	if !ok {
 		return
 	}

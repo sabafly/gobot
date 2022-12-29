@@ -33,6 +33,7 @@ import (
 	"github.com/Tnze/go-mc/chat"
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/api"
+	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
 	"github.com/ikafly144/gobot/pkg/util"
@@ -192,9 +193,9 @@ func MCpanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate, id str
 	} else {
 		s.InteractionResponseDelete(i.Interaction)
 	}
-	i2, _ := interactionLoad(id)
+	i2, _ := session.InteractionLoad(id)
 	s.InteractionResponseDelete(i2.Data().Interaction)
-	interactionRemove(id)
+	session.InteractionRemove(id)
 }
 
 func MCpanelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, id string) {
@@ -291,9 +292,9 @@ func MCpanelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, id 
 		Content: &str,
 		Embeds:  &embed,
 	})
-	i2, _ := interactionLoad(id)
+	i2, _ := session.InteractionLoad(id)
 	s.InteractionResponseDelete(i2.Data().Interaction)
-	interactionRemove(id)
+	session.InteractionRemove(id)
 }
 
 func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
