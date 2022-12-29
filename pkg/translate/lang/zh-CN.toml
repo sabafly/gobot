@@ -4,51 +4,35 @@ other = "地址"
 [channel]
 other = "频道"
 
-[command_ban]
-other = "封禁"
+[client_desktop]
+other = "桌面"
 
-[command_ban_desc]
-other = "封禁所选用户"
+[client_mobile]
+other = "移动设备"
 
-[command_ban_message]
-other = "{{.Target}} 已被封禁"
-
-[command_ban_option_desc_reason]
-other = "禁止的原因"
-
-[command_ban_option_desc_target]
-other = "要禁止的用户"
-
-[command_ban_option_reason]
-other = "原因"
-
-[command_ban_option_target]
-other = "target"
-
-[command_ban_reason]
-one = "原因： {{.Reason}}"
-other = "原因： {{.Reason}}"
-
-[command_kick]
-other = "踢出"
-
-[command_kick_desc]
-other = "踢出选中的用户"
-
-[command_kick_message]
-other = "{{.Target}} 已被踢出"
-
-[command_kick_option_desc_target]
-other = "要踢出的用户"
-
-[command_kick_option_target]
-other = "target"
+[client_web]
+other = "Web"
 
 [command_panel]
 other = "面板"
 
 [command_panel_desc]
 other = "管理或创建面板"
+
+[command_panel_option_config]
+other = "配置"
+
+[command_panel_option_config_desc]
+other = "配置代理"
+
+[command_panel_option_config_option_emoji]
+other = "emoji"
+
+[command_panel_option_config_option_emoji_desc]
+other = "在选择菜单中设置自定义表情"
+
+[command_panel_option_config_option_emoji_message]
+other = "请在此频道中发送表情"
 
 [command_panel_option_desc_role]
 other = "管理角色面板"
@@ -221,21 +205,6 @@ other = "名称"
 [command_tracker_option_minecraft_option_remove_option_name_desc]
 other = "Tracker 名称"
 
-[command_unban]
-other = "取消封禁"
-
-[command_unban_desc]
-other = "取消封禁所选用户"
-
-[command_unban_message]
-other = "{{.Target}} 已被解除封禁"
-
-[command_unban_option_desc_target]
-other = "要解除封禁的用户"
-
-[command_unban_option_target]
-other = "target"
-
 [error]
 other = "{{.Error}}"
 
@@ -244,6 +213,9 @@ other = "发生错误 {{.Error}}"
 
 [error_TargetIsBot]
 other = "无法选择此机器人为目标！"
+
+[error_cannot_use_roles]
+other = "以下角色不能被使用"
 
 [error_failed_to_connect_api]
 other = "连接 api 服务器失败"
@@ -257,9 +229,6 @@ other = "无效端口值"
 [error_invalid_roles]
 other = "无效的角色(s)"
 
-[error_cannot_use_roles]
-other = "以下角色不能被使用"
-
 [error_message]
 other = "发生错误"
 
@@ -271,6 +240,12 @@ other = "延迟"
 
 [message_command_modify]
 other = "修改"
+
+[message_command_select]
+other = "选择"
+
+[message_command_select_message]
+other = "已选择"
 
 [message_command_user_info]
 other = "信息"
@@ -293,11 +268,41 @@ other = "无"
 [message_command_user_info_roles]
 other = "角色"
 
+[message_command_user_info_status]
+other = "状态"
+
+[message_modify_cant_use_this_message_error]
+other = "该消息不可用"
+
+[message_modify_role_add_message]
+other = "选择要添加的角色"
+
+[message_modify_role_create_message]
+other = "为创建面板配置一个角色"
+
+[online_status]
+other = "状态"
+
+[panel_minecraft_add_server]
+other = "添加服务器"
+
+[panel_minecraft_address]
+other = "地址"
+
+[panel_minecraft_display_name]
+other = "显示名称"
+
 [panel_minecraft_message_boot]
 other = "启动 {{.Name}}"
 
 [panel_minecraft_message_stop]
 other = "停止 {{.Name}}"
+
+[panel_minecraft_my_server]
+other = "我的服务器"
+
+[panel_minecraft_port]
+other = "端口"
 
 [panel_role_message_added]
 other = "已添加"
@@ -313,63 +318,3 @@ other = "端口"
 
 [version]
 other = "版本"
-
-[message_modify_cant_use_this_message_error]
-other = "该消息不可用"
-
-[message_modify_role_add_message]
-other = "选择要添加的角色"
-
-[message_modify_role_create_message]
-other = "为创建面板配置一个角色"
-
-[message_command_select_message]
-other = "已选择"
-
-[message_command_select]
-other = "选择"
-
-[command_panel_option_config]
-other = "配置"
-
-[command_panel_option_config_desc]
-other = "配置代理"
-
-[command_panel_option_config_option_emoji]
-other = "emoji"
-
-[command_panel_option_config_option_emoji_desc]
-other = "在选择菜单中设置自定义表情"
-
-[command_panel_option_config_option_emoji_message]
-other = "请在此频道中发送表情"
-
-[panel_minecraft_display_name]
-other = "显示名称"
-
-[panel_minecraft_address]
-other = "地址"
-
-[panel_minecraft_my_server]
-other = "我的服务器"
-
-[panel_minecraft_port]
-other = "端口"
-
-[panel_minecraft_add_server]
-other = "添加服务器"
-
-[client_desktop]
-other = "桌面"
-
-[client_mobile]
-other = "移动设备"
-
-[client_web]
-other = "Web"
-
-[online_status]
-other = "状态"
-
-[message_command_user_info_status]
-other = "状态"
