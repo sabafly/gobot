@@ -446,6 +446,7 @@ func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, 
 			Content: &str,
 		})
 	}
+	util.DeferDeleteInteraction(s, i)
 }
 
 func panelConfigEmoji(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {

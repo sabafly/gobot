@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"reflect"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/dlclark/regexp2"
@@ -134,6 +134,7 @@ func StatusString(status discordgo.Status) (str string) {
 	return
 }
 
-func IsNil[T any](v T) bool {
-	return reflect.ValueOf(v).IsNil()
+func DeferDeleteInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	time.Sleep(time.Second * 3)
+	s.InteractionResponseDelete(i.Interaction)
 }

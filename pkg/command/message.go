@@ -25,6 +25,7 @@ import (
 	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
+	"github.com/ikafly144/gobot/pkg/util"
 )
 
 func MModify(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -185,6 +186,7 @@ func MSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: &str,
 	})
+	util.DeferDeleteInteraction(s, i)
 }
 
 func RemoveSelect(uid string, gid string) {
