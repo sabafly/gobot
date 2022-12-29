@@ -215,7 +215,7 @@ other = "Si è verificato un errore {{.Error}}"
 other = "Non è possibile selezionare questo bot come obiettivo!"
 
 [error_bot_does_not_have_permissions]
-other = "Insufficient bot permissions!\rIt must be given administrator permission by the server admin to work!"
+other = "Permessi bot insufficienti!\rDeve essere dato all'amministratore il permesso del server per funzionare!"
 
 [error_cannot_use_roles]
 other = "I seguenti ruoli non possono essere utilizzati"
