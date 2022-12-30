@@ -904,6 +904,11 @@ func UInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	sort.Slice(r, func(i2, j int) bool {
 		return r[i2].Position < r[j].Position
 	})
+	for _, v := range r {
+		if v.Color != 0x000000 {
+			color = v.Color
+		}
+	}
 	for i2, j := 0, len(r)-1; i2 < j; i2, j = i2+1, j-1 {
 		r[i2], r[j] = r[j], r[i2]
 	}
@@ -913,11 +918,6 @@ func UInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 	if roles == "" {
 		roles = "`" + translate.Message(i.Locale, "message_command_user_info_none") + "`"
-	}
-	for _, v := range r {
-		if v.Color != 0x000000 {
-			color = v.Color
-		}
 	}
 	sColor := strconv.FormatInt(int64(color), 16)
 	for utf8.RuneCountInString(sColor) < 6 {
