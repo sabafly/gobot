@@ -236,7 +236,7 @@ other = "Ugyldige rolle(r)"
 other = "En feil har oppstått"
 
 [error_unknown_command]
-other = "Unkown Operation"
+other = "Ukjent operasjon"
 
 [feed_minecraft_webhook_name]
 other = "varsling av tjener"
