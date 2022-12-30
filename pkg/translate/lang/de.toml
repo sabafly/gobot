@@ -235,6 +235,9 @@ other = "Ungültige Rolle(n)"
 [error_message]
 other = "Ein Fehler ist aufgetreten"
 
+[error_unknown_command]
+other = "Unbekannter Vorgang"
+
 [feed_minecraft_webhook_name]
 other = "server notifier"
 

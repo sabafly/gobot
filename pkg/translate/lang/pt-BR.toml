@@ -235,6 +235,9 @@ other = "Papéis inválidos"
 [error_message]
 other = "Ocorreu um erro"
 
+[error_unknown_command]
+other = "Operação desconhecida"
+
 [feed_minecraft_webhook_name]
 other = "notificador do servidor"
 

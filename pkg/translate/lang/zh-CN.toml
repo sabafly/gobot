@@ -235,6 +235,9 @@ other = "无效的角色(s)"
 [error_message]
 other = "发生错误"
 
+[error_unknown_command]
+other = "未知操作"
+
 [feed_minecraft_webhook_name]
 other = "服务器通知器"
 

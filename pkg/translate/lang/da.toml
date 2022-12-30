@@ -235,6 +235,9 @@ other = "Ugyldig rolle(r)"
 [error_message]
 other = "Der opstod en fejl"
 
+[error_unknown_command]
+other = "Unkown Handling"
+
 [feed_minecraft_webhook_name]
 other = "server notifikation"
 
