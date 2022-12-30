@@ -236,7 +236,7 @@ other = "Neplatná role"
 other = "Došlo k chybě"
 
 [error_unknown_command]
-other = "Unkown Operation"
+other = "Neznámá operace"
 
 [feed_minecraft_webhook_name]
 other = "oznámení serveru"
