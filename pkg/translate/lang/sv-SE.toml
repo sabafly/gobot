@@ -235,6 +235,9 @@ other = "Ogiltig roll(er)"
 [error_message]
 other = "Ett fel har uppstått"
 
+[error_unknown_command]
+other = "Unkown Operation"
+
 [feed_minecraft_webhook_name]
 other = "server avisering"
 
