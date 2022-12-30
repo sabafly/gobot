@@ -236,7 +236,7 @@ other = "Virheellinen rooli(t)"
 other = "Virhe on tapahtunut"
 
 [error_unknown_command]
-other = "Tuntematon Toiminto"
+other = "Unkown operation"
 
 [feed_minecraft_webhook_name]
 other = "palvelimen ilmoittaja"
