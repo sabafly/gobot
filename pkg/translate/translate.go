@@ -33,32 +33,39 @@ import (
 var f embed.FS
 
 var (
-	defaultLang = language.English
+	defaultLang  = language.English
+	translations = i18n.Bundle{}
 )
 
 func init() {
-	loadTranslations()
+	log.SetFlags(log.Ltime)
+	log.Print("翻訳ファイルを読み込みます")
+	translations, _ = loadTranslations()
 }
 
 func loadTranslations() (i18n.Bundle, error) {
-	// dir := filepath.Join("lang")
 	bundle := i18n.NewBundle(defaultLang)
 	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
-	ff, err := f.ReadFile("en.toml")
+	log.Print("en.toml を読み込み中...")
+	buf, err := f.ReadFile("en.toml")
 	if err != nil {
 		panic(err)
 	}
-	ln, err := i18n.ParseMessageFileBytes(ff, "en.toml", map[string]i18n.UnmarshalFunc{
+	ln, err := i18n.ParseMessageFileBytes(buf, "en.toml", map[string]i18n.UnmarshalFunc{
 		"toml": toml.Unmarshal,
 	})
 	if err != nil {
 		panic(err)
 	}
 	bundle.AddMessages(ln.Tag, ln.Messages...)
+	log.Print("完了")
 	fd, _ := f.ReadDir("lang")
 	for _, de := range fd {
+		log.Printf("%v を読み込み中...", de.Name())
 		bundle.LoadMessageFileFS(f, "lang/"+de.Name())
+		log.Print("完了")
 	}
+	log.Print("翻訳ファイルの読み込み完了")
 	return *bundle, nil
 }
 
@@ -73,10 +80,6 @@ func Translate(locale discordgo.Locale, messageId string, templateData interface
 }
 
 func Translates(locale discordgo.Locale, messageId string, templateData interface{}, pluralCount int) string {
-	translations, err := loadTranslations()
-	if err != nil {
-		panic(err)
-	}
 	messageId = strings.ReplaceAll(messageId, ".", "_")
 	defaultLocalizer := i18n.NewLocalizer(&translations, string(locale))
 	res, err := defaultLocalizer.Localize(&i18n.LocalizeConfig{
