@@ -235,6 +235,9 @@ other = "Μη έγκυρος ρόλος"
 [error_message]
 other = "Παρουσιάστηκε ένα σφάλμα"
 
+[error_unknown_command]
+other = "Unkown Operation"
+
 [feed_minecraft_webhook_name]
 other = "κοινοποιών διακομιστή"
 
