@@ -236,7 +236,7 @@ other = "Невірна роль(и)"
 other = "Сталася помилка"
 
 [error_unknown_command]
-other = "Unkown Operation"
+other = "Unkown операція"
 
 [feed_minecraft_webhook_name]
 other = "сповіщення сервера"
