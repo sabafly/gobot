@@ -404,11 +404,13 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		p, err := s.State.UserChannelPermissions(s.State.User.ID, i.ChannelID)
 		if err == nil && p&int64(discordgo.PermissionAdministrator) != 0 {
-			if i.Type == discordgo.InteractionApplicationCommand {
+			switch i.Type {
+			case discordgo.InteractionApplicationCommand:
 				if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
 					h(s, i)
 				}
-			} else if i.Type == discordgo.InteractionMessageComponent {
+				return
+			case discordgo.InteractionMessageComponent:
 				ids := strings.Split(i.MessageComponentData().CustomID, ":")
 				var customID string
 				var sessionID string
@@ -423,7 +425,8 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 				if c, ok := messageComponentHandlers[customID]; ok {
 					c(s, i, sessionID)
 				}
-			} else if i.Type == discordgo.InteractionModalSubmit {
+				return
+			case discordgo.InteractionModalSubmit:
 				ids := strings.Split(i.ModalSubmitData().CustomID, ":")
 				var customID string
 				var mid string
@@ -438,7 +441,14 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 				if m, ok := modalSubmitHandlers[customID]; ok {
 					m(s, i, mid)
 				}
+				return
 			}
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: translate.Message(i.Locale, "error_unknown_command"),
+				},
+			})
 		} else {
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
