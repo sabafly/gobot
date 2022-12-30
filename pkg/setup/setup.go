@@ -105,6 +105,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 									DescriptionLocalizations: *translate.MessageMap("command_panel_option_role_option_create_option_desc_name", false),
 									Type:                     discordgo.ApplicationCommandOptionString,
 									Required:                 true,
+									MaxLength:                32,
 								},
 								{
 									Name:                     "description",
@@ -112,6 +113,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 									NameLocalizations:        *translate.MessageMap("command_panel_option_role_option_create_option_desc", true),
 									DescriptionLocalizations: *translate.MessageMap("command_panel_option_role_option_create_option_desc_desc", false),
 									Type:                     discordgo.ApplicationCommandOptionString,
+									MaxLength:                256,
 								},
 							},
 						},
@@ -138,6 +140,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 									DescriptionLocalizations: *translate.MessageMap("command_panel_option_minecraft_option_create_option_name_desc", false),
 									Type:                     discordgo.ApplicationCommandOptionString,
 									Required:                 true,
+									MaxLength:                32,
 								},
 								{
 									Name:                     "servername",
@@ -146,6 +149,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 									DescriptionLocalizations: *translate.MessageMap("command_panel_option_minecraft_option_create_option_servername_desc", false),
 									Type:                     discordgo.ApplicationCommandOptionString,
 									Required:                 true,
+									MaxLength:                16,
 								},
 								{
 									Name:                     "address",
@@ -154,6 +158,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 									DescriptionLocalizations: *translate.MessageMap("command_panel_option_minecraft_option_create_option_address_desc", false),
 									Type:                     discordgo.ApplicationCommandOptionString,
 									Required:                 true,
+									MaxLength:                32,
 								},
 								{
 									Name:                     "port",
@@ -162,6 +167,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 									DescriptionLocalizations: *translate.MessageMap("command_panel_option_minecraft_option_create_option_port_desc", false),
 									Type:                     discordgo.ApplicationCommandOptionInteger,
 									Required:                 true,
+									MaxValue:                 1 << 16,
 								},
 								{
 									Name:                     "description",
@@ -169,6 +175,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 									NameLocalizations:        *translate.MessageMap("command_panel_option_minecraft_option_create_option_description", true),
 									DescriptionLocalizations: *translate.MessageMap("command_panel_option_minecraft_option_create_option_description_desc", false),
 									Type:                     discordgo.ApplicationCommandOptionString,
+									MaxLength:                256,
 								},
 								{
 									Name:                     "showip",
@@ -228,6 +235,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 									DescriptionLocalizations: *translate.MessageMap("command_tracker_option_minecraft_option_create_option_name_desc", false),
 									Type:                     discordgo.ApplicationCommandOptionString,
 									Required:                 true,
+									MaxLength:                16,
 								},
 								{
 									Name:                     "address",
@@ -236,6 +244,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 									DescriptionLocalizations: *translate.MessageMap("command_tracker_option_minecraft_option_create_option_address_desc", false),
 									Type:                     discordgo.ApplicationCommandOptionString,
 									Required:                 true,
+									MaxLength:                32,
 								},
 								{
 									Name:                     "port",
@@ -275,6 +284,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 									NameLocalizations:        *translate.MessageMap("command_tracker_option_minecraft_option_remove_option_name", true),
 									DescriptionLocalizations: *translate.MessageMap("command_tracker_option_minecraft_option_remove_option_name_desc", false),
 									Required:                 true,
+									MaxLength:                16,
 								},
 							},
 						},
@@ -304,6 +314,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 							DescriptionLocalizations: *translate.MessageMap("command_role_option_color_option_rgb_desc", false),
 							Type:                     discordgo.ApplicationCommandOptionString,
 							Required:                 true,
+							MaxLength:                6,
 						},
 						{
 							Name:                     "name",
@@ -311,6 +322,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 							NameLocalizations:        *translate.MessageMap("command_role_option_color_option_name", true),
 							DescriptionLocalizations: *translate.MessageMap("command_role_option_color_option_name_desc", false),
 							Type:                     discordgo.ApplicationCommandOptionString,
+							MaxLength:                100,
 						},
 					},
 				},
