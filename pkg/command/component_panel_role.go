@@ -21,27 +21,28 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/translate"
+	"github.com/ikafly144/gobot/pkg/util"
 )
 
 func ComponentPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
-	})
+	}))
 	component := i.Message.Components
 	var content string
-	bytes, _ := component[0].MarshalJSON()
+	bytes, _ := util.ErrorCatch(component[0].MarshalJSON())
 	gid := i.GuildID
 	uid := i.Member.User.ID
 	if component[0].Type() == discordgo.ActionsRowComponent {
 		data := &discordgo.ActionsRow{}
-		json.Unmarshal(bytes, data)
-		bytes, _ := data.Components[0].MarshalJSON()
+		util.ErrorCatch("", json.Unmarshal(bytes, data))
+		bytes, _ := util.ErrorCatch(data.Components[0].MarshalJSON())
 		if data.Components[0].Type() == discordgo.SelectMenuComponent {
 			data := &discordgo.SelectMenu{}
-			json.Unmarshal(bytes, data)
+			util.ErrorCatch("", json.Unmarshal(bytes, data))
 			for _, v := range data.Options {
 				t := true
 				for _, v2 := range i.MessageComponentData().Values {
@@ -52,7 +53,7 @@ func ComponentPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				if t {
 					for _, v2 := range i.Member.Roles {
 						if v.Value == v2 {
-							s.GuildMemberRoleRemove(gid, uid, v.Value)
+							util.ErrorCatch("", s.GuildMemberRoleRemove(gid, uid, v.Value))
 							content += translate.Message(i.Locale, "panel_role_message_removed") + "<@&" + v.Value + ">\r"
 						}
 					}
@@ -66,17 +67,17 @@ func ComponentPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate) {
 					}
 				}
 				if t {
-					s.GuildMemberRoleAdd(gid, uid, r)
+					util.ErrorCatch("", s.GuildMemberRoleAdd(gid, uid, r))
 					content += translate.Message(i.Locale, "panel_role_message_added") + " <@&" + r + ">\r"
 				}
 			}
 		}
 	}
 	if content != "" {
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Content: &content,
-		})
+		}))
 	} else {
-		s.InteractionResponseDelete(i.Interaction)
+		util.ErrorCatch("", s.InteractionResponseDelete(i.Interaction))
 	}
 }

@@ -34,10 +34,11 @@ import (
 var VERSION = "Development Version"
 
 var (
-	s              *discordgo.Session              = session.Session()
-	commands       []*discordgo.ApplicationCommand = reg.Commands()
-	GuildID        string                          = *env.GuildID
-	RemoveCommands bool                            = *env.RemoveCommands
+	s                  *discordgo.Session              = session.Session()
+	commands           []*discordgo.ApplicationCommand = reg.Commands()
+	GuildID            string                          = *env.GuildID
+	RemoveCommands     bool                            = *env.RemoveCommands
+	registeredCommands []*discordgo.ApplicationCommand
 )
 
 func Run() {
@@ -63,8 +64,52 @@ func Run() {
 		Status: string(discordgo.StatusDoNotDisturb),
 	})
 
+	go regCommand()
+
+	defer end()
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt)
+	log.Println("Ctrl+Cで終了")
+
+	s := <-sigCh
+
+	log.Printf("受信: %v\n", s.String())
+}
+
+func end() {
+	if RemoveCommands {
+		log.Println("コマンドを登録解除中...")
+
+		for _, v := range registeredCommands {
+			err := s.ApplicationCommandDelete(s.State.User.ID, GuildID, v.ID)
+			if err != nil {
+				log.Panicf("'%v'コマンドを解除できません: %v", v.Name, err)
+			}
+		}
+		c, _ := s.ApplicationCommands(s.State.User.ID, "")
+		for _, v := range c {
+			err := s.ApplicationCommandDelete(s.State.User.ID, "", v.ID)
+			if err != nil {
+				log.Panicf("'%v'コマンドを解除できません: %v", v.Name, err)
+			}
+		}
+
+		cs, _ := s.ApplicationCommands(s.State.User.ID, *env.SupportGuildID)
+		for _, v := range cs {
+			s.ApplicationCommandDelete(s.State.User.ID, v.GuildID, v.ID)
+		}
+
+	}
+	s.Close()
+	log.Println("正常にシャットダウンしました")
+	os.Exit(0)
+}
+
+func regCommand() {
+
 	log.Println("コマンドを追加中...")
-	registeredCommands := make([]*discordgo.ApplicationCommand, len(commands))
+	registeredCommands = make([]*discordgo.ApplicationCommand, len(commands))
 	for i, v := range commands {
 		cmd, err := s.ApplicationCommandCreate(s.State.User.ID, GuildID, v)
 		if err != nil {
@@ -142,47 +187,10 @@ func Run() {
 		Version: "1",
 	})
 
-	defer end(registeredCommands)
+	log.Print("完了")
 
 	go updateStatus()
 	go autoBans()
-
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt)
-	log.Println("Ctrl+Cで終了")
-
-	s := <-sigCh
-
-	log.Printf("受信: %v\n", s.String())
-}
-
-func end(registeredCommands []*discordgo.ApplicationCommand) {
-	if RemoveCommands {
-		log.Println("コマンドを登録解除中...")
-
-		for _, v := range registeredCommands {
-			err := s.ApplicationCommandDelete(s.State.User.ID, GuildID, v.ID)
-			if err != nil {
-				log.Panicf("'%v'コマンドを解除できません: %v", v.Name, err)
-			}
-		}
-		c, _ := s.ApplicationCommands(s.State.User.ID, "")
-		for _, v := range c {
-			err := s.ApplicationCommandDelete(s.State.User.ID, "", v.ID)
-			if err != nil {
-				log.Panicf("'%v'コマンドを解除できません: %v", v.Name, err)
-			}
-		}
-
-		cs, _ := s.ApplicationCommands(s.State.User.ID, *env.SupportGuildID)
-		for _, v := range cs {
-			s.ApplicationCommandDelete(s.State.User.ID, v.GuildID, v.ID)
-		}
-
-	}
-	s.Close()
-	log.Println("正常にシャットダウンしました")
-	os.Exit(0)
 }
 
 func updateStatus() {

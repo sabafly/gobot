@@ -27,22 +27,22 @@ import (
 )
 
 func ComponentPanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate, id string) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
-	})
+	}))
 	mid := i.Message.Embeds[0].Title
 	gid := i.GuildID
 	cid := i.ChannelID
-	mes, _ := s.ChannelMessage(cid, mid)
+	mes, _ := util.ErrorCatch(s.ChannelMessage(cid, mid))
 	var unused string
 	rv := i.Interaction.MessageComponentData().Resolved.Roles
-	me, _ := s.GuildMember(i.GuildID, s.State.User.ID)
+	me, _ := util.ErrorCatch(s.GuildMember(i.GuildID, s.State.User.ID))
 	var highestPosition int
 	for _, v := range me.Roles {
-		r, _ := s.State.Role(i.GuildID, v)
+		r, _ := util.ErrorCatch(s.State.Role(i.GuildID, v))
 		if r.Position > highestPosition {
 			highestPosition = r.Position
 		}
@@ -57,9 +57,9 @@ func ComponentPanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate,
 	}
 	if len(roles) == 0 {
 		embeds := translate.ErrorEmbed(i.Locale, "error_invalid_roles")
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Embeds: &embeds,
-		})
+		}))
 		return
 	}
 	sort.Slice(roles, func(i, j int) bool {
@@ -108,20 +108,20 @@ func ComponentPanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate,
 			},
 		},
 	}
-	s.ChannelMessageEditComplex(&content)
+	util.ErrorCatch(s.ChannelMessageEditComplex(&content))
 	var embed []*discordgo.MessageEmbed
 	if unused != "" {
 		embed = append(embed, &discordgo.MessageEmbed{
 			Title:       translate.Message(i.Locale, "error_cannot_use_roles"),
 			Description: unused,
 		})
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Embeds: &embed,
-		})
+		}))
 	} else {
-		s.InteractionResponseDelete(i.Interaction)
+		util.ErrorCatch("", s.InteractionResponseDelete(i.Interaction))
 	}
-	i2, _ := session.InteractionLoad(id)
-	s.InteractionResponseDelete(i2.Data().Interaction)
+	i2, _ := util.ErrorCatch(session.InteractionLoad(id))
+	util.ErrorCatch("", s.InteractionResponseDelete(i2.Data().Interaction))
 	session.InteractionRemove(id)
 }

@@ -18,3 +18,5 @@
 .vscode
 gobot
 start.sh
+
+logs/

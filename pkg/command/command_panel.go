@@ -32,12 +32,12 @@ import (
 )
 
 func Panel(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
-	})
+	}))
 	options := i.ApplicationCommandData().Options
 	switch options[0].Name {
 	case "role":
@@ -75,7 +75,7 @@ func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, optio
 	}
 	one := 1
 	content := translate.Message(i.Locale, "message_modify_role_create_message")
-	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+	util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: &content,
 		Embeds: &[]*discordgo.MessageEmbed{
 			{
@@ -95,17 +95,17 @@ func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, optio
 				},
 			},
 		},
-	})
+	}))
 }
 
 func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: "OK",
 			Flags:   discordgo.MessageFlagsEphemeral,
 		},
-	})
+	}))
 	options = options[0].Options
 	var content2 discordgo.MessageSend
 	cid := i.ChannelID
@@ -133,7 +133,7 @@ func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, 
 	}
 	serverName = strings.ReplaceAll(serverName, ":", ";")
 	address = strings.ReplaceAll(address, ":", ";")
-	if port > 65535 || 1 > port {
+	if port > 1<<16 || 1 > port {
 		port = 25565
 	}
 	serverAddress := serverName + ":" + address + ":" + strconv.Itoa(port) + ":" + strconv.FormatBool(showIp)
@@ -164,24 +164,23 @@ func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, 
 			},
 		},
 	}
-	_, err := s.ChannelMessageSendComplex(cid, &content2)
+	_, err := util.ErrorCatch(s.ChannelMessageSendComplex(cid, &content2))
 	if err != nil {
 		str := fmt.Sprint(err)
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Content: &str,
-		})
+		}))
 	} else {
 		str := translate.Message(i.Locale, "command_panel_option_minecraft_message")
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Content: &str,
-		})
+		}))
 	}
-	util.DeferDeleteInteraction(s, i)
 }
 
 func panelConfigEmoji(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {
 	uid := i.Member.User.ID
-	mes, err := GetSelectingMessage(uid, i.GuildID)
+	mes, err := util.ErrorCatch(GetSelectingMessage(uid, i.GuildID))
 	if err != nil {
 		embed := translate.ErrorEmbed(i.Locale, "error", map[string]interface{}{
 			"Error": err,
@@ -197,26 +196,22 @@ func panelConfigEmoji(s *discordgo.Session, i *discordgo.InteractionCreate, opti
 
 			var a discordgo.ActionsRow
 
-			b, err := mc.MarshalJSON()
+			b, err := util.ErrorCatch(mc.MarshalJSON())
 			if err != nil {
-				log.Print(err)
 				continue
 			}
-			err = json.Unmarshal(b, &a)
+			_, err = util.ErrorCatch("", json.Unmarshal(b, &a))
 			if err != nil {
-				log.Print(err)
 				continue
 			}
 			for _, smo := range a.Components {
 				if smo.Type() == discordgo.SelectMenuComponent {
-					b, err := smo.MarshalJSON()
+					b, err := util.ErrorCatch(smo.MarshalJSON())
 					if err != nil {
-						log.Print(err)
 						continue
 					}
-					err = json.Unmarshal(b, &data)
+					_, err = util.ErrorCatch("", json.Unmarshal(b, &data))
 					if err != nil {
-						log.Print(err)
 						continue
 					}
 					break
@@ -237,22 +232,22 @@ func panelConfigEmoji(s *discordgo.Session, i *discordgo.InteractionCreate, opti
 			},
 			Handler: panelConfigEmojiHandler,
 		}, uid)
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Embeds: &[]*discordgo.MessageEmbed{
 				{
 					Description: translate.Message(i.Locale, "command_panel_option_config_option_emoji_message"),
 				},
 			},
-		})
+		}))
 		return
 	}
-	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+	util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Embeds: &[]*discordgo.MessageEmbed{
 			{
 				Description: "Error",
 			},
 		},
-	})
+	}))
 }
 
 func panelConfigEmojiHandler(t types.MessageSessionData[types.MessagePanelConfigEmojiData], s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -283,7 +278,7 @@ func panelConfigEmojiHandler(t types.MessageSessionData[types.MessagePanelConfig
 	}
 	t.Data.Emojis = append(t.Data.Emojis, e...)
 	session.MessagePanelConfigEmojiSave(&t, mid)
-	s.ChannelMessageDelete(m.ChannelID, m.ID)
+	util.ErrorCatch("", s.ChannelMessageDelete(m.ChannelID, m.ID))
 	if len(t.Data.Emojis) >= len(t.Data.SelectMenu.Options) {
 		session.MessagePanelConfigEmojiRemove(mid)
 		RemoveSelect(mid, t.Message.GuildID)
@@ -321,8 +316,5 @@ func updateEmoji(s *discordgo.Session, o types.MessageSessionData[types.MessageP
 	})
 	e.Content = &o.Message.Content
 	e.Embeds = o.Message.Embeds
-	_, err := s.ChannelMessageEditComplex(e)
-	if err != nil {
-		log.Print(err)
-	}
+	util.ErrorCatch(s.ChannelMessageEditComplex(e))
 }

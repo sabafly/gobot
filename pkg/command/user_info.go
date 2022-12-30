@@ -17,7 +17,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package command
 
 import (
-	"log"
 	"sort"
 	"strconv"
 	"unicode/utf8"
@@ -28,25 +27,25 @@ import (
 )
 
 func UserInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
-	})
+	}))
 	gid := i.GuildID
 	uid := i.ApplicationCommandData().TargetID
-	m, err := s.State.Member(i.GuildID, uid)
+	m, err := util.ErrorCatch(s.State.Member(i.GuildID, uid))
 	if err != nil {
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Embeds: &[]*discordgo.MessageEmbed{
 				util.ErrorMessage(i.Locale, err).Embeds[0],
 			},
-		})
+		}))
 		return
 	}
 	var status string
-	p, err := s.State.Presence(gid, uid)
+	p, err := util.ErrorCatch(s.State.Presence(gid, uid))
 	if err != nil {
 		status = "Status: " + util.StatusString(discordgo.StatusOffline)
 	} else {
@@ -65,19 +64,19 @@ func UserInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			status += translate.Message(i.Locale, "online_status") + ": " + util.StatusString(p.Status) + "\r"
 		}
 	}
-	u, err := s.User(uid)
+	u, err := util.ErrorCatch(s.User(uid))
 	if err != nil {
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Embeds: &[]*discordgo.MessageEmbed{
 				util.ErrorMessage(i.Locale, err).Embeds[0],
 			},
-		})
+		}))
 		return
 	}
 	var roles string
 	var color int = 0x000000
-	role, _ := s.GuildRoles(i.GuildID)
-	me, _ := s.GuildMember(i.GuildID, uid)
+	role, _ := util.ErrorCatch(s.GuildRoles(i.GuildID))
+	me, _ := util.ErrorCatch(s.GuildMember(i.GuildID, uid))
 	var highestPosition int
 	for _, v := range me.Roles {
 		r, _ := s.State.Role(i.GuildID, v)
@@ -159,10 +158,7 @@ func UserInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			},
 		},
 	}
-	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+	util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Embeds: &[]*discordgo.MessageEmbed{&embed},
-	})
-	if err != nil {
-		log.Print(err)
-	}
+	}))
 }

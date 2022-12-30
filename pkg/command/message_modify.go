@@ -18,34 +18,31 @@ package command
 
 import (
 	"encoding/json"
-	"log"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/product"
 	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
+	"github.com/ikafly144/gobot/pkg/util"
 )
 
 func MessageModify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := &discordgo.ApplicationCommandInteractionData{}
-	byte, _ := json.Marshal(i.Interaction.Data)
-	json.Unmarshal(byte, data)
-	mes, err := s.ChannelMessage(i.ChannelID, data.TargetID)
-	if err != nil {
-		log.Print(err)
-	}
+	byte, _ := util.ErrorCatch(json.Marshal(i.Interaction.Data))
+	util.ErrorCatch("", json.Unmarshal(byte, data))
+	mes, _ := util.ErrorCatch(s.ChannelMessage(i.ChannelID, data.TargetID))
 	if mes.Author.ID == s.State.User.ID {
 		if len(mes.Components) != 0 {
 			for _, v := range mes.Components {
 				if v.Type() == discordgo.ActionsRowComponent {
-					byte, _ := v.MarshalJSON()
+					byte, _ := util.ErrorCatch(v.MarshalJSON())
 					data := &discordgo.ActionsRow{}
-					json.Unmarshal(byte, data)
+					util.ErrorCatch("", json.Unmarshal(byte, data))
 					for _, v := range data.Components {
 						if v.Type() == discordgo.SelectMenuComponent {
-							byte, _ := v.MarshalJSON()
+							byte, _ := util.ErrorCatch(v.MarshalJSON())
 							data := &discordgo.SelectMenu{}
-							json.Unmarshal(byte, data)
+							util.ErrorCatch("", json.Unmarshal(byte, data))
 							switch data.CustomID {
 							case product.CommandPanelRole:
 								modifyPanelRole(s, i, mes)
@@ -60,25 +57,25 @@ func MessageModify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			}
 		}
 	}
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content: translate.Message(i.Locale, "message_modify_cant_use_this_message_error"),
 			Flags:   discordgo.MessageFlagsEphemeral,
 		},
-	})
+	}))
 }
 
 func modifyPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *discordgo.Message) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
-	})
+	}))
 	one := 1
 	str := translate.Message(i.Locale, "message_modify_role_add_message")
-	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+	util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: &str,
 		Embeds: &[]*discordgo.MessageEmbed{
 			{
@@ -97,11 +94,11 @@ func modifyPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *
 				},
 			},
 		},
-	})
+	}))
 }
 
 func modifyPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate, mes *discordgo.Message) {
-	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseModal,
 		Data: &discordgo.InteractionResponseData{
 			Components: []discordgo.MessageComponent{
@@ -148,6 +145,5 @@ func modifyPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate, 
 			Title:    translate.Message(i.Locale, "panel_minecraft_add_server"),
 			Flags:    discordgo.MessageFlagsEphemeral,
 		},
-	})
-	log.Print(err)
+	}))
 }

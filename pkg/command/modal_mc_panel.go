@@ -19,60 +19,64 @@ package command
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/product"
+	"github.com/ikafly144/gobot/pkg/util"
 )
 
 func ModalMinecraftPanel(s *discordgo.Session, i *discordgo.InteractionCreate, mid string) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
-	})
+	}))
 	var name string
 	var address string
 	var port int
 	for _, mc := range i.ModalSubmitData().Components {
 		if mc.Type() == discordgo.ActionsRowComponent {
-			bytes, _ := mc.MarshalJSON()
+			bytes, _ := util.ErrorCatch(mc.MarshalJSON())
 			data := &discordgo.ActionsRow{}
-			json.Unmarshal(bytes, data)
-			bytes, _ = data.Components[0].MarshalJSON()
+			util.ErrorCatch("", json.Unmarshal(bytes, data))
+			bytes, _ = util.ErrorCatch(data.Components[0].MarshalJSON())
 			text := &discordgo.TextInput{}
-			json.Unmarshal(bytes, text)
+			util.ErrorCatch("", json.Unmarshal(bytes, text))
 			switch text.CustomID {
 			case product.CommandPanelMinecraftAddServerName:
 				name = text.Value
 			case product.CommandPanelMinecraftAddAddress:
 				address = text.Value
 			case product.CommandPanelMinecraftAddPort:
-				i, _ := strconv.Atoi(text.Value)
-				port = i
+				i, err := util.ErrorCatch(strconv.Atoi(text.Value))
+				if err != nil {
+					port = 25565
+				} else {
+					port = i
+				}
 			}
 		}
 	}
-	mes, _ := s.ChannelMessage(i.ChannelID, mid)
-	bytes, _ := mes.Components[0].MarshalJSON()
+	mes, _ := util.ErrorCatch(s.ChannelMessage(i.ChannelID, mid))
+	bytes, _ := util.ErrorCatch(mes.Components[0].MarshalJSON())
 	data := &discordgo.ActionsRow{}
-	json.Unmarshal(bytes, data)
-	bytes, _ = data.Components[0].MarshalJSON()
+	util.ErrorCatch("", json.Unmarshal(bytes, data))
+	bytes, _ = util.ErrorCatch(data.Components[0].MarshalJSON())
 	text := &discordgo.SelectMenu{}
-	json.Unmarshal(bytes, text)
+	util.ErrorCatch("", json.Unmarshal(bytes, text))
 	options := text.Options
 	str := strings.Split(options[0].Value, ":")
-	bl, _ := strconv.ParseBool(str[3])
+	bl, _ := util.ErrorCatch(strconv.ParseBool(str[3]))
+	name = strings.ReplaceAll(name, ":", ";")
+	address = strings.ReplaceAll(address, ":", ";")
 	options = append(options, discordgo.SelectMenuOption{
 		Label: name,
 		Value: name + ":" + address + ":" + strconv.Itoa(port) + ":" + strconv.FormatBool(bl),
 	})
-	name = strings.ReplaceAll(name, ":", ";")
-	address = strings.ReplaceAll(address, ":", ";")
-	if port > 65535 || 1 > port {
+	if port > 1<<16 || 1 > port {
 		port = 25565
 	}
 	zero := 0
@@ -93,7 +97,7 @@ func ModalMinecraftPanel(s *discordgo.Session, i *discordgo.InteractionCreate, m
 			},
 		},
 	}
-	_, err := s.ChannelMessageEditComplex(&res)
+	_, err := util.ErrorCatch(s.ChannelMessageEditComplex(&res))
 	if err != nil {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -103,6 +107,5 @@ func ModalMinecraftPanel(s *discordgo.Session, i *discordgo.InteractionCreate, m
 			},
 		})
 	}
-	s.InteractionResponseDelete(i.Interaction)
-	log.Print(name + address + strconv.Itoa(port))
+	util.ErrorCatch("", s.InteractionResponseDelete(i.Interaction))
 }

@@ -17,10 +17,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package handler
 
 import (
-	"log"
-
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/command"
+	"github.com/ikafly144/gobot/pkg/util"
 )
 
 var (
@@ -34,15 +33,12 @@ var (
 				content = c
 			}
 
-			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
 					Content: content,
 				},
-			})
-			if err != nil {
-				log.Printf("例外: %v", err)
-			}
+			}))
 		},
 		"admin": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			command.Admin(s, i)

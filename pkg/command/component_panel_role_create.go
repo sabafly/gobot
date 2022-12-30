@@ -27,19 +27,19 @@ import (
 )
 
 func ComponentPanelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, id string) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
-	})
+	}))
 	title := i.Message.Embeds[0].Title
 	description := i.Message.Embeds[0].Description
 	gid := i.GuildID
 	cid := i.ChannelID
 	var unused string
 	rv := i.Interaction.MessageComponentData().Resolved.Roles
-	me, _ := s.GuildMember(i.GuildID, s.State.User.ID)
+	me, _ := util.ErrorCatch(s.GuildMember(i.GuildID, s.State.User.ID))
 	var highestPosition int
 	for _, v := range me.Roles {
 		r, _ := s.State.Role(i.GuildID, v)
@@ -57,9 +57,9 @@ func ComponentPanelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCrea
 	}
 	if len(roles) == 0 {
 		embeds := translate.ErrorEmbed(i.Locale, "error_invalid_roles")
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Embeds: &embeds,
-		})
+		}))
 		return
 	}
 	sort.Slice(roles, func(i, j int) bool {
@@ -114,13 +114,13 @@ func ComponentPanelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCrea
 			Description: unused,
 		})
 	}
-	s.ChannelMessageSendComplex(cid, &content)
+	util.ErrorCatch(s.ChannelMessageSendComplex(cid, &content))
 	str := translate.Message(i.Locale, "command_panel_option_role_message")
-	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+	util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: &str,
 		Embeds:  &embed,
-	})
-	i2, _ := session.InteractionLoad(id)
-	s.InteractionResponseDelete(i2.Data().Interaction)
+	}))
+	i2, _ := util.ErrorCatch(session.InteractionLoad(id))
+	util.ErrorCatch("", s.InteractionResponseDelete(i2.Data().Interaction))
 	session.InteractionRemove(id)
 }

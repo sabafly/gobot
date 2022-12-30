@@ -30,15 +30,16 @@ import (
 	"github.com/ikafly144/gobot/pkg/api"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
+	"github.com/ikafly144/gobot/pkg/util"
 )
 
 func Feed(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
-	})
+	}))
 	options := i.ApplicationCommandData().Options
 	switch options[0].Name {
 	case "minecraft":
@@ -75,7 +76,7 @@ func feedMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, o
 		}
 	}
 	hash := sha256.New()
-	io.WriteString(hash, address+":"+strconv.Itoa(port))
+	util.ErrorCatch(io.WriteString(hash, address+":"+strconv.Itoa(port)))
 	st := hash.Sum(nil)
 	code := hex.EncodeToString(st)
 	data := &types.TransMCServer{
@@ -91,30 +92,29 @@ func feedMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, o
 		},
 	}
 	log.Print(data.Address, data.Port, i.Locale)
-	body, _ := json.Marshal(data)
-	api.GetApi("/api/feed/mc/add", bytes.NewBuffer(body))
+	body, _ := util.ErrorCatch(json.Marshal(data))
+	util.ErrorCatch(api.GetApi("/api/feed/mc/add", bytes.NewBuffer(body)))
 	str := "OK"
-	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+	util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: &str,
-	})
+	}))
 }
 
 func feedMinecraftGet(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	resp, err := api.GetApi("/api/feed/mc", http.NoBody)
+	resp, err := util.ErrorCatch(api.GetApi("/api/feed/mc", http.NoBody))
 	if err != nil {
-		log.Print(err)
 		embed := translate.ErrorEmbed(i.Locale, "error_failed_to_connect_api")
 		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Embeds: &embed,
 		})
 		return
 	}
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := util.ErrorCatch(io.ReadAll(resp.Body))
 	content := types.Res{}
 	data := types.FeedMCServers{}
-	json.Unmarshal(body, &content)
-	b, _ := json.Marshal(content.Content)
-	json.Unmarshal(b, &data)
+	util.ErrorCatch("", json.Unmarshal(body, &content))
+	b, _ := util.ErrorCatch(json.Marshal(content.Content))
+	util.ErrorCatch("", json.Unmarshal(b, &data))
 	array := []*discordgo.MessageEmbed{}
 	var server types.FeedMCServers
 	var locales []discordgo.Locale
@@ -131,22 +131,20 @@ func feedMinecraftGet(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			locales = append(locales, locale)
 		}
 	}
-	resp2, err := api.GetApi("/api/feed/mc/hash", http.NoBody)
+	resp2, err := util.ErrorCatch(api.GetApi("/api/feed/mc/hash", http.NoBody))
 	if err != nil {
-		log.Print(err)
 		embed := translate.ErrorEmbed(i.Locale, "error_failed_to_connect_api")
 		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Embeds: &embed,
 		})
 		return
 	}
-	body, _ = io.ReadAll(resp2.Body)
+	body, _ = util.ErrorCatch(io.ReadAll(resp2.Body))
 	content2 := types.Res{}
-	json.Unmarshal(body, &content2)
-	b, _ = json.Marshal(content2.Content)
+	util.ErrorCatch("", json.Unmarshal(body, &content2))
+	b, _ = util.ErrorCatch(json.Marshal(content2.Content))
 	hash := types.MCServers{}
-	json.Unmarshal(b, &hash)
-	log.Printf("commands:538: %v | %v", len(server), len(hash))
+	util.ErrorCatch("", json.Unmarshal(b, &hash))
 	for n, v := range server {
 		var address string
 		var port uint16
@@ -178,14 +176,14 @@ func feedMinecraftGet(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		})
 	}
 	if len(array) != 0 {
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Embeds: &array,
-		})
+		}))
 	} else {
 		str := "no data"
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Content: &str,
-		})
+		}))
 	}
 }
 
@@ -201,8 +199,8 @@ func feedMinecraftRemove(s *discordgo.Session, i *discordgo.InteractionCreate, o
 			Name:    name,
 			GuildID: i.GuildID,
 		}
-		body, _ := json.Marshal(data)
-		api.GetApi("/api/feed/mc/remove", bytes.NewBuffer(body))
+		body, _ := util.ErrorCatch(json.Marshal(data))
+		util.ErrorCatch(api.GetApi("/api/feed/mc/remove", bytes.NewBuffer(body)))
 		str := "OK"
 		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Content: &str,

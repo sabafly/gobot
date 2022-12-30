@@ -24,7 +24,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -35,16 +34,17 @@ import (
 	"github.com/ikafly144/gobot/pkg/product"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
+	"github.com/ikafly144/gobot/pkg/util"
 	"github.com/millkhan/mcstatusgo/v2"
 )
 
 func ComponentPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
-	})
+	}))
 	if fmt.Sprint(i.MessageComponentData().Values) == "[]" {
 		s.InteractionResponseDelete(i.Interaction)
 		return
@@ -55,42 +55,37 @@ func ComponentPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreat
 	addresses := strings.Split(data.Values[0], ":")
 	name := addresses[0]
 	address := addresses[1]
-	port, err := strconv.ParseUint(addresses[2], 10, 16)
+	port, err := util.ErrorCatch(strconv.ParseUint(addresses[2], 10, 16))
 	if err != nil {
-		log.Print(err)
 		e := translate.ErrorEmbed(i.Locale, "error_invalid_port_value")
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Embeds: &e,
-		})
+		}))
 		return
 	}
-	showIp, err := strconv.ParseBool(addresses[3])
+	showIp, _ := util.ErrorCatch(strconv.ParseBool(addresses[3]))
+	q, err := util.ErrorCatch(mcstatusgo.Status(address, uint16(port), initialTimeOut, ioTimeOut))
 	if err != nil {
-		log.Print(err)
-	}
-	q, err := mcstatusgo.Status(address, uint16(port), initialTimeOut, ioTimeOut)
-	if err != nil {
-		log.Print(err)
 		e := translate.ErrorEmbed(i.Locale, "error_failed_to_ping_server")
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Embeds: &e,
-		})
+		}))
 		return
 	}
 	message := chat.Message{}
-	message.UnmarshalJSON([]byte(q.Description))
+	util.ErrorCatch("", message.UnmarshalJSON([]byte(q.Description)))
 	hash := sha256.New()
 	thumb := strings.ReplaceAll(q.Favicon, "data:image/png;base64,", "")
-	res, _ := base64.RawStdEncoding.DecodeString(thumb)
-	io.WriteString(hash, thumb)
+	res, _ := util.ErrorCatch(base64.RawStdEncoding.DecodeString(thumb))
+	util.ErrorCatch(io.WriteString(hash, thumb))
 	str := hash.Sum(nil)
 	code := hex.EncodeToString(str)
 	bd := &types.ImagePngHash{
 		Data: thumb,
 		Hash: code,
 	}
-	b, _ := json.Marshal(bd)
-	api.GetApi("/api/image/png/add", bytes.NewBuffer(b))
+	b, _ := util.ErrorCatch(json.Marshal(bd))
+	util.ErrorCatch(api.GetApi("/api/image/png/add", bytes.NewBuffer(b)))
 	color := 0x00ff00
 	if q.Version.Protocol == 46 {
 		color = 0xff0000
@@ -143,8 +138,8 @@ func ComponentPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreat
 				Inline: true,
 			})
 	}
-	s.ChannelMessageEditComplex(discordgo.NewMessageEdit(i.ChannelID, i.Message.ID))
-	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+	util.ErrorCatch(s.ChannelMessageEditComplex(discordgo.NewMessageEdit(i.ChannelID, i.Message.ID)))
+	util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Embeds: &embeds,
 		Files: []*discordgo.File{
 			{
@@ -153,8 +148,5 @@ func ComponentPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreat
 				Reader:      bytes.NewReader(res),
 			},
 		},
-	})
-	if err != nil {
-		log.Print(err)
-	}
+	}))
 }

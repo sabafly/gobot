@@ -17,7 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package session
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 )
@@ -36,7 +36,7 @@ func (s *session[T]) get(id string) (*sessionData[T], error) {
 	if d, ok := s.sessionData[id]; ok {
 		return d, nil
 	}
-	return &sessionData[T]{}, errors.New("not found")
+	return &sessionData[T]{}, fmt.Errorf("not found id: %v", id)
 }
 
 func (s *session[T]) add(data *T) (id string) {

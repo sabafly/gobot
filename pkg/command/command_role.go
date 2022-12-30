@@ -24,12 +24,12 @@ import (
 )
 
 func Role(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
-	})
+	}))
 	options := i.ApplicationCommandData().Options
 	switch options[0].Name {
 	case "color":
@@ -49,34 +49,34 @@ func roleColor(s *discordgo.Session, i *discordgo.InteractionCreate, options []*
 			name = o.StringValue()
 		}
 	}
-	col, err := strconv.ParseInt(raw, 0, 32)
+	col, err := util.ErrorCatch(strconv.ParseInt(raw, 0, 32))
 	if name == "" {
 		name = strconv.FormatInt(col, 16)
 	}
 	if err != nil {
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Embeds: &[]*discordgo.MessageEmbed{
 				util.ErrorMessage(i.Locale, err).Embeds[0],
 			},
-		})
+		}))
 		return
 	}
 	colInt := int(col)
-	r, err := s.GuildRoleCreate(i.GuildID, &discordgo.RoleParams{
+	r, err := util.ErrorCatch(s.GuildRoleCreate(i.GuildID, &discordgo.RoleParams{
 		Name:  name,
 		Color: &colInt,
-	})
+	}))
 	if err != nil {
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Embeds: &[]*discordgo.MessageEmbed{
 				util.ErrorMessage(i.Locale, err).Embeds[0],
 			},
-		})
+		}))
 		return
 	}
-	s.GuildMemberRoleAdd(i.GuildID, i.Member.User.ID, r.ID)
+	util.ErrorCatch("", s.GuildMemberRoleAdd(i.GuildID, i.Member.User.ID, r.ID))
 	str := "OK " + r.Mention()
-	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+	util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: &str,
-	})
+	}))
 }

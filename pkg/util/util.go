@@ -20,7 +20,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"runtime"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -136,5 +141,56 @@ func StatusString(status discordgo.Status) (str string) {
 
 func DeferDeleteInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	time.Sleep(time.Second * 3)
-	s.InteractionResponseDelete(i.Interaction)
+	ErrorCatch("", s.InteractionResponseDelete(i.Interaction))
+}
+
+var logf *os.File
+
+func init() {
+	os.MkdirAll("logs", os.ModeDir)
+	var err error
+	var slash = "/"
+	if runtime.GOOS == "windows" {
+		slash = "\\"
+	}
+	logf, err = os.Create("logs" + slash + time.Now().Local().Format("2006-01-02-15-04-05") + ".log")
+	stats()
+	if err != nil {
+		log.Printf("[ERROR] cannot open log file! : %v", err)
+		logf = os.Stdout
+	}
+	go close()
+}
+
+func close() {
+	defer logf.Close()
+	defer fmt.Fprintf(logf, "\n[%v] Closed", time.Now().Local().Format(time.RFC3339))
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt)
+
+	<-sigCh
+}
+
+func stats() {
+	fmt.Fprintf(logf,
+		"[%v] ==Profiles==\n                runtime: %v %v (%v)\n                thread: max %v routine: %v\n                goroot: %v\n",
+		time.Now().Local().Format(time.RFC3339),
+		runtime.Version(),
+		runtime.GOOS+"/"+runtime.GOARCH,
+		runtime.Compiler,
+		runtime.NumCPU(),
+		runtime.NumGoroutine(),
+		runtime.GOROOT(),
+	)
+}
+
+func ErrorCatch[T any](data T, err error) (T, error) {
+	if err != nil {
+		fmt.Fprintf(logf, "[%v] %v\n", time.Now().Local().Format(time.RFC3339), err)
+		stats()
+		logf.Write(debug.Stack())
+		fmt.Fprint(logf, "\n================\n\n")
+	}
+	return data, err
 }

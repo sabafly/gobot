@@ -19,7 +19,6 @@ package command
 import (
 	"encoding/json"
 	"errors"
-	"log"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/translate"
@@ -44,28 +43,25 @@ func GetSelectingMessage(uid string, gid string) (mes *discordgo.Message, err er
 }
 
 func MessageSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
-	})
+	}))
 	data := &discordgo.ApplicationCommandInteractionData{}
-	byte, _ := json.Marshal(i.Interaction.Data)
-	json.Unmarshal(byte, data)
-	mes, err := s.ChannelMessage(i.ChannelID, data.TargetID)
-	if err != nil {
-		log.Print(err)
-	}
+	byte, _ := util.ErrorCatch(json.Marshal(i.Interaction.Data))
+	util.ErrorCatch("", json.Unmarshal(byte, data))
+	mes, _ := util.ErrorCatch(s.ChannelMessage(i.ChannelID, data.TargetID))
 	id := types.MessageSelect{
 		MemberID: i.Member.User.ID,
 		GuildID:  i.GuildID,
 	}
 	selects[id] = mes
 	str := translate.Message(i.Locale, "message_command_select_message")
-	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+	util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: &str,
-	})
+	}))
 	util.DeferDeleteInteraction(s, i)
 }
 
