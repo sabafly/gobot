@@ -236,7 +236,7 @@ other = "無効な役割です"
 other = "エラーが発生しました"
 
 [error_unknown_command]
-other = "未知の操作"
+other = "Unkown operation"
 
 [feed_minecraft_webhook_name]
 other = "サーバ通知"
