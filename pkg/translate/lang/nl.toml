@@ -236,7 +236,7 @@ other = "Ongeldige rol(en)"
 other = "Er is een fout opgetreden"
 
 [error_unknown_command]
-other = "Onbekend Bewerking"
+other = "Unkown operation"
 
 [feed_minecraft_webhook_name]
 other = "server notificatie"
