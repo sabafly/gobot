@@ -17,7 +17,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package main
 
 import (
-	"fmt"
+	"log"
+
+	_ "github.com/ikafly144/gobot/pkg"
 
 	"github.com/ikafly144/gobot/pkg/cmd"
 )
