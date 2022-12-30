@@ -44,8 +44,8 @@ func init() {
 			case discordgo.InteractionApplicationCommand:
 				if h, ok := handler.CommandHandler()[i.ApplicationCommandData().Name]; ok {
 					h(s, i)
+					return
 				}
-				return
 			case discordgo.InteractionMessageComponent:
 				ids := strings.Split(i.MessageComponentData().CustomID, ":")
 				var customID string
@@ -60,8 +60,8 @@ func init() {
 				}
 				if c, ok := handler.MessageComponentHandler()[customID]; ok {
 					c(s, i, sessionID)
+					return
 				}
-				return
 			case discordgo.InteractionModalSubmit:
 				ids := strings.Split(i.ModalSubmitData().CustomID, ":")
 				var customID string
@@ -76,8 +76,8 @@ func init() {
 				}
 				if m, ok := handler.ModalSubmitHandler()[customID]; ok {
 					m(s, i, mid)
+					return
 				}
-				return
 			}
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -85,6 +85,7 @@ func init() {
 					Content: translate.Message(i.Locale, "error_unknown_command"),
 				},
 			})
+			return
 		} else {
 			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,

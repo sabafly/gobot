@@ -49,20 +49,24 @@ func MessageModify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 							switch data.CustomID {
 							case product.CommandPanelRole:
 								modifyPanelRole(s, i, mes)
+								return
 							case product.CommandPanelMinecraft:
 								modifyPanelMinecraft(s, i, mes)
+								return
 							}
 						}
 					}
 				}
 			}
 		}
-	} else {
-		str := translate.Message(i.Locale, "message_modify_cant_use_this_message_error")
-		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-			Content: &str,
-		})
 	}
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: translate.Message(i.Locale, "message_modify_cant_use_this_message_error"),
+			Flags:   discordgo.MessageFlagsEphemeral,
+		},
+	})
 }
 
 func modifyPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *discordgo.Message) {

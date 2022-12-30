@@ -157,7 +157,7 @@ other = "Invalid role(s)"
 [error_message]
 other = "An error has occurred"
 [error_unknown_command]
-other = "Unkown Operation"
+other = "Unkown operation"
 [feed_minecraft_webhook_name]
 other = "server notifier"
 [latency]
