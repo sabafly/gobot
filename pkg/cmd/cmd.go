@@ -24,27 +24,26 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/ikafly144/gobot/pkg/setup"
+	"github.com/ikafly144/gobot/pkg/command/reg"
+	"github.com/ikafly144/gobot/pkg/env"
+	session "github.com/ikafly144/gobot/pkg/init"
+	"github.com/ikafly144/gobot/pkg/product"
 	"github.com/ikafly144/gobot/pkg/worker"
 )
 
+var VERSION = "Development Version"
+
 var (
-	s              *discordgo.Session
-	commands       = []*discordgo.ApplicationCommand{}
-	GuildID        string
-	RemoveCommands bool
+	s              *discordgo.Session              = session.Session()
+	commands       []*discordgo.ApplicationCommand = reg.Commands()
+	GuildID        string                          = *env.GuildID
+	RemoveCommands bool                            = *env.RemoveCommands
 )
 
-func init() {
-	s = &discordgo.Session{}
-	commands = []*discordgo.ApplicationCommand{}
-	GuildID = ""
-	RemoveCommands = true
-
-	s, commands, RemoveCommands, GuildID = setup.Setup()
-}
-
 func Run() {
+	s.UserAgent = "DiscordBot(https://github.com/ikafly144/gobot, " + VERSION + ")"
+	s.Identify.Properties.Browser = product.ProductName + " " + VERSION
+	fmt.Printf("\n<%v>: Version: %v\n", product.ProductName, VERSION)
 	s.ShardID = 0
 	s.ShardCount = 1
 	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
@@ -57,7 +56,7 @@ func Run() {
 	s.UpdateStatusComplex(discordgo.UpdateStatusData{
 		Activities: []*discordgo.Activity{
 			{
-				Name: fmt.Sprintf("起動準備 | %v Servers | Shard %v/%v", len(s.State.Guilds), s.ShardID+1, s.ShardCount),
+				Name: fmt.Sprintf("起動準備 | %v Servers | Shard %v/%v | %v", len(s.State.Guilds), s.ShardID+1, s.ShardCount, VERSION),
 				Type: discordgo.ActivityTypeGame,
 			},
 		},
@@ -77,7 +76,7 @@ func Run() {
 		dmPermission                 = false
 		PermissionAdminMembers int64 = discordgo.PermissionAdministrator
 	)
-	s.ApplicationCommandCreate(s.State.User.ID, *setup.SupportGuildID, &discordgo.ApplicationCommand{
+	s.ApplicationCommandCreate(s.State.User.ID, *env.SupportGuildID, &discordgo.ApplicationCommand{
 		Name:                     "admin",
 		Description:              "only for bot admins",
 		DMPermission:             &dmPermission,
@@ -175,7 +174,7 @@ func end(registeredCommands []*discordgo.ApplicationCommand) {
 			}
 		}
 
-		cs, _ := s.ApplicationCommands(s.State.User.ID, *setup.SupportGuildID)
+		cs, _ := s.ApplicationCommands(s.State.User.ID, *env.SupportGuildID)
 		for _, v := range cs {
 			s.ApplicationCommandDelete(s.State.User.ID, v.GuildID, v.ID)
 		}
@@ -191,7 +190,7 @@ func updateStatus() {
 		err := s.UpdateStatusComplex(discordgo.UpdateStatusData{
 			Activities: []*discordgo.Activity{
 				{
-					Name: fmt.Sprintf("WIP | %v Servers | Shard %v/%v", len(s.State.Guilds), s.ShardID+1, s.ShardCount),
+					Name: fmt.Sprintf("WIP | %v Servers | Shard %v/%v | %v", len(s.State.Guilds), s.ShardID+1, s.ShardCount, VERSION),
 					Type: discordgo.ActivityTypeGame,
 				},
 			},

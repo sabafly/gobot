@@ -20,17 +20,11 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 
-	"github.com/joho/godotenv"
+	"github.com/ikafly144/gobot/pkg/env"
 )
 
-var APIserver string
-
-func init() {
-	godotenv.Load()
-	APIserver = os.Getenv("API_SERVER")
-}
+var APIserver string = *env.APIServer
 
 func GetApi(URI string, body io.Reader) (*http.Response, error) {
 	req, err := http.NewRequest("GET", "http://"+APIserver+URI, body)

@@ -26,8 +26,8 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/api"
+	session "github.com/ikafly144/gobot/pkg/init"
 	"github.com/ikafly144/gobot/pkg/product"
-	"github.com/ikafly144/gobot/pkg/setup"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
 )
@@ -49,7 +49,7 @@ func MakeBan(s *discordgo.Session) {
 }
 
 func deleteBan(id string) {
-	s := setup.GetSession()
+	s := session.Session()
 	for _, v := range s.State.Guilds {
 		s.GuildBanDelete(v.ID, id)
 		time.Sleep(time.Second)
@@ -81,7 +81,7 @@ func feedMinecraftHandler(w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
 	data := types.FeedMCServers{}
 	json.Unmarshal(body, &data)
-	s := setup.GetSession()
+	s := session.Session()
 	for _, v := range data {
 		var locale discordgo.Locale
 		if v.Locale == "" {

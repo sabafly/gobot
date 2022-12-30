@@ -18,18 +18,15 @@ package command
 
 import (
 	"encoding/json"
-	"errors"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/product"
 	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
-	"github.com/ikafly144/gobot/pkg/types"
-	"github.com/ikafly144/gobot/pkg/util"
 )
 
-func MModify(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func MessageModify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	data := &discordgo.ApplicationCommandInteractionData{}
 	byte, _ := json.Marshal(i.Interaction.Data)
 	json.Unmarshal(byte, data)
@@ -51,9 +48,9 @@ func MModify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 							json.Unmarshal(byte, data)
 							switch data.CustomID {
 							case product.CommandPanelRole:
-								panelRole(s, i, mes)
+								modifyPanelRole(s, i, mes)
 							case product.CommandPanelMinecraft:
-								panelMinecraft(s, i, mes)
+								modifyPanelMinecraft(s, i, mes)
 							}
 						}
 					}
@@ -68,7 +65,7 @@ func MModify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 }
 
-func panelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *discordgo.Message) {
+func modifyPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *discordgo.Message) {
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
@@ -99,7 +96,7 @@ func panelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *discor
 	})
 }
 
-func panelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate, mes *discordgo.Message) {
+func modifyPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate, mes *discordgo.Message) {
 	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseModal,
 		Data: &discordgo.InteractionResponseData{
@@ -149,54 +146,4 @@ func panelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate, mes *d
 		},
 	})
 	log.Print(err)
-}
-
-var selects map[types.MessageSelect]*discordgo.Message = make(map[types.MessageSelect]*discordgo.Message)
-
-func GetSelectingMessage(uid string, gid string) (mes *discordgo.Message, err error) {
-	id := types.MessageSelect{
-		MemberID: uid,
-		GuildID:  gid,
-	}
-	if m, ok := selects[id]; ok {
-		mes = m
-		return
-	} else {
-		err = errors.New("no message is selected")
-		return
-	}
-}
-
-func MSelect(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Flags: discordgo.MessageFlagsEphemeral,
-		},
-	})
-	data := &discordgo.ApplicationCommandInteractionData{}
-	byte, _ := json.Marshal(i.Interaction.Data)
-	json.Unmarshal(byte, data)
-	mes, err := s.ChannelMessage(i.ChannelID, data.TargetID)
-	if err != nil {
-		log.Print(err)
-	}
-	id := types.MessageSelect{
-		MemberID: i.Member.User.ID,
-		GuildID:  i.GuildID,
-	}
-	selects[id] = mes
-	str := translate.Message(i.Locale, "message_command_select_message")
-	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-		Content: &str,
-	})
-	util.DeferDeleteInteraction(s, i)
-}
-
-func RemoveSelect(uid string, gid string) {
-	id := types.MessageSelect{
-		MemberID: uid,
-		GuildID:  gid,
-	}
-	delete(selects, id)
 }

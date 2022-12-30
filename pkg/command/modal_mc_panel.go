@@ -27,7 +27,7 @@ import (
 	"github.com/ikafly144/gobot/pkg/product"
 )
 
-func MSminecraftPanel(s *discordgo.Session, i *discordgo.InteractionCreate, mid string) {
+func ModalMinecraftPanel(s *discordgo.Session, i *discordgo.InteractionCreate, mid string) {
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{

@@ -1,72 +1,18 @@
-/*
-	Copyright (C) 2022  ikafly144
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
-*/
-package setup
+package reg
 
 import (
-	"flag"
-	"fmt"
-	"log"
-	"os"
-	"strconv"
-	"strings"
-
 	"github.com/bwmarrin/discordgo"
-	"github.com/ikafly144/gobot/pkg/command"
-	"github.com/ikafly144/gobot/pkg/product"
-	"github.com/ikafly144/gobot/pkg/session"
+	"github.com/ikafly144/gobot/pkg/env"
 	"github.com/ikafly144/gobot/pkg/translate"
-	"github.com/joho/godotenv"
 )
 
 var (
-	BotToken       = flag.String("Token", "", "botアクセストークン")
-	RemoveCommands = flag.Bool("rmcmd", true, "停止時にコマンドを登録解除するか")
-	SupportGuildID = flag.String("SupportServer", "", "サポートサーバーのID")
-	APIServer      = flag.String("APIAddress", "", "APIサーバーのip")
-	s              *discordgo.Session
+	dmPermission                 = false
+	PermissionAdminMembers int64 = discordgo.PermissionManageServer
 )
 
-func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string) {
-	err := godotenv.Load()
-	if err != nil {
-		fmt.Printf("Failed to load .env:%v", err)
-	}
-	*BotToken = os.Getenv("TOKEN")
-	GuildID := os.Getenv("GUILD_ID")
-	*SupportGuildID = os.Getenv("SUPPORT_ID")
-	RemoveCommands, err := strconv.ParseBool(os.Getenv("REMOVE_COMMANDS"))
-	*APIServer = os.Getenv("API_SERVER")
-	if err != nil {
-		RemoveCommands = true
-	}
-
-	flag.Parse()
-
-	s, err = discordgo.New("Bot " + *BotToken)
-	if err != nil {
-		log.Fatalf("無効なbotパラメータ: %v", err)
-	}
-	s.Identify.Intents = discordgo.IntentsAll
-
-	var (
-		dmPermission                 = false
-		PermissionAdminMembers int64 = discordgo.PermissionManageServer
-	)
-	commands := []*discordgo.ApplicationCommand{
+var (
+	commands = []*discordgo.ApplicationCommand{
 		{
 			Name:        "ping",
 			Description: "pong!",
@@ -80,7 +26,7 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			Description:              "manage or create panel",
 			NameLocalizations:        translate.MessageMap("command_panel", true),
 			DescriptionLocalizations: translate.MessageMap("command_panel_desc", false),
-			GuildID:                  *SupportGuildID,
+			GuildID:                  *env.SupportGuildID,
 			DefaultMemberPermissions: &PermissionAdminMembers,
 			DMPermission:             &dmPermission,
 			Options: []*discordgo.ApplicationCommandOption{
@@ -348,157 +294,8 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 			DMPermission:      &dmPermission,
 		},
 	}
-	var (
-		commandHandlers = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
-			"ping": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				contents := map[discordgo.Locale]string{
-					discordgo.Japanese: "ポング！\r" + s.HeartbeatLatency().String(),
-				}
-				content := "pong!\r" + s.HeartbeatLatency().String()
-				if c, ok := contents[i.Locale]; ok {
-					content = c
-				}
+)
 
-				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: content,
-					},
-				})
-				if err != nil {
-					log.Printf("例外: %v", err)
-				}
-			},
-			"admin": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				command.Admin(s, i)
-			},
-			"panel": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				command.Panel(s, i)
-			},
-			"tracker": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				command.Feed(s, i)
-			},
-			"role": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				command.Role(s, i)
-			},
-			"modify": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				command.MModify(s, i)
-			},
-			"select": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				command.MSelect(s, i)
-			},
-			"info": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				command.UInfo(s, i)
-			},
-		}
-	)
-
-	messageComponentHandlers := map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string){
-		product.CommandPanelRole: func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
-			command.MCpanelRole(s, i)
-		},
-		product.CommandPanelAdd: func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
-			command.MCpanelRoleAdd(s, i, sessionID)
-		},
-		product.CommandPanelRoleCreate: func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
-			command.MCpanelRoleCreate(s, i, sessionID)
-		},
-		product.CommandPanelMinecraft: func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
-			command.MCpanelMinecraft(s, i)
-		},
-	}
-
-	modalSubmitHandlers := map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, mid string){
-		product.CommandPanelMinecraftAddModal: func(s *discordgo.Session, i *discordgo.InteractionCreate, mid string) {
-			command.MSminecraftPanel(s, i, mid)
-		},
-	}
-
-	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		p, err := s.State.UserChannelPermissions(s.State.User.ID, i.ChannelID)
-		if err == nil && p&int64(discordgo.PermissionAdministrator) != 0 {
-			switch i.Type {
-			case discordgo.InteractionApplicationCommand:
-				if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
-					h(s, i)
-				}
-				return
-			case discordgo.InteractionMessageComponent:
-				ids := strings.Split(i.MessageComponentData().CustomID, ":")
-				var customID string
-				var sessionID string
-				for i2, v := range ids {
-					switch i2 {
-					case 0:
-						customID = v
-					case 1:
-						sessionID = v
-					}
-				}
-				if c, ok := messageComponentHandlers[customID]; ok {
-					c(s, i, sessionID)
-				}
-				return
-			case discordgo.InteractionModalSubmit:
-				ids := strings.Split(i.ModalSubmitData().CustomID, ":")
-				var customID string
-				var mid string
-				for i2, v := range ids {
-					switch i2 {
-					case 0:
-						customID = v
-					case 1:
-						mid = v
-					}
-				}
-				if m, ok := modalSubmitHandlers[customID]; ok {
-					m(s, i, mid)
-				}
-				return
-			}
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: translate.Message(i.Locale, "error_unknown_command"),
-				},
-			})
-		} else {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: translate.Message(i.Locale, "error_bot_does_not_have_permissions"),
-				},
-			})
-		}
-	})
-
-	s.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
-		if m.Author.ID == s.State.User.ID {
-			return
-		}
-		str, err := m.ContentWithMoreMentionsReplaced(s)
-		if err != nil {
-			str = m.Content
-		}
-		g, _ := s.Guild(m.GuildID)
-		c, _ := s.Channel(m.ChannelID)
-		log.Printf("[Message Created] : %v(%v) #%v(%v) <%v#%v>\n                 >> %v", g.Name, g.ID, c.Name, c.ID, m.Author.Username, m.Author.Discriminator, str)
-		p, err := s.State.UserChannelPermissions(s.State.User.ID, m.ChannelID)
-		if err == nil && p&int64(discordgo.PermissionAdministrator) == 0 {
-			data, err := session.MessagePanelConfigEmojiLoad(m.Author.ID)
-			if err != nil {
-				log.Print(err)
-				return
-			} else {
-				d := data.Data()
-				data.Data().Handler(d, s, m)
-			}
-		}
-	})
-
-	return s, commands, RemoveCommands, GuildID
-}
-
-func GetSession() *discordgo.Session {
-	return s
+func Commands() []*discordgo.ApplicationCommand {
+	return commands
 }
