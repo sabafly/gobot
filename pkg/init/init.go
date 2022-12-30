@@ -25,6 +25,7 @@ import (
 	"github.com/ikafly144/gobot/pkg/env"
 	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
+	"github.com/ikafly144/gobot/pkg/util"
 )
 
 var s *discordgo.Session
@@ -38,7 +39,7 @@ func init() {
 	s.Identify.Intents = discordgo.IntentsAll
 
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		p, err := s.State.UserChannelPermissions(s.State.User.ID, i.ChannelID)
+		p, err := util.ErrorCatch(s.State.UserChannelPermissions(s.State.User.ID, i.ChannelID))
 		if err == nil && p&int64(discordgo.PermissionAdministrator) != 0 {
 			switch i.Type {
 			case discordgo.InteractionApplicationCommand:
@@ -79,20 +80,20 @@ func init() {
 					return
 				}
 			}
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
 					Content: translate.Message(i.Locale, "error_unknown_command"),
 				},
-			})
+			}))
 			return
 		} else {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 				Type: discordgo.InteractionResponseChannelMessageWithSource,
 				Data: &discordgo.InteractionResponseData{
 					Content: translate.Message(i.Locale, "error_bot_does_not_have_permissions"),
 				},
-			})
+			}))
 		}
 	})
 
@@ -100,18 +101,17 @@ func init() {
 		if m.Author.ID == s.State.User.ID {
 			return
 		}
-		str, err := m.ContentWithMoreMentionsReplaced(s)
+		str, err := util.ErrorCatch(m.ContentWithMoreMentionsReplaced(s))
 		if err != nil {
 			str = m.Content
 		}
-		g, _ := s.Guild(m.GuildID)
-		c, _ := s.Channel(m.ChannelID)
+		g, _ := util.ErrorCatch(s.Guild(m.GuildID))
+		c, _ := util.ErrorCatch(s.Channel(m.ChannelID))
 		log.Printf("[Message Created] : %v(%v) #%v(%v) <%v#%v>\n                 >> %v", g.Name, g.ID, c.Name, c.ID, m.Author.Username, m.Author.Discriminator, str)
-		p, err := s.State.UserChannelPermissions(s.State.User.ID, m.ChannelID)
+		p, err := util.ErrorCatch(s.State.UserChannelPermissions(s.State.User.ID, m.ChannelID))
 		if err == nil && p&int64(discordgo.PermissionAdministrator) != 0 {
-			data, err := session.MessagePanelConfigEmojiLoad(m.Author.ID)
+			data, err := util.ErrorCatch(session.MessagePanelConfigEmojiLoad(m.Author.ID))
 			if err != nil {
-				log.Print(err)
 				return
 			} else {
 				d := data.Data()
