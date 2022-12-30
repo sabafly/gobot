@@ -108,7 +108,7 @@ func init() {
 		c, _ := s.Channel(m.ChannelID)
 		log.Printf("[Message Created] : %v(%v) #%v(%v) <%v#%v>\n                 >> %v", g.Name, g.ID, c.Name, c.ID, m.Author.Username, m.Author.Discriminator, str)
 		p, err := s.State.UserChannelPermissions(s.State.User.ID, m.ChannelID)
-		if err == nil && p&int64(discordgo.PermissionAdministrator) == 0 {
+		if err == nil && p&int64(discordgo.PermissionAdministrator) != 0 {
 			data, err := session.MessagePanelConfigEmojiLoad(m.Author.ID)
 			if err != nil {
 				log.Print(err)
