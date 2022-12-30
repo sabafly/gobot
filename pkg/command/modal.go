@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/ikafly144/gobot/pkg/product"
 )
 
 func MSminecraftPanel(s *discordgo.Session, i *discordgo.InteractionCreate, mid string) {
@@ -45,11 +46,11 @@ func MSminecraftPanel(s *discordgo.Session, i *discordgo.InteractionCreate, mid 
 			text := &discordgo.TextInput{}
 			json.Unmarshal(bytes, text)
 			switch text.CustomID {
-			case "gobot_panel_minecraft_add_servername":
+			case product.CommandPanelMinecraftAddServerName:
 				name = text.Value
-			case "gobot_panel_minecraft_add_address":
+			case product.CommandPanelMinecraftAddAddress:
 				address = text.Value
-			case "gobot_panel_minecraft_add_port":
+			case product.CommandPanelMinecraftAddPort:
 				i, _ := strconv.Atoi(text.Value)
 				port = i
 			}
@@ -83,7 +84,7 @@ func MSminecraftPanel(s *discordgo.Session, i *discordgo.InteractionCreate, mid 
 			discordgo.ActionsRow{
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
-						CustomID:  "gobot_panel_minecraft",
+						CustomID:  product.CommandPanelMinecraft,
 						Options:   options,
 						MinValues: &zero,
 						MaxValues: 1,

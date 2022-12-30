@@ -22,6 +22,7 @@ import (
 	"log"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/ikafly144/gobot/pkg/product"
 	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
@@ -49,10 +50,10 @@ func MModify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 							data := &discordgo.SelectMenu{}
 							json.Unmarshal(byte, data)
 							switch data.CustomID {
-							case "gobot_panel_role":
-								gobotPanelRole(s, i, mes)
-							case "gobot_panel_minecraft":
-								gobotPanelMinecraft(s, i, mes)
+							case product.CommandPanelRole:
+								panelRole(s, i, mes)
+							case product.CommandPanelMinecraft:
+								panelMinecraft(s, i, mes)
 							}
 						}
 					}
@@ -67,7 +68,7 @@ func MModify(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 }
 
-func gobotPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *discordgo.Message) {
+func panelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *discordgo.Message) {
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
@@ -88,7 +89,7 @@ func gobotPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *d
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
 						MenuType:  discordgo.RoleSelectMenu,
-						CustomID:  "gobot_panel_role_add:" + session.InteractionSave(i),
+						CustomID:  product.CommandPanelAdd + ":" + session.InteractionSave(i),
 						MinValues: &one,
 						MaxValues: 25,
 					},
@@ -98,7 +99,7 @@ func gobotPanelRole(s *discordgo.Session, i *discordgo.InteractionCreate, mes *d
 	})
 }
 
-func gobotPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate, mes *discordgo.Message) {
+func panelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate, mes *discordgo.Message) {
 	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseModal,
 		Data: &discordgo.InteractionResponseData{
@@ -106,7 +107,7 @@ func gobotPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate, m
 				discordgo.ActionsRow{
 					Components: []discordgo.MessageComponent{
 						discordgo.TextInput{
-							CustomID:    "gobot_panel_minecraft_add_servername",
+							CustomID:    product.CommandPanelMinecraftAddServerName,
 							Label:       translate.Message(i.Locale, "panel_minecraft_display_name"),
 							Placeholder: translate.Message(i.Locale, "panel_minecraft_my_server"),
 							Style:       discordgo.TextInputShort,
@@ -117,7 +118,7 @@ func gobotPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate, m
 				discordgo.ActionsRow{
 					Components: []discordgo.MessageComponent{
 						discordgo.TextInput{
-							CustomID:    "gobot_panel_minecraft_add_address",
+							CustomID:    product.CommandPanelMinecraftAddAddress,
 							Label:       translate.Message(i.Locale, "panel_minecraft_address"),
 							Placeholder: "example.com",
 							Required:    true,
@@ -128,7 +129,7 @@ func gobotPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate, m
 				discordgo.ActionsRow{
 					Components: []discordgo.MessageComponent{
 						discordgo.TextInput{
-							CustomID:    "gobot_panel_minecraft_add_port",
+							CustomID:    product.CommandPanelMinecraftAddPort,
 							Label:       translate.Message(i.Locale, "panel_minecraft_port"),
 							Placeholder: "25565",
 							Style:       discordgo.TextInputShort,
@@ -139,7 +140,7 @@ func gobotPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate, m
 					},
 				},
 			},
-			CustomID: "gobot_panel_minecraft_add_modal:" + mes.ID,
+			CustomID: product.CommandPanelMinecraftAddModal + ":" + mes.ID,
 			Title:    translate.Message(i.Locale, "panel_minecraft_add_server"),
 			Flags:    discordgo.MessageFlagsEphemeral,
 		},

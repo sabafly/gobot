@@ -33,6 +33,7 @@ import (
 	"github.com/Tnze/go-mc/chat"
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/api"
+	"github.com/ikafly144/gobot/pkg/product"
 	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
@@ -171,7 +172,7 @@ func MCpanelRoleAdd(s *discordgo.Session, i *discordgo.InteractionCreate, id str
 			discordgo.ActionsRow{
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
-						CustomID:  "gobot_panel_role",
+						CustomID:  product.CommandPanelRole,
 						MinValues: &zero,
 						MaxValues: len(options),
 						Options:   options,
@@ -270,7 +271,7 @@ func MCpanelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, id 
 			discordgo.ActionsRow{
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
-						CustomID:  "gobot_panel_role",
+						CustomID:  product.CommandPanelRole,
 						MinValues: &zero,
 						MaxValues: len(options),
 						Options:   options,
@@ -370,7 +371,7 @@ func MCpanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreate) {
 				URL: "attachment://" + code + ".png",
 			},
 			Timestamp: time.Now().UTC().Format(time.RFC3339),
-			Footer:    &discordgo.MessageEmbedFooter{Text: "gobot"},
+			Footer:    &discordgo.MessageEmbedFooter{Text: product.ProductName},
 			Fields: []*discordgo.MessageEmbedField{
 				{
 					Name:   translate.Message(i.Locale, "players"),

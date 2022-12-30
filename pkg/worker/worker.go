@@ -26,6 +26,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/api"
+	"github.com/ikafly144/gobot/pkg/product"
 	"github.com/ikafly144/gobot/pkg/setup"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
@@ -40,7 +41,7 @@ func MakeBan(s *discordgo.Session) {
 		json.Unmarshal(j, data)
 		for _, v := range s.State.Guilds {
 			for _, d := range data.Content {
-				s.GuildBanCreateWithReason(v.ID, strconv.Itoa(int(d.ID)), "GoBot Global Ban | Reason "+d.Reason, 7)
+				s.GuildBanCreateWithReason(v.ID, strconv.Itoa(int(d.ID)), product.ProductName+" Global Ban | Reason "+d.Reason, 7)
 			}
 			time.Sleep(time.Second)
 		}
@@ -102,7 +103,7 @@ func feedMinecraftHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if !hasWB {
-			w, err := s.WebhookCreate(v.ChannelID, "gobot-webhook", s.State.User.AvatarURL("1024"))
+			w, err := s.WebhookCreate(v.ChannelID, product.ProductName+"-webhook", s.State.User.AvatarURL("1024"))
 			if err != nil {
 				log.Print(err)
 				return
@@ -124,7 +125,7 @@ func feedMinecraftHandler(w http.ResponseWriter, r *http.Request) {
 					}),
 					Color: 0x00ff00,
 					Footer: &discordgo.MessageEmbedFooter{
-						Text: "gobot",
+						Text: product.ProductName,
 					},
 					Timestamp: time.Now().UTC().Format(time.RFC3339),
 				},
@@ -137,7 +138,7 @@ func feedMinecraftHandler(w http.ResponseWriter, r *http.Request) {
 					}),
 					Color: 0xff0000,
 					Footer: &discordgo.MessageEmbedFooter{
-						Text: "gobot",
+						Text: product.ProductName,
 					},
 					Timestamp: time.Now().UTC().Format(time.RFC3339),
 				},

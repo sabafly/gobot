@@ -34,6 +34,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/api"
+	"github.com/ikafly144/gobot/pkg/product"
 	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
@@ -358,7 +359,7 @@ func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, optio
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
 						MenuType:  discordgo.RoleSelectMenu,
-						CustomID:  "gobot_panel_role_create:" + session.InteractionSave(i),
+						CustomID:  product.CommandPanelRoleCreate + ":" + session.InteractionSave(i),
 						MinValues: &one,
 						MaxValues: 25,
 					},
@@ -424,7 +425,7 @@ func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, 
 			discordgo.ActionsRow{
 				Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
-						CustomID:    "gobot_panel_minecraft",
+						CustomID:    product.CommandPanelMinecraft,
 						Options:     option,
 						Placeholder: translate.Message(i.Locale, "command_panel_option_minecraft_placeholder"),
 						MinValues:   &zero,
@@ -496,7 +497,7 @@ func panelConfigEmoji(s *discordgo.Session, i *discordgo.InteractionCreate, opti
 		}
 	}
 	switch data.CustomID {
-	case "gobot_panel_minecraft", "gobot_panel_role":
+	case product.CommandPanelMinecraft, product.CommandPanelRole:
 		session.MessagePanelConfigEmojiRemove(uid)
 		session.MessagePanelConfigEmojiSave(&types.MessageSessionData[types.MessagePanelConfigEmojiData]{
 			Message: mes,
@@ -557,7 +558,7 @@ func panelConfigEmojiHandler(t types.MessageSessionData[types.MessagePanelConfig
 	if len(t.Data.Emojis) >= len(t.Data.SelectMenu.Options) {
 		session.MessagePanelConfigEmojiRemove(mid)
 		RemoveSelect(mid, t.Message.GuildID)
-		if t.Data.SelectMenu.CustomID == "gobot_panel_role" {
+		if t.Data.SelectMenu.CustomID == product.CommandPanelRole {
 			var value string
 			str := strings.Split(t.Message.Embeds[0].Fields[0].Value, "\r")
 			for i, v := range str {

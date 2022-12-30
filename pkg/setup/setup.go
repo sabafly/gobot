@@ -26,6 +26,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/command"
+	"github.com/ikafly144/gobot/pkg/product"
 	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/joho/godotenv"
@@ -381,22 +382,22 @@ func Setup() (*discordgo.Session, []*discordgo.ApplicationCommand, bool, string)
 	)
 
 	messageComponentHandlers := map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string){
-		"gobot_panel_role": func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
+		product.CommandPanelRole: func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
 			command.MCpanelRole(s, i)
 		},
-		"gobot_panel_role_add": func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
+		product.CommandPanelAdd: func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
 			command.MCpanelRoleAdd(s, i, sessionID)
 		},
-		"gobot_panel_role_create": func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
+		product.CommandPanelRoleCreate: func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
 			command.MCpanelRoleCreate(s, i, sessionID)
 		},
-		"gobot_panel_minecraft": func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
+		product.CommandPanelMinecraft: func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
 			command.MCpanelMinecraft(s, i)
 		},
 	}
 
 	modalSubmitHandlers := map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, mid string){
-		"gobot_panel_minecraft_add_modal": func(s *discordgo.Session, i *discordgo.InteractionCreate, mid string) {
+		product.CommandPanelMinecraftAddModal: func(s *discordgo.Session, i *discordgo.InteractionCreate, mid string) {
 			command.MSminecraftPanel(s, i, mid)
 		},
 	}
