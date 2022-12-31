@@ -40,7 +40,6 @@ func init() {
 	s.Identify.Intents = discordgo.IntentsAll
 
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		defer messagePin(s, &discordgo.MessageCreate{Message: &discordgo.Message{ChannelID: i.ChannelID, ID: i.ID}})
 		p, err := util.ErrorCatch(s.State.UserChannelPermissions(s.State.User.ID, i.ChannelID))
 		if err == nil && p&int64(discordgo.PermissionAdministrator) != 0 {
 			switch i.Type {

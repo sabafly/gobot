@@ -25,6 +25,7 @@ import (
 var (
 	commandHandler = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
 		"ping": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			defer interaction.MessagePinExec(s, &discordgo.MessageCreate{Message: &discordgo.Message{ChannelID: i.ChannelID, ID: i.ID}})
 			contents := map[discordgo.Locale]string{
 				discordgo.Japanese: "ポング！\r" + s.HeartbeatLatency().String(),
 			}
@@ -41,6 +42,7 @@ var (
 			}))
 		},
 		"admin": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			defer interaction.MessagePinExec(s, &discordgo.MessageCreate{Message: &discordgo.Message{ChannelID: i.ChannelID, ID: i.ID}})
 			interaction.Admin(s, i)
 		},
 		"panel": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
