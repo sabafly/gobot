@@ -217,6 +217,9 @@ other = "Не вдається вибрати цього бота як ціль!
 [error_bot_does_not_have_permissions]
 other = "Недостатньо прав для бота!\rАдміністратор повинен бути наданий адміністратору на роботу!"
 
+[error_cannot_read_content]
+other = "Cant read message content."
+
 [error_cannot_use_roles]
 other = "Наступні ролі не можна використовувати"
 
@@ -276,6 +279,9 @@ other = "Ролі"
 
 [message_command_user_info_status]
 other = "Статус"
+
+[message_command_pin]
+other = "pin message"
 
 [message_modify_cant_use_this_message_error]
 other = "недоступно для цього повідомлення"
