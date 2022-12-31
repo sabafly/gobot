@@ -35,7 +35,8 @@ var (
 			DescriptionLocalizations: &map[discordgo.Locale]string{
 				discordgo.Japanese: "ポング！",
 			},
-			Version: "1",
+			Version:      "1",
+			DMPermission: &dmPermission,
 		},
 		{
 			Name:                     "panel",
