@@ -217,6 +217,9 @@ other = "このボットをターゲットとして選択できません！"
 [error_bot_does_not_have_permissions]
 other = "Botの権限が不足しています！\r管理者権限を与える必要があります！"
 
+[error_cannot_read_content]
+other = "Cant read message content."
+
 [error_cannot_use_roles]
 other = "次のロールは使用できません"
 
@@ -276,6 +279,9 @@ other = "ロール"
 
 [message_command_user_info_status]
 other = "ステータス"
+
+[message_command_pin]
+other = "pin message"
 
 [message_modify_cant_use_this_message_error]
 other = "そのメッセージでは利用できません"
