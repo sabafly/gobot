@@ -21,8 +21,8 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/ikafly144/gobot/pkg/command/handler"
 	"github.com/ikafly144/gobot/pkg/env"
+	"github.com/ikafly144/gobot/pkg/interaction/handler"
 	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/util"

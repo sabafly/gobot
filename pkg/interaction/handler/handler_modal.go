@@ -18,14 +18,14 @@ package handler
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/ikafly144/gobot/pkg/command"
+	"github.com/ikafly144/gobot/pkg/interaction"
 	"github.com/ikafly144/gobot/pkg/product"
 )
 
 var (
 	modalSubmitHandler = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, mid string){
 		product.CommandPanelMinecraftAddModal: func(s *discordgo.Session, i *discordgo.InteractionCreate, mid string) {
-			command.ModalMinecraftPanel(s, i, mid)
+			interaction.ModalMinecraftPanel(s, i, mid)
 		},
 	}
 )

@@ -18,7 +18,7 @@ package handler
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/ikafly144/gobot/pkg/command"
+	"github.com/ikafly144/gobot/pkg/interaction"
 	"github.com/ikafly144/gobot/pkg/util"
 )
 
@@ -41,25 +41,25 @@ var (
 			}))
 		},
 		"admin": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			command.Admin(s, i)
+			interaction.Admin(s, i)
 		},
 		"panel": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			command.Panel(s, i)
+			interaction.Panel(s, i)
 		},
 		"tracker": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			command.Feed(s, i)
+			interaction.Feed(s, i)
 		},
 		"role": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			command.Role(s, i)
+			interaction.Role(s, i)
 		},
 		"modify": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			command.MessageModify(s, i)
+			interaction.MessageModify(s, i)
 		},
 		"select": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			command.MessageSelect(s, i)
+			interaction.MessageSelect(s, i)
 		},
 		"info": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-			command.UserInfo(s, i)
+			interaction.UserInfo(s, i)
 		},
 	}
 )

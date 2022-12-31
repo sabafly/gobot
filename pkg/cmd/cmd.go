@@ -24,9 +24,9 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/ikafly144/gobot/pkg/command/reg"
 	"github.com/ikafly144/gobot/pkg/env"
 	session "github.com/ikafly144/gobot/pkg/init"
+	"github.com/ikafly144/gobot/pkg/interaction/reg"
 	"github.com/ikafly144/gobot/pkg/product"
 	"github.com/ikafly144/gobot/pkg/worker"
 )
