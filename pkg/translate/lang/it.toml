@@ -217,6 +217,9 @@ other = "Non è possibile selezionare questo bot come obiettivo!"
 [error_bot_does_not_have_permissions]
 other = "Permessi bot insufficienti!\rDeve essere dato all'amministratore il permesso del server per funzionare!"
 
+[error_cannot_read_content]
+other = "Cant read message content."
+
 [error_cannot_use_roles]
 other = "I seguenti ruoli non possono essere utilizzati"
 
@@ -276,6 +279,9 @@ other = "Ruoli"
 
 [message_command_user_info_status]
 other = "Stato"
+
+[message_command_pin]
+other = "pin message"
 
 [message_modify_cant_use_this_message_error]
 other = "non disponibile per quel messaggio"
