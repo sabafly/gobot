@@ -217,6 +217,9 @@ other = "无法选择此机器人为目标！"
 [error_bot_does_not_have_permissions]
 other = "机器人权限不足！\r必须由服务器管理员授权才能工作！"
 
+[error_cannot_read_content]
+other = "Cant read message content."
+
 [error_cannot_use_roles]
 other = "以下角色不能被使用"
 
@@ -276,6 +279,9 @@ other = "角色"
 
 [message_command_user_info_status]
 other = "状态"
+
+[message_command_pin]
+other = "pin message"
 
 [message_modify_cant_use_this_message_error]
 other = "该消息不可用"
