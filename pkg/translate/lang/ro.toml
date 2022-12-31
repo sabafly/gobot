@@ -217,6 +217,9 @@ other = "Nu se poate selecta acest bot ca țintă!"
 [error_bot_does_not_have_permissions]
 other = "Permisiuni de bot insuficiente!\rTrebuie să primească permisiunea administratorului serverului pentru a lucra!"
 
+[error_cannot_read_content]
+other = "Cant read message content."
+
 [error_cannot_use_roles]
 other = "Următoarele roluri nu pot fi utilizate"
 
@@ -276,6 +279,9 @@ other = "Roluri"
 
 [message_command_user_info_status]
 other = "Status"
+
+[message_command_pin]
+other = "pin message"
 
 [message_modify_cant_use_this_message_error]
 other = "nu este disponibil pentru acel mesaj"
