@@ -21,7 +21,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
@@ -30,10 +29,8 @@ import (
 
 	"github.com/Tnze/go-mc/chat"
 	"github.com/bwmarrin/discordgo"
-	"github.com/ikafly144/gobot/pkg/api"
 	"github.com/ikafly144/gobot/pkg/product"
 	"github.com/ikafly144/gobot/pkg/translate"
-	"github.com/ikafly144/gobot/pkg/types"
 	"github.com/ikafly144/gobot/pkg/util"
 	"github.com/millkhan/mcstatusgo/v2"
 )
@@ -80,12 +77,6 @@ func ComponentPanelMinecraft(s *discordgo.Session, i *discordgo.InteractionCreat
 	util.ErrorCatch(io.WriteString(hash, thumb))
 	str := hash.Sum(nil)
 	code := hex.EncodeToString(str)
-	bd := &types.ImagePngHash{
-		Data: thumb,
-		Hash: code,
-	}
-	b, _ := util.ErrorCatch(json.Marshal(bd))
-	util.ErrorCatch(api.GetApi("/api/image/png/add", bytes.NewBuffer(b)))
 	color := 0x00ff00
 	if q.Version.Protocol == 46 {
 		color = 0xff0000
