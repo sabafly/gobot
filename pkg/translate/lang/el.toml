@@ -217,6 +217,9 @@ other = "Δεν μπορείτε να επιλέξετε αυτό το bot ως 
 [error_bot_does_not_have_permissions]
 other = "Ανεπαρκή δικαιώματα bot !\rΠρέπει να του δοθεί άδεια διαχειριστή από τον διαχειριστή για να λειτουργήσει!"
 
+[error_cannot_read_content]
+other = "Cant read message content."
+
 [error_cannot_use_roles]
 other = "Οι ακόλουθοι ρόλοι δεν μπορούν να χρησιμοποιηθούν"
 
@@ -276,6 +279,9 @@ other = "Ρόλοι"
 
 [message_command_user_info_status]
 other = "Κατάσταση"
+
+[message_command_pin]
+other = "pin message"
 
 [message_modify_cant_use_this_message_error]
 other = "δεν είναι διαθέσιμο για αυτό το μήνυμα"
