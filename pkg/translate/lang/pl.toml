@@ -217,6 +217,9 @@ other = "Nie można wybrać tego bota jako celu!"
 [error_bot_does_not_have_permissions]
 other = "Niewystarczające uprawnienia bota!\rAdministrator musi otrzymać uprawnienia administratora serwera do pracy!"
 
+[error_cannot_read_content]
+other = "Cant read message content."
+
 [error_cannot_use_roles]
 other = "Nie można użyć następujących ról"
 
@@ -236,7 +239,7 @@ other = "Nieprawidłowe role"
 other = "Wystąpił błąd"
 
 [error_unknown_command]
-other = "Nieznana operacja"
+other = "Unkown operation"
 
 [feed_minecraft_webhook_name]
 other = "powiadomienie serwera"
@@ -276,6 +279,9 @@ other = "Role"
 
 [message_command_user_info_status]
 other = "Status"
+
+[message_command_pin]
+other = "pin message"
 
 [message_modify_cant_use_this_message_error]
 other = "niedostępne dla tej wiadomości"

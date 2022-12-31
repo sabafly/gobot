@@ -217,6 +217,9 @@ other = "Невозможно выбрать этого бота в качест
 [error_bot_does_not_have_permissions]
 other = "Недостаточно прав для бота!\rДля работы администратора необходимо получить разрешение администратора!"
 
+[error_cannot_read_content]
+other = "Cant read message content."
+
 [error_cannot_use_roles]
 other = "Нельзя использовать следующие роли"
 
@@ -236,7 +239,7 @@ other = "Неверная роль(ы)"
 other = "Произошла ошибка"
 
 [error_unknown_command]
-other = "Неизвестная операция"
+other = "Unkown operation"
 
 [feed_minecraft_webhook_name]
 other = "извещение сервера"
@@ -276,6 +279,9 @@ other = "Роли"
 
 [message_command_user_info_status]
 other = "Статус"
+
+[message_command_pin]
+other = "pin message"
 
 [message_modify_cant_use_this_message_error]
 other = "недоступен для этого сообщения"

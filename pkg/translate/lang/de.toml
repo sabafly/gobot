@@ -217,6 +217,9 @@ other = "Dieser Bot kann nicht als Ziel ausgewählt werden!"
 [error_bot_does_not_have_permissions]
 other = "Unzureichende Bot-Berechtigungen!\rDer Server-Administrator muss ihm Administratorrechte erteilen, um zu funktionieren!"
 
+[error_cannot_read_content]
+other = "Cant read message content."
+
 [error_cannot_use_roles]
 other = "Die folgenden Rollen können nicht verwendet werden"
 
@@ -236,7 +239,7 @@ other = "Ungültige Rolle(n)"
 other = "Ein Fehler ist aufgetreten"
 
 [error_unknown_command]
-other = "Unbekannter Vorgang"
+other = "Unkown operation"
 
 [feed_minecraft_webhook_name]
 other = "server notifier"
@@ -276,6 +279,9 @@ other = "Rollen"
 
 [message_command_user_info_status]
 other = "Status"
+
+[message_command_pin]
+other = "pin message"
 
 [message_modify_cant_use_this_message_error]
 other = "nicht verfügbar für diese Nachricht"

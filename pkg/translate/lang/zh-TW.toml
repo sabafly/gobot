@@ -217,6 +217,9 @@ other = "Cannot select this bot as target!"
 [error_bot_does_not_have_permissions]
 other = "Insufficient bot permissions!\rIt must be given administrator permission by the server admin to work!"
 
+[error_cannot_read_content]
+other = "Cant read message content."
+
 [error_cannot_use_roles]
 other = "The following roles cannot be used"
 
@@ -236,7 +239,7 @@ other = "Invalid role(s)"
 other = "An error has occurred"
 
 [error_unknown_command]
-other = "Unkown Operation"
+other = "Unkown operation"
 
 [feed_minecraft_webhook_name]
 other = "server notifier"
@@ -276,6 +279,9 @@ other = "Roles"
 
 [message_command_user_info_status]
 other = "Status"
+
+[message_command_pin]
+other = "pin message"
 
 [message_modify_cant_use_this_message_error]
 other = "not available for that message"

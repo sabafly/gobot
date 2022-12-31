@@ -217,6 +217,9 @@ other = "Kan deze bot niet selecteren als doel!"
 [error_bot_does_not_have_permissions]
 other = "Onvoldoende bot machtigingen!\rHet moet een administrator toestemming krijgen van de server admin om te werken!"
 
+[error_cannot_read_content]
+other = "Cant read message content."
+
 [error_cannot_use_roles]
 other = "De volgende rollen kunnen niet worden gebruikt"
 
@@ -236,7 +239,7 @@ other = "Ongeldige rol(en)"
 other = "Er is een fout opgetreden"
 
 [error_unknown_command]
-other = "Onbekend Bewerking"
+other = "Unkown operation"
 
 [feed_minecraft_webhook_name]
 other = "server notificatie"
@@ -276,6 +279,9 @@ other = "Rollen"
 
 [message_command_user_info_status]
 other = "status"
+
+[message_command_pin]
+other = "pin message"
 
 [message_modify_cant_use_this_message_error]
 other = "niet beschikbaar voor dat bericht"

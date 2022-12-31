@@ -217,6 +217,9 @@ other = "Kan inte välja denna bot som mål!"
 [error_bot_does_not_have_permissions]
 other = "Otillräckliga botbehörigheter!\rDet måste ges administratörsbehörighet av serveradministratören för att fungera!"
 
+[error_cannot_read_content]
+other = "Cant read message content."
+
 [error_cannot_use_roles]
 other = "Följande roller kan inte användas"
 
@@ -236,7 +239,7 @@ other = "Ogiltig roll(er)"
 other = "Ett fel har uppstått"
 
 [error_unknown_command]
-other = "Okänd åtgärd"
+other = "Unkown operation"
 
 [feed_minecraft_webhook_name]
 other = "server avisering"
@@ -276,6 +279,9 @@ other = "Roller"
 
 [message_command_user_info_status]
 other = "Status"
+
+[message_command_pin]
+other = "pin message"
 
 [message_modify_cant_use_this_message_error]
 other = "inte tillgängligt för det meddelandet"

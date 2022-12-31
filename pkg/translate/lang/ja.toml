@@ -217,6 +217,9 @@ other = "このボットをターゲットとして選択できません！"
 [error_bot_does_not_have_permissions]
 other = "Botの権限が不足しています！\r管理者権限を与える必要があります！"
 
+[error_cannot_read_content]
+other = "メッセージの内容を読み取ることができません"
+
 [error_cannot_use_roles]
 other = "次のロールは使用できません"
 
@@ -236,7 +239,7 @@ other = "無効な役割です"
 other = "エラーが発生しました"
 
 [error_unknown_command]
-other = "未知の操作"
+other = "不明な動作"
 
 [feed_minecraft_webhook_name]
 other = "サーバ通知"
@@ -276,6 +279,9 @@ other = "ロール"
 
 [message_command_user_info_status]
 other = "ステータス"
+
+[message_command_pin]
+other = "ピン留め"
 
 [message_modify_cant_use_this_message_error]
 other = "そのメッセージでは利用できません"

@@ -217,6 +217,9 @@ other = "Botti ei voi valita kohteeksi!"
 [error_bot_does_not_have_permissions]
 other = "Riittämätön botin käyttöoikeudet!\rPalvelimen ylläpitäjän täytyy antaa järjestelmänvalvojalle lupa toimiakseen!"
 
+[error_cannot_read_content]
+other = "Cant read message content."
+
 [error_cannot_use_roles]
 other = "Seuraavia rooleja ei voi käyttää"
 
@@ -236,7 +239,7 @@ other = "Virheellinen rooli(t)"
 other = "Virhe on tapahtunut"
 
 [error_unknown_command]
-other = "Tuntematon Toiminto"
+other = "Unkown operation"
 
 [feed_minecraft_webhook_name]
 other = "palvelimen ilmoittaja"
@@ -276,6 +279,9 @@ other = "Roolit"
 
 [message_command_user_info_status]
 other = "Tila"
+
+[message_command_pin]
+other = "pin message"
 
 [message_modify_cant_use_this_message_error]
 other = "ei saatavilla tuossa viestissä"

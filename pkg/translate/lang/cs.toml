@@ -217,6 +217,9 @@ other = "Tohoto bota nelze vybrat jako cíl!"
 [error_bot_does_not_have_permissions]
 other = "Nedostatečná oprávnění bota!\rMusí být správcem serveru uděleno oprávnění správce!"
 
+[error_cannot_read_content]
+other = "Cant read message content."
+
 [error_cannot_use_roles]
 other = "Následující role nelze použít"
 
@@ -236,7 +239,7 @@ other = "Neplatná role"
 other = "Došlo k chybě"
 
 [error_unknown_command]
-other = "Neznámá operace"
+other = "Unkown operation"
 
 [feed_minecraft_webhook_name]
 other = "oznámení serveru"
@@ -276,6 +279,9 @@ other = "Role"
 
 [message_command_user_info_status]
 other = "Stav"
+
+[message_command_pin]
+other = "pin message"
 
 [message_modify_cant_use_this_message_error]
 other = "není k dispozici pro tuto zprávu"
