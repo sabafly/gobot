@@ -217,6 +217,9 @@ other = "Kan ikke vælge denne bot som mål!"
 [error_bot_does_not_have_permissions]
 other = "Utilstrækkelige bot tilladelser!\rDet skal gives administrator tilladelse af server admin til at arbejde!"
 
+[error_cannot_read_content]
+other = "Cant read message content."
+
 [error_cannot_use_roles]
 other = "Følgende roller kan ikke bruges"
 
@@ -276,6 +279,9 @@ other = "Roller"
 
 [message_command_user_info_status]
 other = "Status"
+
+[message_command_pin]
+other = "pin message"
 
 [message_modify_cant_use_this_message_error]
 other = "ikke tilgængelig for denne besked"
