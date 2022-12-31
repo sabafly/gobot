@@ -217,6 +217,9 @@ other = "Não é possível selecionar este bot como destino!"
 [error_bot_does_not_have_permissions]
 other = "Permissões de bot insuficientes!\rEle deve ser dado permissão de administrador pelo administrador do servidor para funcionar!"
 
+[error_cannot_read_content]
+other = "Cant read message content."
+
 [error_cannot_use_roles]
 other = "Não é possível usar as seguintes funções"
 
@@ -276,6 +279,9 @@ other = "Papéis"
 
 [message_command_user_info_status]
 other = "SItuação"
+
+[message_command_pin]
+other = "pin message"
 
 [message_modify_cant_use_this_message_error]
 other = "não disponível para essa mensagem"
