@@ -103,7 +103,6 @@ func end() {
 	}
 	s.Close()
 	log.Println("正常にシャットダウンしました")
-	os.Exit(0)
 }
 
 func regCommand() {

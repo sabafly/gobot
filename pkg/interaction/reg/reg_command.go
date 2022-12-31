@@ -310,6 +310,12 @@ var (
 			Type:              discordgo.MessageApplicationCommand,
 			DMPermission:      &dmPermission,
 		},
+		{
+			Name:              "pin message",
+			NameLocalizations: translate.MessageMap("message_command_pin", false),
+			Type:              discordgo.MessageApplicationCommand,
+			DMPermission:      &dmPermission,
+		},
 	}
 )
 

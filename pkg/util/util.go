@@ -31,6 +31,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/dlclark/regexp2"
+	"github.com/ikafly144/gobot/pkg/product"
 	"github.com/ikafly144/gobot/pkg/translate"
 )
 
@@ -193,4 +194,22 @@ func ErrorCatch[T any](data T, err error) (T, error) {
 		fmt.Fprint(logf, "\n================\n\n")
 	}
 	return data, err
+}
+
+func WebhookExec(s *discordgo.Session, channelID string) (webhookID string, webhookToken string) {
+	ws, _ := ErrorCatch(s.ChannelWebhooks(channelID))
+	for _, w := range ws {
+		if w.User.ID == s.State.User.ID {
+			webhookID = w.ID
+			webhookToken = w.Token
+			return
+		}
+	}
+	w, err := ErrorCatch(s.WebhookCreate(channelID, product.ProductName+"-webhook", s.State.User.AvatarURL("1024")))
+	if err != nil {
+		return
+	}
+	webhookID = w.ID
+	webhookToken = w.Token
+	return
 }

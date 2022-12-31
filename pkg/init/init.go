@@ -22,6 +22,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/env"
+	"github.com/ikafly144/gobot/pkg/interaction"
 	"github.com/ikafly144/gobot/pkg/interaction/handler"
 	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
@@ -110,15 +111,45 @@ func init() {
 		log.Printf("[Message Created] : %v(%v) #%v(%v) <%v#%v>\n                 >> %v", g.Name, g.ID, c.Name, c.ID, m.Author.Username, m.Author.Discriminator, str)
 		p, err := util.ErrorCatch(s.State.UserChannelPermissions(s.State.User.ID, m.ChannelID))
 		if err == nil && p&int64(discordgo.PermissionAdministrator) != 0 {
-			data, err := util.ErrorCatch(session.MessagePanelConfigEmojiLoad(m.Author.ID))
-			if err != nil {
-				return
-			} else {
-				d := data.Data()
-				data.Data().Handler(d, s, m)
-			}
+			go panelConfigEmoji(m)
+			go messagePin(s, m)
 		}
 	})
+
+	s.AddHandler(func(s *discordgo.Session, m *discordgo.MessageDelete) {
+		c, _ := util.ErrorCatch(s.Channel(m.ChannelID))
+		mid := m.ID
+		log.Printf("[Message Deleted] : (%v) #%v(%v) ID:%v", m.GuildID, c.Name, c.ID, mid)
+		p, err := util.ErrorCatch(s.State.UserChannelPermissions(s.State.User.ID, m.ChannelID))
+		if err == nil && p&int64(discordgo.PermissionAdministrator) != 0 {
+			interaction.MessagePinDelete(m.ChannelID, m.ID)
+		}
+	})
+
+	s.AddHandler(func(s *discordgo.Session, mb *discordgo.MessageDeleteBulk) {
+		for _, mi := range mb.Messages {
+			c, _ := util.ErrorCatch(s.Channel(mb.ChannelID))
+			log.Printf("[Message Bulk Deleted] : (%v) #%v(%v) ID:%v", c.GuildID, c.Name, c.ID, mi)
+		}
+		p, err := util.ErrorCatch(s.State.UserChannelPermissions(s.State.User.ID, mb.ChannelID))
+		if err == nil && p&int64(discordgo.PermissionAdministrator) != 0 {
+			interaction.MessagePinDelete(mb.ChannelID, mb.Messages...)
+		}
+	})
+}
+
+func panelConfigEmoji(m *discordgo.MessageCreate) {
+	data, err := util.ErrorCatch(session.MessagePanelConfigEmojiLoad(m.Author.ID))
+	if err != nil {
+		return
+	} else {
+		d := data.Data()
+		data.Data().Handler(d, s, m)
+	}
+}
+
+func messagePin(s *discordgo.Session, m *discordgo.MessageCreate) {
+	interaction.MessagePinExec(s, m)
 }
 
 func Session() *discordgo.Session { return s }

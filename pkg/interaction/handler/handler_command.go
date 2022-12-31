@@ -61,6 +61,9 @@ var (
 		"info": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			interaction.UserInfo(s, i)
 		},
+		"pin message": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			interaction.MessagePin(s, i)
+		},
 	}
 )
 

@@ -30,6 +30,7 @@ import (
 	"github.com/ikafly144/gobot/pkg/product"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
+	"github.com/ikafly144/gobot/pkg/util"
 )
 
 func MakeBan(s *discordgo.Session) {
@@ -90,27 +91,7 @@ func feedMinecraftHandler(w http.ResponseWriter, r *http.Request) {
 		if l, ok := types.StL[string(v.Locale)]; ok {
 			locale = l
 		}
-		ws, _ := s.ChannelWebhooks(v.ChannelID)
-		var wid string
-		var wToken string
-		var hasWB bool
-		for _, w := range ws {
-			if w.User.ID == s.State.User.ID {
-				wid = w.ID
-				wToken = w.Token
-				hasWB = true
-				break
-			}
-		}
-		if !hasWB {
-			w, err := s.WebhookCreate(v.ChannelID, product.ProductName+"-webhook", s.State.User.AvatarURL("1024"))
-			if err != nil {
-				log.Print(err)
-				return
-			}
-			wid = w.ID
-			wToken = w.Token
-		}
+		wid, wToken := util.WebhookExec(s, v.ChannelID)
 		var ctx string
 		var embed []*discordgo.MessageEmbed
 		online, err := strconv.ParseBool(r.URL.Query().Get("online"))

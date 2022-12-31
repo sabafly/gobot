@@ -18,7 +18,6 @@ package api
 
 import (
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/ikafly144/gobot/pkg/env"
@@ -29,14 +28,19 @@ var APIserver string = *env.APIServer
 func GetApi(URI string, body io.Reader) (*http.Response, error) {
 	req, err := http.NewRequest("GET", "http://"+APIserver+URI, body)
 	if err != nil {
-		log.Printf("error on api: %v", err)
 		return &http.Response{}, err
 	}
 	client := http.Client{}
 	resp, err := client.Do(req)
+	return resp, err
+}
+
+func ReqAPI(method string, URI string, body io.Reader) (res *http.Response, err error) {
+	req, err := http.NewRequest(method, "http://"+APIserver+URI, body)
 	if err != nil {
-		log.Printf("error on api: %v", err)
-		return resp, err
+		return
 	}
-	return resp, nil
+	client := http.Client{}
+	res, err = client.Do(req)
+	return
 }

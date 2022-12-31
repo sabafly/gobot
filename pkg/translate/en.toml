@@ -144,6 +144,8 @@ other = "An error has occurred {{.Error}}"
 other = "Cannot select this bot as target!"
 [error_bot_does_not_have_permissions]
 other = "Insufficient bot permissions!\rIt must be given administrator permission by the server admin to work!"
+[error_cannot_read_content]
+other = "Cant read message content."
 [error_cannot_use_roles]
 other = "The following roles cannot be used"
 [error_failed_to_connect_api]
@@ -184,6 +186,8 @@ other = "none"
 other = "Roles"
 [message_command_user_info_status]
 other = "Status"
+[message_command_pin]
+other = "pin message"
 [message_modify_cant_use_this_message_error]
 other = "not available for that message"
 [message_modify_role_add_message]

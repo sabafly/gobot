@@ -99,6 +99,16 @@ type MessageSelect struct {
 	GuildID  string
 }
 
+type MessagePin struct {
+	ChannelID string `gorm:"primarykey"`
+	MessageID string
+	UserID    string
+	UserName  string
+	UserIcon  string
+	Content   string
+	Embeds    []byte
+}
+
 var StL = map[string]discordgo.Locale{
 	"English (Great Britain)": discordgo.EnglishGB,
 	"Bulgarian":               discordgo.Bulgarian,
