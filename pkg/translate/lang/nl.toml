@@ -14,58 +14,58 @@ other = "Mobiel"
 other = "Internet"
 
 [command_message]
-other = "message"
+other = "Bericht"
 
 [command_message_description]
-other = "manage and send message"
+other = "beheren en verzenden van bericht"
 
 [command_message_embed]
-other = "embed"
+other = "ingesloten"
 
 [command_message_embed_color]
-other = "color"
+other = "kleur"
 
 [command_message_embed_color_description]
-other = "rgb code of embed color"
+other = "rgb code van embedkleur"
 
 [command_message_embed_content]
-other = "content"
+other = "inhoud"
 
 [command_message_embed_content_description]
-other = "content of message"
+other = "inhoud van bericht"
 
 [command_message_embed_description]
-other = "send embed message with webhook"
+other = "verstuur insluitingsbericht met webhook"
 
 [command_message_embed_embed_content]
-other = "embed content"
+other = "ingesloten inhoud"
 
 [command_message_embed_embed_content_description]
-other = "content of message embed"
+other = "inhoud van bericht ingesloten"
 
 [command_message_embed_embed_title]
-other = "title"
+other = "Titel"
 
 [command_message_embed_embed_title_description]
-other = "title of message embed"
+other = "titel van het bericht ingesloten"
 
 [command_message_embed_icon_url]
-other = "icon url"
+other = "pictogram url"
 
 [command_message_embed_icon_url_description]
-other = "url of user avater"
+other = "URL van gebruiker avater"
 
 [command_message_embed_username]
-other = "username"
+other = "gebruikersnaam"
 
 [command_message_embed_username_description]
-other = "name of message sender"
+other = "naam van bericht afzender"
 
 [command_message_webhook]
 other = "webhook"
 
 [command_message_webhook_description]
-other = "send webhook message"
+other = "verstuur webhook bericht"
 
 [command_panel]
 other = "paneel"
@@ -272,7 +272,7 @@ other = "Kan deze bot niet selecteren als doel!"
 other = "Onvoldoende bot machtigingen!\rHet moet een administrator toestemming krijgen van de server admin om te werken!"
 
 [error_cannot_read_content]
-other = "Cant read message content."
+other = "Inhoud van berichten niet gelezen"
 
 [error_cannot_use_roles]
 other = "De volgende rollen kunnen niet worden gebruikt"
@@ -293,7 +293,7 @@ other = "Ongeldige rol(en)"
 other = "Er is een fout opgetreden"
 
 [error_unknown_command]
-other = "Unkown operation"
+other = "Onbekend gebruik"
 
 [feed_minecraft_webhook_name]
 other = "server notificatie"
@@ -305,7 +305,7 @@ other = "latentie"
 other = "wijzigen"
 
 [message_command_pin]
-other = "pin message"
+other = "Bericht pinnen"
 
 [message_command_select]
 other = "selecteren"
