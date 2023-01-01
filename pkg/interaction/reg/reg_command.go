@@ -23,8 +23,9 @@ import (
 )
 
 var (
-	dmPermission                 = false
-	PermissionAdminMembers int64 = discordgo.PermissionManageServer
+	dmPermission                   = false
+	PermissionAdminMembers   int64 = discordgo.PermissionManageServer
+	PermissionManageMessages int64 = discordgo.PermissionManageMessages
 )
 
 var (
@@ -311,10 +312,11 @@ var (
 			DMPermission:      &dmPermission,
 		},
 		{
-			Name:              "pin message",
-			NameLocalizations: translate.MessageMap("message_command_pin", false),
-			Type:              discordgo.MessageApplicationCommand,
-			DMPermission:      &dmPermission,
+			Name:                     "pin message",
+			NameLocalizations:        translate.MessageMap("message_command_pin", false),
+			Type:                     discordgo.MessageApplicationCommand,
+			DMPermission:             &dmPermission,
+			DefaultMemberPermissions: &PermissionManageMessages,
 		},
 	}
 )
