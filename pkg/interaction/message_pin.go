@@ -56,6 +56,9 @@ func MessagePin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		AvatarURL: pin.UserIcon,
 		Content:   pin.Content,
 		Embeds:    embed,
+		AllowedMentions: &discordgo.MessageAllowedMentions{
+			Parse: []discordgo.AllowedMentionType{},
+		},
 	}))
 	if err != nil {
 		return
@@ -87,6 +90,9 @@ func MessagePinExec(s *discordgo.Session, m *discordgo.MessageCreate) {
 			Username:  data.UserName,
 			AvatarURL: data.UserIcon,
 			Embeds:    embed,
+			AllowedMentions: &discordgo.MessageAllowedMentions{
+				Parse: []discordgo.AllowedMentionType{},
+			},
 		}))
 		if err != nil {
 			return
