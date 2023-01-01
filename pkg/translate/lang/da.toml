@@ -14,58 +14,58 @@ other = "Mobil"
 other = "Web"
 
 [command_message]
-other = "message"
+other = "besked"
 
 [command_message_description]
-other = "manage and send message"
+other = "administrere og sende besked"
 
 [command_message_embed]
-other = "embed"
+other = "indlejret"
 
 [command_message_embed_color]
-other = "color"
+other = "farve"
 
 [command_message_embed_color_description]
-other = "rgb code of embed color"
+other = "rgb kode for indlejret farve"
 
 [command_message_embed_content]
-other = "content"
+other = "indhold"
 
 [command_message_embed_content_description]
-other = "content of message"
+other = "indholdet af meddelelsen"
 
 [command_message_embed_description]
-other = "send embed message with webhook"
+other = "send indlejret besked med webhook"
 
 [command_message_embed_embed_content]
-other = "embed content"
+other = "indlejret indhold"
 
 [command_message_embed_embed_content_description]
-other = "content of message embed"
+other = "indholdet af meddelelsen indlejret"
 
 [command_message_embed_embed_title]
-other = "title"
+other = "titel"
 
 [command_message_embed_embed_title_description]
-other = "title of message embed"
+other = "titel på indlejret besked"
 
 [command_message_embed_icon_url]
-other = "icon url"
+other = "ikon url"
 
 [command_message_embed_icon_url_description]
-other = "url of user avater"
+other = "url af bruger avater"
 
 [command_message_embed_username]
-other = "username"
+other = "brugernavn"
 
 [command_message_embed_username_description]
-other = "name of message sender"
+other = "navn på beskedafsender"
 
 [command_message_webhook]
 other = "webhook"
 
 [command_message_webhook_description]
-other = "send webhook message"
+other = "send webhook besked"
 
 [command_panel]
 other = "panel"
@@ -272,7 +272,7 @@ other = "Kan ikke vælge denne bot som mål!"
 other = "Utilstrækkelige bot tilladelser!\rDet skal gives administrator tilladelse af server admin til at arbejde!"
 
 [error_cannot_read_content]
-other = "Cant read message content."
+other = "Kan ikke læse besked indhold."
 
 [error_cannot_use_roles]
 other = "Følgende roller kan ikke bruges"
@@ -305,7 +305,7 @@ other = "latens"
 other = "ændre"
 
 [message_command_pin]
-other = "pin message"
+other = "pin besked"
 
 [message_command_select]
 other = "vælg"
