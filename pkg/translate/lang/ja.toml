@@ -14,58 +14,58 @@ other = "モバイル"
 other = "ウェブ"
 
 [command_message]
-other = "message"
+other = "メッセージ"
 
 [command_message_description]
-other = "manage and send message"
+other = "メッセージを管理、送信する"
 
 [command_message_embed]
-other = "embed"
+other = "埋め込み"
 
 [command_message_embed_color]
-other = "color"
+other = "カラー"
 
 [command_message_embed_color_description]
-other = "rgb code of embed color"
+other = "埋め込みカラーのRGBコード"
 
 [command_message_embed_content]
-other = "content"
+other = "コンテンツ"
 
 [command_message_embed_content_description]
-other = "content of message"
+other = "メッセージの内容"
 
 [command_message_embed_description]
-other = "send embed message with webhook"
+other = "ウェブフックで埋め込みメッセージを送信する"
 
 [command_message_embed_embed_content]
-other = "embed content"
+other = "埋め込むコンテンツ"
 
 [command_message_embed_embed_content_description]
-other = "content of message embed"
+other = "メッセージ埋め込みの内容"
 
 [command_message_embed_embed_title]
-other = "title"
+other = "タイトル"
 
 [command_message_embed_embed_title_description]
-other = "title of message embed"
+other = "メッセージ埋め込みのタイトル"
 
 [command_message_embed_icon_url]
-other = "icon url"
+other = "アイコン URL"
 
 [command_message_embed_icon_url_description]
-other = "url of user avater"
+other = "ユーザーアバターのURL"
 
 [command_message_embed_username]
-other = "username"
+other = "ユーザー名"
 
 [command_message_embed_username_description]
-other = "name of message sender"
+other = "メッセージ送信者の名前"
 
 [command_message_webhook]
-other = "webhook"
+other = "ウェブフック"
 
 [command_message_webhook_description]
-other = "send webhook message"
+other = "ウェブフックメッセージの送信"
 
 [command_panel]
 other = "パネル"
