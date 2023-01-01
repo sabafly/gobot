@@ -26,6 +26,8 @@ var (
 	dmPermission                   = false
 	PermissionAdminMembers   int64 = discordgo.PermissionManageServer
 	PermissionManageMessages int64 = discordgo.PermissionManageMessages
+	two                            = 2
+	eight                          = 8
 )
 
 var (
@@ -287,6 +289,55 @@ var (
 							DescriptionLocalizations: *translate.MessageMap("command_role_option_color_option_name_desc", false),
 							Type:                     discordgo.ApplicationCommandOptionString,
 							MaxLength:                100,
+						},
+					},
+				},
+			},
+		},
+		{
+			Name:                     "message",
+			Description:              "test",
+			DMPermission:             &dmPermission,
+			DefaultMemberPermissions: &PermissionManageMessages,
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Name:        "embed",
+					Description: "test",
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Name:        "embed_title",
+							Description: "title of message embed",
+							Type:        discordgo.ApplicationCommandOptionString,
+							Required:    true,
+							MaxLength:   256,
+						},
+						{
+							Name:        "embed_content",
+							Description: "content of message embed",
+							Type:        discordgo.ApplicationCommandOptionString,
+							Required:    true,
+							MaxLength:   4096,
+						},
+						{
+							Name:        "username",
+							Description: "name of message sender",
+							Type:        discordgo.ApplicationCommandOptionString,
+							MinLength:   &two,
+							MaxLength:   32,
+						},
+						{
+							Name:        "icon_url",
+							Description: "url of user avatar",
+							Type:        discordgo.ApplicationCommandOptionString,
+							MinLength:   &eight,
+							MaxLength:   128,
+						},
+						{
+							Name:        "content",
+							Description: "content of embed message",
+							Type:        discordgo.ApplicationCommandOptionString,
+							MaxLength:   2000,
 						},
 					},
 				},
