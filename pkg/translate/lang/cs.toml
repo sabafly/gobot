@@ -14,58 +14,58 @@ other = "Mobil"
 other = "Webová"
 
 [command_message]
-other = "message"
+other = "zpráva"
 
 [command_message_description]
-other = "manage and send message"
+other = "spravovat a odesílat zprávu"
 
 [command_message_embed]
-other = "embed"
+other = "vložený"
 
 [command_message_embed_color]
-other = "color"
+other = "barva"
 
 [command_message_embed_color_description]
-other = "rgb code of embed color"
+other = "rgb kód vložené barvy"
 
 [command_message_embed_content]
-other = "content"
+other = "Obsah"
 
 [command_message_embed_content_description]
-other = "content of message"
+other = "obsah zprávy"
 
 [command_message_embed_description]
-other = "send embed message with webhook"
+other = "poslat zprávu s webhookem"
 
 [command_message_embed_embed_content]
-other = "embed content"
+other = "vložený obsah"
 
 [command_message_embed_embed_content_description]
-other = "content of message embed"
+other = "obsah vložené zprávy"
 
 [command_message_embed_embed_title]
-other = "title"
+other = "titulek"
 
 [command_message_embed_embed_title_description]
-other = "title of message embed"
+other = "název vložené zprávy"
 
 [command_message_embed_icon_url]
-other = "icon url"
+other = "URL ikony"
 
 [command_message_embed_icon_url_description]
-other = "url of user avater"
+other = "URL avateru uživatele"
 
 [command_message_embed_username]
-other = "username"
+other = "uživatelské jméno"
 
 [command_message_embed_username_description]
-other = "name of message sender"
+other = "jméno odesílatele zprávy"
 
 [command_message_webhook]
-other = "webhook"
+other = "webový háček"
 
 [command_message_webhook_description]
-other = "send webhook message"
+other = "odeslat zprávu webhooku"
 
 [command_panel]
 other = "panel"
@@ -272,7 +272,7 @@ other = "Tohoto bota nelze vybrat jako cíl!"
 other = "Nedostatečná oprávnění bota!\rMusí být správcem serveru uděleno oprávnění správce!"
 
 [error_cannot_read_content]
-other = "Cant read message content."
+other = "Přeskočit obsah zpráv."
 
 [error_cannot_use_roles]
 other = "Následující role nelze použít"
@@ -293,7 +293,7 @@ other = "Neplatná role"
 other = "Došlo k chybě"
 
 [error_unknown_command]
-other = "Unkown operation"
+other = "Neznámý provoz"
 
 [feed_minecraft_webhook_name]
 other = "oznámení serveru"
@@ -305,7 +305,7 @@ other = "odezva"
 other = "upravit"
 
 [message_command_pin]
-other = "pin message"
+other = "pin zpráva"
 
 [message_command_select]
 other = "vybrat"
