@@ -49,6 +49,7 @@ func messageEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, option [
 		}
 	}
 	embed := []*discordgo.MessageEmbed{}
+	embed_content = strings.ReplaceAll(embed_content, "\\r", "\r")
 	if embed_title != "" {
 		embed = append(embed, &discordgo.MessageEmbed{
 			Title:       embed_title,
@@ -57,7 +58,6 @@ func messageEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, option [
 		})
 	}
 	content = strings.ReplaceAll(content, "\\r", "\r")
-	embed_content = strings.ReplaceAll(embed_content, "\\r", "\r")
 	util.ErrorCatch("", s.InteractionResponseDelete(i.Interaction))
 	wid, wt := util.WebhookExec(s, i.ChannelID)
 	util.ErrorCatch(s.WebhookExecute(wid, wt, true, &discordgo.WebhookParams{
