@@ -27,6 +27,7 @@ var (
 	PermissionAdminMembers   int64 = discordgo.PermissionManageServer
 	PermissionManageMessages int64 = discordgo.PermissionManageMessages
 	two                            = 2
+	six                            = 6
 	eight                          = 8
 )
 
@@ -338,6 +339,59 @@ var (
 							Description: "content of embed message",
 							Type:        discordgo.ApplicationCommandOptionString,
 							MaxLength:   2000,
+						},
+						{
+							Name:        "color",
+							Description: "color of message embed",
+							Type:        discordgo.ApplicationCommandOptionString,
+							MaxLength:   6,
+							MinLength:   &six,
+						},
+					},
+				}, {
+					Name:        "webhook",
+					Description: "test",
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Name:        "content",
+							Description: "content of embed message",
+							Type:        discordgo.ApplicationCommandOptionString,
+							Required:    true,
+							MaxLength:   2000,
+						},
+						{
+							Name:        "username",
+							Description: "name of message sender",
+							Type:        discordgo.ApplicationCommandOptionString,
+							MinLength:   &two,
+							MaxLength:   32,
+						},
+						{
+							Name:        "icon_url",
+							Description: "url of user avatar",
+							Type:        discordgo.ApplicationCommandOptionString,
+							MinLength:   &eight,
+							MaxLength:   128,
+						},
+						{
+							Name:        "embed_title",
+							Description: "title of message embed",
+							Type:        discordgo.ApplicationCommandOptionString,
+							MaxLength:   256,
+						},
+						{
+							Name:        "embed_content",
+							Description: "content of message embed",
+							Type:        discordgo.ApplicationCommandOptionString,
+							MaxLength:   4096,
+						},
+						{
+							Name:        "color",
+							Description: "color of message embed",
+							Type:        discordgo.ApplicationCommandOptionString,
+							MaxLength:   6,
+							MinLength:   &six,
 						},
 					},
 				},
