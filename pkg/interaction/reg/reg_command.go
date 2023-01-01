@@ -332,7 +332,7 @@ var (
 							Description: "url of user avatar",
 							Type:        discordgo.ApplicationCommandOptionString,
 							MinLength:   &eight,
-							MaxLength:   128,
+							MaxLength:   512,
 						},
 						{
 							Name:        "content",
@@ -372,7 +372,7 @@ var (
 							Description: "url of user avatar",
 							Type:        discordgo.ApplicationCommandOptionString,
 							MinLength:   &eight,
-							MaxLength:   128,
+							MaxLength:   512,
 						},
 						{
 							Name:        "embed_title",
