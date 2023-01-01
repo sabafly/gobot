@@ -14,58 +14,58 @@ other = "移动设备"
 other = "Web"
 
 [command_message]
-other = "message"
+other = "留言"
 
 [command_message_description]
-other = "manage and send message"
+other = "管理和发送消息"
 
 [command_message_embed]
-other = "embed"
+other = "嵌入"
 
 [command_message_embed_color]
-other = "color"
+other = "颜色"
 
 [command_message_embed_color_description]
-other = "rgb code of embed color"
+other = "内嵌颜色的 rgb 代码"
 
 [command_message_embed_content]
-other = "content"
+other = "内容"
 
 [command_message_embed_content_description]
-other = "content of message"
+other = "消息内容"
 
 [command_message_embed_description]
-other = "send embed message with webhook"
+other = "通过网络钩子发送嵌入消息"
 
 [command_message_embed_embed_content]
-other = "embed content"
+other = "嵌入内容"
 
 [command_message_embed_embed_content_description]
-other = "content of message embed"
+other = "消息嵌入的内容"
 
 [command_message_embed_embed_title]
-other = "title"
+other = "标题"
 
 [command_message_embed_embed_title_description]
-other = "title of message embed"
+other = "消息嵌入的标题"
 
 [command_message_embed_icon_url]
-other = "icon url"
+other = "图标网址"
 
 [command_message_embed_icon_url_description]
-other = "url of user avater"
+other = "用户头像的 url"
 
 [command_message_embed_username]
-other = "username"
+other = "用户名"
 
 [command_message_embed_username_description]
-other = "name of message sender"
+other = "消息发送者名称"
 
 [command_message_webhook]
-other = "webhook"
+other = "Web 钩子"
 
 [command_message_webhook_description]
-other = "send webhook message"
+other = "发送 Web 钩子消息"
 
 [command_panel]
 other = "面板"
@@ -272,7 +272,7 @@ other = "无法选择此机器人为目标！"
 other = "机器人权限不足！\r必须由服务器管理员授权才能工作！"
 
 [error_cannot_read_content]
-other = "Cant read message content."
+other = "购买已读消息内容。"
 
 [error_cannot_use_roles]
 other = "以下角色不能被使用"
@@ -293,7 +293,7 @@ other = "无效的角色(s)"
 other = "发生错误"
 
 [error_unknown_command]
-other = "Unkown operation"
+other = "未知的操作"
 
 [feed_minecraft_webhook_name]
 other = "服务器通知器"
@@ -305,7 +305,7 @@ other = "延迟"
 other = "修改"
 
 [message_command_pin]
-other = "pin message"
+other = "置顶消息"
 
 [message_command_select]
 other = "选择"
