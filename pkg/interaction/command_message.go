@@ -2,6 +2,7 @@ package interaction
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/util"
@@ -55,6 +56,8 @@ func messageEmbed(s *discordgo.Session, i *discordgo.InteractionCreate, option [
 			Color:       int(color),
 		})
 	}
+	content = strings.ReplaceAll(content, "\\r", "\r")
+	embed_content = strings.ReplaceAll(embed_content, "\\r", "\r")
 	util.ErrorCatch("", s.InteractionResponseDelete(i.Interaction))
 	wid, wt := util.WebhookExec(s, i.ChannelID)
 	util.ErrorCatch(s.WebhookExecute(wid, wt, true, &discordgo.WebhookParams{
