@@ -14,58 +14,58 @@ other = "Mobil"
 other = "Webb"
 
 [command_message]
-other = "message"
+other = "meddelande"
 
 [command_message_description]
-other = "manage and send message"
+other = "hantera och skicka meddelande"
 
 [command_message_embed]
-other = "embed"
+other = "inbäddad"
 
 [command_message_embed_color]
-other = "color"
+other = "färg"
 
 [command_message_embed_color_description]
-other = "rgb code of embed color"
+other = "rgb kod för inbäddad färg"
 
 [command_message_embed_content]
-other = "content"
+other = "innehåll"
 
 [command_message_embed_content_description]
-other = "content of message"
+other = "innehållet i meddelandet"
 
 [command_message_embed_description]
-other = "send embed message with webhook"
+other = "skicka inbäddade meddelande med webhook"
 
 [command_message_embed_embed_content]
-other = "embed content"
+other = "bädda in innehåll"
 
 [command_message_embed_embed_content_description]
-other = "content of message embed"
+other = "innehållet i inbäddade meddelanden"
 
 [command_message_embed_embed_title]
-other = "title"
+other = "titel"
 
 [command_message_embed_embed_title_description]
-other = "title of message embed"
+other = "titel på inbäddad meddelande"
 
 [command_message_embed_icon_url]
-other = "icon url"
+other = "ikon URL"
 
 [command_message_embed_icon_url_description]
-other = "url of user avater"
+other = "URL till användaravater"
 
 [command_message_embed_username]
-other = "username"
+other = "användarnamn"
 
 [command_message_embed_username_description]
-other = "name of message sender"
+other = "namn på meddelandets avsändare"
 
 [command_message_webhook]
 other = "webhook"
 
 [command_message_webhook_description]
-other = "send webhook message"
+other = "skicka webhook meddelande"
 
 [command_panel]
 other = "panel"
@@ -272,7 +272,7 @@ other = "Kan inte välja denna bot som mål!"
 other = "Otillräckliga botbehörigheter!\rDet måste ges administratörsbehörighet av serveradministratören för att fungera!"
 
 [error_cannot_read_content]
-other = "Cant read message content."
+other = "Kan inte läsa innehållet i meddelandet."
 
 [error_cannot_use_roles]
 other = "Följande roller kan inte användas"
@@ -293,7 +293,7 @@ other = "Ogiltig roll(er)"
 other = "Ett fel har uppstått"
 
 [error_unknown_command]
-other = "Unkown operation"
+other = "Okänd operation"
 
 [feed_minecraft_webhook_name]
 other = "server avisering"
@@ -305,7 +305,7 @@ other = "latens"
 other = "modifiera"
 
 [message_command_pin]
-other = "pin message"
+other = "PIN-meddelande"
 
 [message_command_select]
 other = "välj"
