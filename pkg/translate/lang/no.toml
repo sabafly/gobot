@@ -14,58 +14,58 @@ other = "Mobil"
 other = "Nett"
 
 [command_message]
-other = "message"
+other = "melding"
 
 [command_message_description]
-other = "manage and send message"
+other = "behandle og sende melding"
 
 [command_message_embed]
-other = "embed"
+other = "Fiks"
 
 [command_message_embed_color]
-other = "color"
+other = "farge"
 
 [command_message_embed_color_description]
-other = "rgb code of embed color"
+other = "rgb-kode for innebygd farge"
 
 [command_message_embed_content]
-other = "content"
+other = "innhold"
 
 [command_message_embed_content_description]
-other = "content of message"
+other = "innhold i melding"
 
 [command_message_embed_description]
-other = "send embed message with webhook"
+other = "send en tilkoblet melding med webhook"
 
 [command_message_embed_embed_content]
-other = "embed content"
+other = "Innebygd innhold"
 
 [command_message_embed_embed_content_description]
-other = "content of message embed"
+other = "innhold i en seng"
 
 [command_message_embed_embed_title]
-other = "title"
+other = "tittel"
 
 [command_message_embed_embed_title_description]
-other = "title of message embed"
+other = "tittel på en melding"
 
 [command_message_embed_icon_url]
-other = "icon url"
+other = "URL for ikon"
 
 [command_message_embed_icon_url_description]
-other = "url of user avater"
+other = "url til brukeravsender"
 
 [command_message_embed_username]
-other = "username"
+other = "brukernavn"
 
 [command_message_embed_username_description]
-other = "name of message sender"
+other = "Navn på meldingavsender"
 
 [command_message_webhook]
 other = "webhook"
 
 [command_message_webhook_description]
-other = "send webhook message"
+other = "send webhook melding"
 
 [command_panel]
 other = "panel"
@@ -272,7 +272,7 @@ other = "Kan ikke velge denne botten som mål!"
 other = "Utilstrekkelige bot tillatelser!\rDet må gis administratorrettigheter av serveradministratoren til å virke!"
 
 [error_cannot_read_content]
-other = "Cant read message content."
+other = "Kant lese meldingsinnholdet."
 
 [error_cannot_use_roles]
 other = "Følgende roller kan ikke brukes"
@@ -293,7 +293,7 @@ other = "Ugyldige rolle(r)"
 other = "En feil har oppstått"
 
 [error_unknown_command]
-other = "Unkown operation"
+other = "Ukjent operasjon"
 
 [feed_minecraft_webhook_name]
 other = "varsling av tjener"
@@ -305,7 +305,7 @@ other = "latens"
 other = "endre"
 
 [message_command_pin]
-other = "pin message"
+other = "PIN melding"
 
 [message_command_select]
 other = "velg"
