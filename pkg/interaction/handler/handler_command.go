@@ -54,6 +54,9 @@ var (
 		"role": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			interaction.Role(s, i)
 		},
+		"message": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			interaction.CommandMessage(s, i)
+		},
 		"modify": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			interaction.MessageModify(s, i)
 		},
