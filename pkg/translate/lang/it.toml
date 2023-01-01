@@ -13,6 +13,60 @@ other = "Cellulare"
 [client_web]
 other = "Web"
 
+[command_message]
+other = "message"
+
+[command_message_description]
+other = "manage and send message"
+
+[command_message_embed]
+other = "embed"
+
+[command_message_embed_color]
+other = "color"
+
+[command_message_embed_color_description]
+other = "rgb code of embed color"
+
+[command_message_embed_content]
+other = "content"
+
+[command_message_embed_content_description]
+other = "content of message"
+
+[command_message_embed_description]
+other = "send embed message with webhook"
+
+[command_message_embed_embed_content]
+other = "embed content"
+
+[command_message_embed_embed_content_description]
+other = "content of message embed"
+
+[command_message_embed_embed_title]
+other = "title"
+
+[command_message_embed_embed_title_description]
+other = "title of message embed"
+
+[command_message_embed_icon_url]
+other = "icon url"
+
+[command_message_embed_icon_url_description]
+other = "url of user avater"
+
+[command_message_embed_username]
+other = "username"
+
+[command_message_embed_username_description]
+other = "name of message sender"
+
+[command_message_webhook]
+other = "webhook"
+
+[command_message_webhook_description]
+other = "send webhook message"
+
 [command_panel]
 other = "pannello"
 
@@ -250,6 +304,9 @@ other = "latenza"
 [message_command_modify]
 other = "modifica"
 
+[message_command_pin]
+other = "pin message"
+
 [message_command_select]
 other = "seleziona"
 
@@ -279,9 +336,6 @@ other = "Ruoli"
 
 [message_command_user_info_status]
 other = "Stato"
-
-[message_command_pin]
-other = "pin message"
 
 [message_modify_cant_use_this_message_error]
 other = "non disponibile per quel messaggio"
