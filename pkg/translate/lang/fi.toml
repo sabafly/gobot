@@ -14,58 +14,58 @@ other = "Mobiili"
 other = "Verkko"
 
 [command_message]
-other = "message"
+other = "viesti"
 
 [command_message_description]
-other = "manage and send message"
+other = "hallitse ja lähetä viesti"
 
 [command_message_embed]
-other = "embed"
+other = "upotettu"
 
 [command_message_embed_color]
-other = "color"
+other = "väri"
 
 [command_message_embed_color_description]
-other = "rgb code of embed color"
+other = "rgb upotetun värin koodi"
 
 [command_message_embed_content]
-other = "content"
+other = "sisältö"
 
 [command_message_embed_content_description]
-other = "content of message"
+other = "viestin sisältö"
 
 [command_message_embed_description]
-other = "send embed message with webhook"
+other = "lähetä upotettu viesti webkoukulla"
 
 [command_message_embed_embed_content]
-other = "embed content"
+other = "upotettu sisältö"
 
 [command_message_embed_embed_content_description]
-other = "content of message embed"
+other = "viestin sisältö upotettuna"
 
 [command_message_embed_embed_title]
-other = "title"
+other = "otsikko"
 
 [command_message_embed_embed_title_description]
-other = "title of message embed"
+other = "viestin otsikko upotettuna"
 
 [command_message_embed_icon_url]
-other = "icon url"
+other = "kuvakkeen url"
 
 [command_message_embed_icon_url_description]
-other = "url of user avater"
+other = "käyttäjän avaajan url"
 
 [command_message_embed_username]
-other = "username"
+other = "käyttäjätunnus"
 
 [command_message_embed_username_description]
-other = "name of message sender"
+other = "viestin lähettäjän nimi"
 
 [command_message_webhook]
-other = "webhook"
+other = "webkoukku"
 
 [command_message_webhook_description]
-other = "send webhook message"
+other = "lähetä webhook viesti"
 
 [command_panel]
 other = "paneeli"
@@ -272,7 +272,7 @@ other = "Botti ei voi valita kohteeksi!"
 other = "Riittämätön botin käyttöoikeudet!\rPalvelimen ylläpitäjän täytyy antaa järjestelmänvalvojalle lupa toimiakseen!"
 
 [error_cannot_read_content]
-other = "Cant read message content."
+other = "Cant lukuviestin sisältö."
 
 [error_cannot_use_roles]
 other = "Seuraavia rooleja ei voi käyttää"
@@ -293,7 +293,7 @@ other = "Virheellinen rooli(t)"
 other = "Virhe on tapahtunut"
 
 [error_unknown_command]
-other = "Unkown operation"
+other = "Tuntematon toiminta"
 
 [feed_minecraft_webhook_name]
 other = "palvelimen ilmoittaja"
@@ -305,7 +305,7 @@ other = "latenssi"
 other = "muokkaa"
 
 [message_command_pin]
-other = "pin message"
+other = "pin viesti"
 
 [message_command_select]
 other = "valitse"

@@ -14,58 +14,58 @@ other = "Komórka"
 other = "Web"
 
 [command_message]
-other = "message"
+other = "wiadomość"
 
 [command_message_description]
-other = "manage and send message"
+other = "zarządzaj i wysyłaj wiadomość"
 
 [command_message_embed]
-other = "embed"
+other = "osadzony"
 
 [command_message_embed_color]
-other = "color"
+other = "kolor"
 
 [command_message_embed_color_description]
-other = "rgb code of embed color"
+other = "kod rgb koloru osadzonego"
 
 [command_message_embed_content]
-other = "content"
+other = "zawartość"
 
 [command_message_embed_content_description]
-other = "content of message"
+other = "treść wiadomości"
 
 [command_message_embed_description]
-other = "send embed message with webhook"
+other = "wyślij wiadomość osadzoną przez webhook"
 
 [command_message_embed_embed_content]
-other = "embed content"
+other = "zawartość osadzenia"
 
 [command_message_embed_embed_content_description]
-other = "content of message embed"
+other = "zawartość osadzonych wiadomości"
 
 [command_message_embed_embed_title]
-other = "title"
+other = "tytuł"
 
 [command_message_embed_embed_title_description]
-other = "title of message embed"
+other = "tytuł osadzonej wiadomości"
 
 [command_message_embed_icon_url]
-other = "icon url"
+other = "adres url ikony"
 
 [command_message_embed_icon_url_description]
-other = "url of user avater"
+other = "URL awatera użytkownika"
 
 [command_message_embed_username]
-other = "username"
+other = "nazwa użytkownika"
 
 [command_message_embed_username_description]
-other = "name of message sender"
+other = "nazwa nadawcy wiadomości"
 
 [command_message_webhook]
 other = "webhook"
 
 [command_message_webhook_description]
-other = "send webhook message"
+other = "wyślij wiadomość webhook"
 
 [command_panel]
 other = "panele"
@@ -272,7 +272,7 @@ other = "Nie można wybrać tego bota jako celu!"
 other = "Niewystarczające uprawnienia bota!\rAdministrator musi otrzymać uprawnienia administratora serwera do pracy!"
 
 [error_cannot_read_content]
-other = "Cant read message content."
+other = "Przeczytaj zawartość wiadomości."
 
 [error_cannot_use_roles]
 other = "Nie można użyć następujących ról"
@@ -293,7 +293,7 @@ other = "Nieprawidłowe role"
 other = "Wystąpił błąd"
 
 [error_unknown_command]
-other = "Unkown operation"
+other = "Operacja nieznana"
 
 [feed_minecraft_webhook_name]
 other = "powiadomienie serwera"
@@ -305,7 +305,7 @@ other = "opóźnienie"
 other = "modyfikacja"
 
 [message_command_pin]
-other = "pin message"
+other = "komunikat pin"
 
 [message_command_select]
 other = "wybierz"

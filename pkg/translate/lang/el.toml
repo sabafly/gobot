@@ -14,58 +14,58 @@ other = "Κινητό"
 other = "Ιστός"
 
 [command_message]
-other = "message"
+other = "μήνυμα"
 
 [command_message_description]
-other = "manage and send message"
+other = "διαχείριση και αποστολή μηνύματος"
 
 [command_message_embed]
-other = "embed"
+other = "ενσωματωμένο"
 
 [command_message_embed_color]
-other = "color"
+other = "χρώμα"
 
 [command_message_embed_color_description]
-other = "rgb code of embed color"
+other = "κωδικός rgb του ενσωματωμένου χρώματος"
 
 [command_message_embed_content]
-other = "content"
+other = "περιεχόμενο"
 
 [command_message_embed_content_description]
-other = "content of message"
+other = "περιεχόμενο του μηνύματος"
 
 [command_message_embed_description]
-other = "send embed message with webhook"
+other = "αποστολή ενσωματωμένου μηνύματος με webhook"
 
 [command_message_embed_embed_content]
-other = "embed content"
+other = "ενσωματωμένο περιεχόμενο"
 
 [command_message_embed_embed_content_description]
-other = "content of message embed"
+other = "περιεχόμενο ενσωματωμένου μηνύματος"
 
 [command_message_embed_embed_title]
-other = "title"
+other = "τίτλος"
 
 [command_message_embed_embed_title_description]
-other = "title of message embed"
+other = "τίτλος του ενσωματωμένου μηνύματος"
 
 [command_message_embed_icon_url]
-other = "icon url"
+other = "εικονίδιο url"
 
 [command_message_embed_icon_url_description]
-other = "url of user avater"
+other = "url του χρήστη avater"
 
 [command_message_embed_username]
-other = "username"
+other = "όνομα χρήστη"
 
 [command_message_embed_username_description]
-other = "name of message sender"
+other = "όνομα αποστολέα μηνύματος"
 
 [command_message_webhook]
 other = "webhook"
 
 [command_message_webhook_description]
-other = "send webhook message"
+other = "αποστολή μηνύματος webhook"
 
 [command_panel]
 other = "πίνακας"
@@ -272,7 +272,7 @@ other = "Δεν μπορείτε να επιλέξετε αυτό το bot ως 
 other = "Ανεπαρκή δικαιώματα bot !\rΠρέπει να του δοθεί άδεια διαχειριστή από τον διαχειριστή για να λειτουργήσει!"
 
 [error_cannot_read_content]
-other = "Cant read message content."
+other = "Αντιγραφή αναγνωσμένου περιεχομένου μηνύματος."
 
 [error_cannot_use_roles]
 other = "Οι ακόλουθοι ρόλοι δεν μπορούν να χρησιμοποιηθούν"
@@ -293,7 +293,7 @@ other = "Μη έγκυρος ρόλος"
 other = "Παρουσιάστηκε ένα σφάλμα"
 
 [error_unknown_command]
-other = "Unkown operation"
+other = "Άγνωστη λειτουργία"
 
 [feed_minecraft_webhook_name]
 other = "κοινοποιών διακομιστή"
@@ -305,7 +305,7 @@ other = "λανθάνουσα κατάσταση"
 other = "τροποποίηση"
 
 [message_command_pin]
-other = "pin message"
+other = "μήνυμα ακροδέκτη"
 
 [message_command_select]
 other = "επιλογή"

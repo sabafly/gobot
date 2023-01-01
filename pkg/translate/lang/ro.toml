@@ -14,58 +14,58 @@ other = "Mobil"
 other = "Web"
 
 [command_message]
-other = "message"
+other = "mesaj"
 
 [command_message_description]
-other = "manage and send message"
+other = "gestionează și trimite mesajul"
 
 [command_message_embed]
-other = "embed"
+other = "încorporat"
 
 [command_message_embed_color]
-other = "color"
+other = "culoare"
 
 [command_message_embed_color_description]
-other = "rgb code of embed color"
+other = "cod rgb de culoare încorporată"
 
 [command_message_embed_content]
-other = "content"
+other = "Conținut"
 
 [command_message_embed_content_description]
-other = "content of message"
+other = "conținutul mesajului"
 
 [command_message_embed_description]
-other = "send embed message with webhook"
+other = "trimite mesaj încorporat cu webhook"
 
 [command_message_embed_embed_content]
-other = "embed content"
+other = "încorporare conținut"
 
 [command_message_embed_embed_content_description]
-other = "content of message embed"
+other = "conținutul mesajului încorporat"
 
 [command_message_embed_embed_title]
-other = "title"
+other = "titlu"
 
 [command_message_embed_embed_title_description]
-other = "title of message embed"
+other = "titlul mesajului încorporat"
 
 [command_message_embed_icon_url]
-other = "icon url"
+other = "URL pictogramă"
 
 [command_message_embed_icon_url_description]
 other = "url of user avater"
 
 [command_message_embed_username]
-other = "username"
+other = "utilizator"
 
 [command_message_embed_username_description]
-other = "name of message sender"
+other = "numele expeditorului mesajului"
 
 [command_message_webhook]
 other = "webhook"
 
 [command_message_webhook_description]
-other = "send webhook message"
+other = "trimite mesaj webhook"
 
 [command_panel]
 other = "panou"
@@ -272,7 +272,7 @@ other = "Nu se poate selecta acest bot ca țintă!"
 other = "Permisiuni de bot insuficiente!\rTrebuie să primească permisiunea administratorului serverului pentru a lucra!"
 
 [error_cannot_read_content]
-other = "Cant read message content."
+other = "Conținutul mesajelor citite de cant."
 
 [error_cannot_use_roles]
 other = "Următoarele roluri nu pot fi utilizate"
@@ -293,7 +293,7 @@ other = "Roluri nevalide"
 other = "A apărut o eroare"
 
 [error_unknown_command]
-other = "Unkown operation"
+other = "Operațiune Neconsolidată"
 
 [feed_minecraft_webhook_name]
 other = "notificatorul serverului"
@@ -305,7 +305,7 @@ other = "latență"
 other = "modifică"
 
 [message_command_pin]
-other = "pin message"
+other = "pin mesaj"
 
 [message_command_select]
 other = "selectează"

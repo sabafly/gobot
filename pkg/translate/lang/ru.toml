@@ -14,58 +14,58 @@ other = "Мобильный"
 other = "Веб"
 
 [command_message]
-other = "message"
+other = "сообщение"
 
 [command_message_description]
-other = "manage and send message"
+other = "управлять и отправлять сообщение"
 
 [command_message_embed]
-other = "embed"
+other = "вставить"
 
 [command_message_embed_color]
-other = "color"
+other = "цвет"
 
 [command_message_embed_color_description]
-other = "rgb code of embed color"
+other = "rgb код для встраиваемого цвета"
 
 [command_message_embed_content]
-other = "content"
+other = "контент"
 
 [command_message_embed_content_description]
-other = "content of message"
+other = "содержимое сообщения"
 
 [command_message_embed_description]
-other = "send embed message with webhook"
+other = "отправить сообщение с веб-хуком"
 
 [command_message_embed_embed_content]
-other = "embed content"
+other = "контент для вставки"
 
 [command_message_embed_embed_content_description]
-other = "content of message embed"
+other = "содержимое вложенного сообщения"
 
 [command_message_embed_embed_title]
-other = "title"
+other = "название"
 
 [command_message_embed_embed_title_description]
-other = "title of message embed"
+other = "название встраиваемого сообщения"
 
 [command_message_embed_icon_url]
-other = "icon url"
+other = "ссылка на иконку"
 
 [command_message_embed_icon_url_description]
-other = "url of user avater"
+other = "URL-адрес аватара пользователя"
 
 [command_message_embed_username]
-other = "username"
+other = "имя пользователя"
 
 [command_message_embed_username_description]
-other = "name of message sender"
+other = "имя отправителя сообщения"
 
 [command_message_webhook]
-other = "webhook"
+other = "вебхук"
 
 [command_message_webhook_description]
-other = "send webhook message"
+other = "отправить веб-хук сообщение"
 
 [command_panel]
 other = "панель"
@@ -272,7 +272,7 @@ other = "Невозможно выбрать этого бота в качест
 other = "Недостаточно прав для бота!\rДля работы администратора необходимо получить разрешение администратора!"
 
 [error_cannot_read_content]
-other = "Cant read message content."
+other = "Не прочитать содержимое сообщения."
 
 [error_cannot_use_roles]
 other = "Нельзя использовать следующие роли"
@@ -293,7 +293,7 @@ other = "Неверная роль(ы)"
 other = "Произошла ошибка"
 
 [error_unknown_command]
-other = "Unkown operation"
+other = "Неизвестная операция"
 
 [feed_minecraft_webhook_name]
 other = "извещение сервера"
@@ -305,7 +305,7 @@ other = "задержка"
 other = "изменить"
 
 [message_command_pin]
-other = "pin message"
+other = "прикрепить сообщение"
 
 [message_command_select]
 other = "выбрать"
