@@ -18,10 +18,11 @@ package session
 
 import (
 	"github.com/bwmarrin/discordgo"
+	"github.com/google/uuid"
 	"github.com/ikafly144/gobot/pkg/types"
 )
 
-var interactionSessions *session[discordgo.InteractionCreate] = new[discordgo.InteractionCreate]()
+var interactionSessions *session[discordgo.InteractionCreate] = newSession[discordgo.InteractionCreate]()
 
 func InteractionSave(i *discordgo.InteractionCreate) (id string) {
 	return interactionSessions.add(i)
@@ -35,7 +36,7 @@ func InteractionRemove(id string) {
 	interactionSessions.remove(id)
 }
 
-var messageSessions *session[types.MessageSessionData[types.MessagePanelConfigEmojiData]] = new[types.MessageSessionData[types.MessagePanelConfigEmojiData]]()
+var messageSessions *session[types.MessageSessionData[types.MessagePanelConfigEmojiData]] = newSession[types.MessageSessionData[types.MessagePanelConfigEmojiData]]()
 
 func MessagePanelConfigEmojiSave(m *types.MessageSessionData[types.MessagePanelConfigEmojiData], id string) {
 	messageSessions.addWithID(m, id)
@@ -47,4 +48,25 @@ func MessagePanelConfigEmojiLoad(id string) (data *sessionData[types.MessageSess
 
 func MessagePanelConfigEmojiRemove(id string) {
 	messageSessions.remove(id)
+}
+
+var voteSessions *session[types.VoteSession] = newSession[types.VoteSession]()
+
+func VoteSave(d *types.VoteSession) (id string) {
+	id = uuid.New().String()
+	d.Vote.VoteID = id
+	voteSessions.addWithID(d, id)
+	return
+}
+
+func VoteSaveWithID(d *types.VoteSession, id string) {
+	voteSessions.addWithID(d, id)
+}
+
+func VoteLoad(id string) (data *sessionData[types.VoteSession], err error) {
+	return voteSessions.get(id)
+}
+
+func VoteRemove(id string) {
+	voteSessions.remove(id)
 }

@@ -17,6 +17,8 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package types
 
 import (
+	"time"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/dlclark/regexp2"
 	"gorm.io/gorm"
@@ -107,6 +109,34 @@ type MessagePin struct {
 	UserIcon  string
 	Content   string
 	Embeds    []byte
+}
+
+type VoteSession struct {
+	InteractionCreate *discordgo.InteractionCreate
+	Vote              *VoteObject
+}
+
+type VoteObject struct {
+	VoteID       string `gorm:"primarykey"`
+	ChannelID    string
+	MessageID    string
+	Title        string
+	Description  string
+	MinSelection int
+	MaxSelection int
+	ShowCount    bool
+	Selections   []byte // array of VoteSelection
+	StartAt      time.Time
+	EndAt        time.Time
+	Duration     time.Duration
+}
+
+type VoteSelection struct {
+	ID          string
+	Emoji       discordgo.ComponentEmoji
+	Name        string
+	Description string
+	Users       []string
 }
 
 var StL = map[string]discordgo.Locale{

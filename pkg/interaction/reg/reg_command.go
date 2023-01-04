@@ -23,12 +23,13 @@ import (
 )
 
 var (
-	dmPermission                   = false
-	PermissionAdminMembers   int64 = discordgo.PermissionManageServer
-	PermissionManageMessages int64 = discordgo.PermissionManageMessages
-	two                            = 2
-	six                            = 6
-	eight                          = 8
+	dmPermission                     = false
+	PermissionAdminMembers   int64   = discordgo.PermissionManageServer
+	PermissionManageMessages int64   = discordgo.PermissionManageMessages
+	one                      float64 = 1
+	two                              = 2
+	six                              = 6
+	eight                            = 8
 )
 
 var (
@@ -149,6 +150,102 @@ var (
 									Description:              "show ip or not",
 									NameLocalizations:        *translate.MessageMap("command_panel_option_minecraft_option_create_option_showip", true),
 									DescriptionLocalizations: *translate.MessageMap("command_panel_option_minecraft_option_create_option_showip_desc", false),
+									Type:                     discordgo.ApplicationCommandOptionBoolean,
+								},
+							},
+						},
+					},
+				},
+				{
+					Name:                     "vote",
+					Description:              "manage and create vote panel",
+					NameLocalizations:        *translate.MessageMap("command_panel_vote", true),
+					DescriptionLocalizations: *translate.MessageMap("command_panel_vote_desc", false),
+					Type:                     discordgo.ApplicationCommandOptionSubCommandGroup,
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Name:                     "create",
+							Description:              "create vote panel",
+							NameLocalizations:        *translate.MessageMap("command_panel_vote_create", true),
+							DescriptionLocalizations: *translate.MessageMap("command_panel_vote_create", false),
+							Type:                     discordgo.ApplicationCommandOptionSubCommand,
+							Options: []*discordgo.ApplicationCommandOption{
+								{
+									Name:                     "title",
+									Description:              "title of vote panel",
+									NameLocalizations:        *translate.MessageMap("command_panel_vote_create_title", true),
+									DescriptionLocalizations: *translate.MessageMap("command_panel_vote_create_title_desc", false),
+									Type:                     discordgo.ApplicationCommandOptionString,
+									Required:                 true,
+								},
+								{
+									Name:                     "description",
+									Description:              "description of vote panel",
+									NameLocalizations:        *translate.MessageMap("command_panel_vote_create_description", true),
+									DescriptionLocalizations: *translate.MessageMap("command_panel_vote_create_description_desc", false),
+									Type:                     discordgo.ApplicationCommandOptionString,
+									Required:                 true,
+								},
+								{
+									Name:                     "time",
+									Description:              "time of vote duration",
+									NameLocalizations:        *translate.MessageMap("command_panel_vote_create_time", true),
+									DescriptionLocalizations: *translate.MessageMap("command_panel_vote_create_time_desc", false),
+									Type:                     discordgo.ApplicationCommandOptionInteger,
+									MinValue:                 &one,
+									MaxValue:                 1 << 16,
+									Required:                 true,
+								},
+								{
+									Name:                     "time_unit",
+									Description:              "time unit",
+									NameLocalizations:        *translate.MessageMap("command_panel_vote_create_time_unit", true),
+									DescriptionLocalizations: *translate.MessageMap("command_panel_vote_create_time_unit_desc", false),
+									Type:                     discordgo.ApplicationCommandOptionString,
+									Choices: []*discordgo.ApplicationCommandOptionChoice{
+										{
+											Name:              "day",
+											NameLocalizations: *translate.MessageMap("command_panel_vote_create_time_unit_day", false),
+											Value:             "day",
+										},
+										{
+											Name:              "hour",
+											NameLocalizations: *translate.MessageMap("command_panel_vote_create_time_unit_hour", false),
+											Value:             "hour",
+										},
+										{
+											Name:              "minute",
+											NameLocalizations: *translate.MessageMap("command_panel_vote_create_time_unit_minute", false),
+											Value:             "minute",
+										},
+									},
+									Required: true,
+								},
+								{
+									Name:                     "min_choice",
+									Description:              "minimum number of choices",
+									NameLocalizations:        *translate.MessageMap("command_panel_vote_create_min_choice", true),
+									DescriptionLocalizations: *translate.MessageMap("command_panel_vote_create_min_choice_desc", false),
+									Type:                     discordgo.ApplicationCommandOptionInteger,
+									MinValue:                 &one,
+									MaxValue:                 25,
+									Required:                 true,
+								},
+								{
+									Name:                     "max_choice",
+									Description:              "maximum number of choices",
+									NameLocalizations:        *translate.MessageMap("command_panel_vote_create_max_choice", true),
+									DescriptionLocalizations: *translate.MessageMap("command_panel_vote_create_max_choice_desc", false),
+									Type:                     discordgo.ApplicationCommandOptionInteger,
+									MinValue:                 &one,
+									MaxValue:                 25,
+									Required:                 true,
+								},
+								{
+									Name:                     "show_count",
+									Description:              "show the vote values",
+									NameLocalizations:        *translate.MessageMap("command_panel_vote_create_show_count", true),
+									DescriptionLocalizations: *translate.MessageMap("command_panel_vote_create_show_count", false),
 									Type:                     discordgo.ApplicationCommandOptionBoolean,
 								},
 							},
@@ -340,7 +437,7 @@ var (
 						{
 							Name:                     "icon_url",
 							Description:              "url of user avatar",
-							NameLocalizations:        *translate.MessageMap("command_message_embed_icon_url", false),
+							NameLocalizations:        *translate.MessageMap("command_message_embed_icon_url", true),
 							DescriptionLocalizations: *translate.MessageMap("command_message_embed_icon_url_description", false),
 							Type:                     discordgo.ApplicationCommandOptionString,
 							MinLength:                &eight,

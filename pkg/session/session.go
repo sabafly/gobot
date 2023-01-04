@@ -22,7 +22,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func new[T any]() (s *session[T]) {
+func newSession[T any]() (s *session[T]) {
 	s = &session[T]{}
 	s.sessionData = map[string]*sessionData[T]{}
 	return

@@ -63,21 +63,28 @@ func init() {
 				if c, ok := handler.MessageComponentHandler()[customID]; ok {
 					c(s, i, sessionID)
 					return
+				} else {
+					s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+						Type: discordgo.InteractionResponseChannelMessageWithSource,
+						Data: &discordgo.InteractionResponseData{
+							Flags: discordgo.MessageFlagsEphemeral,
+						},
+					})
 				}
 			case discordgo.InteractionModalSubmit:
 				ids := strings.Split(i.ModalSubmitData().CustomID, ":")
 				var customID string
-				var mid string
+				var sessionID string
 				for i2, v := range ids {
 					switch i2 {
 					case 0:
 						customID = v
 					case 1:
-						mid = v
+						sessionID = v
 					}
 				}
 				if m, ok := handler.ModalSubmitHandler()[customID]; ok {
-					m(s, i, mid)
+					m(s, i, sessionID)
 					return
 				}
 			}
@@ -123,6 +130,7 @@ func init() {
 		p, err := util.ErrorCatch(s.State.UserChannelPermissions(s.State.User.ID, m.ChannelID))
 		if err == nil && p&int64(discordgo.PermissionAdministrator) != 0 {
 			interaction.MessagePinDelete(m.ChannelID, m.ID)
+			interaction.PanelVoteDelete(m.ChannelID, m.ID)
 		}
 	})
 
@@ -134,6 +142,7 @@ func init() {
 		p, err := util.ErrorCatch(s.State.UserChannelPermissions(s.State.User.ID, mb.ChannelID))
 		if err == nil && p&int64(discordgo.PermissionAdministrator) != 0 {
 			interaction.MessagePinDelete(mb.ChannelID, mb.Messages...)
+			interaction.PanelVoteDelete(mb.ChannelID, mb.Messages...)
 		}
 	})
 }

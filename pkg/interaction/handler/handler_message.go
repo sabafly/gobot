@@ -36,6 +36,18 @@ var (
 		product.CommandPanelMinecraft: func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
 			interaction.ComponentPanelMinecraft(s, i)
 		},
+		product.CommandPanelVoteCreateAdd: func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
+			interaction.ComponentPanelVoteCreateAdd(s, i, sessionID)
+		},
+		product.CommandPanelVoteCreatePreview: func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
+			interaction.ComponentPanelVoteCreateAddPreview(s, i, sessionID)
+		},
+		product.CommandPanelVoteCreateDo: func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
+			interaction.ComponentPanelVoteCreateDo(s, i, sessionID)
+		},
+		product.CommandPanelVote: func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
+			interaction.ComponentPanelVote(s, i, sessionID)
+		},
 	}
 )
 

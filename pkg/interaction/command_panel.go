@@ -19,11 +19,15 @@ package interaction
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/ikafly144/gobot/pkg/api"
 	"github.com/ikafly144/gobot/pkg/product"
 	"github.com/ikafly144/gobot/pkg/session"
 	"github.com/ikafly144/gobot/pkg/translate"
@@ -32,12 +36,6 @@ import (
 )
 
 func Panel(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Flags: discordgo.MessageFlagsEphemeral,
-		},
-	}))
 	options := i.ApplicationCommandData().Options
 	switch options[0].Name {
 	case "role":
@@ -52,6 +50,12 @@ func Panel(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		case "create":
 			panelMinecraftCreate(s, i, options)
 		}
+	case "vote":
+		options = options[0].Options
+		switch options[0].Name {
+		case "create":
+			voteCreate(s, i, options)
+		}
 	case "config":
 		options = options[0].Options
 		switch options[0].Name {
@@ -62,6 +66,12 @@ func Panel(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 func panelRoleCreate(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {
+	util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	}))
 	options = options[0].Options
 	var name string
 	var description string
@@ -179,6 +189,12 @@ func panelMinecraftCreate(s *discordgo.Session, i *discordgo.InteractionCreate, 
 }
 
 func panelConfigEmoji(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {
+	util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	}))
 	uid := i.Member.User.ID
 	mes, err := util.ErrorCatch(GetSelectingMessage(uid, i.GuildID))
 	if err != nil {
@@ -317,4 +333,165 @@ func updateEmoji(s *discordgo.Session, o types.MessageSessionData[types.MessageP
 	e.Content = &o.Message.Content
 	e.Embeds = o.Message.Embeds
 	util.ErrorCatch(s.ChannelMessageEditComplex(e))
+}
+
+func voteCreate(s *discordgo.Session, i *discordgo.InteractionCreate, options []*discordgo.ApplicationCommandInteractionDataOption) {
+	util.ErrorCatch("", s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	}))
+	options = options[0].Options
+	var title string
+	var description string
+	var times int64
+	var time_unit string
+	var min_choice int64 = 1
+	var max_choice int64 = 25
+	var show_count bool = true
+	for _, acido := range options {
+		switch acido.Name {
+		case "title":
+			title = acido.StringValue()
+		case "description":
+			description = acido.StringValue()
+		case "time":
+			times = acido.IntValue()
+		case "time_unit":
+			time_unit = acido.StringValue()
+		case "min_choice":
+			min_choice = acido.IntValue()
+		case "max_choice":
+			max_choice = acido.IntValue()
+		case "show_count":
+			show_count = acido.BoolValue()
+		}
+	}
+	var duration time.Duration
+	switch time_unit {
+	case "day":
+		duration = time.Hour * 24 * time.Duration(times)
+	case "hour":
+		duration = time.Hour * time.Duration(times)
+	case "minute":
+		duration = time.Minute * time.Duration(times)
+	}
+	if min_choice > max_choice {
+		min_choice = max_choice
+	}
+	data := &types.VoteSession{
+		InteractionCreate: i,
+		Vote: &types.VoteObject{
+			ChannelID:    i.ChannelID,
+			Title:        title,
+			Description:  description,
+			MinSelection: int(min_choice),
+			MaxSelection: int(max_choice),
+			ShowCount:    show_count,
+			Duration:     duration,
+			Selections:   []byte{},
+		},
+	}
+	id := session.VoteSave(data)
+	util.ErrorCatch(s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Embeds: &[]*discordgo.MessageEmbed{
+			{
+				Title: translate.Message(i.Locale, "command_panel_vote_create_title"),
+				Fields: []*discordgo.MessageEmbedField{
+					{
+						Name:   "title",
+						Value:  title,
+						Inline: true,
+					},
+					{
+						Name:   "description",
+						Value:  description,
+						Inline: true,
+					},
+					{
+						Name:   "time",
+						Value:  strconv.FormatInt(times, 10) + time_unit,
+						Inline: true,
+					},
+					{
+						Name:  "min",
+						Value: strconv.FormatInt(min_choice, 10),
+					},
+					{
+						Name:   "max",
+						Value:  strconv.FormatInt(max_choice, 10),
+						Inline: true,
+					},
+					{
+						Name:   "show count",
+						Value:  strconv.FormatBool(show_count),
+						Inline: true,
+					},
+				},
+			},
+		},
+		Components: &[]discordgo.MessageComponent{
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.SelectMenu{
+						MenuType: discordgo.StringSelectMenu,
+						CustomID: product.CommandPanelVoteCreatePreview + ":" + id,
+						Disabled: true,
+						Options: []discordgo.SelectMenuOption{
+							{
+								Label: "No choices were added",
+								Value: "tmp",
+							},
+						},
+						Placeholder: "Add choice",
+					},
+				},
+			},
+			discordgo.ActionsRow{
+				Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						CustomID: product.CommandPanelVoteCreateAdd + ":" + id,
+						Style:    discordgo.SecondaryButton,
+						Label:    "Add",
+					},
+					discordgo.Button{
+						CustomID: product.CommandPanelVoteCreateDo + ":" + id,
+						Style:    discordgo.PrimaryButton,
+						Label:    "Create",
+						Disabled: true,
+					},
+				},
+			},
+		},
+	}))
+}
+
+func PanelVoteDelete(channelID string, messageID ...string) {
+	var removed []string
+	for _, m := range messageID {
+		if s, ok := createdVotePanel[m]; ok {
+			delete(createdVotePanel, m)
+			api.ReqAPI(http.MethodDelete, "/api/panel/vote?id="+s, http.NoBody)
+			removed = append(removed, m)
+		}
+	}
+	if len(removed) == len(messageID) {
+		return
+	}
+	r, _ := api.ReqAPI(http.MethodGet, "/api/panel/vote", http.NoBody)
+	b, _ := io.ReadAll(r.Body)
+	res := types.Res{}
+	json.Unmarshal(b, &res)
+	b, _ = json.Marshal(res.Content)
+	data := []types.VoteObject{}
+	json.Unmarshal(b, &data)
+	for _, vo := range data {
+		for _, v := range messageID {
+			if vo.MessageID == v {
+				api.ReqAPI(http.MethodDelete, "/api/panel/vote?id="+vo.VoteID, http.NoBody)
+				removed = append(removed, v)
+			}
+		}
+	}
 }

@@ -23,9 +23,12 @@ import (
 )
 
 var (
-	modalSubmitHandler = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, mid string){
-		product.CommandPanelMinecraftAddModal: func(s *discordgo.Session, i *discordgo.InteractionCreate, mid string) {
-			interaction.ModalMinecraftPanel(s, i, mid)
+	modalSubmitHandler = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string){
+		product.CommandPanelMinecraftAddModal: func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
+			interaction.ModalMinecraftPanel(s, i, sessionID)
+		},
+		product.CommandPanelVoteCreateAddModal: func(s *discordgo.Session, i *discordgo.InteractionCreate, sessionID string) {
+			interaction.ModalPanelVoteCreateAdd(s, i, sessionID)
 		},
 	}
 )

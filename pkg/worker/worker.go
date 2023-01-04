@@ -27,6 +27,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/api"
 	session "github.com/ikafly144/gobot/pkg/init"
+	"github.com/ikafly144/gobot/pkg/interaction"
 	"github.com/ikafly144/gobot/pkg/product"
 	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
@@ -60,6 +61,7 @@ func deleteBan(id string) {
 func DeleteBanListener() {
 	http.HandleFunc("/ban/delete", deleteBanHandler)
 	http.HandleFunc("/feed/mc", feedMinecraftHandler)
+	http.HandleFunc("/panel/vote", panelVote)
 	go log.Print(http.ListenAndServe(":8192", nil))
 }
 
@@ -136,6 +138,24 @@ func feedMinecraftHandler(w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			log.Print(err)
+		}
+	}
+}
+
+func panelVote(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodDelete:
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{"Status": "200 OK"})
+		b, err := io.ReadAll(r.Body)
+		if err != nil {
+			return
+		}
+		data := []types.VoteObject{}
+		json.Unmarshal(b, &data)
+		s := session.Session()
+		for _, vo := range data {
+			go interaction.PanelVoteRemove(s, vo)
 		}
 	}
 }
