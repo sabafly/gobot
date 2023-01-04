@@ -384,3 +384,66 @@ other = "port"
 
 [version]
 other = "versiune"
+
+[command_panel_vote]
+other = "vote"
+
+[command_panel_vote_desc]
+other = "manage and create vote panel"
+
+[command_panel_vote_create]
+other = "create"
+
+[command_panel_vote_create_desc]
+other = "create vote panel"
+
+[command_panel_vote_create_title]
+other = "title"
+
+[command_panel_vote_create_title_desc]
+other = "title of vote panel"
+
+[command_panel_vote_create_description]
+other = "description"
+
+[command_panel_vote_create_description_desc]
+other = "description of vote panel"
+
+[command_panel_vote_create_time]
+other = "time limit"
+
+[command_panel_vote_create_time_desc]
+other = "time limit of vote panel"
+
+[command_panel_vote_create_time_unit]
+other = "time unit"
+
+[command_panel_vote_create_time_unit_desc]
+other = "unit of time limit"
+
+[command_panel_vote_create_time_unit_day]
+other = "day"
+
+[command_panel_vote_create_time_unit_hour]
+other = "hour"
+
+[command_panel_vote_create_time_unit_minute]
+other = "minute"
+
+[command_panel_vote_create_min_choice]
+other = "min choice"
+
+[command_panel_vote_create_min_choice_desc]
+other = "minimun number of choices"
+
+[command_panel_vote_create_max_choice]
+other = "max choice"
+
+[command_panel_vote_create_max_choice_desc]
+other = "maximum number of choices"
+
+[command_panel_vote_create_show_count]
+other = "show count"
+
+[command_panel_vote_create_show_count_desc]
+other = "show the values of vote"
