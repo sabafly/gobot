@@ -400,31 +400,31 @@ func voteCreate(s *discordgo.Session, i *discordgo.InteractionCreate, options []
 				Title: translate.Message(i.Locale, "command_panel_vote_create_title"),
 				Fields: []*discordgo.MessageEmbedField{
 					{
-						Name:   "title",
+						Name:   translate.Message(i.Locale, "command_panel_vote_create_title"),
 						Value:  title,
 						Inline: true,
 					},
 					{
-						Name:   "description",
+						Name:   translate.Message(i.Locale, "command_panel_vote_create_description"),
 						Value:  description,
 						Inline: true,
 					},
 					{
-						Name:   "time",
-						Value:  strconv.FormatInt(times, 10) + time_unit,
+						Name:   translate.Message(i.Locale, "command_panel_vote_create_time"),
+						Value:  strconv.FormatInt(times, 10) + translate.Translates(i.Locale, "command_panel_vote_create_time_unit_"+time_unit, map[string]interface{}{}, int(times)),
 						Inline: true,
 					},
 					{
-						Name:  "min",
+						Name:  translate.Message(i.Locale, "command_panel_vote_create_min_choice"),
 						Value: strconv.FormatInt(min_choice, 10),
 					},
 					{
-						Name:   "max",
+						Name:   translate.Message(i.Locale, "command_panel_vote_create_max_choice"),
 						Value:  strconv.FormatInt(max_choice, 10),
 						Inline: true,
 					},
 					{
-						Name:   "show count",
+						Name:   translate.Message(i.Locale, "command_panel_vote_create_show_count"),
 						Value:  strconv.FormatBool(show_count),
 						Inline: true,
 					},
@@ -444,7 +444,7 @@ func voteCreate(s *discordgo.Session, i *discordgo.InteractionCreate, options []
 								Value: "tmp",
 							},
 						},
-						Placeholder: "Add choice",
+						Placeholder: translate.Message(i.Locale, "command_panel_vote_create_message_add_choice"),
 					},
 				},
 			},
@@ -453,12 +453,12 @@ func voteCreate(s *discordgo.Session, i *discordgo.InteractionCreate, options []
 					discordgo.Button{
 						CustomID: product.CommandPanelVoteCreateAdd + ":" + id,
 						Style:    discordgo.SecondaryButton,
-						Label:    "Add",
+						Label:    translate.Message(i.Locale, "command_panel_vote_create_message_add"),
 					},
 					discordgo.Button{
 						CustomID: product.CommandPanelVoteCreateDo + ":" + id,
 						Style:    discordgo.PrimaryButton,
-						Label:    "Create",
+						Label:    translate.Message(i.Locale, "command_panel_vote_create_message_create"),
 						Disabled: true,
 					},
 				},

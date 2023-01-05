@@ -129,6 +129,7 @@ type VoteObject struct {
 	StartAt      time.Time
 	EndAt        time.Time
 	Duration     time.Duration
+	Locale       discordgo.Locale
 }
 
 type VoteSelection struct {

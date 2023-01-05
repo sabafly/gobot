@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/ikafly144/gobot/pkg/product"
 	"github.com/ikafly144/gobot/pkg/session"
+	"github.com/ikafly144/gobot/pkg/translate"
 	"github.com/ikafly144/gobot/pkg/types"
 	"github.com/ikafly144/gobot/pkg/util"
 )
@@ -79,7 +80,7 @@ func ModalPanelVoteCreateAdd(s *discordgo.Session, i *discordgo.InteractionCreat
 						MenuType:    discordgo.StringSelectMenu,
 						CustomID:    product.CommandPanelVoteCreatePreview + ":" + data.ID(),
 						Options:     options,
-						Placeholder: "Add choices",
+						Placeholder: translate.Message(i.Locale, "command_panel_vote_create_message_add_vote_choice"),
 					},
 				},
 			},
@@ -89,12 +90,12 @@ func ModalPanelVoteCreateAdd(s *discordgo.Session, i *discordgo.InteractionCreat
 						CustomID: product.CommandPanelVoteCreateAdd + ":" + data.ID(),
 						Style:    discordgo.SecondaryButton,
 						Disabled: addable,
-						Label:    "Add",
+						Label:    translate.Message(i.Locale, "command_panel_vote_create_message_add"),
 					},
 					discordgo.Button{
 						CustomID: product.CommandPanelVoteCreateDo + ":" + data.ID(),
 						Style:    discordgo.PrimaryButton,
-						Label:    "Create",
+						Label:    translate.Message(i.Locale, "command_panel_vote_create_message_create"),
 					},
 				},
 			},
