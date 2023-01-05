@@ -175,6 +175,130 @@ other = "ruolo"
 [command_panel_option_role_option_desc_create]
 other = "crea pannello ruolo"
 
+[command_panel_vote]
+other = "vota"
+
+[command_panel_vote_create]
+other = "crea"
+
+[command_panel_vote_create_desc]
+other = "crea il comitato di voto"
+
+[command_panel_vote_create_description]
+other = "descrizione"
+
+[command_panel_vote_create_description_desc]
+other = "descrizione della commissione di voto"
+
+[command_panel_vote_create_max_choice]
+other = "scelta massima"
+
+[command_panel_vote_create_max_choice_desc]
+other = "numero massimo di scelte"
+
+[command_panel_vote_create_message_add]
+other = "Add"
+
+[command_panel_vote_create_message_add_choice]
+other = "Add choice"
+
+[command_panel_vote_create_message_add_vote_choice]
+other = "Add vote choices"
+
+[command_panel_vote_create_message_create]
+other = "Create"
+
+[command_panel_vote_create_message_end_at]
+other = "End at"
+
+[command_panel_vote_create_message_max]
+other = "Max"
+
+[command_panel_vote_create_message_min]
+other = "Min"
+
+[command_panel_vote_create_message_modal_description]
+other = "Description"
+
+[command_panel_vote_create_message_modal_description_desc]
+other = "Description of vote choice"
+
+[command_panel_vote_create_message_modal_description_desc_optional]
+other = "optional"
+
+[command_panel_vote_create_message_modal_title]
+other = "Title"
+
+[command_panel_vote_create_message_modal_title_desc]
+other = "Title of vote choice"
+
+[command_panel_vote_create_message_no_desc]
+other = "no description"
+
+[command_panel_vote_create_message_vote_info]
+other = "Vote info"
+
+[command_panel_vote_create_min_choice]
+other = "scelta min"
+
+[command_panel_vote_create_min_choice_desc]
+other = "numero minimo di scelte"
+
+[command_panel_vote_create_show_count]
+other = "mostra conteggio"
+
+[command_panel_vote_create_show_count_desc]
+other = "mostra i valori della votazione"
+
+[command_panel_vote_create_time]
+other = "limite di tempo"
+
+[command_panel_vote_create_time_desc]
+other = "limite di tempo per la commissione di voto"
+
+[command_panel_vote_create_time_unit]
+other = "unità di tempo"
+
+[command_panel_vote_create_time_unit_day]
+one = "day"
+other = "days"
+
+[command_panel_vote_create_time_unit_desc]
+other = "unità di tempo limite"
+
+[command_panel_vote_create_time_unit_hour]
+one = "hour"
+other = "hours"
+
+[command_panel_vote_create_time_unit_minute]
+one = "minute"
+other = "minutes"
+
+[command_panel_vote_create_title]
+other = "titolo"
+
+[command_panel_vote_create_title_desc]
+other = "titolo della commissione di voto"
+
+[command_panel_vote_desc]
+other = "gestire e creare un pannello di voto"
+
+[command_panel_vote_message_finished]
+other = "Vote finished!"
+
+[command_panel_vote_message_result]
+other = "Result"
+
+[command_panel_vote_message_voted]
+other = "Voted!"
+
+[command_panel_vote_message_winner]
+other = "Winner"
+
+[command_panel_vote_votes]
+one = "{{.Vote}} vote"
+other = "{{.Vote}} votes"
+
 [command_role]
 other = "ruolo"
 

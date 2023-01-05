@@ -175,6 +175,130 @@ other = "Rôle"
 [command_panel_option_role_option_desc_create]
 other = "créer un panneau de rôle"
 
+[command_panel_vote]
+other = "Voter"
+
+[command_panel_vote_create]
+other = "créer"
+
+[command_panel_vote_create_desc]
+other = "créer un panneau de vote"
+
+[command_panel_vote_create_description]
+other = "Libellé"
+
+[command_panel_vote_create_description_desc]
+other = "description du panel de vote"
+
+[command_panel_vote_create_max_choice]
+other = "choix max"
+
+[command_panel_vote_create_max_choice_desc]
+other = "nombre maximum de choix"
+
+[command_panel_vote_create_message_add]
+other = "Add"
+
+[command_panel_vote_create_message_add_choice]
+other = "Add choice"
+
+[command_panel_vote_create_message_add_vote_choice]
+other = "Add vote choices"
+
+[command_panel_vote_create_message_create]
+other = "Create"
+
+[command_panel_vote_create_message_end_at]
+other = "End at"
+
+[command_panel_vote_create_message_max]
+other = "Max"
+
+[command_panel_vote_create_message_min]
+other = "Min"
+
+[command_panel_vote_create_message_modal_description]
+other = "Description"
+
+[command_panel_vote_create_message_modal_description_desc]
+other = "Description of vote choice"
+
+[command_panel_vote_create_message_modal_description_desc_optional]
+other = "optional"
+
+[command_panel_vote_create_message_modal_title]
+other = "Title"
+
+[command_panel_vote_create_message_modal_title_desc]
+other = "Title of vote choice"
+
+[command_panel_vote_create_message_no_desc]
+other = "no description"
+
+[command_panel_vote_create_message_vote_info]
+other = "Vote info"
+
+[command_panel_vote_create_min_choice]
+other = "choix min"
+
+[command_panel_vote_create_min_choice_desc]
+other = "nombre minimum de choix"
+
+[command_panel_vote_create_show_count]
+other = "afficher le nombre"
+
+[command_panel_vote_create_show_count_desc]
+other = "afficher les valeurs de vote"
+
+[command_panel_vote_create_time]
+other = "limite de temps"
+
+[command_panel_vote_create_time_desc]
+other = "limite de temps du panel de vote"
+
+[command_panel_vote_create_time_unit]
+other = "unité de temps"
+
+[command_panel_vote_create_time_unit_day]
+one = "day"
+other = "days"
+
+[command_panel_vote_create_time_unit_desc]
+other = "unité de temps limite"
+
+[command_panel_vote_create_time_unit_hour]
+one = "hour"
+other = "hours"
+
+[command_panel_vote_create_time_unit_minute]
+one = "minute"
+other = "minutes"
+
+[command_panel_vote_create_title]
+other = "Titre:"
+
+[command_panel_vote_create_title_desc]
+other = "titre du panel de vote"
+
+[command_panel_vote_desc]
+other = "gérer et créer le panneau de vote"
+
+[command_panel_vote_message_finished]
+other = "Vote finished!"
+
+[command_panel_vote_message_result]
+other = "Result"
+
+[command_panel_vote_message_voted]
+other = "Voted!"
+
+[command_panel_vote_message_winner]
+other = "Winner"
+
+[command_panel_vote_votes]
+one = "{{.Vote}} vote"
+other = "{{.Vote}} votes"
+
 [command_role]
 other = "Rôle"
 
