@@ -197,46 +197,46 @@ other = "макс выбор"
 other = "максимальное количество вариантов"
 
 [command_panel_vote_create_message_add]
-other = "Add"
+other = "Добавить"
 
 [command_panel_vote_create_message_add_choice]
-other = "Add choice"
+other = "Добавить выбор"
 
 [command_panel_vote_create_message_add_vote_choice]
-other = "Add vote choices"
+other = "Добавить выбор голоса"
 
 [command_panel_vote_create_message_create]
-other = "Create"
+other = "Создать"
 
 [command_panel_vote_create_message_end_at]
-other = "End at"
+other = "Окончание"
 
 [command_panel_vote_create_message_max]
-other = "Max"
+other = "Макс"
 
 [command_panel_vote_create_message_min]
-other = "Min"
+other = "Мин"
 
 [command_panel_vote_create_message_modal_description]
-other = "Description"
+other = "Описание"
 
 [command_panel_vote_create_message_modal_description_desc]
-other = "Description of vote choice"
+other = "Описание выбора голоса"
 
 [command_panel_vote_create_message_modal_description_desc_optional]
-other = "optional"
+other = "опционально"
 
 [command_panel_vote_create_message_modal_title]
-other = "Title"
+other = "Заголовок"
 
 [command_panel_vote_create_message_modal_title_desc]
-other = "Title of vote choice"
+other = "Выбор заголовка голосования"
 
 [command_panel_vote_create_message_no_desc]
-other = "no description"
+other = "нет описания"
 
 [command_panel_vote_create_message_vote_info]
-other = "Vote info"
+other = "Информация о голосовании"
 
 [command_panel_vote_create_min_choice]
 other = "минимальный выбор"
@@ -260,19 +260,19 @@ other = "предел времени голосовой панели"
 other = "единица времени"
 
 [command_panel_vote_create_time_unit_day]
-one = "day"
-other = "days"
+one = "день"
+other = "day"
 
 [command_panel_vote_create_time_unit_desc]
 other = "единица временного лимита"
 
 [command_panel_vote_create_time_unit_hour]
-one = "hour"
-other = "hours"
+one = "час"
+other = "hour"
 
 [command_panel_vote_create_time_unit_minute]
-one = "minute"
-other = "minutes"
+one = "минута"
+other = "minute"
 
 [command_panel_vote_create_title]
 other = "название"
@@ -284,20 +284,20 @@ other = "заголовок панели голосования"
 other = "управление и создание голосовой панели"
 
 [command_panel_vote_message_finished]
-other = "Vote finished!"
+other = "Голосование завершено!"
 
 [command_panel_vote_message_result]
-other = "Result"
+other = "Результат"
 
 [command_panel_vote_message_voted]
-other = "Voted!"
+other = "Проголосовал!"
 
 [command_panel_vote_message_winner]
-other = "Winner"
+other = "Победитель"
 
 [command_panel_vote_votes]
-one = "{{.Vote}} vote"
-other = "{{.Vote}} votes"
+one = "{{.Vote}} голос"
+other = "{{.Vote}} голосов"
 
 [command_role]
 other = "роль"
