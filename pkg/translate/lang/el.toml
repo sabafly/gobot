@@ -197,46 +197,46 @@ other = "μέγιστη επιλογή"
 other = "μέγιστος αριθμός επιλογών"
 
 [command_panel_vote_create_message_add]
-other = "Add"
+other = "Προσθήκη"
 
 [command_panel_vote_create_message_add_choice]
-other = "Add choice"
+other = "Προσθήκη επιλογής"
 
 [command_panel_vote_create_message_add_vote_choice]
-other = "Add vote choices"
+other = "Προσθήκη επιλογών ψήφου"
 
 [command_panel_vote_create_message_create]
-other = "Create"
+other = "Δημιουργία"
 
 [command_panel_vote_create_message_end_at]
-other = "End at"
+other = "Τέλος στις"
 
 [command_panel_vote_create_message_max]
-other = "Max"
+other = "Μέγιστο"
 
 [command_panel_vote_create_message_min]
-other = "Min"
+other = "Ελάχιστο"
 
 [command_panel_vote_create_message_modal_description]
-other = "Description"
+other = "Περιγραφή"
 
 [command_panel_vote_create_message_modal_description_desc]
-other = "Description of vote choice"
+other = "Περιγραφή της επιλογής ψήφου"
 
 [command_panel_vote_create_message_modal_description_desc_optional]
-other = "optional"
+other = "προαιρετικό"
 
 [command_panel_vote_create_message_modal_title]
-other = "Title"
+other = "Τίτλος"
 
 [command_panel_vote_create_message_modal_title_desc]
-other = "Title of vote choice"
+other = "Τίτλος της επιλογής ψήφου"
 
 [command_panel_vote_create_message_no_desc]
-other = "no description"
+other = "χωρίς περιγραφή"
 
 [command_panel_vote_create_message_vote_info]
-other = "Vote info"
+other = "Πληροφορίες ψηφοφορίας"
 
 [command_panel_vote_create_min_choice]
 other = "ελάχιστη επιλογή"
@@ -260,19 +260,19 @@ other = "προθεσμία της επιτροπής ψηφοφορίας"
 other = "μονάδα χρόνου"
 
 [command_panel_vote_create_time_unit_day]
-one = "day"
-other = "days"
+one = "ημέρα"
+other = "day"
 
 [command_panel_vote_create_time_unit_desc]
 other = "μονάδα προθεσμίας"
 
 [command_panel_vote_create_time_unit_hour]
-one = "hour"
-other = "hours"
+one = "ώρα"
+other = "hour"
 
 [command_panel_vote_create_time_unit_minute]
-one = "minute"
-other = "minutes"
+one = "λεπτό"
+other = "minute"
 
 [command_panel_vote_create_title]
 other = "τίτλος"
@@ -284,20 +284,20 @@ other = "τίτλος του πίνακα ψηφοφορίας"
 other = "διαχείριση και δημιουργία πίνακα ψηφοφορίας"
 
 [command_panel_vote_message_finished]
-other = "Vote finished!"
+other = "Η ψηφοφορία ολοκληρώθηκε!"
 
 [command_panel_vote_message_result]
-other = "Result"
+other = "Αποτέλεσμα"
 
 [command_panel_vote_message_voted]
-other = "Voted!"
+other = "Ψηφίστηκε!"
 
 [command_panel_vote_message_winner]
-other = "Winner"
+other = "Νικητής"
 
 [command_panel_vote_votes]
-one = "{{.Vote}} vote"
-other = "{{.Vote}} votes"
+one = "{{.Vote}} ψήφος"
+other = "{{.Vote}} ψήφοι"
 
 [command_role]
 other = "ρόλος"

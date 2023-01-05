@@ -197,46 +197,46 @@ other = "maksimi valinta"
 other = "valintojen enimmäismäärä"
 
 [command_panel_vote_create_message_add]
-other = "Add"
+other = "Lisää"
 
 [command_panel_vote_create_message_add_choice]
-other = "Add choice"
+other = "Lisää valinta"
 
 [command_panel_vote_create_message_add_vote_choice]
-other = "Add vote choices"
+other = "Lisää äänivalinnat"
 
 [command_panel_vote_create_message_create]
-other = "Create"
+other = "Luo"
 
 [command_panel_vote_create_message_end_at]
-other = "End at"
+other = "Loppu klo"
 
 [command_panel_vote_create_message_max]
-other = "Max"
+other = "Maksimi"
 
 [command_panel_vote_create_message_min]
-other = "Min"
+other = "Minimi"
 
 [command_panel_vote_create_message_modal_description]
-other = "Description"
+other = "Kuvaus"
 
 [command_panel_vote_create_message_modal_description_desc]
-other = "Description of vote choice"
+other = "Äänestyksen esittämisen kuvaus"
 
 [command_panel_vote_create_message_modal_description_desc_optional]
-other = "optional"
+other = "valinnainen"
 
 [command_panel_vote_create_message_modal_title]
-other = "Title"
+other = "Otsikko"
 
 [command_panel_vote_create_message_modal_title_desc]
-other = "Title of vote choice"
+other = "Äänestyksen otsikko"
 
 [command_panel_vote_create_message_no_desc]
-other = "no description"
+other = "ei kuvausta"
 
 [command_panel_vote_create_message_vote_info]
-other = "Vote info"
+other = "Äänen tiedot"
 
 [command_panel_vote_create_min_choice]
 other = "min valinta"
@@ -260,19 +260,19 @@ other = "äänestysaktiivisuuden aikaraja"
 other = "aikayksikkö"
 
 [command_panel_vote_create_time_unit_day]
-one = "day"
-other = "days"
+one = "päivä"
+other = "day"
 
 [command_panel_vote_create_time_unit_desc]
 other = "aikarajan yksikkö"
 
 [command_panel_vote_create_time_unit_hour]
-one = "hour"
-other = "hours"
+one = "tunti"
+other = "hour"
 
 [command_panel_vote_create_time_unit_minute]
-one = "minute"
-other = "minutes"
+one = "minuutti"
+other = "minute"
 
 [command_panel_vote_create_title]
 other = "otsikko"
@@ -284,20 +284,20 @@ other = "äänioikeusilmoituksen nimi"
 other = "hallitse ja luo äänipaneeli"
 
 [command_panel_vote_message_finished]
-other = "Vote finished!"
+other = "Äänestys valmis!"
 
 [command_panel_vote_message_result]
-other = "Result"
+other = "Tulos"
 
 [command_panel_vote_message_voted]
-other = "Voted!"
+other = "Äänestetty!"
 
 [command_panel_vote_message_winner]
-other = "Winner"
+other = "Voittaja"
 
 [command_panel_vote_votes]
-one = "{{.Vote}} vote"
-other = "{{.Vote}} votes"
+one = "{{.Vote}} ääni"
+other = "{{.Vote}} ääntä"
 
 [command_role]
 other = "rooli"

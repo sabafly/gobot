@@ -197,19 +197,19 @@ other = "scelta massima"
 other = "numero massimo di scelte"
 
 [command_panel_vote_create_message_add]
-other = "Add"
+other = "Aggiungi"
 
 [command_panel_vote_create_message_add_choice]
-other = "Add choice"
+other = "Aggiungi scelta"
 
 [command_panel_vote_create_message_add_vote_choice]
-other = "Add vote choices"
+other = "Aggiungi scelte di voto"
 
 [command_panel_vote_create_message_create]
-other = "Create"
+other = "Crea"
 
 [command_panel_vote_create_message_end_at]
-other = "End at"
+other = "Fine a"
 
 [command_panel_vote_create_message_max]
 other = "Max"
@@ -218,25 +218,25 @@ other = "Max"
 other = "Min"
 
 [command_panel_vote_create_message_modal_description]
-other = "Description"
+other = "Descrizione"
 
 [command_panel_vote_create_message_modal_description_desc]
-other = "Description of vote choice"
+other = "Descrizione della scelta di voto"
 
 [command_panel_vote_create_message_modal_description_desc_optional]
-other = "optional"
+other = "opzionale"
 
 [command_panel_vote_create_message_modal_title]
-other = "Title"
+other = "Titolo"
 
 [command_panel_vote_create_message_modal_title_desc]
-other = "Title of vote choice"
+other = "Titolo della scelta del voto"
 
 [command_panel_vote_create_message_no_desc]
-other = "no description"
+other = "nessuna descrizione"
 
 [command_panel_vote_create_message_vote_info]
-other = "Vote info"
+other = "Informazioni sulla votazione"
 
 [command_panel_vote_create_min_choice]
 other = "scelta min"
@@ -260,19 +260,19 @@ other = "limite di tempo per la commissione di voto"
 other = "unità di tempo"
 
 [command_panel_vote_create_time_unit_day]
-one = "day"
-other = "days"
+one = "giorno"
+other = "day"
 
 [command_panel_vote_create_time_unit_desc]
 other = "unità di tempo limite"
 
 [command_panel_vote_create_time_unit_hour]
-one = "hour"
-other = "hours"
+one = "ora"
+other = "hour"
 
 [command_panel_vote_create_time_unit_minute]
-one = "minute"
-other = "minutes"
+one = "minuto"
+other = "minute"
 
 [command_panel_vote_create_title]
 other = "titolo"
@@ -284,20 +284,20 @@ other = "titolo della commissione di voto"
 other = "gestire e creare un pannello di voto"
 
 [command_panel_vote_message_finished]
-other = "Vote finished!"
+other = "Voto finito!"
 
 [command_panel_vote_message_result]
-other = "Result"
+other = "Risultato"
 
 [command_panel_vote_message_voted]
-other = "Voted!"
+other = "Votato!"
 
 [command_panel_vote_message_winner]
-other = "Winner"
+other = "Vincitore"
 
 [command_panel_vote_votes]
-one = "{{.Vote}} vote"
-other = "{{.Vote}} votes"
+one = "{{.Vote}} voto"
+other = "{{.Vote}} voti"
 
 [command_role]
 other = "ruolo"

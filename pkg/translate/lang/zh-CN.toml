@@ -197,46 +197,46 @@ other = "最大选择"
 other = "最大选择数"
 
 [command_panel_vote_create_message_add]
-other = "Add"
+other = "添加"
 
 [command_panel_vote_create_message_add_choice]
-other = "Add choice"
+other = "添加选择"
 
 [command_panel_vote_create_message_add_vote_choice]
-other = "Add vote choices"
+other = "添加投票选项"
 
 [command_panel_vote_create_message_create]
-other = "Create"
+other = "创建"
 
 [command_panel_vote_create_message_end_at]
-other = "End at"
+other = "结束于"
 
 [command_panel_vote_create_message_max]
-other = "Max"
+other = "最大值"
 
 [command_panel_vote_create_message_min]
-other = "Min"
+other = "最小值"
 
 [command_panel_vote_create_message_modal_description]
-other = "Description"
+other = "描述"
 
 [command_panel_vote_create_message_modal_description_desc]
-other = "Description of vote choice"
+other = "选票说明"
 
 [command_panel_vote_create_message_modal_description_desc_optional]
-other = "optional"
+other = "可选的"
 
 [command_panel_vote_create_message_modal_title]
-other = "Title"
+other = "标题"
 
 [command_panel_vote_create_message_modal_title_desc]
-other = "Title of vote choice"
+other = "选票名称"
 
 [command_panel_vote_create_message_no_desc]
-other = "no description"
+other = "无描述"
 
 [command_panel_vote_create_message_vote_info]
-other = "Vote info"
+other = "投票信息"
 
 [command_panel_vote_create_min_choice]
 other = "最小选择"
@@ -260,19 +260,19 @@ other = "投票时间限制小组"
 other = "时间单位"
 
 [command_panel_vote_create_time_unit_day]
-one = "day"
-other = "days"
+one = "天"
+other = "day"
 
 [command_panel_vote_create_time_unit_desc]
 other = "时间限制"
 
 [command_panel_vote_create_time_unit_hour]
-one = "hour"
-other = "hours"
+one = "小时"
+other = "hour"
 
 [command_panel_vote_create_time_unit_minute]
-one = "minute"
-other = "minutes"
+one = "分钟"
+other = "minute"
 
 [command_panel_vote_create_title]
 other = "标题"
@@ -284,20 +284,20 @@ other = "投票标题面板"
 other = "管理和创建投票面板"
 
 [command_panel_vote_message_finished]
-other = "Vote finished!"
+other = "投票完成！"
 
 [command_panel_vote_message_result]
-other = "Result"
+other = "结果"
 
 [command_panel_vote_message_voted]
-other = "Voted!"
+other = "已投票！"
 
 [command_panel_vote_message_winner]
-other = "Winner"
+other = "获胜者"
 
 [command_panel_vote_votes]
-one = "{{.Vote}} vote"
-other = "{{.Vote}} votes"
+one = "{{.Vote}} 投票"
+other = "{{.Vote}} 票"
 
 [command_role]
 other = "角色"

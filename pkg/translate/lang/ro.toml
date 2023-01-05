@@ -197,46 +197,46 @@ other = "alegere maximă"
 other = "numărul maxim de opțiuni"
 
 [command_panel_vote_create_message_add]
-other = "Add"
+other = "Adăugare"
 
 [command_panel_vote_create_message_add_choice]
-other = "Add choice"
+other = "Adăugați o alegere"
 
 [command_panel_vote_create_message_add_vote_choice]
-other = "Add vote choices"
+other = "Adaugă alegeri de vot"
 
 [command_panel_vote_create_message_create]
-other = "Create"
+other = "Crează"
 
 [command_panel_vote_create_message_end_at]
-other = "End at"
+other = "Sfârșit la"
 
 [command_panel_vote_create_message_max]
-other = "Max"
+other = "Maxim"
 
 [command_panel_vote_create_message_min]
-other = "Min"
+other = "Minim"
 
 [command_panel_vote_create_message_modal_description]
-other = "Description"
+other = "Descriere"
 
 [command_panel_vote_create_message_modal_description_desc]
-other = "Description of vote choice"
+other = "Descrierea alegerii votului"
 
 [command_panel_vote_create_message_modal_description_desc_optional]
-other = "optional"
+other = "opţional"
 
 [command_panel_vote_create_message_modal_title]
-other = "Title"
+other = "Titlu"
 
 [command_panel_vote_create_message_modal_title_desc]
-other = "Title of vote choice"
+other = "Titlul alegerii privind votul"
 
 [command_panel_vote_create_message_no_desc]
-other = "no description"
+other = "fără descriere"
 
 [command_panel_vote_create_message_vote_info]
-other = "Vote info"
+other = "Informații votare"
 
 [command_panel_vote_create_min_choice]
 other = "alegere min"
@@ -260,19 +260,19 @@ other = "limita de timp a panoului de vot"
 other = "unitate de timp"
 
 [command_panel_vote_create_time_unit_day]
-one = "day"
-other = "days"
+one = "zi"
+other = "day"
 
 [command_panel_vote_create_time_unit_desc]
 other = "unitate de timp limită"
 
 [command_panel_vote_create_time_unit_hour]
-one = "hour"
-other = "hours"
+one = "oră"
+other = "hour"
 
 [command_panel_vote_create_time_unit_minute]
-one = "minute"
-other = "minutes"
+one = "minut"
+other = "minute"
 
 [command_panel_vote_create_title]
 other = "titlu"
@@ -284,20 +284,20 @@ other = "Titlul panoului de vot"
 other = "gestionează și creează panoul de vot"
 
 [command_panel_vote_message_finished]
-other = "Vote finished!"
+other = "Votare finalizată!"
 
 [command_panel_vote_message_result]
-other = "Result"
+other = "Rezultat"
 
 [command_panel_vote_message_voted]
-other = "Voted!"
+other = "Votat!"
 
 [command_panel_vote_message_winner]
-other = "Winner"
+other = "Câștigător"
 
 [command_panel_vote_votes]
-one = "{{.Vote}} vote"
-other = "{{.Vote}} votes"
+one = "{{.Vote}} vot"
+other = "{{.Vote}} voturi"
 
 [command_role]
 other = "rol"
