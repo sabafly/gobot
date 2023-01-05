@@ -197,46 +197,46 @@ other = "最大選択数"
 other = "選択の最大数"
 
 [command_panel_vote_create_message_add]
-other = "Add"
+other = "追加"
 
 [command_panel_vote_create_message_add_choice]
-other = "Add choice"
+other = "選択肢を追加"
 
 [command_panel_vote_create_message_add_vote_choice]
-other = "Add vote choices"
+other = "投票の選択肢を追加"
 
 [command_panel_vote_create_message_create]
-other = "Create"
+other = "作成"
 
 [command_panel_vote_create_message_end_at]
-other = "End at"
+other = "終了"
 
 [command_panel_vote_create_message_max]
-other = "Max"
+other = "最大"
 
 [command_panel_vote_create_message_min]
-other = "Min"
+other = "最小"
 
 [command_panel_vote_create_message_modal_description]
-other = "Description"
+other = "説明"
 
 [command_panel_vote_create_message_modal_description_desc]
-other = "Description of vote choice"
+other = "投票の選択肢の説明"
 
 [command_panel_vote_create_message_modal_description_desc_optional]
-other = "optional"
+other = "任意"
 
 [command_panel_vote_create_message_modal_title]
-other = "Title"
+other = "タイトル"
 
 [command_panel_vote_create_message_modal_title_desc]
-other = "Title of vote choice"
+other = "選択肢のタイトル"
 
 [command_panel_vote_create_message_no_desc]
-other = "no description"
+other = "説明なし"
 
 [command_panel_vote_create_message_vote_info]
-other = "Vote info"
+other = "投票情報"
 
 [command_panel_vote_create_min_choice]
 other = "最小選択数"
@@ -260,19 +260,19 @@ other = "投票パネルの制限時間"
 other = "時間単位"
 
 [command_panel_vote_create_time_unit_day]
-one = "day"
-other = "days"
+one = "日"
+other = "day"
 
 [command_panel_vote_create_time_unit_desc]
 other = "時間制限の単位"
 
 [command_panel_vote_create_time_unit_hour]
-one = "hour"
-other = "hours"
+one = "時間"
+other = "hour"
 
 [command_panel_vote_create_time_unit_minute]
-one = "minute"
-other = "minutes"
+one = "分"
+other = "minute"
 
 [command_panel_vote_create_title]
 other = "タイトル"
@@ -284,20 +284,20 @@ other = "投票パネルのタイトル"
 other = "投票パネルを管理、作成する"
 
 [command_panel_vote_message_finished]
-other = "Vote finished!"
+other = "投票終了！"
 
 [command_panel_vote_message_result]
-other = "Result"
+other = "結果"
 
 [command_panel_vote_message_voted]
-other = "Voted!"
+other = "投票しました!"
 
 [command_panel_vote_message_winner]
-other = "Winner"
+other = "勝者"
 
 [command_panel_vote_votes]
-one = "{{.Vote}} vote"
-other = "{{.Vote}} votes"
+one = "{{.Vote}} 票"
+other = "{{.Vote}} 票"
 
 [command_role]
 other = "ロール"
