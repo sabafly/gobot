@@ -225,7 +225,7 @@ func ComponentPanelVoteCreateDo(s *discordgo.Session, i *discordgo.InteractionCr
 		return
 	}
 	d.Vote.MessageID = m.ID
-	d.Vote.Locale = i.Locale
+	d.Vote.Locale = i.Locale.String()
 
 	session.VoteRemove(sessionID)
 	buf, err := util.ErrorCatch(json.Marshal(*d.Vote))
@@ -282,6 +282,7 @@ func ComponentPanelVote(s *discordgo.Session, i *discordgo.InteractionCreate, se
 			}
 		}
 	}
+	locale := types.StL[d.Locale]
 	s.ChannelMessageEditComplex(&discordgo.MessageEdit{
 		Channel: d.ChannelID,
 		ID:      d.MessageID,
@@ -294,10 +295,10 @@ func ComponentPanelVote(s *discordgo.Session, i *discordgo.InteractionCreate, se
 			Inline: true,
 		}
 		if f.Value == "" {
-			f.Value = "`" + translate.Message(i.Locale, "command_panel_vote_create_message_no_desc") + "`"
+			f.Value = "`" + translate.Message(locale, "command_panel_vote_create_message_no_desc") + "`"
 		}
 		if d.ShowCount {
-			f.Name += " - " + translate.Translates(d.Locale, "command_panel_vote_votes", map[string]interface{}{"Vote": strconv.Itoa(len(selections[i2].Users))}, len(selections[i2].Users))
+			f.Name += " - " + translate.Translates(locale, "command_panel_vote_votes", map[string]interface{}{"Vote": strconv.Itoa(len(selections[i2].Users))}, len(selections[i2].Users))
 		}
 		fields = append(fields, f)
 	}
@@ -313,8 +314,8 @@ func ComponentPanelVote(s *discordgo.Session, i *discordgo.InteractionCreate, se
 			Fields:      fields,
 		},
 		{
-			Title:       translate.Message(i.Locale, "command_panel_vote_create_message_vote_info"),
-			Description: translate.Message(i.Locale, "command_panel_vote_create_message_min") + " " + strconv.Itoa(d.MinSelection) + " " + translate.Message(i.Locale, "command_panel_vote_create_message_max") + " " + strconv.Itoa(d.MaxSelection) + "\r" + translate.Message(i.Locale, "command_panel_vote_create_message_end_at") + " " + "<t:" + strconv.FormatInt(d.EndAt.Unix(), 10) + ":F>" + "(" + "<t:" + strconv.FormatInt(d.EndAt.Unix(), 10) + ":R>" + ")",
+			Title:       translate.Message(locale, "command_panel_vote_create_message_vote_info"),
+			Description: translate.Message(locale, "command_panel_vote_create_message_min") + " " + strconv.Itoa(d.MinSelection) + " " + translate.Message(locale, "command_panel_vote_create_message_max") + " " + strconv.Itoa(d.MaxSelection) + "\r" + translate.Message(locale, "command_panel_vote_create_message_end_at") + " " + "<t:" + strconv.FormatInt(d.EndAt.Unix(), 10) + ":F>" + "(" + "<t:" + strconv.FormatInt(d.EndAt.Unix(), 10) + ":R>" + ")",
 		},
 	}
 	util.ErrorCatch(s.ChannelMessageEditComplex(&discordgo.MessageEdit{
@@ -355,6 +356,7 @@ func PanelVoteRemove(s *discordgo.Session, v types.VoteObject) {
 	if err != nil {
 		return
 	}
+	locale := types.StL[data.Locale]
 	selections := []types.VoteSelection{}
 	util.ErrorCatch("", json.Unmarshal(data.Selections, &selections))
 	sort.Slice(selections, func(i, j int) bool {
@@ -365,16 +367,16 @@ func PanelVoteRemove(s *discordgo.Session, v types.VoteObject) {
 		switch i {
 		case 0:
 			field = append(field, &discordgo.MessageEmbedField{
-				Name:  translate.Message(data.Locale, "command_panel_vote_message_winner"),
-				Value: util.EmojiFormat(&vs.Emoji) + " | " + vs.Name + " - " + translate.Translates(data.Locale, "command_panel_vote_votes", map[string]interface{}{"Vote": strconv.Itoa(len(vs.Users))}, len(vs.Users)),
+				Name:  translate.Message(locale, "command_panel_vote_message_winner"),
+				Value: util.EmojiFormat(&vs.Emoji) + " | " + vs.Name + " - " + translate.Translates(locale, "command_panel_vote_votes", map[string]interface{}{"Vote": strconv.Itoa(len(vs.Users))}, len(vs.Users)),
 			})
 		case 1:
 			var v string
 			for _, vs := range selections {
-				v += util.EmojiFormat(&vs.Emoji) + " | " + vs.Name + " - " + translate.Translates(data.Locale, "command_panel_vote_votes", map[string]interface{}{"Vote": strconv.Itoa(len(vs.Users))}, len(vs.Users)) + "\r"
+				v += util.EmojiFormat(&vs.Emoji) + " | " + vs.Name + " - " + translate.Translates(locale, "command_panel_vote_votes", map[string]interface{}{"Vote": strconv.Itoa(len(vs.Users))}, len(vs.Users)) + "\r"
 			}
 			field = append(field, &discordgo.MessageEmbedField{
-				Name:  translate.Message(data.Locale, "command_panel_vote_message_result"),
+				Name:  translate.Message(locale, "command_panel_vote_message_result"),
 				Value: v,
 			})
 		}
@@ -387,7 +389,7 @@ func PanelVoteRemove(s *discordgo.Session, v types.VoteObject) {
 	s.ChannelMessageSendComplex(data.ChannelID, &discordgo.MessageSend{
 		Embeds: []*discordgo.MessageEmbed{
 			{
-				Title:  translate.Message(data.Locale, "command_panel_vote_message_finished"),
+				Title:  translate.Message(locale, "command_panel_vote_message_finished"),
 				Fields: field,
 			},
 		},

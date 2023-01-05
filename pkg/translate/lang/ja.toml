@@ -261,18 +261,18 @@ other = "時間単位"
 
 [command_panel_vote_create_time_unit_day]
 one = "日"
-other = "day"
+other = "日"
 
 [command_panel_vote_create_time_unit_desc]
 other = "時間制限の単位"
 
 [command_panel_vote_create_time_unit_hour]
 one = "時間"
-other = "hour"
+other = "時間"
 
 [command_panel_vote_create_time_unit_minute]
 one = "分"
-other = "minute"
+other = "分"
 
 [command_panel_vote_create_title]
 other = "タイトル"

@@ -479,7 +479,10 @@ func PanelVoteDelete(channelID string, messageID ...string) {
 	if len(removed) == len(messageID) {
 		return
 	}
-	r, _ := api.ReqAPI(http.MethodGet, "/api/panel/vote", http.NoBody)
+	r, err := api.ReqAPI(http.MethodGet, "/api/panel/vote", http.NoBody)
+	if err != nil {
+		return
+	}
 	b, _ := io.ReadAll(r.Body)
 	res := types.Res{}
 	json.Unmarshal(b, &res)
