@@ -197,46 +197,46 @@ other = "maximale keuze"
 other = "maximum aantal keuzes"
 
 [command_panel_vote_create_message_add]
-other = "Add"
+other = "Toevoegen"
 
 [command_panel_vote_create_message_add_choice]
-other = "Add choice"
+other = "Keuze toevoegen"
 
 [command_panel_vote_create_message_add_vote_choice]
-other = "Add vote choices"
+other = "Stemkeuzes toevoegen"
 
 [command_panel_vote_create_message_create]
-other = "Create"
+other = "Aanmaken"
 
 [command_panel_vote_create_message_end_at]
-other = "End at"
+other = "Beëindigen op"
 
 [command_panel_vote_create_message_max]
-other = "Max"
+other = "Max."
 
 [command_panel_vote_create_message_min]
-other = "Min"
+other = "Min."
 
 [command_panel_vote_create_message_modal_description]
-other = "Description"
+other = "Beschrijving"
 
 [command_panel_vote_create_message_modal_description_desc]
-other = "Description of vote choice"
+other = "Omschrijving van de stemkeuze"
 
 [command_panel_vote_create_message_modal_description_desc_optional]
-other = "optional"
+other = "optioneel"
 
 [command_panel_vote_create_message_modal_title]
-other = "Title"
+other = "Aanspreektitel"
 
 [command_panel_vote_create_message_modal_title_desc]
-other = "Title of vote choice"
+other = "Titel van stem keuze"
 
 [command_panel_vote_create_message_no_desc]
-other = "no description"
+other = "geen beschrijving"
 
 [command_panel_vote_create_message_vote_info]
-other = "Vote info"
+other = "Stem informatie"
 
 [command_panel_vote_create_min_choice]
 other = "minimale keuze"
@@ -260,19 +260,19 @@ other = "tijdslimiet van het stempaneel"
 other = "Eenheid van tijd"
 
 [command_panel_vote_create_time_unit_day]
-one = "day"
-other = "days"
+one = "Dag"
+other = "day"
 
 [command_panel_vote_create_time_unit_desc]
 other = "eenheid van tijdslimiet"
 
 [command_panel_vote_create_time_unit_hour]
-one = "hour"
-other = "hours"
+one = "uur"
+other = "hour"
 
 [command_panel_vote_create_time_unit_minute]
-one = "minute"
-other = "minutes"
+one = "minuut"
+other = "minute"
 
 [command_panel_vote_create_title]
 other = "Titel"
@@ -284,20 +284,20 @@ other = "titel van het stempaneel"
 other = "beheren en aanmaken van het stempaneel"
 
 [command_panel_vote_message_finished]
-other = "Vote finished!"
+other = "Stem is beëindigd!"
 
 [command_panel_vote_message_result]
-other = "Result"
+other = "Resultaat"
 
 [command_panel_vote_message_voted]
-other = "Voted!"
+other = "Gestemd!"
 
 [command_panel_vote_message_winner]
-other = "Winner"
+other = "Winnaar"
 
 [command_panel_vote_votes]
-one = "{{.Vote}} vote"
-other = "{{.Vote}} votes"
+one = "{{.Vote}} stem"
+other = "{{.Vote}} stemmen"
 
 [command_role]
 other = "rol"
