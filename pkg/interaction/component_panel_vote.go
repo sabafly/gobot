@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
 	"sort"
 	"strconv"
 	"time"
@@ -399,4 +400,6 @@ func PanelVoteRemove(s *discordgo.Session, v types.VoteObject) {
 	})
 	delete(createdVotePanel, data.VoteID)
 	util.ErrorCatch(api.ReqAPI(http.MethodDelete, "/api/panel/vote?id="+v.VoteID, http.NoBody))
+	b, _ = json.Marshal(data)
+	os.WriteFile("vote-"+data.VoteID+".json", b, 0666)
 }
