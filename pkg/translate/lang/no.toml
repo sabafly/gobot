@@ -197,46 +197,46 @@ other = "maksimalt valg"
 other = "største antall valg"
 
 [command_panel_vote_create_message_add]
-other = "Add"
+other = "Legg til"
 
 [command_panel_vote_create_message_add_choice]
-other = "Add choice"
+other = "Legg til valg"
 
 [command_panel_vote_create_message_add_vote_choice]
-other = "Add vote choices"
+other = "Legg til stemmevalg"
 
 [command_panel_vote_create_message_create]
-other = "Create"
+other = "Opprett"
 
 [command_panel_vote_create_message_end_at]
-other = "End at"
+other = "Slutt på"
 
 [command_panel_vote_create_message_max]
-other = "Max"
+other = "Maks"
 
 [command_panel_vote_create_message_min]
-other = "Min"
+other = "Minimum"
 
 [command_panel_vote_create_message_modal_description]
-other = "Description"
+other = "Beskrivelse"
 
 [command_panel_vote_create_message_modal_description_desc]
-other = "Description of vote choice"
+other = "Beskrivelse av valg av stemme"
 
 [command_panel_vote_create_message_modal_description_desc_optional]
-other = "optional"
+other = "valgfritt"
 
 [command_panel_vote_create_message_modal_title]
-other = "Title"
+other = "Tittel"
 
 [command_panel_vote_create_message_modal_title_desc]
-other = "Title of vote choice"
+other = "Tittel på valg av stemme"
 
 [command_panel_vote_create_message_no_desc]
-other = "no description"
+other = "ingen beskrivelse"
 
 [command_panel_vote_create_message_vote_info]
-other = "Vote info"
+other = "Informasjon om stemmer"
 
 [command_panel_vote_create_min_choice]
 other = "min. valg"
@@ -260,19 +260,19 @@ other = "tidsgrensen til kontrollpanelet"
 other = "tidsenhet"
 
 [command_panel_vote_create_time_unit_day]
-one = "day"
-other = "days"
+one = "dag"
+other = "day"
 
 [command_panel_vote_create_time_unit_desc]
 other = "enhet av tidsgrense"
 
 [command_panel_vote_create_time_unit_hour]
-one = "hour"
-other = "hours"
+one = "time"
+other = "hour"
 
 [command_panel_vote_create_time_unit_minute]
-one = "minute"
-other = "minutes"
+one = "minutt"
+other = "minute"
 
 [command_panel_vote_create_title]
 other = "tittel"
@@ -284,20 +284,20 @@ other = "tittelen på valgpanelet"
 other = "administrere og opprette avstemningspanelet"
 
 [command_panel_vote_message_finished]
-other = "Vote finished!"
+other = "Stem fullført!"
 
 [command_panel_vote_message_result]
-other = "Result"
+other = "Resultat"
 
 [command_panel_vote_message_voted]
-other = "Voted!"
+other = "Stemt!"
 
 [command_panel_vote_message_winner]
-other = "Winner"
+other = "Vinner"
 
 [command_panel_vote_votes]
-one = "{{.Vote}} vote"
-other = "{{.Vote}} votes"
+one = "{{.Vote}} stemme"
+other = "{{.Vote}} stemmer"
 
 [command_role]
 other = "rolle"
