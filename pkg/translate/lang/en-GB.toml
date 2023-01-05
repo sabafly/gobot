@@ -261,18 +261,18 @@ other = "time unit"
 
 [command_panel_vote_create_time_unit_day]
 one = "day"
-other = "days"
+other = "day"
 
 [command_panel_vote_create_time_unit_desc]
 other = "unit of time limit"
 
 [command_panel_vote_create_time_unit_hour]
 one = "hour"
-other = "hours"
+other = "hour"
 
 [command_panel_vote_create_time_unit_minute]
 one = "minute"
-other = "minutes"
+other = "minute"
 
 [command_panel_vote_create_title]
 other = "title"
