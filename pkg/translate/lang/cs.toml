@@ -197,46 +197,46 @@ other = "maximální volba"
 other = "maximální počet možností"
 
 [command_panel_vote_create_message_add]
-other = "Add"
+other = "Přidat"
 
 [command_panel_vote_create_message_add_choice]
-other = "Add choice"
+other = "Přidat volbu"
 
 [command_panel_vote_create_message_add_vote_choice]
-other = "Add vote choices"
+other = "Přidat volbu hlasování"
 
 [command_panel_vote_create_message_create]
-other = "Create"
+other = "Vytvořit"
 
 [command_panel_vote_create_message_end_at]
-other = "End at"
+other = "Konec v"
 
 [command_panel_vote_create_message_max]
-other = "Max"
+other = "Max."
 
 [command_panel_vote_create_message_min]
-other = "Min"
+other = "Min."
 
 [command_panel_vote_create_message_modal_description]
-other = "Description"
+other = "L 343, 22.12.2009, s. 1)."
 
 [command_panel_vote_create_message_modal_description_desc]
-other = "Description of vote choice"
+other = "Popis volby hlasování"
 
 [command_panel_vote_create_message_modal_description_desc_optional]
-other = "optional"
+other = "volitelné"
 
 [command_panel_vote_create_message_modal_title]
-other = "Title"
+other = "Hlava 1 – Celkem"
 
 [command_panel_vote_create_message_modal_title_desc]
-other = "Title of vote choice"
+other = "Název volby hlasování"
 
 [command_panel_vote_create_message_no_desc]
-other = "no description"
+other = "žádný popis"
 
 [command_panel_vote_create_message_vote_info]
-other = "Vote info"
+other = "Informace o hlasování"
 
 [command_panel_vote_create_min_choice]
 other = "min. volba"
@@ -260,19 +260,19 @@ other = "Lhůta hlasovacího panelu"
 other = "časová jednotka"
 
 [command_panel_vote_create_time_unit_day]
-one = "day"
-other = "days"
+one = "den"
+other = "day"
 
 [command_panel_vote_create_time_unit_desc]
 other = "Jednotka časového limitu"
 
 [command_panel_vote_create_time_unit_hour]
-one = "hour"
-other = "hours"
+one = "hodina"
+other = "hour"
 
 [command_panel_vote_create_time_unit_minute]
-one = "minute"
-other = "minutes"
+one = "minuta"
+other = "minute"
 
 [command_panel_vote_create_title]
 other = "titulek"
@@ -284,20 +284,20 @@ other = "Název hlasovacího panelu"
 other = "spravovat a vytvářet hlasovací panel"
 
 [command_panel_vote_message_finished]
-other = "Vote finished!"
+other = "Hlasování dokončeno!"
 
 [command_panel_vote_message_result]
-other = "Result"
+other = "Výsledek"
 
 [command_panel_vote_message_voted]
-other = "Voted!"
+other = "Hlasováno!"
 
 [command_panel_vote_message_winner]
-other = "Winner"
+other = "Vítěz"
 
 [command_panel_vote_votes]
-one = "{{.Vote}} vote"
-other = "{{.Vote}} votes"
+one = "{{.Vote}} hlas"
+other = "{{.Vote}} hlasů"
 
 [command_role]
 other = "role"
