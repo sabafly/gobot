@@ -303,8 +303,6 @@ func ComponentPanelVote(s *discordgo.Session, i *discordgo.InteractionCreate, se
 		}
 		fields = append(fields, f)
 	}
-	d.StartAt = time.Now()
-	d.EndAt = time.Now().Add(d.Duration)
 	d.Selections, _ = util.ErrorCatch(json.Marshal(selections))
 	buf, _ := util.ErrorCatch(json.Marshal(d))
 	api.ReqAPI(http.MethodPost, "/api/panel/vote", bytes.NewBuffer(buf))
