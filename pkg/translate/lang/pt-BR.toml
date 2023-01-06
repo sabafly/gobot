@@ -212,7 +212,7 @@ other = "Crio"
 other = "Termina em"
 
 [command_panel_vote_create_message_start_at]
-other = "Start at"
+other = "Começa em"
 
 [command_panel_vote_create_message_max]
 other = "Máximo"
