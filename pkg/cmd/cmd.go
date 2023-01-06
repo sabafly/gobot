@@ -65,6 +65,7 @@ func Run() {
 	})
 
 	go regCommand()
+	go autoBans()
 
 	defer end()
 
@@ -189,7 +190,6 @@ func regCommand() {
 	log.Print("完了")
 
 	go updateStatus()
-	go autoBans()
 }
 
 func updateStatus() {

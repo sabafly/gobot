@@ -140,6 +140,8 @@ other = "Add vote choices"
 other = "Create"
 [command_panel_vote_create_message_end_at]
 other = "End at"
+[command_panel_vote_create_message_start_at]
+other = "Start at"
 [command_panel_vote_create_message_max]
 other = "Max"
 [command_panel_vote_create_message_min]

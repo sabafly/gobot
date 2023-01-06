@@ -59,6 +59,7 @@ func deleteBan(id string) {
 }
 
 func DeleteBanListener() {
+	log.Print("start web server")
 	http.HandleFunc("/ban/delete", deleteBanHandler)
 	http.HandleFunc("/feed/mc", feedMinecraftHandler)
 	http.HandleFunc("/panel/vote", panelVote)
@@ -143,19 +144,17 @@ func feedMinecraftHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func panelVote(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodDelete:
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{"Status": "200 OK"})
-		b, err := io.ReadAll(r.Body)
-		if err != nil {
-			return
-		}
-		data := []types.VoteObject{}
-		json.Unmarshal(b, &data)
-		s := session.Session()
-		for _, vo := range data {
-			go interaction.PanelVoteRemove(s, vo)
-		}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"Status": "200 OK"})
+	b, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Print(err)
+		return
+	}
+	data := []types.VoteObject{}
+	json.Unmarshal(b, &data)
+	s := session.Session()
+	for _, vo := range data {
+		go interaction.PanelVoteRemove(s, vo)
 	}
 }

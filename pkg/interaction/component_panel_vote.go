@@ -202,7 +202,7 @@ func ComponentPanelVoteCreateDo(s *discordgo.Session, i *discordgo.InteractionCr
 		},
 		{
 			Title:       translate.Message(i.Locale, "command_panel_vote_create_message_vote_info"),
-			Description: translate.Message(i.Locale, "command_panel_vote_create_message_min") + " " + strconv.Itoa(d.Vote.MinSelection) + " " + translate.Message(i.Locale, "command_panel_vote_create_message_max") + " " + strconv.Itoa(d.Vote.MaxSelection) + "\r" + translate.Message(i.Locale, "command_panel_vote_create_message_end_at") + " " + "<t:" + strconv.FormatInt(d.Vote.EndAt.Unix(), 10) + ":F>" + "(" + "<t:" + strconv.FormatInt(d.Vote.EndAt.Unix(), 10) + ":R>" + ")",
+			Description: translate.Message(i.Locale, "command_panel_vote_create_message_min") + " " + strconv.Itoa(d.Vote.MinSelection) + " " + translate.Message(i.Locale, "command_panel_vote_create_message_max") + " " + strconv.Itoa(d.Vote.MaxSelection) + "\r" + translate.Message(i.Locale, "command_panel_vote_create_message_start_at") + " " + "<t:" + strconv.FormatInt(d.Vote.StartAt.Unix(), 10) + ":F>" + "\r" + translate.Message(i.Locale, "command_panel_vote_create_message_end_at") + " " + "<t:" + strconv.FormatInt(d.Vote.EndAt.Unix(), 10) + ":F>" + "(" + "<t:" + strconv.FormatInt(d.Vote.EndAt.Unix(), 10) + ":R>" + ")",
 		},
 	}
 	s.InteractionResponseDelete(d.InteractionCreate.Interaction)
@@ -314,7 +314,7 @@ func ComponentPanelVote(s *discordgo.Session, i *discordgo.InteractionCreate, se
 		},
 		{
 			Title:       translate.Message(locale, "command_panel_vote_create_message_vote_info"),
-			Description: translate.Message(locale, "command_panel_vote_create_message_min") + " " + strconv.Itoa(d.MinSelection) + " " + translate.Message(locale, "command_panel_vote_create_message_max") + " " + strconv.Itoa(d.MaxSelection) + "\r" + translate.Message(locale, "command_panel_vote_create_message_end_at") + " " + "<t:" + strconv.FormatInt(d.EndAt.Unix(), 10) + ":F>" + "(" + "<t:" + strconv.FormatInt(d.EndAt.Unix(), 10) + ":R>" + ")",
+			Description: translate.Message(locale, "command_panel_vote_create_message_min") + " " + strconv.Itoa(d.MinSelection) + " " + translate.Message(locale, "command_panel_vote_create_message_max") + " " + strconv.Itoa(d.MaxSelection) + "\r" + translate.Message(locale, "command_panel_vote_create_message_start_at") + " " + "<t:" + strconv.FormatInt(d.StartAt.Unix(), 10) + ":F>" + "\r" + translate.Message(locale, "command_panel_vote_create_message_end_at") + " " + "<t:" + strconv.FormatInt(d.EndAt.Unix(), 10) + ":F>" + "(" + "<t:" + strconv.FormatInt(d.EndAt.Unix(), 10) + ":R>" + ")",
 		},
 	}
 	util.ErrorCatch(s.ChannelMessageEditComplex(&discordgo.MessageEdit{
@@ -380,12 +380,44 @@ func PanelVoteRemove(s *discordgo.Session, v types.VoteObject) {
 			})
 		}
 	}
-	s.ChannelMessageEditComplex(&discordgo.MessageEdit{
+	var field2 []*discordgo.MessageEmbedField
+	for i2 := range selections {
+		f := &discordgo.MessageEmbedField{
+			Name:   util.EmojiFormat(&selections[i2].Emoji) + " | " + selections[i2].Name,
+			Value:  selections[i2].Description,
+			Inline: true,
+		}
+		if f.Value == "" {
+			f.Value = "`" + translate.Message(locale, "command_panel_vote_create_message_no_desc")
+		}
+		f.Value += "\r"
+		f.Name += " - " + translate.Translates(locale, "command_panel_vote_votes", map[string]interface{}{"Vote": strconv.Itoa(len(selections[i2].Users))}, len(selections[i2].Users))
+		for i, v2 := range selections[i2].Users {
+			f.Value += "<@" + v2 + "> \r"
+			if i > 15 {
+				break
+			}
+		}
+		field2 = append(field2, f)
+	}
+	embeds := []*discordgo.MessageEmbed{
+		{
+			Title:       data.Title,
+			Description: data.Description,
+			Fields:      field2,
+		},
+		{
+			Title:       translate.Message(locale, "command_panel_vote_create_message_vote_info"),
+			Description: translate.Message(locale, "command_panel_vote_create_message_min") + " " + strconv.Itoa(data.MinSelection) + " " + translate.Message(locale, "command_panel_vote_create_message_max") + " " + strconv.Itoa(data.MaxSelection) + "\r" + translate.Message(locale, "command_panel_vote_create_message_start_at") + " " + "<t:" + strconv.FormatInt(data.StartAt.Unix(), 10) + ":F>" + "\r" + translate.Message(locale, "command_panel_vote_create_message_end_at") + " " + "<t:" + strconv.FormatInt(data.EndAt.Unix(), 10) + ":F>" + "(" + "<t:" + strconv.FormatInt(data.EndAt.Unix(), 10) + ":R>" + ")",
+		},
+	}
+	util.ErrorCatch(s.ChannelMessageEditComplex(&discordgo.MessageEdit{
 		Channel:    data.ChannelID,
 		ID:         data.MessageID,
 		Components: []discordgo.MessageComponent{},
-	})
-	s.ChannelMessageSendComplex(data.ChannelID, &discordgo.MessageSend{
+		Embeds:     embeds,
+	}))
+	util.ErrorCatch(s.ChannelMessageSendComplex(data.ChannelID, &discordgo.MessageSend{
 		Embeds: []*discordgo.MessageEmbed{
 			{
 				Title:  translate.Message(locale, "command_panel_vote_message_finished"),
@@ -395,9 +427,14 @@ func PanelVoteRemove(s *discordgo.Session, v types.VoteObject) {
 		Reference: &discordgo.MessageReference{
 			MessageID: data.MessageID,
 		},
-	})
+	}))
 	delete(createdVotePanel, data.VoteID)
 	util.ErrorCatch(api.ReqAPI(http.MethodDelete, "/api/panel/vote?id="+v.VoteID, http.NoBody))
 	b, _ = json.MarshalIndent(data, "", " ")
-	os.WriteFile("vote-"+data.VoteID+".json", b, 0666)
+	file, err := os.Create("logs/vote/" + data.VoteID + ".json")
+	if err != nil {
+		return
+	}
+	defer file.Close()
+	file.Write(b)
 }
