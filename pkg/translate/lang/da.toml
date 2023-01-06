@@ -212,7 +212,7 @@ other = "Opret"
 other = "Slut på"
 
 [command_panel_vote_create_message_start_at]
-other = "Start at"
+other = "Start ved"
 
 [command_panel_vote_create_message_max]
 other = "Maks."
