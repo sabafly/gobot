@@ -211,6 +211,9 @@ other = "作成"
 [command_panel_vote_create_message_end_at]
 other = "終了"
 
+[command_panel_vote_create_message_start_at]
+other = "開始"
+
 [command_panel_vote_create_message_max]
 other = "最大"
 
@@ -261,18 +264,18 @@ other = "時間単位"
 
 [command_panel_vote_create_time_unit_day]
 one = "日"
-other = "日"
+other = "day"
 
 [command_panel_vote_create_time_unit_desc]
 other = "時間制限の単位"
 
 [command_panel_vote_create_time_unit_hour]
 one = "時間"
-other = "時間"
+other = "hour"
 
 [command_panel_vote_create_time_unit_minute]
 one = "分"
-other = "分"
+other = "minute"
 
 [command_panel_vote_create_title]
 other = "タイトル"

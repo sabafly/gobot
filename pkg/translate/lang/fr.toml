@@ -211,6 +211,9 @@ other = "Créer"
 [command_panel_vote_create_message_end_at]
 other = "Finir à"
 
+[command_panel_vote_create_message_start_at]
+other = "Commencer à"
+
 [command_panel_vote_create_message_max]
 other = "Max."
 

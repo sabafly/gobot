@@ -211,6 +211,9 @@ other = "Crează"
 [command_panel_vote_create_message_end_at]
 other = "Sfârșit la"
 
+[command_panel_vote_create_message_start_at]
+other = "Începe de la"
+
 [command_panel_vote_create_message_max]
 other = "Maxim"
 
