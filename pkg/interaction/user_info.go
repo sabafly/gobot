@@ -47,7 +47,7 @@ func UserInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	var status string
 	p, err := util.ErrorCatch(s.State.Presence(gid, uid))
 	if err != nil {
-		status = "Status: " + util.StatusString(discordgo.StatusOffline)
+		status = translate.Message(i.Locale, "online_status") + ": " + util.StatusString(discordgo.StatusOffline)
 	} else {
 		if p.Status != discordgo.StatusOffline {
 			if str := util.StatusString(p.ClientStatus.Web); str != "" {
