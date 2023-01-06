@@ -212,7 +212,7 @@ other = "Vytvořit"
 other = "Konec v"
 
 [command_panel_vote_create_message_start_at]
-other = "Start at"
+other = "Začít v"
 
 [command_panel_vote_create_message_max]
 other = "Max."
