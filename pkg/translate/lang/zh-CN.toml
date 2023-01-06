@@ -212,7 +212,7 @@ other = "创建"
 other = "结束于"
 
 [command_panel_vote_create_message_start_at]
-other = "Start at"
+other = "开始于"
 
 [command_panel_vote_create_message_max]
 other = "最大值"
