@@ -388,7 +388,7 @@ func PanelVoteRemove(s *discordgo.Session, v types.VoteObject) {
 			Inline: true,
 		}
 		if f.Value == "" {
-			f.Value = "`" + translate.Message(locale, "command_panel_vote_create_message_no_desc")
+			f.Value = "`" + translate.Message(locale, "command_panel_vote_create_message_no_desc") + "`"
 		}
 		f.Value += "\r"
 		f.Name += " - " + translate.Translates(locale, "command_panel_vote_votes", map[string]interface{}{"Vote": strconv.Itoa(len(selections[i2].Users))}, len(selections[i2].Users))
