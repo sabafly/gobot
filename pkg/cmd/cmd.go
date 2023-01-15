@@ -25,16 +25,14 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/env"
-	session "github.com/ikafly144/gobot/pkg/init"
 	"github.com/ikafly144/gobot/pkg/interaction/reg"
 	"github.com/ikafly144/gobot/pkg/product"
 	"github.com/ikafly144/gobot/pkg/worker"
 )
 
-var VERSION = "Development Version"
+var VERSION = "v-Dev"
 
 var (
-	s                  *discordgo.Session              = session.Session()
 	commands           []*discordgo.ApplicationCommand = reg.Commands()
 	GuildID            string                          = *env.GuildID
 	RemoveCommands     bool                            = *env.RemoveCommands
@@ -42,46 +40,57 @@ var (
 )
 
 func Run() {
-	s.UserAgent = "DiscordBot(https://github.com/ikafly144/gobot, " + VERSION + ")"
-	s.Identify.Properties.Browser = product.ProductName + " " + VERSION
-	fmt.Printf("\n<%v>: Version: %v\n", product.ProductName, VERSION)
-	s.ShardID = 0
-	s.ShardCount = 1
-	s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
-		log.Printf("%v#%v としてログインしました", s.State.User.Username, s.State.User.Discriminator)
-	})
-	err := s.Open()
+	s := getSession()
+	g, err := s.GatewayBot()
 	if err != nil {
-		log.Fatalf("セッションを開始できません: %v", err)
+		panic(err)
 	}
-	s.UpdateStatusComplex(discordgo.UpdateStatusData{
-		Activities: []*discordgo.Activity{
-			{
-				Name: fmt.Sprintf("起動準備 | %v Servers | Shard %v/%v | %v", len(s.State.Guilds), s.ShardID+1, s.ShardCount, VERSION),
-				Type: discordgo.ActivityTypeGame,
+	fmt.Printf("\n<%v>: Version: %v\n", product.ProductName, VERSION)
+	for i := 0; i < g.Shards; i++ {
+		s := getSession()
+		s.UserAgent = "DiscordBot(https://github.com/ikafly144/gobot, " + VERSION + ")"
+		s.Identify.Properties.Browser = product.ProductName + " " + VERSION
+		s.ShardID = i
+		s.ShardCount = g.Shards
+		s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
+			log.Printf("[%v] %v#%v としてログインしました", i, s.State.User.Username, s.State.User.Discriminator)
+		})
+		err = s.Open()
+		if err != nil {
+			log.Fatalf("[%v] セッションを開始できません: %v", i, err)
+		}
+		s.UpdateStatusComplex(discordgo.UpdateStatusData{
+			Activities: []*discordgo.Activity{
+				{
+					Name: fmt.Sprintf("起動準備 | %v Servers | Shard %v/%v | %v", len(s.State.Guilds), s.ShardID+1, s.ShardCount, VERSION),
+					Type: discordgo.ActivityTypeGame,
+				},
 			},
-		},
-		Status: string(discordgo.StatusDoNotDisturb),
-	})
+			Status: string(discordgo.StatusDoNotDisturb),
+		})
 
-	go regCommand()
-	go autoBans()
+		if s.ShardID == 0 {
+			go autoBans(s)
+			regCommand(s)
+		} else {
+			go updateStatus(s)
+		}
 
-	defer end()
+		defer end(s)
+	}
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt)
 	log.Println("Ctrl+Cで終了")
 
-	s := <-sigCh
+	sig := <-sigCh
 
-	log.Printf("受信: %v\n", s.String())
+	log.Printf("受信: %v\n", sig.String())
 }
 
-func end() {
-	if RemoveCommands {
+func end(s *discordgo.Session) {
+	if RemoveCommands && s.Identify.Shard[0] == 0 {
 		log.Println("コマンドを登録解除中...")
-
 		for _, v := range registeredCommands {
 			err := s.ApplicationCommandDelete(s.State.User.ID, GuildID, v.ID)
 			if err != nil {
@@ -95,19 +104,16 @@ func end() {
 				log.Panicf("'%v'コマンドを解除できません: %v", v.Name, err)
 			}
 		}
-
 		cs, _ := s.ApplicationCommands(s.State.User.ID, *env.SupportGuildID)
 		for _, v := range cs {
 			s.ApplicationCommandDelete(s.State.User.ID, v.GuildID, v.ID)
 		}
-
 	}
 	s.Close()
-	log.Println("正常にシャットダウンしました")
+	log.Println("正常にシャットダウンしました", s.Identify.Shard)
 }
 
-func regCommand() {
-
+func regCommand(s *discordgo.Session) {
 	log.Println("コマンドを追加中...")
 	registeredCommands = make([]*discordgo.ApplicationCommand, len(commands))
 	for i, v := range commands {
@@ -189,10 +195,10 @@ func regCommand() {
 
 	log.Print("完了")
 
-	go updateStatus()
+	go updateStatus(s)
 }
 
-func updateStatus() {
+func updateStatus(s *discordgo.Session) {
 	for {
 		err := s.UpdateStatusComplex(discordgo.UpdateStatusData{
 			Activities: []*discordgo.Activity{
@@ -210,8 +216,8 @@ func updateStatus() {
 	}
 }
 
-func autoBans() {
-	go worker.DeleteBanListener()
+func autoBans(s *discordgo.Session) {
+	go worker.Listener(s)
 	for {
 		worker.MakeBan(s)
 		time.Sleep(time.Minute)

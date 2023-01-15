@@ -14,7 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package init
+package cmd
 
 import (
 	"log"
@@ -29,11 +29,8 @@ import (
 	"github.com/ikafly144/gobot/pkg/util"
 )
 
-var s *discordgo.Session
-
-func init() {
-	var err error
-	s, err = discordgo.New("Bot " + *env.BotToken)
+func getSession() *discordgo.Session {
+	s, err := discordgo.New("Bot " + *env.BotToken)
 	if err != nil {
 		log.Fatalf("無効なbotパラメータ: %v", err)
 	}
@@ -118,7 +115,7 @@ func init() {
 		log.Printf("[Message Created] : %v(%v) #%v(%v) <%v#%v>\n                 >> %v", g.Name, g.ID, c.Name, c.ID, m.Author.Username, m.Author.Discriminator, str)
 		p, err := util.ErrorCatch(s.State.UserChannelPermissions(s.State.User.ID, m.ChannelID))
 		if err == nil && p&int64(discordgo.PermissionAdministrator) != 0 {
-			go panelConfigEmoji(m)
+			go panelConfigEmoji(s, m)
 			go messagePin(s, m)
 		}
 	})
@@ -145,9 +142,10 @@ func init() {
 			interaction.PanelVoteDelete(mb.ChannelID, mb.Messages...)
 		}
 	})
+	return s
 }
 
-func panelConfigEmoji(m *discordgo.MessageCreate) {
+func panelConfigEmoji(s *discordgo.Session, m *discordgo.MessageCreate) {
 	data, err := util.ErrorCatch(session.MessagePanelConfigEmojiLoad(m.Author.ID))
 	if err != nil {
 		return
@@ -160,5 +158,3 @@ func panelConfigEmoji(m *discordgo.MessageCreate) {
 func messagePin(s *discordgo.Session, m *discordgo.MessageCreate) {
 	interaction.MessagePinExec(s, m)
 }
-
-func Session() *discordgo.Session { return s }

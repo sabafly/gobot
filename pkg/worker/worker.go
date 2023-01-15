@@ -26,7 +26,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/ikafly144/gobot/pkg/api"
-	session "github.com/ikafly144/gobot/pkg/init"
 	"github.com/ikafly144/gobot/pkg/interaction"
 	"github.com/ikafly144/gobot/pkg/product"
 	"github.com/ikafly144/gobot/pkg/translate"
@@ -50,15 +49,17 @@ func MakeBan(s *discordgo.Session) {
 	}
 }
 
-func deleteBan(id string) {
-	s := session.Session()
+func deleteBan(s *discordgo.Session, id string) {
 	for _, v := range s.State.Guilds {
 		s.GuildBanDelete(v.ID, id)
 		time.Sleep(time.Second)
 	}
 }
 
-func DeleteBanListener() {
+var s *discordgo.Session
+
+func Listener(sl *discordgo.Session) {
+	s = sl
 	log.Print("start web server")
 	http.HandleFunc("/ban/delete", deleteBanHandler)
 	http.HandleFunc("/feed/mc", feedMinecraftHandler)
@@ -72,7 +73,7 @@ func deleteBanHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Has("id") {
 		w.WriteHeader(200)
 		json.NewEncoder(w).Encode(map[string]interface{}{"Status": "200 OK"})
-		deleteBan(r.URL.Query().Get("id"))
+		deleteBan(s, r.URL.Query().Get("id"))
 	} else {
 		json.NewEncoder(w).Encode(map[string]interface{}{"Status": "400 Bad Request", "Content": "missing id"})
 	}
@@ -85,7 +86,6 @@ func feedMinecraftHandler(w http.ResponseWriter, r *http.Request) {
 	body, _ := io.ReadAll(r.Body)
 	data := types.FeedMCServers{}
 	json.Unmarshal(body, &data)
-	s := session.Session()
 	for _, v := range data {
 		var locale discordgo.Locale
 		if v.Locale == "" {
@@ -153,7 +153,6 @@ func panelVote(w http.ResponseWriter, r *http.Request) {
 	}
 	data := []types.VoteObject{}
 	json.Unmarshal(b, &data)
-	s := session.Session()
 	for _, vo := range data {
 		go interaction.PanelVoteRemove(s, vo)
 	}
