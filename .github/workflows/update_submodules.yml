@@ -1,5 +1,6 @@
 name: Update submodules
 run-name: Update submodules
+permissions: read-all|write-all
 on:
   schedule:
     - cron:  '0 0 * * *'
