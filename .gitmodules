@@ -1,4 +1,4 @@
 [submodule "discordgo"]
 	path = discordgo
-	url = https://github.com/ikafly144/gobot-discordgo
-	branch = gobot
+	url = https://github.com/sabafly/gobot-discordgo
+	branch = master
