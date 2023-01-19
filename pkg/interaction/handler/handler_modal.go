@@ -33,6 +33,7 @@ var (
 	}
 )
 
+// モーダル提出ハンダラを取得
 func ModalSubmitHandler() map[string]func(*discordgo.Session, *discordgo.InteractionCreate, string) {
 	return modalSubmitHandler
 }

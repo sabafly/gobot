@@ -39,15 +39,18 @@ var (
 	registeredCommands []*discordgo.ApplicationCommand
 )
 
+// ボットを起動
 func Run() {
-	s := getSession()
+	s := newSession()
 	g, err := s.GatewayBot()
 	if err != nil {
 		panic(err)
 	}
 	fmt.Printf("\n<%v>: Version: %v\n", product.ProductName, VERSION)
+
+	// シャードを作成
 	for i := 0; i < g.Shards; i++ {
-		s := getSession()
+		s := newSession()
 		s.UserAgent = "DiscordBot(https://github.com/ikafly144/gobot, " + VERSION + ")"
 		s.Identify.Properties.Browser = product.ProductName + " " + VERSION
 		s.ShardID = i
@@ -55,10 +58,12 @@ func Run() {
 		s.AddHandler(func(s *discordgo.Session, r *discordgo.Ready) {
 			log.Printf("[%v] %v#%v としてログインしました", i, s.State.User.Username, s.State.User.Discriminator)
 		})
+
 		err = s.Open()
 		if err != nil {
 			log.Fatalf("[%v] セッションを開始できません: %v", i, err)
 		}
+
 		s.UpdateStatusComplex(discordgo.UpdateStatusData{
 			Activities: []*discordgo.Activity{
 				{
@@ -70,10 +75,10 @@ func Run() {
 		})
 
 		if s.ShardID == 0 {
-			go autoBans(s)
+			go startListener(s)
 			regCommand(s)
 		} else {
-			go updateStatus(s)
+			go startUpdate(s)
 		}
 
 		defer end(s)
@@ -88,6 +93,7 @@ func Run() {
 	log.Printf("受信: %v\n", sig.String())
 }
 
+// 終了処理
 func end(s *discordgo.Session) {
 	if RemoveCommands && s.Identify.Shard[0] == 0 {
 		log.Println("コマンドを登録解除中...")
@@ -113,6 +119,7 @@ func end(s *discordgo.Session) {
 	log.Println("正常にシャットダウンしました", s.Identify.Shard)
 }
 
+// コマンドを登録
 func regCommand(s *discordgo.Session) {
 	log.Println("コマンドを追加中...")
 	registeredCommands = make([]*discordgo.ApplicationCommand, len(commands))
@@ -195,10 +202,11 @@ func regCommand(s *discordgo.Session) {
 
 	log.Print("完了")
 
-	go updateStatus(s)
+	go startUpdate(s)
 }
 
-func updateStatus(s *discordgo.Session) {
+// ステータスを自動更新
+func startUpdate(s *discordgo.Session) {
 	for {
 		err := s.UpdateStatusComplex(discordgo.UpdateStatusData{
 			Activities: []*discordgo.Activity{
@@ -216,7 +224,8 @@ func updateStatus(s *discordgo.Session) {
 	}
 }
 
-func autoBans(s *discordgo.Session) {
+// 内部APIリスナー呼び出し
+func startListener(s *discordgo.Session) {
 	go worker.Listener(s)
 	for {
 		worker.MakeBan(s)

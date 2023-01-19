@@ -205,6 +205,5 @@ func feedMinecraftRemove(s *discordgo.Session, i *discordgo.InteractionCreate, o
 		s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 			Content: &str,
 		})
-
 	}
 }

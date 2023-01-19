@@ -34,6 +34,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// TODO: いつか整える
+// 管理サーバー用コマンド
 func Admin(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if err := godotenv.Load(); err == nil || i.GuildID == os.Getenv("APPLICATION_ID") && os.Getenv("APPLICATION_ID") != "" {
 		il := &discordgo.InteractionCreate{}

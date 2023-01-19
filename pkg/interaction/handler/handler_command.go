@@ -25,6 +25,7 @@ import (
 var (
 	commandHandler = map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate){
 		"ping": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			// TODO:いつか消すか作り直す
 			defer interaction.MessagePinExec(s, &discordgo.MessageCreate{Message: &discordgo.Message{ChannelID: i.ChannelID, ID: i.ID}})
 			contents := map[discordgo.Locale]string{
 				discordgo.Japanese: "ポング！\r" + s.HeartbeatLatency().String(),
@@ -72,6 +73,7 @@ var (
 	}
 )
 
+// コマンドハンダラを取得
 func CommandHandler() map[string]func(*discordgo.Session, *discordgo.InteractionCreate) {
 	return commandHandler
 }

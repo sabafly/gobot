@@ -23,24 +23,30 @@ import (
 	"github.com/ikafly144/gobot/pkg/env"
 )
 
-var APIserver string = *env.APIServer
+var IP string = *env.APIServer
 
 func GetApi(URI string, body io.Reader) (*http.Response, error) {
-	req, err := http.NewRequest("GET", "http://"+APIserver+URI, body)
+	req, err := http.NewRequest("GET", "http://"+IP+URI, body)
 	if err != nil {
 		return &http.Response{}, err
 	}
 	client := http.Client{}
 	resp, err := client.Do(req)
-	return resp, err
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }
 
 func ReqAPI(method string, URI string, body io.Reader) (res *http.Response, err error) {
-	req, err := http.NewRequest(method, "http://"+APIserver+URI, body)
+	req, err := http.NewRequest(method, "http://"+IP+URI, body)
 	if err != nil {
-		return
+		return nil, err
 	}
 	client := http.Client{}
 	res, err = client.Do(req)
-	return
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }

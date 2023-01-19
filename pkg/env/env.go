@@ -33,6 +33,7 @@ var (
 	APIServer      = flag.String("api", "", "APIサーバーのip")
 )
 
+// 初期化
 func init() {
 	err := godotenv.Load()
 	if err != nil {

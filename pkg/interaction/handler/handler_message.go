@@ -51,6 +51,7 @@ var (
 	}
 )
 
+// メッセージコンポーネントハンダラを取得
 func MessageComponentHandler() map[string]func(*discordgo.Session, *discordgo.InteractionCreate, string) {
 	return messageComponentHandler
 }

@@ -29,7 +29,8 @@ import (
 	"github.com/ikafly144/gobot/pkg/util"
 )
 
-func getSession() *discordgo.Session {
+// セッションを作成
+func newSession() *discordgo.Session {
 	s, err := discordgo.New("Bot " + *env.BotToken)
 	if err != nil {
 		log.Fatalf("無効なbotパラメータ: %v", err)
@@ -145,6 +146,9 @@ func getSession() *discordgo.Session {
 	return s
 }
 
+// パネル絵文字設定セッション呼び出し
+//
+// TODO:いつか移動
 func panelConfigEmoji(s *discordgo.Session, m *discordgo.MessageCreate) {
 	data, err := util.ErrorCatch(session.MessagePanelConfigEmojiLoad(m.Author.ID))
 	if err != nil {
@@ -155,6 +159,9 @@ func panelConfigEmoji(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
+// メッセージピン留め呼び出し
+//
+// TODO: いつか移動
 func messagePin(s *discordgo.Session, m *discordgo.MessageCreate) {
 	interaction.MessagePinExec(s, m)
 }
