@@ -18,52 +18,70 @@ package session
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/google/uuid"
 )
-
-func newSession[T any]() (s *session[T]) {
-	s = &session[T]{}
-	s.sessionData = map[string]*sessionData[T]{}
-	return
-}
-
-type session[T any] struct {
-	sessionData map[string]*sessionData[T]
-}
-
-func (s *session[T]) get(id string) (*sessionData[T], error) {
-	if d, ok := s.sessionData[id]; ok {
-		return d, nil
-	}
-	return &sessionData[T]{}, fmt.Errorf("not found id: %v", id)
-}
-
-func (s *session[T]) add(data *T) (id string) {
-	id = uuid.New().String()
-	delete(s.sessionData, id)
-	s.sessionData[id] = &sessionData[T]{id: &id, data: data}
-	return id
-}
-
-func (s *session[T]) addWithID(data *T, id string) {
-	delete(s.sessionData, id)
-	s.sessionData[id] = &sessionData[T]{id: &id, data: data}
-}
-
-func (s *session[T]) remove(id string) {
-	delete(s.sessionData, id)
-}
 
 type sessionData[T any] struct {
 	id   *string
 	data *T
 }
 
+type session[T any] struct {
+	data *sync.Map
+}
+
+// 新しいセッションを作成
+func newSession[T any]() (s *session[T]) {
+	s = &session[T]{}
+	s.data = new(sync.Map)
+	return
+}
+
+// idからデータを取得
+func (s *session[T]) get(id string) (*sessionData[T], error) {
+	m := s.data
+	var d any
+	var ok bool
+	if d, ok = m.Load(id); !ok {
+		return nil, fmt.Errorf("not found id: %v", id)
+	}
+	value, ok := d.(*sessionData[T])
+	if !ok {
+		return nil, fmt.Errorf("cannot convert: %v", id)
+	}
+	return value, nil
+}
+
+// セッションにデータを上書きする
+func (s *session[T]) set(data *T) (id string) {
+	m := s.data
+	id = uuid.New().String()
+	m.Delete(id)
+	m.Store(id, data)
+	return id
+}
+
+// idを指定してセッションにデータを上書きする
+func (s *session[T]) setWithID(data *T, id string) {
+	m := s.data
+	m.Delete(id)
+	m.Store(id, data)
+}
+
+// idのデータを削除する
+func (s *session[T]) remove(id string) {
+	m := s.data
+	m.Delete(id)
+}
+
+// セッションデータからidを取得する
 func (sd *sessionData[T]) ID() (res string) {
 	return *sd.id
 }
 
+// セッションデータから値を取得する
 func (sd *sessionData[T]) Data() (res T) {
 	return *sd.data
 }

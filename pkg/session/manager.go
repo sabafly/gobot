@@ -24,49 +24,59 @@ import (
 
 var interactionSessions *session[discordgo.InteractionCreate] = newSession[discordgo.InteractionCreate]()
 
+// インタラクションセッションを保存
 func InteractionSave(i *discordgo.InteractionCreate) (id string) {
-	return interactionSessions.add(i)
+	return interactionSessions.set(i)
 }
 
+// インタラクションセッションを取得
 func InteractionLoad(id string) (data *sessionData[discordgo.InteractionCreate], err error) {
 	return interactionSessions.get(id)
 }
 
+// インタラクションセッションを削除
 func InteractionRemove(id string) {
 	interactionSessions.remove(id)
 }
 
 var messageSessions *session[types.MessageSessionData[types.MessagePanelConfigEmojiData]] = newSession[types.MessageSessionData[types.MessagePanelConfigEmojiData]]()
 
+// パネル絵文字設定セッションを保存
 func MessagePanelConfigEmojiSave(m *types.MessageSessionData[types.MessagePanelConfigEmojiData], id string) {
-	messageSessions.addWithID(m, id)
+	messageSessions.setWithID(m, id)
 }
 
+// パネル絵文字設定セッションを取得
 func MessagePanelConfigEmojiLoad(id string) (data *sessionData[types.MessageSessionData[types.MessagePanelConfigEmojiData]], err error) {
 	return messageSessions.get(id)
 }
 
+// パネル絵文字設定セッションを削除
 func MessagePanelConfigEmojiRemove(id string) {
 	messageSessions.remove(id)
 }
 
 var voteSessions *session[types.VoteSession] = newSession[types.VoteSession]()
 
+// 投票パネル作成セッションを保存
 func VoteSave(d *types.VoteSession) (id string) {
 	id = uuid.New().String()
 	d.Vote.VoteID = id
-	voteSessions.addWithID(d, id)
+	voteSessions.setWithID(d, id)
 	return
 }
 
+// 投票パネル作成セッションをidを指定して保存
 func VoteSaveWithID(d *types.VoteSession, id string) {
-	voteSessions.addWithID(d, id)
+	voteSessions.setWithID(d, id)
 }
 
+// 投票パネル作成セッションを取得
 func VoteLoad(id string) (data *sessionData[types.VoteSession], err error) {
 	return voteSessions.get(id)
 }
 
+// 投票パネル作成セッションを削除
 func VoteRemove(id string) {
 	voteSessions.remove(id)
 }
