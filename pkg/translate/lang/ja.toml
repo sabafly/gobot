@@ -26,7 +26,7 @@ other = "埋め込み"
 other = "カラー"
 
 [command_message_embed_color_description]
-other = "埋め込みカラーのRGBコード"
+other = "埋め込みメッセージのRGBコード"
 
 [command_message_embed_content]
 other = "コンテンツ"
@@ -38,16 +38,16 @@ other = "メッセージの内容"
 other = "ウェブフックで埋め込みメッセージを送信する"
 
 [command_message_embed_embed_content]
-other = "埋め込むコンテンツ"
+other = "埋め込みメッセージのコンテンツ"
 
 [command_message_embed_embed_content_description]
-other = "メッセージ埋め込みの内容"
+other = "埋め込みメッセージに埋め込む内容"
 
 [command_message_embed_embed_title]
 other = "タイトル"
 
 [command_message_embed_embed_title_description]
-other = "メッセージ埋め込みのタイトル"
+other = "埋め込みメッセージのタイトル"
 
 [command_message_embed_icon_url]
 other = "アイコン URL"
@@ -65,7 +65,7 @@ other = "メッセージ送信者の名前"
 other = "ウェブフック"
 
 [command_message_webhook_description]
-other = "ウェブフックメッセージの送信"
+other = "ウェブフックメッセージを送信"
 
 [command_panel]
 other = "パネル"
@@ -89,7 +89,7 @@ other = "セレクトメニューにカスタム絵文字を設定"
 other = "このチャンネルに絵文字を送信してください"
 
 [command_panel_option_desc_role]
-other = "役割パネルの管理"
+other = "ロールパネルの管理"
 
 [command_panel_option_minecraft]
 other = "マインクラフト"
@@ -104,7 +104,7 @@ other = "サーバーを追加するには、メッセージを右クリック�
 other = "作成"
 
 [command_panel_option_minecraft_option_create_desc]
-other = "マインクラフトパネルを作成"
+other = "Java版マインクラフトのサーバーパネルを作成"
 
 [command_panel_option_minecraft_option_create_option_address]
 other = "アドレス"
@@ -134,7 +134,7 @@ other = "サーバーのポート"
 other = "サーバー名"
 
 [command_panel_option_minecraft_option_create_option_servername_desc]
-other = "サーバー名"
+other = "表示する名前"
 
 [command_panel_option_minecraft_option_create_option_showip]
 other = "ipを表示"
@@ -264,18 +264,18 @@ other = "時間単位"
 
 [command_panel_vote_create_time_unit_day]
 one = "日"
-other = "day"
+other = "日"
 
 [command_panel_vote_create_time_unit_desc]
 other = "時間制限の単位"
 
 [command_panel_vote_create_time_unit_hour]
 one = "時間"
-other = "hour"
+other = "時間"
 
 [command_panel_vote_create_time_unit_minute]
 one = "分"
-other = "minute"
+other = "分"
 
 [command_panel_vote_create_title]
 other = "タイトル"
@@ -342,7 +342,7 @@ other = "マインクラフトサーバートラッカーを管理する"
 other = "作成"
 
 [command_tracker_option_minecraft_option_create_desc]
-other = "マインクラフトサーバートラッカー"
+other = "マインクラフトサーバーの起動・停止通知を送信するよう登録します"
 
 [command_tracker_option_minecraft_option_create_option_address]
 other = "アドレス"
@@ -372,13 +372,13 @@ other = "メンションするロール"
 other = "取得"
 
 [command_tracker_option_minecraft_option_get_desc]
-other = "マインクラフトのトラッカーを取得します"
+other = "現在登録されているマインクラフトサーバーのトラッカーを取得します"
 
 [command_tracker_option_minecraft_option_remove]
 other = "削除"
 
 [command_tracker_option_minecraft_option_remove_desc]
-other = "マインクラフトのトラッカーを削除します"
+other = "現在登録されているマインクラフトサーバーのトラッカーを削除します"
 
 [command_tracker_option_minecraft_option_remove_option_name]
 other = "名前"
