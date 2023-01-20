@@ -65,7 +65,7 @@ other = "メッセージ送信者の名前"
 other = "ウェブフック"
 
 [command_message_webhook_description]
-other = "ウェブフックメッセージを送信"
+other = "ウェブフックでメッセージを送信します"
 
 [command_panel]
 other = "パネル"
@@ -83,7 +83,7 @@ other = "プロパティを設定"
 other = "絵文字"
 
 [command_panel_option_config_option_emoji_desc]
-other = "セレクトメニューにカスタム絵文字を設定"
+other = "選択したパネルにカスタム絵文字を設定します"
 
 [command_panel_option_config_option_emoji_message]
 other = "このチャンネルに絵文字を送信してください"
@@ -104,7 +104,7 @@ other = "サーバーを追加するには、メッセージを右クリック�
 other = "作成"
 
 [command_panel_option_minecraft_option_create_desc]
-other = "Java版マインクラフトのサーバーパネルを作成"
+other = "マインクラフトのサーバー情報を取得できるパネルを作成します"
 
 [command_panel_option_minecraft_option_create_option_address]
 other = "アドレス"
@@ -182,7 +182,7 @@ other = "投票"
 other = "作成"
 
 [command_panel_vote_create_desc]
-other = "投票パネルを作成"
+other = "任意のお題を設定して投票パネルを作成します"
 
 [command_panel_vote_create_description]
 other = "説明"
