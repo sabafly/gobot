@@ -1,5 +1,5 @@
 /*
-	Copyright (C) 2022  ikafly144
+	Copyright (C) 2022-2023  ikafly144
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,13 +18,35 @@ package main
 
 import (
 	"log"
+	"os"
+	"os/signal"
 
-	_ "github.com/ikafly144/gobot/pkg"
-
-	"github.com/ikafly144/gobot/pkg/cmd"
+	"github.com/ikafly144/gobot/pkg/api"
+	gobot "github.com/ikafly144/gobot/pkg/bot"
+	"github.com/ikafly144/gobot/pkg/lib/env"
+	"github.com/ikafly144/gobot/pkg/lib/logger"
 )
 
 func main() {
-	log.SetFlags(log.Ltime)
-	cmd.Run()
+	api.Serve()
+
+	// ボットを用意
+	bot, err := gobot.New(env.Token)
+	if err != nil {
+		logger.Fatal("failed create bot: %s", err)
+	}
+
+	// ボットを開始
+	if err := bot.Open(); err != nil {
+		log.Panicf("failed open bot: %s", err)
+	}
+	defer bot.Close()
+
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt)
+	log.Println("Ctrl+Cで終了")
+
+	sig := <-sigCh
+
+	log.Printf("受信: %v\n", sig.String())
 }

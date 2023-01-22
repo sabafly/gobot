@@ -1,3 +1,3 @@
 files:
-  - source: /pkg/translate/en.toml
-    translation: /pkg/translate/lang/%two_letters_code%.toml
+  - source: /pkg/lib/translate/en.toml
+    translation: /pkg/lib/translate/lang/%two_letters_code%.toml

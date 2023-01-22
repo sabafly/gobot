@@ -1,5 +1,5 @@
 /*
-	Copyright (C) 2022  ikafly144
+	Copyright (C) 2022-2023  ikafly144
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -14,131 +14,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package types
+package structs
 
 import (
-	"time"
-
 	"github.com/bwmarrin/discordgo"
 	"github.com/dlclark/regexp2"
-	"gorm.io/gorm"
 )
-
-type GlobalBan struct {
-	Code    int64  `json:"code"`
-	Status  string `json:"status"`
-	Content []Ban  `json:"content"`
-}
-
-type Ban struct {
-	ID        int64       `json:"ID"`
-	CreatedAt string      `json:"CreatedAt"`
-	UpdatedAt string      `json:"UpdatedAt"`
-	DeletedAt interface{} `json:"DeletedAt"`
-	Reason    string      `json:"Reason"`
-}
-
-type TransMCServer struct {
-	FeedMCServer
-	Address string
-	Port    uint16
-}
-
-type FeedMCServer struct {
-	gorm.Model
-	Hash      string `gorm:"uniqueIndex"`
-	GuildID   string
-	ChannelID string
-	RoleID    string
-	Name      string
-	Locale    discordgo.Locale
-}
-
-type FeedMCServers []FeedMCServer
-
-type ImagePngHash struct {
-	gorm.Model
-	Hash string `gorm:"primarykey"`
-	Data string `gorm:"primarykey"`
-}
-
-type Res struct {
-	Code    int64       `json:"code"`
-	Status  string      `json:"status"`
-	Content interface{} `json:"content"`
-}
-
-type MCServer struct {
-	gorm.Model
-	Hash    string `gorm:"uniqueIndex"`
-	Address string
-	Port    uint16
-	Online  bool
-}
-
-type MCServers []MCServer
-
-type MessageSessionData[T any] struct {
-	Message *discordgo.Message
-	Data    T
-	Handler func(MessageSessionData[T], *discordgo.Session, *discordgo.MessageCreate)
-}
-
-type MessagePanelConfigEmojiData struct {
-	UserID     string
-	Emojis     []*discordgo.ComponentEmoji
-	SelectMenu discordgo.SelectMenu
-}
-
-type MessageSessionType int
-
-const (
-	MessagePanelConfigEmoji MessageSessionType = 1
-)
-
-type MessageSelect struct {
-	MemberID string
-	GuildID  string
-}
-
-type MessagePin struct {
-	ChannelID string `gorm:"primarykey"`
-	MessageID string
-	UserID    string
-	UserName  string
-	UserIcon  string
-	Content   string
-	Embeds    []byte
-}
-
-type VoteSession struct {
-	InteractionCreate *discordgo.InteractionCreate
-	Vote              *VoteObject
-}
-
-type VoteObject struct {
-	VoteID       string `gorm:"primarykey"`
-	ChannelID    string
-	MessageID    string
-	Title        string
-	Description  string
-	MinSelection int
-	MaxSelection int
-	ShowCount    bool
-	Selections   []byte // array of VoteSelection
-	StartAt      time.Time
-	EndAt        time.Time
-	Duration     time.Duration
-	Locale       string
-}
-
-type VoteSelection struct {
-	ID          string
-	Emoji       discordgo.ComponentEmoji
-	Name        string
-	Description string
-	Users       []string
-}
 
 var StL = map[string]discordgo.Locale{
 	"English (Great Britain)": discordgo.EnglishGB,

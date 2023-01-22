@@ -1,5 +1,5 @@
 /*
-	Copyright (C) 2022  ikafly144
+	Copyright (C) 2022-2023  ikafly144
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ package pkg
 import "fmt"
 
 func init() {
-	fmt.Println(`	Copyright (C) 2022  ikafly144
+	fmt.Println(`	Copyright (C) 2022-2023  ikafly144
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by

@@ -14,23 +14,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package api
+package constants
 
-import (
-	"encoding/json"
-	"net/http"
-
-	"github.com/ikafly144/gobot/pkg/lib/logger"
+const (
+	BotName   = "gobot"
+	Version   = "${VERSION}"
+	GitURL    = "${GIT_URL}"
+	UserAgent = "DiscordBot (" + GitURL + ", " + BotName + ")"
 )
-
-func Serve() {
-	http.HandleFunc("/api/v0/gateway", func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(map[string]interface{}{"URL": "ws://localhost:8686/api/v0/gateway/ws"})
-	})
-	http.HandleFunc("/api/v0/gateway/ws", NewWebSocketHandler().Handle)
-	go func() {
-		if err := http.ListenAndServe(":8686", nil); err != nil {
-			logger.Fatal("[内部] APIを開始できませんでした %s", err)
-		}
-	}()
-}
