@@ -14,7 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package api
+package apinternal
 
 import (
 	"encoding/json"
@@ -80,7 +80,7 @@ func (h *WebsocketHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	if err := ws.ReadJSON(&data); err != nil {
 		logging.Error("[内部] JSON読み込みに失敗 %s", err)
 	}
-	logging.Info("[内部] 受信 %s", data)
+	logging.Info("[内部] 受信 %v", data)
 
 	h.Conn = append(h.Conn, ws)
 	go h.handlerLoop(ws)
@@ -91,7 +91,7 @@ func (h *WebsocketHandler) handlerLoop(ws *websocket.Conn) {
 	for {
 		data := Event{}
 		ws.ReadJSON(&data)
-		logging.Info("[内部] 受信 %s", data)
+		logging.Info("[内部] 受信 %v", data)
 
 		switch data.Type {
 		case "GATE":

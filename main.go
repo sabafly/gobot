@@ -22,14 +22,14 @@ import (
 	"strconv"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/sabafly/gobot/pkg/api"
+	apinternal "github.com/sabafly/gobot/pkg/api"
 	gobot "github.com/sabafly/gobot/pkg/bot"
 	"github.com/sabafly/gobot/pkg/lib/env"
 	"github.com/sabafly/gobot/pkg/lib/logging"
 )
 
 func main() {
-	api.Serve()
+	apinternal.Serve()
 
 	// ボットを用意
 	bot, err := gobot.New(env.Token)

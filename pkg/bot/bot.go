@@ -28,6 +28,10 @@ import (
 	"github.com/sabafly/gobot/pkg/lib/logging"
 )
 
+func init() {
+	discordgo.Logger = logging.Logger()
+}
+
 // シャードとセッションをまとめる
 type Shard struct {
 	ShardID int

@@ -16,4 +16,4 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package main
 
-// TODO: 何がしたいかわからない
+// TODO: Api実装をこっちに

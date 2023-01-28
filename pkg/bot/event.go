@@ -128,6 +128,5 @@ func (a *Shard) handleEvent(t string, i any) {
 	a.handle(t, i)
 }
 
-// TODO
 func (s *Shard) onInterface(i interface{}) {
 }

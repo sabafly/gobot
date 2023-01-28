@@ -18,7 +18,6 @@ package logging
 
 import (
 	"fmt"
-	"log"
 	"runtime"
 
 	"github.com/mattn/go-colorable"
@@ -122,7 +121,18 @@ func Fatal(format string, args ...any) {
 	}
 }
 
-// ライターを返す
-func Logger() *log.Logger {
-	return zap.NewStdLog(logger)
+// ログ関数を返す
+func Logger() func(msgL, caller int, format string, a ...interface{}) {
+	return func(msgL, caller int, format string, a ...interface{}) {
+		switch msgL {
+		case 0:
+			Error(format, a...)
+		case 1:
+			Warning(format, a...)
+		case 2:
+			Info(format, a...)
+		case 3:
+			Debug(format, a...)
+		}
+	}
 }
