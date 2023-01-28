@@ -29,7 +29,10 @@ jobs:
           go-version: ${{ matrix.go-version }}
       - name: Code
         uses: actions/checkout@v3
-      - run: go test -v -race ./...
+      - run: |
+          git submodule init
+          git submodule update --recursive
+          go test -v -race ./...
   
   lint:
     runs-on: ubuntu-latest
@@ -41,7 +44,10 @@ jobs:
       - name: Code
         uses: actions/checkout@v3
       - name: Go vet
-        run: go vet -x ./...
+        run: |
+          git submodule init
+          git submodule update --recursive
+          go vet -x ./...
 
       - name: GolangCI-Lint
         uses: golangci/golangci-lint-action@v3
@@ -54,6 +60,8 @@ jobs:
       - name: GolangCI-Lint
         if: github.event.name != 'pull_request' # See https://github.com/golangci/golangci-lint-action/issues/362
         run: |
+          git submodule init
+          git submodule update --recursive
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.45.2
 
           $(go env GOPATH)/bin/golangci-lint run
