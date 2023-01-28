@@ -131,7 +131,10 @@ func (s *Shard) listen(wsConn *websocket.Conn, listening <-chan any) {
 			return
 
 		default:
-			s.onEvent(messageType, message)
+			_, err := s.onEvent(messageType, message)
+			if err != nil {
+				logging.Error("イベント呼び出しに失敗 %s", err)
+			}
 		}
 	}
 }

@@ -109,6 +109,9 @@ func (a *Api) request(method, urlStr, contentType string, b []byte, sequence int
 
 			logging.Info("%s 失敗 (%s) 再試行します...", urlStr, resp.Status)
 			response, err = a.request(method, urlStr, contentType, b, sequence+1)
+			if err != nil {
+				return nil, err
+			}
 		} else {
 			return nil, fmt.Errorf("too many requests")
 		}

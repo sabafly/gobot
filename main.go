@@ -38,7 +38,7 @@ func main() {
 	}
 
 	bot.AddApiHandler(func(a *gobot.Shard, s *gobot.StatusUpdate) {
-		a.Session.UpdateStatusComplex(discordgo.UpdateStatusData{
+		err := a.Session.UpdateStatusComplex(discordgo.UpdateStatusData{
 			Activities: []*discordgo.Activity{
 				{
 					Name: "/help | " + strconv.Itoa(s.Servers) + " Servers",
@@ -47,6 +47,9 @@ func main() {
 			},
 			Status: "online",
 		})
+		if err != nil {
+			logging.Error("ステータス更新に失敗 %s", err)
+		}
 	})
 
 	// ボットを開始
