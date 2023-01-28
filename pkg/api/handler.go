@@ -90,7 +90,9 @@ func (h *WebsocketHandler) Handle(w http.ResponseWriter, r *http.Request) {
 func (h *WebsocketHandler) handlerLoop(ws *websocket.Conn) {
 	for {
 		data := Event{}
-		ws.ReadJSON(&data)
+		if err := ws.ReadJSON(&data); err != nil {
+			logging.Error("[内部] JSON読み込みに失敗 %s", err)
+		}
 		logging.Info("[内部] 受信 %v", data)
 
 		switch data.Type {

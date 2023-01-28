@@ -180,7 +180,10 @@ func (b *BotManager) AddHandler(handler any) {
 }
 
 func (b *BotManager) guildCreateHandler(s *discordgo.Session, g *discordgo.GuildCreate) {
-	b.GuildCreateCall(g)
+	err := b.GuildCreateCall(g)
+	if err != nil {
+		logging.Error("ギルド作成呼び出しに失敗 %s", err)
+	}
 	logging.Info("ギルドが追加されました %s(%s)", g.Name, g.ID)
 }
 

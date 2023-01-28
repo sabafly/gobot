@@ -82,7 +82,10 @@ func main() {
 		names = append(names, object)
 	}
 	sort.Strings(names)
-	eventHandlerTmpl.Execute(&buf, names)
+	err = eventHandlerTmpl.Execute(&buf, names)
+	if err != nil {
+		log.Fatalf("warning: internal error: could not execute event handler template: %s", err)
+	}
 
 	src, err := format.Source(buf.Bytes())
 	if err != nil {

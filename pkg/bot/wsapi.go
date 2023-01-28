@@ -141,7 +141,10 @@ func (s *Shard) listen(wsConn *websocket.Conn, listening <-chan any) {
 // TODO:実装する
 func (a *Shard) ApiClose() (err error) {
 	if a.wsConn != nil {
-		a.wsConn.Close()
+		err := a.wsConn.Close()
+		if err != nil {
+			logging.Fatal("ウェブソケット接続のクローズに失敗 %s", err)
+		}
 		a.wsConn = nil
 	}
 	if a.listening != nil {

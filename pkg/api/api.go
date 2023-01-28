@@ -53,7 +53,10 @@ func Serve() {
 
 	// ハンダラを登録
 	g.Handle(http.MethodGet, "/gateway", func(ctx *gin.Context) {
-		json.NewEncoder(ctx.Writer).Encode(map[string]interface{}{"URL": "ws://" + address + ":" + port + basePath + path + "/gateway/ws"})
+		err := json.NewEncoder(ctx.Writer).Encode(map[string]interface{}{"URL": "ws://" + address + ":" + port + basePath + path + "/gateway/ws"})
+		if err != nil {
+			logging.Error("応答に失敗 %s", err)
+		}
 	})
 	g.Handle("GET", "/gateway/ws", func(ctx *gin.Context) { wh.Handle(ctx.Writer, ctx.Request) })
 	g.Handle("POST", "/guild/create", func(ctx *gin.Context) { wh.HandlerGuildCreate(ctx.Writer, ctx.Request) })

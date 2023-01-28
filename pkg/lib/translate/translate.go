@@ -58,12 +58,21 @@ func loadTranslations() (i18n.Bundle, error) {
 	if err != nil {
 		panic(err)
 	}
-	bundle.AddMessages(ln.Tag, ln.Messages...)
+	err = bundle.AddMessages(ln.Tag, ln.Messages...)
+	if err != nil {
+		panic(err)
+	}
 	log.Print("完了")
-	fd, _ := f.ReadDir("lang")
+	fd, err := f.ReadDir("lang")
+	if err != nil {
+		panic(err)
+	}
 	for _, de := range fd {
 		log.Printf("%v を読み込み中...", de.Name())
-		bundle.LoadMessageFileFS(f, "lang/"+de.Name())
+		_, err := bundle.LoadMessageFileFS(f, "lang/"+de.Name())
+		if err != nil {
+			log.Printf("%v の読み込みに失敗 %s", de.Name(), err)
+		}
 		log.Print("完了")
 	}
 	log.Print("翻訳ファイルの読み込み完了")

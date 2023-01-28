@@ -36,7 +36,10 @@ func (h *WebsocketHandler) HandlerGuildCreate(w http.ResponseWriter, r *http.Req
 	if err := requests.Unmarshal(r, &guildCreate); err != nil {
 		logging.Error("[内部] [REST] アンマーシャルできませんでした %s", err)
 		w.WriteHeader(400)
-		json.NewEncoder(w).Encode(map[string]interface{}{"status": "400 Bad Request"})
+		err := json.NewEncoder(w).Encode(map[string]interface{}{"status": "400 Bad Request"})
+		if err != nil {
+			logging.Error("応答に失敗 %s", err)
+		}
 	}
 
 	// キャッシュに保存
@@ -46,9 +49,15 @@ func (h *WebsocketHandler) HandlerGuildCreate(w http.ResponseWriter, r *http.Req
 		statusUpdate := struct{ Servers int }{Servers: createdGuilds.Len()}
 		b, _ := json.Marshal(statusUpdate) //TODO: エラーハンドリング
 		logging.Debug("[内部] ステータス更新イベント")
-		ws.WriteJSON(Event{Operation: 8, Sequence: h.Seq + 1, Type: "STATUS_UPDATE", RawData: b})
+		err := ws.WriteJSON(Event{Operation: 8, Sequence: h.Seq + 1, Type: "STATUS_UPDATE", RawData: b})
+		if err != nil {
+			logging.Error("応答に失敗 %s", err)
+		}
 		wh.Seq++
 	})
 
-	json.NewEncoder(w).Encode(map[string]interface{}{"status": "200 OK"})
+	err := json.NewEncoder(w).Encode(map[string]interface{}{"status": "200 OK"})
+	if err != nil {
+		logging.Error("応答に失敗 %s", err)
+	}
 }
