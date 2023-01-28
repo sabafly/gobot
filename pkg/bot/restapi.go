@@ -24,7 +24,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/ikafly144/gobot/pkg/lib/logger"
+	"github.com/bwmarrin/discordgo"
+	"github.com/sabafly/gobot/pkg/lib/logging"
 )
 
 type RequestConfig struct {
@@ -57,8 +58,8 @@ func (a *Api) Request(method, urlStr string, data any) (response []byte, err err
 
 // リクエストを作成します
 func (a *Api) request(method, urlStr, contentType string, b []byte, sequence int) (response []byte, err error) {
-	logger.Debug("[内部] API REQUEST %6s :: %s\n", method, urlStr)
-	logger.Debug("[内部] API REQUEST PAYLOAD :: [%s]\n", string(b))
+	logging.Debug("[内部] API REQUEST %6s :: %s\n", method, urlStr)
+	logging.Debug("[内部] API REQUEST PAYLOAD :: [%s]\n", string(b))
 
 	req, err := http.NewRequest(method, urlStr, bytes.NewBuffer(b))
 	if err != nil {
@@ -74,7 +75,7 @@ func (a *Api) request(method, urlStr, contentType string, b []byte, sequence int
 	cfg := newRequestConfig(a, req)
 
 	for k, v := range req.Header {
-		logger.Debug("[内部] API REQUEST   HEADER :: [%s] = %+v\n", k, v)
+		logging.Debug("[内部] API REQUEST   HEADER :: [%s] = %+v\n", k, v)
 	}
 
 	resp, err := cfg.Client.Do(req)
@@ -83,7 +84,7 @@ func (a *Api) request(method, urlStr, contentType string, b []byte, sequence int
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			logger.Debug("error closing resp body")
+			logging.Debug("error closing resp body")
 		}
 	}()
 
@@ -92,11 +93,11 @@ func (a *Api) request(method, urlStr, contentType string, b []byte, sequence int
 		return nil, err
 	}
 
-	logger.Debug("API RESPONSE  STATUS :: %s\n", resp.Status)
+	logging.Debug("API RESPONSE  STATUS :: %s\n", resp.Status)
 	for k, v := range resp.Header {
-		logger.Debug("API RESPONSE  HEADER :: [%s] = %+v\n", k, v)
+		logging.Debug("API RESPONSE  HEADER :: [%s] = %+v\n", k, v)
 	}
-	logger.Debug("API RESPONSE    BODY :: [%s]\n\n\n", response)
+	logging.Debug("API RESPONSE    BODY :: [%s]\n\n\n", response)
 
 	switch resp.StatusCode {
 	case http.StatusOK:
@@ -106,7 +107,7 @@ func (a *Api) request(method, urlStr, contentType string, b []byte, sequence int
 		// 可能ならリクエストをやり直す
 		if sequence < cfg.MaxRestRetries {
 
-			logger.Info("%s 失敗 (%s) 再試行します...", urlStr, resp.Status)
+			logging.Info("%s 失敗 (%s) 再試行します...", urlStr, resp.Status)
 			response, err = a.request(method, urlStr, contentType, b, sequence+1)
 		} else {
 			return nil, fmt.Errorf("too many requests")
@@ -119,7 +120,7 @@ func (a *Api) request(method, urlStr, contentType string, b []byte, sequence int
 }
 
 // ------------------------------------------------------
-// websocket接続の関数
+// websocket接続関連
 // ------------------------------------------------------
 
 // 接続ゲートウェイを取得
@@ -142,4 +143,16 @@ func (a *Api) Gateway() (gateway string, err error) {
 	gateway = strings.TrimSuffix(gateway, "/")
 
 	return gateway, nil
+}
+
+// ------------------------------------------------------
+// API呼び出し
+// ------------------------------------------------------
+
+// ギルド作成呼び出し
+func (a *Api) GuildCreateCall(g *discordgo.GuildCreate) (err error) {
+	if _, err := a.Request("POST", EndpointGuildCreate, g); err != nil {
+		return err
+	}
+	return nil
 }

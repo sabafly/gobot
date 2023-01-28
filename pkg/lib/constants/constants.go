@@ -18,7 +18,7 @@ package constants
 
 const (
 	BotName   = "gobot"
-	Version   = "${VERSION}"
-	GitURL    = "${GIT_URL}"
+	Version   = "alpha-0.12.0"
+	GitURL    = "https://github.com/sabafly/gobot"
 	UserAgent = "DiscordBot (" + GitURL + ", " + BotName + ")"
 )

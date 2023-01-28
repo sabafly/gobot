@@ -17,14 +17,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package main
 
 import (
-	"log"
 	"os"
 	"os/signal"
+	"strconv"
 
-	"github.com/ikafly144/gobot/pkg/api"
-	gobot "github.com/ikafly144/gobot/pkg/bot"
-	"github.com/ikafly144/gobot/pkg/lib/env"
-	"github.com/ikafly144/gobot/pkg/lib/logger"
+	"github.com/bwmarrin/discordgo"
+	"github.com/sabafly/gobot/pkg/api"
+	gobot "github.com/sabafly/gobot/pkg/bot"
+	"github.com/sabafly/gobot/pkg/lib/env"
+	"github.com/sabafly/gobot/pkg/lib/logging"
 )
 
 func main() {
@@ -33,20 +34,32 @@ func main() {
 	// ボットを用意
 	bot, err := gobot.New(env.Token)
 	if err != nil {
-		logger.Fatal("failed create bot: %s", err)
+		logging.Fatal("failed create bot: %s", err)
 	}
+
+	bot.AddApiHandler(func(a *gobot.Shard, s *gobot.StatusUpdate) {
+		a.Session.UpdateStatusComplex(discordgo.UpdateStatusData{
+			Activities: []*discordgo.Activity{
+				{
+					Name: "/help | " + strconv.Itoa(s.Servers) + " Servers",
+					Type: discordgo.ActivityTypeGame,
+				},
+			},
+			Status: "online",
+		})
+	})
 
 	// ボットを開始
 	if err := bot.Open(); err != nil {
-		log.Panicf("failed open bot: %s", err)
+		logging.Fatal("failed open bot: %s", err)
 	}
 	defer bot.Close()
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt)
-	log.Println("Ctrl+Cで終了")
+	logging.Info("Ctrl+Cで終了")
 
 	sig := <-sigCh
 
-	log.Printf("受信: %v\n", sig.String())
+	logging.Info("受信: %v\n", sig.String())
 }

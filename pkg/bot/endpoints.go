@@ -19,8 +19,10 @@ package gobot
 var APIVersion = "0"
 
 var (
-	Endpoint           = "http://localhost:8686/"
-	EndpointAPI        = Endpoint + "api/v" + APIVersion + "/"
-	EndpointGateway    = EndpointAPI + "gateway"
-	EndpointGatewayBot = EndpointGateway + "/bot"
+	Endpoint        = "http://localhost:8686/"
+	EndpointAPI     = Endpoint + "api/v" + APIVersion + "/"
+	EndpointGateway = EndpointAPI + "gateway"
+	EndpointGuild   = EndpointAPI + "guild/"
+
+	EndpointGuildCreate = EndpointGuild + "create"
 )

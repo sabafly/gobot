@@ -39,7 +39,15 @@ var (
 	RemoveCommands bool
 
 	// ログレベル (ERROR, WARN, INFO, DEBUG)
-	LogLevel string
+	LogLevel  string
+	DLogLevel int
+
+	// DB接続オプション
+	DBHost string
+	DBPort string
+	DBUser string
+	DBPass string
+	DBName string
 )
 
 func init() {
@@ -55,4 +63,25 @@ func init() {
 		log.Panic(fmt.Errorf("failed load REMOVE_COMMANDS in .env file: %w", err))
 	}
 	LogLevel = os.Getenv("LOG_LEVEL")
+
+	// DiscordGo用のログレベル
+	l := os.Getenv("D_LOG_LEVEL")
+	switch l {
+	case "INFO", "info":
+		DLogLevel = 2
+	case "DEBUG", "debug":
+		DLogLevel = 3
+	case "ERROR", "error":
+		DLogLevel = 0
+	case "WARNING", "warning":
+		DLogLevel = 1
+	default:
+		DLogLevel = 2
+	}
+
+	DBHost = os.Getenv("DB_HOST")
+	DBPort = os.Getenv("DB_PORT")
+	DBUser = os.Getenv("DB_USER")
+	DBPass = os.Getenv("DB_PASS")
+	DBName = os.Getenv("DB_NAME")
 }

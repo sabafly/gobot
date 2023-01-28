@@ -21,9 +21,12 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	"github.com/ikafly144/gobot/pkg/lib/logger"
+	"github.com/sabafly/gobot/pkg/lib/logging"
 )
 
+// TODO: ライブラリにしてまとめるべき
+
+// イベントを格納する構造体
 type Event struct {
 	Operation int             `json:"op"`
 	Sequence  int64           `json:"s"`
@@ -34,14 +37,20 @@ type Event struct {
 	Struct interface{} `json:"-"`
 }
 
-type WebsocketHandler struct{}
+// ウェブソケットをハンドルする
+type WebsocketHandler struct {
+	Conn []*websocket.Conn
+	Seq  int64
+}
 
+// 新たなウェブソケットハンダラを生成する
 func NewWebSocketHandler() *WebsocketHandler {
 	return &WebsocketHandler{}
 }
 
+// ウェブソケット接続をハンドルする
 func (h *WebsocketHandler) Handle(w http.ResponseWriter, r *http.Request) {
-	logger.Debug("called")
+	logging.Debug("called")
 	upgrader := websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
@@ -49,7 +58,7 @@ func (h *WebsocketHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	}
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		logger.Fatal("[内部] アップグレードできませんでした")
+		logging.Fatal("[内部] アップグレードできませんでした")
 	}
 	message := Event{
 		Operation: 1,
@@ -64,21 +73,38 @@ func (h *WebsocketHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	b, _ = json.Marshal(message)
 
 	if err := ws.WriteMessage(1, b); err != nil {
-		logger.Error("[内部] WebSocket呼び出しに失敗 %s", err)
+		logging.Error("[内部] WebSocket呼び出しに失敗 %s", err)
 	}
 
 	data := Event{}
 	if err := ws.ReadJSON(&data); err != nil {
-		logger.Error("[内部] JSON読み込みに失敗 %s", err)
+		logging.Error("[内部] JSON読み込みに失敗 %s", err)
 	}
-	logger.Debug("[内部] 受信 %s", data)
+	logging.Info("[内部] 受信 %s", data)
+
+	h.Conn = append(h.Conn, ws)
 	go h.handlerLoop(ws)
 }
 
+// ハンドルをループする
 func (h *WebsocketHandler) handlerLoop(ws *websocket.Conn) {
 	for {
 		data := Event{}
 		ws.ReadJSON(&data)
-		logger.Info("[内部] 受信 %s", data)
+		logging.Info("[内部] 受信 %s", data)
+
+		switch data.Type {
+		case "GATE":
+		}
+	}
+}
+
+// 渡された関数をゴルーチンですべてのウェブソケット接続で実行する
+//
+// TODO: もっといい方法があるはず
+// TODO: ウェブソケット接続がクローズしたときに破綻する
+func (h *WebsocketHandler) Broadcast(f func(*websocket.Conn)) {
+	for _, c := range h.Conn {
+		go f(c)
 	}
 }

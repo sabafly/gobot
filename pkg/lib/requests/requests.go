@@ -14,6 +14,21 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package lib
+package requests
 
-// XXX:ライブラリは別リポジトリにするべきか
+import (
+	"encoding/json"
+	"io"
+	"net/http"
+)
+
+func Unmarshal(r *http.Request, v any) error {
+	buf, err := io.ReadAll(r.Body)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(buf, &v); err != nil {
+		return err
+	}
+	return nil
+}

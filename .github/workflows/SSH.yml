@@ -1,0 +1,30 @@
+name: SSH
+
+run-name: ${{ github.ref }}
+
+on:
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+**
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          port: ${{ secrets.SSH_PORT }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASS }}
+          script: |
+            cd ${{ secrets.SERVER_DEPLOY_DIR }}
+            echo ${{ secrets.SSH_PASSWORD }} | sudo -S git stash
+            echo ${{ secrets.SSH_PASSWORD }} | sudo -S git pull
+            echo ${{ secrets.SSH_PASSWORD }} | sudo -S git submodule init
+            echo ${{ secrets.SSH_PASSWORD }} | sudo -S git submodule update --recursive
+            /usr/local/go/bin/go build -race -ldflags "-X github.com/sabafly/gobot/pkg/cmd.VERSION=$(git describe --tag --abbrev=0)"
+            echo ${{ secrets.SSH_PASSWORD }} | sudo -S killall -SIGINT gobot

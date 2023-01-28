@@ -1,30 +1,60 @@
-name: CI
-
-run-name: ${{ github.ref }}
-
 on:
   push:
-    tags:
-      - v[0-9]+.[0-9]+.[0-9]+**
+  pull_request:
+
+name: CI
 
 jobs:
-  build:
+  format:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Deploy
-        uses: appleboy/ssh-action@master
+      - name: Install Go
+        uses: actions/setup-go@v3
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          port: ${{ secrets.SSH_PORT }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          passphrase: ${{ secrets.SSH_PASS }}
-          script: |
-            cd ${{ secrets.SERVER_DEPLOY_DIR }}
-            echo ${{ secrets.SSH_PASSWORD }} | sudo -S git stash
-            echo ${{ secrets.SSH_PASSWORD }} | sudo -S git pull
-            echo ${{ secrets.SSH_PASSWORD }} | sudo -S git submodule init
-            echo ${{ secrets.SSH_PASSWORD }} | sudo -S git submodule update --recursive
-            /usr/local/go/bin/go build -race -ldflags "-X github.com/ikafly144/gobot/pkg/cmd.VERSION=$(git describe --tag --abbrev=0)"
-            echo ${{ secrets.SSH_PASSWORD }} | sudo -S killall -SIGINT gobot
+          go-version: 1.19
+      - name: Code
+        uses: actions/checkout@v3
+      - name: Check diff between gofmt and code
+        run: diff <(gofmt -d .) <(echo -n)
+  
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [1.19]
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Code
+        uses: actions/checkout@v3
+      - run: go test -v -race ./...
+  
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+      - name: Code
+        uses: actions/checkout@v3
+      - name: Go vet
+        run: go vet -x ./...
+
+      - name: GolangCI-Lint
+        uses: golangci/golangci-lint-action@v3
+        if: github.event.name == 'pull_request'
+        with:
+          only-new-issues: true
+          skip-pkg-cache: true
+          skip-build-cache: true
+      
+      - name: GolangCI-Lint
+        if: github.event.name != 'pull_request' # See https://github.com/golangci/golangci-lint-action/issues/362
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.45.2
+
+          $(go env GOPATH)/bin/golangci-lint run
+
