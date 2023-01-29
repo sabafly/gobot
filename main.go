@@ -17,19 +17,79 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"os/signal"
 	"strconv"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/gin-gonic/gin"
 	apinternal "github.com/sabafly/gobot/pkg/api"
 	gobot "github.com/sabafly/gobot/pkg/bot"
 	"github.com/sabafly/gobot/pkg/lib/env"
 	"github.com/sabafly/gobot/pkg/lib/logging"
 )
 
+var (
+	address  = "localhost"
+	port     = "8686"
+	basePath = ""
+	path     = "/api/v0"
+)
+
 func main() {
-	apinternal.Serve()
+	// apinternal.Serve()
+	// 内部APIを用意
+	wh := apinternal.NewWebSocketHandler()
+	server := apinternal.NewServer()
+	server.Pages = []*apinternal.Page{
+		{
+			Path: "/api",
+			Child: []*apinternal.Page{
+				{
+					Path: "/v0/",
+					Child: []*apinternal.Page{
+						{
+							Path:   "gateway",
+							Method: "GET",
+							Handler: func(ctx *gin.Context) {
+								err := json.NewEncoder(ctx.Writer).Encode(map[string]interface{}{"URL": "ws://" + address + ":" + port + basePath + path + "/gateway/ws"})
+								if err != nil {
+									logging.Error("応答に失敗 %s", err)
+								}
+							},
+
+							Child: []*apinternal.Page{
+								{
+									Path:    "/ws",
+									Method:  "GET",
+									Handler: func(ctx *gin.Context) { wh.Handle(ctx.Writer, ctx.Request) },
+								},
+							},
+						},
+						{
+							Path: "guild/",
+
+							Child: []*apinternal.Page{
+								{
+									Path:    "create",
+									Method:  "POST",
+									Handler: func(ctx *gin.Context) { wh.HandlerGuildCreate(ctx.Writer, ctx.Request) },
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// サーバー開始
+	go func() {
+		if err := server.Serve(":8686"); err != nil {
+			logging.Fatal("[内部] APIを開始できませんでした %s", err)
+		}
+	}()
 
 	// ボットを用意
 	bot, err := gobot.New(env.Token)

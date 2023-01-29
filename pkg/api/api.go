@@ -17,54 +17,72 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package apinternal
 
 import (
-	"encoding/json"
-	"net/http"
+	"sync"
 
+	"github.com/andersfylling/snowflake/v5"
 	"github.com/gin-gonic/gin"
-	"github.com/sabafly/gobot/pkg/lib/database"
-	"github.com/sabafly/gobot/pkg/lib/env"
+	"github.com/gorilla/websocket"
 	"github.com/sabafly/gobot/pkg/lib/logging"
 )
 
-// TODO: mainパッケージで組み立てるべき
+// TODO: コメントを書く
+type Server struct {
+	sync.RWMutex
 
-var (
-	g        = gin.New()
-	address  = "localhost"
-	port     = "8686"
-	basePath = ""
-	path     = "/api/v0"
-)
+	Conn []*Connection
 
-var db *database.DatabaseManager
-var wh = NewWebSocketHandler()
+	gin *gin.Engine
 
-func init() {
-	db = database.NewDatabase()
-	if err := db.Connect(env.DBHost, env.DBPort, env.DBUser, env.DBPass, env.DBName, 2); err != nil {
-		logging.Fatal("データベースに接続できませんでした %s", err)
+	Pages       []*Page
+	RootHandler func(*gin.Context)
+}
+
+type Connection struct {
+	*websocket.Conn
+	ID snowflake.Snowflake
+}
+
+type Page struct {
+	Method  string
+	Path    string
+	Handler func(*gin.Context)
+
+	Child []*Page
+}
+
+func NewServer() *Server {
+	return &Server{
+		gin:         gin.New(),
+		RootHandler: DefaultHandler,
 	}
 }
 
-// APIサーバーを開始する
-func Serve() {
-	// ginを初期化
-	g.RouterGroup = *g.Group(path)
+func (s *Server) Serve(addr ...string) (err error) {
+	for _, p := range s.Pages {
+		p.Parse(s.gin)
+	}
+	return s.gin.Run(addr...)
+}
 
-	// ハンダラを登録
-	g.Handle(http.MethodGet, "/gateway", func(ctx *gin.Context) {
-		err := json.NewEncoder(ctx.Writer).Encode(map[string]interface{}{"URL": "ws://" + address + ":" + port + basePath + path + "/gateway/ws"})
-		if err != nil {
-			logging.Error("応答に失敗 %s", err)
-		}
-	})
-	g.Handle("GET", "/gateway/ws", func(ctx *gin.Context) { wh.Handle(ctx.Writer, ctx.Request) })
-	g.Handle("POST", "/guild/create", func(ctx *gin.Context) { wh.HandlerGuildCreate(ctx.Writer, ctx.Request) })
+func (p *Page) Parse(g *gin.Engine) {
+	p.parse(p.Method, p.Path, p.Handler, g)
+	for _, p2 := range p.Child {
+		p2.parse(p2.Method, p2.Path, p.Handler, g)
+	}
+}
 
-	// サーバー開始
-	go func() {
-		if err := g.Run(":8686"); err != nil {
-			logging.Fatal("[内部] APIを開始できませんでした %s", err)
-		}
-	}()
+func (p *Page) parse(method, path string, handler func(*gin.Context), g *gin.Engine) {
+	if handler != nil {
+		g.Handle(method, path, handler)
+	}
+	for _, p2 := range p.Child {
+		p2.parse(p2.Method, path+p2.Path, p2.Handler, g)
+	}
+}
+
+func DefaultHandler(ctx *gin.Context) {
+	_, err := ctx.Writer.WriteString("Hello World!")
+	if err != nil {
+		logging.Error("error: レスポンス書き込みに失敗 %s", err)
+	}
 }

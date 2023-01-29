@@ -53,7 +53,7 @@ func (h *WebsocketHandler) HandlerGuildCreate(w http.ResponseWriter, r *http.Req
 		if err != nil {
 			logging.Error("応答に失敗 %s", err)
 		}
-		wh.Seq++
+		h.Seq++
 	})
 
 	err := json.NewEncoder(w).Encode(map[string]interface{}{"status": "200 OK"})
