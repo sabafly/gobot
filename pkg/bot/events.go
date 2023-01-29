@@ -21,4 +21,5 @@ package gobot
 // ボットステータス更新イベント
 type StatusUpdate struct {
 	Servers int // サーバー数
+	Users   int
 }

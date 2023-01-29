@@ -153,7 +153,9 @@ func (a *Api) Gateway() (gateway string, err error) {
 // ------------------------------------------------------
 
 // ギルド作成呼び出し
-func (a *Api) GuildCreateCall(g *discordgo.GuildCreate) (err error) {
+//
+// TODO: 別の場所に移す
+func (a *Api) guildCreateCall(g *discordgo.GuildCreate) (err error) {
 	if _, err := a.Request("POST", EndpointGuildCreate, g); err != nil {
 		return err
 	}

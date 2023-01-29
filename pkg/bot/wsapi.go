@@ -36,7 +36,7 @@ type Event struct {
 	RawData   json.RawMessage `json:"d"`
 	// Structはこのファイルのその他の型の一つを含む
 	// TODO:よくわからん
-	Struct interface{} `json:"-"`
+	Struct any `json:"-"`
 }
 
 type heartbeatOp struct {

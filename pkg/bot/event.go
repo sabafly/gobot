@@ -128,5 +128,6 @@ func (a *Shard) handleEvent(t string, i any) {
 	a.handle(t, i)
 }
 
-func (s *Shard) onInterface(i interface{}) {
+func (s *Shard) onInterface(i any) {
+	// TODO: 実装する
 }

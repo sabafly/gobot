@@ -14,7 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package apinternal
+package main
 
 import (
 	"encoding/json"
@@ -24,7 +24,7 @@ import (
 	"github.com/sabafly/gobot/pkg/lib/logging"
 )
 
-// TODO: ライブラリにしてまとめるべき
+// XXX: ライブラリにしてまとめるほうがいいか
 
 // イベントを格納する構造体
 type Event struct {
@@ -34,7 +34,7 @@ type Event struct {
 	RawData   json.RawMessage `json:"d"`
 	// Structはこのファイルのその他の型の一つを含む
 	// TODO:よくわからん
-	Struct interface{} `json:"-"`
+	Struct any `json:"-"`
 }
 
 // ウェブソケットをハンドルする

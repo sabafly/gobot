@@ -14,7 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package apinternal
+package main
 
 import (
 	"encoding/json"
@@ -36,7 +36,7 @@ func (h *WebsocketHandler) HandlerGuildCreate(w http.ResponseWriter, r *http.Req
 	if err := requests.Unmarshal(r, &guildCreate); err != nil {
 		logging.Error("[内部] [REST] アンマーシャルできませんでした %s", err)
 		w.WriteHeader(400)
-		err := json.NewEncoder(w).Encode(map[string]interface{}{"status": "400 Bad Request"})
+		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request"})
 		if err != nil {
 			logging.Error("応答に失敗 %s", err)
 		}
@@ -56,7 +56,7 @@ func (h *WebsocketHandler) HandlerGuildCreate(w http.ResponseWriter, r *http.Req
 		h.Seq++
 	})
 
-	err := json.NewEncoder(w).Encode(map[string]interface{}{"status": "200 OK"})
+	err := json.NewEncoder(w).Encode(map[string]any{"status": "200 OK"})
 	if err != nil {
 		logging.Error("応答に失敗 %s", err)
 	}

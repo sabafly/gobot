@@ -122,8 +122,8 @@ func Fatal(format string, args ...any) {
 }
 
 // ログ関数を返す
-func Logger() func(msgL, caller int, format string, a ...interface{}) {
-	return func(msgL, caller int, format string, a ...interface{}) {
+func Logger() func(msgL, caller int, format string, a ...any) {
+	return func(msgL, caller int, format string, a ...any) {
 		switch msgL {
 		case 0:
 			Error(format, a...)

@@ -38,9 +38,8 @@ var (
 )
 
 func main() {
-	// apinternal.Serve()
 	// 内部APIを用意
-	wh := apinternal.NewWebSocketHandler()
+	wh := NewWebSocketHandler()
 	server := apinternal.NewServer()
 	server.Pages = []*apinternal.Page{
 		{
@@ -53,7 +52,7 @@ func main() {
 							Path:   "gateway",
 							Method: "GET",
 							Handler: func(ctx *gin.Context) {
-								err := json.NewEncoder(ctx.Writer).Encode(map[string]interface{}{"URL": "ws://" + address + ":" + port + basePath + path + "/gateway/ws"})
+								err := json.NewEncoder(ctx.Writer).Encode(map[string]any{"URL": "ws://" + address + ":" + port + basePath + path + "/gateway/ws"})
 								if err != nil {
 									logging.Error("応答に失敗 %s", err)
 								}

@@ -26,22 +26,26 @@ import (
 )
 
 // TODO: コメントを書く
+
+// APIサーバーの構造体
 type Server struct {
 	sync.RWMutex
 
 	Conn []*Connection
 
-	gin *gin.Engine
-
-	Pages       []*Page
-	RootHandler func(*gin.Context)
+	gin   *gin.Engine
+	Pages []*Page
 }
 
+// ウェブソケット接続を扱う
 type Connection struct {
 	*websocket.Conn
 	ID snowflake.Snowflake
 }
 
+// ページの構造を表す構造体
+//
+// ハンダラがnilだった場合、Parse時に無視される
 type Page struct {
 	Method  string
 	Path    string
@@ -50,13 +54,14 @@ type Page struct {
 	Child []*Page
 }
 
+// 新たなサーバー構造を生成する
 func NewServer() *Server {
 	return &Server{
-		gin:         gin.New(),
-		RootHandler: DefaultHandler,
+		gin: gin.New(),
 	}
 }
 
+// ページを解析してサーバーを起動する
 func (s *Server) Serve(addr ...string) (err error) {
 	for _, p := range s.Pages {
 		p.Parse(s.gin)
@@ -64,6 +69,7 @@ func (s *Server) Serve(addr ...string) (err error) {
 	return s.gin.Run(addr...)
 }
 
+// ページ構造を解析してginエンジンに登録する
 func (p *Page) Parse(g *gin.Engine) {
 	p.parse(p.Method, p.Path, p.Handler, g)
 	for _, p2 := range p.Child {
@@ -71,6 +77,7 @@ func (p *Page) Parse(g *gin.Engine) {
 	}
 }
 
+// ginエンジンにページハンダラを登録する
 func (p *Page) parse(method, path string, handler func(*gin.Context), g *gin.Engine) {
 	if handler != nil {
 		g.Handle(method, path, handler)
@@ -80,6 +87,7 @@ func (p *Page) parse(method, path string, handler func(*gin.Context), g *gin.Eng
 	}
 }
 
+// Hello Worldを返すシンプルなハンダラ
 func DefaultHandler(ctx *gin.Context) {
 	_, err := ctx.Writer.WriteString("Hello World!")
 	if err != nil {

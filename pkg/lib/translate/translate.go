@@ -80,18 +80,18 @@ func loadTranslations() (i18n.Bundle, error) {
 }
 
 func Message(locale discordgo.Locale, messageId string) (res string) {
-	res = Translate(locale, messageId, map[string]interface{}{})
+	res = Translate(locale, messageId, map[string]any{})
 	return
 }
 
-func Translate(locale discordgo.Locale, messageId string, templateData interface{}) (res string) {
+func Translate(locale discordgo.Locale, messageId string, templateData any) (res string) {
 	res = Translates(locale, messageId, templateData, 2)
 	return
 }
 
 var reg = regexp.MustCompile("[,\\.;:\\]\\[@\\\\\\^\\/\\-!\"#\\$%&'\\(\\)=~\\|<>\\?_\\+\\*\\}\\{`]")
 
-func Translates(locale discordgo.Locale, messageId string, templateData interface{}, pluralCount int) string {
+func Translates(locale discordgo.Locale, messageId string, templateData any, pluralCount int) string {
 	messageId = strings.ReplaceAll(messageId, ".", "_")
 	defaultLocalizer := i18n.NewLocalizer(&translations, string(locale))
 	res, err := defaultLocalizer.Localize(&i18n.LocalizeConfig{
@@ -190,7 +190,7 @@ func MessageMap(key string, replace bool) *map[discordgo.Locale]string {
 	return res
 }
 
-func ErrorEmbed(locale discordgo.Locale, key string, any ...interface{}) (embed []*discordgo.MessageEmbed) {
+func ErrorEmbed(locale discordgo.Locale, key string, any ...any) (embed []*discordgo.MessageEmbed) {
 	var trs string
 	if len(any) != 0 {
 		trs = Translate(locale, key, any[0])
