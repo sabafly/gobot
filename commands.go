@@ -19,37 +19,27 @@ package main
 import (
 	"github.com/bwmarrin/discordgo"
 	gobot "github.com/sabafly/gobot/pkg/bot"
-	"github.com/sabafly/gobot/pkg/lib/logging"
 )
+
+var DMPermission = true
 
 func commands() gobot.ApplicationCommands {
 	return gobot.ApplicationCommands{
 		{
 			ApplicationCommand: &discordgo.ApplicationCommand{
-				Name:        "ping",
-				Description: "pong!",
+				Name:         "ping",
+				Description:  "pong!",
+				DMPermission: &DMPermission,
 			},
-			Handler: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Embeds: setEmbedProperties([]*discordgo.MessageEmbed{
-							{
-								Title: "🏓 pong!",
-								Fields: []*discordgo.MessageEmbedField{
-									{
-										Name:  "Discord API",
-										Value: s.HeartbeatLatency().String(),
-									},
-								},
-							},
-						}),
-					},
-				})
-				if err != nil {
-					logging.Error("インタラクション応答に失敗 %s", err)
-				}
+			Handler: CommandTextPing,
+		},
+		{
+			ApplicationCommand: &discordgo.ApplicationCommand{
+				Name:         "info",
+				Type:         discordgo.UserApplicationCommand,
+				DMPermission: &DMPermission,
 			},
+			Handler: CommandUserInfo,
 		},
 	}
 }

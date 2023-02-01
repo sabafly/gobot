@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/sabafly/gobot/pkg/lib/env"
 	"github.com/sabafly/gobot/pkg/lib/logging"
 )
 
@@ -30,6 +31,22 @@ type ApplicationCommand struct {
 }
 
 type ApplicationCommands []*ApplicationCommand
+
+func (a *ApplicationCommands) Parse() func(*discordgo.Session, *discordgo.InteractionCreate) {
+	handler := map[string]func(*discordgo.Session, *discordgo.InteractionCreate){}
+	for _, ac := range *a {
+		if ac.Handler != nil {
+			handler[ac.Name] = ac.Handler
+		}
+	}
+	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		if f, ok := handler[i.Interaction.ApplicationCommandData().Name]; ok {
+			f(s, i)
+		} else {
+			logging.Warning("不明なコマンド要求")
+		}
+	}
+}
 
 func (b *BotManager) ApplicationCommandCreate(tree ApplicationCommands) (registeredCommands []*discordgo.ApplicationCommand, err error) {
 	if len(b.Shards) == 0 {
@@ -43,11 +60,9 @@ func (b *BotManager) ApplicationCommandCreate(tree ApplicationCommands) (registe
 		if cmd != nil {
 			registeredCommands = append(registeredCommands, cmd)
 		}
-		if v.Handler != nil {
-			for _, s := range b.Shards {
-				s.Session.AddHandler(v.Handler)
-			}
-		}
+	}
+	for _, s := range b.Shards {
+		s.Session.AddHandler(tree.Parse())
 	}
 	return registeredCommands, nil
 }
@@ -62,6 +77,38 @@ func (b *BotManager) ApplicationCommandDelete(cmd []*discordgo.ApplicationComman
 			return errors.New("error: nil command")
 		}
 		err := b.Shards[0].Session.ApplicationCommandDelete(b.Shards[0].Session.State.User.ID, "", ac.ID)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (b *BotManager) ApplicationCommands() ([]*discordgo.ApplicationCommand, error) {
+	if len(b.Shards) == 0 {
+		return nil, errors.New("error: no session")
+	}
+	cmd, err := b.Shards[0].Session.ApplicationCommands(b.Shards[0].Session.State.User.ID, "")
+	if err != nil {
+		return nil, err
+	}
+	return cmd, nil
+}
+
+func (b *BotManager) LocalApplicationCommandDelete() error {
+	if len(b.Shards) == 0 {
+		return errors.New("error: no session")
+	}
+	cmd, err := b.Shards[0].Session.ApplicationCommands(b.Shards[0].Session.State.User.ID, env.AdminID)
+	if err != nil {
+		return err
+	}
+	for _, ac := range cmd {
+		if ac == nil {
+			logging.Error("コマンドがnil")
+			return errors.New("error: nil command")
+		}
+		err := b.Shards[0].Session.ApplicationCommandDelete(b.Shards[0].Session.State.User.ID, env.AdminID, ac.ID)
 		if err != nil {
 			return err
 		}

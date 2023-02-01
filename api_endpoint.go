@@ -27,12 +27,12 @@ import (
 	"github.com/sabafly/gobot/pkg/lib/requests"
 )
 
-var createdGuilds *caches.CacheManager[discordgo.GuildCreate] = caches.NewCacheManager[discordgo.GuildCreate](nil)
+var createdGuilds *caches.CacheManager[struct{ ID string }] = caches.NewCacheManager[struct{ ID string }](nil)
 
 // ギルド作成ハンダラ
 func (h *WebsocketHandler) HandlerGuildCreate(w http.ResponseWriter, r *http.Request) {
 	// データを取り出す
-	guildCreate := discordgo.GuildCreate{}
+	guildCreate := struct{ ID string }{}
 	if err := requests.Unmarshal(r, &guildCreate); err != nil {
 		logging.Error("[内部] [REST] アンマーシャルできませんでした %s", err)
 		w.WriteHeader(400)
@@ -40,6 +40,7 @@ func (h *WebsocketHandler) HandlerGuildCreate(w http.ResponseWriter, r *http.Req
 		if err != nil {
 			logging.Error("応答に失敗 %s", err)
 		}
+		return
 	}
 
 	// キャッシュに保存
@@ -52,6 +53,11 @@ func (h *WebsocketHandler) HandlerGuildCreate(w http.ResponseWriter, r *http.Req
 		err := ws.WriteJSON(Event{Operation: 8, Sequence: h.Seq + 1, Type: "STATUS_UPDATE", RawData: b})
 		if err != nil {
 			logging.Error("応答に失敗 %s", err)
+			w.WriteHeader(500)
+			err := json.NewEncoder(w).Encode(map[string]any{"status": "500 Server Error"})
+			if err != nil {
+				logging.Error("応答に失敗 %s", err)
+			}
 		}
 		h.Seq++
 	})

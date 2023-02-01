@@ -77,9 +77,11 @@ func (b *BotManager) Open() (err error) {
 		s := shards[i].Session
 
 		// セッションを初期化
+		s.Identify.Intents = discordgo.IntentsAll
 		s.ShardCount = b.ShardCount
 		s.ShardID = shards[i].ShardID
 		s.UserAgent = constants.UserAgent
+		s.StateEnabled = true
 
 		s.LogLevel = env.DLogLevel
 
@@ -181,7 +183,7 @@ func (b *BotManager) AddHandler(handler any) {
 }
 
 func (b *BotManager) guildCreateHandler(s *discordgo.Session, g *discordgo.GuildCreate) {
-	err := b.guildCreateCall(g)
+	err := b.guildCreateCall(g.ID)
 	if err != nil {
 		logging.Error("ギルド作成呼び出しに失敗 %s", err)
 	}

@@ -101,6 +101,7 @@ func main() {
 		logging.Fatal("failed create bot: %s", err)
 	}
 
+	// ハンダラ登録
 	bot.AddApiHandler(func(a *gobot.Shard, s *gobot.StatusUpdate) {
 		err := a.Session.UpdateStatusComplex(discordgo.UpdateStatusData{
 			Activities: []*discordgo.Activity{
@@ -122,14 +123,20 @@ func main() {
 	}
 	defer bot.Close()
 
+	// コマンド登録
 	registeredCommands, err := bot.ApplicationCommandCreate(commands())
 	if err != nil {
 		panic(err)
 	}
 
 	if env.RemoveCommands {
+		// コマンド削除
 		defer func() {
 			err := bot.ApplicationCommandDelete(registeredCommands)
+			if err != nil {
+				logging.Error("コマンド削除に失敗 %s", err)
+			}
+			err = bot.LocalApplicationCommandDelete()
 			if err != nil {
 				logging.Error("コマンド削除に失敗 %s", err)
 			}

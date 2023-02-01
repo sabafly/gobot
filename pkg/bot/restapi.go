@@ -59,7 +59,7 @@ func (a *Api) Request(method, urlStr string, data any) (response []byte, err err
 // リクエストを作成します
 func (a *Api) request(method, urlStr, contentType string, b []byte, sequence int) (response []byte, err error) {
 	logging.Debug("[内部] API REQUEST %6s :: %s\n", method, urlStr)
-	logging.Debug("[内部] API REQUEST PAYLOAD :: [%s]\n", string(b))
+	// logging.Debug("[内部] API REQUEST PAYLOAD :: [%s]\n", string(b))
 
 	req, err := http.NewRequest(method, urlStr, bytes.NewBuffer(b))
 	if err != nil {
@@ -155,7 +155,8 @@ func (a *Api) Gateway() (gateway string, err error) {
 // ギルド作成呼び出し
 //
 // TODO: 別の場所に移す
-func (a *Api) guildCreateCall(g *discordgo.GuildCreate) (err error) {
+func (a *Api) guildCreateCall(guildID string) (err error) {
+	g := struct{ ID string }{ID: guildID}
 	if _, err := a.Request("POST", EndpointGuildCreate, g); err != nil {
 		return err
 	}
