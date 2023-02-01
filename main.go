@@ -28,6 +28,7 @@ import (
 	gobot "github.com/sabafly/gobot/pkg/bot"
 	"github.com/sabafly/gobot/pkg/lib/env"
 	"github.com/sabafly/gobot/pkg/lib/logging"
+	"github.com/sabafly/gobot/pkg/lib/translate"
 )
 
 var (
@@ -117,9 +118,20 @@ func main() {
 	}
 	defer bot.Close()
 
+	registeredCommands, err := bot.ApplicationCommandCreate(commands())
+	if err != nil {
+		panic(err)
+	}
+
+	if env.RemoveCommands {
+		defer bot.ApplicationCommandDelete(registeredCommands)
+	}
+
+	// シグナル待機
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt)
 	logging.Info("Ctrl+Cで終了")
+	logging.Info(translate.Message(discordgo.Japanese, "test_message"))
 
 	sig := <-sigCh
 

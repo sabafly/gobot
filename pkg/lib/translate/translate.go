@@ -23,37 +23,37 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/BurntSushi/toml"
 	"github.com/bwmarrin/discordgo"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
+	"github.com/sabafly/gobot/pkg/lib/logging"
 	"golang.org/x/text/language"
+	"gopkg.in/yaml.v2"
 )
 
 //go:embed lang/*
-//go:embed en.toml
+//go:embed ja.yaml
 var f embed.FS
 
 var (
-	defaultLang  = language.English
+	defaultLang  = language.Japanese
 	translations = i18n.Bundle{}
 )
 
 func init() {
-	log.SetFlags(log.Ltime)
-	log.Print("翻訳ファイルを読み込みます")
+	logging.Info("翻訳ファイルを読み込みます")
 	translations, _ = loadTranslations()
 }
 
 func loadTranslations() (i18n.Bundle, error) {
 	bundle := i18n.NewBundle(defaultLang)
-	bundle.RegisterUnmarshalFunc("toml", toml.Unmarshal)
-	log.Print("en.toml を読み込み中...")
-	buf, err := f.ReadFile("en.toml")
+	bundle.RegisterUnmarshalFunc("yaml", yaml.Unmarshal)
+	logging.Info("ja.yaml を読み込み中...")
+	buf, err := f.ReadFile("ja.yaml")
 	if err != nil {
 		panic(err)
 	}
-	ln, err := i18n.ParseMessageFileBytes(buf, "en.toml", map[string]i18n.UnmarshalFunc{
-		"toml": toml.Unmarshal,
+	ln, err := i18n.ParseMessageFileBytes(buf, "ja.yaml", map[string]i18n.UnmarshalFunc{
+		"yaml": yaml.Unmarshal,
 	})
 	if err != nil {
 		panic(err)
@@ -62,20 +62,20 @@ func loadTranslations() (i18n.Bundle, error) {
 	if err != nil {
 		panic(err)
 	}
-	log.Print("完了")
+	logging.Info("完了")
 	fd, err := f.ReadDir("lang")
 	if err != nil {
 		panic(err)
 	}
 	for _, de := range fd {
-		log.Printf("%v を読み込み中...", de.Name())
+		logging.Info("%v を読み込み中...", de.Name())
 		_, err := bundle.LoadMessageFileFS(f, "lang/"+de.Name())
 		if err != nil {
-			log.Printf("%v の読み込みに失敗 %s", de.Name(), err)
+			logging.Error("%v の読み込みに失敗 %s", de.Name(), err)
 		}
-		log.Print("完了")
+		logging.Info("完了")
 	}
-	log.Print("翻訳ファイルの読み込み完了")
+	logging.Info("翻訳ファイルの読み込み完了")
 	return *bundle, nil
 }
 
@@ -100,7 +100,7 @@ func Translates(locale discordgo.Locale, messageId string, templateData any, plu
 		PluralCount:  pluralCount,
 	})
 	if err != nil {
-		defaultLocalizer = i18n.NewLocalizer(&translations, "en")
+		defaultLocalizer = i18n.NewLocalizer(&translations, "ja")
 		res, err = defaultLocalizer.Localize(&i18n.LocalizeConfig{
 			MessageID:    messageId,
 			TemplateData: templateData,
@@ -108,7 +108,7 @@ func Translates(locale discordgo.Locale, messageId string, templateData any, plu
 		})
 		if err != nil {
 			log.Print(err)
-			res = fmt.Sprintf("Translate error: %v", err)
+			res = fmt.Sprintf("translate error: %v", err)
 		}
 	}
 	match := reg.FindAllString(res, -1)

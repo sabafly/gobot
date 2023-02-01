@@ -17,10 +17,22 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package database
 
 import (
+	"errors"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
+
+// DSN構造体
+type DSN struct {
+	Host     string
+	Port     string
+	User     string
+	Pass     string
+	Name     string
+	LogLevel logger.LogLevel
+}
 
 // データベース接続を管理する構造体
 type DatabaseManager struct {
@@ -33,9 +45,9 @@ func NewDatabase() *DatabaseManager {
 }
 
 // データベースに接続
-func (d *DatabaseManager) Connect(host, port, user, pass, name string, logLevel logger.LogLevel) (err error) {
-	dsn := "host=" + host + " port=" + port + " user=" + user + " password=" + pass + " dbname=" + name + " sslmode=disable TimeZone=Asia/Tokyo"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(logLevel)})
+func (d *DatabaseManager) Connect(dsn DSN) (err error) {
+	dsnStr := "host=" + dsn.Host + " port=" + dsn.Port + " user=" + dsn.User + " password=" + dsn.Pass + " dbname=" + dsn.Name + " sslmode=disable TimeZone=Asia/Tokyo"
+	db, err := gorm.Open(postgres.Open(dsnStr), &gorm.Config{Logger: logger.Default.LogMode(dsn.LogLevel)})
 	if err != nil {
 		return err
 	}
@@ -45,6 +57,14 @@ func (d *DatabaseManager) Connect(host, port, user, pass, name string, logLevel 
 
 // テーブルを作成
 func (d *DatabaseManager) Create(data *any) (err error) {
+	// 早期リターン
+	if d.db == nil {
+		return errors.New("error: no database connection")
+	}
+
+	if err := d.db.AutoMigrate(data); err != nil {
+		return err
+	}
 	result := d.db.Create(&data)
 	if err := result.Error; err != nil {
 		return err
@@ -62,6 +82,14 @@ func (d *DatabaseManager) Create(data *any) (err error) {
 // その他の条件はgormのドキュメントを確認してください
 // https://gorm.io/ja_JP/docs/query.html#%E5%8F%96%E5%BE%97%E6%9D%A1%E4%BB%B6
 func (d *DatabaseManager) First(v *any, cond ...any) (err error) {
+	// 早期リターン
+	if d.db == nil {
+		return errors.New("error: no database connection")
+	}
+
+	if err := d.db.AutoMigrate(v); err != nil {
+		return err
+	}
 	result := d.db.First(&v, cond...)
 	if err := result.Error; err != nil {
 		return err
@@ -79,6 +107,14 @@ func (d *DatabaseManager) First(v *any, cond ...any) (err error) {
 // その他の条件はgormのドキュメントを確認してください
 // https://gorm.io/ja_JP/docs/query.html#%E5%8F%96%E5%BE%97%E6%9D%A1%E4%BB%B6
 func (d *DatabaseManager) Find(v *any, cond ...any) (err error) {
+	// 早期リターン
+	if d.db == nil {
+		return errors.New("error: no database connection")
+	}
+
+	if err := d.db.AutoMigrate(v); err != nil {
+		return err
+	}
 	result := d.db.Find(&v, cond...)
 	if err := result.Error; err != nil {
 		return err
@@ -89,6 +125,14 @@ func (d *DatabaseManager) Find(v *any, cond ...any) (err error) {
 // 渡されたデータのプライマリキーに一致する行がある場合その行を更新します
 // ない場合、新たに行を挿入します
 func (d *DatabaseManager) Save(v *any) (err error) {
+	// 早期リターン
+	if d.db == nil {
+		return errors.New("error: no database connection")
+	}
+
+	if err := d.db.AutoMigrate(v); err != nil {
+		return err
+	}
 	result := d.db.Save(&v)
 	if err := result.Error; err != nil {
 		return err
@@ -98,6 +142,14 @@ func (d *DatabaseManager) Save(v *any) (err error) {
 
 // 渡されたデータに一致するレコードを削除します
 func (d *DatabaseManager) Delete(v *any, cond ...any) (err error) {
+	// 早期リターン
+	if d.db == nil {
+		return errors.New("error: no database connection")
+	}
+
+	if err := d.db.AutoMigrate(v); err != nil {
+		return err
+	}
 	result := d.db.Delete(v, cond...)
 	if err := result.Error; err != nil {
 		return err

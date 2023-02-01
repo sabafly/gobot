@@ -16,4 +16,22 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package main
 
-// TODO: Api実装をこっちに
+import (
+	"time"
+
+	"github.com/bwmarrin/discordgo"
+	"github.com/sabafly/gobot/pkg/lib/constants"
+)
+
+func setEmbedProperties(embeds []*discordgo.MessageEmbed) []*discordgo.MessageEmbed {
+	for i := range embeds {
+		embeds[i].Color = constants.Color
+		if i == len(embeds)-1 {
+			embeds[i].Footer = &discordgo.MessageEmbedFooter{
+				Text: constants.BotName,
+			}
+			embeds[i].Timestamp = time.Now().Format(time.RFC3339)
+		}
+	}
+	return embeds
+}

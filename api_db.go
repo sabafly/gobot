@@ -14,8 +14,18 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package database
+package main
 
-// ----------------------------------------------------------------
-// 各テーブル用の構造体
-// ----------------------------------------------------------------
+import (
+	"github.com/sabafly/gobot/pkg/lib/database"
+	"github.com/sabafly/gobot/pkg/lib/env"
+	"gorm.io/gorm/logger"
+)
+
+func db() {
+	db := database.NewDatabase()
+	err := db.Connect(database.DSN{Host: env.DBHost, Port: env.DBPort, User: env.DBUser, Pass: env.DBPass, Name: env.DBName, LogLevel: logger.Info})
+	if err != nil {
+		panic(err)
+	}
+}

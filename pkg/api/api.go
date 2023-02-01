@@ -22,7 +22,6 @@ import (
 	"github.com/andersfylling/snowflake/v5"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/sabafly/gobot/pkg/lib/logging"
 )
 
 // TODO: コメントを書く
@@ -84,13 +83,5 @@ func (p *Page) parse(method, path string, handler func(*gin.Context), g *gin.Eng
 	}
 	for _, p2 := range p.Child {
 		p2.parse(p2.Method, path+p2.Path, p2.Handler, g)
-	}
-}
-
-// Hello Worldを返すシンプルなハンダラ
-func DefaultHandler(ctx *gin.Context) {
-	_, err := ctx.Writer.WriteString("Hello World!")
-	if err != nil {
-		logging.Error("error: レスポンス書き込みに失敗 %s", err)
 	}
 }

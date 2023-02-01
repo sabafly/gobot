@@ -152,6 +152,7 @@ func (a *Shard) ApiClose() (err error) {
 	}
 	if a.listening != nil {
 		close(a.listening)
+		a.listening = nil
 	}
 	return nil
 }
