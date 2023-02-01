@@ -61,3 +61,35 @@ func (h *WebsocketHandler) HandlerGuildCreate(w http.ResponseWriter, r *http.Req
 		logging.Error("応答に失敗 %s", err)
 	}
 }
+
+func (h *WebsocketHandler) HandlerGuildDelete(w http.ResponseWriter, r *http.Request) {
+	// データを取り出す
+	guildDelete := discordgo.GuildDelete{}
+	if err := requests.Unmarshal(r, &guildDelete); err != nil {
+		logging.Error("[内部] [REST] アンマーシャルできませんでした %s", err)
+		w.WriteHeader(400)
+		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request"})
+		if err != nil {
+			logging.Error("応答に失敗 %s", err)
+		}
+	}
+
+	// キャッシュに保存
+	createdGuilds.Delete(guildDelete.ID)
+
+	h.Broadcast(func(ws *websocket.Conn) {
+		statusUpdate := struct{ Servers int }{Servers: createdGuilds.Len()}
+		b, _ := json.Marshal(statusUpdate) //TODO: エラーハンドリング
+		logging.Debug("[内部] ステータス更新イベント")
+		err := ws.WriteJSON(Event{Operation: 8, Sequence: h.Seq + 1, Type: "STATUS_UPDATE", RawData: b})
+		if err != nil {
+			logging.Error("応答に失敗 %s", err)
+		}
+		h.Seq++
+	})
+
+	err := json.NewEncoder(w).Encode(map[string]any{"status": "200 OK"})
+	if err != nil {
+		logging.Error("応答に失敗 %s", err)
+	}
+}

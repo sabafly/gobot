@@ -25,4 +25,5 @@ var (
 	EndpointGuild   = EndpointAPI + "guild/"
 
 	EndpointGuildCreate = EndpointGuild + "create"
+	EndpointGuildDelete = EndpointGuild + "delete"
 )

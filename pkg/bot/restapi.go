@@ -161,3 +161,10 @@ func (a *Api) guildCreateCall(g *discordgo.GuildCreate) (err error) {
 	}
 	return nil
 }
+
+func (a *Api) guildDeleteCall(g *discordgo.GuildDelete) (err error) {
+	if _, err := a.Request("DELETE", EndpointGuildDelete, g); err != nil {
+		return err
+	}
+	return nil
+}

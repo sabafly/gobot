@@ -28,7 +28,6 @@ import (
 	gobot "github.com/sabafly/gobot/pkg/bot"
 	"github.com/sabafly/gobot/pkg/lib/env"
 	"github.com/sabafly/gobot/pkg/lib/logging"
-	"github.com/sabafly/gobot/pkg/lib/translate"
 )
 
 var (
@@ -75,6 +74,11 @@ func main() {
 									Path:    "create",
 									Method:  "POST",
 									Handler: func(ctx *gin.Context) { wh.HandlerGuildCreate(ctx.Writer, ctx.Request) },
+								},
+								{
+									Path:    "delete",
+									Method:  "DELETE",
+									Handler: func(ctx *gin.Context) { wh.HandlerGuildDelete(ctx.Writer, ctx.Request) },
 								},
 							},
 						},
@@ -124,14 +128,18 @@ func main() {
 	}
 
 	if env.RemoveCommands {
-		defer bot.ApplicationCommandDelete(registeredCommands)
+		defer func() {
+			err := bot.ApplicationCommandDelete(registeredCommands)
+			if err != nil {
+				logging.Error("コマンド削除に失敗 %s", err)
+			}
+		}()
 	}
 
 	// シグナル待機
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt)
 	logging.Info("Ctrl+Cで終了")
-	logging.Info(translate.Message(discordgo.Japanese, "test_message"))
 
 	sig := <-sigCh
 

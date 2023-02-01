@@ -3,7 +3,6 @@ module github.com/sabafly/gobot
 go 1.19
 
 require (
-	github.com/BurntSushi/toml v1.2.1
 	github.com/andersfylling/snowflake/v5 v5.0.1
 	github.com/bwmarrin/discordgo v0.26.1
 	github.com/dlclark/regexp2 v1.8.0
@@ -12,11 +11,13 @@ require (
 	github.com/nicksnyder/go-i18n/v2 v2.2.1
 	go.uber.org/zap v1.24.0
 	golang.org/x/text v0.6.0
+	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.4.6
 	gorm.io/gorm v1.24.3
 )
 
 require (
+	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
@@ -37,7 +38,6 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/net v0.5.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
 require (

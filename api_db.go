@@ -22,8 +22,9 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func db() {
-	db := database.NewDatabase()
+var db = database.NewDatabase()
+
+func init() {
 	err := db.Connect(database.DSN{Host: env.DBHost, Port: env.DBPort, User: env.DBUser, Pass: env.DBPass, Name: env.DBName, LogLevel: logger.Info})
 	if err != nil {
 		panic(err)

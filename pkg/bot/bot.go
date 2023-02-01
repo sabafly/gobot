@@ -169,6 +169,7 @@ func validateShards(token string, count int) (bot *BotManager, err error) {
 	}
 
 	bot.AddHandler(bot.guildCreateHandler)
+	bot.AddHandler(bot.guildDeleteHandler)
 	return bot, nil
 }
 
@@ -185,6 +186,14 @@ func (b *BotManager) guildCreateHandler(s *discordgo.Session, g *discordgo.Guild
 		logging.Error("ギルド作成呼び出しに失敗 %s", err)
 	}
 	logging.Info("ギルドが追加されました %s(%s)", g.Name, g.ID)
+}
+
+func (b *BotManager) guildDeleteHandler(s *discordgo.Session, g *discordgo.GuildDelete) {
+	err := b.guildDeleteCall(g)
+	if err != nil {
+		logging.Error("ギルド削除呼び出しに失敗 %s", err)
+	}
+	logging.Info("ギルドが削除されました %s(%s)", g.Name, g.ID)
 }
 
 func (b *BotManager) AddApiHandler(handler any) {

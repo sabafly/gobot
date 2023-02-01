@@ -19,6 +19,7 @@ package main
 import (
 	"github.com/bwmarrin/discordgo"
 	gobot "github.com/sabafly/gobot/pkg/bot"
+	"github.com/sabafly/gobot/pkg/lib/logging"
 )
 
 func commands() gobot.ApplicationCommands {
@@ -29,7 +30,7 @@ func commands() gobot.ApplicationCommands {
 				Description: "pong!",
 			},
 			Handler: func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
 					Data: &discordgo.InteractionResponseData{
 						Embeds: setEmbedProperties([]*discordgo.MessageEmbed{
@@ -45,6 +46,9 @@ func commands() gobot.ApplicationCommands {
 						}),
 					},
 				})
+				if err != nil {
+					logging.Error("インタラクション応答に失敗 %s", err)
+				}
 			},
 		},
 	}

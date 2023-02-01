@@ -62,7 +62,7 @@ func (ch *Cache[T]) newContext(parent *CacheManager[T], id string, timeout *time
 		ch.ctx, ch.del = context.WithTimeout(context.WithValue(context.WithValue(context.Background(), keyID, id), keyParent, parent), *timeout)
 	} else {
 		// nilだったら
-		ch.ctx, ch.del = context.WithCancel(context.WithValue(context.Background(), keyID, id))
+		ch.ctx, ch.del = context.WithCancel(context.WithValue(context.WithValue(context.Background(), keyID, id), keyParent, parent))
 	}
 
 	go ch.closer()
@@ -85,7 +85,7 @@ func (c *CacheManager[T]) Set(key string, v T) {
 	defer c.sync.Unlock()
 
 	cache := Cache[T]{ID: key, Data: &v}
-	cache.newContext(c, key, c.timeOut)
+	cache.ctx, cache.del = cache.newContext(c, key, c.timeOut)
 
 	c.caches[key] = cache
 }
@@ -97,7 +97,7 @@ func (c *CacheManager[T]) SetWithUUID(v T) (key string) {
 
 	id := uuid.New().String()
 	cache := Cache[T]{ID: id, Data: &v}
-	cache.newContext(c, id, c.timeOut)
+	cache.ctx, cache.del = cache.newContext(c, id, c.timeOut)
 
 	c.caches[id] = cache
 	return id
