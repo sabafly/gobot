@@ -25,6 +25,7 @@ import (
 	"github.com/sabafly/gobot/pkg/lib/translate"
 )
 
+// 埋め込みの色、フッター、タイムスタンプを設定する
 func setEmbedProperties(embeds []*discordgo.MessageEmbed) []*discordgo.MessageEmbed {
 	for i := range embeds {
 		if embeds[i].Color == 0 {
@@ -40,6 +41,7 @@ func setEmbedProperties(embeds []*discordgo.MessageEmbed) []*discordgo.MessageEm
 	return embeds
 }
 
+// エラーメッセージ埋め込みを作成する
 func ErrorTraceEmbed(locale discordgo.Locale, err error) []*discordgo.MessageEmbed {
 	stack := debug.Stack()
 	embeds := []*discordgo.MessageEmbed{
@@ -53,6 +55,7 @@ func ErrorTraceEmbed(locale discordgo.Locale, err error) []*discordgo.MessageEmb
 	return embeds
 }
 
+// エラーが発生したことを返すレスポンスを作成する
 func ErrorRespond(i *discordgo.InteractionCreate, err error) *discordgo.InteractionResponse {
 	return &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -62,6 +65,7 @@ func ErrorRespond(i *discordgo.InteractionCreate, err error) *discordgo.Interact
 	}
 }
 
+// 渡されたステータスの絵文字を返す
 func StatusString(status discordgo.Status) (str string) {
 	switch status {
 	case discordgo.StatusOnline:
@@ -78,6 +82,7 @@ func StatusString(status discordgo.Status) (str string) {
 	return ""
 }
 
+// アクティビティ名をアクティビティの種類によって渡された言語に翻訳して返す
 func ActivitiesNameString(locale discordgo.Locale, activity *discordgo.Activity) (str string) {
 	switch activity.Type {
 	case discordgo.ActivityTypeGame:

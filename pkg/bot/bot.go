@@ -170,8 +170,10 @@ func validateShards(token string, count int) (bot *BotManager, err error) {
 		})
 	}
 
+	// TODO: 別の場所に移す
 	bot.AddHandler(bot.guildCreateHandler)
 	bot.AddHandler(bot.guildDeleteHandler)
+
 	return bot, nil
 }
 
@@ -182,6 +184,7 @@ func (b *BotManager) AddHandler(handler any) {
 	}
 }
 
+// ギルド作成をデフォルトでハンドルする
 func (b *BotManager) guildCreateHandler(s *discordgo.Session, g *discordgo.GuildCreate) {
 	err := b.guildCreateCall(g.ID)
 	if err != nil {
@@ -190,6 +193,7 @@ func (b *BotManager) guildCreateHandler(s *discordgo.Session, g *discordgo.Guild
 	logging.Info("ギルドが追加されました %s(%s)", g.Name, g.ID)
 }
 
+// ギルド削除をデフォルトでハンドルする
 func (b *BotManager) guildDeleteHandler(s *discordgo.Session, g *discordgo.GuildDelete) {
 	err := b.guildDeleteCall(g)
 	if err != nil {
@@ -198,6 +202,7 @@ func (b *BotManager) guildDeleteHandler(s *discordgo.Session, g *discordgo.Guild
 	logging.Info("ギルドが削除されました %s(%s)", g.Name, g.ID)
 }
 
+// 内部APIのイベントハンダラを登録する
 func (b *BotManager) AddApiHandler(handler any) {
 	for _, s := range b.Shards {
 		s.AddHandler(handler)

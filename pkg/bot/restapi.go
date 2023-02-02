@@ -153,8 +153,6 @@ func (a *Api) Gateway() (gateway string, err error) {
 // ------------------------------------------------------
 
 // ギルド作成呼び出し
-//
-// TODO: 別の場所に移す
 func (a *Api) guildCreateCall(guildID string) (err error) {
 	g := struct{ ID string }{ID: guildID}
 	if _, err := a.Request("POST", EndpointGuildCreate, g); err != nil {
@@ -163,6 +161,7 @@ func (a *Api) guildCreateCall(guildID string) (err error) {
 	return nil
 }
 
+// ギルド削除呼び出し
 func (a *Api) guildDeleteCall(g *discordgo.GuildDelete) (err error) {
 	if _, err := a.Request("DELETE", EndpointGuildDelete, g); err != nil {
 		return err

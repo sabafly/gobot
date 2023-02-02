@@ -29,7 +29,8 @@ import (
 
 var createdGuilds *caches.CacheManager[struct{ ID string }] = caches.NewCacheManager[struct{ ID string }](nil)
 
-// ギルド作成ハンダラ
+// ギルド作成イベントを処理する
+// 受け取ったギルドをキャッシュに登録しクライアントにステータス更新イベントを送る
 func (h *WebsocketHandler) HandlerGuildCreate(w http.ResponseWriter, r *http.Request) {
 	// データを取り出す
 	guildCreate := struct{ ID string }{}
@@ -68,6 +69,8 @@ func (h *WebsocketHandler) HandlerGuildCreate(w http.ResponseWriter, r *http.Req
 	}
 }
 
+// ギルド削除イベントを受け取る
+// 受け取ったギルドをキャッシュから削除しクライアントにステータス更新イベントを送る
 func (h *WebsocketHandler) HandlerGuildDelete(w http.ResponseWriter, r *http.Request) {
 	// データを取り出す
 	guildDelete := discordgo.GuildDelete{}

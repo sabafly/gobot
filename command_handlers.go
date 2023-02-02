@@ -32,6 +32,8 @@ import (
 // テキストコマンド
 // ----------------------------------------------------------------
 
+// 疎通確認用コマンド
+// Discord API とのレスポンスを返す
 func CommandTextPing(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -58,6 +60,8 @@ func CommandTextPing(s *discordgo.Session, i *discordgo.InteractionCreate) {
 // ユーザーコマンド
 // ----------------------------------------------------------------
 
+// コマンド対象のユーザーデータを返すコマンド
+// TODO: 統計を追加
 func CommandUserInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	// ユーザー情報を取得
 	user, err := s.GuildMember(i.GuildID, i.ApplicationCommandData().TargetID)

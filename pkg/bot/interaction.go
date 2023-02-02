@@ -25,13 +25,16 @@ import (
 	"github.com/sabafly/gobot/pkg/lib/logging"
 )
 
+// アプリケーションコマンドとそのハンダラを備えた構造体
 type ApplicationCommand struct {
 	*discordgo.ApplicationCommand
 	Handler func(*discordgo.Session, *discordgo.InteractionCreate)
 }
 
+// アプリケーションコマンドのスライス型
 type ApplicationCommands []*ApplicationCommand
 
+// アプリケーションコマンドを解析してハンダラを返す
 func (a *ApplicationCommands) Parse() func(*discordgo.Session, *discordgo.InteractionCreate) {
 	handler := map[string]func(*discordgo.Session, *discordgo.InteractionCreate){}
 	for _, ac := range *a {
@@ -50,6 +53,7 @@ func (a *ApplicationCommands) Parse() func(*discordgo.Session, *discordgo.Intera
 	}
 }
 
+// ボットにアプリケーションコマンドを登録する
 func (b *BotManager) ApplicationCommandCreate(tree ApplicationCommands) (registeredCommands []*discordgo.ApplicationCommand, err error) {
 	if len(b.Shards) == 0 {
 		return nil, errors.New("error: no session")
@@ -66,6 +70,7 @@ func (b *BotManager) ApplicationCommandCreate(tree ApplicationCommands) (registe
 	return registeredCommands, nil
 }
 
+// ボットからアプリケーションコマンドを削除する
 func (b *BotManager) ApplicationCommandDelete(cmd []*discordgo.ApplicationCommand) (err error) {
 	if len(b.Shards) == 0 {
 		return errors.New("error: no session")
@@ -83,6 +88,7 @@ func (b *BotManager) ApplicationCommandDelete(cmd []*discordgo.ApplicationComman
 	return nil
 }
 
+// ボットに登録されているコマンドを取得する
 func (b *BotManager) ApplicationCommands() ([]*discordgo.ApplicationCommand, error) {
 	if len(b.Shards) == 0 {
 		return nil, errors.New("error: no session")
@@ -94,6 +100,9 @@ func (b *BotManager) ApplicationCommands() ([]*discordgo.ApplicationCommand, err
 	return cmd, nil
 }
 
+// サポートサーバーからすべてのコマンドを削除する
+//
+// TODO: 消すか残りも実装するか
 func (b *BotManager) LocalApplicationCommandDelete() error {
 	if len(b.Shards) == 0 {
 		return errors.New("error: no session")
