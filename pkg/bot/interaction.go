@@ -40,10 +40,12 @@ func (a *ApplicationCommands) Parse() func(*discordgo.Session, *discordgo.Intera
 		}
 	}
 	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if f, ok := handler[i.Interaction.ApplicationCommandData().Name]; ok {
-			f(s, i)
-		} else {
-			logging.Warning("不明なコマンド要求")
+		if i.Type == discordgo.InteractionApplicationCommand {
+			if f, ok := handler[i.Interaction.ApplicationCommandData().Name]; ok {
+				f(s, i)
+			} else {
+				logging.Warning("不明なコマンド要求")
+			}
 		}
 	}
 }
@@ -60,9 +62,6 @@ func (b *BotManager) ApplicationCommandCreate(tree ApplicationCommands) (registe
 		if cmd != nil {
 			registeredCommands = append(registeredCommands, cmd)
 		}
-	}
-	for _, s := range b.Shards {
-		s.Session.AddHandler(tree.Parse())
 	}
 	return registeredCommands, nil
 }

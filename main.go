@@ -117,6 +117,10 @@ func main() {
 		}
 	})
 
+	// コマンドハンダラ
+	command := commands()
+	bot.AddHandler(command.Parse())
+
 	// ボットを開始
 	if err := bot.Open(); err != nil {
 		logging.Fatal("failed open bot: %s", err)
@@ -124,7 +128,7 @@ func main() {
 	defer bot.Close()
 
 	// コマンド登録
-	registeredCommands, err := bot.ApplicationCommandCreate(commands())
+	registeredCommands, err := bot.ApplicationCommandCreate(command)
 	if err != nil {
 		panic(err)
 	}

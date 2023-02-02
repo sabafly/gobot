@@ -75,5 +75,23 @@ func StatusString(status discordgo.Status) (str string) {
 	case discordgo.StatusOffline:
 		return "<:offline:1055434315514785792>"
 	}
-	return
+	return ""
+}
+
+func ActivitiesNameString(locale discordgo.Locale, activity *discordgo.Activity) (str string) {
+	switch activity.Type {
+	case discordgo.ActivityTypeGame:
+		str = translate.Translate(locale, "activity_game_name", map[string]any{"Name": activity.Name})
+	case discordgo.ActivityTypeStreaming:
+		str = translate.Translate(locale, "activity_streaming_name", map[string]any{"Details": activity.Details, "URL": activity.URL})
+	case discordgo.ActivityTypeListening:
+		str = translate.Translate(locale, "activity_listening_name", map[string]any{"Name": activity.Name})
+	case discordgo.ActivityTypeWatching:
+		str = translate.Translate(locale, "activity_watching_name", map[string]any{"Name": activity.Name})
+	case discordgo.ActivityTypeCustom:
+		str = activity.Emoji.MessageFormat() + " " + activity.Name
+	case discordgo.ActivityTypeCompeting:
+		str = translate.Translate(locale, "activity_competing_name", map[string]any{"Name": activity.Name})
+	}
+	return str
 }

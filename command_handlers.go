@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"unicode/utf8"
 
 	"github.com/bwmarrin/discordgo"
@@ -133,7 +134,7 @@ func CommandUserInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	// ロール一覧
 	var roleStr string
 	for _, r := range roles {
-		roleStr += r.Mention()
+		roleStr += fmt.Sprintf("%s ", r.Mention())
 	}
 	roleStr += fmt.Sprintf("<@&%s>", i.GuildID)
 
@@ -187,6 +188,51 @@ func CommandUserInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		translate.Message(i.Locale, "command_user_info_time_joined"),
 		joined.Unix(), joined.Unix())
 
+	// ユーザーアクティビティ
+	var activityEmbeds []*discordgo.MessageEmbed
+	if status != nil {
+		for i2, a := range status.Activities {
+			if i2 > 4 {
+				break
+			}
+
+			// 詳細整形
+			var description string
+			if a.Type != discordgo.ActivityTypeStreaming {
+				if a.Details != "" {
+					description += fmt.Sprintf("%s\r", a.Details)
+				}
+				if a.State != "" {
+					description += fmt.Sprintf("%s ", a.State)
+				}
+				if a.Party.Size != nil {
+					description += translate.Translate(i.Locale, "activity_party_format", map[string]any{"PartySize": a.Party.Size[0], "PartyMax": a.Party.Size[1]})
+				}
+				if a.Timestamps.StartTimestamp != 0 {
+					description += fmt.Sprintf("\r<t:%d:R>", a.Timestamps.StartTimestamp/1000)
+				}
+			}
+
+			// 画像取得
+			var imageURL string
+			if a.Assets.LargeImageID != "" {
+				if strings.HasPrefix(a.Assets.LargeImageID, "mp:") {
+					imageURL = fmt.Sprintf("https://media.discordapp.net/%s", strings.TrimPrefix(a.Assets.LargeImageID, "mp:"))
+				} else {
+					imageURL = fmt.Sprintf("https://cdn.discordapp.com/app-icons/%s/%s.webp", a.ApplicationID, a.Assets.LargeImageID)
+				}
+			}
+
+			// 埋め込み組み立て
+			embed := &discordgo.MessageEmbed{
+				Title:       ActivitiesNameString(i.Locale, a),
+				Description: description,
+				Thumbnail:   &discordgo.MessageEmbedThumbnail{URL: imageURL},
+			}
+			activityEmbeds = append(activityEmbeds, embed)
+		}
+	}
+
 	// 埋め込み組み立て
 	embeds = append(embeds, &discordgo.MessageEmbed{
 		Title:       title,
@@ -194,6 +240,7 @@ func CommandUserInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		Thumbnail:   &discordgo.MessageEmbedThumbnail{URL: avatarURL},
 		Fields:      fields,
 	})
+	embeds = append(embeds, activityEmbeds...)
 	embeds = setEmbedProperties(embeds)
 
 	// 応答送信
