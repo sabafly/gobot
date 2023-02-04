@@ -1,6 +1,6 @@
 module github.com/sabafly/gobot
 
-go 1.19
+go 1.20
 
 require (
 	github.com/andersfylling/snowflake/v5 v5.0.1
