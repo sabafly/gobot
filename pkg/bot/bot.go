@@ -130,6 +130,16 @@ func New(token string) (bot *BotManager, err error) {
 	return validateShards(token, count)
 }
 
+func NewApi() *Api {
+	var zero int64 = 0
+	return &Api{
+		Dialer:         websocket.DefaultDialer,
+		MaxRestRetries: 5,
+		Client:         http.Client{},
+		sequence:       &zero,
+	}
+}
+
 // シャード数を取得する
 func shardCount(s *discordgo.Session) (count int, err error) {
 	gateway, err := s.GatewayBot()
@@ -142,64 +152,44 @@ func shardCount(s *discordgo.Session) (count int, err error) {
 
 // 指定した数のシャードを用意する
 func validateShards(token string, count int) (bot *BotManager, err error) {
-	var zero int64 = 0
 	bot = &BotManager{
 		// API接続関連
-		Api: &Api{
-			Dialer:         websocket.DefaultDialer,
-			MaxRestRetries: 5,
-			Client:         http.Client{},
-			sequence:       &zero,
-		}}
+		Api: NewApi(),
+	}
 
 	for i := 0; i < count; i++ {
 		s, err := discordgo.New("Bot " + token)
 		if err != nil {
 			return nil, fmt.Errorf("failed validate shard %v: %w", i, err)
 		}
+		s.AddHandler(bot.interfaceHandler)
 		bot.Shards = append(bot.Shards, &Shard{
 			ShardID: i,
 			Session: s,
 			// API接続関連
-			Api: &Api{
-				Dialer:         websocket.DefaultDialer,
-				MaxRestRetries: 5,
-				Client:         http.Client{},
-				sequence:       &zero,
-			},
+			Api: NewApi(),
 		})
 	}
-
-	// TODO: 別の場所に移す
-	bot.AddHandler(bot.guildCreateHandler)
-	bot.AddHandler(bot.guildDeleteHandler)
 
 	return bot, nil
 }
 
-// セッションにハンダラを登録する
+// セッションにDiscordAPIイベントハンダラを登録する
 func (b *BotManager) AddHandler(handler any) {
 	for _, s := range b.Shards {
 		s.Session.AddHandler(handler)
 	}
 }
 
-// ギルド作成をデフォルトでハンドルする
-func (b *BotManager) guildCreateHandler(s *discordgo.Session, g *discordgo.GuildCreate) {
-	err := b.guildCreateCall(g.ID)
-	if err != nil {
-		logging.Error("ギルド作成呼び出しに失敗 %s", err)
+func (b *BotManager) interfaceHandler(s *discordgo.Session, i any) {
+	switch t := i.(type) {
+	case *discordgo.GuildCreate:
+		b.guildCreateCall(t.ID)
+	case *discordgo.GuildDelete:
+		b.guildDeleteCall(t)
+	case *discordgo.MessageCreate:
+		b.messageCreateCall(t)
 	}
-	logging.Info("ギルドが追加されました %s(%s)", g.Name, g.ID)
-}
-
-// ギルド削除をデフォルトでハンドルする
-func (b *BotManager) guildDeleteHandler(s *discordgo.Session, g *discordgo.GuildDelete) {
-	err := b.guildDeleteCall(g)
-	if err != nil {
-		logging.Error("ギルド削除呼び出しに失敗 %s", err)
-	}
-	logging.Info("ギルドが削除されました %s(%s)", g.Name, g.ID)
 }
 
 // 内部APIのイベントハンダラを登録する
@@ -207,4 +197,13 @@ func (b *BotManager) AddApiHandler(handler any) {
 	for _, s := range b.Shards {
 		s.AddHandler(handler)
 	}
+}
+
+// DiscordAPIイベントから内部APIを呼び出すときに使う
+//
+// XXX: メソッドで実装したい
+func AddIntegrationHandler[T any](b *BotManager, handler func(*Api, *discordgo.Session, T)) {
+	b.AddHandler(func(s *discordgo.Session, d T) {
+		handler(b.Api, s, d)
+	})
 }

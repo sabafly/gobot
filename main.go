@@ -38,18 +38,23 @@ var (
 )
 
 func main() {
+
+	// ----------------------------------------------------------------
+	// 内部API
+	// ----------------------------------------------------------------
+
 	// 内部APIを用意
 	wh := NewWebSocketHandler()
 	server := apinternal.NewServer()
-	server.Pages = []*apinternal.Page{
-		{
-			Path: "/api",
-			Child: []*apinternal.Page{
-				{
-					Path: "/v0/",
-					Child: []*apinternal.Page{
-						{
-							Path:   "gateway",
+	server.PageTree = &apinternal.Page{
+		Path: "/api",
+		Child: []*apinternal.Page{
+			{
+				Path: "/v0/",
+				Child: []*apinternal.Page{
+					{
+						Path: "gateway",
+						Handlers: []*apinternal.Handler{{
 							Method: "GET",
 							Handler: func(ctx *gin.Context) {
 								err := json.NewEncoder(ctx.Writer).Encode(map[string]any{"URL": "ws://" + address + ":" + port + basePath + path + "/gateway/ws"})
@@ -57,28 +62,59 @@ func main() {
 									logging.Error("応答に失敗 %s", err)
 								}
 							},
+						}},
 
-							Child: []*apinternal.Page{
-								{
-									Path:    "/ws",
-									Method:  "GET",
-									Handler: func(ctx *gin.Context) { wh.Handle(ctx.Writer, ctx.Request) },
+						Child: []*apinternal.Page{
+							{
+								Path: "/ws",
+								Handlers: []*apinternal.Handler{
+									{
+										Method:  "GET",
+										Handler: func(ctx *gin.Context) { wh.Handle(ctx.Writer, ctx.Request) },
+									},
 								},
 							},
 						},
-						{
-							Path: "guild/",
+					},
+					{
+						Path: "guild",
+						Handlers: []*apinternal.Handler{
+							{
+								Method:  "POST",
+								Handler: func(ctx *gin.Context) { wh.HandlerGuildCreate(ctx.Writer, ctx.Request) },
+							},
+							{
+								Method:  "DELETE",
+								Handler: func(ctx *gin.Context) { wh.HandlerGuildDelete(ctx.Writer, ctx.Request) },
+							},
+						},
+					},
+					{
+						Path: "message",
+						Handlers: []*apinternal.Handler{
+							{
+								Method:  "POST",
+								Handler: func(ctx *gin.Context) { wh.HandlerMessageCreate(ctx.Writer, ctx.Request) },
+							},
+						},
+					},
+					{
+						Path: "statics/",
 
-							Child: []*apinternal.Page{
-								{
-									Path:    "create",
-									Method:  "POST",
-									Handler: func(ctx *gin.Context) { wh.HandlerGuildCreate(ctx.Writer, ctx.Request) },
-								},
-								{
-									Path:    "delete",
-									Method:  "DELETE",
-									Handler: func(ctx *gin.Context) { wh.HandlerGuildDelete(ctx.Writer, ctx.Request) },
+						Child: []*apinternal.Page{
+							{
+								Path: "user",
+
+								Child: []*apinternal.Page{
+									{
+										Path: "/message",
+										Handlers: []*apinternal.Handler{
+											{
+												Method:  "GET",
+												Handler: func(ctx *gin.Context) { wh.HandlerStaticsUserMessage(ctx.Writer, ctx.Request) },
+											},
+										},
+									},
 								},
 							},
 						},
@@ -94,6 +130,10 @@ func main() {
 			logging.Fatal("[内部] APIを開始できませんでした %s", err)
 		}
 	}()
+
+	// ----------------------------------------------------------------
+	// ボット
+	// ----------------------------------------------------------------
 
 	// ボットを用意
 	bot, err := gobot.New(env.Token)

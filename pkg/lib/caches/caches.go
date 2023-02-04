@@ -28,7 +28,7 @@ import (
 // キャッシュのIDとデータと最後にアクセスされた時を格納する
 type Cache[T any] struct {
 	ID   string
-	Data *T
+	Data T
 	ctx  context.Context
 	del  func()
 }
@@ -84,7 +84,7 @@ func (c *CacheManager[T]) Set(key string, v T) {
 	c.sync.Lock()
 	defer c.sync.Unlock()
 
-	cache := Cache[T]{ID: key, Data: &v}
+	cache := Cache[T]{ID: key, Data: v}
 	cache.ctx, cache.del = cache.newContext(c, key, c.timeOut)
 
 	c.caches[key] = cache
@@ -96,7 +96,7 @@ func (c *CacheManager[T]) SetWithUUID(v T) (key string) {
 	defer c.sync.Unlock()
 
 	id := uuid.New().String()
-	cache := Cache[T]{ID: id, Data: &v}
+	cache := Cache[T]{ID: id, Data: v}
 	cache.ctx, cache.del = cache.newContext(c, id, c.timeOut)
 
 	c.caches[id] = cache
@@ -104,13 +104,13 @@ func (c *CacheManager[T]) SetWithUUID(v T) (key string) {
 }
 
 // 指定されたキーの値を読み込みます
-func (c *CacheManager[T]) Load(key string) (*T, error) {
+func (c *CacheManager[T]) Get(key string) (data T, err error) {
 	c.sync.Lock()
 	defer c.sync.Unlock()
 
 	v, ok := c.caches[key]
 	if !ok {
-		return nil, fmt.Errorf("not found in %s", key)
+		return data, fmt.Errorf("not found in %s", key)
 	}
 	return v.Data, nil
 }
@@ -130,7 +130,7 @@ func (c *CacheManager[T]) Range(f func(string, T)) {
 	defer c.sync.Unlock()
 
 	for k, c2 := range c.caches {
-		f(k, *c2.Data)
+		f(k, c2.Data)
 	}
 }
 

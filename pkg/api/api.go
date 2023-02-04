@@ -32,8 +32,8 @@ type Server struct {
 
 	Conn []*Connection
 
-	gin   *gin.Engine
-	Pages []*Page
+	gin      *gin.Engine
+	PageTree *Page
 }
 
 // ウェブソケット接続を扱う
@@ -46,11 +46,16 @@ type Connection struct {
 //
 // ハンダラがnilだった場合、Parse時に無視される
 type Page struct {
-	Method  string
-	Path    string
-	Handler func(*gin.Context)
+	Path     string
+	Handlers []*Handler
 
 	Child []*Page
+}
+
+// メソッドとハンダラの構造体
+type Handler struct {
+	Method  string
+	Handler func(*gin.Context)
 }
 
 // 新たなサーバー構造を生成する
@@ -62,26 +67,28 @@ func NewServer() *Server {
 
 // ページを解析してサーバーを起動する
 func (s *Server) Serve(addr ...string) (err error) {
-	for _, p := range s.Pages {
-		p.Parse(s.gin)
-	}
+	s.PageTree.Parse(s.gin)
 	return s.gin.Run(addr...)
 }
 
 // ページ構造を解析してginエンジンに登録する
 func (p *Page) Parse(g *gin.Engine) {
-	p.parse(p.Method, p.Path, p.Handler, g)
+	for _, h := range p.Handlers {
+		g.Handle(h.Method, p.Path, h.Handler)
+	}
 	for _, p2 := range p.Child {
-		p2.parse(p2.Method, p2.Path, p.Handler, g)
+		p2.parse(p2, p.Path+p2.Path, g)
 	}
 }
 
 // ginエンジンにページハンダラを登録する
-func (p *Page) parse(method, path string, handler func(*gin.Context), g *gin.Engine) {
-	if handler != nil {
-		g.Handle(method, path, handler)
+func (p *Page) parse(page *Page, path string, g *gin.Engine) {
+	for _, h := range page.Handlers {
+		if h.Handler != nil {
+			g.Handle(h.Method, path, h.Handler)
+		}
 	}
 	for _, p2 := range p.Child {
-		p2.parse(p2.Method, path+p2.Path, p2.Handler, g)
+		p2.parse(p2, path+p2.Path, g)
 	}
 }

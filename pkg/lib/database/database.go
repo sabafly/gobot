@@ -56,7 +56,7 @@ func (d *DatabaseManager) Connect(dsn DSN) (err error) {
 }
 
 // テーブルを作成
-func (d *DatabaseManager) Create(data *any) (err error) {
+func (d *DatabaseManager) Create(data any) (err error) {
 	// 早期リターン
 	if d.db == nil {
 		return errors.New("error: no database connection")
@@ -65,7 +65,7 @@ func (d *DatabaseManager) Create(data *any) (err error) {
 	if err := d.db.AutoMigrate(data); err != nil {
 		return err
 	}
-	result := d.db.Create(&data)
+	result := d.db.Create(data)
 	if err := result.Error; err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func (d *DatabaseManager) Create(data *any) (err error) {
 //
 // その他の条件はgormのドキュメントを確認してください
 // https://gorm.io/ja_JP/docs/query.html#%E5%8F%96%E5%BE%97%E6%9D%A1%E4%BB%B6
-func (d *DatabaseManager) First(v *any, cond ...any) (err error) {
+func (d *DatabaseManager) First(v any, cond ...any) (err error) {
 	// 早期リターン
 	if d.db == nil {
 		return errors.New("error: no database connection")
@@ -106,7 +106,7 @@ func (d *DatabaseManager) First(v *any, cond ...any) (err error) {
 //
 // その他の条件はgormのドキュメントを確認してください
 // https://gorm.io/ja_JP/docs/query.html#%E5%8F%96%E5%BE%97%E6%9D%A1%E4%BB%B6
-func (d *DatabaseManager) Find(v *any, cond ...any) (err error) {
+func (d *DatabaseManager) Find(v any, cond ...any) (err error) {
 	// 早期リターン
 	if d.db == nil {
 		return errors.New("error: no database connection")
@@ -115,7 +115,7 @@ func (d *DatabaseManager) Find(v *any, cond ...any) (err error) {
 	if err := d.db.AutoMigrate(v); err != nil {
 		return err
 	}
-	result := d.db.Find(&v, cond...)
+	result := d.db.Find(v, cond...)
 	if err := result.Error; err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ func (d *DatabaseManager) Find(v *any, cond ...any) (err error) {
 
 // 渡されたデータのプライマリキーに一致する行がある場合その行を更新します
 // ない場合、新たに行を挿入します
-func (d *DatabaseManager) Save(v *any) (err error) {
+func (d *DatabaseManager) Save(v any) (err error) {
 	// 早期リターン
 	if d.db == nil {
 		return errors.New("error: no database connection")
@@ -133,7 +133,7 @@ func (d *DatabaseManager) Save(v *any) (err error) {
 	if err := d.db.AutoMigrate(v); err != nil {
 		return err
 	}
-	result := d.db.Save(&v)
+	result := d.db.Save(v)
 	if err := result.Error; err != nil {
 		return err
 	}
@@ -141,7 +141,7 @@ func (d *DatabaseManager) Save(v *any) (err error) {
 }
 
 // 渡されたデータに一致するレコードを削除します
-func (d *DatabaseManager) Delete(v *any, cond ...any) (err error) {
+func (d *DatabaseManager) Delete(v any, cond ...any) (err error) {
 	// 早期リターン
 	if d.db == nil {
 		return errors.New("error: no database connection")

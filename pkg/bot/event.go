@@ -31,6 +31,7 @@ type EventHandler interface {
 
 	Handle(*Shard, any)
 }
+
 type EventInterfaceProvider interface {
 	// Type is the type of event this handler belongs to.
 	Type() string
@@ -129,5 +130,7 @@ func (a *Shard) handleEvent(t string, i any) {
 }
 
 func (s *Shard) onInterface(i any) {
-	// TODO: 実装する
+	// TODO: なんか実装する
+	switch i.(type) {
+	}
 }

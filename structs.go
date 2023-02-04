@@ -14,18 +14,28 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package gobot
+package main
 
-var APIVersion = "0"
+import (
+	"time"
 
-var (
-	Endpoint        = "http://localhost:8686/"
-	EndpointAPI     = Endpoint + "api/v" + APIVersion + "/"
-	EndpointGateway = EndpointAPI + "gateway"
-	EndpointGuild   = EndpointAPI + "guild"
-	EndpointMessage = EndpointAPI + "message"
-
-	EndpointStatics            = EndpointAPI + "statics/"
-	EndpointStaticsUser        = EndpointStatics + "user"
-	EndpointStaticsUserMessage = EndpointStaticsUser + "/message"
+	"gorm.io/gorm"
 )
+
+type Model struct {
+	ID        string `gorm:"primarykey"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
+type MessageLog struct {
+	Model
+	GuildID   string
+	ChannelID string
+	UserID    string `gorm:"index"`
+	Content   string
+	Bot       bool
+}
+
+type MessageLogs []MessageLog

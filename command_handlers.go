@@ -24,6 +24,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/bwmarrin/discordgo"
+	gobot "github.com/sabafly/gobot/pkg/bot"
 	"github.com/sabafly/gobot/pkg/lib/logging"
 	"github.com/sabafly/gobot/pkg/lib/translate"
 )
@@ -149,15 +150,7 @@ func CommandUserInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 
 	// ロールカラー取得
-	var color int
-	for i2, j := 0, len(roles)-1; i2 < j; i2, j = i2+1, j-1 {
-		roles[i2], roles[j] = roles[j], roles[i2]
-	}
-	for _, r := range roles {
-		if r.Color != 0 {
-			color = r.Color
-		}
-	}
+	color := s.State.UserColor(i.ApplicationCommandData().TargetID, i.ChannelID)
 	colorStr := strconv.FormatInt(int64(color), 16)
 	for utf8.RuneCountInString(colorStr) < 6 {
 		colorStr = "0" + colorStr
@@ -166,6 +159,37 @@ func CommandUserInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	fields = append(fields, &discordgo.MessageEmbedField{
 		Name:   translate.Message(i.Locale, "command_user_info_color"),
 		Value:  colorStr,
+		Inline: true,
+	})
+
+	// メッセージ統計
+	api := gobot.NewApi()
+	var messageStaticStr string
+	logs, err := api.StaticsUserMessage(i.GuildID, i.ApplicationCommandData().TargetID)
+	if err != nil {
+		logging.Error("取得できませんでした %s", err)
+		messageStaticStr = "💥" + translate.Message(i.Locale, "error_not_found")
+		goto staticsFinal
+	}
+	if user.User.Bot {
+		messageStaticStr = "bot"
+		goto staticsFinal
+	}
+	{
+		day, week, all, channelID := MessageLogDetails(logs)
+		messageStaticStr += fmt.Sprintf(
+			"24%s: %d\r7%s: %d\r%s: %d\r%s: <#%s>",
+			translate.Message(i.Locale, "hour"), day,
+			translate.Message(i.Locale, "day"), week,
+			translate.Message(i.Locale, "all_time"), all,
+			translate.Message(i.Locale, "channel"), channelID,
+		)
+	}
+
+staticsFinal:
+	fields = append(fields, &discordgo.MessageEmbedField{
+		Name:   translate.Message(i.Locale, "command_user_info_messages_statics"),
+		Value:  messageStaticStr,
 		Inline: true,
 	})
 

@@ -27,6 +27,10 @@ import (
 	"github.com/sabafly/gobot/pkg/lib/requests"
 )
 
+// ----------------------------------------------------------------
+// ギルド関連
+// ----------------------------------------------------------------
+
 var createdGuilds *caches.CacheManager[struct{ ID string }] = caches.NewCacheManager[struct{ ID string }](nil)
 
 // ギルド作成イベントを処理する
@@ -81,9 +85,10 @@ func (h *WebsocketHandler) HandlerGuildDelete(w http.ResponseWriter, r *http.Req
 		if err != nil {
 			logging.Error("応答に失敗 %s", err)
 		}
+		return
 	}
 
-	// キャッシュに保存
+	// キャッシュを削除
 	createdGuilds.Delete(guildDelete.ID)
 
 	h.Broadcast(func(ws *websocket.Conn) {
@@ -98,6 +103,116 @@ func (h *WebsocketHandler) HandlerGuildDelete(w http.ResponseWriter, r *http.Req
 	})
 
 	err := json.NewEncoder(w).Encode(map[string]any{"status": "200 OK"})
+	if err != nil {
+		logging.Error("応答に失敗 %s", err)
+	}
+}
+
+// ----------------------------------------------------------------
+// メッセージ関連
+// ----------------------------------------------------------------
+
+var messageLog = caches.NewCacheManager[MessageLogs](nil)
+
+func (h *WebsocketHandler) HandlerMessageCreate(w http.ResponseWriter, r *http.Request) {
+	// データを取り出す
+	messageCreate := &discordgo.MessageCreate{}
+	if err := requests.Unmarshal(r, messageCreate); err != nil {
+		logging.Error("[内部] [REST] アンマーシャルできませんでした %s", err)
+		w.WriteHeader(400)
+		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request"})
+		if err != nil {
+			logging.Error("応答に失敗 %s", err)
+		}
+		return
+	}
+
+	author := messageCreate.Author
+	if author == nil {
+		logging.Error("[内部] [REST] 送信者が不明")
+		w.WriteHeader(400)
+		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request"})
+		if err != nil {
+			logging.Error("応答に失敗 %s", err)
+		}
+		return
+	}
+
+	if messageCreate.WebhookID != "" {
+		err := json.NewEncoder(w).Encode(map[string]any{"status": "200 OK"})
+		if err != nil {
+			logging.Error("応答に失敗 %s", err)
+		}
+		return
+	}
+
+	log := MessageLog{
+		Model: Model{
+			ID: messageCreate.ID,
+		},
+		GuildID:   messageCreate.GuildID,
+		ChannelID: messageCreate.ChannelID,
+		UserID:    messageCreate.Author.ID,
+		Content:   messageCreate.Content,
+		Bot:       messageCreate.Author.Bot,
+	}
+
+	err := db.Create(&log)
+	if err != nil {
+		logging.Error("[内部] [REST] データベースへの書き込みに失敗 %s", err)
+		w.WriteHeader(400)
+		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request"})
+		if err != nil {
+			logging.Error("応答に失敗 %s", err)
+		}
+		return
+	}
+
+	messages, err := messageLog.Get(messageCreate.Author.ID)
+	if err != nil {
+		messages = MessageLogs{}
+	}
+
+	messages = append(messages, log)
+
+	messageLog.Set(messageCreate.Author.ID, messages)
+	err = json.NewEncoder(w).Encode(map[string]any{"status": "200 OK"})
+	if err != nil {
+		logging.Error("応答に失敗 %s", err)
+	}
+}
+
+// ----------------------------------------------------------------
+// 統計
+// ----------------------------------------------------------------
+
+func (h *WebsocketHandler) HandlerStaticsUserMessage(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	if !query.Has("user") || !query.Has("guild") {
+		w.WriteHeader(400)
+		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request"})
+		if err != nil {
+			logging.Error("応答に失敗 %s", err)
+		}
+		return
+	}
+
+	logs := MessageLogs{}
+
+	err := db.Find(&logs, "user_id = ?", query.Get("user"))
+	if err != nil {
+		logging.Warning("見つからなかった %s", err)
+	}
+
+	res := MessageLogs{}
+
+	for _, v := range logs {
+		if v.GuildID == query.Get("guild") {
+			res = append(res, v)
+		}
+	}
+
+	err = json.NewEncoder(w).Encode(res)
 	if err != nil {
 		logging.Error("応答に失敗 %s", err)
 	}

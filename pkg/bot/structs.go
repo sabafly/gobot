@@ -16,16 +16,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package gobot
 
-var APIVersion = "0"
-
-var (
-	Endpoint        = "http://localhost:8686/"
-	EndpointAPI     = Endpoint + "api/v" + APIVersion + "/"
-	EndpointGateway = EndpointAPI + "gateway"
-	EndpointGuild   = EndpointAPI + "guild"
-	EndpointMessage = EndpointAPI + "message"
-
-	EndpointStatics            = EndpointAPI + "statics/"
-	EndpointStaticsUser        = EndpointStatics + "user"
-	EndpointStaticsUserMessage = EndpointStaticsUser + "/message"
-)
+type MessageLog struct {
+	ID        string
+	GuildID   string
+	ChannelID string
+	UserID    string
+	Content   string
+	Bot       bool
+}

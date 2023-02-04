@@ -20,7 +20,6 @@ import (
 	"embed"
 	"fmt"
 	"log"
-	"regexp"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -89,8 +88,6 @@ func Translate(locale discordgo.Locale, messageId string, templateData any) (res
 	return
 }
 
-var reg = regexp.MustCompile("[,\\.;:\\]\\[@\\\\\\^\\/\\-!\"#\\$%&'\\(\\)=~\\|<>\\?_\\+\\*\\}\\{`]")
-
 func Translates(locale discordgo.Locale, messageId string, templateData any, pluralCount int) string {
 	messageId = strings.ReplaceAll(messageId, ".", "_")
 	defaultLocalizer := i18n.NewLocalizer(&translations, string(locale))
@@ -110,10 +107,6 @@ func Translates(locale discordgo.Locale, messageId string, templateData any, plu
 			log.Print(err)
 			res = fmt.Sprintf("translate error: %v", err)
 		}
-	}
-	match := reg.FindAllString(res, -1)
-	for _, v := range match {
-		res = strings.Replace(res, v, "", 1)
 	}
 	return res
 }

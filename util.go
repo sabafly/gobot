@@ -18,9 +18,11 @@ package main
 
 import (
 	"runtime/debug"
+	"sort"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	gobot "github.com/sabafly/gobot/pkg/bot"
 	"github.com/sabafly/gobot/pkg/lib/constants"
 	"github.com/sabafly/gobot/pkg/lib/translate"
 )
@@ -99,4 +101,45 @@ func ActivitiesNameString(locale discordgo.Locale, activity *discordgo.Activity)
 		str = translate.Translate(locale, "activity_competing_name", map[string]any{"Name": activity.Name})
 	}
 	return str
+}
+
+func MessageLogDetails(m []gobot.MessageLog) (day, week, all int, channelID string) {
+	var inDay, inWeek []gobot.MessageLog
+	channelCount := map[string]int{}
+	for _, ml := range m {
+		channelCount[ml.ChannelID]++
+		timestamp, err := discordgo.SnowflakeTimestamp(ml.ID)
+		if err != nil {
+			continue
+		}
+		if timestamp.After(time.Now().Add(-time.Hour * 24 * 7)) {
+			inWeek = append(inWeek, ml)
+		}
+	}
+	for _, ml := range inWeek {
+		timestamp, err := discordgo.SnowflakeTimestamp(ml.ID)
+		if err != nil {
+			continue
+		}
+		if timestamp.After(time.Now().Add(-time.Hour * 24)) {
+			inDay = append(inDay, ml)
+		}
+	}
+	count := []struct {
+		ID    string
+		Count int
+	}{}
+	for k, v := range channelCount {
+		count = append(count, struct {
+			ID    string
+			Count int
+		}{ID: k, Count: v})
+	}
+	sort.Slice(count, func(i, j int) bool {
+		return count[i].Count > count[j].Count
+	})
+	if len(count) != 0 {
+		channelID = count[0].ID
+	}
+	return len(inDay), len(inWeek), len(m), channelID
 }

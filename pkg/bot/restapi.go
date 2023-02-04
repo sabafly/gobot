@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -155,7 +156,8 @@ func (a *Api) Gateway() (gateway string, err error) {
 // ギルド作成呼び出し
 func (a *Api) guildCreateCall(guildID string) (err error) {
 	g := struct{ ID string }{ID: guildID}
-	if _, err := a.Request("POST", EndpointGuildCreate, g); err != nil {
+	if _, err := a.Request("POST", EndpointGuild, g); err != nil {
+		logging.Warning("リクエストに失敗 %s", err)
 		return err
 	}
 	return nil
@@ -163,8 +165,51 @@ func (a *Api) guildCreateCall(guildID string) (err error) {
 
 // ギルド削除呼び出し
 func (a *Api) guildDeleteCall(g *discordgo.GuildDelete) (err error) {
-	if _, err := a.Request("DELETE", EndpointGuildDelete, g); err != nil {
+	if _, err := a.Request("DELETE", EndpointGuild, g); err != nil {
+		logging.Warning("リクエストに失敗 %s", err)
 		return err
 	}
 	return nil
+}
+
+// メッセージ送信呼び出し
+func (a *Api) messageCreateCall(m *discordgo.MessageCreate) (err error) {
+	if _, err := a.Request("POST", EndpointMessage, m); err != nil {
+		logging.Warning("リクエストに失敗 %s", err)
+		return err
+	}
+	return nil
+}
+
+// ----------------------------------------------------------------
+// 統計
+// ----------------------------------------------------------------
+
+func (a *Api) StaticsUserMessage(guildID, userID string) (logs []MessageLog, err error) {
+	uri := EndpointStaticsUserMessage
+
+	queryPrams := url.Values{}
+	if guildID != "" {
+		queryPrams.Set("guild", guildID)
+	}
+	if userID != "" {
+		queryPrams.Set("user", userID)
+	}
+
+	if len(queryPrams) > 0 {
+		uri += "?" + queryPrams.Encode()
+	}
+
+	response, err := a.Request("GET", uri, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	logs = []MessageLog{}
+	err = json.Unmarshal(response, &logs)
+	if err != nil {
+		return nil, err
+	}
+
+	return logs, nil
 }
