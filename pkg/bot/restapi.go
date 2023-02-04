@@ -154,31 +154,25 @@ func (a *Api) Gateway() (gateway string, err error) {
 // ------------------------------------------------------
 
 // ギルド作成呼び出し
-func (a *Api) guildCreateCall(guildID string) (err error) {
+func (a *Api) guildCreateCall(guildID string) {
 	g := struct{ ID string }{ID: guildID}
 	if _, err := a.Request("POST", EndpointGuild, g); err != nil {
 		logging.Warning("リクエストに失敗 %s", err)
-		return err
 	}
-	return nil
 }
 
 // ギルド削除呼び出し
-func (a *Api) guildDeleteCall(g *discordgo.GuildDelete) (err error) {
+func (a *Api) guildDeleteCall(g *discordgo.GuildDelete) {
 	if _, err := a.Request("DELETE", EndpointGuild, g); err != nil {
 		logging.Warning("リクエストに失敗 %s", err)
-		return err
 	}
-	return nil
 }
 
 // メッセージ送信呼び出し
-func (a *Api) messageCreateCall(m *discordgo.MessageCreate) (err error) {
+func (a *Api) messageCreateCall(m *discordgo.MessageCreate) {
 	if _, err := a.Request("POST", EndpointMessage, m); err != nil {
 		logging.Warning("リクエストに失敗 %s", err)
-		return err
 	}
-	return nil
 }
 
 // ----------------------------------------------------------------
