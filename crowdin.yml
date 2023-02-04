@@ -1,4 +1,4 @@
 files:
-  - source: /pkg/lib/translate/en.yaml
+  - source: /pkg/lib/translate/ja.yaml
     translation: /pkg/lib/translate/lang/%two_letters_code%.yaml
 targets: []
