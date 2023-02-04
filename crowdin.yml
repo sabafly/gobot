@@ -1,9 +1,4 @@
 files:
   - source: /pkg/lib/translate/en.yaml
     translation: /pkg/lib/translate/lang/%two_letters_code%.yaml
-targets:
-  - name: gobot
-    sources:
-      - /pkg/lib/translate/ja.yaml
-    file: /pkg/lib/translate/lang/%two_letters_code%.yaml
-    format: xliff
+targets: []
