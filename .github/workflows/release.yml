@@ -1,6 +1,6 @@
-name: SSH
+name: deoploy
 
-run-name: ${{ github.ref }}
+run-name: ${{ github.ref_name }}
 
 on:
   push:
@@ -28,3 +28,14 @@ jobs:
             echo ${{ secrets.SSH_PASSWORD }} | sudo -S git submodule update --recursive
             /usr/local/go/bin/go build -race -ldflags "-X github.com/sabafly/gobot/pkg/cmd.VERSION=$(git describe --tag --abbrev=0)"
             echo ${{ secrets.SSH_PASSWORD }} | sudo -S killall -SIGINT gobot
+
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: goreleaser/goreleaser-action@v4
+      with:
+        distribution: goreleaser
+        version: latest
+        args: release --rm-dist
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -20,3 +20,4 @@ gobot
 start.sh
 
 logs/
+dist/
