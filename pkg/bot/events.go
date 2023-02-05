@@ -16,7 +16,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package gobot
 
-//go:generate go run ./tools/cmd/pkg/bot/eventhandlers/main.go
+//go:generate go run ../../tools/cmd/pkg/bot/eventhandlers/main.go
 
 // ボットステータス更新イベント
 type StatusUpdate struct {
