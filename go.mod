@@ -6,7 +6,7 @@ require (
 	github.com/andersfylling/snowflake/v5 v5.0.1
 	github.com/bwmarrin/discordgo v0.26.1
 	github.com/dlclark/regexp2 v1.8.0
-	github.com/joho/godotenv v1.4.0
+	github.com/joho/godotenv v1.5.0
 	github.com/mattn/go-colorable v0.1.13
 	github.com/nicksnyder/go-i18n/v2 v2.2.1
 	go.uber.org/zap v1.24.0
