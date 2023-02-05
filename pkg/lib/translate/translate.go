@@ -19,7 +19,6 @@ package translate
 import (
 	"embed"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -90,21 +89,21 @@ func Translate(locale discordgo.Locale, messageId string, templateData any) (res
 
 func Translates(locale discordgo.Locale, messageId string, templateData any, pluralCount int) string {
 	messageId = strings.ReplaceAll(messageId, ".", "_")
-	defaultLocalizer := i18n.NewLocalizer(&translations, string(locale))
-	res, err := defaultLocalizer.Localize(&i18n.LocalizeConfig{
+	Localizer := i18n.NewLocalizer(&translations, string(locale))
+	res, err := Localizer.Localize(&i18n.LocalizeConfig{
 		MessageID:    messageId,
 		TemplateData: templateData,
 		PluralCount:  pluralCount,
 	})
 	if err != nil {
-		defaultLocalizer = i18n.NewLocalizer(&translations, "ja")
-		res, err = defaultLocalizer.Localize(&i18n.LocalizeConfig{
+		Localizer = i18n.NewLocalizer(&translations, "ja")
+		res, err = Localizer.Localize(&i18n.LocalizeConfig{
 			MessageID:    messageId,
 			TemplateData: templateData,
 			PluralCount:  pluralCount,
 		})
 		if err != nil {
-			log.Print(err)
+			logging.Error("翻訳に失敗しました %s", err)
 			res = fmt.Sprintf("translate error: %v", err)
 		}
 	}
@@ -112,75 +111,44 @@ func Translates(locale discordgo.Locale, messageId string, templateData any, plu
 }
 
 func MessageMap(key string, replace bool) *map[discordgo.Locale]string {
-	var res *map[discordgo.Locale]string
+	res := map[discordgo.Locale]string{
+		discordgo.Bulgarian:    Message(discordgo.Bulgarian, key),
+		discordgo.ChineseCN:    Message(discordgo.ChineseCN, key),
+		discordgo.ChineseTW:    Message(discordgo.ChineseTW, key),
+		discordgo.Croatian:     Message(discordgo.Croatian, key),
+		discordgo.Czech:        Message(discordgo.Czech, key),
+		discordgo.Danish:       Message(discordgo.Danish, key),
+		discordgo.Dutch:        Message(discordgo.Dutch, key),
+		discordgo.EnglishGB:    Message(discordgo.EnglishGB, key),
+		discordgo.EnglishUS:    Message(discordgo.EnglishUS, key),
+		discordgo.Finnish:      Message(discordgo.Finnish, key),
+		discordgo.French:       Message(discordgo.French, key),
+		discordgo.German:       Message(discordgo.German, key),
+		discordgo.Greek:        Message(discordgo.Greek, key),
+		discordgo.Hindi:        Message(discordgo.Hindi, key),
+		discordgo.Hungarian:    Message(discordgo.Hungarian, key),
+		discordgo.Italian:      Message(discordgo.Italian, key),
+		discordgo.Japanese:     Message(discordgo.Japanese, key),
+		discordgo.Korean:       Message(discordgo.Korean, key),
+		discordgo.Lithuanian:   Message(discordgo.Lithuanian, key),
+		discordgo.Norwegian:    Message(discordgo.Norwegian, key),
+		discordgo.Polish:       Message(discordgo.Polish, key),
+		discordgo.PortugueseBR: Message(discordgo.PortugueseBR, key),
+		discordgo.Romanian:     Message(discordgo.Romanian, key),
+		discordgo.Russian:      Message(discordgo.Russian, key),
+		discordgo.SpanishES:    Message(discordgo.SpanishES, key),
+		discordgo.Swedish:      Message(discordgo.Swedish, key),
+		discordgo.Thai:         Message(discordgo.Thai, key),
+		discordgo.Turkish:      Message(discordgo.Turkish, key),
+		discordgo.Ukrainian:    Message(discordgo.Ukrainian, key),
+		discordgo.Vietnamese:   Message(discordgo.Vietnamese, key),
+	}
 	if replace {
-		res = &map[discordgo.Locale]string{
-			discordgo.Bulgarian:    strings.ReplaceAll(strings.ToLower(Message(discordgo.Bulgarian, key)), " ", "_"),
-			discordgo.ChineseCN:    strings.ReplaceAll(strings.ToLower(Message(discordgo.ChineseCN, key)), " ", "_"),
-			discordgo.ChineseTW:    strings.ReplaceAll(strings.ToLower(Message(discordgo.ChineseTW, key)), " ", "_"),
-			discordgo.Croatian:     strings.ReplaceAll(strings.ToLower(Message(discordgo.Croatian, key)), " ", "_"),
-			discordgo.Czech:        strings.ReplaceAll(strings.ToLower(Message(discordgo.Czech, key)), " ", "_"),
-			discordgo.Danish:       strings.ReplaceAll(strings.ToLower(Message(discordgo.Danish, key)), " ", "_"),
-			discordgo.Dutch:        strings.ReplaceAll(strings.ToLower(Message(discordgo.Dutch, key)), " ", "_"),
-			discordgo.EnglishGB:    strings.ReplaceAll(strings.ToLower(Message(discordgo.EnglishGB, key)), " ", "_"),
-			discordgo.EnglishUS:    strings.ReplaceAll(strings.ToLower(Message(discordgo.EnglishUS, key)), " ", "_"),
-			discordgo.Finnish:      strings.ReplaceAll(strings.ToLower(Message(discordgo.Finnish, key)), " ", "_"),
-			discordgo.French:       strings.ReplaceAll(strings.ToLower(Message(discordgo.French, key)), " ", "_"),
-			discordgo.German:       strings.ReplaceAll(strings.ToLower(Message(discordgo.German, key)), " ", "_"),
-			discordgo.Greek:        strings.ReplaceAll(strings.ToLower(Message(discordgo.Greek, key)), " ", "_"),
-			discordgo.Hindi:        strings.ReplaceAll(strings.ToLower(Message(discordgo.Hindi, key)), " ", "_"),
-			discordgo.Hungarian:    strings.ReplaceAll(strings.ToLower(Message(discordgo.Hungarian, key)), " ", "_"),
-			discordgo.Italian:      strings.ReplaceAll(strings.ToLower(Message(discordgo.Italian, key)), " ", "_"),
-			discordgo.Japanese:     strings.ReplaceAll(strings.ToLower(Message(discordgo.Japanese, key)), " ", "_"),
-			discordgo.Korean:       strings.ReplaceAll(strings.ToLower(Message(discordgo.Korean, key)), " ", "_"),
-			discordgo.Lithuanian:   strings.ReplaceAll(strings.ToLower(Message(discordgo.Lithuanian, key)), " ", "_"),
-			discordgo.Norwegian:    strings.ReplaceAll(strings.ToLower(Message(discordgo.Norwegian, key)), " ", "_"),
-			discordgo.Polish:       strings.ReplaceAll(strings.ToLower(Message(discordgo.Polish, key)), " ", "_"),
-			discordgo.PortugueseBR: strings.ReplaceAll(strings.ToLower(Message(discordgo.PortugueseBR, key)), " ", "_"),
-			discordgo.Romanian:     strings.ReplaceAll(strings.ToLower(Message(discordgo.Romanian, key)), " ", "_"),
-			discordgo.Russian:      strings.ReplaceAll(strings.ToLower(Message(discordgo.Russian, key)), " ", "_"),
-			discordgo.SpanishES:    strings.ReplaceAll(strings.ToLower(Message(discordgo.SpanishES, key)), " ", "_"),
-			discordgo.Swedish:      strings.ReplaceAll(strings.ToLower(Message(discordgo.Swedish, key)), " ", "_"),
-			discordgo.Thai:         strings.ReplaceAll(strings.ToLower(Message(discordgo.Thai, key)), " ", "_"),
-			discordgo.Turkish:      strings.ReplaceAll(strings.ToLower(Message(discordgo.Turkish, key)), " ", "_"),
-			discordgo.Ukrainian:    strings.ReplaceAll(strings.ToLower(Message(discordgo.Ukrainian, key)), " ", "_"),
-			discordgo.Vietnamese:   strings.ReplaceAll(strings.ToLower(Message(discordgo.Vietnamese, key)), " ", "_"),
-		}
-	} else {
-		res = &map[discordgo.Locale]string{
-			discordgo.Bulgarian:    strings.ToLower(Message(discordgo.Bulgarian, key)),
-			discordgo.ChineseCN:    strings.ToLower(Message(discordgo.ChineseCN, key)),
-			discordgo.ChineseTW:    strings.ToLower(Message(discordgo.ChineseTW, key)),
-			discordgo.Croatian:     strings.ToLower(Message(discordgo.Croatian, key)),
-			discordgo.Czech:        strings.ToLower(Message(discordgo.Czech, key)),
-			discordgo.Danish:       strings.ToLower(Message(discordgo.Danish, key)),
-			discordgo.Dutch:        strings.ToLower(Message(discordgo.Dutch, key)),
-			discordgo.EnglishGB:    strings.ToLower(Message(discordgo.EnglishGB, key)),
-			discordgo.EnglishUS:    strings.ToLower(Message(discordgo.EnglishUS, key)),
-			discordgo.Finnish:      strings.ToLower(Message(discordgo.Finnish, key)),
-			discordgo.French:       strings.ToLower(Message(discordgo.French, key)),
-			discordgo.German:       strings.ToLower(Message(discordgo.German, key)),
-			discordgo.Greek:        strings.ToLower(Message(discordgo.Greek, key)),
-			discordgo.Hindi:        strings.ToLower(Message(discordgo.Hindi, key)),
-			discordgo.Hungarian:    strings.ToLower(Message(discordgo.Hungarian, key)),
-			discordgo.Italian:      strings.ToLower(Message(discordgo.Italian, key)),
-			discordgo.Japanese:     strings.ToLower(Message(discordgo.Japanese, key)),
-			discordgo.Korean:       strings.ToLower(Message(discordgo.Korean, key)),
-			discordgo.Lithuanian:   strings.ToLower(Message(discordgo.Lithuanian, key)),
-			discordgo.Norwegian:    strings.ToLower(Message(discordgo.Norwegian, key)),
-			discordgo.Polish:       strings.ToLower(Message(discordgo.Polish, key)),
-			discordgo.PortugueseBR: strings.ToLower(Message(discordgo.PortugueseBR, key)),
-			discordgo.Romanian:     strings.ToLower(Message(discordgo.Romanian, key)),
-			discordgo.Russian:      strings.ToLower(Message(discordgo.Russian, key)),
-			discordgo.SpanishES:    strings.ToLower(Message(discordgo.SpanishES, key)),
-			discordgo.Swedish:      strings.ToLower(Message(discordgo.Swedish, key)),
-			discordgo.Thai:         strings.ToLower(Message(discordgo.Thai, key)),
-			discordgo.Turkish:      strings.ToLower(Message(discordgo.Turkish, key)),
-			discordgo.Ukrainian:    strings.ToLower(Message(discordgo.Ukrainian, key)),
-			discordgo.Vietnamese:   strings.ToLower(Message(discordgo.Vietnamese, key)),
+		for l, v := range res {
+			res[l] = strings.ReplaceAll(v, " ", "-")
 		}
 	}
-	return res
+	return &res
 }
 
 func ErrorEmbed(locale discordgo.Locale, key string, any ...any) (embed []*discordgo.MessageEmbed) {
