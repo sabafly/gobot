@@ -109,10 +109,10 @@ func (h *WebsocketHandler) handlerLoop(ws *websocket.Conn) {
 // TODO: ウェブソケット接続がクローズしたときに破綻する
 func (h *WebsocketHandler) Broadcast(f func(*websocket.Conn)) {
 	for _, c := range h.Conn {
-		go func() {
+		go func(c *websocket.Conn) {
 			h.WSMutex.Lock()
 			f(c)
 			h.WSMutex.Unlock()
-		}()
+		}(c)
 	}
 }
