@@ -19,4 +19,5 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.SSH_PASS }}
           script: |
+            echo ${{ secrets.SSH_PASSWORD }} | sudo -S upnpc -d 3389 tcp
             echo ${{ secrets.SSH_PASSWORD }} | sudo -S upnpc -a 192.168.3.43 3389 3389 tcp
