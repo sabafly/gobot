@@ -19,6 +19,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/websocket"
 	"github.com/sabafly/gobot/pkg/lib/logging"
@@ -39,8 +40,9 @@ type Event struct {
 
 // ウェブソケットをハンドルする
 type WebsocketHandler struct {
-	Conn []*websocket.Conn
-	Seq  int64
+	WSMutex sync.Mutex
+	Conn    []*websocket.Conn
+	Seq     int64
 }
 
 // 新たなウェブソケットハンダラを生成する
@@ -107,6 +109,10 @@ func (h *WebsocketHandler) handlerLoop(ws *websocket.Conn) {
 // TODO: ウェブソケット接続がクローズしたときに破綻する
 func (h *WebsocketHandler) Broadcast(f func(*websocket.Conn)) {
 	for _, c := range h.Conn {
-		go f(c)
+		go func(c *websocket.Conn) {
+			h.WSMutex.Lock()
+			f(c)
+			h.WSMutex.Unlock()
+		}(c)
 	}
 }
