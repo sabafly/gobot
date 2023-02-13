@@ -17,6 +17,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package main
 
 import (
+	"fmt"
 	"runtime/debug"
 	"sort"
 	"time"
@@ -49,7 +50,7 @@ func ErrorTraceEmbed(locale discordgo.Locale, err error) []*discordgo.MessageEmb
 	embeds := []*discordgo.MessageEmbed{
 		{
 			Title:       "💥" + translate.Message(locale, "error_occurred_embed_message"),
-			Description: "```" + string(stack) + "```",
+			Description: fmt.Sprintf("%s\r```%s```", err, string(stack)),
 			Color:       0xff0000,
 		},
 	}

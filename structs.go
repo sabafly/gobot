@@ -38,4 +38,8 @@ type MessageLog struct {
 	Bot       bool
 }
 
-type MessageLogs []MessageLog
+type GuildFeature struct {
+	Model
+	ChannelID string
+	FeatureID int
+}
