@@ -21,7 +21,7 @@ import (
 	gobot "github.com/sabafly/gobot/pkg/bot"
 )
 
-var DMPermission = true
+var DMPermission = false
 
 func commands() gobot.ApplicationCommands {
 	return gobot.ApplicationCommands{
@@ -32,6 +32,34 @@ func commands() gobot.ApplicationCommands {
 				DMPermission: &DMPermission,
 			},
 			Handler: CommandTextPing,
+		},
+		{
+			ApplicationCommand: &discordgo.ApplicationCommand{
+				Name:         "feature",
+				Description:  "manage feature command",
+				DMPermission: &DMPermission,
+				Options: []*discordgo.ApplicationCommandOption{
+					{
+						Name:        "enable",
+						Description: "Enable an experiment",
+						Type:        discordgo.ApplicationCommandOptionSubCommand,
+						Options: []*discordgo.ApplicationCommandOption{
+							{
+								Name:        "feature",
+								Description: "kind of feature",
+								Type:        discordgo.ApplicationCommandOptionString,
+								Choices: []*discordgo.ApplicationCommandOptionChoice{
+									{
+										Name:  "pressure",
+										Value: "1",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			Handler: CommandTextFeature,
 		},
 		{
 			ApplicationCommand: &discordgo.ApplicationCommand{

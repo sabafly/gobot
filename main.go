@@ -88,6 +88,18 @@ func main() {
 								Handler: func(ctx *gin.Context) { wh.HandlerGuildDelete(ctx.Writer, ctx.Request) },
 							},
 						},
+
+						Child: []*apinternal.Page{
+							{
+								Path: "feature",
+								Handlers: []*apinternal.Handler{
+									{
+										Method:  "POST",
+										Handler: func(ctx *gin.Context) {},
+									},
+								},
+							},
+						},
 					},
 					{
 						Path: "message",

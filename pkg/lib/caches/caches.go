@@ -140,3 +140,13 @@ func (c *CacheManager[T]) Len() int {
 	defer c.sync.Unlock()
 	return len(c.caches)
 }
+
+func Append[T any](c *CacheManager[[]T], key string, v T) (data []T) {
+	d, err := c.Get(key)
+	if err != nil {
+		d = []T{}
+	}
+	d = append(d, v)
+	c.Set(key, d)
+	return d
+}

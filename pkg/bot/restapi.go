@@ -176,6 +176,19 @@ func (a *Api) messageCreateCall(m *discordgo.MessageCreate) {
 }
 
 // ----------------------------------------------------------------
+// ギルド
+// ----------------------------------------------------------------
+
+func (a *Api) GuildFeatureCreate(feature *GuildFeature) (err error) {
+	_, err = a.Request("POST", EndpointGuildFeature, feature)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ----------------------------------------------------------------
 // 統計
 // ----------------------------------------------------------------
 

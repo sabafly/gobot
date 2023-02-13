@@ -81,7 +81,7 @@ func (h *WebsocketHandler) HandlerGuildDelete(w http.ResponseWriter, r *http.Req
 	if err := requests.Unmarshal(r, &guildDelete); err != nil {
 		logging.Error("[内部] [REST] アンマーシャルできませんでした %s", err)
 		w.WriteHeader(400)
-		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request"})
+		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request", "error": err})
 		if err != nil {
 			logging.Error("応答に失敗 %s", err)
 		}
@@ -108,11 +108,47 @@ func (h *WebsocketHandler) HandlerGuildDelete(w http.ResponseWriter, r *http.Req
 	}
 }
 
+// ギルドフィーチャー関連
+
+var featureCache = caches.NewCacheManager[[]GuildFeature](nil)
+
+func HandlerGuildFeaturePost(w http.ResponseWriter, r *http.Request) {
+	//データ取り出す
+	guildFeature := GuildFeature{}
+	if err := requests.Unmarshal(r, &guildFeature); err != nil {
+		logging.Error("[内部] [REST] アンマーシャルできませんでした %s", err)
+		w.WriteHeader(400)
+		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request", "error": err})
+		if err != nil {
+			logging.Error("応答に失敗 %s", err)
+		}
+		return
+	}
+
+	err := db.Save(&guildFeature)
+	if err != nil {
+		logging.Error("[内部] [REST] データベースへの書き込みに失敗 %s", err)
+		w.WriteHeader(400)
+		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request"})
+		if err != nil {
+			logging.Error("応答に失敗 %s", err)
+		}
+		return
+	}
+
+	caches.Append(featureCache, guildFeature.ID, guildFeature)
+
+	err = json.NewEncoder(w).Encode(map[string]any{"status": "200 OK"})
+	if err != nil {
+		logging.Error("応答に失敗 %s", err)
+	}
+}
+
 // ----------------------------------------------------------------
 // メッセージ関連
 // ----------------------------------------------------------------
 
-var messageLog = caches.NewCacheManager[MessageLogs](nil)
+var messageLog = caches.NewCacheManager[[]MessageLog](nil)
 
 func (h *WebsocketHandler) HandlerMessageCreate(w http.ResponseWriter, r *http.Request) {
 	// データを取り出す
@@ -168,14 +204,8 @@ func (h *WebsocketHandler) HandlerMessageCreate(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	messages, err := messageLog.Get(messageCreate.Author.ID)
-	if err != nil {
-		messages = MessageLogs{}
-	}
+	caches.Append(messageLog, messageCreate.Author.ID, log)
 
-	messages = append(messages, log)
-
-	messageLog.Set(messageCreate.Author.ID, messages)
 	err = json.NewEncoder(w).Encode(map[string]any{"status": "200 OK"})
 	if err != nil {
 		logging.Error("応答に失敗 %s", err)
@@ -197,14 +227,14 @@ func (h *WebsocketHandler) HandlerStaticsUserMessage(w http.ResponseWriter, r *h
 		return
 	}
 
-	logs := MessageLogs{}
+	logs := []MessageLog{}
 
 	err := db.Find(&logs, "user_id = ?", query.Get("user"))
 	if err != nil {
 		logging.Warning("見つからなかった %s", err)
 	}
 
-	res := MessageLogs{}
+	res := []MessageLog{}
 
 	for _, v := range logs {
 		if v.GuildID == query.Get("guild") {

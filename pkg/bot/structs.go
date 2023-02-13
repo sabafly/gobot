@@ -24,3 +24,9 @@ type MessageLog struct {
 	Content   string
 	Bot       bool
 }
+
+type GuildFeature struct {
+	ID        string
+	ChannelID string
+	FeatureID int
+}

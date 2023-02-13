@@ -25,6 +25,8 @@ var (
 	EndpointGuild   = EndpointAPI + "guild"
 	EndpointMessage = EndpointAPI + "message"
 
+	EndpointGuildFeature = EndpointGuild + "/feature"
+
 	EndpointStatics            = EndpointAPI + "statics/"
 	EndpointStaticsUser        = EndpointStatics + "user"
 	EndpointStaticsUserMessage = EndpointStaticsUser + "/message"
