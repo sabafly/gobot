@@ -10,7 +10,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13
 	github.com/nicksnyder/go-i18n/v2 v2.2.1
 	go.uber.org/zap v1.24.0
-	golang.org/x/text v0.6.0
+	golang.org/x/text v0.7.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.4.6
 	gorm.io/gorm v1.24.5
