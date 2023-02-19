@@ -14,11 +14,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package main
+package gobot
 
 import (
 	"github.com/bwmarrin/discordgo"
-	gobot "github.com/sabafly/gobot/pkg/bot"
+	gobot "github.com/sabafly/gobot-lib/bot"
 )
 
 var DMPermission = false
@@ -32,34 +32,6 @@ func commands() gobot.ApplicationCommands {
 				DMPermission: &DMPermission,
 			},
 			Handler: CommandTextPing,
-		},
-		{
-			ApplicationCommand: &discordgo.ApplicationCommand{
-				Name:         "feature",
-				Description:  "manage feature command",
-				DMPermission: &DMPermission,
-				Options: []*discordgo.ApplicationCommandOption{
-					{
-						Name:        "enable",
-						Description: "Enable an experiment",
-						Type:        discordgo.ApplicationCommandOptionSubCommand,
-						Options: []*discordgo.ApplicationCommandOption{
-							{
-								Name:        "feature",
-								Description: "kind of feature",
-								Type:        discordgo.ApplicationCommandOptionString,
-								Choices: []*discordgo.ApplicationCommandOptionChoice{
-									{
-										Name:  "pressure",
-										Value: "1",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			Handler: CommandTextFeature,
 		},
 		{
 			ApplicationCommand: &discordgo.ApplicationCommand{

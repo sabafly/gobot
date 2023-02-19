@@ -14,7 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package main
+package gobot
 
 import (
 	"fmt"
@@ -24,9 +24,10 @@ import (
 	"unicode/utf8"
 
 	"github.com/bwmarrin/discordgo"
-	gobot "github.com/sabafly/gobot/pkg/bot"
-	"github.com/sabafly/gobot/pkg/lib/logging"
-	"github.com/sabafly/gobot/pkg/lib/translate"
+	botlib "github.com/sabafly/gobot-lib/bot"
+	gobot "github.com/sabafly/gobot-lib/bot"
+	"github.com/sabafly/gobot-lib/logging"
+	"github.com/sabafly/gobot-lib/translate"
 )
 
 // ----------------------------------------------------------------
@@ -39,7 +40,7 @@ func CommandTextPing(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Embeds: setEmbedProperties([]*discordgo.MessageEmbed{
+			Embeds: botlib.SetEmbedProperties([]*discordgo.MessageEmbed{
 				{
 					Title: "🏓 pong!",
 					Fields: []*discordgo.MessageEmbedField{
@@ -57,52 +58,53 @@ func CommandTextPing(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 }
 
-// チャンネルエクスペリエンスを設定するコマンド
-func CommandTextFeature(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	options := i.ApplicationCommandData().Options
-	switch options[0].Name {
-	case "enable":
-		options = options[0].Options
-		for _, acido := range options {
-			// featureオプションじゃなかったらスキップ
-			if acido.Name != "feature" {
-				continue
-			}
+// TODO: module_feature.goが完成したら消す
+// // チャンネルエクスペリエンスを設定するコマンド
+// func CommandTextFeature(s *discordgo.Session, i *discordgo.InteractionCreate) {
+// 	options := i.ApplicationCommandData().Options
+// 	switch options[0].Name {
+// 	case "enable":
+// 		options = options[0].Options
+// 		for _, acido := range options {
+// 			// featureオプションじゃなかったらスキップ
+// 			if acido.Name != "feature" {
+// 				continue
+// 			}
 
-			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Embeds: setEmbedProperties([]*discordgo.MessageEmbed{
-						{
-							Description: translate.Translate(
-								i.Locale,
-								"command_text_feature_add_message_select_target",
-								map[string]any{"Target": translate.Message(i.Locale, "channel")},
-							),
-						},
-					}),
-					Components: []discordgo.MessageComponent{
-						discordgo.ActionsRow{
-							Components: []discordgo.MessageComponent{
-								discordgo.SelectMenu{
-									CustomID:     "text_feature_enable_" + acido.StringValue(),
-									MenuType:     discordgo.ChannelSelectMenu,
-									ChannelTypes: []discordgo.ChannelType{discordgo.ChannelTypeGuildText},
-								},
-							},
-						},
-					},
-					Flags: discordgo.MessageFlagsEphemeral,
-				},
-			})
-			if err != nil {
-				logging.Error("レスポンスに失敗 %s", err)
-			}
-		}
-	case "disable":
-		options = options[0].Options
-	}
-}
+// 			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+// 				Type: discordgo.InteractionResponseChannelMessageWithSource,
+// 				Data: &discordgo.InteractionResponseData{
+// 					Embeds: botlib.setEmbedProperties([]*discordgo.MessageEmbed{
+// 						{
+// 							Description: translate.Translate(
+// 								i.Locale,
+// 								"command_text_feature_add_message_select_target",
+// 								map[string]any{"Target": translate.Message(i.Locale, "channel")},
+// 							),
+// 						},
+// 					}),
+// 					Components: []discordgo.MessageComponent{
+// 						discordgo.ActionsRow{
+// 							Components: []discordgo.MessageComponent{
+// 								discordgo.SelectMenu{
+// 									CustomID:     "text_feature_enable_" + acido.StringValue(),
+// 									MenuType:     discordgo.ChannelSelectMenu,
+// 									ChannelTypes: []discordgo.ChannelType{discordgo.ChannelTypeGuildText},
+// 								},
+// 							},
+// 						},
+// 					},
+// 					Flags: discordgo.MessageFlagsEphemeral,
+// 				},
+// 			})
+// 			if err != nil {
+// 				logging.Error("レスポンスに失敗 %s", err)
+// 			}
+// 		}
+// 	case "disable":
+// 		options = options[0].Options
+// 	}
+// }
 
 // ----------------------------------------------------------------
 // ユーザーコマンド
@@ -114,7 +116,7 @@ func CommandUserInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	// ユーザー情報を取得
 	user, err := s.GuildMember(i.GuildID, i.ApplicationCommandData().TargetID)
 	if err != nil {
-		err := s.InteractionRespond(i.Interaction, ErrorRespond(i, err))
+		err := s.InteractionRespond(i.Interaction, botlib.ErrorRespond(i, err))
 		if err != nil {
 			logging.Error("インタラクションレスポンスに失敗 %s", err)
 		}
@@ -131,21 +133,21 @@ func CommandUserInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	status, err := s.State.Presence(i.GuildID, i.ApplicationCommandData().TargetID)
 	if err != nil {
 		logging.Warning("ユーザーステータスの取得に失敗 %s", err)
-		statusStr = translate.Message(i.Locale, "online_status") + ": " + StatusString(discordgo.StatusOffline)
+		statusStr = translate.Message(i.Locale, "online_status") + ": " + botlib.StatusString(discordgo.StatusOffline)
 	} else {
 		if status.Status != discordgo.StatusOffline {
-			if str := StatusString(status.ClientStatus.Web); str != "" {
+			if str := botlib.StatusString(status.ClientStatus.Web); str != "" {
 				statusStr += translate.Message(i.Locale, "client_web") + ": " + str + "\r"
 			}
-			if str := StatusString(status.ClientStatus.Desktop); str != "" {
+			if str := botlib.StatusString(status.ClientStatus.Desktop); str != "" {
 				statusStr += translate.Message(i.Locale, "client_desktop") + ": " + str + "\r"
 			}
-			if str := StatusString(status.ClientStatus.Mobile); str != "" {
+			if str := botlib.StatusString(status.ClientStatus.Mobile); str != "" {
 				statusStr += translate.Message(i.Locale, "client_mobile") + ": " + str + "\r"
 			}
 		}
 		if statusStr == "" {
-			statusStr += translate.Message(i.Locale, "online_status") + ": " + StatusString(status.Status) + "\r"
+			statusStr += translate.Message(i.Locale, "online_status") + ": " + botlib.StatusString(status.Status) + "\r"
 		}
 	}
 
@@ -169,7 +171,7 @@ func CommandUserInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	for _, roleID := range user.Roles {
 		role, err := s.State.Role(i.GuildID, roleID)
 		if err != nil {
-			err := s.InteractionRespond(i.Interaction, ErrorRespond(i, err))
+			err := s.InteractionRespond(i.Interaction, botlib.ErrorRespond(i, err))
 			if err != nil {
 				logging.Error("インタラクションレスポンスに失敗 %s", err)
 			}
@@ -223,7 +225,7 @@ func CommandUserInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		goto staticsFinal
 	}
 	{
-		day, week, all, channelID := MessageLogDetails(logs)
+		day, week, all, channelID := botlib.MessageLogDetails(logs)
 		messageStaticStr += fmt.Sprintf(
 			"24%s: %d\r7%s: %d\r%s: %d\r%s: <#%s>",
 			translate.Message(i.Locale, "hour"), day,
@@ -249,7 +251,7 @@ staticsFinal:
 	// ユーザーの日時情報を取得
 	created, err := discordgo.SnowflakeTimestamp(user.User.ID)
 	if err != nil {
-		err := s.InteractionRespond(i.Interaction, ErrorRespond(i, err))
+		err := s.InteractionRespond(i.Interaction, botlib.ErrorRespond(i, err))
 		if err != nil {
 			logging.Error("インタラクションレスポンスに失敗 %s", err)
 		}
@@ -300,7 +302,7 @@ staticsFinal:
 
 			// 埋め込み組み立て
 			embed := &discordgo.MessageEmbed{
-				Title:       ActivitiesNameString(i.Locale, a),
+				Title:       botlib.ActivitiesNameString(i.Locale, a),
 				Description: description,
 				Thumbnail:   &discordgo.MessageEmbedThumbnail{URL: imageURL},
 			}
@@ -316,7 +318,7 @@ staticsFinal:
 		Fields:      fields,
 	})
 	embeds = append(embeds, activityEmbeds...)
-	embeds = setEmbedProperties(embeds)
+	embeds = botlib.SetEmbedProperties(embeds)
 
 	// 応答送信
 	response = &discordgo.InteractionResponseData{
@@ -326,7 +328,7 @@ staticsFinal:
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: response,
 	}); err != nil {
-		err := s.InteractionRespond(i.Interaction, ErrorRespond(i, err))
+		err := s.InteractionRespond(i.Interaction, botlib.ErrorRespond(i, err))
 		if err != nil {
 			logging.Error("インタラクションレスポンスに失敗 %s", err)
 		}

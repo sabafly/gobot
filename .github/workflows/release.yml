@@ -26,7 +26,7 @@ jobs:
             echo ${{ secrets.SSH_PASSWORD }} | sudo -S git pull
             echo ${{ secrets.SSH_PASSWORD }} | sudo -S git submodule init
             echo ${{ secrets.SSH_PASSWORD }} | sudo -S git submodule update --recursive
-            /usr/local/go/bin/go build -race -ldflags "-X github.com/sabafly/gobot/pkg/cmd.VERSION=$(git describe --tag --abbrev=0)"
+            /usr/local/go/bin/go build -race -ldflags "-X github.com/sabafly/gobot-lib/cmd.VERSION=$(git describe --tag --abbrev=0)"
             echo ${{ secrets.SSH_PASSWORD }} | sudo -S killall -SIGINT gobot
 
   release:
