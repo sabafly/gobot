@@ -50,12 +50,16 @@ func Run() {
 			if err != nil {
 				return
 			}
+			username := user.User.Username
+			if user.Nick != "" {
+				username = user.Nick
+			}
 			s.ChannelMessageSendComplex(ts.ChannelID, &discordgo.MessageSend{
 				Embeds: []*discordgo.MessageEmbed{
 					{
 						Author: &discordgo.MessageEmbedAuthor{
 							IconURL: user.AvatarURL(""),
-							Name:    fmt.Sprintf("<@%s>が入力を始めた！", ts.UserID),
+							Name:    fmt.Sprintf("%sが入力を始めた！", username),
 						},
 					},
 				},
