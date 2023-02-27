@@ -54,15 +54,16 @@ func Run() {
 			if user.Nick != "" {
 				username = user.Nick
 			}
-			s.ChannelMessageSendComplex(ts.ChannelID, &discordgo.MessageSend{
-				Embeds: []*discordgo.MessageEmbed{
-					{
-						Author: &discordgo.MessageEmbedAuthor{
-							IconURL: user.AvatarURL(""),
-							Name:    fmt.Sprintf("%sが入力を始めた！", username),
-						},
+			embeds := []*discordgo.MessageEmbed{
+				{
+					Author: &discordgo.MessageEmbedAuthor{
+						IconURL: user.AvatarURL(""),
+						Name:    fmt.Sprintf("%sが入力を始めた！", username),
 					},
 				},
+			}
+			s.ChannelMessageSendComplex(ts.ChannelID, &discordgo.MessageSend{
+				Embeds: embeds,
 			})
 		},
 	})
