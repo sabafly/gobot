@@ -25,7 +25,6 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	botlib "github.com/sabafly/gobot-lib/bot"
-	gobot "github.com/sabafly/gobot-lib/bot"
 	"github.com/sabafly/gobot-lib/logging"
 	"github.com/sabafly/gobot-lib/translate"
 )
@@ -164,7 +163,7 @@ func CommandUserInfo(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	})
 
 	// メッセージ統計
-	api := gobot.NewApi()
+	api := botlib.NewApi()
 	var messageStaticStr string
 	logs, err := api.StaticsUserMessage(i.GuildID, i.ApplicationCommandData().TargetID)
 	if err != nil {
