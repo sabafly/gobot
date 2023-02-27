@@ -46,8 +46,19 @@ func Run() {
 		ChannelTypes: []discordgo.ChannelType{discordgo.ChannelTypeGuildText},
 		Type:         botlib.FeatureTypingStart,
 		Handler: func(s *discordgo.Session, ts *discordgo.TypingStart) {
+			user, err := s.GuildMember(ts.GuildID, ts.UserID)
+			if err != nil {
+				return
+			}
 			s.ChannelMessageSendComplex(ts.ChannelID, &discordgo.MessageSend{
-				Content: fmt.Sprintf("<@%s>が入力を始めたぞ！", ts.UserID),
+				Embeds: []*discordgo.MessageEmbed{
+					{
+						Author: &discordgo.MessageEmbedAuthor{
+							IconURL: user.AvatarURL(""),
+							Name:    fmt.Sprintf("<@%s>が入力を始めた！", ts.UserID),
+						},
+					},
+				},
 			})
 		},
 	})
