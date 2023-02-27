@@ -58,54 +58,6 @@ func CommandTextPing(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	}
 }
 
-// TODO: module_feature.goが完成したら消す
-// // チャンネルエクスペリエンスを設定するコマンド
-// func CommandTextFeature(s *discordgo.Session, i *discordgo.InteractionCreate) {
-// 	options := i.ApplicationCommandData().Options
-// 	switch options[0].Name {
-// 	case "enable":
-// 		options = options[0].Options
-// 		for _, acido := range options {
-// 			// featureオプションじゃなかったらスキップ
-// 			if acido.Name != "feature" {
-// 				continue
-// 			}
-
-// 			err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-// 				Type: discordgo.InteractionResponseChannelMessageWithSource,
-// 				Data: &discordgo.InteractionResponseData{
-// 					Embeds: botlib.setEmbedProperties([]*discordgo.MessageEmbed{
-// 						{
-// 							Description: translate.Translate(
-// 								i.Locale,
-// 								"command_text_feature_add_message_select_target",
-// 								map[string]any{"Target": translate.Message(i.Locale, "channel")},
-// 							),
-// 						},
-// 					}),
-// 					Components: []discordgo.MessageComponent{
-// 						discordgo.ActionsRow{
-// 							Components: []discordgo.MessageComponent{
-// 								discordgo.SelectMenu{
-// 									CustomID:     "text_feature_enable_" + acido.StringValue(),
-// 									MenuType:     discordgo.ChannelSelectMenu,
-// 									ChannelTypes: []discordgo.ChannelType{discordgo.ChannelTypeGuildText},
-// 								},
-// 							},
-// 						},
-// 					},
-// 					Flags: discordgo.MessageFlagsEphemeral,
-// 				},
-// 			})
-// 			if err != nil {
-// 				logging.Error("レスポンスに失敗 %s", err)
-// 			}
-// 		}
-// 	case "disable":
-// 		options = options[0].Options
-// 	}
-// }
-
 // ----------------------------------------------------------------
 // ユーザーコマンド
 // ----------------------------------------------------------------
