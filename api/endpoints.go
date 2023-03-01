@@ -167,7 +167,16 @@ func HandlerGuildFeatureDelete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	guildFeatures := []*GuildFeature{}
-	db.Find(&guildFeatures, "guild_id = ?", guildFeature.GuildID)
+	err := db.Find(&guildFeatures, "guild_id = ?", guildFeature.GuildID)
+	if err != nil {
+		logging.Error("[内部] [REST] データベースへの書き込みに失敗 %s", err)
+		w.WriteHeader(400)
+		err := json.NewEncoder(w).Encode(map[string]any{"status": "500 Server Error"})
+		if err != nil {
+			logging.Error("応答に失敗 %s", err)
+		}
+		return
+	}
 
 	for _, gf := range guildFeatures {
 		if gf.TargetID == guildFeature.TargetID && gf.FeatureID == guildFeature.FeatureID {

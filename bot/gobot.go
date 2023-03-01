@@ -39,7 +39,7 @@ func Run() {
 		logging.Fatal("failed create bot: %s", err)
 	}
 
-	bot.FeatureCreate(&botlib.Feature{
+	err = bot.FeatureCreate(&botlib.Feature{
 		Name:         "Pressure",
 		ID:           "TYPING_START_PRESSURE",
 		IDType:       botlib.FeatureChannelID,
@@ -72,6 +72,9 @@ func Run() {
 			}
 		},
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	bot.FeatureApplicationCommandSettingsSet(botlib.FeatureApplicationCommandSettings{
 		Name:         "feature",

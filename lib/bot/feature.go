@@ -301,14 +301,21 @@ func (bm *BotManager) FeatureApplicationCommandHandler() func(*discordgo.Session
 				var values []string
 				i, values = RequestFeatureIDRespond(s, i, f)
 				for _, v := range values {
-					bm.FeatureEnable(i.GuildID, f.ID, v)
+					err := bm.FeatureEnable(i.GuildID, f.ID, v)
+					if err != nil {
+						logging.Error("有効化に失敗 %s", err)
+						return
+					}
 				}
-				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
 					Data: &discordgo.InteractionResponseData{
 						Content: "OK",
 					},
 				})
+				if err != nil {
+					logging.Error("インタラクションレスポンスに失敗 %s", err)
+				}
 			}
 		case "disable":
 			logging.Debug("disable called")
@@ -349,14 +356,21 @@ func (bm *BotManager) FeatureApplicationCommandHandler() func(*discordgo.Session
 				var values []string
 				i, values = RequestFeatureIDRespond(s, i, f)
 				for _, v := range values {
-					bm.FeatureDisable(i.GuildID, f.ID, v)
+					err := bm.FeatureDisable(i.GuildID, f.ID, v)
+					if err != nil {
+						logging.Error("無効化に失敗 %s", err)
+						return
+					}
 				}
-				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
 					Data: &discordgo.InteractionResponseData{
 						Content: "OK",
 					},
 				})
+				if err != nil {
+					logging.Error("インタラクションレスポンスに失敗 %s", err)
+				}
 			}
 		}
 	}

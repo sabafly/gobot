@@ -220,7 +220,7 @@ func WaitNewInteractionResponseSingle(s *discordgo.Session, i *discordgo.Interac
 			ic = i2
 			ctx.Done()
 		}
-		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: messageData.Data,
 		})
