@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/sabafly/gobot/lib/caches"
 	"github.com/sabafly/gobot/lib/logging"
@@ -112,11 +113,11 @@ func (h *WebsocketHandler) HandlerGuildDelete(w http.ResponseWriter, r *http.Req
 
 // ギルドフィーチャー関連
 
-var featureCache = caches.NewCacheManager[map[*GuildFeature]bool](nil)
+var featureCache = caches.NewCacheManager[map[string]GuildFeature](nil)
 
 func HandlerGuildFeaturePost(w http.ResponseWriter, r *http.Request) {
 	//データ取り出す
-	guildFeature := &GuildFeature{}
+	guildFeature := GuildFeature{}
 	if err := requests.Unmarshal(r, &guildFeature); err != nil {
 		logging.Error("[内部] [REST] アンマーシャルできませんでした %s", err)
 		w.WriteHeader(400)
@@ -127,7 +128,9 @@ func HandlerGuildFeaturePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := db.Save(guildFeature)
+	guildFeature.ID = uuid.NewString()
+
+	err := db.Save(&guildFeature)
 	if err != nil {
 		logging.Error("[内部] [REST] データベースへの書き込みに失敗 %s", err)
 		w.WriteHeader(400)
@@ -140,10 +143,10 @@ func HandlerGuildFeaturePost(w http.ResponseWriter, r *http.Request) {
 
 	features, err := featureCache.Get(guildFeature.GuildID)
 	if err != nil {
-		features = make(map[*GuildFeature]bool)
+		features = make(map[string]GuildFeature)
 	}
 
-	features[guildFeature] = true
+	features[guildFeature.ID] = guildFeature
 
 	featureCache.Set(guildFeature.GuildID, features)
 
@@ -155,8 +158,8 @@ func HandlerGuildFeaturePost(w http.ResponseWriter, r *http.Request) {
 
 func HandlerGuildFeatureDelete(w http.ResponseWriter, r *http.Request) {
 	//データ取り出す
-	guildFeature := &GuildFeature{}
-	if err := requests.Unmarshal(r, guildFeature); err != nil {
+	guildFeature := GuildFeature{}
+	if err := requests.Unmarshal(r, &guildFeature); err != nil {
 		logging.Error("[内部] [REST] アンマーシャルできませんでした %s", err)
 		w.WriteHeader(400)
 		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request", "error": err})
@@ -166,7 +169,7 @@ func HandlerGuildFeatureDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	guildFeatures := []*GuildFeature{}
+	guildFeatures := []GuildFeature{}
 	err := db.Find(&guildFeatures, "guild_id = ?", guildFeature.GuildID)
 	if err != nil {
 		logging.Error("[内部] [REST] データベースへの書き込みに失敗 %s", err)
@@ -178,9 +181,11 @@ func HandlerGuildFeatureDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var deleted bool
+
 	for _, gf := range guildFeatures {
 		if gf.TargetID == guildFeature.TargetID && gf.FeatureID == guildFeature.FeatureID {
-			err := db.Delete(guildFeature, "id = ?", gf.ID)
+			err := db.Delete(&guildFeature, "id = ?", gf.ID)
 			if err != nil {
 				logging.Error("[内部] [REST] データベースへの書き込みに失敗 %s", err)
 				w.WriteHeader(400)
@@ -190,12 +195,11 @@ func HandlerGuildFeatureDelete(w http.ResponseWriter, r *http.Request) {
 				}
 				return
 			}
+			deleted = true
 		}
 	}
 
-	features, err := featureCache.Get(guildFeature.GuildID)
-	if err != nil {
-		logging.Error("[内部] [REST] キャッシュへの書き込みに失敗 %s", err)
+	if !deleted {
 		w.WriteHeader(400)
 		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request"})
 		if err != nil {
@@ -203,9 +207,19 @@ func HandlerGuildFeatureDelete(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	for gf := range features {
-		if gf.TargetID == guildFeature.TargetID {
-			delete(features, gf)
+
+	features, err := featureCache.Get(guildFeature.GuildID)
+	if err != nil {
+		err = json.NewEncoder(w).Encode(map[string]any{"status": "200 OK"})
+		if err != nil {
+			logging.Error("応答に失敗 %s", err)
+		}
+		return
+	}
+
+	for _, gf := range features {
+		if gf.TargetID == guildFeature.TargetID && gf.FeatureID == guildFeature.FeatureID {
+			delete(features, gf.ID)
 		}
 	}
 	featureCache.Set(guildFeature.GuildID, features)
@@ -218,8 +232,8 @@ func HandlerGuildFeatureDelete(w http.ResponseWriter, r *http.Request) {
 
 func HandlerGuildFeatureGet(w http.ResponseWriter, r *http.Request) {
 	//データ取り出す
-	guildFeature := &GuildFeature{}
-	if err := requests.Unmarshal(r, guildFeature); err != nil {
+	guildFeature := GuildFeature{}
+	if err := requests.Unmarshal(r, &guildFeature); err != nil {
 		logging.Error("[内部] [REST] アンマーシャルできませんでした %s", err)
 		w.WriteHeader(400)
 		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request", "error": err})
@@ -229,30 +243,45 @@ func HandlerGuildFeatureGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := featureCache.Get(guildFeature.GuildID)
+	feature, err := featureCache.Get(guildFeature.GuildID)
 	if err != nil {
-		err := db.First(guildFeature)
+		guildFeatures := []GuildFeature{}
+		err := db.Find(&guildFeatures, "guild_id = ?", guildFeature.GuildID)
 		if err != nil {
 			logging.Error("[内部] [REST] データベースへの書き込みに失敗 %s", err)
 			w.WriteHeader(404)
-			err := json.NewEncoder(w).Encode(map[string]any{"status": "404 Not Found"})
+			err := json.NewEncoder(w).Encode(map[string]any{"status": "404 Not Found", "error": err})
 			if err != nil {
 				logging.Error("応答に失敗 %s", err)
 			}
 			return
 		}
+		feature = make(map[string]GuildFeature)
 
-		features, err := featureCache.Get(guildFeature.GuildID)
-		if err != nil {
-			features = make(map[*GuildFeature]bool)
+		for _, gf := range guildFeatures {
+			feature[gf.ID] = gf
 		}
-
-		features[guildFeature] = true
-
-		featureCache.Set(guildFeature.GuildID, features)
+		featureCache.Set(guildFeature.GuildID, feature)
 	}
 
-	err = json.NewEncoder(w).Encode(struct{ Enabled bool }{Enabled: true})
+	var found bool
+
+	for _, gf := range feature {
+		if gf.TargetID == guildFeature.TargetID && gf.FeatureID == guildFeature.FeatureID {
+			found = true
+		}
+	}
+
+	if !found {
+		w.WriteHeader(404)
+		err := json.NewEncoder(w).Encode(map[string]any{"status": "404 Not Found"})
+		if err != nil {
+			logging.Error("応答に失敗 %s", err)
+		}
+		return
+	}
+
+	err = json.NewEncoder(w).Encode(map[string]any{"enabled": true})
 	if err != nil {
 		logging.Error("応答に失敗 %s", err)
 	}

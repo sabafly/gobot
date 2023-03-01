@@ -26,7 +26,8 @@ type MessageLog struct {
 }
 
 type GuildFeature struct {
-	GuildID   string `gorm:"index"`
+	ID        string
+	GuildID   string
 	TargetID  string
 	FeatureID string
 }

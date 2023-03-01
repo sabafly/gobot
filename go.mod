@@ -2,6 +2,10 @@ module github.com/sabafly/gobot
 
 go 1.20
 
+replace (
+	github.com/bwmarrin/discordgo => ./discordgo
+)
+
 require (
 	github.com/andersfylling/snowflake/v5 v5.0.1
 	github.com/bwmarrin/discordgo v0.27.0

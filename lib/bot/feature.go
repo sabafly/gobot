@@ -304,9 +304,20 @@ func (bm *BotManager) FeatureApplicationCommandHandler() func(*discordgo.Session
 					err := bm.FeatureEnable(i.GuildID, f.ID, v)
 					if err != nil {
 						logging.Error("有効化に失敗 %s", err)
+						embeds := ErrorMessageEmbed(i, "error_create_failed")
+						err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+							Type: discordgo.InteractionResponseChannelMessageWithSource,
+							Data: &discordgo.InteractionResponseData{
+								Embeds: embeds,
+							},
+						})
+						if err != nil {
+							logging.Error("インタラクションに失敗 %s", err)
+						}
 						return
 					}
 				}
+				// TODO: カスタマイズ可能なメッセージ
 				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
 					Data: &discordgo.InteractionResponseData{
@@ -359,9 +370,20 @@ func (bm *BotManager) FeatureApplicationCommandHandler() func(*discordgo.Session
 					err := bm.FeatureDisable(i.GuildID, f.ID, v)
 					if err != nil {
 						logging.Error("無効化に失敗 %s", err)
+						embeds := ErrorMessageEmbed(i, "error_already_deleted")
+						err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+							Type: discordgo.InteractionResponseChannelMessageWithSource,
+							Data: &discordgo.InteractionResponseData{
+								Embeds: embeds,
+							},
+						})
+						if err != nil {
+							logging.Error("インタラクションに失敗 %s", err)
+						}
 						return
 					}
 				}
+				// TODO: カスタマイズ可能なメッセージ
 				err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 					Type: discordgo.InteractionResponseChannelMessageWithSource,
 					Data: &discordgo.InteractionResponseData{
