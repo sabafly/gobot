@@ -1,5 +1,5 @@
 /*
-	Copyright (C) 2022-2023  ikafly144
+	Copyright (C) 2022-2023  sabafly
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -14,32 +14,36 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package gobot
+package botlib
 
 import (
+	"time"
+
 	"github.com/bwmarrin/discordgo"
-	gobot "github.com/sabafly/gobot-lib/bot"
 )
 
-var DMPermission = false
+type Menu interface {
+	Handle(*discordgo.Session, *discordgo.InteractionCreate)
+	Closed() bool
+}
 
-func commands() gobot.ApplicationCommands {
-	return gobot.ApplicationCommands{
-		{
-			ApplicationCommand: &discordgo.ApplicationCommand{
-				Name:         "ping",
-				Description:  "pong!",
-				DMPermission: &DMPermission,
-			},
-			Handler: CommandTextPing,
-		},
-		{
-			ApplicationCommand: &discordgo.ApplicationCommand{
-				Name:         "info",
-				Type:         discordgo.UserApplicationCommand,
-				DMPermission: &DMPermission,
-			},
-			Handler: CommandUserInfo,
-		},
-	}
+type VoteCreationMenu struct {
+	Title       string
+	Description string
+	GuildID     string
+	CustomID    string
+	Selections  []*VoteSelection
+	ExpireAt    time.Time
+	StartAt     time.Time
+	Duration    time.Duration
+}
+
+type VoteSelection struct {
+	Name        string
+	Description string
+	Emoji       discordgo.Emoji
+}
+
+func (v *VoteCreationMenu) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) {
+
 }

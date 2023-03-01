@@ -1,5 +1,5 @@
 /*
-	Copyright (C) 2022-2023  ikafly144
+	Copyright (C) 2022-2023  sabafly
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -23,9 +23,9 @@ import (
 	"strconv"
 
 	"github.com/bwmarrin/discordgo"
-	botlib "github.com/sabafly/gobot-lib/bot"
-	"github.com/sabafly/gobot-lib/env"
-	"github.com/sabafly/gobot-lib/logging"
+	botlib "github.com/sabafly/gobot/lib/bot"
+	"github.com/sabafly/gobot/lib/env"
+	"github.com/sabafly/gobot/lib/logging"
 )
 
 func Run() {
@@ -48,6 +48,7 @@ func Run() {
 		Handler: func(s *discordgo.Session, ts *discordgo.TypingStart) {
 			user, err := s.GuildMember(ts.GuildID, ts.UserID)
 			if err != nil {
+				logging.Error("ギルドメンバーの取得に失敗 %s", err)
 				return
 			}
 			username := user.User.Username
@@ -62,9 +63,13 @@ func Run() {
 					},
 				},
 			}
-			s.ChannelMessageSendComplex(ts.ChannelID, &discordgo.MessageSend{
+			botlib.SetEmbedProperties(embeds)
+			_, err = botlib.SendWebhook(s, ts.ChannelID, &discordgo.WebhookParams{
 				Embeds: embeds,
 			})
+			if err != nil {
+				logging.Error("メッセージの送信に失敗 %s", err)
+			}
 		},
 	})
 

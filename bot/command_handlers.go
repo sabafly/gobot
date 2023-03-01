@@ -1,5 +1,5 @@
 /*
-	Copyright (C) 2022-2023  ikafly144
+	Copyright (C) 2022-2023  sabafly
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -24,9 +24,9 @@ import (
 	"unicode/utf8"
 
 	"github.com/bwmarrin/discordgo"
-	botlib "github.com/sabafly/gobot-lib/bot"
-	"github.com/sabafly/gobot-lib/logging"
-	"github.com/sabafly/gobot-lib/translate"
+	botlib "github.com/sabafly/gobot/lib/bot"
+	"github.com/sabafly/gobot/lib/logging"
+	"github.com/sabafly/gobot/lib/translate"
 )
 
 // ----------------------------------------------------------------
@@ -55,6 +55,50 @@ func CommandTextPing(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	if err != nil {
 		logging.Error("インタラクション応答に失敗 %s", err)
 	}
+}
+
+// 投票コマンド
+func CommandTextVote(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	// 	options := i.ApplicationCommandData().Options[0].Options
+	// 	switch i.ApplicationCommandData().Options[0].Name {
+	// 	case "create":
+	// 		//引数用意
+	// 		var (
+	// 			title       string
+	// 			description string
+	// 			duration    int64
+	// 			unit        time.Duration
+	// 			min         int64
+	// 			max         int64
+	// 			showVote    bool
+	// 		)
+
+	// 		// 引数取り出し
+	// 		for _, acido := range options {
+	// 			switch acido.Name {
+	// 			case "title":
+	// 				title = acido.StringValue()
+	// 			case "description":
+	// 				description = acido.StringValue()
+	// 			case "duration":
+	// 				duration = acido.IntValue()
+	// 			case "unit":
+	// 				unit = time.Duration(acido.IntValue())
+	// 			case "min-number-limit":
+	// 				min = acido.IntValue()
+	// 			case "max-number-limit":
+	// 				max = acido.IntValue()
+	// 			case "show-vote":
+	// 				showVote = acido.BoolValue()
+	// 			}
+	// 		}
+	// 		menu := botlib.VoteCreationMenu{
+	// 			Title:       title,
+	// 			Description: description,
+	// 			GuildID:     i.GuildID,
+	// 			CustomID:    uuid.NewString(),
+	// 		}
+	// 	}
 }
 
 // ----------------------------------------------------------------
