@@ -41,10 +41,12 @@ func Run() {
 	}
 
 	bot.Api.AddHandler(func(a *botlib.Api, s *botlib.StatusUpdate) {
-		bot.Client.SetPresence(context.TODO(),
+		if err := bot.Client.SetPresence(context.TODO(),
 			gateway.WithOnlineStatus(discord.OnlineStatusOnline),
 			gateway.WithPlayingActivity(fmt.Sprintf("/help | %d Servers", s.Servers)),
-		)
+		); err != nil {
+			logging.Error("ステータス更新に失敗 %s", err)
+		}
 	})
 
 	// ボットを開始

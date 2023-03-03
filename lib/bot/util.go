@@ -214,7 +214,10 @@ func SendWebhook(client bot.Client, channelID snowflake.ID, data discord.Webhook
 			continue
 		}
 		data := discord.IncomingWebhook{}
-		json.Unmarshal(buf, &data)
+		err = json.Unmarshal(buf, &data)
+		if err != nil {
+			return nil, err
+		}
 		if data.User.ID == client.ID() {
 			token = data.Token
 			webhook = data
