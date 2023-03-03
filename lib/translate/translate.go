@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bwmarrin/discordgo"
+	"github.com/disgoorg/disgo/discord"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"github.com/sabafly/gobot/lib/logging"
 	"golang.org/x/text/language"
@@ -77,17 +77,17 @@ func loadTranslations() (i18n.Bundle, error) {
 	return *bundle, nil
 }
 
-func Message(locale discordgo.Locale, messageId string) (res string) {
+func Message(locale discord.Locale, messageId string) (res string) {
 	res = Translate(locale, messageId, map[string]any{})
 	return
 }
 
-func Translate(locale discordgo.Locale, messageId string, templateData any) (res string) {
+func Translate(locale discord.Locale, messageId string, templateData any) (res string) {
 	res = Translates(locale, messageId, templateData, 2)
 	return
 }
 
-func Translates(locale discordgo.Locale, messageId string, templateData any, pluralCount int) string {
+func Translates(locale discord.Locale, messageId string, templateData any, pluralCount int) string {
 	messageId = strings.ReplaceAll(messageId, ".", "_")
 	Localizer := i18n.NewLocalizer(&translations, string(locale))
 	res, err := Localizer.Localize(&i18n.LocalizeConfig{
@@ -110,38 +110,40 @@ func Translates(locale discordgo.Locale, messageId string, templateData any, plu
 	return res
 }
 
-func MessageMap(key string, replace bool) *map[discordgo.Locale]string {
-	res := map[discordgo.Locale]string{
-		discordgo.Bulgarian:    Message(discordgo.Bulgarian, key),
-		discordgo.ChineseCN:    Message(discordgo.ChineseCN, key),
-		discordgo.ChineseTW:    Message(discordgo.ChineseTW, key),
-		discordgo.Croatian:     Message(discordgo.Croatian, key),
-		discordgo.Czech:        Message(discordgo.Czech, key),
-		discordgo.Danish:       Message(discordgo.Danish, key),
-		discordgo.Dutch:        Message(discordgo.Dutch, key),
-		discordgo.EnglishGB:    Message(discordgo.EnglishGB, key),
-		discordgo.EnglishUS:    Message(discordgo.EnglishUS, key),
-		discordgo.Finnish:      Message(discordgo.Finnish, key),
-		discordgo.French:       Message(discordgo.French, key),
-		discordgo.German:       Message(discordgo.German, key),
-		discordgo.Greek:        Message(discordgo.Greek, key),
-		discordgo.Hindi:        Message(discordgo.Hindi, key),
-		discordgo.Hungarian:    Message(discordgo.Hungarian, key),
-		discordgo.Italian:      Message(discordgo.Italian, key),
-		discordgo.Japanese:     Message(discordgo.Japanese, key),
-		discordgo.Korean:       Message(discordgo.Korean, key),
-		discordgo.Lithuanian:   Message(discordgo.Lithuanian, key),
-		discordgo.Norwegian:    Message(discordgo.Norwegian, key),
-		discordgo.Polish:       Message(discordgo.Polish, key),
-		discordgo.PortugueseBR: Message(discordgo.PortugueseBR, key),
-		discordgo.Romanian:     Message(discordgo.Romanian, key),
-		discordgo.Russian:      Message(discordgo.Russian, key),
-		discordgo.SpanishES:    Message(discordgo.SpanishES, key),
-		discordgo.Swedish:      Message(discordgo.Swedish, key),
-		discordgo.Thai:         Message(discordgo.Thai, key),
-		discordgo.Turkish:      Message(discordgo.Turkish, key),
-		discordgo.Ukrainian:    Message(discordgo.Ukrainian, key),
-		discordgo.Vietnamese:   Message(discordgo.Vietnamese, key),
+func MessageMap(key string, replace bool) *map[discord.Locale]string {
+	res := map[discord.Locale]string{
+		discord.LocaleEnglishUS:    Message(discord.LocaleEnglishUS, ""),
+		discord.LocaleEnglishGB:    Message(discord.LocaleEnglishGB, ""),
+		discord.LocaleBulgarian:    Message(discord.LocaleBulgarian, ""),
+		discord.LocaleChineseCN:    Message(discord.LocaleChineseCN, ""),
+		discord.LocaleChineseTW:    Message(discord.LocaleChineseTW, ""),
+		discord.LocaleCroatian:     Message(discord.LocaleCroatian, ""),
+		discord.LocaleCzech:        Message(discord.LocaleCzech, ""),
+		discord.LocaleDanish:       Message(discord.LocaleDanish, ""),
+		discord.LocaleDutch:        Message(discord.LocaleDutch, ""),
+		discord.LocaleFinnish:      Message(discord.LocaleFinnish, ""),
+		discord.LocaleFrench:       Message(discord.LocaleFrench, ""),
+		discord.LocaleGerman:       Message(discord.LocaleGerman, ""),
+		discord.LocaleGreek:        Message(discord.LocaleGreek, ""),
+		discord.LocaleHindi:        Message(discord.LocaleHindi, ""),
+		discord.LocaleHungarian:    Message(discord.LocaleHungarian, ""),
+		discord.LocaleIndonesian:   Message(discord.LocaleIndonesian, ""),
+		discord.LocaleItalian:      Message(discord.LocaleItalian, ""),
+		discord.LocaleJapanese:     Message(discord.LocaleJapanese, ""),
+		discord.LocaleKorean:       Message(discord.LocaleKorean, ""),
+		discord.LocaleLithuanian:   Message(discord.LocaleLithuanian, ""),
+		discord.LocaleNorwegian:    Message(discord.LocaleNorwegian, ""),
+		discord.LocalePolish:       Message(discord.LocalePolish, ""),
+		discord.LocalePortugueseBR: Message(discord.LocalePortugueseBR, ""),
+		discord.LocaleRomanian:     Message(discord.LocaleRomanian, ""),
+		discord.LocaleRussian:      Message(discord.LocaleRussian, ""),
+		discord.LocaleSpanishES:    Message(discord.LocaleSpanishES, ""),
+		discord.LocaleSwedish:      Message(discord.LocaleSwedish, ""),
+		discord.LocaleThai:         Message(discord.LocaleThai, ""),
+		discord.LocaleTurkish:      Message(discord.LocaleTurkish, ""),
+		discord.LocaleUkrainian:    Message(discord.LocaleUkrainian, ""),
+		discord.LocaleVietnamese:   Message(discord.LocaleVietnamese, ""),
+		discord.LocaleUnknown:      Message(discord.LocaleUnknown, ""),
 	}
 	if replace {
 		for l, v := range res {
@@ -151,14 +153,14 @@ func MessageMap(key string, replace bool) *map[discordgo.Locale]string {
 	return &res
 }
 
-func ErrorEmbed(locale discordgo.Locale, key string, any ...any) (embed []*discordgo.MessageEmbed) {
+func ErrorEmbed(locale discord.Locale, key string, any ...any) (embed []*discord.Embed) {
 	var trs string
 	if len(any) != 0 {
 		trs = Translate(locale, key, any[0])
 	} else if key != "" {
 		trs = Message(locale, key)
 	}
-	embed = append(embed, &discordgo.MessageEmbed{
+	embed = append(embed, &discord.Embed{
 		Title:       Message(locale, "error_message"),
 		Description: trs,
 		Color:       0xff0000,

@@ -44,7 +44,7 @@ type heartbeatOp struct {
 	Data int64 `json:"d"`
 }
 
-func (a *Shard) ApiOpen() (err error) {
+func (a *Api) ApiOpen() (err error) {
 	logging.Debug("called")
 
 	a.Lock()
@@ -99,7 +99,7 @@ func (a *Shard) ApiOpen() (err error) {
 	return nil
 }
 
-func (s *Shard) listen(wsConn *websocket.Conn, listening <-chan any) {
+func (s *Api) listen(wsConn *websocket.Conn, listening <-chan any) {
 
 	logging.Info("内部呼び出し")
 
@@ -142,7 +142,7 @@ func (s *Shard) listen(wsConn *websocket.Conn, listening <-chan any) {
 // 内部APIとの接続を閉じる
 //
 // TODO:実装する
-func (a *Shard) ApiClose() (err error) {
+func (a *Api) ApiClose() (err error) {
 	if a.wsConn != nil {
 		err := a.wsConn.Close()
 		if err != nil {
@@ -158,7 +158,7 @@ func (a *Shard) ApiClose() (err error) {
 }
 
 // Websocketイベント呼び出し
-func (a *Shard) onEvent(messageType int, message []byte) (*Event, error) {
+func (a *Api) onEvent(messageType int, message []byte) (*Event, error) {
 	var reader io.Reader
 	reader = bytes.NewBuffer(message)
 

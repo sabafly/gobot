@@ -17,12 +17,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package gobot
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
-	"strconv"
 
-	"github.com/bwmarrin/discordgo"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/gateway"
 	botlib "github.com/sabafly/gobot/lib/bot"
 	"github.com/sabafly/gobot/lib/env"
 	"github.com/sabafly/gobot/lib/logging"
@@ -39,100 +40,20 @@ func Run() {
 		logging.Fatal("failed create bot: %s", err)
 	}
 
-	err = bot.FeatureCreate(&botlib.Feature{
-		Name:         "Pressure",
-		ID:           "TYPING_START_PRESSURE",
-		IDType:       botlib.FeatureChannelID,
-		ChannelTypes: []discordgo.ChannelType{discordgo.ChannelTypeGuildText},
-		Type:         botlib.FeatureTypingStart,
-		Handler: func(s *discordgo.Session, ts *discordgo.TypingStart) {
-			user, err := s.GuildMember(ts.GuildID, ts.UserID)
-			if err != nil {
-				logging.Error("ギルドメンバーの取得に失敗 %s", err)
-				return
-			}
-			username := user.User.Username
-			if user.Nick != "" {
-				username = user.Nick
-			}
-			embeds := []*discordgo.MessageEmbed{
-				{
-					Author: &discordgo.MessageEmbedAuthor{
-						IconURL: user.AvatarURL(""),
-						Name:    fmt.Sprintf("%sが入力を始めた！", username),
-					},
-				},
-			}
-			botlib.SetEmbedProperties(embeds)
-			_, err = botlib.SendWebhook(s, ts.ChannelID, &discordgo.WebhookParams{
-				Embeds: embeds,
-			})
-			if err != nil {
-				logging.Error("メッセージの送信に失敗 %s", err)
-			}
-		},
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	bot.FeatureApplicationCommandSettingsSet(botlib.FeatureApplicationCommandSettings{
-		Name:         "feature",
-		Description:  "manage feature",
-		Permission:   discordgo.PermissionAdministrator,
-		DMPermission: false,
-	})
-
-	// ハンダラ登録
-	bot.AddHandler(bot.FeatureHandler())
-	bot.AddApiHandler(func(a *botlib.Shard, s *botlib.StatusUpdate) {
-		err := a.Session.UpdateStatusComplex(discordgo.UpdateStatusData{
-			Activities: []*discordgo.Activity{
-				{
-					Name: "/help | " + strconv.Itoa(s.Servers) + " Servers",
-					Type: discordgo.ActivityTypeGame,
-				},
-			},
-			Status: "online",
-		})
-		if err != nil {
+	bot.Api.AddHandler(func(a *botlib.Api, s *botlib.StatusUpdate) {
+		if err := bot.Client.SetPresence(context.TODO(),
+			gateway.WithOnlineStatus(discord.OnlineStatusOnline),
+			gateway.WithPlayingActivity(fmt.Sprintf("/help | %d Servers", s.Servers)),
+		); err != nil {
 			logging.Error("ステータス更新に失敗 %s", err)
 		}
 	})
-
-	// コマンドハンダラ
-	command := commands()
-	command = append(command, &botlib.ApplicationCommand{
-		ApplicationCommand: bot.FeaturesApplicationCommand(),
-		Handler:            bot.FeatureApplicationCommandHandler(),
-	})
-	bot.AddHandler(command.Parse())
 
 	// ボットを開始
 	if err := bot.Open(); err != nil {
 		logging.Fatal("failed open bot: %s", err)
 	}
 	defer bot.Close()
-
-	// コマンド登録
-	registeredCommands, err := bot.ApplicationCommandCreate(command)
-	if err != nil {
-		panic(err)
-	}
-
-	if env.RemoveCommands {
-		// コマンド削除
-		defer func() {
-			err := bot.ApplicationCommandDelete(registeredCommands)
-			if err != nil {
-				logging.Error("コマンド削除に失敗 %s", err)
-			}
-			err = bot.LocalApplicationCommandDelete()
-			if err != nil {
-				logging.Error("コマンド削除に失敗 %s", err)
-			}
-		}()
-	}
 
 	// シグナル待機
 	sigCh := make(chan os.Signal, 1)

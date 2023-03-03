@@ -67,26 +67,6 @@ func Run() {
 								Handler: func(ctx *gin.Context) { wh.HandlerGuildDelete(ctx.Writer, ctx.Request) },
 							},
 						},
-
-						Child: []*apinternal.Page{
-							{
-								Path: "/feature",
-								Handlers: []*apinternal.Handler{
-									{
-										Method:  "POST",
-										Handler: func(ctx *gin.Context) { HandlerGuildFeaturePost(ctx.Writer, ctx.Request) },
-									},
-									{
-										Method:  "DELETE",
-										Handler: func(ctx *gin.Context) { HandlerGuildFeatureDelete(ctx.Writer, ctx.Request) },
-									},
-									{
-										Method:  "GET",
-										Handler: func(ctx *gin.Context) { HandlerGuildFeatureGet(ctx.Writer, ctx.Request) },
-									},
-								},
-							},
-						},
 					},
 					{
 						Path: "message",

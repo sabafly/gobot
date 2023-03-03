@@ -19,7 +19,6 @@ package api
 import (
 	"time"
 
-	"github.com/bwmarrin/discordgo"
 	"gorm.io/gorm"
 )
 
@@ -37,29 +36,4 @@ type MessageLog struct {
 	UserID    string `gorm:"index"`
 	Content   string
 	Bot       bool
-}
-
-type GuildFeature struct {
-	Model
-	GuildID   string `gorm:"index"`
-	TargetID  string
-	FeatureID string
-}
-
-type VoteCreationMenu struct {
-	gorm.Model
-	Title       string
-	Description string
-	GuildID     string `gorm:"index"`
-	CustomID    string
-	Selections  []*VoteSelection
-	ExpireAt    time.Time
-	StartAt     time.Time
-	Duration    time.Duration
-}
-
-type VoteSelection struct {
-	Name        string
-	Description string
-	Emoji       discordgo.Emoji
 }

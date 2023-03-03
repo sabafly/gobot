@@ -16,34 +16,4 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package botlib
 
-import (
-	"time"
-
-	"github.com/bwmarrin/discordgo"
-)
-
-type Menu interface {
-	Handle(*discordgo.Session, *discordgo.InteractionCreate)
-	Closed() bool
-}
-
-type VoteCreationMenu struct {
-	Title       string
-	Description string
-	GuildID     string
-	CustomID    string
-	Selections  []*VoteSelection
-	ExpireAt    time.Time
-	StartAt     time.Time
-	Duration    time.Duration
-}
-
-type VoteSelection struct {
-	Name        string
-	Description string
-	Emoji       discordgo.Emoji
-}
-
-func (v *VoteCreationMenu) Handle(s *discordgo.Session, i *discordgo.InteractionCreate) {
-
-}
+// TODO: disgoで実装

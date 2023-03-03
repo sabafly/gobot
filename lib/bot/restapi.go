@@ -25,7 +25,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/bwmarrin/discordgo"
+	"github.com/disgoorg/disgo/gateway"
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/lib/logging"
 )
 
@@ -154,22 +155,22 @@ func (a *Api) Gateway() (gateway string, err error) {
 // ------------------------------------------------------
 
 // ギルド作成呼び出し
-func (a *Api) guildCreateCall(guildID string) {
-	g := struct{ ID string }{ID: guildID}
+func (a *Api) guildCreateCall(guildID snowflake.ID) {
+	g := struct{ ID string }{ID: guildID.String()}
 	if _, err := a.Request("POST", EndpointGuild, g); err != nil {
 		logging.Warning("リクエストに失敗 %s", err)
 	}
 }
 
 // ギルド削除呼び出し
-func (a *Api) guildDeleteCall(g *discordgo.GuildDelete) {
+func (a *Api) guildDeleteCall(g gateway.EventGuildDelete) {
 	if _, err := a.Request("DELETE", EndpointGuild, g); err != nil {
 		logging.Warning("リクエストに失敗 %s", err)
 	}
 }
 
 // メッセージ送信呼び出し
-func (a *Api) messageCreateCall(m *discordgo.MessageCreate) {
+func (a *Api) messageCreateCall(m gateway.EventMessageCreate) {
 	if _, err := a.Request("POST", EndpointMessage, m); err != nil {
 		logging.Warning("リクエストに失敗 %s", err)
 	}
@@ -206,58 +207,4 @@ func (a *Api) StaticsUserMessage(guildID, userID string) (logs []MessageLog, err
 	}
 
 	return logs, nil
-}
-
-// ----------------------------------------------------------------
-// Feature関連
-// ----------------------------------------------------------------
-
-func (a *Api) FeatureEnable(guildID, featureID, id string) (err error) {
-	Feature := GuildFeature{
-		GuildID:   guildID,
-		FeatureID: featureID,
-		TargetID:  id,
-	}
-
-	_, err = a.Request("POST", EndpointGuildFeature, Feature)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (a *Api) FeatureDisable(guildID, featureID, id string) (err error) {
-	Feature := GuildFeature{
-		GuildID:   guildID,
-		FeatureID: featureID,
-		TargetID:  id,
-	}
-
-	_, err = a.Request("DELETE", EndpointGuildFeature, Feature)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (a *Api) FeatureEnabled(guildID, featureID, id string) (enabled bool, err error) {
-	Feature := GuildFeature{
-		GuildID:   guildID,
-		FeatureID: featureID,
-		TargetID:  id,
-	}
-
-	isEnabled := struct{ Enabled bool }{}
-	response, err := a.Request("GET", EndpointGuildFeature, Feature)
-	if err != nil {
-		return false, err
-	}
-	err = json.Unmarshal(response, &isEnabled)
-	if err != nil {
-		return false, err
-	}
-
-	return isEnabled.Enabled, nil
 }

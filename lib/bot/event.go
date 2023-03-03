@@ -29,7 +29,7 @@ type eventHandlerInstance struct {
 type EventHandler interface {
 	Type() string
 
-	Handle(*Shard, any)
+	Handle(*Api, any)
 }
 
 type EventInterfaceProvider interface {
@@ -46,7 +46,7 @@ type EventInterfaceProvider interface {
 const anyEventType = "__ANY__"
 
 // anyEventHandler is an event handler for any events.
-type anyEventHandler func(*Shard, any)
+type anyEventHandler func(*Api, any)
 
 // Type returns the event type for any events.
 func (eh anyEventHandler) Type() string {
@@ -54,7 +54,7 @@ func (eh anyEventHandler) Type() string {
 }
 
 // Handle is the handler for an any event.
-func (eh anyEventHandler) Handle(s *Shard, i any) {
+func (eh anyEventHandler) Handle(s *Api, i any) {
 	eh(s, i)
 }
 
@@ -73,7 +73,7 @@ func registerInterfaceProvider(eh EventInterfaceProvider) {
 }
 
 // APIイベントのハンダラを登録する
-func (a *Shard) AddHandler(handler any) func() {
+func (a *Api) AddHandler(handler any) func() {
 	eh := handlerForInterface(handler)
 
 	if eh == nil {
@@ -84,7 +84,7 @@ func (a *Shard) AddHandler(handler any) func() {
 	return a.addEventHandler(eh)
 }
 
-func (a *Shard) addEventHandler(eventHandler EventHandler) func() {
+func (a *Api) addEventHandler(eventHandler EventHandler) func() {
 	a.handlersMu.Lock()
 	defer a.handlersMu.Unlock()
 
@@ -100,7 +100,7 @@ func (a *Shard) addEventHandler(eventHandler EventHandler) func() {
 	}
 }
 
-func (a *Shard) removeEventHandlerInstance(t string, ehi *eventHandlerInstance) {
+func (a *Api) removeEventHandlerInstance(t string, ehi *eventHandlerInstance) {
 	a.handlersMu.Lock()
 	defer a.handlersMu.Unlock()
 
@@ -112,13 +112,13 @@ func (a *Shard) removeEventHandlerInstance(t string, ehi *eventHandlerInstance) 
 	}
 }
 
-func (s *Shard) handle(t string, i any) {
+func (s *Api) handle(t string, i any) {
 	for _, eh := range s.handlers[t] {
 		go eh.eventHandler.Handle(s, i)
 	}
 }
 
-func (a *Shard) handleEvent(t string, i any) {
+func (a *Api) handleEvent(t string, i any) {
 	a.handlersMu.Lock()
 	defer a.handlersMu.Unlock()
 
@@ -129,7 +129,7 @@ func (a *Shard) handleEvent(t string, i any) {
 	a.handle(t, i)
 }
 
-func (s *Shard) onInterface(i any) {
+func (s *Api) onInterface(i any) {
 	// TODO: なんか実装する
 	switch i.(type) {
 	}

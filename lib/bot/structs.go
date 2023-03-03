@@ -16,18 +16,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 package botlib
 
+import "github.com/disgoorg/snowflake/v2"
+
 type MessageLog struct {
-	ID        string
-	GuildID   string
-	ChannelID string
-	UserID    string
+	ID        snowflake.ID
+	GuildID   snowflake.ID
+	ChannelID snowflake.ID
+	UserID    snowflake.ID
 	Content   string
 	Bot       bool
-}
-
-type GuildFeature struct {
-	ID        string
-	GuildID   string
-	TargetID  string
-	FeatureID string
 }
