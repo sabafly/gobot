@@ -17,109 +17,37 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package botlib
 
 import (
-	"errors"
-	"fmt"
-
-	"github.com/bwmarrin/discordgo"
-	"github.com/sabafly/gobot/lib/env"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
 	"github.com/sabafly/gobot/lib/logging"
 )
 
 // アプリケーションコマンドとそのハンダラを備えた構造体
 type ApplicationCommand struct {
-	*discordgo.ApplicationCommand
-	Handler func(*discordgo.Session, *discordgo.InteractionCreate)
+	discord.ApplicationCommandCreate
+	Handler func(*events.ApplicationCommandInteractionCreate)
 }
 
 // アプリケーションコマンドのスライス型
-type ApplicationCommands []*ApplicationCommand
+type ApplicationCommands []ApplicationCommand
 
 // アプリケーションコマンドを解析してハンダラを返す
-func (a *ApplicationCommands) Parse() func(*discordgo.Session, *discordgo.InteractionCreate) {
-	handler := map[string]func(*discordgo.Session, *discordgo.InteractionCreate){}
-	for _, ac := range *a {
+func (a ApplicationCommands) Parse() func(*events.ApplicationCommandInteractionCreate) {
+	handler := map[string]func(*events.ApplicationCommandInteractionCreate){}
+	for _, ac := range a {
 		if ac.Handler != nil {
-			handler[ac.Name] = ac.Handler
+			handler[ac.CommandName()] = ac.Handler
 		}
 	}
-	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if i.Type == discordgo.InteractionApplicationCommand {
-			if f, ok := handler[i.Interaction.ApplicationCommandData().Name]; ok {
-				f(s, i)
-			} else {
-				logging.Warning("不明なコマンド要求")
-			}
+	return func(aci *events.ApplicationCommandInteractionCreate) {
+		if aci.Type() != discord.InteractionTypeApplicationCommand {
+			return
 		}
-	}
-}
 
-// ボットにアプリケーションコマンドを登録する
-func (b *BotManager) ApplicationCommandCreate(tree ApplicationCommands) (registeredCommands []*discordgo.ApplicationCommand, err error) {
-	if len(b.Shards) == 0 {
-		return nil, errors.New("error: no session")
-	}
-	for _, v := range tree {
-		cmd, err := b.Shards[0].Session.ApplicationCommandCreate(b.Shards[0].Session.State.User.ID, "", v.ApplicationCommand)
-		if err != nil {
-			return nil, fmt.Errorf("error: failed to create %s command: %w", v.Name, err)
-		}
-		if cmd != nil {
-			registeredCommands = append(registeredCommands, cmd)
+		if f, ok := handler[aci.Data.CommandName()]; ok {
+			f(aci)
+		} else {
+			logging.Warning("不明なコマンド要求")
 		}
 	}
-	return registeredCommands, nil
-}
-
-// ボットからアプリケーションコマンドを削除する
-func (b *BotManager) ApplicationCommandDelete(cmd []*discordgo.ApplicationCommand) (err error) {
-	if len(b.Shards) == 0 {
-		return errors.New("error: no session")
-	}
-	for _, ac := range cmd {
-		if ac == nil {
-			logging.Error("コマンドがnil")
-			return errors.New("error: nil command")
-		}
-		err := b.Shards[0].Session.ApplicationCommandDelete(b.Shards[0].Session.State.User.ID, "", ac.ID)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// ボットに登録されているコマンドを取得する
-func (b *BotManager) ApplicationCommands() ([]*discordgo.ApplicationCommand, error) {
-	if len(b.Shards) == 0 {
-		return nil, errors.New("error: no session")
-	}
-	cmd, err := b.Shards[0].Session.ApplicationCommands(b.Shards[0].Session.State.User.ID, "")
-	if err != nil {
-		return nil, err
-	}
-	return cmd, nil
-}
-
-// サポートサーバーからすべてのコマンドを削除する
-//
-// TODO: 消すか残りも実装するか
-func (b *BotManager) LocalApplicationCommandDelete() error {
-	if len(b.Shards) == 0 {
-		return errors.New("error: no session")
-	}
-	cmd, err := b.Shards[0].Session.ApplicationCommands(b.Shards[0].Session.State.User.ID, env.AdminID)
-	if err != nil {
-		return err
-	}
-	for _, ac := range cmd {
-		if ac == nil {
-			logging.Error("コマンドがnil")
-			return errors.New("error: nil command")
-		}
-		err := b.Shards[0].Session.ApplicationCommandDelete(b.Shards[0].Session.State.User.ID, env.AdminID, ac.ID)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }

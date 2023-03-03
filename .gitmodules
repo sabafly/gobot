@@ -1,4 +1,0 @@
-[submodule "discordgo"]
-	path = discordgo
-	url = https://github.com/sabafly/gobot-discordgo
-	branch = master

@@ -18,39 +18,47 @@ package botlib
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"runtime/debug"
 	"sort"
 	"time"
 
-	"github.com/bwmarrin/discordgo"
+	"github.com/disgoorg/disgo/bot"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"github.com/sabafly/gobot/lib/constants"
+	"github.com/sabafly/gobot/lib/logging"
 	"github.com/sabafly/gobot/lib/translate"
 )
 
 // 埋め込みの色、フッター、タイムスタンプを設定する
-func SetEmbedProperties(embeds []*discordgo.MessageEmbed) []*discordgo.MessageEmbed {
+func SetEmbedProperties(embeds []discord.Embed) []discord.Embed {
+	now := time.Now()
 	for i := range embeds {
 		if embeds[i].Color == 0 {
 			embeds[i].Color = constants.Color
 		}
 		if i == len(embeds)-1 {
-			embeds[i].Footer = &discordgo.MessageEmbedFooter{
+			embeds[i].Footer = &discord.EmbedFooter{
 				Text: constants.BotName,
 			}
-			embeds[i].Timestamp = time.Now().Format(time.RFC3339)
+			embeds[i].Timestamp = &now
 		}
 	}
 	return embeds
 }
 
 // エラーメッセージ埋め込みを作成する
-func ErrorMessageEmbed(i *discordgo.InteractionCreate, t string) []*discordgo.MessageEmbed {
-	embeds := []*discordgo.MessageEmbed{
+func ErrorMessageEmbed(locale discord.Locale, t string) []discord.Embed {
+	embeds := []discord.Embed{
 		{
-			Title:       translate.Message(i.Locale, t+"_title"),
-			Description: translate.Message(i.Locale, t+"_message"),
+			Title:       translate.Message(locale, t+"_title"),
+			Description: translate.Message(locale, t+"_message"),
 			Color:       0xff0000,
 		},
 	}
@@ -59,9 +67,9 @@ func ErrorMessageEmbed(i *discordgo.InteractionCreate, t string) []*discordgo.Me
 }
 
 // エラートレース埋め込みを作成する
-func ErrorTraceEmbed(locale discordgo.Locale, err error) []*discordgo.MessageEmbed {
+func ErrorTraceEmbed(locale discord.Locale, err error) []discord.Embed {
 	stack := debug.Stack()
-	embeds := []*discordgo.MessageEmbed{
+	embeds := []discord.Embed{
 		{
 			Title:       "💥" + translate.Message(locale, "error_occurred_embed_message"),
 			Description: fmt.Sprintf("%s\r```%s```", err, string(stack)),
@@ -73,80 +81,74 @@ func ErrorTraceEmbed(locale discordgo.Locale, err error) []*discordgo.MessageEmb
 }
 
 // エラーが発生したことを返すレスポンスを作成する
-func ErrorRespond(i *discordgo.InteractionCreate, err error) *discordgo.InteractionResponse {
-	return &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Embeds: ErrorTraceEmbed(i.Locale, err),
-		},
+func ErrorRespond(locale discord.Locale, err error) *discord.Message {
+	return &discord.Message{
+		Embeds: ErrorTraceEmbed(locale, err),
 	}
 }
 
 // 渡されたステータスの絵文字を返す
-func StatusString(status discordgo.Status) (str string) {
+func StatusString(status discord.OnlineStatus) (str string) {
 	switch status {
-	case discordgo.StatusOnline:
+	case discord.OnlineStatusOnline:
 		return "<:online:1055430359363354644>"
-	case discordgo.StatusDoNotDisturb:
+	case discord.OnlineStatusDND:
 		return "<:dnd:1055434290629980220>"
-	case discordgo.StatusIdle:
+	case discord.OnlineStatusIdle:
 		return "<:idle:1055433789020586035> "
-	case discordgo.StatusInvisible:
+	case discord.OnlineStatusInvisible:
 		return "<:offline:1055434315514785792>"
-	case discordgo.StatusOffline:
+	case discord.OnlineStatusOffline:
 		return "<:offline:1055434315514785792>"
 	}
 	return ""
 }
 
 // アクティビティ名をアクティビティの種類によって渡された言語に翻訳して返す
-func ActivitiesNameString(locale discordgo.Locale, activity *discordgo.Activity) (str string) {
+func ActivitiesNameString(locale discord.Locale, activity discord.Activity) (str string) {
 	switch activity.Type {
-	case discordgo.ActivityTypeGame:
+	case discord.ActivityTypeGame:
 		str = translate.Translate(locale, "activity_game_name", map[string]any{"Name": activity.Name})
-	case discordgo.ActivityTypeStreaming:
+	case discord.ActivityTypeStreaming:
 		str = translate.Translate(locale, "activity_streaming_name", map[string]any{"Details": activity.Details, "URL": activity.URL})
-	case discordgo.ActivityTypeListening:
+	case discord.ActivityTypeListening:
 		str = translate.Translate(locale, "activity_listening_name", map[string]any{"Name": activity.Name})
-	case discordgo.ActivityTypeWatching:
+	case discord.ActivityTypeWatching:
 		str = translate.Translate(locale, "activity_watching_name", map[string]any{"Name": activity.Name})
-	case discordgo.ActivityTypeCustom:
-		str = activity.Emoji.MessageFormat() + " " + activity.Name
-	case discordgo.ActivityTypeCompeting:
+	case discord.ActivityTypeCustom:
+		if activity.Emoji != nil {
+			return
+		}
+		str = discord.EmojiMention(*activity.Emoji.ID, activity.Emoji.Name) + " " + activity.Name
+	case discord.ActivityTypeCompeting:
 		str = translate.Translate(locale, "activity_competing_name", map[string]any{"Name": activity.Name})
 	}
 	return str
 }
 
-func MessageLogDetails(m []MessageLog) (day, week, all int, channelID string) {
+func MessageLogDetails(m []MessageLog) (day, week, all int, channelID snowflake.ID) {
 	var inDay, inWeek []MessageLog
-	channelCount := map[string]int{}
+	channelCount := map[snowflake.ID]int{}
 	for _, ml := range m {
 		channelCount[ml.ChannelID]++
-		timestamp, err := discordgo.SnowflakeTimestamp(ml.ID)
-		if err != nil {
-			continue
-		}
+		timestamp := ml.ID.Time()
 		if timestamp.After(time.Now().Add(-time.Hour * 24 * 7)) {
 			inWeek = append(inWeek, ml)
 		}
 	}
 	for _, ml := range inWeek {
-		timestamp, err := discordgo.SnowflakeTimestamp(ml.ID)
-		if err != nil {
-			continue
-		}
+		timestamp := ml.ID.Time()
 		if timestamp.After(time.Now().Add(-time.Hour * 24)) {
 			inDay = append(inDay, ml)
 		}
 	}
 	count := []struct {
-		ID    string
+		ID    snowflake.ID
 		Count int
 	}{}
 	for k, v := range channelCount {
 		count = append(count, struct {
-			ID    string
+			ID    snowflake.ID
 			Count int
 		}{ID: k, Count: v})
 	}
@@ -159,106 +161,94 @@ func MessageLogDetails(m []MessageLog) (day, week, all int, channelID string) {
 	return len(inDay), len(inWeek), len(m), channelID
 }
 
-type WaitNewInteractionResponseMessageData struct {
-	Data *discordgo.InteractionResponseData
-	Type discordgo.InteractionResponseType
-
-	// TypeがInteractionResponseModalの時のみ使用される
-	ModalComponent []discordgo.MessageComponent
-	ModalHandler   func(*discordgo.Session, *discordgo.MessageComponentInteractionData)
-}
-
-// TODO: クソみたいな仕様
-// TODO: 使い方を書き残す
-// TODO: 使わないかもしれない
-func WaitNewInteractionResponseSingle(s *discordgo.Session, i *discordgo.InteractionCreate, messageData WaitNewInteractionResponseMessageData) (ic *discordgo.InteractionCreate, err error) {
+func WaitModalSubmit(i *events.ApplicationCommandInteractionCreate, title string, container []discord.TextInputComponent) (st *events.ModalSubmitInteractionCreate, err error) {
 	customID := uuid.NewString()
 	ctx := context.Background()
-	ctx, cancelCtx := context.WithDeadline(ctx, time.Now().Add(time.Minute*5))
+	ctx, cancelCtx := context.WithDeadline(ctx, time.Now().Add(time.Minute*3)) //TODO: タイムアウトをカスタマイズ可能に
 	defer cancelCtx()
-	var cancel func()
-	var handler func(*discordgo.Session, *discordgo.InteractionCreate)
-	switch messageData.Type {
-	case discordgo.InteractionResponseModal:
-		handler = func(s *discordgo.Session, i2 *discordgo.InteractionCreate) {
-			if i2.Type != discordgo.InteractionModalSubmit {
-				cancel = s.AddHandler(handler)
-				return
-			}
-			if i2.MessageComponentData().CustomID != customID {
-				cancel = s.AddHandlerOnce(handler)
-				return
-			}
-			ic = i2
-			ctx.Done()
+	handler := func(m *events.ModalSubmitInteractionCreate) {
+		if m.Data.CustomID != customID {
+			return
 		}
-		cancel = s.AddHandlerOnce(handler)
-		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseModal,
-			Data: &discordgo.InteractionResponseData{
-				Components: messageData.ModalComponent,
-				CustomID:   customID,
-			},
-		})
-		if err != nil {
-			return nil, err
-		}
-		<-ctx.Done()
-		if ctx.Err() != nil {
-			cancel()
-		}
-	case discordgo.InteractionResponseChannelMessageWithSource:
-		handler = func(s *discordgo.Session, i2 *discordgo.InteractionCreate) {
-			if i2.Type != discordgo.InteractionMessageComponent {
-				cancel = s.AddHandler(handler)
-				return
-			}
-			if i2.MessageComponentData().CustomID != customID {
-				cancel = s.AddHandler(handler)
-				return
-			}
-			ic = i2
-			ctx.Done()
-		}
-		err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: messageData.Data,
-		})
-		if err != nil {
-			return nil, err
-		}
-		<-ctx.Done()
-		if ctx.Err() != nil {
-			cancel()
-		}
+		st = m
+		cancelCtx()
 	}
-	return ic, nil
-}
-
-func SendWebhook(s *discordgo.Session, channelID string, data *discordgo.WebhookParams) (st *discordgo.Message, err error) {
-	webhooks, err := s.ChannelWebhooks(channelID)
+	listener := bot.NewListenerFunc(handler)
+	i.Client().AddEventListeners(listener)
+	i.Client().RemoveEventListeners(listener)
+	builder := discord.NewModalCreateBuilder().
+		SetTitle(title).
+		SetCustomID(customID)
+	for _, tic := range container {
+		builder = builder.AddActionRow(tic)
+	}
+	err = i.CreateModal(builder.Build())
 	if err != nil {
 		return nil, err
 	}
-	var webhook *discordgo.Webhook = nil
+	<-ctx.Done()
+	if ctx.Err() != nil {
+		return nil, err
+	}
+	return st, nil
+}
+
+func SendWebhook(client bot.Client, channelID snowflake.ID, data discord.WebhookMessageCreate) (st *discord.Message, err error) {
+	webhooks, err := client.Rest().GetWebhooks(channelID)
+	if err != nil {
+		return nil, err
+	}
+	me, ok := client.Caches().SelfUser()
+	if !ok {
+		logging.Error("セルフ取得に失敗しました %s", err)
+		return
+	}
+	var token string
+	var webhook discord.Webhook = nil
 	for _, w := range webhooks {
-		if w.User.ID == s.State.User.ID {
-			webhook = w
+		if w.Type() != discord.WebhookTypeIncoming {
+			continue
+		}
+		buf, err := w.MarshalJSON()
+		if err != nil {
+			continue
+		}
+		data := discord.IncomingWebhook{}
+		json.Unmarshal(buf, &data)
+		if data.User.ID == client.ID() {
+			token = data.Token
+			webhook = data
 		}
 	}
 	if webhook == nil {
-		webhook, err = s.WebhookCreate(channelID, "gobot-webhook", s.State.User.AvatarURL(""))
+		var buf []byte
+		if avatarURL := me.EffectiveAvatarURL(discord.WithFormat(discord.ImageFormatPNG)); avatarURL != "" {
+			resp, err := http.Get(avatarURL)
+			if err != nil {
+				return nil, err
+			}
+			buf, err = io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+		}
+		data, err := client.Rest().CreateWebhook(channelID, discord.WebhookCreate{
+			Name:   "gobot-webhook",
+			Avatar: discord.NewIconRaw(discord.IconTypePNG, buf),
+		})
 		if err != nil {
 			return nil, err
 		}
+		token = data.Token
+		webhook = data
 	}
 	if data.Username == "" {
-		data.Username = s.State.User.Username
+		data.Username = me.Username
 	}
 	if data.AvatarURL == "" {
-		data.AvatarURL = s.State.User.AvatarURL("")
+		data.AvatarURL = me.EffectiveAvatarURL(discord.WithFormat(discord.ImageFormatPNG))
 	}
-	st, err = s.WebhookExecute(webhook.ID, webhook.Token, true, data)
+	st, err = client.Rest().CreateWebhookMessage(webhook.ID(), token, data, true, snowflake.ID(0))
 	if err != nil {
 		return nil, err
 	}

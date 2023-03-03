@@ -11,7 +11,7 @@ const (
 )
 
 // StatusUpdate イベントのイベントハンダラを返します
-type statusUpdateEventHandler func(*Shard, *StatusUpdate)
+type statusUpdateEventHandler func(*Api, *StatusUpdate)
 
 // StatusUpdate イベントの型名を返します
 func (eh statusUpdateEventHandler) Type() string {
@@ -24,7 +24,7 @@ func (eh statusUpdateEventHandler) New() any {
 }
 
 // StatusUpdate イベントのハンダラ
-func (eh statusUpdateEventHandler) Handle(s *Shard, i any) {
+func (eh statusUpdateEventHandler) Handle(s *Api, i any) {
 	if t, ok := i.(*StatusUpdate); ok {
 		eh(s, t)
 	}
@@ -32,9 +32,9 @@ func (eh statusUpdateEventHandler) Handle(s *Shard, i any) {
 
 func handlerForInterface(handler any) EventHandler {
 	switch v := handler.(type) {
-	case func(*Shard, any):
+	case func(*Api, any):
 		return anyEventHandler(v)
-	case func(*Shard, *StatusUpdate):
+	case func(*Api, *StatusUpdate):
 		return statusUpdateEventHandler(v)
 	}
 

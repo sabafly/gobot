@@ -17,27 +17,21 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package botlib
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"sync"
 
-	"github.com/bwmarrin/discordgo"
+	"github.com/disgoorg/disgo"
+	"github.com/disgoorg/disgo/bot"
+	"github.com/disgoorg/disgo/cache"
+	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/disgo/gateway"
 	"github.com/gorilla/websocket"
-	"github.com/sabafly/gobot/lib/constants"
-	"github.com/sabafly/gobot/lib/env"
 	"github.com/sabafly/gobot/lib/logging"
 )
-
-func init() {
-	discordgo.Logger = logging.Logger()
-}
-
-// シャードとセッションをまとめる
-type Shard struct {
-	ShardID int
-	*Api
-	Session *discordgo.Session
-}
 
 type Api struct {
 	sync.RWMutex
@@ -61,74 +55,57 @@ type Api struct {
 type BotManager struct {
 	*Api
 	ShardCount int
-	Shards     []*Shard
-	features   *FeatureManager
+	Client     bot.Client
 }
 
 // ボットセッションを開始する
 func (b *BotManager) Open() (err error) {
-	shards := b.Shards
-
-	for i := range shards {
-		// 内部APIと接続
-		if err := shards[i].ApiOpen(); err != nil {
-			return fmt.Errorf("failed open api connection: %w", err)
-		}
-
-		s := shards[i].Session
-
-		// セッションを初期化
-		s.Identify.Intents = discordgo.IntentsAll
-		s.ShardCount = b.ShardCount
-		s.ShardID = shards[i].ShardID
-		s.UserAgent = constants.UserAgent
-		s.StateEnabled = true
-
-		s.LogLevel = env.DLogLevel
-
-		// セッションを開始
-		if err := s.Open(); err != nil {
-			return fmt.Errorf("failed open session: %w", err)
-		}
+	// 内部APIと接続
+	if err := b.Api.ApiOpen(); err != nil {
+		return fmt.Errorf("failed open api connection: %w", err)
 	}
-	b.Shards = shards
+
+	// セッションを開始
+	if err := b.Client.OpenGateway(context.TODO()); err != nil {
+		return fmt.Errorf("failed open session: %w", err)
+	}
 	return nil
 }
 
 // ボットセッションを終了する
 func (b *BotManager) Close() (err error) {
-	shards := b.Shards
-	for i := range shards {
-		s := shards[i].Session
+	b.Client.Close(context.TODO())
 
-		if err := s.Close(); err != nil {
-			return fmt.Errorf("failed close session: %w", err)
-		}
-
-		if err := shards[i].ApiClose(); err != nil {
-			return fmt.Errorf("failed close api connection: %w", err)
-		}
+	if err := b.ApiClose(); err != nil {
+		return fmt.Errorf("failed close api connection: %w", err)
 	}
-	b.Shards = shards
 	return nil
 }
 
 // 新規のボット接続を作成する
-func New(token string) (bot *BotManager, err error) {
-	// セッションを作成
-	s, err := discordgo.New("Bot " + token)
-	if err != nil {
-		return nil, fmt.Errorf("failed create bot: %w", err)
+func New(token string) (b *BotManager, err error) {
+	b = &BotManager{
+		// API接続関連
+		Api: NewApi(),
 	}
 
-	// シャードの個数を取得
-	count, err := shardCount(s)
+	client, err := disgo.New(token,
+		bot.WithDefaultGateway(),
+		bot.WithCaches(cache.New()),
+		bot.WithDefaultShardManager(),
+		bot.WithEventListeners(&events.ListenerAdapter{OnRaw: b.interfaceHandler}),
+		bot.WithGatewayConfigOpts(
+			gateway.WithIntents(gateway.IntentsAll),
+			gateway.WithEnableRawEvents(true),
+		),
+	)
 	if err != nil {
-		return nil, fmt.Errorf("failed get shard count: %w", err)
+		return nil, err
 	}
 
-	// シャードを設定
-	return validateShards(token, count)
+	b.Client = client
+
+	return b, nil
 }
 
 func NewApi() *Api {
@@ -141,71 +118,32 @@ func NewApi() *Api {
 	}
 }
 
-// シャード数を取得する
-func shardCount(s *discordgo.Session) (count int, err error) {
-	gateway, err := s.GatewayBot()
+func (b *BotManager) interfaceHandler(event *events.Raw) {
+	buf, err := io.ReadAll(event.Payload)
 	if err != nil {
-		return 0, fmt.Errorf("failed request gateway bot: %w", err)
+		logging.Error("イベントバッファ読み込みに失敗 %s", err)
 	}
-	count = gateway.Shards
-	return count, nil
-}
-
-// 指定した数のシャードを用意する
-func validateShards(token string, count int) (bot *BotManager, err error) {
-	bot = &BotManager{
-		// API接続関連
-		Api:      NewApi(),
-		features: NewFeatureManager(),
-	}
-
-	for i := 0; i < count; i++ {
-		s, err := discordgo.New("Bot " + token)
+	switch event.EventType {
+	case gateway.EventTypeGuildCreate:
+		data := gateway.EventGuildCreate{}
+		err := json.Unmarshal(buf, &data)
 		if err != nil {
-			return nil, fmt.Errorf("failed validate shard %v: %w", i, err)
+			logging.Error("イベントアンマーシャルに失敗 %s", err)
 		}
-		s.AddHandler(bot.interfaceHandler)
-		bot.Shards = append(bot.Shards, &Shard{
-			ShardID: i,
-			Session: s,
-			// API接続関連
-			Api: NewApi(),
-		})
+		b.guildCreateCall(data.ID)
+	case gateway.EventTypeGuildDelete:
+		data := gateway.EventGuildDelete{}
+		err := json.Unmarshal(buf, &data)
+		if err != nil {
+			logging.Error("イベントアンマーシャルに失敗 %s", err)
+		}
+		b.guildDeleteCall(data)
+	case gateway.EventTypeMessageCreate:
+		data := gateway.EventMessageCreate{}
+		err := json.Unmarshal(buf, &data)
+		if err != nil {
+			logging.Error("イベントアンマーシャルに失敗 %s", err)
+		}
+		b.messageCreateCall(data)
 	}
-
-	return bot, nil
-}
-
-// セッションにDiscordAPIイベントハンダラを登録する
-func (b *BotManager) AddHandler(handler any) {
-	for _, s := range b.Shards {
-		s.Session.AddHandler(handler)
-	}
-}
-
-func (b *BotManager) interfaceHandler(s *discordgo.Session, i any) {
-	switch t := i.(type) {
-	case *discordgo.GuildCreate:
-		b.guildCreateCall(t.ID)
-	case *discordgo.GuildDelete:
-		b.guildDeleteCall(t)
-	case *discordgo.MessageCreate:
-		b.messageCreateCall(t)
-	}
-}
-
-// 内部APIのイベントハンダラを登録する
-func (b *BotManager) AddApiHandler(handler any) {
-	for _, s := range b.Shards {
-		s.AddHandler(handler)
-	}
-}
-
-// DiscordAPIイベントから内部APIを呼び出すときに使う
-//
-// XXX: メソッドで実装したい
-func AddIntegrationHandler[T any](b *BotManager, handler func(*Api, *discordgo.Session, T)) {
-	b.AddHandler(func(s *discordgo.Session, d T) {
-		handler(b.Api, s, d)
-	})
 }

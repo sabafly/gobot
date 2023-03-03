@@ -20,8 +20,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/bwmarrin/discordgo"
-	"github.com/google/uuid"
+	"github.com/disgoorg/disgo/gateway"
 	"github.com/gorilla/websocket"
 	"github.com/sabafly/gobot/lib/caches"
 	"github.com/sabafly/gobot/lib/logging"
@@ -80,7 +79,7 @@ func (h *WebsocketHandler) HandlerGuildCreate(w http.ResponseWriter, r *http.Req
 // 受け取ったギルドをキャッシュから削除しクライアントにステータス更新イベントを送る
 func (h *WebsocketHandler) HandlerGuildDelete(w http.ResponseWriter, r *http.Request) {
 	// データを取り出す
-	guildDelete := discordgo.GuildDelete{}
+	guildDelete := gateway.EventGuildDelete{}
 	if err := requests.Unmarshal(r, &guildDelete); err != nil {
 		logging.Error("[内部] [REST] アンマーシャルできませんでした %s", err)
 		w.WriteHeader(400)
@@ -92,7 +91,7 @@ func (h *WebsocketHandler) HandlerGuildDelete(w http.ResponseWriter, r *http.Req
 	}
 
 	// キャッシュを削除
-	createdGuilds.Delete(guildDelete.ID)
+	createdGuilds.Delete(guildDelete.ID.String())
 
 	h.Broadcast(func(ws *websocket.Conn) {
 		statusUpdate := struct{ Servers int }{Servers: createdGuilds.Len()}
@@ -111,182 +110,6 @@ func (h *WebsocketHandler) HandlerGuildDelete(w http.ResponseWriter, r *http.Req
 	}
 }
 
-// ギルドフィーチャー関連
-
-var featureCache = caches.NewCacheManager[map[string]GuildFeature](nil)
-
-func HandlerGuildFeaturePost(w http.ResponseWriter, r *http.Request) {
-	//データ取り出す
-	guildFeature := GuildFeature{}
-	if err := requests.Unmarshal(r, &guildFeature); err != nil {
-		logging.Error("[内部] [REST] アンマーシャルできませんでした %s", err)
-		w.WriteHeader(400)
-		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request", "error": err})
-		if err != nil {
-			logging.Error("応答に失敗 %s", err)
-		}
-		return
-	}
-
-	guildFeature.ID = uuid.NewString()
-
-	err := db.Save(&guildFeature)
-	if err != nil {
-		logging.Error("[内部] [REST] データベースへの書き込みに失敗 %s", err)
-		w.WriteHeader(400)
-		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request"})
-		if err != nil {
-			logging.Error("応答に失敗 %s", err)
-		}
-		return
-	}
-
-	features, err := featureCache.Get(guildFeature.GuildID)
-	if err != nil {
-		features = make(map[string]GuildFeature)
-	}
-
-	features[guildFeature.ID] = guildFeature
-
-	featureCache.Set(guildFeature.GuildID, features)
-
-	err = json.NewEncoder(w).Encode(map[string]any{"status": "200 OK"})
-	if err != nil {
-		logging.Error("応答に失敗 %s", err)
-	}
-}
-
-func HandlerGuildFeatureDelete(w http.ResponseWriter, r *http.Request) {
-	//データ取り出す
-	guildFeature := GuildFeature{}
-	if err := requests.Unmarshal(r, &guildFeature); err != nil {
-		logging.Error("[内部] [REST] アンマーシャルできませんでした %s", err)
-		w.WriteHeader(400)
-		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request", "error": err})
-		if err != nil {
-			logging.Error("応答に失敗 %s", err)
-		}
-		return
-	}
-
-	guildFeatures := []GuildFeature{}
-	err := db.Find(&guildFeatures, "guild_id = ?", guildFeature.GuildID)
-	if err != nil {
-		logging.Error("[内部] [REST] データベースへの書き込みに失敗 %s", err)
-		w.WriteHeader(400)
-		err := json.NewEncoder(w).Encode(map[string]any{"status": "500 Server Error"})
-		if err != nil {
-			logging.Error("応答に失敗 %s", err)
-		}
-		return
-	}
-
-	var deleted bool
-
-	for _, gf := range guildFeatures {
-		if gf.TargetID == guildFeature.TargetID && gf.FeatureID == guildFeature.FeatureID {
-			err := db.Delete(&guildFeature, "id = ?", gf.ID)
-			if err != nil {
-				logging.Error("[内部] [REST] データベースへの書き込みに失敗 %s", err)
-				w.WriteHeader(400)
-				err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request"})
-				if err != nil {
-					logging.Error("応答に失敗 %s", err)
-				}
-				return
-			}
-			deleted = true
-		}
-	}
-
-	if !deleted {
-		w.WriteHeader(400)
-		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request"})
-		if err != nil {
-			logging.Error("応答に失敗 %s", err)
-		}
-		return
-	}
-
-	features, err := featureCache.Get(guildFeature.GuildID)
-	if err != nil {
-		err = json.NewEncoder(w).Encode(map[string]any{"status": "200 OK"})
-		if err != nil {
-			logging.Error("応答に失敗 %s", err)
-		}
-		return
-	}
-
-	for _, gf := range features {
-		if gf.TargetID == guildFeature.TargetID && gf.FeatureID == guildFeature.FeatureID {
-			delete(features, gf.ID)
-		}
-	}
-	featureCache.Set(guildFeature.GuildID, features)
-
-	err = json.NewEncoder(w).Encode(map[string]any{"status": "200 OK"})
-	if err != nil {
-		logging.Error("応答に失敗 %s", err)
-	}
-}
-
-func HandlerGuildFeatureGet(w http.ResponseWriter, r *http.Request) {
-	//データ取り出す
-	guildFeature := GuildFeature{}
-	if err := requests.Unmarshal(r, &guildFeature); err != nil {
-		logging.Error("[内部] [REST] アンマーシャルできませんでした %s", err)
-		w.WriteHeader(400)
-		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request", "error": err})
-		if err != nil {
-			logging.Error("応答に失敗 %s", err)
-		}
-		return
-	}
-
-	feature, err := featureCache.Get(guildFeature.GuildID)
-	if err != nil {
-		guildFeatures := []GuildFeature{}
-		err := db.Find(&guildFeatures, "guild_id = ?", guildFeature.GuildID)
-		if err != nil {
-			logging.Error("[内部] [REST] データベースへの書き込みに失敗 %s", err)
-			w.WriteHeader(404)
-			err := json.NewEncoder(w).Encode(map[string]any{"status": "404 Not Found", "error": err})
-			if err != nil {
-				logging.Error("応答に失敗 %s", err)
-			}
-			return
-		}
-		feature = make(map[string]GuildFeature)
-
-		for _, gf := range guildFeatures {
-			feature[gf.ID] = gf
-		}
-		featureCache.Set(guildFeature.GuildID, feature)
-	}
-
-	var found bool
-
-	for _, gf := range feature {
-		if gf.TargetID == guildFeature.TargetID && gf.FeatureID == guildFeature.FeatureID {
-			found = true
-		}
-	}
-
-	if !found {
-		w.WriteHeader(404)
-		err := json.NewEncoder(w).Encode(map[string]any{"status": "404 Not Found"})
-		if err != nil {
-			logging.Error("応答に失敗 %s", err)
-		}
-		return
-	}
-
-	err = json.NewEncoder(w).Encode(map[string]any{"enabled": true})
-	if err != nil {
-		logging.Error("応答に失敗 %s", err)
-	}
-}
-
 // ----------------------------------------------------------------
 // メッセージ関連
 // ----------------------------------------------------------------
@@ -295,8 +118,8 @@ var messageLog = caches.NewCacheManager[[]MessageLog](nil)
 
 func (h *WebsocketHandler) HandlerMessageCreate(w http.ResponseWriter, r *http.Request) {
 	// データを取り出す
-	messageCreate := &discordgo.MessageCreate{}
-	if err := requests.Unmarshal(r, messageCreate); err != nil {
+	messageCreate := gateway.EventMessageCreate{}
+	if err := requests.Unmarshal(r, &messageCreate); err != nil {
 		logging.Error("[内部] [REST] アンマーシャルできませんでした %s", err)
 		w.WriteHeader(400)
 		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request"})
@@ -306,18 +129,7 @@ func (h *WebsocketHandler) HandlerMessageCreate(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	author := messageCreate.Author
-	if author == nil {
-		logging.Error("[内部] [REST] 送信者が不明")
-		w.WriteHeader(400)
-		err := json.NewEncoder(w).Encode(map[string]any{"status": "400 Bad Request"})
-		if err != nil {
-			logging.Error("応答に失敗 %s", err)
-		}
-		return
-	}
-
-	if messageCreate.WebhookID != "" {
+	if messageCreate.Message.WebhookID != nil {
 		err := json.NewEncoder(w).Encode(map[string]any{"status": "200 OK"})
 		if err != nil {
 			logging.Error("応答に失敗 %s", err)
@@ -327,13 +139,13 @@ func (h *WebsocketHandler) HandlerMessageCreate(w http.ResponseWriter, r *http.R
 
 	log := MessageLog{
 		Model: Model{
-			ID: messageCreate.ID,
+			ID: messageCreate.ID.String(),
 		},
-		GuildID:   messageCreate.GuildID,
-		ChannelID: messageCreate.ChannelID,
-		UserID:    messageCreate.Author.ID,
-		Content:   messageCreate.Content,
-		Bot:       messageCreate.Author.Bot,
+		GuildID:   messageCreate.GuildID.String(),
+		ChannelID: messageCreate.ChannelID.String(),
+		UserID:    messageCreate.Message.Author.ID.String(),
+		Content:   messageCreate.Message.Content,
+		Bot:       messageCreate.Message.Author.Bot,
 	}
 
 	err := db.Create(&log)
@@ -347,7 +159,7 @@ func (h *WebsocketHandler) HandlerMessageCreate(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	caches.Append(messageLog, messageCreate.Author.ID, log)
+	caches.Append(messageLog, messageCreate.Message.Author.ID.String(), log)
 
 	err = json.NewEncoder(w).Encode(map[string]any{"status": "200 OK"})
 	if err != nil {
