@@ -9,7 +9,7 @@ require (
 	github.com/bwmarrin/discordgo v0.27.0
 	github.com/disgoorg/disgo v0.15.2
 	github.com/disgoorg/snowflake/v2 v2.0.1
-	github.com/dlclark/regexp2 v1.8.0
+	github.com/dlclark/regexp2 v1.8.1
 	github.com/gin-gonic/gin v1.8.2
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
