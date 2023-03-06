@@ -18,7 +18,7 @@ require (
 	github.com/nicksnyder/go-i18n/v2 v2.2.1
 	github.com/spf13/cobra v1.6.1
 	go.uber.org/zap v1.24.0
-	golang.org/x/text v0.7.0
+	golang.org/x/text v0.8.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/postgres v1.4.7
 	gorm.io/gorm v1.24.5
