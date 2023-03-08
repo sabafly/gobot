@@ -463,9 +463,12 @@ func pollComponentVoteDo(b *botlib.Bot) func(e *events.ComponentInteractionCreat
 		for _, v := range e.StringSelectMenuInteractionData().Values {
 			choice, ok := p.Choices[v]
 			if !ok {
-				e.CreateMessage(discord.MessageCreate{
+				err := e.CreateMessage(discord.MessageCreate{
 					Content: "an critical error has occurred",
 				})
+				if err != nil {
+					return err
+				}
 				return nil
 			}
 			choice.Users[e.Member().User.ID] = true
@@ -581,7 +584,9 @@ func pollComponentVote(b *botlib.Bot) func(e *events.ComponentInteractionCreate)
 		if err != nil {
 			return err
 		}
-		b.DB.Interactions().Set(tokenID, e.Token())
+		if err := b.DB.Interactions().Set(tokenID, e.Token()); err != nil {
+			return err
+		}
 		return nil
 	}
 }
