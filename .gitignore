@@ -18,6 +18,7 @@
 .vscode
 gobot
 start.sh
+config.json
 
 logs/
 dist/

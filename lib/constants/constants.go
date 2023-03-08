@@ -18,7 +18,6 @@ package constants
 
 const (
 	BotName   = "gobot"
-	Version   = "alpha-0.12.0"
 	GitURL    = "https://github.com/sabafly/gobot"
 	UserAgent = "DiscordBot (" + GitURL + ", " + BotName + ")"
 	Color     = 0x89d53c

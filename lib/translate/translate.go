@@ -23,7 +23,6 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
-	"github.com/sabafly/gobot/lib/logging"
 	"golang.org/x/text/language"
 	"gopkg.in/yaml.v2"
 )
@@ -38,14 +37,12 @@ var (
 )
 
 func init() {
-	logging.Info("翻訳ファイルを読み込みます")
 	translations, _ = loadTranslations()
 }
 
 func loadTranslations() (i18n.Bundle, error) {
 	bundle := i18n.NewBundle(defaultLang)
 	bundle.RegisterUnmarshalFunc("yaml", yaml.Unmarshal)
-	logging.Info("ja.yaml を読み込み中...")
 	buf, err := f.ReadFile("ja.yaml")
 	if err != nil {
 		panic(err)
@@ -60,20 +57,16 @@ func loadTranslations() (i18n.Bundle, error) {
 	if err != nil {
 		panic(err)
 	}
-	logging.Info("完了")
 	fd, err := f.ReadDir("lang")
 	if err != nil {
 		panic(err)
 	}
 	for _, de := range fd {
-		logging.Info("%v を読み込み中...", de.Name())
 		_, err := bundle.LoadMessageFileFS(f, "lang/"+de.Name())
 		if err != nil {
-			logging.Error("%v の読み込みに失敗 %s", de.Name(), err)
+			panic(err)
 		}
-		logging.Info("完了")
 	}
-	logging.Info("翻訳ファイルの読み込み完了")
 	return *bundle, nil
 }
 
@@ -103,7 +96,6 @@ func Translates(locale discord.Locale, messageId string, templateData any, plura
 			PluralCount:  pluralCount,
 		})
 		if err != nil {
-			logging.Error("翻訳に失敗しました %s", err)
 			res = fmt.Sprintf("translate error: %v", err)
 		}
 	}

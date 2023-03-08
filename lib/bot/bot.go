@@ -18,132 +18,106 @@ package botlib
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
-	"sync"
 
 	"github.com/disgoorg/disgo"
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/cache"
+	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/gateway"
-	"github.com/gorilla/websocket"
-	"github.com/sabafly/gobot/lib/logging"
+	"github.com/disgoorg/log"
+	"github.com/disgoorg/paginator"
+	"github.com/sabafly/gobot/lib/db"
+	"github.com/sabafly/gobot/lib/handler"
 )
 
-type Api struct {
-	sync.RWMutex
-	Client         http.Client
-	MaxRestRetries int
-	UserAgent      string
-
-	listening chan any
-
-	handlersMu sync.RWMutex
-	handlers   map[string][]*eventHandlerInstance
-
-	Dialer   *websocket.Dialer
-	wsConn   *websocket.Conn
-	wsMutex  sync.Mutex
-	sequence *int64
-	gateway  string
+func New(logger log.Logger, version string, config Config) *Bot {
+	return &Bot{
+		Logger:    logger,
+		Config:    config,
+		Paginator: paginator.New(),
+		Version:   version,
+		Handler:   handler.New(logger),
+	}
 }
 
-// ボット接続を管理する
-type BotManager struct {
-	*Api
-	ShardCount int
-	Client     bot.Client
+type Bot struct {
+	Logger    log.Logger
+	Client    bot.Client
+	Paginator *paginator.Manager
+	Config    Config
+	Version   string
+	Handler   *handler.Handler
+	DB        db.DB
 }
 
-// ボットセッションを開始する
-func (b *BotManager) Open() (err error) {
-	// 内部APIと接続
-	if err := b.Api.ApiOpen(); err != nil {
-		return fmt.Errorf("failed open api connection: %w", err)
+func (b *Bot) SetupBot(listeners ...bot.EventListener) {
+	var err error
+	b.DB, err = db.SetupDatabase(b.Config.DBConfig)
+	if err != nil {
+		b.Logger.Fatalf("botのセットアップに失敗 %s", err)
 	}
-
-	// セッションを開始
-	if err := b.Client.OpenGateway(context.TODO()); err != nil {
-		return fmt.Errorf("failed open session: %w", err)
-	}
-	return nil
-}
-
-// ボットセッションを終了する
-func (b *BotManager) Close() (err error) {
-	b.Client.Close(context.TODO())
-
-	if err := b.ApiClose(); err != nil {
-		return fmt.Errorf("failed close api connection: %w", err)
-	}
-	return nil
-}
-
-// 新規のボット接続を作成する
-func New(token string) (b *BotManager, err error) {
-	b = &BotManager{
-		// API接続関連
-		Api: NewApi(),
-	}
-
-	client, err := disgo.New(token,
-		bot.WithDefaultGateway(),
-		bot.WithCaches(cache.New()),
+	b.Client, err = disgo.New(b.Config.Token,
+		bot.WithLogger(b.Logger),
+		bot.WithGatewayConfigOpts(gateway.WithIntents(gateway.IntentsAll)),
+		bot.WithCacheConfigOpts(cache.WithCaches(cache.FlagsAll)),
 		bot.WithDefaultShardManager(),
-		bot.WithEventListeners(&events.ListenerAdapter{OnRaw: b.interfaceHandler}),
-		bot.WithGatewayConfigOpts(
-			gateway.WithIntents(gateway.IntentsAll),
-			gateway.WithEnableRawEvents(true),
-		),
+		bot.WithEventListeners(b.Paginator),
+		bot.WithEventListeners(listeners...),
 	)
 	if err != nil {
-		return nil, err
-	}
-
-	b.Client = client
-
-	return b, nil
-}
-
-func NewApi() *Api {
-	var zero int64 = 0
-	return &Api{
-		Dialer:         websocket.DefaultDialer,
-		MaxRestRetries: 5,
-		Client:         http.Client{},
-		sequence:       &zero,
+		b.Logger.Fatalf("botのセットアップに失敗 %s", err)
 	}
 }
 
-func (b *BotManager) interfaceHandler(event *events.Raw) {
-	buf, err := io.ReadAll(event.Payload)
-	if err != nil {
-		logging.Error("イベントバッファ読み込みに失敗 %s", err)
+func (b *Bot) OnGuildJoin(g *events.GuildJoin) {
+	b.Logger.Infof("[#%d]ギルド参加 %3dメンバー 作成 %s 名前 %s(%d)", g.ShardID(), g.Guild.MemberCount, g.Guild.CreatedAt().String(), g.Guild.Name, g.GuildID)
+	b.RefreshPresence()
+}
+
+func (b *Bot) OnGuildLeave(g *events.GuildLeave) {
+	b.Logger.Infof("[#%d]ギルド脱退 %3dメンバー 作成 %s 名前 %s(%d)", g.ShardID(), g.Guild.MemberCount, g.Guild.CreatedAt().String(), g.Guild.Name, g.GuildID)
+	b.RefreshPresence()
+}
+
+func (b *Bot) OnGuildMemberJoin(m *events.GuildMemberJoin) {
+	if g, ok := m.Client().Caches().Guild(m.GuildID); ok {
+		b.Logger.Infof("[#%d]ギルドメンバー参加 %32s#%s(%d) ギルド %3dメンバー %s(%d)", m.Member.User.Username, m.Member.User.Discriminator, m.Member.User.ID, g.Name, g.ID, g.MemberCount)
 	}
-	switch event.EventType {
-	case gateway.EventTypeGuildCreate:
-		data := gateway.EventGuildCreate{}
-		err := json.Unmarshal(buf, &data)
-		if err != nil {
-			logging.Error("イベントアンマーシャルに失敗 %s", err)
+	b.RefreshPresence()
+}
+
+func (b *Bot) OnGuildMemberLeave(m *events.GuildMemberLeave) {
+	if g, ok := m.Client().Caches().Guild(m.GuildID); ok {
+		b.Logger.Infof("[#%d]ギルドメンバー脱退 %32s#%s(%d) ギルド %3dメンバー %s(%d)", m.Member.User.Username, m.Member.User.Discriminator, m.Member.User.ID, g.Name, g.ID, g.MemberCount)
+	}
+	b.RefreshPresence()
+}
+
+func (b *Bot) RefreshPresence() {
+	var (
+		guilds int
+		users  int
+	)
+	b.Client.Caches().GuildsForEach(func(guild discord.Guild) {
+		guilds++
+		b.Client.Caches().MembersForEach(guild.ID, func(member discord.Member) {
+			users++
+		})
+	})
+	shards := b.Client.ShardManager().Shards()
+	for k := range shards {
+		state := fmt.Sprintf("/help | %d Servers | %d Users | #%d", guilds, users, k)
+		if err := b.Client.SetPresenceForShard(context.TODO(), k, gateway.WithOnlineStatus(discord.OnlineStatusOnline), gateway.WithPlayingActivity(state)); err != nil {
+			b.Logger.Errorf("ステータス更新に失敗 %s", err)
 		}
-		b.guildCreateCall(data.ID)
-	case gateway.EventTypeGuildDelete:
-		data := gateway.EventGuildDelete{}
-		err := json.Unmarshal(buf, &data)
+	}
+	if len(shards) == 0 {
+		state := fmt.Sprintf("/help | %d Servers | %d Users", guilds, users)
+		err := b.Client.SetPresence(context.TODO(), gateway.WithPlayingActivity(state))
 		if err != nil {
-			logging.Error("イベントアンマーシャルに失敗 %s", err)
+			b.Logger.Errorf("ステータス更新に失敗 %s", err)
 		}
-		b.guildDeleteCall(data)
-	case gateway.EventTypeMessageCreate:
-		data := gateway.EventMessageCreate{}
-		err := json.Unmarshal(buf, &data)
-		if err != nil {
-			logging.Error("イベントアンマーシャルに失敗 %s", err)
-		}
-		b.messageCreateCall(data)
 	}
 }
