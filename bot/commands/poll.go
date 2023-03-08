@@ -1152,7 +1152,10 @@ func pollCOmponentDeleteChoice(b *botlib.Bot) func(e *events.ComponentInteractio
 			}
 			return err
 		}
-		pollComponentBackMenu(b)(e)
+		err = pollComponentBackMenu(b)(e)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 }
