@@ -103,16 +103,16 @@ func (h *Handler) SyncCommands(client bot.Client, guildIDs ...snowflake.ID) {
 func (h *Handler) OnEvent(event bot.Event) {
 	switch e := event.(type) {
 	case *events.ApplicationCommandInteractionCreate:
-		h.handleCommand(e)
+		go h.handleCommand(e)
 	case *events.AutocompleteInteractionCreate:
-		h.handleAutocomplete(e)
+		go h.handleAutocomplete(e)
 	case *events.ComponentInteractionCreate:
-		h.handleComponent(e)
+		go h.handleComponent(e)
 	case *events.ModalSubmitInteractionCreate:
-		h.handleModal(e)
+		go h.handleModal(e)
 	case *events.MessageCreate:
-		h.handleMessage(e)
+		go h.handleMessage(e)
 	case *events.Ready:
-		h.handleReady(e)
+		go h.handleReady(e)
 	}
 }
