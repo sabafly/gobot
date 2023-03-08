@@ -497,7 +497,10 @@ func pollComponentVoteDo(b *botlib.Bot) func(e *events.ComponentInteractionCreat
 			}
 			return err
 		}
-		token, _ := b.DB.Interactions().Get(snowflake.MustParse(args[4]))
+		token, err := b.DB.Interactions().Get(snowflake.MustParse(args[4]))
+		if err != nil {
+			b.Logger.Error(err)
+		}
 		err = e.Client().Rest().DeleteInteractionResponse(e.ApplicationID(), token)
 		if err != nil {
 			b.Logger.Error(err)

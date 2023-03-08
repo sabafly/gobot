@@ -37,7 +37,11 @@ var (
 )
 
 func init() {
-	translations, _ = loadTranslations()
+	var err error
+	translations, err = loadTranslations()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func loadTranslations() (i18n.Bundle, error) {
