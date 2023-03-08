@@ -219,21 +219,13 @@ func (p *Poll) VoteComponent(tokenID snowflake.ID) []discord.ContainerComponent 
 		}
 		options = append(options, o)
 	}
-	max := p.MaxChoice
-	min := p.MinChoice
-	if max < len(options) {
-		max = len(options)
-	}
-	if max < min {
-		min = max
-	}
 	return []discord.ContainerComponent{
 		discord.ActionRowComponent{
 			discord.StringSelectMenuComponent{
 				CustomID:  fmt.Sprintf("handler:poll:vote-do:%d:%d", p.ID, tokenID),
 				Options:   options,
-				MaxValues: max,
-				MinValues: &min,
+				MaxValues: p.MaxChoice,
+				MinValues: &p.MinChoice,
 			},
 		},
 	}
