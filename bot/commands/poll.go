@@ -498,14 +498,20 @@ func pollComponentVoteDo(b *botlib.Bot) func(e *events.ComponentInteractionCreat
 			return err
 		}
 		token, _ := b.DB.Interactions().Get(snowflake.MustParse(args[4]))
-		_ = e.Client().Rest().DeleteInteractionResponse(e.ApplicationID(), token)
+		err = e.Client().Rest().DeleteInteractionResponse(e.ApplicationID(), token)
+		if err != nil {
+			b.Logger.Error(err)
+		}
 		embeds := p.MessageEmbed()
 		embeds = botlib.SetEmbedProperties(embeds)
 		components := p.MessageComponent()
-		_, _ = e.Client().Rest().UpdateMessage(p.ChannelID, p.MessageID, discord.MessageUpdate{
+		_, err = e.Client().Rest().UpdateMessage(p.ChannelID, p.MessageID, discord.MessageUpdate{
 			Embeds:     &embeds,
 			Components: &components,
 		})
+		if err != nil {
+			b.Logger.Error(err)
+		}
 		embeds = []discord.Embed{
 			{
 				Title:       translate.Message(e.Locale(), "poll_component_select_menu_vote_do_response_title"),
