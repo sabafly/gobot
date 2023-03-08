@@ -9,6 +9,7 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	botlib "github.com/sabafly/gobot/lib/bot"
@@ -21,9 +22,10 @@ import (
 func Poll(b *botlib.Bot) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
-			Name:         "poll",
-			Description:  "create, and manage poll",
-			DMPermission: &b.Config.DMPermission,
+			DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageServer),
+			Name:                     "poll",
+			Description:              "create, and manage poll",
+			DMPermission:             &b.Config.DMPermission,
 			Options: []discord.ApplicationCommandOption{
 				discord.ApplicationCommandOptionSubCommand{
 					Name:        "create",
