@@ -259,10 +259,18 @@ func (v *PollCreate) Components() []discord.ContainerComponent {
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStylePrimary),
-				CustomID: fmt.Sprintf("handler:poll:edit-settings:%d", v.ID),
+				CustomID: fmt.Sprintf("handler:poll:change-poll-info:%d", v.ID),
 				Emoji: &discord.ComponentEmoji{
 					ID:   snowflake.ID(1082025248330891388),
 					Name: "modify",
+				},
+			},
+			discord.ButtonComponent{
+				Style:    discord.ButtonStyle(discord.ButtonStylePrimary),
+				CustomID: fmt.Sprintf("handler:poll:edit-settings:%d", v.ID),
+				Emoji: &discord.ComponentEmoji{
+					ID:   snowflake.ID(1083053845632000010),
+					Name: "setting",
 				},
 			},
 			discord.ButtonComponent{

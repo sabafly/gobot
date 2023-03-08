@@ -169,7 +169,61 @@ func PollComponent(b *botlib.Bot) handler.Component {
 			"see-info-do":          pollComponentSeeInfoDo(b),
 			"see-result":           pollComponentSeeResult(b),
 			"see-result-do":        pollComponentSeeResultDo(b),
+			"change-poll-info":     pollComponentChangePollInfo(b),
 		},
+	}
+}
+
+func pollComponentChangePollInfo(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
+	return func(e *events.ComponentInteractionCreate) error {
+		args := strings.Split(e.Data.CustomID(), ":")
+		id, err := snowflake.Parse(args[3])
+		if err != nil {
+			return err
+		}
+		v, err := b.DB.PollCreate().Get(id)
+		if err != nil {
+			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
+			if err := e.CreateMessage(discord.MessageCreate{
+				Embeds: embeds,
+				Flags:  discord.MessageFlagEphemeral,
+			}); err != nil {
+				return err
+			}
+			return err
+		}
+		err = e.CreateModal(discord.ModalCreate{
+			CustomID: e.Data.CustomID(),
+			Title:    translate.Message(e.Locale(), "command_text_poll_create_modal_change_poll_info_modal_title"),
+			Components: []discord.ContainerComponent{
+				discord.ActionRowComponent{
+					discord.TextInputComponent{
+						CustomID:    "title",
+						Style:       discord.TextInputStyle(discord.TextInputStyleShort),
+						Label:       translate.Message(e.Locale(), "command_text_poll_create_modal_change_poll_info_modal_component_title"),
+						Placeholder: translate.Message(e.Locale(), "command_text_poll_create_modal_change_poll_info_modal_component_title_placeholder"),
+						Required:    true,
+						MaxLength:   54,
+						Value:       v.Title,
+					},
+				},
+				discord.ActionRowComponent{
+					discord.TextInputComponent{
+						CustomID:    "description",
+						Style:       discord.TextInputStyle(discord.TextInputStyleParagraph),
+						Label:       translate.Message(e.Locale(), "command_text_poll_create_modal_change_poll_info_modal_component_description"),
+						Placeholder: translate.Message(e.Locale(), "command_text_poll_create_modal_change_poll_info_modal_component_description_placeholder"),
+						Required:    false,
+						MaxLength:   2048,
+						Value:       v.Description,
+					},
+				},
+			},
+		})
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 }
 
@@ -1443,6 +1497,7 @@ func PollModal(b *botlib.Bot) handler.Modal {
 		Handler: map[string]handler.ModalHandler{
 			"add-choice":         pollModalAddChoice(b),
 			"change-choice-info": pollModalChangeChoiceInfo(b),
+			"change-poll-info":   pollModalChangePollInfo(b),
 		},
 	}
 }
@@ -1668,6 +1723,119 @@ func pollModalChangeChoiceInfo(b *botlib.Bot) func(*events.ModalSubmitInteractio
 		if description, ok := e.ModalSubmitInteraction.Data.OptText("description"); ok {
 			embeds[0].Fields = append(embeds[0].Fields, discord.EmbedField{
 				Name:  translate.Message(e.Locale(), "command_text_poll_create_modal_add_choice_component_description_label"),
+				Value: description,
+			})
+		}
+		botlib.SetEmbedProperties(embeds)
+		if err := e.CreateMessage(discord.MessageCreate{
+			Embeds: embeds,
+			Flags:  discord.MessageFlagEphemeral,
+		}); err != nil {
+			return err
+		}
+		// 3秒後に削除
+		time.Sleep(time.Second * 3)
+		if err := e.Client().Rest().DeleteInteractionResponse(e.Client().ApplicationID(), e.Token()); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func pollModalChangePollInfo(b *botlib.Bot) func(*events.ModalSubmitInteractionCreate) error {
+	return func(e *events.ModalSubmitInteractionCreate) error {
+		// IDを取り出す
+		args := strings.Split(e.Data.CustomID, ":")
+		id, err := snowflake.Parse(args[3])
+		if err != nil {
+			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
+			if err := e.CreateMessage(discord.MessageCreate{
+				Embeds: embeds,
+				Flags:  discord.MessageFlagEphemeral,
+			}); err != nil {
+				return err
+			}
+			return err
+		}
+		// データベースから取得
+		v, err := b.DB.PollCreate().Get(id)
+		if err != nil {
+			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
+			if err := e.CreateMessage(discord.MessageCreate{
+				Embeds: embeds,
+				Flags:  discord.MessageFlagEphemeral,
+			}); err != nil {
+				return err
+			}
+			return err
+		}
+		// インタラクショントークンを取得
+		token, err := b.DB.Interactions().Get(id)
+		if err != nil {
+			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
+			if err := e.CreateMessage(discord.MessageCreate{
+				Embeds: embeds,
+				Flags:  discord.MessageFlagEphemeral,
+			}); err != nil {
+				return err
+			}
+			return err
+		}
+
+		v.Title = e.ModalSubmitInteraction.Data.Text("title")
+		v.Description = e.ModalSubmitInteraction.Data.Text("description")
+		embeds := v.ConfigEmbed()
+		botlib.SetEmbedProperties(embeds)
+		components := v.Components()
+		_, err = e.Client().Rest().UpdateInteractionResponse(e.ApplicationID(), token, discord.MessageUpdate{
+			Embeds:     &embeds,
+			Components: &components,
+		})
+		if err != nil {
+			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
+			if err := e.CreateMessage(discord.MessageCreate{
+				Embeds: embeds,
+				Flags:  discord.MessageFlagEphemeral,
+			}); err != nil {
+				return err
+			}
+			return err
+		}
+		if err := b.DB.PollCreate().Remove(id); err != nil {
+			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
+			if err := e.CreateMessage(discord.MessageCreate{
+				Embeds: embeds,
+				Flags:  discord.MessageFlagEphemeral,
+			}); err != nil {
+				return err
+			}
+			return err
+		}
+		if err := b.DB.PollCreate().Set(id, v); err != nil {
+			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
+			if err := e.CreateMessage(discord.MessageCreate{
+				Embeds: embeds,
+				Flags:  discord.MessageFlagEphemeral,
+			}); err != nil {
+				return err
+			}
+			return err
+		}
+
+		// 追加内容をレスポンド
+		embeds = []discord.Embed{}
+		embeds = append(embeds, discord.Embed{
+			Title: translate.Message(e.Locale(), "command_text_poll_create_modal_change_choice_info_component_response_title"),
+			Fields: []discord.EmbedField{
+				{
+					Name:  translate.Message(e.Locale(), "command_text_poll_create_modal_change_poll_info_modal_component_title"),
+					Value: e.ModalSubmitInteraction.Data.Text("name"),
+				},
+			},
+		})
+		if description, ok := e.ModalSubmitInteraction.Data.OptText("description"); ok {
+			embeds[0].Fields = append(embeds[0].Fields, discord.EmbedField{
+				Name:  translate.Message(e.Locale(), "command_text_poll_create_modal_change_poll_info_modal_component_description"),
 				Value: description,
 			})
 		}
