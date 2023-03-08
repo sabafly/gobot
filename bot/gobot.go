@@ -18,49 +18,84 @@ package gobot
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
+	"syscall"
+	"time"
 
-	"github.com/disgoorg/disgo/discord"
-	"github.com/disgoorg/disgo/gateway"
+	"github.com/disgoorg/disgo/bot"
+	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/log"
+	"github.com/disgoorg/snowflake/v2"
+	"github.com/sabafly/gobot/bot/commands"
+
 	botlib "github.com/sabafly/gobot/lib/bot"
-	"github.com/sabafly/gobot/lib/env"
-	"github.com/sabafly/gobot/lib/logging"
+)
+
+var (
+	version = "dev"
 )
 
 func Run() {
-	// ----------------------------------------------------------------
-	// ボット
-	// ----------------------------------------------------------------
-
-	// ボットを用意
-	bot, err := botlib.New(env.Token)
+	cfg, err := botlib.LoadConfig()
 	if err != nil {
-		logging.Fatal("failed create bot: %s", err)
+		panic("failed to load config: " + err.Error())
 	}
 
-	bot.Api.AddHandler(func(a *botlib.Api, s *botlib.StatusUpdate) {
-		if err := bot.Client.SetPresence(context.TODO(),
-			gateway.WithOnlineStatus(discord.OnlineStatusOnline),
-			gateway.WithPlayingActivity(fmt.Sprintf("/help | %d Servers", s.Servers)),
-		); err != nil {
-			logging.Error("ステータス更新に失敗 %s", err)
+	logger := log.New(log.Ldate | log.Ltime | log.Lshortfile)
+	logger.SetLevel(cfg.LogLevel)
+	logger.Infof("Starting bot version: %s", version)
+	logger.Infof("Syncing commands? %t", cfg.ShouldSyncCommands)
+
+	b := botlib.New(logger, version, *cfg)
+
+	b.Handler.AddCommands(
+		commands.Ping(b),
+		commands.Poll(b),
+	)
+
+	b.Handler.AddComponents(
+		commands.PollComponent(b),
+	)
+
+	b.Handler.AddModals(
+		commands.PollModal(b),
+	)
+
+	b.Handler.AddReady(func(r *events.Ready) {
+		polls, err := b.DB.Poll().GetAll()
+		if err != nil {
+			logger.Fatal(err)
+		}
+		for _, p := range polls {
+			go commands.End(b, p)
 		}
 	})
 
-	// ボットを開始
-	if err := bot.Open(); err != nil {
-		logging.Fatal("failed open bot: %s", err)
+	b.SetupBot(bot.NewListenerFunc(b.Handler.OnEvent))
+	b.Client.EventManager().AddEventListeners(&events.ListenerAdapter{
+		OnGuildJoin:  b.OnGuildJoin,
+		OnGuildLeave: b.OnGuildLeave,
+	})
+
+	if cfg.ShouldSyncCommands {
+		var guilds []snowflake.ID
+		if cfg.DevMode {
+			guilds = b.Config.DevGuildIDs
+		}
+		b.Handler.SyncCommands(b.Client, guilds...)
 	}
-	defer bot.Close()
 
-	// シグナル待機
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt)
-	logging.Info("Ctrl+Cで終了")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err = b.Client.OpenGateway(ctx); err != nil {
+		b.Logger.Errorf("Failed to connect to gateway: %s", err)
+	}
+	defer b.Client.Close(context.TODO())
 
-	sig := <-sigCh
-
-	logging.Info("受信: %v\n", sig.String())
+	b.Logger.Info("Bot is running. Press CTRL-C to exit.")
+	s := make(chan os.Signal, 1)
+	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
+	<-s
+	b.Logger.Info("Shutting down...")
 }

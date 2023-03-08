@@ -17,22 +17,20 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package botlib
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"runtime/debug"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
-	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/google/uuid"
 	"github.com/sabafly/gobot/lib/constants"
-	"github.com/sabafly/gobot/lib/logging"
 	"github.com/sabafly/gobot/lib/translate"
 )
 
@@ -81,8 +79,8 @@ func ErrorTraceEmbed(locale discord.Locale, err error) []discord.Embed {
 }
 
 // エラーが発生したことを返すレスポンスを作成する
-func ErrorRespond(locale discord.Locale, err error) *discord.Message {
-	return &discord.Message{
+func ErrorRespond(locale discord.Locale, err error) discord.MessageCreate {
+	return discord.MessageCreate{
 		Embeds: ErrorTraceEmbed(locale, err),
 	}
 }
@@ -161,38 +159,6 @@ func MessageLogDetails(m []MessageLog) (day, week, all int, channelID snowflake.
 	return len(inDay), len(inWeek), len(m), channelID
 }
 
-func WaitModalSubmit(i *events.ApplicationCommandInteractionCreate, title string, container []discord.TextInputComponent) (st *events.ModalSubmitInteractionCreate, err error) {
-	customID := uuid.NewString()
-	ctx := context.Background()
-	ctx, cancelCtx := context.WithDeadline(ctx, time.Now().Add(time.Minute*3)) //TODO: タイムアウトをカスタマイズ可能に
-	defer cancelCtx()
-	handler := func(m *events.ModalSubmitInteractionCreate) {
-		if m.Data.CustomID != customID {
-			return
-		}
-		st = m
-		cancelCtx()
-	}
-	listener := bot.NewListenerFunc(handler)
-	i.Client().AddEventListeners(listener)
-	i.Client().RemoveEventListeners(listener)
-	builder := discord.NewModalCreateBuilder().
-		SetTitle(title).
-		SetCustomID(customID)
-	for _, tic := range container {
-		builder = builder.AddActionRow(tic)
-	}
-	err = i.CreateModal(builder.Build())
-	if err != nil {
-		return nil, err
-	}
-	<-ctx.Done()
-	if ctx.Err() != nil {
-		return nil, err
-	}
-	return st, nil
-}
-
 func SendWebhook(client bot.Client, channelID snowflake.ID, data discord.WebhookMessageCreate) (st *discord.Message, err error) {
 	webhooks, err := client.Rest().GetWebhooks(channelID)
 	if err != nil {
@@ -200,8 +166,7 @@ func SendWebhook(client bot.Client, channelID snowflake.ID, data discord.Webhook
 	}
 	me, ok := client.Caches().SelfUser()
 	if !ok {
-		logging.Error("セルフ取得に失敗しました %s", err)
-		return
+		return nil, err
 	}
 	var token string
 	var webhook discord.Webhook = nil
@@ -236,7 +201,7 @@ func SendWebhook(client bot.Client, channelID snowflake.ID, data discord.Webhook
 			}
 		}
 		data, err := client.Rest().CreateWebhook(channelID, discord.WebhookCreate{
-			Name:   "gobot-webhook",
+			Name:   constants.BotName + "-webhook",
 			Avatar: discord.NewIconRaw(discord.IconTypePNG, buf),
 		})
 		if err != nil {
@@ -256,4 +221,58 @@ func SendWebhook(client bot.Client, channelID snowflake.ID, data discord.Webhook
 		return nil, err
 	}
 	return st, nil
+}
+
+var EmojiRegex = regexp.MustCompile(`<(a|):[A-z0-9_~]+:[0-9]{18,20}>`)
+
+func GetCustomEmojis(str string) []discord.Emoji {
+	var toReturn []discord.Emoji
+	emojis := EmojiRegex.FindAllString(str, -1)
+	if len(emojis) < 1 {
+		return toReturn
+	}
+	for _, em := range emojis {
+		parts := strings.Split(em, ":")
+		toReturn = append(toReturn, discord.Emoji{
+			ID:       snowflake.MustParse(parts[2][:len(parts[2])-1]),
+			Name:     parts[1],
+			Animated: strings.HasPrefix(em, "<a:"),
+		})
+	}
+	return toReturn
+}
+
+func ParseComponentEmoji(str string) discord.ComponentEmoji {
+	emoji := discord.ComponentEmoji{
+		Name: str,
+	}
+	if !EmojiRegex.MatchString(str) {
+		return emoji
+	}
+	emojis := GetCustomEmojis(str)
+	if len(emojis) < 1 {
+		return emoji
+	}
+	emoji = discord.ComponentEmoji{
+		ID:       emojis[0].ID,
+		Name:     emojis[0].Name,
+		Animated: emojis[0].Animated,
+	}
+	return emoji
+}
+
+func Number2Emoji(n int) string {
+	return string(rune('🇦' - 1 + n))
+}
+
+func FormatComponentEmoji(e discord.ComponentEmoji) string {
+	var zeroID snowflake.ID
+	if e.ID == zeroID {
+		return e.Name
+	}
+	if e.Animated {
+		return fmt.Sprintf("<a:%s:%d>", e.Name, e.ID)
+	} else {
+		return fmt.Sprintf("<:%s:%d>", e.Name, e.ID)
+	}
 }
