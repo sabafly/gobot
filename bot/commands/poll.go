@@ -1904,6 +1904,7 @@ func End(b *botlib.Bot, p db.Poll) {
 			Fields:      ranking,
 		},
 	}
+	embeds = botlib.SetEmbedProperties(embeds)
 	_, err = b.Client.Rest().CreateMessage(p.ChannelID, discord.MessageCreate{
 		Embeds: embeds,
 		MessageReference: &discord.MessageReference{
