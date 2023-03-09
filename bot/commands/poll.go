@@ -381,10 +381,10 @@ func pollComponentSeeInfoDo(b *botlib.Bot) func(e *events.ComponentInteractionCr
 		fields := []discord.EmbedField{}
 		var isUser bool
 		var isCount bool
-		if _, ok := p.Users[e.Member().User.ID]; p.Settings.ShowUser != db.PollSettingShowTypeNever || p.Settings.ShowUser == db.PollSettingShowTypeAlways || ok {
+		if _, ok := p.Users[e.Member().User.ID]; p.Settings.ShowUser != db.PollSettingShowTypeAfterVote && ok || p.Settings.ShowUser == db.PollSettingShowTypeAlways {
 			isUser = true
 		}
-		if _, ok := p.Users[e.Member().User.ID]; p.Settings.ShowCount != db.PollSettingShowTypeNever || p.Settings.ShowCount == db.PollSettingShowTypeAlways || ok {
+		if _, ok := p.Users[e.Member().User.ID]; p.Settings.ShowCount == db.PollSettingShowTypeAfterVote && ok || p.Settings.ShowCount == db.PollSettingShowTypeAlways {
 			isCount = true
 		}
 		if isCount {
