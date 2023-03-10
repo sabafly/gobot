@@ -8,7 +8,6 @@ require (
 	github.com/disgoorg/log v1.2.0
 	github.com/disgoorg/paginator v0.0.0-20230104145353-f988d828ede9
 	github.com/disgoorg/snowflake/v2 v2.0.1
-	github.com/dlclark/regexp2 v1.8.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/uuid v1.3.0
 	github.com/nicksnyder/go-i18n/v2 v2.2.1
