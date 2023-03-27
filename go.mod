@@ -3,7 +3,7 @@ module github.com/sabafly/gobot
 go 1.20
 
 require (
-	github.com/disgoorg/disgo v0.15.2
+	github.com/disgoorg/disgo v0.15.3
 	github.com/disgoorg/json v1.0.0
 	github.com/disgoorg/log v1.2.0
 	github.com/disgoorg/paginator v0.0.0-20230104145353-f988d828ede9
