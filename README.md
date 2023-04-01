@@ -5,7 +5,7 @@
 
 sabaflyが開発する多機能、便利なディスコードボットです。
 
-もしボットに興味を持ったのならぜひあなたのサーバーにも[このリンク](https://discord.com/api/oauth2/authorize?client_id=973391124389572608&permissions=8&scope=bot%20applications.commands)を使ってボットを招待してください。
+もしボットに興味を持ったのならぜひあなたのサーバーにも[このリンク](https://discord.com/api/oauth2/authorize?client_id=1083042729996603412&permissions=8&scope=bot%20applications.commands)を使ってボットを招待してください。
 
 ## Documentation
 
