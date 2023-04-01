@@ -44,56 +44,56 @@ func Poll(b *botlib.Bot) handler.Command {
 							MaxLength:   pint(2048),
 						},
 						discord.ApplicationCommandOptionInt{
-							Name:        "time-year",
+							Name:        "timeyear",
 							Description: "year of end time",
 							Required:    true,
 							MinValue:    pint(time.Now().Year()),
 							MaxValue:    pint(time.Now().Year() + 1),
 						},
 						discord.ApplicationCommandOptionInt{
-							Name:        "time-month",
+							Name:        "timemonth",
 							Description: "month of end time",
 							Required:    true,
 							MinValue:    pint(1),
 							MaxValue:    pint(12),
 						},
 						discord.ApplicationCommandOptionInt{
-							Name:        "time-day",
+							Name:        "timeday",
 							Description: "day of end time",
 							Required:    true,
 							MinValue:    pint(1),
 							MaxValue:    pint(31),
 						},
 						discord.ApplicationCommandOptionInt{
-							Name:        "time-hour",
+							Name:        "timehour",
 							Description: "hour of end time",
 							Required:    true,
 							MinValue:    pint(0),
 							MaxValue:    pint(23),
 						},
 						discord.ApplicationCommandOptionInt{
-							Name:        "time-minute",
+							Name:        "timeminute",
 							Description: "minute of end time",
 							Required:    true,
 							MinValue:    pint(0),
 							MaxValue:    pint(59),
 						},
 						discord.ApplicationCommandOptionInt{
-							Name:        "time-zone",
+							Name:        "timezone",
 							Description: "timezone of end time",
 							Required:    true,
 							MinValue:    pint(-12),
 							MaxValue:    pint(+14),
 						},
 						discord.ApplicationCommandOptionInt{
-							Name:        "max-choice",
+							Name:        "maxchoice",
 							Description: "Maximum number of votes a user can have",
 							Required:    true,
 							MinValue:    pint(1),
 							MaxValue:    pint(25),
 						},
 						discord.ApplicationCommandOptionInt{
-							Name:        "min-choice",
+							Name:        "minchoice",
 							Description: "Minimum number of votes a user can have",
 							Required:    false,
 							MinValue:    pint(1),
@@ -111,22 +111,22 @@ func Poll(b *botlib.Bot) handler.Command {
 
 func pollCreateHandler(b *botlib.Bot) func(e *events.ApplicationCommandInteractionCreate) error {
 	return func(e *events.ApplicationCommandInteractionCreate) error {
-		timeLimit := time.Date(e.SlashCommandInteractionData().Int("time-year"), time.Month(e.SlashCommandInteractionData().Int("time-month")), e.SlashCommandInteractionData().Int("time-day"), e.SlashCommandInteractionData().Int("time-hour"), e.SlashCommandInteractionData().Int("time-minute"), 0, 0, time.FixedZone("", e.SlashCommandInteractionData().Int("time-zone")*60*60))
+		timeLimit := time.Date(e.SlashCommandInteractionData().Int("timeyear"), time.Month(e.SlashCommandInteractionData().Int("timemonth")), e.SlashCommandInteractionData().Int("timeday"), e.SlashCommandInteractionData().Int("timehour"), e.SlashCommandInteractionData().Int("timeminute"), 0, 0, time.FixedZone("", e.SlashCommandInteractionData().Int("timezone")*60*60))
 		if time.Now().After(timeLimit) {
 			timeLimit = time.Now().Add(time.Hour)
 		}
-		min, ok := e.SlashCommandInteractionData().OptInt("min-choice")
+		min, ok := e.SlashCommandInteractionData().OptInt("minchoice")
 		if !ok {
 			min = 1
 		}
 		v := db.PollCreate{
-			ID:          snowflake.New(time.Now()),
+			ID:          uuid.New(),
 			Title:       e.SlashCommandInteractionData().String("title"),
 			Description: e.SlashCommandInteractionData().String("description"),
 			EndAt:       timeLimit.Unix(),
-			MaxChoice:   e.SlashCommandInteractionData().Int("max-choice"),
+			MaxChoice:   e.SlashCommandInteractionData().Int("maxchoice"),
 			MinChoice:   min,
-			Choices:     make(map[string]db.PollCreateChoice),
+			Choices:     make(map[uuid.UUID]db.PollCreateChoice),
 			Locale:      e.Locale(),
 		}
 		embeds := v.ConfigEmbed()
@@ -152,24 +152,24 @@ func PollComponent(b *botlib.Bot) handler.Component {
 	return handler.Component{
 		Name: "poll",
 		Handler: map[string]handler.ComponentHandler{
-			"add-choice":           pollComponentAddChoice(b),
-			"edit-choice":          pollComponentEditChoice(b),
-			"edit-settings":        pollComponentEditSettings(b),
-			"back-menu":            pollComponentBackMenu(b),
-			"delete-choice":        pollCOmponentDeleteChoice(b),
-			"change-choice-info":   pollComponentChangeChoiceInfo(b),
-			"change-choice-emoji":  pollComponentChangeChoiceEmoji(b),
-			"change-settings-menu": pollComponentChangeSettingsMenu(b),
-			"change-settings":      pollComponentChangeSettings(b),
-			"create":               pollComponentCreate(b),
-			"create-do":            pollComponentCreateDo(b),
-			"vote":                 pollComponentVote(b),
-			"vote-do":              pollComponentVoteDo(b),
-			"see-info":             pollComponentSeeInfo(b),
-			"see-info-do":          pollComponentSeeInfoDo(b),
-			"see-result":           pollComponentSeeResult(b),
-			"see-result-do":        pollComponentSeeResultDo(b),
-			"change-poll-info":     pollComponentChangePollInfo(b),
+			"addchoice":          pollComponentAddChoice(b),
+			"editchoice":         pollComponentEditChoice(b),
+			"editsettings":       pollComponentEditSettings(b),
+			"backmenu":           pollComponentBackMenu(b),
+			"deletechoice":       pollComponentDeleteChoice(b),
+			"changechoiceinfo":   pollComponentChangeChoiceInfo(b),
+			"changechoiceemoji":  pollComponentChangeChoiceEmoji(b),
+			"changesettingsmenu": pollComponentChangeSettingsMenu(b),
+			"changesettings":     pollComponentChangeSettings(b),
+			"create":             pollComponentCreate(b),
+			"createdo":           pollComponentCreateDo(b),
+			"vote":               pollComponentVote(b),
+			"votedo":             pollComponentVoteDo(b),
+			"seeinfo":            pollComponentSeeInfo(b),
+			"seeinfodo":          pollComponentSeeInfoDo(b),
+			"seeresult":          pollComponentSeeResult(b),
+			"seeresultdo":        pollComponentSeeResultDo(b),
+			"changepollinfo":     pollComponentChangePollInfo(b),
 		},
 	}
 }
@@ -177,7 +177,7 @@ func PollComponent(b *botlib.Bot) handler.Component {
 func pollComponentChangePollInfo(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
@@ -230,7 +230,7 @@ func pollComponentChangePollInfo(b *botlib.Bot) func(e *events.ComponentInteract
 func pollComponentSeeResultDo(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
@@ -245,7 +245,7 @@ func pollComponentSeeResultDo(b *botlib.Bot) func(e *events.ComponentInteraction
 			}
 			return err
 		}
-		token, err := b.DB.Interactions().Get(snowflake.MustParse(args[4]))
+		token, err := b.DB.Interactions().Get(uuid.MustParse(args[4]))
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -256,7 +256,8 @@ func pollComponentSeeResultDo(b *botlib.Bot) func(e *events.ComponentInteraction
 			}
 			return err
 		}
-		choice, ok := p.Choices[e.StringSelectMenuInteractionData().Values[0]]
+		choiceID := uuid.MustParse(e.StringSelectMenuInteractionData().Values[0])
+		choice, ok := p.Choices[choiceID]
 		if !ok {
 			return nil
 		}
@@ -295,7 +296,7 @@ func pollComponentSeeResultDo(b *botlib.Bot) func(e *events.ComponentInteraction
 			}
 			return err
 		}
-		err = e.CreateMessage(discord.MessageCreate{})
+		err = e.DeferUpdateMessage()
 		if err != nil {
 			return err
 		}
@@ -306,7 +307,7 @@ func pollComponentSeeResultDo(b *botlib.Bot) func(e *events.ComponentInteraction
 func pollComponentSeeResult(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
@@ -321,7 +322,7 @@ func pollComponentSeeResult(b *botlib.Bot) func(e *events.ComponentInteractionCr
 			}
 			return err
 		}
-		tokenID := snowflake.New(time.Now())
+		tokenID := uuid.New()
 		err = b.DB.Interactions().Set(tokenID, e.Token())
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
@@ -348,7 +349,7 @@ func pollComponentSeeResult(b *botlib.Bot) func(e *events.ComponentInteractionCr
 func pollComponentSeeInfoDo(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
@@ -363,7 +364,7 @@ func pollComponentSeeInfoDo(b *botlib.Bot) func(e *events.ComponentInteractionCr
 			}
 			return err
 		}
-		token, err := b.DB.Interactions().Get(snowflake.MustParse(args[4]))
+		token, err := b.DB.Interactions().Get(uuid.MustParse(args[4]))
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -374,7 +375,8 @@ func pollComponentSeeInfoDo(b *botlib.Bot) func(e *events.ComponentInteractionCr
 			}
 			return err
 		}
-		choice, ok := p.Choices[e.StringSelectMenuInteractionData().Values[0]]
+		choiceID := uuid.MustParse(e.StringSelectMenuInteractionData().Values[0])
+		choice, ok := p.Choices[choiceID]
 		if !ok {
 			return nil
 		}
@@ -423,7 +425,7 @@ func pollComponentSeeInfoDo(b *botlib.Bot) func(e *events.ComponentInteractionCr
 			}
 			return err
 		}
-		err = e.CreateMessage(discord.MessageCreate{})
+		err = e.DeferUpdateMessage()
 		if err != nil {
 			return err
 		}
@@ -434,7 +436,7 @@ func pollComponentSeeInfoDo(b *botlib.Bot) func(e *events.ComponentInteractionCr
 func pollComponentSeeInfo(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
@@ -468,7 +470,7 @@ func pollComponentSeeInfo(b *botlib.Bot) func(e *events.ComponentInteractionCrea
 				return nil
 			}
 		}
-		tokenID := snowflake.New(time.Now())
+		tokenID := uuid.New()
 		err = b.DB.Interactions().Set(tokenID, e.Token())
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
@@ -495,7 +497,7 @@ func pollComponentSeeInfo(b *botlib.Bot) func(e *events.ComponentInteractionCrea
 func pollComponentVoteDo(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
@@ -517,7 +519,8 @@ func pollComponentVoteDo(b *botlib.Bot) func(e *events.ComponentInteractionCreat
 		}
 		var voted string
 		for _, v := range e.StringSelectMenuInteractionData().Values {
-			choice, ok := p.Choices[v]
+			choiceID := uuid.MustParse(v)
+			choice, ok := p.Choices[choiceID]
 			if !ok {
 				err := e.CreateMessage(discord.MessageCreate{
 					Content: "an critical error has occurred",
@@ -528,7 +531,7 @@ func pollComponentVoteDo(b *botlib.Bot) func(e *events.ComponentInteractionCreat
 				return nil
 			}
 			choice.Users[e.Member().User.ID] = true
-			p.Choices[v] = choice
+			p.Choices[choiceID] = choice
 			voted += fmt.Sprintf("%s | %s\r", botlib.FormatComponentEmoji(*choice.Emoji), choice.Name)
 		}
 		err = b.DB.Poll().Remove(p.ID)
@@ -553,7 +556,7 @@ func pollComponentVoteDo(b *botlib.Bot) func(e *events.ComponentInteractionCreat
 			}
 			return err
 		}
-		token, err := b.DB.Interactions().Get(snowflake.MustParse(args[4]))
+		token, err := b.DB.Interactions().Get(uuid.MustParse(args[4]))
 		if err != nil {
 			b.Logger.Error(err)
 		}
@@ -592,7 +595,7 @@ func pollComponentVoteDo(b *botlib.Bot) func(e *events.ComponentInteractionCreat
 func pollComponentVote(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
@@ -607,7 +610,7 @@ func pollComponentVote(b *botlib.Bot) func(e *events.ComponentInteractionCreate)
 			}
 			return err
 		}
-		tokenID := snowflake.New(time.Now())
+		tokenID := uuid.New()
 		if !p.Settings.CanChangeTarget {
 			_, ok := p.Users[e.Member().User.ID]
 			if ok {
@@ -659,7 +662,7 @@ func pollComponentVote(b *botlib.Bot) func(e *events.ComponentInteractionCreate)
 func pollComponentCreate(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
@@ -694,7 +697,7 @@ func pollComponentCreate(b *botlib.Bot) func(e *events.ComponentInteractionCreat
 		components := []discord.ContainerComponent{
 			discord.ActionRowComponent{
 				discord.ChannelSelectMenuComponent{
-					CustomID: fmt.Sprintf("handler:poll:create-do:%d", v.ID),
+					CustomID: fmt.Sprintf("handler:poll:createdo:%s", v.ID),
 					ChannelTypes: []discord.ComponentType{
 						discord.ComponentType(discord.ChannelTypeGuildText),
 					},
@@ -703,7 +706,7 @@ func pollComponentCreate(b *botlib.Bot) func(e *events.ComponentInteractionCreat
 			discord.ActionRowComponent{
 				discord.ButtonComponent{
 					Style:    discord.ButtonStyle(discord.ButtonStyleSecondary),
-					CustomID: fmt.Sprintf("handler:poll:back-menu:%d", v.ID),
+					CustomID: fmt.Sprintf("handler:poll:backmenu:%s", v.ID),
 					Emoji: &discord.ComponentEmoji{
 						ID:   snowflake.ID(1081932944739938414),
 						Name: "left",
@@ -726,7 +729,7 @@ func pollComponentCreate(b *botlib.Bot) func(e *events.ComponentInteractionCreat
 			}
 			return err
 		}
-		err = e.CreateMessage(discord.MessageCreate{})
+		err = e.DeferUpdateMessage()
 		if err != nil {
 			return err
 		}
@@ -737,7 +740,7 @@ func pollComponentCreate(b *botlib.Bot) func(e *events.ComponentInteractionCreat
 func pollComponentCreateDo(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
@@ -793,7 +796,7 @@ func pollComponentCreateDo(b *botlib.Bot) func(e *events.ComponentInteractionCre
 		if err != nil {
 			return err
 		}
-		err = e.CreateMessage(discord.MessageCreate{})
+		err = e.DeferUpdateMessage()
 		if err != nil {
 			return err
 		}
@@ -804,7 +807,7 @@ func pollComponentCreateDo(b *botlib.Bot) func(e *events.ComponentInteractionCre
 func pollComponentAddChoice(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
@@ -820,7 +823,7 @@ func pollComponentAddChoice(b *botlib.Bot) func(e *events.ComponentInteractionCr
 			return err
 		}
 		err = e.CreateModal(discord.ModalCreate{
-			CustomID: fmt.Sprintf("handler:poll:add-choice:%d", v.ID),
+			CustomID: fmt.Sprintf("handler:poll:addchoice:%s", v.ID),
 			Title:    translate.Message(e.Locale(), "command_text_poll_create_modal_add_choice_title"),
 			Components: []discord.ContainerComponent{
 				discord.ActionRowComponent{
@@ -855,7 +858,7 @@ func pollComponentAddChoice(b *botlib.Bot) func(e *events.ComponentInteractionCr
 func pollComponentEditSettings(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
@@ -898,7 +901,7 @@ func pollComponentEditSettings(b *botlib.Bot) func(e *events.ComponentInteractio
 			}
 			return err
 		}
-		err = e.CreateMessage(discord.MessageCreate{})
+		err = e.DeferUpdateMessage()
 		if err != nil {
 			return err
 		}
@@ -909,7 +912,7 @@ func pollComponentEditSettings(b *botlib.Bot) func(e *events.ComponentInteractio
 func pollComponentChangeSettingsMenu(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
@@ -988,7 +991,7 @@ func pollComponentChangeSettingsMenu(b *botlib.Bot) func(e *events.ComponentInte
 			b.Logger.Warn("不明な選択")
 			return nil
 		}
-		err = e.CreateMessage(discord.MessageCreate{})
+		err = e.DeferUpdateMessage()
 		if err != nil {
 			return err
 		}
@@ -999,7 +1002,7 @@ func pollComponentChangeSettingsMenu(b *botlib.Bot) func(e *events.ComponentInte
 func pollComponentChangeSettings(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
@@ -1026,7 +1029,7 @@ func pollComponentChangeSettings(b *botlib.Bot) func(e *events.ComponentInteract
 			return err
 		}
 		switch args[4] {
-		case "show-user":
+		case "showuser":
 			var val db.PollSettingShowType
 			switch args[5] {
 			case "0":
@@ -1037,7 +1040,7 @@ func pollComponentChangeSettings(b *botlib.Bot) func(e *events.ComponentInteract
 				val = db.PollSettingShowTypeAfterVote
 			}
 			v.Settings.ShowUser = val
-		case "show-count":
+		case "showcount":
 			var val db.PollSettingShowType
 			switch args[5] {
 			case "0":
@@ -1048,7 +1051,7 @@ func pollComponentChangeSettings(b *botlib.Bot) func(e *events.ComponentInteract
 				val = db.PollSettingShowTypeAfterVote
 			}
 			v.Settings.ShowCount = val
-		case "show-total-count":
+		case "showtotalcount":
 			var val db.PollSettingsBool
 			switch args[5] {
 			case "true":
@@ -1057,7 +1060,7 @@ func pollComponentChangeSettings(b *botlib.Bot) func(e *events.ComponentInteract
 				val = false
 			}
 			v.Settings.ShowTotalCount = val
-		case "show-user-in-result":
+		case "showuserinresult":
 			var val db.PollSettingsBool
 			switch args[5] {
 			case "true":
@@ -1066,7 +1069,7 @@ func pollComponentChangeSettings(b *botlib.Bot) func(e *events.ComponentInteract
 				val = false
 			}
 			v.Settings.ShowUserInResult = val
-		case "can-change-target":
+		case "canchangetarget":
 			var val db.PollSettingsBool
 			switch args[5] {
 			case "true":
@@ -1113,7 +1116,7 @@ func pollComponentChangeSettings(b *botlib.Bot) func(e *events.ComponentInteract
 func pollComponentEditChoice(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
@@ -1139,8 +1142,8 @@ func pollComponentEditChoice(b *botlib.Bot) func(e *events.ComponentInteractionC
 			}
 			return err
 		}
-		val := e.StringSelectMenuInteractionData().Values[0]
-		choice, ok := v.Choices[val]
+		choiceID := uuid.MustParse(e.StringSelectMenuInteractionData().Values[0])
+		choice, ok := v.Choices[choiceID]
 		if !ok {
 			return fmt.Errorf("poll choice not found err")
 		}
@@ -1161,7 +1164,7 @@ func pollComponentEditChoice(b *botlib.Bot) func(e *events.ComponentInteractionC
 			}
 			return err
 		}
-		err = e.CreateMessage(discord.MessageCreate{})
+		err = e.DeferUpdateMessage()
 		if err != nil {
 			return err
 		}
@@ -1169,10 +1172,10 @@ func pollComponentEditChoice(b *botlib.Bot) func(e *events.ComponentInteractionC
 	}
 }
 
-func pollCOmponentDeleteChoice(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
+func pollComponentDeleteChoice(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
@@ -1187,7 +1190,8 @@ func pollCOmponentDeleteChoice(b *botlib.Bot) func(e *events.ComponentInteractio
 			}
 			return err
 		}
-		delete(v.Choices, args[4])
+		choiceID := uuid.MustParse(args[4])
+		delete(v.Choices, choiceID)
 		if err := b.DB.PollCreate().Remove(id); err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1219,7 +1223,7 @@ func pollCOmponentDeleteChoice(b *botlib.Bot) func(e *events.ComponentInteractio
 func pollComponentChangeChoiceInfo(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
@@ -1234,6 +1238,7 @@ func pollComponentChangeChoiceInfo(b *botlib.Bot) func(e *events.ComponentIntera
 			}
 			return err
 		}
+		choiceID := uuid.MustParse(args[4])
 		err = e.CreateModal(discord.ModalCreate{
 			CustomID: e.Data.CustomID(),
 			Title:    translate.Message(e.Locale(), "command_text_poll_create_modal_change_choice_info_title"),
@@ -1246,7 +1251,7 @@ func pollComponentChangeChoiceInfo(b *botlib.Bot) func(e *events.ComponentIntera
 						Placeholder: translate.Message(e.Locale(), "command_text_poll_create_modal_add_choice_component_name_placeholder"),
 						Required:    true,
 						MaxLength:   100,
-						Value:       v.Choices[args[4]].Name,
+						Value:       v.Choices[choiceID].Name,
 					},
 				},
 				discord.ActionRowComponent{
@@ -1257,7 +1262,7 @@ func pollComponentChangeChoiceInfo(b *botlib.Bot) func(e *events.ComponentIntera
 						Placeholder: translate.Message(e.Locale(), "command_text_poll_create_modal_add_choice_component_description_placeholder"),
 						Required:    false,
 						MaxLength:   100,
-						Value:       v.Choices[args[4]].Description,
+						Value:       v.Choices[choiceID].Description,
 					},
 				},
 			},
@@ -1272,10 +1277,11 @@ func pollComponentChangeChoiceInfo(b *botlib.Bot) func(e *events.ComponentIntera
 func pollComponentChangeChoiceEmoji(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
+		choiceID := uuid.MustParse(args[4])
 		v, err := b.DB.PollCreate().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
@@ -1321,9 +1327,9 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot) func(e *events.ComponentInter
 			Handler: func(event *events.MessageCreate) error {
 				b.Logger.Debug("called message")
 				emoji := botlib.ParseComponentEmoji(event.Message.Content)
-				choice := v.Choices[args[4]]
+				choice := v.Choices[choiceID]
 				choice.Emoji = &emoji
-				v.Choices[args[4]] = choice
+				v.Choices[choiceID] = choice
 				err := event.Client().Rest().DeleteMessage(event.ChannelID, event.MessageID)
 				if err != nil {
 					return err
@@ -1357,9 +1363,9 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot) func(e *events.ComponentInter
 			},
 		})
 		removeButton = b.Handler.AddComponent(handler.Component{
-			Name: fmt.Sprintf("poll-%s", customID),
+			Name: fmt.Sprintf("poll%s", customID),
 			Handler: map[string]handler.ComponentHandler{
-				"change-choice-emoji-cancel": func(event *events.ComponentInteractionCreate) error {
+				"changechoiceemojicancel": func(event *events.ComponentInteractionCreate) error {
 					b.Logger.Debug("called cancel button")
 					defer cancel()
 					// インタラクショントークンを取得
@@ -1375,7 +1381,7 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot) func(e *events.ComponentInter
 						return err
 					}
 
-					choice := v.Choices[args[4]]
+					choice := v.Choices[choiceID]
 
 					embeds = []discord.Embed{}
 					embeds = v.EditChoiceEmbed(choice.ID)
@@ -1395,7 +1401,7 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot) func(e *events.ComponentInter
 						}
 						return err
 					}
-					err = event.CreateMessage(discord.MessageCreate{})
+					err = event.DeferUpdateMessage()
 					if err != nil {
 						return err
 					}
@@ -1408,7 +1414,7 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot) func(e *events.ComponentInter
 			Components: &[]discord.ContainerComponent{
 				discord.ActionRowComponent{
 					discord.ButtonComponent{
-						CustomID: fmt.Sprintf("handler:poll-%s:change-choice-emoji-cancel", customID),
+						CustomID: fmt.Sprintf("handler:poll%s:changechoiceemojicancel", customID),
 						Style:    discord.ButtonStyle(discord.ButtonStyleDanger),
 						Emoji: &discord.ComponentEmoji{
 							ID:   snowflake.ID(1082319994211270686),
@@ -1421,7 +1427,7 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot) func(e *events.ComponentInter
 		if err != nil {
 			return err
 		}
-		err = e.CreateMessage(discord.MessageCreate{})
+		err = e.DeferUpdateMessage()
 		if err != nil {
 			b.Logger.Debug(err)
 		}
@@ -1439,7 +1445,7 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot) func(e *events.ComponentInter
 func pollComponentBackMenu(b *botlib.Bot) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
@@ -1483,7 +1489,7 @@ func pollComponentBackMenu(b *botlib.Bot) func(e *events.ComponentInteractionCre
 			}
 			return err
 		}
-		err = e.CreateMessage(discord.MessageCreate{})
+		err = e.DeferUpdateMessage()
 		if err != nil {
 			return err
 		}
@@ -1495,9 +1501,9 @@ func PollModal(b *botlib.Bot) handler.Modal {
 	return handler.Modal{
 		Name: "poll",
 		Handler: map[string]handler.ModalHandler{
-			"add-choice":         pollModalAddChoice(b),
-			"change-choice-info": pollModalChangeChoiceInfo(b),
-			"change-poll-info":   pollModalChangePollInfo(b),
+			"addchoice":        pollModalAddChoice(b),
+			"changechoiceinfo": pollModalChangeChoiceInfo(b),
+			"changepollinfo":   pollModalChangePollInfo(b),
 		},
 	}
 }
@@ -1506,7 +1512,7 @@ func pollModalAddChoice(b *botlib.Bot) func(*events.ModalSubmitInteractionCreate
 	return func(e *events.ModalSubmitInteractionCreate) error {
 		// IDを取り出す
 		args := strings.Split(e.Data.CustomID, ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1542,7 +1548,7 @@ func pollModalAddChoice(b *botlib.Bot) func(*events.ModalSubmitInteractionCreate
 			return err
 		}
 
-		choiceID := uuid.NewString()
+		choiceID := uuid.New()
 		v.Choices[choiceID] = db.PollCreateChoice{
 			ID:          choiceID,
 			Name:        e.ModalSubmitInteraction.Data.Text("name"),
@@ -1629,7 +1635,7 @@ func pollModalChangeChoiceInfo(b *botlib.Bot) func(*events.ModalSubmitInteractio
 	return func(e *events.ModalSubmitInteractionCreate) error {
 		// IDを取り出す
 		args := strings.Split(e.Data.CustomID, ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1665,7 +1671,7 @@ func pollModalChangeChoiceInfo(b *botlib.Bot) func(*events.ModalSubmitInteractio
 			return err
 		}
 
-		choiceID := args[4]
+		choiceID := uuid.MustParse(args[4])
 		choice := v.Choices[choiceID]
 		choice.Name = e.ModalSubmitInteraction.Data.Text("name")
 		choice.Description = e.ModalSubmitInteraction.Data.Text("description")
@@ -1746,7 +1752,7 @@ func pollModalChangePollInfo(b *botlib.Bot) func(*events.ModalSubmitInteractionC
 	return func(e *events.ModalSubmitInteractionCreate) error {
 		// IDを取り出す
 		args := strings.Split(e.Data.CustomID, ":")
-		id, err := snowflake.Parse(args[3])
+		id, err := uuid.Parse(args[3])
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{

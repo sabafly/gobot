@@ -20,5 +20,7 @@ gobot
 start.sh
 config.json
 
+__**__**
+
 logs/
 dist/

@@ -16,6 +16,9 @@ type DB interface {
 	Close() error
 	PollCreate() PollCreateDB
 	Poll() PollDB
+	RolePanelCreate() RolePanelCreateDB
+	RolePanel() RolePanelDB
+	GuildData() GuildDataDB
 	Interactions() InteractionsDB
 }
 
@@ -26,18 +29,24 @@ func SetupDatabase(cfg DBConfig) (DB, error) {
 		DB:      cfg.DB,
 	})
 	return &dbImpl{
-		db:           db,
-		pollCreate:   &pollCreateDBImpl{db: db},
-		poll:         &pollDBImpl{db: db},
-		interactions: &interactionsImpl{db: db},
+		db:              db,
+		pollCreate:      &pollCreateDBImpl{db: db},
+		poll:            &pollDBImpl{db: db},
+		rolePanelCreate: &rolePanelCreateDBImpl{db: db},
+		rolePanel:       &rolePanelDBImpl{db: db},
+		guildData:       &guildDataDBImpl{db: db},
+		interactions:    &interactionsImpl{db: db},
 	}, nil
 }
 
 type dbImpl struct {
-	db           *redis.Client
-	pollCreate   *pollCreateDBImpl
-	poll         *pollDBImpl
-	interactions *interactionsImpl
+	db              *redis.Client
+	pollCreate      *pollCreateDBImpl
+	poll            *pollDBImpl
+	rolePanelCreate *rolePanelCreateDBImpl
+	rolePanel       *rolePanelDBImpl
+	guildData       *guildDataDBImpl
+	interactions    *interactionsImpl
 }
 
 func (d *dbImpl) PollCreate() PollCreateDB {
@@ -46,6 +55,18 @@ func (d *dbImpl) PollCreate() PollCreateDB {
 
 func (d *dbImpl) Poll() PollDB {
 	return d.poll
+}
+
+func (d *dbImpl) RolePanelCreate() RolePanelCreateDB {
+	return d.rolePanelCreate
+}
+
+func (d *dbImpl) RolePanel() RolePanelDB {
+	return d.rolePanel
+}
+
+func (d *dbImpl) GuildData() GuildDataDB {
+	return d.guildData
 }
 
 func (d *dbImpl) Interactions() InteractionsDB {

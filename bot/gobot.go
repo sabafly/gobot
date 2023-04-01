@@ -18,16 +18,20 @@ package gobot
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/events"
-	"github.com/disgoorg/log"
+	"github.com/disgoorg/dislog"
 	"github.com/disgoorg/snowflake/v2"
+	"github.com/mattn/go-colorable"
 	"github.com/sabafly/gobot/bot/commands"
+	"github.com/sirupsen/logrus"
 
 	botlib "github.com/sabafly/gobot/lib/bot"
 )
@@ -37,29 +41,59 @@ var (
 )
 
 func Run() {
+
 	cfg, err := botlib.LoadConfig()
 	if err != nil {
 		panic("failed to load config: " + err.Error())
 	}
 
-	logger := log.New(log.Ldate | log.Ltime | log.Lshortfile)
-	logger.SetLevel(cfg.LogLevel)
+	// logger := log.New(log.Ldate | log.Ltime | log.Lshortfile)
+	logger := logrus.New()
+	logger.ReportCaller = cfg.DevMode
+	logger.SetFormatter(&logrus.TextFormatter{
+		ForceColors:   true,
+		FullTimestamp: true,
+		CallerPrettyfier: func(f *runtime.Frame) (function string, file string) {
+			return "", fmt.Sprintf("%s:%d", f.File, f.Line)
+		},
+	})
+	logger.SetOutput(colorable.NewColorableStdout())
+	lvl, err := logrus.ParseLevel(cfg.LogLevel)
+	if err != nil {
+		panic(err)
+	}
+	logger.SetLevel(lvl)
+	dlog, err := dislog.New(
+		dislog.WithLogLevels(dislog.TraceLevelAndAbove...),
+		dislog.WithWebhookIDToken(cfg.Dislog.WebhookID, cfg.Dislog.WebhookToken),
+	)
+	if err != nil {
+		logger.Fatal("error initializing dislog: ", err)
+	}
+	defer dlog.Close(context.TODO())
+	logger.AddHook(dlog)
 	logger.Infof("Starting bot version: %s", version)
 	logger.Infof("Syncing commands? %t", cfg.ShouldSyncCommands)
 
 	b := botlib.New(logger, version, *cfg)
 
+	b.Handler.AddExclude(b.Config.Dislog.WebhookChannel)
+
 	b.Handler.AddCommands(
 		commands.Ping(b),
 		commands.Poll(b),
+		commands.Role(b),
+		commands.RolePanel(b),
 	)
 
 	b.Handler.AddComponents(
 		commands.PollComponent(b),
+		commands.RolePanelComponent(b),
 	)
 
 	b.Handler.AddModals(
 		commands.PollModal(b),
+		commands.RolePanelModal(b),
 	)
 
 	b.Handler.AddReady(func(r *events.Ready) {

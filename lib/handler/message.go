@@ -19,6 +19,9 @@ type Message struct {
 }
 
 func (h *Handler) handleMessage(event *events.MessageCreate) {
+	if _, ok := h.ExcludeID[event.ChannelID]; ok {
+		return
+	}
 	h.Logger.Debugf("メッセージ作成 %d", event.ChannelID)
 	channelID := event.ChannelID
 	for _, m := range h.Message {
