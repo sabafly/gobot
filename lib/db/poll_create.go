@@ -5,26 +5,28 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
 	"github.com/sabafly/gobot/lib/translate"
 )
 
 type PollCreateDB interface {
-	Get(id snowflake.ID) (PollCreate, error)
-	Set(id snowflake.ID, poll PollCreate) error
-	Remove(id snowflake.ID) error
+	Get(id uuid.UUID) (PollCreate, error)
+	Set(id uuid.UUID, poll PollCreate) error
+	Remove(id uuid.UUID) error
 }
 
 type pollCreateDBImpl struct {
 	db *redis.Client
 }
 
-func (p *pollCreateDBImpl) Get(id snowflake.ID) (PollCreate, error) {
-	res := p.db.Get(context.TODO(), "polls-"+id.String())
+func (p *pollCreateDBImpl) Get(id uuid.UUID) (PollCreate, error) {
+	res := p.db.Get(context.TODO(), "polls"+id.String())
 	if err := res.Err(); err != nil {
 		return PollCreate{}, err
 	}
@@ -40,20 +42,20 @@ func (p *pollCreateDBImpl) Get(id snowflake.ID) (PollCreate, error) {
 	return data, nil
 }
 
-func (p *pollCreateDBImpl) Set(id snowflake.ID, poll PollCreate) error {
+func (p *pollCreateDBImpl) Set(id uuid.UUID, poll PollCreate) error {
 	buf, err := json.Marshal(poll)
 	if err != nil {
 		return err
 	}
-	res := p.db.Set(context.TODO(), "polls-"+id.String(), buf, time.Minute*14)
+	res := p.db.Set(context.TODO(), "polls"+id.String(), buf, time.Minute*14)
 	if err := res.Err(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *pollCreateDBImpl) Remove(id snowflake.ID) error {
-	res := p.db.Del(context.TODO(), "polls-"+id.String())
+func (p *pollCreateDBImpl) Remove(id uuid.UUID) error {
+	res := p.db.Del(context.TODO(), "polls"+id.String())
 	if err := res.Err(); err != nil {
 		return err
 	}
@@ -61,20 +63,20 @@ func (p *pollCreateDBImpl) Remove(id snowflake.ID) error {
 }
 
 type PollCreate struct {
-	ID          snowflake.ID                `json:"id"`
-	Title       string                      `json:"title"`
-	Description string                      `json:"description"`
-	EndAt       int64                       `json:"time_limit"`
-	MaxChoice   int                         `json:"max"`
-	MinChoice   int                         `json:"min"`
-	Choices     map[string]PollCreateChoice `json:"choices"`
+	ID          uuid.UUID                      `json:"id"`
+	Title       string                         `json:"title"`
+	Description string                         `json:"description"`
+	EndAt       int64                          `json:"time_limit"`
+	MaxChoice   int                            `json:"max"`
+	MinChoice   int                            `json:"min"`
+	Choices     map[uuid.UUID]PollCreateChoice `json:"choices"`
 
 	Locale   discord.Locale `json:"locale"`
 	Settings PollSettings   `json:"settings"`
 }
 
 type PollCreateChoice struct {
-	ID          string                  `json:"id"`
+	ID          uuid.UUID               `json:"id"`
 	Position    int                     `json:"position"`
 	Name        string                  `json:"name"`
 	Description string                  `json:"description"`
@@ -133,7 +135,7 @@ func (p PollSettingsBool) EmojiString() string {
 }
 
 func (p *PollCreate) CreatePoll(user discord.User) Poll {
-	choices := make(map[string]PollChoice)
+	choices := make(map[uuid.UUID]PollChoice)
 	for k, pcc := range p.Choices {
 		choices[k] = PollChoice{
 			Name:        pcc.Name,
@@ -148,7 +150,7 @@ func (p *PollCreate) CreatePoll(user discord.User) Poll {
 		Username:    user.Username,
 		UserAvatar:  *user.AvatarURL(),
 		Users:       make(map[snowflake.ID]bool),
-		ID:          snowflake.New(time.Now()),
+		ID:          uuid.New(),
 		Title:       p.Title,
 		Description: p.Description,
 		EndAt:       p.EndAt,
@@ -170,12 +172,12 @@ func (v *PollCreate) ConfigEmbed() []discord.Embed {
 		Fields: []discord.EmbedField{
 			{
 				Name:   translate.Message(v.Locale, "command_text_poll_create_embed_field_title"),
-				Value:  v.Title,
+				Value:  fmt.Sprintf("```\r%s```", v.Title),
 				Inline: &inline,
 			},
 			{
 				Name:   translate.Message(v.Locale, "command_text_poll_create_embed_field_description"),
-				Value:  v.Description,
+				Value:  fmt.Sprintf("```\r%s```", v.Description),
 				Inline: &inline,
 			},
 			{
@@ -221,7 +223,7 @@ func (v *PollCreate) Components() []discord.ContainerComponent {
 			o := discord.StringSelectMenuOption{
 				Label:       pc.Name,
 				Description: pc.Description,
-				Value:       pc.ID,
+				Value:       pc.ID.String(),
 				Emoji:       pc.Emoji,
 			}
 			if o.Emoji == nil {
@@ -233,7 +235,7 @@ func (v *PollCreate) Components() []discord.ContainerComponent {
 		}
 	}
 	choicesSelectMenu := discord.StringSelectMenuComponent{
-		CustomID:    fmt.Sprintf("handler:poll:edit-choice:%d", v.ID),
+		CustomID:    fmt.Sprintf("handler:poll:editchoice:%s", v.ID.String()),
 		Disabled:    disabled,
 		Placeholder: translate.Message(v.Locale, "command_text_poll_create_embed_component_edit_choice_placeholder"),
 		MaxValues:   1,
@@ -250,7 +252,7 @@ func (v *PollCreate) Components() []discord.ContainerComponent {
 		discord.ActionRowComponent{
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStyleSecondary),
-				CustomID: fmt.Sprintf("handler:poll:add-choice:%d", v.ID),
+				CustomID: fmt.Sprintf("handler:poll:addchoice:%s", v.ID),
 				Disabled: addDisabled,
 				Emoji: &discord.ComponentEmoji{
 					ID:   snowflake.ID(1081653685320433724),
@@ -259,7 +261,7 @@ func (v *PollCreate) Components() []discord.ContainerComponent {
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStylePrimary),
-				CustomID: fmt.Sprintf("handler:poll:change-poll-info:%d", v.ID),
+				CustomID: fmt.Sprintf("handler:poll:changepollinfo:%s", v.ID.String()),
 				Emoji: &discord.ComponentEmoji{
 					ID:   snowflake.ID(1082025248330891388),
 					Name: "modify",
@@ -267,7 +269,7 @@ func (v *PollCreate) Components() []discord.ContainerComponent {
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStylePrimary),
-				CustomID: fmt.Sprintf("handler:poll:edit-settings:%d", v.ID),
+				CustomID: fmt.Sprintf("handler:poll:editsettings:%s", v.ID.String()),
 				Emoji: &discord.ComponentEmoji{
 					ID:   snowflake.ID(1083053845632000010),
 					Name: "setting",
@@ -275,7 +277,7 @@ func (v *PollCreate) Components() []discord.ContainerComponent {
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStyleSuccess),
-				CustomID: fmt.Sprintf("handler:poll:create:%d", v.ID),
+				CustomID: fmt.Sprintf("handler:poll:create:%s", v.ID.String()),
 				Disabled: disabled,
 				Emoji: &discord.ComponentEmoji{
 					Name: "🛠️",
@@ -285,7 +287,7 @@ func (v *PollCreate) Components() []discord.ContainerComponent {
 	}
 }
 
-func (p *PollCreate) EditChoiceEmbed(choiceID string) []discord.Embed {
+func (p *PollCreate) EditChoiceEmbed(choiceID uuid.UUID) []discord.Embed {
 	inline := true
 	return []discord.Embed{
 		{
@@ -293,12 +295,12 @@ func (p *PollCreate) EditChoiceEmbed(choiceID string) []discord.Embed {
 			Fields: []discord.EmbedField{
 				{
 					Name:   translate.Message(p.Locale, "command_text_poll_create_modal_add_choice_component_name_label"),
-					Value:  p.Choices[choiceID].Name,
+					Value:  fmt.Sprintf("```\r%s```", p.Choices[choiceID].Name),
 					Inline: &inline,
 				},
 				{
 					Name:   translate.Message(p.Locale, "command_text_poll_create_modal_add_choice_component_description_label"),
-					Value:  p.Choices[choiceID].Description,
+					Value:  fmt.Sprintf("```\r%s```", p.Choices[choiceID].Description),
 					Inline: &inline,
 				},
 				{
@@ -310,12 +312,12 @@ func (p *PollCreate) EditChoiceEmbed(choiceID string) []discord.Embed {
 	}
 }
 
-func (p *PollCreate) EditChoiceComponent(choiceID string) []discord.ContainerComponent {
+func (p *PollCreate) EditChoiceComponent(choiceID uuid.UUID) []discord.ContainerComponent {
 	return []discord.ContainerComponent{
 		discord.ActionRowComponent{
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStyleSecondary),
-				CustomID: fmt.Sprintf("handler:poll:back-menu:%d", p.ID),
+				CustomID: fmt.Sprintf("handler:poll:backmenu:%s", p.ID.String()),
 				Emoji: &discord.ComponentEmoji{
 					ID:   snowflake.ID(1081932944739938414),
 					Name: "left",
@@ -323,7 +325,7 @@ func (p *PollCreate) EditChoiceComponent(choiceID string) []discord.ContainerCom
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStylePrimary),
-				CustomID: fmt.Sprintf("handler:poll:change-choice-info:%d:%s", p.ID, choiceID),
+				CustomID: fmt.Sprintf("handler:poll:changechoiceinfo:%s:%s", strings.ReplaceAll(p.ID.String(), "-", ""), strings.ReplaceAll(choiceID.String(), "-", "")),
 				Emoji: &discord.ComponentEmoji{
 					ID:   snowflake.ID(1082025248330891388),
 					Name: "modify",
@@ -331,7 +333,7 @@ func (p *PollCreate) EditChoiceComponent(choiceID string) []discord.ContainerCom
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStylePrimary),
-				CustomID: fmt.Sprintf("handler:poll:change-choice-emoji:%d:%s", p.ID, choiceID),
+				CustomID: fmt.Sprintf("handler:poll:changechoiceemoji:%s:%s", strings.ReplaceAll(p.ID.String(), "-", ""), strings.ReplaceAll(choiceID.String(), "-", "")),
 				Emoji: &discord.ComponentEmoji{
 					ID:   snowflake.ID(1082267519374589992),
 					Name: "smile",
@@ -339,7 +341,7 @@ func (p *PollCreate) EditChoiceComponent(choiceID string) []discord.ContainerCom
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStyleDanger),
-				CustomID: fmt.Sprintf("handler:poll:delete-choice:%d:%s", p.ID, choiceID),
+				CustomID: fmt.Sprintf("handler:poll:deletechoice:%s:%s", strings.ReplaceAll(p.ID.String(), "-", ""), strings.ReplaceAll(choiceID.String(), "-", "")),
 				Emoji: &discord.ComponentEmoji{
 					ID:   snowflake.ID(1081940223547678757),
 					Name: "trash",
@@ -384,7 +386,7 @@ func (p *PollCreate) EditSettingsComponent() []discord.ContainerComponent {
 		discord.ActionRowComponent{
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStyleSecondary),
-				CustomID: fmt.Sprintf("handler:poll:back-menu:%d", p.ID),
+				CustomID: fmt.Sprintf("handler:poll:backmenu:%s", p.ID),
 				Emoji: &discord.ComponentEmoji{
 					ID:   snowflake.ID(1081932944739938414),
 					Name: "left",
@@ -393,7 +395,7 @@ func (p *PollCreate) EditSettingsComponent() []discord.ContainerComponent {
 		},
 		discord.ActionRowComponent{
 			discord.StringSelectMenuComponent{
-				CustomID:    fmt.Sprintf("handler:poll:change-settings-menu:%d", p.ID),
+				CustomID:    fmt.Sprintf("handler:poll:changesettingsmenu:%s", p.ID),
 				Placeholder: translate.Message(p.Locale, "command_text_poll_create_embed_component_edit_settings_response_select_menu_placeholder"),
 				Options: []discord.StringSelectMenuOption{
 					{
@@ -444,17 +446,17 @@ func (p *PollCreate) ChangeSettingsMenuComponent(t PollSettingsType) []discord.C
 		resAction = discord.ActionRowComponent{
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStyleSuccess),
-				CustomID: fmt.Sprintf("handler:poll:change-settings:%d:show-user:0", p.ID),
+				CustomID: fmt.Sprintf("handler:poll:changesettings:%s:showuser:0", p.ID),
 				Label:    translate.Message(p.Locale, "command_text_poll_settings_show_type_always"),
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStyleDanger),
-				CustomID: fmt.Sprintf("handler:poll:change-settings:%d:show-user:1", p.ID),
+				CustomID: fmt.Sprintf("handler:poll:changesettings:%s:showuser:1", p.ID),
 				Label:    translate.Message(p.Locale, "command_text_poll_settings_show_type_never"),
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStylePrimary),
-				CustomID: fmt.Sprintf("handler:poll:change-settings:%d:show-user:2", p.ID),
+				CustomID: fmt.Sprintf("handler:poll:changesettings:%s:showuser:2", p.ID),
 				Label:    translate.Message(p.Locale, "command_text_poll_settings_show_type_after_vote"),
 			},
 		}
@@ -462,17 +464,17 @@ func (p *PollCreate) ChangeSettingsMenuComponent(t PollSettingsType) []discord.C
 		resAction = discord.ActionRowComponent{
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStyleSuccess),
-				CustomID: fmt.Sprintf("handler:poll:change-settings:%d:show-count:0", p.ID),
+				CustomID: fmt.Sprintf("handler:poll:changesettings:%s:showcount:0", p.ID),
 				Label:    translate.Message(p.Locale, "command_text_poll_settings_show_type_always"),
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStyleDanger),
-				CustomID: fmt.Sprintf("handler:poll:change-settings:%d:show-count:1", p.ID),
+				CustomID: fmt.Sprintf("handler:poll:changesettings:%s:showcount:1", p.ID),
 				Label:    translate.Message(p.Locale, "command_text_poll_settings_show_type_never"),
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStylePrimary),
-				CustomID: fmt.Sprintf("handler:poll:change-settings:%d:show-count:2", p.ID),
+				CustomID: fmt.Sprintf("handler:poll:changesettings:%s:showcount:2", p.ID),
 				Label:    translate.Message(p.Locale, "command_text_poll_settings_show_type_after_vote"),
 			},
 		}
@@ -480,7 +482,7 @@ func (p *PollCreate) ChangeSettingsMenuComponent(t PollSettingsType) []discord.C
 		resAction = discord.ActionRowComponent{
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStyleSuccess),
-				CustomID: fmt.Sprintf("handler:poll:change-settings:%d:show-total-count:true", p.ID),
+				CustomID: fmt.Sprintf("handler:poll:changesettings:%s:showtotalcount:true", p.ID),
 				Emoji: &discord.ComponentEmoji{
 					ID:   snowflake.ID(1082691057931788368),
 					Name: "o_",
@@ -488,7 +490,7 @@ func (p *PollCreate) ChangeSettingsMenuComponent(t PollSettingsType) []discord.C
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStyleDanger),
-				CustomID: fmt.Sprintf("handler:poll:change-settings:%d:show-total-count:false", p.ID),
+				CustomID: fmt.Sprintf("handler:poll:changesettings:%s:showtotalcount:false", p.ID),
 				Emoji: &discord.ComponentEmoji{
 					ID:   snowflake.ID(1082689149557014549),
 					Name: "x_",
@@ -499,7 +501,7 @@ func (p *PollCreate) ChangeSettingsMenuComponent(t PollSettingsType) []discord.C
 		resAction = discord.ActionRowComponent{
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStyleSuccess),
-				CustomID: fmt.Sprintf("handler:poll:change-settings:%d:show-user-in-result:true", p.ID),
+				CustomID: fmt.Sprintf("handler:poll:changesettings:%s:showuserinresult:true", p.ID),
 				Emoji: &discord.ComponentEmoji{
 					ID:   snowflake.ID(1082691057931788368),
 					Name: "o_",
@@ -507,7 +509,7 @@ func (p *PollCreate) ChangeSettingsMenuComponent(t PollSettingsType) []discord.C
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStyleDanger),
-				CustomID: fmt.Sprintf("handler:poll:change-settings:%d:show-user-in-result:false", p.ID),
+				CustomID: fmt.Sprintf("handler:poll:changesettings:%s:showuserinresult:false", p.ID),
 				Emoji: &discord.ComponentEmoji{
 					ID:   snowflake.ID(1082689149557014549),
 					Name: "x_",
@@ -518,7 +520,7 @@ func (p *PollCreate) ChangeSettingsMenuComponent(t PollSettingsType) []discord.C
 		resAction = discord.ActionRowComponent{
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStyleSuccess),
-				CustomID: fmt.Sprintf("handler:poll:change-settings:%d:can-change-target:true", p.ID),
+				CustomID: fmt.Sprintf("handler:poll:changesettings:%s:canchangetarget:true", p.ID),
 				Emoji: &discord.ComponentEmoji{
 					ID:   snowflake.ID(1082691057931788368),
 					Name: "o_",
@@ -526,7 +528,7 @@ func (p *PollCreate) ChangeSettingsMenuComponent(t PollSettingsType) []discord.C
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyle(discord.ButtonStyleDanger),
-				CustomID: fmt.Sprintf("handler:poll:change-settings:%d:can-change-target:false", p.ID),
+				CustomID: fmt.Sprintf("handler:poll:changesettings:%s:canchangetarget:false", p.ID),
 				Emoji: &discord.ComponentEmoji{
 					ID:   snowflake.ID(1082689149557014549),
 					Name: "x_",

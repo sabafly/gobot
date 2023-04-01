@@ -4,22 +4,22 @@ import (
 	"context"
 	"time"
 
-	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
 )
 
 type InteractionsDB interface {
-	Get(id snowflake.ID) (string, error)
-	Set(id snowflake.ID, poll string) error
-	Remove(id snowflake.ID) error
+	Get(id uuid.UUID) (string, error)
+	Set(id uuid.UUID, token string) error
+	Remove(id uuid.UUID) error
 }
 
 type interactionsImpl struct {
 	db *redis.Client
 }
 
-func (i *interactionsImpl) Get(id snowflake.ID) (string, error) {
-	res := i.db.Get(context.TODO(), "interactions-"+id.String())
+func (i *interactionsImpl) Get(id uuid.UUID) (string, error) {
+	res := i.db.Get(context.TODO(), "interactions"+id.String())
 	if err := res.Err(); err != nil {
 		return "", err
 	}
@@ -30,16 +30,16 @@ func (i *interactionsImpl) Get(id snowflake.ID) (string, error) {
 	return rt, nil
 }
 
-func (i *interactionsImpl) Set(id snowflake.ID, token string) error {
-	res := i.db.Set(context.TODO(), "interactions-"+id.String(), token, time.Minute*14)
+func (i *interactionsImpl) Set(id uuid.UUID, token string) error {
+	res := i.db.Set(context.TODO(), "interactions"+id.String(), token, time.Minute*14)
 	if err := res.Err(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (i *interactionsImpl) Remove(id snowflake.ID) error {
-	res := i.db.Del(context.TODO(), "interactions-"+id.String())
+func (i *interactionsImpl) Remove(id uuid.UUID) error {
+	res := i.db.Del(context.TODO(), "interactions"+id.String())
 	if err := res.Err(); err != nil {
 		return err
 	}

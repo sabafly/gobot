@@ -19,6 +19,7 @@ func New(logger log.Logger) *Handler {
 		Modals:     map[string]Modal{},
 		Message:    map[uuid.UUID]Message{},
 		Ready:      []func(*events.Ready){},
+		ExcludeID:  map[snowflake.ID]struct{}{},
 	}
 }
 
@@ -30,6 +31,14 @@ type Handler struct {
 	Modals     map[string]Modal
 	Message    map[uuid.UUID]Message
 	Ready      []func(*events.Ready)
+
+	ExcludeID map[snowflake.ID]struct{}
+}
+
+func (h *Handler) AddExclude(ids ...snowflake.ID) {
+	for _, id := range ids {
+		h.ExcludeID[id] = struct{}{}
+	}
 }
 
 func (h *Handler) AddCommands(commands ...Command) {

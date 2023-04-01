@@ -39,6 +39,10 @@ func (h *Handler) handleComponent(event *events.ComponentInteractionCreate) {
 	handler, ok := component.Handler[subName]
 	if !ok {
 		h.Logger.Debugf("不明なハンダラ %s", subName)
+		err := event.DeferUpdateMessage()
+		if err != nil {
+			h.Logger.Errorf("Failed to handle unknown handler interaction for \"%s\" : %s", customID, err)
+		}
 		return
 	}
 	if err := handler(event); err != nil {

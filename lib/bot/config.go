@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/disgoorg/json"
-	"github.com/disgoorg/log"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/lib/db"
 )
@@ -39,9 +38,16 @@ type Config struct {
 	DevMode            bool           `json:"dev_mode"`
 	DevGuildIDs        []snowflake.ID `json:"dev_guild_id"`
 	DevUserIDs         []snowflake.ID `json:"dev_user_id"`
-	LogLevel           log.Level      `json:"log_level"`
+	LogLevel           string         `json:"log_level"`
 	Token              string         `json:"token"`
 	DMPermission       bool           `json:"dm_permission"`
 	ShouldSyncCommands bool           `json:"sync_commands"`
 	DBConfig           db.DBConfig    `json:"db_config"`
+	Dislog             DislogConfig   `json:"dislog"`
+}
+
+type DislogConfig struct {
+	WebhookChannel snowflake.ID `json:"webhook_channel"`
+	WebhookID      snowflake.ID `json:"webhook_id"`
+	WebhookToken   string       `json:"webhook_token"`
 }

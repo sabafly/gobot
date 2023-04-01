@@ -10,14 +10,15 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
 	"github.com/sabafly/gobot/lib/translate"
 )
 
 type PollDB interface {
 	GetAll() ([]Poll, error)
-	Get(id snowflake.ID) (Poll, error)
-	Set(id snowflake.ID, poll Poll) error
-	Remove(id snowflake.ID) error
+	Get(id uuid.UUID) (Poll, error)
+	Set(id uuid.UUID, poll Poll) error
+	Remove(id uuid.UUID) error
 }
 
 type pollDBImpl struct {
@@ -42,7 +43,7 @@ func (p *pollDBImpl) GetAll() ([]Poll, error) {
 	return rt, nil
 }
 
-func (p *pollDBImpl) Get(id snowflake.ID) (Poll, error) {
+func (p *pollDBImpl) Get(id uuid.UUID) (Poll, error) {
 	res := p.db.HGet(context.TODO(), "poll", id.String())
 	if err := res.Err(); err != nil {
 		return Poll{}, err
@@ -59,7 +60,7 @@ func (p *pollDBImpl) Get(id snowflake.ID) (Poll, error) {
 	return data, nil
 }
 
-func (p *pollDBImpl) Set(id snowflake.ID, poll Poll) error {
+func (p *pollDBImpl) Set(id uuid.UUID, poll Poll) error {
 	buf, err := json.Marshal(poll)
 	if err != nil {
 		return err
@@ -71,7 +72,7 @@ func (p *pollDBImpl) Set(id snowflake.ID, poll Poll) error {
 	return nil
 }
 
-func (p *pollDBImpl) Remove(id snowflake.ID) error {
+func (p *pollDBImpl) Remove(id uuid.UUID) error {
 	res := p.db.HDel(context.TODO(), "poll", id.String())
 	if err := res.Err(); err != nil {
 		return err
@@ -83,16 +84,16 @@ type Poll struct {
 	Username    string                `json:"username"`
 	UserAvatar  string                `json:"user_avatar"`
 	Users       map[snowflake.ID]bool `json:"users"`
-	ID          snowflake.ID          `json:"id"`
+	ID          uuid.UUID             `json:"id"`
 	MessageID   snowflake.ID          `json:"message_id"`
 	GuildId     snowflake.ID          `json:"guild_id"`
 	ChannelID   snowflake.ID
-	Title       string                `json:"title"`
-	Description string                `json:"description"`
-	EndAt       int64                 `json:"end_at"`
-	MaxChoice   int                   `json:"max"`
-	MinChoice   int                   `json:"min"`
-	Choices     map[string]PollChoice `json:"choices"`
+	Title       string                   `json:"title"`
+	Description string                   `json:"description"`
+	EndAt       int64                    `json:"end_at"`
+	MaxChoice   int                      `json:"max"`
+	MinChoice   int                      `json:"min"`
+	Choices     map[uuid.UUID]PollChoice `json:"choices"`
 
 	Locale   discord.Locale `json:"locale"`
 	Settings PollSettings   `json:"settings"`
@@ -101,7 +102,7 @@ type Poll struct {
 
 type PollChoice struct {
 	Users       map[snowflake.ID]bool   `json:"users"`
-	ID          string                  `json:"id"`
+	ID          uuid.UUID               `json:"id"`
 	Position    int                     `json:"position"`
 	Name        string                  `json:"name"`
 	Description string                  `json:"description"`
@@ -173,7 +174,7 @@ func (p *Poll) MessageComponent() []discord.ContainerComponent {
 			discord.ActionRowComponent{
 				discord.ButtonComponent{
 					Style:    discord.ButtonStyle(discord.ButtonStylePrimary),
-					CustomID: fmt.Sprintf("handler:poll:see-result:%d", p.ID),
+					CustomID: fmt.Sprintf("handler:poll:seeresult:%s", p.ID),
 					Label:    translate.Message(p.Locale, "poll_component_button_see_result_label"),
 				},
 			},
@@ -183,12 +184,12 @@ func (p *Poll) MessageComponent() []discord.ContainerComponent {
 			discord.ActionRowComponent{
 				discord.ButtonComponent{
 					Style:    discord.ButtonStyle(discord.ButtonStyleSuccess),
-					CustomID: fmt.Sprintf("handler:poll:vote:%d", p.ID),
+					CustomID: fmt.Sprintf("handler:poll:vote:%s", p.ID),
 					Label:    translate.Message(p.Locale, "poll_component_button_vote_label"),
 				},
 				discord.ButtonComponent{
 					Style:    discord.ButtonStyle(discord.ButtonStylePrimary),
-					CustomID: fmt.Sprintf("handler:poll:see-info:%d", p.ID),
+					CustomID: fmt.Sprintf("handler:poll:seeinfo:%s", p.ID),
 					Label:    translate.Message(p.Locale, "poll_component_button_see_info_label"),
 				},
 			},
@@ -196,7 +197,7 @@ func (p *Poll) MessageComponent() []discord.ContainerComponent {
 	}
 }
 
-func (p *Poll) VoteComponent(tokenID snowflake.ID) []discord.ContainerComponent {
+func (p *Poll) VoteComponent(tokenID uuid.UUID) []discord.ContainerComponent {
 	var options []discord.StringSelectMenuOption
 	choices := []PollChoice{}
 	for _, pc := range p.Choices {
@@ -209,7 +210,7 @@ func (p *Poll) VoteComponent(tokenID snowflake.ID) []discord.ContainerComponent 
 		o := discord.StringSelectMenuOption{
 			Label:       pc.Name,
 			Description: pc.Description,
-			Value:       pc.ID,
+			Value:       pc.ID.String(),
 			Emoji:       pc.Emoji,
 		}
 		if o.Emoji == nil {
@@ -222,7 +223,7 @@ func (p *Poll) VoteComponent(tokenID snowflake.ID) []discord.ContainerComponent 
 	return []discord.ContainerComponent{
 		discord.ActionRowComponent{
 			discord.StringSelectMenuComponent{
-				CustomID:  fmt.Sprintf("handler:poll:vote-do:%d:%d", p.ID, tokenID),
+				CustomID:  fmt.Sprintf("handler:poll:votedo:%s:%s", p.ID, tokenID),
 				Options:   options,
 				MaxValues: p.MaxChoice,
 				MinValues: &p.MinChoice,
@@ -231,7 +232,7 @@ func (p *Poll) VoteComponent(tokenID snowflake.ID) []discord.ContainerComponent 
 	}
 }
 
-func (p *Poll) SeeInfoComponent(tokenID snowflake.ID) []discord.ContainerComponent {
+func (p *Poll) SeeInfoComponent(tokenID uuid.UUID) []discord.ContainerComponent {
 	var options []discord.StringSelectMenuOption
 	choices := []PollChoice{}
 	for _, pc := range p.Choices {
@@ -244,7 +245,7 @@ func (p *Poll) SeeInfoComponent(tokenID snowflake.ID) []discord.ContainerCompone
 		o := discord.StringSelectMenuOption{
 			Label:       pc.Name,
 			Description: pc.Description,
-			Value:       pc.ID,
+			Value:       pc.ID.String(),
 			Emoji:       pc.Emoji,
 		}
 		if o.Emoji == nil {
@@ -257,14 +258,14 @@ func (p *Poll) SeeInfoComponent(tokenID snowflake.ID) []discord.ContainerCompone
 	return []discord.ContainerComponent{
 		discord.ActionRowComponent{
 			discord.StringSelectMenuComponent{
-				CustomID: fmt.Sprintf("handler:poll:see-info-do:%d:%d", p.ID, tokenID),
+				CustomID: fmt.Sprintf("handler:poll:seeinfodo:%s:%s", p.ID, tokenID),
 				Options:  options,
 			},
 		},
 	}
 }
 
-func (p *Poll) SeeResultComponent(tokenID snowflake.ID) []discord.ContainerComponent {
+func (p *Poll) SeeResultComponent(tokenID uuid.UUID) []discord.ContainerComponent {
 	var options []discord.StringSelectMenuOption
 	choices := []PollChoice{}
 	for _, pc := range p.Choices {
@@ -277,7 +278,7 @@ func (p *Poll) SeeResultComponent(tokenID snowflake.ID) []discord.ContainerCompo
 		o := discord.StringSelectMenuOption{
 			Label:       pc.Name,
 			Description: pc.Description,
-			Value:       pc.ID,
+			Value:       pc.ID.String(),
 			Emoji:       pc.Emoji,
 		}
 		if o.Emoji == nil {
@@ -290,7 +291,7 @@ func (p *Poll) SeeResultComponent(tokenID snowflake.ID) []discord.ContainerCompo
 	return []discord.ContainerComponent{
 		discord.ActionRowComponent{
 			discord.StringSelectMenuComponent{
-				CustomID: fmt.Sprintf("handler:poll:see-result-do:%d:%d", p.ID, tokenID),
+				CustomID: fmt.Sprintf("handler:poll:seeresultdo:%s:%s", p.ID, tokenID),
 				Options:  options,
 			},
 		},

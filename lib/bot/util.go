@@ -29,6 +29,7 @@ import (
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/lib/constants"
 	"github.com/sabafly/gobot/lib/translate"
@@ -42,13 +43,45 @@ func SetEmbedProperties(embeds []discord.Embed) []discord.Embed {
 			embeds[i].Color = constants.Color
 		}
 		if i == len(embeds)-1 {
-			embeds[i].Footer = &discord.EmbedFooter{
-				Text: constants.BotName,
+			if embeds[i].Footer == nil {
+				embeds[i].Footer = &discord.EmbedFooter{}
 			}
-			embeds[i].Timestamp = &now
+			if embeds[i].Footer.Text == "" {
+				embeds[i].Footer.Text = constants.BotName
+			}
+			if embeds[i].Timestamp == nil {
+				embeds[i].Timestamp = &now
+			}
 		}
 	}
 	return embeds
+}
+
+type responsibleInteraction interface {
+	Locale() discord.Locale
+	CreateMessage(discord.MessageCreate, ...rest.RequestOpt) error
+}
+
+func ReturnErr(interaction responsibleInteraction, err error) error {
+	embeds := ErrorTraceEmbed(interaction.Locale(), err)
+	embeds = SetEmbedProperties(embeds)
+	if err := interaction.CreateMessage(discord.MessageCreate{
+		Embeds: embeds,
+	}); err != nil {
+		return err
+	}
+	return err
+}
+
+func ReturnErrMessage(interaction responsibleInteraction, tr string) error {
+	embeds := ErrorMessageEmbed(interaction.Locale(), tr)
+	embeds = SetEmbedProperties(embeds)
+	if err := interaction.CreateMessage(discord.MessageCreate{
+		Embeds: embeds,
+	}); err != nil {
+		return err
+	}
+	return nil
 }
 
 // エラーメッセージ埋め込みを作成する
@@ -275,4 +308,16 @@ func FormatComponentEmoji(e discord.ComponentEmoji) string {
 	} else {
 		return fmt.Sprintf("<:%s:%d>", e.Name, e.ID)
 	}
+}
+
+func GetHighestRolePosition(role map[snowflake.ID]discord.Role) (int, snowflake.ID) {
+	var max int
+	var id snowflake.ID
+	for i, r := range role {
+		if max < r.Position {
+			max = r.Position
+			id = i
+		}
+	}
+	return max, id
 }
