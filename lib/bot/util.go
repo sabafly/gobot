@@ -74,10 +74,19 @@ func ReturnErr(interaction responsibleInteraction, err error) error {
 }
 
 func ReturnErrMessage(interaction responsibleInteraction, tr string) error {
+	return ReturnErrMessageEphemeral(interaction, tr, false)
+}
+
+func ReturnErrMessageEphemeral(interaction responsibleInteraction, tr string, ephemeral bool) error {
 	embeds := ErrorMessageEmbed(interaction.Locale(), tr)
 	embeds = SetEmbedProperties(embeds)
+	var flags discord.MessageFlags
+	if ephemeral {
+		flags = discord.MessageFlagEphemeral
+	}
 	if err := interaction.CreateMessage(discord.MessageCreate{
 		Embeds: embeds,
+		Flags:  flags,
 	}); err != nil {
 		return err
 	}

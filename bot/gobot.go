@@ -84,11 +84,13 @@ func Run() {
 		commands.Poll(b),
 		commands.Role(b),
 		commands.RolePanel(b),
+		commands.Util(b),
 	)
 
 	b.Handler.AddComponents(
 		commands.PollComponent(b),
 		commands.RolePanelComponent(b),
+		commands.UtilCalcComponent(b),
 	)
 
 	b.Handler.AddModals(
@@ -97,6 +99,7 @@ func Run() {
 	)
 
 	b.Handler.AddReady(func(r *events.Ready) {
+		b.Logger.Info("Ready!")
 		polls, err := b.DB.Poll().GetAll()
 		if err != nil {
 			logger.Fatal(err)
