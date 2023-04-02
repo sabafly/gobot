@@ -19,6 +19,7 @@ type DB interface {
 	RolePanelCreate() RolePanelCreateDB
 	RolePanel() RolePanelDB
 	GuildData() GuildDataDB
+	Calc() CalcDB
 	Interactions() InteractionsDB
 }
 
@@ -35,6 +36,7 @@ func SetupDatabase(cfg DBConfig) (DB, error) {
 		rolePanelCreate: &rolePanelCreateDBImpl{db: db},
 		rolePanel:       &rolePanelDBImpl{db: db},
 		guildData:       &guildDataDBImpl{db: db},
+		calc:            &CalcDBImpl{db: db},
 		interactions:    &interactionsImpl{db: db},
 	}, nil
 }
@@ -46,6 +48,7 @@ type dbImpl struct {
 	rolePanelCreate *rolePanelCreateDBImpl
 	rolePanel       *rolePanelDBImpl
 	guildData       *guildDataDBImpl
+	calc            *CalcDBImpl
 	interactions    *interactionsImpl
 }
 
@@ -67,6 +70,10 @@ func (d *dbImpl) RolePanel() RolePanelDB {
 
 func (d *dbImpl) GuildData() GuildDataDB {
 	return d.guildData
+}
+
+func (d *dbImpl) Calc() CalcDB {
+	return d.calc
 }
 
 func (d *dbImpl) Interactions() InteractionsDB {
