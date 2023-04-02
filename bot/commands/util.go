@@ -21,6 +21,13 @@ func Util(b *botlib.Bot) handler.Command {
 				discord.ApplicationCommandOptionSubCommand{
 					Name:        "calc",
 					Description: "in discord calculator",
+					Options: []discord.ApplicationCommandOption{
+						discord.ApplicationCommandOptionBool{
+							Name:        "ephemeral",
+							Description: "create calculator as ephemeral message",
+							Required:    false,
+						},
+					},
 				},
 			},
 		},
@@ -45,6 +52,9 @@ func utilCommandCalcHandler(b *botlib.Bot) func(event *events.ApplicationCommand
 		mes, err := calc.Message(botlib.SetEmbedProperties)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
+		}
+		if event.SlashCommandInteractionData().Bool("ephemeral") {
+			mes.Flags = mes.Flags.Add(discord.MessageFlagEphemeral)
 		}
 		err = event.CreateMessage(mes)
 		if err != nil {

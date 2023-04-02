@@ -274,14 +274,14 @@ func (c *Calc) Do() {
 
 func (c *Calc) toFloat() error {
 	var err error
-	if c.LastInput == "" {
+	if c.LastInput == "" || c.LastInput == "-" {
 		c.LastInput = "0"
 	}
 	c.lastInputFloat, err = strconv.ParseFloat(c.LastInput, 64)
 	if err != nil {
 		return err
 	}
-	if c.Input == "" {
+	if c.Input == "" || c.Input == "-" {
 		c.Input = "0"
 	}
 	c.inputFloat, err = strconv.ParseFloat(c.Input, 64)
