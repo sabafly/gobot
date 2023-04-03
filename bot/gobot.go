@@ -29,11 +29,13 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/dislog"
 	"github.com/disgoorg/snowflake/v2"
+	"github.com/google/uuid"
 	"github.com/mattn/go-colorable"
 	"github.com/sabafly/gobot/bot/commands"
 	"github.com/sirupsen/logrus"
 
 	botlib "github.com/sabafly/gobot/lib/bot"
+	"github.com/sabafly/gobot/lib/handler"
 )
 
 var (
@@ -108,6 +110,26 @@ func Run() {
 			go commands.End(b, p)
 		}
 	})
+
+	b.Handler.AddMemberJoins(
+		handler.MemberJoin{
+			UUID: uuid.New(),
+			Handler: func(event *events.GuildMemberJoin) error {
+				b.OnGuildMemberJoin(event)
+				return nil
+			},
+		},
+	)
+
+	b.Handler.AddMemberLeaves(
+		handler.MemberLeave{
+			UUID: uuid.New(),
+			Handler: func(event *events.GuildMemberLeave) error {
+				b.OnGuildMemberLeave(event)
+				return nil
+			},
+		},
+	)
 
 	b.SetupBot(bot.NewListenerFunc(b.Handler.OnEvent))
 	b.Client.EventManager().AddEventListeners(&events.ListenerAdapter{

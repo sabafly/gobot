@@ -13,24 +13,29 @@ var _ bot.EventListener = (*Handler)(nil)
 
 func New(logger log.Logger) *Handler {
 	return &Handler{
-		Logger:     logger,
-		Commands:   map[string]Command{},
-		Components: map[string]Component{},
-		Modals:     map[string]Modal{},
-		Message:    map[uuid.UUID]Message{},
-		Ready:      []func(*events.Ready){},
-		ExcludeID:  map[snowflake.ID]struct{}{},
+		Logger:      logger,
+		Commands:    map[string]Command{},
+		Components:  map[string]Component{},
+		Modals:      map[string]Modal{},
+		Message:     map[uuid.UUID]Message{},
+		Ready:       []func(*events.Ready){},
+		MemberJoin:  map[uuid.UUID]MemberJoin{},
+		MemberLeave: map[uuid.UUID]MemberLeave{},
+
+		ExcludeID: map[snowflake.ID]struct{}{},
 	}
 }
 
 type Handler struct {
 	Logger log.Logger
 
-	Commands   map[string]Command
-	Components map[string]Component
-	Modals     map[string]Modal
-	Message    map[uuid.UUID]Message
-	Ready      []func(*events.Ready)
+	Commands    map[string]Command
+	Components  map[string]Component
+	Modals      map[string]Modal
+	Message     map[uuid.UUID]Message
+	Ready       []func(*events.Ready)
+	MemberJoin  map[uuid.UUID]MemberJoin
+	MemberLeave map[uuid.UUID]MemberLeave
 
 	ExcludeID map[snowflake.ID]struct{}
 }
@@ -70,6 +75,32 @@ func (h *Handler) AddMessage(message Message) func() {
 	h.Message[message.UUID] = message
 	return func() {
 		delete(h.Message, message.UUID)
+	}
+}
+
+func (h *Handler) AddMemberJoin(memberJoin MemberJoin) func() {
+	h.MemberJoin[memberJoin.UUID] = memberJoin
+	return func() {
+		delete(h.MemberJoin, memberJoin.UUID)
+	}
+}
+
+func (h *Handler) AddMemberJoins(memberJoins ...MemberJoin) {
+	for _, mj := range memberJoins {
+		h.MemberJoin[mj.UUID] = mj
+	}
+}
+
+func (h *Handler) AddMemberLeave(memberLeave MemberLeave) func() {
+	h.MemberLeave[memberLeave.UUID] = memberLeave
+	return func() {
+		delete(h.MemberLeave, memberLeave.UUID)
+	}
+}
+
+func (h *Handler) AddMemberLeaves(memberLeaves ...MemberLeave) {
+	for _, ml := range memberLeaves {
+		h.MemberLeave[ml.UUID] = ml
 	}
 }
 
@@ -123,5 +154,9 @@ func (h *Handler) OnEvent(event bot.Event) {
 		go h.handleMessage(e)
 	case *events.Ready:
 		go h.handleReady(e)
+	case *events.GuildMemberJoin:
+		go h.handlerMemberJoin(e)
+	case *events.GuildMemberLeave:
+		go h.handlerMemberLeave(e)
 	}
 }

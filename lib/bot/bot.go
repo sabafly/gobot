@@ -97,15 +97,9 @@ func (b *Bot) OnGuildMemberLeave(m *events.GuildMemberLeave) {
 
 func (b *Bot) RefreshPresence() {
 	var (
-		guilds int
-		users  int
+		guilds int = b.Client.Caches().GuildsLen()
+		users  int = b.Client.Caches().MembersAllLen()
 	)
-	b.Client.Caches().GuildsForEach(func(guild discord.Guild) {
-		guilds++
-		b.Client.Caches().MembersForEach(guild.ID, func(member discord.Member) {
-			users++
-		})
-	})
 	shards := b.Client.ShardManager().Shards()
 	for k := range shards {
 		state := fmt.Sprintf("/help | %d Servers | %d Users | #%d", guilds, users, k)
