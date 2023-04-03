@@ -141,22 +141,31 @@ func (h *Handler) SyncCommands(client bot.Client, guildIDs ...snowflake.ID) {
 }
 
 func (h *Handler) OnEvent(event bot.Event) {
+	go func() {
+		defer h.panicCatch()
 	switch e := event.(type) {
 	case *events.ApplicationCommandInteractionCreate:
-		go h.handleCommand(e)
+			h.handleCommand(e)
 	case *events.AutocompleteInteractionCreate:
-		go h.handleAutocomplete(e)
+			h.handleAutocomplete(e)
 	case *events.ComponentInteractionCreate:
-		go h.handleComponent(e)
+			h.handleComponent(e)
 	case *events.ModalSubmitInteractionCreate:
-		go h.handleModal(e)
+			h.handleModal(e)
 	case *events.MessageCreate:
-		go h.handleMessage(e)
+			h.handleMessage(e)
 	case *events.Ready:
-		go h.handleReady(e)
+			h.handleReady(e)
 	case *events.GuildMemberJoin:
-		go h.handlerMemberJoin(e)
+			h.handlerMemberJoin(e)
 	case *events.GuildMemberLeave:
-		go h.handlerMemberLeave(e)
+			h.handlerMemberLeave(e)
+		}
+	}()
+}
+
+func (h *Handler) panicCatch() {
+	if err := recover(); err != nil {
+		h.Logger.Errorf("panic: %s", err)
 	}
 }
