@@ -36,6 +36,7 @@ func LoadConfig() (*Config, error) {
 
 type Config struct {
 	DevMode            bool           `json:"dev_mode"`
+	DevOnly            bool           `json:"dev_only"`
 	DevGuildIDs        []snowflake.ID `json:"dev_guild_id"`
 	DevUserIDs         []snowflake.ID `json:"dev_user_id"`
 	LogLevel           string         `json:"log_level"`

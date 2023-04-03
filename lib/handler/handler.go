@@ -37,7 +37,8 @@ type Handler struct {
 	MemberJoin  map[uuid.UUID]MemberJoin
 	MemberLeave map[uuid.UUID]MemberLeave
 
-	ExcludeID map[snowflake.ID]struct{}
+	ExcludeID  map[snowflake.ID]struct{}
+	DevGuildID []snowflake.ID
 }
 
 func (h *Handler) AddExclude(ids ...snowflake.ID) {
@@ -115,11 +116,25 @@ func (h *Handler) handleReady(e *events.Ready) {
 }
 
 func (h *Handler) SyncCommands(client bot.Client, guildIDs ...snowflake.ID) {
-	commands := make([]discord.ApplicationCommandCreate, len(h.Commands))
-	var i int
+	commands := []discord.ApplicationCommandCreate{}
+	devCommands := []discord.ApplicationCommandCreate{}
 	for _, command := range h.Commands {
-		commands[i] = command.Create
-		i++
+		if command.DevOnly {
+			devCommands = append(devCommands, command.Create)
+		} else {
+			commands = append(commands, command.Create)
+		}
+	}
+
+	if len(devCommands) > 0 {
+		for _, id := range h.DevGuildID {
+			if _, err := client.Rest().SetGuildCommands(client.ApplicationID(), id, devCommands); err != nil {
+				h.Logger.Errorf("Failed to sync %d commands: %s", id, err)
+			}
+			h.Logger.Infof("Synced %d guild %d commands", len(devCommands), id)
+			cmd, err := client.Rest().GetGuildCommands(client.ApplicationID(), id, true)
+			h.Logger.Debugf("%+v %s", *cmd[0].GuildID(), err)
+		}
 	}
 
 	if len(guildIDs) == 0 {
@@ -141,22 +156,31 @@ func (h *Handler) SyncCommands(client bot.Client, guildIDs ...snowflake.ID) {
 }
 
 func (h *Handler) OnEvent(event bot.Event) {
-	switch e := event.(type) {
-	case *events.ApplicationCommandInteractionCreate:
-		go h.handleCommand(e)
-	case *events.AutocompleteInteractionCreate:
-		go h.handleAutocomplete(e)
-	case *events.ComponentInteractionCreate:
-		go h.handleComponent(e)
-	case *events.ModalSubmitInteractionCreate:
-		go h.handleModal(e)
-	case *events.MessageCreate:
-		go h.handleMessage(e)
-	case *events.Ready:
-		go h.handleReady(e)
-	case *events.GuildMemberJoin:
-		go h.handlerMemberJoin(e)
-	case *events.GuildMemberLeave:
-		go h.handlerMemberLeave(e)
+	go func() {
+		defer h.panicCatch()
+		switch e := event.(type) {
+		case *events.ApplicationCommandInteractionCreate:
+			h.handleCommand(e)
+		case *events.AutocompleteInteractionCreate:
+			h.handleAutocomplete(e)
+		case *events.ComponentInteractionCreate:
+			h.handleComponent(e)
+		case *events.ModalSubmitInteractionCreate:
+			h.handleModal(e)
+		case *events.MessageCreate:
+			h.handleMessage(e)
+		case *events.Ready:
+			h.handleReady(e)
+		case *events.GuildMemberJoin:
+			h.handlerMemberJoin(e)
+		case *events.GuildMemberLeave:
+			h.handlerMemberLeave(e)
+		}
+	}()
+}
+
+func (h *Handler) panicCatch() {
+	if err := recover(); err != nil {
+		h.Logger.Errorf("panic: %s", err)
 	}
 }

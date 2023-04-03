@@ -16,10 +16,13 @@ type Command struct {
 	AutocompleteCheck    Check[*events.AutocompleteInteractionCreate]
 	CommandHandlers      map[string]CommandHandler
 	AutocompleteHandlers map[string]AutocompleteHandler
+
+	DevOnly bool
 }
 
 func (h *Handler) handleCommand(event *events.ApplicationCommandInteractionCreate) {
 	name := event.Data.CommandName()
+	h.Logger.Debugf("command created %s", name)
 	cmd, ok := h.Commands[name]
 	if !ok || cmd.CommandHandlers == nil {
 		h.Logger.Errorf("No command or handler found for \"%s\"", name)

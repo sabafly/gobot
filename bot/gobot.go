@@ -81,12 +81,16 @@ func Run() {
 
 	b.Handler.AddExclude(b.Config.Dislog.WebhookChannel)
 
+	b.Logger.Infof("dev guilds %v", b.Config.DevGuildIDs)
+	b.Handler.DevGuildID = b.Config.DevGuildIDs
+
 	b.Handler.AddCommands(
 		commands.Ping(b),
 		commands.Poll(b),
 		commands.Role(b),
 		commands.RolePanel(b),
 		commands.Util(b),
+		commands.Admin(b),
 	)
 
 	b.Handler.AddComponents(
@@ -139,7 +143,7 @@ func Run() {
 
 	if cfg.ShouldSyncCommands {
 		var guilds []snowflake.ID
-		if cfg.DevMode {
+		if cfg.DevOnly {
 			guilds = b.Config.DevGuildIDs
 		}
 		b.Handler.SyncCommands(b.Client, guilds...)
