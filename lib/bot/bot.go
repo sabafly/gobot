@@ -83,14 +83,14 @@ func (b *Bot) OnGuildLeave(g *events.GuildLeave) {
 
 func (b *Bot) OnGuildMemberJoin(m *events.GuildMemberJoin) {
 	if g, ok := m.Client().Caches().Guild(m.GuildID); ok {
-		b.Logger.Infof("[#%d]ギルドメンバー参加 %32s#%s(%d) ギルド %3dメンバー %s(%d)", m.Member.User.Username, m.Member.User.Discriminator, m.Member.User.ID, g.Name, g.ID, g.MemberCount)
+		b.Logger.Infof("[#%d]ギルドメンバー参加 %32s#%s(%d) ギルド %s(%d) %3d メンバー", m.ShardID(), m.Member.User.Username, m.Member.User.Discriminator, m.Member.User.ID, g.Name, g.ID, g.MemberCount)
 	}
 	b.RefreshPresence()
 }
 
 func (b *Bot) OnGuildMemberLeave(m *events.GuildMemberLeave) {
 	if g, ok := m.Client().Caches().Guild(m.GuildID); ok {
-		b.Logger.Infof("[#%d]ギルドメンバー脱退 %32s#%s(%d) ギルド %3dメンバー %s(%d)", m.Member.User.Username, m.Member.User.Discriminator, m.Member.User.ID, g.Name, g.ID, g.MemberCount)
+		b.Logger.Infof("[#%d]ギルドメンバー脱退 %32s#%s(%d) ギルド %s(%d) %3d メンバー", m.ShardID(), m.Member.User.Username, m.Member.User.Discriminator, m.Member.User.ID, g.Name, g.ID, g.MemberCount)
 	}
 	b.RefreshPresence()
 }
