@@ -454,6 +454,7 @@ func adminCommandChannelGetHandler(b *botlib.Bot) handler.CommandHandler {
 
 func adminCommandMessageGetHandler(b *botlib.Bot) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
+		channel, _ := event.Channel()
 		channelID := snowflake.MustParse(event.SlashCommandInteractionData().String("channel-id"))
 		if messageID, ok := event.SlashCommandInteractionData().OptString("message-id"); ok {
 			mes, err := event.Client().Rest().GetMessage(channelID, snowflake.MustParse(messageID))
@@ -550,7 +551,7 @@ func adminCommandMessageGetHandler(b *botlib.Bot) handler.CommandHandler {
 						continue
 					}
 					v = botlib.SetEmbedProperties(v)
-					_, err := event.Client().Rest().CreateMessage(event.ChannelID(), discord.MessageCreate{
+					_, err := event.Client().Rest().CreateMessage(channel.ID(), discord.MessageCreate{
 						Embeds: v,
 					})
 					if err != nil {
