@@ -26,6 +26,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/gateway"
+	"github.com/disgoorg/disgo/sharding"
 	"github.com/disgoorg/log"
 	"github.com/disgoorg/paginator"
 	"github.com/sabafly/gobot/lib/db"
@@ -60,11 +61,10 @@ func (b *Bot) SetupBot(listeners ...bot.EventListener) {
 	}
 	b.Client, err = disgo.New(b.Config.Token,
 		bot.WithLogger(b.Logger),
-		bot.WithGatewayConfigOpts(gateway.WithIntents(gateway.IntentsAll)),
+		bot.WithGatewayConfigOpts(gateway.WithIntents(gateway.IntentsAll), gateway.WithAutoReconnect(true)),
 		bot.WithCacheConfigOpts(cache.WithCaches(cache.FlagsAll)),
-		bot.WithDefaultShardManager(),
-		bot.WithEventListeners(b.Paginator),
-		bot.WithEventListeners(listeners...),
+		bot.WithShardManagerConfigOpts(sharding.WithAutoScaling(true), sharding.WithGatewayConfigOpts(gateway.WithIntents(gateway.IntentsAll), gateway.WithAutoReconnect(true))),
+		bot.WithEventManagerConfigOpts(bot.WithAsyncEventsEnabled(), bot.WithListeners(b.Paginator), bot.WithListeners(listeners...)),
 	)
 	if err != nil {
 		b.Logger.Fatalf("botのセットアップに失敗 %s", err)

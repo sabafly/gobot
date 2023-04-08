@@ -22,7 +22,7 @@ import (
 func Poll(b *botlib.Bot) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
-			DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageServer),
+			DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageGuild),
 			Name:                     "poll",
 			Description:              "create, and manage poll",
 			DMPermission:             &b.Config.DMPermission,
