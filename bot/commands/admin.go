@@ -180,9 +180,9 @@ func adminCommandApplicationCommandDelete(b *botlib.Bot) handler.CommandHandler 
 func adminCommandApplicationCommandGet(b *botlib.Bot) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		if id, ok := event.SlashCommandInteractionData().OptString("command-id"); ok {
+			var err error
 			commandID := snowflake.MustParse(id)
 			var command discord.ApplicationCommand
-			var err error
 			if id, ok := event.SlashCommandInteractionData().OptString("guild-id"); ok {
 				command, err = event.Client().Rest().GetGuildCommand(event.ApplicationID(), snowflake.MustParse(id), commandID)
 				if err != nil {
@@ -210,6 +210,7 @@ func adminCommandApplicationCommandGet(b *botlib.Bot) handler.CommandHandler {
 				return botlib.ReturnErr(event, err)
 			}
 		} else {
+			channel, _ := event.Channel()
 			var commands []discord.ApplicationCommand
 			var err error
 			if id, ok := event.SlashCommandInteractionData().OptString("guild-id"); ok {
@@ -267,7 +268,7 @@ func adminCommandApplicationCommandGet(b *botlib.Bot) handler.CommandHandler {
 						continue
 					}
 					v = botlib.SetEmbedProperties(v)
-					_, err := botlib.SendWebhook(event.Client(), event.ChannelID(), discord.WebhookMessageCreate{Embeds: v})
+					_, err := botlib.SendWebhook(event.Client(), channel.ID(), discord.WebhookMessageCreate{Embeds: v})
 					if err != nil {
 						return err
 					}
@@ -302,6 +303,7 @@ func adminCommandGuildGetHandler(b *botlib.Bot) handler.CommandHandler {
 				return botlib.ReturnErr(event, err)
 			}
 		} else {
+			channel, _ := event.Channel()
 			var description []string
 			var temp string
 			event.Client().Caches().GuildsForEach(func(guild discord.Guild) {
@@ -349,7 +351,7 @@ func adminCommandGuildGetHandler(b *botlib.Bot) handler.CommandHandler {
 						continue
 					}
 					v = botlib.SetEmbedProperties(v)
-					_, err := botlib.SendWebhook(event.Client(), event.ChannelID(), discord.WebhookMessageCreate{Embeds: v})
+					_, err := botlib.SendWebhook(event.Client(), channel.ID(), discord.WebhookMessageCreate{Embeds: v})
 					if err != nil {
 						return err
 					}
@@ -384,6 +386,7 @@ func adminCommandChannelGetHandler(b *botlib.Bot) handler.CommandHandler {
 				return botlib.ReturnErr(event, err)
 			}
 		} else {
+			channel, _ := event.Channel()
 			guildID := snowflake.MustParse(event.SlashCommandInteractionData().String("guild-id"))
 			channels, err := event.Client().Rest().GetGuildChannels(guildID)
 			if err != nil {
@@ -436,7 +439,7 @@ func adminCommandChannelGetHandler(b *botlib.Bot) handler.CommandHandler {
 						continue
 					}
 					v = botlib.SetEmbedProperties(v)
-					_, err := event.Client().Rest().CreateMessage(event.ChannelID(), discord.MessageCreate{
+					_, err := event.Client().Rest().CreateMessage(channel.ID(), discord.MessageCreate{
 						Embeds: v,
 					})
 					if err != nil {

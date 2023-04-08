@@ -1320,6 +1320,7 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot) func(e *events.ComponentInter
 				Description: translate.Message(e.Locale(), "command_text_poll_create_modal_change_choice_emoji_description"),
 			},
 		}
+		channel, _ := e.Channel()
 		embeds = botlib.SetEmbedProperties(embeds)
 		customID := uuid.NewString()
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute*3)
@@ -1327,7 +1328,7 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot) func(e *events.ComponentInter
 		var removeButton func()
 		remove = b.Handler.AddMessage(handler.Message{
 			UUID:      uuid.New(),
-			ChannelID: e.ChannelID(),
+			ChannelID: channel.ID(),
 			AuthorID:  &e.Member().User.ID,
 			Check: func(ctx *events.MessageCreate) bool {
 				b.Logger.Debug("check")
