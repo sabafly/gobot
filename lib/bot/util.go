@@ -73,12 +73,12 @@ func ReturnErr(interaction responsibleInteraction, err error) error {
 	return err
 }
 
-func ReturnErrMessage(interaction responsibleInteraction, tr string) error {
-	return ReturnErrMessageEphemeral(interaction, tr, false)
+func ReturnErrMessage(interaction responsibleInteraction, tr string, data ...any) error {
+	return ReturnErrMessageEphemeral(interaction, tr, false, data...)
 }
 
-func ReturnErrMessageEphemeral(interaction responsibleInteraction, tr string, ephemeral bool) error {
-	embeds := ErrorMessageEmbed(interaction.Locale(), tr)
+func ReturnErrMessageEphemeral(interaction responsibleInteraction, tr string, ephemeral bool, data ...any) error {
+	embeds := ErrorMessageEmbed(interaction.Locale(), tr, data...)
 	embeds = SetEmbedProperties(embeds)
 	var flags discord.MessageFlags
 	if ephemeral {
@@ -94,11 +94,15 @@ func ReturnErrMessageEphemeral(interaction responsibleInteraction, tr string, ep
 }
 
 // エラーメッセージ埋め込みを作成する
-func ErrorMessageEmbed(locale discord.Locale, t string) []discord.Embed {
+func ErrorMessageEmbed(locale discord.Locale, t string, data ...any) []discord.Embed {
+	var td any
+	if len(data) != 0 {
+		td = data[0]
+	}
 	embeds := []discord.Embed{
 		{
 			Title:       translate.Message(locale, t+"_title"),
-			Description: translate.Message(locale, t+"_message"),
+			Description: translate.Translate(locale, t+"_message", td),
 			Color:       0xff0000,
 		},
 	}

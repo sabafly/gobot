@@ -11,7 +11,6 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/rest"
-	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	botlib "github.com/sabafly/gobot/lib/bot"
@@ -24,10 +23,9 @@ import (
 func Role(b *botlib.Bot) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
-			Name:                     "role",
-			Description:              "require manage role permission",
-			DMPermission:             &b.Config.DMPermission,
-			DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageRoles),
+			Name:         "role",
+			Description:  "require manage role permission",
+			DMPermission: &b.Config.DMPermission,
 			Options: []discord.ApplicationCommandOption{
 				discord.ApplicationCommandOptionSubCommandGroup{
 					Name:        "panel",
@@ -48,6 +46,17 @@ func Role(b *botlib.Bot) handler.Command {
 					},
 				},
 			},
+		},
+		Check: func(ctx *events.ApplicationCommandInteractionCreate) bool {
+			if b.CheckDev(ctx.User().ID) {
+				return true
+			}
+			permission := discord.PermissionManageRoles
+			if ctx.Member() != nil && ctx.Member().Permissions.Has(permission) {
+				return true
+			}
+			_ = botlib.ReturnErrMessage(ctx, "error_no_permission", map[string]any{"Name": permission.String()})
+			return false
 		},
 		CommandHandlers: map[string]handler.CommandHandler{
 			"panel/create": rolePanelCreateHandler(b),

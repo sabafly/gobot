@@ -16,9 +16,8 @@ import (
 func Admin(b *botlib.Bot) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
-			Name:                     "admin",
-			Description:              "admin only",
-			DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionAdministrator),
+			Name:        "admin",
+			Description: "admin only",
 			Options: []discord.ApplicationCommandOption{
 				discord.ApplicationCommandOptionSubCommandGroup{
 					Name:        "message",
@@ -143,7 +142,16 @@ func Admin(b *botlib.Bot) handler.Command {
 			"application/command-get":    adminCommandApplicationCommandGet(b),
 			"application/command-delete": adminCommandApplicationCommandDelete(b),
 		},
-		DevOnly: true,
+		Check: func(ctx *events.ApplicationCommandInteractionCreate) bool {
+			if b.CheckDev(ctx.User().ID) {
+				return true
+			}
+			if ctx.GuildID() != nil && b.CheckDev(*ctx.GuildID()) && ctx.Member().Permissions.Has(discord.PermissionAdministrator) {
+				return true
+			}
+			return false
+		},
+		DevOnly: false,
 	}
 }
 

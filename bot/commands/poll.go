@@ -9,7 +9,6 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
-	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	botlib "github.com/sabafly/gobot/lib/bot"
@@ -22,10 +21,9 @@ import (
 func Poll(b *botlib.Bot) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
-			DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionManageGuild),
-			Name:                     "poll",
-			Description:              "create, and manage poll",
-			DMPermission:             &b.Config.DMPermission,
+			Name:         "poll",
+			Description:  "create, and manage poll",
+			DMPermission: &b.Config.DMPermission,
 			Options: []discord.ApplicationCommandOption{
 				discord.ApplicationCommandOptionSubCommand{
 					Name:        "create",
@@ -102,6 +100,17 @@ func Poll(b *botlib.Bot) handler.Command {
 					},
 				},
 			},
+		},
+		Check: func(ctx *events.ApplicationCommandInteractionCreate) bool {
+			if b.CheckDev(ctx.User().ID) {
+				return true
+			}
+			permission := discord.PermissionManageGuild
+			if ctx.Member() != nil && ctx.Member().Permissions.Has(permission) {
+				return true
+			}
+			_ = botlib.ReturnErrMessage(ctx, "error_no_permission", map[string]any{"Name": permission.String()})
+			return false
 		},
 		CommandHandlers: map[string]handler.CommandHandler{
 			"create": pollCreateHandler(b),
