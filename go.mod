@@ -3,7 +3,7 @@ module github.com/sabafly/gobot
 go 1.20
 
 require (
-	github.com/disgoorg/disgo v0.16.1
+	github.com/disgoorg/disgo v0.16.2
 	github.com/disgoorg/dislog v1.1.0
 	github.com/disgoorg/json v1.0.0
 	github.com/disgoorg/log v1.2.0
