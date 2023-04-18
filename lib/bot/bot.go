@@ -19,6 +19,7 @@ package botlib
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/disgoorg/disgo"
 	"github.com/disgoorg/disgo/bot"
@@ -44,13 +45,14 @@ func New(logger log.Logger, version string, config Config) *Bot {
 }
 
 type Bot struct {
-	Logger    log.Logger
-	Client    bot.Client
-	Paginator *paginator.Manager
-	Config    Config
-	Version   string
-	Handler   *handler.Handler
-	DB        db.DB
+	Logger        log.Logger
+	Client        bot.Client
+	Paginator     *paginator.Manager
+	Config        Config
+	Version       string
+	Handler       *handler.Handler
+	DB            db.DB
+	GuildDataMute sync.Mutex
 }
 
 func (b *Bot) SetupBot(listeners ...bot.EventListener) {

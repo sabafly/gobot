@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
@@ -57,6 +58,7 @@ func NewGuildData(id snowflake.ID) GuildData {
 		ID:             id,
 		RolePanel:      make(map[uuid.UUID]GuildDataRolePanel),
 		RolePanelLimit: 10,
+		Member:         make(map[snowflake.ID]GuildDataMember),
 	}
 }
 
@@ -64,6 +66,13 @@ type GuildData struct {
 	ID             snowflake.ID                     `json:"id"`
 	RolePanel      map[uuid.UUID]GuildDataRolePanel `json:"role_panel"`
 	RolePanelLimit int                              `json:"role_panel_limit"`
+	Member         map[snowflake.ID]GuildDataMember `json:"message"`
+}
+
+type GuildDataMember struct {
+	LastMessageID snowflake.ID `json:"last_message_id"`
+	LastMessage   time.Time    `json:"last_message"`
+	LastVoice     time.Time    `json:"last_voice"`
 }
 
 type GuildDataRolePanel struct {

@@ -104,6 +104,10 @@ func Run() {
 		commands.RolePanelModal(b),
 	)
 
+	b.Handler.AddMessage(
+		commands.LevelMessage(b),
+	)
+
 	b.Handler.AddReady(func(r *events.Ready) {
 		b.Logger.Info("Ready!")
 		polls, err := b.DB.Poll().GetAll()

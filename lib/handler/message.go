@@ -25,7 +25,7 @@ func (h *Handler) handleMessage(event *events.MessageCreate) {
 	h.Logger.Debugf("メッセージ作成 %d", event.ChannelID)
 	channelID := event.ChannelID
 	for _, m := range h.Message {
-		if m.ChannelID != channelID {
+		if m.ChannelID != 0 && m.ChannelID != channelID {
 			h.Logger.Debug("チャンネルが違います")
 			continue
 		}
