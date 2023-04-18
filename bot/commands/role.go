@@ -706,14 +706,14 @@ func roleComponentEditRoleEmojiHandler(b *botlib.Bot) func(event *events.Compone
 			return err
 		}
 
-		channel, _ := event.Channel()
+		channel := event.Channel()
 
 		var remove func()
 		var removeButton func()
 		author := event.Member()
 		remove = b.Handler.AddMessage(handler.Message{
 			UUID:      uuid.New(),
-			ChannelID: channel.ID(),
+			ChannelID: channel.ID,
 			AuthorID:  &author.User.ID,
 			Handler: func(event *events.MessageCreate) error {
 				if event.Message.Author.ID != author.User.ID || !structs.Twemoji.MatchString(event.Message.Content) {
