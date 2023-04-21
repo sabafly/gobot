@@ -93,6 +93,17 @@ func Admin(b *botlib.Bot) handler.Command {
 								},
 							},
 						},
+						{
+							Name:        "leave",
+							Description: "leave guild",
+							Options: []discord.ApplicationCommandOption{
+								discord.ApplicationCommandOptionString{
+									Name:        "guild-id",
+									Description: "guild id",
+									Required:    true,
+								},
+							},
+						},
 					},
 				},
 				discord.ApplicationCommandOptionSubCommandGroup{
@@ -139,6 +150,7 @@ func Admin(b *botlib.Bot) handler.Command {
 			"message/get":                adminCommandMessageGetHandler(b),
 			"channel/get":                adminCommandChannelGetHandler(b),
 			"guild/get":                  adminCommandGuildGetHandler(b),
+			"guild/leave":                adminCommandGuildLeaveHandler(b),
 			"application/command-get":    adminCommandApplicationCommandGet(b),
 			"application/command-delete": adminCommandApplicationCommandDelete(b),
 		},
@@ -152,6 +164,19 @@ func Admin(b *botlib.Bot) handler.Command {
 			return false
 		},
 		DevOnly: false,
+	}
+}
+
+func adminCommandGuildLeaveHandler(b *botlib.Bot) handler.CommandHandler {
+	return func(event *events.ApplicationCommandInteractionCreate) error {
+		guildID := snowflake.MustParse(event.SlashCommandInteractionData().String("guild-id"))
+		if err := event.Client().Rest().LeaveGuild(guildID); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("OK").Build()); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		return nil
 	}
 }
 
