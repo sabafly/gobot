@@ -16,8 +16,9 @@ import (
 func Admin(b *botlib.Bot) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
-			Name:        "admin",
-			Description: "admin only",
+			Name:         "admin",
+			Description:  "admin only",
+			DMPermission: &b.Config.DMPermission,
 			Options: []discord.ApplicationCommandOption{
 				discord.ApplicationCommandOptionSubCommandGroup{
 					Name:        "message",
