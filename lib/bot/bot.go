@@ -73,26 +73,29 @@ func (b *Bot) SetupBot(listeners ...bot.EventListener) {
 
 func (b *Bot) OnGuildJoin(g *events.GuildJoin) {
 	b.Logger.Infof("[#%d]ギルド参加 %3dメンバー 作成 %s 名前 %s(%d)", g.ShardID(), g.Guild.MemberCount, g.Guild.CreatedAt().String(), g.Guild.Name, g.GuildID)
-	b.RefreshPresence()
+	go b.RefreshPresence()
 }
 
 func (b *Bot) OnGuildLeave(g *events.GuildLeave) {
 	b.Logger.Infof("[#%d]ギルド脱退 %3dメンバー 作成 %s 名前 %s(%d)", g.ShardID(), g.Guild.MemberCount, g.Guild.CreatedAt().String(), g.Guild.Name, g.GuildID)
-	b.RefreshPresence()
+	b.Client.Caches().RemoveGuild(g.GuildID)
+	b.Client.Caches().RemoveMembersByGuildID(g.GuildID)
+	go b.RefreshPresence()
 }
 
 func (b *Bot) OnGuildMemberJoin(m *events.GuildMemberJoin) {
 	if g, ok := m.Client().Caches().Guild(m.GuildID); ok {
 		b.Logger.Infof("[#%d]ギルドメンバー参加 %32s#%s(%d) ギルド %s(%d) %3d メンバー", m.ShardID(), m.Member.User.Username, m.Member.User.Discriminator, m.Member.User.ID, g.Name, g.ID, g.MemberCount)
 	}
-	b.RefreshPresence()
+	go b.RefreshPresence()
 }
 
 func (b *Bot) OnGuildMemberLeave(m *events.GuildMemberLeave) {
 	if g, ok := m.Client().Caches().Guild(m.GuildID); ok {
 		b.Logger.Infof("[#%d]ギルドメンバー脱退 %32s#%s(%d) ギルド %s(%d) %3d メンバー", m.ShardID(), m.Member.User.Username, m.Member.User.Discriminator, m.Member.User.ID, g.Name, g.ID, g.MemberCount)
 	}
-	b.RefreshPresence()
+	b.Client.Caches().RemoveMember(m.GuildID, m.User.ID)
+	go b.RefreshPresence()
 }
 
 func (b *Bot) RefreshPresence() {
