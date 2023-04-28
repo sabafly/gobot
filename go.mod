@@ -13,6 +13,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/mattn/go-colorable v0.1.13
 	github.com/nicksnyder/go-i18n/v2 v2.2.1
+	github.com/pelletier/go-toml/v2 v2.0.7
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.7.0
 	golang.org/x/text v0.9.0
