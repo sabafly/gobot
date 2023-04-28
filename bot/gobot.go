@@ -42,14 +42,13 @@ var (
 	version = "dev"
 )
 
-func Run() {
+func Run(file_path string) {
 
-	cfg, err := botlib.LoadConfig()
+	cfg, err := botlib.LoadConfig(file_path)
 	if err != nil {
 		panic("failed to load config: " + err.Error())
 	}
 
-	// logger := log.New(log.Ldate | log.Ltime | log.Lshortfile)
 	logger := logrus.New()
 	logger.ReportCaller = cfg.DevMode
 	logger.SetFormatter(&logrus.TextFormatter{

@@ -22,6 +22,7 @@ func main() {
 }
 
 func init() {
+	botCmd.Flags().String("config", "config.json", "config file of bot")
 	root.AddCommand(botCmd)
 }
 
@@ -30,7 +31,10 @@ var botCmd = &cobra.Command{
 	Short: "botを起動する",
 	Long: `botの説明
 	後で書く`,
+	ValidArgs: []string{
+		"config",
+	},
 	Run: func(cmd *cobra.Command, args []string) {
-		bot.Run()
+		bot.Run(cmd.Flag("config").Value.String())
 	},
 }
