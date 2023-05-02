@@ -8,8 +8,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f h1:lO4WD4F/rVNCu3HqELle0jiPLLBs70cWOduZpkS1E78=
 github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f/go.mod h1:cuUVRXasLTGF7a8hSLbxyZXjz+1KgoB3wDUb6vlszIc=
-github.com/disgoorg/disgo v0.16.2 h1:Qo1Cwmev2mxQll+f/NDB8kTCyMCrAq3/1JohXcpgUYQ=
-github.com/disgoorg/disgo v0.16.2/go.mod h1:hUkznOmm+f+owh/MuOBX0sDviQV5cL0FqcWbpIyV1Y0=
+github.com/disgoorg/disgo v0.16.3 h1:9wI7ZTL/RTJlaTCb2T0DviPvXgpDTNmBk4wGnxIo5Ko=
+github.com/disgoorg/disgo v0.16.3/go.mod h1:hUkznOmm+f+owh/MuOBX0sDviQV5cL0FqcWbpIyV1Y0=
 github.com/disgoorg/dislog v1.1.0 h1:BhFzCyBL1Fo9JQ+Mze411JBRf9Epqp2jJYHcSoQSSj4=
 github.com/disgoorg/dislog v1.1.0/go.mod h1:MO9pSb/rIpiMXpMOX6yIbjiry0Vw0FUCmA7KP0cTlnY=
 github.com/disgoorg/json v1.0.0 h1:kDhSM661fgIuNoZF3BO5/odaR5NSq80AWb937DH+Pdo=
