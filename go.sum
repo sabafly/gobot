@@ -44,8 +44,8 @@ github.com/pelletier/go-toml/v2 v2.0.7/go.mod h1:eumQOmlWiOPt5WriQQqoM5y18pDHwha
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
-github.com/sabafly/sabafly-lib v0.3.0 h1:YWOXHszPKekPpFKGKF6vAtQa6EqKi5To33bPuGhKIyk=
-github.com/sabafly/sabafly-lib v0.3.0/go.mod h1:D4wjpKn0hyB7VnwCwkRoKIZrRO5HQCeGv6lliBLs1co=
+github.com/sabafly/sabafly-lib v0.3.1 h1:EWuzubV5u2XzHPsn1AfYilC+zXwN+extdOWGspD5+QE=
+github.com/sabafly/sabafly-lib v0.3.1/go.mod h1:D4wjpKn0hyB7VnwCwkRoKIZrRO5HQCeGv6lliBLs1co=
 github.com/sasha-s/go-csync v0.0.0-20210812194225-61421b77c44b h1:qYTY2tN72LhgDj2rtWG+LI6TXFl2ygFQQ4YezfVaGQE=
 github.com/sasha-s/go-csync v0.0.0-20210812194225-61421b77c44b/go.mod h1:/pA7k3zsXKdjjAiUhB5CjuKib9KJGCaLvZwtxGC8U0s=
 github.com/sirupsen/logrus v1.9.0 h1:trlNQbNUG3OdDrDil03MCb1H2o9nJ1x4/5LYw7byDE0=

@@ -88,10 +88,16 @@ func Run(file_path string) {
 
 	b := botlib.New[db.DB](logger, version, *cfg)
 
+	b.DB, err = db.SetupDatabase(db.DBConfig(b.Config.DBConfig))
+	if err != nil {
+		panic(err)
+	}
+
 	b.Handler.AddExclude(b.Config.Dislog.WebhookChannel)
 
 	b.Logger.Infof("dev guilds %v", b.Config.DevGuildIDs)
 	b.Handler.DevGuildID = b.Config.DevGuildIDs
+	b.Handler.IsDebug = b.Config.DevMode
 
 	b.Handler.AddCommands(
 		commands.Ping(b),
