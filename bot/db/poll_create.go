@@ -12,14 +12,11 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"github.com/sabafly/gobot/lib/translate"
+	"github.com/sabafly/sabafly-lib/db"
+	"github.com/sabafly/sabafly-lib/translate"
 )
 
-type PollCreateDB interface {
-	Get(id uuid.UUID) (PollCreate, error)
-	Set(id uuid.UUID, poll PollCreate) error
-	Remove(id uuid.UUID) error
-}
+type PollCreateDB db.DBRecord[PollCreate, uuid.UUID]
 
 type pollCreateDBImpl struct {
 	db *redis.Client
@@ -54,7 +51,7 @@ func (p *pollCreateDBImpl) Set(id uuid.UUID, poll PollCreate) error {
 	return nil
 }
 
-func (p *pollCreateDBImpl) Remove(id uuid.UUID) error {
+func (p *pollCreateDBImpl) Del(id uuid.UUID) error {
 	res := p.db.Del(context.TODO(), "polls"+id.String())
 	if err := res.Err(); err != nil {
 		return err

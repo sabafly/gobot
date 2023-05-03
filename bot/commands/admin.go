@@ -9,11 +9,12 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
-	botlib "github.com/sabafly/gobot/lib/bot"
-	"github.com/sabafly/gobot/lib/handler"
+	"github.com/sabafly/gobot/bot/db"
+	botlib "github.com/sabafly/sabafly-lib/bot"
+	"github.com/sabafly/sabafly-lib/handler"
 )
 
-func Admin(b *botlib.Bot) handler.Command {
+func Admin(b *botlib.Bot[db.DB]) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
 			Name:         "admin",
@@ -168,7 +169,7 @@ func Admin(b *botlib.Bot) handler.Command {
 	}
 }
 
-func adminCommandGuildLeaveHandler(b *botlib.Bot) handler.CommandHandler {
+func adminCommandGuildLeaveHandler(b *botlib.Bot[db.DB]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		guildID := snowflake.MustParse(event.SlashCommandInteractionData().String("guild-id"))
 		if err := event.Client().Rest().LeaveGuild(guildID); err != nil {
@@ -181,7 +182,7 @@ func adminCommandGuildLeaveHandler(b *botlib.Bot) handler.CommandHandler {
 	}
 }
 
-func adminCommandApplicationCommandDelete(b *botlib.Bot) handler.CommandHandler {
+func adminCommandApplicationCommandDelete(b *botlib.Bot[db.DB]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		commandID := snowflake.MustParse(event.SlashCommandInteractionData().String("command-id"))
 		var err error
@@ -203,7 +204,7 @@ func adminCommandApplicationCommandDelete(b *botlib.Bot) handler.CommandHandler 
 	}
 }
 
-func adminCommandApplicationCommandGet(b *botlib.Bot) handler.CommandHandler {
+func adminCommandApplicationCommandGet(b *botlib.Bot[db.DB]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		if id, ok := event.SlashCommandInteractionData().OptString("command-id"); ok {
 			var err error
@@ -281,7 +282,7 @@ func adminCommandApplicationCommandGet(b *botlib.Bot) handler.CommandHandler {
 					embeds = []discord.Embed{}
 				}
 			}
-			embeds = botlib.SetEmbedProperties(mEmbeds[0])
+			embeds = botlib.SetEmbedsProperties(mEmbeds[0])
 			err = event.CreateMessage(discord.MessageCreate{
 				Embeds: embeds,
 			})
@@ -293,7 +294,7 @@ func adminCommandApplicationCommandGet(b *botlib.Bot) handler.CommandHandler {
 					if i == 0 {
 						continue
 					}
-					v = botlib.SetEmbedProperties(v)
+					v = botlib.SetEmbedsProperties(v)
 					_, err := botlib.SendWebhook(event.Client(), channel.ID, discord.WebhookMessageCreate{Embeds: v})
 					if err != nil {
 						return err
@@ -305,7 +306,7 @@ func adminCommandApplicationCommandGet(b *botlib.Bot) handler.CommandHandler {
 	}
 }
 
-func adminCommandGuildGetHandler(b *botlib.Bot) handler.CommandHandler {
+func adminCommandGuildGetHandler(b *botlib.Bot[db.DB]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		if id, ok := event.SlashCommandInteractionData().OptString("guild-id"); ok {
 			guildID := snowflake.MustParse(id)
@@ -364,7 +365,7 @@ func adminCommandGuildGetHandler(b *botlib.Bot) handler.CommandHandler {
 					embeds = []discord.Embed{}
 				}
 			}
-			embeds = botlib.SetEmbedProperties(mEmbeds[0])
+			embeds = botlib.SetEmbedsProperties(mEmbeds[0])
 			err := event.CreateMessage(discord.MessageCreate{
 				Embeds: embeds,
 			})
@@ -376,7 +377,7 @@ func adminCommandGuildGetHandler(b *botlib.Bot) handler.CommandHandler {
 					if i == 0 {
 						continue
 					}
-					v = botlib.SetEmbedProperties(v)
+					v = botlib.SetEmbedsProperties(v)
 					_, err := botlib.SendWebhook(event.Client(), channel.ID, discord.WebhookMessageCreate{Embeds: v})
 					if err != nil {
 						return err
@@ -388,7 +389,7 @@ func adminCommandGuildGetHandler(b *botlib.Bot) handler.CommandHandler {
 	}
 }
 
-func adminCommandChannelGetHandler(b *botlib.Bot) handler.CommandHandler {
+func adminCommandChannelGetHandler(b *botlib.Bot[db.DB]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		if id, ok := event.SlashCommandInteractionData().OptString("channel-id"); ok {
 			channelID := snowflake.MustParse(id)
@@ -452,7 +453,7 @@ func adminCommandChannelGetHandler(b *botlib.Bot) handler.CommandHandler {
 					embeds = []discord.Embed{}
 				}
 			}
-			embeds = botlib.SetEmbedProperties(mEmbeds[0])
+			embeds = botlib.SetEmbedsProperties(mEmbeds[0])
 			err = event.CreateMessage(discord.MessageCreate{
 				Embeds: embeds,
 			})
@@ -464,7 +465,7 @@ func adminCommandChannelGetHandler(b *botlib.Bot) handler.CommandHandler {
 					if i == 0 {
 						continue
 					}
-					v = botlib.SetEmbedProperties(v)
+					v = botlib.SetEmbedsProperties(v)
 					_, err := event.Client().Rest().CreateMessage(channel.ID, discord.MessageCreate{
 						Embeds: v,
 					})
@@ -478,7 +479,7 @@ func adminCommandChannelGetHandler(b *botlib.Bot) handler.CommandHandler {
 	}
 }
 
-func adminCommandMessageGetHandler(b *botlib.Bot) handler.CommandHandler {
+func adminCommandMessageGetHandler(b *botlib.Bot[db.DB]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		channel := event.Channel()
 		channelID := snowflake.MustParse(event.SlashCommandInteractionData().String("channel-id"))
@@ -501,7 +502,7 @@ func adminCommandMessageGetHandler(b *botlib.Bot) handler.CommandHandler {
 					Description: mes.Content,
 				},
 			}
-			embeds = botlib.SetEmbedProperties(embeds)
+			embeds = botlib.SetEmbedsProperties(embeds)
 			err = event.CreateMessage(discord.MessageCreate{
 				Embeds: embeds,
 				Files: []*discord.File{
@@ -564,7 +565,7 @@ func adminCommandMessageGetHandler(b *botlib.Bot) handler.CommandHandler {
 				}
 			}
 			embeds = mEmbeds[0]
-			embeds = botlib.SetEmbedProperties(embeds)
+			embeds = botlib.SetEmbedsProperties(embeds)
 			err = event.CreateMessage(discord.MessageCreate{
 				Embeds: embeds,
 			})
@@ -576,7 +577,7 @@ func adminCommandMessageGetHandler(b *botlib.Bot) handler.CommandHandler {
 					if i == 0 {
 						continue
 					}
-					v = botlib.SetEmbedProperties(v)
+					v = botlib.SetEmbedsProperties(v)
 					_, err := event.Client().Rest().CreateMessage(channel.ID, discord.MessageCreate{
 						Embeds: v,
 					})

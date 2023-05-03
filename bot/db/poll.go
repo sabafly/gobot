@@ -11,14 +11,14 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"github.com/sabafly/gobot/lib/translate"
+	"github.com/sabafly/sabafly-lib/translate"
 )
 
 type PollDB interface {
 	GetAll() ([]Poll, error)
 	Get(id uuid.UUID) (Poll, error)
 	Set(id uuid.UUID, poll Poll) error
-	Remove(id uuid.UUID) error
+	Del(id uuid.UUID) error
 }
 
 type pollDBImpl struct {
@@ -72,7 +72,7 @@ func (p *pollDBImpl) Set(id uuid.UUID, poll Poll) error {
 	return nil
 }
 
-func (p *pollDBImpl) Remove(id uuid.UUID) error {
+func (p *pollDBImpl) Del(id uuid.UUID) error {
 	res := p.db.HDel(context.TODO(), "poll", id.String())
 	if err := res.Err(); err != nil {
 		return err

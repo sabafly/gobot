@@ -11,7 +11,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"github.com/sabafly/gobot/lib/translate"
+	"github.com/sabafly/sabafly-lib/translate"
 )
 
 type RolePanelCreateDB interface {
@@ -321,11 +321,11 @@ func (r *RolePanelCreate) EditPanelSettingsEmbed() []discord.Embed {
 			Fields: []discord.EmbedField{
 				{
 					Name:  translate.Message(r.locale, "command_text_role_panel_create_edit_panel_config_fields_max_name"),
-					Value: fmt.Sprintf("%d %s", r.Max, translate.Translates(r.locale, "role", nil, r.Max)),
+					Value: fmt.Sprintf("%d %s", r.Max, translate.Translates(r.locale, "role", nil, r.Max, "role")),
 				},
 				{
 					Name:  translate.Message(r.locale, "command_text_role_panel_create_edit_panel_config_fields_min_name"),
-					Value: fmt.Sprintf("%d %s", r.Min, translate.Translates(r.locale, "role", nil, r.Min)),
+					Value: fmt.Sprintf("%d %s", r.Min, translate.Translates(r.locale, "role", nil, r.Min, "role")),
 				},
 			},
 		},

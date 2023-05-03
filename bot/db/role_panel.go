@@ -10,8 +10,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"github.com/sabafly/gobot/lib/constants"
-	"github.com/sabafly/gobot/lib/translate"
+	"github.com/sabafly/sabafly-lib/translate"
 )
 
 type RolePanelDB interface {
@@ -120,7 +119,8 @@ func (r *RolePanel) BuildMessage(format func([]discord.Embed) []discord.Embed) d
 	embeds := []discord.Embed{
 		{
 			Footer: &discord.EmbedFooter{
-				Text: fmt.Sprintf("%s %s", constants.BotName, translate.Message(r.locale, "role_panel")),
+				// XXX: 変数参照にしたい
+				Text: fmt.Sprintf("%s %s", "gobot", translate.Message(r.locale, "role_panel")),
 			},
 			Title:       r.Name,
 			Description: r.Description,

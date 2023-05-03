@@ -13,14 +13,14 @@ import (
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
-	botlib "github.com/sabafly/gobot/lib/bot"
-	"github.com/sabafly/gobot/lib/db"
-	"github.com/sabafly/gobot/lib/handler"
-	"github.com/sabafly/gobot/lib/structs"
-	"github.com/sabafly/gobot/lib/translate"
+	"github.com/sabafly/gobot/bot/db"
+	botlib "github.com/sabafly/sabafly-lib/bot"
+	"github.com/sabafly/sabafly-lib/emoji"
+	"github.com/sabafly/sabafly-lib/handler"
+	"github.com/sabafly/sabafly-lib/translate"
 )
 
-func Role(b *botlib.Bot) handler.Command {
+func Role(b *botlib.Bot[db.DB]) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
 			Name:         "role",
@@ -55,7 +55,7 @@ func Role(b *botlib.Bot) handler.Command {
 			if ctx.Member() != nil && ctx.Member().Permissions.Has(permission) {
 				return true
 			}
-			_ = botlib.ReturnErrMessage(ctx, "error_no_permission", map[string]any{"Name": permission.String()})
+			_ = botlib.ReturnErrMessage(ctx, "error_no_permission", "", "", map[string]any{"Name": permission.String()})
 			return false
 		},
 		CommandHandlers: map[string]handler.CommandHandler{
@@ -66,11 +66,11 @@ func Role(b *botlib.Bot) handler.Command {
 	}
 }
 
-func rolePanelDeleteHandler(b *botlib.Bot) func(event *events.ApplicationCommandInteractionCreate) error {
+func rolePanelDeleteHandler(b *botlib.Bot[db.DB]) func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		gData, err := b.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
-			return botlib.ReturnErrMessage(event, "error_has_no_data")
+			return botlib.ReturnErrMessage(event, "error_has_no_data", "", "")
 		}
 		options := []discord.StringSelectMenuOption{}
 		for u := range gData.RolePanel {
@@ -98,7 +98,7 @@ func rolePanelDeleteHandler(b *botlib.Bot) func(event *events.ApplicationCommand
 				Title: translate.Message(event.Locale(), "role_panel"),
 			},
 		}
-		embeds = botlib.SetEmbedProperties(embeds)
+		embeds = botlib.SetEmbedsProperties(embeds)
 		err = event.CreateMessage(discord.MessageCreate{
 			Embeds: embeds,
 			Components: []discord.ContainerComponent{
@@ -117,11 +117,11 @@ func rolePanelDeleteHandler(b *botlib.Bot) func(event *events.ApplicationCommand
 	}
 }
 
-func rolePanelListHandler(b *botlib.Bot) func(event *events.ApplicationCommandInteractionCreate) error {
+func rolePanelListHandler(b *botlib.Bot[db.DB]) func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		gData, err := b.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
-			return botlib.ReturnErrMessage(event, "error_has_no_data")
+			return botlib.ReturnErrMessage(event, "error_has_no_data", "", "")
 		}
 		fields := []discord.EmbedField{}
 		for u, gdrp := range gData.RolePanel {
@@ -166,7 +166,7 @@ func rolePanelListHandler(b *botlib.Bot) func(event *events.ApplicationCommandIn
 				Fields: fields,
 			},
 		}
-		embeds = botlib.SetEmbedProperties(embeds)
+		embeds = botlib.SetEmbedsProperties(embeds)
 		err = event.CreateMessage(discord.MessageCreate{
 			Embeds: embeds,
 		})
@@ -177,7 +177,7 @@ func rolePanelListHandler(b *botlib.Bot) func(event *events.ApplicationCommandIn
 	}
 }
 
-func rolePanelCreateHandler(b *botlib.Bot) func(event *events.ApplicationCommandInteractionCreate) error {
+func rolePanelCreateHandler(b *botlib.Bot[db.DB]) func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		err := event.CreateModal(discord.ModalCreate{
 			Title:    translate.Message(event.Locale(), "command_text_role_panel_role_create_modal_title"),
@@ -210,7 +210,7 @@ func rolePanelCreateHandler(b *botlib.Bot) func(event *events.ApplicationCommand
 	}
 }
 
-func RolePanelComponent(b *botlib.Bot) handler.Component {
+func RolePanelComponent(b *botlib.Bot[db.DB]) handler.Component {
 	return handler.Component{
 		Name: "rolepanel",
 		Handler: map[string]handler.ComponentHandler{
@@ -233,14 +233,14 @@ func RolePanelComponent(b *botlib.Bot) handler.Component {
 	}
 }
 
-func roleComponentCallHandler(b *botlib.Bot) func(event *events.ComponentInteractionCreate) error {
+func roleComponentCallHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		panelID := uuid.MustParse(event.StringSelectMenuInteractionData().Values[0])
 		rp, err := b.DB.RolePanel().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		mes := rp.BuildMessage(botlib.SetEmbedProperties)
+		mes := rp.BuildMessage(botlib.SetEmbedsProperties)
 		mes.Flags = discord.MessageFlagEphemeral
 		err = event.CreateMessage(mes)
 		if err != nil {
@@ -250,7 +250,7 @@ func roleComponentCallHandler(b *botlib.Bot) func(event *events.ComponentInterac
 	}
 }
 
-func roleComponentDeleteHandler(b *botlib.Bot) func(event *events.ComponentInteractionCreate) error {
+func roleComponentDeleteHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(event.StringSelectMenuInteractionData().Values[0])
@@ -277,7 +277,7 @@ func roleComponentDeleteHandler(b *botlib.Bot) func(event *events.ComponentInter
 				Description: translate.Message(event.Locale(), "command_text_role_panel_delete_embed_description"),
 			},
 		}
-		embeds = botlib.SetEmbedProperties(embeds)
+		embeds = botlib.SetEmbedsProperties(embeds)
 		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
 			Embeds:     &embeds,
 			Components: &[]discord.ContainerComponent{},
@@ -289,7 +289,7 @@ func roleComponentDeleteHandler(b *botlib.Bot) func(event *events.ComponentInter
 	}
 }
 
-func roleComponentGetRole(b *botlib.Bot) func(event *events.ComponentInteractionCreate) error {
+func roleComponentGetRole(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
@@ -365,7 +365,7 @@ func roleComponentGetRole(b *botlib.Bot) func(event *events.ComponentInteraction
 				Fields: fields,
 			},
 		}
-		embeds = botlib.SetEmbedProperties(embeds)
+		embeds = botlib.SetEmbedsProperties(embeds)
 		err = event.CreateMessage(discord.MessageCreate{
 			Flags:  discord.MessageFlagEphemeral,
 			Embeds: embeds,
@@ -384,7 +384,7 @@ func roleComponentGetRole(b *botlib.Bot) func(event *events.ComponentInteraction
 	}
 }
 
-func roleComponentUseHandler(b *botlib.Bot) func(event *events.ComponentInteractionCreate) error {
+func roleComponentUseHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
@@ -400,7 +400,7 @@ func roleComponentUseHandler(b *botlib.Bot) func(event *events.ComponentInteract
 			}
 			m = *member
 		}
-		mes := rp.UseMessage(botlib.SetEmbedProperties, m)
+		mes := rp.UseMessage(botlib.SetEmbedsProperties, m)
 		b.Logger.Debugf("%+v", mes)
 		err = event.CreateMessage(mes)
 		if err != nil {
@@ -410,7 +410,7 @@ func roleComponentUseHandler(b *botlib.Bot) func(event *events.ComponentInteract
 	}
 }
 
-func roleComponentCreateHandler(b *botlib.Bot) func(event *events.ComponentInteractionCreate) error {
+func roleComponentCreateHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
@@ -429,7 +429,7 @@ func roleComponentCreateHandler(b *botlib.Bot) func(event *events.ComponentInter
 					Description: translate.Message(event.Locale(), "command_text_role_panel_create_edit_panel_create_embed_description"),
 				},
 			}
-			embeds = botlib.SetEmbedProperties(embeds)
+			embeds = botlib.SetEmbedsProperties(embeds)
 			components := []discord.ContainerComponent{
 				discord.ActionRowComponent{
 					rp.BackMainMenuButton(),
@@ -467,14 +467,14 @@ func roleComponentCreateHandler(b *botlib.Bot) func(event *events.ComponentInter
 				}
 				gData.RolePanel[r.UUID()] = db.GuildDataRolePanel{OnList: false}
 				if gData.RolePanelLimit > 25 || len(gData.RolePanel) > gData.RolePanelLimit {
-					return botlib.ReturnErrMessage(event, "error_guild_max_count_limit_has_reached")
+					return botlib.ReturnErrMessage(event, "error_guild_max_count_limit_has_reached", "", "")
 				}
 				err = b.DB.GuildData().Set(gData.ID, gData)
 				if err != nil {
 					return botlib.ReturnErr(event, err)
 				}
 
-				m, err := event.Client().Rest().CreateMessage(event.ChannelSelectMenuInteractionData().Values[0], r.BuildMessage(botlib.SetEmbedProperties))
+				m, err := event.Client().Rest().CreateMessage(event.ChannelSelectMenuInteractionData().Values[0], r.BuildMessage(botlib.SetEmbedsProperties))
 				if err != nil {
 					return botlib.ReturnErr(event, err)
 				}
@@ -499,7 +499,7 @@ func roleComponentCreateHandler(b *botlib.Bot) func(event *events.ComponentInter
 					Description: translate.Message(event.Locale(), "command_text_role_panel_create_edit_panel_create_send_channel_embed_description"),
 				},
 			}
-			embeds = botlib.SetEmbedProperties(embeds)
+			embeds = botlib.SetEmbedsProperties(embeds)
 			components := []discord.ContainerComponent{
 				discord.ActionRowComponent{
 					discord.ChannelSelectMenuComponent{
@@ -528,7 +528,7 @@ func roleComponentCreateHandler(b *botlib.Bot) func(event *events.ComponentInter
 			}
 			gData.RolePanel[r.UUID()] = db.GuildDataRolePanel{OnList: true}
 			if gData.RolePanelLimit > 25 || len(gData.RolePanel) > gData.RolePanelLimit {
-				return botlib.ReturnErrMessage(event, "error_guild_max_count_limit_has_reached")
+				return botlib.ReturnErrMessage(event, "error_guild_max_count_limit_has_reached", "", "")
 			}
 			err = b.DB.GuildData().Set(gData.ID, gData)
 			if err != nil {
@@ -546,7 +546,7 @@ func roleComponentCreateHandler(b *botlib.Bot) func(event *events.ComponentInter
 					Description: translate.Message(event.Locale(), "command_text_role_panel_create_edit_panel_create_add_list_embed_description"),
 				},
 			}
-			embeds = botlib.SetEmbedProperties(embeds)
+			embeds = botlib.SetEmbedsProperties(embeds)
 			_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
 				Embeds:     &embeds,
 				Components: &[]discord.ContainerComponent{},
@@ -560,7 +560,7 @@ func roleComponentCreateHandler(b *botlib.Bot) func(event *events.ComponentInter
 	}
 }
 
-func roleComponentChangeSettingsHandler(b *botlib.Bot) func(event *events.ComponentInteractionCreate) error {
+func roleComponentChangeSettingsHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		return event.CreateModal(discord.ModalCreate{
 			CustomID: fmt.Sprintf("%s:%s", event.Data.CustomID(), event.StringSelectMenuInteractionData().Values[0]),
@@ -581,7 +581,7 @@ func roleComponentChangeSettingsHandler(b *botlib.Bot) func(event *events.Compon
 	}
 }
 
-func roleComponentEditPanelSettingsHandler(b *botlib.Bot) func(event *events.ComponentInteractionCreate) error {
+func roleComponentEditPanelSettingsHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
@@ -594,7 +594,7 @@ func roleComponentEditPanelSettingsHandler(b *botlib.Bot) func(event *events.Com
 			return botlib.ReturnErr(event, err)
 		}
 		embeds := rp.EditPanelSettingsEmbed()
-		embeds = botlib.SetEmbedProperties(embeds)
+		embeds = botlib.SetEmbedsProperties(embeds)
 		components := rp.EditPanelSettingsComponent()
 		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
 			Embeds:     &embeds,
@@ -607,7 +607,7 @@ func roleComponentEditPanelSettingsHandler(b *botlib.Bot) func(event *events.Com
 	}
 }
 
-func roleComponentEditPanelInfoHandler(b *botlib.Bot) func(event *events.ComponentInteractionCreate) error {
+func roleComponentEditPanelInfoHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
@@ -646,7 +646,7 @@ func roleComponentEditPanelInfoHandler(b *botlib.Bot) func(event *events.Compone
 	}
 }
 
-func roleComponentEditRoleDeleteHandler(b *botlib.Bot) func(event *events.ComponentInteractionCreate) error {
+func roleComponentEditRoleDeleteHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
@@ -665,7 +665,7 @@ func roleComponentEditRoleDeleteHandler(b *botlib.Bot) func(event *events.Compon
 			return botlib.ReturnErr(event, err)
 		}
 		embeds := rp.BaseMenuEmbed()
-		embeds = botlib.SetEmbedProperties(embeds)
+		embeds = botlib.SetEmbedsProperties(embeds)
 		components := rp.BaseMenuComponent()
 		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
 			Embeds:     &embeds,
@@ -679,7 +679,7 @@ func roleComponentEditRoleDeleteHandler(b *botlib.Bot) func(event *events.Compon
 	}
 }
 
-func roleComponentEditRoleEmojiHandler(b *botlib.Bot) func(event *events.ComponentInteractionCreate) error {
+func roleComponentEditRoleEmojiHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
@@ -696,7 +696,7 @@ func roleComponentEditRoleEmojiHandler(b *botlib.Bot) func(event *events.Compone
 
 		cancel := func(bt bot.Client) error {
 			embeds := rp.EditRoleMenuEmbed(roleID)
-			embeds = botlib.SetEmbedProperties(embeds)
+			embeds = botlib.SetEmbedsProperties(embeds)
 			_, err := bt.Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
 				Embeds: &embeds,
 				Components: &[]discord.ContainerComponent{
@@ -716,10 +716,10 @@ func roleComponentEditRoleEmojiHandler(b *botlib.Bot) func(event *events.Compone
 			ChannelID: channel.ID,
 			AuthorID:  &author.User.ID,
 			Handler: func(event *events.MessageCreate) error {
-				if event.Message.Author.ID != author.User.ID || !structs.Twemoji.MatchString(event.Message.Content) {
+				if event.Message.Author.ID != author.User.ID || !emoji.Twemoji.MatchString(event.Message.Content) {
 					return nil
 				}
-				matches := structs.Twemoji.FindAllString(event.Message.Content, -1)
+				matches := emoji.Twemoji.FindAllString(event.Message.Content, -1)
 				role.Emoji = botlib.ParseComponentEmoji(matches[0])
 				remove()
 				removeButton()
@@ -755,7 +755,7 @@ func roleComponentEditRoleEmojiHandler(b *botlib.Bot) func(event *events.Compone
 				Description: translate.Message(event.Locale(), "command_text_role_panel_create_edit_role_emoji_embed_description"),
 			},
 		}
-		embeds = botlib.SetEmbedProperties(embeds)
+		embeds = botlib.SetEmbedsProperties(embeds)
 		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
 			Embeds: &embeds,
 			Components: &[]discord.ContainerComponent{
@@ -779,7 +779,7 @@ func roleComponentEditRoleEmojiHandler(b *botlib.Bot) func(event *events.Compone
 	}
 }
 
-func roleComponentEditRoleInfoHandler(b *botlib.Bot) func(event *events.ComponentInteractionCreate) error {
+func roleComponentEditRoleInfoHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
@@ -820,7 +820,7 @@ func roleComponentEditRoleInfoHandler(b *botlib.Bot) func(event *events.Componen
 	}
 }
 
-func roleComponentAddRoleSelectMenuHandler(b *botlib.Bot) func(event *events.ComponentInteractionCreate) error {
+func roleComponentAddRoleSelectMenuHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
@@ -835,7 +835,7 @@ func roleComponentAddRoleSelectMenuHandler(b *botlib.Bot) func(event *events.Com
 
 		self, valid := event.Client().Caches().SelfMember(*event.GuildID())
 		if !valid {
-			return botlib.ReturnErrMessage(event, "error_bot_member_not_found")
+			return botlib.ReturnErrMessage(event, "error_bot_member_not_found", "", "")
 		}
 		roleMap := make(map[snowflake.ID]discord.Role)
 		for _, i2 := range self.RoleIDs {
@@ -871,7 +871,7 @@ func roleComponentAddRoleSelectMenuHandler(b *botlib.Bot) func(event *events.Com
 		}
 
 		embeds := rp.BaseMenuEmbed()
-		embeds = botlib.SetEmbedProperties(embeds)
+		embeds = botlib.SetEmbedsProperties(embeds)
 		components := rp.BaseMenuComponent()
 		b.Logger.Debugf("%+v", components)
 		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
@@ -885,7 +885,7 @@ func roleComponentAddRoleSelectMenuHandler(b *botlib.Bot) func(event *events.Com
 	}
 }
 
-func roleComponentAddRoleHandler(b *botlib.Bot) func(event *events.ComponentInteractionCreate) error {
+func roleComponentAddRoleHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
@@ -898,7 +898,7 @@ func roleComponentAddRoleHandler(b *botlib.Bot) func(event *events.ComponentInte
 			return botlib.ReturnErr(event, err)
 		}
 		embeds := rp.AddRoleMenuEmbed()
-		embeds = botlib.SetEmbedProperties(embeds)
+		embeds = botlib.SetEmbedsProperties(embeds)
 		components := rp.AddRoleMenuComponent()
 		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
 			Embeds:     &embeds,
@@ -911,7 +911,7 @@ func roleComponentAddRoleHandler(b *botlib.Bot) func(event *events.ComponentInte
 	}
 }
 
-func roleComponentBackMainMenuHandler(b *botlib.Bot) func(event *events.ComponentInteractionCreate) error {
+func roleComponentBackMainMenuHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		var err error
 		args := strings.Split(event.Data.CustomID(), ":")
@@ -924,7 +924,7 @@ func roleComponentBackMainMenuHandler(b *botlib.Bot) func(event *events.Componen
 			return botlib.ReturnErr(event, err)
 		}
 		embeds := rp.BaseMenuEmbed()
-		embeds = botlib.SetEmbedProperties(embeds)
+		embeds = botlib.SetEmbedsProperties(embeds)
 		components := rp.BaseMenuComponent()
 		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
 			Embeds:     &embeds,
@@ -937,7 +937,7 @@ func roleComponentBackMainMenuHandler(b *botlib.Bot) func(event *events.Componen
 	}
 }
 
-func roleComponentEditRoleHandler(b *botlib.Bot) func(event *events.ComponentInteractionCreate) error {
+func roleComponentEditRoleHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		var err error
 		args := strings.Split(event.Data.CustomID(), ":")
@@ -952,7 +952,7 @@ func roleComponentEditRoleHandler(b *botlib.Bot) func(event *events.ComponentInt
 		}
 		roleID := snowflake.MustParse(event.StringSelectMenuInteractionData().Values[0])
 		embeds := rp.EditRoleMenuEmbed(roleID)
-		embeds = botlib.SetEmbedProperties(embeds)
+		embeds = botlib.SetEmbedsProperties(embeds)
 		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
 			Embeds: &embeds,
 			Components: &[]discord.ContainerComponent{
@@ -966,7 +966,7 @@ func roleComponentEditRoleHandler(b *botlib.Bot) func(event *events.ComponentInt
 	}
 }
 
-func RolePanelModal(b *botlib.Bot) handler.Modal {
+func RolePanelModal(b *botlib.Bot[db.DB]) handler.Modal {
 	return handler.Modal{
 		Name: "rolepanel",
 		Handler: map[string]handler.ModalHandler{
@@ -978,7 +978,7 @@ func RolePanelModal(b *botlib.Bot) handler.Modal {
 	}
 }
 
-func roleModalChangeSettingsHandler(b *botlib.Bot) func(event *events.ModalSubmitInteractionCreate) error {
+func roleModalChangeSettingsHandler(b *botlib.Bot[db.DB]) func(event *events.ModalSubmitInteractionCreate) error {
 	return func(event *events.ModalSubmitInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID, ":")
 		panelID := uuid.MustParse(args[3])
@@ -992,7 +992,7 @@ func roleModalChangeSettingsHandler(b *botlib.Bot) func(event *events.ModalSubmi
 		}
 		value, err := strconv.ParseInt(event.ModalSubmitInteraction.Data.Text("value"), 10, 64)
 		if err != nil || value < 1 || value > 25 {
-			return botlib.ReturnErrMessage(event, "error_out_of_range_select_menu")
+			return botlib.ReturnErrMessage(event, "error_out_of_range_select_menu", "", "")
 		}
 		switch args[4] {
 		case "max":
@@ -1008,7 +1008,7 @@ func roleModalChangeSettingsHandler(b *botlib.Bot) func(event *events.ModalSubmi
 			return botlib.ReturnErr(event, err)
 		}
 		embeds := rp.EditPanelSettingsEmbed()
-		embeds = botlib.SetEmbedProperties(embeds)
+		embeds = botlib.SetEmbedsProperties(embeds)
 		components := rp.EditPanelSettingsComponent()
 		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
 			Embeds:     &embeds,
@@ -1021,7 +1021,7 @@ func roleModalChangeSettingsHandler(b *botlib.Bot) func(event *events.ModalSubmi
 	}
 }
 
-func roleModalEditPanelInfoHandler(b *botlib.Bot) func(event *events.ModalSubmitInteractionCreate) error {
+func roleModalEditPanelInfoHandler(b *botlib.Bot[db.DB]) func(event *events.ModalSubmitInteractionCreate) error {
 	return func(event *events.ModalSubmitInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID, ":")
 		panelID := uuid.MustParse(args[3])
@@ -1040,7 +1040,7 @@ func roleModalEditPanelInfoHandler(b *botlib.Bot) func(event *events.ModalSubmit
 			return botlib.ReturnErr(event, err)
 		}
 		embeds := rp.BaseMenuEmbed()
-		embeds = botlib.SetEmbedProperties(embeds)
+		embeds = botlib.SetEmbedsProperties(embeds)
 		components := rp.BaseMenuComponent()
 		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
 			Embeds:     &embeds,
@@ -1053,7 +1053,7 @@ func roleModalEditPanelInfoHandler(b *botlib.Bot) func(event *events.ModalSubmit
 	}
 }
 
-func roleModalEditRoleInfoHandler(b *botlib.Bot) func(event *events.ModalSubmitInteractionCreate) error {
+func roleModalEditRoleInfoHandler(b *botlib.Bot[db.DB]) func(event *events.ModalSubmitInteractionCreate) error {
 	return func(event *events.ModalSubmitInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID, ":")
 		panelID := uuid.MustParse(args[3])
@@ -1075,7 +1075,7 @@ func roleModalEditRoleInfoHandler(b *botlib.Bot) func(event *events.ModalSubmitI
 		}
 
 		embeds := rp.EditRoleMenuEmbed(roleID)
-		embeds = botlib.SetEmbedProperties(embeds)
+		embeds = botlib.SetEmbedsProperties(embeds)
 		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
 			Embeds: &embeds,
 			Components: &[]discord.ContainerComponent{
@@ -1089,7 +1089,7 @@ func roleModalEditRoleInfoHandler(b *botlib.Bot) func(event *events.ModalSubmitI
 	}
 }
 
-func roleModalCreateHandler(b *botlib.Bot) func(event *events.ModalSubmitInteractionCreate) error {
+func roleModalCreateHandler(b *botlib.Bot[db.DB]) func(event *events.ModalSubmitInteractionCreate) error {
 	return func(event *events.ModalSubmitInteractionCreate) error {
 		var err error
 		rp := db.NewRolePanelCreate(event.ModalSubmitInteraction.Data.Text("name"), event.ModalSubmitInteraction.Data.Text("description"), event.Locale())
@@ -1102,7 +1102,7 @@ func roleModalCreateHandler(b *botlib.Bot) func(event *events.ModalSubmitInterac
 			return botlib.ReturnErr(event, err)
 		}
 		embeds := rp.BaseMenuEmbed()
-		embeds = botlib.SetEmbedProperties(embeds)
+		embeds = botlib.SetEmbedsProperties(embeds)
 		components := rp.BaseMenuComponent()
 		err = event.CreateMessage(discord.MessageCreate{
 			Flags:      discord.MessageFlagEphemeral,
