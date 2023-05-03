@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/sabafly/sabafly-lib/db"
 )
 
 type DBConfig struct {
@@ -13,7 +14,7 @@ type DBConfig struct {
 }
 
 type DB interface {
-	Close() error
+	db.DB
 	PollCreate() PollCreateDB
 	Poll() PollDB
 	RolePanelCreate() RolePanelCreateDB

@@ -3,12 +3,13 @@ package commands
 import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
-	botlib "github.com/sabafly/gobot/lib/bot"
-	"github.com/sabafly/gobot/lib/handler"
-	"github.com/sabafly/gobot/lib/translate"
+	"github.com/sabafly/gobot/bot/db"
+	botlib "github.com/sabafly/sabafly-lib/bot"
+	"github.com/sabafly/sabafly-lib/handler"
+	"github.com/sabafly/sabafly-lib/translate"
 )
 
-func Ping(b *botlib.Bot) handler.Command {
+func Ping(b *botlib.Bot[db.DB]) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
 			Name:         "ping",
@@ -21,7 +22,7 @@ func Ping(b *botlib.Bot) handler.Command {
 	}
 }
 
-func pingHandler(b *botlib.Bot) handler.CommandHandler {
+func pingHandler(b *botlib.Bot[db.DB]) handler.CommandHandler {
 	return func(e *events.ApplicationCommandInteractionCreate) error {
 		embeds := []discord.Embed{}
 		embeds = append(embeds, discord.Embed{
@@ -33,7 +34,7 @@ func pingHandler(b *botlib.Bot) handler.CommandHandler {
 				},
 			},
 		})
-		embeds = botlib.SetEmbedProperties(embeds)
+		embeds = botlib.SetEmbedsProperties(embeds)
 		err := e.CreateMessage(discord.MessageCreate{
 			Embeds: embeds,
 		})

@@ -32,15 +32,25 @@ import (
 	"github.com/google/uuid"
 	"github.com/mattn/go-colorable"
 	"github.com/sabafly/gobot/bot/commands"
+	"github.com/sabafly/gobot/bot/db"
 	"github.com/sirupsen/logrus"
 
-	botlib "github.com/sabafly/gobot/lib/bot"
-	"github.com/sabafly/gobot/lib/handler"
+	botlib "github.com/sabafly/sabafly-lib/bot"
+	"github.com/sabafly/sabafly-lib/handler"
+	"github.com/sabafly/sabafly-lib/translate"
 )
 
 var (
 	version = "dev"
 )
+
+func init() {
+	if _, err := translate.LoadTranslations("lang/"); err != nil {
+		panic(err)
+	}
+	botlib.BotName = "gobot"
+	botlib.Color = 0x89d53c
+}
 
 func Run(file_path string) {
 
@@ -76,12 +86,18 @@ func Run(file_path string) {
 	logger.Infof("Starting bot version: %s", version)
 	logger.Infof("Syncing commands? %t", cfg.ShouldSyncCommands)
 
-	b := botlib.New(logger, version, *cfg)
+	b := botlib.New[db.DB](logger, version, *cfg)
+
+	b.DB, err = db.SetupDatabase(db.DBConfig(b.Config.DBConfig))
+	if err != nil {
+		panic(err)
+	}
 
 	b.Handler.AddExclude(b.Config.Dislog.WebhookChannel)
 
 	b.Logger.Infof("dev guilds %v", b.Config.DevGuildIDs)
 	b.Handler.DevGuildID = b.Config.DevGuildIDs
+	b.Handler.IsDebug = b.Config.DevMode
 
 	b.Handler.AddCommands(
 		commands.Ping(b),

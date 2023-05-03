@@ -3,12 +3,13 @@ package commands
 import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
-	botlib "github.com/sabafly/gobot/lib/bot"
-	"github.com/sabafly/gobot/lib/handler"
-	"github.com/sabafly/gobot/lib/translate"
+	"github.com/sabafly/gobot/bot/db"
+	botlib "github.com/sabafly/sabafly-lib/bot"
+	"github.com/sabafly/sabafly-lib/handler"
+	"github.com/sabafly/sabafly-lib/translate"
 )
 
-func RolePanel(b *botlib.Bot) handler.Command {
+func RolePanel(b *botlib.Bot[db.DB]) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
 			Name:         "role-panel",
@@ -21,11 +22,11 @@ func RolePanel(b *botlib.Bot) handler.Command {
 	}
 }
 
-func rolePanelHandler(b *botlib.Bot) func(event *events.ApplicationCommandInteractionCreate) error {
+func rolePanelHandler(b *botlib.Bot[db.DB]) func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		gData, err := b.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
-			return botlib.ReturnErrMessage(event, "error_has_no_data")
+			return botlib.ReturnErrMessage(event, "error_has_no_data", "", "")
 		}
 		options := []discord.StringSelectMenuOption{}
 		for u, gdrp := range gData.RolePanel {
@@ -43,14 +44,14 @@ func rolePanelHandler(b *botlib.Bot) func(event *events.ApplicationCommandIntera
 			})
 		}
 		if len(options) == 0 {
-			return botlib.ReturnErrMessage(event, "error_has_no_panel")
+			return botlib.ReturnErrMessage(event, "error_has_no_panel", "", "")
 		}
 		embeds := []discord.Embed{
 			{
 				Title: translate.Message(event.Locale(), "role_panel"),
 			},
 		}
-		embeds = botlib.SetEmbedProperties(embeds)
+		embeds = botlib.SetEmbedsProperties(embeds)
 		err = event.CreateMessage(discord.MessageCreate{
 			Embeds: embeds,
 			Components: []discord.ContainerComponent{
