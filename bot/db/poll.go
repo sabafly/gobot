@@ -21,6 +21,8 @@ type PollDB interface {
 	Del(id uuid.UUID) error
 }
 
+var _ PollDB = (*pollDBImpl)(nil)
+
 type pollDBImpl struct {
 	db *redis.Client
 }

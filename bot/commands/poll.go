@@ -1332,7 +1332,7 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot[db.DB]) func(e *events.Compone
 			AuthorID:  &e.Member().User.ID,
 			Check: func(ctx *events.MessageCreate) bool {
 				b.Logger.Debug("check")
-				return emoji.Twemoji.MatchString(ctx.Message.Content)
+				return emoji.MatchString(ctx.Message.Content)
 			},
 			Handler: func(event *events.MessageCreate) error {
 				b.Logger.Debug("called message")

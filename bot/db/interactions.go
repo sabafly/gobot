@@ -6,13 +6,12 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/sabafly/sabafly-lib/db"
 )
 
-type InteractionsDB interface {
-	Get(id uuid.UUID) (string, error)
-	Set(id uuid.UUID, token string) error
-	Remove(id uuid.UUID) error
-}
+type InteractionsDB db.DBRecord[string, uuid.UUID]
+
+var _ InteractionsDB = (*interactionsImpl)(nil)
 
 type interactionsImpl struct {
 	db *redis.Client
@@ -38,7 +37,7 @@ func (i *interactionsImpl) Set(id uuid.UUID, token string) error {
 	return nil
 }
 
-func (i *interactionsImpl) Remove(id uuid.UUID) error {
+func (i *interactionsImpl) Del(id uuid.UUID) error {
 	res := i.db.Del(context.TODO(), "interactions"+id.String())
 	if err := res.Err(); err != nil {
 		return err

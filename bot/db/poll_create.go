@@ -18,6 +18,8 @@ import (
 
 type PollCreateDB db.DBRecord[PollCreate, uuid.UUID]
 
+var _ PollCreateDB = (*pollCreateDBImpl)(nil)
+
 type pollCreateDBImpl struct {
 	db *redis.Client
 }

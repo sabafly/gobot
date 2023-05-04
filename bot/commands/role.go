@@ -134,7 +134,7 @@ func rolePanelListHandler(b *botlib.Bot[db.DB]) func(event *events.ApplicationCo
 				mes, err := event.Client().Rest().GetMessage(rp.ChannelID, rp.MessageID)
 				if err != nil {
 					delete(gData.RolePanel, u)
-					err := b.DB.RolePanel().Remove(u)
+					err := b.DB.RolePanel().Del(u)
 					if err != nil {
 						return botlib.ReturnErr(event, err)
 					}
@@ -258,7 +258,7 @@ func roleComponentDeleteHandler(b *botlib.Bot[db.DB]) func(event *events.Compone
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		err = b.DB.RolePanel().Remove(panelID)
+		err = b.DB.RolePanel().Del(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -716,10 +716,10 @@ func roleComponentEditRoleEmojiHandler(b *botlib.Bot[db.DB]) func(event *events.
 			ChannelID: channel.ID,
 			AuthorID:  &author.User.ID,
 			Handler: func(event *events.MessageCreate) error {
-				if event.Message.Author.ID != author.User.ID || !emoji.Twemoji.MatchString(event.Message.Content) {
+				if event.Message.Author.ID != author.User.ID || !emoji.MatchString(event.Message.Content) {
 					return nil
 				}
-				matches := emoji.Twemoji.FindAllString(event.Message.Content, -1)
+				matches := emoji.FindAllString(event.Message.Content)
 				role.Emoji = botlib.ParseComponentEmoji(matches[0])
 				remove()
 				removeButton()
