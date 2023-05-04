@@ -42,6 +42,8 @@ func SetupDatabase(cfg DBConfig) (DB, error) {
 	}, nil
 }
 
+var _ DB = (*dbImpl)(nil)
+
 type dbImpl struct {
 	db              *redis.Client
 	pollCreate      *pollCreateDBImpl

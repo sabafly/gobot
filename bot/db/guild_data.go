@@ -7,13 +7,12 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/sabafly/sabafly-lib/db"
 )
 
-type GuildDataDB interface {
-	Get(snowflake.ID) (GuildData, error)
-	Set(snowflake.ID, GuildData) error
-	Remove(snowflake.ID) error
-}
+type GuildDataDB db.DBRecord[GuildData, snowflake.ID]
+
+var _ GuildDataDB = (*guildDataDBImpl)(nil)
 
 type guildDataDBImpl struct {
 	db *redis.Client
@@ -44,7 +43,7 @@ func (g *guildDataDBImpl) Set(id snowflake.ID, data GuildData) error {
 	return nil
 }
 
-func (g *guildDataDBImpl) Remove(id snowflake.ID) error {
+func (g *guildDataDBImpl) Del(id snowflake.ID) error {
 	res := g.db.HDel(context.TODO(), "guild-data", id.String())
 	if err := res.Err(); err != nil {
 		return err

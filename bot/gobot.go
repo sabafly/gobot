@@ -45,15 +45,14 @@ var (
 )
 
 func init() {
-	if _, err := translate.LoadTranslations("lang/"); err != nil {
-		panic(err)
-	}
 	botlib.BotName = "gobot"
 	botlib.Color = 0x89d53c
 }
 
-func Run(file_path string) {
-
+func Run(file_path, lang_path string) {
+	if _, err := translate.LoadTranslations(lang_path); err != nil {
+		panic(err)
+	}
 	cfg, err := botlib.LoadConfig(file_path)
 	if err != nil {
 		panic("failed to load config: " + err.Error())

@@ -16,8 +16,10 @@ import (
 type RolePanelDB interface {
 	Get(uuid.UUID) (RolePanel, error)
 	Set(RolePanel) error
-	Remove(uuid.UUID) error
+	Del(uuid.UUID) error
 }
+
+var _ RolePanelDB = (*rolePanelDBImpl)(nil)
 
 type rolePanelDBImpl struct {
 	db *redis.Client
@@ -47,7 +49,7 @@ func (r *rolePanelDBImpl) Set(data RolePanel) error {
 	return nil
 }
 
-func (r *rolePanelDBImpl) Remove(id uuid.UUID) error {
+func (r *rolePanelDBImpl) Del(id uuid.UUID) error {
 	res := r.db.HDel(context.TODO(), "rolepanel", id.String())
 	if err := res.Err(); err != nil {
 		return err

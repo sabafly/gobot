@@ -23,6 +23,9 @@ func main() {
 
 func init() {
 	botCmd.Flags().String("config", "config.json", "config file of bot")
+	botCmd.Flag("config").Shorthand = "c"
+	botCmd.Flags().String("lang", "lang", "lang file path")
+	botCmd.Flag("lang").Shorthand = "l"
 	root.AddCommand(botCmd)
 }
 
@@ -35,6 +38,6 @@ var botCmd = &cobra.Command{
 		"config",
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		bot.Run(cmd.Flag("config").Value.String())
+		bot.Run(cmd.Flag("config").Value.String(), cmd.Flag("lang").Value.String())
 	},
 }

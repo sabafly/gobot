@@ -11,13 +11,12 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/sabafly/sabafly-lib/db"
 )
 
-type CalcDB interface {
-	Get(uuid.UUID) (Calc, error)
-	Set(uuid.UUID, Calc) error
-	Remove(uuid.UUID) error
-}
+type CalcDB db.DBRecord[Calc, uuid.UUID]
+
+var _ CalcDB = (*CalcDBImpl)(nil)
 
 type CalcDBImpl struct {
 	db *redis.Client
@@ -49,7 +48,7 @@ func (c *CalcDBImpl) Set(id uuid.UUID, data Calc) error {
 	return nil
 }
 
-func (c *CalcDBImpl) Remove(id uuid.UUID) error {
+func (c *CalcDBImpl) Del(id uuid.UUID) error {
 	res := c.db.Del(context.TODO(), id.String())
 	if err := res.Err(); err != nil {
 		return err
