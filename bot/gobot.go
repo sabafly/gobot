@@ -105,6 +105,7 @@ func Run(file_path, lang_path string) {
 		commands.RolePanel(b),
 		commands.Util(b),
 		commands.Admin(b),
+		commands.About(b),
 	)
 
 	b.Handler.AddComponents(

@@ -3,14 +3,14 @@ module github.com/sabafly/gobot
 go 1.20
 
 require (
-	github.com/disgoorg/disgo v0.16.3
+	github.com/disgoorg/disgo v0.16.4
 	github.com/disgoorg/dislog v1.1.0
 	github.com/disgoorg/json v1.0.0
 	github.com/disgoorg/snowflake/v2 v2.0.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/uuid v1.3.0
 	github.com/mattn/go-colorable v0.1.13
-	github.com/sabafly/sabafly-lib v0.3.2
+	github.com/sabafly/sabafly-lib v1.0.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.7.0
 )
@@ -30,8 +30,8 @@ require (
 	github.com/sasha-s/go-csync v0.0.0-20210812194225-61421b77c44b // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/crypto v0.8.0 // indirect
-	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
-	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/exp v0.0.0-20230425010034-47ecfdc1ba53 // indirect
+	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
