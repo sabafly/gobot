@@ -169,11 +169,6 @@ func Run(file_path, lang_path string) {
 		b.Handler.SyncCommands(b.Client, guilds...)
 	}
 
-	if err := b.Client.OpenGateway(context.TODO()); err != nil {
-		b.Logger.Fatalf("failed to open gateway: %s", err)
-	}
-	defer b.Client.Gateway().Close(context.TODO())
-
 	if err := b.Client.OpenShardManager(context.TODO()); err != nil {
 		b.Logger.Fatalf("failed to open shard manager: %s", err)
 	}
