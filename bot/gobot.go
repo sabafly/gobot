@@ -174,6 +174,7 @@ func Run(file_path, lang_path string) {
 	}
 	defer b.Client.ShardManager().Close(context.TODO())
 
+	b.Logger.Infof("shard count: %d", len(b.Client.ShardManager().Shards()))
 	b.Logger.Info("Bot is running. Press CTRL-C to exit.")
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
