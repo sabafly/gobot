@@ -1328,7 +1328,7 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot[db.DB]) func(e *events.Compone
 		var removeButton func()
 		remove = b.Handler.AddMessage(handler.Message{
 			UUID:      uuid.New(),
-			ChannelID: channel.ID,
+			ChannelID: &channel.ID,
 			AuthorID:  &e.Member().User.ID,
 			Check: func(ctx *events.MessageCreate) bool {
 				b.Logger.Debug("check")
