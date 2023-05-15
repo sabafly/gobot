@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/disgoorg/disgo v0.16.4
 	github.com/disgoorg/dislog v1.1.0
-	github.com/disgoorg/json v1.0.0
+	github.com/disgoorg/json v1.1.0
 	github.com/disgoorg/snowflake/v2 v2.0.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/uuid v1.3.0
