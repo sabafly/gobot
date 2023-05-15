@@ -12,8 +12,8 @@ github.com/disgoorg/disgo v0.16.4 h1:O3qihEjfnJOPcEFqMwcM2h5k1B+B0ac4xj5YV/mT0to
 github.com/disgoorg/disgo v0.16.4/go.mod h1:hUkznOmm+f+owh/MuOBX0sDviQV5cL0FqcWbpIyV1Y0=
 github.com/disgoorg/dislog v1.1.0 h1:BhFzCyBL1Fo9JQ+Mze411JBRf9Epqp2jJYHcSoQSSj4=
 github.com/disgoorg/dislog v1.1.0/go.mod h1:MO9pSb/rIpiMXpMOX6yIbjiry0Vw0FUCmA7KP0cTlnY=
-github.com/disgoorg/json v1.0.0 h1:kDhSM661fgIuNoZF3BO5/odaR5NSq80AWb937DH+Pdo=
-github.com/disgoorg/json v1.0.0/go.mod h1:BHDwdde0rpQFDVsRLKhma6Y7fTbQKub/zdGO5O9NqqA=
+github.com/disgoorg/json v1.1.0 h1:7xigHvomlVA9PQw9bMGO02PHGJJPqvX5AnwlYg/Tnys=
+github.com/disgoorg/json v1.1.0/go.mod h1:BHDwdde0rpQFDVsRLKhma6Y7fTbQKub/zdGO5O9NqqA=
 github.com/disgoorg/log v1.2.0 h1:sqlXnu/ZKAlIlHV9IO+dbMto7/hCQ474vlIdMWk8QKo=
 github.com/disgoorg/log v1.2.0/go.mod h1:3x1KDG6DI1CE2pDwi3qlwT3wlXpeHW/5rVay+1qDqOo=
 github.com/disgoorg/paginator v0.0.0-20230104145353-f988d828ede9 h1:h7feN1V8sRJGKtd/5g8FtKT0IcVyCKABRSECOEf3oYc=
