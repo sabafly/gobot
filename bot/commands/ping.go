@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/sabafly/gobot/bot/db"
@@ -29,8 +31,8 @@ func pingHandler(b *botlib.Bot[db.DB]) handler.CommandHandler {
 			Title: "🏓 " + translate.Message(e.Locale(), "command_text_ping_response_embed_title"),
 			Fields: []discord.EmbedField{
 				{
-					Name:  "DiscordAPI",
-					Value: e.Client().Gateway().Latency().String(),
+					Name:  fmt.Sprintf("DiscordAPI(#%d)", e.ShardID()),
+					Value: e.Client().ShardManager().Shard(e.ShardID()).Latency().String(),
 				},
 			},
 		})
