@@ -109,7 +109,7 @@ func Poll(b *botlib.Bot[db.DB]) handler.Command {
 			if ctx.Member() != nil && ctx.Member().Permissions.Has(permission) {
 				return true
 			}
-			_ = botlib.ReturnErrMessage(ctx, "error_no_permission", "", "", map[string]any{"Name": permission.String()})
+			_ = botlib.ReturnErrMessage(ctx, "error_no_permission", botlib.WithTranslateData(map[string]any{"Name": permission.String()}))
 			return false
 		},
 		CommandHandlers: map[string]handler.CommandHandler{

@@ -55,7 +55,7 @@ func Role(b *botlib.Bot[db.DB]) handler.Command {
 			if ctx.Member() != nil && ctx.Member().Permissions.Has(permission) {
 				return true
 			}
-			_ = botlib.ReturnErrMessage(ctx, "error_no_permission", "", "", map[string]any{"Name": permission.String()})
+			_ = botlib.ReturnErrMessage(ctx, "error_no_permission", botlib.WithTranslateData(map[string]any{"Name": permission.String()}))
 			return false
 		},
 		CommandHandlers: map[string]handler.CommandHandler{
@@ -70,7 +70,7 @@ func rolePanelDeleteHandler(b *botlib.Bot[db.DB]) func(event *events.Application
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		gData, err := b.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
-			return botlib.ReturnErrMessage(event, "error_has_no_data", "", "")
+			return botlib.ReturnErrMessage(event, "error_has_no_data")
 		}
 		options := []discord.StringSelectMenuOption{}
 		for u := range gData.RolePanel {
@@ -121,7 +121,7 @@ func rolePanelListHandler(b *botlib.Bot[db.DB]) func(event *events.ApplicationCo
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		gData, err := b.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
-			return botlib.ReturnErrMessage(event, "error_has_no_data", "", "")
+			return botlib.ReturnErrMessage(event, "error_has_no_data")
 		}
 		fields := []discord.EmbedField{}
 		for u, gdrp := range gData.RolePanel {
@@ -467,7 +467,7 @@ func roleComponentCreateHandler(b *botlib.Bot[db.DB]) func(event *events.Compone
 				}
 				gData.RolePanel[r.UUID()] = db.GuildDataRolePanel{OnList: false}
 				if gData.RolePanelLimit > 25 || len(gData.RolePanel) > gData.RolePanelLimit {
-					return botlib.ReturnErrMessage(event, "error_guild_max_count_limit_has_reached", "", "")
+					return botlib.ReturnErrMessage(event, "error_guild_max_count_limit_has_reached")
 				}
 				err = b.DB.GuildData().Set(gData.ID, gData)
 				if err != nil {
@@ -528,7 +528,7 @@ func roleComponentCreateHandler(b *botlib.Bot[db.DB]) func(event *events.Compone
 			}
 			gData.RolePanel[r.UUID()] = db.GuildDataRolePanel{OnList: true}
 			if gData.RolePanelLimit > 25 || len(gData.RolePanel) > gData.RolePanelLimit {
-				return botlib.ReturnErrMessage(event, "error_guild_max_count_limit_has_reached", "", "")
+				return botlib.ReturnErrMessage(event, "error_guild_max_count_limit_has_reached")
 			}
 			err = b.DB.GuildData().Set(gData.ID, gData)
 			if err != nil {
@@ -835,7 +835,7 @@ func roleComponentAddRoleSelectMenuHandler(b *botlib.Bot[db.DB]) func(event *eve
 
 		self, valid := event.Client().Caches().SelfMember(*event.GuildID())
 		if !valid {
-			return botlib.ReturnErrMessage(event, "error_bot_member_not_found", "", "")
+			return botlib.ReturnErrMessage(event, "error_bot_member_not_found")
 		}
 		roleMap := make(map[snowflake.ID]discord.Role)
 		for _, i2 := range self.RoleIDs {
@@ -992,7 +992,7 @@ func roleModalChangeSettingsHandler(b *botlib.Bot[db.DB]) func(event *events.Mod
 		}
 		value, err := strconv.ParseInt(event.ModalSubmitInteraction.Data.Text("value"), 10, 64)
 		if err != nil || value < 1 || value > 25 {
-			return botlib.ReturnErrMessage(event, "error_out_of_range_select_menu", "", "")
+			return botlib.ReturnErrMessage(event, "error_out_of_range_select_menu")
 		}
 		switch args[4] {
 		case "max":

@@ -26,7 +26,7 @@ func rolePanelHandler(b *botlib.Bot[db.DB]) func(event *events.ApplicationComman
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		gData, err := b.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
-			return botlib.ReturnErrMessage(event, "error_has_no_data", "", "")
+			return botlib.ReturnErrMessage(event, "error_has_no_data")
 		}
 		options := []discord.StringSelectMenuOption{}
 		for u, gdrp := range gData.RolePanel {
@@ -44,7 +44,7 @@ func rolePanelHandler(b *botlib.Bot[db.DB]) func(event *events.ApplicationComman
 			})
 		}
 		if len(options) == 0 {
-			return botlib.ReturnErrMessage(event, "error_has_no_panel", "", "")
+			return botlib.ReturnErrMessage(event, "error_has_no_panel")
 		}
 		embeds := []discord.Embed{
 			{

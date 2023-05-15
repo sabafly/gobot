@@ -10,7 +10,7 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/uuid v1.3.0
 	github.com/mattn/go-colorable v0.1.13
-	github.com/sabafly/sabafly-lib v1.4.0
+	github.com/sabafly/sabafly-lib v1.5.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.7.0
 )
