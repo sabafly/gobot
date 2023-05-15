@@ -84,11 +84,11 @@ func utilCalcComponentBackHandler(b *botlib.Bot[db.DB]) func(event *events.Compo
 		calcID := uuid.MustParse(args[3])
 		calc, err := b.DB.Calc().Get(calcID)
 		if err != nil {
-			return botlib.ReturnErrMessageEphemeral(event, "error_time_out", "", "", true)
+			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
 		token, err := b.DB.Interactions().Get(calcID)
 		if err != nil {
-			return botlib.ReturnErrMessageEphemeral(event, "error_time_out", "", "", true)
+			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
 		calc.Back()
 		mes, err := calc.Message(botlib.SetEmbedsProperties)
@@ -97,7 +97,7 @@ func utilCalcComponentBackHandler(b *botlib.Bot[db.DB]) func(event *events.Compo
 		}
 		err = b.DB.Calc().Set(calc.ID(), calc)
 		if err != nil {
-			return botlib.ReturnErrMessageEphemeral(event, "error_time_out", "", "", true)
+			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
 		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
 			Content:    &mes.Content,
@@ -116,11 +116,11 @@ func utilCalcComponentCEHandler(b *botlib.Bot[db.DB]) func(event *events.Compone
 		calcID := uuid.MustParse(args[3])
 		calc, err := b.DB.Calc().Get(calcID)
 		if err != nil {
-			return botlib.ReturnErrMessageEphemeral(event, "error_time_out", "", "", true)
+			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
 		token, err := b.DB.Interactions().Get(calcID)
 		if err != nil {
-			return botlib.ReturnErrMessageEphemeral(event, "error_time_out", "", "", true)
+			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
 		calc.CE()
 		mes, err := calc.Message(botlib.SetEmbedsProperties)
@@ -129,7 +129,7 @@ func utilCalcComponentCEHandler(b *botlib.Bot[db.DB]) func(event *events.Compone
 		}
 		err = b.DB.Calc().Set(calc.ID(), calc)
 		if err != nil {
-			return botlib.ReturnErrMessageEphemeral(event, "error_time_out", "", "", true)
+			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
 		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
 			Content:    &mes.Content,
@@ -148,11 +148,11 @@ func utilCalcComponentCHandler(b *botlib.Bot[db.DB]) func(event *events.Componen
 		calcID := uuid.MustParse(args[3])
 		calc, err := b.DB.Calc().Get(calcID)
 		if err != nil {
-			return botlib.ReturnErrMessageEphemeral(event, "error_time_out", "", "", true)
+			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
 		token, err := b.DB.Interactions().Get(calcID)
 		if err != nil {
-			return botlib.ReturnErrMessageEphemeral(event, "error_time_out", "", "", true)
+			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
 		calc.Reset()
 		mes, err := calc.Message(botlib.SetEmbedsProperties)
@@ -161,7 +161,7 @@ func utilCalcComponentCHandler(b *botlib.Bot[db.DB]) func(event *events.Componen
 		}
 		err = b.DB.Calc().Set(calc.ID(), calc)
 		if err != nil {
-			return botlib.ReturnErrMessageEphemeral(event, "error_time_out", "", "", true)
+			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
 		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
 			Content:    &mes.Content,
@@ -180,11 +180,11 @@ func utilCalcComponentDoHandler(b *botlib.Bot[db.DB]) func(event *events.Compone
 		calcID := uuid.MustParse(args[3])
 		calc, err := b.DB.Calc().Get(calcID)
 		if err != nil {
-			return botlib.ReturnErrMessageEphemeral(event, "error_time_out", "", "", true)
+			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
 		token, err := b.DB.Interactions().Get(calcID)
 		if err != nil {
-			return botlib.ReturnErrMessageEphemeral(event, "error_time_out", "", "", true)
+			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
 
 		calc.Do()
@@ -195,7 +195,7 @@ func utilCalcComponentDoHandler(b *botlib.Bot[db.DB]) func(event *events.Compone
 		}
 		err = b.DB.Calc().Set(calc.ID(), calc)
 		if err != nil {
-			return botlib.ReturnErrMessageEphemeral(event, "error_time_out", "", "", true)
+			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
 		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
 			Content:    &mes.Content,
@@ -214,11 +214,11 @@ func utilCalcComponentActHandler(b *botlib.Bot[db.DB]) func(event *events.Compon
 		calcID := uuid.MustParse(args[4])
 		calc, err := b.DB.Calc().Get(calcID)
 		if err != nil {
-			return botlib.ReturnErrMessageEphemeral(event, "error_time_out", "", "", true)
+			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
 		token, err := b.DB.Interactions().Get(calcID)
 		if err != nil {
-			return botlib.ReturnErrMessageEphemeral(event, "error_time_out", "", "", true)
+			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
 		switch args[3] {
 		case "plus":
@@ -236,7 +236,7 @@ func utilCalcComponentActHandler(b *botlib.Bot[db.DB]) func(event *events.Compon
 		}
 		err = b.DB.Calc().Set(calc.ID(), calc)
 		if err != nil {
-			return botlib.ReturnErrMessageEphemeral(event, "error_time_out", "", "", true)
+			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
 		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
 			Content:    &mes.Content,
@@ -255,11 +255,11 @@ func utilCalcComponentNumHandler(b *botlib.Bot[db.DB]) func(event *events.Compon
 		calcID := uuid.MustParse(args[4])
 		calc, err := b.DB.Calc().Get(calcID)
 		if err != nil {
-			return botlib.ReturnErrMessageEphemeral(event, "error_time_out", "", "", true)
+			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
 		token, err := b.DB.Interactions().Get(calcID)
 		if err != nil {
-			return botlib.ReturnErrMessageEphemeral(event, "error_time_out", "", "", true)
+			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
 		switch args[3] {
 		case "±":
@@ -290,7 +290,7 @@ func utilCalcComponentNumHandler(b *botlib.Bot[db.DB]) func(event *events.Compon
 		}
 		err = b.DB.Calc().Set(calc.ID(), calc)
 		if err != nil {
-			return botlib.ReturnErrMessageEphemeral(event, "error_time_out", "", "", true)
+			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
 		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
 			Content:    &mes.Content,
