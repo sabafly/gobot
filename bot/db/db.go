@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-redis/redis/v8"
@@ -30,6 +31,10 @@ func SetupDatabase(cfg DBConfig) (DB, error) {
 		Addr:    fmt.Sprintf("%s:%s", cfg.Host, cfg.Port),
 		DB:      cfg.DB,
 	})
+	res := db.Ping(context.TODO())
+	if err := res.Err(); err != nil {
+		return nil, err
+	}
 	return &dbImpl{
 		db:              db,
 		pollCreate:      &pollCreateDBImpl{db: db},

@@ -23,7 +23,6 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
-	"time"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/events"
@@ -154,6 +153,12 @@ func Run(file_path, lang_path string) {
 	b.Client.EventManager().AddEventListeners(&events.ListenerAdapter{
 		OnGuildJoin:  b.OnGuildJoin,
 		OnGuildLeave: b.OnGuildLeave,
+		OnGuildReady: func(event *events.GuildReady) {
+			b.Logger.Infof("guild ready: %s", event.GuildID)
+		},
+		OnGuildsReady: func(event *events.GuildsReady) {
+			b.Logger.Infof("guilds on shard %d ready", event.ShardID())
+		},
 	})
 
 	if cfg.ShouldSyncCommands {
@@ -164,13 +169,12 @@ func Run(file_path, lang_path string) {
 		b.Handler.SyncCommands(b.Client, guilds...)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err = b.Client.OpenGateway(ctx); err != nil {
-		b.Logger.Errorf("Failed to connect to gateway: %s", err)
+	if err := b.Client.OpenShardManager(context.TODO()); err != nil {
+		b.Logger.Fatalf("failed to open shard manager: %s", err)
 	}
-	defer b.Client.Close(context.TODO())
+	defer b.Client.ShardManager().Close(context.TODO())
 
+	b.Logger.Infof("shard count: %d", len(b.Client.ShardManager().Shards()))
 	b.Logger.Info("Bot is running. Press CTRL-C to exit.")
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
