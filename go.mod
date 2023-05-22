@@ -11,7 +11,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/mattn/go-colorable v0.1.13
 	github.com/sabafly/sabafly-lib v1.5.3
-	github.com/sirupsen/logrus v1.9.0
+	github.com/sirupsen/logrus v1.9.2
 	github.com/spf13/cobra v1.7.0
 )
 
