@@ -9,6 +9,7 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"github.com/sabafly/gobot/bot/db"
@@ -1328,7 +1329,7 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot[db.DB]) func(e *events.Compone
 		var removeButton func()
 		remove = b.Handler.AddMessage(handler.Message{
 			UUID:      uuid.New(),
-			ChannelID: &channel.ID,
+			ChannelID: json.Ptr(channel.ID()),
 			AuthorID:  &e.Member().User.ID,
 			Check: func(ctx *events.MessageCreate) bool {
 				b.Logger.Debug("check")

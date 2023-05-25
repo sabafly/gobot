@@ -295,7 +295,7 @@ func adminCommandApplicationCommandGet(b *botlib.Bot[db.DB]) handler.CommandHand
 						continue
 					}
 					v = botlib.SetEmbedsProperties(v)
-					_, err := botlib.SendWebhook(event.Client(), channel.ID, discord.WebhookMessageCreate{Embeds: v})
+					_, err := botlib.SendWebhook(event.Client(), channel.ID(), discord.WebhookMessageCreate{Embeds: v})
 					if err != nil {
 						return err
 					}
@@ -378,7 +378,7 @@ func adminCommandGuildGetHandler(b *botlib.Bot[db.DB]) handler.CommandHandler {
 						continue
 					}
 					v = botlib.SetEmbedsProperties(v)
-					_, err := botlib.SendWebhook(event.Client(), channel.ID, discord.WebhookMessageCreate{Embeds: v})
+					_, err := botlib.SendWebhook(event.Client(), channel.ID(), discord.WebhookMessageCreate{Embeds: v})
 					if err != nil {
 						return err
 					}
@@ -466,7 +466,7 @@ func adminCommandChannelGetHandler(b *botlib.Bot[db.DB]) handler.CommandHandler 
 						continue
 					}
 					v = botlib.SetEmbedsProperties(v)
-					_, err := event.Client().Rest().CreateMessage(channel.ID, discord.MessageCreate{
+					_, err := event.Client().Rest().CreateMessage(channel.ID(), discord.MessageCreate{
 						Embeds: v,
 					})
 					if err != nil {
@@ -578,7 +578,7 @@ func adminCommandMessageGetHandler(b *botlib.Bot[db.DB]) handler.CommandHandler 
 						continue
 					}
 					v = botlib.SetEmbedsProperties(v)
-					_, err := event.Client().Rest().CreateMessage(channel.ID, discord.MessageCreate{
+					_, err := event.Client().Rest().CreateMessage(channel.ID(), discord.MessageCreate{
 						Embeds: v,
 					})
 					if err != nil {
