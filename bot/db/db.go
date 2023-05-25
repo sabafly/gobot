@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/sabafly/sabafly-lib/db"
@@ -31,7 +32,9 @@ func SetupDatabase(cfg DBConfig) (DB, error) {
 		Addr:    fmt.Sprintf("%s:%s", cfg.Host, cfg.Port),
 		DB:      cfg.DB,
 	})
-	res := db.Ping(context.TODO())
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	res := db.Ping(ctx)
 	if err := res.Err(); err != nil {
 		return nil, err
 	}
