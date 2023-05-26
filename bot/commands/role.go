@@ -11,6 +11,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/rest"
+	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"github.com/sabafly/gobot/bot/db"
@@ -713,7 +714,7 @@ func roleComponentEditRoleEmojiHandler(b *botlib.Bot[db.DB]) func(event *events.
 		author := event.Member()
 		remove = b.Handler.AddMessage(handler.Message{
 			UUID:      uuid.New(),
-			ChannelID: &channel.ID,
+			ChannelID: json.Ptr(channel.ID()),
 			AuthorID:  &author.User.ID,
 			Handler: func(event *events.MessageCreate) error {
 				if event.Message.Author.ID != author.User.ID || !emoji.MatchString(event.Message.Content) {
