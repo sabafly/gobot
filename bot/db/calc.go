@@ -11,10 +11,13 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"github.com/sabafly/sabafly-lib/db"
 )
 
-type CalcDB db.DBRecord[Calc, uuid.UUID]
+type CalcDB interface {
+	Get(id uuid.UUID) (Calc, error)
+	Set(id uuid.UUID, data Calc) error
+	Del(id uuid.UUID) error
+}
 
 var _ CalcDB = (*CalcDBImpl)(nil)
 

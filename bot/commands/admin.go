@@ -9,12 +9,12 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/sabafly/gobot/bot/db"
-	botlib "github.com/sabafly/sabafly-lib/bot"
-	"github.com/sabafly/sabafly-lib/handler"
+	"github.com/sabafly/gobot/bot/client"
+	botlib "github.com/sabafly/sabafly-lib/v2/bot"
+	"github.com/sabafly/sabafly-lib/v2/handler"
 )
 
-func Admin(b *botlib.Bot[db.DB]) handler.Command {
+func Admin(b *botlib.Bot[*client.Client]) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
 			Name:         "admin",
@@ -169,7 +169,7 @@ func Admin(b *botlib.Bot[db.DB]) handler.Command {
 	}
 }
 
-func adminCommandGuildLeaveHandler(b *botlib.Bot[db.DB]) handler.CommandHandler {
+func adminCommandGuildLeaveHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		guildID := snowflake.MustParse(event.SlashCommandInteractionData().String("guild-id"))
 		if err := event.Client().Rest().LeaveGuild(guildID); err != nil {
@@ -182,7 +182,7 @@ func adminCommandGuildLeaveHandler(b *botlib.Bot[db.DB]) handler.CommandHandler 
 	}
 }
 
-func adminCommandApplicationCommandDelete(b *botlib.Bot[db.DB]) handler.CommandHandler {
+func adminCommandApplicationCommandDelete(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		commandID := snowflake.MustParse(event.SlashCommandInteractionData().String("command-id"))
 		var err error
@@ -204,7 +204,7 @@ func adminCommandApplicationCommandDelete(b *botlib.Bot[db.DB]) handler.CommandH
 	}
 }
 
-func adminCommandApplicationCommandGet(b *botlib.Bot[db.DB]) handler.CommandHandler {
+func adminCommandApplicationCommandGet(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		if id, ok := event.SlashCommandInteractionData().OptString("command-id"); ok {
 			var err error
@@ -306,7 +306,7 @@ func adminCommandApplicationCommandGet(b *botlib.Bot[db.DB]) handler.CommandHand
 	}
 }
 
-func adminCommandGuildGetHandler(b *botlib.Bot[db.DB]) handler.CommandHandler {
+func adminCommandGuildGetHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		if id, ok := event.SlashCommandInteractionData().OptString("guild-id"); ok {
 			guildID := snowflake.MustParse(id)
@@ -389,7 +389,7 @@ func adminCommandGuildGetHandler(b *botlib.Bot[db.DB]) handler.CommandHandler {
 	}
 }
 
-func adminCommandChannelGetHandler(b *botlib.Bot[db.DB]) handler.CommandHandler {
+func adminCommandChannelGetHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		if id, ok := event.SlashCommandInteractionData().OptString("channel-id"); ok {
 			channelID := snowflake.MustParse(id)
@@ -479,7 +479,7 @@ func adminCommandChannelGetHandler(b *botlib.Bot[db.DB]) handler.CommandHandler 
 	}
 }
 
-func adminCommandMessageGetHandler(b *botlib.Bot[db.DB]) handler.CommandHandler {
+func adminCommandMessageGetHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		channel := event.Channel()
 		channelID := snowflake.MustParse(event.SlashCommandInteractionData().String("channel-id"))

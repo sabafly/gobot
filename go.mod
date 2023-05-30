@@ -10,10 +10,12 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/uuid v1.3.0
 	github.com/mattn/go-colorable v0.1.13
-	github.com/sabafly/sabafly-lib v1.6.2
+	github.com/pelletier/go-toml/v2 v2.0.8
+	github.com/sabafly/sabafly-lib/v2 v2.0.0
 	github.com/shirou/gopsutil/v3 v3.23.4
 	github.com/sirupsen/logrus v1.9.2
 	github.com/spf13/cobra v1.7.0
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
@@ -28,7 +30,6 @@ require (
 	github.com/lufia/plan9stats v0.0.0-20230326075908-cb1d2100619a // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/nicksnyder/go-i18n/v2 v2.2.1 // indirect
-	github.com/pelletier/go-toml/v2 v2.0.8 // indirect
 	github.com/power-devops/perfstat v0.0.0-20221212215047-62379fc7944b // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/sasha-s/go-csync v0.0.0-20210812194225-61421b77c44b // indirect
@@ -40,5 +41,4 @@ require (
 	golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1 // indirect
 	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

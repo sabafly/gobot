@@ -3,13 +3,13 @@ package commands
 import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
-	"github.com/sabafly/gobot/bot/db"
-	botlib "github.com/sabafly/sabafly-lib/bot"
-	"github.com/sabafly/sabafly-lib/handler"
-	"github.com/sabafly/sabafly-lib/translate"
+	"github.com/sabafly/gobot/bot/client"
+	botlib "github.com/sabafly/sabafly-lib/v2/bot"
+	"github.com/sabafly/sabafly-lib/v2/handler"
+	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
-func RolePanel(b *botlib.Bot[db.DB]) handler.Command {
+func RolePanel(b *botlib.Bot[*client.Client]) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
 			Name:         "role-panel",
@@ -22,9 +22,9 @@ func RolePanel(b *botlib.Bot[db.DB]) handler.Command {
 	}
 }
 
-func rolePanelHandler(b *botlib.Bot[db.DB]) func(event *events.ApplicationCommandInteractionCreate) error {
+func rolePanelHandler(b *botlib.Bot[*client.Client]) func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		gData, err := b.DB.GuildData().Get(*event.GuildID())
+		gData, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_has_no_data")
 		}
@@ -33,7 +33,7 @@ func rolePanelHandler(b *botlib.Bot[db.DB]) func(event *events.ApplicationComman
 			if !gdrp.OnList {
 				continue
 			}
-			rp, err := b.DB.RolePanel().Get(u)
+			rp, err := b.Self.DB.RolePanel().Get(u)
 			if err != nil {
 				return botlib.ReturnErr(event, err)
 			}

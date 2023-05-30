@@ -22,10 +22,9 @@ func main() {
 }
 
 func init() {
-	botCmd.Flags().String("config", "config.json", "config file of bot")
-	botCmd.Flag("config").Shorthand = "c"
-	botCmd.Flags().String("lang", "lang", "lang file path")
-	botCmd.Flag("lang").Shorthand = "l"
+	botCmd.Flags().StringP("config", "c", "config.json", "config file of bot")
+	botCmd.Flags().String("gobot-config", "gobot.json", "config file of gobot")
+	botCmd.Flags().StringP("lang", "l", "lang", "lang file path")
 	root.AddCommand(botCmd)
 }
 
@@ -38,6 +37,6 @@ var botCmd = &cobra.Command{
 		"config",
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		bot.Run(cmd.Flag("config").Value.String(), cmd.Flag("lang").Value.String())
+		bot.Run(cmd.Flag("config").Value.String(), cmd.Flag("lang").Value.String(), cmd.Flag("gobot-config").Value.String())
 	},
 }

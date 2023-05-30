@@ -10,7 +10,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"github.com/sabafly/sabafly-lib/translate"
+	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
 type RolePanelDB interface {

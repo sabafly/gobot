@@ -7,10 +7,13 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"github.com/sabafly/sabafly-lib/db"
 )
 
-type GuildDataDB db.DBRecord[GuildData, snowflake.ID]
+type GuildDataDB interface {
+	Get(id snowflake.ID) (GuildData, error)
+	Set(id snowflake.ID, data GuildData) error
+	Del(id snowflake.ID) error
+}
 
 var _ GuildDataDB = (*guildDataDBImpl)(nil)
 

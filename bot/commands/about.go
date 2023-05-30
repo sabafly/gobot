@@ -5,18 +5,17 @@ import (
 	"runtime"
 	"runtime/debug"
 
-	"github.com/sabafly/gobot/bot/db"
-
 	"github.com/disgoorg/disgo"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
-	lib "github.com/sabafly/sabafly-lib"
-	botlib "github.com/sabafly/sabafly-lib/bot"
-	"github.com/sabafly/sabafly-lib/handler"
+	"github.com/sabafly/gobot/bot/client"
+	lib "github.com/sabafly/sabafly-lib/v2"
+	botlib "github.com/sabafly/sabafly-lib/v2/bot"
+	"github.com/sabafly/sabafly-lib/v2/handler"
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
-func About(b *botlib.Bot[db.DB]) handler.Command {
+func About(b *botlib.Bot[*client.Client]) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
 			Name:         "about",
@@ -29,7 +28,7 @@ func About(b *botlib.Bot[db.DB]) handler.Command {
 	}
 }
 
-func aboutCommandHandler(b *botlib.Bot[db.DB]) handler.CommandHandler {
+func aboutCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		message := discord.NewMessageCreateBuilder()
 		embed := discord.NewEmbedBuilder()

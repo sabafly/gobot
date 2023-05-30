@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/sabafly/sabafly-lib/db"
 )
 
 type DBConfig struct {
@@ -16,13 +15,14 @@ type DBConfig struct {
 }
 
 type DB interface {
-	db.DB
+	Close() error
 	PollCreate() PollCreateDB
 	Poll() PollDB
 	RolePanelCreate() RolePanelCreateDB
 	RolePanel() RolePanelDB
 	GuildData() GuildDataDB
 	Calc() CalcDB
+	MessagePin() MessagePinDB
 	Interactions() InteractionsDB
 }
 
@@ -46,6 +46,7 @@ func SetupDatabase(cfg DBConfig) (DB, error) {
 		rolePanel:       &rolePanelDBImpl{db: db},
 		guildData:       &guildDataDBImpl{db: db},
 		calc:            &CalcDBImpl{db: db},
+		messagePin:      &messagePinDBImpl{db: db},
 		interactions:    &interactionsImpl{db: db},
 	}, nil
 }
@@ -60,6 +61,7 @@ type dbImpl struct {
 	rolePanel       *rolePanelDBImpl
 	guildData       *guildDataDBImpl
 	calc            *CalcDBImpl
+	messagePin      *messagePinDBImpl
 	interactions    *interactionsImpl
 }
 
@@ -85,6 +87,10 @@ func (d *dbImpl) GuildData() GuildDataDB {
 
 func (d *dbImpl) Calc() CalcDB {
 	return d.calc
+}
+
+func (d *dbImpl) MessagePin() MessagePinDB {
+	return d.messagePin
 }
 
 func (d *dbImpl) Interactions() InteractionsDB {
