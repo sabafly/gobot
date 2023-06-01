@@ -121,7 +121,7 @@ func Run(file_path, lang_path, gobot_path string) {
 		commands.Util(b),
 		commands.Admin(b),
 		commands.About(b),
-		commands.Message(b),
+		// commands.Message(b),
 	)
 
 	b.Handler.AddComponents(

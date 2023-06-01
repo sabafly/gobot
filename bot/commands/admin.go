@@ -12,6 +12,7 @@ import (
 	"github.com/sabafly/gobot/bot/client"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
+	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
 func Admin(b *botlib.Bot[*client.Client]) handler.Command {
@@ -146,6 +147,22 @@ func Admin(b *botlib.Bot[*client.Client]) handler.Command {
 						},
 					},
 				},
+				discord.ApplicationCommandOptionSubCommand{
+					Name:        "translate",
+					Description: "for debug translate module",
+					Options: []discord.ApplicationCommandOption{
+						discord.ApplicationCommandOptionString{
+							Name:        "locale",
+							Description: "locale id",
+							Required:    true,
+						},
+						discord.ApplicationCommandOptionString{
+							Name:        "translate-key",
+							Description: "translate key",
+							Required:    true,
+						},
+					},
+				},
 			},
 		},
 		CommandHandlers: map[string]handler.CommandHandler{
@@ -155,6 +172,7 @@ func Admin(b *botlib.Bot[*client.Client]) handler.Command {
 			"guild/leave":                adminCommandGuildLeaveHandler(b),
 			"application/command-get":    adminCommandApplicationCommandGet(b),
 			"application/command-delete": adminCommandApplicationCommandDelete(b),
+			"translate":                  adminCommandTranslateHandler(b),
 		},
 		Check: func(ctx *events.ApplicationCommandInteractionCreate) bool {
 			if b.CheckDev(ctx.User().ID) {
@@ -586,6 +604,15 @@ func adminCommandMessageGetHandler(b *botlib.Bot[*client.Client]) handler.Comman
 					}
 				}
 			}
+		}
+		return nil
+	}
+}
+
+func adminCommandTranslateHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+	return func(event *events.ApplicationCommandInteractionCreate) error {
+		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent(translate.Message(discord.Locale(event.SlashCommandInteractionData().String("locale")), event.SlashCommandInteractionData().String("translate-key"))).Build()); err != nil {
+			return botlib.ReturnErr(event, err)
 		}
 		return nil
 	}
