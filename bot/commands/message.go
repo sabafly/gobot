@@ -95,7 +95,7 @@ func messageModalPinCreate(b *botlib.Bot[*client.Client]) handler.ModalHandler {
 		}
 		wmc := discord.WebhookMessageCreate{
 			Content:   content,
-			Username:  "Pinned Message",
+			Username:  translate.Message(event.Locale(), "command_message_pin_create_pinned_message"),
 			AvatarURL: b.Self.Config.MessagePinAvatarURL,
 		}
 		m, err := botlib.SendWebhook(event.Client(), event.Channel().ID(), wmc)
