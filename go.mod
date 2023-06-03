@@ -11,7 +11,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/mattn/go-colorable v0.1.13
 	github.com/pelletier/go-toml/v2 v2.0.8
-	github.com/sabafly/sabafly-lib/v2 v2.0.0
+	github.com/sabafly/sabafly-lib/v2 v2.1.0
 	github.com/shirou/gopsutil/v3 v3.23.4
 	github.com/sirupsen/logrus v1.9.2
 	github.com/spf13/cobra v1.7.0

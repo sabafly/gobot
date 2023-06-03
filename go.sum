@@ -61,6 +61,8 @@ github.com/rivo/uniseg v0.4.4/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUc
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/sabafly/sabafly-lib/v2 v2.0.0 h1:uUDOGFEDRnSGb3MPXUQyfngfqqVSEYVozlPhAh0kGpc=
 github.com/sabafly/sabafly-lib/v2 v2.0.0/go.mod h1:fOWyzLZj+XPqiPJe+MWosXot1JJWHYFopUdhgB0VR2s=
+github.com/sabafly/sabafly-lib/v2 v2.1.0 h1:oDiBB9lwVa38/Y4/56AZS6f0GA/9tsfUvI2K+PwS97U=
+github.com/sabafly/sabafly-lib/v2 v2.1.0/go.mod h1:sa4HQMLC4/Ote//ietBvEHA9SFNIJOdYFdGD/OwHR5w=
 github.com/sasha-s/go-csync v0.0.0-20210812194225-61421b77c44b h1:qYTY2tN72LhgDj2rtWG+LI6TXFl2ygFQQ4YezfVaGQE=
 github.com/sasha-s/go-csync v0.0.0-20210812194225-61421b77c44b/go.mod h1:/pA7k3zsXKdjjAiUhB5CjuKib9KJGCaLvZwtxGC8U0s=
 github.com/shirou/gopsutil/v3 v3.23.4 h1:hZwmDxZs7Ewt75DV81r4pFMqbq+di2cbt9FsQBqLD2o=
