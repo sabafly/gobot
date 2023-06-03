@@ -14,11 +14,17 @@ import (
 )
 
 type Config struct {
-	DBConfig db.DBConfig `json:"db_config"`
+	DBConfig            db.DBConfig `json:"db_config"`
+	MessagePinAvatarURL string      `json:"message_pin_avatar_url"`
 }
 
 var defaultConfig = Config{
-	DBConfig: db.DBConfig{},
+	DBConfig: db.DBConfig{
+		Host: "localhost",
+		Port: "6379",
+		DB:   0,
+	},
+	MessagePinAvatarURL: "",
 }
 
 func LoadConfig(config_filepath string) (*Config, error) {

@@ -136,14 +136,19 @@ func Run(file_path, lang_path, gobot_path string) {
 		commands.MessageModal(b),
 	)
 
+	b.Handler.AddMessage(commands.MessagePinMessageCreate(b))
+
 	b.Handler.AddReady(func(r *events.Ready) {
 		b.Logger.Info("Ready!")
 		polls, err := b.Self.DB.Poll().GetAll()
-		if err != nil {
-			logger.Fatal(err)
-		}
+		if err == nil {
 		for _, p := range polls {
 			go commands.End(b, p)
+			}
+		}
+		mp, err := b.Self.DB.MessagePin().GetAll()
+		if err == nil {
+			b.Self.MessagePin = mp
 		}
 	})
 

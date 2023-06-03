@@ -1,6 +1,9 @@
 package client
 
-import "github.com/sabafly/gobot/bot/db"
+import (
+	"github.com/disgoorg/snowflake/v2"
+	"github.com/sabafly/gobot/bot/db"
+)
 
 func New(cfg *Config, db db.DB) (*Client, error) {
 	return &Client{
@@ -10,6 +13,7 @@ func New(cfg *Config, db db.DB) (*Client, error) {
 }
 
 type Client struct {
-	Config *Config
-	DB     db.DB
+	Config     *Config
+	DB         db.DB
+	MessagePin map[snowflake.ID]db.GuildMessagePins
 }
