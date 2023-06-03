@@ -5,13 +5,13 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
-	"github.com/sabafly/gobot/bot/db"
-	botlib "github.com/sabafly/sabafly-lib/bot"
-	"github.com/sabafly/sabafly-lib/handler"
-	"github.com/sabafly/sabafly-lib/translate"
+	"github.com/sabafly/gobot/bot/client"
+	botlib "github.com/sabafly/sabafly-lib/v2/bot"
+	"github.com/sabafly/sabafly-lib/v2/handler"
+	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
-func Ping(b *botlib.Bot[db.DB]) handler.Command {
+func Ping(b *botlib.Bot[*client.Client]) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
 			Name:         "ping",
@@ -24,7 +24,7 @@ func Ping(b *botlib.Bot[db.DB]) handler.Command {
 	}
 }
 
-func pingHandler(b *botlib.Bot[db.DB]) handler.CommandHandler {
+func pingHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(e *events.ApplicationCommandInteractionCreate) error {
 		embeds := []discord.Embed{}
 		embeds = append(embeds, discord.Embed{

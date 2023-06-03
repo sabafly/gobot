@@ -30,13 +30,15 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"github.com/mattn/go-colorable"
+	"github.com/sabafly/gobot/bot/client"
 	"github.com/sabafly/gobot/bot/commands"
 	"github.com/sabafly/gobot/bot/db"
 	"github.com/sirupsen/logrus"
 
-	botlib "github.com/sabafly/sabafly-lib/bot"
-	"github.com/sabafly/sabafly-lib/handler"
-	"github.com/sabafly/sabafly-lib/translate"
+	botlib "github.com/sabafly/sabafly-lib/v2/bot"
+	"github.com/sabafly/sabafly-lib/v2/handler"
+	"github.com/sabafly/sabafly-lib/v2/logging"
+	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
 var (
@@ -48,7 +50,7 @@ func init() {
 	botlib.Color = 0x89d53c
 }
 
-func Run(file_path, lang_path string) {
+func Run(file_path, lang_path, gobot_path string) {
 	if _, err := translate.LoadTranslations(lang_path); err != nil {
 		panic(err)
 	}
@@ -72,6 +74,14 @@ func Run(file_path, lang_path string) {
 		panic(err)
 	}
 	logger.SetLevel(lvl)
+	l, err := logging.New(logging.Config{
+		FilePath:  "./logs",
+		LogLevels: logrus.AllLevels,
+	})
+	if err != nil {
+		panic(err)
+	}
+	logger.AddHook(l)
 	dlog, err := dislog.New(
 		dislog.WithLogLevels(dislog.TraceLevelAndAbove...),
 		dislog.WithWebhookIDToken(cfg.Dislog.WebhookID, cfg.Dislog.WebhookToken),
@@ -84,9 +94,24 @@ func Run(file_path, lang_path string) {
 	logger.Infof("Starting bot version: %s", version)
 	logger.Infof("Syncing commands? %t", cfg.ShouldSyncCommands)
 
-	b := botlib.New[db.DB](logger, version, *cfg)
+	b := botlib.New[*client.Client](logger, version, *cfg)
 
-	b.DB, err = db.SetupDatabase(db.DBConfig(b.Config.DBConfig))
+	gobot_cfg, err := client.LoadConfig(gobot_path)
+	if err != nil {
+		panic(err)
+	}
+	d, err := db.SetupDatabase(gobot_cfg.DBConfig)
+	if err != nil {
+		panic(err)
+	}
+	cl, err := client.New(gobot_cfg, d)
+	if err != nil {
+		panic(err)
+	}
+
+	b.Self = cl
+
+	b.Self.DB, err = db.SetupDatabase(b.Self.Config.DBConfig)
 	if err != nil {
 		panic(err)
 	}
@@ -96,6 +121,7 @@ func Run(file_path, lang_path string) {
 	b.Logger.Infof("dev guilds %v", b.Config.DevGuildIDs)
 	b.Handler.DevGuildID = b.Config.DevGuildIDs
 	b.Handler.IsDebug = b.Config.DevMode
+	b.Handler.IsLogEvent = true
 
 	b.Handler.AddCommands(
 		commands.Ping(b),
@@ -105,6 +131,7 @@ func Run(file_path, lang_path string) {
 		commands.Util(b),
 		commands.Admin(b),
 		commands.About(b),
+		commands.Message(b),
 	)
 
 	b.Handler.AddComponents(
@@ -116,11 +143,12 @@ func Run(file_path, lang_path string) {
 	b.Handler.AddModals(
 		commands.PollModal(b),
 		commands.RolePanelModal(b),
+		commands.MessageModal(b),
 	)
 
 	b.Handler.AddReady(func(r *events.Ready) {
 		b.Logger.Info("Ready!")
-		polls, err := b.DB.Poll().GetAll()
+		polls, err := b.Self.DB.Poll().GetAll()
 		if err != nil {
 			logger.Fatal(err)
 		}

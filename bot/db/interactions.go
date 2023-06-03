@@ -6,10 +6,13 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"github.com/sabafly/sabafly-lib/db"
 )
 
-type InteractionsDB db.DBRecord[string, uuid.UUID]
+type InteractionsDB interface {
+	Get(id uuid.UUID) (string, error)
+	Set(id uuid.UUID, token string) error
+	Del(id uuid.UUID) error
+}
 
 var _ InteractionsDB = (*interactionsImpl)(nil)
 

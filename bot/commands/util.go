@@ -6,12 +6,13 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/google/uuid"
+	"github.com/sabafly/gobot/bot/client"
 	"github.com/sabafly/gobot/bot/db"
-	botlib "github.com/sabafly/sabafly-lib/bot"
-	"github.com/sabafly/sabafly-lib/handler"
+	botlib "github.com/sabafly/sabafly-lib/v2/bot"
+	"github.com/sabafly/sabafly-lib/v2/handler"
 )
 
-func Util(b *botlib.Bot[db.DB]) handler.Command {
+func Util(b *botlib.Bot[*client.Client]) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
 			Name:         "util",
@@ -37,14 +38,14 @@ func Util(b *botlib.Bot[db.DB]) handler.Command {
 	}
 }
 
-func utilCommandCalcHandler(b *botlib.Bot[db.DB]) func(event *events.ApplicationCommandInteractionCreate) error {
+func utilCommandCalcHandler(b *botlib.Bot[*client.Client]) func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		calc := db.NewCalc()
-		err := b.DB.Calc().Set(calc.ID(), calc)
+		err := b.Self.DB.Calc().Set(calc.ID(), calc)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		err = b.DB.Interactions().Set(calc.ID(), event.Token())
+		err = b.Self.DB.Interactions().Set(calc.ID(), event.Token())
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -64,7 +65,7 @@ func utilCommandCalcHandler(b *botlib.Bot[db.DB]) func(event *events.Application
 	}
 }
 
-func UtilCalcComponent(b *botlib.Bot[db.DB]) handler.Component {
+func UtilCalcComponent(b *botlib.Bot[*client.Client]) handler.Component {
 	return handler.Component{
 		Name: "utilcalc",
 		Handler: map[string]handler.ComponentHandler{
@@ -78,15 +79,15 @@ func UtilCalcComponent(b *botlib.Bot[db.DB]) handler.Component {
 	}
 }
 
-func utilCalcComponentBackHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func utilCalcComponentBackHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		calcID := uuid.MustParse(args[3])
-		calc, err := b.DB.Calc().Get(calcID)
+		calc, err := b.Self.DB.Calc().Get(calcID)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
-		token, err := b.DB.Interactions().Get(calcID)
+		token, err := b.Self.DB.Interactions().Get(calcID)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
@@ -95,7 +96,7 @@ func utilCalcComponentBackHandler(b *botlib.Bot[db.DB]) func(event *events.Compo
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		err = b.DB.Calc().Set(calc.ID(), calc)
+		err = b.Self.DB.Calc().Set(calc.ID(), calc)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
@@ -110,15 +111,15 @@ func utilCalcComponentBackHandler(b *botlib.Bot[db.DB]) func(event *events.Compo
 	}
 }
 
-func utilCalcComponentCEHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func utilCalcComponentCEHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		calcID := uuid.MustParse(args[3])
-		calc, err := b.DB.Calc().Get(calcID)
+		calc, err := b.Self.DB.Calc().Get(calcID)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
-		token, err := b.DB.Interactions().Get(calcID)
+		token, err := b.Self.DB.Interactions().Get(calcID)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
@@ -127,7 +128,7 @@ func utilCalcComponentCEHandler(b *botlib.Bot[db.DB]) func(event *events.Compone
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		err = b.DB.Calc().Set(calc.ID(), calc)
+		err = b.Self.DB.Calc().Set(calc.ID(), calc)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
@@ -142,15 +143,15 @@ func utilCalcComponentCEHandler(b *botlib.Bot[db.DB]) func(event *events.Compone
 	}
 }
 
-func utilCalcComponentCHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func utilCalcComponentCHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		calcID := uuid.MustParse(args[3])
-		calc, err := b.DB.Calc().Get(calcID)
+		calc, err := b.Self.DB.Calc().Get(calcID)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
-		token, err := b.DB.Interactions().Get(calcID)
+		token, err := b.Self.DB.Interactions().Get(calcID)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
@@ -159,7 +160,7 @@ func utilCalcComponentCHandler(b *botlib.Bot[db.DB]) func(event *events.Componen
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		err = b.DB.Calc().Set(calc.ID(), calc)
+		err = b.Self.DB.Calc().Set(calc.ID(), calc)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
@@ -174,15 +175,15 @@ func utilCalcComponentCHandler(b *botlib.Bot[db.DB]) func(event *events.Componen
 	}
 }
 
-func utilCalcComponentDoHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func utilCalcComponentDoHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		calcID := uuid.MustParse(args[3])
-		calc, err := b.DB.Calc().Get(calcID)
+		calc, err := b.Self.DB.Calc().Get(calcID)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
-		token, err := b.DB.Interactions().Get(calcID)
+		token, err := b.Self.DB.Interactions().Get(calcID)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
@@ -193,7 +194,7 @@ func utilCalcComponentDoHandler(b *botlib.Bot[db.DB]) func(event *events.Compone
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		err = b.DB.Calc().Set(calc.ID(), calc)
+		err = b.Self.DB.Calc().Set(calc.ID(), calc)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
@@ -208,15 +209,15 @@ func utilCalcComponentDoHandler(b *botlib.Bot[db.DB]) func(event *events.Compone
 	}
 }
 
-func utilCalcComponentActHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func utilCalcComponentActHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		calcID := uuid.MustParse(args[4])
-		calc, err := b.DB.Calc().Get(calcID)
+		calc, err := b.Self.DB.Calc().Get(calcID)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
-		token, err := b.DB.Interactions().Get(calcID)
+		token, err := b.Self.DB.Interactions().Get(calcID)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
@@ -234,7 +235,7 @@ func utilCalcComponentActHandler(b *botlib.Bot[db.DB]) func(event *events.Compon
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		err = b.DB.Calc().Set(calc.ID(), calc)
+		err = b.Self.DB.Calc().Set(calc.ID(), calc)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
@@ -249,15 +250,15 @@ func utilCalcComponentActHandler(b *botlib.Bot[db.DB]) func(event *events.Compon
 	}
 }
 
-func utilCalcComponentNumHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func utilCalcComponentNumHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		calcID := uuid.MustParse(args[4])
-		calc, err := b.DB.Calc().Get(calcID)
+		calc, err := b.Self.DB.Calc().Get(calcID)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
-		token, err := b.DB.Interactions().Get(calcID)
+		token, err := b.Self.DB.Interactions().Get(calcID)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}
@@ -288,7 +289,7 @@ func utilCalcComponentNumHandler(b *botlib.Bot[db.DB]) func(event *events.Compon
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		err = b.DB.Calc().Set(calc.ID(), calc)
+		err = b.Self.DB.Calc().Set(calc.ID(), calc)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_time_out", botlib.WithEphemeral(true))
 		}

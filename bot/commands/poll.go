@@ -12,14 +12,15 @@ import (
 	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+	"github.com/sabafly/gobot/bot/client"
 	"github.com/sabafly/gobot/bot/db"
-	botlib "github.com/sabafly/sabafly-lib/bot"
-	"github.com/sabafly/sabafly-lib/emoji"
-	"github.com/sabafly/sabafly-lib/handler"
-	"github.com/sabafly/sabafly-lib/translate"
+	botlib "github.com/sabafly/sabafly-lib/v2/bot"
+	"github.com/sabafly/sabafly-lib/v2/emoji"
+	"github.com/sabafly/sabafly-lib/v2/handler"
+	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
-func Poll(b *botlib.Bot[db.DB]) handler.Command {
+func Poll(b *botlib.Bot[*client.Client]) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
 			Name:         "poll",
@@ -119,7 +120,7 @@ func Poll(b *botlib.Bot[db.DB]) handler.Command {
 	}
 }
 
-func pollCreateHandler(b *botlib.Bot[db.DB]) func(e *events.ApplicationCommandInteractionCreate) error {
+func pollCreateHandler(b *botlib.Bot[*client.Client]) func(e *events.ApplicationCommandInteractionCreate) error {
 	return func(e *events.ApplicationCommandInteractionCreate) error {
 		timeLimit := time.Date(e.SlashCommandInteractionData().Int("timeyear"), time.Month(e.SlashCommandInteractionData().Int("timemonth")), e.SlashCommandInteractionData().Int("timeday"), e.SlashCommandInteractionData().Int("timehour"), e.SlashCommandInteractionData().Int("timeminute"), 0, 0, time.FixedZone("", e.SlashCommandInteractionData().Int("timezone")*60*60))
 		if time.Now().After(timeLimit) {
@@ -148,17 +149,17 @@ func pollCreateHandler(b *botlib.Bot[db.DB]) func(e *events.ApplicationCommandIn
 		if err != nil {
 			return err
 		}
-		if err := b.DB.PollCreate().Set(v.ID, v); err != nil {
+		if err := b.Self.DB.PollCreate().Set(v.ID, v); err != nil {
 			return err
 		}
-		if err := b.DB.Interactions().Set(v.ID, e.Token()); err != nil {
+		if err := b.Self.DB.Interactions().Set(v.ID, e.Token()); err != nil {
 			return err
 		}
 		return nil
 	}
 }
 
-func PollComponent(b *botlib.Bot[db.DB]) handler.Component {
+func PollComponent(b *botlib.Bot[*client.Client]) handler.Component {
 	return handler.Component{
 		Name: "poll",
 		Handler: map[string]handler.ComponentHandler{
@@ -184,14 +185,14 @@ func PollComponent(b *botlib.Bot[db.DB]) handler.Component {
 	}
 }
 
-func pollComponentChangePollInfo(b *botlib.Bot[db.DB]) func(e *events.ComponentInteractionCreate) error {
+func pollComponentChangePollInfo(b *botlib.Bot[*client.Client]) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
 		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
-		v, err := b.DB.PollCreate().Get(id)
+		v, err := b.Self.DB.PollCreate().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -237,14 +238,14 @@ func pollComponentChangePollInfo(b *botlib.Bot[db.DB]) func(e *events.ComponentI
 	}
 }
 
-func pollComponentSeeResultDo(b *botlib.Bot[db.DB]) func(e *events.ComponentInteractionCreate) error {
+func pollComponentSeeResultDo(b *botlib.Bot[*client.Client]) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
 		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
-		p, err := b.DB.Poll().Get(id)
+		p, err := b.Self.DB.Poll().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -255,7 +256,7 @@ func pollComponentSeeResultDo(b *botlib.Bot[db.DB]) func(e *events.ComponentInte
 			}
 			return err
 		}
-		token, err := b.DB.Interactions().Get(uuid.MustParse(args[4]))
+		token, err := b.Self.DB.Interactions().Get(uuid.MustParse(args[4]))
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -314,14 +315,14 @@ func pollComponentSeeResultDo(b *botlib.Bot[db.DB]) func(e *events.ComponentInte
 	}
 }
 
-func pollComponentSeeResult(b *botlib.Bot[db.DB]) func(e *events.ComponentInteractionCreate) error {
+func pollComponentSeeResult(b *botlib.Bot[*client.Client]) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
 		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
-		p, err := b.DB.Poll().Get(id)
+		p, err := b.Self.DB.Poll().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -333,7 +334,7 @@ func pollComponentSeeResult(b *botlib.Bot[db.DB]) func(e *events.ComponentIntera
 			return err
 		}
 		tokenID := uuid.New()
-		err = b.DB.Interactions().Set(tokenID, e.Token())
+		err = b.Self.DB.Interactions().Set(tokenID, e.Token())
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -356,14 +357,14 @@ func pollComponentSeeResult(b *botlib.Bot[db.DB]) func(e *events.ComponentIntera
 	}
 }
 
-func pollComponentSeeInfoDo(b *botlib.Bot[db.DB]) func(e *events.ComponentInteractionCreate) error {
+func pollComponentSeeInfoDo(b *botlib.Bot[*client.Client]) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
 		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
-		p, err := b.DB.Poll().Get(id)
+		p, err := b.Self.DB.Poll().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -374,7 +375,7 @@ func pollComponentSeeInfoDo(b *botlib.Bot[db.DB]) func(e *events.ComponentIntera
 			}
 			return err
 		}
-		token, err := b.DB.Interactions().Get(uuid.MustParse(args[4]))
+		token, err := b.Self.DB.Interactions().Get(uuid.MustParse(args[4]))
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -443,14 +444,14 @@ func pollComponentSeeInfoDo(b *botlib.Bot[db.DB]) func(e *events.ComponentIntera
 	}
 }
 
-func pollComponentSeeInfo(b *botlib.Bot[db.DB]) func(e *events.ComponentInteractionCreate) error {
+func pollComponentSeeInfo(b *botlib.Bot[*client.Client]) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
 		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
-		p, err := b.DB.Poll().Get(id)
+		p, err := b.Self.DB.Poll().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -481,7 +482,7 @@ func pollComponentSeeInfo(b *botlib.Bot[db.DB]) func(e *events.ComponentInteract
 			}
 		}
 		tokenID := uuid.New()
-		err = b.DB.Interactions().Set(tokenID, e.Token())
+		err = b.Self.DB.Interactions().Set(tokenID, e.Token())
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -504,14 +505,14 @@ func pollComponentSeeInfo(b *botlib.Bot[db.DB]) func(e *events.ComponentInteract
 	}
 }
 
-func pollComponentVoteDo(b *botlib.Bot[db.DB]) func(e *events.ComponentInteractionCreate) error {
+func pollComponentVoteDo(b *botlib.Bot[*client.Client]) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
 		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
-		p, err := b.DB.Poll().Get(id)
+		p, err := b.Self.DB.Poll().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -544,7 +545,7 @@ func pollComponentVoteDo(b *botlib.Bot[db.DB]) func(e *events.ComponentInteracti
 			p.Choices[choiceID] = choice
 			voted += fmt.Sprintf("%s | %s\r", botlib.FormatComponentEmoji(*choice.Emoji), choice.Name)
 		}
-		err = b.DB.Poll().Del(p.ID)
+		err = b.Self.DB.Poll().Del(p.ID)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -555,7 +556,7 @@ func pollComponentVoteDo(b *botlib.Bot[db.DB]) func(e *events.ComponentInteracti
 			}
 			return err
 		}
-		err = b.DB.Poll().Set(p.ID, p)
+		err = b.Self.DB.Poll().Set(p.ID, p)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -566,7 +567,7 @@ func pollComponentVoteDo(b *botlib.Bot[db.DB]) func(e *events.ComponentInteracti
 			}
 			return err
 		}
-		token, err := b.DB.Interactions().Get(uuid.MustParse(args[4]))
+		token, err := b.Self.DB.Interactions().Get(uuid.MustParse(args[4]))
 		if err != nil {
 			b.Logger.Error(err)
 		}
@@ -602,14 +603,14 @@ func pollComponentVoteDo(b *botlib.Bot[db.DB]) func(e *events.ComponentInteracti
 	}
 }
 
-func pollComponentVote(b *botlib.Bot[db.DB]) func(e *events.ComponentInteractionCreate) error {
+func pollComponentVote(b *botlib.Bot[*client.Client]) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
 		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
-		p, err := b.DB.Poll().Get(id)
+		p, err := b.Self.DB.Poll().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -662,21 +663,21 @@ func pollComponentVote(b *botlib.Bot[db.DB]) func(e *events.ComponentInteraction
 		if err != nil {
 			return err
 		}
-		if err := b.DB.Interactions().Set(tokenID, e.Token()); err != nil {
+		if err := b.Self.DB.Interactions().Set(tokenID, e.Token()); err != nil {
 			return err
 		}
 		return nil
 	}
 }
 
-func pollComponentCreate(b *botlib.Bot[db.DB]) func(e *events.ComponentInteractionCreate) error {
+func pollComponentCreate(b *botlib.Bot[*client.Client]) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
 		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
-		v, err := b.DB.PollCreate().Get(id)
+		v, err := b.Self.DB.PollCreate().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -687,7 +688,7 @@ func pollComponentCreate(b *botlib.Bot[db.DB]) func(e *events.ComponentInteracti
 			}
 			return err
 		}
-		token, err := b.DB.Interactions().Get(id)
+		token, err := b.Self.DB.Interactions().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -747,14 +748,14 @@ func pollComponentCreate(b *botlib.Bot[db.DB]) func(e *events.ComponentInteracti
 	}
 }
 
-func pollComponentCreateDo(b *botlib.Bot[db.DB]) func(e *events.ComponentInteractionCreate) error {
+func pollComponentCreateDo(b *botlib.Bot[*client.Client]) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
 		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
-		v, err := b.DB.PollCreate().Get(id)
+		v, err := b.Self.DB.PollCreate().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -765,7 +766,7 @@ func pollComponentCreateDo(b *botlib.Bot[db.DB]) func(e *events.ComponentInterac
 			}
 			return err
 		}
-		token, err := b.DB.Interactions().Get(id)
+		token, err := b.Self.DB.Interactions().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -797,7 +798,7 @@ func pollComponentCreateDo(b *botlib.Bot[db.DB]) func(e *events.ComponentInterac
 			return err
 		}
 		poll.MessageID = m.ID
-		err = b.DB.Poll().Set(poll.ID, poll)
+		err = b.Self.DB.Poll().Set(poll.ID, poll)
 		if err != nil {
 			return err
 		}
@@ -814,14 +815,14 @@ func pollComponentCreateDo(b *botlib.Bot[db.DB]) func(e *events.ComponentInterac
 	}
 }
 
-func pollComponentAddChoice(b *botlib.Bot[db.DB]) func(e *events.ComponentInteractionCreate) error {
+func pollComponentAddChoice(b *botlib.Bot[*client.Client]) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
 		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
-		v, err := b.DB.PollCreate().Get(id)
+		v, err := b.Self.DB.PollCreate().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -865,14 +866,14 @@ func pollComponentAddChoice(b *botlib.Bot[db.DB]) func(e *events.ComponentIntera
 	}
 }
 
-func pollComponentEditSettings(b *botlib.Bot[db.DB]) func(e *events.ComponentInteractionCreate) error {
+func pollComponentEditSettings(b *botlib.Bot[*client.Client]) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
 		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
-		v, err := b.DB.PollCreate().Get(id)
+		v, err := b.Self.DB.PollCreate().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -883,7 +884,7 @@ func pollComponentEditSettings(b *botlib.Bot[db.DB]) func(e *events.ComponentInt
 			}
 			return err
 		}
-		token, err := b.DB.Interactions().Get(id)
+		token, err := b.Self.DB.Interactions().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -919,14 +920,14 @@ func pollComponentEditSettings(b *botlib.Bot[db.DB]) func(e *events.ComponentInt
 	}
 }
 
-func pollComponentChangeSettingsMenu(b *botlib.Bot[db.DB]) func(e *events.ComponentInteractionCreate) error {
+func pollComponentChangeSettingsMenu(b *botlib.Bot[*client.Client]) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
 		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
-		v, err := b.DB.PollCreate().Get(id)
+		v, err := b.Self.DB.PollCreate().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -937,7 +938,7 @@ func pollComponentChangeSettingsMenu(b *botlib.Bot[db.DB]) func(e *events.Compon
 			}
 			return err
 		}
-		token, err := b.DB.Interactions().Get(id)
+		token, err := b.Self.DB.Interactions().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1009,14 +1010,14 @@ func pollComponentChangeSettingsMenu(b *botlib.Bot[db.DB]) func(e *events.Compon
 	}
 }
 
-func pollComponentChangeSettings(b *botlib.Bot[db.DB]) func(e *events.ComponentInteractionCreate) error {
+func pollComponentChangeSettings(b *botlib.Bot[*client.Client]) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
 		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
-		v, err := b.DB.PollCreate().Get(id)
+		v, err := b.Self.DB.PollCreate().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1027,7 +1028,7 @@ func pollComponentChangeSettings(b *botlib.Bot[db.DB]) func(e *events.ComponentI
 			}
 			return err
 		}
-		token, err := b.DB.Interactions().Get(id)
+		token, err := b.Self.DB.Interactions().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1099,7 +1100,7 @@ func pollComponentChangeSettings(b *botlib.Bot[db.DB]) func(e *events.ComponentI
 		if err != nil {
 			return err
 		}
-		if err := b.DB.PollCreate().Del(id); err != nil {
+		if err := b.Self.DB.PollCreate().Del(id); err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
 				Embeds: embeds,
@@ -1109,7 +1110,7 @@ func pollComponentChangeSettings(b *botlib.Bot[db.DB]) func(e *events.ComponentI
 			}
 			return err
 		}
-		if err := b.DB.PollCreate().Set(id, v); err != nil {
+		if err := b.Self.DB.PollCreate().Set(id, v); err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
 				Embeds: embeds,
@@ -1123,14 +1124,14 @@ func pollComponentChangeSettings(b *botlib.Bot[db.DB]) func(e *events.ComponentI
 	}
 }
 
-func pollComponentEditChoice(b *botlib.Bot[db.DB]) func(e *events.ComponentInteractionCreate) error {
+func pollComponentEditChoice(b *botlib.Bot[*client.Client]) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
 		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
-		v, err := b.DB.PollCreate().Get(id)
+		v, err := b.Self.DB.PollCreate().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1141,7 +1142,7 @@ func pollComponentEditChoice(b *botlib.Bot[db.DB]) func(e *events.ComponentInter
 			}
 			return err
 		}
-		token, err := b.DB.Interactions().Get(id)
+		token, err := b.Self.DB.Interactions().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1182,14 +1183,14 @@ func pollComponentEditChoice(b *botlib.Bot[db.DB]) func(e *events.ComponentInter
 	}
 }
 
-func pollComponentDeleteChoice(b *botlib.Bot[db.DB]) func(e *events.ComponentInteractionCreate) error {
+func pollComponentDeleteChoice(b *botlib.Bot[*client.Client]) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
 		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
-		v, err := b.DB.PollCreate().Get(id)
+		v, err := b.Self.DB.PollCreate().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1202,7 +1203,7 @@ func pollComponentDeleteChoice(b *botlib.Bot[db.DB]) func(e *events.ComponentInt
 		}
 		choiceID := uuid.MustParse(args[4])
 		delete(v.Choices, choiceID)
-		if err := b.DB.PollCreate().Del(id); err != nil {
+		if err := b.Self.DB.PollCreate().Del(id); err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
 				Embeds: embeds,
@@ -1212,7 +1213,7 @@ func pollComponentDeleteChoice(b *botlib.Bot[db.DB]) func(e *events.ComponentInt
 			}
 			return err
 		}
-		if err := b.DB.PollCreate().Set(id, v); err != nil {
+		if err := b.Self.DB.PollCreate().Set(id, v); err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
 				Embeds: embeds,
@@ -1230,14 +1231,14 @@ func pollComponentDeleteChoice(b *botlib.Bot[db.DB]) func(e *events.ComponentInt
 	}
 }
 
-func pollComponentChangeChoiceInfo(b *botlib.Bot[db.DB]) func(e *events.ComponentInteractionCreate) error {
+func pollComponentChangeChoiceInfo(b *botlib.Bot[*client.Client]) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
 		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
-		v, err := b.DB.PollCreate().Get(id)
+		v, err := b.Self.DB.PollCreate().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1284,7 +1285,7 @@ func pollComponentChangeChoiceInfo(b *botlib.Bot[db.DB]) func(e *events.Componen
 	}
 }
 
-func pollComponentChangeChoiceEmoji(b *botlib.Bot[db.DB]) func(e *events.ComponentInteractionCreate) error {
+func pollComponentChangeChoiceEmoji(b *botlib.Bot[*client.Client]) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
 		id, err := uuid.Parse(args[3])
@@ -1292,7 +1293,7 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot[db.DB]) func(e *events.Compone
 			return err
 		}
 		choiceID := uuid.MustParse(args[4])
-		v, err := b.DB.PollCreate().Get(id)
+		v, err := b.Self.DB.PollCreate().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1303,7 +1304,7 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot[db.DB]) func(e *events.Compone
 			}
 			return err
 		}
-		token, err := b.DB.Interactions().Get(id)
+		token, err := b.Self.DB.Interactions().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1346,7 +1347,7 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot[db.DB]) func(e *events.Compone
 					return err
 				}
 				// インタラクショントークンを取得
-				token, err = b.DB.Interactions().Get(id)
+				token, err = b.Self.DB.Interactions().Get(id)
 				if err != nil {
 					return err
 				}
@@ -1364,10 +1365,10 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot[db.DB]) func(e *events.Compone
 				if err != nil {
 					return err
 				}
-				if err := b.DB.PollCreate().Del(id); err != nil {
+				if err := b.Self.DB.PollCreate().Del(id); err != nil {
 					return err
 				}
-				if err := b.DB.PollCreate().Set(id, v); err != nil {
+				if err := b.Self.DB.PollCreate().Set(id, v); err != nil {
 					return err
 				}
 				return nil
@@ -1380,7 +1381,7 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot[db.DB]) func(e *events.Compone
 					b.Logger.Debug("called cancel button")
 					defer cancel()
 					// インタラクショントークンを取得
-					token, err := b.DB.Interactions().Get(id)
+					token, err := b.Self.DB.Interactions().Get(id)
 					if err != nil {
 						embeds := botlib.ErrorTraceEmbed(event.Locale(), err)
 						if err := event.CreateMessage(discord.MessageCreate{
@@ -1453,14 +1454,14 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot[db.DB]) func(e *events.Compone
 	}
 }
 
-func pollComponentBackMenu(b *botlib.Bot[db.DB]) func(e *events.ComponentInteractionCreate) error {
+func pollComponentBackMenu(b *botlib.Bot[*client.Client]) func(e *events.ComponentInteractionCreate) error {
 	return func(e *events.ComponentInteractionCreate) error {
 		args := strings.Split(e.Data.CustomID(), ":")
 		id, err := uuid.Parse(args[3])
 		if err != nil {
 			return err
 		}
-		v, err := b.DB.PollCreate().Get(id)
+		v, err := b.Self.DB.PollCreate().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1471,7 +1472,7 @@ func pollComponentBackMenu(b *botlib.Bot[db.DB]) func(e *events.ComponentInterac
 			}
 			return err
 		}
-		token, err := b.DB.Interactions().Get(id)
+		token, err := b.Self.DB.Interactions().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1508,7 +1509,7 @@ func pollComponentBackMenu(b *botlib.Bot[db.DB]) func(e *events.ComponentInterac
 	}
 }
 
-func PollModal(b *botlib.Bot[db.DB]) handler.Modal {
+func PollModal(b *botlib.Bot[*client.Client]) handler.Modal {
 	return handler.Modal{
 		Name: "poll",
 		Handler: map[string]handler.ModalHandler{
@@ -1519,7 +1520,7 @@ func PollModal(b *botlib.Bot[db.DB]) handler.Modal {
 	}
 }
 
-func pollModalAddChoice(b *botlib.Bot[db.DB]) func(*events.ModalSubmitInteractionCreate) error {
+func pollModalAddChoice(b *botlib.Bot[*client.Client]) func(*events.ModalSubmitInteractionCreate) error {
 	return func(e *events.ModalSubmitInteractionCreate) error {
 		// IDを取り出す
 		args := strings.Split(e.Data.CustomID, ":")
@@ -1535,7 +1536,7 @@ func pollModalAddChoice(b *botlib.Bot[db.DB]) func(*events.ModalSubmitInteractio
 			return err
 		}
 		// データベースから取得
-		v, err := b.DB.PollCreate().Get(id)
+		v, err := b.Self.DB.PollCreate().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1547,7 +1548,7 @@ func pollModalAddChoice(b *botlib.Bot[db.DB]) func(*events.ModalSubmitInteractio
 			return err
 		}
 		// インタラクショントークンを取得
-		token, err := b.DB.Interactions().Get(id)
+		token, err := b.Self.DB.Interactions().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1588,7 +1589,7 @@ func pollModalAddChoice(b *botlib.Bot[db.DB]) func(*events.ModalSubmitInteractio
 			}
 			return err
 		}
-		if err := b.DB.PollCreate().Del(id); err != nil {
+		if err := b.Self.DB.PollCreate().Del(id); err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
 				Embeds: embeds,
@@ -1598,7 +1599,7 @@ func pollModalAddChoice(b *botlib.Bot[db.DB]) func(*events.ModalSubmitInteractio
 			}
 			return err
 		}
-		if err := b.DB.PollCreate().Set(id, v); err != nil {
+		if err := b.Self.DB.PollCreate().Set(id, v); err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
 				Embeds: embeds,
@@ -1642,7 +1643,7 @@ func pollModalAddChoice(b *botlib.Bot[db.DB]) func(*events.ModalSubmitInteractio
 	}
 }
 
-func pollModalChangeChoiceInfo(b *botlib.Bot[db.DB]) func(*events.ModalSubmitInteractionCreate) error {
+func pollModalChangeChoiceInfo(b *botlib.Bot[*client.Client]) func(*events.ModalSubmitInteractionCreate) error {
 	return func(e *events.ModalSubmitInteractionCreate) error {
 		// IDを取り出す
 		args := strings.Split(e.Data.CustomID, ":")
@@ -1658,7 +1659,7 @@ func pollModalChangeChoiceInfo(b *botlib.Bot[db.DB]) func(*events.ModalSubmitInt
 			return err
 		}
 		// データベースから取得
-		v, err := b.DB.PollCreate().Get(id)
+		v, err := b.Self.DB.PollCreate().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1670,7 +1671,7 @@ func pollModalChangeChoiceInfo(b *botlib.Bot[db.DB]) func(*events.ModalSubmitInt
 			return err
 		}
 		// インタラクショントークンを取得
-		token, err := b.DB.Interactions().Get(id)
+		token, err := b.Self.DB.Interactions().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1705,7 +1706,7 @@ func pollModalChangeChoiceInfo(b *botlib.Bot[db.DB]) func(*events.ModalSubmitInt
 			}
 			return err
 		}
-		if err := b.DB.PollCreate().Del(id); err != nil {
+		if err := b.Self.DB.PollCreate().Del(id); err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
 				Embeds: embeds,
@@ -1715,7 +1716,7 @@ func pollModalChangeChoiceInfo(b *botlib.Bot[db.DB]) func(*events.ModalSubmitInt
 			}
 			return err
 		}
-		if err := b.DB.PollCreate().Set(id, v); err != nil {
+		if err := b.Self.DB.PollCreate().Set(id, v); err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
 				Embeds: embeds,
@@ -1759,7 +1760,7 @@ func pollModalChangeChoiceInfo(b *botlib.Bot[db.DB]) func(*events.ModalSubmitInt
 	}
 }
 
-func pollModalChangePollInfo(b *botlib.Bot[db.DB]) func(*events.ModalSubmitInteractionCreate) error {
+func pollModalChangePollInfo(b *botlib.Bot[*client.Client]) func(*events.ModalSubmitInteractionCreate) error {
 	return func(e *events.ModalSubmitInteractionCreate) error {
 		// IDを取り出す
 		args := strings.Split(e.Data.CustomID, ":")
@@ -1775,7 +1776,7 @@ func pollModalChangePollInfo(b *botlib.Bot[db.DB]) func(*events.ModalSubmitInter
 			return err
 		}
 		// データベースから取得
-		v, err := b.DB.PollCreate().Get(id)
+		v, err := b.Self.DB.PollCreate().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1787,7 +1788,7 @@ func pollModalChangePollInfo(b *botlib.Bot[db.DB]) func(*events.ModalSubmitInter
 			return err
 		}
 		// インタラクショントークンを取得
-		token, err := b.DB.Interactions().Get(id)
+		token, err := b.Self.DB.Interactions().Get(id)
 		if err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
@@ -1818,7 +1819,7 @@ func pollModalChangePollInfo(b *botlib.Bot[db.DB]) func(*events.ModalSubmitInter
 			}
 			return err
 		}
-		if err := b.DB.PollCreate().Del(id); err != nil {
+		if err := b.Self.DB.PollCreate().Del(id); err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
 				Embeds: embeds,
@@ -1828,7 +1829,7 @@ func pollModalChangePollInfo(b *botlib.Bot[db.DB]) func(*events.ModalSubmitInter
 			}
 			return err
 		}
-		if err := b.DB.PollCreate().Set(id, v); err != nil {
+		if err := b.Self.DB.PollCreate().Set(id, v); err != nil {
 			embeds := botlib.ErrorTraceEmbed(e.Locale(), err)
 			if err := e.CreateMessage(discord.MessageCreate{
 				Embeds: embeds,
@@ -1872,13 +1873,13 @@ func pollModalChangePollInfo(b *botlib.Bot[db.DB]) func(*events.ModalSubmitInter
 	}
 }
 
-func End(b *botlib.Bot[db.DB], p db.Poll) {
+func End(b *botlib.Bot[*client.Client], p db.Poll) {
 	if p.Finished {
 		return
 	}
 	time.Sleep(time.Until(time.Unix(p.EndAt, 0)))
 	b.Logger.Debug("finish vote")
-	p, err := b.DB.Poll().Get(p.ID)
+	p, err := b.Self.DB.Poll().Get(p.ID)
 	if err != nil {
 		b.Logger.Error(err)
 		return
@@ -1935,10 +1936,10 @@ func End(b *botlib.Bot[db.DB], p db.Poll) {
 		return
 	}
 	p.Finished = true
-	if err := b.DB.Poll().Del(p.ID); err != nil {
+	if err := b.Self.DB.Poll().Del(p.ID); err != nil {
 		b.Logger.Error(err)
 	}
-	if err := b.DB.Poll().Set(p.ID, p); err != nil {
+	if err := b.Self.DB.Poll().Set(p.ID, p); err != nil {
 		b.Logger.Error(err)
 	}
 }

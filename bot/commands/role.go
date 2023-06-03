@@ -14,14 +14,15 @@ import (
 	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+	"github.com/sabafly/gobot/bot/client"
 	"github.com/sabafly/gobot/bot/db"
-	botlib "github.com/sabafly/sabafly-lib/bot"
-	"github.com/sabafly/sabafly-lib/emoji"
-	"github.com/sabafly/sabafly-lib/handler"
-	"github.com/sabafly/sabafly-lib/translate"
+	botlib "github.com/sabafly/sabafly-lib/v2/bot"
+	"github.com/sabafly/sabafly-lib/v2/emoji"
+	"github.com/sabafly/sabafly-lib/v2/handler"
+	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
-func Role(b *botlib.Bot[db.DB]) handler.Command {
+func Role(b *botlib.Bot[*client.Client]) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
 			Name:         "role",
@@ -67,15 +68,15 @@ func Role(b *botlib.Bot[db.DB]) handler.Command {
 	}
 }
 
-func rolePanelDeleteHandler(b *botlib.Bot[db.DB]) func(event *events.ApplicationCommandInteractionCreate) error {
+func rolePanelDeleteHandler(b *botlib.Bot[*client.Client]) func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		gData, err := b.DB.GuildData().Get(*event.GuildID())
+		gData, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_has_no_data")
 		}
 		options := []discord.StringSelectMenuOption{}
 		for u := range gData.RolePanel {
-			rp, err := b.DB.RolePanel().Get(u)
+			rp, err := b.Self.DB.RolePanel().Get(u)
 			if err != nil {
 				delete(gData.RolePanel, u)
 			}
@@ -85,12 +86,12 @@ func rolePanelDeleteHandler(b *botlib.Bot[db.DB]) func(event *events.Application
 				Value:       rp.UUID().String(),
 			})
 		}
-		err = b.DB.GuildData().Set(gData.ID, gData)
+		err = b.Self.DB.GuildData().Set(gData.ID, gData)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
 		tokenID := uuid.New()
-		err = b.DB.Interactions().Set(tokenID, event.Token())
+		err = b.Self.DB.Interactions().Set(tokenID, event.Token())
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -118,15 +119,15 @@ func rolePanelDeleteHandler(b *botlib.Bot[db.DB]) func(event *events.Application
 	}
 }
 
-func rolePanelListHandler(b *botlib.Bot[db.DB]) func(event *events.ApplicationCommandInteractionCreate) error {
+func rolePanelListHandler(b *botlib.Bot[*client.Client]) func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		gData, err := b.DB.GuildData().Get(*event.GuildID())
+		gData, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_has_no_data")
 		}
 		fields := []discord.EmbedField{}
 		for u, gdrp := range gData.RolePanel {
-			rp, err := b.DB.RolePanel().Get(u)
+			rp, err := b.Self.DB.RolePanel().Get(u)
 			if err != nil {
 				delete(gData.RolePanel, u)
 			}
@@ -135,7 +136,7 @@ func rolePanelListHandler(b *botlib.Bot[db.DB]) func(event *events.ApplicationCo
 				mes, err := event.Client().Rest().GetMessage(rp.ChannelID, rp.MessageID)
 				if err != nil {
 					delete(gData.RolePanel, u)
-					err := b.DB.RolePanel().Del(u)
+					err := b.Self.DB.RolePanel().Del(u)
 					if err != nil {
 						return botlib.ReturnErr(event, err)
 					}
@@ -157,7 +158,7 @@ func rolePanelListHandler(b *botlib.Bot[db.DB]) func(event *events.ApplicationCo
 				}(),
 			})
 		}
-		err = b.DB.GuildData().Set(gData.ID, gData)
+		err = b.Self.DB.GuildData().Set(gData.ID, gData)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -178,7 +179,7 @@ func rolePanelListHandler(b *botlib.Bot[db.DB]) func(event *events.ApplicationCo
 	}
 }
 
-func rolePanelCreateHandler(b *botlib.Bot[db.DB]) func(event *events.ApplicationCommandInteractionCreate) error {
+func rolePanelCreateHandler(b *botlib.Bot[*client.Client]) func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		err := event.CreateModal(discord.ModalCreate{
 			Title:    translate.Message(event.Locale(), "command_text_role_panel_role_create_modal_title"),
@@ -211,7 +212,7 @@ func rolePanelCreateHandler(b *botlib.Bot[db.DB]) func(event *events.Application
 	}
 }
 
-func RolePanelComponent(b *botlib.Bot[db.DB]) handler.Component {
+func RolePanelComponent(b *botlib.Bot[*client.Client]) handler.Component {
 	return handler.Component{
 		Name: "rolepanel",
 		Handler: map[string]handler.ComponentHandler{
@@ -234,10 +235,10 @@ func RolePanelComponent(b *botlib.Bot[db.DB]) handler.Component {
 	}
 }
 
-func roleComponentCallHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func roleComponentCallHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		panelID := uuid.MustParse(event.StringSelectMenuInteractionData().Values[0])
-		rp, err := b.DB.RolePanel().Get(panelID)
+		rp, err := b.Self.DB.RolePanel().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -251,24 +252,24 @@ func roleComponentCallHandler(b *botlib.Bot[db.DB]) func(event *events.Component
 	}
 }
 
-func roleComponentDeleteHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func roleComponentDeleteHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(event.StringSelectMenuInteractionData().Values[0])
-		token, err := b.DB.Interactions().Get(uuid.MustParse(args[3]))
+		token, err := b.Self.DB.Interactions().Get(uuid.MustParse(args[3]))
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		err = b.DB.RolePanel().Del(panelID)
+		err = b.Self.DB.RolePanel().Del(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		gData, err := b.DB.GuildData().Get(*event.GuildID())
+		gData, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
 		delete(gData.RolePanel, panelID)
-		err = b.DB.GuildData().Set(gData.ID, gData)
+		err = b.Self.DB.GuildData().Set(gData.ID, gData)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -290,11 +291,11 @@ func roleComponentDeleteHandler(b *botlib.Bot[db.DB]) func(event *events.Compone
 	}
 }
 
-func roleComponentGetRole(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func roleComponentGetRole(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
-		rp, err := b.DB.RolePanel().Get(panelID)
+		rp, err := b.Self.DB.RolePanel().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -385,11 +386,11 @@ func roleComponentGetRole(b *botlib.Bot[db.DB]) func(event *events.ComponentInte
 	}
 }
 
-func roleComponentUseHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func roleComponentUseHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
-		rp, err := b.DB.RolePanel().Get(panelID)
+		rp, err := b.Self.DB.RolePanel().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -411,15 +412,15 @@ func roleComponentUseHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentI
 	}
 }
 
-func roleComponentCreateHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func roleComponentCreateHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
-		rp, err := b.DB.RolePanelCreate().Get(panelID)
+		rp, err := b.Self.DB.RolePanelCreate().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		token, err := b.DB.Interactions().Get(panelID)
+		token, err := b.Self.DB.Interactions().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -462,7 +463,7 @@ func roleComponentCreateHandler(b *botlib.Bot[db.DB]) func(event *events.Compone
 			if event.Data.Type() == discord.ComponentTypeChannelSelectMenu {
 				r := db.NewRolePanel(rp)
 
-				gData, err := b.DB.GuildData().Get(*event.GuildID())
+				gData, err := b.Self.DB.GuildData().Get(*event.GuildID())
 				if err != nil {
 					gData = db.NewGuildData(*event.GuildID())
 				}
@@ -470,7 +471,7 @@ func roleComponentCreateHandler(b *botlib.Bot[db.DB]) func(event *events.Compone
 				if gData.RolePanelLimit > 25 || len(gData.RolePanel) > gData.RolePanelLimit {
 					return botlib.ReturnErrMessage(event, "error_guild_max_count_limit_has_reached")
 				}
-				err = b.DB.GuildData().Set(gData.ID, gData)
+				err = b.Self.DB.GuildData().Set(gData.ID, gData)
 				if err != nil {
 					return botlib.ReturnErr(event, err)
 				}
@@ -483,7 +484,7 @@ func roleComponentCreateHandler(b *botlib.Bot[db.DB]) func(event *events.Compone
 				r.ChannelID = m.ChannelID
 				r.GuildID = *event.GuildID()
 
-				err = b.DB.RolePanel().Set(r)
+				err = b.Self.DB.RolePanel().Set(r)
 				if err != nil {
 					return botlib.ReturnErr(event, err)
 				}
@@ -523,7 +524,7 @@ func roleComponentCreateHandler(b *botlib.Bot[db.DB]) func(event *events.Compone
 			r := db.NewRolePanel(rp)
 			r.GuildID = *event.GuildID()
 
-			gData, err := b.DB.GuildData().Get(*event.GuildID())
+			gData, err := b.Self.DB.GuildData().Get(*event.GuildID())
 			if err != nil {
 				gData = db.NewGuildData(*event.GuildID())
 			}
@@ -531,12 +532,12 @@ func roleComponentCreateHandler(b *botlib.Bot[db.DB]) func(event *events.Compone
 			if gData.RolePanelLimit > 25 || len(gData.RolePanel) > gData.RolePanelLimit {
 				return botlib.ReturnErrMessage(event, "error_guild_max_count_limit_has_reached")
 			}
-			err = b.DB.GuildData().Set(gData.ID, gData)
+			err = b.Self.DB.GuildData().Set(gData.ID, gData)
 			if err != nil {
 				return botlib.ReturnErr(event, err)
 			}
 
-			err = b.DB.RolePanel().Set(r)
+			err = b.Self.DB.RolePanel().Set(r)
 			if err != nil {
 				return botlib.ReturnErr(event, err)
 			}
@@ -561,7 +562,7 @@ func roleComponentCreateHandler(b *botlib.Bot[db.DB]) func(event *events.Compone
 	}
 }
 
-func roleComponentChangeSettingsHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func roleComponentChangeSettingsHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		return event.CreateModal(discord.ModalCreate{
 			CustomID: fmt.Sprintf("%s:%s", event.Data.CustomID(), event.StringSelectMenuInteractionData().Values[0]),
@@ -582,15 +583,15 @@ func roleComponentChangeSettingsHandler(b *botlib.Bot[db.DB]) func(event *events
 	}
 }
 
-func roleComponentEditPanelSettingsHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func roleComponentEditPanelSettingsHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
-		rp, err := b.DB.RolePanelCreate().Get(panelID)
+		rp, err := b.Self.DB.RolePanelCreate().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		token, err := b.DB.Interactions().Get(panelID)
+		token, err := b.Self.DB.Interactions().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -608,11 +609,11 @@ func roleComponentEditPanelSettingsHandler(b *botlib.Bot[db.DB]) func(event *eve
 	}
 }
 
-func roleComponentEditPanelInfoHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func roleComponentEditPanelInfoHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
-		rp, err := b.DB.RolePanelCreate().Get(panelID)
+		rp, err := b.Self.DB.RolePanelCreate().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -647,21 +648,21 @@ func roleComponentEditPanelInfoHandler(b *botlib.Bot[db.DB]) func(event *events.
 	}
 }
 
-func roleComponentEditRoleDeleteHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func roleComponentEditRoleDeleteHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
 		roleID := snowflake.MustParse(args[4])
-		rp, err := b.DB.RolePanelCreate().Get(panelID)
+		rp, err := b.Self.DB.RolePanelCreate().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		token, err := b.DB.Interactions().Get(panelID)
+		token, err := b.Self.DB.Interactions().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
 		rp.DeleteRole(roleID)
-		err = b.DB.RolePanelCreate().Set(rp)
+		err = b.Self.DB.RolePanelCreate().Set(rp)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -680,16 +681,16 @@ func roleComponentEditRoleDeleteHandler(b *botlib.Bot[db.DB]) func(event *events
 	}
 }
 
-func roleComponentEditRoleEmojiHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func roleComponentEditRoleEmojiHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
 		roleID := snowflake.MustParse(args[4])
-		rp, err := b.DB.RolePanelCreate().Get(panelID)
+		rp, err := b.Self.DB.RolePanelCreate().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		token, err := b.DB.Interactions().Get(panelID)
+		token, err := b.Self.DB.Interactions().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -726,7 +727,7 @@ func roleComponentEditRoleEmojiHandler(b *botlib.Bot[db.DB]) func(event *events.
 				removeButton()
 
 				rp.SetRole(role.Label, role.Description, roleID, &role.Emoji)
-				err := b.DB.RolePanelCreate().Set(rp)
+				err := b.Self.DB.RolePanelCreate().Set(rp)
 				if err != nil {
 					return err
 				}
@@ -780,12 +781,12 @@ func roleComponentEditRoleEmojiHandler(b *botlib.Bot[db.DB]) func(event *events.
 	}
 }
 
-func roleComponentEditRoleInfoHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func roleComponentEditRoleInfoHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
 		roleID := snowflake.MustParse(args[4])
-		rp, err := b.DB.RolePanelCreate().Get(panelID)
+		rp, err := b.Self.DB.RolePanelCreate().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -821,15 +822,15 @@ func roleComponentEditRoleInfoHandler(b *botlib.Bot[db.DB]) func(event *events.C
 	}
 }
 
-func roleComponentAddRoleSelectMenuHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func roleComponentAddRoleSelectMenuHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
-		rp, err := b.DB.RolePanelCreate().Get(panelID)
+		rp, err := b.Self.DB.RolePanelCreate().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		token, err := b.DB.Interactions().Get(panelID)
+		token, err := b.Self.DB.Interactions().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -866,7 +867,7 @@ func roleComponentAddRoleSelectMenuHandler(b *botlib.Bot[db.DB]) func(event *eve
 			rp.SetRole(r.Name, description, r.ID, emoji)
 		}
 
-		err = b.DB.RolePanelCreate().Set(rp)
+		err = b.Self.DB.RolePanelCreate().Set(rp)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -886,15 +887,15 @@ func roleComponentAddRoleSelectMenuHandler(b *botlib.Bot[db.DB]) func(event *eve
 	}
 }
 
-func roleComponentAddRoleHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func roleComponentAddRoleHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
-		rp, err := b.DB.RolePanelCreate().Get(panelID)
+		rp, err := b.Self.DB.RolePanelCreate().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		token, err := b.DB.Interactions().Get(rp.UUID())
+		token, err := b.Self.DB.Interactions().Get(rp.UUID())
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -912,15 +913,15 @@ func roleComponentAddRoleHandler(b *botlib.Bot[db.DB]) func(event *events.Compon
 	}
 }
 
-func roleComponentBackMainMenuHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func roleComponentBackMainMenuHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		var err error
 		args := strings.Split(event.Data.CustomID(), ":")
-		rp, err := b.DB.RolePanelCreate().Get(uuid.MustParse(args[3]))
+		rp, err := b.Self.DB.RolePanelCreate().Get(uuid.MustParse(args[3]))
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		token, err := b.DB.Interactions().Get(rp.UUID())
+		token, err := b.Self.DB.Interactions().Get(rp.UUID())
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -938,16 +939,16 @@ func roleComponentBackMainMenuHandler(b *botlib.Bot[db.DB]) func(event *events.C
 	}
 }
 
-func roleComponentEditRoleHandler(b *botlib.Bot[db.DB]) func(event *events.ComponentInteractionCreate) error {
+func roleComponentEditRoleHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		var err error
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
-		rp, err := b.DB.RolePanelCreate().Get(panelID)
+		rp, err := b.Self.DB.RolePanelCreate().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		token, err := b.DB.Interactions().Get(panelID)
+		token, err := b.Self.DB.Interactions().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -967,7 +968,7 @@ func roleComponentEditRoleHandler(b *botlib.Bot[db.DB]) func(event *events.Compo
 	}
 }
 
-func RolePanelModal(b *botlib.Bot[db.DB]) handler.Modal {
+func RolePanelModal(b *botlib.Bot[*client.Client]) handler.Modal {
 	return handler.Modal{
 		Name: "rolepanel",
 		Handler: map[string]handler.ModalHandler{
@@ -979,15 +980,15 @@ func RolePanelModal(b *botlib.Bot[db.DB]) handler.Modal {
 	}
 }
 
-func roleModalChangeSettingsHandler(b *botlib.Bot[db.DB]) func(event *events.ModalSubmitInteractionCreate) error {
+func roleModalChangeSettingsHandler(b *botlib.Bot[*client.Client]) func(event *events.ModalSubmitInteractionCreate) error {
 	return func(event *events.ModalSubmitInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID, ":")
 		panelID := uuid.MustParse(args[3])
-		rp, err := b.DB.RolePanelCreate().Get(panelID)
+		rp, err := b.Self.DB.RolePanelCreate().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		token, err := b.DB.Interactions().Get(panelID)
+		token, err := b.Self.DB.Interactions().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -1004,7 +1005,7 @@ func roleModalChangeSettingsHandler(b *botlib.Bot[db.DB]) func(event *events.Mod
 			return botlib.ReturnErr(event, errors.New("invalid args"))
 		}
 		rp.Validate()
-		err = b.DB.RolePanelCreate().Set(rp)
+		err = b.Self.DB.RolePanelCreate().Set(rp)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -1022,21 +1023,21 @@ func roleModalChangeSettingsHandler(b *botlib.Bot[db.DB]) func(event *events.Mod
 	}
 }
 
-func roleModalEditPanelInfoHandler(b *botlib.Bot[db.DB]) func(event *events.ModalSubmitInteractionCreate) error {
+func roleModalEditPanelInfoHandler(b *botlib.Bot[*client.Client]) func(event *events.ModalSubmitInteractionCreate) error {
 	return func(event *events.ModalSubmitInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID, ":")
 		panelID := uuid.MustParse(args[3])
-		rp, err := b.DB.RolePanelCreate().Get(panelID)
+		rp, err := b.Self.DB.RolePanelCreate().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		token, err := b.DB.Interactions().Get(panelID)
+		token, err := b.Self.DB.Interactions().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
 		rp.Name = event.ModalSubmitInteraction.Data.Text("name")
 		rp.Description = event.ModalSubmitInteraction.Data.Text("description")
-		err = b.DB.RolePanelCreate().Set(rp)
+		err = b.Self.DB.RolePanelCreate().Set(rp)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -1054,23 +1055,23 @@ func roleModalEditPanelInfoHandler(b *botlib.Bot[db.DB]) func(event *events.Moda
 	}
 }
 
-func roleModalEditRoleInfoHandler(b *botlib.Bot[db.DB]) func(event *events.ModalSubmitInteractionCreate) error {
+func roleModalEditRoleInfoHandler(b *botlib.Bot[*client.Client]) func(event *events.ModalSubmitInteractionCreate) error {
 	return func(event *events.ModalSubmitInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID, ":")
 		panelID := uuid.MustParse(args[3])
 		roleID := snowflake.MustParse(args[4])
-		rp, err := b.DB.RolePanelCreate().Get(panelID)
+		rp, err := b.Self.DB.RolePanelCreate().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		token, err := b.DB.Interactions().Get(panelID)
+		token, err := b.Self.DB.Interactions().Get(panelID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
 		role, _ := rp.GetRole(roleID)
 		rp.SetRole(event.ModalSubmitInteraction.Data.Text("name"), event.ModalSubmitInteraction.Data.Text("description"), roleID, &role.Emoji)
 
-		err = b.DB.RolePanelCreate().Set(rp)
+		err = b.Self.DB.RolePanelCreate().Set(rp)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -1090,15 +1091,15 @@ func roleModalEditRoleInfoHandler(b *botlib.Bot[db.DB]) func(event *events.Modal
 	}
 }
 
-func roleModalCreateHandler(b *botlib.Bot[db.DB]) func(event *events.ModalSubmitInteractionCreate) error {
+func roleModalCreateHandler(b *botlib.Bot[*client.Client]) func(event *events.ModalSubmitInteractionCreate) error {
 	return func(event *events.ModalSubmitInteractionCreate) error {
 		var err error
 		rp := db.NewRolePanelCreate(event.ModalSubmitInteraction.Data.Text("name"), event.ModalSubmitInteraction.Data.Text("description"), event.Locale())
-		err = b.DB.RolePanelCreate().Set(rp)
+		err = b.Self.DB.RolePanelCreate().Set(rp)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		err = b.DB.Interactions().Set(rp.UUID(), event.Token())
+		err = b.Self.DB.Interactions().Set(rp.UUID(), event.Token())
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
