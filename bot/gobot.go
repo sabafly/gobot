@@ -37,6 +37,7 @@ import (
 
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
+	"github.com/sabafly/sabafly-lib/v2/logging"
 	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
@@ -73,6 +74,14 @@ func Run(file_path, lang_path, gobot_path string) {
 		panic(err)
 	}
 	logger.SetLevel(lvl)
+	l, err := logging.New(logging.Config{
+		FilePath:  "./logs",
+		LogLevels: logrus.AllLevels,
+	})
+	if err != nil {
+		panic(err)
+	}
+	logger.AddHook(l)
 	dlog, err := dislog.New(
 		dislog.WithLogLevels(dislog.TraceLevelAndAbove...),
 		dislog.WithWebhookIDToken(cfg.Dislog.WebhookID, cfg.Dislog.WebhookToken),
@@ -112,6 +121,7 @@ func Run(file_path, lang_path, gobot_path string) {
 	b.Logger.Infof("dev guilds %v", b.Config.DevGuildIDs)
 	b.Handler.DevGuildID = b.Config.DevGuildIDs
 	b.Handler.IsDebug = b.Config.DevMode
+	b.Handler.IsLogEvent = true
 
 	b.Handler.AddCommands(
 		commands.Ping(b),
@@ -121,7 +131,7 @@ func Run(file_path, lang_path, gobot_path string) {
 		commands.Util(b),
 		commands.Admin(b),
 		commands.About(b),
-		// commands.Message(b),
+		commands.Message(b),
 	)
 
 	b.Handler.AddComponents(
@@ -142,8 +152,8 @@ func Run(file_path, lang_path, gobot_path string) {
 		b.Logger.Info("Ready!")
 		polls, err := b.Self.DB.Poll().GetAll()
 		if err == nil {
-		for _, p := range polls {
-			go commands.End(b, p)
+			for _, p := range polls {
+				go commands.End(b, p)
 			}
 		}
 		mp, err := b.Self.DB.MessagePin().GetAll()
