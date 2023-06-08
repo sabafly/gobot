@@ -24,15 +24,16 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/disgoorg/disgo/bot"
-	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/dislog"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"github.com/mattn/go-colorable"
+	"github.com/sabafly/disgo/bot"
+	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
 	"github.com/sabafly/gobot/bot/commands"
 	"github.com/sabafly/gobot/bot/db"
+	"github.com/sabafly/gobot/bot/handlers"
 	"github.com/sirupsen/logrus"
 
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
@@ -75,7 +76,7 @@ func Run(file_path, lang_path, gobot_path string) {
 	}
 	logger.SetLevel(lvl)
 	l, err := logging.New(logging.Config{
-		FilePath:  "./logs",
+		LogPath:   "./logs",
 		LogLevels: logrus.AllLevels,
 	})
 	if err != nil {
@@ -138,15 +139,22 @@ func Run(file_path, lang_path, gobot_path string) {
 		commands.PollComponent(b),
 		commands.RolePanelComponent(b),
 		commands.UtilCalcComponent(b),
+		commands.MessageComponent(b),
+
+		handlers.EmbedDialogComponent(b),
 	)
 
 	b.Handler.AddModals(
 		commands.PollModal(b),
 		commands.RolePanelModal(b),
 		commands.MessageModal(b),
+
+		handlers.EmbedDialogModal(b),
 	)
 
-	b.Handler.AddMessage(commands.MessagePinMessageCreate(b))
+	b.Handler.AddMessages(
+		commands.MessagePinMessageCreate(b),
+	)
 
 	b.Handler.AddReady(func(r *events.Ready) {
 		b.Logger.Info("Ready!")

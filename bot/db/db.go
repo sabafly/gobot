@@ -23,6 +23,7 @@ type DB interface {
 	GuildData() GuildDataDB
 	Calc() CalcDB
 	MessagePin() MessagePinDB
+	EmbedDialog() EmbedDialogDB
 	Interactions() InteractionsDB
 }
 
@@ -47,6 +48,7 @@ func SetupDatabase(cfg DBConfig) (DB, error) {
 		guildData:       &guildDataDBImpl{db: db},
 		calc:            &CalcDBImpl{db: db},
 		messagePin:      &messagePinDBImpl{db: db},
+		embedDialog:     &embedDialogDBImpl{db: db},
 		interactions:    &interactionsImpl{db: db},
 	}, nil
 }
@@ -62,6 +64,7 @@ type dbImpl struct {
 	guildData       *guildDataDBImpl
 	calc            *CalcDBImpl
 	messagePin      *messagePinDBImpl
+	embedDialog     *embedDialogDBImpl
 	interactions    *interactionsImpl
 }
 
@@ -91,6 +94,10 @@ func (d *dbImpl) Calc() CalcDB {
 
 func (d *dbImpl) MessagePin() MessagePinDB {
 	return d.messagePin
+}
+
+func (d *dbImpl) EmbedDialog() EmbedDialogDB {
+	return d.embedDialog
 }
 
 func (d *dbImpl) Interactions() InteractionsDB {

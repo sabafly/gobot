@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/disgoorg/disgo/bot"
-	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
+	"github.com/sabafly/disgo/bot"
+	"github.com/sabafly/disgo/discord"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 )
 
@@ -89,7 +89,7 @@ type MessagePin struct {
 
 func (self *MessagePin) Update(client bot.Client) error {
 	if self.LastMessageID != nil {
-		_ = client.Rest().DeleteMessage(self.ChannelID, *self.LastMessageID)
+		go func() { _ = client.Rest().DeleteMessage(self.ChannelID, *self.LastMessageID) }()
 	}
 	m, err := botlib.SendWebhook(client, self.ChannelID, self.WebhookMessageCreate)
 	if err != nil {
