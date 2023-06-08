@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/disgoorg/disgo/discord"
-	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
+	"github.com/sabafly/disgo/discord"
+	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"

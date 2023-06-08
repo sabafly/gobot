@@ -7,10 +7,11 @@ import (
 	"sort"
 	"time"
 
-	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/sabafly/disgo/discord"
+	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
@@ -252,7 +253,7 @@ func (r *RolePanelCreate) EditRoleMenuEmbed(id snowflake.ID) []discord.Embed {
 				},
 				{
 					Name:   translate.Message(r.locale, "command_text_role_panel_create_edit_role_menu_embed_fields_emoji"),
-					Value:  componentEmojiFormat(r.roles[id].Emoji),
+					Value:  botlib.FormatComponentEmoji(r.roles[id].Emoji),
 					Inline: &inline,
 				},
 			},
@@ -384,7 +385,7 @@ func (r *RolePanelCreate) SetRole(label, description string, roleID snowflake.ID
 	if v, ok := r.roles[roleID]; ok {
 		if emoji == nil {
 			emoji = &discord.ComponentEmoji{
-				Name: number2Emoji(v.position),
+				Name: botlib.Number2Emoji(v.position),
 			}
 		}
 		v.Label = label
@@ -398,7 +399,7 @@ func (r *RolePanelCreate) SetRole(label, description string, roleID snowflake.ID
 		}
 		if emoji == nil {
 			emoji = &discord.ComponentEmoji{
-				Name: number2Emoji(len(r.roles) + 1),
+				Name: botlib.Number2Emoji(len(r.roles) + 1),
 			}
 		}
 		r.roles[roleID] = RolePanelCreateRole{

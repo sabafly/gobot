@@ -4,14 +4,17 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
+	"github.com/sabafly/disgo/bot"
+	"github.com/sabafly/disgo/discord"
+	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 )
 
 type MessagePinDB interface {
-	Get(id snowflake.ID) (MessagePin, error)
-	Set(id snowflake.ID, data MessagePin) error
+	Get(id snowflake.ID) (GuildMessagePins, error)
+	GetAll() (map[snowflake.ID]GuildMessagePins, error)
+	Set(id snowflake.ID, data GuildMessagePins) error
 	Del(id snowflake.ID) error
 }
 
@@ -21,19 +24,39 @@ type messagePinDBImpl struct {
 	db *redis.Client
 }
 
-func (m *messagePinDBImpl) Get(id snowflake.ID) (MessagePin, error) {
+func (m *messagePinDBImpl) Get(id snowflake.ID) (GuildMessagePins, error) {
 	res := m.db.HGet(context.TODO(), "message-pin", id.String())
 	if err := res.Err(); err != nil {
-		return MessagePin{}, err
+		return GuildMessagePins{}, err
 	}
-	val := MessagePin{}
+	val := GuildMessagePins{}
 	if err := json.Unmarshal([]byte(res.Val()), &val); err != nil {
-		return MessagePin{}, err
+		return GuildMessagePins{}, err
 	}
 	return val, nil
 }
 
-func (m *messagePinDBImpl) Set(id snowflake.ID, data MessagePin) error {
+func (m *messagePinDBImpl) GetAll() (map[snowflake.ID]GuildMessagePins, error) {
+	res := m.db.HGetAll(context.TODO(), "message-pin")
+	if err := res.Err(); err != nil {
+		return nil, err
+	}
+	val := make(map[snowflake.ID]GuildMessagePins)
+	for k, v := range res.Val() {
+		id, err := snowflake.Parse(k)
+		if err != nil {
+			return nil, err
+		}
+		data := GuildMessagePins{}
+		if err := json.Unmarshal([]byte(v), &data); err != nil {
+			return nil, err
+		}
+		val[id] = data
+	}
+	return val, nil
+}
+
+func (m *messagePinDBImpl) Set(id snowflake.ID, data GuildMessagePins) error {
 	buf, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -53,14 +76,32 @@ func (m *messagePinDBImpl) Del(id snowflake.ID) error {
 	return nil
 }
 
-type MessagePin struct {
-	Enabled bool                                   `json:"enabled"`
-	Pins    map[snowflake.ID]discord.MessageCreate `json:"pins"`
+type GuildMessagePins struct {
+	Enabled bool                        `json:"enabled"`
+	Pins    map[snowflake.ID]MessagePin `json:"pins"`
 }
 
-func NewMessagePin() MessagePin {
-	return MessagePin{
-		Enabled: false,
-		Pins:    make(map[snowflake.ID]discord.MessageCreate),
+type MessagePin struct {
+	WebhookMessageCreate discord.WebhookMessageCreate `json:"webhook_message_create"`
+	ChannelID            snowflake.ID
+	LastMessageID        *snowflake.ID `json:"last_message_id"`
+}
+
+func (self *MessagePin) Update(client bot.Client) error {
+	if self.LastMessageID != nil {
+		go func() { _ = client.Rest().DeleteMessage(self.ChannelID, *self.LastMessageID) }()
+	}
+	m, err := botlib.SendWebhook(client, self.ChannelID, self.WebhookMessageCreate)
+	if err != nil {
+		return err
+	}
+	self.LastMessageID = &m.ID
+	return nil
+}
+
+func NewMessagePin() GuildMessagePins {
+	return GuildMessagePins{
+		Enabled: true,
+		Pins:    make(map[snowflake.ID]MessagePin),
 	}
 }

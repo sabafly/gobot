@@ -8,10 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/sabafly/disgo/discord"
+	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
@@ -230,7 +231,7 @@ func (v *PollCreate) Components() []discord.ContainerComponent {
 			}
 			if o.Emoji == nil {
 				o.Emoji = &discord.ComponentEmoji{
-					Name: number2Emoji(i + 1),
+					Name: botlib.Number2Emoji(i + 1),
 				}
 			}
 			options = append(options, o)
@@ -307,7 +308,7 @@ func (p *PollCreate) EditChoiceEmbed(choiceID uuid.UUID) []discord.Embed {
 				},
 				{
 					Name:  translate.Message(p.Locale, "command_text_poll_create_embed_component_edit_choice_response_field_emoji_name"),
-					Value: componentEmojiFormat(*p.Choices[choiceID].Emoji),
+					Value: botlib.FormatComponentEmoji(*p.Choices[choiceID].Emoji),
 				},
 			},
 		},
@@ -541,20 +542,4 @@ func (p *PollCreate) ChangeSettingsMenuComponent(t PollSettingsType) []discord.C
 	res := p.EditSettingsComponent()
 	res = append(res, resAction)
 	return res
-}
-
-func number2Emoji(n int) string {
-	return string(rune('🇦' - 1 + n))
-}
-
-func componentEmojiFormat(e discord.ComponentEmoji) string {
-	var zeroID snowflake.ID
-	if e.ID == zeroID {
-		return e.Name
-	}
-	if e.Animated {
-		return fmt.Sprintf("<a:%s:%d>", e.Name, e.ID)
-	} else {
-		return fmt.Sprintf("<:%s:%d>", e.Name, e.ID)
-	}
 }

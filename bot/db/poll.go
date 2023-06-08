@@ -7,10 +7,11 @@ import (
 	"sort"
 	"time"
 
-	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/sabafly/disgo/discord"
+	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
@@ -125,7 +126,7 @@ func (p *Poll) MessageEmbed() []discord.Embed {
 	})
 	for _, pc := range choices {
 		choicesEmbed.Fields = append(choicesEmbed.Fields, discord.EmbedField{
-			Name:   fmt.Sprintf("%s | %s", componentEmojiFormat(*pc.Emoji), pc.Name),
+			Name:   fmt.Sprintf("%s | %s", botlib.FormatComponentEmoji(*pc.Emoji), pc.Name),
 			Value:  pc.Description,
 			Inline: &inline,
 		})
@@ -217,7 +218,7 @@ func (p *Poll) VoteComponent(tokenID uuid.UUID) []discord.ContainerComponent {
 		}
 		if o.Emoji == nil {
 			o.Emoji = &discord.ComponentEmoji{
-				Name: number2Emoji(i + 1),
+				Name: botlib.Number2Emoji(i + 1),
 			}
 		}
 		options = append(options, o)
@@ -252,7 +253,7 @@ func (p *Poll) SeeInfoComponent(tokenID uuid.UUID) []discord.ContainerComponent 
 		}
 		if o.Emoji == nil {
 			o.Emoji = &discord.ComponentEmoji{
-				Name: number2Emoji(i + 1),
+				Name: botlib.Number2Emoji(i + 1),
 			}
 		}
 		options = append(options, o)
@@ -285,7 +286,7 @@ func (p *Poll) SeeResultComponent(tokenID uuid.UUID) []discord.ContainerComponen
 		}
 		if o.Emoji == nil {
 			o.Emoji = &discord.ComponentEmoji{
-				Name: number2Emoji(i + 1),
+				Name: botlib.Number2Emoji(i + 1),
 			}
 		}
 		options = append(options, o)

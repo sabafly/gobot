@@ -3,7 +3,6 @@ module github.com/sabafly/gobot
 go 1.20
 
 require (
-	github.com/disgoorg/disgo v0.16.5
 	github.com/disgoorg/dislog v1.1.0
 	github.com/disgoorg/json v1.1.0
 	github.com/disgoorg/snowflake/v2 v2.0.1
@@ -11,9 +10,10 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/mattn/go-colorable v0.1.13
 	github.com/pelletier/go-toml/v2 v2.0.8
-	github.com/sabafly/sabafly-lib/v2 v2.1.0
+	github.com/sabafly/disgo v0.2.0
+	github.com/sabafly/sabafly-lib/v2 v2.3.0
 	github.com/shirou/gopsutil/v3 v3.23.5
-	github.com/sirupsen/logrus v1.9.2
+	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -21,8 +21,8 @@ require (
 require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
+	github.com/disgoorg/disgo v0.16.5 // indirect
 	github.com/disgoorg/log v1.2.0 // indirect
-	github.com/disgoorg/paginator v0.0.0-20230104145353-f988d828ede9 // indirect
 	github.com/forPelevin/gomoji v1.1.8 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect

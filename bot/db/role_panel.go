@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/sabafly/disgo/discord"
+	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
@@ -114,15 +115,14 @@ func (r *RolePanel) BuildMessage(format func([]discord.Embed) []discord.Embed) d
 	})
 	for _, v := range roles {
 		fields = append(fields, discord.EmbedField{
-			Name:  fmt.Sprintf("%s:%s", formatComponentEmoji(v.Emoji), v.Label),
+			Name:  fmt.Sprintf("%s:%s", botlib.FormatComponentEmoji(v.Emoji), v.Label),
 			Value: v.Description,
 		})
 	}
 	embeds := []discord.Embed{
 		{
 			Footer: &discord.EmbedFooter{
-				// XXX: 変数参照にしたい
-				Text: fmt.Sprintf("%s %s", "gobot", translate.Message(r.locale, "role_panel")),
+				Text: fmt.Sprintf("%s %s", botlib.BotName, translate.Message(r.locale, "role_panel")),
 			},
 			Title:       r.Name,
 			Description: r.Description,
@@ -194,17 +194,5 @@ func (r *RolePanel) UseMessage(format func([]discord.Embed) []discord.Embed, mem
 		Flags:      discord.MessageFlagEphemeral,
 		Embeds:     embeds,
 		Components: components,
-	}
-}
-
-func formatComponentEmoji(e discord.ComponentEmoji) string {
-	var zeroID snowflake.ID
-	if e.ID == zeroID {
-		return e.Name
-	}
-	if e.Animated {
-		return fmt.Sprintf("<a:%s:%d>", e.Name, e.ID)
-	} else {
-		return fmt.Sprintf("<:%s:%d>", e.Name, e.ID)
 	}
 }

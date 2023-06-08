@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/disgoorg/disgo/discord"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/sabafly/disgo/discord"
 )
 
 type CalcDB interface {
