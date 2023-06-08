@@ -16,8 +16,6 @@ github.com/disgoorg/json v1.1.0 h1:7xigHvomlVA9PQw9bMGO02PHGJJPqvX5AnwlYg/Tnys=
 github.com/disgoorg/json v1.1.0/go.mod h1:BHDwdde0rpQFDVsRLKhma6Y7fTbQKub/zdGO5O9NqqA=
 github.com/disgoorg/log v1.2.0 h1:sqlXnu/ZKAlIlHV9IO+dbMto7/hCQ474vlIdMWk8QKo=
 github.com/disgoorg/log v1.2.0/go.mod h1:3x1KDG6DI1CE2pDwi3qlwT3wlXpeHW/5rVay+1qDqOo=
-github.com/disgoorg/paginator v0.0.0-20230104145353-f988d828ede9 h1:h7feN1V8sRJGKtd/5g8FtKT0IcVyCKABRSECOEf3oYc=
-github.com/disgoorg/paginator v0.0.0-20230104145353-f988d828ede9/go.mod h1:k+g1jz3HxI97c5IGsScxOZYqhjZvDkNKLma7pUXiGcw=
 github.com/disgoorg/snowflake/v2 v2.0.1 h1:CuUxGLwggUxEswZOmZ+mZ5i0xSumQdXW9tXW7uGqe+0=
 github.com/disgoorg/snowflake/v2 v2.0.1/go.mod h1:SPU9c2CNn5DSyb86QcKtdZgix9osEtKrHLW4rMhfLCs=
 github.com/forPelevin/gomoji v1.1.8 h1:JElzDdt0TyiUlecy6PfITDL6eGvIaxqYH1V52zrd0qQ=
@@ -61,8 +59,6 @@ github.com/rivo/uniseg v0.4.4/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUc
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/sabafly/disgo v0.2.0 h1:jz7WduDcV3B2IOZI1LHzPT1I9wZTqTwVibJmgrtLD58=
 github.com/sabafly/disgo v0.2.0/go.mod h1:4p4+Z/Px9CQx/zHT735cMn5XZraQ46p+cwE9Ntwq0Tk=
-github.com/sabafly/sabafly-lib/v2 v2.2.0 h1:3S9BCAoK2sWM2jFWGZMKwzay6++6/GcvjLY21gST0k4=
-github.com/sabafly/sabafly-lib/v2 v2.2.0/go.mod h1:sa4HQMLC4/Ote//ietBvEHA9SFNIJOdYFdGD/OwHR5w=
 github.com/sabafly/sabafly-lib/v2 v2.3.0 h1:mvb6b6xbym9dtaLnbmR9WpWlHQI5g6ejkOIS5/A6GGI=
 github.com/sabafly/sabafly-lib/v2 v2.3.0/go.mod h1:PuZuYEvy2F7Io5rFpiGwDW7Qr5SAWTKIWY081cval5U=
 github.com/sasha-s/go-csync v0.0.0-20210812194225-61421b77c44b h1:qYTY2tN72LhgDj2rtWG+LI6TXFl2ygFQQ4YezfVaGQE=

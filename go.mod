@@ -23,7 +23,6 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/disgoorg/disgo v0.16.5 // indirect
 	github.com/disgoorg/log v1.2.0 // indirect
-	github.com/disgoorg/paginator v0.0.0-20230104145353-f988d828ede9 // indirect
 	github.com/forPelevin/gomoji v1.1.8 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
