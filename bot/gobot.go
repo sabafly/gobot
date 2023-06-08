@@ -154,6 +154,12 @@ func Run(file_path, lang_path, gobot_path string) {
 
 	b.Handler.AddMessages(
 		commands.MessagePinMessageCreate(b),
+		handler.Message{
+			UUID: uuid.New(),
+			Handler: func(event *events.MessageCreate) error {
+				return b.Self.MessageLogger.Log("message", fmt.Sprintf("%s at:%s/%s by:%s(%s) %s", event.Message.ID, event.GuildID, event.ChannelID, event.Message.Author.Tag(), event.Message.Author.ID, event.Message.Content), event.Message.CreatedAt)
+			},
+		},
 	)
 
 	b.Handler.AddReady(func(r *events.Ready) {
