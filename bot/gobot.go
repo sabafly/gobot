@@ -26,7 +26,6 @@ import (
 
 	"github.com/disgoorg/dislog"
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/google/uuid"
 	"github.com/mattn/go-colorable"
 	"github.com/sabafly/disgo/bot"
 	"github.com/sabafly/disgo/events"
@@ -82,6 +81,7 @@ func Run(file_path, lang_path, gobot_path string) {
 	if err != nil {
 		panic(err)
 	}
+	defer l.Close()
 	logger.AddHook(l)
 	dlog, err := dislog.New(
 		dislog.WithLogLevels(dislog.TraceLevelAndAbove...),
@@ -105,17 +105,14 @@ func Run(file_path, lang_path, gobot_path string) {
 	if err != nil {
 		panic(err)
 	}
+	defer d.Close()
 	cl, err := client.New(gobot_cfg, d)
 	if err != nil {
 		panic(err)
 	}
+	defer cl.Close()
 
 	b.Self = cl
-
-	b.Self.DB, err = db.SetupDatabase(b.Self.Config.DBConfig)
-	if err != nil {
-		panic(err)
-	}
 
 	b.Handler.AddExclude(b.Config.Dislog.WebhookChannel)
 
@@ -154,12 +151,8 @@ func Run(file_path, lang_path, gobot_path string) {
 
 	b.Handler.AddMessages(
 		commands.MessagePinMessageCreate(b),
-		handler.Message{
-			UUID: uuid.New(),
-			Handler: func(event *events.MessageCreate) error {
-				return b.Self.MessageLogger.Log("message", fmt.Sprintf("%s at:%s/%s by:%s(%s) %s", event.Message.ID, event.GuildID, event.ChannelID, event.Message.Author.Tag(), event.Message.Author.ID, event.Message.Content), event.Message.CreatedAt)
-			},
-		},
+
+		handlers.LogMessage(b),
 	)
 
 	b.Handler.AddReady(func(r *events.Ready) {
@@ -176,24 +169,22 @@ func Run(file_path, lang_path, gobot_path string) {
 		}
 	})
 
-	b.Handler.AddMemberJoins(
-		handler.MemberJoin{
-			UUID: uuid.New(),
-			Handler: func(event *events.GuildMemberJoin) error {
-				b.OnGuildMemberJoin(event)
-				return nil
-			},
+	b.Handler.MemberJoin.Adds(handler.Generics[events.GuildMemberJoin]{
+		Handler: func(event *events.GuildMemberJoin) error {
+			b.OnGuildMemberJoin(event)
+			return nil
 		},
-	)
+	})
 
-	b.Handler.AddMemberLeaves(
-		handler.MemberLeave{
-			UUID: uuid.New(),
-			Handler: func(event *events.GuildMemberLeave) error {
-				b.OnGuildMemberLeave(event)
-				return nil
-			},
+	b.Handler.MemberLeave.Adds(handler.Generics[events.GuildMemberLeave]{
+		Handler: func(event *events.GuildMemberLeave) error {
+			b.OnGuildMemberLeave(event)
+			return nil
 		},
+	})
+
+	b.Handler.AddEvent(
+		handlers.LogEvent(b),
 	)
 
 	b.SetupBot(bot.NewListenerFunc(b.Handler.OnEvent))

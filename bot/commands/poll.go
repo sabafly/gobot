@@ -1329,14 +1329,13 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot[*client.Client]) func(e *event
 		var remove func()
 		var removeButton func()
 		remove = b.Handler.AddMessage(handler.Message{
-			UUID:      uuid.New(),
 			ChannelID: json.Ptr(channel.ID()),
 			AuthorID:  &e.Member().User.ID,
-			Check: func(ctx *events.MessageCreate) bool {
+			Check: func(ctx *events.GuildMessageCreate) bool {
 				b.Logger.Debug("check")
 				return emoji.MatchString(ctx.Message.Content)
 			},
-			Handler: func(event *events.MessageCreate) error {
+			Handler: func(event *events.GuildMessageCreate) error {
 				b.Logger.Debug("called message")
 				emoji := botlib.ParseComponentEmoji(event.Message.Content)
 				choice := v.Choices[choiceID]
