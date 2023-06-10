@@ -40,6 +40,9 @@ func Message(b *botlib.Bot[*client.Client]) handler.Command {
 				},
 			},
 		},
+		Check: func(ctx *events.ApplicationCommandInteractionCreate) bool {
+			return ctx.Member().Permissions.Has(discord.PermissionManageChannels)
+		},
 		CommandHandlers: map[string]handler.CommandHandler{
 			"pin/create": messagePinCreateCommandHandler(b),
 		},
