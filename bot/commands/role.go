@@ -714,10 +714,9 @@ func roleComponentEditRoleEmojiHandler(b *botlib.Bot[*client.Client]) func(event
 		var removeButton func()
 		author := event.Member()
 		remove = b.Handler.AddMessage(handler.Message{
-			UUID:      uuid.New(),
 			ChannelID: json.Ptr(channel.ID()),
 			AuthorID:  &author.User.ID,
-			Handler: func(event *events.MessageCreate) error {
+			Handler: func(event *events.GuildMessageCreate) error {
 				if event.Message.Author.ID != author.User.ID || !emoji.MatchString(event.Message.Content) {
 					return nil
 				}

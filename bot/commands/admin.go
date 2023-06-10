@@ -12,6 +12,7 @@ import (
 	"github.com/sabafly/gobot/bot/client"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
+	"github.com/sabafly/sabafly-lib/v2/logging"
 	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
@@ -53,6 +54,11 @@ func Admin(b *botlib.Bot[*client.Client]) handler.Command {
 								discord.ApplicationCommandOptionString{
 									Name:        "around-id",
 									Description: "message id",
+									Required:    false,
+								},
+								discord.ApplicationCommandOptionBool{
+									Name:        "create-message",
+									Description: "create message",
 									Required:    false,
 								},
 							},
@@ -147,19 +153,62 @@ func Admin(b *botlib.Bot[*client.Client]) handler.Command {
 						},
 					},
 				},
-				discord.ApplicationCommandOptionSubCommand{
-					Name:        "translate",
-					Description: "for debug translate module",
-					Options: []discord.ApplicationCommandOption{
-						discord.ApplicationCommandOptionString{
-							Name:        "locale",
-							Description: "locale id",
-							Required:    true,
+				discord.ApplicationCommandOptionSubCommandGroup{
+					Name:        "debug",
+					Description: "debug",
+					Options: []discord.ApplicationCommandOptionSubCommand{
+						{
+							Name:        "translate",
+							Description: "for debug translate module",
+							Options: []discord.ApplicationCommandOption{
+								discord.ApplicationCommandOptionString{
+									Name:        "locale",
+									Description: "locale id",
+									Required:    true,
+								},
+								discord.ApplicationCommandOptionString{
+									Name:        "translate-key",
+									Description: "translate key",
+									Required:    true,
+								},
+							},
 						},
-						discord.ApplicationCommandOptionString{
-							Name:        "translate-key",
-							Description: "translate key",
-							Required:    true,
+						{
+							Name:        "log",
+							Description: "log debug",
+							Options: []discord.ApplicationCommandOption{
+								discord.ApplicationCommandOptionString{
+									Name:        "content",
+									Description: "content",
+									Required:    true,
+								},
+								discord.ApplicationCommandOptionInt{
+									Name:        "count",
+									Description: "count",
+									Required:    true,
+								},
+							},
+						},
+						{
+							Name:        "add-hook",
+							Description: "add hook",
+							Options: []discord.ApplicationCommandOption{
+								discord.ApplicationCommandOptionString{
+									Name:        "guild-id",
+									Description: "guild id",
+									Required:    true,
+								},
+								discord.ApplicationCommandOptionString{
+									Name:        "channel-id",
+									Description: "guild id",
+									Required:    false,
+								},
+								discord.ApplicationCommandOptionBool{
+									Name:        "write-file",
+									Description: "write file",
+									Required:    false,
+								},
+							},
 						},
 					},
 				},
@@ -172,7 +221,9 @@ func Admin(b *botlib.Bot[*client.Client]) handler.Command {
 			"guild/leave":                adminCommandGuildLeaveHandler(b),
 			"application/command-get":    adminCommandApplicationCommandGet(b),
 			"application/command-delete": adminCommandApplicationCommandDelete(b),
-			"translate":                  adminCommandTranslateHandler(b),
+			"debug/translate":            adminCommandDebugTranslateHandler(b),
+			"debug/log":                  adminCommandDebugLogHandler(b),
+			"debug/add-hook":             adminCommandDebugAddHook(b),
 		},
 		Check: func(ctx *events.ApplicationCommandInteractionCreate) bool {
 			if b.CheckDev(ctx.User().ID) {
@@ -548,6 +599,38 @@ func adminCommandMessageGetHandler(b *botlib.Bot[*client.Client]) handler.Comman
 			if err != nil {
 				return botlib.ReturnErr(event, err)
 			}
+			if event.SlashCommandInteractionData().Bool("create-message") {
+				go func() {
+					for i, j := 0, len(channelMes)-1; i < j; i, j = i+1, j-1 {
+						channelMes[i], channelMes[j] = channelMes[j], channelMes[i]
+					}
+					for _, m := range channelMes {
+						raw, err := json.MarshalIndent(m, "", "  ")
+						if err != nil {
+							_, _ = botlib.SendWebhook(event.Client(), event.Channel().ID(), discord.WebhookMessageCreate{
+								Content: err.Error(),
+							})
+							continue
+						}
+						if _, err := botlib.SendWebhook(event.Client(), event.Channel().ID(), discord.WebhookMessageCreate{
+							Content:    m.Content,
+							Embeds:     m.Embeds,
+							Username:   m.Author.Tag(),
+							Components: m.Components,
+							AvatarURL:  m.Author.EffectiveAvatarURL(),
+							Files: []*discord.File{
+								{
+									Name:   "message-" + m.ID.String() + ".json",
+									Reader: bytes.NewBuffer(raw),
+								},
+							},
+						}); err != nil {
+							b.Logger.Error(err)
+						}
+					}
+				}()
+				return event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("OK").Build())
+			}
 			var description []string
 			var temp string
 			for _, m := range channelMes {
@@ -609,11 +692,60 @@ func adminCommandMessageGetHandler(b *botlib.Bot[*client.Client]) handler.Comman
 	}
 }
 
-func adminCommandTranslateHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+func adminCommandDebugTranslateHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent(translate.Message(discord.Locale(event.SlashCommandInteractionData().String("locale")), event.SlashCommandInteractionData().String("translate-key"))).Build()); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
 		return nil
+	}
+}
+
+func adminCommandDebugLogHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+	return func(event *events.ApplicationCommandInteractionCreate) error {
+		go func() {
+			for i := 0; i < event.SlashCommandInteractionData().Int("count")+1; i++ {
+				b.Logger.Info(event.SlashCommandInteractionData().String("content"))
+			}
+		}()
+		return event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("OK").Build())
+	}
+}
+
+func adminCommandDebugAddHook(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+	return func(event *events.ApplicationCommandInteractionCreate) error {
+		isWriteFile := event.SlashCommandInteractionData().Bool("write-file")
+		guildID := snowflake.MustParse(event.SlashCommandInteractionData().String("guild-id"))
+		if channelIDOpt, ok := event.SlashCommandInteractionData().OptString("channel-id"); ok {
+			channelID := snowflake.MustParse(channelIDOpt)
+			b.Self.Logger.DebugChannel[channelID] = &client.DebugLog{
+				LogChannel: json.Ptr(event.Channel().ID()),
+			}
+			if isWriteFile {
+				logger, err := logging.New(logging.Config{
+					LogPath: "./logs/channels/" + guildID.String(),
+					LogName: channelID.String() + ".log",
+				})
+				if err != nil {
+					return botlib.ReturnErr(event, err)
+				}
+				b.Self.Logger.DebugChannel[channelID].Logger = logger
+			}
+		} else {
+			b.Self.Logger.DebugGuild[guildID] = &client.DebugLog{
+				LogChannel: json.Ptr(event.Channel().ID()),
+			}
+			if isWriteFile {
+				logger, err := logging.New(logging.Config{
+					LogPath: "./logs/channels",
+					LogName: guildID.String() + ".log",
+				})
+				if err != nil {
+					return botlib.ReturnErr(event, err)
+				}
+				b.Self.Logger.DebugChannel[guildID].Logger = logger
+			}
+		}
+		return event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("OK").Build())
 	}
 }

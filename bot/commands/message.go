@@ -181,9 +181,8 @@ func messageModalPinCreate(b *botlib.Bot[*client.Client]) handler.ModalHandler {
 
 func MessagePinMessageCreate(b *botlib.Bot[*client.Client]) handler.Message {
 	return handler.Message{
-		UUID: uuid.New(),
-		Handler: func(event *events.MessageCreate) error {
-			m, ok := b.Self.MessagePin[*event.GuildID]
+		Handler: func(event *events.GuildMessageCreate) error {
+			m, ok := b.Self.MessagePin[event.GuildID]
 			if !ok || !m.Enabled {
 				return nil
 			}
@@ -202,7 +201,7 @@ func MessagePinMessageCreate(b *botlib.Bot[*client.Client]) handler.Message {
 				return err
 			}
 			m.Pins[event.ChannelID] = mp
-			if err := b.Self.DB.MessagePin().Set(*event.GuildID, m); err != nil {
+			if err := b.Self.DB.MessagePin().Set(event.GuildID, m); err != nil {
 				return err
 			}
 			return nil
