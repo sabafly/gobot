@@ -61,11 +61,14 @@ func (g *guildDataDBImpl) Del(id snowflake.ID) error {
 }
 
 func NewGuildData(id snowflake.ID) GuildData {
-	return GuildData{
+	g := GuildData{
 		ID:             id,
 		RolePanel:      make(map[uuid.UUID]GuildDataRolePanel),
 		RolePanelLimit: 10,
 	}
+	b, _ := json.Marshal(g)
+	_ = g.validate(b)
+	return g
 }
 
 const GuildDataVersion = 2
