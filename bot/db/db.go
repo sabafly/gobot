@@ -24,6 +24,7 @@ type DB interface {
 	Calc() CalcDB
 	MessagePin() MessagePinDB
 	EmbedDialog() EmbedDialogDB
+	UserData() UserDataDB
 	Interactions() InteractionsDB
 }
 
@@ -49,6 +50,7 @@ func SetupDatabase(cfg DBConfig) (DB, error) {
 		calc:            &CalcDBImpl{db: db},
 		messagePin:      &messagePinDBImpl{db: db},
 		embedDialog:     &embedDialogDBImpl{db: db},
+		userData:        &userDataDBImpl{db: db},
 		interactions:    &interactionsImpl{db: db},
 	}, nil
 }
@@ -65,6 +67,7 @@ type dbImpl struct {
 	calc            *CalcDBImpl
 	messagePin      *messagePinDBImpl
 	embedDialog     *embedDialogDBImpl
+	userData        *userDataDBImpl
 	interactions    *interactionsImpl
 }
 
@@ -98,6 +101,10 @@ func (d *dbImpl) MessagePin() MessagePinDB {
 
 func (d *dbImpl) EmbedDialog() EmbedDialogDB {
 	return d.embedDialog
+}
+
+func (d *dbImpl) UserData() UserDataDB {
+	return d.userData
 }
 
 func (d *dbImpl) Interactions() InteractionsDB {

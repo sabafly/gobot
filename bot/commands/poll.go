@@ -394,10 +394,10 @@ func pollComponentSeeInfoDo(b *botlib.Bot[*client.Client]) func(e *events.Compon
 		fields := []discord.EmbedField{}
 		var isUser bool
 		var isCount bool
-		if _, ok := p.Users[e.Member().User.ID]; p.Settings.ShowUser == db.PollSettingShowTypeAfterVote && ok || p.Settings.ShowUser == db.PollSettingShowTypeAlways {
+		if _, ok := p.Users[e.User().ID]; p.Settings.ShowUser == db.PollSettingShowTypeAfterVote && ok || p.Settings.ShowUser == db.PollSettingShowTypeAlways {
 			isUser = true
 		}
-		if _, ok := p.Users[e.Member().User.ID]; p.Settings.ShowCount == db.PollSettingShowTypeAfterVote && ok || p.Settings.ShowCount == db.PollSettingShowTypeAlways {
+		if _, ok := p.Users[e.User().ID]; p.Settings.ShowCount == db.PollSettingShowTypeAfterVote && ok || p.Settings.ShowCount == db.PollSettingShowTypeAlways {
 			isCount = true
 		}
 		if isCount {
@@ -523,9 +523,9 @@ func pollComponentVoteDo(b *botlib.Bot[*client.Client]) func(e *events.Component
 			}
 			return err
 		}
-		p.Users[e.Member().User.ID] = true
+		p.Users[e.User().ID] = true
 		for k, pc := range p.Choices {
-			delete(pc.Users, e.Member().User.ID)
+			delete(pc.Users, e.User().ID)
 			p.Choices[k] = pc
 		}
 		var voted string
@@ -541,7 +541,7 @@ func pollComponentVoteDo(b *botlib.Bot[*client.Client]) func(e *events.Component
 				}
 				return nil
 			}
-			choice.Users[e.Member().User.ID] = true
+			choice.Users[e.User().ID] = true
 			p.Choices[choiceID] = choice
 			voted += fmt.Sprintf("%s | %s\r", botlib.FormatComponentEmoji(*choice.Emoji), choice.Name)
 		}
@@ -623,11 +623,11 @@ func pollComponentVote(b *botlib.Bot[*client.Client]) func(e *events.ComponentIn
 		}
 		tokenID := uuid.New()
 		if !p.Settings.CanChangeTarget {
-			_, ok := p.Users[e.Member().User.ID]
+			_, ok := p.Users[e.User().ID]
 			if ok {
 				var voted string
 				for _, v := range p.Choices {
-					_, ok := v.Users[e.Member().User.ID]
+					_, ok := v.Users[e.User().ID]
 					if !ok {
 						continue
 					}
@@ -709,8 +709,8 @@ func pollComponentCreate(b *botlib.Bot[*client.Client]) func(e *events.Component
 			discord.ActionRowComponent{
 				discord.ChannelSelectMenuComponent{
 					CustomID: fmt.Sprintf("handler:poll:createdo:%s", v.ID),
-					ChannelTypes: []discord.ComponentType{
-						discord.ComponentType(discord.ChannelTypeGuildText),
+					ChannelTypes: []discord.ChannelType{
+						discord.ChannelTypeGuildText,
 					},
 				},
 			},
@@ -1330,7 +1330,7 @@ func pollComponentChangeChoiceEmoji(b *botlib.Bot[*client.Client]) func(e *event
 		var removeButton func()
 		remove = b.Handler.AddMessage(handler.Message{
 			ChannelID: json.Ptr(channel.ID()),
-			AuthorID:  &e.Member().User.ID,
+			AuthorID:  json.Ptr(e.User().ID),
 			Check: func(ctx *events.GuildMessageCreate) bool {
 				b.Logger.Debug("check")
 				return emoji.MatchString(ctx.Message.Content)

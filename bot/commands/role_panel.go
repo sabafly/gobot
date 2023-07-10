@@ -24,6 +24,11 @@ func RolePanel(b *botlib.Bot[*client.Client]) handler.Command {
 
 func rolePanelHandler(b *botlib.Bot[*client.Client]) func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
+		mute := b.Self.GuildDataLock(*event.GuildID())
+		if !mute.TryLock() {
+			return botlib.ReturnErrMessage(event, "error_busy")
+		}
+		defer mute.Unlock()
 		gData, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_has_no_data")

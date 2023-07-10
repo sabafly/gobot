@@ -130,6 +130,7 @@ func Run(file_path, lang_path, gobot_path string) {
 		commands.Admin(b),
 		commands.About(b),
 		commands.Message(b),
+		commands.Level(b),
 	)
 
 	b.Handler.AddComponents(
@@ -145,6 +146,7 @@ func Run(file_path, lang_path, gobot_path string) {
 		commands.PollModal(b),
 		commands.RolePanelModal(b),
 		commands.MessageModal(b),
+		commands.LevelModal(b),
 
 		handlers.EmbedDialogModal(b),
 	)
@@ -153,6 +155,7 @@ func Run(file_path, lang_path, gobot_path string) {
 		commands.MessagePinMessageCreate(b),
 
 		handlers.LogMessage(b),
+		handlers.UserDataMessage(b),
 	)
 
 	b.Handler.AddReady(func(r *events.Ready) {

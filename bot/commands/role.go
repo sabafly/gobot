@@ -70,6 +70,11 @@ func Role(b *botlib.Bot[*client.Client]) handler.Command {
 
 func rolePanelDeleteHandler(b *botlib.Bot[*client.Client]) func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
+		mute := b.Self.GuildDataLock(*event.GuildID())
+		if !mute.TryLock() {
+			return botlib.ReturnErrMessage(event, "error_busy")
+		}
+		defer mute.Unlock()
 		gData, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_has_no_data")
@@ -121,6 +126,11 @@ func rolePanelDeleteHandler(b *botlib.Bot[*client.Client]) func(event *events.Ap
 
 func rolePanelListHandler(b *botlib.Bot[*client.Client]) func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
+		mute := b.Self.GuildDataLock(*event.GuildID())
+		if !mute.TryLock() {
+			return botlib.ReturnErrMessage(event, "error_busy")
+		}
+		defer mute.Unlock()
 		gData, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_has_no_data")
@@ -254,6 +264,11 @@ func roleComponentCallHandler(b *botlib.Bot[*client.Client]) func(event *events.
 
 func roleComponentDeleteHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
+		mute := b.Self.GuildDataLock(*event.GuildID())
+		if !mute.TryLock() {
+			return botlib.ReturnErrMessage(event, "error_busy")
+		}
+		defer mute.Unlock()
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(event.StringSelectMenuInteractionData().Values[0])
 		token, err := b.Self.DB.Interactions().Get(uuid.MustParse(args[3]))
@@ -299,7 +314,7 @@ func roleComponentGetRole(b *botlib.Bot[*client.Client]) func(event *events.Comp
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		member, err := event.Client().Rest().GetMember(*event.GuildID(), event.Member().User.ID)
+		member, err := event.Client().Rest().GetMember(*event.GuildID(), event.User().ID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -323,7 +338,7 @@ func roleComponentGetRole(b *botlib.Bot[*client.Client]) func(event *events.Comp
 				}
 				if !rMap[i] && sMap[i] {
 					//選択されたが持っていない
-					err := event.Client().Rest().AddMemberRole(*event.GuildID(), event.Member().User.ID, i, rest.WithReason(fmt.Sprintf("role panel %s", rp.UUID().String())))
+					err := event.Client().Rest().AddMemberRole(*event.GuildID(), event.User().ID, i, rest.WithReason(fmt.Sprintf("role panel %s", rp.UUID().String())))
 					if err != nil {
 						return botlib.ReturnErr(event, err)
 					}
@@ -335,7 +350,7 @@ func roleComponentGetRole(b *botlib.Bot[*client.Client]) func(event *events.Comp
 				continue
 			}
 			// 持っているし選ばれていない
-			err := event.Client().Rest().RemoveMemberRole(*event.GuildID(), event.Member().User.ID, i, rest.WithReason(fmt.Sprintf("role panel %s", rp.UUID().String())))
+			err := event.Client().Rest().RemoveMemberRole(*event.GuildID(), event.User().ID, i, rest.WithReason(fmt.Sprintf("role panel %s", rp.UUID().String())))
 			if err != nil {
 				return botlib.ReturnErr(event, err)
 			}
@@ -394,9 +409,9 @@ func roleComponentUseHandler(b *botlib.Bot[*client.Client]) func(event *events.C
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		m, ok := event.Client().Caches().Member(*event.GuildID(), event.Member().User.ID)
+		m, ok := event.Client().Caches().Member(*event.GuildID(), event.User().ID)
 		if !ok {
-			member, err := event.Client().Rest().GetMember(*event.GuildID(), event.Member().User.ID)
+			member, err := event.Client().Rest().GetMember(*event.GuildID(), event.User().ID)
 			if err != nil {
 				return botlib.ReturnErr(event, err)
 			}
@@ -414,6 +429,11 @@ func roleComponentUseHandler(b *botlib.Bot[*client.Client]) func(event *events.C
 
 func roleComponentCreateHandler(b *botlib.Bot[*client.Client]) func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
+		mute := b.Self.GuildDataLock(*event.GuildID())
+		if !mute.TryLock() {
+			return botlib.ReturnErrMessage(event, "error_busy")
+		}
+		defer mute.Unlock()
 		args := strings.Split(event.Data.CustomID(), ":")
 		panelID := uuid.MustParse(args[3])
 		rp, err := b.Self.DB.RolePanelCreate().Get(panelID)
@@ -506,8 +526,8 @@ func roleComponentCreateHandler(b *botlib.Bot[*client.Client]) func(event *event
 				discord.ActionRowComponent{
 					discord.ChannelSelectMenuComponent{
 						CustomID: event.Data.CustomID(),
-						ChannelTypes: []discord.ComponentType{
-							discord.ComponentType(discord.ChannelTypeGuildText),
+						ChannelTypes: []discord.ChannelType{
+							discord.ChannelTypeGuildText,
 						},
 					},
 				},

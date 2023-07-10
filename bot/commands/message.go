@@ -36,6 +36,10 @@ func Message(b *botlib.Bot[*client.Client]) handler.Command {
 								},
 							},
 						},
+						{
+							Name:        "delete",
+							Description: "delete pinned message",
+						},
 					},
 				},
 			},
@@ -45,6 +49,7 @@ func Message(b *botlib.Bot[*client.Client]) handler.Command {
 		},
 		CommandHandlers: map[string]handler.CommandHandler{
 			"pin/create": messagePinCreateCommandHandler(b),
+			"pin/delete": messagePinDeleteCommandHandler(b),
 		},
 	}
 }
@@ -86,6 +91,34 @@ func messagePinCreateCommandHandler(b *botlib.Bot[*client.Client]) handler.Comma
 			}
 			return nil
 		}
+	}
+}
+
+func messagePinDeleteCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+	return func(event *events.ApplicationCommandInteractionCreate) error {
+		if !b.Self.MessagePinSync.TryLock() {
+			return botlib.ReturnErrMessage(event, "error_busy", botlib.WithEphemeral(true))
+		}
+		defer b.Self.MessagePinSync.Unlock()
+		m, ok := b.Self.MessagePin[*event.GuildID()]
+		if !ok {
+			return botlib.ReturnErrMessage(event, "error_has_no_data", botlib.WithEphemeral(true))
+		}
+		mp, ok := m.Pins[event.Channel().ID()]
+		b.Logger.Debug(*event.GuildID(), event.Channel().ID())
+		if !ok {
+			return botlib.ReturnErrMessage(event, "error_has_no_data", botlib.WithEphemeral(true))
+		}
+		if mp.LastMessageID != nil {
+			_ = event.Client().Rest().DeleteMessage(mp.ChannelID, *mp.LastMessageID)
+		}
+		delete(m.Pins, event.Channel().ID())
+		if err := b.Self.DB.MessagePin().Set(*event.GuildID(), m); err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+		m.Pins[event.Channel().ID()] = mp
+		b.Self.MessagePin[*event.GuildID()] = m
+		return event.CreateMessage(discord.MessageCreate{Content: "OK", Flags: discord.MessageFlagEphemeral})
 	}
 }
 
@@ -185,6 +218,10 @@ func messageModalPinCreate(b *botlib.Bot[*client.Client]) handler.ModalHandler {
 func MessagePinMessageCreate(b *botlib.Bot[*client.Client]) handler.Message {
 	return handler.Message{
 		Handler: func(event *events.GuildMessageCreate) error {
+			if !b.Self.MessagePinSync.TryLock() {
+				return nil
+			}
+			defer b.Self.MessagePinSync.Unlock()
 			m, ok := b.Self.MessagePin[event.GuildID]
 			if !ok || !m.Enabled {
 				return nil
@@ -195,6 +232,7 @@ func MessagePinMessageCreate(b *botlib.Bot[*client.Client]) handler.Message {
 			}
 			id, _, err := botlib.GetWebhook(event.Client(), event.ChannelID)
 			if err != nil {
+				b.Logger.Error(err)
 				return err
 			}
 			if event.Message.WebhookID != nil && id == *event.Message.WebhookID {
@@ -204,6 +242,7 @@ func MessagePinMessageCreate(b *botlib.Bot[*client.Client]) handler.Message {
 				return err
 			}
 			m.Pins[event.ChannelID] = mp
+			b.Self.MessagePin[event.GuildID] = m
 			if err := b.Self.DB.MessagePin().Set(event.GuildID, m); err != nil {
 				return err
 			}

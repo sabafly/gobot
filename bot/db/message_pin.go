@@ -12,9 +12,9 @@ import (
 )
 
 type MessagePinDB interface {
-	Get(id snowflake.ID) (GuildMessagePins, error)
-	GetAll() (map[snowflake.ID]GuildMessagePins, error)
-	Set(id snowflake.ID, data GuildMessagePins) error
+	Get(id snowflake.ID) (*GuildMessagePins, error)
+	GetAll() (map[snowflake.ID]*GuildMessagePins, error)
+	Set(id snowflake.ID, data *GuildMessagePins) error
 	Del(id snowflake.ID) error
 }
 
@@ -24,31 +24,31 @@ type messagePinDBImpl struct {
 	db *redis.Client
 }
 
-func (m *messagePinDBImpl) Get(id snowflake.ID) (GuildMessagePins, error) {
+func (m *messagePinDBImpl) Get(id snowflake.ID) (*GuildMessagePins, error) {
 	res := m.db.HGet(context.TODO(), "message-pin", id.String())
 	if err := res.Err(); err != nil {
-		return GuildMessagePins{}, err
+		return nil, err
 	}
-	val := GuildMessagePins{}
-	if err := json.Unmarshal([]byte(res.Val()), &val); err != nil {
-		return GuildMessagePins{}, err
+	val := &GuildMessagePins{}
+	if err := json.Unmarshal([]byte(res.Val()), val); err != nil {
+		return nil, err
 	}
 	return val, nil
 }
 
-func (m *messagePinDBImpl) GetAll() (map[snowflake.ID]GuildMessagePins, error) {
+func (m *messagePinDBImpl) GetAll() (map[snowflake.ID]*GuildMessagePins, error) {
 	res := m.db.HGetAll(context.TODO(), "message-pin")
 	if err := res.Err(); err != nil {
 		return nil, err
 	}
-	val := make(map[snowflake.ID]GuildMessagePins)
+	val := make(map[snowflake.ID]*GuildMessagePins)
 	for k, v := range res.Val() {
 		id, err := snowflake.Parse(k)
 		if err != nil {
 			return nil, err
 		}
-		data := GuildMessagePins{}
-		if err := json.Unmarshal([]byte(v), &data); err != nil {
+		data := &GuildMessagePins{}
+		if err := json.Unmarshal([]byte(v), data); err != nil {
 			return nil, err
 		}
 		val[id] = data
@@ -56,7 +56,7 @@ func (m *messagePinDBImpl) GetAll() (map[snowflake.ID]GuildMessagePins, error) {
 	return val, nil
 }
 
-func (m *messagePinDBImpl) Set(id snowflake.ID, data GuildMessagePins) error {
+func (m *messagePinDBImpl) Set(id snowflake.ID, data *GuildMessagePins) error {
 	buf, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -83,8 +83,8 @@ type GuildMessagePins struct {
 
 type MessagePin struct {
 	WebhookMessageCreate discord.WebhookMessageCreate `json:"webhook_message_create"`
-	ChannelID            snowflake.ID
-	LastMessageID        *snowflake.ID `json:"last_message_id"`
+	ChannelID            snowflake.ID                 `json:"channel_id"`
+	LastMessageID        *snowflake.ID                `json:"last_message_id"`
 }
 
 func (self *MessagePin) Update(client bot.Client) error {
@@ -99,8 +99,8 @@ func (self *MessagePin) Update(client bot.Client) error {
 	return nil
 }
 
-func NewMessagePin() GuildMessagePins {
-	return GuildMessagePins{
+func NewMessagePin() *GuildMessagePins {
+	return &GuildMessagePins{
 		Enabled: true,
 		Pins:    make(map[snowflake.ID]MessagePin),
 	}
