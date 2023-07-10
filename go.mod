@@ -12,7 +12,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.8
 	github.com/sabafly/disgo v0.4.1
 	github.com/sabafly/sabafly-lib/v2 v2.5.0
-	github.com/shirou/gopsutil/v3 v3.23.5
+	github.com/shirou/gopsutil/v3 v3.23.6
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
 	gopkg.in/yaml.v2 v2.4.0
