@@ -26,7 +26,11 @@ type guildDataDBImpl struct {
 func (g *guildDataDBImpl) Get(id snowflake.ID) (GuildData, error) {
 	res := g.db.HGet(context.TODO(), "guild-data", id.String())
 	if err := res.Err(); err != nil {
-		return GuildData{}, err
+		if err != redis.Nil {
+			return GuildData{}, err
+		} else {
+			return NewGuildData(id), nil
+		}
 	}
 	buf := []byte(res.Val())
 	val := GuildData{}
