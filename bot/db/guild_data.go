@@ -81,8 +81,26 @@ type GuildData struct {
 	RolePermissions map[snowflake.ID]permissions.Permission `json:"role_permissions"`
 	UserLevels      map[snowflake.ID]GuildDataUserLevel     `json:"user_levels"`
 	Config          GuildDataConfig                         `json:"config"`
+	BumpStatus      BumpStatus                              `json:"bump_status"`
 
 	DataVersion *int `json:"data_version,omitempty"`
+}
+
+type BumpStatus struct {
+	BumpEnabled     bool          `json:"bump_enabled"`
+	BumpChannel     *snowflake.ID `json:"bump_channel"`
+	BumpRole        *snowflake.ID `json:"bump_role"`
+	BumpMessage     [2]string     `json:"bump_message"`
+	BumpRemind      [2]string     `json:"bump_remind"`
+	LastBump        time.Time     `json:"last_bump"`
+	LastBumpChannel *snowflake.ID `json:"last_bump_channel"`
+	UpEnabled       bool          `json:"up_enabled"`
+	UpChannel       *snowflake.ID `json:"up_channel"`
+	UpRole          *snowflake.ID `json:"up_role"`
+	UpMessage       [2]string     `json:"up_message"`
+	UpRemind        [2]string     `json:"up_remind"`
+	LastUp          time.Time     `json:"last_up"`
+	LastUpChannel   *snowflake.ID `json:"last_up_channel"`
 }
 
 type GuildDataConfig struct {

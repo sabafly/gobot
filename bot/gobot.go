@@ -132,6 +132,7 @@ func Run(file_path, lang_path, gobot_path string) {
 		commands.Message(b),
 		commands.Level(b),
 		commands.Permission(b),
+		commands.Config(b),
 	)
 
 	b.Handler.AddComponents(
@@ -148,6 +149,7 @@ func Run(file_path, lang_path, gobot_path string) {
 		commands.RolePanelModal(b),
 		commands.MessageModal(b),
 		commands.LevelModal(b),
+		commands.ConfigModal(b),
 
 		handlers.EmbedDialogModal(b),
 	)
@@ -157,6 +159,7 @@ func Run(file_path, lang_path, gobot_path string) {
 
 		handlers.LogMessage(b),
 		handlers.UserDataMessage(b),
+		handlers.BumpUpMessage(b),
 	)
 
 	b.Handler.AddReady(func(r *events.Ready) {
