@@ -197,7 +197,7 @@ func permissionListCommandHandler(b *botlib.Bot[*client.Client]) handler.Command
 		for _, v := range permissions {
 			embed.Description += v + "\r"
 		}
-		embed.SetDescriptionf("```%s```", embed.Description)
+		embed.SetDescriptionf("```%s ```", embed.Description)
 		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
 		message := discord.NewMessageCreateBuilder()
 		message.AddEmbeds(embed.Build())
