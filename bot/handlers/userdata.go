@@ -33,6 +33,7 @@ func userDataMessageHandler(b *botlib.Bot[*client.Client]) func(event *events.Gu
 		}
 		if !u.LastMessageTime.After(event.Message.CreatedAt.Add(-time.Duration((time.Now().Minute() % 5) * int(time.Minute)))) {
 			u.GlobalLevel.AddRandom()
+			u.MessageCount++
 			u.LastMessageTime = event.Message.CreatedAt
 			u.GlobalMessageLevel.AddRandom()
 			if err := b.Self.DB.UserData().Set(u.ID, u); err != nil {
@@ -64,6 +65,7 @@ func userDataMessageHandler(b *botlib.Bot[*client.Client]) func(event *events.Gu
 						return err
 					}
 				}
+				ul.MessageCount++
 				ul.LastMessageTime = event.Message.CreatedAt
 				gd.UserLevels[event.Message.Author.ID] = ul
 			}

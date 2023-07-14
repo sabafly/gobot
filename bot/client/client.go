@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/disgoorg/snowflake/v2"
+	"github.com/sabafly/disgo/discord"
 	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/db"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
@@ -93,9 +94,12 @@ func (c *Client) UserDataLock(uid snowflake.ID) *sync.Mutex {
 	return c.userDataLocks[uid]
 }
 
-func (c *Client) CheckCommandPermission(b *botlib.Bot[*Client], perm string) handler.Check[*events.ApplicationCommandInteractionCreate] {
+func (c *Client) CheckCommandPermission(b *botlib.Bot[*Client], perm string, alt_perm discord.Permissions) handler.Check[*events.ApplicationCommandInteractionCreate] {
 	return func(ctx *events.ApplicationCommandInteractionCreate) bool {
 		if b.CheckDev(ctx.User().ID) {
+			return true
+		}
+		if ctx.Member() != nil && ctx.Member().Permissions.Has(alt_perm) {
 			return true
 		}
 		gd, err := c.DB.GuildData().Get(*ctx.GuildID())

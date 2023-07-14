@@ -77,8 +77,8 @@ type GuildData struct {
 	ID              snowflake.ID                            `json:"id"`
 	RolePanel       map[uuid.UUID]GuildDataRolePanel        `json:"role_panel"`
 	RolePanelLimit  int                                     `json:"role_panel_limit"`
-	UserPermissions map[snowflake.ID]permissions.Permission `json:"user_permissions,omitempty"`
-	RolePermissions map[snowflake.ID]permissions.Permission `json:"role_permissions,omitempty"`
+	UserPermissions map[snowflake.ID]permissions.Permission `json:"user_permissions"`
+	RolePermissions map[snowflake.ID]permissions.Permission `json:"role_permissions"`
 	UserLevels      map[snowflake.ID]GuildDataUserLevel     `json:"user_levels"`
 	Config          GuildDataConfig                         `json:"config"`
 
@@ -92,6 +92,7 @@ type GuildDataConfig struct {
 
 type GuildDataUserLevel struct {
 	UserDataLevel
+	MessageCount    int64     `json:"message_count"`
 	LastMessageTime time.Time `json:"last_message_time"`
 }
 

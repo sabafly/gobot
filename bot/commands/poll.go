@@ -103,17 +103,7 @@ func Poll(b *botlib.Bot[*client.Client]) handler.Command {
 				},
 			},
 		},
-		Check: func(ctx *events.ApplicationCommandInteractionCreate) bool {
-			if b.CheckDev(ctx.User().ID) {
-				return true
-			}
-			permission := discord.PermissionManageGuild
-			if ctx.Member() != nil && ctx.Member().Permissions.Has(permission) {
-				return true
-			}
-			_ = botlib.ReturnErrMessage(ctx, "error_no_permission", botlib.WithTranslateData(map[string]any{"Name": permission.String()}))
-			return false
-		},
+		Check: b.Self.CheckCommandPermission(b, "poll.manage", discord.PermissionManageGuild),
 		CommandHandlers: map[string]handler.CommandHandler{
 			"create": pollCreateHandler(b),
 		},

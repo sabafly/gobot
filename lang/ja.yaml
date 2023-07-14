@@ -175,3 +175,5 @@ modal_level_notice_message_text_input_0_placeholder: "{mention} : ユーザー�
 command_level_reset_result_embed_title: "レベルをリセットしました"
 error_is_bot_title: "ボットは無効です"
 error_is_bot_message: "ボットは選択できません"
+error_invalid_role_title: "無効なロール"
+error_invalid_role_message: "使用できないロールです"

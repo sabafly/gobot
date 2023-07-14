@@ -74,7 +74,8 @@ type UserData struct {
 	BirthDay  [2]int       `json:"birth_day"`
 	Location  UserLocation `json:"location"`
 
-	LastMessageTime    time.Time
+	LastMessageTime    time.Time     `json:"last_message_time"`
+	MessageCount       int64         `json:"message_count"`
 	GlobalLevel        UserDataLevel `json:"global_level"`
 	GlobalMessageLevel UserDataLevel `json:"global_message_level"`
 	GlobalVoiceLevel   UserDataLevel `json:"global_voice_level"`
@@ -148,7 +149,7 @@ func (u *UserLocation) UnmarshalJSON(b []byte) error {
 }
 
 type UserDataLevel struct {
-	Point uint64
+	Point uint64 `json:"point"`
 }
 
 var i, a float64 = 10, 1.1

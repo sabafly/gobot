@@ -76,9 +76,9 @@ func Level(b *botlib.Bot[*client.Client]) handler.Command {
 			},
 		},
 		Checks: map[string]handler.Check[*events.ApplicationCommandInteractionCreate]{
-			"user/move":             b.Self.CheckCommandPermission(b, "user.level.manage"),
-			"user/reset":            b.Self.CheckCommandPermission(b, "user.level.manage"),
-			"config/notice-message": b.Self.CheckCommandPermission(b, "guild.config.manage"),
+			"user/move":             b.Self.CheckCommandPermission(b, "user.level.manage", discord.PermissionManageGuild),
+			"user/reset":            b.Self.CheckCommandPermission(b, "user.level.manage", discord.PermissionManageGuild),
+			"config/notice-message": b.Self.CheckCommandPermission(b, "guild.config.manage", discord.PermissionManageGuild),
 		},
 		CommandHandlers: map[string]handler.CommandHandler{
 			"user/move":             levelUserMoveCommandHandler(b),
