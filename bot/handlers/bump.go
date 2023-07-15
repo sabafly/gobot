@@ -31,8 +31,8 @@ func bumpUpMessageHandler(b *botlib.Bot[*client.Client]) func(event *events.Guil
 		if err != nil {
 			return err
 		}
-		switch event.Message.Interaction.ID {
-		case 302050872383242240: // disboard
+		switch event.Message.Interaction.Name {
+		case "bump": // disboard
 			if !gd.BumpStatus.BumpEnabled {
 				return nil
 			}
@@ -45,21 +45,21 @@ func bumpUpMessageHandler(b *botlib.Bot[*client.Client]) func(event *events.Guil
 			if gd.BumpStatus.BumpChannel != nil {
 				channelID = *gd.BumpStatus.BumpChannel
 			}
-			go bumpScheduler(b, channelID, gd.BumpStatus.BumpRole, event.Message.CreatedAt, gd.BumpStatus.BumpRemind[0], gd.BumpStatus.BumpRemind[1], 2)
+			go bumpScheduler(b, channelID, gd.BumpStatus.BumpRole, gd.BumpStatus.BumpRemind[0], gd.BumpStatus.BumpRemind[1], 2)
 			message := discord.NewMessageCreateBuilder()
 			embed := discord.NewEmbedBuilder()
-			embed.SetTitle(gd.BumpStatus.UpMessage[0])
-			embed.SetDescription(gd.BumpStatus.UpMessage[1])
+			embed.SetTitle(gd.BumpStatus.BumpMessage[0])
+			embed.SetDescription(gd.BumpStatus.BumpMessage[1])
 			embed.Embed = botlib.SetEmbedProperties(embed.Embed)
 			message.AddEmbeds(embed.Build())
 			if _, err := b.Client.Rest().CreateMessage(event.Message.ChannelID, message.Build()); err != nil {
 				b.Logger.Errorf("error on bump message: %s", err)
 			}
-		case 1127977377067188336: // dissoku
+		case "dissoku up": // dissoku
 			if !gd.BumpStatus.UpEnabled {
 				return nil
 			}
-			if event.Message.Embeds[0].Color != 7506394 {
+			if len(event.Message.Embeds) < 1 || event.Message.Embeds[0].Color != 7506394 {
 				return nil
 			}
 			gd.BumpStatus.LastUp = event.Message.CreatedAt
@@ -68,11 +68,11 @@ func bumpUpMessageHandler(b *botlib.Bot[*client.Client]) func(event *events.Guil
 			if gd.BumpStatus.UpChannel != nil {
 				channelID = *gd.BumpStatus.UpChannel
 			}
-			go bumpScheduler(b, channelID, gd.BumpStatus.UpRole, event.Message.CreatedAt, gd.BumpStatus.UpRemind[0], gd.BumpStatus.UpRemind[1], 1)
+			go bumpScheduler(b, channelID, gd.BumpStatus.UpRole, gd.BumpStatus.UpRemind[0], gd.BumpStatus.UpRemind[1], 1)
 			message := discord.NewMessageCreateBuilder()
 			embed := discord.NewEmbedBuilder()
-			embed.SetTitle(gd.BumpStatus.BumpMessage[0])
-			embed.SetDescription(gd.BumpStatus.BumpMessage[1])
+			embed.SetTitle(gd.BumpStatus.UpMessage[0])
+			embed.SetDescription(gd.BumpStatus.UpMessage[1])
 			embed.Embed = botlib.SetEmbedProperties(embed.Embed)
 			message.AddEmbeds(embed.Build())
 			if _, err := b.Client.Rest().CreateMessage(event.Message.ChannelID, message.Build()); err != nil {
@@ -86,8 +86,20 @@ func bumpUpMessageHandler(b *botlib.Bot[*client.Client]) func(event *events.Guil
 	}
 }
 
-func bumpScheduler(b *botlib.Bot[*client.Client], channelID snowflake.ID, roleID *snowflake.ID, created_time time.Time, title, desc string, hours int) {
-	time.Sleep(time.Since(created_time.Add(time.Hour * time.Duration(hours))))
+func BumpUpdateMessage(b *botlib.Bot[*client.Client]) handler.MessageUpdate {
+	return handler.MessageUpdate{
+		Handler: bumpUpdateHandler(b),
+	}
+}
+
+func bumpUpdateHandler(b *botlib.Bot[*client.Client]) handler.MessageUpdateHandler {
+	return func(event *events.GuildMessageUpdate) error {
+		return bumpUpMessageHandler(b)(&events.GuildMessageCreate{GenericGuildMessage: event.GenericGuildMessage})
+	}
+}
+
+func bumpScheduler(b *botlib.Bot[*client.Client], channelID snowflake.ID, roleID *snowflake.ID, title, desc string, hours int) {
+	time.Sleep(time.Hour * time.Duration(hours))
 	var mention string
 	if roleID != nil {
 		mention = discord.RoleMention(*roleID)

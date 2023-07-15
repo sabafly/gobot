@@ -162,6 +162,10 @@ func Run(file_path, lang_path, gobot_path string) {
 		handlers.BumpUpMessage(b),
 	)
 
+	b.Handler.AddMessageUpdates(
+		handlers.BumpUpdateMessage(b),
+	)
+
 	b.Handler.AddReady(func(r *events.Ready) {
 		b.Logger.Info("Ready!")
 		polls, err := b.Self.DB.Poll().GetAll()
