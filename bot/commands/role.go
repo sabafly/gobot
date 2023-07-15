@@ -49,17 +49,7 @@ func Role(b *botlib.Bot[*client.Client]) handler.Command {
 				},
 			},
 		},
-		Check: func(ctx *events.ApplicationCommandInteractionCreate) bool {
-			if b.CheckDev(ctx.User().ID) {
-				return true
-			}
-			permission := discord.PermissionManageRoles
-			if ctx.Member() != nil && ctx.Member().Permissions.Has(permission) {
-				return true
-			}
-			_ = botlib.ReturnErrMessage(ctx, "error_no_permission", botlib.WithTranslateData(map[string]any{"Name": permission.String()}))
-			return false
-		},
+		Check: b.Self.CheckCommandPermission(b, "guild.role.manage", discord.PermissionManageGuild),
 		CommandHandlers: map[string]handler.CommandHandler{
 			"panel/create": rolePanelCreateHandler(b),
 			"panel/list":   rolePanelListHandler(b),

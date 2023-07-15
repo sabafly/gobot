@@ -77,6 +77,7 @@ func Config(b *botlib.Bot[*client.Client]) handler.Command {
 				},
 			},
 		},
+		Check: b.Self.CheckCommandPermission(b, "guild.config.manage", discord.PermissionManageGuild),
 		CommandHandlers: map[string]handler.CommandHandler{
 			"bump/on":      configBumpOnCommandHandler(b),
 			"bump/off":     configBumpOffCommandHandler(b),
