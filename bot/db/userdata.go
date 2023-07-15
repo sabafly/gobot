@@ -152,14 +152,14 @@ type UserDataLevel struct {
 	Point uint64 `json:"point"`
 }
 
-var i, a float64 = 10, 1.1
+var i, a float64 = 10, 2
 
 func (UserDataLevel) sum_required_level_point(n float64) float64 {
-	return i*((math.Pow(a, n)-1)/(a-1)) + 256
+	return i * ((math.Pow(a, n) - 1) / (a - 1))
 }
 
 func (UserDataLevel) required_level_point(n float64) float64 {
-	return i*math.Pow(float64(a), float64(n)) + 256
+	return i * math.Pow(float64(a), float64(n))
 }
 
 func (u UserDataLevel) ReqPoint() uint64 {
@@ -171,7 +171,7 @@ func (u UserDataLevel) SumReqPoint() uint64 {
 }
 
 func (u UserDataLevel) Level() uint64 {
-	for k := 0; k < 401; k++ {
+	for k := 0; k < 60; k++ {
 		lv := u.sum_required_level_point(float64(k))
 		if lv > float64(u.Point) {
 			return uint64(k)
