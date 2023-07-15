@@ -155,11 +155,11 @@ type UserDataLevel struct {
 var i, a float64 = 10, 1.1
 
 func (UserDataLevel) sum_required_level_point(n float64) float64 {
-	return i*((math.Pow(a, n)-1)/(a-1)) + 32
+	return i*((math.Pow(a, n)-1)/(a-1)) + 256
 }
 
 func (UserDataLevel) required_level_point(n float64) float64 {
-	return i*math.Pow(float64(a), float64(n)) + 32
+	return i*math.Pow(float64(a), float64(n)) + 256
 }
 
 func (u UserDataLevel) ReqPoint() uint64 {
