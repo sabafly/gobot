@@ -114,7 +114,7 @@ func levelUserMoveCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandH
 		embed := discord.NewEmbedBuilder()
 		embed.SetTitle(translate.Message(event.Locale(), "command_level_move_result_embed_title"))
 		embed.SetDescriptionf(
-			"%s```0 lvl 0 xp```-> %s```%d lvl %d xp```",
+			"%s```0 lvl 0 xp```-> %s```%s lvl %s xp```",
 			user_from.Mention(),
 			user_to.Mention(),
 			gd.UserLevels[user_to.ID].Level(),
@@ -152,7 +152,7 @@ func levelUserResetCommandHandler(b *botlib.Bot[*client.Client]) handler.Command
 		embed := discord.NewEmbedBuilder()
 		embed.SetTitle(translate.Message(event.Locale(), "command_level_reset_result_embed_title"))
 		embed.SetDescriptionf(
-			"```%s: %d lvl %d xp -> 0 lvl 0 xp```",
+			"```%s: %s lvl %s xp -> 0 lvl 0 xp```",
 			target.EffectiveName(),
 			user_level.Level(),
 			user_level.Point,
