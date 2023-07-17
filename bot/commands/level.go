@@ -190,7 +190,7 @@ func levelRankCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandl
 		embed.SetTitle(translate.Translate(event.Locale(), "command_level_rank_result_embed_title", map[string]any{"User": event.Member().EffectiveName()}))
 		embed.SetDescriptionf("```%-6.6s:%16.s``````%-6.6s:%16.s/%s```",
 			"Level", ud.GlobalLevel.Level().String(),
-			"Point", ud.GlobalLevel.Point, ud.GlobalLevel.SumReqPoint().String(),
+			"Point", ud.GlobalLevel.Point.String(), ud.GlobalLevel.SumReqPoint().String(),
 		)
 		var guild discord.Guild
 		var ok bool
