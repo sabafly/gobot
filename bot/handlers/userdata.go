@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"strconv"
 	"strings"
 	"time"
 
@@ -51,12 +50,12 @@ func userDataMessageHandler(b *botlib.Bot[*client.Client]) func(event *events.Gu
 				before := ul.Level()
 				ul.AddRandom()
 				after := ul.Level()
-				if before < after {
+				if before.Cmp(after) == -1 {
 					// メッセージを送る処理
 					mes := strings.ReplaceAll(gd.Config.LevelUpMessage, "{mention}", discord.UserMention(event.Message.Author.ID))
 					mes = strings.ReplaceAll(mes, "{username}", event.Message.Author.EffectiveName())
-					mes = strings.ReplaceAll(mes, "{level}", strconv.FormatUint(after, 10))
-					mes = strings.ReplaceAll(mes, "{level_before}", strconv.FormatUint(before, 10))
+					mes = strings.ReplaceAll(mes, "{level}", after.Text(10))
+					mes = strings.ReplaceAll(mes, "{level_before}", before.Text(10))
 					channelID := event.ChannelID
 					if gd.Config.LevelUpMessageChannel != nil {
 						channelID = *gd.Config.LevelUpMessageChannel

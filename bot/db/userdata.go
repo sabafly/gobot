@@ -2,9 +2,9 @@ package db
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/json"
-	"math"
-	"math/rand"
+	"math/big"
 	"time"
 
 	"github.com/disgoorg/snowflake/v2"
@@ -149,41 +149,43 @@ func (u *UserLocation) UnmarshalJSON(b []byte) error {
 }
 
 type UserDataLevel struct {
-	Point uint64 `json:"point"`
+	Point big.Int `json:"point"`
 }
 
-var i, a float64 = 10, 2
+var i = big.NewInt(10)
+var a = big.NewInt(2)
 
-func (UserDataLevel) sum_required_level_point(n float64) float64 {
-	return i * ((math.Pow(a, n) - 1) / (a - 1))
+func (UserDataLevel) sum_required_level_point(n *big.Int) *big.Int {
+	return new(big.Int).Add(new(big.Int).Mul(i, new(big.Int).Div(new(big.Int).Sub(new(big.Int).Exp(a, n, nil), big.NewInt(1)), new(big.Int).Sub(a, big.NewInt(1)))), big.NewInt(50))
 }
 
-func (UserDataLevel) required_level_point(n float64) float64 {
-	return i * math.Pow(float64(a), float64(n))
+func (UserDataLevel) required_level_point(n *big.Int) *big.Int {
+	return new(big.Int).Add(new(big.Int).Mul(i, new(big.Int).Exp(a, n, nil)), big.NewInt(50))
 }
 
-func (u UserDataLevel) ReqPoint() uint64 {
-	return uint64(u.required_level_point(float64(u.Level())))
+func (u UserDataLevel) ReqPoint() *big.Int {
+	return u.required_level_point(u.Level())
 }
 
-func (u UserDataLevel) SumReqPoint() uint64 {
-	return uint64(u.sum_required_level_point(float64(u.Level())))
+func (u UserDataLevel) SumReqPoint() *big.Int {
+	return u.sum_required_level_point(u.Level())
 }
 
-func (u UserDataLevel) Level() uint64 {
-	for k := 0; k < 60; k++ {
-		lv := u.sum_required_level_point(float64(k))
-		if lv > float64(u.Point) {
-			return uint64(k)
+func (u UserDataLevel) Level() *big.Int {
+	for k := 0; k < 999; k++ {
+		lv := u.sum_required_level_point(big.NewInt(int64(k)))
+		if lv.Cmp(&u.Point) == 1 {
+			return big.NewInt(int64(k))
 		}
 	}
-	return 0
+	return nil
 }
 
-func (u *UserDataLevel) Add(i uint64) {
-	u.Point += i
+func (u *UserDataLevel) Add(i big.Int) {
+	u.Point.Add(&u.Point, &i)
 }
 
 func (u *UserDataLevel) AddRandom() {
-	u.Add(uint64(rand.Int63n(10)) + 5)
+	r, _ := rand.Int(nil, big.NewInt(10))
+	u.Add(*new(big.Int).Add(r, big.NewInt(15)))
 }
