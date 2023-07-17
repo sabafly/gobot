@@ -188,9 +188,9 @@ func levelRankCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandl
 			IconURL: event.Member().EffectiveAvatarURL(),
 		}
 		embed.SetTitle(translate.Translate(event.Locale(), "command_level_rank_result_embed_title", map[string]any{"User": event.Member().EffectiveName()}))
-		embed.SetDescriptionf("```%-6.6s:%16.v``````%-6.6s:%16.v/%v```",
-			"Level", ud.GlobalLevel.Level(),
-			"Point", ud.GlobalLevel.Point, ud.GlobalLevel.SumReqPoint(),
+		embed.SetDescriptionf("```%-6.6s:%16.s``````%-6.6s:%16.s/%s```",
+			"Level", ud.GlobalLevel.Level().String(),
+			"Point", ud.GlobalLevel.Point, ud.GlobalLevel.SumReqPoint().String(),
 		)
 		var guild discord.Guild
 		var ok bool
@@ -201,11 +201,12 @@ func levelRankCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandl
 			}
 			guild = g.Guild
 		}
+		ul := gd.UserLevels[event.User().ID]
 		embed.AddFields(discord.EmbedField{
 			Name: guild.Name,
-			Value: fmt.Sprintf("```%-6.6s:%16.v``````%-6.6s:%16.v/%v```",
-				"Level", gd.UserLevels[event.User().ID].Level(),
-				"Point", gd.UserLevels[event.User().ID].Point, gd.UserLevels[event.User().ID].SumReqPoint(),
+			Value: fmt.Sprintf("```%-6.6s:%16.s``````%-6.6s:%16.s/%v```",
+				"Level", ul.Level().String(),
+				"Point", ul.Point.String(), ul.SumReqPoint().String(),
 			),
 		})
 		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
