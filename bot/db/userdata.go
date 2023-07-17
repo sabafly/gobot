@@ -2,9 +2,9 @@ package db
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/json"
 	"math/big"
+	"math/rand"
 	"time"
 
 	"github.com/disgoorg/snowflake/v2"
@@ -149,7 +149,7 @@ func (u *UserLocation) UnmarshalJSON(b []byte) error {
 }
 
 type UserDataLevel struct {
-	Point big.Int `json:"point"`
+	Point *big.Int `json:"point"`
 }
 
 var i = big.NewInt(10)
@@ -174,18 +174,18 @@ func (u UserDataLevel) SumReqPoint() *big.Int {
 func (u UserDataLevel) Level() *big.Int {
 	for k := 0; k < 999; k++ {
 		lv := u.sum_required_level_point(big.NewInt(int64(k)))
-		if lv.Cmp(&u.Point) == 1 {
+		if lv.Cmp(u.Point) == 1 {
 			return big.NewInt(int64(k))
 		}
 	}
 	return nil
 }
 
-func (u *UserDataLevel) Add(i big.Int) {
-	u.Point.Add(&u.Point, &i)
+func (u *UserDataLevel) Add(i *big.Int) {
+	u.Point.Add(u.Point, i)
 }
 
 func (u *UserDataLevel) AddRandom() {
-	r, _ := rand.Int(nil, big.NewInt(10))
-	u.Add(*new(big.Int).Add(r, big.NewInt(15)))
+	r := rand.Intn(10)
+	u.Add(new(big.Int).Add(big.NewInt(int64(r)), big.NewInt(15)))
 }
