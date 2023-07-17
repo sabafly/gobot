@@ -71,7 +71,7 @@ func NewGuildData(id snowflake.ID) GuildData {
 	return g
 }
 
-const GuildDataVersion = 2
+const GuildDataVersion = 3
 
 type GuildData struct {
 	ID              snowflake.ID                            `json:"id"`
@@ -82,6 +82,10 @@ type GuildData struct {
 	UserLevels      map[snowflake.ID]GuildDataUserLevel     `json:"user_levels"`
 	Config          GuildDataConfig                         `json:"config"`
 	BumpStatus      BumpStatus                              `json:"bump_status"`
+
+	MCStatusPanel     map[uuid.UUID]string `json:"mc_status_panel"`
+	MCStatusPanelName map[string]int       `json:"mc_status_panel_name"`
+	MCStatusPanelMax  int                  `json:"mc_status_panel_max"`
 
 	DataVersion *int `json:"data_version,omitempty"`
 }
@@ -154,6 +158,12 @@ func (g *GuildData) validate(b []byte) error {
 			LevelUpMessage: "{mention} がレベルアップしました。 {level} lv",
 		}
 		*g.DataVersion = 2
+		fallthrough
+	case 2:
+		g.MCStatusPanel = make(map[uuid.UUID]string)
+		g.MCStatusPanelName = make(map[string]int)
+		g.MCStatusPanelMax = 10
+		*g.DataVersion = 3
 		fallthrough
 	case GuildDataVersion:
 		return nil

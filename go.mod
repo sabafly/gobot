@@ -3,6 +3,7 @@ module github.com/sabafly/gobot
 go 1.20
 
 require (
+	github.com/Tnze/go-mc v1.19.3
 	github.com/disgoorg/dislog v1.1.0
 	github.com/disgoorg/json v1.1.0
 	github.com/disgoorg/snowflake/v2 v2.0.1
@@ -15,6 +16,7 @@ require (
 	github.com/shirou/gopsutil/v3 v3.23.6
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
+	github.com/xrjr/mcutils v1.5.1
 	gopkg.in/yaml.v2 v2.4.0
 )
 

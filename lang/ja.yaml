@@ -183,3 +183,5 @@ command_config_bump_message_modal_text_0_label: "応答メッセージのタイ�
 command_config_bump_message_modal_text_1_label: "応答メッセージの本文"
 command_config_bump_message_modal_text_2_label: "催促メッセージのタイトル"
 command_config_bump_message_modal_text_3_label: "催促メッセージの本文"
+error_failed_to_connect_server_title: "サーバーに接続できませんでした"
+error_failed_to_connect_server_message: "{{.Err}}"

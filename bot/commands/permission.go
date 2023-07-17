@@ -67,9 +67,9 @@ func Permission(b *botlib.Bot[*client.Client]) handler.Command {
 			DMPermission: &b.Config.DMPermission,
 		},
 		Checks: map[string]handler.Check[*events.ApplicationCommandInteractionCreate]{
-			"add":    b.Self.CheckCommandPermission(b, "permissions.manage", discord.PermissionManageGuild),
-			"remove": b.Self.CheckCommandPermission(b, "permissions.manage", discord.PermissionManageGuild),
-			"list":   b.Self.CheckCommandPermission(b, "permissions.manage", discord.PermissionManageGuild),
+			"add":    b.Self.CheckCommandPermission(b, "guild.permissions.manage", discord.PermissionManageGuild),
+			"remove": b.Self.CheckCommandPermission(b, "guild.permissions.manage", discord.PermissionManageGuild),
+			"list":   b.Self.CheckCommandPermission(b, "guild.permissions.manage", discord.PermissionManageGuild),
 		},
 		CommandHandlers: map[string]handler.CommandHandler{
 			"add":    permissionAddCommandHandler(b),

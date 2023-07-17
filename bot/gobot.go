@@ -133,6 +133,7 @@ func Run(file_path, lang_path, gobot_path string) {
 		commands.Level(b),
 		commands.Permission(b),
 		commands.Config(b),
+		commands.Minecraft(b),
 	)
 
 	b.Handler.AddComponents(
@@ -140,6 +141,7 @@ func Run(file_path, lang_path, gobot_path string) {
 		commands.RolePanelComponent(b),
 		commands.UtilCalcComponent(b),
 		commands.MessageComponent(b),
+		commands.MinecraftComponent(b),
 
 		handlers.EmbedDialogComponent(b),
 	)

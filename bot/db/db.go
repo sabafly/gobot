@@ -25,6 +25,8 @@ type DB interface {
 	MessagePin() MessagePinDB
 	EmbedDialog() EmbedDialogDB
 	UserData() UserDataDB
+	MinecraftServer() MinecraftServerDB
+	MinecraftStatusPanel() MinecraftStatusPanelDB
 	Interactions() InteractionsDB
 }
 
@@ -41,34 +43,38 @@ func SetupDatabase(cfg DBConfig) (DB, error) {
 		return nil, err
 	}
 	return &dbImpl{
-		db:              db,
-		pollCreate:      &pollCreateDBImpl{db: db},
-		poll:            &pollDBImpl{db: db},
-		rolePanelCreate: &rolePanelCreateDBImpl{db: db},
-		rolePanel:       &rolePanelDBImpl{db: db},
-		guildData:       &guildDataDBImpl{db: db},
-		calc:            &CalcDBImpl{db: db},
-		messagePin:      &messagePinDBImpl{db: db},
-		embedDialog:     &embedDialogDBImpl{db: db},
-		userData:        &userDataDBImpl{db: db},
-		interactions:    &interactionsImpl{db: db},
+		db:                   db,
+		pollCreate:           &pollCreateDBImpl{db: db},
+		poll:                 &pollDBImpl{db: db},
+		rolePanelCreate:      &rolePanelCreateDBImpl{db: db},
+		rolePanel:            &rolePanelDBImpl{db: db},
+		guildData:            &guildDataDBImpl{db: db},
+		calc:                 &CalcDBImpl{db: db},
+		messagePin:           &messagePinDBImpl{db: db},
+		embedDialog:          &embedDialogDBImpl{db: db},
+		userData:             &userDataDBImpl{db: db},
+		minecraftServer:      &minecraftServerDBImpl{db: db},
+		minecraftStatusPanel: &minecraftStatusPanelDBImpl{db: db},
+		interactions:         &interactionsImpl{db: db},
 	}, nil
 }
 
 var _ DB = (*dbImpl)(nil)
 
 type dbImpl struct {
-	db              *redis.Client
-	pollCreate      *pollCreateDBImpl
-	poll            *pollDBImpl
-	rolePanelCreate *rolePanelCreateDBImpl
-	rolePanel       *rolePanelDBImpl
-	guildData       *guildDataDBImpl
-	calc            *CalcDBImpl
-	messagePin      *messagePinDBImpl
-	embedDialog     *embedDialogDBImpl
-	userData        *userDataDBImpl
-	interactions    *interactionsImpl
+	db                   *redis.Client
+	pollCreate           *pollCreateDBImpl
+	poll                 *pollDBImpl
+	rolePanelCreate      *rolePanelCreateDBImpl
+	rolePanel            *rolePanelDBImpl
+	guildData            *guildDataDBImpl
+	calc                 *CalcDBImpl
+	messagePin           *messagePinDBImpl
+	embedDialog          *embedDialogDBImpl
+	userData             *userDataDBImpl
+	minecraftServer      *minecraftServerDBImpl
+	minecraftStatusPanel *minecraftStatusPanelDBImpl
+	interactions         *interactionsImpl
 }
 
 func (d *dbImpl) PollCreate() PollCreateDB {
@@ -105,6 +111,14 @@ func (d *dbImpl) EmbedDialog() EmbedDialogDB {
 
 func (d *dbImpl) UserData() UserDataDB {
 	return d.userData
+}
+
+func (d *dbImpl) MinecraftServer() MinecraftServerDB {
+	return d.minecraftServer
+}
+
+func (d *dbImpl) MinecraftStatusPanel() MinecraftStatusPanelDB {
+	return d.minecraftStatusPanel
 }
 
 func (d *dbImpl) Interactions() InteractionsDB {
