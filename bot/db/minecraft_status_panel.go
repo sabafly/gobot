@@ -90,7 +90,7 @@ func (m MinecraftStatusPanel) Embed(address string, response *MinecraftPingRespo
 		},
 		discord.EmbedField{
 			Name:   "Latency",
-			Value:  "```disabled```",
+			Value:  fmt.Sprintf("```%d ms```", response.Latency),
 			Inline: json.Ptr(true),
 		},
 		discord.EmbedField{

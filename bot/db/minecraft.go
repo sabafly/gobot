@@ -135,13 +135,16 @@ func (ms *MinecraftServer) Fetch() (r *MinecraftPingResponse, err error) {
 			}
 			defer func() { _ = c.Disconnect() }()
 			var h ping.Handshake
+			t := time.Now()
 			h, err = c.Handshake()
 			if err != nil {
 				return
 			}
+			latency := time.Now().Sub(t).Milliseconds()
 			r = &MinecraftPingResponse{
-				Infos: h.Properties.Infos(),
-				Type:  ms.Type,
+				Infos:   h.Properties.Infos(),
+				Latency: latency,
+				Type:    ms.Type,
 			}
 			nbt_mes := chat.Message{}
 			b, _ := json.Marshal(h.Properties["description"])
@@ -153,7 +156,8 @@ func (ms *MinecraftServer) Fetch() (r *MinecraftPingResponse, err error) {
 				return
 			}
 			var res bedrock.UnconnectedPong
-			res, _, err = c.UnconnectedPing()
+			var latency int
+			res, latency, err = c.UnconnectedPing()
 			if err != nil {
 				return
 			}
@@ -162,7 +166,8 @@ func (ms *MinecraftServer) Fetch() (r *MinecraftPingResponse, err error) {
 					Description: res.MOTD,
 					Favicon:     "",
 				},
-				Type: ms.Type,
+				Latency: int64(latency),
+				Type:    ms.Type,
 			}
 			r.Version.Name = res.MinecraftVersion
 			r.Version.Protocol = res.ProtocolVersion
@@ -186,7 +191,8 @@ func (ms *MinecraftServer) Fetch() (r *MinecraftPingResponse, err error) {
 
 type MinecraftPingResponse struct {
 	ping.Infos
-	Type MinecraftServerType `json:"type"`
+	Latency int64
+	Type    MinecraftServerType `json:"type"`
 }
 
 func (r MinecraftPingResponse) AnsiDescription() string {
