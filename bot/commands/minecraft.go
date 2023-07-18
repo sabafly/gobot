@@ -61,8 +61,8 @@ func Minecraft(b *botlib.Bot[*client.Client]) handler.Command {
 									},
 								},
 								discord.ApplicationCommandOptionBool{
-									Name:        "show-address",
-									Description: "show address",
+									Name:        "hide-address",
+									Description: "hide address",
 								},
 							},
 						},
@@ -175,7 +175,7 @@ func minecraftStatusPanelCreateCommandHandler(b *botlib.Bot[*client.Client]) han
 		}
 
 		name := event.SlashCommandInteractionData().String("server-name")
-		show_address := event.SlashCommandInteractionData().Bool("show-address")
+		show_address := !event.SlashCommandInteractionData().Bool("hide-address")
 		mcp := db.NewMinecraftStatusPanel(name, *event.GuildID(), event.Channel().ID(), 0, hash, show_address)
 		message := discord.NewMessageCreateBuilder()
 		message.AddEmbeds(mcp.Embed(address, resp))
@@ -232,9 +232,7 @@ func minecraftStatusPanelDeleteCommandHandler(b *botlib.Bot[*client.Client]) han
 		}
 		gd.MCStatusPanelName[panel.Name]--
 		delete(gd.MCStatusPanel, panel.ID)
-		if err := event.Client().Rest().DeleteMessage(panel.ChannelID, panel.MessageID); err != nil {
-			return err
-		}
+		_ = event.Client().Rest().DeleteMessage(panel.ChannelID, panel.MessageID)
 		if err := b.Self.DB.MinecraftStatusPanel().Del(panel.ID); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
