@@ -140,7 +140,7 @@ func (ms *MinecraftServer) Fetch() (r *MinecraftPingResponse, err error) {
 			if err != nil {
 				return
 			}
-			latency := time.Now().Sub(t).Milliseconds()
+			latency := time.Since(t).Milliseconds()
 			r = &MinecraftPingResponse{
 				Infos:   h.Properties.Infos(),
 				Latency: latency,
