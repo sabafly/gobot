@@ -132,6 +132,12 @@ func (ms *MinecraftServer) Fetch() (r *MinecraftPingResponse, err error) {
 		case MinecraftServerTypeJava:
 			c := ping.NewClient(ms.Address, int(ms.Port))
 			if err = c.Connect(); err != nil {
+				err = nil
+				r = &MinecraftPingResponse{
+					Infos:   ping.Infos{Description: err.Error()},
+					Type:    ms.Type,
+					Succeed: false,
+				}
 				return
 			}
 			defer func() { _ = c.Disconnect() }()
@@ -139,6 +145,12 @@ func (ms *MinecraftServer) Fetch() (r *MinecraftPingResponse, err error) {
 			t := time.Now()
 			h, err = c.Handshake()
 			if err != nil {
+				err = nil
+				r = &MinecraftPingResponse{
+					Infos:   ping.Infos{Description: err.Error()},
+					Type:    ms.Type,
+					Succeed: false,
+				}
 				return
 			}
 			latency := time.Since(t).Milliseconds()
@@ -146,6 +158,7 @@ func (ms *MinecraftServer) Fetch() (r *MinecraftPingResponse, err error) {
 				Infos:   h.Properties.Infos(),
 				Latency: latency,
 				Type:    ms.Type,
+				Succeed: true,
 			}
 			nbt_mes := chat.Message{}
 			b, _ := json.Marshal(h.Properties["description"])
@@ -154,12 +167,24 @@ func (ms *MinecraftServer) Fetch() (r *MinecraftPingResponse, err error) {
 		case MinecraftServerTypeBedrock:
 			c := bedrock.NewClient(ms.String(), int(ms.Port))
 			if err = c.Connect(); err != nil {
+				err = nil
+				r = &MinecraftPingResponse{
+					Infos:   ping.Infos{Description: err.Error()},
+					Type:    ms.Type,
+					Succeed: false,
+				}
 				return
 			}
 			var res bedrock.UnconnectedPong
 			var latency int
 			res, latency, err = c.UnconnectedPing()
 			if err != nil {
+				err = nil
+				r = &MinecraftPingResponse{
+					Infos:   ping.Infos{Description: err.Error()},
+					Type:    ms.Type,
+					Succeed: false,
+				}
 				return
 			}
 			r = &MinecraftPingResponse{
@@ -194,6 +219,7 @@ type MinecraftPingResponse struct {
 	ping.Infos
 	Latency int64
 	Type    MinecraftServerType `json:"type"`
+	Succeed bool                `json:"succeed"`
 }
 
 func (r MinecraftPingResponse) AnsiDescription() string {

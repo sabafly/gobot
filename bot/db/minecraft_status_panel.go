@@ -80,6 +80,10 @@ type MinecraftStatusPanel struct {
 func (m MinecraftStatusPanel) Embed(address string, response *MinecraftPingResponse) discord.Embed {
 	embed := discord.NewEmbedBuilder()
 	embed.SetTitle(m.Name)
+	if response.Succeed {
+		response.Latency = -1
+		embed.SetColor(0xff2313)
+	}
 	embed.SetDescriptionf("```ansi\r%s ```", response.Description)
 	embed.SetThumbnail("attachment://favicon.png")
 	embed.AddFields(

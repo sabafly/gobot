@@ -355,7 +355,7 @@ func minecraftComponentStatusRefreshHandler(b *botlib.Bot[*client.Client]) handl
 		if resp == nil || server.LastResponseTime.Before(time.Now().Add(-5*time.Minute)) {
 			resp, err = server.Fetch()
 			if err != nil {
-				return botlib.ReturnErrMessage(event, "error_failed_to_connect_server", botlib.WithTranslateData(map[string]any{"Err": err}))
+				return botlib.ReturnErrMessage(event, "error_failed_to_connect_server", botlib.WithTranslateData(map[string]any{"Err": err}), botlib.WithEphemeral(true))
 			}
 		}
 		if err := b.Self.DB.MinecraftServer().Set(server.Hash, server); err != nil {
