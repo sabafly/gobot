@@ -208,7 +208,7 @@ func (ms *MinecraftServer) Fetch() (r *MinecraftPingResponse, err error) {
 		case <-ctx.Done():
 			if ctx.Err() == context.DeadlineExceeded {
 				r = &MinecraftPingResponse{
-					Infos:   ping.Infos{Description: err.Error()},
+					Infos:   ping.Infos{Description: "TIMEOUT"},
 					Type:    ms.Type,
 					Succeed: false,
 				}
