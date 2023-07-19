@@ -132,12 +132,12 @@ func (ms *MinecraftServer) Fetch() (r *MinecraftPingResponse, err error) {
 		case MinecraftServerTypeJava:
 			c := ping.NewClient(ms.Address, int(ms.Port))
 			if err = c.Connect(); err != nil {
-				err = nil
 				r = &MinecraftPingResponse{
 					Infos:   ping.Infos{Description: err.Error()},
 					Type:    ms.Type,
 					Succeed: false,
 				}
+				err = nil
 				return
 			}
 			defer func() { _ = c.Disconnect() }()
@@ -145,12 +145,12 @@ func (ms *MinecraftServer) Fetch() (r *MinecraftPingResponse, err error) {
 			t := time.Now()
 			h, err = c.Handshake()
 			if err != nil {
-				err = nil
 				r = &MinecraftPingResponse{
 					Infos:   ping.Infos{Description: err.Error()},
 					Type:    ms.Type,
 					Succeed: false,
 				}
+				err = nil
 				return
 			}
 			latency := time.Since(t).Milliseconds()
@@ -167,24 +167,24 @@ func (ms *MinecraftServer) Fetch() (r *MinecraftPingResponse, err error) {
 		case MinecraftServerTypeBedrock:
 			c := bedrock.NewClient(ms.String(), int(ms.Port))
 			if err = c.Connect(); err != nil {
-				err = nil
 				r = &MinecraftPingResponse{
 					Infos:   ping.Infos{Description: err.Error()},
 					Type:    ms.Type,
 					Succeed: false,
 				}
+				err = nil
 				return
 			}
 			var res bedrock.UnconnectedPong
 			var latency int
 			res, latency, err = c.UnconnectedPing()
 			if err != nil {
-				err = nil
 				r = &MinecraftPingResponse{
 					Infos:   ping.Infos{Description: err.Error()},
 					Type:    ms.Type,
 					Succeed: false,
 				}
+				err = nil
 				return
 			}
 			r = &MinecraftPingResponse{
