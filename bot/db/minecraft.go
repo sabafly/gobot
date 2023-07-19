@@ -207,7 +207,12 @@ func (ms *MinecraftServer) Fetch() (r *MinecraftPingResponse, err error) {
 		select {
 		case <-ctx.Done():
 			if ctx.Err() == context.DeadlineExceeded {
-				return nil, fmt.Errorf("timeout")
+				r = &MinecraftPingResponse{
+					Infos:   ping.Infos{Description: err.Error()},
+					Type:    ms.Type,
+					Succeed: false,
+				}
+				return r, nil
 			}
 			return
 		default:

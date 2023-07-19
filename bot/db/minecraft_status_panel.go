@@ -80,7 +80,7 @@ type MinecraftStatusPanel struct {
 func (m MinecraftStatusPanel) Embed(address string, response *MinecraftPingResponse) discord.Embed {
 	embed := discord.NewEmbedBuilder()
 	embed.SetTitle(m.Name)
-	if response.Succeed {
+	if !response.Succeed {
 		response.Latency = -1
 		embed.SetColor(0xff2313)
 	}
