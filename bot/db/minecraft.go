@@ -124,6 +124,7 @@ func (ms *MinecraftServer) Fetch() (r *MinecraftPingResponse, err error) {
 	defer func() {
 		if r != nil {
 			ms.LastResponse = r
+			ms.LastResponseTime = time.Now()
 		}
 	}()
 	go func() {

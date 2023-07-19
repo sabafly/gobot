@@ -134,6 +134,9 @@ func minecraftStatusPanelCreateCommandHandler(b *botlib.Bot[*client.Client]) han
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
+		if len(gd.MCStatusPanel) >= gd.MCStatusPanelMax {
+			return botlib.ReturnErrMessage(event, "error_guild_max_count_limit_has_reached")
+		}
 		var port uint16
 		var s_type db.MinecraftServerType
 		switch event.SlashCommandInteractionData().String("edition") {
@@ -232,6 +235,9 @@ func minecraftStatusPanelDeleteCommandHandler(b *botlib.Bot[*client.Client]) han
 		}
 		gd.MCStatusPanelName[panel.Name]--
 		delete(gd.MCStatusPanel, panel.ID)
+		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
 		_ = event.Client().Rest().DeleteMessage(panel.ChannelID, panel.MessageID)
 		if err := b.Self.DB.MinecraftStatusPanel().Del(panel.ID); err != nil {
 			return botlib.ReturnErr(event, err)
@@ -269,12 +275,9 @@ func minecraftStatusPanelListCommandHandler(b *botlib.Bot[*client.Client]) handl
 			if err != nil {
 				continue
 			}
-			res += fmt.Sprintf("%s (%s:%d)\r", panel.Name, server.Address, server.Port)
+			res += fmt.Sprintf("- `%s` `%s:%d` %s\r", panel.Name, server.Address, server.Port, discord.MessageURL(panel.GuildID, panel.ChannelID, panel.MessageID))
 		}
-		if res == "" {
-			res = "None"
-		}
-		res = fmt.Sprintf("```%s```", res)
+		res = fmt.Sprintf("## There are (%d/%d) panels\r%s", len(gd.MCStatusPanel), gd.MCStatusPanelMax, res)
 		message := discord.NewMessageCreateBuilder().SetContent(res)
 		if err := event.CreateMessage(message.Build()); err != nil {
 			return err
