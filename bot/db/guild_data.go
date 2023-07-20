@@ -87,6 +87,8 @@ type GuildData struct {
 	MCStatusPanelName map[string]int       `json:"mc_status_panel_name"`
 	MCStatusPanelMax  int                  `json:"mc_status_panel_max"`
 
+	UserLevelExcludeChannels map[snowflake.ID]string `json:"user_level_exclude_channels"`
+
 	DataVersion *int `json:"data_version,omitempty"`
 }
 
@@ -105,6 +107,9 @@ type BumpStatus struct {
 	UpRemind        [2]string     `json:"up_remind"`
 	LastUp          time.Time     `json:"last_up"`
 	LastUpChannel   *snowflake.ID `json:"last_up_channel"`
+
+	BumpCountMap map[snowflake.ID]uint64 `json:"bump_count_map"`
+	UpCountMap   map[snowflake.ID]uint64 `json:"up_count_map"`
 }
 
 type GuildDataConfig struct {
@@ -192,6 +197,9 @@ func (g *GuildData) validate(b []byte) error {
 				"`/bump` でBumpしよう!",
 			}
 		}
+		g.BumpStatus.BumpCountMap = make(map[snowflake.ID]uint64)
+		g.BumpStatus.UpCountMap = make(map[snowflake.ID]uint64)
+		g.UserLevelExcludeChannels = make(map[snowflake.ID]string)
 		*g.DataVersion = 4
 		fallthrough
 	case GuildDataVersion:

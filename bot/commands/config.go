@@ -1,7 +1,10 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/disgoorg/json"
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/disgo/discord"
 	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
@@ -96,6 +99,35 @@ func Config(b *botlib.Bot[*client.Client]) handler.Command {
 								},
 							},
 						},
+						{
+							Name:        "exclude-add",
+							Description: "add exclude channel",
+							Options: []discord.ApplicationCommandOption{
+								discord.ApplicationCommandOptionChannel{
+									Name:        "channel",
+									Description: "target channel",
+									Required:    true,
+									ChannelTypes: []discord.ChannelType{
+										discord.ChannelTypeGuildText,
+										discord.ChannelTypeGuildPublicThread,
+										discord.ChannelTypeGuildPrivateThread,
+										discord.ChannelTypeGuildNewsThread,
+									},
+								},
+							},
+						},
+						{
+							Name:        "exclude-remove",
+							Description: "remove exclude channel",
+							Options: []discord.ApplicationCommandOption{
+								discord.ApplicationCommandOptionString{
+									Name:         "channel",
+									Description:  "target channel",
+									Required:     true,
+									Autocomplete: true,
+								},
+							},
+						},
 					},
 				},
 			},
@@ -112,6 +144,31 @@ func Config(b *botlib.Bot[*client.Client]) handler.Command {
 			"up/mention":           configUpMentionCommandHandler(b),
 			"level/notice-message": configLevelNoticeMessageCommandHandler(b),
 			"level/notice-channel": configLevelNoticeChannelCommandHandler(b),
+			"level/exclude-add":    configLevelExcludeAddCommandHandler(b),
+			"level/exclude-remove": configLevelExcludeRemoveHandler(b),
+		},
+		AutocompleteCheck: func(ctx *events.AutocompleteInteractionCreate) bool {
+			if b.CheckDev(ctx.User().ID) {
+				return true
+			}
+			if ctx.Member() != nil && ctx.Member().Permissions.Has(discord.PermissionManageGuild) {
+				return true
+			}
+			gd, err := b.Self.DB.GuildData().Get(*ctx.GuildID())
+			if err == nil {
+				if gd.UserPermissions[ctx.User().ID].Has("guild.config.manage") {
+					return true
+				}
+				for _, id := range ctx.Member().RoleIDs {
+					if gd.RolePermissions[id].Has("guild.config.manage") {
+						return true
+					}
+				}
+			}
+			return false
+		},
+		AutocompleteHandlers: map[string]handler.AutocompleteHandler{
+			"level/exclude-remove": configLevelExcludeAutocompleteHandler(b),
 		},
 	}
 }
@@ -396,6 +453,71 @@ func configLevelNoticeChannelCommandHandler(b *botlib.Bot[*client.Client]) handl
 		}
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("OK").SetFlags(discord.MessageFlagEphemeral).Build()); err != nil {
 			return botlib.ReturnErr(event, err)
+		}
+		return nil
+	}
+}
+
+func configLevelExcludeAddCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+	return func(event *events.ApplicationCommandInteractionCreate) error {
+		b.Self.GuildDataLock(*event.GuildID()).Lock()
+		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
+		if err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		channel := event.SlashCommandInteractionData().Channel("channel")
+		gd.UserLevelExcludeChannels[channel.ID] = channel.Name
+		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("OK").AddFlags(discord.MessageFlagEphemeral).Build()); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		return nil
+	}
+}
+
+func configLevelExcludeRemoveHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+	return func(event *events.ApplicationCommandInteractionCreate) error {
+		b.Self.GuildDataLock(*event.GuildID()).Lock()
+		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
+		if err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		channel_id, err := snowflake.Parse(event.SlashCommandInteractionData().String("channel"))
+		if err != nil {
+			return botlib.ReturnErrMessage(event, "error_invalid_id")
+		}
+		delete(gd.UserLevelExcludeChannels, channel_id)
+		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("OK").AddFlags(discord.MessageFlagEphemeral).Build()); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		return nil
+	}
+}
+
+func configLevelExcludeAutocompleteHandler(b *botlib.Bot[*client.Client]) handler.AutocompleteHandler {
+	return func(event *events.AutocompleteInteractionCreate) error {
+		b.Self.GuildDataLock(*event.GuildID()).Lock()
+		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
+		if err != nil {
+			return err
+		}
+		var choices []discord.AutocompleteChoice
+		for i, v := range gd.UserLevelExcludeChannels {
+			choices = append(choices, discord.AutocompleteChoiceString{
+				Name:  fmt.Sprintf("%s (%s)", v, i.String()),
+				Value: i.String(),
+			})
+		}
+		if err := event.Result(choices); err != nil {
+			return err
 		}
 		return nil
 	}

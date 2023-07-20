@@ -42,6 +42,7 @@ func bumpUpMessageHandler(b *botlib.Bot[*client.Client]) func(event *events.Guil
 			gd.BumpStatus.LastBump = event.Message.CreatedAt
 			gd.BumpStatus.LastBumpChannel = &event.ChannelID
 			channelID := event.Message.ChannelID
+			gd.BumpStatus.BumpCountMap[event.Message.Interaction.User.ID]++
 			if gd.BumpStatus.BumpChannel != nil {
 				channelID = *gd.BumpStatus.BumpChannel
 			}
@@ -65,6 +66,7 @@ func bumpUpMessageHandler(b *botlib.Bot[*client.Client]) func(event *events.Guil
 			gd.BumpStatus.LastUp = event.Message.CreatedAt
 			gd.BumpStatus.LastUpChannel = &event.ChannelID
 			channelID := event.Message.ChannelID
+			gd.BumpStatus.UpCountMap[event.Message.Interaction.User.ID]++
 			if gd.BumpStatus.UpChannel != nil {
 				channelID = *gd.BumpStatus.UpChannel
 			}
