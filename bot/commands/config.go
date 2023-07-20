@@ -43,7 +43,6 @@ func Config(b *botlib.Bot[*client.Client]) handler.Command {
 								discord.ApplicationCommandOptionRole{
 									Name:        "role",
 									Description: "target role",
-									Required:    true,
 								},
 							},
 						},
@@ -72,7 +71,6 @@ func Config(b *botlib.Bot[*client.Client]) handler.Command {
 								discord.ApplicationCommandOptionRole{
 									Name:        "role",
 									Description: "target role",
-									Required:    true,
 								},
 							},
 						},
@@ -274,7 +272,9 @@ func configBumpMentionCommandHandler(b *botlib.Bot[*client.Client]) handler.Comm
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		gd.BumpStatus.BumpRole = json.Ptr(event.SlashCommandInteractionData().Role("role").ID)
+		if role, ok := event.SlashCommandInteractionData().OptRole("role"); ok {
+			gd.BumpStatus.BumpRole = json.Ptr(role.ID)
+		}
 		if *gd.BumpStatus.BumpRole == 0 {
 			gd.BumpStatus.BumpRole = nil
 		}
@@ -389,7 +389,9 @@ func configUpMentionCommandHandler(b *botlib.Bot[*client.Client]) handler.Comman
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		gd.BumpStatus.UpRole = json.Ptr(event.SlashCommandInteractionData().Role("role").ID)
+		if role, ok := event.SlashCommandInteractionData().OptRole("role"); ok {
+			gd.BumpStatus.UpRole = json.Ptr(role.ID)
+		}
 		if *gd.BumpStatus.UpRole == 0 {
 			gd.BumpStatus.UpRole = nil
 		}
