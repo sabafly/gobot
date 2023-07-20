@@ -2,12 +2,15 @@ package commands
 
 import (
 	"fmt"
+	"math/big"
+	"net/http"
 
 	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/disgo/discord"
 	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
+	"github.com/sabafly/gobot/bot/db"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
 	"github.com/sabafly/sabafly-lib/v2/translate"
@@ -126,6 +129,10 @@ func Config(b *botlib.Bot[*client.Client]) handler.Command {
 								},
 							},
 						},
+						{
+							Name:        "import-mee6",
+							Description: "import level data from mee6 ⚠ all guild levels reset ⚠",
+						},
 					},
 				},
 			},
@@ -144,6 +151,7 @@ func Config(b *botlib.Bot[*client.Client]) handler.Command {
 			"level/notice-channel": configLevelNoticeChannelCommandHandler(b),
 			"level/exclude-add":    configLevelExcludeAddCommandHandler(b),
 			"level/exclude-remove": configLevelExcludeRemoveHandler(b),
+			"level/import-mee6":    configLevelImportMee6CommandHandler(b),
 		},
 		AutocompleteCheck: func(ctx *events.AutocompleteInteractionCreate) bool {
 			if b.CheckDev(ctx.User().ID) {
@@ -519,6 +527,53 @@ func configLevelExcludeAutocompleteHandler(b *botlib.Bot[*client.Client]) handle
 			})
 		}
 		if err := event.Result(choices); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func configLevelImportMee6CommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+	return func(event *events.ApplicationCommandInteractionCreate) error {
+		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("Please Wait...").Build()); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		url := fmt.Sprintf("https://mee6.xyz/api/plugins/levels/leaderboard/%s", event.GuildID().String())
+		users := map[snowflake.ID]db.GuildDataUserLevel{}
+		for page := 0; ; page++ {
+			c, err := http.Get(fmt.Sprintf("%s?page=%d", url, page))
+			if err != nil {
+				_, _ = event.Client().Rest().CreateMessage(event.Channel().ID(), discord.NewMessageCreateBuilder().SetContent(err.Error()).Build())
+				return err
+			}
+			var leaderboard db.Mee6LeaderBoard
+			if err := json.NewDecoder(c.Body).Decode(&leaderboard); err != nil {
+				return err
+			}
+			if len(leaderboard.Players) < 1 {
+				break
+			}
+			for _, mp := range leaderboard.Players {
+				u := db.GuildDataUserLevel{
+					MessageCount: mp.MessageCount,
+					UserDataLevel: db.UserDataLevel{
+						Point: big.NewInt(mp.Xp),
+					},
+				}
+				users[mp.ID] = u
+			}
+		}
+		b.Self.GuildDataLock(*event.GuildID()).Lock()
+		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
+		if err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		gd.UserLevels = users
+		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
+			return err
+		}
+		if _, err := event.Client().Rest().CreateMessage(event.Channel().ID(), discord.NewMessageCreateBuilder().SetContent("OK").Build()); err != nil {
 			return err
 		}
 		return nil
