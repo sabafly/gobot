@@ -42,7 +42,7 @@ import (
 )
 
 var (
-	version = "dev"
+	version = "v0.12.0rc1"
 )
 
 func init() {
