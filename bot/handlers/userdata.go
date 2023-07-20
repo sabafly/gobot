@@ -45,7 +45,8 @@ func userDataMessageHandler(b *botlib.Bot[*client.Client]) func(event *events.Gu
 			if err != nil {
 				return err
 			}
-			if !gd.UserLevels[event.Message.Author.ID].LastMessageTime.Add(time.Minute * 3).After(time.Now()) {
+			_, ok := gd.UserLevelExcludeChannels[event.ChannelID]
+			if !gd.UserLevels[event.Message.Author.ID].LastMessageTime.Add(time.Minute*3).After(time.Now()) && !ok {
 				ul := gd.UserLevels[event.Message.Author.ID]
 				before := ul.Level()
 				ul.AddRandom()
