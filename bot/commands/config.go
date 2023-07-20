@@ -75,18 +75,43 @@ func Config(b *botlib.Bot[*client.Client]) handler.Command {
 						},
 					},
 				},
+				discord.ApplicationCommandOptionSubCommandGroup{
+					Name:        "level",
+					Description: "level config",
+					Options: []discord.ApplicationCommandOptionSubCommand{
+						{
+							Name:        "notice-message",
+							Description: "set level up message",
+						},
+						{
+							Name:        "notice-channel",
+							Description: "set level up message channel to send",
+							Options: []discord.ApplicationCommandOption{
+								discord.ApplicationCommandOptionChannel{
+									Name:        "channel",
+									Description: "target channel",
+									ChannelTypes: []discord.ChannelType{
+										discord.ChannelTypeGuildText,
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 		Check: b.Self.CheckCommandPermission(b, "guild.config.manage", discord.PermissionManageGuild),
 		CommandHandlers: map[string]handler.CommandHandler{
-			"bump/on":      configBumpOnCommandHandler(b),
-			"bump/off":     configBumpOffCommandHandler(b),
-			"bump/message": configBumpMessageConfigHandler(b),
-			"bump/mention": configBumpMentionCommandHandler(b),
-			"up/on":        configUpOnCommandHandler(b),
-			"up/off":       configUpOffCommandHandler(b),
-			"up/message":   configUpMessageConfigHandler(b),
-			"up/mention":   configUpMentionCommandHandler(b),
+			"bump/on":              configBumpOnCommandHandler(b),
+			"bump/off":             configBumpOffCommandHandler(b),
+			"bump/message":         configBumpMessageConfigHandler(b),
+			"bump/mention":         configBumpMentionCommandHandler(b),
+			"up/on":                configUpOnCommandHandler(b),
+			"up/off":               configUpOffCommandHandler(b),
+			"up/message":           configUpMessageConfigHandler(b),
+			"up/mention":           configUpMentionCommandHandler(b),
+			"level/notice-message": configLevelNoticeMessageCommandHandler(b),
+			"level/notice-channel": configLevelNoticeChannelCommandHandler(b),
 		},
 	}
 }
@@ -316,6 +341,61 @@ func configUpMentionCommandHandler(b *botlib.Bot[*client.Client]) handler.Comman
 		}
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("OK").AddFlags(discord.MessageFlagEphemeral).Build()); err != nil {
 			return err
+		}
+		return nil
+	}
+}
+
+func configLevelNoticeMessageCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+	return func(event *events.ApplicationCommandInteractionCreate) error {
+		b.Self.GuildDataLock(*event.GuildID()).Lock()
+		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
+		if err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		modal := discord.NewModalCreateBuilder()
+		modal.SetCustomID("handler:level:notice-message")
+		modal.SetTitle(translate.Message(event.Locale(), "modal_level_notice_message_title"))
+		modal.AddContainerComponents(
+			discord.NewActionRow(
+				discord.TextInputComponent{
+					CustomID:    "message",
+					Style:       discord.TextInputStyleParagraph,
+					Label:       translate.Message(event.Locale(), "modal_level_notice_message_text_input_0_label"),
+					MinLength:   json.Ptr(1),
+					MaxLength:   512,
+					Required:    true,
+					Value:       gd.Config.LevelUpMessage,
+					Placeholder: translate.Message(event.Locale(), "modal_level_notice_message_text_input_0_placeholder"),
+				},
+			),
+		)
+		if err := event.CreateModal(modal.Build()); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func configLevelNoticeChannelCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+	return func(event *events.ApplicationCommandInteractionCreate) error {
+		b.Self.GuildDataLock(*event.GuildID()).Lock()
+		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
+		if err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		if channel, ok := event.SlashCommandInteractionData().OptChannel("channel"); ok {
+			gd.Config.LevelUpMessageChannel = &channel.ID
+		} else {
+			gd.Config.LevelUpMessageChannel = nil
+		}
+		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("OK").SetFlags(discord.MessageFlagEphemeral).Build()); err != nil {
+			return botlib.ReturnErr(event, err)
 		}
 		return nil
 	}

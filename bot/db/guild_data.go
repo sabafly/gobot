@@ -71,7 +71,7 @@ func NewGuildData(id snowflake.ID) GuildData {
 	return g
 }
 
-const GuildDataVersion = 3
+const GuildDataVersion = 4
 
 type GuildData struct {
 	ID              snowflake.ID                            `json:"id"`
@@ -164,6 +164,35 @@ func (g *GuildData) validate(b []byte) error {
 		g.MCStatusPanelName = make(map[string]int)
 		g.MCStatusPanelMax = 10
 		*g.DataVersion = 3
+		fallthrough
+	case 3:
+		g.BumpStatus.UpEnabled = true
+		if g.BumpStatus.UpMessage == [2]string{} {
+			g.BumpStatus.UpMessage = [2]string{
+				"UPを検知したよ",
+				"１時間後に通知するね！",
+			}
+		}
+		if g.BumpStatus.UpRemind == [2]string{} {
+			g.BumpStatus.UpRemind = [2]string{
+				"UPできるよ!",
+				"`/dissoku up` でUPしよう!",
+			}
+		}
+		g.BumpStatus.BumpEnabled = true
+		if g.BumpStatus.BumpMessage == [2]string{} {
+			g.BumpStatus.BumpMessage = [2]string{
+				"Bumpを検知したよ",
+				"２時間後に通知するね！",
+			}
+		}
+		if g.BumpStatus.BumpRemind == [2]string{} {
+			g.BumpStatus.BumpRemind = [2]string{
+				"Bumpできるよ!",
+				"`/bump` でBumpしよう!",
+			}
+		}
+		*g.DataVersion = 4
 		fallthrough
 	case GuildDataVersion:
 		return nil
