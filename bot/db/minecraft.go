@@ -194,6 +194,7 @@ func (ms *MinecraftServer) Fetch() (r *MinecraftPingResponse, err error) {
 				},
 				Latency: int64(latency),
 				Type:    ms.Type,
+				Succeed: true,
 			}
 			r.Version.Name = res.MinecraftVersion
 			r.Version.Protocol = res.ProtocolVersion
