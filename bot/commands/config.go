@@ -540,7 +540,7 @@ func configLevelImportMee6CommandHandler(b *botlib.Bot[*client.Client]) handler.
 		}
 		url := fmt.Sprintf("https://mee6.xyz/api/plugins/levels/leaderboard/%s", event.GuildID().String())
 		users := map[snowflake.ID]db.GuildDataUserLevel{}
-		for page := 0; ; page++ {
+		for page := 0; true ; page++ {
 			c, err := http.Get(fmt.Sprintf("%s?page=%d", url, page))
 			if err != nil {
 				_, _ = event.Client().Rest().CreateMessage(event.Channel().ID(), discord.NewMessageCreateBuilder().SetContent(err.Error()).Build())
