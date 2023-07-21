@@ -535,21 +535,23 @@ func configLevelExcludeAutocompleteHandler(b *botlib.Bot[*client.Client]) handle
 
 func configLevelImportMee6CommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("Please Wait...").Build()); err != nil {
+		if err := event.DeferCreateMessage(false); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
 		url := fmt.Sprintf("https://mee6.xyz/api/plugins/levels/leaderboard/%s", event.GuildID().String())
 		users := map[snowflake.ID]db.GuildDataUserLevel{}
-		for page := 0; true ; page++ {
+		for page := 0; true; page++ {
 			c, err := http.Get(fmt.Sprintf("%s?page=%d", url, page))
-			if err != nil {
-				_, _ = event.Client().Rest().CreateMessage(event.Channel().ID(), discord.NewMessageCreateBuilder().SetContent(err.Error()).Build())
+			if err != nil || c.StatusCode != http.StatusOK {
+				_, _ = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent(fmt.Sprintf("# FAILED\r```| STATUS CODE | %d\r| RESPONSE | %v```", c.StatusCode, err)).Build())
 				return err
 			}
 			var leaderboard db.Mee6LeaderBoard
 			if err := json.NewDecoder(c.Body).Decode(&leaderboard); err != nil {
+				_, _ = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent(fmt.Sprintf("# FAILED\r```| ERROR | %s```", err)).Build())
 				return err
 			}
+			event.Client().Logger().Info(leaderboard)
 			if len(leaderboard.Players) < 1 {
 				break
 			}
@@ -567,13 +569,16 @@ func configLevelImportMee6CommandHandler(b *botlib.Bot[*client.Client]) handler.
 		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
 		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
-			return botlib.ReturnErr(event, err)
+			_, _ = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent(fmt.Sprintf("# FAILED\r```| ERROR | %s```", err)).Build())
+			return err
 		}
 		gd.UserLevels = users
 		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
+			_, _ = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent(fmt.Sprintf("# FAILED\r```| ERROR | %s```", err)).Build())
 			return err
 		}
-		if _, err := event.Client().Rest().CreateMessage(event.Channel().ID(), discord.NewMessageCreateBuilder().SetContent("OK").Build()); err != nil {
+		if _, err := event.Client().Rest().CreateMessage(event.Channel().ID(), discord.NewMessageCreateBuilder().SetContentf("# DONE\r```%d users has been imported```", len(users)).Build()); err != nil {
+			_, _ = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent(fmt.Sprintf("# FAILED\r```| ERROR | %s```", err)).Build())
 			return err
 		}
 		return nil
