@@ -577,7 +577,7 @@ func configLevelImportMee6CommandHandler(b *botlib.Bot[*client.Client]) handler.
 			_, _ = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent(fmt.Sprintf("# FAILED\r```| ERROR | %s```", err)).Build())
 			return err
 		}
-		if _, err := event.Client().Rest().CreateMessage(event.Channel().ID(), discord.NewMessageCreateBuilder().SetContentf("# DONE\r```%d users has been imported```", len(users)).Build()); err != nil {
+		if _, err := event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContentf("# DONE\r```%d users has been imported```", len(users)).Build()); err != nil {
 			_, _ = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent(fmt.Sprintf("# FAILED\r```| ERROR | %s```", err)).Build())
 			return err
 		}
