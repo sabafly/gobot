@@ -156,10 +156,12 @@ var i = big.NewInt(10)
 var a = big.NewInt(2)
 
 func (UserDataLevel) sum_required_level_point(n *big.Int) *big.Int {
+	n.Add(n, big.NewInt(5))
 	return new(big.Int).Add(new(big.Int).Mul(i, new(big.Int).Div(new(big.Int).Sub(new(big.Int).Exp(a, n, nil), big.NewInt(1)), new(big.Int).Sub(a, big.NewInt(1)))), big.NewInt(50))
 }
 
 func (UserDataLevel) required_level_point(n *big.Int) *big.Int {
+	n.Add(n, big.NewInt(5))
 	return new(big.Int).Add(new(big.Int).Mul(i, new(big.Int).Exp(a, n, nil)), big.NewInt(50))
 }
 
