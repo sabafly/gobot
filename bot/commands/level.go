@@ -2,10 +2,12 @@ package commands
 
 import (
 	"fmt"
+	"math/big"
 
 	"github.com/sabafly/disgo/discord"
 	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
+	"github.com/sabafly/gobot/bot/db"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
 	"github.com/sabafly/sabafly-lib/v2/translate"
@@ -188,7 +190,14 @@ func levelRankCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandl
 			}
 			guild = g.Guild
 		}
-		ul := gd.UserLevels[event.User().ID]
+		ul, ok := gd.UserLevels[event.User().ID]
+		if !ok {
+			ul = db.GuildDataUserLevel{
+				UserDataLevel: db.UserDataLevel{
+					Point: big.NewInt(0),
+				},
+			}
+		}
 		embed.AddFields(discord.EmbedField{
 			Name: guild.Name,
 			Value: fmt.Sprintf("```%-6.6s:%16s``````%-6.6s:%16s/%v```",
