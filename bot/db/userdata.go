@@ -62,6 +62,15 @@ func NewUserData(id snowflake.ID) (*UserData, error) {
 		ID:          id,
 		CreatedAt:   time.Now(),
 		DataVersion: 0,
+		GlobalLevel: UserDataLevel{
+			Point: big.NewInt(0),
+		},
+		GlobalMessageLevel: UserDataLevel{
+			Point: big.NewInt(0),
+		},
+		GlobalVoiceLevel: UserDataLevel{
+			Point: big.NewInt(0),
+		},
 	}, nil
 }
 

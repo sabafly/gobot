@@ -23,6 +23,7 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
+	"time"
 
 	"github.com/disgoorg/dislog"
 	"github.com/disgoorg/snowflake/v2"
@@ -33,6 +34,7 @@ import (
 	"github.com/sabafly/gobot/bot/commands"
 	"github.com/sabafly/gobot/bot/db"
 	"github.com/sabafly/gobot/bot/handlers"
+	"github.com/sabafly/gobot/bot/worker"
 	"github.com/sirupsen/logrus"
 
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
@@ -219,6 +221,40 @@ func Run(file_path, lang_path, gobot_path string) {
 		}
 		b.Handler.SyncCommands(b.Client, guilds...)
 	}
+
+	w := worker.New()
+	w.Add(
+		func(b *botlib.Bot[*client.Client]) error {
+			ns, err := b.Self.DB.NoticeSchedule().GetAll()
+			if err != nil {
+				return err
+			}
+			for _, s := range ns {
+				switch s.Type() {
+				case db.NoticeScheduleTypeBump:
+					s, ok := s.(db.NoticeScheduleBump)
+					if !ok {
+						b.Logger.Warn("failed to convert")
+						break
+					}
+					if !s.ScheduledTime.Before(time.Now().Add(-time.Minute * 15)) {
+						continue
+					}
+					if err := handlers.ScheduleBump(b, s); err != nil {
+						b.Logger.Errorf("error on worker notice schedule: %s", err)
+						continue
+					}
+					if err := b.Self.DB.NoticeSchedule().Del(s.ID()); err != nil {
+						b.Logger.Errorf("error on worker notice schedule delete: %s", err)
+						continue
+					}
+				}
+			}
+			return nil
+		},
+		5,
+	)
+	w.Start(b)
 
 	if err := b.Client.OpenShardManager(context.TODO()); err != nil {
 		b.Logger.Fatalf("failed to open shard manager: %s", err)

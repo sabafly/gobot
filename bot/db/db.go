@@ -27,6 +27,7 @@ type DB interface {
 	UserData() UserDataDB
 	MinecraftServer() MinecraftServerDB
 	MinecraftStatusPanel() MinecraftStatusPanelDB
+	NoticeSchedule() NoticeScheduleDB
 	Interactions() InteractionsDB
 }
 
@@ -55,6 +56,7 @@ func SetupDatabase(cfg DBConfig) (DB, error) {
 		userData:             &userDataDBImpl{db: db},
 		minecraftServer:      &minecraftServerDBImpl{db: db},
 		minecraftStatusPanel: &minecraftStatusPanelDBImpl{db: db},
+		noticeSchedule:       &noticeScheduleDBImpl{db: db},
 		interactions:         &interactionsImpl{db: db},
 	}, nil
 }
@@ -74,6 +76,7 @@ type dbImpl struct {
 	userData             *userDataDBImpl
 	minecraftServer      *minecraftServerDBImpl
 	minecraftStatusPanel *minecraftStatusPanelDBImpl
+	noticeSchedule       *noticeScheduleDBImpl
 	interactions         *interactionsImpl
 }
 
@@ -119,6 +122,10 @@ func (d *dbImpl) MinecraftServer() MinecraftServerDB {
 
 func (d *dbImpl) MinecraftStatusPanel() MinecraftStatusPanelDB {
 	return d.minecraftStatusPanel
+}
+
+func (d *dbImpl) NoticeSchedule() NoticeScheduleDB {
+	return d.noticeSchedule
 }
 
 func (d *dbImpl) Interactions() InteractionsDB {

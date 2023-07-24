@@ -65,6 +65,8 @@ github.com/sabafly/sabafly-lib/v2 v2.5.4 h1:Nj7NpGx/1LgT2/kl1KkfcIaSyqlvy8VAhxxg
 github.com/sabafly/sabafly-lib/v2 v2.5.4/go.mod h1:CurXEdjWQtd+gkIfpCW/zCgKYeOT+0Yqi6+n1mNP3j4=
 github.com/sabafly/sabafly-lib/v2 v2.5.5 h1:ymec51JIqN7R8yb/GRUM7/Xr/pZLARcI4GJTg8b48gc=
 github.com/sabafly/sabafly-lib/v2 v2.5.5/go.mod h1:CurXEdjWQtd+gkIfpCW/zCgKYeOT+0Yqi6+n1mNP3j4=
+github.com/sabafly/sabafly-lib/v2 v2.5.6 h1:ZDdNAGwQ+bqbbKKPUvLCPewxealRSBxe882uT6wsux4=
+github.com/sabafly/sabafly-lib/v2 v2.5.6/go.mod h1:CurXEdjWQtd+gkIfpCW/zCgKYeOT+0Yqi6+n1mNP3j4=
 github.com/sasha-s/go-csync v0.0.0-20210812194225-61421b77c44b h1:qYTY2tN72LhgDj2rtWG+LI6TXFl2ygFQQ4YezfVaGQE=
 github.com/sasha-s/go-csync v0.0.0-20210812194225-61421b77c44b/go.mod h1:/pA7k3zsXKdjjAiUhB5CjuKib9KJGCaLvZwtxGC8U0s=
 github.com/shirou/gopsutil/v3 v3.23.6 h1:5y46WPI9QBKBbK7EEccUPNXpJpNrvPuTD0O2zHEHT08=
