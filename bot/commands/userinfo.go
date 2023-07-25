@@ -2,7 +2,9 @@ package commands
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/sabafly/disgo/discord"
 	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
@@ -66,11 +68,24 @@ func userInfoUserCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHa
 		if err != nil {
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
 		}
+		ud, err := b.Self.DB.UserData().Get(member.User.ID)
+		if err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
 
 		embed2 := discord.NewEmbedBuilder()
-		embed2.SetTitle("Guild Info")
-		embed2.AddField("Level", gd.UserLevels[member.User.ID].Level().String(), false)
+		embed2.SetTitle("User Info")
+		embed2.AddField("Level", fmt.Sprintf("%s lv (%s xp)", gd.UserLevels[member.User.ID].Level().String(), humanize.SI(float64(gd.UserLevels[member.User.ID].Point.Int64()), "")), false)
 		embed2.AddField("Message Count", fmt.Sprintf("%d", gd.UserLevels[member.User.ID].MessageCount), false)
+		var birthday string
+		if ud.BirthDay != [2]int{} {
+			btime := time.Date(time.Now().Year(), time.Month(ud.BirthDay[0]), ud.BirthDay[1], 0, 0, 0, 0, time.Local)
+			if btime.Before(time.Now()) {
+				btime = time.Date(time.Now().Year()+1, time.Month(ud.BirthDay[0]), ud.BirthDay[1], 0, 0, 0, 0, time.Local)
+			}
+			birthday = fmt.Sprintf("%s (%s)", discord.FormattedTimestampMention(btime.Unix(), discord.TimestampStyleShortDate), discord.FormattedTimestampMention(btime.Unix(), discord.TimestampStyleRelative))
+		}
+		embed2.AddField("Birthday", birthday, false)
 
 		message := discord.NewMessageCreateBuilder()
 		message.SetEmbeds(embed.Build(), embed2.Build())

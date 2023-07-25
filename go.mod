@@ -7,6 +7,7 @@ require (
 	github.com/disgoorg/dislog v1.1.0
 	github.com/disgoorg/json v1.1.0
 	github.com/disgoorg/snowflake/v2 v2.0.1
+	github.com/dustin/go-humanize v1.0.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/google/uuid v1.3.0
 	github.com/mattn/go-colorable v0.1.13
@@ -44,5 +45,3 @@ require (
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
 )
-
-replace github.com/sabafly/disgo => c:/users/ikafly/.github/sabafly/disgo
