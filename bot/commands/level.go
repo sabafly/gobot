@@ -95,7 +95,9 @@ func levelUserMoveCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandH
 			return botlib.ReturnErrMessage(event, "error_is_bot")
 		}
 		gd.UserLevels[user_to.ID] = gd.UserLevels[user_from.ID]
-		delete(gd.UserLevels, user_from.ID)
+		tmp := gd.UserLevels[user_from.ID]
+		tmp.Point = big.NewInt(0)
+		gd.UserLevels[user_from.ID] = tmp
 		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -134,7 +136,9 @@ func levelUserResetCommandHandler(b *botlib.Bot[*client.Client]) handler.Command
 			return botlib.ReturnErrMessage(event, "error_is_bot")
 		}
 		user_level := gd.UserLevels[target.ID]
-		delete(gd.UserLevels, target.ID)
+		ul := gd.UserLevels[target.ID]
+		ul.Point = big.NewInt(0)
+		gd.UserLevels[target.ID] = ul
 		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
 			return botlib.ReturnErr(event, err)
 		}

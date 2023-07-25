@@ -136,6 +136,9 @@ func Run(file_path, lang_path, gobot_path string) {
 		commands.Permission(b),
 		commands.Config(b),
 		commands.Minecraft(b),
+		commands.User(b),
+
+		commands.UserInfo(b),
 	)
 
 	b.Handler.AddComponents(
