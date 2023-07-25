@@ -237,7 +237,7 @@ func Run(file_path, lang_path, gobot_path string) {
 						b.Logger.Warn("failed to convert")
 						break
 					}
-					if !s.ScheduledTime.Before(time.Now().Add(-time.Minute * 15)) {
+					if !time.Now().After(s.ScheduledTime.Add(-time.Minute * 15)) {
 						continue
 					}
 					if err := handlers.ScheduleBump(b, s); err != nil {
