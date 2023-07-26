@@ -110,10 +110,10 @@ func user_flags2emoji(flags discord.UserFlags) string {
 		str += "<:ACTIVE_DEVELOPER:1133431399895027854>"
 	}
 	if flags.Has(discord.UserFlagHouseBalance) {
-		str += "<:HYPTESQUAD_ONLINE_HOUSE_1:1133432075719020686>"
+		str += "<:HYPTESQUAD_ONLINE_HOUSE_1:1133432354099183717>"
 	}
 	if flags.Has(discord.UserFlagHouseBravery) {
-		str += "<:HYPESQUAD_ONLINE_HOUSE_2:1133432354099183717>"
+		str += "<:HYPESQUAD_ONLINE_HOUSE_2:1133432075719020686>"
 	}
 	if flags.Has(discord.UserFlagHouseBrilliance) {
 		str += "<:HYPESQUAD_ONLINE_HOUSE_3:1133432218551861258>"

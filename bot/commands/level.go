@@ -196,11 +196,7 @@ func levelRankCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandl
 		}
 		ul, ok := gd.UserLevels[event.User().ID]
 		if !ok {
-			ul = db.GuildDataUserLevel{
-				UserDataLevel: db.UserDataLevel{
-					Point: big.NewInt(0),
-				},
-			}
+			ul = db.NewGuildDataUserLevel()
 		}
 		embed.AddFields(discord.EmbedField{
 			Name: guild.Name,
