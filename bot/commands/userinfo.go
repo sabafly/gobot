@@ -8,6 +8,7 @@ import (
 	"github.com/sabafly/disgo/discord"
 	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
+	"github.com/sabafly/gobot/bot/db"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
 )
@@ -75,6 +76,9 @@ func userInfoUserCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHa
 
 		embed2 := discord.NewEmbedBuilder()
 		embed2.SetTitle("User Info")
+		if _, ok := gd.UserLevels[member.User.ID]; !ok {
+			gd.UserLevels[member.User.ID] = db.NewGuildDataUserLevel()
+		}
 		embed2.AddField("Level", fmt.Sprintf("%s lv (%s xp)", gd.UserLevels[member.User.ID].Level().String(), humanize.SI(float64(gd.UserLevels[member.User.ID].Point.Int64()), "")), false)
 		embed2.AddField("Message Count", fmt.Sprintf("%d", gd.UserLevels[member.User.ID].MessageCount), false)
 		var birthday string

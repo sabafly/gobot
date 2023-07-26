@@ -117,6 +117,12 @@ type GuildDataConfig struct {
 	LevelUpMessageChannel *snowflake.ID `json:"level_up_message_channel"`
 }
 
+func NewGuildDataUserLevel() GuildDataUserLevel {
+	return GuildDataUserLevel{
+		UserDataLevel: NewUserDataLevel(),
+	}
+}
+
 type GuildDataUserLevel struct {
 	UserDataLevel
 	MessageCount    int64     `json:"message_count"`

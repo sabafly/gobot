@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"math/big"
 	"strings"
 	"time"
 
@@ -51,11 +50,7 @@ func userDataMessageHandler(b *botlib.Bot[*client.Client]) func(event *events.Gu
 			if !gd.UserLevels[event.Message.Author.ID].LastMessageTime.Add(time.Minute*3).After(time.Now()) && !ok {
 				ul, ok := gd.UserLevels[event.Message.Author.ID]
 				if !ok {
-					ul = db.GuildDataUserLevel{
-						UserDataLevel: db.UserDataLevel{
-							Point: big.NewInt(0),
-						},
-					}
+					ul = db.NewGuildDataUserLevel()
 				}
 				before := ul.Level()
 				ul.AddRandom()

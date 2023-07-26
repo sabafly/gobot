@@ -157,6 +157,12 @@ func (u *UserLocation) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+func NewUserDataLevel() UserDataLevel {
+	return UserDataLevel{
+		Point: big.NewInt(0),
+	}
+}
+
 type UserDataLevel struct {
 	Point *big.Int `json:"point"`
 }
