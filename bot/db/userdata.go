@@ -183,13 +183,16 @@ func (u UserDataLevel) SumReqPoint() *big.Int {
 }
 
 func (u UserDataLevel) Level() *big.Int {
+	if u.Point == nil {
+		u.Point = big.NewInt(0)
+	}
 	for k := 0; k < 999; k++ {
 		lv := u.sum_required_level_point(big.NewInt(int64(k)))
 		if lv.Cmp(u.Point) == 1 {
 			return big.NewInt(int64(k))
 		}
 	}
-	return nil
+	return big.NewInt(0)
 }
 
 func (u *UserDataLevel) Add(i *big.Int) {
