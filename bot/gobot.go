@@ -162,7 +162,8 @@ func Run(file_path, lang_path, gobot_path string) {
 	)
 
 	b.Handler.AddMessages(
-		commands.MessagePinMessageCreate(b),
+		commands.MessagePinMessageCreateHandler(b),
+		commands.MessageSuffixMessageCreateHandler(b),
 
 		handlers.LogMessage(b),
 		handlers.UserDataMessage(b),

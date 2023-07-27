@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
@@ -42,14 +43,66 @@ func Message(b *botlib.Bot[*client.Client]) handler.Command {
 						},
 					},
 				},
+				discord.ApplicationCommandOptionSubCommandGroup{
+					Name:        "suffix",
+					Description: "suffix",
+					Options: []discord.ApplicationCommandOptionSubCommand{
+						{
+							Name:        "set",
+							Description: "set user message suffix",
+							Options: []discord.ApplicationCommandOption{
+								discord.ApplicationCommandOptionUser{
+									Name:        "target",
+									Description: "target user",
+									Required:    true,
+								},
+								discord.ApplicationCommandOptionString{
+									Name:        "suffix",
+									Description: "suffix text",
+									Required:    true,
+								},
+								discord.ApplicationCommandOptionInt{
+									Name:        "rule-type",
+									Description: "force suffix rule type",
+									Required:    true,
+									Choices: []discord.ApplicationCommandOptionChoiceInt{
+										{
+											Name:  "send warning message",
+											Value: db.MessageSuffixRuleTypeWarning,
+										},
+										{
+											Name:  "delete message",
+											Value: db.MessageSuffixRuleTypeDelete,
+										},
+										{
+											Name:  "webhook replace",
+											Value: db.MessageSuffixRuleTypeWebhook,
+										},
+									},
+								},
+							},
+						},
+						{
+							Name:        "remove",
+							Description: "remove suffix rule from target",
+							Options: []discord.ApplicationCommandOption{
+								discord.ApplicationCommandOptionUser{
+									Name:        "target",
+									Description: "target user",
+									Required:    true,
+								},
+							},
+						},
+					},
+				},
 			},
 		},
-		Check: func(ctx *events.ApplicationCommandInteractionCreate) bool {
-			return ctx.Member().Permissions.Has(discord.PermissionManageChannels)
-		},
+		Check: b.Self.CheckCommandPermission(b, "message.manage", discord.PermissionManageChannels.Add(discord.PermissionManageMessages)),
 		CommandHandlers: map[string]handler.CommandHandler{
-			"pin/create": messagePinCreateCommandHandler(b),
-			"pin/delete": messagePinDeleteCommandHandler(b),
+			"pin/create":    messagePinCreateCommandHandler(b),
+			"pin/delete":    messagePinDeleteCommandHandler(b),
+			"suffix/set":    messageSuffixSetCommandHandler(b),
+			"suffix/remove": messageSuffixRemoveCommandHandler(b),
 		},
 	}
 }
@@ -119,6 +172,59 @@ func messagePinDeleteCommandHandler(b *botlib.Bot[*client.Client]) handler.Comma
 		m.Pins[event.Channel().ID()] = mp
 		b.Self.MessagePin[*event.GuildID()] = m
 		return event.CreateMessage(discord.MessageCreate{Content: "OK", Flags: discord.MessageFlagEphemeral})
+	}
+}
+
+func messageSuffixSetCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+	return func(event *events.ApplicationCommandInteractionCreate) error {
+		b.Self.GuildDataLock(*event.GuildID()).Lock()
+		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
+		if err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		target := event.SlashCommandInteractionData().User("target")
+		if target.Bot || target.System {
+			return botlib.ReturnErrMessage(event, "error_is_bot")
+		}
+		suffix_string := event.SlashCommandInteractionData().String("suffix")
+		suffix_type := event.SlashCommandInteractionData().Int("rule-type")
+		suffix := db.NewMessageSuffix(target.ID, suffix_string, db.MessageSuffixRuleType(suffix_type))
+		gd.MessageSuffix[target.ID] = suffix
+		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		message := discord.NewMessageCreateBuilder()
+		message.SetContentf("%sの語尾を「%s」に強制します", target.Mention(), suffix_string)
+		if err := event.CreateMessage(message.Build()); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func messageSuffixRemoveCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+	return func(event *events.ApplicationCommandInteractionCreate) error {
+		b.Self.GuildDataLock(*event.GuildID()).Lock()
+		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
+		if err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		target := event.SlashCommandInteractionData().User("target")
+		if _, ok := gd.MessageSuffix[target.ID]; !ok {
+			return botlib.ReturnErrMessage(event, "error_already_deleted")
+		}
+		delete(gd.MessageSuffix, target.ID)
+		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		message := discord.NewMessageCreateBuilder()
+		message.SetContentf("%sの語尾を解除しました", target.Mention())
+		if err := event.CreateMessage(message.Build()); err != nil {
+			return err
+		}
+		return nil
 	}
 }
 
@@ -215,7 +321,7 @@ func messageModalPinCreate(b *botlib.Bot[*client.Client]) handler.ModalHandler {
 	}
 }
 
-func MessagePinMessageCreate(b *botlib.Bot[*client.Client]) handler.Message {
+func MessagePinMessageCreateHandler(b *botlib.Bot[*client.Client]) handler.Message {
 	return handler.Message{
 		Handler: func(event *events.GuildMessageCreate) error {
 			if !b.Self.MessagePinSync.TryLock() {
@@ -245,6 +351,67 @@ func MessagePinMessageCreate(b *botlib.Bot[*client.Client]) handler.Message {
 			b.Self.MessagePin[event.GuildID] = m
 			if err := b.Self.DB.MessagePin().Set(event.GuildID, m); err != nil {
 				return err
+			}
+			return nil
+		},
+	}
+}
+
+func MessageSuffixMessageCreateHandler(b *botlib.Bot[*client.Client]) handler.Message {
+	return handler.Message{
+		Handler: func(event *events.GuildMessageCreate) error {
+			if event.Message.Author.Bot || event.Message.Author.System || event.Message.Type.System() || !event.Message.Type.Deleteable() {
+				return nil
+			}
+			if event.Message.Type != discord.MessageTypeDefault && event.Message.Type != discord.MessageTypeReply {
+				return nil
+			}
+			b.Self.GuildDataLock(event.GuildID).Lock()
+			defer b.Self.GuildDataLock(event.GuildID).Unlock()
+			gd, err := b.Self.DB.GuildData().Get(event.GuildID)
+			if err != nil {
+				return err
+			}
+			suffix, ok := gd.MessageSuffix[event.Message.Author.ID]
+			if !ok {
+				return nil
+			}
+			has_suffix := strings.HasSuffix(event.Message.Content, suffix.Suffix)
+			switch suffix.RuleType {
+			case db.MessageSuffixRuleTypeWarning:
+				if has_suffix {
+					break
+				}
+				message := discord.NewMessageCreateBuilder()
+				message.SetContent(fmt.Sprintf("語尾がついてないよ！\r「%s」を忘れないで(笑)", suffix.Suffix))
+				message.SetAllowedMentions(&discord.AllowedMentions{
+					RepliedUser: true,
+				})
+				message.SetMessageReferenceByID(event.MessageID)
+				if _, err := event.Client().Rest().CreateMessage(event.ChannelID, message.Build()); err != nil {
+					return err
+				}
+			case db.MessageSuffixRuleTypeDelete:
+				if has_suffix {
+					break
+				}
+				if err := event.Client().Rest().DeleteMessage(event.ChannelID, event.MessageID); err != nil {
+					return err
+				}
+			case db.MessageSuffixRuleTypeWebhook:
+				if !has_suffix {
+					event.Message.Content += suffix.Suffix
+				}
+				if err := event.Client().Rest().DeleteMessage(event.ChannelID, event.MessageID); err != nil {
+					return err
+				}
+				message := discord.NewWebhookMessageCreateBuilder()
+				message.Content = event.Message.Content
+				message.SetAvatarURL(event.Message.Member.EffectiveAvatarURL())
+				message.SetUsername(event.Message.Author.EffectiveName())
+				if _, err := botlib.SendWebhook(event.Client(), event.ChannelID, message.Build()); err != nil {
+					return err
+				}
 			}
 			return nil
 		},

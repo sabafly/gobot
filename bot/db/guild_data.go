@@ -71,7 +71,7 @@ func NewGuildData(id snowflake.ID) GuildData {
 	return g
 }
 
-const GuildDataVersion = 4
+const GuildDataVersion = 5
 
 type GuildData struct {
 	ID              snowflake.ID                            `json:"id"`
@@ -87,10 +87,34 @@ type GuildData struct {
 	MCStatusPanelName map[string]int       `json:"mc_status_panel_name"`
 	MCStatusPanelMax  int                  `json:"mc_status_panel_max"`
 
+	MessageSuffix map[snowflake.ID]MessageSuffix `json:"message_suffix"`
+
 	UserLevelExcludeChannels map[snowflake.ID]string `json:"user_level_exclude_channels"`
 
 	DataVersion *int `json:"data_version,omitempty"`
 }
+
+func NewMessageSuffix(target snowflake.ID, suffix string, rule MessageSuffixRuleType) MessageSuffix {
+	return MessageSuffix{
+		Target:   target,
+		Suffix:   suffix,
+		RuleType: rule,
+	}
+}
+
+type MessageSuffix struct {
+	Target   snowflake.ID          `json:"target"`
+	Suffix   string                `json:"suffix"`
+	RuleType MessageSuffixRuleType `json:"rule_type"`
+}
+
+type MessageSuffixRuleType int
+
+const (
+	MessageSuffixRuleTypeWarning = iota
+	MessageSuffixRuleTypeDelete
+	MessageSuffixRuleTypeWebhook
+)
 
 type BumpStatus struct {
 	BumpEnabled     bool          `json:"bump_enabled"`
@@ -207,6 +231,10 @@ func (g *GuildData) validate(b []byte) error {
 		g.BumpStatus.UpCountMap = make(map[snowflake.ID]uint64)
 		g.UserLevelExcludeChannels = make(map[snowflake.ID]string)
 		*g.DataVersion = 4
+		fallthrough
+	case 4:
+		g.MessageSuffix = make(map[snowflake.ID]MessageSuffix)
+		*g.DataVersion = 5
 		fallthrough
 	case GuildDataVersion:
 		return nil
