@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"github.com/sabafly/disgo/discord"
 	"github.com/sabafly/disgo/events"
@@ -13,6 +14,7 @@ import (
 	"github.com/sabafly/sabafly-lib/v2/handler"
 	"github.com/sabafly/sabafly-lib/v2/handler/interactions"
 	"github.com/sabafly/sabafly-lib/v2/translate"
+	"golang.org/x/exp/slices"
 )
 
 func Message(b *botlib.Bot[*client.Client]) handler.Command {
@@ -409,6 +411,25 @@ func MessageSuffixMessageCreateHandler(b *botlib.Bot[*client.Client]) handler.Me
 				message.Content = event.Message.Content
 				message.SetAvatarURL(event.Message.Member.EffectiveAvatarURL())
 				message.SetUsername(event.Message.Author.EffectiveName())
+				mention_users := make([]snowflake.ID, len(event.Message.Mentions))
+				for i, u := range event.Message.Mentions {
+					mention_users[i] = u.ID
+				}
+				replied_user := false
+				if event.Message.MessageReference != nil && event.Message.MessageReference.ChannelID != nil && event.Message.MessageReference.MessageID != nil {
+					reply_message, err := event.Client().Rest().GetMessage(*event.Message.MessageReference.ChannelID, *event.Message.MessageReference.MessageID)
+					if err == nil {
+						replied_user = slices.Index(mention_users, reply_message.Author.ID) != -1
+					}
+				}
+				message.SetAllowedMentions(&discord.AllowedMentions{
+					Users:       mention_users,
+					Roles:       event.Message.MentionRoles,
+					RepliedUser: replied_user,
+				})
+
+				// うーーん むりぽ¯\_(ツ)_/¯
+
 				if _, err := botlib.SendWebhook(event.Client(), event.ChannelID, message.Build()); err != nil {
 					return err
 				}
