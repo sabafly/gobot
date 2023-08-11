@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"slices"
+
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"github.com/sabafly/disgo/discord"
@@ -14,7 +16,6 @@ import (
 	"github.com/sabafly/sabafly-lib/v2/handler"
 	"github.com/sabafly/sabafly-lib/v2/handler/interactions"
 	"github.com/sabafly/sabafly-lib/v2/translate"
-	"golang.org/x/exp/slices"
 )
 
 func Message(b *botlib.Bot[*client.Client]) handler.Command {

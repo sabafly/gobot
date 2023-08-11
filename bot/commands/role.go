@@ -19,6 +19,7 @@ import (
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/emoji"
 	"github.com/sabafly/sabafly-lib/v2/handler"
+	"github.com/sabafly/sabafly-lib/v2/handler/interactions"
 	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
@@ -47,16 +48,143 @@ func Role(b *botlib.Bot[*client.Client]) handler.Command {
 						},
 					},
 				},
+				discord.ApplicationCommandOptionSubCommandGroup{
+					Name:        "panel-v2",
+					Description: "panel version 2",
+					Options: []discord.ApplicationCommandOptionSubCommand{
+						{
+							Name:        "create",
+							Description: "create a new role panel",
+						},
+						{
+							Name:        "list",
+							Description: "show list of role panels",
+						},
+						{
+							Name:        "delete",
+							Description: "deletes a role panel",
+							Options: []discord.ApplicationCommandOption{
+								discord.ApplicationCommandOptionString{
+									Name:         "panel",
+									Description:  "panel identify",
+									Autocomplete: true,
+								},
+							},
+						},
+						{
+							Name:        "edit",
+							Description: "edit a role panel",
+							Options: []discord.ApplicationCommandOption{
+								discord.ApplicationCommandOptionString{
+									Name:         "panel",
+									Description:  "panel identify",
+									Autocomplete: true,
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 		Check: b.Self.CheckCommandPermission(b, "guild.role.manage", discord.PermissionManageGuild),
 		CommandHandlers: map[string]handler.CommandHandler{
-			"panel/create": rolePanelCreateHandler(b),
-			"panel/list":   rolePanelListHandler(b),
-			"panel/delete": rolePanelDeleteHandler(b),
+			"panel/create":    rolePanelCreateHandler(b),
+			"panel/list":      rolePanelListHandler(b),
+			"panel/delete":    rolePanelDeleteHandler(b),
+			"panel-v2/create": rolePanelV2Create(b),
 		},
 	}
 }
+
+func rolePanelV2Create(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+	return func(event *events.ApplicationCommandInteractionCreate) error {
+		modal := discord.NewModalCreateBuilder()
+		modal.SetCustomID("handler:rp-v2:create-modal")
+		modal.SetTitle(translate.Message(event.Locale(), "rp_v2_create_modal_title"))
+		modal.AddActionRow(discord.TextInputComponent{
+			CustomID:  "name",
+			Style:     discord.TextInputStyleShort,
+			Label:     translate.Message(event.Locale(), "rp_v2_create_modal_label_0"),
+			Value:     translate.Message(event.Locale(), "rp_v2_default_panel_name"),
+			MaxLength: 32,
+			Required:  true,
+		})
+		modal.AddActionRow(discord.TextInputComponent{
+			CustomID:  "description",
+			Style:     discord.TextInputStyleParagraph,
+			Label:     translate.Message(event.Locale(), "rp_v2_create_modal_label_1"),
+			MaxLength: 140,
+			Required:  false,
+		})
+		if err := event.CreateModal(modal.Build()); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func rolePanelV2Edit(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+	return func(event *events.ApplicationCommandInteractionCreate) error {
+		b.Self.GuildDataLock(*event.GuildID()).Lock()
+		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+
+		role_panel_id, err := uuid.Parse(event.SlashCommandInteractionData().String("panel"))
+		if err != nil {
+			return botlib.ReturnErrMessage(event, "error_invalid_id")
+		}
+
+		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
+		if err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+
+		if _, ok := gd.RolePanelV2[role_panel_id]; !ok {
+			return botlib.ReturnErrMessage(event, "error_unsearchable")
+		}
+
+		rp, err := b.Self.DB.RolePanelV2().Get(role_panel_id)
+		if err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+
+		rp_session := db.NewRolePanelV2Edit(*event.GuildID(), event.Channel().ID(), 0, interactions.New(event.Token(), event.CreatedAt()))
+
+	}
+}
+
+func RolePanelV2Modal(b *botlib.Bot[*client.Client]) handler.Modal {
+	return handler.Modal{
+		Name: "rp-v2",
+		Handler: map[string]handler.ModalHandler{
+			"create-modal": rolePanelV2CreateModalHandler(b),
+		},
+	}
+}
+
+func rolePanelV2CreateModalHandler(b *botlib.Bot[*client.Client]) handler.ModalHandler {
+	return func(event *events.ModalSubmitInteractionCreate) error {
+		b.Self.GuildDataLock(*event.GuildID()).Lock()
+		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		name := event.ModalSubmitInteraction.Data.Text("name")
+		description := event.ModalSubmitInteraction.Data.Text("description")
+		rp := db.NewRolePanelV2(name, description)
+		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
+		if err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		gd.RolePanelV2[rp.ID] = rp.Name
+		gd.RolePanelV2Name[rp.Name]++
+		if err := b.Self.DB.RolePanelV2().Set(rp.ID, rp); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		if err := event.DeferUpdateMessage(); err != nil {
+			return nil
+		}
+		return nil
+	}
+}
+
+// これより下V2完成後廃止予定
 
 func rolePanelDeleteHandler(b *botlib.Bot[*client.Client]) func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {

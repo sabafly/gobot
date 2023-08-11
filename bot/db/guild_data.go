@@ -71,7 +71,7 @@ func NewGuildData(id snowflake.ID) GuildData {
 	return g
 }
 
-const GuildDataVersion = 5
+const GuildDataVersion = 6
 
 type GuildData struct {
 	ID              snowflake.ID                            `json:"id"`
@@ -90,6 +90,11 @@ type GuildData struct {
 	MessageSuffix map[snowflake.ID]MessageSuffix `json:"message_suffix"`
 
 	UserLevelExcludeChannels map[snowflake.ID]string `json:"user_level_exclude_channels"`
+
+	RolePanelV2       map[uuid.UUID]string       `json:"role_panel_v2"`
+	RolePanelV2Name   map[string]int             `json:"role_panel_v2_name"`
+	RolePanelV2Placed map[snowflake.ID]uuid.UUID `json:"role_panel_v2_placed"`
+	RolePanelV2Limit  int                        `json:"role_panel_v2_limit"`
 
 	DataVersion *int `json:"data_version,omitempty"`
 }
@@ -235,6 +240,13 @@ func (g *GuildData) validate(b []byte) error {
 	case 4:
 		g.MessageSuffix = make(map[snowflake.ID]MessageSuffix)
 		*g.DataVersion = 5
+		fallthrough
+	case 5:
+		g.RolePanelV2 = make(map[uuid.UUID]string)
+		g.RolePanelV2Name = make(map[string]int)
+		g.RolePanelV2Placed = make(map[snowflake.ID]uuid.UUID)
+		g.RolePanelV2Limit = 5
+		*g.DataVersion = 6
 		fallthrough
 	case GuildDataVersion:
 		return nil
