@@ -68,6 +68,7 @@ func Role(b *botlib.Bot[*client.Client]) handler.Command {
 									Name:         "panel",
 									Description:  "panel identify",
 									Autocomplete: true,
+									Required:     true,
 								},
 							},
 						},
@@ -79,6 +80,7 @@ func Role(b *botlib.Bot[*client.Client]) handler.Command {
 									Name:         "panel",
 									Description:  "panel identify",
 									Autocomplete: true,
+									Required:     true,
 								},
 							},
 						},
@@ -92,6 +94,7 @@ func Role(b *botlib.Bot[*client.Client]) handler.Command {
 			"panel/list":      rolePanelListHandler(b),
 			"panel/delete":    rolePanelDeleteHandler(b),
 			"panel-v2/create": rolePanelV2Create(b),
+			"panel-v2/edit":   rolePanelV2Edit(b),
 		},
 	}
 }
@@ -147,8 +150,130 @@ func rolePanelV2Edit(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 			return botlib.ReturnErr(event, err)
 		}
 
-		rp_session := db.NewRolePanelV2Edit(*event.GuildID(), event.Channel().ID(), 0, interactions.New(event.Token(), event.CreatedAt()))
+		edit := db.NewRolePanelV2Edit(rp.ID, *event.GuildID(), event.Channel().ID(), interactions.New(event.Token(), event.CreatedAt()))
+		mes := discord.NewMessageCreateBuilder()
 
+		mes = db.RolePanelV2EditMenuEmbed(rp, event.Locale(), edit, mes)
+
+		if err := b.Self.DB.RolePanelV2Edit().Set(edit.ID, edit); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+
+		if err := event.CreateMessage(mes.Build()); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		return nil
+	}
+}
+
+func RolePanelV2Component(b *botlib.Bot[*client.Client]) handler.Component {
+	return handler.Component{
+		Name: "rp-v2",
+		Handler: map[string]handler.ComponentHandler{
+			"edit-rsm":         rolePanelV2EditRoleSelectMenuHandler(b),
+			"edit_name":        rolePanelV2EditPanelInfoHandler(b),
+			"edit_description": rolePanelV2EditPanelInfoHandler(b),
+		},
+	}
+}
+
+func rolePanelV2EditRoleSelectMenuHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
+	return func(event *events.ComponentInteractionCreate) error {
+		args := strings.Split(event.Data.CustomID(), ":")
+		edit_id, err := uuid.Parse(args[3])
+		if err != nil {
+			return botlib.ReturnErrMessage(event, "error_invalid_id")
+		}
+
+		edit, err := b.Self.DB.RolePanelV2Edit().Get(edit_id)
+		if err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+
+		if len(event.StringSelectMenuInteractionData().Values) < 1 {
+			edit.SelectedID = nil
+		} else {
+			selected_role, err := snowflake.Parse(event.StringSelectMenuInteractionData().Values[0])
+			if err != nil {
+				return botlib.ReturnErr(event, err)
+			}
+			edit.SelectedID = &selected_role
+		}
+
+		if err := b.Self.DB.RolePanelV2Edit().Set(edit.ID, edit); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		rp, err := b.Self.DB.RolePanelV2().Get(edit.RolePanelID)
+		if err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+
+		message := discord.NewMessageUpdateBuilder()
+		message = db.RolePanelV2EditMenuEmbed(rp, event.Locale(), edit, message)
+
+		token, err := edit.InteractionToken.Get()
+		if err != nil {
+			return botlib.ReturnErrMessage(event, "error_timeout")
+		}
+		if _, err := event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, message.Build()); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+
+		if err := event.DeferUpdateMessage(); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		return nil
+	}
+}
+
+func rolePanelV2EditPanelInfoHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
+	return func(event *events.ComponentInteractionCreate) error {
+		args := strings.Split(event.Data.CustomID(), ":")
+		edit_id, err := uuid.Parse(args[3])
+		if err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		edit, err := b.Self.DB.RolePanelV2Edit().Get(edit_id)
+		if err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		panel, err := b.Self.DB.RolePanelV2().Get(edit.RolePanelID)
+		if err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		modal := discord.NewModalCreateBuilder()
+		switch args[2] {
+		case "edit_name":
+			modal.SetTitle(translate.Message(event.Locale(), "rp_v2_edit_embed_edit_name_modal_title"))
+			modal.SetCustomID(event.Data.CustomID())
+			modal.AddActionRow(
+				discord.TextInputComponent{
+					CustomID:  "value",
+					Style:     discord.TextInputStyleShort,
+					Label:     translate.Message(event.Locale(), "rp_v2_create_modal_label_0"),
+					Value:     panel.Name,
+					MaxLength: 32,
+					Required:  true,
+				},
+			)
+		case "edit_description":
+			modal.SetTitle(translate.Message(event.Locale(), "rp_v2_edit_embed_edit_description_modal_title"))
+			modal.SetCustomID(event.Data.CustomID())
+			modal.AddActionRow(
+				discord.TextInputComponent{
+					CustomID:  "value",
+					Style:     discord.TextInputStyleParagraph,
+					Label:     translate.Message(event.Locale(), "rp_v2_create_modal_label_1"),
+					Value:     panel.Description,
+					MaxLength: 140,
+					Required:  false,
+				},
+			)
+		}
+		if err := event.CreateModal(modal.Build()); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		return nil
 	}
 }
 
@@ -177,6 +302,12 @@ func rolePanelV2CreateModalHandler(b *botlib.Bot[*client.Client]) handler.ModalH
 		if err := b.Self.DB.RolePanelV2().Set(rp.ID, rp); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
+		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+
+		// TODO: この後編集画面を表示する
+
 		if err := event.DeferUpdateMessage(); err != nil {
 			return nil
 		}

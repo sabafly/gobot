@@ -29,6 +29,7 @@ type DB interface {
 	MinecraftStatusPanel() MinecraftStatusPanelDB
 	NoticeSchedule() NoticeScheduleDB
 	RolePanelV2() RolePanelV2DB
+	RolePanelV2Edit() RolePanelV2EditDB
 	Interactions() InteractionsDB
 }
 
@@ -59,6 +60,7 @@ func SetupDatabase(cfg DBConfig) (DB, error) {
 		minecraftStatusPanel: &minecraftStatusPanelDBImpl{db: db},
 		noticeSchedule:       &noticeScheduleDBImpl{db: db},
 		rolePanelV2:          &rolePanelV2DBImpl{db: db},
+		rolePanelV2Edit:      &rolePanelV2EditDBImpl{db: db},
 		interactions:         &interactionsImpl{db: db},
 	}, nil
 }
@@ -80,6 +82,7 @@ type dbImpl struct {
 	minecraftStatusPanel *minecraftStatusPanelDBImpl
 	noticeSchedule       *noticeScheduleDBImpl
 	rolePanelV2          *rolePanelV2DBImpl
+	rolePanelV2Edit      *rolePanelV2EditDBImpl
 	interactions         *interactionsImpl
 }
 
@@ -133,6 +136,10 @@ func (d *dbImpl) NoticeSchedule() NoticeScheduleDB {
 
 func (d *dbImpl) RolePanelV2() RolePanelV2DB {
 	return d.rolePanelV2
+}
+
+func (d *dbImpl) RolePanelV2Edit() RolePanelV2EditDB {
+	return d.rolePanelV2Edit
 }
 
 func (d *dbImpl) Interactions() InteractionsDB {

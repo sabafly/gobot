@@ -147,6 +147,7 @@ func Run(file_path, lang_path, gobot_path string) {
 		commands.UtilCalcComponent(b),
 		commands.MessageComponent(b),
 		commands.MinecraftComponent(b),
+		commands.RolePanelV2Component(b),
 
 		handlers.EmbedDialogComponent(b),
 	)
@@ -157,6 +158,7 @@ func Run(file_path, lang_path, gobot_path string) {
 		commands.MessageModal(b),
 		commands.LevelModal(b),
 		commands.ConfigModal(b),
+		commands.RolePanelV2Modal(b),
 
 		handlers.EmbedDialogModal(b),
 	)

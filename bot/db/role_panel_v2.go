@@ -9,6 +9,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	"github.com/sabafly/disgo/discord"
+	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
@@ -70,7 +71,12 @@ type RolePanelV2 struct {
 	Roles       []RolePanelV2Role `json:"roles"`
 }
 
-func (r RolePanelV2) EditMenuEmbed(locale discord.Locale, edit RolePanelV2Edit) discord.MessageCreate {
+type rolePanelV2MessageBuilder[T any] interface {
+	AddEmbeds(...discord.Embed) T
+	AddContainerComponents(...discord.ContainerComponent) T
+}
+
+func RolePanelV2EditMenuEmbed[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, locale discord.Locale, edit *RolePanelV2Edit, message T) T {
 	// 埋め込みを組み立てる
 	embed := discord.NewEmbedBuilder()
 	embed.AddFields(
@@ -98,6 +104,10 @@ func (r RolePanelV2) EditMenuEmbed(locale discord.Locale, edit RolePanelV2Edit) 
 
 	if len(r.Roles) == 0 {
 		disabled = true
+		role_select_menu_option = append(role_select_menu_option, discord.StringSelectMenuOption{
+			Label: "disabled",
+			Value: "disabled",
+		})
 	}
 
 	// コンポーネントを組み立てる(クソだるい)
@@ -110,12 +120,50 @@ func (r RolePanelV2) EditMenuEmbed(locale discord.Locale, edit RolePanelV2Edit) 
 		Options:     role_select_menu_option,
 	}
 
-	role_edit_buttons := []discord.ButtonComponent{
-		{
-			Style: discord.ButtonStylePr,
-			Label: "名前を編集",
+	panel_edit_buttons := []discord.InteractiveComponent{
+		discord.ButtonComponent{
+			Style:    discord.ButtonStylePrimary,
+			Label:    translate.Message(locale, "rp_v2_edit_embed_edit_name_button"),
+			CustomID: fmt.Sprintf("handler:rp-v2:edit_name:%s", edit.ID.String()),
+		},
+		discord.ButtonComponent{
+			Style:    discord.ButtonStylePrimary,
+			Label:    translate.Message(locale, "rp_v2_edit_embed_edit_description_button"),
+			CustomID: fmt.Sprintf("handler:rp-v2:edit_description:%s", edit.ID.String()),
+		},
+		discord.ButtonComponent{
+			Style:    discord.ButtonStyleSecondary,
+			Label:    translate.Message(locale, "rp_v2_edit_embed_edit_roles_button"),
+			CustomID: fmt.Sprintf("handler:rp-v2:edit_roles:%s", edit.ID.String()),
 		},
 	}
+
+	role_edit_buttons := []discord.InteractiveComponent{
+		discord.ButtonComponent{
+			Style:    discord.ButtonStyleDanger,
+			Label:    translate.Message(locale, "rp_v2_edit_embed_edit_role_emoji_button"),
+			CustomID: fmt.Sprintf("handler:rp-v2:edit_role_emoji:%s", edit.ID.String()),
+			Disabled: !edit.HasSelectedRole(),
+		},
+		discord.ButtonComponent{
+			Style:    discord.ButtonStyleSuccess,
+			Label:    translate.Message(locale, "rp_v2_edit_embed_edit_role_name_button"),
+			CustomID: fmt.Sprintf("handler:rp-v2:edit_role_name:%s", edit.ID.String()),
+			Disabled: !edit.HasSelectedRole(),
+		},
+	}
+
+	embed.Embed = botlib.SetEmbedProperties(embed.Embed)
+	message.AddEmbeds(embed.Build())
+	message.AddContainerComponents(
+		discord.ActionRowComponent(panel_edit_buttons),
+		discord.NewActionRow(
+			role_select_menu,
+		),
+		discord.ActionRowComponent(role_edit_buttons),
+	)
+
+	return message
 }
 
 type RolePanelV2Role struct {
