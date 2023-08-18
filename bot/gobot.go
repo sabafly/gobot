@@ -127,7 +127,6 @@ func Run(file_path, lang_path, gobot_path string) {
 		commands.Ping(b),
 		commands.Poll(b),
 		commands.Role(b),
-		commands.RolePanel(b),
 		commands.Util(b),
 		commands.Admin(b),
 		commands.About(b),
@@ -143,7 +142,6 @@ func Run(file_path, lang_path, gobot_path string) {
 
 	b.Handler.AddComponents(
 		commands.PollComponent(b),
-		commands.RolePanelComponent(b),
 		commands.UtilCalcComponent(b),
 		commands.MessageComponent(b),
 		commands.MinecraftComponent(b),
@@ -154,7 +152,6 @@ func Run(file_path, lang_path, gobot_path string) {
 
 	b.Handler.AddModals(
 		commands.PollModal(b),
-		commands.RolePanelModal(b),
 		commands.MessageModal(b),
 		commands.LevelModal(b),
 		commands.ConfigModal(b),
