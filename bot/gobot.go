@@ -166,6 +166,7 @@ func Run(file_path, lang_path, gobot_path string) {
 	b.Handler.AddMessages(
 		commands.MessagePinMessageCreateHandler(b),
 		commands.MessageSuffixMessageCreateHandler(b),
+		commands.RolePanelV2Message(b),
 
 		handlers.LogMessage(b),
 		handlers.UserDataMessage(b),
@@ -174,6 +175,14 @@ func Run(file_path, lang_path, gobot_path string) {
 
 	b.Handler.AddMessageUpdates(
 		handlers.BumpUpdateMessage(b),
+	)
+
+	b.Handler.AddMessageDelete(
+		commands.RolePanelV2MessageDelete(b),
+	)
+
+	b.Handler.MessageReactionAdd.Adds(
+		commands.RolePanelV2MessageReaction(b),
 	)
 
 	b.Handler.AddReady(func(r *events.Ready) {

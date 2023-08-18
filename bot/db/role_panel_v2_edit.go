@@ -8,6 +8,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/sabafly/disgo/discord"
 	"github.com/sabafly/sabafly-lib/v2/handler/interactions"
 )
 
@@ -38,7 +39,7 @@ func (self rolePanelV2EditDBImpl) Set(id uuid.UUID, data *RolePanelV2Edit) error
 	if err != nil {
 		return err
 	}
-	res := self.db.Set(context.TODO(), "role-panel-v2-edit"+id.String(), buf, time.Minute*15)
+	res := self.db.Set(context.TODO(), "role-panel-v2-edit"+id.String(), buf, (time.Minute*15)-(time.Since(data.CreatedAt)))
 	if err := res.Err(); err != nil {
 		return err
 	}
@@ -74,6 +75,8 @@ type RolePanelV2Edit struct {
 	ChannelID        snowflake.ID       `json:"channel_id"`
 	MessageID        snowflake.ID       `json:"message_id"`
 	InteractionToken interactions.Token `json:"interaction_token"`
+	EmojiMode        bool               `json:"emoji_mode"`
+	EmojiLocale      discord.Locale     `json:"emoji_locale"`
 
 	SelectedID *snowflake.ID
 }

@@ -30,6 +30,7 @@ type DB interface {
 	NoticeSchedule() NoticeScheduleDB
 	RolePanelV2() RolePanelV2DB
 	RolePanelV2Edit() RolePanelV2EditDB
+	RolePanelV2Place() RolePanelV2PlaceDB
 	Interactions() InteractionsDB
 }
 
@@ -61,6 +62,7 @@ func SetupDatabase(cfg DBConfig) (DB, error) {
 		noticeSchedule:       &noticeScheduleDBImpl{db: db},
 		rolePanelV2:          &rolePanelV2DBImpl{db: db},
 		rolePanelV2Edit:      &rolePanelV2EditDBImpl{db: db},
+		rolePanelV2Place:     &rolePanelV2PlaceDBImpl{db: db},
 		interactions:         &interactionsImpl{db: db},
 	}, nil
 }
@@ -83,6 +85,7 @@ type dbImpl struct {
 	noticeSchedule       *noticeScheduleDBImpl
 	rolePanelV2          *rolePanelV2DBImpl
 	rolePanelV2Edit      *rolePanelV2EditDBImpl
+	rolePanelV2Place     *rolePanelV2PlaceDBImpl
 	interactions         *interactionsImpl
 }
 
@@ -140,6 +143,10 @@ func (d *dbImpl) RolePanelV2() RolePanelV2DB {
 
 func (d *dbImpl) RolePanelV2Edit() RolePanelV2EditDB {
 	return d.rolePanelV2Edit
+}
+
+func (d *dbImpl) RolePanelV2Place() RolePanelV2PlaceDB {
+	return d.rolePanelV2Place
 }
 
 func (d *dbImpl) Interactions() InteractionsDB {
