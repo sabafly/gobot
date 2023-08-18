@@ -22,8 +22,9 @@ import (
 func Minecraft(b *botlib.Bot[*client.Client]) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
-			Name:        "minecraft",
-			Description: "minecraft",
+			Name:         "minecraft",
+			Description:  "minecraft",
+			DMPermission: &b.Config.DMPermission,
 			Options: []discord.ApplicationCommandOption{
 				discord.ApplicationCommandOptionSubCommandGroup{
 					Name:        "status-panel",

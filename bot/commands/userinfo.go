@@ -11,13 +11,15 @@ import (
 	"github.com/sabafly/gobot/bot/db"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
+	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
 func UserInfo(b *botlib.Bot[*client.Client]) handler.Command {
 	return handler.Command{
 		Create: discord.UserCommandCreate{
-			Name:         "info",
-			DMPermission: &b.Config.DMPermission,
+			Name:              "info",
+			NameLocalizations: *translate.MessageMap("user_info_command", false),
+			DMPermission:      &b.Config.DMPermission,
 		},
 		CommandHandlers: map[string]handler.CommandHandler{
 			"": userInfoUserCommandHandler(b),

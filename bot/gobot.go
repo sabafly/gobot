@@ -127,7 +127,6 @@ func Run(file_path, lang_path, gobot_path string) {
 		commands.Ping(b),
 		commands.Poll(b),
 		commands.Role(b),
-		commands.RolePanel(b),
 		commands.Util(b),
 		commands.Admin(b),
 		commands.About(b),
@@ -143,20 +142,20 @@ func Run(file_path, lang_path, gobot_path string) {
 
 	b.Handler.AddComponents(
 		commands.PollComponent(b),
-		commands.RolePanelComponent(b),
 		commands.UtilCalcComponent(b),
 		commands.MessageComponent(b),
 		commands.MinecraftComponent(b),
+		commands.RolePanelV2Component(b),
 
 		handlers.EmbedDialogComponent(b),
 	)
 
 	b.Handler.AddModals(
 		commands.PollModal(b),
-		commands.RolePanelModal(b),
 		commands.MessageModal(b),
 		commands.LevelModal(b),
 		commands.ConfigModal(b),
+		commands.RolePanelV2Modal(b),
 
 		handlers.EmbedDialogModal(b),
 	)
@@ -164,6 +163,7 @@ func Run(file_path, lang_path, gobot_path string) {
 	b.Handler.AddMessages(
 		commands.MessagePinMessageCreateHandler(b),
 		commands.MessageSuffixMessageCreateHandler(b),
+		commands.RolePanelV2Message(b),
 
 		handlers.LogMessage(b),
 		handlers.UserDataMessage(b),
@@ -172,6 +172,14 @@ func Run(file_path, lang_path, gobot_path string) {
 
 	b.Handler.AddMessageUpdates(
 		handlers.BumpUpdateMessage(b),
+	)
+
+	b.Handler.AddMessageDelete(
+		commands.RolePanelV2MessageDelete(b),
+	)
+
+	b.Handler.MessageReactionAdd.Adds(
+		commands.RolePanelV2MessageReaction(b),
 	)
 
 	b.Handler.AddReady(func(r *events.Ready) {
