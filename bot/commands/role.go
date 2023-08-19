@@ -373,6 +373,7 @@ func RolePanelV2Component(b *botlib.Bot[*client.Client]) handler.Component {
 			"place_simple_select_menu": rolePanelV2PlaceSimpleSelectMenuComponentHandler(b),
 			"place_button_show_name":   rolePanelV2PlaceButtonShowNameComponentHandler(b),
 			"place_button_color":       rolePanelV2PlaceButtonColorComponentHandler(b),
+			"call_select_menu":         rolePanelV2CallSelectMenuComponentHandler(b),
 		},
 	}
 }
@@ -652,20 +653,9 @@ func rolePanelV2EditRoleSelectComponentHandler(b *botlib.Bot[*client.Client]) ha
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
 		}
 
-		if len(deleted_role) < 1 {
-			if err := event.DeferUpdateMessage(); err != nil {
-				return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
-			}
-			return nil
-		}
-
-		var deleted_role_string string
-		for _, id := range deleted_role {
-			deleted_role_string += fmt.Sprintf("- %s\r", discord.RoleMention(id))
-		}
-
 		// パネルを更新する: ここから
 		go func() {
+			b.Logger.Debug("update called")
 			b.Self.GuildDataLock(*event.GuildID()).Lock()
 			defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
 			gd, err := b.Self.DB.GuildData().Get(edit.GuildID)
@@ -714,6 +704,18 @@ func rolePanelV2EditRoleSelectComponentHandler(b *botlib.Bot[*client.Client]) ha
 		}()
 		// パネルを更新する: ここまで
 
+		if len(deleted_role) < 1 {
+			if err := event.DeferUpdateMessage(); err != nil {
+				return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+			}
+			return nil
+		}
+
+		var deleted_role_string string
+		for _, id := range deleted_role {
+			deleted_role_string += fmt.Sprintf("- %s\r", discord.RoleMention(id))
+		}
+
 		embed := discord.NewEmbedBuilder()
 		embed.SetTitle(translate.Message(event.Locale(), "rp_v2_edit_role_add_select_deleted_embed_title"))
 		embed.SetDescriptionf("%s\r%s",
@@ -727,6 +729,7 @@ func rolePanelV2EditRoleSelectComponentHandler(b *botlib.Bot[*client.Client]) ha
 		if err := event.CreateMessage(message.Build()); err != nil {
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
 		}
+
 		return nil
 	}
 }
@@ -1225,8 +1228,11 @@ func rolePanelV2UseSelectMenuComponentHandler(b *botlib.Bot[*client.Client]) han
 
 		key := fmt.Sprintf("%s/%s", event.Message.ChannelID, event.Message.ID)
 		panel_id, ok := gd.RolePanelV2Placed[key]
-		if !ok {
+		if !ok && !event.Message.Flags.Has(discord.MessageFlagEphemeral) {
 			return botlib.ReturnErrMessage(event, "error_not_found", botlib.WithEphemeral(true))
+		}
+		if event.Message.Flags.Has(discord.MessageFlagEphemeral) {
+			panel_id = uuid.MustParse(strings.Split(event.Data.CustomID(), ":")[3])
 		}
 		panel, err := b.Self.DB.RolePanelV2().Get(panel_id)
 		if err != nil {
@@ -1411,6 +1417,59 @@ func rolePanelV2UseButtonComponentHandler(b *botlib.Bot[*client.Client]) handler
 			}); err != nil {
 				return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
 			}
+		}
+		return nil
+	}
+}
+
+func rolePanelV2CallSelectMenuComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
+	return func(event *events.ComponentInteractionCreate) error {
+		b.Self.GuildDataLock(*event.GuildID()).Lock()
+		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
+		if err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+		key := fmt.Sprintf("%s/%s", event.Message.ChannelID, event.Message.ID)
+		panel_id, ok := gd.RolePanelV2Placed[key]
+		if !ok {
+			return botlib.ReturnErrMessage(event, "error_not_found", botlib.WithEphemeral(true))
+		}
+		panel, err := b.Self.DB.RolePanelV2().Get(panel_id)
+		if err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+
+		embed := discord.NewEmbedBuilder()
+		embed.SetTitle(translate.Message(event.Locale(), "rp_v2_call_select_menu_embed_title"))
+		embed.SetDescription(translate.Message(event.Locale(), "rp_v2_call_select_menu_embed_description"))
+		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
+		message := discord.NewMessageCreateBuilder()
+		message.AddEmbeds(embed.Build())
+		options := make([]discord.StringSelectMenuOption, len(panel.Roles))
+		for i, rpvr := range panel.Roles {
+			options[i] = discord.StringSelectMenuOption{
+				Label:   rpvr.RoleName,
+				Value:   rpvr.RoleID.String(),
+				Emoji:   rpvr.Emoji,
+				Default: slices.Contains(event.Member().RoleIDs, rpvr.RoleID),
+			}
+		}
+		message.AddContainerComponents(
+			discord.NewActionRow(
+				discord.StringSelectMenuComponent{
+					CustomID:    fmt.Sprintf("handler:rp-v2:use_select_menu:%s", panel.ID.String()),
+					Placeholder: translate.Message(event.Locale(), "rp_v2_select_menu_placeholder"),
+					MinValues:   json.Ptr(0),
+					MaxValues:   len(panel.Roles),
+					Options:     options,
+				},
+			),
+		)
+		message.SetFlags(discord.MessageFlagEphemeral)
+
+		if err := event.CreateMessage(message.Build()); err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
 		}
 		return nil
 	}

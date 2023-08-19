@@ -446,7 +446,7 @@ func RolePanelV2EditMenuEmbed[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, lo
 			Style:    discord.ButtonStyleDanger,
 			Label:    translate.Message(locale, "rp_v2_edit_embed_edit_role_delete_button"),
 			CustomID: fmt.Sprintf("handler:rp-v2:edit_role_delete:%s", edit.ID.String()),
-			Disabled: !edit.HasSelectedRole(),
+			Disabled: !edit.HasSelectedRole() || len(r.Roles) <= 1,
 		},
 	}
 
