@@ -45,3 +45,5 @@ require (
 	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/text v0.12.0 // indirect
 )
+
+replace github.com/sabafly/sabafly-lib/v2 => C:/Users/ikafly/.github/sabafly/sabafly-lib

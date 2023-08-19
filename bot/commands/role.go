@@ -1244,6 +1244,10 @@ func rolePanelV2UseSelectMenuComponentHandler(b *botlib.Bot[*client.Client]) han
 			selected_roles = append(selected_roles, snowflake.MustParse(v))
 		}
 
+		if err := event.DeferCreateMessage(true); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+
 		add_roles := []snowflake.ID{}
 		removed_roles := []snowflake.ID{}
 		unchanged_role := []snowflake.ID{}
@@ -1263,12 +1267,15 @@ func rolePanelV2UseSelectMenuComponentHandler(b *botlib.Bot[*client.Client]) han
 							SetTitle(translate.Message(event.Locale(), "rp_v2_add_role_failed_embed_title")).
 							SetDescription(translate.Message(event.Locale(), "rp_v2_add_role_failed_embed_description"))
 						embed.Embed = botlib.SetEmbedProperties(embed.Embed)
-						if err := event.CreateMessage(discord.MessageCreate{
-							Embeds: []discord.Embed{
-								embed.Build(),
-							},
-						}); err != nil {
-							return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+						if _, err := event.Client().Rest().UpdateInteractionResponse(
+							event.ApplicationID(),
+							event.Token(),
+							discord.MessageUpdate{
+								Embeds: &[]discord.Embed{
+									embed.Build(),
+								},
+							}); err != nil {
+							return botlib.ReturnErr(event, err, botlib.WithEphemeral(true), botlib.WithUpdate(true, event.Client()))
 						}
 						return err
 					}
@@ -1284,12 +1291,15 @@ func rolePanelV2UseSelectMenuComponentHandler(b *botlib.Bot[*client.Client]) han
 							SetTitle(translate.Message(event.Locale(), "rp_v2_remove_role_failed_embed_title")).
 							SetDescription(translate.Message(event.Locale(), "rp_v2_remove_role_failed_embed_description"))
 						embed.Embed = botlib.SetEmbedProperties(embed.Embed)
-						if err := event.CreateMessage(discord.MessageCreate{
-							Embeds: []discord.Embed{
-								embed.Build(),
-							},
-						}); err != nil {
-							return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+						if _, err := event.Client().Rest().UpdateInteractionResponse(
+							event.ApplicationID(),
+							event.Token(),
+							discord.MessageUpdate{
+								Embeds: &[]discord.Embed{
+									embed.Build(),
+								},
+							}); err != nil {
+							return botlib.ReturnErr(event, err, botlib.WithEphemeral(true), botlib.WithUpdate(true, event.Client()))
 						}
 						return err
 					}
@@ -1339,11 +1349,11 @@ func rolePanelV2UseSelectMenuComponentHandler(b *botlib.Bot[*client.Client]) han
 			)
 		}
 		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
-		message := discord.NewMessageCreateBuilder()
+		message := discord.NewMessageUpdateBuilder()
 		message.AddEmbeds(embed.Build())
 		message.SetFlags(discord.MessageFlagEphemeral)
-		if err := event.CreateMessage(message.Build()); err != nil {
-			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		if _, err := event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), message.Build()); err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true), botlib.WithUpdate(true, event.Client()))
 		}
 		return nil
 	}
