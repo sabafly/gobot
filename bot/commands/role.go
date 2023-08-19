@@ -330,7 +330,7 @@ func rolePanelV2Delete(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 				message_id := snowflake.MustParse(keys[1])
 
 				delete(gd.RolePanelV2Placed, k)
-				delete(gd.RolePanelV2PlacedType, k)
+				delete(gd.RolePanelV2PlacedConfig, k)
 
 				if err := event.Client().Rest().DeleteMessage(channel_id, message_id); err != nil {
 					b.Logger.Errorf("error on delete role panel message: %s", err.Error())
@@ -357,19 +357,22 @@ func RolePanelV2Component(b *botlib.Bot[*client.Client]) handler.Component {
 	return handler.Component{
 		Name: "rp-v2",
 		Handler: map[string]handler.ComponentHandler{
-			"edit-rsm":         rolePanelV2EditRoleSelectMenuHandler(b),
-			"edit_name":        rolePanelV2EditPanelInfoHandler(b),
-			"edit_description": rolePanelV2EditPanelInfoHandler(b),
-			"edit_roles":       rolePanelV2EditRolesComponentHandler(b),
-			"back_edit_roles":  rolePanelV2BackEditRolesComponentHandler(b),
-			"edit_role_select": rolePanelV2EditRoleSelectComponentHandler(b),
-			"edit_role_name":   rolePanelV2EditRoleNameComponentHandler(b),
-			"edit_role_delete": rolePanelV2EditRoleDeleteComponent(b),
-			"edit_role_emoji":  rolePanelV2EditRoleEmojiComponentHandler(b),
-			"place_type":       rolePanelV2PlaceTypeComponentHandler(b),
-			"place":            rolePanelV2PlaceComponentHandler(b),
-			"use_select_menu":  rolePanelV2UseSelectMenuComponentHandler(b),
-			"use_button":       rolePanelV2UseButtonComponentHandler(b),
+			"edit-rsm":                 rolePanelV2EditRoleSelectMenuHandler(b),
+			"edit_name":                rolePanelV2EditPanelInfoHandler(b),
+			"edit_description":         rolePanelV2EditPanelInfoHandler(b),
+			"edit_roles":               rolePanelV2EditRolesComponentHandler(b),
+			"back_edit_roles":          rolePanelV2BackEditRolesComponentHandler(b),
+			"edit_role_select":         rolePanelV2EditRoleSelectComponentHandler(b),
+			"edit_role_name":           rolePanelV2EditRoleNameComponentHandler(b),
+			"edit_role_delete":         rolePanelV2EditRoleDeleteComponent(b),
+			"edit_role_emoji":          rolePanelV2EditRoleEmojiComponentHandler(b),
+			"place_type":               rolePanelV2PlaceTypeComponentHandler(b),
+			"place":                    rolePanelV2PlaceComponentHandler(b),
+			"use_select_menu":          rolePanelV2UseSelectMenuComponentHandler(b),
+			"use_button":               rolePanelV2UseButtonComponentHandler(b),
+			"place_simple_select_menu": rolePanelV2PlaceSimpleSelectMenuComponentHandler(b),
+			"place_button_show_name":   rolePanelV2PlaceButtonShowNameComponentHandler(b),
+			"place_button_color":       rolePanelV2PlaceButtonColorComponentHandler(b),
 		},
 	}
 }
@@ -679,23 +682,23 @@ func rolePanelV2EditRoleSelectComponentHandler(b *botlib.Bot[*client.Client]) ha
 				channel_id := snowflake.MustParse(keys[0])
 				message_id := snowflake.MustParse(keys[1])
 
-				panel_type := gd.RolePanelV2PlacedType[k]
+				panel_config := gd.RolePanelV2PlacedConfig[k]
 
 				message_update := discord.NewMessageUpdateBuilder()
-				switch panel_type {
+				switch panel_config.PanelType {
 				case db.RolePanelV2TypeReaction:
 					message_update = db.RolePanelV2MessageReaction(panel, event.Locale(), message_update)
 				case db.RolePanelV2TypeSelectMenu:
-					message_update = db.RolePanelV2MessageSelectMenu(panel, event.Locale(), message_update)
+					message_update = db.RolePanelV2MessageSelectMenu(panel, event.Locale(), message_update, panel_config)
 				case db.RolePanelV2TypeButton:
-					message_update = db.RolePanelV2MessageButton(panel, event.Locale(), message_update)
+					message_update = db.RolePanelV2MessageButton(panel, event.Locale(), message_update, panel_config)
 				}
 				if _, err := event.Client().Rest().UpdateMessage(channel_id, message_id, message_update.Build()); err != nil {
 					b.Logger.Errorf("error on update role panel message: %s", err.Error())
 					return
 				}
 
-				if panel_type == db.RolePanelV2TypeReaction {
+				if panel_config.PanelType == db.RolePanelV2TypeReaction {
 					if err := event.Client().Rest().RemoveAllReactions(channel_id, message_id); err != nil {
 						b.Logger.Errorf("error on update role panel message: %s", err.Error())
 						return
@@ -838,23 +841,23 @@ func rolePanelV2EditRoleDeleteComponent(b *botlib.Bot[*client.Client]) handler.C
 				channel_id := snowflake.MustParse(keys[0])
 				message_id := snowflake.MustParse(keys[1])
 
-				panel_type := gd.RolePanelV2PlacedType[k]
+				panel_config := gd.RolePanelV2PlacedConfig[k]
 
 				message_update := discord.NewMessageUpdateBuilder()
-				switch panel_type {
+				switch panel_config.PanelType {
 				case db.RolePanelV2TypeReaction:
 					message_update = db.RolePanelV2MessageReaction(panel, event.Locale(), message_update)
 				case db.RolePanelV2TypeSelectMenu:
-					message_update = db.RolePanelV2MessageSelectMenu(panel, event.Locale(), message_update)
+					message_update = db.RolePanelV2MessageSelectMenu(panel, event.Locale(), message_update, panel_config)
 				case db.RolePanelV2TypeButton:
-					message_update = db.RolePanelV2MessageButton(panel, event.Locale(), message_update)
+					message_update = db.RolePanelV2MessageButton(panel, event.Locale(), message_update, panel_config)
 				}
 				if _, err := event.Client().Rest().UpdateMessage(channel_id, message_id, message_update.Build()); err != nil {
 					b.Logger.Errorf("error on update role panel message: %s", err.Error())
 					return
 				}
 
-				if panel_type == db.RolePanelV2TypeReaction {
+				if panel_config.PanelType == db.RolePanelV2TypeReaction {
 					if err := event.Client().Rest().RemoveAllReactions(channel_id, message_id); err != nil {
 						b.Logger.Errorf("error on update role panel message: %s", err.Error())
 						return
@@ -972,7 +975,150 @@ func rolePanelV2PlaceTypeComponentHandler(b *botlib.Bot[*client.Client]) handler
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
 		}
 
-		place.SelectedType = db.RolePanelV2Type(event.StringSelectMenuInteractionData().Values[0])
+		place.Config.PanelType = db.RolePanelV2Type(event.StringSelectMenuInteractionData().Values[0])
+
+		if err := b.Self.DB.RolePanelV2Place().Set(place.ID, place); err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+
+		message := discord.NewMessageUpdateBuilder()
+		message = db.RolePanelV2PlaceMenuEmbed(panel, event.Locale(), place, message)
+
+		token, err := place.InteractionToken.Get()
+		if err != nil {
+			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
+		}
+
+		if _, err := event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, message.Build()); err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+		if err := event.DeferUpdateMessage(); err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+
+		return nil
+	}
+}
+
+func rolePanelV2PlaceSimpleSelectMenuComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
+	return func(event *events.ComponentInteractionCreate) error {
+		b.Self.GuildDataLock(*event.GuildID()).Lock()
+		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+
+		args := strings.Split(event.Data.CustomID(), ":")
+		place_id, err := uuid.Parse(args[3])
+		if err != nil {
+			return botlib.ReturnErrMessage(event, "error_invalid_id")
+		}
+		place, err := b.Self.DB.RolePanelV2Place().Get(place_id)
+		if err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+		panel, err := b.Self.DB.RolePanelV2().Get(place.PanelID)
+		if err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+
+		place.Config.SimpleSelectMenu = !place.Config.SimpleSelectMenu
+
+		if err := b.Self.DB.RolePanelV2Place().Set(place.ID, place); err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+
+		message := discord.NewMessageUpdateBuilder()
+		message = db.RolePanelV2PlaceMenuEmbed(panel, event.Locale(), place, message)
+
+		token, err := place.InteractionToken.Get()
+		if err != nil {
+			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
+		}
+
+		if _, err := event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, message.Build()); err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+		if err := event.DeferUpdateMessage(); err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+
+		return nil
+	}
+}
+
+func rolePanelV2PlaceButtonShowNameComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
+	return func(event *events.ComponentInteractionCreate) error {
+		b.Self.GuildDataLock(*event.GuildID()).Lock()
+		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+
+		args := strings.Split(event.Data.CustomID(), ":")
+		place_id, err := uuid.Parse(args[3])
+		if err != nil {
+			return botlib.ReturnErrMessage(event, "error_invalid_id")
+		}
+		place, err := b.Self.DB.RolePanelV2Place().Get(place_id)
+		if err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+		panel, err := b.Self.DB.RolePanelV2().Get(place.PanelID)
+		if err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+
+		place.Config.ButtonShowName = !place.Config.ButtonShowName
+
+		if err := b.Self.DB.RolePanelV2Place().Set(place.ID, place); err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+
+		message := discord.NewMessageUpdateBuilder()
+		message = db.RolePanelV2PlaceMenuEmbed(panel, event.Locale(), place, message)
+
+		token, err := place.InteractionToken.Get()
+		if err != nil {
+			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
+		}
+
+		if _, err := event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, message.Build()); err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+		if err := event.DeferUpdateMessage(); err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+
+		return nil
+	}
+}
+
+func rolePanelV2PlaceButtonColorComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
+	return func(event *events.ComponentInteractionCreate) error {
+		b.Self.GuildDataLock(*event.GuildID()).Lock()
+		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+
+		args := strings.Split(event.Data.CustomID(), ":")
+		place_id, err := uuid.Parse(args[3])
+		if err != nil {
+			return botlib.ReturnErrMessage(event, "error_invalid_id")
+		}
+		place, err := b.Self.DB.RolePanelV2Place().Get(place_id)
+		if err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+		panel, err := b.Self.DB.RolePanelV2().Get(place.PanelID)
+		if err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+
+		value := event.StringSelectMenuInteractionData().Values[0]
+
+		switch value {
+		case "red":
+			place.Config.ButtonStyle = discord.ButtonStyleDanger
+		case "green":
+			place.Config.ButtonStyle = discord.ButtonStyleSuccess
+		case "blue":
+			place.Config.ButtonStyle = discord.ButtonStylePrimary
+		case "gray":
+			place.Config.ButtonStyle = discord.ButtonStyleSecondary
+		}
 
 		if err := b.Self.DB.RolePanelV2Place().Set(place.ID, place); err != nil {
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
@@ -1033,13 +1179,13 @@ func rolePanelV2PlaceComponentHandler(b *botlib.Bot[*client.Client]) handler.Com
 		}
 
 		message_create := discord.NewMessageCreateBuilder()
-		switch place.SelectedType {
+		switch place.Config.PanelType {
 		case db.RolePanelV2TypeReaction:
 			message_create = db.RolePanelV2MessageReaction(panel, event.Locale(), message_create)
 		case db.RolePanelV2TypeSelectMenu:
-			message_create = db.RolePanelV2MessageSelectMenu(panel, event.Locale(), message_create)
+			message_create = db.RolePanelV2MessageSelectMenu(panel, event.Locale(), message_create, place.Config)
 		case db.RolePanelV2TypeButton:
-			message_create = db.RolePanelV2MessageButton(panel, event.Locale(), message_create)
+			message_create = db.RolePanelV2MessageButton(panel, event.Locale(), message_create, place.Config)
 		}
 		message, err := event.Client().Rest().CreateMessage(event.Channel().ID(), message_create.Build())
 		if err != nil {
@@ -1048,12 +1194,12 @@ func rolePanelV2PlaceComponentHandler(b *botlib.Bot[*client.Client]) handler.Com
 
 		key := fmt.Sprintf("%d/%d", event.Channel().ID(), message.ID)
 		gd.RolePanelV2Placed[key] = panel.ID
-		gd.RolePanelV2PlacedType[key] = place.SelectedType
+		gd.RolePanelV2PlacedConfig[key] = place.Config
 		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
 		}
 
-		if place.SelectedType == db.RolePanelV2TypeReaction {
+		if place.Config.PanelType == db.RolePanelV2TypeReaction {
 			for _, role := range panel.Roles {
 				if err = event.Client().Rest().AddReaction(event.Channel().ID(), message.ID, botlib.ReactionComponentEmoji(*role.Emoji)); err != nil {
 					return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
@@ -1389,23 +1535,23 @@ func rolePanelV2EditPanelInfoModalHandler(b *botlib.Bot[*client.Client]) handler
 				channel_id := snowflake.MustParse(keys[0])
 				message_id := snowflake.MustParse(keys[1])
 
-				panel_type := gd.RolePanelV2PlacedType[k]
+				panel_config := gd.RolePanelV2PlacedConfig[k]
 
 				message_update := discord.NewMessageUpdateBuilder()
-				switch panel_type {
+				switch panel_config.PanelType {
 				case db.RolePanelV2TypeReaction:
 					message_update = db.RolePanelV2MessageReaction(panel, event.Locale(), message_update)
 				case db.RolePanelV2TypeSelectMenu:
-					message_update = db.RolePanelV2MessageSelectMenu(panel, event.Locale(), message_update)
+					message_update = db.RolePanelV2MessageSelectMenu(panel, event.Locale(), message_update, panel_config)
 				case db.RolePanelV2TypeButton:
-					message_update = db.RolePanelV2MessageButton(panel, event.Locale(), message_update)
+					message_update = db.RolePanelV2MessageButton(panel, event.Locale(), message_update, panel_config)
 				}
 				if _, err := event.Client().Rest().UpdateMessage(channel_id, message_id, message_update.Build()); err != nil {
 					b.Logger.Errorf("error on update role panel message: %s", err.Error())
 					return
 				}
 
-				if panel_type == db.RolePanelV2TypeReaction {
+				if panel_config.PanelType == db.RolePanelV2TypeReaction {
 					if err := event.Client().Rest().RemoveAllReactions(channel_id, message_id); err != nil {
 						b.Logger.Errorf("error on update role panel message: %s", err.Error())
 						return
@@ -1491,23 +1637,23 @@ func rolePanelV2EditRoleNameModalHandler(b *botlib.Bot[*client.Client]) handler.
 				channel_id := snowflake.MustParse(keys[0])
 				message_id := snowflake.MustParse(keys[1])
 
-				panel_type := gd.RolePanelV2PlacedType[k]
+				panel_config := gd.RolePanelV2PlacedConfig[k]
 
 				message_update := discord.NewMessageUpdateBuilder()
-				switch panel_type {
+				switch panel_config.PanelType {
 				case db.RolePanelV2TypeReaction:
 					message_update = db.RolePanelV2MessageReaction(panel, event.Locale(), message_update)
 				case db.RolePanelV2TypeSelectMenu:
-					message_update = db.RolePanelV2MessageSelectMenu(panel, event.Locale(), message_update)
+					message_update = db.RolePanelV2MessageSelectMenu(panel, event.Locale(), message_update, panel_config)
 				case db.RolePanelV2TypeButton:
-					message_update = db.RolePanelV2MessageButton(panel, event.Locale(), message_update)
+					message_update = db.RolePanelV2MessageButton(panel, event.Locale(), message_update, panel_config)
 				}
 				if _, err := event.Client().Rest().UpdateMessage(channel_id, message_id, message_update.Build()); err != nil {
 					b.Logger.Errorf("error on update role panel message: %s", err.Error())
 					return
 				}
 
-				if panel_type == db.RolePanelV2TypeReaction {
+				if panel_config.PanelType == db.RolePanelV2TypeReaction {
 					if err := event.Client().Rest().RemoveAllReactions(channel_id, message_id); err != nil {
 						b.Logger.Errorf("error on update role panel message: %s", err.Error())
 						return
@@ -1627,23 +1773,23 @@ func rolePanelV2MessageCreate(b *botlib.Bot[*client.Client]) handler.MessageHand
 					channel_id := snowflake.MustParse(keys[0])
 					message_id := snowflake.MustParse(keys[1])
 
-					panel_type := gd.RolePanelV2PlacedType[k]
+					panel_config := gd.RolePanelV2PlacedConfig[k]
 
 					message_update := discord.NewMessageUpdateBuilder()
-					switch panel_type {
+					switch panel_config.PanelType {
 					case db.RolePanelV2TypeReaction:
 						message_update = db.RolePanelV2MessageReaction(panel, edit.EmojiLocale, message_update)
 					case db.RolePanelV2TypeSelectMenu:
-						message_update = db.RolePanelV2MessageSelectMenu(panel, edit.EmojiLocale, message_update)
+						message_update = db.RolePanelV2MessageSelectMenu(panel, edit.EmojiLocale, message_update, panel_config)
 					case db.RolePanelV2TypeButton:
-						message_update = db.RolePanelV2MessageButton(panel, edit.EmojiLocale, message_update)
+						message_update = db.RolePanelV2MessageButton(panel, edit.EmojiLocale, message_update, panel_config)
 					}
 					if _, err := event.Client().Rest().UpdateMessage(channel_id, message_id, message_update.Build()); err != nil {
 						b.Logger.Errorf("error on update role panel message: %s", err.Error())
 						return
 					}
 
-					if panel_type == db.RolePanelV2TypeReaction {
+					if panel_config.PanelType == db.RolePanelV2TypeReaction {
 						if err := event.Client().Rest().RemoveAllReactions(channel_id, message_id); err != nil {
 							b.Logger.Errorf("error on update role panel message: %s", err.Error())
 							return
@@ -1681,7 +1827,7 @@ func RolePanelV2MessageDelete(b *botlib.Bot[*client.Client]) handler.MessageDele
 			}
 			key := fmt.Sprintf("%s/%s", event.ChannelID, event.MessageID)
 			if _, ok := gd.RolePanelV2Placed[key]; ok {
-				delete(gd.RolePanelV2PlacedType, key)
+				delete(gd.RolePanelV2PlacedConfig, key)
 				delete(gd.RolePanelV2Placed, key)
 				if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
 					b.Logger.Errorf("error on delete role panel message handling: %s", err.Error())

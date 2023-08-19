@@ -71,7 +71,7 @@ func NewGuildData(id snowflake.ID) GuildData {
 	return g
 }
 
-const GuildDataVersion = 10
+const GuildDataVersion = 11
 
 type GuildData struct {
 	ID              snowflake.ID                            `json:"id"`
@@ -91,11 +91,11 @@ type GuildData struct {
 
 	UserLevelExcludeChannels map[snowflake.ID]string `json:"user_level_exclude_channels"`
 
-	RolePanelV2           map[uuid.UUID]string       `json:"role_panel_v2"`
-	RolePanelV2Name       map[string]int             `json:"role_panel_v2_name"`
-	RolePanelV2Placed     map[string]uuid.UUID       `json:"role_panel_v2_placed"`
-	RolePanelV2PlacedType map[string]RolePanelV2Type `json:"role_panel_v2_placed_type"`
-	RolePanelV2Limit      int                        `json:"role_panel_v2_limit"`
+	RolePanelV2             map[uuid.UUID]string         `json:"role_panel_v2"`
+	RolePanelV2Name         map[string]int               `json:"role_panel_v2_name"`
+	RolePanelV2Placed       map[string]uuid.UUID         `json:"role_panel_v2_placed"`
+	RolePanelV2PlacedConfig map[string]RolePanelV2Config `json:"role_panel_v2_placed_config"`
+	RolePanelV2Limit        int                          `json:"role_panel_v2_limit"`
 
 	RolePanelV2Editing map[uuid.UUID]uuid.UUID `json:"role_panel_v2_editing"`
 
@@ -267,15 +267,20 @@ func (g *GuildData) validate(b []byte) error {
 		*g.DataVersion = 9
 		fallthrough
 	case 9:
-		g.RolePanelV2PlacedType = make(map[string]RolePanelV2Type)
+		// g.RolePanelV2PlacedType = make(map[string]RolePanelV2Type)
 		*g.DataVersion = 10
+		fallthrough
+	case 10:
+		g.RolePanelV2PlacedConfig = make(map[string]RolePanelV2Config)
+		*g.DataVersion = 11
+		fallthrough
 	case GuildDataVersion:
 		return nil
 	default:
 		d := NewGuildData(g.ID)
 		*g = d
+		return nil
 	}
-	return nil
 }
 
 type GuildDataRolePanel struct {

@@ -96,43 +96,76 @@ type rolePanelV2MessageBuilder[T any] interface {
 	AddContainerComponents(...discord.ContainerComponent) T
 }
 
+func NewRolePanelV2Config() RolePanelV2Config {
+	return RolePanelV2Config{
+		PanelType:        RolePanelV2TypeNone,
+		ButtonStyle:      discord.ButtonStyleSuccess,
+		ButtonShowName:   false,
+		SimpleSelectMenu: true,
+	}
+}
+
+type RolePanelV2Config struct {
+	PanelType        RolePanelV2Type     `json:"panel_type"`
+	ButtonStyle      discord.ButtonStyle `json:"button_style"`
+	ButtonShowName   bool                `json:"show_name"`
+	SimpleSelectMenu bool                `json:"simple_select_menu"`
+}
+
 func RolePanelV2MessageReaction[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, locale discord.Locale, message T) T {
 	message.AddEmbeds(r.rolePanelV2Embed(locale))
 	return message
 }
 
-func RolePanelV2MessageSelectMenu[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, locale discord.Locale, message T) T {
+func RolePanelV2MessageSelectMenu[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, locale discord.Locale, message T, config RolePanelV2Config) T {
 	message.AddEmbeds(r.rolePanelV2Embed(locale))
-	options := make([]discord.StringSelectMenuOption, len(r.Roles))
-	for i, rpvr := range r.Roles {
-		options[i] = discord.StringSelectMenuOption{
-			Label: rpvr.RoleName,
-			Value: rpvr.RoleID.String(),
-			Emoji: rpvr.Emoji,
+	if config.SimpleSelectMenu {
+		options := make([]discord.StringSelectMenuOption, len(r.Roles))
+		for i, rpvr := range r.Roles {
+			options[i] = discord.StringSelectMenuOption{
+				Label: rpvr.RoleName,
+				Value: rpvr.RoleID.String(),
+				Emoji: rpvr.Emoji,
+			}
 		}
+		message.AddContainerComponents(
+			discord.NewActionRow(
+				discord.StringSelectMenuComponent{
+					CustomID:    fmt.Sprintf("handler:rp-v2:use_select_menu:%s", r.ID.String()),
+					Placeholder: translate.Message(locale, "rp_v2_select_menu_placeholder"),
+					MinValues:   json.Ptr(0),
+					MaxValues:   len(r.Roles),
+					Options:     options,
+				},
+			),
+		)
+	} else {
+		message.AddContainerComponents(
+			discord.NewActionRow(
+				discord.ButtonComponent{
+					Style:    discord.ButtonStyleSuccess,
+					Label:    translate.Message(locale, "rp_v2_use_button_label"),
+					CustomID: fmt.Sprintf("handler:rp-v2:call_select_menu:%s", r.ID.String()),
+				},
+			),
+		)
 	}
-	message.AddContainerComponents(
-		discord.NewActionRow(
-			discord.StringSelectMenuComponent{
-				CustomID:    fmt.Sprintf("handler:rp-v2:use_select_menu:%s", r.ID.String()),
-				Placeholder: translate.Message(locale, "rp_v2_select_menu_placeholder"),
-				MinValues:   json.Ptr(0),
-				MaxValues:   len(r.Roles),
-				Options:     options,
-			},
-		),
-	)
 	return message
 }
 
-func RolePanelV2MessageButton[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, locale discord.Locale, message T) T {
+func RolePanelV2MessageButton[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, locale discord.Locale, message T, config RolePanelV2Config) T {
 	message.AddEmbeds(r.rolePanelV2Embed(locale))
 	buttons := make([]discord.InteractiveComponent, len(r.Roles))
 	components := []discord.ContainerComponent{}
 	for i, rpvr := range r.Roles {
+		var label string
+		if config.ButtonShowName {
+			label = rpvr.RoleName
+		}
 		buttons[i] = discord.ButtonComponent{
-			Style:    discord.ButtonStyleSuccess,
+			Style:    config.ButtonStyle,
 			Emoji:    rpvr.Emoji,
+			Label:    label,
 			CustomID: fmt.Sprintf("handler:rp-v2:use_button:%s:%s", r.ID, rpvr.RoleID),
 		}
 	}
@@ -190,7 +223,7 @@ func RolePanelV2PlaceMenuEmbed[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, l
 					ID:   1141985795641716736,
 					Name: "reaction",
 				},
-				Default: place.SelectedType == RolePanelV2TypeReaction,
+				Default: place.Config.PanelType == RolePanelV2TypeReaction,
 			},
 			{
 				Label:       translate.Message(locale, "rp_v2_place_type_select_menu"),
@@ -200,7 +233,7 @@ func RolePanelV2PlaceMenuEmbed[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, l
 					ID:   1141991243832901704,
 					Name: "select_menu",
 				},
-				Default: place.SelectedType == RolePanelV2TypeSelectMenu,
+				Default: place.Config.PanelType == RolePanelV2TypeSelectMenu,
 			},
 			{
 				Label:       translate.Message(locale, "rp_v2_place_type_button"),
@@ -210,18 +243,116 @@ func RolePanelV2PlaceMenuEmbed[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, l
 					ID:   1141991285281001553,
 					Name: "button",
 				},
-				Default: place.SelectedType == RolePanelV2TypeButton,
+				Default: place.Config.PanelType == RolePanelV2TypeButton,
 			},
 		},
 	}
 
 	message.AddContainerComponents(
 		discord.NewActionRow(panel_type_select_menu),
+	)
+
+	switch place.Config.PanelType {
+	case RolePanelV2TypeButton:
+		var emoji *discord.ComponentEmoji
+		if place.Config.ButtonShowName {
+			emoji = &discord.ComponentEmoji{
+				ID:   1142095470227890279,
+				Name: "on",
+			}
+		} else {
+			emoji = &discord.ComponentEmoji{
+				ID:   1142110196462788779,
+				Name: "off",
+			}
+		}
+		message.AddContainerComponents(
+			discord.NewActionRow(
+				discord.StringSelectMenuComponent{
+					CustomID:    fmt.Sprintf("handler:rp-v2:place_button_color:%s", place.ID),
+					Placeholder: translate.Message(locale, "rp_v2_place_button_color_select_menu_placeholder"),
+					MinValues:   json.Ptr(1),
+					MaxValues:   1,
+					Options: []discord.StringSelectMenuOption{
+						{
+							Label: translate.Message(locale, "rp_v2_place_button_color_green"),
+							Value: "green",
+							Emoji: &discord.ComponentEmoji{
+								ID:   1142333937180483687,
+								Name: "green_button",
+							},
+							Default: place.Config.ButtonStyle == discord.ButtonStyleSuccess,
+						},
+						{
+							Label: translate.Message(locale, "rp_v2_place_button_color_blue"),
+							Value: "blue",
+							Emoji: &discord.ComponentEmoji{
+								ID:   1142333868490367037,
+								Name: "blue_button",
+							},
+							Default: place.Config.ButtonStyle == discord.ButtonStylePrimary,
+						},
+						{
+							Label: translate.Message(locale, "rp_v2_place_button_color_red"),
+							Value: "red",
+							Emoji: &discord.ComponentEmoji{
+								ID:   1142334020403871745,
+								Name: "red_button",
+							},
+							Default: place.Config.ButtonStyle == discord.ButtonStyleDanger,
+						},
+						{
+							Label: translate.Message(locale, "rp_v2_place_button_color_gray"),
+							Value: "gray",
+							Emoji: &discord.ComponentEmoji{
+								ID:   1142333913906298960,
+								Name: "gray_button",
+							},
+							Default: place.Config.ButtonStyle == discord.ButtonStyleSecondary,
+						},
+					},
+				},
+			),
+			discord.NewActionRow(
+				discord.ButtonComponent{
+					Style:    discord.ButtonStyleSecondary,
+					Label:    translate.Message(locale, "rp_v2_place_button_show_name_label"),
+					CustomID: fmt.Sprintf("handler:rp-v2:place_button_show_name:%s", place.ID),
+					Emoji:    emoji,
+				},
+			),
+		)
+	case RolePanelV2TypeSelectMenu:
+		var emoji *discord.ComponentEmoji
+		if place.Config.SimpleSelectMenu {
+			emoji = &discord.ComponentEmoji{
+				ID:   1142095470227890279,
+				Name: "on",
+			}
+		} else {
+			emoji = &discord.ComponentEmoji{
+				ID:   1142110196462788779,
+				Name: "off",
+			}
+		}
+		message.AddContainerComponents(
+			discord.NewActionRow(
+				discord.ButtonComponent{
+					Style:    discord.ButtonStyleSecondary,
+					Label:    translate.Message(locale, "rp_v2_place_simple_select_menu_label"),
+					CustomID: fmt.Sprintf("handler:rp-v2:place_simple_select_menu:%s", place.ID),
+					Emoji:    emoji,
+				},
+			),
+		)
+	}
+
+	message.AddContainerComponents(
 		discord.NewActionRow(discord.ButtonComponent{
 			Style:    discord.ButtonStyleSuccess,
 			CustomID: fmt.Sprintf("handler:rp-v2:place:%s", place.ID.String()),
 			Label:    translate.Message(locale, "rp_v2_place_button_label"),
-			Disabled: place.SelectedType == RolePanelV2TypeNone,
+			Disabled: place.Config.PanelType == RolePanelV2TypeNone,
 		}),
 	)
 

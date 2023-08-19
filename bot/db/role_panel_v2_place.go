@@ -59,7 +59,7 @@ func NewRolePanelV2Place(guild_id snowflake.ID, panel_id uuid.UUID, interaction_
 		CreatedAt:        time.Now(),
 		GuildID:          guild_id,
 		PanelID:          panel_id,
-		SelectedType:     RolePanelV2TypeNone,
+		Config:           NewRolePanelV2Config(),
 		InteractionToken: interaction_token,
 	}
 }
@@ -69,7 +69,7 @@ type RolePanelV2Place struct {
 	CreatedAt        time.Time          `json:"created_at"`
 	GuildID          snowflake.ID       `json:"guild_id"`
 	PanelID          uuid.UUID          `json:"panel_id"`
-	SelectedType     RolePanelV2Type    `json:"selected_type"`
+	Config           RolePanelV2Config  `json:"config"`
 	InteractionToken interactions.Token `json:"interaction_token"`
 }
 
