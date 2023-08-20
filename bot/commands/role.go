@@ -1359,7 +1359,8 @@ func rolePanelV2ConvertComponentHandler(b *botlib.Bot[*client.Client]) handler.C
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
 		}
 
-		lines := strings.Split(message.Embeds[0].Description, "\r")
+		lines := strings.Split(message.Embeds[0].Description, "\n")
+		b.Logger.Debugf("lines %d", len(lines))
 		roles := []db.RolePanelV2Role{}
 		for _, v := range lines {
 			if !emoji.MatchString(v) {
