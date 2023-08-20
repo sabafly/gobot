@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/disgoorg/snowflake/v2"
@@ -14,6 +15,9 @@ import (
 )
 
 func New(cfg *Config, db db.DB) (*Client, error) {
+	if err := os.MkdirAll("./logs/messages", 0755); err != nil {
+		return nil, err
+	}
 	ml, err := logging.New(logging.Config{
 		LogPath: "./logs/messages",
 		LogName: "message.log",

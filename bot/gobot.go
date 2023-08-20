@@ -52,9 +52,9 @@ func init() {
 	botlib.Color = 0x89d53c
 }
 
-func Run(file_path, lang_path, gobot_path string) {
+func Run(file_path, lang_path, gobot_path string) error {
 	if _, err := translate.LoadTranslations(lang_path); err != nil {
-		panic(err)
+		return err
 	}
 	cfg, err := botlib.LoadConfig(file_path)
 	if err != nil {
@@ -73,15 +73,18 @@ func Run(file_path, lang_path, gobot_path string) {
 	logger.SetOutput(colorable.NewColorableStdout())
 	lvl, err := logrus.ParseLevel(cfg.LogLevel)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	logger.SetLevel(lvl)
+	if err := os.MkdirAll("./logs", 0755); err != nil {
+		return err
+	}
 	l, err := logging.New(logging.Config{
 		LogPath:   "./logs",
 		LogLevels: logrus.AllLevels,
 	})
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer l.Close()
 	logger.AddHook(l)
@@ -101,16 +104,16 @@ func Run(file_path, lang_path, gobot_path string) {
 
 	gobot_cfg, err := client.LoadConfig(gobot_path)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	d, err := db.SetupDatabase(gobot_cfg.DBConfig)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer d.Close()
 	cl, err := client.New(gobot_cfg, d)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer cl.Close()
 
@@ -279,4 +282,5 @@ func Run(file_path, lang_path, gobot_path string) {
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-s
 	b.Logger.Info("Shutting down...")
+	return nil
 }
