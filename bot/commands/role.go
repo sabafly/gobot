@@ -1411,6 +1411,8 @@ func rolePanelV2ConvertComponentHandler(b *botlib.Bot[*client.Client]) handler.C
 		if err != nil {
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true), botlib.WithUpdate(true, event.Client()))
 		}
+		gd.RolePanelV2[panel.ID] = panel.Name
+		gd.RolePanelV2Name[panel.Name]++
 		if err := panelPlace(b, panel, &db.RolePanelV2Place{
 			Config: db.RolePanelV2Config{
 				PanelType: db.RolePanelV2TypeReaction,
