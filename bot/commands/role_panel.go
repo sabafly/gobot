@@ -22,6 +22,7 @@ func RolePanel(b *botlib.Bot[*client.Client]) handler.Command {
 	}
 }
 
+// TODO: V2に対応
 func rolePanelHandler(b *botlib.Bot[*client.Client]) func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		mute := b.Self.GuildDataLock(*event.GuildID())
