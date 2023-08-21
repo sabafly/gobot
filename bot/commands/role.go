@@ -311,7 +311,7 @@ func rolePanelV2Delete(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
 		}
 
-		go rolePanelV2Update(b, *event.GuildID(), panel, event.Locale())
+		go rolePanelV2MessageDelete(b, *event.GuildID(), panel, event.Locale())
 
 		embed := discord.NewEmbedBuilder()
 		embed.SetTitle(translate.Message(event.Locale(), "rp_v2_delete_success_embed_title"))
@@ -1858,6 +1858,33 @@ func rolePanelV2Update(b *botlib.Bot[*client.Client], guild_id snowflake.ID, pan
 					return
 				}
 			}
+		}
+	}
+}
+
+func rolePanelV2MessageDelete(b *botlib.Bot[*client.Client], guild_id snowflake.ID, panel *db.RolePanelV2, locale discord.Locale) {
+	b.Self.GuildDataLock(guild_id).Lock()
+	defer b.Self.GuildDataLock(guild_id).Unlock()
+	gd, err := b.Self.DB.GuildData().Get(guild_id)
+	if err != nil {
+		b.Logger.Errorf("error on update role panel message: %s", err.Error())
+		return
+	}
+
+	for k, u := range gd.RolePanelV2Placed {
+		if u != panel.ID {
+			continue
+		}
+		keys := strings.Split(k, "/")
+		channel_id := snowflake.MustParse(keys[0])
+		message_id := snowflake.MustParse(keys[1])
+
+		delete(gd.RolePanelV2Placed, k)
+		delete(gd.RolePanelV2PlacedConfig, k)
+
+		if err := b.Client.Rest().DeleteMessage(channel_id, message_id); err != nil {
+			b.Logger.Errorf("error on delete role panel message: %s", err.Error())
+			return
 		}
 	}
 }

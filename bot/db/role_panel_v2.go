@@ -324,7 +324,7 @@ func RolePanelV2PlaceMenuEmbed[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, l
 		)
 	case RolePanelV2TypeSelectMenu:
 		var emoji *discord.ComponentEmoji
-		if place.Config.SimpleSelectMenu {
+		if !place.Config.SimpleSelectMenu {
 			emoji = &discord.ComponentEmoji{
 				ID:   1142095470227890279,
 				Name: "on",
