@@ -58,7 +58,7 @@ func Run(file_path, lang_path, gobot_path string) error {
 	}
 	cfg, err := botlib.LoadConfig(file_path)
 	if err != nil {
-		panic("failed to load config: " + err.Error())
+		return err
 	}
 
 	logger := logrus.New()
