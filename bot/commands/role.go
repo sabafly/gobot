@@ -1241,7 +1241,7 @@ func rolePanelV2UseButtonComponentHandler(b *botlib.Bot[*client.Client]) handler
 			}
 			embed := discord.NewEmbedBuilder().
 				SetTitle(translate.Message(event.Locale(), "rp_v2_add_role_added_embed_title")).
-				SetDescription(translate.Translate(event.Locale(), "rp_v2_add_role_added_embed_description", map[string]any{"Role": discord.RoleMention(role_id)}))
+				SetDescription(translate.Message(event.Locale(), "rp_v2_add_role_added_embed_description", translate.WithTemplate(map[string]any{"Role": discord.RoleMention(role_id)})))
 			embed.Embed = botlib.SetEmbedProperties(embed.Embed)
 			if err := event.CreateMessage(discord.MessageCreate{
 				Embeds: []discord.Embed{
@@ -1269,7 +1269,7 @@ func rolePanelV2UseButtonComponentHandler(b *botlib.Bot[*client.Client]) handler
 			}
 			embed := discord.NewEmbedBuilder().
 				SetTitle(translate.Message(event.Locale(), "rp_v2_add_role_removed_embed_title")).
-				SetDescription(translate.Translate(event.Locale(), "rp_v2_add_role_removed_embed_description", map[string]any{"Role": discord.RoleMention(role_id)}))
+				SetDescription(translate.Message(event.Locale(), "rp_v2_add_role_removed_embed_description", translate.WithTemplate(map[string]any{"Role": discord.RoleMention(role_id)})))
 			embed.Embed = botlib.SetEmbedProperties(embed.Embed)
 			if err := event.CreateMessage(discord.MessageCreate{
 				Embeds: []discord.Embed{
@@ -1756,7 +1756,7 @@ func RolePanelV2MessageReaction(b *botlib.Bot[*client.Client]) handler.Generics[
 						}
 						embed := discord.NewEmbedBuilder().
 							SetTitle(translate.Message(user.Locale, "rp_v2_add_role_added_embed_title")).
-							SetDescription(translate.Translate(user.Locale, "rp_v2_add_role_added_embed_description", map[string]any{"Role": discord.RoleMention(rpvr.RoleID)}))
+							SetDescription(translate.Message(user.Locale, "rp_v2_add_role_added_embed_description", translate.WithTemplate(map[string]any{"Role": discord.RoleMention(rpvr.RoleID)})))
 						embed.Embed = botlib.SetEmbedProperties(embed.Embed)
 						message, err := event.Client().Rest().CreateMessage(event.ChannelID, discord.MessageCreate{
 							Content: discord.UserMention(event.UserID),
@@ -1786,7 +1786,7 @@ func RolePanelV2MessageReaction(b *botlib.Bot[*client.Client]) handler.Generics[
 						}
 						embed := discord.NewEmbedBuilder().
 							SetTitle(translate.Message(user.Locale, "rp_v2_add_role_removed_embed_title")).
-							SetDescription(translate.Translate(user.Locale, "rp_v2_add_role_removed_embed_description", map[string]any{"Role": discord.RoleMention(rpvr.RoleID)}))
+							SetDescription(translate.Message(user.Locale, "rp_v2_add_role_removed_embed_description", translate.WithTemplate(map[string]any{"Role": discord.RoleMention(rpvr.RoleID)})))
 						embed.Embed = botlib.SetEmbedProperties(embed.Embed)
 						message, err := event.Client().Rest().CreateMessage(event.ChannelID, discord.MessageCreate{
 							Content: discord.UserMention(event.UserID),

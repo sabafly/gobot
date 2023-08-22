@@ -180,7 +180,7 @@ func levelRankCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandl
 			Name:    event.Member().EffectiveName(),
 			IconURL: event.Member().EffectiveAvatarURL(),
 		}
-		embed.SetTitle(translate.Translate(event.Locale(), "command_level_rank_result_embed_title", map[string]any{"User": event.Member().EffectiveName()}))
+		embed.SetTitle(translate.Message(event.Locale(), "command_level_rank_result_embed_title", translate.WithTemplate(map[string]any{"User": event.Member().EffectiveName()})))
 		embed.SetDescriptionf("```%-6.6s:%16s``````%-6.6s:%16s/%s```",
 			"Level", ud.GlobalLevel.Level().String(),
 			"Point", ud.GlobalLevel.Point.String(), ud.GlobalLevel.SumReqPoint().String(),

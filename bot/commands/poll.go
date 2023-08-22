@@ -279,7 +279,7 @@ func pollComponentSeeResultDo(b *botlib.Bot[*client.Client]) func(e *events.Comp
 		}
 		embeds := []discord.Embed{
 			{
-				Title:  translate.Translate(e.Locale(), "poll_component_see_info_response_embed_title", map[string]any{"Name": choice.Name}),
+				Title:  translate.Message(e.Locale(), "poll_component_see_info_response_embed_title", translate.WithTemplate(map[string]any{"Name": choice.Name})),
 				Fields: fields,
 			},
 		}
@@ -408,7 +408,7 @@ func pollComponentSeeInfoDo(b *botlib.Bot[*client.Client]) func(e *events.Compon
 		}
 		embeds := []discord.Embed{
 			{
-				Title:  translate.Translate(e.Locale(), "poll_component_see_info_response_embed_title", map[string]any{"Name": choice.Name}),
+				Title:  translate.Message(e.Locale(), "poll_component_see_info_response_embed_title", translate.WithTemplate(map[string]any{"Name": choice.Name})),
 				Fields: fields,
 			},
 		}
@@ -1899,15 +1899,15 @@ func End(b *botlib.Bot[*client.Client], p db.Poll) {
 			rank = i + 1
 		}
 		ranking = append(ranking, discord.EmbedField{
-			Name:   fmt.Sprintf("%s %s %s", botlib.FormatComponentEmoji(*pc.Emoji), pc.Name, translate.Translate(p.Locale, "poll_message_result_title", map[string]any{"Rank": rank})),
-			Value:  translate.Translate(p.Locale, "poll_message_result_description", map[string]any{"Count": len(pc.Users)}),
+			Name:   fmt.Sprintf("%s %s %s", botlib.FormatComponentEmoji(*pc.Emoji), pc.Name, translate.Message(p.Locale, "poll_message_result_title", translate.WithTemplate(map[string]any{"Rank": rank}))),
+			Value:  translate.Message(p.Locale, "poll_message_result_description", translate.WithTemplate(map[string]any{"Count": len(pc.Users)})),
 			Inline: &inline,
 		})
 	}
 	embeds = []discord.Embed{
 		{
 			Title:       translate.Message(p.Locale, "poll_message_result_embed_title"),
-			Description: fmt.Sprintf("**%s**\r%s", translate.Message(p.Locale, "joined_people"), translate.Translate(p.Locale, "people", map[string]any{"Count": len(p.Users)})),
+			Description: fmt.Sprintf("**%s**\r%s", translate.Message(p.Locale, "joined_people"), translate.Message(p.Locale, "people", translate.WithTemplate(map[string]any{"Count": len(p.Users)}))),
 			Fields:      ranking,
 		},
 	}
