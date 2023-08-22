@@ -602,7 +602,12 @@ func configLevelImportMee6CommandHandler(b *botlib.Bot[*client.Client]) handler.
 		for page := 0; true; page++ {
 			c, err := http.Get(fmt.Sprintf("%s?page=%d", url, page))
 			if err != nil || c.StatusCode != http.StatusOK {
-				_, _ = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent(fmt.Sprintf("# FAILED\r```| STATUS CODE | %d\r| RESPONSE | %v```", c.StatusCode, err)).Build())
+				switch c.StatusCode {
+				case http.StatusUnauthorized:
+					_, _ = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent(fmt.Sprintf("# FAILED\r```| STATUS CODE | %d\r| RESPONSE | %v```%s", c.StatusCode, err, translate.Message(event.Locale(), "config_import_mee6_result_unauthorized", translate.WithTemplate(map[string]any{"GuildID": *event.GuildID()})))).Build())
+				default:
+					_, _ = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent(fmt.Sprintf("# FAILED\r```| STATUS CODE | %d\r| RESPONSE | %v```", c.StatusCode, err)).Build())
+				}
 				return err
 			}
 			var leaderboard db.Mee6LeaderBoard
