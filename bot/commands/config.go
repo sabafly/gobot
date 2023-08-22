@@ -194,7 +194,13 @@ func configBumpOnCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHa
 		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("OK").AddFlags(discord.MessageFlagEphemeral).Build()); err != nil {
+		embed := discord.NewEmbedBuilder()
+		embed.SetTitle(translate.Message(event.Locale(), "config_changed"))
+		embed.SetDescription(translate.Message(event.Locale(), "config_bump_on_description"))
+		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
+		message := discord.NewMessageCreateBuilder().AddFlags(discord.MessageFlagEphemeral)
+		message.AddEmbeds(embed.Build())
+		if err := event.CreateMessage(message.Build()); err != nil {
 			return err
 		}
 		return nil
@@ -213,7 +219,13 @@ func configBumpOffCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandH
 		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("OK").AddFlags(discord.MessageFlagEphemeral).Build()); err != nil {
+		embed := discord.NewEmbedBuilder()
+		embed.SetTitle(translate.Message(event.Locale(), "config_changed"))
+		embed.SetDescription(translate.Message(event.Locale(), "config_bump_off_description"))
+		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
+		message := discord.NewMessageCreateBuilder().AddFlags(discord.MessageFlagEphemeral)
+		message.AddEmbeds(embed.Build())
+		if err := event.CreateMessage(message.Build()); err != nil {
 			return err
 		}
 		return nil
@@ -280,16 +292,25 @@ func configBumpMentionCommandHandler(b *botlib.Bot[*client.Client]) handler.Comm
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
+		embed := discord.NewEmbedBuilder()
+		embed.SetTitle(translate.Message(event.Locale(), "config_changed"))
+		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
 		if role, ok := event.SlashCommandInteractionData().OptRole("role"); ok {
 			gd.BumpStatus.BumpRole = json.Ptr(role.ID)
-		}
-		if *gd.BumpStatus.BumpRole == 0 {
+			embed.SetDescription(translate.Message(event.Locale(), "config_bump_up_mention_set", translate.WithTemplate(map[string]any{"Mention": discord.RoleMention(role.ID)})))
+		} else if gd.BumpStatus.BumpRole != nil {
+			embed.SetDescription(translate.Message(event.Locale(), "config_bump_up_mention_remove", translate.WithTemplate(map[string]any{"Mention": discord.RoleMention(*gd.BumpStatus.BumpRole)})))
 			gd.BumpStatus.BumpRole = nil
+		} else {
+			gd.BumpStatus.BumpRole = nil
+			embed.SetDescription(translate.Message(event.Locale(), "config_bump_up_mention_none"))
 		}
 		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("OK").AddFlags(discord.MessageFlagEphemeral).Build()); err != nil {
+		message := discord.NewMessageCreateBuilder().AddFlags(discord.MessageFlagEphemeral)
+		message.AddEmbeds(embed.Build())
+		if err := event.CreateMessage(message.Build()); err != nil {
 			return err
 		}
 		return nil
@@ -311,7 +332,13 @@ func configUpOnCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHand
 		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("OK").AddFlags(discord.MessageFlagEphemeral).Build()); err != nil {
+		embed := discord.NewEmbedBuilder()
+		embed.SetTitle(translate.Message(event.Locale(), "config_changed"))
+		embed.SetDescription(translate.Message(event.Locale(), "config_up_on_description"))
+		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
+		message := discord.NewMessageCreateBuilder().AddFlags(discord.MessageFlagEphemeral)
+		message.AddEmbeds(embed.Build())
+		if err := event.CreateMessage(message.Build()); err != nil {
 			return err
 		}
 		return nil
@@ -330,7 +357,13 @@ func configUpOffCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHan
 		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("OK").AddFlags(discord.MessageFlagEphemeral).Build()); err != nil {
+		embed := discord.NewEmbedBuilder()
+		embed.SetTitle(translate.Message(event.Locale(), "config_changed"))
+		embed.SetDescription(translate.Message(event.Locale(), "config_up_off_description"))
+		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
+		message := discord.NewMessageCreateBuilder().AddFlags(discord.MessageFlagEphemeral)
+		message.AddEmbeds(embed.Build())
+		if err := event.CreateMessage(message.Build()); err != nil {
 			return err
 		}
 		return nil
@@ -397,16 +430,25 @@ func configUpMentionCommandHandler(b *botlib.Bot[*client.Client]) handler.Comman
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
+		embed := discord.NewEmbedBuilder()
+		embed.SetTitle(translate.Message(event.Locale(), "config_changed"))
+		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
 		if role, ok := event.SlashCommandInteractionData().OptRole("role"); ok {
 			gd.BumpStatus.UpRole = json.Ptr(role.ID)
-		}
-		if *gd.BumpStatus.UpRole == 0 {
+			embed.SetDescription(translate.Message(event.Locale(), "config_bump_up_mention_set", translate.WithTemplate(map[string]any{"Mention": discord.RoleMention(role.ID)})))
+		} else if gd.BumpStatus.UpRole != nil {
+			embed.SetDescription(translate.Message(event.Locale(), "config_bump_up_mention_remove", translate.WithTemplate(map[string]any{"Mention": discord.RoleMention(*gd.BumpStatus.UpRole)})))
 			gd.BumpStatus.UpRole = nil
+		} else {
+			gd.BumpStatus.UpRole = nil
+			embed.SetDescription(translate.Message(event.Locale(), "config_bump_up_mention_none"))
 		}
 		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("OK").AddFlags(discord.MessageFlagEphemeral).Build()); err != nil {
+		message := discord.NewMessageCreateBuilder().AddFlags(discord.MessageFlagEphemeral)
+		message.AddEmbeds(embed.Build())
+		if err := event.CreateMessage(message.Build()); err != nil {
 			return err
 		}
 		return nil
@@ -453,15 +495,22 @@ func configLevelNoticeChannelCommandHandler(b *botlib.Bot[*client.Client]) handl
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
+		embed := discord.NewEmbedBuilder()
+		embed.SetTitle(translate.Message(event.Locale(), "config_changed"))
 		if channel, ok := event.SlashCommandInteractionData().OptChannel("channel"); ok {
 			gd.Config.LevelUpMessageChannel = &channel.ID
+			embed.SetDescription(translate.Message(event.Locale(), "config_level_notice_channel_set", translate.WithTemplate(map[string]any{"Mention": discord.ChannelMention(channel.ID)})))
 		} else {
 			gd.Config.LevelUpMessageChannel = nil
+			embed.SetDescription(translate.Message(event.Locale(), "config_level_notice_channel_remove"))
 		}
 		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("OK").SetFlags(discord.MessageFlagEphemeral).Build()); err != nil {
+		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
+		message := discord.NewMessageCreateBuilder().SetFlags(discord.MessageFlagEphemeral)
+		message.AddEmbeds(embed.Build())
+		if err := event.CreateMessage(message.Build()); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
 		return nil
@@ -481,7 +530,12 @@ func configLevelExcludeAddCommandHandler(b *botlib.Bot[*client.Client]) handler.
 		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("OK").AddFlags(discord.MessageFlagEphemeral).Build()); err != nil {
+		embed := discord.NewEmbedBuilder()
+		embed.SetTitle(translate.Message(event.Locale(), "config_changed"))
+		embed.SetDescription(translate.Message(event.Locale(), "config_level_exclude_add", translate.WithTemplate(map[string]any{"Mention": discord.ChannelMention(channel.ID)})))
+		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
+		message := discord.NewMessageCreateBuilder()
+		if err := event.CreateMessage(message.AddFlags(discord.MessageFlagEphemeral).Build()); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
 		return nil
@@ -504,7 +558,12 @@ func configLevelExcludeRemoveHandler(b *botlib.Bot[*client.Client]) handler.Comm
 		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("OK").AddFlags(discord.MessageFlagEphemeral).Build()); err != nil {
+		embed := discord.NewEmbedBuilder()
+		embed.SetTitle(translate.Message(event.Locale(), "config_changed"))
+		embed.SetDescription(translate.Message(event.Locale(), "config_level_exclude_remove", translate.WithTemplate(map[string]any{"Mention": discord.ChannelMention(channel_id)})))
+		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
+		message := discord.NewMessageCreateBuilder()
+		if err := event.CreateMessage(message.AddFlags(discord.MessageFlagEphemeral).Build()); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
 		return nil
@@ -614,7 +673,13 @@ func configModalBumpMessageHandler(b *botlib.Bot[*client.Client]) handler.ModalH
 		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		if err := event.DeferUpdateMessage(); err != nil {
+		embed := discord.NewEmbedBuilder()
+		embed.SetTitle(translate.Message(event.Locale(), "config_changed"))
+		embed.SetDescription(translate.Message(event.Locale(), "config_bump_message_changed"))
+		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
+		message := discord.NewMessageCreateBuilder()
+		message.AddEmbeds(embed.Build())
+		if err := event.CreateMessage(message.SetFlags(discord.MessageFlagEphemeral).Build()); err != nil {
 			return err
 		}
 		return nil
@@ -640,7 +705,13 @@ func configModalUpMessageHandler(b *botlib.Bot[*client.Client]) handler.ModalHan
 		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		if err := event.DeferUpdateMessage(); err != nil {
+		embed := discord.NewEmbedBuilder()
+		embed.SetTitle(translate.Message(event.Locale(), "config_changed"))
+		embed.SetDescription(translate.Message(event.Locale(), "config_up_message_changed"))
+		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
+		message := discord.NewMessageCreateBuilder()
+		message.AddEmbeds(embed.Build())
+		if err := event.CreateMessage(message.SetFlags(discord.MessageFlagEphemeral).Build()); err != nil {
 			return err
 		}
 		return nil

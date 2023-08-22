@@ -1,12 +1,15 @@
 package commands
 
 import (
+	"time"
+
 	"github.com/disgoorg/json"
 	"github.com/sabafly/disgo/discord"
 	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
+	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
 func User(b *botlib.Bot[*client.Client]) handler.Command {
@@ -101,13 +104,18 @@ func userSetBirthDayCommandHandler(b *botlib.Bot[*client.Client]) handler.Comman
 			return botlib.ReturnErr(event, err)
 		}
 		month := event.SlashCommandInteractionData().Int("month")
-		date := event.SlashCommandInteractionData().Int("date")
-		ud.BirthDay = [2]int{month, date}
+		day := event.SlashCommandInteractionData().Int("date")
+		date := time.Date(time.Now().Year(), time.Month(month), day, 0, 0, 0, 0, ud.Location.Location)
+		ud.BirthDay = [2]int{int(date.Month()), date.Day()}
 		if err := b.Self.DB.UserData().Set(ud.ID, ud); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
+		embed := discord.NewEmbedBuilder()
+		embed.SetTitle(translate.Message(event.Locale(), "user_changed"))
+		embed.SetDescription(translate.Message(event.Locale(), "user_set_birthday", translate.WithTemplate(map[string]any{"Date": date.Format("01/02")})))
+		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
 		message := discord.NewMessageCreateBuilder()
-		message.SetContent("OK")
+		message.AddEmbeds(embed.Build())
 		message.SetFlags(discord.MessageFlagEphemeral)
 		if err := event.CreateMessage(message.Build()); err != nil {
 			return err

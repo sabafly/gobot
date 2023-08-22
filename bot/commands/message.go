@@ -158,12 +158,12 @@ func messagePinDeleteCommandHandler(b *botlib.Bot[*client.Client]) handler.Comma
 		defer b.Self.MessagePinSync.Unlock()
 		m, ok := b.Self.MessagePin[*event.GuildID()]
 		if !ok {
-			return botlib.ReturnErrMessage(event, "error_has_no_data", botlib.WithEphemeral(true))
+			return botlib.ReturnErrMessage(event, "error_not_found", botlib.WithEphemeral(true))
 		}
 		mp, ok := m.Pins[event.Channel().ID()]
 		b.Logger.Debug(*event.GuildID(), event.Channel().ID())
 		if !ok {
-			return botlib.ReturnErrMessage(event, "error_has_no_data", botlib.WithEphemeral(true))
+			return botlib.ReturnErrMessage(event, "error_not_found", botlib.WithEphemeral(true))
 		}
 		if mp.LastMessageID != nil {
 			_ = event.Client().Rest().DeleteMessage(mp.ChannelID, *mp.LastMessageID)
@@ -174,7 +174,12 @@ func messagePinDeleteCommandHandler(b *botlib.Bot[*client.Client]) handler.Comma
 		}
 		m.Pins[event.Channel().ID()] = mp
 		b.Self.MessagePin[*event.GuildID()] = m
-		return event.CreateMessage(discord.MessageCreate{Content: "OK", Flags: discord.MessageFlagEphemeral})
+		embed := discord.NewEmbedBuilder()
+		embed.SetDescription(translate.Message(event.Locale(), "message_pin_delete"))
+		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
+		message := discord.NewMessageCreateBuilder()
+		message.AddEmbeds(embed.Build())
+		return event.CreateMessage(message.SetFlags(discord.MessageFlagEphemeral).Build())
 	}
 }
 

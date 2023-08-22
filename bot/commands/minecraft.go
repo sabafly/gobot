@@ -17,6 +17,7 @@ import (
 	"github.com/sabafly/gobot/bot/db"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
+	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
 func Minecraft(b *botlib.Bot[*client.Client]) handler.Command {
@@ -204,10 +205,12 @@ func minecraftStatusPanelCreateCommandHandler(b *botlib.Bot[*client.Client]) han
 		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		if err := event.CreateMessage(discord.MessageCreate{
-			Content: "OK",
-			Flags:   discord.MessageFlagEphemeral,
-		}); err != nil {
+		embed := discord.NewEmbedBuilder()
+		embed.SetDescription(translate.Message(event.Locale(), "minecraft_status_panel_created"))
+		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
+		result_message := discord.NewMessageCreateBuilder()
+		result_message.AddEmbeds(embed.Build())
+		if err := event.CreateMessage(result_message.SetFlags(discord.MessageFlagEphemeral).Build()); err != nil {
 			return err
 		}
 		return nil
