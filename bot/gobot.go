@@ -44,7 +44,7 @@ import (
 )
 
 var (
-	version = "v0.12.1"
+	version = "v0.12.2"
 )
 
 func init() {
@@ -173,6 +173,7 @@ func Run(file_path, lang_path, gobot_path string) error {
 		handlers.LogMessage(b),
 		handlers.UserDataMessage(b),
 		handlers.BumpUpMessage(b),
+		handlers.MentionMessage(b),
 	)
 
 	b.Handler.AddMessageUpdates(

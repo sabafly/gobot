@@ -68,12 +68,10 @@ github.com/rivo/uniseg v0.4.4/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUc
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/sabafly/disgo v0.5.0 h1:pwUJb991m+7B8fxVpfujpThZSgzeaipu/wBElQK7dmo=
 github.com/sabafly/disgo v0.5.0/go.mod h1:qhKFp2bKcueqnGIOQkXmHBVjSQ1taA1wdwba3+mlJEI=
-github.com/sabafly/sabafly-lib/v2 v2.6.2 h1:MS3j8bdRL1q8q+8VBdkI8CQXEP7+X4+oxpRCKvilGZI=
-github.com/sabafly/sabafly-lib/v2 v2.6.2/go.mod h1:6LwbMUGyrdlfa7q6Zg01zAekcjW0oI5B9hTFOV+DsLI=
-github.com/sabafly/sabafly-lib/v2 v2.6.3 h1:y35+FDkL1Jeh1SK4GO409pz0IdScahkEvFW0JsbSrTk=
-github.com/sabafly/sabafly-lib/v2 v2.6.3/go.mod h1:6LwbMUGyrdlfa7q6Zg01zAekcjW0oI5B9hTFOV+DsLI=
 github.com/sabafly/sabafly-lib/v2 v2.6.4 h1:CkQpglvWzu8j6VYUb8fUGI9bIiAyGHVI5+W6gWQf7N0=
 github.com/sabafly/sabafly-lib/v2 v2.6.4/go.mod h1:6LwbMUGyrdlfa7q6Zg01zAekcjW0oI5B9hTFOV+DsLI=
+github.com/sabafly/sabafly-lib/v2 v2.6.5 h1:n1YQglyPJrGlHFMh6tll3eyvfrYuBayEYETlnvFl8fs=
+github.com/sabafly/sabafly-lib/v2 v2.6.5/go.mod h1:6LwbMUGyrdlfa7q6Zg01zAekcjW0oI5B9hTFOV+DsLI=
 github.com/sasha-s/go-csync v0.0.0-20210812194225-61421b77c44b h1:qYTY2tN72LhgDj2rtWG+LI6TXFl2ygFQQ4YezfVaGQE=
 github.com/sasha-s/go-csync v0.0.0-20210812194225-61421b77c44b/go.mod h1:/pA7k3zsXKdjjAiUhB5CjuKib9KJGCaLvZwtxGC8U0s=
 github.com/shirou/gopsutil/v3 v3.23.7 h1:C+fHO8hfIppoJ1WdsVm1RoI0RwXoNdfTK7yWXV0wVj4=
