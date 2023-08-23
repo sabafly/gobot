@@ -8,6 +8,7 @@ import (
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
 	"github.com/sabafly/sabafly-lib/v2/permissions"
+	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
 func Permission(b *botlib.Bot[*client.Client]) handler.Command {
@@ -17,49 +18,57 @@ func Permission(b *botlib.Bot[*client.Client]) handler.Command {
 			Description: "permission",
 			Options: []discord.ApplicationCommandOption{
 				discord.ApplicationCommandOptionSubCommand{
-					Name:        "add",
-					Description: "add permission to target",
+					Name:                     "add",
+					Description:              "add permission to target",
+					DescriptionLocalizations: translate.MessageMap("permission_add_command_description", false),
 					Options: []discord.ApplicationCommandOption{
 						discord.ApplicationCommandOptionMentionable{
-							Name:        "target",
-							Description: "target to add permission",
-							Required:    true,
+							Name:                     "target",
+							Description:              "target to add permission",
+							DescriptionLocalizations: translate.MessageMap("permission_add_command_target_option_description", false),
+							Required:                 true,
 						},
 						discord.ApplicationCommandOptionString{
-							Name:         "permission",
-							Description:  "permission string",
-							Required:     true,
-							Autocomplete: true,
-							MaxLength:    json.Ptr(32),
+							Name:                     "permission",
+							Description:              "permission string",
+							DescriptionLocalizations: translate.MessageMap("permission_add_command_permission_option_description", false),
+							Required:                 true,
+							Autocomplete:             true,
+							MaxLength:                json.Ptr(32),
 						},
 					},
 				},
 				discord.ApplicationCommandOptionSubCommand{
-					Name:        "remove",
-					Description: "remove permission to target",
+					Name:                     "remove",
+					Description:              "remove permission to target",
+					DescriptionLocalizations: translate.MessageMap("permission_remove_command_description", false),
 					Options: []discord.ApplicationCommandOption{
 						discord.ApplicationCommandOptionMentionable{
-							Name:        "target",
-							Description: "target to add permission",
-							Required:    true,
+							Name:                     "target",
+							Description:              "target to add permission",
+							DescriptionLocalizations: translate.MessageMap("permission_remove_command_target_option", false),
+							Required:                 true,
 						},
 						discord.ApplicationCommandOptionString{
-							Name:         "permission",
-							Description:  "permission string",
-							Required:     true,
-							Autocomplete: true,
-							MaxLength:    json.Ptr(32),
+							Name:                     "permission",
+							Description:              "permission string",
+							DescriptionLocalizations: translate.MessageMap("permission_remove_command_permission_option", false),
+							Required:                 true,
+							Autocomplete:             true,
+							MaxLength:                json.Ptr(32),
 						},
 					},
 				},
 				discord.ApplicationCommandOptionSubCommand{
-					Name:        "list",
-					Description: "show list os target permission",
+					Name:                     "list",
+					Description:              "show list os target permission",
+					DescriptionLocalizations: translate.MessageMap("permission_list_command_description", false),
 					Options: []discord.ApplicationCommandOption{
 						discord.ApplicationCommandOptionMentionable{
-							Name:        "target",
-							Description: "target to show permissions",
-							Required:    true,
+							Name:                     "target",
+							Description:              "target to show permissions",
+							DescriptionLocalizations: translate.MessageMap("permission_list_command_target_option", false),
+							Required:                 true,
 						},
 					},
 				},

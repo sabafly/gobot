@@ -32,8 +32,9 @@ func Role(b *botlib.Bot[*client.Client]) handler.Command {
 					Description: "panel version 2",
 					Options: []discord.ApplicationCommandOptionSubCommand{
 						{
-							Name:        "create",
-							Description: "create a new role panel",
+							Name:                     "create",
+							Description:              "create a new role panel",
+							DescriptionLocalizations: translate.MessageMap("role_panel_v2_create_command_description", false),
 						},
 						// TODO: Listコマンドを実装する
 						// {
@@ -41,38 +42,44 @@ func Role(b *botlib.Bot[*client.Client]) handler.Command {
 						// 	Description: "show list of role panels",
 						// },
 						{
-							Name:        "delete",
-							Description: "deletes a role panel",
+							Name:                     "delete",
+							Description:              "deletes a role panel",
+							DescriptionLocalizations: translate.MessageMap("role_panel_v2_delete_command_description", false),
 							Options: []discord.ApplicationCommandOption{
 								discord.ApplicationCommandOptionString{
-									Name:         "panel",
-									Description:  "panel identify",
-									Autocomplete: true,
-									Required:     true,
+									Name:                     "panel",
+									Description:              "panel identify",
+									DescriptionLocalizations: translate.MessageMap("role_panel_v2_delete_command_panel_option_description", false),
+									Autocomplete:             true,
+									Required:                 true,
 								},
 							},
 						},
 						{
-							Name:        "edit",
-							Description: "edit a role panel",
+							Name:                     "edit",
+							Description:              "edit a role panel",
+							DescriptionLocalizations: translate.MessageMap("role_panel_v2_edit_command_description", false),
 							Options: []discord.ApplicationCommandOption{
 								discord.ApplicationCommandOptionString{
-									Name:         "panel",
-									Description:  "panel identify",
-									Autocomplete: true,
-									Required:     true,
+									Name:                     "panel",
+									Description:              "panel identify",
+									DescriptionLocalizations: translate.MessageMap("role_panel_v2_edit_command_panel_option_description", false),
+									Autocomplete:             true,
+									Required:                 true,
 								},
 							},
 						},
 						{
-							Name:        "place",
-							Description: "place panel to the channel",
+							Name:                     "place",
+							Description:              "place panel to the channel",
+							DescriptionLocalizations: translate.MessageMap("role_panel_v2_place_command_description", false),
 							Options: []discord.ApplicationCommandOption{
 								discord.ApplicationCommandOptionString{
-									Name:         "panel",
-									Description:  "panel identify",
-									Autocomplete: true,
-									Required:     true,
+									Name:                     "panel",
+									Description:              "panel identify",
+									DescriptionLocalizations: translate.MessageMap("role_panel_v2_place_command_panel_description", false),
+									Autocomplete:             true,
+									Required:                 true,
 								},
 							},
 						},

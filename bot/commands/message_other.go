@@ -18,7 +18,7 @@ func MessageOther(b *botlib.Bot[*client.Client]) handler.Command {
 	return handler.Command{
 		Create: discord.MessageCommandCreate{
 			Name:              "message other",
-			NameLocalizations: *translate.MessageMap("message_other_command_name", false),
+			NameLocalizations: translate.MessageMap("message_other_command_name", false),
 			DMPermission:      &b.Config.DMPermission,
 		},
 		CommandHandlers: map[string]handler.CommandHandler{
