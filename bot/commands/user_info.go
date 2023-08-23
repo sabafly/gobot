@@ -18,7 +18,7 @@ func UserInfo(b *botlib.Bot[*client.Client]) handler.Command {
 	return handler.Command{
 		Create: discord.UserCommandCreate{
 			Name:              "info",
-			NameLocalizations: *translate.MessageMap("user_info_command", false),
+			NameLocalizations: translate.MessageMap("user_info_command", false),
 			DMPermission:      &b.Config.DMPermission,
 		},
 		CommandHandlers: map[string]handler.CommandHandler{

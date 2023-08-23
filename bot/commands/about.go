@@ -12,15 +12,17 @@ import (
 	lib "github.com/sabafly/sabafly-lib/v2"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
+	"github.com/sabafly/sabafly-lib/v2/translate"
 	"github.com/shirou/gopsutil/v3/mem"
 )
 
 func About(b *botlib.Bot[*client.Client]) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
-			Name:         "about",
-			Description:  "ボットの情報を表示します",
-			DMPermission: &b.Config.DMPermission,
+			Name:                     "about",
+			Description:              "show bot info",
+			DescriptionLocalizations: translate.MessageMap("about_command_description", false),
+			DMPermission:             &b.Config.DMPermission,
 		},
 		CommandHandlers: map[string]handler.CommandHandler{
 			"": aboutCommandHandler(b),

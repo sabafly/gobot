@@ -10,6 +10,7 @@ import (
 	"github.com/sabafly/gobot/bot/db"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
+	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
 func Util(b *botlib.Bot[*client.Client]) handler.Command {
@@ -20,13 +21,15 @@ func Util(b *botlib.Bot[*client.Client]) handler.Command {
 			DMPermission: &b.Config.DMPermission,
 			Options: []discord.ApplicationCommandOption{
 				discord.ApplicationCommandOptionSubCommand{
-					Name:        "calc",
-					Description: "in discord calculator",
+					Name:                     "calc",
+					Description:              "in discord calculator",
+					DescriptionLocalizations: translate.MessageMap("util_calc_command_description", false),
 					Options: []discord.ApplicationCommandOption{
 						discord.ApplicationCommandOptionBool{
-							Name:        "ephemeral",
-							Description: "create calculator as ephemeral message",
-							Required:    false,
+							Name:                     "ephemeral",
+							Description:              "create calculator as ephemeral message",
+							DescriptionLocalizations: translate.MessageMap("util_calc_command_ephemeral_option_description", false),
+							Required:                 false,
 						},
 					},
 				},

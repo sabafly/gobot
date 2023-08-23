@@ -28,24 +28,29 @@ func Config(b *botlib.Bot[*client.Client]) handler.Command {
 					Description: "bump",
 					Options: []discord.ApplicationCommandOptionSubCommand{
 						{
-							Name:        "on",
-							Description: "turn on",
+							Name:                     "on",
+							Description:              "turn on",
+							DescriptionLocalizations: translate.MessageMap("config_bump_on_command_description", false),
 						},
 						{
-							Name:        "off",
-							Description: "turn off",
+							Name:                     "off",
+							Description:              "turn off",
+							DescriptionLocalizations: translate.MessageMap("config_bump_off_command_description", false),
 						},
 						{
-							Name:        "message",
-							Description: "config message",
+							Name:                     "message",
+							Description:              "config message",
+							DescriptionLocalizations: translate.MessageMap("config_bump_message_command_description", false),
 						},
 						{
-							Name:        "mention",
-							Description: "set mention role",
+							Name:                     "mention",
+							Description:              "set mention role",
+							DescriptionLocalizations: translate.MessageMap("config_bump_mention_command_description", false),
 							Options: []discord.ApplicationCommandOption{
 								discord.ApplicationCommandOptionRole{
-									Name:        "role",
-									Description: "target role",
+									Name:                     "role",
+									Description:              "target role",
+									DescriptionLocalizations: translate.MessageMap("config_bump_mention_command_role_option_description", false),
 								},
 							},
 						},
@@ -56,24 +61,29 @@ func Config(b *botlib.Bot[*client.Client]) handler.Command {
 					Description: "up",
 					Options: []discord.ApplicationCommandOptionSubCommand{
 						{
-							Name:        "on",
-							Description: "turn on",
+							Name:                     "on",
+							Description:              "turn on",
+							DescriptionLocalizations: translate.MessageMap("config_up_on_command_description", false),
 						},
 						{
-							Name:        "off",
-							Description: "turn off",
+							Name:                     "off",
+							Description:              "turn off",
+							DescriptionLocalizations: translate.MessageMap("config_up_off_message_description", false),
 						},
 						{
-							Name:        "message",
-							Description: "config message",
+							Name:                     "message",
+							Description:              "config message",
+							DescriptionLocalizations: translate.MessageMap("config_up_message_command_description", false),
 						},
 						{
-							Name:        "mention",
-							Description: "set mention role",
+							Name:                     "mention",
+							Description:              "set mention role",
+							DescriptionLocalizations: translate.MessageMap("config_up_mention_command_description", false),
 							Options: []discord.ApplicationCommandOption{
 								discord.ApplicationCommandOptionRole{
-									Name:        "role",
-									Description: "target role",
+									Name:                     "role",
+									Description:              "target role",
+									DescriptionLocalizations: translate.MessageMap("config_up_mention_command_role_option_description", false),
 								},
 							},
 						},
@@ -84,16 +94,19 @@ func Config(b *botlib.Bot[*client.Client]) handler.Command {
 					Description: "level config",
 					Options: []discord.ApplicationCommandOptionSubCommand{
 						{
-							Name:        "notice-message",
-							Description: "set level up message",
+							Name:                     "notice-message",
+							Description:              "set level up message",
+							DescriptionLocalizations: translate.MessageMap("config_level_notice_message_command_description", false),
 						},
 						{
-							Name:        "notice-channel",
-							Description: "set level up message channel to send",
+							Name:                     "notice-channel",
+							Description:              "set level up message channel to send",
+							DescriptionLocalizations: translate.MessageMap("config_level_notice_channel_command_description", false),
 							Options: []discord.ApplicationCommandOption{
 								discord.ApplicationCommandOptionChannel{
-									Name:        "channel",
-									Description: "target channel",
+									Name:                     "channel",
+									Description:              "target channel",
+									DescriptionLocalizations: translate.MessageMap("config_level_notice_channel_command_channel_option_description", false),
 									ChannelTypes: []discord.ChannelType{
 										discord.ChannelTypeGuildText,
 									},
@@ -101,13 +114,15 @@ func Config(b *botlib.Bot[*client.Client]) handler.Command {
 							},
 						},
 						{
-							Name:        "exclude-add",
-							Description: "add exclude channel",
+							Name:                     "exclude-add",
+							Description:              "add exclude channel",
+							DescriptionLocalizations: translate.MessageMap("config_level_exclude_add_command_description", false),
 							Options: []discord.ApplicationCommandOption{
 								discord.ApplicationCommandOptionChannel{
-									Name:        "channel",
-									Description: "target channel",
-									Required:    true,
+									Name:                     "channel",
+									Description:              "target channel",
+									DescriptionLocalizations: translate.MessageMap("config_level_exclude_add_command_channel_option_description", false),
+									Required:                 true,
 									ChannelTypes: []discord.ChannelType{
 										discord.ChannelTypeGuildText,
 										discord.ChannelTypeGuildPublicThread,
@@ -118,20 +133,23 @@ func Config(b *botlib.Bot[*client.Client]) handler.Command {
 							},
 						},
 						{
-							Name:        "exclude-remove",
-							Description: "remove exclude channel",
+							Name:                     "exclude-remove",
+							Description:              "remove exclude channel",
+							DescriptionLocalizations: translate.MessageMap("config_level_exclude_remove_command_description", false),
 							Options: []discord.ApplicationCommandOption{
 								discord.ApplicationCommandOptionString{
-									Name:         "channel",
-									Description:  "target channel",
-									Required:     true,
-									Autocomplete: true,
+									Name:                     "channel",
+									Description:              "target channel",
+									DescriptionLocalizations: translate.MessageMap("config_level_exclude_remove_command_channel_option_description", false),
+									Required:                 true,
+									Autocomplete:             true,
 								},
 							},
 						},
 						{
-							Name:        "import-mee6",
-							Description: "import level data from mee6 ⚠ all guild levels reset ⚠",
+							Name:                     "import-mee6",
+							Description:              "import level data from mee6 ⚠ all guild levels reset ⚠",
+							DescriptionLocalizations: translate.MessageMap("config_level_import_mee6_command_description", false),
 						},
 					},
 				},

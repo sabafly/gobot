@@ -14,9 +14,10 @@ import (
 func Ping(b *botlib.Bot[*client.Client]) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
-			Name:         "ping",
-			Description:  "pong!",
-			DMPermission: &b.Config.DMPermission,
+			Name:                     "ping",
+			Description:              "pong!",
+			DescriptionLocalizations: translate.MessageMap("ping_command_description", false),
+			DMPermission:             &b.Config.DMPermission,
 		},
 		CommandHandlers: map[string]handler.CommandHandler{
 			"": pingHandler(b),
