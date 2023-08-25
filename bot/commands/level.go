@@ -3,7 +3,10 @@ package commands
 import (
 	"fmt"
 	"math/big"
+	"slices"
 
+	"github.com/disgoorg/json"
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/disgo/discord"
 	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
@@ -25,44 +28,56 @@ func Level(b *botlib.Bot[*client.Client]) handler.Command {
 					Description: "user",
 					Options: []discord.ApplicationCommandOptionSubCommand{
 						{
-							Name:        "move",
-							Description: "set user level",
+							Name:                     "move",
+							Description:              "set user level",
+							DescriptionLocalizations: translate.MessageMap("level_user_move_command_description", false),
 							Options: []discord.ApplicationCommandOption{
 								discord.ApplicationCommandOptionUser{
-									Name:        "target-from",
-									Description: "target user move level from",
-									Required:    true,
+									Name:                     "target-from",
+									Description:              "target user move level from",
+									DescriptionLocalizations: translate.MessageMap("level_user_move_command_target_from_option_description", false),
+									Required:                 true,
 								},
 								discord.ApplicationCommandOptionUser{
-									Name:        "target-to",
-									Description: "target user move level to",
-									Required:    true,
+									Name:                     "target-to",
+									Description:              "target user move level to",
+									DescriptionLocalizations: translate.MessageMap("level_user_move_command_target_to_option_description", false),
+									Required:                 true,
 								},
 							},
 						},
 						{
-							Name:        "reset",
-							Description: "reset user level",
+							Name:                     "reset",
+							Description:              "reset user level",
+							DescriptionLocalizations: translate.MessageMap("level_user_reset_command_description", false),
 							Options: []discord.ApplicationCommandOption{
 								discord.ApplicationCommandOptionUser{
-									Name:        "target",
-									Description: "target user",
-									Required:    true,
+									Name:                     "target",
+									Description:              "target user",
+									DescriptionLocalizations: translate.MessageMap("level_user_reset_command_target_option_description", false),
+									Required:                 true,
 								},
 							},
 						},
 					},
 				},
 				discord.ApplicationCommandOptionSubCommand{
-					Name:        "rank",
-					Description: "get the user rank",
+					Name:                     "leaderboard",
+					Description:              "show guild member leaderboard",
+					DescriptionLocalizations: translate.MessageMap("level_leaderboard_command_description", false),
 					Options: []discord.ApplicationCommandOption{
-						discord.ApplicationCommandOptionBool{
-							Name:        "all-list",
-							Description: "get all of rank list",
-							Required:    false,
+						discord.ApplicationCommandOptionInt{
+							Name:                     "page",
+							Description:              "page number",
+							DescriptionLocalizations: translate.MessageMap("level_leaderboard_command_page_option_description", false),
+							MinValue:                 json.Ptr(1),
 						},
 					},
+				},
+				discord.ApplicationCommandOptionSubCommand{
+					Name:                     "point",
+					Description:              "show yourself point",
+					DescriptionLocalizations: translate.MessageMap("level_point_command_description", false),
 				},
 			},
 		},
@@ -71,9 +86,10 @@ func Level(b *botlib.Bot[*client.Client]) handler.Command {
 			"user/reset": b.Self.CheckCommandPermission(b, "user.level.manage", discord.PermissionManageGuild),
 		},
 		CommandHandlers: map[string]handler.CommandHandler{
-			"user/move":  levelUserMoveCommandHandler(b),
-			"user/reset": levelUserResetCommandHandler(b),
-			"rank":       levelRankCommandHandler(b),
+			"user/move":   levelUserMoveCommandHandler(b),
+			"user/reset":  levelUserResetCommandHandler(b),
+			"point":       levelPointCommandHandler(b),
+			"leaderboard": levelLeaderBoard(b),
 		},
 	}
 }
@@ -160,7 +176,7 @@ func levelUserResetCommandHandler(b *botlib.Bot[*client.Client]) handler.Command
 	}
 }
 
-func levelRankCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+func levelPointCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		b.Self.UserDataLock(event.User().ID).Lock()
 		defer b.Self.UserDataLock(event.User().ID).Unlock()
@@ -180,7 +196,7 @@ func levelRankCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandl
 			Name:    event.Member().EffectiveName(),
 			IconURL: event.Member().EffectiveAvatarURL(),
 		}
-		embed.SetTitle(translate.Translate(event.Locale(), "command_level_rank_result_embed_title", map[string]any{"User": event.Member().EffectiveName()}))
+		embed.SetTitle(translate.Message(event.Locale(), "command_level_rank_result_embed_title", translate.WithTemplate(map[string]any{"User": event.Member().EffectiveName()})))
 		embed.SetDescriptionf("```%-6.6s:%16s``````%-6.6s:%16s/%s```",
 			"Level", ud.GlobalLevel.Level().String(),
 			"Point", ud.GlobalLevel.Point.String(), ud.GlobalLevel.SumReqPoint().String(),
@@ -214,6 +230,74 @@ func levelRankCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandl
 	}
 }
 
+func levelLeaderBoard(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+	return func(event *events.ApplicationCommandInteractionCreate) error {
+		b.Self.UserDataLock(event.User().ID).Lock()
+		defer b.Self.UserDataLock(event.User().ID).Unlock()
+		b.Self.GuildDataLock(*event.GuildID()).Lock()
+		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
+		if err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		type sortLevel struct {
+			user_id snowflake.ID
+			level   db.UserDataLevel
+		}
+		sort_list := []sortLevel{}
+		for id, level := range gd.UserLevels {
+			sort_list = append(sort_list, sortLevel{
+				user_id: id,
+				level:   level.UserDataLevel,
+			})
+		}
+
+		page_number, ok := event.SlashCommandInteractionData().OptInt("page")
+		if !ok || page_number < 1 {
+			page_number = 1
+		}
+
+		max_page := len(sort_list)/25 + 1
+
+		if len(sort_list) < 1 || max_page < page_number {
+			return botlib.ReturnErrMessage(event, "error_unavailable_page")
+		}
+
+		slices.SortFunc(sort_list, func(a, b sortLevel) int {
+			return a.level.Point.Cmp(b.level.Point)
+		})
+		slices.Reverse(sort_list)
+
+		sort_list = sort_list[25*(page_number-1) : min(25*page_number, len(sort_list))]
+
+		var text_list_string string
+		for i, sl := range sort_list {
+			text_list_string += fmt.Sprintf(
+				"**#%d | ** %s **XP:** `%s` **Level:** `%s`\r",
+				(25*(page_number-1))+(i+1), discord.UserMention(sl.user_id), sl.level.Point.String(), sl.level.Level().String(),
+			)
+		}
+
+		embed := discord.NewEmbedBuilder()
+		embed.SetTitlef("💬%s(%d/%d)", translate.Message(event.Locale(), "level_leader_board_category_text"), page_number, max_page)
+		embed.SetDescription(text_list_string)
+		embed.SetAuthorNamef("🏆%s", translate.Message(event.Locale(), "level_leader_board_author_text"))
+		if guild, ok := event.Guild(); ok && guild.Icon != nil {
+			embed.SetAuthorIcon(*guild.IconURL())
+		}
+		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
+		message := discord.NewMessageCreateBuilder()
+		message.AddEmbeds(embed.Build())
+		if err := event.CreateMessage(message.Build()); err != nil {
+			buf, _ := json.Marshal(message.Build())
+			b.Logger.Debug(string(buf), len(sort_list))
+			return botlib.ReturnErr(event, err)
+		}
+		b.Logger.Debug(len(sort_list))
+		return nil
+	}
+}
+
 func LevelModal(b *botlib.Bot[*client.Client]) handler.Modal {
 	return handler.Modal{
 		Name: "level",
@@ -235,6 +319,9 @@ func levelModalNoticeMessageHandler(b *botlib.Bot[*client.Client]) handler.Modal
 		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
+		embed := discord.NewEmbedBuilder()
+		embed.SetTitle(translate.Message(event.Locale(), "config_changed"))
+		embed.SetDescription(translate.Message(event.Locale(), "config_level_notice_message_changed"))
 		if err := event.DeferUpdateMessage(); err != nil {
 			return err
 		}

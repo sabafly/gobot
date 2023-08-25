@@ -17,38 +17,44 @@ import (
 	"github.com/sabafly/gobot/bot/db"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
+	"github.com/sabafly/sabafly-lib/v2/translate"
 )
 
 func Minecraft(b *botlib.Bot[*client.Client]) handler.Command {
 	return handler.Command{
 		Create: discord.SlashCommandCreate{
-			Name:        "minecraft",
-			Description: "minecraft",
+			Name:         "minecraft",
+			Description:  "minecraft",
+			DMPermission: &b.Config.DMPermission,
 			Options: []discord.ApplicationCommandOption{
 				discord.ApplicationCommandOptionSubCommandGroup{
 					Name:        "status-panel",
 					Description: "status-panel",
 					Options: []discord.ApplicationCommandOptionSubCommand{
 						{
-							Name:        "create",
-							Description: "create status panel",
+							Name:                     "create",
+							Description:              "create status panel",
+							DescriptionLocalizations: translate.MessageMap("minecraft_status_panel_create_command_description", false),
 							Options: []discord.ApplicationCommandOption{
 								discord.ApplicationCommandOptionString{
-									Name:        "server-name",
-									Description: "name of server",
-									Required:    true,
-									MaxLength:   json.Ptr(100),
+									Name:                     "server-name",
+									Description:              "name of server",
+									DescriptionLocalizations: translate.MessageMap("minecraft_status_panel_create_command_server_name_option_description", false),
+									Required:                 true,
+									MaxLength:                json.Ptr(100),
 								},
 								discord.ApplicationCommandOptionString{
-									Name:        "address",
-									Description: "address of server",
-									Required:    true,
-									MaxLength:   json.Ptr(32),
+									Name:                     "address",
+									Description:              "address of server",
+									DescriptionLocalizations: translate.MessageMap("minecraft_status_panel_create_command_address_option_description", false),
+									Required:                 true,
+									MaxLength:                json.Ptr(32),
 								},
 								discord.ApplicationCommandOptionString{
-									Name:        "edition",
-									Description: "edition of server",
-									Required:    true,
+									Name:                     "edition",
+									Description:              "edition of server",
+									DescriptionLocalizations: translate.MessageMap("minecraft_status_panel_create_command_hide_address_option_description", false),
+									Required:                 true,
 									Choices: []discord.ApplicationCommandOptionChoiceString{
 										{
 											Name:  "java",
@@ -61,26 +67,30 @@ func Minecraft(b *botlib.Bot[*client.Client]) handler.Command {
 									},
 								},
 								discord.ApplicationCommandOptionBool{
-									Name:        "hide-address",
-									Description: "hide address",
+									Name:                     "hide-address",
+									Description:              "hide address",
+									DescriptionLocalizations: translate.MessageMap("minecraft_status_panel_create_command_hide_address_option_description", false),
 								},
 							},
 						},
 						{
-							Name:        "delete",
-							Description: "delete panel",
+							Name:                     "delete",
+							Description:              "delete panel",
+							DescriptionLocalizations: translate.MessageMap("minecraft_status_panel_delete_command_description", false),
 							Options: []discord.ApplicationCommandOption{
 								discord.ApplicationCommandOptionString{
-									Name:         "panel",
-									Description:  "target panel",
-									Autocomplete: true,
-									Required:     true,
+									Name:                     "panel",
+									Description:              "target panel",
+									DescriptionLocalizations: translate.MessageMap("minecraft_status_panel_delete_command_panel_option", false),
+									Autocomplete:             true,
+									Required:                 true,
 								},
 							},
 						},
 						{
-							Name:        "list",
-							Description: "show list of panels",
+							Name:                     "list",
+							Description:              "show list of panels",
+							DescriptionLocalizations: translate.MessageMap("minecraft_status_panel_list_command_description", false),
 						},
 					},
 				},
@@ -203,10 +213,12 @@ func minecraftStatusPanelCreateCommandHandler(b *botlib.Bot[*client.Client]) han
 		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		if err := event.CreateMessage(discord.MessageCreate{
-			Content: "OK",
-			Flags:   discord.MessageFlagEphemeral,
-		}); err != nil {
+		embed := discord.NewEmbedBuilder()
+		embed.SetDescription(translate.Message(event.Locale(), "minecraft_status_panel_created"))
+		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
+		result_message := discord.NewMessageCreateBuilder()
+		result_message.AddEmbeds(embed.Build())
+		if err := event.CreateMessage(result_message.SetFlags(discord.MessageFlagEphemeral).Build()); err != nil {
 			return err
 		}
 		return nil

@@ -9,6 +9,7 @@ import (
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
+	"github.com/sabafly/disgo/discord"
 )
 
 type UserDataDB interface {
@@ -74,14 +75,15 @@ func NewUserData(id snowflake.ID) (*UserData, error) {
 	}, nil
 }
 
-const UserDataVersion = 0
+const UserDataVersion = 1
 
 type UserData struct {
 	ID snowflake.ID `json:"id"`
 
-	CreatedAt time.Time    `json:"created_at"`
-	BirthDay  [2]int       `json:"birth_day"`
-	Location  UserLocation `json:"location"`
+	CreatedAt time.Time      `json:"created_at"`
+	BirthDay  [2]int         `json:"birth_day"`
+	Location  UserLocation   `json:"location"`
+	Locale    discord.Locale `json:"locale"`
 
 	LastMessageTime    time.Time     `json:"last_message_time"`
 	MessageCount       int64         `json:"message_count"`
@@ -115,6 +117,10 @@ func (u *UserData) isValid() bool {
 
 func (u *UserData) validate(b []byte) error {
 	switch u.DataVersion {
+	case 0:
+		u.Locale = discord.LocaleJapanese
+		u.DataVersion = 1
+		fallthrough
 	case UserDataVersion:
 		return nil
 	default:

@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"os"
 	"sync"
 
 	"github.com/disgoorg/snowflake/v2"
@@ -14,6 +15,9 @@ import (
 )
 
 func New(cfg *Config, db db.DB) (*Client, error) {
+	if err := os.MkdirAll("./logs/messages", 0755); err != nil {
+		return nil, err
+	}
 	ml, err := logging.New(logging.Config{
 		LogPath: "./logs/messages",
 		LogName: "message.log",
@@ -92,6 +96,29 @@ func (c *Client) UserDataLock(uid snowflake.ID) *sync.Mutex {
 		c.userDataLocks[uid] = new(sync.Mutex)
 	}
 	return c.userDataLocks[uid]
+}
+
+func (c *Client) CheckAutoCompletePermission(b *botlib.Bot[*Client], perm string, alt_perm discord.Permissions) handler.Check[*events.AutocompleteInteractionCreate] {
+	return func(ctx *events.AutocompleteInteractionCreate) bool {
+		if b.CheckDev(ctx.User().ID) {
+			return true
+		}
+		if ctx.Member() != nil && ctx.Member().Permissions.Has(alt_perm) {
+			return true
+		}
+		gd, err := c.DB.GuildData().Get(*ctx.GuildID())
+		if err == nil {
+			if gd.UserPermissions[ctx.User().ID].Has(perm) {
+				return true
+			}
+			for _, id := range ctx.Member().RoleIDs {
+				if gd.RolePermissions[id].Has(perm) {
+					return true
+				}
+			}
+		}
+		return false
+	}
 }
 
 func (c *Client) CheckCommandPermission(b *botlib.Bot[*Client], perm string, alt_perm discord.Permissions) handler.Check[*events.ApplicationCommandInteractionCreate] {

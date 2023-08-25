@@ -71,7 +71,7 @@ func NewGuildData(id snowflake.ID) GuildData {
 	return g
 }
 
-const GuildDataVersion = 5
+const GuildDataVersion = 11
 
 type GuildData struct {
 	ID              snowflake.ID                            `json:"id"`
@@ -90,6 +90,16 @@ type GuildData struct {
 	MessageSuffix map[snowflake.ID]MessageSuffix `json:"message_suffix"`
 
 	UserLevelExcludeChannels map[snowflake.ID]string `json:"user_level_exclude_channels"`
+
+	RolePanelV2             map[uuid.UUID]string         `json:"role_panel_v2"`
+	RolePanelV2Name         map[string]int               `json:"role_panel_v2_name"`
+	RolePanelV2Placed       map[string]uuid.UUID         `json:"role_panel_v2_placed"`
+	RolePanelV2PlacedConfig map[string]RolePanelV2Config `json:"role_panel_v2_placed_config"`
+	RolePanelV2Limit        int                          `json:"role_panel_v2_limit"`
+
+	RolePanelV2Editing map[uuid.UUID]uuid.UUID `json:"role_panel_v2_editing"`
+
+	RolePanelV2EditingEmoji map[uuid.UUID][2]snowflake.ID `json:"role_panel_v2_emoji"`
 
 	DataVersion *int `json:"data_version,omitempty"`
 }
@@ -236,13 +246,41 @@ func (g *GuildData) validate(b []byte) error {
 		g.MessageSuffix = make(map[snowflake.ID]MessageSuffix)
 		*g.DataVersion = 5
 		fallthrough
+	case 5:
+		g.RolePanelV2 = make(map[uuid.UUID]string)
+		g.RolePanelV2Name = make(map[string]int)
+		g.RolePanelV2Placed = make(map[string]uuid.UUID)
+		g.RolePanelV2Limit = 5
+		*g.DataVersion = 6
+		fallthrough
+	case 6:
+		g.RolePanelV2Editing = make(map[uuid.UUID]uuid.UUID)
+		g.RolePanelV2Limit = 15
+		*g.DataVersion = 7
+		fallthrough
+	case 7:
+		g.RolePanelV2Editing = make(map[uuid.UUID]uuid.UUID)
+		*g.DataVersion = 8
+		fallthrough
+	case 8:
+		g.RolePanelV2EditingEmoji = make(map[uuid.UUID][2]snowflake.ID)
+		*g.DataVersion = 9
+		fallthrough
+	case 9:
+		// g.RolePanelV2PlacedType = make(map[string]RolePanelV2Type)
+		*g.DataVersion = 10
+		fallthrough
+	case 10:
+		g.RolePanelV2PlacedConfig = make(map[string]RolePanelV2Config)
+		*g.DataVersion = 11
+		fallthrough
 	case GuildDataVersion:
 		return nil
 	default:
 		d := NewGuildData(g.ID)
 		*g = d
+		return nil
 	}
-	return nil
 }
 
 type GuildDataRolePanel struct {
