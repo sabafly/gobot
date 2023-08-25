@@ -7,6 +7,7 @@ import (
 	"github.com/sabafly/disgo/discord"
 	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
+	"github.com/sabafly/gobot/bot/db"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
 )
@@ -46,7 +47,12 @@ func bumpUpMessageHandler(b *botlib.Bot[*client.Client]) func(event *events.Guil
 			if gd.BumpStatus.BumpChannel != nil {
 				channelID = *gd.BumpStatus.BumpChannel
 			}
-			go bumpScheduler(b, channelID, gd.BumpStatus.BumpRole, gd.BumpStatus.BumpRemind[0], gd.BumpStatus.BumpRemind[1], 2)
+
+			ns := db.NewNoticeScheduleBump(false, event.GuildID, channelID, time.Now().Add(2*time.Hour))
+			if err := b.Self.DB.NoticeSchedule().Set(ns.ID(), ns); err != nil {
+				return err
+			}
+
 			message := discord.NewMessageCreateBuilder()
 			embed := discord.NewEmbedBuilder()
 			embed.SetTitle(gd.BumpStatus.BumpMessage[0])
@@ -70,7 +76,12 @@ func bumpUpMessageHandler(b *botlib.Bot[*client.Client]) func(event *events.Guil
 			if gd.BumpStatus.UpChannel != nil {
 				channelID = *gd.BumpStatus.UpChannel
 			}
-			go bumpScheduler(b, channelID, gd.BumpStatus.UpRole, gd.BumpStatus.UpRemind[0], gd.BumpStatus.UpRemind[1], 1)
+
+			ns := db.NewNoticeScheduleBump(true, event.GuildID, channelID, time.Now().Add(time.Hour))
+			if err := b.Self.DB.NoticeSchedule().Set(ns.ID(), ns); err != nil {
+				return err
+			}
+
 			message := discord.NewMessageCreateBuilder()
 			embed := discord.NewEmbedBuilder()
 			embed.SetTitle(gd.BumpStatus.UpMessage[0])
@@ -100,8 +111,31 @@ func bumpUpdateHandler(b *botlib.Bot[*client.Client]) handler.MessageUpdateHandl
 	}
 }
 
-func bumpScheduler(b *botlib.Bot[*client.Client], channelID snowflake.ID, roleID *snowflake.ID, title, desc string, hours int) {
-	time.Sleep(time.Hour * time.Duration(hours))
+func ScheduleBump(b *botlib.Bot[*client.Client], bp db.NoticeScheduleBump) error {
+	b.Self.GuildDataLock(bp.GuildID).Lock()
+	defer b.Self.GuildDataLock(bp.GuildID).Unlock()
+	gd, err := b.Self.DB.GuildData().Get(bp.GuildID)
+	if err != nil {
+		return err
+	}
+	if !bp.IsUp {
+		channelID := bp.ChannelID
+		if gd.BumpStatus.BumpChannel != nil {
+			channelID = *gd.BumpStatus.BumpChannel
+		}
+		go bumpScheduler(b, channelID, gd.BumpStatus.BumpRole, gd.BumpStatus.BumpRemind[0], gd.BumpStatus.BumpRemind[1], bp.ScheduledTime)
+	} else {
+		channelID := bp.ChannelID
+		if gd.BumpStatus.UpChannel != nil {
+			channelID = *gd.BumpStatus.UpChannel
+		}
+		go bumpScheduler(b, channelID, gd.BumpStatus.UpRole, gd.BumpStatus.UpRemind[0], gd.BumpStatus.UpRemind[1], bp.ScheduledTime)
+	}
+	return nil
+}
+
+func bumpScheduler(b *botlib.Bot[*client.Client], channelID snowflake.ID, roleID *snowflake.ID, title, desc string, tm time.Time) {
+	time.Sleep(time.Until(tm))
 	var mention string
 	if roleID != nil {
 		mention = discord.RoleMention(*roleID)

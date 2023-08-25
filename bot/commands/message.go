@@ -1,8 +1,12 @@
 package commands
 
 import (
+	"fmt"
 	"strings"
 
+	"slices"
+
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"github.com/sabafly/disgo/discord"
 	"github.com/sabafly/disgo/events"
@@ -26,30 +30,94 @@ func Message(b *botlib.Bot[*client.Client]) handler.Command {
 					Description: "pin",
 					Options: []discord.ApplicationCommandOptionSubCommand{
 						{
-							Name:        "create",
-							Description: "create pinned message",
+							Name:                     "create",
+							Description:              "create pinned message",
+							DescriptionLocalizations: translate.MessageMap("message_pin_create_command_description", false),
 							Options: []discord.ApplicationCommandOption{
 								discord.ApplicationCommandOptionBool{
-									Name:        "use-embed",
-									Description: "wither uses embed creator",
-									Required:    false,
+									Name:                     "use-embed",
+									Description:              "wither uses embed creator",
+									DescriptionLocalizations: translate.MessageMap("message_pin_create_command_user_embed_option_description", false),
+									Required:                 false,
 								},
 							},
 						},
 						{
-							Name:        "delete",
-							Description: "delete pinned message",
+							Name:                     "delete",
+							Description:              "delete pinned message",
+							DescriptionLocalizations: translate.MessageMap("message_pin_delete_command_description", false),
+						},
+					},
+				},
+				discord.ApplicationCommandOptionSubCommandGroup{
+					Name:        "suffix",
+					Description: "suffix",
+					Options: []discord.ApplicationCommandOptionSubCommand{
+						{
+							Name:                     "set",
+							Description:              "set user message suffix",
+							DescriptionLocalizations: translate.MessageMap("message_suffix_set_command_description", false),
+							Options: []discord.ApplicationCommandOption{
+								discord.ApplicationCommandOptionUser{
+									Name:                     "target",
+									Description:              "target user",
+									DescriptionLocalizations: translate.MessageMap("message_suffix_set_command_target_option_description", false),
+									Required:                 true,
+								},
+								discord.ApplicationCommandOptionString{
+									Name:                     "suffix",
+									Description:              "suffix text",
+									DescriptionLocalizations: translate.MessageMap("message_suffix_set_command_suffix_option_description", false),
+									Required:                 true,
+								},
+								discord.ApplicationCommandOptionInt{
+									Name:                     "rule-type",
+									Description:              "force suffix rule type",
+									DescriptionLocalizations: translate.MessageMap("message_suffix_set_command_rule_type_option_description", false),
+									Required:                 true,
+									Choices: []discord.ApplicationCommandOptionChoiceInt{
+										{
+											Name:              "send warning message",
+											NameLocalizations: translate.MessageMap("message_suffix_set_command_rule_type_option_send_warn", false),
+											Value:             db.MessageSuffixRuleTypeWarning,
+										},
+										{
+											Name:              "delete message",
+											NameLocalizations: translate.MessageMap("message_suffix_set_command_rule_type_option_delete", false),
+											Value:             db.MessageSuffixRuleTypeDelete,
+										},
+										{
+											Name:              "webhook replace",
+											NameLocalizations: translate.MessageMap("message_suffix_set_command_rule_type_webhook", false),
+											Value:             db.MessageSuffixRuleTypeWebhook,
+										},
+									},
+								},
+							},
+						},
+						{
+							Name:                     "remove",
+							Description:              "remove suffix rule from target",
+							DescriptionLocalizations: translate.MessageMap("message_suffix_remove_command_description", false),
+							Options: []discord.ApplicationCommandOption{
+								discord.ApplicationCommandOptionUser{
+									Name:                     "target",
+									Description:              "target user",
+									DescriptionLocalizations: translate.MessageMap("message_suffix_remove_command_target_option_description", false),
+									Required:                 true,
+								},
+							},
 						},
 					},
 				},
 			},
 		},
-		Check: func(ctx *events.ApplicationCommandInteractionCreate) bool {
-			return ctx.Member().Permissions.Has(discord.PermissionManageChannels)
-		},
+		Check: b.Self.CheckCommandPermission(b, "message.manage", discord.PermissionManageChannels.Add(discord.PermissionManageMessages)),
 		CommandHandlers: map[string]handler.CommandHandler{
-			"pin/create": messagePinCreateCommandHandler(b),
-			"pin/delete": messagePinDeleteCommandHandler(b),
+			"pin/create":    messagePinCreateCommandHandler(b),
+			"pin/delete":    messagePinDeleteCommandHandler(b),
+			"suffix/set":    messageSuffixSetCommandHandler(b),
+			"suffix/remove": messageSuffixRemoveCommandHandler(b),
 		},
 	}
 }
@@ -102,12 +170,12 @@ func messagePinDeleteCommandHandler(b *botlib.Bot[*client.Client]) handler.Comma
 		defer b.Self.MessagePinSync.Unlock()
 		m, ok := b.Self.MessagePin[*event.GuildID()]
 		if !ok {
-			return botlib.ReturnErrMessage(event, "error_has_no_data", botlib.WithEphemeral(true))
+			return botlib.ReturnErrMessage(event, "error_not_found", botlib.WithEphemeral(true))
 		}
 		mp, ok := m.Pins[event.Channel().ID()]
 		b.Logger.Debug(*event.GuildID(), event.Channel().ID())
 		if !ok {
-			return botlib.ReturnErrMessage(event, "error_has_no_data", botlib.WithEphemeral(true))
+			return botlib.ReturnErrMessage(event, "error_not_found", botlib.WithEphemeral(true))
 		}
 		if mp.LastMessageID != nil {
 			_ = event.Client().Rest().DeleteMessage(mp.ChannelID, *mp.LastMessageID)
@@ -118,7 +186,65 @@ func messagePinDeleteCommandHandler(b *botlib.Bot[*client.Client]) handler.Comma
 		}
 		m.Pins[event.Channel().ID()] = mp
 		b.Self.MessagePin[*event.GuildID()] = m
-		return event.CreateMessage(discord.MessageCreate{Content: "OK", Flags: discord.MessageFlagEphemeral})
+		embed := discord.NewEmbedBuilder()
+		embed.SetDescription(translate.Message(event.Locale(), "message_pin_delete"))
+		embed.Embed = botlib.SetEmbedProperties(embed.Embed)
+		message := discord.NewMessageCreateBuilder()
+		message.AddEmbeds(embed.Build())
+		return event.CreateMessage(message.SetFlags(discord.MessageFlagEphemeral).Build())
+	}
+}
+
+func messageSuffixSetCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+	return func(event *events.ApplicationCommandInteractionCreate) error {
+		b.Self.GuildDataLock(*event.GuildID()).Lock()
+		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
+		if err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		target := event.SlashCommandInteractionData().User("target")
+		if target.Bot || target.System {
+			return botlib.ReturnErrMessage(event, "error_is_bot")
+		}
+		suffix_string := event.SlashCommandInteractionData().String("suffix")
+		suffix_type := event.SlashCommandInteractionData().Int("rule-type")
+		suffix := db.NewMessageSuffix(target.ID, suffix_string, db.MessageSuffixRuleType(suffix_type))
+		gd.MessageSuffix[target.ID] = suffix
+		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		message := discord.NewMessageCreateBuilder()
+		message.SetContentf("%sの語尾を「%s」に強制します", target.Mention(), suffix_string)
+		if err := event.CreateMessage(message.Build()); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func messageSuffixRemoveCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+	return func(event *events.ApplicationCommandInteractionCreate) error {
+		b.Self.GuildDataLock(*event.GuildID()).Lock()
+		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
+		if err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		target := event.SlashCommandInteractionData().User("target")
+		if _, ok := gd.MessageSuffix[target.ID]; !ok {
+			return botlib.ReturnErrMessage(event, "error_already_deleted")
+		}
+		delete(gd.MessageSuffix, target.ID)
+		if err := b.Self.DB.GuildData().Set(gd.ID, gd); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		message := discord.NewMessageCreateBuilder()
+		message.SetContentf("%sの語尾を解除しました", target.Mention())
+		if err := event.CreateMessage(message.Build()); err != nil {
+			return err
+		}
+		return nil
 	}
 }
 
@@ -215,7 +341,7 @@ func messageModalPinCreate(b *botlib.Bot[*client.Client]) handler.ModalHandler {
 	}
 }
 
-func MessagePinMessageCreate(b *botlib.Bot[*client.Client]) handler.Message {
+func MessagePinMessageCreateHandler(b *botlib.Bot[*client.Client]) handler.Message {
 	return handler.Message{
 		Handler: func(event *events.GuildMessageCreate) error {
 			if !b.Self.MessagePinSync.TryLock() {
@@ -245,6 +371,86 @@ func MessagePinMessageCreate(b *botlib.Bot[*client.Client]) handler.Message {
 			b.Self.MessagePin[event.GuildID] = m
 			if err := b.Self.DB.MessagePin().Set(event.GuildID, m); err != nil {
 				return err
+			}
+			return nil
+		},
+	}
+}
+
+func MessageSuffixMessageCreateHandler(b *botlib.Bot[*client.Client]) handler.Message {
+	return handler.Message{
+		Handler: func(event *events.GuildMessageCreate) error {
+			if event.Message.Author.Bot || event.Message.Author.System || event.Message.Type.System() || !event.Message.Type.Deleteable() {
+				return nil
+			}
+			if event.Message.Type != discord.MessageTypeDefault && event.Message.Type != discord.MessageTypeReply {
+				return nil
+			}
+			b.Self.GuildDataLock(event.GuildID).Lock()
+			defer b.Self.GuildDataLock(event.GuildID).Unlock()
+			gd, err := b.Self.DB.GuildData().Get(event.GuildID)
+			if err != nil {
+				return err
+			}
+			suffix, ok := gd.MessageSuffix[event.Message.Author.ID]
+			if !ok {
+				return nil
+			}
+			has_suffix := strings.HasSuffix(event.Message.Content, suffix.Suffix)
+			switch suffix.RuleType {
+			case db.MessageSuffixRuleTypeWarning:
+				if has_suffix {
+					break
+				}
+				message := discord.NewMessageCreateBuilder()
+				message.SetContent(fmt.Sprintf("語尾がついてないよ！\r「%s」を忘れないで(笑)", suffix.Suffix))
+				message.SetAllowedMentions(&discord.AllowedMentions{
+					RepliedUser: true,
+				})
+				message.SetMessageReferenceByID(event.MessageID)
+				if _, err := event.Client().Rest().CreateMessage(event.ChannelID, message.Build()); err != nil {
+					return err
+				}
+			case db.MessageSuffixRuleTypeDelete:
+				if has_suffix {
+					break
+				}
+				if err := event.Client().Rest().DeleteMessage(event.ChannelID, event.MessageID); err != nil {
+					return err
+				}
+			case db.MessageSuffixRuleTypeWebhook:
+				if !has_suffix {
+					event.Message.Content += suffix.Suffix
+				}
+				if err := event.Client().Rest().DeleteMessage(event.ChannelID, event.MessageID); err != nil {
+					return err
+				}
+				message := discord.NewWebhookMessageCreateBuilder()
+				message.Content = event.Message.Content
+				message.SetAvatarURL(event.Message.Member.EffectiveAvatarURL())
+				message.SetUsername(event.Message.Author.EffectiveName())
+				mention_users := make([]snowflake.ID, len(event.Message.Mentions))
+				for i, u := range event.Message.Mentions {
+					mention_users[i] = u.ID
+				}
+				replied_user := false
+				if event.Message.MessageReference != nil && event.Message.MessageReference.ChannelID != nil && event.Message.MessageReference.MessageID != nil {
+					reply_message, err := event.Client().Rest().GetMessage(*event.Message.MessageReference.ChannelID, *event.Message.MessageReference.MessageID)
+					if err == nil {
+						replied_user = slices.Index(mention_users, reply_message.Author.ID) != -1
+					}
+				}
+				message.SetAllowedMentions(&discord.AllowedMentions{
+					Users:       mention_users,
+					Roles:       event.Message.MentionRoles,
+					RepliedUser: replied_user,
+				})
+
+				// うーーん むりぽ¯\_(ツ)_/¯
+
+				if _, err := botlib.SendWebhook(event.Client(), event.ChannelID, message.Build()); err != nil {
+					return err
+				}
 			}
 			return nil
 		},

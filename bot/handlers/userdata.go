@@ -7,6 +7,7 @@ import (
 	"github.com/sabafly/disgo/discord"
 	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
+	"github.com/sabafly/gobot/bot/db"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
 )
@@ -47,7 +48,10 @@ func userDataMessageHandler(b *botlib.Bot[*client.Client]) func(event *events.Gu
 			}
 			_, ok := gd.UserLevelExcludeChannels[event.ChannelID]
 			if !gd.UserLevels[event.Message.Author.ID].LastMessageTime.Add(time.Minute*3).After(time.Now()) && !ok {
-				ul := gd.UserLevels[event.Message.Author.ID]
+				ul, ok := gd.UserLevels[event.Message.Author.ID]
+				if !ok {
+					ul = db.NewGuildDataUserLevel()
+				}
 				before := ul.Level()
 				ul.AddRandom()
 				after := ul.Level()

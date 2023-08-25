@@ -23,6 +23,7 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
+	"time"
 
 	"github.com/disgoorg/dislog"
 	"github.com/disgoorg/snowflake/v2"
@@ -33,6 +34,7 @@ import (
 	"github.com/sabafly/gobot/bot/commands"
 	"github.com/sabafly/gobot/bot/db"
 	"github.com/sabafly/gobot/bot/handlers"
+	"github.com/sabafly/gobot/bot/worker"
 	"github.com/sirupsen/logrus"
 
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
@@ -42,7 +44,7 @@ import (
 )
 
 var (
-	version = "v0.12.0rc1"
+	version = "v0.12.2"
 )
 
 func init() {
@@ -50,13 +52,13 @@ func init() {
 	botlib.Color = 0x89d53c
 }
 
-func Run(file_path, lang_path, gobot_path string) {
+func Run(file_path, lang_path, gobot_path string) error {
 	if _, err := translate.LoadTranslations(lang_path); err != nil {
-		panic(err)
+		return err
 	}
 	cfg, err := botlib.LoadConfig(file_path)
 	if err != nil {
-		panic("failed to load config: " + err.Error())
+		return err
 	}
 
 	logger := logrus.New()
@@ -71,15 +73,18 @@ func Run(file_path, lang_path, gobot_path string) {
 	logger.SetOutput(colorable.NewColorableStdout())
 	lvl, err := logrus.ParseLevel(cfg.LogLevel)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	logger.SetLevel(lvl)
+	if err := os.MkdirAll("./logs", 0755); err != nil {
+		return err
+	}
 	l, err := logging.New(logging.Config{
 		LogPath:   "./logs",
 		LogLevels: logrus.AllLevels,
 	})
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer l.Close()
 	logger.AddHook(l)
@@ -99,16 +104,16 @@ func Run(file_path, lang_path, gobot_path string) {
 
 	gobot_cfg, err := client.LoadConfig(gobot_path)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	d, err := db.SetupDatabase(gobot_cfg.DBConfig)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer d.Close()
 	cl, err := client.New(gobot_cfg, d)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer cl.Close()
 
@@ -125,7 +130,6 @@ func Run(file_path, lang_path, gobot_path string) {
 		commands.Ping(b),
 		commands.Poll(b),
 		commands.Role(b),
-		commands.RolePanel(b),
 		commands.Util(b),
 		commands.Admin(b),
 		commands.About(b),
@@ -134,38 +138,54 @@ func Run(file_path, lang_path, gobot_path string) {
 		commands.Permission(b),
 		commands.Config(b),
 		commands.Minecraft(b),
+		commands.User(b),
+
+		commands.UserInfo(b),
+
+		commands.MessageOther(b),
 	)
 
 	b.Handler.AddComponents(
 		commands.PollComponent(b),
-		commands.RolePanelComponent(b),
 		commands.UtilCalcComponent(b),
 		commands.MessageComponent(b),
 		commands.MinecraftComponent(b),
+		commands.RolePanelV2Component(b),
 
 		handlers.EmbedDialogComponent(b),
 	)
 
 	b.Handler.AddModals(
 		commands.PollModal(b),
-		commands.RolePanelModal(b),
 		commands.MessageModal(b),
 		commands.LevelModal(b),
 		commands.ConfigModal(b),
+		commands.RolePanelV2Modal(b),
 
 		handlers.EmbedDialogModal(b),
 	)
 
 	b.Handler.AddMessages(
-		commands.MessagePinMessageCreate(b),
+		commands.MessagePinMessageCreateHandler(b),
+		commands.MessageSuffixMessageCreateHandler(b),
+		commands.RolePanelV2Message(b),
 
 		handlers.LogMessage(b),
 		handlers.UserDataMessage(b),
 		handlers.BumpUpMessage(b),
+		handlers.MentionMessage(b),
 	)
 
 	b.Handler.AddMessageUpdates(
 		handlers.BumpUpdateMessage(b),
+	)
+
+	b.Handler.AddMessageDelete(
+		commands.RolePanelV2MessageDelete(b),
+	)
+
+	b.Handler.MessageReactionAdd.Adds(
+		commands.RolePanelV2MessageReaction(b),
 	)
 
 	b.Handler.AddReady(func(r *events.Ready) {
@@ -220,6 +240,40 @@ func Run(file_path, lang_path, gobot_path string) {
 		b.Handler.SyncCommands(b.Client, guilds...)
 	}
 
+	w := worker.New()
+	w.Add(
+		func(b *botlib.Bot[*client.Client]) error {
+			ns, err := b.Self.DB.NoticeSchedule().GetAll()
+			if err != nil {
+				return err
+			}
+			for _, s := range ns {
+				switch s.Type() {
+				case db.NoticeScheduleTypeBump:
+					s, ok := s.(db.NoticeScheduleBump)
+					if !ok {
+						b.Logger.Warn("failed to convert")
+						break
+					}
+					if !time.Now().After(s.ScheduledTime.Add(-time.Minute * 15)) {
+						continue
+					}
+					if err := handlers.ScheduleBump(b, s); err != nil {
+						b.Logger.Errorf("error on worker notice schedule: %s", err)
+						continue
+					}
+					if err := b.Self.DB.NoticeSchedule().Del(s.ID()); err != nil {
+						b.Logger.Errorf("error on worker notice schedule delete: %s", err)
+						continue
+					}
+				}
+			}
+			return nil
+		},
+		5,
+	)
+	w.Start(b)
+
 	if err := b.Client.OpenShardManager(context.TODO()); err != nil {
 		b.Logger.Fatalf("failed to open shard manager: %s", err)
 	}
@@ -231,4 +285,5 @@ func Run(file_path, lang_path, gobot_path string) {
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-s
 	b.Logger.Info("Shutting down...")
+	return nil
 }

@@ -36,7 +36,7 @@ var botCmd = &cobra.Command{
 	ValidArgs: []string{
 		"config",
 	},
-	Run: func(cmd *cobra.Command, args []string) {
-		bot.Run(cmd.Flag("config").Value.String(), cmd.Flag("lang").Value.String(), cmd.Flag("gobot-config").Value.String())
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return bot.Run(cmd.Flag("config").Value.String(), cmd.Flag("lang").Value.String(), cmd.Flag("gobot-config").Value.String())
 	},
 }
