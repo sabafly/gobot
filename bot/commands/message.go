@@ -164,10 +164,10 @@ func messagePinCreateCommandHandler(b *botlib.Bot[*client.Client]) handler.Comma
 
 func messagePinDeleteCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		if !b.Self.MessagePinSync.TryLock() {
+		if !b.Self.DB.MessagePin().Mu().TryLock() {
 			return botlib.ReturnErrMessage(event, "error_busy", botlib.WithEphemeral(true))
 		}
-		defer b.Self.MessagePinSync.Unlock()
+		defer b.Self.DB.MessagePin().Mu().Unlock()
 		m, ok := b.Self.MessagePin[*event.GuildID()]
 		if !ok {
 			return botlib.ReturnErrMessage(event, "error_not_found", botlib.WithEphemeral(true))
@@ -344,10 +344,10 @@ func messageModalPinCreate(b *botlib.Bot[*client.Client]) handler.ModalHandler {
 func MessagePinMessageCreateHandler(b *botlib.Bot[*client.Client]) handler.Message {
 	return handler.Message{
 		Handler: func(event *events.GuildMessageCreate) error {
-			if !b.Self.MessagePinSync.TryLock() {
+			if !b.Self.DB.MessagePin().Mu().TryLock() {
 				return nil
 			}
-			defer b.Self.MessagePinSync.Unlock()
+			defer b.Self.DB.MessagePin().Mu().Unlock()
 			m, ok := b.Self.MessagePin[event.GuildID]
 			if !ok || !m.Enabled {
 				return nil

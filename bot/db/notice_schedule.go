@@ -134,18 +134,22 @@ type NoticeScheduleType int
 
 const (
 	NoticeScheduleTypeBump = iota + 1
+	NoticeScheduleTypeTicketTask
 )
 
 func (t NoticeScheduleType) String() string {
 	switch t {
 	case NoticeScheduleTypeBump:
 		return "bump"
+	case NoticeScheduleTypeTicketTask:
+		return "ticket_task"
+	default:
+		return "unknown"
 	}
-	return "unknown"
 }
 
-func NewNoticeScheduleBump(is_up bool, guildID, channelID snowflake.ID, schedule_time time.Time) NoticeSchedule {
-	return NoticeScheduleBump{
+func NewNoticeScheduleBump(is_up bool, guildID, channelID snowflake.ID, schedule_time time.Time) *NoticeScheduleBump {
+	return &NoticeScheduleBump{
 		id:            uuid.New(),
 		IsUp:          is_up,
 		GuildID:       guildID,
@@ -162,13 +166,8 @@ type NoticeScheduleBump struct {
 	ScheduledTime time.Time    `json:"scheduled_time"`
 }
 
-func (n NoticeScheduleBump) Type() NoticeScheduleType {
-	return NoticeScheduleTypeBump
-}
-
-func (n NoticeScheduleBump) ID() uuid.UUID {
-	return n.id
-}
+func (n NoticeScheduleBump) Type() NoticeScheduleType { return NoticeScheduleTypeBump }
+func (n NoticeScheduleBump) ID() uuid.UUID            { return n.id }
 
 func (n *NoticeScheduleBump) UnmarshalJSON(data []byte) error {
 	type noticeScheduleBump NoticeScheduleBump
@@ -194,6 +193,54 @@ func (n NoticeScheduleBump) MarshalJSON() ([]byte, error) {
 		Type:               n.Type(),
 		ID:                 n.id,
 		noticeScheduleBump: noticeScheduleBump(n),
+	},
+	)
+}
+
+func NewNoticeScheduleTicketTask(guildID snowflake.ID, ticketID uuid.UUID, scheduledTime time.Time) *NoticeScheduleTicketTask {
+	return &NoticeScheduleTicketTask{
+		id:            uuid.New(),
+		GuildID:       guildID,
+		TicketID:      ticketID,
+		ScheduledTime: scheduledTime,
+	}
+}
+
+type NoticeScheduleTicketTask struct {
+	id            uuid.UUID
+	TicketID      uuid.UUID    `json:"ticket_id"`
+	GuildID       snowflake.ID `json:"guild_id"`
+	ScheduledTime time.Time    `json:"scheduled_time"`
+	IsDeadline    bool         `json:"is_dead_line"`
+}
+
+func (n NoticeScheduleTicketTask) Type() NoticeScheduleType { return NoticeScheduleTypeTicketTask }
+func (n NoticeScheduleTicketTask) ID() uuid.UUID            { return n.id }
+
+func (n *NoticeScheduleTicketTask) UnmarshalJSON(data []byte) error {
+	type noticeScheduleTicketTask NoticeScheduleTicketTask
+	var v struct {
+		ID uuid.UUID
+		noticeScheduleTicketTask
+	}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	*n = NoticeScheduleTicketTask(v.noticeScheduleTicketTask)
+	n.id = v.ID
+	return nil
+}
+
+func (n NoticeScheduleTicketTask) MarshalJSON() ([]byte, error) {
+	type noticeScheduleTicketTask NoticeScheduleTicketTask
+	return json.Marshal(struct {
+		Type NoticeScheduleType `json:"type"`
+		ID   uuid.UUID          `json:"id"`
+		noticeScheduleTicketTask
+	}{
+		Type:                     n.Type(),
+		ID:                       n.id,
+		noticeScheduleTicketTask: noticeScheduleTicketTask(n),
 	},
 	)
 }

@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/disgoorg/json"
@@ -15,12 +16,15 @@ type GuildDataDB interface {
 	Get(id snowflake.ID) (GuildData, error)
 	Set(id snowflake.ID, data GuildData) error
 	Del(id snowflake.ID) error
+	Mu(id snowflake.ID) *sync.Mutex
 }
 
 var _ GuildDataDB = (*guildDataDBImpl)(nil)
 
 type guildDataDBImpl struct {
-	db *redis.Client
+	db             *redis.Client
+	guildDataLock  sync.Mutex
+	guildDataLocks map[snowflake.ID]*sync.Mutex
 }
 
 func (g *guildDataDBImpl) Get(id snowflake.ID) (GuildData, error) {
@@ -58,6 +62,15 @@ func (g *guildDataDBImpl) Del(id snowflake.ID) error {
 		return err
 	}
 	return nil
+}
+
+func (g *guildDataDBImpl) Mu(gid snowflake.ID) *sync.Mutex {
+	g.guildDataLock.Lock()
+	defer g.guildDataLock.Unlock()
+	if g.guildDataLocks[gid] == nil {
+		g.guildDataLocks[gid] = new(sync.Mutex)
+	}
+	return g.guildDataLocks[gid]
 }
 
 func NewGuildData(id snowflake.ID) GuildData {

@@ -33,8 +33,6 @@ func New(cfg *Config, db db.DB) (*Client, error) {
 			DebugChannel: map[snowflake.ID]*DebugLog{},
 			DebugGuild:   map[snowflake.ID]*DebugLog{},
 		},
-		userDataLocks:  make(map[snowflake.ID]*sync.Mutex),
-		guildDataLocks: make(map[snowflake.ID]*sync.Mutex),
 	}, nil
 }
 
@@ -69,33 +67,18 @@ func (c *Client) Close() (err error) {
 }
 
 type Client struct {
-	Config         *Config
-	DB             db.DB
-	MessagePin     map[snowflake.ID]*db.GuildMessagePins
-	MessagePinSync sync.Mutex
-	Logger         *Logger
-	userDataLock   sync.Mutex
-	userDataLocks  map[snowflake.ID]*sync.Mutex
-	guildDataLock  sync.Mutex
-	guildDataLocks map[snowflake.ID]*sync.Mutex
+	Config     *Config
+	DB         db.DB
+	MessagePin map[snowflake.ID]*db.GuildMessagePins
+	Logger     *Logger
 }
 
 func (c *Client) GuildDataLock(gid snowflake.ID) *sync.Mutex {
-	c.guildDataLock.Lock()
-	defer c.guildDataLock.Unlock()
-	if c.guildDataLocks[gid] == nil {
-		c.guildDataLocks[gid] = new(sync.Mutex)
-	}
-	return c.guildDataLocks[gid]
+	return c.DB.GuildData().Mu(gid)
 }
 
 func (c *Client) UserDataLock(uid snowflake.ID) *sync.Mutex {
-	c.userDataLock.Lock()
-	defer c.userDataLock.Unlock()
-	if c.userDataLocks[uid] == nil {
-		c.userDataLocks[uid] = new(sync.Mutex)
-	}
-	return c.userDataLocks[uid]
+	return c.DB.UserData().Mu(uid)
 }
 
 func (c *Client) CheckAutoCompletePermission(b *botlib.Bot[*Client], perm string, alt_perm discord.Permissions) handler.Check[*events.AutocompleteInteractionCreate] {

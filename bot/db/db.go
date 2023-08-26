@@ -3,8 +3,10 @@ package db
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
 )
 
@@ -52,11 +54,11 @@ func SetupDatabase(cfg DBConfig) (DB, error) {
 		poll:                 &pollDBImpl{db: db},
 		rolePanelCreate:      &rolePanelCreateDBImpl{db: db},
 		rolePanel:            &rolePanelDBImpl{db: db},
-		guildData:            &guildDataDBImpl{db: db},
+		guildData:            &guildDataDBImpl{db: db, guildDataLocks: make(map[snowflake.ID]*sync.Mutex)},
 		calc:                 &CalcDBImpl{db: db},
 		messagePin:           &messagePinDBImpl{db: db},
 		embedDialog:          &embedDialogDBImpl{db: db},
-		userData:             &userDataDBImpl{db: db},
+		userData:             &userDataDBImpl{db: db, userDataLocks: make(map[snowflake.ID]*sync.Mutex)},
 		minecraftServer:      &minecraftServerDBImpl{db: db},
 		minecraftStatusPanel: &minecraftStatusPanelDBImpl{db: db},
 		noticeSchedule:       &noticeScheduleDBImpl{db: db},

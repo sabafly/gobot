@@ -2,7 +2,6 @@ package db
 
 import (
 	"encoding/json"
-	"time"
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
@@ -14,8 +13,9 @@ type Ticket struct {
 	guildID  snowflake.ID
 	isClosed bool
 	author   discord.User
-	Subject  string  `json:"subject"`
-	Content  *string `json:"content,omitempty"`
+	Subject  string                       `json:"subject"`
+	Content  *string                      `json:"content,omitempty"`
+	Routine  *TicketPanelTaskAddonRoutine `json:"routine,omitempty"`
 }
 
 func (t Ticket) MarshalJSON() ([]byte, error) {
@@ -58,25 +58,3 @@ func (t Ticket) ID() uuid.UUID         { return t.id }
 func (t Ticket) GuildID() snowflake.ID { return t.guildID }
 func (t Ticket) IsClosed() bool        { return t.isClosed }
 func (t Ticket) Author() discord.User  { return t.author }
-
-type TicketAddon interface {
-	Type() TicketAddonType
-}
-
-type TicketAddonType int
-
-const (
-	TicketAddonTypeTask = iota + 1
-	TicketAddonTypeDiscussion
-	TicketAddonTypeParliament
-)
-
-type TaskTicketAddon struct {
-	Deadline time.Time `json:"deadline"`
-	Routine  struct {
-		Weekday  time.Weekday `json:"weekday"`
-		Interval int          `json:"interval"`
-	}
-}
-
-func (t TaskTicketAddon) Type() TicketAddonType { return TicketAddonTypeTask }

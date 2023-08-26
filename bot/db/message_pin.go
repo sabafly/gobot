@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"encoding/json"
+	"sync"
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
@@ -16,12 +17,14 @@ type MessagePinDB interface {
 	GetAll() (map[snowflake.ID]*GuildMessagePins, error)
 	Set(id snowflake.ID, data *GuildMessagePins) error
 	Del(id snowflake.ID) error
+	Mu() *sync.Mutex
 }
 
 var _ MessagePinDB = (*messagePinDBImpl)(nil)
 
 type messagePinDBImpl struct {
 	db *redis.Client
+	mu sync.Mutex
 }
 
 func (m *messagePinDBImpl) Get(id snowflake.ID) (*GuildMessagePins, error) {
@@ -75,6 +78,8 @@ func (m *messagePinDBImpl) Del(id snowflake.ID) error {
 	}
 	return nil
 }
+
+func (m *messagePinDBImpl) Mu() *sync.Mutex { return &m.mu }
 
 type GuildMessagePins struct {
 	Enabled bool                        `json:"enabled"`
