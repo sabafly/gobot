@@ -68,6 +68,8 @@ github.com/rivo/uniseg v0.4.4/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUc
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/sabafly/disgo v0.5.0 h1:pwUJb991m+7B8fxVpfujpThZSgzeaipu/wBElQK7dmo=
 github.com/sabafly/disgo v0.5.0/go.mod h1:qhKFp2bKcueqnGIOQkXmHBVjSQ1taA1wdwba3+mlJEI=
+github.com/sabafly/disgo v0.5.1 h1:iEg6Ls+9tUN4Gxng4D5yhoT06zhEglwNK7srm+MzMpc=
+github.com/sabafly/disgo v0.5.1/go.mod h1:OKfMQGMJaKga1kvZBxNPM4pZWmlwMGZlSNEF5+HEhH4=
 github.com/sabafly/sabafly-lib/v2 v2.6.4 h1:CkQpglvWzu8j6VYUb8fUGI9bIiAyGHVI5+W6gWQf7N0=
 github.com/sabafly/sabafly-lib/v2 v2.6.4/go.mod h1:6LwbMUGyrdlfa7q6Zg01zAekcjW0oI5B9hTFOV+DsLI=
 github.com/sabafly/sabafly-lib/v2 v2.6.5 h1:n1YQglyPJrGlHFMh6tll3eyvfrYuBayEYETlnvFl8fs=

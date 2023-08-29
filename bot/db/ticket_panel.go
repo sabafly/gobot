@@ -35,7 +35,7 @@ type TicketPanelAddonHandler interface {
 	TicketPanel() TicketPanel
 	Ticket() *Ticket
 	Next(TicketPanelAddonHandler)
-	DB() DB
+	DB() *DB
 }
 
 type TicketPanelAddon interface {
@@ -85,7 +85,7 @@ func (t TicketPanelTaskAddon) Handle(ctx TicketPanelAddonHandler) error {
 		return err
 	}
 	if t.Routine != nil {
-		ctx.Ticket().Routine = t.Routine
+		ctx.Ticket().routine = t.Routine
 	}
 	return nil
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
 )
 
 type DBConfig struct {
@@ -16,27 +17,7 @@ type DBConfig struct {
 	DB   int    `json:"db"`
 }
 
-type DB interface {
-	Close() error
-	PollCreate() PollCreateDB
-	Poll() PollDB
-	RolePanelCreate() RolePanelCreateDB
-	RolePanel() RolePanelDB
-	GuildData() GuildDataDB
-	Calc() CalcDB
-	MessagePin() MessagePinDB
-	EmbedDialog() EmbedDialogDB
-	UserData() UserDataDB
-	MinecraftServer() MinecraftServerDB
-	MinecraftStatusPanel() MinecraftStatusPanelDB
-	NoticeSchedule() NoticeScheduleDB
-	RolePanelV2() RolePanelV2DB
-	RolePanelV2Edit() RolePanelV2EditDB
-	RolePanelV2Place() RolePanelV2PlaceDB
-	Interactions() InteractionsDB
-}
-
-func SetupDatabase(cfg DBConfig) (DB, error) {
+func SetupDatabase(cfg DBConfig) (*DB, error) {
 	db := redis.NewClient(&redis.Options{
 		Network: "tcp",
 		Addr:    fmt.Sprintf("%s:%s", cfg.Host, cfg.Port),
@@ -48,7 +29,7 @@ func SetupDatabase(cfg DBConfig) (DB, error) {
 	if err := res.Err(); err != nil {
 		return nil, err
 	}
-	return &dbImpl{
+	return &DB{
 		db:                   db,
 		pollCreate:           &pollCreateDBImpl{db: db},
 		poll:                 &pollDBImpl{db: db},
@@ -65,13 +46,12 @@ func SetupDatabase(cfg DBConfig) (DB, error) {
 		rolePanelV2:          &rolePanelV2DBImpl{db: db},
 		rolePanelV2Edit:      &rolePanelV2EditDBImpl{db: db},
 		rolePanelV2Place:     &rolePanelV2PlaceDBImpl{db: db},
+		ticketDB:             newAnyDB[Ticket, uuid.UUID](db),
 		interactions:         &interactionsImpl{db: db},
 	}, nil
 }
 
-var _ DB = (*dbImpl)(nil)
-
-type dbImpl struct {
+type DB struct {
 	db                   *redis.Client
 	pollCreate           *pollCreateDBImpl
 	poll                 *pollDBImpl
@@ -88,73 +68,78 @@ type dbImpl struct {
 	rolePanelV2          *rolePanelV2DBImpl
 	rolePanelV2Edit      *rolePanelV2EditDBImpl
 	rolePanelV2Place     *rolePanelV2PlaceDBImpl
+	ticketDB             *anyDB[Ticket, uuid.UUID]
 	interactions         *interactionsImpl
 }
 
-func (d *dbImpl) PollCreate() PollCreateDB {
+func (d *DB) PollCreate() PollCreateDB {
 	return d.pollCreate
 }
 
-func (d *dbImpl) Poll() PollDB {
+func (d *DB) Poll() PollDB {
 	return d.poll
 }
 
-func (d *dbImpl) RolePanelCreate() RolePanelCreateDB {
+func (d *DB) RolePanelCreate() RolePanelCreateDB {
 	return d.rolePanelCreate
 }
 
-func (d *dbImpl) RolePanel() RolePanelDB {
+func (d *DB) RolePanel() RolePanelDB {
 	return d.rolePanel
 }
 
-func (d *dbImpl) GuildData() GuildDataDB {
+func (d *DB) GuildData() GuildDataDB {
 	return d.guildData
 }
 
-func (d *dbImpl) Calc() CalcDB {
+func (d *DB) Calc() CalcDB {
 	return d.calc
 }
 
-func (d *dbImpl) MessagePin() MessagePinDB {
+func (d *DB) MessagePin() MessagePinDB {
 	return d.messagePin
 }
 
-func (d *dbImpl) EmbedDialog() EmbedDialogDB {
+func (d *DB) EmbedDialog() EmbedDialogDB {
 	return d.embedDialog
 }
 
-func (d *dbImpl) UserData() UserDataDB {
+func (d *DB) UserData() UserDataDB {
 	return d.userData
 }
 
-func (d *dbImpl) MinecraftServer() MinecraftServerDB {
+func (d *DB) MinecraftServer() MinecraftServerDB {
 	return d.minecraftServer
 }
 
-func (d *dbImpl) MinecraftStatusPanel() MinecraftStatusPanelDB {
+func (d *DB) MinecraftStatusPanel() MinecraftStatusPanelDB {
 	return d.minecraftStatusPanel
 }
 
-func (d *dbImpl) NoticeSchedule() NoticeScheduleDB {
+func (d *DB) NoticeSchedule() NoticeScheduleDB {
 	return d.noticeSchedule
 }
 
-func (d *dbImpl) RolePanelV2() RolePanelV2DB {
+func (d *DB) RolePanelV2() RolePanelV2DB {
 	return d.rolePanelV2
 }
 
-func (d *dbImpl) RolePanelV2Edit() RolePanelV2EditDB {
+func (d *DB) RolePanelV2Edit() RolePanelV2EditDB {
 	return d.rolePanelV2Edit
 }
 
-func (d *dbImpl) RolePanelV2Place() RolePanelV2PlaceDB {
+func (d *DB) RolePanelV2Place() RolePanelV2PlaceDB {
 	return d.rolePanelV2Place
 }
 
-func (d *dbImpl) Interactions() InteractionsDB {
+func (d *DB) Ticket() AnyDB[Ticket, uuid.UUID] {
+	return d.ticketDB
+}
+
+func (d *DB) Interactions() InteractionsDB {
 	return d.interactions
 }
 
-func (d *dbImpl) Close() error {
+func (d *DB) Close() error {
 	return d.db.Close()
 }

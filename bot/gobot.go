@@ -139,6 +139,7 @@ func Run(file_path, lang_path, gobot_path string) error {
 		commands.Config(b),
 		commands.Minecraft(b),
 		commands.User(b),
+		commands.Ticket(b),
 
 		commands.UserInfo(b),
 
@@ -161,6 +162,7 @@ func Run(file_path, lang_path, gobot_path string) error {
 		commands.LevelModal(b),
 		commands.ConfigModal(b),
 		commands.RolePanelV2Modal(b),
+		commands.TicketModal(b),
 
 		handlers.EmbedDialogModal(b),
 	)

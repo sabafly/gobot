@@ -14,7 +14,7 @@ import (
 	"github.com/sabafly/sabafly-lib/v2/logging"
 )
 
-func New(cfg *Config, db db.DB) (*Client, error) {
+func New(cfg *Config, db *db.DB) (*Client, error) {
 	if err := os.MkdirAll("./logs/messages", 0755); err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func (c *Client) Close() (err error) {
 
 type Client struct {
 	Config     *Config
-	DB         db.DB
+	DB         *db.DB
 	MessagePin map[snowflake.ID]*db.GuildMessagePins
 	Logger     *Logger
 }

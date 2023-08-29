@@ -376,3 +376,6 @@ message_mention_help: |-
   こんにちは！
   このボットはテキストメッセージではなくスラッシュコマンドで操作します。
   詳しくは [ドキュメント](https://gobot.sabafly.net) を参照してください。
+ticket_new_modal_title: "チケットを作成する"
+ticket_new_modal_label_0: "件名"
+ticket_new_modal_label_1: "内容"
