@@ -58,18 +58,13 @@ func messageOtherHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 }
 
 func rolePanelConvertCheck(b *botlib.Bot[*client.Client], message discord.Message) bool {
-	wh, err := b.Client.Rest().GetWebhooks(message.ChannelID)
-	if err != nil {
-		b.Logger.Error(err)
-	}
 	var wid snowflake.ID
-	for _, w := range wh {
-		if w.Type() != discord.WebhookTypeApplication {
-			continue
-		}
-		if w.(discord.ApplicationWebhook).ApplicationID == 716496407212589087 && w.ID() == message.Author.ID {
+	if message.WebhookID != nil {
+		wh, err := b.Client.Rest().GetWebhook(*message.WebhookID)
+		if err != nil {
+			b.Logger.Error(err)
+		} else if wh.Type() == discord.WebhookTypeIncoming && wh.(discord.IncomingWebhook).User.ID == 716496407212589087 {
 			wid = message.Author.ID
-			break
 		}
 	}
 	switch message.Author.ID {
