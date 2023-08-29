@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/disgo/discord"
 	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
@@ -31,7 +32,7 @@ func messageOtherHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 		result_message := discord.NewMessageCreateBuilder()
 		message := event.MessageCommandInteractionData().TargetMessage()
 		switch {
-		case rolePanelConvertCheck(message):
+		case rolePanelConvertCheck(b, message):
 			result_message.AddContainerComponents(
 				discord.NewActionRow(
 					discord.ButtonComponent{
@@ -56,9 +57,23 @@ func messageOtherHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	}
 }
 
-func rolePanelConvertCheck(message discord.Message) bool {
+func rolePanelConvertCheck(b *botlib.Bot[*client.Client], message discord.Message) bool {
+	wh, err := b.Client.Rest().GetWebhooks(message.ChannelID)
+	if err != nil {
+		b.Logger.Error(err)
+	}
+	var wid snowflake.ID
+	for _, w := range wh {
+		if w.Type() != discord.WebhookTypeApplication {
+			continue
+		}
+		if w.(discord.ApplicationWebhook).ApplicationID == 716496407212589087 && w.ID() == message.Author.ID {
+			wid = message.Author.ID
+			break
+		}
+	}
 	switch message.Author.ID {
-	case 895912135039803402, 1138119538190340146, 1137367652482957313, 971523089550671953 /*役職パネルv3*/, 917780792032251904 /*役職ボット*/, 669817785932578826 /*陽菜*/, 716496407212589087 /*RT*/, 718760319207473152 /*SevenBot*/, 832614051514417202 /*Glow-bot*/ :
+	case 895912135039803402, 1138119538190340146, 1137367652482957313, 971523089550671953 /*役職パネルv3*/, 917780792032251904 /*役職ボット*/, 669817785932578826 /*陽菜*/, 716496407212589087, wid /*RT*/, 718760319207473152 /*SevenBot*/, 832614051514417202 /*Glow-bot*/ :
 		if len(message.Embeds) < 1 {
 			return false
 		}
