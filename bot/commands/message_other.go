@@ -9,7 +9,6 @@ import (
 	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
-	"github.com/sabafly/sabafly-lib/v2/emoji"
 	"github.com/sabafly/sabafly-lib/v2/handler"
 	"github.com/sabafly/sabafly-lib/v2/translate"
 )
@@ -59,22 +58,14 @@ func messageOtherHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 
 func rolePanelConvertCheck(message discord.Message) bool {
 	switch message.Author.ID {
-	case 895912135039803402, 1138119538190340146, 1137367652482957313, 971523089550671953:
+	case 895912135039803402, 1138119538190340146, 1137367652482957313, 971523089550671953 /*役職パネルv3*/, 917780792032251904 /*役職ボット*/, 669817785932578826 /*陽菜*/, 716496407212589087 /*RT*/, 718760319207473152 /*SevenBot*/, 832614051514417202 /*Glow-bot*/ :
 		if len(message.Embeds) < 1 {
 			return false
 		}
 		lines := strings.Split(message.Embeds[0].Description, "\r")
 		valid_lines := 0
 		for _, v := range lines {
-			if !emoji.MatchString(v) {
-				continue
-			}
-			emojis := emoji.FindAllString(v)
-			role_strings, ok := strings.CutPrefix(v, emojis[0])
-			if !ok {
-				continue
-			}
-			if !role_regexp.MatchString(role_strings) {
+			if !role_regexp.MatchString(v) {
 				continue
 			}
 			valid_lines++
