@@ -356,16 +356,18 @@ func MessagePinMessageCreateHandler(b *botlib.Bot[*client.Client]) handler.Messa
 			if !ok {
 				return nil
 			}
-			id, _, err := botlib.GetWebhook(event.Client(), event.ChannelID)
-			if err != nil {
-				b.Logger.Error(err)
-				return err
-			}
-			if event.Message.WebhookID != nil && id == *event.Message.WebhookID {
-				return nil
-			}
-			if err := mp.Update(event.Client()); err != nil {
-				return err
+			if mp.CheckLimit() {
+				id, _, err := botlib.GetWebhook(event.Client(), event.ChannelID)
+				if err != nil {
+					b.Logger.Error(err)
+					return err
+				}
+				if event.Message.WebhookID != nil && id == *event.Message.WebhookID {
+					return nil
+				}
+				if err := mp.Update(event.Client()); err != nil {
+					return err
+				}
 			}
 			m.Pins[event.ChannelID] = mp
 			b.Self.MessagePin[event.GuildID] = m

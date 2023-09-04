@@ -134,24 +134,7 @@ func rolePanelV2PanelAutoCompleteHandler(b *botlib.Bot[*client.Client]) handler.
 func rolePanelV2Create(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		modal := discord.NewModalCreateBuilder()
-		role := event.SlashCommandInteractionData().Role("role")
-		self, valid := event.Client().Caches().SelfMember(*event.GuildID())
-		if !valid {
-			return botlib.ReturnErrMessage(event, "error_bot_member_not_found", botlib.WithEphemeral(true))
-		}
-		role_map := map[snowflake.ID]discord.Role{}
-		for _, id := range self.RoleIDs {
-			role, ok := event.Client().Caches().Role(*event.GuildID(), id)
-			if !ok {
-				continue
-			}
-			role_map[id] = role
-		}
-		hi, _ := botlib.GetHighestRolePosition(role_map)
-		if role.Managed || role.Position >= hi {
-			return botlib.ReturnErrMessage(event, "error_invalid_command_argument")
-		}
-		modal.SetCustomID(fmt.Sprintf("handler:rp-v2:create-modal:%s", role.ID.String()))
+		modal.SetCustomID("handler:rp-v2:create-modal")
 		modal.SetTitle(translate.Message(event.Locale(), "rp_v2_create_modal_title"))
 		modal.AddActionRow(discord.TextInputComponent{
 			CustomID:  "name",
@@ -1369,23 +1352,23 @@ func rolePanelV2ConvertComponentHandler(b *botlib.Bot[*client.Client]) handler.C
 		lines := strings.Split(message.Embeds[0].Description, "\n")
 		b.Logger.Debugf("lines %d", len(lines))
 		roles := []db.RolePanelV2Role{}
+		role_count := 0
 		for _, v := range lines {
-			if !emoji.MatchString(v) {
-				b.Logger.Debug("failed emoji match")
-				continue
-			}
-			emojis := emoji.FindAllString(v)
-			component_emoji := botlib.ParseComponentEmoji(emojis[0])
-			role_strings, ok := strings.CutPrefix(v, emojis[0])
-			if !ok {
-				b.Logger.Debug("failed cut prefix")
-				continue
-			}
-			if !role_regexp.MatchString(role_strings) {
+			if !role_regexp.MatchString(v) {
 				b.Logger.Debug("failed role regexp")
 				continue
 			}
-			role_id, err := snowflake.Parse(role_id_regexp.FindString(role_regexp.FindString(role_strings)))
+			var emojis []string
+			if !emoji.MatchString(v) {
+				emojis = append(emojis, botlib.Number2Emoji(role_count+1))
+			} else {
+				emojis = emoji.FindAllString(v)
+			}
+			component_emoji := botlib.ParseComponentEmoji(emojis[0])
+			if _, ok := event.Client().Caches().Emoji(*event.GuildID(), component_emoji.ID); !ok && component_emoji.ID != 0 {
+				component_emoji = botlib.ParseComponentEmoji(botlib.Number2Emoji(role_count + 1))
+			}
+			role_id, err := snowflake.Parse(role_id_regexp.FindString(role_regexp.FindString(v)))
 			if err != nil {
 				b.Logger.Debug("failed parse role id")
 				continue
@@ -1399,6 +1382,7 @@ func rolePanelV2ConvertComponentHandler(b *botlib.Bot[*client.Client]) handler.C
 				}
 				role = *role_ptr
 			}
+			role_count++
 			roles = append(roles, db.RolePanelV2Role{
 				RoleID:   role.ID,
 				RoleName: role.Name,

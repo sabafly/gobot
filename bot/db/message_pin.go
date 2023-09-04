@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"sync"
+	"time"
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
@@ -90,6 +91,13 @@ type MessagePin struct {
 	WebhookMessageCreate discord.WebhookMessageCreate `json:"webhook_message_create"`
 	ChannelID            snowflake.ID                 `json:"channel_id"`
 	LastMessageID        *snowflake.ID                `json:"last_message_id"`
+
+	limit []time.Time
+}
+
+func (m *MessagePin) CheckLimit() bool {
+	m.limit = append(m.limit[0:min(9, len(m.limit))], time.Now())
+	return (len(m.limit) < 3 || time.Since(m.limit[2]) >= time.Second*15) && (len(m.limit) < 10 || time.Since(m.limit[0]) >= time.Minute)
 }
 
 func (self *MessagePin) Update(client bot.Client) error {

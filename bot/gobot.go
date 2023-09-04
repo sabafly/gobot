@@ -49,7 +49,7 @@ var (
 
 func init() {
 	botlib.BotName = "gobot"
-	botlib.Color = 0x89d53c
+	botlib.Color = 0x00AED9
 }
 
 func Run(file_path, lang_path, gobot_path string) error {
@@ -206,14 +206,14 @@ func Run(file_path, lang_path, gobot_path string) error {
 
 	b.Handler.MemberJoin.Adds(handler.Generics[events.GuildMemberJoin]{
 		Handler: func(event *events.GuildMemberJoin) error {
-			b.OnGuildMemberJoin(event)
+			onGuildMemberJoin(event, b)
 			return nil
 		},
 	})
 
 	b.Handler.MemberLeave.Adds(handler.Generics[events.GuildMemberLeave]{
 		Handler: func(event *events.GuildMemberLeave) error {
-			b.OnGuildMemberLeave(event)
+			onGuildMemberLeave(event, b)
 			return nil
 		},
 	})
@@ -224,8 +224,8 @@ func Run(file_path, lang_path, gobot_path string) error {
 
 	b.SetupBot(bot.NewListenerFunc(b.Handler.OnEvent))
 	b.Client.EventManager().AddEventListeners(&events.ListenerAdapter{
-		OnGuildJoin:  b.OnGuildJoin,
-		OnGuildLeave: b.OnGuildLeave,
+		OnGuildJoin:  onGuildJoin(b),
+		OnGuildLeave: onGuildLeave(b),
 		OnGuildReady: func(event *events.GuildReady) {
 			b.Logger.Infof("guild ready: %s", event.GuildID)
 		},
