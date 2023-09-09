@@ -47,6 +47,7 @@ func SetupDatabase(cfg DBConfig) (*DB, error) {
 		rolePanelV2Edit:      &rolePanelV2EditDBImpl{db: db},
 		rolePanelV2Place:     &rolePanelV2PlaceDBImpl{db: db},
 		ticketDB:             newAnyDB[Ticket, uuid.UUID](db),
+		guildTicketData:      newAnyDB[GuildTicketData, snowflake.ID](db),
 		interactions:         &interactionsImpl{db: db},
 	}, nil
 }
@@ -69,6 +70,7 @@ type DB struct {
 	rolePanelV2Edit      *rolePanelV2EditDBImpl
 	rolePanelV2Place     *rolePanelV2PlaceDBImpl
 	ticketDB             *anyDB[Ticket, uuid.UUID]
+	guildTicketData      *anyDB[GuildTicketData, snowflake.ID]
 	interactions         *interactionsImpl
 }
 
@@ -134,6 +136,10 @@ func (d *DB) RolePanelV2Place() RolePanelV2PlaceDB {
 
 func (d *DB) Ticket() AnyDB[Ticket, uuid.UUID] {
 	return d.ticketDB
+}
+
+func (d *DB) GuildTicketData() AnyDB[GuildTicketData, snowflake.ID] {
+	return d.guildTicketData
 }
 
 func (d *DB) Interactions() InteractionsDB {

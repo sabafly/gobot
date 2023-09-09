@@ -27,7 +27,8 @@ type AnyDB[T Data[U], U snowflake.ID | uuid.UUID] interface {
 }
 
 type config struct {
-	Timeout *time.Duration
+	Timeout         *time.Duration
+	CreateNotExists bool
 }
 
 type OptionFunc func(*config) *config
@@ -46,7 +47,7 @@ func newAnyDB[T Data[U], U snowflake.ID | uuid.UUID](db *redis.Client, opt ...Op
 	}
 	return &anyDB[T, U]{
 		db:     db,
-		mus:    make(map[U]*sync.Mutex),
+		mus:    make(map[U]*UMutex),
 		config: *cfg,
 	}
 }
@@ -54,22 +55,26 @@ func newAnyDB[T Data[U], U snowflake.ID | uuid.UUID](db *redis.Client, opt ...Op
 type anyDB[T Data[U], U snowflake.ID | uuid.UUID] struct {
 	db  *redis.Client
 	mu  sync.Mutex
-	mus map[U]*sync.Mutex
+	mus map[U]*UMutex
 
 	config config
 }
 
-func (a *anyDB[T, U]) Mu(id U) *sync.Mutex {
+func (a *anyDB[T, U]) Mu(id U) *UMutex {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if a.mus[id] == nil {
-		a.mus[id] = new(sync.Mutex)
+		a.mus[id] = new(UMutex)
 	}
 	return a.mus[id]
 }
 
+type validator interface {
+	validate([]byte) error
+}
+
 func (a *anyDB[T, U]) Get(ctx context.Context, id U) (*Result[T, U], error) {
-	a.Mu(id).Lock()
+	a.Mu(id).RLock()
 	var res *redis.StringCmd
 	switch a.config.Timeout {
 	case nil:
@@ -78,23 +83,67 @@ func (a *anyDB[T, U]) Get(ctx context.Context, id U) (*Result[T, U], error) {
 		res = a.db.Get(ctx, fmt.Sprintf("%s-%s", toChainCase(reflect.TypeOf(*new(T)).Name()), reflect.ValueOf(id).MethodByName("String").Call(nil)[0].String()))
 	}
 	if err := res.Err(); err != nil {
-		return nil, err
+		if err != redis.Nil {
+			a.Mu(id).RUnlock()
+			return nil, err
+		}
+		data := new(T)
+		if d, ok := interface{}(data).(validator); ok {
+			b, _ := json.Marshal(data)
+			_ = d.validate(b)
+		}
+		upgraded := false
+		return &Result[T, U]{
+			Value: *data,
+			closer: func() error {
+				if upgraded {
+					a.Mu(id).Unlock()
+				} else {
+					a.Mu(id).RUnlock()
+				}
+				return nil
+			},
+			setter: func(ctx context.Context, id U, data T) error {
+				a.Mu(id).Upgrade()
+				for !a.Mu(id).Upgrade() {
+				}
+				upgraded = true
+				return a.set(ctx, id, data)
+			},
+		}, nil
 	}
 	data := new(T)
 	if err := json.Unmarshal([]byte(res.Val()), data); err != nil {
+		a.Mu(id).RUnlock()
 		return nil, err
 	}
+	upgraded := false
 	return &Result[T, U]{
-		data: *data,
+		Value: *data,
 		closer: func() error {
-			a.Mu(id).Unlock()
+			if upgraded {
+				a.Mu(id).Unlock()
+			} else {
+				a.Mu(id).RUnlock()
+			}
 			return nil
+		},
+		setter: func(ctx context.Context, id U, data T) error {
+			for !a.Mu(id).Upgrade() {
+			}
+			upgraded = true
+			return a.set(ctx, id, data)
 		},
 	}, nil
 }
 
 func (a *anyDB[T, U]) Set(ctx context.Context, id U, data T) error {
 	a.Mu(id).Lock()
+	defer a.Mu(id).Unlock()
+	return a.set(ctx, id, data)
+}
+
+func (a *anyDB[T, U]) set(ctx context.Context, id U, data T) error {
 	buf, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -116,6 +165,7 @@ func (a *anyDB[T, U]) Set(ctx context.Context, id U, data T) error {
 
 func (a *anyDB[T, U]) Del(ctx context.Context, id U) error {
 	a.Mu(id).Lock()
+	defer a.Mu(id).Unlock()
 	switch a.config.Timeout {
 	case nil:
 		res := a.db.HDel(ctx, toChainCase(reflect.TypeOf(*new(T)).Name()), reflect.ValueOf(id).MethodByName("String").Call(nil)[0].String())
@@ -152,14 +202,14 @@ func (a *anyDB[T, U]) GetAll(ctx context.Context) (*Results[T, U], error) {
 		if err := json.Unmarshal([]byte(k), key); err != nil {
 			return nil, err
 		}
-		a.Mu(*key).Lock()
+		a.Mu(*key).RLock()
 		closers = append(closers, *key)
 	}
 	return &Results[T, U]{
 		data: data,
 		closer: func() error {
 			for _, v := range closers {
-				a.Mu(v).Unlock()
+				a.Mu(v).RUnlock()
 			}
 			return nil
 		},
@@ -167,16 +217,17 @@ func (a *anyDB[T, U]) GetAll(ctx context.Context) (*Results[T, U], error) {
 }
 
 type Result[T Data[U], U snowflake.ID | uuid.UUID] struct {
-	data   T
+	Value  T
 	closer func() error
-}
-
-func (r Result[T, U]) Value() T {
-	return r.data
+	setter func(ctx context.Context, id U, data T) error
 }
 
 func (r Result[T, U]) Close() error {
 	return r.closer()
+}
+
+func (r Result[T, U]) Set(ctx context.Context) error {
+	return r.setter(ctx, r.Value.ID(), r.Value)
 }
 
 type Results[T Data[U], U snowflake.ID | uuid.UUID] struct {

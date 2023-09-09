@@ -11,7 +11,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"github.com/sabafly/disgo/discord"
+	"github.com/sabafly/sabafly-disgo/discord"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/translate"
 )

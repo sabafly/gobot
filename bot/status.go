@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/sabafly/disgo/discord"
-	"github.com/sabafly/disgo/events"
-	"github.com/sabafly/disgo/gateway"
 	"github.com/sabafly/gobot/bot/client"
+	"github.com/sabafly/sabafly-disgo/discord"
+	"github.com/sabafly/sabafly-disgo/events"
+	"github.com/sabafly/sabafly-disgo/gateway"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 )
 

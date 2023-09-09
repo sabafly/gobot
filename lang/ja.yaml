@@ -379,3 +379,4 @@ message_mention_help: |-
 ticket_new_modal_title: "チケットを作成する"
 ticket_new_modal_label_0: "件名"
 ticket_new_modal_label_1: "内容"
+ticket_new_created: "チケットを作成しました"

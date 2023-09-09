@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"github.com/sabafly/disgo/discord"
+	"github.com/sabafly/sabafly-disgo/discord"
 )
 
 type CalcDB interface {
