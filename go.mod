@@ -46,8 +46,3 @@ require (
 	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 )
-
-replace (
-	github.com/sabafly/disgo => c:\users\ikafly\.github\sabafly\disgo
-	github.com/sabafly/sabafly-lib/v2 => c:\users\ikafly\.github\sabafly\sabafly-lib
-)
