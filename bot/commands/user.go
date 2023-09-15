@@ -112,8 +112,8 @@ func User(b *botlib.Bot[*client.Client]) handler.Command {
 
 func userSetBirthDayCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		b.Self.UserDataLock(event.User().ID).Lock()
-		defer b.Self.UserDataLock(event.User().ID).Unlock()
+		b.Self.DB.GuildData().Mu(event.User().ID).Lock()
+		defer b.Self.DB.GuildData().Mu(event.User().ID).Unlock()
 		ud, err := b.Self.DB.UserData().Get(event.User().ID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)

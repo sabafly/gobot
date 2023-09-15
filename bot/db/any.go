@@ -6,13 +6,15 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-	"sync"
+	"sync/atomic"
 	"time"
 	"unicode"
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/sabafly/sabafly-lib/v2/smap"
+	"github.com/sabafly/sabafly-lib/v2/usync"
 )
 
 type Data[ID snowflake.ID | uuid.UUID] interface {
@@ -47,26 +49,20 @@ func newAnyDB[T Data[U], U snowflake.ID | uuid.UUID](db *redis.Client, opt ...Op
 	}
 	return &anyDB[T, U]{
 		db:     db,
-		mus:    make(map[U]*UMutex),
 		config: *cfg,
 	}
 }
 
 type anyDB[T Data[U], U snowflake.ID | uuid.UUID] struct {
-	db  *redis.Client
-	mu  sync.Mutex
-	mus map[U]*UMutex
+	db *redis.Client
+	mu smap.SyncedMap[U, *usync.UMutex]
 
 	config config
 }
 
-func (a *anyDB[T, U]) Mu(id U) *UMutex {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	if a.mus[id] == nil {
-		a.mus[id] = new(UMutex)
-	}
-	return a.mus[id]
+func (a *anyDB[T, U]) Mu(id U) *usync.UMutex {
+	v, _ := a.mu.LoadOrStore(id, new(usync.UMutex))
+	return v
 }
 
 type validator interface {
@@ -92,11 +88,11 @@ func (a *anyDB[T, U]) Get(ctx context.Context, id U) (*Result[T, U], error) {
 			b, _ := json.Marshal(data)
 			_ = d.validate(b)
 		}
-		upgraded := false
+		var upgraded atomic.Bool
 		return &Result[T, U]{
 			Value: *data,
 			closer: func() error {
-				if upgraded {
+				if upgraded.Load() {
 					a.Mu(id).Unlock()
 				} else {
 					a.Mu(id).RUnlock()
@@ -107,7 +103,7 @@ func (a *anyDB[T, U]) Get(ctx context.Context, id U) (*Result[T, U], error) {
 				a.Mu(id).Upgrade()
 				for !a.Mu(id).Upgrade() {
 				}
-				upgraded = true
+				upgraded.Store(true)
 				return a.set(ctx, id, data)
 			},
 		}, nil

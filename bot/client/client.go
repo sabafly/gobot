@@ -67,16 +67,19 @@ func (c *Client) Close() (err error) {
 }
 
 type Client struct {
-	Config     *Config
-	DB         *db.DB
-	MessagePin map[snowflake.ID]*db.GuildMessagePins
-	Logger     *Logger
+	Config          *Config
+	DB              *db.DB
+	MessagePin      map[snowflake.ID]*db.GuildMessagePins
+	Logger          *Logger
+	ResourceManager *ResourceManager
 }
 
+// Deprecated: Use DB.GuildData().Mu()
 func (c *Client) GuildDataLock(gid snowflake.ID) *sync.Mutex {
 	return c.DB.GuildData().Mu(gid)
 }
 
+// Deprecated: Use DB.UserData().Mu()
 func (c *Client) UserDataLock(uid snowflake.ID) *sync.Mutex {
 	return c.DB.UserData().Mu(uid)
 }

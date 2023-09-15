@@ -11,6 +11,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/sabafly/sabafly-disgo/discord"
+	"github.com/sabafly/sabafly-lib/v2/smap"
 )
 
 type UserDataDB interface {
@@ -22,8 +23,7 @@ type UserDataDB interface {
 
 type userDataDBImpl struct {
 	db            *redis.Client
-	userDataLock  sync.Mutex
-	userDataLocks map[snowflake.ID]*sync.Mutex
+	userDataLocks smap.SyncedMap[snowflake.ID, *sync.Mutex]
 }
 
 func (self *userDataDBImpl) Get(id snowflake.ID) (*UserData, error) {
@@ -63,12 +63,8 @@ func (self *userDataDBImpl) Del(id snowflake.ID) error {
 }
 
 func (self *userDataDBImpl) Mu(uid snowflake.ID) *sync.Mutex {
-	self.userDataLock.Lock()
-	defer self.userDataLock.Unlock()
-	if self.userDataLocks[uid] == nil {
-		self.userDataLocks[uid] = new(sync.Mutex)
-	}
-	return self.userDataLocks[uid]
+	v, _ := self.userDataLocks.LoadOrStore(uid, new(sync.Mutex))
+	return v
 }
 
 func NewUserData(id snowflake.ID) (*UserData, error) {

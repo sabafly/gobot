@@ -96,7 +96,7 @@ func Level(b *botlib.Bot[*client.Client]) handler.Command {
 
 func levelUserMoveCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		mute := b.Self.GuildDataLock(*event.GuildID())
+		mute := b.Self.DB.GuildData().Mu(*event.GuildID())
 		if !mute.TryLock() {
 			return botlib.ReturnErrMessage(event, "error_busy")
 		}
@@ -139,10 +139,10 @@ func levelUserMoveCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandH
 
 func levelUserResetCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		if !b.Self.GuildDataLock(*event.GuildID()).TryLock() {
+		if !b.Self.DB.GuildData().Mu(*event.GuildID()).TryLock() {
 			return botlib.ReturnErrMessage(event, "error_busy")
 		}
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErr(event, err)
@@ -178,10 +178,10 @@ func levelUserResetCommandHandler(b *botlib.Bot[*client.Client]) handler.Command
 
 func levelPointCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		b.Self.UserDataLock(event.User().ID).Lock()
-		defer b.Self.UserDataLock(event.User().ID).Unlock()
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.UserData().Mu(event.User().ID).Lock()
+		defer b.Self.DB.UserData().Mu(event.User().ID).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		ud, err := b.Self.DB.UserData().Get(event.User().ID)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
@@ -232,10 +232,10 @@ func levelPointCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHand
 
 func levelLeaderBoard(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		b.Self.UserDataLock(event.User().ID).Lock()
-		defer b.Self.UserDataLock(event.User().ID).Unlock()
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.UserData().Mu(event.User().ID).Lock()
+		defer b.Self.DB.UserData().Mu(event.User().ID).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErr(event, err)
@@ -309,8 +309,8 @@ func LevelModal(b *botlib.Bot[*client.Client]) handler.Modal {
 
 func levelModalNoticeMessageHandler(b *botlib.Bot[*client.Client]) handler.ModalHandler {
 	return func(event *events.ModalSubmitInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErr(event, err)

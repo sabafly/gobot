@@ -197,8 +197,8 @@ func messagePinDeleteCommandHandler(b *botlib.Bot[*client.Client]) handler.Comma
 
 func messageSuffixSetCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErr(event, err)
@@ -225,8 +225,8 @@ func messageSuffixSetCommandHandler(b *botlib.Bot[*client.Client]) handler.Comma
 
 func messageSuffixRemoveCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErr(event, err)
@@ -388,8 +388,8 @@ func MessageSuffixMessageCreateHandler(b *botlib.Bot[*client.Client]) handler.Me
 			if event.Message.Type != discord.MessageTypeDefault && event.Message.Type != discord.MessageTypeReply {
 				return nil
 			}
-			b.Self.GuildDataLock(event.GuildID).Lock()
-			defer b.Self.GuildDataLock(event.GuildID).Unlock()
+			b.Self.DB.GuildData().Mu(event.GuildID).Lock()
+			defer b.Self.DB.GuildData().Mu(event.GuildID).Unlock()
 			gd, err := b.Self.DB.GuildData().Get(event.GuildID)
 			if err != nil {
 				return err

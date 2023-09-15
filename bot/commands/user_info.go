@@ -29,10 +29,10 @@ func UserInfo(b *botlib.Bot[*client.Client]) handler.Command {
 
 func userInfoUserCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
-		b.Self.UserDataLock(event.UserCommandInteractionData().TargetID()).Lock()
-		defer b.Self.UserDataLock(event.UserCommandInteractionData().TargetID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
+		b.Self.DB.UserData().Mu(event.UserCommandInteractionData().TargetID()).Lock()
+		defer b.Self.DB.UserData().Mu(event.UserCommandInteractionData().TargetID()).Unlock()
 		member := event.UserCommandInteractionData().TargetMember()
 		embed := discord.NewEmbedBuilder()
 		embed.SetTitle(member.User.Tag())

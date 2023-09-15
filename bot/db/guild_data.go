@@ -10,6 +10,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	"github.com/sabafly/sabafly-lib/v2/permissions"
+	"github.com/sabafly/sabafly-lib/v2/smap"
 )
 
 type GuildDataDB interface {
@@ -23,8 +24,7 @@ var _ GuildDataDB = (*guildDataDBImpl)(nil)
 
 type guildDataDBImpl struct {
 	db             *redis.Client
-	guildDataLock  sync.Mutex
-	guildDataLocks map[snowflake.ID]*sync.Mutex
+	guildDataLocks smap.SyncedMap[snowflake.ID, *sync.Mutex]
 }
 
 func (g *guildDataDBImpl) Get(id snowflake.ID) (GuildData, error) {
@@ -65,12 +65,8 @@ func (g *guildDataDBImpl) Del(id snowflake.ID) error {
 }
 
 func (g *guildDataDBImpl) Mu(gid snowflake.ID) *sync.Mutex {
-	g.guildDataLock.Lock()
-	defer g.guildDataLock.Unlock()
-	if g.guildDataLocks[gid] == nil {
-		g.guildDataLocks[gid] = new(sync.Mutex)
-	}
-	return g.guildDataLocks[gid]
+	v, _ := g.guildDataLocks.LoadOrStore(gid, new(sync.Mutex))
+	return v
 }
 
 func NewGuildData(id snowflake.ID) GuildData {
