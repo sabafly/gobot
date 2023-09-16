@@ -1,7 +1,8 @@
 package handlers
 
 import (
-	"slices"
+	"fmt"
+	"strings"
 
 	"github.com/sabafly/gobot/bot/client"
 	"github.com/sabafly/sabafly-disgo/discord"
@@ -23,9 +24,7 @@ func mentionMessageHandler(b *botlib.Bot[*client.Client]) handler.MessageHandler
 			return nil
 		}
 
-		if !slices.ContainsFunc(event.Message.Mentions, func(u discord.User) bool {
-			return u.ID == event.Client().ApplicationID()
-		}) {
+		if !strings.Contains(event.Message.Content, fmt.Sprintf("<@%s>", event.Client().ApplicationID())) {
 			return nil
 		}
 
