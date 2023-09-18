@@ -224,7 +224,7 @@ func Run(file_path, lang_path, gobot_path string) error {
 
 	b.SetupBot(bot.NewListenerFunc(b.Handler.OnEvent))
 
-	b.Self.ResourceManager = client.NewResourceManager(b.Client)
+	b.Self.ResourceManager = client.NewResourceManager(b.Client, b.Self)
 
 	b.Client.EventManager().AddEventListeners(&events.ListenerAdapter{
 		OnGuildJoin:  onGuildJoin(b),

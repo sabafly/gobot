@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/sabafly/gobot/bot/client"
 	"github.com/sabafly/gobot/bot/db"
 	"github.com/sabafly/sabafly-disgo/discord"
@@ -25,10 +26,14 @@ func Ticket(b *botlib.Bot[*client.Client]) handler.Command {
 				discord.ApplicationCommandOptionSubCommand{
 					Name:        "new",
 					Description: "new role panel",
-					Options: []discord.ApplicationCommandOption{
-						discord.ApplicationCommandOptionBool{
-							Name:        "without-thread",
-							Description: "do not create thread",
+				},
+				discord.ApplicationCommandOptionSubCommandGroup{
+					Name:        "config",
+					Description: "config",
+					Options: []discord.ApplicationCommandOptionSubCommand{
+						{
+							Name:        "setup",
+							Description: "setup ticket configuration",
 						},
 					},
 				},
@@ -36,7 +41,8 @@ func Ticket(b *botlib.Bot[*client.Client]) handler.Command {
 		},
 		Check: b.Self.CheckCommandPermission(b, "ticket.manage", discord.PermissionManageGuild),
 		CommandHandlers: map[string]handler.CommandHandler{
-			"new": ticketNewCommandHandler(b),
+			"new":          ticketNewCommandHandler(b),
+			"config/setup": ticketConfigSetupCommandHandler(b),
 		},
 	}
 }
@@ -73,6 +79,36 @@ func ticketNewCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandl
 	}
 }
 
+func ticketConfigSetupCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
+	return func(event *events.ApplicationCommandInteractionCreate) error {
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
+		builder := discord.NewMessageBuilder()
+		embedBuilder := discord.NewEmbedBuilder()
+		embedBuilder.SetTitle(gofakeit.LoremIpsumSentence(4))
+		embedBuilder.SetDescription(gofakeit.LoremIpsumSentence(9))
+		embedBuilder.Embed = botlib.SetEmbedProperties(embedBuilder.Embed)
+		builder.AddEmbeds(embedBuilder.Build())
+		builder.AddContainerComponents(
+			discord.NewActionRow(
+				discord.ChannelSelectMenuComponent{
+					CustomID:    "handler:ticket:setup_channel",
+					Placeholder: gofakeit.LoremIpsumSentence(3),
+					MaxValues:   1,
+					ChannelTypes: []discord.ChannelType{
+						discord.ChannelTypeGuildText,
+					},
+					Disabled: true,
+				},
+			),
+		)
+		if err := event.CreateMessage(builder.Create()); err != nil {
+			return botlib.ReturnErr(event, err)
+		}
+		return nil
+	}
+}
+
 func TicketModal(b *botlib.Bot[*client.Client]) handler.Modal {
 	return handler.Modal{
 		Name: "ticket",
@@ -98,6 +134,11 @@ func ticketNewModalHandler(b *botlib.Bot[*client.Client]) handler.ModalHandler {
 		ticket.SetContent(event.ModalSubmitInteraction.Data.Text("content"))
 		ticket.SetHasThread(!without_thread)
 
+		channelID, ok := ticket_data.Value.ChannelID()
+		if !ok {
+			return botlib.ReturnErrMessage(event, "error_ticket_not_configured")
+		}
+
 		ticket_data.Value.Tickets = append(ticket_data.Value.Tickets, ticket.ID())
 		if err := ticket_data.Set(context.TODO()); err != nil {
 			return botlib.ReturnErr(event, err)
@@ -107,7 +148,7 @@ func ticketNewModalHandler(b *botlib.Bot[*client.Client]) handler.ModalHandler {
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
 		}
 
-		if _, err := event.Client().Rest().CreateMessage(ticket_data.Value.ChannelID(), db.TicketMessage(discord.NewMessageCreateBuilder(), ticket).Build()); err != nil {
+		if _, err := event.Client().Rest().CreateMessage(*channelID, db.TicketMessage(discord.NewMessageBuilder(), ticket).Create()); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
 

@@ -6,20 +6,22 @@ import (
 	"github.com/sabafly/sabafly-disgo/discord"
 )
 
-func NewResourceManager(client bot.Client) *ResourceManager {
+func NewResourceManager(b bot.Client, cl *Client) *ResourceManager {
 	return &ResourceManager{
-		client: client,
+		bot:    b,
+		client: cl,
 	}
 }
 
 type ResourceManager struct {
-	client bot.Client
+	bot    bot.Client
+	client *Client
 }
 
 func (r *ResourceManager) Channel(id snowflake.ID) (discord.Channel, error) {
-	channel, ok := r.client.Caches().Channel(id)
+	channel, ok := r.bot.Caches().Channel(id)
 	if !ok {
-		channel, err := r.client.Rest().GetChannel(id)
+		channel, err := r.bot.Rest().GetChannel(id)
 		if err != nil {
 			return nil, err
 		}
@@ -29,9 +31,9 @@ func (r *ResourceManager) Channel(id snowflake.ID) (discord.Channel, error) {
 }
 
 func (r *ResourceManager) Guild(id snowflake.ID) (*discord.Guild, error) {
-	guild, ok := r.client.Caches().Guild(id)
+	guild, ok := r.bot.Caches().Guild(id)
 	if !ok {
-		guild, err := r.client.Rest().GetGuild(id, true)
+		guild, err := r.bot.Rest().GetGuild(id, true)
 		if err != nil {
 			return nil, err
 		}
@@ -41,9 +43,9 @@ func (r *ResourceManager) Guild(id snowflake.ID) (*discord.Guild, error) {
 }
 
 func (r *ResourceManager) Member(guildID, userID snowflake.ID) (*discord.Member, error) {
-	member, ok := r.client.Caches().Member(guildID, userID)
+	member, ok := r.bot.Caches().Member(guildID, userID)
 	if !ok {
-		member, err := r.client.Rest().GetMember(guildID, userID)
+		member, err := r.bot.Rest().GetMember(guildID, userID)
 		if err != nil {
 			return nil, err
 		}
@@ -53,9 +55,9 @@ func (r *ResourceManager) Member(guildID, userID snowflake.ID) (*discord.Member,
 }
 
 func (r *ResourceManager) Role(guildID, roleID snowflake.ID) (*discord.Role, error) {
-	role, ok := r.client.Caches().Role(guildID, roleID)
+	role, ok := r.bot.Caches().Role(guildID, roleID)
 	if !ok {
-		role, err := r.client.Rest().GetRole(guildID, roleID)
+		role, err := r.bot.Rest().GetRole(guildID, roleID)
 		if err != nil {
 			return nil, err
 		}

@@ -28,14 +28,15 @@ type Ticket struct {
 	content                 string
 	hasThread               bool
 	template                *TicketTemplate
+	status                  TicketStatus
 }
 
 type TicketStatus int
 
 const (
-	TicketStatusCancel TicketStatus = iota
+	TicketStatusOpen TicketStatus = iota
+	TicketStatusCancel
 	TicketStatusDone
-	TicketStatusOpen
 )
 
 func (t Ticket) MarshalJSON() ([]byte, error) {
@@ -52,6 +53,7 @@ func (t Ticket) MarshalJSON() ([]byte, error) {
 		Content       string          `json:"content,omitempty"`
 		HasThread     bool            `json:"has_thread"`
 		Template      *TicketTemplate `json:"template,omitempty"`
+		Status        TicketStatus    `json:"status"`
 	}{
 		ID:            t.id,
 		GuildID:       t.guildID,
@@ -65,6 +67,7 @@ func (t Ticket) MarshalJSON() ([]byte, error) {
 		Content:       t.content,
 		HasThread:     t.hasThread,
 		Template:      t.template,
+		Status:        t.status,
 	}
 	return json.Marshal(v)
 }
@@ -83,6 +86,7 @@ func (t *Ticket) UnmarshalJSON(b []byte) error {
 		Content       string          `json:"content,omitempty"`
 		HasThread     bool            `json:"has_thread"`
 		Template      *TicketTemplate `json:"template"`
+		Status        TicketStatus    `json:"status"`
 	}{}
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
@@ -99,6 +103,7 @@ func (t *Ticket) UnmarshalJSON(b []byte) error {
 	t.content = v.Content
 	t.hasThread = v.HasThread
 	t.template = v.Template
+	t.status = v.Status
 	return nil
 }
 
@@ -123,6 +128,7 @@ func (t Ticket) Subject() string              { return t.subject }
 func (t Ticket) Content() string              { return t.content }
 func (t Ticket) HasThread() bool              { return t.hasThread }
 func (t Ticket) Template() *TicketTemplate    { return t.template }
+func (t Ticket) Status() TicketStatus         { return t.status }
 
 func (t *Ticket) SetSubject(s string)                     { t.subject = s }
 func (t *Ticket) SetContent(s string)                     { t.content = s }
