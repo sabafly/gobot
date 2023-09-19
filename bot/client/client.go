@@ -6,15 +6,15 @@ import (
 	"sync"
 
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/sabafly/disgo/discord"
-	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/db"
+	"github.com/sabafly/sabafly-disgo/discord"
+	"github.com/sabafly/sabafly-disgo/events"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
 	"github.com/sabafly/sabafly-lib/v2/logging"
 )
 
-func New(cfg *Config, db db.DB) (*Client, error) {
+func New(cfg *Config, db *db.DB) (*Client, error) {
 	if err := os.MkdirAll("./logs/messages", 0755); err != nil {
 		return nil, err
 	}
@@ -33,8 +33,6 @@ func New(cfg *Config, db db.DB) (*Client, error) {
 			DebugChannel: map[snowflake.ID]*DebugLog{},
 			DebugGuild:   map[snowflake.ID]*DebugLog{},
 		},
-		userDataLocks:  make(map[snowflake.ID]*sync.Mutex),
-		guildDataLocks: make(map[snowflake.ID]*sync.Mutex),
 	}, nil
 }
 
@@ -69,33 +67,21 @@ func (c *Client) Close() (err error) {
 }
 
 type Client struct {
-	Config         *Config
-	DB             db.DB
-	MessagePin     map[snowflake.ID]*db.GuildMessagePins
-	MessagePinSync sync.Mutex
-	Logger         *Logger
-	userDataLock   sync.Mutex
-	userDataLocks  map[snowflake.ID]*sync.Mutex
-	guildDataLock  sync.Mutex
-	guildDataLocks map[snowflake.ID]*sync.Mutex
+	Config          *Config
+	DB              *db.DB
+	MessagePin      map[snowflake.ID]*db.GuildMessagePins
+	Logger          *Logger
+	ResourceManager *ResourceManager
 }
 
+// Deprecated: Use DB.GuildData().Mu()
 func (c *Client) GuildDataLock(gid snowflake.ID) *sync.Mutex {
-	c.guildDataLock.Lock()
-	defer c.guildDataLock.Unlock()
-	if c.guildDataLocks[gid] == nil {
-		c.guildDataLocks[gid] = new(sync.Mutex)
-	}
-	return c.guildDataLocks[gid]
+	return c.DB.GuildData().Mu(gid)
 }
 
+// Deprecated: Use DB.UserData().Mu()
 func (c *Client) UserDataLock(uid snowflake.ID) *sync.Mutex {
-	c.userDataLock.Lock()
-	defer c.userDataLock.Unlock()
-	if c.userDataLocks[uid] == nil {
-		c.userDataLocks[uid] = new(sync.Mutex)
-	}
-	return c.userDataLocks[uid]
+	return c.DB.UserData().Mu(uid)
 }
 
 func (c *Client) CheckAutoCompletePermission(b *botlib.Bot[*Client], perm string, alt_perm discord.Permissions) handler.Check[*events.AutocompleteInteractionCreate] {

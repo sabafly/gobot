@@ -8,10 +8,10 @@ import (
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
-	"github.com/sabafly/disgo/discord"
-	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
 	"github.com/sabafly/gobot/bot/db"
+	"github.com/sabafly/sabafly-disgo/discord"
+	"github.com/sabafly/sabafly-disgo/events"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
 	"github.com/sabafly/sabafly-lib/v2/handler/interactions"
@@ -164,10 +164,10 @@ func messagePinCreateCommandHandler(b *botlib.Bot[*client.Client]) handler.Comma
 
 func messagePinDeleteCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		if !b.Self.MessagePinSync.TryLock() {
+		if !b.Self.DB.MessagePin().Mu().TryLock() {
 			return botlib.ReturnErrMessage(event, "error_busy", botlib.WithEphemeral(true))
 		}
-		defer b.Self.MessagePinSync.Unlock()
+		defer b.Self.DB.MessagePin().Mu().Unlock()
 		m, ok := b.Self.MessagePin[*event.GuildID()]
 		if !ok {
 			return botlib.ReturnErrMessage(event, "error_not_found", botlib.WithEphemeral(true))
@@ -197,8 +197,8 @@ func messagePinDeleteCommandHandler(b *botlib.Bot[*client.Client]) handler.Comma
 
 func messageSuffixSetCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErr(event, err)
@@ -225,8 +225,8 @@ func messageSuffixSetCommandHandler(b *botlib.Bot[*client.Client]) handler.Comma
 
 func messageSuffixRemoveCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErr(event, err)
@@ -344,10 +344,10 @@ func messageModalPinCreate(b *botlib.Bot[*client.Client]) handler.ModalHandler {
 func MessagePinMessageCreateHandler(b *botlib.Bot[*client.Client]) handler.Message {
 	return handler.Message{
 		Handler: func(event *events.GuildMessageCreate) error {
-			if !b.Self.MessagePinSync.TryLock() {
+			if !b.Self.DB.MessagePin().Mu().TryLock() {
 				return nil
 			}
-			defer b.Self.MessagePinSync.Unlock()
+			defer b.Self.DB.MessagePin().Mu().Unlock()
 			m, ok := b.Self.MessagePin[event.GuildID]
 			if !ok || !m.Enabled {
 				return nil
@@ -388,8 +388,8 @@ func MessageSuffixMessageCreateHandler(b *botlib.Bot[*client.Client]) handler.Me
 			if event.Message.Type != discord.MessageTypeDefault && event.Message.Type != discord.MessageTypeReply {
 				return nil
 			}
-			b.Self.GuildDataLock(event.GuildID).Lock()
-			defer b.Self.GuildDataLock(event.GuildID).Unlock()
+			b.Self.DB.GuildData().Mu(event.GuildID).Lock()
+			defer b.Self.DB.GuildData().Mu(event.GuildID).Unlock()
 			gd, err := b.Self.DB.GuildData().Get(event.GuildID)
 			if err != nil {
 				return err

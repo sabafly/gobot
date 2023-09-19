@@ -2,9 +2,9 @@ package commands
 
 import (
 	"github.com/disgoorg/json"
-	"github.com/sabafly/disgo/discord"
-	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
+	"github.com/sabafly/sabafly-disgo/discord"
+	"github.com/sabafly/sabafly-disgo/events"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
 	"github.com/sabafly/sabafly-lib/v2/permissions"
@@ -90,8 +90,8 @@ func Permission(b *botlib.Bot[*client.Client]) handler.Command {
 
 func permissionAddCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErr(event, err)
@@ -137,8 +137,8 @@ func permissionAddCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandH
 
 func permissionRemoveCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErr(event, err)
@@ -178,8 +178,8 @@ func permissionRemoveCommandHandler(b *botlib.Bot[*client.Client]) handler.Comma
 
 func permissionListCommandHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErr(event, err)

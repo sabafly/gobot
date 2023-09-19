@@ -4,10 +4,10 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/sabafly/disgo/discord"
-	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
 	"github.com/sabafly/gobot/bot/db"
+	"github.com/sabafly/sabafly-disgo/discord"
+	"github.com/sabafly/sabafly-disgo/events"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
 	"github.com/sabafly/sabafly-lib/v2/translate"

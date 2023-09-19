@@ -4,10 +4,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sabafly/disgo/discord"
-	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
 	"github.com/sabafly/gobot/bot/db"
+	"github.com/sabafly/sabafly-disgo/discord"
+	"github.com/sabafly/sabafly-disgo/events"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
 )
@@ -23,10 +23,10 @@ func userDataMessageHandler(b *botlib.Bot[*client.Client]) func(event *events.Gu
 		if event.Message.Author.System || event.Message.Author.Bot {
 			return nil
 		}
-		if !b.Self.UserDataLock(event.Message.Author.ID).TryLock() {
+		if !b.Self.DB.UserData().Mu(event.Message.Author.ID).TryLock() {
 			return nil
 		}
-		defer b.Self.UserDataLock(event.Message.Author.ID).Unlock()
+		defer b.Self.DB.UserData().Mu(event.Message.Author.ID).Unlock()
 		u, err := b.Self.DB.UserData().Get(event.Message.Author.ID)
 		if err != nil {
 			return err
@@ -40,8 +40,8 @@ func userDataMessageHandler(b *botlib.Bot[*client.Client]) func(event *events.Gu
 				return err
 			}
 		}
-		if b.Self.GuildDataLock(event.GuildID).TryLock() {
-			defer b.Self.GuildDataLock(event.GuildID).Unlock()
+		if b.Self.DB.GuildData().Mu(event.GuildID).TryLock() {
+			defer b.Self.DB.GuildData().Mu(event.GuildID).Unlock()
 			gd, err := b.Self.DB.GuildData().Get(event.GuildID)
 			if err != nil {
 				return err

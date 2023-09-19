@@ -4,10 +4,10 @@ import (
 	"time"
 
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/sabafly/disgo/discord"
-	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
 	"github.com/sabafly/gobot/bot/db"
+	"github.com/sabafly/sabafly-disgo/discord"
+	"github.com/sabafly/sabafly-disgo/events"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
 )
@@ -26,8 +26,8 @@ func bumpUpMessageHandler(b *botlib.Bot[*client.Client]) func(event *events.Guil
 		if event.Message.Author.ID != 761562078095867916 && event.Message.Author.ID != 302050872383242240 {
 			return nil
 		}
-		b.Self.GuildDataLock(event.GuildID).Lock()
-		defer b.Self.GuildDataLock(event.GuildID).Unlock()
+		b.Self.DB.GuildData().Mu(event.GuildID).Lock()
+		defer b.Self.DB.GuildData().Mu(event.GuildID).Unlock()
 		gd, err := b.Self.DB.GuildData().Get(event.GuildID)
 		if err != nil {
 			return err
@@ -112,8 +112,8 @@ func bumpUpdateHandler(b *botlib.Bot[*client.Client]) handler.MessageUpdateHandl
 }
 
 func ScheduleBump(b *botlib.Bot[*client.Client], bp db.NoticeScheduleBump) error {
-	b.Self.GuildDataLock(bp.GuildID).Lock()
-	defer b.Self.GuildDataLock(bp.GuildID).Unlock()
+	b.Self.DB.GuildData().Mu(bp.GuildID).Lock()
+	defer b.Self.DB.GuildData().Mu(bp.GuildID).Unlock()
 	gd, err := b.Self.DB.GuildData().Get(bp.GuildID)
 	if err != nil {
 		return err

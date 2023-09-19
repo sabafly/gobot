@@ -9,10 +9,10 @@ import (
 	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
-	"github.com/sabafly/disgo/discord"
-	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
 	"github.com/sabafly/gobot/bot/db"
+	"github.com/sabafly/sabafly-disgo/discord"
+	"github.com/sabafly/sabafly-disgo/events"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/emoji"
 	"github.com/sabafly/sabafly-lib/v2/handler"
@@ -105,8 +105,8 @@ func Role(b *botlib.Bot[*client.Client]) handler.Command {
 
 func rolePanelV2PanelAutoCompleteHandler(b *botlib.Bot[*client.Client]) handler.AutocompleteHandler {
 	return func(event *events.AutocompleteInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return err
@@ -160,8 +160,8 @@ func rolePanelV2Create(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 
 func rolePanelV2Edit(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 
 		role_panel_id, err := uuid.Parse(event.SlashCommandInteractionData().String("panel"))
 		if err != nil {
@@ -224,8 +224,8 @@ func rolePanelV2Edit(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 
 func rolePanelV2Place(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 
 		role_panel_id, err := uuid.Parse(event.SlashCommandInteractionData().String("panel"))
 		if err != nil {
@@ -264,8 +264,8 @@ func rolePanelV2Place(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 
 func rolePanelV2Delete(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 
 		role_panel_id, err := uuid.Parse(event.SlashCommandInteractionData().String("panel"))
 		if err != nil {
@@ -444,8 +444,8 @@ func rolePanelV2EditPanelInfoHandler(b *botlib.Bot[*client.Client]) handler.Comp
 
 func rolePanelV2EditRolesComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
 	return func(event *events.ComponentInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		args := strings.Split(event.Data.CustomID(), ":")
 		edit_id, err := uuid.Parse(args[3])
 		if err != nil {
@@ -507,8 +507,8 @@ func rolePanelV2EditRolesComponentHandler(b *botlib.Bot[*client.Client]) handler
 
 func rolePanelV2BackEditRolesComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
 	return func(event *events.ComponentInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		args := strings.Split(event.Data.CustomID(), ":")
 		edit_id, err := uuid.Parse(args[3])
 		if err != nil {
@@ -553,8 +553,8 @@ func rolePanelV2BackEditRolesComponentHandler(b *botlib.Bot[*client.Client]) han
 
 func rolePanelV2EditRoleSelectComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
 	return func(event *events.ComponentInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		args := strings.Split(event.Data.CustomID(), ":")
 		edit_id, err := uuid.Parse(args[3])
 		if err != nil {
@@ -651,8 +651,8 @@ func rolePanelV2EditRoleSelectComponentHandler(b *botlib.Bot[*client.Client]) ha
 
 func rolePanelV2EditRoleNameComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
 	return func(event *events.ComponentInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		args := strings.Split(event.Data.CustomID(), ":")
 		edit_id, err := uuid.Parse(args[3])
 		if err != nil {
@@ -700,8 +700,8 @@ func rolePanelV2EditRoleNameComponentHandler(b *botlib.Bot[*client.Client]) hand
 
 func rolePanelV2EditRoleDeleteComponent(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
 	return func(event *events.ComponentInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		args := strings.Split(event.Data.CustomID(), ":")
 		edit_id, err := uuid.Parse(args[3])
 		if err != nil {
@@ -758,8 +758,8 @@ func rolePanelV2EditRoleDeleteComponent(b *botlib.Bot[*client.Client]) handler.C
 
 func rolePanelV2EditRoleEmojiComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
 	return func(event *events.ComponentInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		args := strings.Split(event.Data.CustomID(), ":")
 		edit_id, err := uuid.Parse(args[3])
 		if err != nil {
@@ -828,8 +828,8 @@ func rolePanelV2EditRoleEmojiComponentHandler(b *botlib.Bot[*client.Client]) han
 
 func rolePanelV2PlaceTypeComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
 	return func(event *events.ComponentInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 
 		args := strings.Split(event.Data.CustomID(), ":")
 		place_id, err := uuid.Parse(args[3])
@@ -872,8 +872,8 @@ func rolePanelV2PlaceTypeComponentHandler(b *botlib.Bot[*client.Client]) handler
 
 func rolePanelV2PlaceSimpleSelectMenuComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
 	return func(event *events.ComponentInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 
 		args := strings.Split(event.Data.CustomID(), ":")
 		place_id, err := uuid.Parse(args[3])
@@ -916,8 +916,8 @@ func rolePanelV2PlaceSimpleSelectMenuComponentHandler(b *botlib.Bot[*client.Clie
 
 func rolePanelV2PlaceButtonShowNameComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
 	return func(event *events.ComponentInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 
 		args := strings.Split(event.Data.CustomID(), ":")
 		place_id, err := uuid.Parse(args[3])
@@ -960,8 +960,8 @@ func rolePanelV2PlaceButtonShowNameComponentHandler(b *botlib.Bot[*client.Client
 
 func rolePanelV2PlaceButtonColorComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
 	return func(event *events.ComponentInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 
 		args := strings.Split(event.Data.CustomID(), ":")
 		place_id, err := uuid.Parse(args[3])
@@ -1015,8 +1015,8 @@ func rolePanelV2PlaceButtonColorComponentHandler(b *botlib.Bot[*client.Client]) 
 
 func rolePanelV2PlaceComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
 	return func(event *events.ComponentInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 
 		args := strings.Split(event.Data.CustomID(), ":")
 		place_id, err := uuid.Parse(args[3])
@@ -1061,8 +1061,8 @@ func rolePanelV2PlaceComponentHandler(b *botlib.Bot[*client.Client]) handler.Com
 
 func rolePanelV2UseSelectMenuComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
 	return func(event *events.ComponentInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
@@ -1203,8 +1203,8 @@ func rolePanelV2UseSelectMenuComponentHandler(b *botlib.Bot[*client.Client]) han
 
 func rolePanelV2UseButtonComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
 	return func(event *events.ComponentInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 
 		args := strings.Split(event.ButtonInteractionData().CustomID(), ":")
 
@@ -1276,8 +1276,8 @@ func rolePanelV2UseButtonComponentHandler(b *botlib.Bot[*client.Client]) handler
 
 func rolePanelV2CallSelectMenuComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
 	return func(event *events.ComponentInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
@@ -1329,8 +1329,8 @@ func rolePanelV2CallSelectMenuComponentHandler(b *botlib.Bot[*client.Client]) ha
 
 func rolePanelV2ConvertComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
 	return func(event *events.ComponentInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		args := strings.Split(event.Data.CustomID(), ":")
 		channel_id, err := snowflake.Parse(args[3])
 		if err != nil {
@@ -1433,8 +1433,8 @@ func RolePanelV2Modal(b *botlib.Bot[*client.Client]) handler.Modal {
 
 func rolePanelV2CreateModalHandler(b *botlib.Bot[*client.Client]) handler.ModalHandler {
 	return func(event *events.ModalSubmitInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		name := event.ModalSubmitInteraction.Data.Text("name")
 		description := event.ModalSubmitInteraction.Data.Text("description")
 		rp := db.NewRolePanelV2(name, description)
@@ -1472,8 +1472,8 @@ func rolePanelV2CreateModalHandler(b *botlib.Bot[*client.Client]) handler.ModalH
 
 func rolePanelV2EditPanelInfoModalHandler(b *botlib.Bot[*client.Client]) handler.ModalHandler {
 	return func(event *events.ModalSubmitInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		args := strings.Split(event.Data.CustomID, ":")
 		edit_id, err := uuid.Parse(args[3])
 		if err != nil {
@@ -1531,8 +1531,8 @@ func rolePanelV2EditPanelInfoModalHandler(b *botlib.Bot[*client.Client]) handler
 
 func rolePanelV2EditRoleNameModalHandler(b *botlib.Bot[*client.Client]) handler.ModalHandler {
 	return func(event *events.ModalSubmitInteractionCreate) error {
-		b.Self.GuildDataLock(*event.GuildID()).Lock()
-		defer b.Self.GuildDataLock(*event.GuildID()).Unlock()
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		args := strings.Split(event.Data.CustomID, ":")
 		edit_id, err := uuid.Parse(args[3])
 		if err != nil {
@@ -1594,8 +1594,8 @@ func rolePanelV2MessageCreate(b *botlib.Bot[*client.Client]) handler.MessageHand
 		if event.Message.Type != discord.MessageTypeDefault {
 			return nil
 		}
-		b.Self.GuildDataLock(event.GuildID).Lock()
-		defer b.Self.GuildDataLock(event.GuildID).Unlock()
+		b.Self.DB.GuildData().Mu(event.GuildID).Lock()
+		defer b.Self.DB.GuildData().Mu(event.GuildID).Unlock()
 
 		gd, err := b.Self.DB.GuildData().Get(event.GuildID)
 		if err != nil {
@@ -1677,8 +1677,8 @@ func rolePanelV2MessageCreate(b *botlib.Bot[*client.Client]) handler.MessageHand
 func RolePanelV2MessageDelete(b *botlib.Bot[*client.Client]) handler.MessageDelete {
 	return handler.MessageDelete{
 		Handler: func(event *events.GuildMessageDelete) error {
-			b.Self.GuildDataLock(event.GuildID).Lock()
-			defer b.Self.GuildDataLock(event.GuildID).Unlock()
+			b.Self.DB.GuildData().Mu(event.GuildID).Lock()
+			defer b.Self.DB.GuildData().Mu(event.GuildID).Unlock()
 
 			gd, err := b.Self.DB.GuildData().Get(event.GuildID)
 			if err != nil {
@@ -1705,8 +1705,8 @@ func RolePanelV2MessageReaction(b *botlib.Bot[*client.Client]) handler.Generics[
 				return nil
 			}
 			b.Logger.Debug("reaction added")
-			b.Self.GuildDataLock(event.GuildID).Lock()
-			defer b.Self.GuildDataLock(event.GuildID).Unlock()
+			b.Self.DB.GuildData().Mu(event.GuildID).Lock()
+			defer b.Self.DB.GuildData().Mu(event.GuildID).Unlock()
 
 			gd, err := b.Self.DB.GuildData().Get(event.GuildID)
 			if err != nil {
@@ -1806,8 +1806,8 @@ func RolePanelV2DeferDeleteMessage(b *botlib.Bot[*client.Client], channel_id, me
 
 func rolePanelV2Update(b *botlib.Bot[*client.Client], guild_id snowflake.ID, panel *db.RolePanelV2, locale discord.Locale) {
 	b.Logger.Debug("update called")
-	b.Self.GuildDataLock(guild_id).Lock()
-	defer b.Self.GuildDataLock(guild_id).Unlock()
+	b.Self.DB.GuildData().Mu(guild_id).Lock()
+	defer b.Self.DB.GuildData().Mu(guild_id).Unlock()
 	gd, err := b.Self.DB.GuildData().Get(guild_id)
 	if err != nil {
 		b.Logger.Errorf("error on update role panel message: %s", err.Error())
@@ -1854,8 +1854,8 @@ func rolePanelV2Update(b *botlib.Bot[*client.Client], guild_id snowflake.ID, pan
 }
 
 func rolePanelV2MessageDelete(b *botlib.Bot[*client.Client], guild_id snowflake.ID, panel *db.RolePanelV2, locale discord.Locale) {
-	b.Self.GuildDataLock(guild_id).Lock()
-	defer b.Self.GuildDataLock(guild_id).Unlock()
+	b.Self.DB.GuildData().Mu(guild_id).Lock()
+	defer b.Self.DB.GuildData().Mu(guild_id).Unlock()
 	gd, err := b.Self.DB.GuildData().Get(guild_id)
 	if err != nil {
 		b.Logger.Errorf("error on update role panel message: %s", err.Error())

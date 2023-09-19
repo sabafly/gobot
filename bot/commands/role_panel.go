@@ -1,9 +1,9 @@
 package commands
 
 import (
-	"github.com/sabafly/disgo/discord"
-	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
+	"github.com/sabafly/sabafly-disgo/discord"
+	"github.com/sabafly/sabafly-disgo/events"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/handler"
 	"github.com/sabafly/sabafly-lib/v2/translate"
@@ -25,7 +25,7 @@ func RolePanel(b *botlib.Bot[*client.Client]) handler.Command {
 // TODO: V2に対応
 func rolePanelHandler(b *botlib.Bot[*client.Client]) func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		mute := b.Self.GuildDataLock(*event.GuildID())
+		mute := b.Self.DB.GuildData().Mu(*event.GuildID())
 		if !mute.TryLock() {
 			return botlib.ReturnErrMessage(event, "error_busy")
 		}

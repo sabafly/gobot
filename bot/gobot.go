@@ -23,18 +23,18 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
-	"time"
 
 	"github.com/disgoorg/dislog"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/mattn/go-colorable"
-	"github.com/sabafly/disgo/bot"
-	"github.com/sabafly/disgo/events"
 	"github.com/sabafly/gobot/bot/client"
 	"github.com/sabafly/gobot/bot/commands"
 	"github.com/sabafly/gobot/bot/db"
 	"github.com/sabafly/gobot/bot/handlers"
+	"github.com/sabafly/gobot/bot/notification"
 	"github.com/sabafly/gobot/bot/worker"
+	"github.com/sabafly/sabafly-disgo/bot"
+	"github.com/sabafly/sabafly-disgo/events"
 	"github.com/sirupsen/logrus"
 
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
@@ -139,6 +139,7 @@ func Run(file_path, lang_path, gobot_path string) error {
 		commands.Config(b),
 		commands.Minecraft(b),
 		commands.User(b),
+		// commands.Ticket(b), // TODO: v0.13までに実装
 
 		commands.UserInfo(b),
 
@@ -161,6 +162,7 @@ func Run(file_path, lang_path, gobot_path string) error {
 		commands.LevelModal(b),
 		commands.ConfigModal(b),
 		commands.RolePanelV2Modal(b),
+		commands.TicketModal(b),
 
 		handlers.EmbedDialogModal(b),
 	)
@@ -221,6 +223,9 @@ func Run(file_path, lang_path, gobot_path string) error {
 	)
 
 	b.SetupBot(bot.NewListenerFunc(b.Handler.OnEvent))
+
+	b.Self.ResourceManager = client.NewResourceManager(b.Client, b.Self)
+
 	b.Client.EventManager().AddEventListeners(&events.ListenerAdapter{
 		OnGuildJoin:  onGuildJoin(b),
 		OnGuildLeave: onGuildLeave(b),
@@ -242,34 +247,7 @@ func Run(file_path, lang_path, gobot_path string) error {
 
 	w := worker.New()
 	w.Add(
-		func(b *botlib.Bot[*client.Client]) error {
-			ns, err := b.Self.DB.NoticeSchedule().GetAll()
-			if err != nil {
-				return err
-			}
-			for _, s := range ns {
-				switch s.Type() {
-				case db.NoticeScheduleTypeBump:
-					s, ok := s.(db.NoticeScheduleBump)
-					if !ok {
-						b.Logger.Warn("failed to convert")
-						break
-					}
-					if !time.Now().After(s.ScheduledTime.Add(-time.Minute * 15)) {
-						continue
-					}
-					if err := handlers.ScheduleBump(b, s); err != nil {
-						b.Logger.Errorf("error on worker notice schedule: %s", err)
-						continue
-					}
-					if err := b.Self.DB.NoticeSchedule().Del(s.ID()); err != nil {
-						b.Logger.Errorf("error on worker notice schedule delete: %s", err)
-						continue
-					}
-				}
-			}
-			return nil
-		},
+		notification.Handler,
 		5,
 	)
 	w.Start(b)
