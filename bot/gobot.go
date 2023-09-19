@@ -139,7 +139,7 @@ func Run(file_path, lang_path, gobot_path string) error {
 		commands.Config(b),
 		commands.Minecraft(b),
 		commands.User(b),
-		commands.Ticket(b),
+		// commands.Ticket(b), // TODO: v0.13までに実装
 
 		commands.UserInfo(b),
 
