@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sabafly/gobot/bot/client"
 	"github.com/sabafly/gobot/bot/db"
+	. "github.com/sabafly/gobot/internal"
 	"github.com/sabafly/sabafly-disgo/discord"
 	"github.com/sabafly/sabafly-disgo/events"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
@@ -113,10 +114,13 @@ func rolePanelV2PanelAutoCompleteHandler(b *botlib.Bot[*client.Client]) handler.
 		}
 		choices := []discord.AutocompleteChoice{}
 		for u, v := range gd.RolePanelV2 {
+			if len(choices) >= 25 {
+				break
+			}
 			if !strings.HasPrefix(v, event.Data.String("panel")) {
 				continue
 			}
-			if gd.RolePanelV2Name[v] > 1 {
+			if gd.RolePanelV2Name[v] > 1 || v == "" {
 				v = fmt.Sprintf("%s(%s)", v, u.String())
 			}
 			choices = append(choices, discord.AutocompleteChoiceString{
@@ -142,7 +146,7 @@ func rolePanelV2Create(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 			Label:     translate.Message(event.Locale(), "rp_v2_create_modal_label_0"),
 			Value:     translate.Message(event.Locale(), "rp_v2_default_panel_name"),
 			MaxLength: 32,
-			Required:  true,
+			Required:  false,
 		})
 		modal.AddActionRow(discord.TextInputComponent{
 			CustomID:  "description",
@@ -336,6 +340,7 @@ func RolePanelV2Component(b *botlib.Bot[*client.Client]) handler.Component {
 			"place_simple_select_menu": rolePanelV2PlaceSimpleSelectMenuComponentHandler(b),
 			"place_button_show_name":   rolePanelV2PlaceButtonShowNameComponentHandler(b),
 			"place_button_color":       rolePanelV2PlaceButtonColorComponentHandler(b),
+			"place_no_response":        rolePanelV2PlaceNoResponseComponentHandler(b),
 			"call_select_menu":         rolePanelV2CallSelectMenuComponentHandler(b),
 			"convert":                  rolePanelV2ConvertComponentHandler(b),
 		},
@@ -418,7 +423,7 @@ func rolePanelV2EditPanelInfoHandler(b *botlib.Bot[*client.Client]) handler.Comp
 					Label:     translate.Message(event.Locale(), "rp_v2_create_modal_label_0"),
 					Value:     panel.Name,
 					MaxLength: 32,
-					Required:  true,
+					Required:  false,
 				},
 			)
 		case "edit_description":
@@ -431,7 +436,7 @@ func rolePanelV2EditPanelInfoHandler(b *botlib.Bot[*client.Client]) handler.Comp
 					Label:     translate.Message(event.Locale(), "rp_v2_create_modal_label_1"),
 					Value:     panel.Description,
 					MaxLength: 140,
-					Required:  false,
+					Required:  panel.Name == "",
 				},
 			)
 		}
@@ -958,6 +963,49 @@ func rolePanelV2PlaceButtonShowNameComponentHandler(b *botlib.Bot[*client.Client
 	}
 }
 
+func rolePanelV2PlaceNoResponseComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
+	return func(event *events.ComponentInteractionCreate) error {
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
+
+		args := strings.Split(event.Data.CustomID(), ":")
+		place_id, err := uuid.Parse(args[3])
+		if err != nil {
+			return botlib.ReturnErrMessage(event, "error_invalid_id")
+		}
+		place, err := b.Self.DB.RolePanelV2Place().Get(place_id)
+		if err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+		panel, err := b.Self.DB.RolePanelV2().Get(place.PanelID)
+		if err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+
+		place.Config.NoResponse = !place.Config.NoResponse
+
+		if err := b.Self.DB.RolePanelV2Place().Set(place.ID, place); err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+
+		message := discord.NewMessageUpdateBuilder()
+		message = db.RolePanelV2PlaceMenuEmbed(panel, event.Locale(), place, message)
+
+		token, err := place.InteractionToken.Get()
+		if err != nil {
+			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
+		}
+
+		if _, err := event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, message.Build()); err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+		if err := event.DeferUpdateMessage(); err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+
+		return nil
+	}
+}
 func rolePanelV2PlaceButtonColorComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
 	return func(event *events.ComponentInteractionCreate) error {
 		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
@@ -1392,7 +1440,7 @@ func rolePanelV2ConvertComponentHandler(b *botlib.Bot[*client.Client]) handler.C
 		if len(roles) < 1 {
 			return botlib.ReturnErrMessage(event, "error_convert_failed_no_role", botlib.WithEphemeral(true), botlib.WithUpdate(true, event.Client()))
 		}
-		panel := db.NewRolePanelV2(message.Embeds[0].Title, "")
+		panel := db.NewRolePanelV2(Or(message.Embeds[0].Title != "", message.Embeds[0].Title, translate.Message(event.Locale(), "rp_v2_default_panel_name")), "")
 		for _, r := range roles {
 			panel.AddRole(r.RoleID, r.RoleName, r.Emoji)
 		}
@@ -1407,7 +1455,8 @@ func rolePanelV2ConvertComponentHandler(b *botlib.Bot[*client.Client]) handler.C
 		gd.RolePanelV2Name[panel.Name]++
 		if err := panelPlace(b, panel, &db.RolePanelV2Place{
 			Config: db.RolePanelV2Config{
-				PanelType: db.RolePanelV2TypeReaction,
+				PanelType:        db.RolePanelV2Type(Or(len(message.Components) < 1, db.RolePanelV2TypeReaction, db.RolePanelV2TypeSelectMenu)),
+				SimpleSelectMenu: true,
 			},
 		}, &gd, event.Locale(), channel_id); err != nil {
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true), botlib.WithUpdate(true, event.Client()))
@@ -1437,7 +1486,7 @@ func rolePanelV2CreateModalHandler(b *botlib.Bot[*client.Client]) handler.ModalH
 		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
 		name := event.ModalSubmitInteraction.Data.Text("name")
 		description := event.ModalSubmitInteraction.Data.Text("description")
-		rp := db.NewRolePanelV2(name, description)
+		rp := db.NewRolePanelV2(Or(name != "" || description != "", name, translate.Message(event.Locale(), "rp_v2_default_panel_name")), description)
 		gd, err := b.Self.DB.GuildData().Get(*event.GuildID())
 		if err != nil {
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
@@ -1490,6 +1539,7 @@ func rolePanelV2EditPanelInfoModalHandler(b *botlib.Bot[*client.Client]) handler
 		value := event.ModalSubmitInteraction.Data.Text("value")
 		switch args[2] {
 		case "edit_name":
+			value := Or(value != "" || panel.Description != "", value, translate.Message(event.Locale(), "rp_v2_default_panel_name"))
 			gd, err := b.Self.DB.GuildData().Get(edit.GuildID)
 			if err != nil {
 				return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
@@ -1713,38 +1763,42 @@ func RolePanelV2MessageReaction(b *botlib.Bot[*client.Client]) handler.Generics[
 				return err
 			}
 			key := fmt.Sprintf("%s/%s", event.ChannelID, event.MessageID)
-			if panel_id, ok := gd.RolePanelV2Placed[key]; ok {
-				panel, err := b.Self.DB.RolePanelV2().Get(panel_id)
-				if err != nil {
-					b.Logger.Errorf("error on handling add reaction role panel: %s", err.Error())
-					return err
+			panel_id, ok := gd.RolePanelV2Placed[key]
+			if !ok {
+				return nil
+			}
+			panel, err := b.Self.DB.RolePanelV2().Get(panel_id)
+			if err != nil {
+				b.Logger.Errorf("error on handling add reaction role panel: %s", err.Error())
+				return err
+			}
+			user, err := b.Self.DB.UserData().Get(event.UserID)
+			if err != nil {
+				return err
+			}
+			_ = event.Client().Rest().RemoveUserReaction(event.ChannelID, event.MessageID, event.Emoji.Reaction(), event.UserID)
+			for _, rpvr := range panel.Roles {
+				if event.Emoji.Reaction() != botlib.ReactionComponentEmoji(*rpvr.Emoji) {
+					continue
 				}
-				user, err := b.Self.DB.UserData().Get(event.UserID)
-				if err != nil {
-					return err
-				}
-				_ = event.Client().Rest().RemoveUserReaction(event.ChannelID, event.MessageID, event.Emoji.Reaction(), event.UserID)
-				for _, rpvr := range panel.Roles {
-					if event.Emoji.Reaction() != botlib.ReactionComponentEmoji(*rpvr.Emoji) {
-						continue
-					}
-					if slices.Index(event.Member.RoleIDs, rpvr.RoleID) == -1 {
-						if err := event.Client().Rest().AddMemberRole(event.GuildID, event.UserID, rpvr.RoleID); err != nil {
-							embed := discord.NewEmbedBuilder().
-								SetTitle(translate.Message(user.Locale, "rp_v2_add_role_failed_embed_title")).
-								SetDescription(translate.Message(user.Locale, "rp_v2_add_role_failed_embed_description"))
-							embed.Embed = botlib.SetEmbedProperties(embed.Embed)
-							message, err := event.Client().Rest().CreateMessage(event.ChannelID, discord.MessageCreate{
-								Content: discord.UserMention(event.UserID),
-								Embeds: []discord.Embed{
-									embed.Build(),
-								},
-							})
-							if err == nil {
-								go RolePanelV2DeferDeleteMessage(b, event.ChannelID, message.ID)
-							}
-							return err
+				if slices.Index(event.Member.RoleIDs, rpvr.RoleID) == -1 {
+					if err := event.Client().Rest().AddMemberRole(event.GuildID, event.UserID, rpvr.RoleID); err != nil {
+						embed := discord.NewEmbedBuilder().
+							SetTitle(translate.Message(user.Locale, "rp_v2_add_role_failed_embed_title")).
+							SetDescription(translate.Message(user.Locale, "rp_v2_add_role_failed_embed_description"))
+						embed.Embed = botlib.SetEmbedProperties(embed.Embed)
+						message, err := event.Client().Rest().CreateMessage(event.ChannelID, discord.MessageCreate{
+							Content: discord.UserMention(event.UserID),
+							Embeds: []discord.Embed{
+								embed.Build(),
+							},
+						})
+						if err == nil {
+							go RolePanelV2DeferDeleteMessage(b, event.ChannelID, message.ID)
 						}
+						return err
+					}
+					if !gd.RolePanelV2PlacedConfig[key].NoResponse {
 						embed := discord.NewEmbedBuilder().
 							SetTitle(translate.Message(user.Locale, "rp_v2_add_role_added_embed_title")).
 							SetDescription(translate.Message(user.Locale, "rp_v2_add_role_added_embed_description", translate.WithTemplate(map[string]any{"Role": discord.RoleMention(rpvr.RoleID)})))
@@ -1758,23 +1812,25 @@ func RolePanelV2MessageReaction(b *botlib.Bot[*client.Client]) handler.Generics[
 						if err == nil {
 							go RolePanelV2DeferDeleteMessage(b, event.ChannelID, message.ID)
 						}
-					} else {
-						if err := event.Client().Rest().RemoveMemberRole(event.GuildID, event.UserID, rpvr.RoleID); err != nil {
-							embed := discord.NewEmbedBuilder().
-								SetTitle(translate.Message(user.Locale, "rp_v2_remove_role_failed_embed_title")).
-								SetDescription(translate.Message(user.Locale, "rp_v2_remove_role_failed_embed_description"))
-							embed.Embed = botlib.SetEmbedProperties(embed.Embed)
-							message, err := event.Client().Rest().CreateMessage(event.ChannelID, discord.MessageCreate{
-								Content: discord.UserMention(event.UserID),
-								Embeds: []discord.Embed{
-									embed.Build(),
-								},
-							})
-							if err == nil {
-								go RolePanelV2DeferDeleteMessage(b, event.ChannelID, message.ID)
-							}
-							return err
+					}
+				} else {
+					if err := event.Client().Rest().RemoveMemberRole(event.GuildID, event.UserID, rpvr.RoleID); err != nil {
+						embed := discord.NewEmbedBuilder().
+							SetTitle(translate.Message(user.Locale, "rp_v2_remove_role_failed_embed_title")).
+							SetDescription(translate.Message(user.Locale, "rp_v2_remove_role_failed_embed_description"))
+						embed.Embed = botlib.SetEmbedProperties(embed.Embed)
+						message, err := event.Client().Rest().CreateMessage(event.ChannelID, discord.MessageCreate{
+							Content: discord.UserMention(event.UserID),
+							Embeds: []discord.Embed{
+								embed.Build(),
+							},
+						})
+						if err == nil {
+							go RolePanelV2DeferDeleteMessage(b, event.ChannelID, message.ID)
 						}
+						return err
+					}
+					if !gd.RolePanelV2PlacedConfig[key].NoResponse {
 						embed := discord.NewEmbedBuilder().
 							SetTitle(translate.Message(user.Locale, "rp_v2_add_role_removed_embed_title")).
 							SetDescription(translate.Message(user.Locale, "rp_v2_add_role_removed_embed_description", translate.WithTemplate(map[string]any{"Role": discord.RoleMention(rpvr.RoleID)})))
