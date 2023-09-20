@@ -385,9 +385,6 @@ func minecraftComponentStatusRefreshHandler(b *botlib.Bot[*client.Client]) handl
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
 		}
 
-		if err := event.DeferUpdateMessage(); err != nil {
-			return err
-		}
 		return nil
 	}
 }
