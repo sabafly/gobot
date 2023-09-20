@@ -35,7 +35,7 @@ func SetupDatabase(cfg DBConfig) (*DB, error) {
 		rolePanelCreate:      &rolePanelCreateDBImpl{db: db},
 		rolePanel:            &rolePanelDBImpl{db: db},
 		guildData:            &guildDataDBImpl{db: db},
-		calc:                 &CalcDBImpl{db: db},
+		calc:                 &calcDBImpl{db: db},
 		messagePin:           &messagePinDBImpl{db: db},
 		embedDialog:          &embedDialogDBImpl{db: db},
 		userData:             &userDataDBImpl{db: db},
@@ -59,7 +59,7 @@ type DB struct {
 	rolePanelCreate      *rolePanelCreateDBImpl
 	rolePanel            *rolePanelDBImpl
 	guildData            *guildDataDBImpl
-	calc                 *CalcDBImpl
+	calc                 *calcDBImpl
 	messagePin           *messagePinDBImpl
 	embedDialog          *embedDialogDBImpl
 	userData             *userDataDBImpl

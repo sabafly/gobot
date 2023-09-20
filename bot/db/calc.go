@@ -1,63 +1,20 @@
 package db
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	"github.com/sabafly/sabafly-disgo/discord"
 )
 
-type CalcDB interface {
-	Get(id uuid.UUID) (Calc, error)
-	Set(id uuid.UUID, data Calc) error
-	Del(id uuid.UUID) error
-}
+type CalcDB AnyDB[Calc, uuid.UUID]
 
-var _ CalcDB = (*CalcDBImpl)(nil)
+var _ CalcDB = (*calcDBImpl)(nil)
 
-type CalcDBImpl struct {
-	db *redis.Client
-}
-
-func (c *CalcDBImpl) Get(id uuid.UUID) (Calc, error) {
-	res := c.db.Get(context.TODO(), "calc"+id.String())
-	if err := res.Err(); err != nil {
-		return Calc{}, err
-	}
-	buf := []byte(res.Val())
-	val := Calc{}
-	err := json.Unmarshal(buf, &val)
-	if err != nil {
-		return Calc{}, err
-	}
-	return val, nil
-}
-
-func (c *CalcDBImpl) Set(id uuid.UUID, data Calc) error {
-	buf, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-	res := c.db.Set(context.TODO(), "calc"+id.String(), buf, time.Minute*14)
-	if err := res.Err(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *CalcDBImpl) Del(id uuid.UUID) error {
-	res := c.db.Del(context.TODO(), id.String())
-	if err := res.Err(); err != nil {
-		return err
-	}
-	return nil
-}
+type calcDBImpl = anyDB[Calc, uuid.UUID]
 
 func NewCalc() Calc {
 	return Calc{

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"strings"
 
 	"github.com/google/uuid"
@@ -44,7 +45,7 @@ func Util(b *botlib.Bot[*client.Client]) handler.Command {
 func utilCommandCalcHandler(b *botlib.Bot[*client.Client]) func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		calc := db.NewCalc()
-		err := b.Self.DB.Calc().Set(calc.ID(), calc)
+		err := b.Self.DB.Calc().Set(context.TODO(), calc.ID(), calc)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
@@ -86,31 +87,27 @@ func utilCalcComponentBackHandler(b *botlib.Bot[*client.Client]) func(event *eve
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		calcID := uuid.MustParse(args[3])
-		calc, err := b.Self.DB.Calc().Get(calcID)
+		calc, err := b.Self.DB.Calc().Get(context.TODO(), calcID)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
 		}
-		token, err := b.Self.DB.Interactions().Get(calcID)
-		if err != nil {
-			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
-		}
-		calc.Back()
-		mes, err := calc.Message(botlib.SetEmbedsProperties)
+		defer calc.Close()
+
+		calc.Value.Back()
+		mes, err := calc.Value.Message(botlib.SetEmbedsProperties)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		err = b.Self.DB.Calc().Set(calc.ID(), calc)
-		if err != nil {
+		if err := calc.Set(context.TODO()); err != nil {
 			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
 		}
-		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
+		if err := event.UpdateMessage(discord.MessageUpdate{
 			Content:    &mes.Content,
 			Components: &mes.Components,
-		})
-		if err != nil {
+		}); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		return event.DeferUpdateMessage()
+		return nil
 	}
 }
 
@@ -118,31 +115,27 @@ func utilCalcComponentCEHandler(b *botlib.Bot[*client.Client]) func(event *event
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		calcID := uuid.MustParse(args[3])
-		calc, err := b.Self.DB.Calc().Get(calcID)
+		calc, err := b.Self.DB.Calc().Get(context.TODO(), calcID)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
 		}
-		token, err := b.Self.DB.Interactions().Get(calcID)
-		if err != nil {
-			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
-		}
-		calc.CE()
-		mes, err := calc.Message(botlib.SetEmbedsProperties)
+		defer calc.Close()
+
+		calc.Value.CE()
+		mes, err := calc.Value.Message(botlib.SetEmbedsProperties)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		err = b.Self.DB.Calc().Set(calc.ID(), calc)
-		if err != nil {
+		if err := calc.Set(context.TODO()); err != nil {
 			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
 		}
-		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
+		if err := event.UpdateMessage(discord.MessageUpdate{
 			Content:    &mes.Content,
 			Components: &mes.Components,
-		})
-		if err != nil {
+		}); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		return event.DeferUpdateMessage()
+		return nil
 	}
 }
 
@@ -150,31 +143,27 @@ func utilCalcComponentCHandler(b *botlib.Bot[*client.Client]) func(event *events
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		calcID := uuid.MustParse(args[3])
-		calc, err := b.Self.DB.Calc().Get(calcID)
+		calc, err := b.Self.DB.Calc().Get(context.TODO(), calcID)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
 		}
-		token, err := b.Self.DB.Interactions().Get(calcID)
-		if err != nil {
-			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
-		}
-		calc.Reset()
-		mes, err := calc.Message(botlib.SetEmbedsProperties)
+		defer calc.Close()
+
+		calc.Value.Reset()
+		mes, err := calc.Value.Message(botlib.SetEmbedsProperties)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		err = b.Self.DB.Calc().Set(calc.ID(), calc)
-		if err != nil {
+		if err := calc.Set(context.TODO()); err != nil {
 			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
 		}
-		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
+		if err := event.UpdateMessage(discord.MessageUpdate{
 			Content:    &mes.Content,
 			Components: &mes.Components,
-		})
-		if err != nil {
+		}); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		return event.DeferUpdateMessage()
+		return nil
 	}
 }
 
@@ -182,33 +171,28 @@ func utilCalcComponentDoHandler(b *botlib.Bot[*client.Client]) func(event *event
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		calcID := uuid.MustParse(args[3])
-		calc, err := b.Self.DB.Calc().Get(calcID)
+		calc, err := b.Self.DB.Calc().Get(context.TODO(), calcID)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
 		}
-		token, err := b.Self.DB.Interactions().Get(calcID)
-		if err != nil {
-			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
-		}
+		defer calc.Close()
 
-		calc.Do()
+		calc.Value.Do()
 
-		mes, err := calc.Message(botlib.SetEmbedsProperties)
+		mes, err := calc.Value.Message(botlib.SetEmbedsProperties)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		err = b.Self.DB.Calc().Set(calc.ID(), calc)
-		if err != nil {
+		if err := calc.Set(context.TODO()); err != nil {
 			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
 		}
-		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
+		if err := event.UpdateMessage(discord.MessageUpdate{
 			Content:    &mes.Content,
 			Components: &mes.Components,
-		})
-		if err != nil {
+		}); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		return event.DeferUpdateMessage()
+		return nil
 	}
 }
 
@@ -216,40 +200,35 @@ func utilCalcComponentActHandler(b *botlib.Bot[*client.Client]) func(event *even
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		calcID := uuid.MustParse(args[4])
-		calc, err := b.Self.DB.Calc().Get(calcID)
+		calc, err := b.Self.DB.Calc().Get(context.TODO(), calcID)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
 		}
-		token, err := b.Self.DB.Interactions().Get(calcID)
-		if err != nil {
-			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
-		}
+		defer calc.Close()
 		switch args[3] {
 		case "plus":
-			calc.Plus()
+			calc.Value.Plus()
 		case "minus":
-			calc.Minus()
+			calc.Value.Minus()
 		case "multiple":
-			calc.Multiple()
+			calc.Value.Multiple()
 		case "divide":
-			calc.Divide()
+			calc.Value.Divide()
 		}
-		mes, err := calc.Message(botlib.SetEmbedsProperties)
+		mes, err := calc.Value.Message(botlib.SetEmbedsProperties)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		err = b.Self.DB.Calc().Set(calc.ID(), calc)
-		if err != nil {
+		if err := calc.Set(context.TODO()); err != nil {
 			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
 		}
-		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
+		if err := event.UpdateMessage(discord.MessageUpdate{
 			Content:    &mes.Content,
 			Components: &mes.Components,
-		})
-		if err != nil {
+		}); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		return event.DeferUpdateMessage()
+		return nil
 	}
 }
 
@@ -257,52 +236,47 @@ func utilCalcComponentNumHandler(b *botlib.Bot[*client.Client]) func(event *even
 	return func(event *events.ComponentInteractionCreate) error {
 		args := strings.Split(event.Data.CustomID(), ":")
 		calcID := uuid.MustParse(args[4])
-		calc, err := b.Self.DB.Calc().Get(calcID)
+		calc, err := b.Self.DB.Calc().Get(context.TODO(), calcID)
 		if err != nil {
 			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
 		}
-		token, err := b.Self.DB.Interactions().Get(calcID)
-		if err != nil {
-			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
-		}
+		defer calc.Close()
 		switch args[3] {
 		case "±":
-			calc.InputDo() // TODO: 電卓に合わせる
-			if strings.HasPrefix(calc.Input, "-") {
-				calc.Input = strings.TrimPrefix(calc.Input, "-")
+			calc.Value.InputDo() // TODO: 電卓に合わせる
+			if strings.HasPrefix(calc.Value.Input, "-") {
+				calc.Value.Input = strings.TrimPrefix(calc.Value.Input, "-")
 			} else {
-				calc.Input = "-" + calc.Input
+				calc.Value.Input = "-" + calc.Value.Input
 			}
 		case ".":
-			calc.InputDo()
-			if strings.Count(calc.Input, ".") == 0 {
-				calc.Input += "."
+			calc.Value.InputDo()
+			if strings.Count(calc.Value.Input, ".") == 0 {
+				calc.Value.Input += "."
 			}
 		default:
-			calc.InputDo()
-			if calc.Input == "0" {
-				calc.Input = ""
+			calc.Value.InputDo()
+			if calc.Value.Input == "0" {
+				calc.Value.Input = ""
 			}
-			if calc.Input == "-0" {
-				calc.Input = "-"
+			if calc.Value.Input == "-0" {
+				calc.Value.Input = "-"
 			}
-			calc.Input += args[3]
+			calc.Value.Input += args[3]
 		}
-		mes, err := calc.Message(botlib.SetEmbedsProperties)
+		mes, err := calc.Value.Message(botlib.SetEmbedsProperties)
 		if err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		err = b.Self.DB.Calc().Set(calc.ID(), calc)
-		if err != nil {
+		if err := calc.Set(context.TODO()); err != nil {
 			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
 		}
-		_, err = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, discord.MessageUpdate{
+		if err := event.UpdateMessage(discord.MessageUpdate{
 			Content:    &mes.Content,
 			Components: &mes.Components,
-		})
-		if err != nil {
+		}); err != nil {
 			return botlib.ReturnErr(event, err)
 		}
-		return event.DeferUpdateMessage()
+		return nil
 	}
 }

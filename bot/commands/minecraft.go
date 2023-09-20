@@ -381,7 +381,7 @@ func minecraftComponentStatusRefreshHandler(b *botlib.Bot[*client.Client]) handl
 			message.AddFiles(discord.NewFile("favicon.png", "", bytes.NewBuffer(res)))
 		}
 		message.AddContainerComponents(panel.Components()...)
-		if _, err := event.Client().Rest().UpdateMessage(panel.ChannelID, panel.MessageID, message.Build()); err != nil {
+		if err := event.UpdateMessage(message.Build()); err != nil {
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
 		}
 
