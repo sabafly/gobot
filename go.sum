@@ -68,8 +68,6 @@ github.com/power-devops/perfstat v0.0.0-20221212215047-62379fc7944b/go.mod h1:Om
 github.com/rivo/uniseg v0.4.4 h1:8TfxU8dW6PdqD27gjM8MVNuicgxIjxpm4K7x4jp8sis=
 github.com/rivo/uniseg v0.4.4/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUcx88=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
-github.com/sabafly/disgo v0.5.1 h1:iEg6Ls+9tUN4Gxng4D5yhoT06zhEglwNK7srm+MzMpc=
-github.com/sabafly/disgo v0.5.1/go.mod h1:OKfMQGMJaKga1kvZBxNPM4pZWmlwMGZlSNEF5+HEhH4=
 github.com/sabafly/sabafly-disgo v0.1.0 h1:ZevFSwCgxLZpyvny1MMEJROEXyTsmd8yVMd3vGtZ7ts=
 github.com/sabafly/sabafly-disgo v0.1.0/go.mod h1:7mxJOBXgrcb9e5zW1wgj/RxtekfeHnQq8jMXpLyPxvc=
 github.com/sabafly/sabafly-lib/v2 v2.7.2 h1:Y4uYgrm2+lnbLQe9R01wyluZezLTrfQvSAiFGCR2xhY=

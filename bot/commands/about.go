@@ -5,8 +5,8 @@ import (
 	"runtime"
 	"runtime/debug"
 
-	"github.com/sabafly/disgo"
 	"github.com/sabafly/gobot/bot/client"
+	disgo "github.com/sabafly/sabafly-disgo"
 	"github.com/sabafly/sabafly-disgo/discord"
 	"github.com/sabafly/sabafly-disgo/events"
 	lib "github.com/sabafly/sabafly-lib/v2"
