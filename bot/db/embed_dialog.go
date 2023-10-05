@@ -97,6 +97,11 @@ func (e EmbedDialog) BaseMenu() (mes discord.MessageUpdate) {
 				Label:    translate.Message(e.Locale, "embed_dialog_button_to_title_description_menu"),
 				CustomID: fmt.Sprintf("handler:ed:to-title-desc:%s", e.ID.String()),
 			},
+			discord.ButtonComponent{
+				Style:    discord.ButtonStyleSecondary,
+				Label:    translate.Message(e.Locale, "embed_dialog_button_to_fields_menu"),
+				CustomID: fmt.Sprintf("handler:ed:to-fields:%s", e.ID.String()),
+			},
 		},
 		discord.ActionRowComponent{
 			discord.ButtonComponent{
@@ -130,6 +135,10 @@ func (e EmbedDialog) TitleDescriptionMenu() (mes discord.MessageUpdate) {
 	if mes.Components == nil {
 		mes.Components = &[]discord.ContainerComponent{}
 	}
+	disabled := false
+	if e.Title == "" && e.Description == "" {
+		disabled = true
+	}
 	*mes.Components = append(*mes.Components,
 		discord.ActionRowComponent{
 			discord.ButtonComponent{
@@ -143,6 +152,36 @@ func (e EmbedDialog) TitleDescriptionMenu() (mes discord.MessageUpdate) {
 				CustomID: fmt.Sprintf("handler:ed:set-desc:%s", e.ID.String()),
 			},
 		},
+		discord.ActionRowComponent{
+			discord.ButtonComponent{
+				Style:    discord.ButtonStyleSecondary,
+				Label:    "Back", //TODO: 絵文字にする
+				CustomID: fmt.Sprintf("handler:ed:base-menu:%s", e.ID.String()),
+				Disabled: disabled,
+			},
+		},
+	)
+	return
+}
+
+func (e EmbedDialog) FieldsMenu() (mes discord.MessageUpdate) {
+	if mes.Embeds == nil {
+		mes.Embeds = &[]discord.Embed{}
+	}
+	var str string
+	for i2, ef := range e.Fields {
+		str += fmt.Sprintf("- %d\r```Name: %s\rValue: %s```", i2+1, ef.Name, ef.Value)
+	}
+	*mes.Embeds = append(*mes.Embeds,
+		discord.Embed{
+			Title: translate.Message(e.Locale, "embed_dialog_fields_menu_title"),
+			Description: fmt.Sprintf("%s\r%s",
+				translate.Translate(e.Locale, "", map[string]any{"max": 5, "count": len(e.Fields)}),
+				str,
+			),
+		},
+	)
+	*mes.Components = append(*mes.Components,
 		discord.ActionRowComponent{
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyleSecondary,
