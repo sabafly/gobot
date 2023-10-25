@@ -156,7 +156,6 @@ func RolePanelV2MessageSelectMenu[T rolePanelV2MessageBuilder[T]](r *RolePanelV2
 func RolePanelV2MessageButton[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, locale discord.Locale, message T, config RolePanelV2Config) T {
 	message.AddEmbeds(r.rolePanelV2Embed(locale))
 	buttons := make([]discord.InteractiveComponent, len(r.Roles))
-	components := []discord.ContainerComponent{}
 	for i, rpvr := range r.Roles {
 		var label string
 		if config.ButtonShowName {
@@ -169,13 +168,14 @@ func RolePanelV2MessageButton[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, lo
 			CustomID: fmt.Sprintf("handler:rp-v2:use_button:%s:%s", r.ID, rpvr.RoleID),
 		}
 	}
-	a := make([]int, len(r.Roles)/5+1)
-	for range a {
+	components := make([]discord.ContainerComponent, len(r.Roles)/5+1)
+	for i := range components {
 		count := 5
 		if len(buttons) < 5 {
 			count = len(buttons)
 		}
-		components = append(components, discord.NewActionRow(buttons[:count]...))
+		components[i] = discord.NewActionRow(buttons[:count]...)
+		buttons = buttons[count:]
 	}
 	message.AddContainerComponents(
 		components...,
