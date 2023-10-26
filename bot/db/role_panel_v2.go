@@ -168,7 +168,7 @@ func RolePanelV2MessageButton[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, lo
 			CustomID: fmt.Sprintf("handler:rp-v2:use_button:%s:%s", r.ID, rpvr.RoleID),
 		}
 	}
-	components := make([]discord.ContainerComponent, len(r.Roles)/5+1)
+	components := make([]discord.ContainerComponent, (len(r.Roles)-1)/5+1)
 	for i := range components {
 		count := 5
 		if len(buttons) < 5 {
