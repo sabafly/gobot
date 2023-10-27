@@ -9,6 +9,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/sabafly/gobot/internal"
 	"github.com/sabafly/sabafly-disgo/discord"
 	botlib "github.com/sabafly/sabafly-lib/v2/bot"
 	"github.com/sabafly/sabafly-lib/v2/translate"
@@ -110,15 +111,17 @@ type RolePanelV2Config struct {
 	ButtonStyle      discord.ButtonStyle `json:"button_style"`
 	ButtonShowName   bool                `json:"show_name"`
 	SimpleSelectMenu bool                `json:"simple_select_menu"`
+	SendNotice       bool                `json:"send_notice"`
+	UseDisplayName   bool                `json:"use_display_name"`
 }
 
-func RolePanelV2MessageReaction[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, locale discord.Locale, message T) T {
-	message.AddEmbeds(r.rolePanelV2Embed(locale))
+func RolePanelV2MessageReaction[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, locale discord.Locale, message T, config RolePanelV2Config) T {
+	message.AddEmbeds(r.rolePanelV2Embed(locale, config))
 	return message
 }
 
 func RolePanelV2MessageSelectMenu[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, locale discord.Locale, message T, config RolePanelV2Config) T {
-	message.AddEmbeds(r.rolePanelV2Embed(locale))
+	message.AddEmbeds(r.rolePanelV2Embed(locale, config))
 	if config.SimpleSelectMenu {
 		options := make([]discord.StringSelectMenuOption, len(r.Roles))
 		for i, rpvr := range r.Roles {
@@ -154,7 +157,7 @@ func RolePanelV2MessageSelectMenu[T rolePanelV2MessageBuilder[T]](r *RolePanelV2
 }
 
 func RolePanelV2MessageButton[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, locale discord.Locale, message T, config RolePanelV2Config) T {
-	message.AddEmbeds(r.rolePanelV2Embed(locale))
+	message.AddEmbeds(r.rolePanelV2Embed(locale, config))
 	buttons := make([]discord.InteractiveComponent, len(r.Roles))
 	for i, rpvr := range r.Roles {
 		var label string
@@ -183,13 +186,13 @@ func RolePanelV2MessageButton[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, lo
 	return message
 }
 
-func (r *RolePanelV2) rolePanelV2Embed(locale discord.Locale) discord.Embed {
+func (r *RolePanelV2) rolePanelV2Embed(locale discord.Locale, config RolePanelV2Config) discord.Embed {
 	embed := discord.NewEmbedBuilder()
 	embed.SetTitle(r.Name)
 	embed.SetDescription(r.Description)
 	var role_string string
 	for _, role := range r.Roles {
-		role_string += fmt.Sprintf("%s| %s\r", botlib.FormatComponentEmoji(*role.Emoji), discord.RoleMention(role.RoleID))
+		role_string += fmt.Sprintf("%s| %s\r", botlib.FormatComponentEmoji(*role.Emoji), internal.Or(config.UseDisplayName, role.RoleName, discord.RoleMention(role.RoleID)))
 	}
 	embed.AddFields(
 		discord.EmbedField{
@@ -341,6 +344,29 @@ func RolePanelV2PlaceMenuEmbed[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, l
 					Style:    discord.ButtonStyleSecondary,
 					Label:    translate.Message(locale, "rp_v2_place_simple_select_menu_label"),
 					CustomID: fmt.Sprintf("handler:rp-v2:place_simple_select_menu:%s", place.ID),
+					Emoji:    emoji,
+				},
+			),
+		)
+	case RolePanelV2TypeReaction:
+		var emoji *discord.ComponentEmoji
+		if place.Config.SendNotice {
+			emoji = &discord.ComponentEmoji{
+				ID:   1142095470227890279,
+				Name: "on",
+			}
+		} else {
+			emoji = &discord.ComponentEmoji{
+				ID:   1142110196462788779,
+				Name: "off",
+			}
+		}
+		message.AddContainerComponents(
+			discord.NewActionRow(
+				discord.ButtonComponent{
+					Style:    discord.ButtonStyleSecondary,
+					Label:    translate.Message(locale, "rp_v2_place_reaction_send_notice_label"),
+					CustomID: fmt.Sprintf("handler:rp-v2:place_reaction_send_notice:%s", place.ID),
 					Emoji:    emoji,
 				},
 			),
