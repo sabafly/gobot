@@ -1439,7 +1439,7 @@ func rolePanelV2PlaceReactionSendNoticeComponentHandler(b *botlib.Bot[*client.Cl
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
 		}
 
-		place.Config.SendNotice = !place.Config.SendNotice
+		place.Config.HideNotice = !place.Config.HideNotice
 
 		if err := b.Self.DB.RolePanelV2Place().Set(place.ID, place); err != nil {
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
@@ -1790,7 +1790,7 @@ func RolePanelV2MessageReaction(b *botlib.Bot[*client.Client]) handler.Generics[
 							}
 							return err
 						}
-						if gd.RolePanelV2PlacedConfig[panel.ID.String()].SendNotice {
+						if !gd.RolePanelV2PlacedConfig[key].HideNotice {
 							embed := discord.NewEmbedBuilder().
 								SetTitle(translate.Message(user.Locale, "rp_v2_add_role_added_embed_title")).
 								SetDescription(translate.Message(user.Locale, "rp_v2_add_role_added_embed_description", translate.WithTemplate(map[string]any{"Role": discord.RoleMention(rpvr.RoleID)})))
@@ -1822,7 +1822,7 @@ func RolePanelV2MessageReaction(b *botlib.Bot[*client.Client]) handler.Generics[
 							}
 							return err
 						}
-						if gd.RolePanelV2PlacedConfig[panel.ID.String()].SendNotice {
+						if !gd.RolePanelV2PlacedConfig[key].HideNotice {
 							embed := discord.NewEmbedBuilder().
 								SetTitle(translate.Message(user.Locale, "rp_v2_add_role_removed_embed_title")).
 								SetDescription(translate.Message(user.Locale, "rp_v2_add_role_removed_embed_description", translate.WithTemplate(map[string]any{"Role": discord.RoleMention(rpvr.RoleID)})))

@@ -111,7 +111,7 @@ type RolePanelV2Config struct {
 	ButtonStyle      discord.ButtonStyle `json:"button_style"`
 	ButtonShowName   bool                `json:"show_name"`
 	SimpleSelectMenu bool                `json:"simple_select_menu"`
-	SendNotice       bool                `json:"send_notice"`
+	HideNotice       bool                `json:"hide_notice"`
 	UseDisplayName   bool                `json:"use_display_name"`
 }
 
@@ -350,7 +350,7 @@ func RolePanelV2PlaceMenuEmbed[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, l
 		)
 	case RolePanelV2TypeReaction:
 		var emoji *discord.ComponentEmoji
-		if place.Config.SendNotice {
+		if !place.Config.HideNotice {
 			emoji = &discord.ComponentEmoji{
 				ID:   1142095470227890279,
 				Name: "on",
