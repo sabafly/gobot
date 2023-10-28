@@ -339,6 +339,7 @@ func RolePanelV2Component(b *botlib.Bot[*client.Client]) handler.Component {
 			"call_select_menu":           rolePanelV2CallSelectMenuComponentHandler(b),
 			"convert":                    rolePanelV2ConvertComponentHandler(b),
 			"place_reaction_send_notice": rolePanelV2PlaceReactionSendNoticeComponentHandler(b),
+			"place_use_display_name":     rolePanelV2PlaceUseDisplayNameComponentHandler(b),
 		},
 	}
 }
@@ -1440,6 +1441,50 @@ func rolePanelV2PlaceReactionSendNoticeComponentHandler(b *botlib.Bot[*client.Cl
 		}
 
 		place.Config.HideNotice = !place.Config.HideNotice
+
+		if err := b.Self.DB.RolePanelV2Place().Set(place.ID, place); err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+
+		message := discord.NewMessageUpdateBuilder()
+		message = db.RolePanelV2PlaceMenuEmbed(panel, event.Locale(), place, message)
+
+		token, err := place.InteractionToken.Get()
+		if err != nil {
+			return botlib.ReturnErrMessage(event, "error_timeout", botlib.WithEphemeral(true))
+		}
+
+		if _, err := event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), token, message.Build()); err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+		if err := event.DeferUpdateMessage(); err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+
+		return nil
+	}
+}
+
+func rolePanelV2PlaceUseDisplayNameComponentHandler(b *botlib.Bot[*client.Client]) handler.ComponentHandler {
+	return func(event *events.ComponentInteractionCreate) error {
+		b.Self.DB.GuildData().Mu(*event.GuildID()).Lock()
+		defer b.Self.DB.GuildData().Mu(*event.GuildID()).Unlock()
+
+		args := strings.Split(event.Data.CustomID(), ":")
+		place_id, err := uuid.Parse(args[3])
+		if err != nil {
+			return botlib.ReturnErrMessage(event, "error_invalid_id")
+		}
+		place, err := b.Self.DB.RolePanelV2Place().Get(place_id)
+		if err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+		panel, err := b.Self.DB.RolePanelV2().Get(place.PanelID)
+		if err != nil {
+			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
+		}
+
+		place.Config.UseDisplayName = !place.Config.UseDisplayName
 
 		if err := b.Self.DB.RolePanelV2Place().Set(place.ID, place); err != nil {
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))

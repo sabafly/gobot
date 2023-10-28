@@ -373,6 +373,29 @@ func RolePanelV2PlaceMenuEmbed[T rolePanelV2MessageBuilder[T]](r *RolePanelV2, l
 		)
 	}
 
+	var emoji *discord.ComponentEmoji
+	if place.Config.UseDisplayName {
+		emoji = &discord.ComponentEmoji{
+			ID:   1142095470227890279,
+			Name: "on",
+		}
+	} else {
+		emoji = &discord.ComponentEmoji{
+			ID:   1142110196462788779,
+			Name: "off",
+		}
+	}
+	message.AddContainerComponents(
+		discord.NewActionRow(
+			discord.ButtonComponent{
+				Style:    discord.ButtonStyleSecondary,
+				Label:    translate.Message(locale, "rp_v2_place_use_display_name_label"),
+				CustomID: fmt.Sprintf("handler:rp-v2:place_use_display_name:%s", place.ID),
+				Emoji:    emoji,
+			},
+		),
+	)
+
 	message.AddContainerComponents(
 		discord.NewActionRow(discord.ButtonComponent{
 			Style:    discord.ButtonStyleSuccess,
