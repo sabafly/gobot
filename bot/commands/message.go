@@ -184,7 +184,6 @@ func messagePinDeleteCommandHandler(b *botlib.Bot[*client.Client]) handler.Comma
 		if err := b.Self.DB.MessagePin().Set(*event.GuildID(), m); err != nil {
 			return botlib.ReturnErr(event, err, botlib.WithEphemeral(true))
 		}
-		m.Pins[event.Channel().ID()] = mp
 		b.Self.MessagePin[*event.GuildID()] = m
 		embed := discord.NewEmbedBuilder()
 		embed.SetDescription(translate.Message(event.Locale(), "message_pin_delete"))
