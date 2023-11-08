@@ -33,6 +33,9 @@ func messageOtherHandler(b *botlib.Bot[*client.Client]) handler.CommandHandler {
 		message := event.MessageCommandInteractionData().TargetMessage()
 		switch {
 		case rolePanelConvertCheck(b, message):
+			if !b.Self.CheckCommandPermission(b, "role.manage", discord.PermissionManageRoles)(event) {
+				return nil
+			}
 			result_message.AddContainerComponents(
 				discord.NewActionRow(
 					discord.ButtonComponent{
