@@ -7,6 +7,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/disgoorg/disgo/discord"
 )
 
 const (
@@ -18,6 +19,8 @@ const (
 	FieldName = "name"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
+	// FieldLocale holds the string denoting the locale field in the database.
+	FieldLocale = "locale"
 	// EdgeOwnGuilds holds the string denoting the own_guilds edge name in mutations.
 	EdgeOwnGuilds = "own_guilds"
 	// EdgeGuilds holds the string denoting the guilds edge name in mutations.
@@ -34,10 +37,10 @@ const (
 	// OwnGuildsColumn is the table column denoting the own_guilds relation/edge.
 	OwnGuildsColumn = "user_own_guilds"
 	// GuildsTable is the table that holds the guilds relation/edge. The primary key declared below.
-	GuildsTable = "guild_members"
-	// GuildsInverseTable is the table name for the Guild entity.
-	// It exists in this package in order to avoid circular dependency with the "guild" package.
-	GuildsInverseTable = "guilds"
+	GuildsTable = "member_owner"
+	// GuildsInverseTable is the table name for the Member entity.
+	// It exists in this package in order to avoid circular dependency with the "member" package.
+	GuildsInverseTable = "members"
 	// WordSuffixTable is the table that holds the word_suffix relation/edge.
 	WordSuffixTable = "word_suffixes"
 	// WordSuffixInverseTable is the table name for the WordSuffix entity.
@@ -52,12 +55,13 @@ var Columns = []string{
 	FieldID,
 	FieldName,
 	FieldCreatedAt,
+	FieldLocale,
 }
 
 var (
 	// GuildsPrimaryKey and GuildsColumn2 are the table columns denoting the
 	// primary key for the guilds relation (M2M).
-	GuildsPrimaryKey = []string{"guild_id", "user_id"}
+	GuildsPrimaryKey = []string{"member_id", "user_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -75,6 +79,10 @@ var (
 	NameValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
 	DefaultCreatedAt func() time.Time
+	// DefaultLocale holds the default value on creation for the "locale" field.
+	DefaultLocale discord.Locale
+	// LocaleValidator is a validator for the "locale" field. It is called by the builders before save.
+	LocaleValidator func(string) error
 )
 
 // OrderOption defines the ordering options for the User queries.
@@ -93,6 +101,11 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByCreatedAt orders the results by the created_at field.
 func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
+}
+
+// ByLocale orders the results by the locale field.
+func ByLocale(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLocale, opts...).ToFunc()
 }
 
 // ByOwnGuildsCount orders the results by own_guilds count.

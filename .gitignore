@@ -20,6 +20,7 @@ gobot
 start.sh
 config.json
 gobot.json
+gobot.yml
 
 __**__**
 

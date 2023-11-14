@@ -12,6 +12,7 @@ var (
 	GuildsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUint64, Increment: true},
 		{Name: "name", Type: field.TypeString},
+		{Name: "locale", Type: field.TypeString, Default: "ja"},
 		{Name: "user_own_guilds", Type: field.TypeUint64},
 	}
 	// GuildsTable holds the schema information for the "guilds" table.
@@ -22,17 +23,30 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "guilds_users_own_guilds",
-				Columns:    []*schema.Column{GuildsColumns[2]},
+				Columns:    []*schema.Column{GuildsColumns[3]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 		},
+	}
+	// MembersColumns holds the columns for the "members" table.
+	MembersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "user_id", Type: field.TypeUint64},
+		{Name: "permission", Type: field.TypeJSON, Nullable: true},
+	}
+	// MembersTable holds the schema information for the "members" table.
+	MembersTable = &schema.Table{
+		Name:       "members",
+		Columns:    MembersColumns,
+		PrimaryKey: []*schema.Column{MembersColumns[0]},
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUint64, Increment: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "created_at", Type: field.TypeTime},
+		{Name: "locale", Type: field.TypeString, Default: "ja"},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
@@ -72,7 +86,7 @@ var (
 	// GuildMembersColumns holds the columns for the "guild_members" table.
 	GuildMembersColumns = []*schema.Column{
 		{Name: "guild_id", Type: field.TypeUint64},
-		{Name: "user_id", Type: field.TypeUint64},
+		{Name: "member_id", Type: field.TypeInt},
 	}
 	// GuildMembersTable holds the schema information for the "guild_members" table.
 	GuildMembersTable = &schema.Table{
@@ -87,8 +101,33 @@ var (
 				OnDelete:   schema.Cascade,
 			},
 			{
-				Symbol:     "guild_members_user_id",
+				Symbol:     "guild_members_member_id",
 				Columns:    []*schema.Column{GuildMembersColumns[1]},
+				RefColumns: []*schema.Column{MembersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// MemberOwnerColumns holds the columns for the "member_owner" table.
+	MemberOwnerColumns = []*schema.Column{
+		{Name: "member_id", Type: field.TypeInt},
+		{Name: "user_id", Type: field.TypeUint64},
+	}
+	// MemberOwnerTable holds the schema information for the "member_owner" table.
+	MemberOwnerTable = &schema.Table{
+		Name:       "member_owner",
+		Columns:    MemberOwnerColumns,
+		PrimaryKey: []*schema.Column{MemberOwnerColumns[0], MemberOwnerColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "member_owner_member_id",
+				Columns:    []*schema.Column{MemberOwnerColumns[0]},
+				RefColumns: []*schema.Column{MembersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "member_owner_user_id",
+				Columns:    []*schema.Column{MemberOwnerColumns[1]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.Cascade,
 			},
@@ -97,9 +136,11 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		GuildsTable,
+		MembersTable,
 		UsersTable,
 		WordSuffixesTable,
 		GuildMembersTable,
+		MemberOwnerTable,
 	}
 )
 
@@ -108,5 +149,7 @@ func init() {
 	WordSuffixesTable.ForeignKeys[0].RefTable = UsersTable
 	WordSuffixesTable.ForeignKeys[1].RefTable = GuildsTable
 	GuildMembersTable.ForeignKeys[0].RefTable = GuildsTable
-	GuildMembersTable.ForeignKeys[1].RefTable = UsersTable
+	GuildMembersTable.ForeignKeys[1].RefTable = MembersTable
+	MemberOwnerTable.ForeignKeys[0].RefTable = MembersTable
+	MemberOwnerTable.ForeignKeys[1].RefTable = UsersTable
 }

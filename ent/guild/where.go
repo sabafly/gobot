@@ -5,6 +5,7 @@ package guild
 import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/disgoorg/disgo/discord"
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/ent/predicate"
 )
@@ -57,6 +58,12 @@ func IDLTE(id snowflake.ID) predicate.Guild {
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Guild {
 	return predicate.Guild(sql.FieldEQ(FieldName, v))
+}
+
+// Locale applies equality check predicate on the "locale" field. It's identical to LocaleEQ.
+func Locale(v discord.Locale) predicate.Guild {
+	vc := string(v)
+	return predicate.Guild(sql.FieldEQ(FieldLocale, vc))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -124,6 +131,90 @@ func NameContainsFold(v string) predicate.Guild {
 	return predicate.Guild(sql.FieldContainsFold(FieldName, v))
 }
 
+// LocaleEQ applies the EQ predicate on the "locale" field.
+func LocaleEQ(v discord.Locale) predicate.Guild {
+	vc := string(v)
+	return predicate.Guild(sql.FieldEQ(FieldLocale, vc))
+}
+
+// LocaleNEQ applies the NEQ predicate on the "locale" field.
+func LocaleNEQ(v discord.Locale) predicate.Guild {
+	vc := string(v)
+	return predicate.Guild(sql.FieldNEQ(FieldLocale, vc))
+}
+
+// LocaleIn applies the In predicate on the "locale" field.
+func LocaleIn(vs ...discord.Locale) predicate.Guild {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = string(vs[i])
+	}
+	return predicate.Guild(sql.FieldIn(FieldLocale, v...))
+}
+
+// LocaleNotIn applies the NotIn predicate on the "locale" field.
+func LocaleNotIn(vs ...discord.Locale) predicate.Guild {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = string(vs[i])
+	}
+	return predicate.Guild(sql.FieldNotIn(FieldLocale, v...))
+}
+
+// LocaleGT applies the GT predicate on the "locale" field.
+func LocaleGT(v discord.Locale) predicate.Guild {
+	vc := string(v)
+	return predicate.Guild(sql.FieldGT(FieldLocale, vc))
+}
+
+// LocaleGTE applies the GTE predicate on the "locale" field.
+func LocaleGTE(v discord.Locale) predicate.Guild {
+	vc := string(v)
+	return predicate.Guild(sql.FieldGTE(FieldLocale, vc))
+}
+
+// LocaleLT applies the LT predicate on the "locale" field.
+func LocaleLT(v discord.Locale) predicate.Guild {
+	vc := string(v)
+	return predicate.Guild(sql.FieldLT(FieldLocale, vc))
+}
+
+// LocaleLTE applies the LTE predicate on the "locale" field.
+func LocaleLTE(v discord.Locale) predicate.Guild {
+	vc := string(v)
+	return predicate.Guild(sql.FieldLTE(FieldLocale, vc))
+}
+
+// LocaleContains applies the Contains predicate on the "locale" field.
+func LocaleContains(v discord.Locale) predicate.Guild {
+	vc := string(v)
+	return predicate.Guild(sql.FieldContains(FieldLocale, vc))
+}
+
+// LocaleHasPrefix applies the HasPrefix predicate on the "locale" field.
+func LocaleHasPrefix(v discord.Locale) predicate.Guild {
+	vc := string(v)
+	return predicate.Guild(sql.FieldHasPrefix(FieldLocale, vc))
+}
+
+// LocaleHasSuffix applies the HasSuffix predicate on the "locale" field.
+func LocaleHasSuffix(v discord.Locale) predicate.Guild {
+	vc := string(v)
+	return predicate.Guild(sql.FieldHasSuffix(FieldLocale, vc))
+}
+
+// LocaleEqualFold applies the EqualFold predicate on the "locale" field.
+func LocaleEqualFold(v discord.Locale) predicate.Guild {
+	vc := string(v)
+	return predicate.Guild(sql.FieldEqualFold(FieldLocale, vc))
+}
+
+// LocaleContainsFold applies the ContainsFold predicate on the "locale" field.
+func LocaleContainsFold(v discord.Locale) predicate.Guild {
+	vc := string(v)
+	return predicate.Guild(sql.FieldContainsFold(FieldLocale, vc))
+}
+
 // HasOwner applies the HasEdge predicate on the "owner" edge.
 func HasOwner() predicate.Guild {
 	return predicate.Guild(func(s *sql.Selector) {
@@ -159,7 +250,7 @@ func HasMembers() predicate.Guild {
 }
 
 // HasMembersWith applies the HasEdge predicate on the "members" edge with a given conditions (other predicates).
-func HasMembersWith(preds ...predicate.User) predicate.Guild {
+func HasMembersWith(preds ...predicate.Member) predicate.Guild {
 	return predicate.Guild(func(s *sql.Selector) {
 		step := newMembersStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {

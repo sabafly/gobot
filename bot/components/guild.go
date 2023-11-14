@@ -19,26 +19,26 @@ func (c *Components) OnGuildJoin() func(event *events.GuildJoin) {
 			slog.Error("ギルド参加 オーナーの取得に失敗", "err", err)
 			return
 		}
-		u, err := c.UserCreate(context.Background(), member.User)
+		u, err := c.UserCreate(event, member.User)
 		if err != nil {
 			slog.Error("ギルド参加 オーナーの初期化に失敗", "err", err)
 			return
 		}
 
-		if _, err := c.GuildCreate(context.Background(), u.ID, event.GenericGuild); err != nil {
+		if _, err := c.GuildCreate(event, u.ID, event.GenericGuild); err != nil {
 			slog.Error("ギルドの作成に失敗", "err", err)
 			return
 		}
 
-		u = c.db.User.Query().Where(user.ID(u.ID)).OnlyX(context.Background())
-		slog.Debug("ギルドオーナー情報", "id", u.ID, "name", u.Name, "own_guilds", u.QueryOwnGuilds().AllX(context.Background()), "guilds", u.QueryGuilds().AllX(context.Background()))
+		u = c.db.User.Query().Where(user.ID(u.ID)).OnlyX(event)
+		slog.Debug("ギルドオーナー情報", "id", u.ID, "name", u.Name, "own_guilds", u.QueryOwnGuilds().AllX(event), "guilds", u.QueryGuilds().AllX(event))
 	}
 }
 
 func (c *Components) OnGuildLeave() func(event *events.GuildLeave) {
 	return func(event *events.GuildLeave) {
 		slog.Info("ギルド脱退", "id", event.Guild.ID, "name", event.Guild.Name)
-		c.db.Guild.DeleteOneID(event.Guild.ID).ExecX(context.Background())
+		c.db.Guild.DeleteOneID(event.Guild.ID).ExecX(event)
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
 )
 
@@ -21,6 +22,10 @@ func (Guild) Fields() []ent.Field {
 			GoType(snowflake.ID(0)),
 		field.String("name").
 			NotEmpty(),
+		field.String("locale").
+			NotEmpty().
+			Default(string(discord.LocaleJapanese)).
+			GoType(discord.Locale("")),
 	}
 }
 
@@ -31,6 +36,6 @@ func (Guild) Edges() []ent.Edge {
 			Ref("own_guilds").
 			Unique().
 			Required(),
-		edge.To("members", User.Type),
+		edge.To("members", Member.Type),
 	}
 }

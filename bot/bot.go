@@ -14,7 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-package gobot
+package bot
 
 import (
 	"context"
@@ -31,10 +31,14 @@ import (
 	"github.com/disgoorg/disgo/sharding"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
+	"github.com/sabafly/gobot/bot/commands/debug"
 	"github.com/sabafly/gobot/bot/commands/message"
+	"github.com/sabafly/gobot/bot/commands/ping"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/ent"
+	"github.com/sabafly/gobot/internal/translate"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 var cmd = &cobra.Command{
@@ -54,7 +58,7 @@ var (
 func run() error {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		AddSource: true,
-		Level:     slog.LevelDebug,
+		Level:     slog.LevelInfo,
 	})))
 	if err := godotenv.Load(); err != nil {
 		slog.Error(".envファイルを読み込めませんでした", "err", err)
@@ -73,10 +77,32 @@ func run() error {
 		return err
 	}
 
-	component := components.New(db)
+	f, err := os.Open("gobot.yml")
+	if err != nil {
+		slog.Error("設定ファイルが見つかりません", "err", err)
+		return err
+	}
+	defer f.Close()
+
+	var config components.Config
+	if err := yaml.NewDecoder(f).Decode(&config); err != nil {
+		slog.Error("設定ファイルが読み込めません", "err", err)
+		return err
+	}
+
+	if _, err := translate.LoadDir(config.TranslateDir); err != nil {
+		slog.Error("翻訳ファイルが読み込めません", "err", err, "path", config.TranslateDir)
+		return err
+	}
+
+	component := components.New(db, config)
 	component.Version = version
 
-	component.AddCommand(message.Command(component))
+	component.AddCommands(
+		debug.Command(component),
+		ping.Command(),
+		message.Command(component),
+	)
 
 	token := os.Getenv("TOKEN")
 	if token == "" {

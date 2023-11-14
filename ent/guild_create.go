@@ -9,8 +9,10 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/disgoorg/disgo/discord"
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/ent/guild"
+	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/user"
 )
 
@@ -24,6 +26,20 @@ type GuildCreate struct {
 // SetName sets the "name" field.
 func (gc *GuildCreate) SetName(s string) *GuildCreate {
 	gc.mutation.SetName(s)
+	return gc
+}
+
+// SetLocale sets the "locale" field.
+func (gc *GuildCreate) SetLocale(d discord.Locale) *GuildCreate {
+	gc.mutation.SetLocale(d)
+	return gc
+}
+
+// SetNillableLocale sets the "locale" field if the given value is not nil.
+func (gc *GuildCreate) SetNillableLocale(d *discord.Locale) *GuildCreate {
+	if d != nil {
+		gc.SetLocale(*d)
+	}
 	return gc
 }
 
@@ -44,17 +60,17 @@ func (gc *GuildCreate) SetOwner(u *User) *GuildCreate {
 	return gc.SetOwnerID(u.ID)
 }
 
-// AddMemberIDs adds the "members" edge to the User entity by IDs.
-func (gc *GuildCreate) AddMemberIDs(ids ...snowflake.ID) *GuildCreate {
+// AddMemberIDs adds the "members" edge to the Member entity by IDs.
+func (gc *GuildCreate) AddMemberIDs(ids ...int) *GuildCreate {
 	gc.mutation.AddMemberIDs(ids...)
 	return gc
 }
 
-// AddMembers adds the "members" edges to the User entity.
-func (gc *GuildCreate) AddMembers(u ...*User) *GuildCreate {
-	ids := make([]snowflake.ID, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// AddMembers adds the "members" edges to the Member entity.
+func (gc *GuildCreate) AddMembers(m ...*Member) *GuildCreate {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
 	}
 	return gc.AddMemberIDs(ids...)
 }
@@ -66,6 +82,7 @@ func (gc *GuildCreate) Mutation() *GuildMutation {
 
 // Save creates the Guild in the database.
 func (gc *GuildCreate) Save(ctx context.Context) (*Guild, error) {
+	gc.defaults()
 	return withHooks(ctx, gc.sqlSave, gc.mutation, gc.hooks)
 }
 
@@ -91,6 +108,14 @@ func (gc *GuildCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (gc *GuildCreate) defaults() {
+	if _, ok := gc.mutation.Locale(); !ok {
+		v := guild.DefaultLocale
+		gc.mutation.SetLocale(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (gc *GuildCreate) check() error {
 	if _, ok := gc.mutation.Name(); !ok {
@@ -99,6 +124,14 @@ func (gc *GuildCreate) check() error {
 	if v, ok := gc.mutation.Name(); ok {
 		if err := guild.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Guild.name": %w`, err)}
+		}
+	}
+	if _, ok := gc.mutation.Locale(); !ok {
+		return &ValidationError{Name: "locale", err: errors.New(`ent: missing required field "Guild.locale"`)}
+	}
+	if v, ok := gc.mutation.Locale(); ok {
+		if err := guild.LocaleValidator(string(v)); err != nil {
+			return &ValidationError{Name: "locale", err: fmt.Errorf(`ent: validator failed for field "Guild.locale": %w`, err)}
 		}
 	}
 	if _, ok := gc.mutation.OwnerID(); !ok {
@@ -140,6 +173,10 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 		_spec.SetField(guild.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
+	if value, ok := gc.mutation.Locale(); ok {
+		_spec.SetField(guild.FieldLocale, field.TypeString, value)
+		_node.Locale = value
+	}
 	if nodes := gc.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -165,7 +202,7 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 			Columns: guild.MembersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -194,6 +231,7 @@ func (gcb *GuildCreateBulk) Save(ctx context.Context) ([]*Guild, error) {
 	for i := range gcb.builders {
 		func(i int, root context.Context) {
 			builder := gcb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*GuildMutation)
 				if !ok {

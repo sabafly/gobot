@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/sabafly/gobot/ent/guild"
+	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/ent/wordsuffix"
 )
@@ -76,6 +77,7 @@ func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			guild.Table:      guild.ValidColumn,
+			member.Table:     member.ValidColumn,
 			user.Table:       user.ValidColumn,
 			wordsuffix.Table: wordsuffix.ValidColumn,
 		})

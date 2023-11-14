@@ -5,6 +5,7 @@ package ent
 import (
 	"time"
 
+	"github.com/disgoorg/disgo/discord"
 	"github.com/google/uuid"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/schema"
@@ -22,6 +23,12 @@ func init() {
 	guildDescName := guildFields[1].Descriptor()
 	// guild.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	guild.NameValidator = guildDescName.Validators[0].(func(string) error)
+	// guildDescLocale is the schema descriptor for locale field.
+	guildDescLocale := guildFields[2].Descriptor()
+	// guild.DefaultLocale holds the default value on creation for the locale field.
+	guild.DefaultLocale = discord.Locale(guildDescLocale.Default.(string))
+	// guild.LocaleValidator is a validator for the "locale" field. It is called by the builders before save.
+	guild.LocaleValidator = guildDescLocale.Validators[0].(func(string) error)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescName is the schema descriptor for name field.
@@ -32,6 +39,12 @@ func init() {
 	userDescCreatedAt := userFields[2].Descriptor()
 	// user.DefaultCreatedAt holds the default value on creation for the created_at field.
 	user.DefaultCreatedAt = userDescCreatedAt.Default.(func() time.Time)
+	// userDescLocale is the schema descriptor for locale field.
+	userDescLocale := userFields[3].Descriptor()
+	// user.DefaultLocale holds the default value on creation for the locale field.
+	user.DefaultLocale = discord.Locale(userDescLocale.Default.(string))
+	// user.LocaleValidator is a validator for the "locale" field. It is called by the builders before save.
+	user.LocaleValidator = userDescLocale.Validators[0].(func(string) error)
 	wordsuffixFields := schema.WordSuffix{}.Fields()
 	_ = wordsuffixFields
 	// wordsuffixDescSuffix is the schema descriptor for suffix field.

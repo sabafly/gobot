@@ -5,6 +5,7 @@ package guild
 import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/disgoorg/disgo/discord"
 )
 
 const (
@@ -14,6 +15,8 @@ const (
 	FieldID = "id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldLocale holds the string denoting the locale field in the database.
+	FieldLocale = "locale"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
 	// EdgeMembers holds the string denoting the members edge name in mutations.
@@ -29,15 +32,16 @@ const (
 	OwnerColumn = "user_own_guilds"
 	// MembersTable is the table that holds the members relation/edge. The primary key declared below.
 	MembersTable = "guild_members"
-	// MembersInverseTable is the table name for the User entity.
-	// It exists in this package in order to avoid circular dependency with the "user" package.
-	MembersInverseTable = "users"
+	// MembersInverseTable is the table name for the Member entity.
+	// It exists in this package in order to avoid circular dependency with the "member" package.
+	MembersInverseTable = "members"
 )
 
 // Columns holds all SQL columns for guild fields.
 var Columns = []string{
 	FieldID,
 	FieldName,
+	FieldLocale,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "guilds"
@@ -49,7 +53,7 @@ var ForeignKeys = []string{
 var (
 	// MembersPrimaryKey and MembersColumn2 are the table columns denoting the
 	// primary key for the members relation (M2M).
-	MembersPrimaryKey = []string{"guild_id", "user_id"}
+	MembersPrimaryKey = []string{"guild_id", "member_id"}
 )
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -70,6 +74,10 @@ func ValidColumn(column string) bool {
 var (
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
+	// DefaultLocale holds the default value on creation for the "locale" field.
+	DefaultLocale discord.Locale
+	// LocaleValidator is a validator for the "locale" field. It is called by the builders before save.
+	LocaleValidator func(string) error
 )
 
 // OrderOption defines the ordering options for the Guild queries.
@@ -83,6 +91,11 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByLocale orders the results by the locale field.
+func ByLocale(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLocale, opts...).ToFunc()
 }
 
 // ByOwnerField orders the results by owner field.

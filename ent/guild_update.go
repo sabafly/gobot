@@ -10,8 +10,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/disgoorg/disgo/discord"
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/ent/guild"
+	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/predicate"
 	"github.com/sabafly/gobot/ent/user"
 )
@@ -35,6 +37,20 @@ func (gu *GuildUpdate) SetName(s string) *GuildUpdate {
 	return gu
 }
 
+// SetLocale sets the "locale" field.
+func (gu *GuildUpdate) SetLocale(d discord.Locale) *GuildUpdate {
+	gu.mutation.SetLocale(d)
+	return gu
+}
+
+// SetNillableLocale sets the "locale" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableLocale(d *discord.Locale) *GuildUpdate {
+	if d != nil {
+		gu.SetLocale(*d)
+	}
+	return gu
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (gu *GuildUpdate) SetOwnerID(id snowflake.ID) *GuildUpdate {
 	gu.mutation.SetOwnerID(id)
@@ -46,17 +62,17 @@ func (gu *GuildUpdate) SetOwner(u *User) *GuildUpdate {
 	return gu.SetOwnerID(u.ID)
 }
 
-// AddMemberIDs adds the "members" edge to the User entity by IDs.
-func (gu *GuildUpdate) AddMemberIDs(ids ...snowflake.ID) *GuildUpdate {
+// AddMemberIDs adds the "members" edge to the Member entity by IDs.
+func (gu *GuildUpdate) AddMemberIDs(ids ...int) *GuildUpdate {
 	gu.mutation.AddMemberIDs(ids...)
 	return gu
 }
 
-// AddMembers adds the "members" edges to the User entity.
-func (gu *GuildUpdate) AddMembers(u ...*User) *GuildUpdate {
-	ids := make([]snowflake.ID, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// AddMembers adds the "members" edges to the Member entity.
+func (gu *GuildUpdate) AddMembers(m ...*Member) *GuildUpdate {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
 	}
 	return gu.AddMemberIDs(ids...)
 }
@@ -72,23 +88,23 @@ func (gu *GuildUpdate) ClearOwner() *GuildUpdate {
 	return gu
 }
 
-// ClearMembers clears all "members" edges to the User entity.
+// ClearMembers clears all "members" edges to the Member entity.
 func (gu *GuildUpdate) ClearMembers() *GuildUpdate {
 	gu.mutation.ClearMembers()
 	return gu
 }
 
-// RemoveMemberIDs removes the "members" edge to User entities by IDs.
-func (gu *GuildUpdate) RemoveMemberIDs(ids ...snowflake.ID) *GuildUpdate {
+// RemoveMemberIDs removes the "members" edge to Member entities by IDs.
+func (gu *GuildUpdate) RemoveMemberIDs(ids ...int) *GuildUpdate {
 	gu.mutation.RemoveMemberIDs(ids...)
 	return gu
 }
 
-// RemoveMembers removes "members" edges to User entities.
-func (gu *GuildUpdate) RemoveMembers(u ...*User) *GuildUpdate {
-	ids := make([]snowflake.ID, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// RemoveMembers removes "members" edges to Member entities.
+func (gu *GuildUpdate) RemoveMembers(m ...*Member) *GuildUpdate {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
 	}
 	return gu.RemoveMemberIDs(ids...)
 }
@@ -127,6 +143,11 @@ func (gu *GuildUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Guild.name": %w`, err)}
 		}
 	}
+	if v, ok := gu.mutation.Locale(); ok {
+		if err := guild.LocaleValidator(string(v)); err != nil {
+			return &ValidationError{Name: "locale", err: fmt.Errorf(`ent: validator failed for field "Guild.locale": %w`, err)}
+		}
+	}
 	if _, ok := gu.mutation.OwnerID(); gu.mutation.OwnerCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Guild.owner"`)
 	}
@@ -147,6 +168,9 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := gu.mutation.Name(); ok {
 		_spec.SetField(guild.FieldName, field.TypeString, value)
+	}
+	if value, ok := gu.mutation.Locale(); ok {
+		_spec.SetField(guild.FieldLocale, field.TypeString, value)
 	}
 	if gu.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -185,7 +209,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: guild.MembersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -198,7 +222,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: guild.MembersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -214,7 +238,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Columns: guild.MembersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -248,6 +272,20 @@ func (guo *GuildUpdateOne) SetName(s string) *GuildUpdateOne {
 	return guo
 }
 
+// SetLocale sets the "locale" field.
+func (guo *GuildUpdateOne) SetLocale(d discord.Locale) *GuildUpdateOne {
+	guo.mutation.SetLocale(d)
+	return guo
+}
+
+// SetNillableLocale sets the "locale" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableLocale(d *discord.Locale) *GuildUpdateOne {
+	if d != nil {
+		guo.SetLocale(*d)
+	}
+	return guo
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (guo *GuildUpdateOne) SetOwnerID(id snowflake.ID) *GuildUpdateOne {
 	guo.mutation.SetOwnerID(id)
@@ -259,17 +297,17 @@ func (guo *GuildUpdateOne) SetOwner(u *User) *GuildUpdateOne {
 	return guo.SetOwnerID(u.ID)
 }
 
-// AddMemberIDs adds the "members" edge to the User entity by IDs.
-func (guo *GuildUpdateOne) AddMemberIDs(ids ...snowflake.ID) *GuildUpdateOne {
+// AddMemberIDs adds the "members" edge to the Member entity by IDs.
+func (guo *GuildUpdateOne) AddMemberIDs(ids ...int) *GuildUpdateOne {
 	guo.mutation.AddMemberIDs(ids...)
 	return guo
 }
 
-// AddMembers adds the "members" edges to the User entity.
-func (guo *GuildUpdateOne) AddMembers(u ...*User) *GuildUpdateOne {
-	ids := make([]snowflake.ID, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// AddMembers adds the "members" edges to the Member entity.
+func (guo *GuildUpdateOne) AddMembers(m ...*Member) *GuildUpdateOne {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
 	}
 	return guo.AddMemberIDs(ids...)
 }
@@ -285,23 +323,23 @@ func (guo *GuildUpdateOne) ClearOwner() *GuildUpdateOne {
 	return guo
 }
 
-// ClearMembers clears all "members" edges to the User entity.
+// ClearMembers clears all "members" edges to the Member entity.
 func (guo *GuildUpdateOne) ClearMembers() *GuildUpdateOne {
 	guo.mutation.ClearMembers()
 	return guo
 }
 
-// RemoveMemberIDs removes the "members" edge to User entities by IDs.
-func (guo *GuildUpdateOne) RemoveMemberIDs(ids ...snowflake.ID) *GuildUpdateOne {
+// RemoveMemberIDs removes the "members" edge to Member entities by IDs.
+func (guo *GuildUpdateOne) RemoveMemberIDs(ids ...int) *GuildUpdateOne {
 	guo.mutation.RemoveMemberIDs(ids...)
 	return guo
 }
 
-// RemoveMembers removes "members" edges to User entities.
-func (guo *GuildUpdateOne) RemoveMembers(u ...*User) *GuildUpdateOne {
-	ids := make([]snowflake.ID, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// RemoveMembers removes "members" edges to Member entities.
+func (guo *GuildUpdateOne) RemoveMembers(m ...*Member) *GuildUpdateOne {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
 	}
 	return guo.RemoveMemberIDs(ids...)
 }
@@ -353,6 +391,11 @@ func (guo *GuildUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Guild.name": %w`, err)}
 		}
 	}
+	if v, ok := guo.mutation.Locale(); ok {
+		if err := guild.LocaleValidator(string(v)); err != nil {
+			return &ValidationError{Name: "locale", err: fmt.Errorf(`ent: validator failed for field "Guild.locale": %w`, err)}
+		}
+	}
 	if _, ok := guo.mutation.OwnerID(); guo.mutation.OwnerCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Guild.owner"`)
 	}
@@ -391,6 +434,9 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 	if value, ok := guo.mutation.Name(); ok {
 		_spec.SetField(guild.FieldName, field.TypeString, value)
 	}
+	if value, ok := guo.mutation.Locale(); ok {
+		_spec.SetField(guild.FieldLocale, field.TypeString, value)
+	}
 	if guo.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -428,7 +474,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 			Columns: guild.MembersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
@@ -441,7 +487,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 			Columns: guild.MembersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -457,7 +503,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 			Columns: guild.MembersPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

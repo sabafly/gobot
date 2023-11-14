@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/ent/guild"
+	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/predicate"
 	"github.com/sabafly/gobot/ent/user"
 )
@@ -25,7 +26,7 @@ type GuildQuery struct {
 	inters      []Interceptor
 	predicates  []predicate.Guild
 	withOwner   *UserQuery
-	withMembers *UserQuery
+	withMembers *MemberQuery
 	withFKs     bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -86,8 +87,8 @@ func (gq *GuildQuery) QueryOwner() *UserQuery {
 }
 
 // QueryMembers chains the current query on the "members" edge.
-func (gq *GuildQuery) QueryMembers() *UserQuery {
-	query := (&UserClient{config: gq.config}).Query()
+func (gq *GuildQuery) QueryMembers() *MemberQuery {
+	query := (&MemberClient{config: gq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := gq.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -98,7 +99,7 @@ func (gq *GuildQuery) QueryMembers() *UserQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(guild.Table, guild.FieldID, selector),
-			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.To(member.Table, member.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, guild.MembersTable, guild.MembersPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
@@ -320,8 +321,8 @@ func (gq *GuildQuery) WithOwner(opts ...func(*UserQuery)) *GuildQuery {
 
 // WithMembers tells the query-builder to eager-load the nodes that are connected to
 // the "members" edge. The optional arguments are used to configure the query builder of the edge.
-func (gq *GuildQuery) WithMembers(opts ...func(*UserQuery)) *GuildQuery {
-	query := (&UserClient{config: gq.config}).Query()
+func (gq *GuildQuery) WithMembers(opts ...func(*MemberQuery)) *GuildQuery {
+	query := (&MemberClient{config: gq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
@@ -445,8 +446,8 @@ func (gq *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild,
 	}
 	if query := gq.withMembers; query != nil {
 		if err := gq.loadMembers(ctx, query, nodes,
-			func(n *Guild) { n.Edges.Members = []*User{} },
-			func(n *Guild, e *User) { n.Edges.Members = append(n.Edges.Members, e) }); err != nil {
+			func(n *Guild) { n.Edges.Members = []*Member{} },
+			func(n *Guild, e *Member) { n.Edges.Members = append(n.Edges.Members, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -485,10 +486,10 @@ func (gq *GuildQuery) loadOwner(ctx context.Context, query *UserQuery, nodes []*
 	}
 	return nil
 }
-func (gq *GuildQuery) loadMembers(ctx context.Context, query *UserQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *User)) error {
+func (gq *GuildQuery) loadMembers(ctx context.Context, query *MemberQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *Member)) error {
 	edgeIDs := make([]driver.Value, len(nodes))
 	byID := make(map[snowflake.ID]*Guild)
-	nids := make(map[snowflake.ID]map[*Guild]struct{})
+	nids := make(map[int]map[*Guild]struct{})
 	for i, node := range nodes {
 		edgeIDs[i] = node.ID
 		byID[node.ID] = node
@@ -498,7 +499,7 @@ func (gq *GuildQuery) loadMembers(ctx context.Context, query *UserQuery, nodes [
 	}
 	query.Where(func(s *sql.Selector) {
 		joinT := sql.Table(guild.MembersTable)
-		s.Join(joinT).On(s.C(user.FieldID), joinT.C(guild.MembersPrimaryKey[1]))
+		s.Join(joinT).On(s.C(member.FieldID), joinT.C(guild.MembersPrimaryKey[1]))
 		s.Where(sql.InValues(joinT.C(guild.MembersPrimaryKey[0]), edgeIDs...))
 		columns := s.SelectedColumns()
 		s.Select(joinT.C(guild.MembersPrimaryKey[0]))
@@ -521,7 +522,7 @@ func (gq *GuildQuery) loadMembers(ctx context.Context, query *UserQuery, nodes [
 			}
 			spec.Assign = func(columns []string, values []any) error {
 				outValue := snowflake.ID(values[0].(*sql.NullInt64).Int64)
-				inValue := snowflake.ID(values[1].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
 				if nids[inValue] == nil {
 					nids[inValue] = map[*Guild]struct{}{byID[outValue]: {}}
 					return assign(columns[1:], values[1:])
@@ -531,7 +532,7 @@ func (gq *GuildQuery) loadMembers(ctx context.Context, query *UserQuery, nodes [
 			}
 		})
 	})
-	neighbors, err := withInterceptors[[]*User](ctx, query, qr, query.inters)
+	neighbors, err := withInterceptors[[]*Member](ctx, query, qr, query.inters)
 	if err != nil {
 		return err
 	}

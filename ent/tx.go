@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Guild is the client for interacting with the Guild builders.
 	Guild *GuildClient
+	// Member is the client for interacting with the Member builders.
+	Member *MemberClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// WordSuffix is the client for interacting with the WordSuffix builders.
@@ -150,6 +152,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Guild = NewGuildClient(tx.config)
+	tx.Member = NewMemberClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.WordSuffix = NewWordSuffixClient(tx.config)
 }

@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
+	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
 )
 
@@ -26,6 +27,10 @@ func (User) Fields() []ent.Field {
 		field.Time("created_at").
 			Default(time.Now).
 			Immutable(),
+		field.String("locale").
+			NotEmpty().
+			Default(string(discord.LocaleJapanese)).
+			GoType(discord.Locale("")),
 	}
 }
 
@@ -33,8 +38,8 @@ func (User) Fields() []ent.Field {
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("own_guilds", Guild.Type),
-		edge.From("guilds", Guild.Type).
-			Ref("members"),
+		edge.From("guilds", Member.Type).
+			Ref("owner"),
 		edge.To("word_suffix", WordSuffix.Type),
 	}
 }

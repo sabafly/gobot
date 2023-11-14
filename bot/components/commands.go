@@ -13,10 +13,13 @@ var (
 	DefaultCommands []Command
 )
 
-func (c *Components) AddCommand(cmd Command) {
-	if c.commandsRegistry == nil {
-		c.commandsRegistry = make(map[string]Command)
+func (c *Components) AddCommands(cmds ...Command) {
+	for _, cmd := range cmds {
+		c.commandsRegistry[cmd.Name()] = cmd
 	}
+}
+
+func (c *Components) AddCommand(cmd Command) {
 	c.commandsRegistry[cmd.Name()] = cmd
 }
 
@@ -25,21 +28,28 @@ func (c *Components) Initialize(client bot.Client) error {
 		c.AddCommand(cmd)
 	}
 
-	if c.commandsRegistry == nil {
-		c.commandsRegistry = make(map[string]Command)
-	}
-
-	commands := []discord.ApplicationCommandCreate{}
+	var commands, privCommands []discord.ApplicationCommandCreate
 	for name, cmd := range c.commandsRegistry {
 		if len(cmd.Create()) > 0 {
-			slog.Info("コマンドを登録します", "name", name, "count", len(cmd.Create()))
-			commands = append(commands, cmd.Create()...)
+			slog.Info("コマンドを登録します", "name", name, "count", len(cmd.Create()), "is_private", cmd.IsPrivate())
+			if cmd.IsPrivate() {
+				privCommands = append(privCommands, cmd.Create()...)
+			} else {
+				commands = append(commands, cmd.Create()...)
+			}
 		}
 	}
 
 	if _, err := client.Rest().SetGlobalCommands(client.ApplicationID(), commands); err != nil {
 		slog.Error("コマンドの登録に失敗", "err", err)
 		return err
+	}
+
+	for _, id := range c.Config().PrivateGuilds {
+		if _, err := client.Rest().SetGuildCommands(client.ApplicationID(), id, privCommands); err != nil {
+			slog.Error("プライベートコマンドの登録に失敗", "err", err, "guild", id)
+			return err
+		}
 	}
 
 	client.EventManager().AddEventListeners(
@@ -132,6 +142,7 @@ type Command interface {
 	Name() string
 
 	Create() []discord.ApplicationCommandCreate
+	IsPrivate() bool
 	CommandHandler() func(event *events.ApplicationCommandInteractionCreate) error
 	ComponentHandler() func(event *events.ComponentInteractionCreate) error
 	ModalHandler() func(event *events.ModalSubmitInteractionCreate) error

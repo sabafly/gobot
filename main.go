@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	bot "github.com/sabafly/gobot/bot"
+	"github.com/sabafly/gobot/bot"
 	"github.com/spf13/cobra"
 )
 

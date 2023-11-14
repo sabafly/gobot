@@ -11,12 +11,15 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/disgoorg/disgo/discord"
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"github.com/sabafly/gobot/ent/guild"
+	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/predicate"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/ent/wordsuffix"
+	"github.com/sabafly/gobot/internal/permissions"
 )
 
 const (
@@ -29,6 +32,7 @@ const (
 
 	// Node types.
 	TypeGuild      = "Guild"
+	TypeMember     = "Member"
 	TypeUser       = "User"
 	TypeWordSuffix = "WordSuffix"
 )
@@ -40,11 +44,12 @@ type GuildMutation struct {
 	typ            string
 	id             *snowflake.ID
 	name           *string
+	locale         *discord.Locale
 	clearedFields  map[string]struct{}
 	owner          *snowflake.ID
 	clearedowner   bool
-	members        map[snowflake.ID]struct{}
-	removedmembers map[snowflake.ID]struct{}
+	members        map[int]struct{}
+	removedmembers map[int]struct{}
 	clearedmembers bool
 	done           bool
 	oldValue       func(context.Context) (*Guild, error)
@@ -191,6 +196,42 @@ func (m *GuildMutation) ResetName() {
 	m.name = nil
 }
 
+// SetLocale sets the "locale" field.
+func (m *GuildMutation) SetLocale(d discord.Locale) {
+	m.locale = &d
+}
+
+// Locale returns the value of the "locale" field in the mutation.
+func (m *GuildMutation) Locale() (r discord.Locale, exists bool) {
+	v := m.locale
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLocale returns the old "locale" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldLocale(ctx context.Context) (v discord.Locale, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLocale is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLocale requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLocale: %w", err)
+	}
+	return oldValue.Locale, nil
+}
+
+// ResetLocale resets all changes to the "locale" field.
+func (m *GuildMutation) ResetLocale() {
+	m.locale = nil
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by id.
 func (m *GuildMutation) SetOwnerID(id snowflake.ID) {
 	m.owner = &id
@@ -230,30 +271,30 @@ func (m *GuildMutation) ResetOwner() {
 	m.clearedowner = false
 }
 
-// AddMemberIDs adds the "members" edge to the User entity by ids.
-func (m *GuildMutation) AddMemberIDs(ids ...snowflake.ID) {
+// AddMemberIDs adds the "members" edge to the Member entity by ids.
+func (m *GuildMutation) AddMemberIDs(ids ...int) {
 	if m.members == nil {
-		m.members = make(map[snowflake.ID]struct{})
+		m.members = make(map[int]struct{})
 	}
 	for i := range ids {
 		m.members[ids[i]] = struct{}{}
 	}
 }
 
-// ClearMembers clears the "members" edge to the User entity.
+// ClearMembers clears the "members" edge to the Member entity.
 func (m *GuildMutation) ClearMembers() {
 	m.clearedmembers = true
 }
 
-// MembersCleared reports if the "members" edge to the User entity was cleared.
+// MembersCleared reports if the "members" edge to the Member entity was cleared.
 func (m *GuildMutation) MembersCleared() bool {
 	return m.clearedmembers
 }
 
-// RemoveMemberIDs removes the "members" edge to the User entity by IDs.
-func (m *GuildMutation) RemoveMemberIDs(ids ...snowflake.ID) {
+// RemoveMemberIDs removes the "members" edge to the Member entity by IDs.
+func (m *GuildMutation) RemoveMemberIDs(ids ...int) {
 	if m.removedmembers == nil {
-		m.removedmembers = make(map[snowflake.ID]struct{})
+		m.removedmembers = make(map[int]struct{})
 	}
 	for i := range ids {
 		delete(m.members, ids[i])
@@ -261,8 +302,8 @@ func (m *GuildMutation) RemoveMemberIDs(ids ...snowflake.ID) {
 	}
 }
 
-// RemovedMembers returns the removed IDs of the "members" edge to the User entity.
-func (m *GuildMutation) RemovedMembersIDs() (ids []snowflake.ID) {
+// RemovedMembers returns the removed IDs of the "members" edge to the Member entity.
+func (m *GuildMutation) RemovedMembersIDs() (ids []int) {
 	for id := range m.removedmembers {
 		ids = append(ids, id)
 	}
@@ -270,7 +311,7 @@ func (m *GuildMutation) RemovedMembersIDs() (ids []snowflake.ID) {
 }
 
 // MembersIDs returns the "members" edge IDs in the mutation.
-func (m *GuildMutation) MembersIDs() (ids []snowflake.ID) {
+func (m *GuildMutation) MembersIDs() (ids []int) {
 	for id := range m.members {
 		ids = append(ids, id)
 	}
@@ -318,9 +359,12 @@ func (m *GuildMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GuildMutation) Fields() []string {
-	fields := make([]string, 0, 1)
+	fields := make([]string, 0, 2)
 	if m.name != nil {
 		fields = append(fields, guild.FieldName)
+	}
+	if m.locale != nil {
+		fields = append(fields, guild.FieldLocale)
 	}
 	return fields
 }
@@ -332,6 +376,8 @@ func (m *GuildMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case guild.FieldName:
 		return m.Name()
+	case guild.FieldLocale:
+		return m.Locale()
 	}
 	return nil, false
 }
@@ -343,6 +389,8 @@ func (m *GuildMutation) OldField(ctx context.Context, name string) (ent.Value, e
 	switch name {
 	case guild.FieldName:
 		return m.OldName(ctx)
+	case guild.FieldLocale:
+		return m.OldLocale(ctx)
 	}
 	return nil, fmt.Errorf("unknown Guild field %s", name)
 }
@@ -358,6 +406,13 @@ func (m *GuildMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetName(v)
+		return nil
+	case guild.FieldLocale:
+		v, ok := value.(discord.Locale)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLocale(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Guild field %s", name)
@@ -410,6 +465,9 @@ func (m *GuildMutation) ResetField(name string) error {
 	switch name {
 	case guild.FieldName:
 		m.ResetName()
+		return nil
+	case guild.FieldLocale:
+		m.ResetLocale()
 		return nil
 	}
 	return fmt.Errorf("unknown Guild field %s", name)
@@ -517,6 +575,637 @@ func (m *GuildMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Guild edge %s", name)
 }
 
+// MemberMutation represents an operation that mutates the Member nodes in the graph.
+type MemberMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int
+	user_id          *snowflake.ID
+	adduser_id       *snowflake.ID
+	permission       *permissions.Permission
+	appendpermission permissions.Permission
+	clearedFields    map[string]struct{}
+	guild            map[snowflake.ID]struct{}
+	removedguild     map[snowflake.ID]struct{}
+	clearedguild     bool
+	owner            map[snowflake.ID]struct{}
+	removedowner     map[snowflake.ID]struct{}
+	clearedowner     bool
+	done             bool
+	oldValue         func(context.Context) (*Member, error)
+	predicates       []predicate.Member
+}
+
+var _ ent.Mutation = (*MemberMutation)(nil)
+
+// memberOption allows management of the mutation configuration using functional options.
+type memberOption func(*MemberMutation)
+
+// newMemberMutation creates new mutation for the Member entity.
+func newMemberMutation(c config, op Op, opts ...memberOption) *MemberMutation {
+	m := &MemberMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeMember,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withMemberID sets the ID field of the mutation.
+func withMemberID(id int) memberOption {
+	return func(m *MemberMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Member
+		)
+		m.oldValue = func(ctx context.Context) (*Member, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Member.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withMember sets the old Member of the mutation.
+func withMember(node *Member) memberOption {
+	return func(m *MemberMutation) {
+		m.oldValue = func(context.Context) (*Member, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m MemberMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m MemberMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *MemberMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *MemberMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Member.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetUserID sets the "user_id" field.
+func (m *MemberMutation) SetUserID(s snowflake.ID) {
+	m.user_id = &s
+	m.adduser_id = nil
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *MemberMutation) UserID() (r snowflake.ID, exists bool) {
+	v := m.user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the Member entity.
+// If the Member object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MemberMutation) OldUserID(ctx context.Context) (v snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// AddUserID adds s to the "user_id" field.
+func (m *MemberMutation) AddUserID(s snowflake.ID) {
+	if m.adduser_id != nil {
+		*m.adduser_id += s
+	} else {
+		m.adduser_id = &s
+	}
+}
+
+// AddedUserID returns the value that was added to the "user_id" field in this mutation.
+func (m *MemberMutation) AddedUserID() (r snowflake.ID, exists bool) {
+	v := m.adduser_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *MemberMutation) ResetUserID() {
+	m.user_id = nil
+	m.adduser_id = nil
+}
+
+// SetPermission sets the "permission" field.
+func (m *MemberMutation) SetPermission(pe permissions.Permission) {
+	m.permission = &pe
+	m.appendpermission = nil
+}
+
+// Permission returns the value of the "permission" field in the mutation.
+func (m *MemberMutation) Permission() (r permissions.Permission, exists bool) {
+	v := m.permission
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPermission returns the old "permission" field's value of the Member entity.
+// If the Member object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MemberMutation) OldPermission(ctx context.Context) (v permissions.Permission, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPermission is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPermission requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPermission: %w", err)
+	}
+	return oldValue.Permission, nil
+}
+
+// AppendPermission adds pe to the "permission" field.
+func (m *MemberMutation) AppendPermission(pe permissions.Permission) {
+	m.appendpermission = append(m.appendpermission, pe...)
+}
+
+// AppendedPermission returns the list of values that were appended to the "permission" field in this mutation.
+func (m *MemberMutation) AppendedPermission() (permissions.Permission, bool) {
+	if len(m.appendpermission) == 0 {
+		return nil, false
+	}
+	return m.appendpermission, true
+}
+
+// ClearPermission clears the value of the "permission" field.
+func (m *MemberMutation) ClearPermission() {
+	m.permission = nil
+	m.appendpermission = nil
+	m.clearedFields[member.FieldPermission] = struct{}{}
+}
+
+// PermissionCleared returns if the "permission" field was cleared in this mutation.
+func (m *MemberMutation) PermissionCleared() bool {
+	_, ok := m.clearedFields[member.FieldPermission]
+	return ok
+}
+
+// ResetPermission resets all changes to the "permission" field.
+func (m *MemberMutation) ResetPermission() {
+	m.permission = nil
+	m.appendpermission = nil
+	delete(m.clearedFields, member.FieldPermission)
+}
+
+// AddGuildIDs adds the "guild" edge to the Guild entity by ids.
+func (m *MemberMutation) AddGuildIDs(ids ...snowflake.ID) {
+	if m.guild == nil {
+		m.guild = make(map[snowflake.ID]struct{})
+	}
+	for i := range ids {
+		m.guild[ids[i]] = struct{}{}
+	}
+}
+
+// ClearGuild clears the "guild" edge to the Guild entity.
+func (m *MemberMutation) ClearGuild() {
+	m.clearedguild = true
+}
+
+// GuildCleared reports if the "guild" edge to the Guild entity was cleared.
+func (m *MemberMutation) GuildCleared() bool {
+	return m.clearedguild
+}
+
+// RemoveGuildIDs removes the "guild" edge to the Guild entity by IDs.
+func (m *MemberMutation) RemoveGuildIDs(ids ...snowflake.ID) {
+	if m.removedguild == nil {
+		m.removedguild = make(map[snowflake.ID]struct{})
+	}
+	for i := range ids {
+		delete(m.guild, ids[i])
+		m.removedguild[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedGuild returns the removed IDs of the "guild" edge to the Guild entity.
+func (m *MemberMutation) RemovedGuildIDs() (ids []snowflake.ID) {
+	for id := range m.removedguild {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// GuildIDs returns the "guild" edge IDs in the mutation.
+func (m *MemberMutation) GuildIDs() (ids []snowflake.ID) {
+	for id := range m.guild {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetGuild resets all changes to the "guild" edge.
+func (m *MemberMutation) ResetGuild() {
+	m.guild = nil
+	m.clearedguild = false
+	m.removedguild = nil
+}
+
+// AddOwnerIDs adds the "owner" edge to the User entity by ids.
+func (m *MemberMutation) AddOwnerIDs(ids ...snowflake.ID) {
+	if m.owner == nil {
+		m.owner = make(map[snowflake.ID]struct{})
+	}
+	for i := range ids {
+		m.owner[ids[i]] = struct{}{}
+	}
+}
+
+// ClearOwner clears the "owner" edge to the User entity.
+func (m *MemberMutation) ClearOwner() {
+	m.clearedowner = true
+}
+
+// OwnerCleared reports if the "owner" edge to the User entity was cleared.
+func (m *MemberMutation) OwnerCleared() bool {
+	return m.clearedowner
+}
+
+// RemoveOwnerIDs removes the "owner" edge to the User entity by IDs.
+func (m *MemberMutation) RemoveOwnerIDs(ids ...snowflake.ID) {
+	if m.removedowner == nil {
+		m.removedowner = make(map[snowflake.ID]struct{})
+	}
+	for i := range ids {
+		delete(m.owner, ids[i])
+		m.removedowner[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedOwner returns the removed IDs of the "owner" edge to the User entity.
+func (m *MemberMutation) RemovedOwnerIDs() (ids []snowflake.ID) {
+	for id := range m.removedowner {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// OwnerIDs returns the "owner" edge IDs in the mutation.
+func (m *MemberMutation) OwnerIDs() (ids []snowflake.ID) {
+	for id := range m.owner {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetOwner resets all changes to the "owner" edge.
+func (m *MemberMutation) ResetOwner() {
+	m.owner = nil
+	m.clearedowner = false
+	m.removedowner = nil
+}
+
+// Where appends a list predicates to the MemberMutation builder.
+func (m *MemberMutation) Where(ps ...predicate.Member) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the MemberMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *MemberMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Member, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *MemberMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *MemberMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Member).
+func (m *MemberMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *MemberMutation) Fields() []string {
+	fields := make([]string, 0, 2)
+	if m.user_id != nil {
+		fields = append(fields, member.FieldUserID)
+	}
+	if m.permission != nil {
+		fields = append(fields, member.FieldPermission)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *MemberMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case member.FieldUserID:
+		return m.UserID()
+	case member.FieldPermission:
+		return m.Permission()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *MemberMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case member.FieldUserID:
+		return m.OldUserID(ctx)
+	case member.FieldPermission:
+		return m.OldPermission(ctx)
+	}
+	return nil, fmt.Errorf("unknown Member field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MemberMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case member.FieldUserID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case member.FieldPermission:
+		v, ok := value.(permissions.Permission)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPermission(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Member field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *MemberMutation) AddedFields() []string {
+	var fields []string
+	if m.adduser_id != nil {
+		fields = append(fields, member.FieldUserID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *MemberMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case member.FieldUserID:
+		return m.AddedUserID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MemberMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case member.FieldUserID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddUserID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Member numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *MemberMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(member.FieldPermission) {
+		fields = append(fields, member.FieldPermission)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *MemberMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *MemberMutation) ClearField(name string) error {
+	switch name {
+	case member.FieldPermission:
+		m.ClearPermission()
+		return nil
+	}
+	return fmt.Errorf("unknown Member nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *MemberMutation) ResetField(name string) error {
+	switch name {
+	case member.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case member.FieldPermission:
+		m.ResetPermission()
+		return nil
+	}
+	return fmt.Errorf("unknown Member field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *MemberMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.guild != nil {
+		edges = append(edges, member.EdgeGuild)
+	}
+	if m.owner != nil {
+		edges = append(edges, member.EdgeOwner)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *MemberMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case member.EdgeGuild:
+		ids := make([]ent.Value, 0, len(m.guild))
+		for id := range m.guild {
+			ids = append(ids, id)
+		}
+		return ids
+	case member.EdgeOwner:
+		ids := make([]ent.Value, 0, len(m.owner))
+		for id := range m.owner {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *MemberMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedguild != nil {
+		edges = append(edges, member.EdgeGuild)
+	}
+	if m.removedowner != nil {
+		edges = append(edges, member.EdgeOwner)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *MemberMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case member.EdgeGuild:
+		ids := make([]ent.Value, 0, len(m.removedguild))
+		for id := range m.removedguild {
+			ids = append(ids, id)
+		}
+		return ids
+	case member.EdgeOwner:
+		ids := make([]ent.Value, 0, len(m.removedowner))
+		for id := range m.removedowner {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *MemberMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedguild {
+		edges = append(edges, member.EdgeGuild)
+	}
+	if m.clearedowner {
+		edges = append(edges, member.EdgeOwner)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *MemberMutation) EdgeCleared(name string) bool {
+	switch name {
+	case member.EdgeGuild:
+		return m.clearedguild
+	case member.EdgeOwner:
+		return m.clearedowner
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *MemberMutation) ClearEdge(name string) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Member unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *MemberMutation) ResetEdge(name string) error {
+	switch name {
+	case member.EdgeGuild:
+		m.ResetGuild()
+		return nil
+	case member.EdgeOwner:
+		m.ResetOwner()
+		return nil
+	}
+	return fmt.Errorf("unknown Member edge %s", name)
+}
+
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
@@ -525,12 +1214,13 @@ type UserMutation struct {
 	id                 *snowflake.ID
 	name               *string
 	created_at         *time.Time
+	locale             *discord.Locale
 	clearedFields      map[string]struct{}
 	own_guilds         map[snowflake.ID]struct{}
 	removedown_guilds  map[snowflake.ID]struct{}
 	clearedown_guilds  bool
-	guilds             map[snowflake.ID]struct{}
-	removedguilds      map[snowflake.ID]struct{}
+	guilds             map[int]struct{}
+	removedguilds      map[int]struct{}
 	clearedguilds      bool
 	word_suffix        map[uuid.UUID]struct{}
 	removedword_suffix map[uuid.UUID]struct{}
@@ -716,6 +1406,42 @@ func (m *UserMutation) ResetCreatedAt() {
 	m.created_at = nil
 }
 
+// SetLocale sets the "locale" field.
+func (m *UserMutation) SetLocale(d discord.Locale) {
+	m.locale = &d
+}
+
+// Locale returns the value of the "locale" field in the mutation.
+func (m *UserMutation) Locale() (r discord.Locale, exists bool) {
+	v := m.locale
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLocale returns the old "locale" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldLocale(ctx context.Context) (v discord.Locale, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLocale is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLocale requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLocale: %w", err)
+	}
+	return oldValue.Locale, nil
+}
+
+// ResetLocale resets all changes to the "locale" field.
+func (m *UserMutation) ResetLocale() {
+	m.locale = nil
+}
+
 // AddOwnGuildIDs adds the "own_guilds" edge to the Guild entity by ids.
 func (m *UserMutation) AddOwnGuildIDs(ids ...snowflake.ID) {
 	if m.own_guilds == nil {
@@ -770,30 +1496,30 @@ func (m *UserMutation) ResetOwnGuilds() {
 	m.removedown_guilds = nil
 }
 
-// AddGuildIDs adds the "guilds" edge to the Guild entity by ids.
-func (m *UserMutation) AddGuildIDs(ids ...snowflake.ID) {
+// AddGuildIDs adds the "guilds" edge to the Member entity by ids.
+func (m *UserMutation) AddGuildIDs(ids ...int) {
 	if m.guilds == nil {
-		m.guilds = make(map[snowflake.ID]struct{})
+		m.guilds = make(map[int]struct{})
 	}
 	for i := range ids {
 		m.guilds[ids[i]] = struct{}{}
 	}
 }
 
-// ClearGuilds clears the "guilds" edge to the Guild entity.
+// ClearGuilds clears the "guilds" edge to the Member entity.
 func (m *UserMutation) ClearGuilds() {
 	m.clearedguilds = true
 }
 
-// GuildsCleared reports if the "guilds" edge to the Guild entity was cleared.
+// GuildsCleared reports if the "guilds" edge to the Member entity was cleared.
 func (m *UserMutation) GuildsCleared() bool {
 	return m.clearedguilds
 }
 
-// RemoveGuildIDs removes the "guilds" edge to the Guild entity by IDs.
-func (m *UserMutation) RemoveGuildIDs(ids ...snowflake.ID) {
+// RemoveGuildIDs removes the "guilds" edge to the Member entity by IDs.
+func (m *UserMutation) RemoveGuildIDs(ids ...int) {
 	if m.removedguilds == nil {
-		m.removedguilds = make(map[snowflake.ID]struct{})
+		m.removedguilds = make(map[int]struct{})
 	}
 	for i := range ids {
 		delete(m.guilds, ids[i])
@@ -801,8 +1527,8 @@ func (m *UserMutation) RemoveGuildIDs(ids ...snowflake.ID) {
 	}
 }
 
-// RemovedGuilds returns the removed IDs of the "guilds" edge to the Guild entity.
-func (m *UserMutation) RemovedGuildsIDs() (ids []snowflake.ID) {
+// RemovedGuilds returns the removed IDs of the "guilds" edge to the Member entity.
+func (m *UserMutation) RemovedGuildsIDs() (ids []int) {
 	for id := range m.removedguilds {
 		ids = append(ids, id)
 	}
@@ -810,7 +1536,7 @@ func (m *UserMutation) RemovedGuildsIDs() (ids []snowflake.ID) {
 }
 
 // GuildsIDs returns the "guilds" edge IDs in the mutation.
-func (m *UserMutation) GuildsIDs() (ids []snowflake.ID) {
+func (m *UserMutation) GuildsIDs() (ids []int) {
 	for id := range m.guilds {
 		ids = append(ids, id)
 	}
@@ -912,12 +1638,15 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+	fields := make([]string, 0, 3)
 	if m.name != nil {
 		fields = append(fields, user.FieldName)
 	}
 	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
+	}
+	if m.locale != nil {
+		fields = append(fields, user.FieldLocale)
 	}
 	return fields
 }
@@ -931,6 +1660,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case user.FieldCreatedAt:
 		return m.CreatedAt()
+	case user.FieldLocale:
+		return m.Locale()
 	}
 	return nil, false
 }
@@ -944,6 +1675,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldName(ctx)
 	case user.FieldCreatedAt:
 		return m.OldCreatedAt(ctx)
+	case user.FieldLocale:
+		return m.OldLocale(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -966,6 +1699,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCreatedAt(v)
+		return nil
+	case user.FieldLocale:
+		v, ok := value.(discord.Locale)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLocale(v)
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
@@ -1021,6 +1761,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldCreatedAt:
 		m.ResetCreatedAt()
+		return nil
+	case user.FieldLocale:
+		m.ResetLocale()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)

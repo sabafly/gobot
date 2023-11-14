@@ -8,6 +8,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/disgoorg/disgo/discord"
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/user"
@@ -20,6 +21,8 @@ type Guild struct {
 	ID snowflake.ID `json:"id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// Locale holds the value of the "locale" field.
+	Locale discord.Locale `json:"locale,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the GuildQuery when eager-loading is set.
 	Edges           GuildEdges `json:"edges"`
@@ -32,7 +35,7 @@ type GuildEdges struct {
 	// Owner holds the value of the owner edge.
 	Owner *User `json:"owner,omitempty"`
 	// Members holds the value of the members edge.
-	Members []*User `json:"members,omitempty"`
+	Members []*Member `json:"members,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
@@ -53,7 +56,7 @@ func (e GuildEdges) OwnerOrErr() (*User, error) {
 
 // MembersOrErr returns the Members value or an error if the edge
 // was not loaded in eager-loading.
-func (e GuildEdges) MembersOrErr() ([]*User, error) {
+func (e GuildEdges) MembersOrErr() ([]*Member, error) {
 	if e.loadedTypes[1] {
 		return e.Members, nil
 	}
@@ -67,7 +70,7 @@ func (*Guild) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case guild.FieldID:
 			values[i] = new(sql.NullInt64)
-		case guild.FieldName:
+		case guild.FieldName, guild.FieldLocale:
 			values[i] = new(sql.NullString)
 		case guild.ForeignKeys[0]: // user_own_guilds
 			values[i] = new(sql.NullInt64)
@@ -98,6 +101,12 @@ func (gu *Guild) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				gu.Name = value.String
 			}
+		case guild.FieldLocale:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field locale", values[i])
+			} else if value.Valid {
+				gu.Locale = discord.Locale(value.String)
+			}
 		case guild.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field user_own_guilds", values[i])
@@ -124,7 +133,7 @@ func (gu *Guild) QueryOwner() *UserQuery {
 }
 
 // QueryMembers queries the "members" edge of the Guild entity.
-func (gu *Guild) QueryMembers() *UserQuery {
+func (gu *Guild) QueryMembers() *MemberQuery {
 	return NewGuildClient(gu.config).QueryMembers(gu)
 }
 
@@ -153,6 +162,9 @@ func (gu *Guild) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", gu.ID))
 	builder.WriteString("name=")
 	builder.WriteString(gu.Name)
+	builder.WriteString(", ")
+	builder.WriteString("locale=")
+	builder.WriteString(fmt.Sprintf("%v", gu.Locale))
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -10,9 +10,11 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/disgoorg/disgo/discord"
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"github.com/sabafly/gobot/ent/guild"
+	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/ent/wordsuffix"
 )
@@ -44,6 +46,20 @@ func (uc *UserCreate) SetNillableCreatedAt(t *time.Time) *UserCreate {
 	return uc
 }
 
+// SetLocale sets the "locale" field.
+func (uc *UserCreate) SetLocale(d discord.Locale) *UserCreate {
+	uc.mutation.SetLocale(d)
+	return uc
+}
+
+// SetNillableLocale sets the "locale" field if the given value is not nil.
+func (uc *UserCreate) SetNillableLocale(d *discord.Locale) *UserCreate {
+	if d != nil {
+		uc.SetLocale(*d)
+	}
+	return uc
+}
+
 // SetID sets the "id" field.
 func (uc *UserCreate) SetID(s snowflake.ID) *UserCreate {
 	uc.mutation.SetID(s)
@@ -65,17 +81,17 @@ func (uc *UserCreate) AddOwnGuilds(g ...*Guild) *UserCreate {
 	return uc.AddOwnGuildIDs(ids...)
 }
 
-// AddGuildIDs adds the "guilds" edge to the Guild entity by IDs.
-func (uc *UserCreate) AddGuildIDs(ids ...snowflake.ID) *UserCreate {
+// AddGuildIDs adds the "guilds" edge to the Member entity by IDs.
+func (uc *UserCreate) AddGuildIDs(ids ...int) *UserCreate {
 	uc.mutation.AddGuildIDs(ids...)
 	return uc
 }
 
-// AddGuilds adds the "guilds" edges to the Guild entity.
-func (uc *UserCreate) AddGuilds(g ...*Guild) *UserCreate {
-	ids := make([]snowflake.ID, len(g))
-	for i := range g {
-		ids[i] = g[i].ID
+// AddGuilds adds the "guilds" edges to the Member entity.
+func (uc *UserCreate) AddGuilds(m ...*Member) *UserCreate {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
 	}
 	return uc.AddGuildIDs(ids...)
 }
@@ -134,6 +150,10 @@ func (uc *UserCreate) defaults() {
 		v := user.DefaultCreatedAt()
 		uc.mutation.SetCreatedAt(v)
 	}
+	if _, ok := uc.mutation.Locale(); !ok {
+		v := user.DefaultLocale
+		uc.mutation.SetLocale(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -148,6 +168,14 @@ func (uc *UserCreate) check() error {
 	}
 	if _, ok := uc.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "User.created_at"`)}
+	}
+	if _, ok := uc.mutation.Locale(); !ok {
+		return &ValidationError{Name: "locale", err: errors.New(`ent: missing required field "User.locale"`)}
+	}
+	if v, ok := uc.mutation.Locale(); ok {
+		if err := user.LocaleValidator(string(v)); err != nil {
+			return &ValidationError{Name: "locale", err: fmt.Errorf(`ent: validator failed for field "User.locale": %w`, err)}
+		}
 	}
 	return nil
 }
@@ -189,6 +217,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
+	if value, ok := uc.mutation.Locale(); ok {
+		_spec.SetField(user.FieldLocale, field.TypeString, value)
+		_node.Locale = value
+	}
 	if nodes := uc.mutation.OwnGuildsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -213,7 +245,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Columns: user.GuildsPrimaryKey,
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(guild.FieldID, field.TypeUint64),
+				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

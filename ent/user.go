@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
+	"github.com/disgoorg/disgo/discord"
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/ent/user"
 )
@@ -22,6 +23,8 @@ type User struct {
 	Name string `json:"name,omitempty"`
 	// CreatedAt holds the value of the "created_at" field.
 	CreatedAt time.Time `json:"created_at,omitempty"`
+	// Locale holds the value of the "locale" field.
+	Locale discord.Locale `json:"locale,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges        UserEdges `json:"edges"`
@@ -33,7 +36,7 @@ type UserEdges struct {
 	// OwnGuilds holds the value of the own_guilds edge.
 	OwnGuilds []*Guild `json:"own_guilds,omitempty"`
 	// Guilds holds the value of the guilds edge.
-	Guilds []*Guild `json:"guilds,omitempty"`
+	Guilds []*Member `json:"guilds,omitempty"`
 	// WordSuffix holds the value of the word_suffix edge.
 	WordSuffix []*WordSuffix `json:"word_suffix,omitempty"`
 	// loadedTypes holds the information for reporting if a
@@ -52,7 +55,7 @@ func (e UserEdges) OwnGuildsOrErr() ([]*Guild, error) {
 
 // GuildsOrErr returns the Guilds value or an error if the edge
 // was not loaded in eager-loading.
-func (e UserEdges) GuildsOrErr() ([]*Guild, error) {
+func (e UserEdges) GuildsOrErr() ([]*Member, error) {
 	if e.loadedTypes[1] {
 		return e.Guilds, nil
 	}
@@ -75,7 +78,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case user.FieldID:
 			values[i] = new(sql.NullInt64)
-		case user.FieldName:
+		case user.FieldName, user.FieldLocale:
 			values[i] = new(sql.NullString)
 		case user.FieldCreatedAt:
 			values[i] = new(sql.NullTime)
@@ -112,6 +115,12 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.CreatedAt = value.Time
 			}
+		case user.FieldLocale:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field locale", values[i])
+			} else if value.Valid {
+				u.Locale = discord.Locale(value.String)
+			}
 		default:
 			u.selectValues.Set(columns[i], values[i])
 		}
@@ -131,7 +140,7 @@ func (u *User) QueryOwnGuilds() *GuildQuery {
 }
 
 // QueryGuilds queries the "guilds" edge of the User entity.
-func (u *User) QueryGuilds() *GuildQuery {
+func (u *User) QueryGuilds() *MemberQuery {
 	return NewUserClient(u.config).QueryGuilds(u)
 }
 
@@ -168,6 +177,9 @@ func (u *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
 	builder.WriteString(u.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("locale=")
+	builder.WriteString(fmt.Sprintf("%v", u.Locale))
 	builder.WriteByte(')')
 	return builder.String()
 }
