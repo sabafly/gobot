@@ -293,11 +293,20 @@ func Command(c *components.Components) *generic.GenericCommand {
 					slog.Error("メッセージ著者取得に失敗", "err", err, "uid", e.Message.Author.ID)
 					return generic.NewError(err)
 				}
-				if !u.QueryWordSuffix().Where(wordsuffix.GuildID(e.GuildID)).ExistX(e) {
-					slog.Debug("語尾が存在しません")
-					return nil
+
+				var w *ent.WordSuffix
+
+				if u.QueryWordSuffix().Where(wordsuffix.GuildID(e.GuildID)).ExistX(e) {
+					// Guild
+					w = u.QueryWordSuffix().Where(wordsuffix.GuildID(e.GuildID)).FirstX(e)
+				} else {
+					// Global
+					if u.QueryWordSuffix().Where(wordsuffix.GuildIDIsNil()).ExistX(e) {
+						slog.Debug("語尾が存在しません")
+						return nil
 				}
-				w := u.QueryWordSuffix().Where(wordsuffix.GuildID(e.GuildID)).OnlyX(e)
+					w = u.QueryWordSuffix().Where(wordsuffix.GuildIDIsNil()).FirstX(e)
+				}
 				if w.Expired != nil && time.Now().Compare(*w.Expired) == 1 {
 					c.DB().WordSuffix.DeleteOneID(w.ID).ExecX(e)
 					return nil
