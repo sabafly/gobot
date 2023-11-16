@@ -35,34 +35,26 @@ func (mc *MemberCreate) SetPermission(pe permissions.Permission) *MemberCreate {
 	return mc
 }
 
-// AddGuildIDs adds the "guild" edge to the Guild entity by IDs.
-func (mc *MemberCreate) AddGuildIDs(ids ...snowflake.ID) *MemberCreate {
-	mc.mutation.AddGuildIDs(ids...)
+// SetGuildID sets the "guild" edge to the Guild entity by ID.
+func (mc *MemberCreate) SetGuildID(id snowflake.ID) *MemberCreate {
+	mc.mutation.SetGuildID(id)
 	return mc
 }
 
-// AddGuild adds the "guild" edges to the Guild entity.
-func (mc *MemberCreate) AddGuild(g ...*Guild) *MemberCreate {
-	ids := make([]snowflake.ID, len(g))
-	for i := range g {
-		ids[i] = g[i].ID
-	}
-	return mc.AddGuildIDs(ids...)
+// SetGuild sets the "guild" edge to the Guild entity.
+func (mc *MemberCreate) SetGuild(g *Guild) *MemberCreate {
+	return mc.SetGuildID(g.ID)
 }
 
-// AddOwnerIDs adds the "owner" edge to the User entity by IDs.
-func (mc *MemberCreate) AddOwnerIDs(ids ...snowflake.ID) *MemberCreate {
-	mc.mutation.AddOwnerIDs(ids...)
+// SetOwnerID sets the "owner" edge to the User entity by ID.
+func (mc *MemberCreate) SetOwnerID(id snowflake.ID) *MemberCreate {
+	mc.mutation.SetOwnerID(id)
 	return mc
 }
 
-// AddOwner adds the "owner" edges to the User entity.
-func (mc *MemberCreate) AddOwner(u ...*User) *MemberCreate {
-	ids := make([]snowflake.ID, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return mc.AddOwnerIDs(ids...)
+// SetOwner sets the "owner" edge to the User entity.
+func (mc *MemberCreate) SetOwner(u *User) *MemberCreate {
+	return mc.SetOwnerID(u.ID)
 }
 
 // Mutation returns the MemberMutation object of the builder.
@@ -102,10 +94,10 @@ func (mc *MemberCreate) check() error {
 	if _, ok := mc.mutation.UserID(); !ok {
 		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "Member.user_id"`)}
 	}
-	if len(mc.mutation.GuildIDs()) == 0 {
+	if _, ok := mc.mutation.GuildID(); !ok {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "Member.guild"`)}
 	}
-	if len(mc.mutation.OwnerIDs()) == 0 {
+	if _, ok := mc.mutation.OwnerID(); !ok {
 		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Member.owner"`)}
 	}
 	return nil
@@ -144,10 +136,10 @@ func (mc *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 	}
 	if nodes := mc.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   member.GuildTable,
-			Columns: member.GuildPrimaryKey,
+			Columns: []string{member.GuildColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(guild.FieldID, field.TypeUint64),
@@ -156,14 +148,15 @@ func (mc *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.guild_members = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := mc.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: false,
 			Table:   member.OwnerTable,
-			Columns: member.OwnerPrimaryKey,
+			Columns: []string{member.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),
@@ -172,6 +165,7 @@ func (mc *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.member_owner = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

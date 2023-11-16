@@ -36,11 +36,13 @@ const (
 	OwnGuildsInverseTable = "guilds"
 	// OwnGuildsColumn is the table column denoting the own_guilds relation/edge.
 	OwnGuildsColumn = "user_own_guilds"
-	// GuildsTable is the table that holds the guilds relation/edge. The primary key declared below.
-	GuildsTable = "member_owner"
+	// GuildsTable is the table that holds the guilds relation/edge.
+	GuildsTable = "members"
 	// GuildsInverseTable is the table name for the Member entity.
 	// It exists in this package in order to avoid circular dependency with the "member" package.
 	GuildsInverseTable = "members"
+	// GuildsColumn is the table column denoting the guilds relation/edge.
+	GuildsColumn = "member_owner"
 	// WordSuffixTable is the table that holds the word_suffix relation/edge.
 	WordSuffixTable = "word_suffixes"
 	// WordSuffixInverseTable is the table name for the WordSuffix entity.
@@ -57,12 +59,6 @@ var Columns = []string{
 	FieldCreatedAt,
 	FieldLocale,
 }
-
-var (
-	// GuildsPrimaryKey and GuildsColumn2 are the table columns denoting the
-	// primary key for the guilds relation (M2M).
-	GuildsPrimaryKey = []string{"member_id", "user_id"}
-)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -160,7 +156,7 @@ func newGuildsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(GuildsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2M, true, GuildsTable, GuildsPrimaryKey...),
+		sqlgraph.Edge(sqlgraph.O2M, true, GuildsTable, GuildsColumn),
 	)
 }
 func newWordSuffixStep() *sqlgraph.Step {

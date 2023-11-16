@@ -22,16 +22,20 @@ const (
 	EdgeOwner = "owner"
 	// Table holds the table name of the member in the database.
 	Table = "members"
-	// GuildTable is the table that holds the guild relation/edge. The primary key declared below.
-	GuildTable = "guild_members"
+	// GuildTable is the table that holds the guild relation/edge.
+	GuildTable = "members"
 	// GuildInverseTable is the table name for the Guild entity.
 	// It exists in this package in order to avoid circular dependency with the "guild" package.
 	GuildInverseTable = "guilds"
-	// OwnerTable is the table that holds the owner relation/edge. The primary key declared below.
-	OwnerTable = "member_owner"
+	// GuildColumn is the table column denoting the guild relation/edge.
+	GuildColumn = "guild_members"
+	// OwnerTable is the table that holds the owner relation/edge.
+	OwnerTable = "members"
 	// OwnerInverseTable is the table name for the User entity.
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	OwnerInverseTable = "users"
+	// OwnerColumn is the table column denoting the owner relation/edge.
+	OwnerColumn = "member_owner"
 )
 
 // Columns holds all SQL columns for member fields.
@@ -41,19 +45,22 @@ var Columns = []string{
 	FieldPermission,
 }
 
-var (
-	// GuildPrimaryKey and GuildColumn2 are the table columns denoting the
-	// primary key for the guild relation (M2M).
-	GuildPrimaryKey = []string{"guild_id", "member_id"}
-	// OwnerPrimaryKey and OwnerColumn2 are the table columns denoting the
-	// primary key for the owner relation (M2M).
-	OwnerPrimaryKey = []string{"member_id", "user_id"}
-)
+// ForeignKeys holds the SQL foreign-keys that are owned by the "members"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"guild_members",
+	"member_owner",
+}
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -73,44 +80,30 @@ func ByUserID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUserID, opts...).ToFunc()
 }
 
-// ByGuildCount orders the results by guild count.
-func ByGuildCount(opts ...sql.OrderTermOption) OrderOption {
+// ByGuildField orders the results by guild field.
+func ByGuildField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newGuildStep(), opts...)
+		sqlgraph.OrderByNeighborTerms(s, newGuildStep(), sql.OrderByField(field, opts...))
 	}
 }
 
-// ByGuild orders the results by guild terms.
-func ByGuild(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByOwnerField orders the results by owner field.
+func ByOwnerField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newGuildStep(), append([]sql.OrderTerm{term}, terms...)...)
-	}
-}
-
-// ByOwnerCount orders the results by owner count.
-func ByOwnerCount(opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newOwnerStep(), opts...)
-	}
-}
-
-// ByOwner orders the results by owner terms.
-func ByOwner(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newOwnerStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newOwnerStep(), sql.OrderByField(field, opts...))
 	}
 }
 func newGuildStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(GuildInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2M, true, GuildTable, GuildPrimaryKey...),
+		sqlgraph.Edge(sqlgraph.M2O, true, GuildTable, GuildColumn),
 	)
 }
 func newOwnerStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(OwnerInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2M, false, OwnerTable, OwnerPrimaryKey...),
+		sqlgraph.Edge(sqlgraph.M2O, false, OwnerTable, OwnerColumn),
 	)
 }

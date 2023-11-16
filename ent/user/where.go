@@ -290,7 +290,7 @@ func HasGuilds() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, GuildsTable, GuildsPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2M, true, GuildsTable, GuildsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})

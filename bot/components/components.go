@@ -2,6 +2,7 @@ package components
 
 import (
 	"github.com/sabafly/gobot/ent"
+	"github.com/sabafly/gobot/internal/smap"
 )
 
 func New(db *ent.Client, conf Config) *Components {
@@ -18,6 +19,8 @@ type Components struct {
 	config Config
 
 	commandsRegistry map[string]Command
+
+	l smap.SyncedMap[string, *Mu]
 
 	Version string
 }

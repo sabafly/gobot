@@ -50,34 +50,26 @@ func (mu *MemberUpdate) ClearPermission() *MemberUpdate {
 	return mu
 }
 
-// AddGuildIDs adds the "guild" edge to the Guild entity by IDs.
-func (mu *MemberUpdate) AddGuildIDs(ids ...snowflake.ID) *MemberUpdate {
-	mu.mutation.AddGuildIDs(ids...)
+// SetGuildID sets the "guild" edge to the Guild entity by ID.
+func (mu *MemberUpdate) SetGuildID(id snowflake.ID) *MemberUpdate {
+	mu.mutation.SetGuildID(id)
 	return mu
 }
 
-// AddGuild adds the "guild" edges to the Guild entity.
-func (mu *MemberUpdate) AddGuild(g ...*Guild) *MemberUpdate {
-	ids := make([]snowflake.ID, len(g))
-	for i := range g {
-		ids[i] = g[i].ID
-	}
-	return mu.AddGuildIDs(ids...)
+// SetGuild sets the "guild" edge to the Guild entity.
+func (mu *MemberUpdate) SetGuild(g *Guild) *MemberUpdate {
+	return mu.SetGuildID(g.ID)
 }
 
-// AddOwnerIDs adds the "owner" edge to the User entity by IDs.
-func (mu *MemberUpdate) AddOwnerIDs(ids ...snowflake.ID) *MemberUpdate {
-	mu.mutation.AddOwnerIDs(ids...)
+// SetOwnerID sets the "owner" edge to the User entity by ID.
+func (mu *MemberUpdate) SetOwnerID(id snowflake.ID) *MemberUpdate {
+	mu.mutation.SetOwnerID(id)
 	return mu
 }
 
-// AddOwner adds the "owner" edges to the User entity.
-func (mu *MemberUpdate) AddOwner(u ...*User) *MemberUpdate {
-	ids := make([]snowflake.ID, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return mu.AddOwnerIDs(ids...)
+// SetOwner sets the "owner" edge to the User entity.
+func (mu *MemberUpdate) SetOwner(u *User) *MemberUpdate {
+	return mu.SetOwnerID(u.ID)
 }
 
 // Mutation returns the MemberMutation object of the builder.
@@ -85,46 +77,16 @@ func (mu *MemberUpdate) Mutation() *MemberMutation {
 	return mu.mutation
 }
 
-// ClearGuild clears all "guild" edges to the Guild entity.
+// ClearGuild clears the "guild" edge to the Guild entity.
 func (mu *MemberUpdate) ClearGuild() *MemberUpdate {
 	mu.mutation.ClearGuild()
 	return mu
 }
 
-// RemoveGuildIDs removes the "guild" edge to Guild entities by IDs.
-func (mu *MemberUpdate) RemoveGuildIDs(ids ...snowflake.ID) *MemberUpdate {
-	mu.mutation.RemoveGuildIDs(ids...)
-	return mu
-}
-
-// RemoveGuild removes "guild" edges to Guild entities.
-func (mu *MemberUpdate) RemoveGuild(g ...*Guild) *MemberUpdate {
-	ids := make([]snowflake.ID, len(g))
-	for i := range g {
-		ids[i] = g[i].ID
-	}
-	return mu.RemoveGuildIDs(ids...)
-}
-
-// ClearOwner clears all "owner" edges to the User entity.
+// ClearOwner clears the "owner" edge to the User entity.
 func (mu *MemberUpdate) ClearOwner() *MemberUpdate {
 	mu.mutation.ClearOwner()
 	return mu
-}
-
-// RemoveOwnerIDs removes the "owner" edge to User entities by IDs.
-func (mu *MemberUpdate) RemoveOwnerIDs(ids ...snowflake.ID) *MemberUpdate {
-	mu.mutation.RemoveOwnerIDs(ids...)
-	return mu
-}
-
-// RemoveOwner removes "owner" edges to User entities.
-func (mu *MemberUpdate) RemoveOwner(u ...*User) *MemberUpdate {
-	ids := make([]snowflake.ID, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return mu.RemoveOwnerIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -154,7 +116,21 @@ func (mu *MemberUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (mu *MemberUpdate) check() error {
+	if _, ok := mu.mutation.GuildID(); mu.mutation.GuildCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Member.guild"`)
+	}
+	if _, ok := mu.mutation.OwnerID(); mu.mutation.OwnerCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Member.owner"`)
+	}
+	return nil
+}
+
 func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := mu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(member.Table, member.Columns, sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt))
 	if ps := mu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -176,39 +152,23 @@ func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if mu.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   member.GuildTable,
-			Columns: member.GuildPrimaryKey,
+			Columns: []string{member.GuildColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(guild.FieldID, field.TypeUint64),
 			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := mu.mutation.RemovedGuildIDs(); len(nodes) > 0 && !mu.mutation.GuildCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   member.GuildTable,
-			Columns: member.GuildPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(guild.FieldID, field.TypeUint64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := mu.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   member.GuildTable,
-			Columns: member.GuildPrimaryKey,
+			Columns: []string{member.GuildColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(guild.FieldID, field.TypeUint64),
@@ -221,39 +181,23 @@ func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if mu.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: false,
 			Table:   member.OwnerTable,
-			Columns: member.OwnerPrimaryKey,
+			Columns: []string{member.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),
 			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := mu.mutation.RemovedOwnerIDs(); len(nodes) > 0 && !mu.mutation.OwnerCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   member.OwnerTable,
-			Columns: member.OwnerPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := mu.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: false,
 			Table:   member.OwnerTable,
-			Columns: member.OwnerPrimaryKey,
+			Columns: []string{member.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),
@@ -302,34 +246,26 @@ func (muo *MemberUpdateOne) ClearPermission() *MemberUpdateOne {
 	return muo
 }
 
-// AddGuildIDs adds the "guild" edge to the Guild entity by IDs.
-func (muo *MemberUpdateOne) AddGuildIDs(ids ...snowflake.ID) *MemberUpdateOne {
-	muo.mutation.AddGuildIDs(ids...)
+// SetGuildID sets the "guild" edge to the Guild entity by ID.
+func (muo *MemberUpdateOne) SetGuildID(id snowflake.ID) *MemberUpdateOne {
+	muo.mutation.SetGuildID(id)
 	return muo
 }
 
-// AddGuild adds the "guild" edges to the Guild entity.
-func (muo *MemberUpdateOne) AddGuild(g ...*Guild) *MemberUpdateOne {
-	ids := make([]snowflake.ID, len(g))
-	for i := range g {
-		ids[i] = g[i].ID
-	}
-	return muo.AddGuildIDs(ids...)
+// SetGuild sets the "guild" edge to the Guild entity.
+func (muo *MemberUpdateOne) SetGuild(g *Guild) *MemberUpdateOne {
+	return muo.SetGuildID(g.ID)
 }
 
-// AddOwnerIDs adds the "owner" edge to the User entity by IDs.
-func (muo *MemberUpdateOne) AddOwnerIDs(ids ...snowflake.ID) *MemberUpdateOne {
-	muo.mutation.AddOwnerIDs(ids...)
+// SetOwnerID sets the "owner" edge to the User entity by ID.
+func (muo *MemberUpdateOne) SetOwnerID(id snowflake.ID) *MemberUpdateOne {
+	muo.mutation.SetOwnerID(id)
 	return muo
 }
 
-// AddOwner adds the "owner" edges to the User entity.
-func (muo *MemberUpdateOne) AddOwner(u ...*User) *MemberUpdateOne {
-	ids := make([]snowflake.ID, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return muo.AddOwnerIDs(ids...)
+// SetOwner sets the "owner" edge to the User entity.
+func (muo *MemberUpdateOne) SetOwner(u *User) *MemberUpdateOne {
+	return muo.SetOwnerID(u.ID)
 }
 
 // Mutation returns the MemberMutation object of the builder.
@@ -337,46 +273,16 @@ func (muo *MemberUpdateOne) Mutation() *MemberMutation {
 	return muo.mutation
 }
 
-// ClearGuild clears all "guild" edges to the Guild entity.
+// ClearGuild clears the "guild" edge to the Guild entity.
 func (muo *MemberUpdateOne) ClearGuild() *MemberUpdateOne {
 	muo.mutation.ClearGuild()
 	return muo
 }
 
-// RemoveGuildIDs removes the "guild" edge to Guild entities by IDs.
-func (muo *MemberUpdateOne) RemoveGuildIDs(ids ...snowflake.ID) *MemberUpdateOne {
-	muo.mutation.RemoveGuildIDs(ids...)
-	return muo
-}
-
-// RemoveGuild removes "guild" edges to Guild entities.
-func (muo *MemberUpdateOne) RemoveGuild(g ...*Guild) *MemberUpdateOne {
-	ids := make([]snowflake.ID, len(g))
-	for i := range g {
-		ids[i] = g[i].ID
-	}
-	return muo.RemoveGuildIDs(ids...)
-}
-
-// ClearOwner clears all "owner" edges to the User entity.
+// ClearOwner clears the "owner" edge to the User entity.
 func (muo *MemberUpdateOne) ClearOwner() *MemberUpdateOne {
 	muo.mutation.ClearOwner()
 	return muo
-}
-
-// RemoveOwnerIDs removes the "owner" edge to User entities by IDs.
-func (muo *MemberUpdateOne) RemoveOwnerIDs(ids ...snowflake.ID) *MemberUpdateOne {
-	muo.mutation.RemoveOwnerIDs(ids...)
-	return muo
-}
-
-// RemoveOwner removes "owner" edges to User entities.
-func (muo *MemberUpdateOne) RemoveOwner(u ...*User) *MemberUpdateOne {
-	ids := make([]snowflake.ID, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return muo.RemoveOwnerIDs(ids...)
 }
 
 // Where appends a list predicates to the MemberUpdate builder.
@@ -419,7 +325,21 @@ func (muo *MemberUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (muo *MemberUpdateOne) check() error {
+	if _, ok := muo.mutation.GuildID(); muo.mutation.GuildCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Member.guild"`)
+	}
+	if _, ok := muo.mutation.OwnerID(); muo.mutation.OwnerCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Member.owner"`)
+	}
+	return nil
+}
+
 func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err error) {
+	if err := muo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(member.Table, member.Columns, sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt))
 	id, ok := muo.mutation.ID()
 	if !ok {
@@ -458,39 +378,23 @@ func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err err
 	}
 	if muo.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   member.GuildTable,
-			Columns: member.GuildPrimaryKey,
+			Columns: []string{member.GuildColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(guild.FieldID, field.TypeUint64),
 			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := muo.mutation.RemovedGuildIDs(); len(nodes) > 0 && !muo.mutation.GuildCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   member.GuildTable,
-			Columns: member.GuildPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(guild.FieldID, field.TypeUint64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := muo.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   member.GuildTable,
-			Columns: member.GuildPrimaryKey,
+			Columns: []string{member.GuildColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(guild.FieldID, field.TypeUint64),
@@ -503,39 +407,23 @@ func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err err
 	}
 	if muo.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: false,
 			Table:   member.OwnerTable,
-			Columns: member.OwnerPrimaryKey,
+			Columns: []string{member.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),
 			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := muo.mutation.RemovedOwnerIDs(); len(nodes) > 0 && !muo.mutation.OwnerCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   member.OwnerTable,
-			Columns: member.OwnerPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := muo.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: false,
 			Table:   member.OwnerTable,
-			Columns: member.OwnerPrimaryKey,
+			Columns: []string{member.OwnerColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),

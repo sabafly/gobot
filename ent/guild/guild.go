@@ -21,6 +21,8 @@ const (
 	EdgeOwner = "owner"
 	// EdgeMembers holds the string denoting the members edge name in mutations.
 	EdgeMembers = "members"
+	// EdgeMessagePins holds the string denoting the message_pins edge name in mutations.
+	EdgeMessagePins = "message_pins"
 	// Table holds the table name of the guild in the database.
 	Table = "guilds"
 	// OwnerTable is the table that holds the owner relation/edge.
@@ -30,11 +32,20 @@ const (
 	OwnerInverseTable = "users"
 	// OwnerColumn is the table column denoting the owner relation/edge.
 	OwnerColumn = "user_own_guilds"
-	// MembersTable is the table that holds the members relation/edge. The primary key declared below.
-	MembersTable = "guild_members"
+	// MembersTable is the table that holds the members relation/edge.
+	MembersTable = "members"
 	// MembersInverseTable is the table name for the Member entity.
 	// It exists in this package in order to avoid circular dependency with the "member" package.
 	MembersInverseTable = "members"
+	// MembersColumn is the table column denoting the members relation/edge.
+	MembersColumn = "guild_members"
+	// MessagePinsTable is the table that holds the message_pins relation/edge.
+	MessagePinsTable = "message_pins"
+	// MessagePinsInverseTable is the table name for the MessagePin entity.
+	// It exists in this package in order to avoid circular dependency with the "messagepin" package.
+	MessagePinsInverseTable = "message_pins"
+	// MessagePinsColumn is the table column denoting the message_pins relation/edge.
+	MessagePinsColumn = "guild_message_pins"
 )
 
 // Columns holds all SQL columns for guild fields.
@@ -49,12 +60,6 @@ var Columns = []string{
 var ForeignKeys = []string{
 	"user_own_guilds",
 }
-
-var (
-	// MembersPrimaryKey and MembersColumn2 are the table columns denoting the
-	// primary key for the members relation (M2M).
-	MembersPrimaryKey = []string{"guild_id", "member_id"}
-)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -118,6 +123,20 @@ func ByMembers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newMembersStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByMessagePinsCount orders the results by message_pins count.
+func ByMessagePinsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newMessagePinsStep(), opts...)
+	}
+}
+
+// ByMessagePins orders the results by message_pins terms.
+func ByMessagePins(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newMessagePinsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newOwnerStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -129,6 +148,13 @@ func newMembersStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(MembersInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2M, false, MembersTable, MembersPrimaryKey...),
+		sqlgraph.Edge(sqlgraph.O2M, false, MembersTable, MembersColumn),
+	)
+}
+func newMessagePinsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(MessagePinsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, MessagePinsTable, MessagePinsColumn),
 	)
 }

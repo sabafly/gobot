@@ -129,7 +129,7 @@ func HasGuild() predicate.Member {
 	return predicate.Member(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, GuildTable, GuildPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2O, true, GuildTable, GuildColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -152,7 +152,7 @@ func HasOwner() predicate.Member {
 	return predicate.Member(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, OwnerTable, OwnerPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2O, false, OwnerTable, OwnerColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})

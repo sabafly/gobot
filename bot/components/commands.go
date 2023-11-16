@@ -55,7 +55,8 @@ func (c *Components) Initialize(client bot.Client) error {
 	client.EventManager().AddEventListeners(
 		bot.NewListenerFunc(c.OnEvent(client)),
 		&events.ListenerAdapter{
-			OnGuildJoin: c.OnGuildJoin(),
+			OnGuildJoin:  c.OnGuildJoin(),
+			OnGuildLeave: c.OnGuildLeave(),
 		},
 	)
 	return nil

@@ -29,8 +29,10 @@ func (Member) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("guild", Guild.Type).
 			Ref("members").
+			Unique().
 			Required(),
 		edge.To("owner", User.Type).
+			Unique().
 			Required(),
 	}
 }

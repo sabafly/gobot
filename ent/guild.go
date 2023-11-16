@@ -36,9 +36,11 @@ type GuildEdges struct {
 	Owner *User `json:"owner,omitempty"`
 	// Members holds the value of the members edge.
 	Members []*Member `json:"members,omitempty"`
+	// MessagePins holds the value of the message_pins edge.
+	MessagePins []*MessagePin `json:"message_pins,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // OwnerOrErr returns the Owner value or an error if the edge
@@ -61,6 +63,15 @@ func (e GuildEdges) MembersOrErr() ([]*Member, error) {
 		return e.Members, nil
 	}
 	return nil, &NotLoadedError{edge: "members"}
+}
+
+// MessagePinsOrErr returns the MessagePins value or an error if the edge
+// was not loaded in eager-loading.
+func (e GuildEdges) MessagePinsOrErr() ([]*MessagePin, error) {
+	if e.loadedTypes[2] {
+		return e.MessagePins, nil
+	}
+	return nil, &NotLoadedError{edge: "message_pins"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -135,6 +146,11 @@ func (gu *Guild) QueryOwner() *UserQuery {
 // QueryMembers queries the "members" edge of the Guild entity.
 func (gu *Guild) QueryMembers() *MemberQuery {
 	return NewGuildClient(gu.config).QueryMembers(gu)
+}
+
+// QueryMessagePins queries the "message_pins" edge of the Guild entity.
+func (gu *Guild) QueryMessagePins() *MessagePinQuery {
+	return NewGuildClient(gu.config).QueryMessagePins(gu)
 }
 
 // Update returns a builder for updating this Guild.

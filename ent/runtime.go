@@ -8,6 +8,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/google/uuid"
 	"github.com/sabafly/gobot/ent/guild"
+	"github.com/sabafly/gobot/ent/messagepin"
 	"github.com/sabafly/gobot/ent/schema"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/ent/wordsuffix"
@@ -29,6 +30,16 @@ func init() {
 	guild.DefaultLocale = discord.Locale(guildDescLocale.Default.(string))
 	// guild.LocaleValidator is a validator for the "locale" field. It is called by the builders before save.
 	guild.LocaleValidator = guildDescLocale.Validators[0].(func(string) error)
+	messagepinFields := schema.MessagePin{}.Fields()
+	_ = messagepinFields
+	// messagepinDescRateLimit is the schema descriptor for rate_limit field.
+	messagepinDescRateLimit := messagepinFields[5].Descriptor()
+	// messagepin.DefaultRateLimit holds the default value on creation for the rate_limit field.
+	messagepin.DefaultRateLimit = messagepinDescRateLimit.Default.(schema.RateLimit)
+	// messagepinDescID is the schema descriptor for id field.
+	messagepinDescID := messagepinFields[0].Descriptor()
+	// messagepin.DefaultID holds the default value on creation for the id field.
+	messagepin.DefaultID = messagepinDescID.Default.(func() uuid.UUID)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescName is the schema descriptor for name field.

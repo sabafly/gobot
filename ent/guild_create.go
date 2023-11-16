@@ -11,8 +11,10 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/disgoorg/disgo/discord"
 	snowflake "github.com/disgoorg/snowflake/v2"
+	"github.com/google/uuid"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
+	"github.com/sabafly/gobot/ent/messagepin"
 	"github.com/sabafly/gobot/ent/user"
 )
 
@@ -73,6 +75,21 @@ func (gc *GuildCreate) AddMembers(m ...*Member) *GuildCreate {
 		ids[i] = m[i].ID
 	}
 	return gc.AddMemberIDs(ids...)
+}
+
+// AddMessagePinIDs adds the "message_pins" edge to the MessagePin entity by IDs.
+func (gc *GuildCreate) AddMessagePinIDs(ids ...uuid.UUID) *GuildCreate {
+	gc.mutation.AddMessagePinIDs(ids...)
+	return gc
+}
+
+// AddMessagePins adds the "message_pins" edges to the MessagePin entity.
+func (gc *GuildCreate) AddMessagePins(m ...*MessagePin) *GuildCreate {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return gc.AddMessagePinIDs(ids...)
 }
 
 // Mutation returns the GuildMutation object of the builder.
@@ -196,13 +213,29 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 	}
 	if nodes := gc.mutation.MembersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   guild.MembersTable,
-			Columns: guild.MembersPrimaryKey,
+			Columns: []string{guild.MembersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := gc.mutation.MessagePinsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.MessagePinsTable,
+			Columns: []string{guild.MessagePinsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(messagepin.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

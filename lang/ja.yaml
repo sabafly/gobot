@@ -416,9 +416,16 @@ components.message.suffix.remove.command.options.target.name: 対象
 components.message.suffix.remove.command.options.target.description: 語尾を解除するユーザー
 components.message.suffix.duration.message: "期限：{{.Duration}}"
 components.message.suffix.duration.none: 無期限
+components.message.pin.create.modal.title: ピン留めメッセージを作成する
+components.message.pin.create.modal.input.1.label: メッセージの内容
+components.message.pin.create.message: ピン留めメッセージを作成しました
+components.message.pin.delete.message: ピン留めメッセージを削除しました
+components.message.pin.username: ピン留め
 components.ping.pong: ポング！
 components.ping.command.description: ポング！
 errors.generic.message: エラーが発生しました
 errors.invalid.bot.target: ボットは選択できません
+errors.invalid.bot.target.description: ボット以外のユーザーである必要があります
 errors.invalid.permission: 権限が不足しています
 errors.invalid.permission.description: "`/permission add`コマンドで`{{.Permission}}`の権限を追加することで使用可能になります。"
+errors.unavailable.message.pin: ピン留めメッセージが存在しません

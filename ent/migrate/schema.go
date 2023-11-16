@@ -34,12 +34,52 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "user_id", Type: field.TypeUint64},
 		{Name: "permission", Type: field.TypeJSON, Nullable: true},
+		{Name: "guild_members", Type: field.TypeUint64},
+		{Name: "member_owner", Type: field.TypeUint64},
 	}
 	// MembersTable holds the schema information for the "members" table.
 	MembersTable = &schema.Table{
 		Name:       "members",
 		Columns:    MembersColumns,
 		PrimaryKey: []*schema.Column{MembersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "members_guilds_members",
+				Columns:    []*schema.Column{MembersColumns[3]},
+				RefColumns: []*schema.Column{GuildsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "members_users_owner",
+				Columns:    []*schema.Column{MembersColumns[4]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// MessagePinsColumns holds the columns for the "message_pins" table.
+	MessagePinsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "channel_id", Type: field.TypeUint64, Unique: true},
+		{Name: "content", Type: field.TypeString, Nullable: true},
+		{Name: "embeds", Type: field.TypeJSON, Nullable: true},
+		{Name: "before_id", Type: field.TypeUint64, Nullable: true},
+		{Name: "rate_limit", Type: field.TypeJSON},
+		{Name: "guild_message_pins", Type: field.TypeUint64},
+	}
+	// MessagePinsTable holds the schema information for the "message_pins" table.
+	MessagePinsTable = &schema.Table{
+		Name:       "message_pins",
+		Columns:    MessagePinsColumns,
+		PrimaryKey: []*schema.Column{MessagePinsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "message_pins_guilds_message_pins",
+				Columns:    []*schema.Column{MessagePinsColumns[6]},
+				RefColumns: []*schema.Column{GuildsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
@@ -83,73 +123,21 @@ var (
 			},
 		},
 	}
-	// GuildMembersColumns holds the columns for the "guild_members" table.
-	GuildMembersColumns = []*schema.Column{
-		{Name: "guild_id", Type: field.TypeUint64},
-		{Name: "member_id", Type: field.TypeInt},
-	}
-	// GuildMembersTable holds the schema information for the "guild_members" table.
-	GuildMembersTable = &schema.Table{
-		Name:       "guild_members",
-		Columns:    GuildMembersColumns,
-		PrimaryKey: []*schema.Column{GuildMembersColumns[0], GuildMembersColumns[1]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "guild_members_guild_id",
-				Columns:    []*schema.Column{GuildMembersColumns[0]},
-				RefColumns: []*schema.Column{GuildsColumns[0]},
-				OnDelete:   schema.Cascade,
-			},
-			{
-				Symbol:     "guild_members_member_id",
-				Columns:    []*schema.Column{GuildMembersColumns[1]},
-				RefColumns: []*schema.Column{MembersColumns[0]},
-				OnDelete:   schema.Cascade,
-			},
-		},
-	}
-	// MemberOwnerColumns holds the columns for the "member_owner" table.
-	MemberOwnerColumns = []*schema.Column{
-		{Name: "member_id", Type: field.TypeInt},
-		{Name: "user_id", Type: field.TypeUint64},
-	}
-	// MemberOwnerTable holds the schema information for the "member_owner" table.
-	MemberOwnerTable = &schema.Table{
-		Name:       "member_owner",
-		Columns:    MemberOwnerColumns,
-		PrimaryKey: []*schema.Column{MemberOwnerColumns[0], MemberOwnerColumns[1]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "member_owner_member_id",
-				Columns:    []*schema.Column{MemberOwnerColumns[0]},
-				RefColumns: []*schema.Column{MembersColumns[0]},
-				OnDelete:   schema.Cascade,
-			},
-			{
-				Symbol:     "member_owner_user_id",
-				Columns:    []*schema.Column{MemberOwnerColumns[1]},
-				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.Cascade,
-			},
-		},
-	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		GuildsTable,
 		MembersTable,
+		MessagePinsTable,
 		UsersTable,
 		WordSuffixesTable,
-		GuildMembersTable,
-		MemberOwnerTable,
 	}
 )
 
 func init() {
 	GuildsTable.ForeignKeys[0].RefTable = UsersTable
+	MembersTable.ForeignKeys[0].RefTable = GuildsTable
+	MembersTable.ForeignKeys[1].RefTable = UsersTable
+	MessagePinsTable.ForeignKeys[0].RefTable = GuildsTable
 	WordSuffixesTable.ForeignKeys[0].RefTable = UsersTable
 	WordSuffixesTable.ForeignKeys[1].RefTable = GuildsTable
-	GuildMembersTable.ForeignKeys[0].RefTable = GuildsTable
-	GuildMembersTable.ForeignKeys[1].RefTable = MembersTable
-	MemberOwnerTable.ForeignKeys[0].RefTable = MembersTable
-	MemberOwnerTable.ForeignKeys[1].RefTable = UsersTable
 }

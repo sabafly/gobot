@@ -101,7 +101,7 @@ func (uq *UserQuery) QueryGuilds() *MemberQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(member.Table, member.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, user.GuildsTable, user.GuildsPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2M, true, user.GuildsTable, user.GuildsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -523,63 +523,33 @@ func (uq *UserQuery) loadOwnGuilds(ctx context.Context, query *GuildQuery, nodes
 	return nil
 }
 func (uq *UserQuery) loadGuilds(ctx context.Context, query *MemberQuery, nodes []*User, init func(*User), assign func(*User, *Member)) error {
-	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[snowflake.ID]*User)
-	nids := make(map[int]map[*User]struct{})
-	for i, node := range nodes {
-		edgeIDs[i] = node.ID
-		byID[node.ID] = node
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[snowflake.ID]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
 		if init != nil {
-			init(node)
+			init(nodes[i])
 		}
 	}
-	query.Where(func(s *sql.Selector) {
-		joinT := sql.Table(user.GuildsTable)
-		s.Join(joinT).On(s.C(member.FieldID), joinT.C(user.GuildsPrimaryKey[0]))
-		s.Where(sql.InValues(joinT.C(user.GuildsPrimaryKey[1]), edgeIDs...))
-		columns := s.SelectedColumns()
-		s.Select(joinT.C(user.GuildsPrimaryKey[1]))
-		s.AppendSelect(columns...)
-		s.SetDistinct(false)
-	})
-	if err := query.prepareQuery(ctx); err != nil {
-		return err
-	}
-	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
-		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
-			assign := spec.Assign
-			values := spec.ScanValues
-			spec.ScanValues = func(columns []string) ([]any, error) {
-				values, err := values(columns[1:])
-				if err != nil {
-					return nil, err
-				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
-			}
-			spec.Assign = func(columns []string, values []any) error {
-				outValue := snowflake.ID(values[0].(*sql.NullInt64).Int64)
-				inValue := int(values[1].(*sql.NullInt64).Int64)
-				if nids[inValue] == nil {
-					nids[inValue] = map[*User]struct{}{byID[outValue]: {}}
-					return assign(columns[1:], values[1:])
-				}
-				nids[inValue][byID[outValue]] = struct{}{}
-				return nil
-			}
-		})
-	})
-	neighbors, err := withInterceptors[[]*Member](ctx, query, qr, query.inters)
+	query.withFKs = true
+	query.Where(predicate.Member(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.GuildsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nids[n.ID]
+		fk := n.member_owner
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "member_owner" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected "guilds" node returned %v`, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "member_owner" returned %v for node %v`, *fk, n.ID)
 		}
-		for kn := range nodes {
-			assign(kn, n)
-		}
+		assign(node, n)
 	}
 	return nil
 }

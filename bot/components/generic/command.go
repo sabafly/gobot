@@ -1,9 +1,12 @@
 package generic
 
 import (
+	"errors"
 	"fmt"
+	"log/slog"
 	"runtime"
 	"runtime/debug"
+	"strings"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
@@ -43,6 +46,15 @@ func newError(err error, skip int) *errorImpl {
 	runtime.Callers(skip, pc)
 	f := runtime.FuncForPC(pc[0])
 	file, line := f.FileLine(pc[0])
+	// XXX: なんかこうトラックIDとか言っていい感じに管理したい…
+	slog.Error("エラーが生成されました", "err", err, "file", fmt.Sprintf("%s:%d", file, line), "filename", f.Name())
+	e := errors.Unwrap(err)
+	if e == nil {
+		e = err
+	}
+	if err, ok := e.(rest.Error); ok {
+		slog.Error("", fmt.Errorf("%w\nrq: %s\nrs: %s\nhd: %v", err, string(err.RqBody), string(err.RsBody), err.Response.Header))
+	}
 	return &errorImpl{
 		err:   err,
 		file:  fmt.Sprintf("%s:%d %s\n", file, line, f.Name()),
@@ -244,7 +256,8 @@ func (gc *GenericCommand) CommandHandler() func(event *events.ApplicationCommand
 
 func (gc *GenericCommand) ComponentHandler() func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
-		cmd, ok := gc.ComponentHandlers[event.Data.CustomID()]
+		customID := strings.Split(event.Data.CustomID(), ":")
+		cmd, ok := gc.ComponentHandlers[strings.Join(customID[:2], ":")]
 		if !ok {
 			return fmt.Errorf("unknown handler: custom_id=%s", event.Data.CustomID())
 		}
@@ -267,7 +280,8 @@ func (gc *GenericCommand) ComponentHandler() func(event *events.ComponentInterac
 
 func (gc *GenericCommand) ModalHandler() func(event *events.ModalSubmitInteractionCreate) error {
 	return func(event *events.ModalSubmitInteractionCreate) error {
-		cmd, ok := gc.ModalHandlers[event.Data.CustomID]
+		customID := strings.Split(event.Data.CustomID, ":")
+		cmd, ok := gc.ModalHandlers[strings.Join(customID[:2], ":")]
 		if !ok {
 			return fmt.Errorf("unknown handler: custom_id=%s", event.Data.CustomID)
 		}

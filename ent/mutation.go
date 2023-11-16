@@ -16,7 +16,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
+	"github.com/sabafly/gobot/ent/messagepin"
 	"github.com/sabafly/gobot/ent/predicate"
+	"github.com/sabafly/gobot/ent/schema"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/ent/wordsuffix"
 	"github.com/sabafly/gobot/internal/permissions"
@@ -33,6 +35,7 @@ const (
 	// Node types.
 	TypeGuild      = "Guild"
 	TypeMember     = "Member"
+	TypeMessagePin = "MessagePin"
 	TypeUser       = "User"
 	TypeWordSuffix = "WordSuffix"
 )
@@ -40,20 +43,23 @@ const (
 // GuildMutation represents an operation that mutates the Guild nodes in the graph.
 type GuildMutation struct {
 	config
-	op             Op
-	typ            string
-	id             *snowflake.ID
-	name           *string
-	locale         *discord.Locale
-	clearedFields  map[string]struct{}
-	owner          *snowflake.ID
-	clearedowner   bool
-	members        map[int]struct{}
-	removedmembers map[int]struct{}
-	clearedmembers bool
-	done           bool
-	oldValue       func(context.Context) (*Guild, error)
-	predicates     []predicate.Guild
+	op                  Op
+	typ                 string
+	id                  *snowflake.ID
+	name                *string
+	locale              *discord.Locale
+	clearedFields       map[string]struct{}
+	owner               *snowflake.ID
+	clearedowner        bool
+	members             map[int]struct{}
+	removedmembers      map[int]struct{}
+	clearedmembers      bool
+	message_pins        map[uuid.UUID]struct{}
+	removedmessage_pins map[uuid.UUID]struct{}
+	clearedmessage_pins bool
+	done                bool
+	oldValue            func(context.Context) (*Guild, error)
+	predicates          []predicate.Guild
 }
 
 var _ ent.Mutation = (*GuildMutation)(nil)
@@ -325,6 +331,60 @@ func (m *GuildMutation) ResetMembers() {
 	m.removedmembers = nil
 }
 
+// AddMessagePinIDs adds the "message_pins" edge to the MessagePin entity by ids.
+func (m *GuildMutation) AddMessagePinIDs(ids ...uuid.UUID) {
+	if m.message_pins == nil {
+		m.message_pins = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.message_pins[ids[i]] = struct{}{}
+	}
+}
+
+// ClearMessagePins clears the "message_pins" edge to the MessagePin entity.
+func (m *GuildMutation) ClearMessagePins() {
+	m.clearedmessage_pins = true
+}
+
+// MessagePinsCleared reports if the "message_pins" edge to the MessagePin entity was cleared.
+func (m *GuildMutation) MessagePinsCleared() bool {
+	return m.clearedmessage_pins
+}
+
+// RemoveMessagePinIDs removes the "message_pins" edge to the MessagePin entity by IDs.
+func (m *GuildMutation) RemoveMessagePinIDs(ids ...uuid.UUID) {
+	if m.removedmessage_pins == nil {
+		m.removedmessage_pins = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.message_pins, ids[i])
+		m.removedmessage_pins[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedMessagePins returns the removed IDs of the "message_pins" edge to the MessagePin entity.
+func (m *GuildMutation) RemovedMessagePinsIDs() (ids []uuid.UUID) {
+	for id := range m.removedmessage_pins {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// MessagePinsIDs returns the "message_pins" edge IDs in the mutation.
+func (m *GuildMutation) MessagePinsIDs() (ids []uuid.UUID) {
+	for id := range m.message_pins {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetMessagePins resets all changes to the "message_pins" edge.
+func (m *GuildMutation) ResetMessagePins() {
+	m.message_pins = nil
+	m.clearedmessage_pins = false
+	m.removedmessage_pins = nil
+}
+
 // Where appends a list predicates to the GuildMutation builder.
 func (m *GuildMutation) Where(ps ...predicate.Guild) {
 	m.predicates = append(m.predicates, ps...)
@@ -475,12 +535,15 @@ func (m *GuildMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *GuildMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.owner != nil {
 		edges = append(edges, guild.EdgeOwner)
 	}
 	if m.members != nil {
 		edges = append(edges, guild.EdgeMembers)
+	}
+	if m.message_pins != nil {
+		edges = append(edges, guild.EdgeMessagePins)
 	}
 	return edges
 }
@@ -499,15 +562,24 @@ func (m *GuildMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case guild.EdgeMessagePins:
+		ids := make([]ent.Value, 0, len(m.message_pins))
+		for id := range m.message_pins {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *GuildMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removedmembers != nil {
 		edges = append(edges, guild.EdgeMembers)
+	}
+	if m.removedmessage_pins != nil {
+		edges = append(edges, guild.EdgeMessagePins)
 	}
 	return edges
 }
@@ -522,18 +594,27 @@ func (m *GuildMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case guild.EdgeMessagePins:
+		ids := make([]ent.Value, 0, len(m.removedmessage_pins))
+		for id := range m.removedmessage_pins {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *GuildMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedowner {
 		edges = append(edges, guild.EdgeOwner)
 	}
 	if m.clearedmembers {
 		edges = append(edges, guild.EdgeMembers)
+	}
+	if m.clearedmessage_pins {
+		edges = append(edges, guild.EdgeMessagePins)
 	}
 	return edges
 }
@@ -546,6 +627,8 @@ func (m *GuildMutation) EdgeCleared(name string) bool {
 		return m.clearedowner
 	case guild.EdgeMembers:
 		return m.clearedmembers
+	case guild.EdgeMessagePins:
+		return m.clearedmessage_pins
 	}
 	return false
 }
@@ -571,6 +654,9 @@ func (m *GuildMutation) ResetEdge(name string) error {
 	case guild.EdgeMembers:
 		m.ResetMembers()
 		return nil
+	case guild.EdgeMessagePins:
+		m.ResetMessagePins()
+		return nil
 	}
 	return fmt.Errorf("unknown Guild edge %s", name)
 }
@@ -586,11 +672,9 @@ type MemberMutation struct {
 	permission       *permissions.Permission
 	appendpermission permissions.Permission
 	clearedFields    map[string]struct{}
-	guild            map[snowflake.ID]struct{}
-	removedguild     map[snowflake.ID]struct{}
+	guild            *snowflake.ID
 	clearedguild     bool
-	owner            map[snowflake.ID]struct{}
-	removedowner     map[snowflake.ID]struct{}
+	owner            *snowflake.ID
 	clearedowner     bool
 	done             bool
 	oldValue         func(context.Context) (*Member, error)
@@ -816,14 +900,9 @@ func (m *MemberMutation) ResetPermission() {
 	delete(m.clearedFields, member.FieldPermission)
 }
 
-// AddGuildIDs adds the "guild" edge to the Guild entity by ids.
-func (m *MemberMutation) AddGuildIDs(ids ...snowflake.ID) {
-	if m.guild == nil {
-		m.guild = make(map[snowflake.ID]struct{})
-	}
-	for i := range ids {
-		m.guild[ids[i]] = struct{}{}
-	}
+// SetGuildID sets the "guild" edge to the Guild entity by id.
+func (m *MemberMutation) SetGuildID(id snowflake.ID) {
+	m.guild = &id
 }
 
 // ClearGuild clears the "guild" edge to the Guild entity.
@@ -836,29 +915,20 @@ func (m *MemberMutation) GuildCleared() bool {
 	return m.clearedguild
 }
 
-// RemoveGuildIDs removes the "guild" edge to the Guild entity by IDs.
-func (m *MemberMutation) RemoveGuildIDs(ids ...snowflake.ID) {
-	if m.removedguild == nil {
-		m.removedguild = make(map[snowflake.ID]struct{})
-	}
-	for i := range ids {
-		delete(m.guild, ids[i])
-		m.removedguild[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedGuild returns the removed IDs of the "guild" edge to the Guild entity.
-func (m *MemberMutation) RemovedGuildIDs() (ids []snowflake.ID) {
-	for id := range m.removedguild {
-		ids = append(ids, id)
+// GuildID returns the "guild" edge ID in the mutation.
+func (m *MemberMutation) GuildID() (id snowflake.ID, exists bool) {
+	if m.guild != nil {
+		return *m.guild, true
 	}
 	return
 }
 
 // GuildIDs returns the "guild" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GuildID instead. It exists only for internal usage by the builders.
 func (m *MemberMutation) GuildIDs() (ids []snowflake.ID) {
-	for id := range m.guild {
-		ids = append(ids, id)
+	if id := m.guild; id != nil {
+		ids = append(ids, *id)
 	}
 	return
 }
@@ -867,17 +937,11 @@ func (m *MemberMutation) GuildIDs() (ids []snowflake.ID) {
 func (m *MemberMutation) ResetGuild() {
 	m.guild = nil
 	m.clearedguild = false
-	m.removedguild = nil
 }
 
-// AddOwnerIDs adds the "owner" edge to the User entity by ids.
-func (m *MemberMutation) AddOwnerIDs(ids ...snowflake.ID) {
-	if m.owner == nil {
-		m.owner = make(map[snowflake.ID]struct{})
-	}
-	for i := range ids {
-		m.owner[ids[i]] = struct{}{}
-	}
+// SetOwnerID sets the "owner" edge to the User entity by id.
+func (m *MemberMutation) SetOwnerID(id snowflake.ID) {
+	m.owner = &id
 }
 
 // ClearOwner clears the "owner" edge to the User entity.
@@ -890,29 +954,20 @@ func (m *MemberMutation) OwnerCleared() bool {
 	return m.clearedowner
 }
 
-// RemoveOwnerIDs removes the "owner" edge to the User entity by IDs.
-func (m *MemberMutation) RemoveOwnerIDs(ids ...snowflake.ID) {
-	if m.removedowner == nil {
-		m.removedowner = make(map[snowflake.ID]struct{})
-	}
-	for i := range ids {
-		delete(m.owner, ids[i])
-		m.removedowner[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedOwner returns the removed IDs of the "owner" edge to the User entity.
-func (m *MemberMutation) RemovedOwnerIDs() (ids []snowflake.ID) {
-	for id := range m.removedowner {
-		ids = append(ids, id)
+// OwnerID returns the "owner" edge ID in the mutation.
+func (m *MemberMutation) OwnerID() (id snowflake.ID, exists bool) {
+	if m.owner != nil {
+		return *m.owner, true
 	}
 	return
 }
 
 // OwnerIDs returns the "owner" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// OwnerID instead. It exists only for internal usage by the builders.
 func (m *MemberMutation) OwnerIDs() (ids []snowflake.ID) {
-	for id := range m.owner {
-		ids = append(ids, id)
+	if id := m.owner; id != nil {
+		ids = append(ids, *id)
 	}
 	return
 }
@@ -921,7 +976,6 @@ func (m *MemberMutation) OwnerIDs() (ids []snowflake.ID) {
 func (m *MemberMutation) ResetOwner() {
 	m.owner = nil
 	m.clearedowner = false
-	m.removedowner = nil
 }
 
 // Where appends a list predicates to the MemberMutation builder.
@@ -1113,17 +1167,13 @@ func (m *MemberMutation) AddedEdges() []string {
 func (m *MemberMutation) AddedIDs(name string) []ent.Value {
 	switch name {
 	case member.EdgeGuild:
-		ids := make([]ent.Value, 0, len(m.guild))
-		for id := range m.guild {
-			ids = append(ids, id)
+		if id := m.guild; id != nil {
+			return []ent.Value{*id}
 		}
-		return ids
 	case member.EdgeOwner:
-		ids := make([]ent.Value, 0, len(m.owner))
-		for id := range m.owner {
-			ids = append(ids, id)
+		if id := m.owner; id != nil {
+			return []ent.Value{*id}
 		}
-		return ids
 	}
 	return nil
 }
@@ -1131,32 +1181,12 @@ func (m *MemberMutation) AddedIDs(name string) []ent.Value {
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *MemberMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 2)
-	if m.removedguild != nil {
-		edges = append(edges, member.EdgeGuild)
-	}
-	if m.removedowner != nil {
-		edges = append(edges, member.EdgeOwner)
-	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *MemberMutation) RemovedIDs(name string) []ent.Value {
-	switch name {
-	case member.EdgeGuild:
-		ids := make([]ent.Value, 0, len(m.removedguild))
-		for id := range m.removedguild {
-			ids = append(ids, id)
-		}
-		return ids
-	case member.EdgeOwner:
-		ids := make([]ent.Value, 0, len(m.removedowner))
-		for id := range m.removedowner {
-			ids = append(ids, id)
-		}
-		return ids
-	}
 	return nil
 }
 
@@ -1188,6 +1218,12 @@ func (m *MemberMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *MemberMutation) ClearEdge(name string) error {
 	switch name {
+	case member.EdgeGuild:
+		m.ClearGuild()
+		return nil
+	case member.EdgeOwner:
+		m.ClearOwner()
+		return nil
 	}
 	return fmt.Errorf("unknown Member unique edge %s", name)
 }
@@ -1204,6 +1240,768 @@ func (m *MemberMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown Member edge %s", name)
+}
+
+// MessagePinMutation represents an operation that mutates the MessagePin nodes in the graph.
+type MessagePinMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *uuid.UUID
+	channel_id    *snowflake.ID
+	addchannel_id *snowflake.ID
+	content       *string
+	embeds        *[]discord.Embed
+	appendembeds  []discord.Embed
+	before_id     *snowflake.ID
+	addbefore_id  *snowflake.ID
+	rate_limit    *schema.RateLimit
+	clearedFields map[string]struct{}
+	guild         *snowflake.ID
+	clearedguild  bool
+	done          bool
+	oldValue      func(context.Context) (*MessagePin, error)
+	predicates    []predicate.MessagePin
+}
+
+var _ ent.Mutation = (*MessagePinMutation)(nil)
+
+// messagepinOption allows management of the mutation configuration using functional options.
+type messagepinOption func(*MessagePinMutation)
+
+// newMessagePinMutation creates new mutation for the MessagePin entity.
+func newMessagePinMutation(c config, op Op, opts ...messagepinOption) *MessagePinMutation {
+	m := &MessagePinMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeMessagePin,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withMessagePinID sets the ID field of the mutation.
+func withMessagePinID(id uuid.UUID) messagepinOption {
+	return func(m *MessagePinMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *MessagePin
+		)
+		m.oldValue = func(ctx context.Context) (*MessagePin, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().MessagePin.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withMessagePin sets the old MessagePin of the mutation.
+func withMessagePin(node *MessagePin) messagepinOption {
+	return func(m *MessagePinMutation) {
+		m.oldValue = func(context.Context) (*MessagePin, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m MessagePinMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m MessagePinMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of MessagePin entities.
+func (m *MessagePinMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *MessagePinMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *MessagePinMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().MessagePin.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetChannelID sets the "channel_id" field.
+func (m *MessagePinMutation) SetChannelID(s snowflake.ID) {
+	m.channel_id = &s
+	m.addchannel_id = nil
+}
+
+// ChannelID returns the value of the "channel_id" field in the mutation.
+func (m *MessagePinMutation) ChannelID() (r snowflake.ID, exists bool) {
+	v := m.channel_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldChannelID returns the old "channel_id" field's value of the MessagePin entity.
+// If the MessagePin object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessagePinMutation) OldChannelID(ctx context.Context) (v snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldChannelID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldChannelID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldChannelID: %w", err)
+	}
+	return oldValue.ChannelID, nil
+}
+
+// AddChannelID adds s to the "channel_id" field.
+func (m *MessagePinMutation) AddChannelID(s snowflake.ID) {
+	if m.addchannel_id != nil {
+		*m.addchannel_id += s
+	} else {
+		m.addchannel_id = &s
+	}
+}
+
+// AddedChannelID returns the value that was added to the "channel_id" field in this mutation.
+func (m *MessagePinMutation) AddedChannelID() (r snowflake.ID, exists bool) {
+	v := m.addchannel_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetChannelID resets all changes to the "channel_id" field.
+func (m *MessagePinMutation) ResetChannelID() {
+	m.channel_id = nil
+	m.addchannel_id = nil
+}
+
+// SetContent sets the "content" field.
+func (m *MessagePinMutation) SetContent(s string) {
+	m.content = &s
+}
+
+// Content returns the value of the "content" field in the mutation.
+func (m *MessagePinMutation) Content() (r string, exists bool) {
+	v := m.content
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContent returns the old "content" field's value of the MessagePin entity.
+// If the MessagePin object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessagePinMutation) OldContent(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContent: %w", err)
+	}
+	return oldValue.Content, nil
+}
+
+// ClearContent clears the value of the "content" field.
+func (m *MessagePinMutation) ClearContent() {
+	m.content = nil
+	m.clearedFields[messagepin.FieldContent] = struct{}{}
+}
+
+// ContentCleared returns if the "content" field was cleared in this mutation.
+func (m *MessagePinMutation) ContentCleared() bool {
+	_, ok := m.clearedFields[messagepin.FieldContent]
+	return ok
+}
+
+// ResetContent resets all changes to the "content" field.
+func (m *MessagePinMutation) ResetContent() {
+	m.content = nil
+	delete(m.clearedFields, messagepin.FieldContent)
+}
+
+// SetEmbeds sets the "embeds" field.
+func (m *MessagePinMutation) SetEmbeds(d []discord.Embed) {
+	m.embeds = &d
+	m.appendembeds = nil
+}
+
+// Embeds returns the value of the "embeds" field in the mutation.
+func (m *MessagePinMutation) Embeds() (r []discord.Embed, exists bool) {
+	v := m.embeds
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEmbeds returns the old "embeds" field's value of the MessagePin entity.
+// If the MessagePin object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessagePinMutation) OldEmbeds(ctx context.Context) (v []discord.Embed, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEmbeds is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEmbeds requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEmbeds: %w", err)
+	}
+	return oldValue.Embeds, nil
+}
+
+// AppendEmbeds adds d to the "embeds" field.
+func (m *MessagePinMutation) AppendEmbeds(d []discord.Embed) {
+	m.appendembeds = append(m.appendembeds, d...)
+}
+
+// AppendedEmbeds returns the list of values that were appended to the "embeds" field in this mutation.
+func (m *MessagePinMutation) AppendedEmbeds() ([]discord.Embed, bool) {
+	if len(m.appendembeds) == 0 {
+		return nil, false
+	}
+	return m.appendembeds, true
+}
+
+// ClearEmbeds clears the value of the "embeds" field.
+func (m *MessagePinMutation) ClearEmbeds() {
+	m.embeds = nil
+	m.appendembeds = nil
+	m.clearedFields[messagepin.FieldEmbeds] = struct{}{}
+}
+
+// EmbedsCleared returns if the "embeds" field was cleared in this mutation.
+func (m *MessagePinMutation) EmbedsCleared() bool {
+	_, ok := m.clearedFields[messagepin.FieldEmbeds]
+	return ok
+}
+
+// ResetEmbeds resets all changes to the "embeds" field.
+func (m *MessagePinMutation) ResetEmbeds() {
+	m.embeds = nil
+	m.appendembeds = nil
+	delete(m.clearedFields, messagepin.FieldEmbeds)
+}
+
+// SetBeforeID sets the "before_id" field.
+func (m *MessagePinMutation) SetBeforeID(s snowflake.ID) {
+	m.before_id = &s
+	m.addbefore_id = nil
+}
+
+// BeforeID returns the value of the "before_id" field in the mutation.
+func (m *MessagePinMutation) BeforeID() (r snowflake.ID, exists bool) {
+	v := m.before_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBeforeID returns the old "before_id" field's value of the MessagePin entity.
+// If the MessagePin object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessagePinMutation) OldBeforeID(ctx context.Context) (v *snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBeforeID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBeforeID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBeforeID: %w", err)
+	}
+	return oldValue.BeforeID, nil
+}
+
+// AddBeforeID adds s to the "before_id" field.
+func (m *MessagePinMutation) AddBeforeID(s snowflake.ID) {
+	if m.addbefore_id != nil {
+		*m.addbefore_id += s
+	} else {
+		m.addbefore_id = &s
+	}
+}
+
+// AddedBeforeID returns the value that was added to the "before_id" field in this mutation.
+func (m *MessagePinMutation) AddedBeforeID() (r snowflake.ID, exists bool) {
+	v := m.addbefore_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearBeforeID clears the value of the "before_id" field.
+func (m *MessagePinMutation) ClearBeforeID() {
+	m.before_id = nil
+	m.addbefore_id = nil
+	m.clearedFields[messagepin.FieldBeforeID] = struct{}{}
+}
+
+// BeforeIDCleared returns if the "before_id" field was cleared in this mutation.
+func (m *MessagePinMutation) BeforeIDCleared() bool {
+	_, ok := m.clearedFields[messagepin.FieldBeforeID]
+	return ok
+}
+
+// ResetBeforeID resets all changes to the "before_id" field.
+func (m *MessagePinMutation) ResetBeforeID() {
+	m.before_id = nil
+	m.addbefore_id = nil
+	delete(m.clearedFields, messagepin.FieldBeforeID)
+}
+
+// SetRateLimit sets the "rate_limit" field.
+func (m *MessagePinMutation) SetRateLimit(sl schema.RateLimit) {
+	m.rate_limit = &sl
+}
+
+// RateLimit returns the value of the "rate_limit" field in the mutation.
+func (m *MessagePinMutation) RateLimit() (r schema.RateLimit, exists bool) {
+	v := m.rate_limit
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRateLimit returns the old "rate_limit" field's value of the MessagePin entity.
+// If the MessagePin object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessagePinMutation) OldRateLimit(ctx context.Context) (v schema.RateLimit, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRateLimit is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRateLimit requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRateLimit: %w", err)
+	}
+	return oldValue.RateLimit, nil
+}
+
+// ResetRateLimit resets all changes to the "rate_limit" field.
+func (m *MessagePinMutation) ResetRateLimit() {
+	m.rate_limit = nil
+}
+
+// SetGuildID sets the "guild" edge to the Guild entity by id.
+func (m *MessagePinMutation) SetGuildID(id snowflake.ID) {
+	m.guild = &id
+}
+
+// ClearGuild clears the "guild" edge to the Guild entity.
+func (m *MessagePinMutation) ClearGuild() {
+	m.clearedguild = true
+}
+
+// GuildCleared reports if the "guild" edge to the Guild entity was cleared.
+func (m *MessagePinMutation) GuildCleared() bool {
+	return m.clearedguild
+}
+
+// GuildID returns the "guild" edge ID in the mutation.
+func (m *MessagePinMutation) GuildID() (id snowflake.ID, exists bool) {
+	if m.guild != nil {
+		return *m.guild, true
+	}
+	return
+}
+
+// GuildIDs returns the "guild" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GuildID instead. It exists only for internal usage by the builders.
+func (m *MessagePinMutation) GuildIDs() (ids []snowflake.ID) {
+	if id := m.guild; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetGuild resets all changes to the "guild" edge.
+func (m *MessagePinMutation) ResetGuild() {
+	m.guild = nil
+	m.clearedguild = false
+}
+
+// Where appends a list predicates to the MessagePinMutation builder.
+func (m *MessagePinMutation) Where(ps ...predicate.MessagePin) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the MessagePinMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *MessagePinMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.MessagePin, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *MessagePinMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *MessagePinMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (MessagePin).
+func (m *MessagePinMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *MessagePinMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.channel_id != nil {
+		fields = append(fields, messagepin.FieldChannelID)
+	}
+	if m.content != nil {
+		fields = append(fields, messagepin.FieldContent)
+	}
+	if m.embeds != nil {
+		fields = append(fields, messagepin.FieldEmbeds)
+	}
+	if m.before_id != nil {
+		fields = append(fields, messagepin.FieldBeforeID)
+	}
+	if m.rate_limit != nil {
+		fields = append(fields, messagepin.FieldRateLimit)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *MessagePinMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case messagepin.FieldChannelID:
+		return m.ChannelID()
+	case messagepin.FieldContent:
+		return m.Content()
+	case messagepin.FieldEmbeds:
+		return m.Embeds()
+	case messagepin.FieldBeforeID:
+		return m.BeforeID()
+	case messagepin.FieldRateLimit:
+		return m.RateLimit()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *MessagePinMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case messagepin.FieldChannelID:
+		return m.OldChannelID(ctx)
+	case messagepin.FieldContent:
+		return m.OldContent(ctx)
+	case messagepin.FieldEmbeds:
+		return m.OldEmbeds(ctx)
+	case messagepin.FieldBeforeID:
+		return m.OldBeforeID(ctx)
+	case messagepin.FieldRateLimit:
+		return m.OldRateLimit(ctx)
+	}
+	return nil, fmt.Errorf("unknown MessagePin field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MessagePinMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case messagepin.FieldChannelID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetChannelID(v)
+		return nil
+	case messagepin.FieldContent:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContent(v)
+		return nil
+	case messagepin.FieldEmbeds:
+		v, ok := value.([]discord.Embed)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEmbeds(v)
+		return nil
+	case messagepin.FieldBeforeID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBeforeID(v)
+		return nil
+	case messagepin.FieldRateLimit:
+		v, ok := value.(schema.RateLimit)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRateLimit(v)
+		return nil
+	}
+	return fmt.Errorf("unknown MessagePin field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *MessagePinMutation) AddedFields() []string {
+	var fields []string
+	if m.addchannel_id != nil {
+		fields = append(fields, messagepin.FieldChannelID)
+	}
+	if m.addbefore_id != nil {
+		fields = append(fields, messagepin.FieldBeforeID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *MessagePinMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case messagepin.FieldChannelID:
+		return m.AddedChannelID()
+	case messagepin.FieldBeforeID:
+		return m.AddedBeforeID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MessagePinMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case messagepin.FieldChannelID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddChannelID(v)
+		return nil
+	case messagepin.FieldBeforeID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBeforeID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown MessagePin numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *MessagePinMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(messagepin.FieldContent) {
+		fields = append(fields, messagepin.FieldContent)
+	}
+	if m.FieldCleared(messagepin.FieldEmbeds) {
+		fields = append(fields, messagepin.FieldEmbeds)
+	}
+	if m.FieldCleared(messagepin.FieldBeforeID) {
+		fields = append(fields, messagepin.FieldBeforeID)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *MessagePinMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *MessagePinMutation) ClearField(name string) error {
+	switch name {
+	case messagepin.FieldContent:
+		m.ClearContent()
+		return nil
+	case messagepin.FieldEmbeds:
+		m.ClearEmbeds()
+		return nil
+	case messagepin.FieldBeforeID:
+		m.ClearBeforeID()
+		return nil
+	}
+	return fmt.Errorf("unknown MessagePin nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *MessagePinMutation) ResetField(name string) error {
+	switch name {
+	case messagepin.FieldChannelID:
+		m.ResetChannelID()
+		return nil
+	case messagepin.FieldContent:
+		m.ResetContent()
+		return nil
+	case messagepin.FieldEmbeds:
+		m.ResetEmbeds()
+		return nil
+	case messagepin.FieldBeforeID:
+		m.ResetBeforeID()
+		return nil
+	case messagepin.FieldRateLimit:
+		m.ResetRateLimit()
+		return nil
+	}
+	return fmt.Errorf("unknown MessagePin field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *MessagePinMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.guild != nil {
+		edges = append(edges, messagepin.EdgeGuild)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *MessagePinMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case messagepin.EdgeGuild:
+		if id := m.guild; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *MessagePinMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *MessagePinMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *MessagePinMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedguild {
+		edges = append(edges, messagepin.EdgeGuild)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *MessagePinMutation) EdgeCleared(name string) bool {
+	switch name {
+	case messagepin.EdgeGuild:
+		return m.clearedguild
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *MessagePinMutation) ClearEdge(name string) error {
+	switch name {
+	case messagepin.EdgeGuild:
+		m.ClearGuild()
+		return nil
+	}
+	return fmt.Errorf("unknown MessagePin unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *MessagePinMutation) ResetEdge(name string) error {
+	switch name {
+	case messagepin.EdgeGuild:
+		m.ResetGuild()
+		return nil
+	}
+	return fmt.Errorf("unknown MessagePin edge %s", name)
 }
 
 // UserMutation represents an operation that mutates the User nodes in the graph.

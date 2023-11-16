@@ -17,11 +17,11 @@ var (
 func SendWebhook(client bot.Client, channelID snowflake.ID, data discord.WebhookMessageCreate) (st *discord.Message, err error) {
 	id, token, err := GetWebhook(client, channelID)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot get webhook: %w", err)
 	}
 	st, err = client.Rest().CreateWebhookMessage(id, token, data, true, snowflake.ID(0))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot send webhook: %w", err)
 	}
 	return st, nil
 }
@@ -29,11 +29,11 @@ func SendWebhook(client bot.Client, channelID snowflake.ID, data discord.Webhook
 func GetWebhook(client bot.Client, channelID snowflake.ID) (id snowflake.ID, token string, err error) {
 	webhooks, err := client.Rest().GetWebhooks(channelID)
 	if err != nil {
-		return 0, "", err
+		return 0, "", fmt.Errorf("cannot request webhook: %w", err)
 	}
 	me, ok := client.Caches().SelfUser()
 	if !ok {
-		return 0, "", err
+		return 0, "", fmt.Errorf("cannot cache self: %w", err)
 	}
 	var webhook discord.Webhook = nil
 	for _, w := range webhooks {

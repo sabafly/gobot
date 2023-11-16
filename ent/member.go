@@ -10,7 +10,9 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	snowflake "github.com/disgoorg/snowflake/v2"
+	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
+	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/internal/permissions"
 )
 
@@ -25,34 +27,44 @@ type Member struct {
 	Permission permissions.Permission `json:"permission,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the MemberQuery when eager-loading is set.
-	Edges        MemberEdges `json:"edges"`
-	selectValues sql.SelectValues
+	Edges         MemberEdges `json:"edges"`
+	guild_members *snowflake.ID
+	member_owner  *snowflake.ID
+	selectValues  sql.SelectValues
 }
 
 // MemberEdges holds the relations/edges for other nodes in the graph.
 type MemberEdges struct {
 	// Guild holds the value of the guild edge.
-	Guild []*Guild `json:"guild,omitempty"`
+	Guild *Guild `json:"guild,omitempty"`
 	// Owner holds the value of the owner edge.
-	Owner []*User `json:"owner,omitempty"`
+	Owner *User `json:"owner,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
 }
 
 // GuildOrErr returns the Guild value or an error if the edge
-// was not loaded in eager-loading.
-func (e MemberEdges) GuildOrErr() ([]*Guild, error) {
+// was not loaded in eager-loading, or loaded but was not found.
+func (e MemberEdges) GuildOrErr() (*Guild, error) {
 	if e.loadedTypes[0] {
+		if e.Guild == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: guild.Label}
+		}
 		return e.Guild, nil
 	}
 	return nil, &NotLoadedError{edge: "guild"}
 }
 
 // OwnerOrErr returns the Owner value or an error if the edge
-// was not loaded in eager-loading.
-func (e MemberEdges) OwnerOrErr() ([]*User, error) {
+// was not loaded in eager-loading, or loaded but was not found.
+func (e MemberEdges) OwnerOrErr() (*User, error) {
 	if e.loadedTypes[1] {
+		if e.Owner == nil {
+			// Edge was loaded but was not found.
+			return nil, &NotFoundError{label: user.Label}
+		}
 		return e.Owner, nil
 	}
 	return nil, &NotLoadedError{edge: "owner"}
@@ -66,6 +78,10 @@ func (*Member) scanValues(columns []string) ([]any, error) {
 		case member.FieldPermission:
 			values[i] = new([]byte)
 		case member.FieldID, member.FieldUserID:
+			values[i] = new(sql.NullInt64)
+		case member.ForeignKeys[0]: // guild_members
+			values[i] = new(sql.NullInt64)
+		case member.ForeignKeys[1]: // member_owner
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -101,6 +117,20 @@ func (m *Member) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &m.Permission); err != nil {
 					return fmt.Errorf("unmarshal field permission: %w", err)
 				}
+			}
+		case member.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field guild_members", values[i])
+			} else if value.Valid {
+				m.guild_members = new(snowflake.ID)
+				*m.guild_members = snowflake.ID(value.Int64)
+			}
+		case member.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field member_owner", values[i])
+			} else if value.Valid {
+				m.member_owner = new(snowflake.ID)
+				*m.member_owner = snowflake.ID(value.Int64)
 			}
 		default:
 			m.selectValues.Set(columns[i], values[i])

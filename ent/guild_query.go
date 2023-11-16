@@ -14,6 +14,7 @@ import (
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
+	"github.com/sabafly/gobot/ent/messagepin"
 	"github.com/sabafly/gobot/ent/predicate"
 	"github.com/sabafly/gobot/ent/user"
 )
@@ -21,13 +22,14 @@ import (
 // GuildQuery is the builder for querying Guild entities.
 type GuildQuery struct {
 	config
-	ctx         *QueryContext
-	order       []guild.OrderOption
-	inters      []Interceptor
-	predicates  []predicate.Guild
-	withOwner   *UserQuery
-	withMembers *MemberQuery
-	withFKs     bool
+	ctx             *QueryContext
+	order           []guild.OrderOption
+	inters          []Interceptor
+	predicates      []predicate.Guild
+	withOwner       *UserQuery
+	withMembers     *MemberQuery
+	withMessagePins *MessagePinQuery
+	withFKs         bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -100,7 +102,29 @@ func (gq *GuildQuery) QueryMembers() *MemberQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(guild.Table, guild.FieldID, selector),
 			sqlgraph.To(member.Table, member.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, guild.MembersTable, guild.MembersPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2M, false, guild.MembersTable, guild.MembersColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryMessagePins chains the current query on the "message_pins" edge.
+func (gq *GuildQuery) QueryMessagePins() *MessagePinQuery {
+	query := (&MessagePinClient{config: gq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := gq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := gq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(guild.Table, guild.FieldID, selector),
+			sqlgraph.To(messagepin.Table, messagepin.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, guild.MessagePinsTable, guild.MessagePinsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
 		return fromU, nil
@@ -295,13 +319,14 @@ func (gq *GuildQuery) Clone() *GuildQuery {
 		return nil
 	}
 	return &GuildQuery{
-		config:      gq.config,
-		ctx:         gq.ctx.Clone(),
-		order:       append([]guild.OrderOption{}, gq.order...),
-		inters:      append([]Interceptor{}, gq.inters...),
-		predicates:  append([]predicate.Guild{}, gq.predicates...),
-		withOwner:   gq.withOwner.Clone(),
-		withMembers: gq.withMembers.Clone(),
+		config:          gq.config,
+		ctx:             gq.ctx.Clone(),
+		order:           append([]guild.OrderOption{}, gq.order...),
+		inters:          append([]Interceptor{}, gq.inters...),
+		predicates:      append([]predicate.Guild{}, gq.predicates...),
+		withOwner:       gq.withOwner.Clone(),
+		withMembers:     gq.withMembers.Clone(),
+		withMessagePins: gq.withMessagePins.Clone(),
 		// clone intermediate query.
 		sql:  gq.sql.Clone(),
 		path: gq.path,
@@ -327,6 +352,17 @@ func (gq *GuildQuery) WithMembers(opts ...func(*MemberQuery)) *GuildQuery {
 		opt(query)
 	}
 	gq.withMembers = query
+	return gq
+}
+
+// WithMessagePins tells the query-builder to eager-load the nodes that are connected to
+// the "message_pins" edge. The optional arguments are used to configure the query builder of the edge.
+func (gq *GuildQuery) WithMessagePins(opts ...func(*MessagePinQuery)) *GuildQuery {
+	query := (&MessagePinClient{config: gq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	gq.withMessagePins = query
 	return gq
 }
 
@@ -409,9 +445,10 @@ func (gq *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild,
 		nodes       = []*Guild{}
 		withFKs     = gq.withFKs
 		_spec       = gq.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			gq.withOwner != nil,
 			gq.withMembers != nil,
+			gq.withMessagePins != nil,
 		}
 	)
 	if gq.withOwner != nil {
@@ -451,6 +488,13 @@ func (gq *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild,
 			return nil, err
 		}
 	}
+	if query := gq.withMessagePins; query != nil {
+		if err := gq.loadMessagePins(ctx, query, nodes,
+			func(n *Guild) { n.Edges.MessagePins = []*MessagePin{} },
+			func(n *Guild, e *MessagePin) { n.Edges.MessagePins = append(n.Edges.MessagePins, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -487,63 +531,64 @@ func (gq *GuildQuery) loadOwner(ctx context.Context, query *UserQuery, nodes []*
 	return nil
 }
 func (gq *GuildQuery) loadMembers(ctx context.Context, query *MemberQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *Member)) error {
-	edgeIDs := make([]driver.Value, len(nodes))
-	byID := make(map[snowflake.ID]*Guild)
-	nids := make(map[int]map[*Guild]struct{})
-	for i, node := range nodes {
-		edgeIDs[i] = node.ID
-		byID[node.ID] = node
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[snowflake.ID]*Guild)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
 		if init != nil {
-			init(node)
+			init(nodes[i])
 		}
 	}
-	query.Where(func(s *sql.Selector) {
-		joinT := sql.Table(guild.MembersTable)
-		s.Join(joinT).On(s.C(member.FieldID), joinT.C(guild.MembersPrimaryKey[1]))
-		s.Where(sql.InValues(joinT.C(guild.MembersPrimaryKey[0]), edgeIDs...))
-		columns := s.SelectedColumns()
-		s.Select(joinT.C(guild.MembersPrimaryKey[0]))
-		s.AppendSelect(columns...)
-		s.SetDistinct(false)
-	})
-	if err := query.prepareQuery(ctx); err != nil {
-		return err
-	}
-	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
-		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
-			assign := spec.Assign
-			values := spec.ScanValues
-			spec.ScanValues = func(columns []string) ([]any, error) {
-				values, err := values(columns[1:])
-				if err != nil {
-					return nil, err
-				}
-				return append([]any{new(sql.NullInt64)}, values...), nil
-			}
-			spec.Assign = func(columns []string, values []any) error {
-				outValue := snowflake.ID(values[0].(*sql.NullInt64).Int64)
-				inValue := int(values[1].(*sql.NullInt64).Int64)
-				if nids[inValue] == nil {
-					nids[inValue] = map[*Guild]struct{}{byID[outValue]: {}}
-					return assign(columns[1:], values[1:])
-				}
-				nids[inValue][byID[outValue]] = struct{}{}
-				return nil
-			}
-		})
-	})
-	neighbors, err := withInterceptors[[]*Member](ctx, query, qr, query.inters)
+	query.withFKs = true
+	query.Where(predicate.Member(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(guild.MembersColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nids[n.ID]
+		fk := n.guild_members
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "guild_members" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected "members" node returned %v`, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "guild_members" returned %v for node %v`, *fk, n.ID)
 		}
-		for kn := range nodes {
-			assign(kn, n)
+		assign(node, n)
+	}
+	return nil
+}
+func (gq *GuildQuery) loadMessagePins(ctx context.Context, query *MessagePinQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *MessagePin)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[snowflake.ID]*Guild)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
 		}
+	}
+	query.withFKs = true
+	query.Where(predicate.MessagePin(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(guild.MessagePinsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.guild_message_pins
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "guild_message_pins" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "guild_message_pins" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

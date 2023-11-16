@@ -243,7 +243,7 @@ func HasMembers() predicate.Guild {
 	return predicate.Guild(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, MembersTable, MembersPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2M, false, MembersTable, MembersColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -253,6 +253,29 @@ func HasMembers() predicate.Guild {
 func HasMembersWith(preds ...predicate.Member) predicate.Guild {
 	return predicate.Guild(func(s *sql.Selector) {
 		step := newMembersStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasMessagePins applies the HasEdge predicate on the "message_pins" edge.
+func HasMessagePins() predicate.Guild {
+	return predicate.Guild(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, MessagePinsTable, MessagePinsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasMessagePinsWith applies the HasEdge predicate on the "message_pins" edge with a given conditions (other predicates).
+func HasMessagePinsWith(preds ...predicate.MessagePin) predicate.Guild {
+	return predicate.Guild(func(s *sql.Selector) {
+		step := newMessagePinsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

@@ -126,17 +126,21 @@ var (
 	}
 )
 
+func Localize(locale discord.Locale, messageId string, template any, count int) (string, error) {
+	return localizer.Localize(&i18n.LocalizeConfig{
+		MessageID:    messageId,
+		TemplateData: template,
+		PluralCount:  count,
+	})
+}
+
 func Message(locale discord.Locale, messageId string, opts ...Option) (res string) {
 	opt := new(Cfg)
 	opt.FallbackLanguage = discord.LocaleJapanese
 	for _, o := range opts {
 		o(opt)
 	}
-	res, err := localizer.Localize(&i18n.LocalizeConfig{
-		MessageID:    messageId,
-		TemplateData: opt.TemplateData,
-		PluralCount:  opt.PluralCount,
-	})
+	res, err := Localize(locale, messageId, opt.TemplateData, opt.PluralCount)
 	if err != nil {
 		res = messageId
 		if opt.Fallback != "" {

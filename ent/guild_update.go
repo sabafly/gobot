@@ -12,8 +12,10 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/disgoorg/disgo/discord"
 	snowflake "github.com/disgoorg/snowflake/v2"
+	"github.com/google/uuid"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
+	"github.com/sabafly/gobot/ent/messagepin"
 	"github.com/sabafly/gobot/ent/predicate"
 	"github.com/sabafly/gobot/ent/user"
 )
@@ -77,6 +79,21 @@ func (gu *GuildUpdate) AddMembers(m ...*Member) *GuildUpdate {
 	return gu.AddMemberIDs(ids...)
 }
 
+// AddMessagePinIDs adds the "message_pins" edge to the MessagePin entity by IDs.
+func (gu *GuildUpdate) AddMessagePinIDs(ids ...uuid.UUID) *GuildUpdate {
+	gu.mutation.AddMessagePinIDs(ids...)
+	return gu
+}
+
+// AddMessagePins adds the "message_pins" edges to the MessagePin entity.
+func (gu *GuildUpdate) AddMessagePins(m ...*MessagePin) *GuildUpdate {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return gu.AddMessagePinIDs(ids...)
+}
+
 // Mutation returns the GuildMutation object of the builder.
 func (gu *GuildUpdate) Mutation() *GuildMutation {
 	return gu.mutation
@@ -107,6 +124,27 @@ func (gu *GuildUpdate) RemoveMembers(m ...*Member) *GuildUpdate {
 		ids[i] = m[i].ID
 	}
 	return gu.RemoveMemberIDs(ids...)
+}
+
+// ClearMessagePins clears all "message_pins" edges to the MessagePin entity.
+func (gu *GuildUpdate) ClearMessagePins() *GuildUpdate {
+	gu.mutation.ClearMessagePins()
+	return gu
+}
+
+// RemoveMessagePinIDs removes the "message_pins" edge to MessagePin entities by IDs.
+func (gu *GuildUpdate) RemoveMessagePinIDs(ids ...uuid.UUID) *GuildUpdate {
+	gu.mutation.RemoveMessagePinIDs(ids...)
+	return gu
+}
+
+// RemoveMessagePins removes "message_pins" edges to MessagePin entities.
+func (gu *GuildUpdate) RemoveMessagePins(m ...*MessagePin) *GuildUpdate {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return gu.RemoveMessagePinIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -203,10 +241,10 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if gu.mutation.MembersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   guild.MembersTable,
-			Columns: guild.MembersPrimaryKey,
+			Columns: []string{guild.MembersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
@@ -216,10 +254,10 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := gu.mutation.RemovedMembersIDs(); len(nodes) > 0 && !gu.mutation.MembersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   guild.MembersTable,
-			Columns: guild.MembersPrimaryKey,
+			Columns: []string{guild.MembersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
@@ -232,13 +270,58 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := gu.mutation.MembersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   guild.MembersTable,
-			Columns: guild.MembersPrimaryKey,
+			Columns: []string{guild.MembersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if gu.mutation.MessagePinsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.MessagePinsTable,
+			Columns: []string{guild.MessagePinsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(messagepin.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.RemovedMessagePinsIDs(); len(nodes) > 0 && !gu.mutation.MessagePinsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.MessagePinsTable,
+			Columns: []string{guild.MessagePinsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(messagepin.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.MessagePinsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.MessagePinsTable,
+			Columns: []string{guild.MessagePinsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(messagepin.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -312,6 +395,21 @@ func (guo *GuildUpdateOne) AddMembers(m ...*Member) *GuildUpdateOne {
 	return guo.AddMemberIDs(ids...)
 }
 
+// AddMessagePinIDs adds the "message_pins" edge to the MessagePin entity by IDs.
+func (guo *GuildUpdateOne) AddMessagePinIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	guo.mutation.AddMessagePinIDs(ids...)
+	return guo
+}
+
+// AddMessagePins adds the "message_pins" edges to the MessagePin entity.
+func (guo *GuildUpdateOne) AddMessagePins(m ...*MessagePin) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return guo.AddMessagePinIDs(ids...)
+}
+
 // Mutation returns the GuildMutation object of the builder.
 func (guo *GuildUpdateOne) Mutation() *GuildMutation {
 	return guo.mutation
@@ -342,6 +440,27 @@ func (guo *GuildUpdateOne) RemoveMembers(m ...*Member) *GuildUpdateOne {
 		ids[i] = m[i].ID
 	}
 	return guo.RemoveMemberIDs(ids...)
+}
+
+// ClearMessagePins clears all "message_pins" edges to the MessagePin entity.
+func (guo *GuildUpdateOne) ClearMessagePins() *GuildUpdateOne {
+	guo.mutation.ClearMessagePins()
+	return guo
+}
+
+// RemoveMessagePinIDs removes the "message_pins" edge to MessagePin entities by IDs.
+func (guo *GuildUpdateOne) RemoveMessagePinIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	guo.mutation.RemoveMessagePinIDs(ids...)
+	return guo
+}
+
+// RemoveMessagePins removes "message_pins" edges to MessagePin entities.
+func (guo *GuildUpdateOne) RemoveMessagePins(m ...*MessagePin) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return guo.RemoveMessagePinIDs(ids...)
 }
 
 // Where appends a list predicates to the GuildUpdate builder.
@@ -468,10 +587,10 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 	}
 	if guo.mutation.MembersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   guild.MembersTable,
-			Columns: guild.MembersPrimaryKey,
+			Columns: []string{guild.MembersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
@@ -481,10 +600,10 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 	}
 	if nodes := guo.mutation.RemovedMembersIDs(); len(nodes) > 0 && !guo.mutation.MembersCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   guild.MembersTable,
-			Columns: guild.MembersPrimaryKey,
+			Columns: []string{guild.MembersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
@@ -497,13 +616,58 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 	}
 	if nodes := guo.mutation.MembersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   guild.MembersTable,
-			Columns: guild.MembersPrimaryKey,
+			Columns: []string{guild.MembersColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if guo.mutation.MessagePinsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.MessagePinsTable,
+			Columns: []string{guild.MessagePinsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(messagepin.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.RemovedMessagePinsIDs(); len(nodes) > 0 && !guo.mutation.MessagePinsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.MessagePinsTable,
+			Columns: []string{guild.MessagePinsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(messagepin.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.MessagePinsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.MessagePinsTable,
+			Columns: []string{guild.MessagePinsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(messagepin.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

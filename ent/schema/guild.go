@@ -37,5 +37,6 @@ func (Guild) Edges() []ent.Edge {
 			Unique().
 			Required(),
 		edge.To("members", Member.Type),
+		edge.To("message_pins", MessagePin.Type),
 	}
 }
