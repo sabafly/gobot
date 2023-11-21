@@ -15,6 +15,9 @@ import (
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
+	"github.com/sabafly/gobot/ent/rolepanel"
+	"github.com/sabafly/gobot/ent/rolepaneledit"
+	"github.com/sabafly/gobot/ent/rolepanelplaced"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/ent/wordsuffix"
 )
@@ -77,11 +80,14 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			guild.Table:      guild.ValidColumn,
-			member.Table:     member.ValidColumn,
-			messagepin.Table: messagepin.ValidColumn,
-			user.Table:       user.ValidColumn,
-			wordsuffix.Table: wordsuffix.ValidColumn,
+			guild.Table:           guild.ValidColumn,
+			member.Table:          member.ValidColumn,
+			messagepin.Table:      messagepin.ValidColumn,
+			rolepanel.Table:       rolepanel.ValidColumn,
+			rolepaneledit.Table:   rolepaneledit.ValidColumn,
+			rolepanelplaced.Table: rolepanelplaced.ValidColumn,
+			user.Table:            user.ValidColumn,
+			wordsuffix.Table:      wordsuffix.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

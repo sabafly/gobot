@@ -42,7 +42,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "member" package.
 	GuildsInverseTable = "members"
 	// GuildsColumn is the table column denoting the guilds relation/edge.
-	GuildsColumn = "member_owner"
+	GuildsColumn = "user_guilds"
 	// WordSuffixTable is the table that holds the word_suffix relation/edge.
 	WordSuffixTable = "word_suffixes"
 	// WordSuffixInverseTable is the table name for the WordSuffix entity.
@@ -156,7 +156,7 @@ func newGuildsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(GuildsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, true, GuildsTable, GuildsColumn),
+		sqlgraph.Edge(sqlgraph.O2M, false, GuildsTable, GuildsColumn),
 	)
 }
 func newWordSuffixStep() *sqlgraph.Step {

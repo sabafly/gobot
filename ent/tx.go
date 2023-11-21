@@ -18,6 +18,12 @@ type Tx struct {
 	Member *MemberClient
 	// MessagePin is the client for interacting with the MessagePin builders.
 	MessagePin *MessagePinClient
+	// RolePanel is the client for interacting with the RolePanel builders.
+	RolePanel *RolePanelClient
+	// RolePanelEdit is the client for interacting with the RolePanelEdit builders.
+	RolePanelEdit *RolePanelEditClient
+	// RolePanelPlaced is the client for interacting with the RolePanelPlaced builders.
+	RolePanelPlaced *RolePanelPlacedClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// WordSuffix is the client for interacting with the WordSuffix builders.
@@ -156,6 +162,9 @@ func (tx *Tx) init() {
 	tx.Guild = NewGuildClient(tx.config)
 	tx.Member = NewMemberClient(tx.config)
 	tx.MessagePin = NewMessagePinClient(tx.config)
+	tx.RolePanel = NewRolePanelClient(tx.config)
+	tx.RolePanelEdit = NewRolePanelEditClient(tx.config)
+	tx.RolePanelPlaced = NewRolePanelPlacedClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.WordSuffix = NewWordSuffixClient(tx.config)
 }

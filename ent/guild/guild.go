@@ -23,6 +23,12 @@ const (
 	EdgeMembers = "members"
 	// EdgeMessagePins holds the string denoting the message_pins edge name in mutations.
 	EdgeMessagePins = "message_pins"
+	// EdgeRolePanels holds the string denoting the role_panels edge name in mutations.
+	EdgeRolePanels = "role_panels"
+	// EdgeRolePanelPlacements holds the string denoting the role_panel_placements edge name in mutations.
+	EdgeRolePanelPlacements = "role_panel_placements"
+	// EdgeRolePanelEdits holds the string denoting the role_panel_edits edge name in mutations.
+	EdgeRolePanelEdits = "role_panel_edits"
 	// Table holds the table name of the guild in the database.
 	Table = "guilds"
 	// OwnerTable is the table that holds the owner relation/edge.
@@ -46,6 +52,27 @@ const (
 	MessagePinsInverseTable = "message_pins"
 	// MessagePinsColumn is the table column denoting the message_pins relation/edge.
 	MessagePinsColumn = "guild_message_pins"
+	// RolePanelsTable is the table that holds the role_panels relation/edge.
+	RolePanelsTable = "role_panels"
+	// RolePanelsInverseTable is the table name for the RolePanel entity.
+	// It exists in this package in order to avoid circular dependency with the "rolepanel" package.
+	RolePanelsInverseTable = "role_panels"
+	// RolePanelsColumn is the table column denoting the role_panels relation/edge.
+	RolePanelsColumn = "guild_role_panels"
+	// RolePanelPlacementsTable is the table that holds the role_panel_placements relation/edge.
+	RolePanelPlacementsTable = "role_panel_placeds"
+	// RolePanelPlacementsInverseTable is the table name for the RolePanelPlaced entity.
+	// It exists in this package in order to avoid circular dependency with the "rolepanelplaced" package.
+	RolePanelPlacementsInverseTable = "role_panel_placeds"
+	// RolePanelPlacementsColumn is the table column denoting the role_panel_placements relation/edge.
+	RolePanelPlacementsColumn = "guild_role_panel_placements"
+	// RolePanelEditsTable is the table that holds the role_panel_edits relation/edge.
+	RolePanelEditsTable = "role_panel_edits"
+	// RolePanelEditsInverseTable is the table name for the RolePanelEdit entity.
+	// It exists in this package in order to avoid circular dependency with the "rolepaneledit" package.
+	RolePanelEditsInverseTable = "role_panel_edits"
+	// RolePanelEditsColumn is the table column denoting the role_panel_edits relation/edge.
+	RolePanelEditsColumn = "guild_role_panel_edits"
 )
 
 // Columns holds all SQL columns for guild fields.
@@ -137,6 +164,48 @@ func ByMessagePins(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newMessagePinsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByRolePanelsCount orders the results by role_panels count.
+func ByRolePanelsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRolePanelsStep(), opts...)
+	}
+}
+
+// ByRolePanels orders the results by role_panels terms.
+func ByRolePanels(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRolePanelsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByRolePanelPlacementsCount orders the results by role_panel_placements count.
+func ByRolePanelPlacementsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRolePanelPlacementsStep(), opts...)
+	}
+}
+
+// ByRolePanelPlacements orders the results by role_panel_placements terms.
+func ByRolePanelPlacements(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRolePanelPlacementsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByRolePanelEditsCount orders the results by role_panel_edits count.
+func ByRolePanelEditsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRolePanelEditsStep(), opts...)
+	}
+}
+
+// ByRolePanelEdits orders the results by role_panel_edits terms.
+func ByRolePanelEdits(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRolePanelEditsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newOwnerStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -156,5 +225,26 @@ func newMessagePinsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(MessagePinsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, MessagePinsTable, MessagePinsColumn),
+	)
+}
+func newRolePanelsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RolePanelsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RolePanelsTable, RolePanelsColumn),
+	)
+}
+func newRolePanelPlacementsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RolePanelPlacementsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RolePanelPlacementsTable, RolePanelPlacementsColumn),
+	)
+}
+func newRolePanelEditsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RolePanelEditsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RolePanelEditsTable, RolePanelEditsColumn),
 	)
 }

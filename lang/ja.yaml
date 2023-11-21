@@ -3,7 +3,7 @@ activity_competing_name: "{{.Name}}の試合中"
 activity_game_name: "{{.Name}}をプレイ中"
 activity_listening_name: "{{.Name}}を再生中"
 activity_party_format: ({{.PartySize}}/{{.PartyMax}})
-activity_streaming_name: '[{{.Details}}]({{.URL}})を配信中'
+activity_streaming_name: "[{{.Details}}]({{.URL}})を配信中"
 activity_watching_name: "{{.Name}}を視聴中"
 all_time: 全期間
 april: 4月
@@ -423,9 +423,83 @@ components.message.pin.delete.message: ピン留めメッセージを削除し�
 components.message.pin.username: ピン留め
 components.ping.pong: ポング！
 components.ping.command.description: ポング！
+components.role.panel.default_name: 役職パネル
+components.role.panel.create.modal.title: 役職パネルを作成
+components.role.panel.create.modal.input.1.label: 役職パネルの名前
+components.role.panel.create.modal.input.2.label: 役職パネルの説明
+components.role.panel.edit.menu.base.title: 役職パネルを編集する
+components.role.panel.edit.menu.base.field.name: 名前
+components.role.panel.edit.menu.base.field.description: 説明
+components.role.panel.edit.menu.base.field.roles: 役職
+components.role.panel.edit.menu.base.field.value.empty: 値なし
+components.role.panel.edit.menu.base.components.change_name: 名前の変更
+components.role.panel.edit.menu.base.components.change_description: 説明の変更
+components.role.panel.edit.menu.base.components.modify_roles: 役職リストの編集
+components.role.panel.edit.menu.base.components.select_role: 編集する役職を選択
+components.role.panel.edit.menu.base.components.delete: 役職を削除
+components.role.panel.edit.menu.base.components.set_emoji: 絵文字の設定
+components.role.panel.edit.menu.base.components.set_display_name: 名前の設定
+components.role.panel.edit.menu.base.components.back_base_menu: 戻る
+components.role.panel.edit.menu.base.components.apply_change: 変更を適用
+components.role.panel.edit.menu.modify_roles.title: 役職リストの編集
+components.role.panel.edit.menu.modify_roles.field.roles: 役職
+components.role.panel.edit.action.change_name.title: 名前の変更
+components.role.panel.edit.action.change_description.title: 説明の変更
+components.role.panel.embed.field.role: 役職
+components.role.panel.components.use_button: 使用
+components.role.panel.components.select_menu.placeholder: 取得する役職を選択
+components.role.panel.edit.add_role.deleted_role.embed.title: 追加できない役職があります
+components.role.panel.edit.add_role.deleted_role.embed.description: "役職の順位等を確認してください\n以下の役職を追加できませんでした"
+components.role.panel.edit.set_display.name.modal.title: 表示名を設定
+components.role.panel.edit.set_display.name.modal.input.display_name.label: 表示名
+components.role.panel.edit.menu.set_emoji.title: 絵文字の設定
+components.role.panel.edit.menu.set_emoji.description: |-
+  役職に設定する絵文字をこのチャンネルに送信してください
+  絵文字をリセットすると、役職の順位に応じてアルファベットの絵文字が割り当てられます
+components.role.panel.edit.menu.set_emoji.components.cancel: キャンセル
+components.role.panel.edit.menu.set_emoji.components.reset: リセット
+components.role.panel.place.menu.author.text: 設置時のプレビュー
+components.role.panel.place.menu.select_type.placeholder: 設置するパネルの種類を選択
+components.role.panel.type.reaction: リアクション
+components.role.panel.type.reaction.description: リアクションを使って役職を得るパネル
+components.role.panel.type.select_menu: セレクトメニュー
+components.role.panel.type.select_menu.description: セレクトメニューから取得したいパネルを選択するパネル
+components.role.panel.type.button: ボタン
+components.role.panel.type.button.description: ボタンを使って役職を得るパネル
+components.role.panel.button.color.green: グリーン
+components.role.panel.button.color.blue: ブルー
+components.role.panel.button.color.red: レッド
+components.role.panel.button.color.gray: グレー
+components.role.panel.place.menu.button.show_name: 表示名を表示する
+components.role.panel.place.menu.select_menu.folding_select_menu: 折り畳みセレクトメニューを使用する
+components.role.panel.place.menu.reaction.hide_notice: 通知を送信しない
+components.role.panel.place.menu.generic.use_display_name: メンションの代わりに役職の表示名を使う
+components.role.panel.place.menu.generic.create: 作成
+components.role.panel.create.message: 作成しました
+components.role.panel.create.description: 役職パネルを作成しました
+components.role.panel.use.added: 役職を追加しました
+components.role.panel.use.added.description: "{{.Role}}の役職を追加しました"
+components.role.panel.use.removed: 役職を解除しました
+components.role.panel.use.removed.description: "{{.Role}}の役職を解除しました"
+components.role.panel.use.changed: 役職を操作しました
+components.role.panel.use.changed.add: 追加
+components.role.panel.use.changed.remove: 解除
+components.role.panel.use.changed.unchanged: 既存
+components.role.panel.delete.message.embed.title: 削除しました
+components.role.panel.delete.message.embed.description: "{{.RolePanel}} を削除しました"
+
 errors.generic.message: エラーが発生しました
+errors.panic.message: 致命的なエラー
 errors.invalid.bot.target: ボットは選択できません
 errors.invalid.bot.target.description: ボット以外のユーザーである必要があります
 errors.invalid.permission: 権限が不足しています
-errors.invalid.permission.description: "`/permission add`コマンドで`{{.Permission}}`の権限を追加することで使用可能になります。"
+errors.invalid.permission.description: "`/permission add`コマンドで`{{.Permission}}`の権限を追加することで使用可能になります"
 errors.unavailable.message.pin: ピン留めメッセージが存在しません
+errors.timeout: 期限切れ
+errors.timeout.description: 有効期限が切れています
+errors.invalid.self: ボットの情報を解決できません
+errors.invalid.self.description: このエラーが何度も発生する場合は、ボットを導入しなおしてください
+errors.fail.role.panel: 役職の操作に失敗
+errors.fail.role.panel.description: |-
+  役職の追加または解除に失敗しました
+  役職がボットより下の順位にあることとボットに役職を操作する権限があるかを確認してください

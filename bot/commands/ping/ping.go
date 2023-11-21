@@ -9,6 +9,7 @@ import (
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/internal/builtin"
 	"github.com/sabafly/gobot/internal/embeds"
+	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/translate"
 )
 
@@ -24,7 +25,7 @@ func Command() *generic.GenericCommand {
 			},
 		},
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
-			"/ping": generic.CommandHandler(func(_ *components.Components, event *events.ApplicationCommandInteractionCreate) generic.Error {
+			"/ping": generic.CommandHandler(func(_ *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 				if err := event.CreateMessage(
 					discord.NewMessageBuilder().
 						SetEmbeds(
@@ -40,7 +41,7 @@ func Command() *generic.GenericCommand {
 						).
 						Create(),
 				); err != nil {
-					return generic.NewError(err)
+					return errors.NewError(err)
 				}
 				return nil
 			}),

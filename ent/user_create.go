@@ -240,7 +240,7 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if nodes := uc.mutation.GuildsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   user.GuildsTable,
 			Columns: []string{user.GuildsColumn},
 			Bidi:    false,

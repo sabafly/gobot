@@ -15,6 +15,9 @@ import (
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
+	"github.com/sabafly/gobot/ent/rolepanel"
+	"github.com/sabafly/gobot/ent/rolepaneledit"
+	"github.com/sabafly/gobot/ent/rolepanelplaced"
 	"github.com/sabafly/gobot/ent/user"
 )
 
@@ -90,6 +93,51 @@ func (gc *GuildCreate) AddMessagePins(m ...*MessagePin) *GuildCreate {
 		ids[i] = m[i].ID
 	}
 	return gc.AddMessagePinIDs(ids...)
+}
+
+// AddRolePanelIDs adds the "role_panels" edge to the RolePanel entity by IDs.
+func (gc *GuildCreate) AddRolePanelIDs(ids ...uuid.UUID) *GuildCreate {
+	gc.mutation.AddRolePanelIDs(ids...)
+	return gc
+}
+
+// AddRolePanels adds the "role_panels" edges to the RolePanel entity.
+func (gc *GuildCreate) AddRolePanels(r ...*RolePanel) *GuildCreate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return gc.AddRolePanelIDs(ids...)
+}
+
+// AddRolePanelPlacementIDs adds the "role_panel_placements" edge to the RolePanelPlaced entity by IDs.
+func (gc *GuildCreate) AddRolePanelPlacementIDs(ids ...uuid.UUID) *GuildCreate {
+	gc.mutation.AddRolePanelPlacementIDs(ids...)
+	return gc
+}
+
+// AddRolePanelPlacements adds the "role_panel_placements" edges to the RolePanelPlaced entity.
+func (gc *GuildCreate) AddRolePanelPlacements(r ...*RolePanelPlaced) *GuildCreate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return gc.AddRolePanelPlacementIDs(ids...)
+}
+
+// AddRolePanelEditIDs adds the "role_panel_edits" edge to the RolePanelEdit entity by IDs.
+func (gc *GuildCreate) AddRolePanelEditIDs(ids ...uuid.UUID) *GuildCreate {
+	gc.mutation.AddRolePanelEditIDs(ids...)
+	return gc
+}
+
+// AddRolePanelEdits adds the "role_panel_edits" edges to the RolePanelEdit entity.
+func (gc *GuildCreate) AddRolePanelEdits(r ...*RolePanelEdit) *GuildCreate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return gc.AddRolePanelEditIDs(ids...)
 }
 
 // Mutation returns the GuildMutation object of the builder.
@@ -236,6 +284,54 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(messagepin.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := gc.mutation.RolePanelsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelsTable,
+			Columns: []string{guild.RolePanelsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepanel.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := gc.mutation.RolePanelPlacementsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelPlacementsTable,
+			Columns: []string{guild.RolePanelPlacementsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepanelplaced.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := gc.mutation.RolePanelEditsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelEditsTable,
+			Columns: []string{guild.RolePanelEditsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepaneledit.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

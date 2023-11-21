@@ -23,12 +23,6 @@ type MemberCreate struct {
 	hooks    []Hook
 }
 
-// SetUserID sets the "user_id" field.
-func (mc *MemberCreate) SetUserID(s snowflake.ID) *MemberCreate {
-	mc.mutation.SetUserID(s)
-	return mc
-}
-
 // SetPermission sets the "permission" field.
 func (mc *MemberCreate) SetPermission(pe permissions.Permission) *MemberCreate {
 	mc.mutation.SetPermission(pe)
@@ -46,15 +40,15 @@ func (mc *MemberCreate) SetGuild(g *Guild) *MemberCreate {
 	return mc.SetGuildID(g.ID)
 }
 
-// SetOwnerID sets the "owner" edge to the User entity by ID.
-func (mc *MemberCreate) SetOwnerID(id snowflake.ID) *MemberCreate {
-	mc.mutation.SetOwnerID(id)
+// SetUserID sets the "user" edge to the User entity by ID.
+func (mc *MemberCreate) SetUserID(id snowflake.ID) *MemberCreate {
+	mc.mutation.SetUserID(id)
 	return mc
 }
 
-// SetOwner sets the "owner" edge to the User entity.
-func (mc *MemberCreate) SetOwner(u *User) *MemberCreate {
-	return mc.SetOwnerID(u.ID)
+// SetUser sets the "user" edge to the User entity.
+func (mc *MemberCreate) SetUser(u *User) *MemberCreate {
+	return mc.SetUserID(u.ID)
 }
 
 // Mutation returns the MemberMutation object of the builder.
@@ -91,14 +85,11 @@ func (mc *MemberCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (mc *MemberCreate) check() error {
-	if _, ok := mc.mutation.UserID(); !ok {
-		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "Member.user_id"`)}
-	}
 	if _, ok := mc.mutation.GuildID(); !ok {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "Member.guild"`)}
 	}
-	if _, ok := mc.mutation.OwnerID(); !ok {
-		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Member.owner"`)}
+	if _, ok := mc.mutation.UserID(); !ok {
+		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "Member.user"`)}
 	}
 	return nil
 }
@@ -126,10 +117,6 @@ func (mc *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 		_node = &Member{config: mc.config}
 		_spec = sqlgraph.NewCreateSpec(member.Table, sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt))
 	)
-	if value, ok := mc.mutation.UserID(); ok {
-		_spec.SetField(member.FieldUserID, field.TypeUint64, value)
-		_node.UserID = value
-	}
 	if value, ok := mc.mutation.Permission(); ok {
 		_spec.SetField(member.FieldPermission, field.TypeJSON, value)
 		_node.Permission = value
@@ -151,12 +138,12 @@ func (mc *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 		_node.guild_members = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := mc.mutation.OwnerIDs(); len(nodes) > 0 {
+	if nodes := mc.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   member.OwnerTable,
-			Columns: []string{member.OwnerColumn},
+			Inverse: true,
+			Table:   member.UserTable,
+			Columns: []string{member.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),
@@ -165,7 +152,7 @@ func (mc *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.member_owner = &nodes[0]
+		_node.user_guilds = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

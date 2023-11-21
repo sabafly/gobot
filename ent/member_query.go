@@ -25,7 +25,7 @@ type MemberQuery struct {
 	inters     []Interceptor
 	predicates []predicate.Member
 	withGuild  *GuildQuery
-	withOwner  *UserQuery
+	withUser   *UserQuery
 	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -85,8 +85,8 @@ func (mq *MemberQuery) QueryGuild() *GuildQuery {
 	return query
 }
 
-// QueryOwner chains the current query on the "owner" edge.
-func (mq *MemberQuery) QueryOwner() *UserQuery {
+// QueryUser chains the current query on the "user" edge.
+func (mq *MemberQuery) QueryUser() *UserQuery {
 	query := (&UserClient{config: mq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := mq.prepareQuery(ctx); err != nil {
@@ -99,7 +99,7 @@ func (mq *MemberQuery) QueryOwner() *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(member.Table, member.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, member.OwnerTable, member.OwnerColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, member.UserTable, member.UserColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
 		return fromU, nil
@@ -300,7 +300,7 @@ func (mq *MemberQuery) Clone() *MemberQuery {
 		inters:     append([]Interceptor{}, mq.inters...),
 		predicates: append([]predicate.Member{}, mq.predicates...),
 		withGuild:  mq.withGuild.Clone(),
-		withOwner:  mq.withOwner.Clone(),
+		withUser:   mq.withUser.Clone(),
 		// clone intermediate query.
 		sql:  mq.sql.Clone(),
 		path: mq.path,
@@ -318,14 +318,14 @@ func (mq *MemberQuery) WithGuild(opts ...func(*GuildQuery)) *MemberQuery {
 	return mq
 }
 
-// WithOwner tells the query-builder to eager-load the nodes that are connected to
-// the "owner" edge. The optional arguments are used to configure the query builder of the edge.
-func (mq *MemberQuery) WithOwner(opts ...func(*UserQuery)) *MemberQuery {
+// WithUser tells the query-builder to eager-load the nodes that are connected to
+// the "user" edge. The optional arguments are used to configure the query builder of the edge.
+func (mq *MemberQuery) WithUser(opts ...func(*UserQuery)) *MemberQuery {
 	query := (&UserClient{config: mq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	mq.withOwner = query
+	mq.withUser = query
 	return mq
 }
 
@@ -335,12 +335,12 @@ func (mq *MemberQuery) WithOwner(opts ...func(*UserQuery)) *MemberQuery {
 // Example:
 //
 //	var v []struct {
-//		UserID snowflake.ID `json:"user_id,omitempty"`
+//		Permission permissions.Permission `json:"permission,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Member.Query().
-//		GroupBy(member.FieldUserID).
+//		GroupBy(member.FieldPermission).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (mq *MemberQuery) GroupBy(field string, fields ...string) *MemberGroupBy {
@@ -358,11 +358,11 @@ func (mq *MemberQuery) GroupBy(field string, fields ...string) *MemberGroupBy {
 // Example:
 //
 //	var v []struct {
-//		UserID snowflake.ID `json:"user_id,omitempty"`
+//		Permission permissions.Permission `json:"permission,omitempty"`
 //	}
 //
 //	client.Member.Query().
-//		Select(member.FieldUserID).
+//		Select(member.FieldPermission).
 //		Scan(ctx, &v)
 func (mq *MemberQuery) Select(fields ...string) *MemberSelect {
 	mq.ctx.Fields = append(mq.ctx.Fields, fields...)
@@ -410,10 +410,10 @@ func (mq *MemberQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Membe
 		_spec       = mq.querySpec()
 		loadedTypes = [2]bool{
 			mq.withGuild != nil,
-			mq.withOwner != nil,
+			mq.withUser != nil,
 		}
 	)
-	if mq.withGuild != nil || mq.withOwner != nil {
+	if mq.withGuild != nil || mq.withUser != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -443,9 +443,9 @@ func (mq *MemberQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Membe
 			return nil, err
 		}
 	}
-	if query := mq.withOwner; query != nil {
-		if err := mq.loadOwner(ctx, query, nodes, nil,
-			func(n *Member, e *User) { n.Edges.Owner = e }); err != nil {
+	if query := mq.withUser; query != nil {
+		if err := mq.loadUser(ctx, query, nodes, nil,
+			func(n *Member, e *User) { n.Edges.User = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -484,14 +484,14 @@ func (mq *MemberQuery) loadGuild(ctx context.Context, query *GuildQuery, nodes [
 	}
 	return nil
 }
-func (mq *MemberQuery) loadOwner(ctx context.Context, query *UserQuery, nodes []*Member, init func(*Member), assign func(*Member, *User)) error {
+func (mq *MemberQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Member, init func(*Member), assign func(*Member, *User)) error {
 	ids := make([]snowflake.ID, 0, len(nodes))
 	nodeids := make(map[snowflake.ID][]*Member)
 	for i := range nodes {
-		if nodes[i].member_owner == nil {
+		if nodes[i].user_guilds == nil {
 			continue
 		}
-		fk := *nodes[i].member_owner
+		fk := *nodes[i].user_guilds
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -508,7 +508,7 @@ func (mq *MemberQuery) loadOwner(ctx context.Context, query *UserQuery, nodes []
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "member_owner" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "user_guilds" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

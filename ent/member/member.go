@@ -12,14 +12,12 @@ const (
 	Label = "member"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldUserID holds the string denoting the user_id field in the database.
-	FieldUserID = "user_id"
 	// FieldPermission holds the string denoting the permission field in the database.
 	FieldPermission = "permission"
 	// EdgeGuild holds the string denoting the guild edge name in mutations.
 	EdgeGuild = "guild"
-	// EdgeOwner holds the string denoting the owner edge name in mutations.
-	EdgeOwner = "owner"
+	// EdgeUser holds the string denoting the user edge name in mutations.
+	EdgeUser = "user"
 	// Table holds the table name of the member in the database.
 	Table = "members"
 	// GuildTable is the table that holds the guild relation/edge.
@@ -29,19 +27,18 @@ const (
 	GuildInverseTable = "guilds"
 	// GuildColumn is the table column denoting the guild relation/edge.
 	GuildColumn = "guild_members"
-	// OwnerTable is the table that holds the owner relation/edge.
-	OwnerTable = "members"
-	// OwnerInverseTable is the table name for the User entity.
+	// UserTable is the table that holds the user relation/edge.
+	UserTable = "members"
+	// UserInverseTable is the table name for the User entity.
 	// It exists in this package in order to avoid circular dependency with the "user" package.
-	OwnerInverseTable = "users"
-	// OwnerColumn is the table column denoting the owner relation/edge.
-	OwnerColumn = "member_owner"
+	UserInverseTable = "users"
+	// UserColumn is the table column denoting the user relation/edge.
+	UserColumn = "user_guilds"
 )
 
 // Columns holds all SQL columns for member fields.
 var Columns = []string{
 	FieldID,
-	FieldUserID,
 	FieldPermission,
 }
 
@@ -49,7 +46,7 @@ var Columns = []string{
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"guild_members",
-	"member_owner",
+	"user_guilds",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -75,11 +72,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByUserID orders the results by the user_id field.
-func ByUserID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldUserID, opts...).ToFunc()
-}
-
 // ByGuildField orders the results by guild field.
 func ByGuildField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -87,10 +79,10 @@ func ByGuildField(field string, opts ...sql.OrderTermOption) OrderOption {
 	}
 }
 
-// ByOwnerField orders the results by owner field.
-func ByOwnerField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByUserField orders the results by user field.
+func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newOwnerStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborTerms(s, newUserStep(), sql.OrderByField(field, opts...))
 	}
 }
 func newGuildStep() *sqlgraph.Step {
@@ -100,10 +92,10 @@ func newGuildStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.M2O, true, GuildTable, GuildColumn),
 	)
 }
-func newOwnerStep() *sqlgraph.Step {
+func newUserStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(OwnerInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, false, OwnerTable, OwnerColumn),
+		sqlgraph.To(UserInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
 	)
 }

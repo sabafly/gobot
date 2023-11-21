@@ -21,15 +21,13 @@ type Member struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// UserID holds the value of the "user_id" field.
-	UserID snowflake.ID `json:"user_id,omitempty"`
 	// Permission holds the value of the "permission" field.
 	Permission permissions.Permission `json:"permission,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the MemberQuery when eager-loading is set.
 	Edges         MemberEdges `json:"edges"`
 	guild_members *snowflake.ID
-	member_owner  *snowflake.ID
+	user_guilds   *snowflake.ID
 	selectValues  sql.SelectValues
 }
 
@@ -37,8 +35,8 @@ type Member struct {
 type MemberEdges struct {
 	// Guild holds the value of the guild edge.
 	Guild *Guild `json:"guild,omitempty"`
-	// Owner holds the value of the owner edge.
-	Owner *User `json:"owner,omitempty"`
+	// User holds the value of the user edge.
+	User *User `json:"user,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
 	loadedTypes [2]bool
@@ -57,17 +55,17 @@ func (e MemberEdges) GuildOrErr() (*Guild, error) {
 	return nil, &NotLoadedError{edge: "guild"}
 }
 
-// OwnerOrErr returns the Owner value or an error if the edge
+// UserOrErr returns the User value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e MemberEdges) OwnerOrErr() (*User, error) {
+func (e MemberEdges) UserOrErr() (*User, error) {
 	if e.loadedTypes[1] {
-		if e.Owner == nil {
+		if e.User == nil {
 			// Edge was loaded but was not found.
 			return nil, &NotFoundError{label: user.Label}
 		}
-		return e.Owner, nil
+		return e.User, nil
 	}
-	return nil, &NotLoadedError{edge: "owner"}
+	return nil, &NotLoadedError{edge: "user"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -77,11 +75,11 @@ func (*Member) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case member.FieldPermission:
 			values[i] = new([]byte)
-		case member.FieldID, member.FieldUserID:
+		case member.FieldID:
 			values[i] = new(sql.NullInt64)
 		case member.ForeignKeys[0]: // guild_members
 			values[i] = new(sql.NullInt64)
-		case member.ForeignKeys[1]: // member_owner
+		case member.ForeignKeys[1]: // user_guilds
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -104,12 +102,6 @@ func (m *Member) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			m.ID = int(value.Int64)
-		case member.FieldUserID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field user_id", values[i])
-			} else if value.Valid {
-				m.UserID = snowflake.ID(value.Int64)
-			}
 		case member.FieldPermission:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field permission", values[i])
@@ -127,10 +119,10 @@ func (m *Member) assignValues(columns []string, values []any) error {
 			}
 		case member.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field member_owner", values[i])
+				return fmt.Errorf("unexpected type %T for field user_guilds", values[i])
 			} else if value.Valid {
-				m.member_owner = new(snowflake.ID)
-				*m.member_owner = snowflake.ID(value.Int64)
+				m.user_guilds = new(snowflake.ID)
+				*m.user_guilds = snowflake.ID(value.Int64)
 			}
 		default:
 			m.selectValues.Set(columns[i], values[i])
@@ -150,9 +142,9 @@ func (m *Member) QueryGuild() *GuildQuery {
 	return NewMemberClient(m.config).QueryGuild(m)
 }
 
-// QueryOwner queries the "owner" edge of the Member entity.
-func (m *Member) QueryOwner() *UserQuery {
-	return NewMemberClient(m.config).QueryOwner(m)
+// QueryUser queries the "user" edge of the Member entity.
+func (m *Member) QueryUser() *UserQuery {
+	return NewMemberClient(m.config).QueryUser(m)
 }
 
 // Update returns a builder for updating this Member.
@@ -178,9 +170,6 @@ func (m *Member) String() string {
 	var builder strings.Builder
 	builder.WriteString("Member(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", m.ID))
-	builder.WriteString("user_id=")
-	builder.WriteString(fmt.Sprintf("%v", m.UserID))
-	builder.WriteString(", ")
 	builder.WriteString("permission=")
 	builder.WriteString(fmt.Sprintf("%v", m.Permission))
 	builder.WriteByte(')')

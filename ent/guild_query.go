@@ -16,20 +16,26 @@ import (
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
 	"github.com/sabafly/gobot/ent/predicate"
+	"github.com/sabafly/gobot/ent/rolepanel"
+	"github.com/sabafly/gobot/ent/rolepaneledit"
+	"github.com/sabafly/gobot/ent/rolepanelplaced"
 	"github.com/sabafly/gobot/ent/user"
 )
 
 // GuildQuery is the builder for querying Guild entities.
 type GuildQuery struct {
 	config
-	ctx             *QueryContext
-	order           []guild.OrderOption
-	inters          []Interceptor
-	predicates      []predicate.Guild
-	withOwner       *UserQuery
-	withMembers     *MemberQuery
-	withMessagePins *MessagePinQuery
-	withFKs         bool
+	ctx                     *QueryContext
+	order                   []guild.OrderOption
+	inters                  []Interceptor
+	predicates              []predicate.Guild
+	withOwner               *UserQuery
+	withMembers             *MemberQuery
+	withMessagePins         *MessagePinQuery
+	withRolePanels          *RolePanelQuery
+	withRolePanelPlacements *RolePanelPlacedQuery
+	withRolePanelEdits      *RolePanelEditQuery
+	withFKs                 bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -125,6 +131,72 @@ func (gq *GuildQuery) QueryMessagePins() *MessagePinQuery {
 			sqlgraph.From(guild.Table, guild.FieldID, selector),
 			sqlgraph.To(messagepin.Table, messagepin.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.MessagePinsTable, guild.MessagePinsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRolePanels chains the current query on the "role_panels" edge.
+func (gq *GuildQuery) QueryRolePanels() *RolePanelQuery {
+	query := (&RolePanelClient{config: gq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := gq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := gq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(guild.Table, guild.FieldID, selector),
+			sqlgraph.To(rolepanel.Table, rolepanel.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, guild.RolePanelsTable, guild.RolePanelsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRolePanelPlacements chains the current query on the "role_panel_placements" edge.
+func (gq *GuildQuery) QueryRolePanelPlacements() *RolePanelPlacedQuery {
+	query := (&RolePanelPlacedClient{config: gq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := gq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := gq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(guild.Table, guild.FieldID, selector),
+			sqlgraph.To(rolepanelplaced.Table, rolepanelplaced.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, guild.RolePanelPlacementsTable, guild.RolePanelPlacementsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRolePanelEdits chains the current query on the "role_panel_edits" edge.
+func (gq *GuildQuery) QueryRolePanelEdits() *RolePanelEditQuery {
+	query := (&RolePanelEditClient{config: gq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := gq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := gq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(guild.Table, guild.FieldID, selector),
+			sqlgraph.To(rolepaneledit.Table, rolepaneledit.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, guild.RolePanelEditsTable, guild.RolePanelEditsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
 		return fromU, nil
@@ -319,14 +391,17 @@ func (gq *GuildQuery) Clone() *GuildQuery {
 		return nil
 	}
 	return &GuildQuery{
-		config:          gq.config,
-		ctx:             gq.ctx.Clone(),
-		order:           append([]guild.OrderOption{}, gq.order...),
-		inters:          append([]Interceptor{}, gq.inters...),
-		predicates:      append([]predicate.Guild{}, gq.predicates...),
-		withOwner:       gq.withOwner.Clone(),
-		withMembers:     gq.withMembers.Clone(),
-		withMessagePins: gq.withMessagePins.Clone(),
+		config:                  gq.config,
+		ctx:                     gq.ctx.Clone(),
+		order:                   append([]guild.OrderOption{}, gq.order...),
+		inters:                  append([]Interceptor{}, gq.inters...),
+		predicates:              append([]predicate.Guild{}, gq.predicates...),
+		withOwner:               gq.withOwner.Clone(),
+		withMembers:             gq.withMembers.Clone(),
+		withMessagePins:         gq.withMessagePins.Clone(),
+		withRolePanels:          gq.withRolePanels.Clone(),
+		withRolePanelPlacements: gq.withRolePanelPlacements.Clone(),
+		withRolePanelEdits:      gq.withRolePanelEdits.Clone(),
 		// clone intermediate query.
 		sql:  gq.sql.Clone(),
 		path: gq.path,
@@ -363,6 +438,39 @@ func (gq *GuildQuery) WithMessagePins(opts ...func(*MessagePinQuery)) *GuildQuer
 		opt(query)
 	}
 	gq.withMessagePins = query
+	return gq
+}
+
+// WithRolePanels tells the query-builder to eager-load the nodes that are connected to
+// the "role_panels" edge. The optional arguments are used to configure the query builder of the edge.
+func (gq *GuildQuery) WithRolePanels(opts ...func(*RolePanelQuery)) *GuildQuery {
+	query := (&RolePanelClient{config: gq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	gq.withRolePanels = query
+	return gq
+}
+
+// WithRolePanelPlacements tells the query-builder to eager-load the nodes that are connected to
+// the "role_panel_placements" edge. The optional arguments are used to configure the query builder of the edge.
+func (gq *GuildQuery) WithRolePanelPlacements(opts ...func(*RolePanelPlacedQuery)) *GuildQuery {
+	query := (&RolePanelPlacedClient{config: gq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	gq.withRolePanelPlacements = query
+	return gq
+}
+
+// WithRolePanelEdits tells the query-builder to eager-load the nodes that are connected to
+// the "role_panel_edits" edge. The optional arguments are used to configure the query builder of the edge.
+func (gq *GuildQuery) WithRolePanelEdits(opts ...func(*RolePanelEditQuery)) *GuildQuery {
+	query := (&RolePanelEditClient{config: gq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	gq.withRolePanelEdits = query
 	return gq
 }
 
@@ -445,10 +553,13 @@ func (gq *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild,
 		nodes       = []*Guild{}
 		withFKs     = gq.withFKs
 		_spec       = gq.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [6]bool{
 			gq.withOwner != nil,
 			gq.withMembers != nil,
 			gq.withMessagePins != nil,
+			gq.withRolePanels != nil,
+			gq.withRolePanelPlacements != nil,
+			gq.withRolePanelEdits != nil,
 		}
 	)
 	if gq.withOwner != nil {
@@ -492,6 +603,29 @@ func (gq *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild,
 		if err := gq.loadMessagePins(ctx, query, nodes,
 			func(n *Guild) { n.Edges.MessagePins = []*MessagePin{} },
 			func(n *Guild, e *MessagePin) { n.Edges.MessagePins = append(n.Edges.MessagePins, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := gq.withRolePanels; query != nil {
+		if err := gq.loadRolePanels(ctx, query, nodes,
+			func(n *Guild) { n.Edges.RolePanels = []*RolePanel{} },
+			func(n *Guild, e *RolePanel) { n.Edges.RolePanels = append(n.Edges.RolePanels, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := gq.withRolePanelPlacements; query != nil {
+		if err := gq.loadRolePanelPlacements(ctx, query, nodes,
+			func(n *Guild) { n.Edges.RolePanelPlacements = []*RolePanelPlaced{} },
+			func(n *Guild, e *RolePanelPlaced) {
+				n.Edges.RolePanelPlacements = append(n.Edges.RolePanelPlacements, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
+	if query := gq.withRolePanelEdits; query != nil {
+		if err := gq.loadRolePanelEdits(ctx, query, nodes,
+			func(n *Guild) { n.Edges.RolePanelEdits = []*RolePanelEdit{} },
+			func(n *Guild, e *RolePanelEdit) { n.Edges.RolePanelEdits = append(n.Edges.RolePanelEdits, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -587,6 +721,99 @@ func (gq *GuildQuery) loadMessagePins(ctx context.Context, query *MessagePinQuer
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "guild_message_pins" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (gq *GuildQuery) loadRolePanels(ctx context.Context, query *RolePanelQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *RolePanel)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[snowflake.ID]*Guild)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.RolePanel(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(guild.RolePanelsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.guild_role_panels
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "guild_role_panels" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "guild_role_panels" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (gq *GuildQuery) loadRolePanelPlacements(ctx context.Context, query *RolePanelPlacedQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *RolePanelPlaced)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[snowflake.ID]*Guild)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.RolePanelPlaced(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(guild.RolePanelPlacementsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.guild_role_panel_placements
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "guild_role_panel_placements" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "guild_role_panel_placements" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (gq *GuildQuery) loadRolePanelEdits(ctx context.Context, query *RolePanelEditQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *RolePanelEdit)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[snowflake.ID]*Guild)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.RolePanelEdit(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(guild.RolePanelEditsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.guild_role_panel_edits
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "guild_role_panel_edits" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "guild_role_panel_edits" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

@@ -284,6 +284,75 @@ func HasMessagePinsWith(preds ...predicate.MessagePin) predicate.Guild {
 	})
 }
 
+// HasRolePanels applies the HasEdge predicate on the "role_panels" edge.
+func HasRolePanels() predicate.Guild {
+	return predicate.Guild(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, RolePanelsTable, RolePanelsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRolePanelsWith applies the HasEdge predicate on the "role_panels" edge with a given conditions (other predicates).
+func HasRolePanelsWith(preds ...predicate.RolePanel) predicate.Guild {
+	return predicate.Guild(func(s *sql.Selector) {
+		step := newRolePanelsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasRolePanelPlacements applies the HasEdge predicate on the "role_panel_placements" edge.
+func HasRolePanelPlacements() predicate.Guild {
+	return predicate.Guild(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, RolePanelPlacementsTable, RolePanelPlacementsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRolePanelPlacementsWith applies the HasEdge predicate on the "role_panel_placements" edge with a given conditions (other predicates).
+func HasRolePanelPlacementsWith(preds ...predicate.RolePanelPlaced) predicate.Guild {
+	return predicate.Guild(func(s *sql.Selector) {
+		step := newRolePanelPlacementsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasRolePanelEdits applies the HasEdge predicate on the "role_panel_edits" edge.
+func HasRolePanelEdits() predicate.Guild {
+	return predicate.Guild(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, RolePanelEditsTable, RolePanelEditsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRolePanelEditsWith applies the HasEdge predicate on the "role_panel_edits" edge with a given conditions (other predicates).
+func HasRolePanelEditsWith(preds ...predicate.RolePanelEdit) predicate.Guild {
+	return predicate.Guild(func(s *sql.Selector) {
+		step := newRolePanelEditsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Guild) predicate.Guild {
 	return predicate.Guild(sql.AndPredicates(predicates...))

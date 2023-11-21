@@ -39,6 +39,14 @@ func (mpu *MessagePinUpdate) SetChannelID(s snowflake.ID) *MessagePinUpdate {
 	return mpu
 }
 
+// SetNillableChannelID sets the "channel_id" field if the given value is not nil.
+func (mpu *MessagePinUpdate) SetNillableChannelID(s *snowflake.ID) *MessagePinUpdate {
+	if s != nil {
+		mpu.SetChannelID(*s)
+	}
+	return mpu
+}
+
 // AddChannelID adds s to the "channel_id" field.
 func (mpu *MessagePinUpdate) AddChannelID(s snowflake.ID) *MessagePinUpdate {
 	mpu.mutation.AddChannelID(s)
@@ -281,6 +289,14 @@ type MessagePinUpdateOne struct {
 func (mpuo *MessagePinUpdateOne) SetChannelID(s snowflake.ID) *MessagePinUpdateOne {
 	mpuo.mutation.ResetChannelID()
 	mpuo.mutation.SetChannelID(s)
+	return mpuo
+}
+
+// SetNillableChannelID sets the "channel_id" field if the given value is not nil.
+func (mpuo *MessagePinUpdateOne) SetNillableChannelID(s *snowflake.ID) *MessagePinUpdateOne {
+	if s != nil {
+		mpuo.SetChannelID(*s)
+	}
 	return mpuo
 }
 

@@ -101,7 +101,7 @@ func (uq *UserQuery) QueryGuilds() *MemberQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(member.Table, member.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, user.GuildsTable, user.GuildsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.GuildsTable, user.GuildsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -541,13 +541,13 @@ func (uq *UserQuery) loadGuilds(ctx context.Context, query *MemberQuery, nodes [
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.member_owner
+		fk := n.user_guilds
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "member_owner" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "user_guilds" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "member_owner" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "user_guilds" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

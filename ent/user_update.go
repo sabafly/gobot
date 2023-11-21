@@ -39,6 +39,14 @@ func (uu *UserUpdate) SetName(s string) *UserUpdate {
 	return uu
 }
 
+// SetNillableName sets the "name" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableName(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetName(*s)
+	}
+	return uu
+}
+
 // SetLocale sets the "locale" field.
 func (uu *UserUpdate) SetLocale(d discord.Locale) *UserUpdate {
 	uu.mutation.SetLocale(d)
@@ -274,7 +282,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if uu.mutation.GuildsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   user.GuildsTable,
 			Columns: []string{user.GuildsColumn},
 			Bidi:    false,
@@ -287,7 +295,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := uu.mutation.RemovedGuildsIDs(); len(nodes) > 0 && !uu.mutation.GuildsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   user.GuildsTable,
 			Columns: []string{user.GuildsColumn},
 			Bidi:    false,
@@ -303,7 +311,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if nodes := uu.mutation.GuildsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   user.GuildsTable,
 			Columns: []string{user.GuildsColumn},
 			Bidi:    false,
@@ -384,6 +392,14 @@ type UserUpdateOne struct {
 // SetName sets the "name" field.
 func (uuo *UserUpdateOne) SetName(s string) *UserUpdateOne {
 	uuo.mutation.SetName(s)
+	return uuo
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableName(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetName(*s)
+	}
 	return uuo
 }
 
@@ -652,7 +668,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if uuo.mutation.GuildsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   user.GuildsTable,
 			Columns: []string{user.GuildsColumn},
 			Bidi:    false,
@@ -665,7 +681,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if nodes := uuo.mutation.RemovedGuildsIDs(); len(nodes) > 0 && !uuo.mutation.GuildsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   user.GuildsTable,
 			Columns: []string{user.GuildsColumn},
 			Bidi:    false,
@@ -681,7 +697,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if nodes := uuo.mutation.GuildsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
-			Inverse: true,
+			Inverse: false,
 			Table:   user.GuildsTable,
 			Columns: []string{user.GuildsColumn},
 			Bidi:    false,

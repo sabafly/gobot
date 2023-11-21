@@ -38,8 +38,7 @@ func (User) Fields() []ent.Field {
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("own_guilds", Guild.Type),
-		edge.From("guilds", Member.Type).
-			Ref("owner"),
+		edge.To("guilds", Member.Type),
 		edge.To("word_suffix", WordSuffix.Type),
 	}
 }

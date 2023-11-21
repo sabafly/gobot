@@ -10,6 +10,7 @@ import (
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
+	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/internal/translate"
 )
 
@@ -79,7 +80,7 @@ func permissionCheck(event interface {
 		return true, true
 	}
 
-	if g := c.DB().Guild.Query().Where(guild.ID(*event.GuildID())).FirstX(event).QueryMembers().Where(member.UserID(event.User().ID)).FirstX(event); g != nil && g.Permission.Has(perm) {
+	if g := c.DB().Guild.Query().Where(guild.ID(*event.GuildID())).FirstX(event).QueryMembers().Where(member.HasUserWith(user.ID(event.User().ID))).FirstX(event); g != nil && g.Permission.Has(perm) {
 		return true, true
 	}
 	return false, false

@@ -18,6 +18,9 @@ import (
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
 	"github.com/sabafly/gobot/ent/predicate"
+	"github.com/sabafly/gobot/ent/rolepanel"
+	"github.com/sabafly/gobot/ent/rolepaneledit"
+	"github.com/sabafly/gobot/ent/rolepanelplaced"
 	"github.com/sabafly/gobot/ent/schema"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/ent/wordsuffix"
@@ -33,33 +36,45 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeGuild      = "Guild"
-	TypeMember     = "Member"
-	TypeMessagePin = "MessagePin"
-	TypeUser       = "User"
-	TypeWordSuffix = "WordSuffix"
+	TypeGuild           = "Guild"
+	TypeMember          = "Member"
+	TypeMessagePin      = "MessagePin"
+	TypeRolePanel       = "RolePanel"
+	TypeRolePanelEdit   = "RolePanelEdit"
+	TypeRolePanelPlaced = "RolePanelPlaced"
+	TypeUser            = "User"
+	TypeWordSuffix      = "WordSuffix"
 )
 
 // GuildMutation represents an operation that mutates the Guild nodes in the graph.
 type GuildMutation struct {
 	config
-	op                  Op
-	typ                 string
-	id                  *snowflake.ID
-	name                *string
-	locale              *discord.Locale
-	clearedFields       map[string]struct{}
-	owner               *snowflake.ID
-	clearedowner        bool
-	members             map[int]struct{}
-	removedmembers      map[int]struct{}
-	clearedmembers      bool
-	message_pins        map[uuid.UUID]struct{}
-	removedmessage_pins map[uuid.UUID]struct{}
-	clearedmessage_pins bool
-	done                bool
-	oldValue            func(context.Context) (*Guild, error)
-	predicates          []predicate.Guild
+	op                           Op
+	typ                          string
+	id                           *snowflake.ID
+	name                         *string
+	locale                       *discord.Locale
+	clearedFields                map[string]struct{}
+	owner                        *snowflake.ID
+	clearedowner                 bool
+	members                      map[int]struct{}
+	removedmembers               map[int]struct{}
+	clearedmembers               bool
+	message_pins                 map[uuid.UUID]struct{}
+	removedmessage_pins          map[uuid.UUID]struct{}
+	clearedmessage_pins          bool
+	role_panels                  map[uuid.UUID]struct{}
+	removedrole_panels           map[uuid.UUID]struct{}
+	clearedrole_panels           bool
+	role_panel_placements        map[uuid.UUID]struct{}
+	removedrole_panel_placements map[uuid.UUID]struct{}
+	clearedrole_panel_placements bool
+	role_panel_edits             map[uuid.UUID]struct{}
+	removedrole_panel_edits      map[uuid.UUID]struct{}
+	clearedrole_panel_edits      bool
+	done                         bool
+	oldValue                     func(context.Context) (*Guild, error)
+	predicates                   []predicate.Guild
 }
 
 var _ ent.Mutation = (*GuildMutation)(nil)
@@ -385,6 +400,168 @@ func (m *GuildMutation) ResetMessagePins() {
 	m.removedmessage_pins = nil
 }
 
+// AddRolePanelIDs adds the "role_panels" edge to the RolePanel entity by ids.
+func (m *GuildMutation) AddRolePanelIDs(ids ...uuid.UUID) {
+	if m.role_panels == nil {
+		m.role_panels = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.role_panels[ids[i]] = struct{}{}
+	}
+}
+
+// ClearRolePanels clears the "role_panels" edge to the RolePanel entity.
+func (m *GuildMutation) ClearRolePanels() {
+	m.clearedrole_panels = true
+}
+
+// RolePanelsCleared reports if the "role_panels" edge to the RolePanel entity was cleared.
+func (m *GuildMutation) RolePanelsCleared() bool {
+	return m.clearedrole_panels
+}
+
+// RemoveRolePanelIDs removes the "role_panels" edge to the RolePanel entity by IDs.
+func (m *GuildMutation) RemoveRolePanelIDs(ids ...uuid.UUID) {
+	if m.removedrole_panels == nil {
+		m.removedrole_panels = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.role_panels, ids[i])
+		m.removedrole_panels[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedRolePanels returns the removed IDs of the "role_panels" edge to the RolePanel entity.
+func (m *GuildMutation) RemovedRolePanelsIDs() (ids []uuid.UUID) {
+	for id := range m.removedrole_panels {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// RolePanelsIDs returns the "role_panels" edge IDs in the mutation.
+func (m *GuildMutation) RolePanelsIDs() (ids []uuid.UUID) {
+	for id := range m.role_panels {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetRolePanels resets all changes to the "role_panels" edge.
+func (m *GuildMutation) ResetRolePanels() {
+	m.role_panels = nil
+	m.clearedrole_panels = false
+	m.removedrole_panels = nil
+}
+
+// AddRolePanelPlacementIDs adds the "role_panel_placements" edge to the RolePanelPlaced entity by ids.
+func (m *GuildMutation) AddRolePanelPlacementIDs(ids ...uuid.UUID) {
+	if m.role_panel_placements == nil {
+		m.role_panel_placements = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.role_panel_placements[ids[i]] = struct{}{}
+	}
+}
+
+// ClearRolePanelPlacements clears the "role_panel_placements" edge to the RolePanelPlaced entity.
+func (m *GuildMutation) ClearRolePanelPlacements() {
+	m.clearedrole_panel_placements = true
+}
+
+// RolePanelPlacementsCleared reports if the "role_panel_placements" edge to the RolePanelPlaced entity was cleared.
+func (m *GuildMutation) RolePanelPlacementsCleared() bool {
+	return m.clearedrole_panel_placements
+}
+
+// RemoveRolePanelPlacementIDs removes the "role_panel_placements" edge to the RolePanelPlaced entity by IDs.
+func (m *GuildMutation) RemoveRolePanelPlacementIDs(ids ...uuid.UUID) {
+	if m.removedrole_panel_placements == nil {
+		m.removedrole_panel_placements = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.role_panel_placements, ids[i])
+		m.removedrole_panel_placements[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedRolePanelPlacements returns the removed IDs of the "role_panel_placements" edge to the RolePanelPlaced entity.
+func (m *GuildMutation) RemovedRolePanelPlacementsIDs() (ids []uuid.UUID) {
+	for id := range m.removedrole_panel_placements {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// RolePanelPlacementsIDs returns the "role_panel_placements" edge IDs in the mutation.
+func (m *GuildMutation) RolePanelPlacementsIDs() (ids []uuid.UUID) {
+	for id := range m.role_panel_placements {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetRolePanelPlacements resets all changes to the "role_panel_placements" edge.
+func (m *GuildMutation) ResetRolePanelPlacements() {
+	m.role_panel_placements = nil
+	m.clearedrole_panel_placements = false
+	m.removedrole_panel_placements = nil
+}
+
+// AddRolePanelEditIDs adds the "role_panel_edits" edge to the RolePanelEdit entity by ids.
+func (m *GuildMutation) AddRolePanelEditIDs(ids ...uuid.UUID) {
+	if m.role_panel_edits == nil {
+		m.role_panel_edits = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.role_panel_edits[ids[i]] = struct{}{}
+	}
+}
+
+// ClearRolePanelEdits clears the "role_panel_edits" edge to the RolePanelEdit entity.
+func (m *GuildMutation) ClearRolePanelEdits() {
+	m.clearedrole_panel_edits = true
+}
+
+// RolePanelEditsCleared reports if the "role_panel_edits" edge to the RolePanelEdit entity was cleared.
+func (m *GuildMutation) RolePanelEditsCleared() bool {
+	return m.clearedrole_panel_edits
+}
+
+// RemoveRolePanelEditIDs removes the "role_panel_edits" edge to the RolePanelEdit entity by IDs.
+func (m *GuildMutation) RemoveRolePanelEditIDs(ids ...uuid.UUID) {
+	if m.removedrole_panel_edits == nil {
+		m.removedrole_panel_edits = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.role_panel_edits, ids[i])
+		m.removedrole_panel_edits[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedRolePanelEdits returns the removed IDs of the "role_panel_edits" edge to the RolePanelEdit entity.
+func (m *GuildMutation) RemovedRolePanelEditsIDs() (ids []uuid.UUID) {
+	for id := range m.removedrole_panel_edits {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// RolePanelEditsIDs returns the "role_panel_edits" edge IDs in the mutation.
+func (m *GuildMutation) RolePanelEditsIDs() (ids []uuid.UUID) {
+	for id := range m.role_panel_edits {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetRolePanelEdits resets all changes to the "role_panel_edits" edge.
+func (m *GuildMutation) ResetRolePanelEdits() {
+	m.role_panel_edits = nil
+	m.clearedrole_panel_edits = false
+	m.removedrole_panel_edits = nil
+}
+
 // Where appends a list predicates to the GuildMutation builder.
 func (m *GuildMutation) Where(ps ...predicate.Guild) {
 	m.predicates = append(m.predicates, ps...)
@@ -535,7 +712,7 @@ func (m *GuildMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *GuildMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 6)
 	if m.owner != nil {
 		edges = append(edges, guild.EdgeOwner)
 	}
@@ -544,6 +721,15 @@ func (m *GuildMutation) AddedEdges() []string {
 	}
 	if m.message_pins != nil {
 		edges = append(edges, guild.EdgeMessagePins)
+	}
+	if m.role_panels != nil {
+		edges = append(edges, guild.EdgeRolePanels)
+	}
+	if m.role_panel_placements != nil {
+		edges = append(edges, guild.EdgeRolePanelPlacements)
+	}
+	if m.role_panel_edits != nil {
+		edges = append(edges, guild.EdgeRolePanelEdits)
 	}
 	return edges
 }
@@ -568,18 +754,45 @@ func (m *GuildMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case guild.EdgeRolePanels:
+		ids := make([]ent.Value, 0, len(m.role_panels))
+		for id := range m.role_panels {
+			ids = append(ids, id)
+		}
+		return ids
+	case guild.EdgeRolePanelPlacements:
+		ids := make([]ent.Value, 0, len(m.role_panel_placements))
+		for id := range m.role_panel_placements {
+			ids = append(ids, id)
+		}
+		return ids
+	case guild.EdgeRolePanelEdits:
+		ids := make([]ent.Value, 0, len(m.role_panel_edits))
+		for id := range m.role_panel_edits {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *GuildMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 6)
 	if m.removedmembers != nil {
 		edges = append(edges, guild.EdgeMembers)
 	}
 	if m.removedmessage_pins != nil {
 		edges = append(edges, guild.EdgeMessagePins)
+	}
+	if m.removedrole_panels != nil {
+		edges = append(edges, guild.EdgeRolePanels)
+	}
+	if m.removedrole_panel_placements != nil {
+		edges = append(edges, guild.EdgeRolePanelPlacements)
+	}
+	if m.removedrole_panel_edits != nil {
+		edges = append(edges, guild.EdgeRolePanelEdits)
 	}
 	return edges
 }
@@ -600,13 +813,31 @@ func (m *GuildMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case guild.EdgeRolePanels:
+		ids := make([]ent.Value, 0, len(m.removedrole_panels))
+		for id := range m.removedrole_panels {
+			ids = append(ids, id)
+		}
+		return ids
+	case guild.EdgeRolePanelPlacements:
+		ids := make([]ent.Value, 0, len(m.removedrole_panel_placements))
+		for id := range m.removedrole_panel_placements {
+			ids = append(ids, id)
+		}
+		return ids
+	case guild.EdgeRolePanelEdits:
+		ids := make([]ent.Value, 0, len(m.removedrole_panel_edits))
+		for id := range m.removedrole_panel_edits {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *GuildMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 6)
 	if m.clearedowner {
 		edges = append(edges, guild.EdgeOwner)
 	}
@@ -615,6 +846,15 @@ func (m *GuildMutation) ClearedEdges() []string {
 	}
 	if m.clearedmessage_pins {
 		edges = append(edges, guild.EdgeMessagePins)
+	}
+	if m.clearedrole_panels {
+		edges = append(edges, guild.EdgeRolePanels)
+	}
+	if m.clearedrole_panel_placements {
+		edges = append(edges, guild.EdgeRolePanelPlacements)
+	}
+	if m.clearedrole_panel_edits {
+		edges = append(edges, guild.EdgeRolePanelEdits)
 	}
 	return edges
 }
@@ -629,6 +869,12 @@ func (m *GuildMutation) EdgeCleared(name string) bool {
 		return m.clearedmembers
 	case guild.EdgeMessagePins:
 		return m.clearedmessage_pins
+	case guild.EdgeRolePanels:
+		return m.clearedrole_panels
+	case guild.EdgeRolePanelPlacements:
+		return m.clearedrole_panel_placements
+	case guild.EdgeRolePanelEdits:
+		return m.clearedrole_panel_edits
 	}
 	return false
 }
@@ -657,6 +903,15 @@ func (m *GuildMutation) ResetEdge(name string) error {
 	case guild.EdgeMessagePins:
 		m.ResetMessagePins()
 		return nil
+	case guild.EdgeRolePanels:
+		m.ResetRolePanels()
+		return nil
+	case guild.EdgeRolePanelPlacements:
+		m.ResetRolePanelPlacements()
+		return nil
+	case guild.EdgeRolePanelEdits:
+		m.ResetRolePanelEdits()
+		return nil
 	}
 	return fmt.Errorf("unknown Guild edge %s", name)
 }
@@ -667,15 +922,13 @@ type MemberMutation struct {
 	op               Op
 	typ              string
 	id               *int
-	user_id          *snowflake.ID
-	adduser_id       *snowflake.ID
 	permission       *permissions.Permission
 	appendpermission permissions.Permission
 	clearedFields    map[string]struct{}
 	guild            *snowflake.ID
 	clearedguild     bool
-	owner            *snowflake.ID
-	clearedowner     bool
+	user             *snowflake.ID
+	cleareduser      bool
 	done             bool
 	oldValue         func(context.Context) (*Member, error)
 	predicates       []predicate.Member
@@ -777,62 +1030,6 @@ func (m *MemberMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
-}
-
-// SetUserID sets the "user_id" field.
-func (m *MemberMutation) SetUserID(s snowflake.ID) {
-	m.user_id = &s
-	m.adduser_id = nil
-}
-
-// UserID returns the value of the "user_id" field in the mutation.
-func (m *MemberMutation) UserID() (r snowflake.ID, exists bool) {
-	v := m.user_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldUserID returns the old "user_id" field's value of the Member entity.
-// If the Member object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MemberMutation) OldUserID(ctx context.Context) (v snowflake.ID, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldUserID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
-	}
-	return oldValue.UserID, nil
-}
-
-// AddUserID adds s to the "user_id" field.
-func (m *MemberMutation) AddUserID(s snowflake.ID) {
-	if m.adduser_id != nil {
-		*m.adduser_id += s
-	} else {
-		m.adduser_id = &s
-	}
-}
-
-// AddedUserID returns the value that was added to the "user_id" field in this mutation.
-func (m *MemberMutation) AddedUserID() (r snowflake.ID, exists bool) {
-	v := m.adduser_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ResetUserID resets all changes to the "user_id" field.
-func (m *MemberMutation) ResetUserID() {
-	m.user_id = nil
-	m.adduser_id = nil
 }
 
 // SetPermission sets the "permission" field.
@@ -939,43 +1136,43 @@ func (m *MemberMutation) ResetGuild() {
 	m.clearedguild = false
 }
 
-// SetOwnerID sets the "owner" edge to the User entity by id.
-func (m *MemberMutation) SetOwnerID(id snowflake.ID) {
-	m.owner = &id
+// SetUserID sets the "user" edge to the User entity by id.
+func (m *MemberMutation) SetUserID(id snowflake.ID) {
+	m.user = &id
 }
 
-// ClearOwner clears the "owner" edge to the User entity.
-func (m *MemberMutation) ClearOwner() {
-	m.clearedowner = true
+// ClearUser clears the "user" edge to the User entity.
+func (m *MemberMutation) ClearUser() {
+	m.cleareduser = true
 }
 
-// OwnerCleared reports if the "owner" edge to the User entity was cleared.
-func (m *MemberMutation) OwnerCleared() bool {
-	return m.clearedowner
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *MemberMutation) UserCleared() bool {
+	return m.cleareduser
 }
 
-// OwnerID returns the "owner" edge ID in the mutation.
-func (m *MemberMutation) OwnerID() (id snowflake.ID, exists bool) {
-	if m.owner != nil {
-		return *m.owner, true
+// UserID returns the "user" edge ID in the mutation.
+func (m *MemberMutation) UserID() (id snowflake.ID, exists bool) {
+	if m.user != nil {
+		return *m.user, true
 	}
 	return
 }
 
-// OwnerIDs returns the "owner" edge IDs in the mutation.
+// UserIDs returns the "user" edge IDs in the mutation.
 // Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
-// OwnerID instead. It exists only for internal usage by the builders.
-func (m *MemberMutation) OwnerIDs() (ids []snowflake.ID) {
-	if id := m.owner; id != nil {
+// UserID instead. It exists only for internal usage by the builders.
+func (m *MemberMutation) UserIDs() (ids []snowflake.ID) {
+	if id := m.user; id != nil {
 		ids = append(ids, *id)
 	}
 	return
 }
 
-// ResetOwner resets all changes to the "owner" edge.
-func (m *MemberMutation) ResetOwner() {
-	m.owner = nil
-	m.clearedowner = false
+// ResetUser resets all changes to the "user" edge.
+func (m *MemberMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
 }
 
 // Where appends a list predicates to the MemberMutation builder.
@@ -1012,10 +1209,7 @@ func (m *MemberMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MemberMutation) Fields() []string {
-	fields := make([]string, 0, 2)
-	if m.user_id != nil {
-		fields = append(fields, member.FieldUserID)
-	}
+	fields := make([]string, 0, 1)
 	if m.permission != nil {
 		fields = append(fields, member.FieldPermission)
 	}
@@ -1027,8 +1221,6 @@ func (m *MemberMutation) Fields() []string {
 // schema.
 func (m *MemberMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case member.FieldUserID:
-		return m.UserID()
 	case member.FieldPermission:
 		return m.Permission()
 	}
@@ -1040,8 +1232,6 @@ func (m *MemberMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *MemberMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case member.FieldUserID:
-		return m.OldUserID(ctx)
 	case member.FieldPermission:
 		return m.OldPermission(ctx)
 	}
@@ -1053,13 +1243,6 @@ func (m *MemberMutation) OldField(ctx context.Context, name string) (ent.Value, 
 // type.
 func (m *MemberMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case member.FieldUserID:
-		v, ok := value.(snowflake.ID)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetUserID(v)
-		return nil
 	case member.FieldPermission:
 		v, ok := value.(permissions.Permission)
 		if !ok {
@@ -1074,21 +1257,13 @@ func (m *MemberMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *MemberMutation) AddedFields() []string {
-	var fields []string
-	if m.adduser_id != nil {
-		fields = append(fields, member.FieldUserID)
-	}
-	return fields
+	return nil
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *MemberMutation) AddedField(name string) (ent.Value, bool) {
-	switch name {
-	case member.FieldUserID:
-		return m.AddedUserID()
-	}
 	return nil, false
 }
 
@@ -1097,13 +1272,6 @@ func (m *MemberMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *MemberMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case member.FieldUserID:
-		v, ok := value.(snowflake.ID)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddUserID(v)
-		return nil
 	}
 	return fmt.Errorf("unknown Member numeric field %s", name)
 }
@@ -1140,9 +1308,6 @@ func (m *MemberMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *MemberMutation) ResetField(name string) error {
 	switch name {
-	case member.FieldUserID:
-		m.ResetUserID()
-		return nil
 	case member.FieldPermission:
 		m.ResetPermission()
 		return nil
@@ -1156,8 +1321,8 @@ func (m *MemberMutation) AddedEdges() []string {
 	if m.guild != nil {
 		edges = append(edges, member.EdgeGuild)
 	}
-	if m.owner != nil {
-		edges = append(edges, member.EdgeOwner)
+	if m.user != nil {
+		edges = append(edges, member.EdgeUser)
 	}
 	return edges
 }
@@ -1170,8 +1335,8 @@ func (m *MemberMutation) AddedIDs(name string) []ent.Value {
 		if id := m.guild; id != nil {
 			return []ent.Value{*id}
 		}
-	case member.EdgeOwner:
-		if id := m.owner; id != nil {
+	case member.EdgeUser:
+		if id := m.user; id != nil {
 			return []ent.Value{*id}
 		}
 	}
@@ -1196,8 +1361,8 @@ func (m *MemberMutation) ClearedEdges() []string {
 	if m.clearedguild {
 		edges = append(edges, member.EdgeGuild)
 	}
-	if m.clearedowner {
-		edges = append(edges, member.EdgeOwner)
+	if m.cleareduser {
+		edges = append(edges, member.EdgeUser)
 	}
 	return edges
 }
@@ -1208,8 +1373,8 @@ func (m *MemberMutation) EdgeCleared(name string) bool {
 	switch name {
 	case member.EdgeGuild:
 		return m.clearedguild
-	case member.EdgeOwner:
-		return m.clearedowner
+	case member.EdgeUser:
+		return m.cleareduser
 	}
 	return false
 }
@@ -1221,8 +1386,8 @@ func (m *MemberMutation) ClearEdge(name string) error {
 	case member.EdgeGuild:
 		m.ClearGuild()
 		return nil
-	case member.EdgeOwner:
-		m.ClearOwner()
+	case member.EdgeUser:
+		m.ClearUser()
 		return nil
 	}
 	return fmt.Errorf("unknown Member unique edge %s", name)
@@ -1235,8 +1400,8 @@ func (m *MemberMutation) ResetEdge(name string) error {
 	case member.EdgeGuild:
 		m.ResetGuild()
 		return nil
-	case member.EdgeOwner:
-		m.ResetOwner()
+	case member.EdgeUser:
+		m.ResetUser()
 		return nil
 	}
 	return fmt.Errorf("unknown Member edge %s", name)
@@ -2002,6 +2167,2655 @@ func (m *MessagePinMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown MessagePin edge %s", name)
+}
+
+// RolePanelMutation represents an operation that mutates the RolePanel nodes in the graph.
+type RolePanelMutation struct {
+	config
+	op                Op
+	typ               string
+	id                *uuid.UUID
+	name              *string
+	description       *string
+	roles             *[]schema.Role
+	appendroles       []schema.Role
+	clearedFields     map[string]struct{}
+	guild             *snowflake.ID
+	clearedguild      bool
+	placements        map[uuid.UUID]struct{}
+	removedplacements map[uuid.UUID]struct{}
+	clearedplacements bool
+	edit              *uuid.UUID
+	clearededit       bool
+	done              bool
+	oldValue          func(context.Context) (*RolePanel, error)
+	predicates        []predicate.RolePanel
+}
+
+var _ ent.Mutation = (*RolePanelMutation)(nil)
+
+// rolepanelOption allows management of the mutation configuration using functional options.
+type rolepanelOption func(*RolePanelMutation)
+
+// newRolePanelMutation creates new mutation for the RolePanel entity.
+func newRolePanelMutation(c config, op Op, opts ...rolepanelOption) *RolePanelMutation {
+	m := &RolePanelMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeRolePanel,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withRolePanelID sets the ID field of the mutation.
+func withRolePanelID(id uuid.UUID) rolepanelOption {
+	return func(m *RolePanelMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *RolePanel
+		)
+		m.oldValue = func(ctx context.Context) (*RolePanel, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().RolePanel.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withRolePanel sets the old RolePanel of the mutation.
+func withRolePanel(node *RolePanel) rolepanelOption {
+	return func(m *RolePanelMutation) {
+		m.oldValue = func(context.Context) (*RolePanel, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m RolePanelMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m RolePanelMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of RolePanel entities.
+func (m *RolePanelMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *RolePanelMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *RolePanelMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().RolePanel.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetName sets the "name" field.
+func (m *RolePanelMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *RolePanelMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the RolePanel entity.
+// If the RolePanel object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *RolePanelMutation) ResetName() {
+	m.name = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *RolePanelMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *RolePanelMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the RolePanel entity.
+// If the RolePanel object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *RolePanelMutation) ResetDescription() {
+	m.description = nil
+}
+
+// SetRoles sets the "roles" field.
+func (m *RolePanelMutation) SetRoles(s []schema.Role) {
+	m.roles = &s
+	m.appendroles = nil
+}
+
+// Roles returns the value of the "roles" field in the mutation.
+func (m *RolePanelMutation) Roles() (r []schema.Role, exists bool) {
+	v := m.roles
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRoles returns the old "roles" field's value of the RolePanel entity.
+// If the RolePanel object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelMutation) OldRoles(ctx context.Context) (v []schema.Role, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRoles is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRoles requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRoles: %w", err)
+	}
+	return oldValue.Roles, nil
+}
+
+// AppendRoles adds s to the "roles" field.
+func (m *RolePanelMutation) AppendRoles(s []schema.Role) {
+	m.appendroles = append(m.appendroles, s...)
+}
+
+// AppendedRoles returns the list of values that were appended to the "roles" field in this mutation.
+func (m *RolePanelMutation) AppendedRoles() ([]schema.Role, bool) {
+	if len(m.appendroles) == 0 {
+		return nil, false
+	}
+	return m.appendroles, true
+}
+
+// ClearRoles clears the value of the "roles" field.
+func (m *RolePanelMutation) ClearRoles() {
+	m.roles = nil
+	m.appendroles = nil
+	m.clearedFields[rolepanel.FieldRoles] = struct{}{}
+}
+
+// RolesCleared returns if the "roles" field was cleared in this mutation.
+func (m *RolePanelMutation) RolesCleared() bool {
+	_, ok := m.clearedFields[rolepanel.FieldRoles]
+	return ok
+}
+
+// ResetRoles resets all changes to the "roles" field.
+func (m *RolePanelMutation) ResetRoles() {
+	m.roles = nil
+	m.appendroles = nil
+	delete(m.clearedFields, rolepanel.FieldRoles)
+}
+
+// SetGuildID sets the "guild" edge to the Guild entity by id.
+func (m *RolePanelMutation) SetGuildID(id snowflake.ID) {
+	m.guild = &id
+}
+
+// ClearGuild clears the "guild" edge to the Guild entity.
+func (m *RolePanelMutation) ClearGuild() {
+	m.clearedguild = true
+}
+
+// GuildCleared reports if the "guild" edge to the Guild entity was cleared.
+func (m *RolePanelMutation) GuildCleared() bool {
+	return m.clearedguild
+}
+
+// GuildID returns the "guild" edge ID in the mutation.
+func (m *RolePanelMutation) GuildID() (id snowflake.ID, exists bool) {
+	if m.guild != nil {
+		return *m.guild, true
+	}
+	return
+}
+
+// GuildIDs returns the "guild" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GuildID instead. It exists only for internal usage by the builders.
+func (m *RolePanelMutation) GuildIDs() (ids []snowflake.ID) {
+	if id := m.guild; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetGuild resets all changes to the "guild" edge.
+func (m *RolePanelMutation) ResetGuild() {
+	m.guild = nil
+	m.clearedguild = false
+}
+
+// AddPlacementIDs adds the "placements" edge to the RolePanelPlaced entity by ids.
+func (m *RolePanelMutation) AddPlacementIDs(ids ...uuid.UUID) {
+	if m.placements == nil {
+		m.placements = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.placements[ids[i]] = struct{}{}
+	}
+}
+
+// ClearPlacements clears the "placements" edge to the RolePanelPlaced entity.
+func (m *RolePanelMutation) ClearPlacements() {
+	m.clearedplacements = true
+}
+
+// PlacementsCleared reports if the "placements" edge to the RolePanelPlaced entity was cleared.
+func (m *RolePanelMutation) PlacementsCleared() bool {
+	return m.clearedplacements
+}
+
+// RemovePlacementIDs removes the "placements" edge to the RolePanelPlaced entity by IDs.
+func (m *RolePanelMutation) RemovePlacementIDs(ids ...uuid.UUID) {
+	if m.removedplacements == nil {
+		m.removedplacements = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.placements, ids[i])
+		m.removedplacements[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedPlacements returns the removed IDs of the "placements" edge to the RolePanelPlaced entity.
+func (m *RolePanelMutation) RemovedPlacementsIDs() (ids []uuid.UUID) {
+	for id := range m.removedplacements {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// PlacementsIDs returns the "placements" edge IDs in the mutation.
+func (m *RolePanelMutation) PlacementsIDs() (ids []uuid.UUID) {
+	for id := range m.placements {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetPlacements resets all changes to the "placements" edge.
+func (m *RolePanelMutation) ResetPlacements() {
+	m.placements = nil
+	m.clearedplacements = false
+	m.removedplacements = nil
+}
+
+// SetEditID sets the "edit" edge to the RolePanelEdit entity by id.
+func (m *RolePanelMutation) SetEditID(id uuid.UUID) {
+	m.edit = &id
+}
+
+// ClearEdit clears the "edit" edge to the RolePanelEdit entity.
+func (m *RolePanelMutation) ClearEdit() {
+	m.clearededit = true
+}
+
+// EditCleared reports if the "edit" edge to the RolePanelEdit entity was cleared.
+func (m *RolePanelMutation) EditCleared() bool {
+	return m.clearededit
+}
+
+// EditID returns the "edit" edge ID in the mutation.
+func (m *RolePanelMutation) EditID() (id uuid.UUID, exists bool) {
+	if m.edit != nil {
+		return *m.edit, true
+	}
+	return
+}
+
+// EditIDs returns the "edit" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// EditID instead. It exists only for internal usage by the builders.
+func (m *RolePanelMutation) EditIDs() (ids []uuid.UUID) {
+	if id := m.edit; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetEdit resets all changes to the "edit" edge.
+func (m *RolePanelMutation) ResetEdit() {
+	m.edit = nil
+	m.clearededit = false
+}
+
+// Where appends a list predicates to the RolePanelMutation builder.
+func (m *RolePanelMutation) Where(ps ...predicate.RolePanel) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the RolePanelMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *RolePanelMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.RolePanel, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *RolePanelMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *RolePanelMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (RolePanel).
+func (m *RolePanelMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *RolePanelMutation) Fields() []string {
+	fields := make([]string, 0, 3)
+	if m.name != nil {
+		fields = append(fields, rolepanel.FieldName)
+	}
+	if m.description != nil {
+		fields = append(fields, rolepanel.FieldDescription)
+	}
+	if m.roles != nil {
+		fields = append(fields, rolepanel.FieldRoles)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *RolePanelMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case rolepanel.FieldName:
+		return m.Name()
+	case rolepanel.FieldDescription:
+		return m.Description()
+	case rolepanel.FieldRoles:
+		return m.Roles()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *RolePanelMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case rolepanel.FieldName:
+		return m.OldName(ctx)
+	case rolepanel.FieldDescription:
+		return m.OldDescription(ctx)
+	case rolepanel.FieldRoles:
+		return m.OldRoles(ctx)
+	}
+	return nil, fmt.Errorf("unknown RolePanel field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RolePanelMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case rolepanel.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case rolepanel.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case rolepanel.FieldRoles:
+		v, ok := value.([]schema.Role)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRoles(v)
+		return nil
+	}
+	return fmt.Errorf("unknown RolePanel field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *RolePanelMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *RolePanelMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RolePanelMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown RolePanel numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *RolePanelMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(rolepanel.FieldRoles) {
+		fields = append(fields, rolepanel.FieldRoles)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *RolePanelMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *RolePanelMutation) ClearField(name string) error {
+	switch name {
+	case rolepanel.FieldRoles:
+		m.ClearRoles()
+		return nil
+	}
+	return fmt.Errorf("unknown RolePanel nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *RolePanelMutation) ResetField(name string) error {
+	switch name {
+	case rolepanel.FieldName:
+		m.ResetName()
+		return nil
+	case rolepanel.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case rolepanel.FieldRoles:
+		m.ResetRoles()
+		return nil
+	}
+	return fmt.Errorf("unknown RolePanel field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *RolePanelMutation) AddedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.guild != nil {
+		edges = append(edges, rolepanel.EdgeGuild)
+	}
+	if m.placements != nil {
+		edges = append(edges, rolepanel.EdgePlacements)
+	}
+	if m.edit != nil {
+		edges = append(edges, rolepanel.EdgeEdit)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *RolePanelMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case rolepanel.EdgeGuild:
+		if id := m.guild; id != nil {
+			return []ent.Value{*id}
+		}
+	case rolepanel.EdgePlacements:
+		ids := make([]ent.Value, 0, len(m.placements))
+		for id := range m.placements {
+			ids = append(ids, id)
+		}
+		return ids
+	case rolepanel.EdgeEdit:
+		if id := m.edit; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *RolePanelMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.removedplacements != nil {
+		edges = append(edges, rolepanel.EdgePlacements)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *RolePanelMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case rolepanel.EdgePlacements:
+		ids := make([]ent.Value, 0, len(m.removedplacements))
+		for id := range m.removedplacements {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *RolePanelMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.clearedguild {
+		edges = append(edges, rolepanel.EdgeGuild)
+	}
+	if m.clearedplacements {
+		edges = append(edges, rolepanel.EdgePlacements)
+	}
+	if m.clearededit {
+		edges = append(edges, rolepanel.EdgeEdit)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *RolePanelMutation) EdgeCleared(name string) bool {
+	switch name {
+	case rolepanel.EdgeGuild:
+		return m.clearedguild
+	case rolepanel.EdgePlacements:
+		return m.clearedplacements
+	case rolepanel.EdgeEdit:
+		return m.clearededit
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *RolePanelMutation) ClearEdge(name string) error {
+	switch name {
+	case rolepanel.EdgeGuild:
+		m.ClearGuild()
+		return nil
+	case rolepanel.EdgeEdit:
+		m.ClearEdit()
+		return nil
+	}
+	return fmt.Errorf("unknown RolePanel unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *RolePanelMutation) ResetEdge(name string) error {
+	switch name {
+	case rolepanel.EdgeGuild:
+		m.ResetGuild()
+		return nil
+	case rolepanel.EdgePlacements:
+		m.ResetPlacements()
+		return nil
+	case rolepanel.EdgeEdit:
+		m.ResetEdit()
+		return nil
+	}
+	return fmt.Errorf("unknown RolePanel edge %s", name)
+}
+
+// RolePanelEditMutation represents an operation that mutates the RolePanelEdit nodes in the graph.
+type RolePanelEditMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *uuid.UUID
+	channel_id       *snowflake.ID
+	addchannel_id    *snowflake.ID
+	emoji_author     *snowflake.ID
+	addemoji_author  *snowflake.ID
+	token            *string
+	selected_role    *snowflake.ID
+	addselected_role *snowflake.ID
+	modified         *bool
+	clearedFields    map[string]struct{}
+	guild            *snowflake.ID
+	clearedguild     bool
+	parent           *uuid.UUID
+	clearedparent    bool
+	done             bool
+	oldValue         func(context.Context) (*RolePanelEdit, error)
+	predicates       []predicate.RolePanelEdit
+}
+
+var _ ent.Mutation = (*RolePanelEditMutation)(nil)
+
+// rolepaneleditOption allows management of the mutation configuration using functional options.
+type rolepaneleditOption func(*RolePanelEditMutation)
+
+// newRolePanelEditMutation creates new mutation for the RolePanelEdit entity.
+func newRolePanelEditMutation(c config, op Op, opts ...rolepaneleditOption) *RolePanelEditMutation {
+	m := &RolePanelEditMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeRolePanelEdit,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withRolePanelEditID sets the ID field of the mutation.
+func withRolePanelEditID(id uuid.UUID) rolepaneleditOption {
+	return func(m *RolePanelEditMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *RolePanelEdit
+		)
+		m.oldValue = func(ctx context.Context) (*RolePanelEdit, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().RolePanelEdit.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withRolePanelEdit sets the old RolePanelEdit of the mutation.
+func withRolePanelEdit(node *RolePanelEdit) rolepaneleditOption {
+	return func(m *RolePanelEditMutation) {
+		m.oldValue = func(context.Context) (*RolePanelEdit, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m RolePanelEditMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m RolePanelEditMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of RolePanelEdit entities.
+func (m *RolePanelEditMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *RolePanelEditMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *RolePanelEditMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().RolePanelEdit.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetChannelID sets the "channel_id" field.
+func (m *RolePanelEditMutation) SetChannelID(s snowflake.ID) {
+	m.channel_id = &s
+	m.addchannel_id = nil
+}
+
+// ChannelID returns the value of the "channel_id" field in the mutation.
+func (m *RolePanelEditMutation) ChannelID() (r snowflake.ID, exists bool) {
+	v := m.channel_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldChannelID returns the old "channel_id" field's value of the RolePanelEdit entity.
+// If the RolePanelEdit object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelEditMutation) OldChannelID(ctx context.Context) (v snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldChannelID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldChannelID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldChannelID: %w", err)
+	}
+	return oldValue.ChannelID, nil
+}
+
+// AddChannelID adds s to the "channel_id" field.
+func (m *RolePanelEditMutation) AddChannelID(s snowflake.ID) {
+	if m.addchannel_id != nil {
+		*m.addchannel_id += s
+	} else {
+		m.addchannel_id = &s
+	}
+}
+
+// AddedChannelID returns the value that was added to the "channel_id" field in this mutation.
+func (m *RolePanelEditMutation) AddedChannelID() (r snowflake.ID, exists bool) {
+	v := m.addchannel_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetChannelID resets all changes to the "channel_id" field.
+func (m *RolePanelEditMutation) ResetChannelID() {
+	m.channel_id = nil
+	m.addchannel_id = nil
+}
+
+// SetEmojiAuthor sets the "emoji_author" field.
+func (m *RolePanelEditMutation) SetEmojiAuthor(s snowflake.ID) {
+	m.emoji_author = &s
+	m.addemoji_author = nil
+}
+
+// EmojiAuthor returns the value of the "emoji_author" field in the mutation.
+func (m *RolePanelEditMutation) EmojiAuthor() (r snowflake.ID, exists bool) {
+	v := m.emoji_author
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEmojiAuthor returns the old "emoji_author" field's value of the RolePanelEdit entity.
+// If the RolePanelEdit object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelEditMutation) OldEmojiAuthor(ctx context.Context) (v *snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEmojiAuthor is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEmojiAuthor requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEmojiAuthor: %w", err)
+	}
+	return oldValue.EmojiAuthor, nil
+}
+
+// AddEmojiAuthor adds s to the "emoji_author" field.
+func (m *RolePanelEditMutation) AddEmojiAuthor(s snowflake.ID) {
+	if m.addemoji_author != nil {
+		*m.addemoji_author += s
+	} else {
+		m.addemoji_author = &s
+	}
+}
+
+// AddedEmojiAuthor returns the value that was added to the "emoji_author" field in this mutation.
+func (m *RolePanelEditMutation) AddedEmojiAuthor() (r snowflake.ID, exists bool) {
+	v := m.addemoji_author
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearEmojiAuthor clears the value of the "emoji_author" field.
+func (m *RolePanelEditMutation) ClearEmojiAuthor() {
+	m.emoji_author = nil
+	m.addemoji_author = nil
+	m.clearedFields[rolepaneledit.FieldEmojiAuthor] = struct{}{}
+}
+
+// EmojiAuthorCleared returns if the "emoji_author" field was cleared in this mutation.
+func (m *RolePanelEditMutation) EmojiAuthorCleared() bool {
+	_, ok := m.clearedFields[rolepaneledit.FieldEmojiAuthor]
+	return ok
+}
+
+// ResetEmojiAuthor resets all changes to the "emoji_author" field.
+func (m *RolePanelEditMutation) ResetEmojiAuthor() {
+	m.emoji_author = nil
+	m.addemoji_author = nil
+	delete(m.clearedFields, rolepaneledit.FieldEmojiAuthor)
+}
+
+// SetToken sets the "token" field.
+func (m *RolePanelEditMutation) SetToken(s string) {
+	m.token = &s
+}
+
+// Token returns the value of the "token" field in the mutation.
+func (m *RolePanelEditMutation) Token() (r string, exists bool) {
+	v := m.token
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldToken returns the old "token" field's value of the RolePanelEdit entity.
+// If the RolePanelEdit object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelEditMutation) OldToken(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldToken is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldToken requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldToken: %w", err)
+	}
+	return oldValue.Token, nil
+}
+
+// ClearToken clears the value of the "token" field.
+func (m *RolePanelEditMutation) ClearToken() {
+	m.token = nil
+	m.clearedFields[rolepaneledit.FieldToken] = struct{}{}
+}
+
+// TokenCleared returns if the "token" field was cleared in this mutation.
+func (m *RolePanelEditMutation) TokenCleared() bool {
+	_, ok := m.clearedFields[rolepaneledit.FieldToken]
+	return ok
+}
+
+// ResetToken resets all changes to the "token" field.
+func (m *RolePanelEditMutation) ResetToken() {
+	m.token = nil
+	delete(m.clearedFields, rolepaneledit.FieldToken)
+}
+
+// SetSelectedRole sets the "selected_role" field.
+func (m *RolePanelEditMutation) SetSelectedRole(s snowflake.ID) {
+	m.selected_role = &s
+	m.addselected_role = nil
+}
+
+// SelectedRole returns the value of the "selected_role" field in the mutation.
+func (m *RolePanelEditMutation) SelectedRole() (r snowflake.ID, exists bool) {
+	v := m.selected_role
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSelectedRole returns the old "selected_role" field's value of the RolePanelEdit entity.
+// If the RolePanelEdit object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelEditMutation) OldSelectedRole(ctx context.Context) (v *snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSelectedRole is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSelectedRole requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSelectedRole: %w", err)
+	}
+	return oldValue.SelectedRole, nil
+}
+
+// AddSelectedRole adds s to the "selected_role" field.
+func (m *RolePanelEditMutation) AddSelectedRole(s snowflake.ID) {
+	if m.addselected_role != nil {
+		*m.addselected_role += s
+	} else {
+		m.addselected_role = &s
+	}
+}
+
+// AddedSelectedRole returns the value that was added to the "selected_role" field in this mutation.
+func (m *RolePanelEditMutation) AddedSelectedRole() (r snowflake.ID, exists bool) {
+	v := m.addselected_role
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearSelectedRole clears the value of the "selected_role" field.
+func (m *RolePanelEditMutation) ClearSelectedRole() {
+	m.selected_role = nil
+	m.addselected_role = nil
+	m.clearedFields[rolepaneledit.FieldSelectedRole] = struct{}{}
+}
+
+// SelectedRoleCleared returns if the "selected_role" field was cleared in this mutation.
+func (m *RolePanelEditMutation) SelectedRoleCleared() bool {
+	_, ok := m.clearedFields[rolepaneledit.FieldSelectedRole]
+	return ok
+}
+
+// ResetSelectedRole resets all changes to the "selected_role" field.
+func (m *RolePanelEditMutation) ResetSelectedRole() {
+	m.selected_role = nil
+	m.addselected_role = nil
+	delete(m.clearedFields, rolepaneledit.FieldSelectedRole)
+}
+
+// SetModified sets the "modified" field.
+func (m *RolePanelEditMutation) SetModified(b bool) {
+	m.modified = &b
+}
+
+// Modified returns the value of the "modified" field in the mutation.
+func (m *RolePanelEditMutation) Modified() (r bool, exists bool) {
+	v := m.modified
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldModified returns the old "modified" field's value of the RolePanelEdit entity.
+// If the RolePanelEdit object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelEditMutation) OldModified(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldModified is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldModified requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldModified: %w", err)
+	}
+	return oldValue.Modified, nil
+}
+
+// ResetModified resets all changes to the "modified" field.
+func (m *RolePanelEditMutation) ResetModified() {
+	m.modified = nil
+}
+
+// SetGuildID sets the "guild" edge to the Guild entity by id.
+func (m *RolePanelEditMutation) SetGuildID(id snowflake.ID) {
+	m.guild = &id
+}
+
+// ClearGuild clears the "guild" edge to the Guild entity.
+func (m *RolePanelEditMutation) ClearGuild() {
+	m.clearedguild = true
+}
+
+// GuildCleared reports if the "guild" edge to the Guild entity was cleared.
+func (m *RolePanelEditMutation) GuildCleared() bool {
+	return m.clearedguild
+}
+
+// GuildID returns the "guild" edge ID in the mutation.
+func (m *RolePanelEditMutation) GuildID() (id snowflake.ID, exists bool) {
+	if m.guild != nil {
+		return *m.guild, true
+	}
+	return
+}
+
+// GuildIDs returns the "guild" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GuildID instead. It exists only for internal usage by the builders.
+func (m *RolePanelEditMutation) GuildIDs() (ids []snowflake.ID) {
+	if id := m.guild; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetGuild resets all changes to the "guild" edge.
+func (m *RolePanelEditMutation) ResetGuild() {
+	m.guild = nil
+	m.clearedguild = false
+}
+
+// SetParentID sets the "parent" edge to the RolePanel entity by id.
+func (m *RolePanelEditMutation) SetParentID(id uuid.UUID) {
+	m.parent = &id
+}
+
+// ClearParent clears the "parent" edge to the RolePanel entity.
+func (m *RolePanelEditMutation) ClearParent() {
+	m.clearedparent = true
+}
+
+// ParentCleared reports if the "parent" edge to the RolePanel entity was cleared.
+func (m *RolePanelEditMutation) ParentCleared() bool {
+	return m.clearedparent
+}
+
+// ParentID returns the "parent" edge ID in the mutation.
+func (m *RolePanelEditMutation) ParentID() (id uuid.UUID, exists bool) {
+	if m.parent != nil {
+		return *m.parent, true
+	}
+	return
+}
+
+// ParentIDs returns the "parent" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ParentID instead. It exists only for internal usage by the builders.
+func (m *RolePanelEditMutation) ParentIDs() (ids []uuid.UUID) {
+	if id := m.parent; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetParent resets all changes to the "parent" edge.
+func (m *RolePanelEditMutation) ResetParent() {
+	m.parent = nil
+	m.clearedparent = false
+}
+
+// Where appends a list predicates to the RolePanelEditMutation builder.
+func (m *RolePanelEditMutation) Where(ps ...predicate.RolePanelEdit) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the RolePanelEditMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *RolePanelEditMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.RolePanelEdit, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *RolePanelEditMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *RolePanelEditMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (RolePanelEdit).
+func (m *RolePanelEditMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *RolePanelEditMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.channel_id != nil {
+		fields = append(fields, rolepaneledit.FieldChannelID)
+	}
+	if m.emoji_author != nil {
+		fields = append(fields, rolepaneledit.FieldEmojiAuthor)
+	}
+	if m.token != nil {
+		fields = append(fields, rolepaneledit.FieldToken)
+	}
+	if m.selected_role != nil {
+		fields = append(fields, rolepaneledit.FieldSelectedRole)
+	}
+	if m.modified != nil {
+		fields = append(fields, rolepaneledit.FieldModified)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *RolePanelEditMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case rolepaneledit.FieldChannelID:
+		return m.ChannelID()
+	case rolepaneledit.FieldEmojiAuthor:
+		return m.EmojiAuthor()
+	case rolepaneledit.FieldToken:
+		return m.Token()
+	case rolepaneledit.FieldSelectedRole:
+		return m.SelectedRole()
+	case rolepaneledit.FieldModified:
+		return m.Modified()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *RolePanelEditMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case rolepaneledit.FieldChannelID:
+		return m.OldChannelID(ctx)
+	case rolepaneledit.FieldEmojiAuthor:
+		return m.OldEmojiAuthor(ctx)
+	case rolepaneledit.FieldToken:
+		return m.OldToken(ctx)
+	case rolepaneledit.FieldSelectedRole:
+		return m.OldSelectedRole(ctx)
+	case rolepaneledit.FieldModified:
+		return m.OldModified(ctx)
+	}
+	return nil, fmt.Errorf("unknown RolePanelEdit field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RolePanelEditMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case rolepaneledit.FieldChannelID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetChannelID(v)
+		return nil
+	case rolepaneledit.FieldEmojiAuthor:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEmojiAuthor(v)
+		return nil
+	case rolepaneledit.FieldToken:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetToken(v)
+		return nil
+	case rolepaneledit.FieldSelectedRole:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSelectedRole(v)
+		return nil
+	case rolepaneledit.FieldModified:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetModified(v)
+		return nil
+	}
+	return fmt.Errorf("unknown RolePanelEdit field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *RolePanelEditMutation) AddedFields() []string {
+	var fields []string
+	if m.addchannel_id != nil {
+		fields = append(fields, rolepaneledit.FieldChannelID)
+	}
+	if m.addemoji_author != nil {
+		fields = append(fields, rolepaneledit.FieldEmojiAuthor)
+	}
+	if m.addselected_role != nil {
+		fields = append(fields, rolepaneledit.FieldSelectedRole)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *RolePanelEditMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case rolepaneledit.FieldChannelID:
+		return m.AddedChannelID()
+	case rolepaneledit.FieldEmojiAuthor:
+		return m.AddedEmojiAuthor()
+	case rolepaneledit.FieldSelectedRole:
+		return m.AddedSelectedRole()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RolePanelEditMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case rolepaneledit.FieldChannelID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddChannelID(v)
+		return nil
+	case rolepaneledit.FieldEmojiAuthor:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddEmojiAuthor(v)
+		return nil
+	case rolepaneledit.FieldSelectedRole:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSelectedRole(v)
+		return nil
+	}
+	return fmt.Errorf("unknown RolePanelEdit numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *RolePanelEditMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(rolepaneledit.FieldEmojiAuthor) {
+		fields = append(fields, rolepaneledit.FieldEmojiAuthor)
+	}
+	if m.FieldCleared(rolepaneledit.FieldToken) {
+		fields = append(fields, rolepaneledit.FieldToken)
+	}
+	if m.FieldCleared(rolepaneledit.FieldSelectedRole) {
+		fields = append(fields, rolepaneledit.FieldSelectedRole)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *RolePanelEditMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *RolePanelEditMutation) ClearField(name string) error {
+	switch name {
+	case rolepaneledit.FieldEmojiAuthor:
+		m.ClearEmojiAuthor()
+		return nil
+	case rolepaneledit.FieldToken:
+		m.ClearToken()
+		return nil
+	case rolepaneledit.FieldSelectedRole:
+		m.ClearSelectedRole()
+		return nil
+	}
+	return fmt.Errorf("unknown RolePanelEdit nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *RolePanelEditMutation) ResetField(name string) error {
+	switch name {
+	case rolepaneledit.FieldChannelID:
+		m.ResetChannelID()
+		return nil
+	case rolepaneledit.FieldEmojiAuthor:
+		m.ResetEmojiAuthor()
+		return nil
+	case rolepaneledit.FieldToken:
+		m.ResetToken()
+		return nil
+	case rolepaneledit.FieldSelectedRole:
+		m.ResetSelectedRole()
+		return nil
+	case rolepaneledit.FieldModified:
+		m.ResetModified()
+		return nil
+	}
+	return fmt.Errorf("unknown RolePanelEdit field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *RolePanelEditMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.guild != nil {
+		edges = append(edges, rolepaneledit.EdgeGuild)
+	}
+	if m.parent != nil {
+		edges = append(edges, rolepaneledit.EdgeParent)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *RolePanelEditMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case rolepaneledit.EdgeGuild:
+		if id := m.guild; id != nil {
+			return []ent.Value{*id}
+		}
+	case rolepaneledit.EdgeParent:
+		if id := m.parent; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *RolePanelEditMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *RolePanelEditMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *RolePanelEditMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedguild {
+		edges = append(edges, rolepaneledit.EdgeGuild)
+	}
+	if m.clearedparent {
+		edges = append(edges, rolepaneledit.EdgeParent)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *RolePanelEditMutation) EdgeCleared(name string) bool {
+	switch name {
+	case rolepaneledit.EdgeGuild:
+		return m.clearedguild
+	case rolepaneledit.EdgeParent:
+		return m.clearedparent
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *RolePanelEditMutation) ClearEdge(name string) error {
+	switch name {
+	case rolepaneledit.EdgeGuild:
+		m.ClearGuild()
+		return nil
+	case rolepaneledit.EdgeParent:
+		m.ClearParent()
+		return nil
+	}
+	return fmt.Errorf("unknown RolePanelEdit unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *RolePanelEditMutation) ResetEdge(name string) error {
+	switch name {
+	case rolepaneledit.EdgeGuild:
+		m.ResetGuild()
+		return nil
+	case rolepaneledit.EdgeParent:
+		m.ResetParent()
+		return nil
+	}
+	return fmt.Errorf("unknown RolePanelEdit edge %s", name)
+}
+
+// RolePanelPlacedMutation represents an operation that mutates the RolePanelPlaced nodes in the graph.
+type RolePanelPlacedMutation struct {
+	config
+	op                  Op
+	typ                 string
+	id                  *uuid.UUID
+	message_id          *snowflake.ID
+	addmessage_id       *snowflake.ID
+	channel_id          *snowflake.ID
+	addchannel_id       *snowflake.ID
+	_type               *rolepanelplaced.Type
+	button_type         *discord.ButtonStyle
+	addbutton_type      *discord.ButtonStyle
+	show_name           *bool
+	folding_select_menu *bool
+	hide_notice         *bool
+	use_display_name    *bool
+	created_at          *time.Time
+	uses                *int
+	adduses             *int
+	clearedFields       map[string]struct{}
+	guild               *snowflake.ID
+	clearedguild        bool
+	role_panel          *uuid.UUID
+	clearedrole_panel   bool
+	done                bool
+	oldValue            func(context.Context) (*RolePanelPlaced, error)
+	predicates          []predicate.RolePanelPlaced
+}
+
+var _ ent.Mutation = (*RolePanelPlacedMutation)(nil)
+
+// rolepanelplacedOption allows management of the mutation configuration using functional options.
+type rolepanelplacedOption func(*RolePanelPlacedMutation)
+
+// newRolePanelPlacedMutation creates new mutation for the RolePanelPlaced entity.
+func newRolePanelPlacedMutation(c config, op Op, opts ...rolepanelplacedOption) *RolePanelPlacedMutation {
+	m := &RolePanelPlacedMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeRolePanelPlaced,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withRolePanelPlacedID sets the ID field of the mutation.
+func withRolePanelPlacedID(id uuid.UUID) rolepanelplacedOption {
+	return func(m *RolePanelPlacedMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *RolePanelPlaced
+		)
+		m.oldValue = func(ctx context.Context) (*RolePanelPlaced, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().RolePanelPlaced.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withRolePanelPlaced sets the old RolePanelPlaced of the mutation.
+func withRolePanelPlaced(node *RolePanelPlaced) rolepanelplacedOption {
+	return func(m *RolePanelPlacedMutation) {
+		m.oldValue = func(context.Context) (*RolePanelPlaced, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m RolePanelPlacedMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m RolePanelPlacedMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of RolePanelPlaced entities.
+func (m *RolePanelPlacedMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *RolePanelPlacedMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *RolePanelPlacedMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().RolePanelPlaced.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetMessageID sets the "message_id" field.
+func (m *RolePanelPlacedMutation) SetMessageID(s snowflake.ID) {
+	m.message_id = &s
+	m.addmessage_id = nil
+}
+
+// MessageID returns the value of the "message_id" field in the mutation.
+func (m *RolePanelPlacedMutation) MessageID() (r snowflake.ID, exists bool) {
+	v := m.message_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMessageID returns the old "message_id" field's value of the RolePanelPlaced entity.
+// If the RolePanelPlaced object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelPlacedMutation) OldMessageID(ctx context.Context) (v *snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMessageID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMessageID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMessageID: %w", err)
+	}
+	return oldValue.MessageID, nil
+}
+
+// AddMessageID adds s to the "message_id" field.
+func (m *RolePanelPlacedMutation) AddMessageID(s snowflake.ID) {
+	if m.addmessage_id != nil {
+		*m.addmessage_id += s
+	} else {
+		m.addmessage_id = &s
+	}
+}
+
+// AddedMessageID returns the value that was added to the "message_id" field in this mutation.
+func (m *RolePanelPlacedMutation) AddedMessageID() (r snowflake.ID, exists bool) {
+	v := m.addmessage_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearMessageID clears the value of the "message_id" field.
+func (m *RolePanelPlacedMutation) ClearMessageID() {
+	m.message_id = nil
+	m.addmessage_id = nil
+	m.clearedFields[rolepanelplaced.FieldMessageID] = struct{}{}
+}
+
+// MessageIDCleared returns if the "message_id" field was cleared in this mutation.
+func (m *RolePanelPlacedMutation) MessageIDCleared() bool {
+	_, ok := m.clearedFields[rolepanelplaced.FieldMessageID]
+	return ok
+}
+
+// ResetMessageID resets all changes to the "message_id" field.
+func (m *RolePanelPlacedMutation) ResetMessageID() {
+	m.message_id = nil
+	m.addmessage_id = nil
+	delete(m.clearedFields, rolepanelplaced.FieldMessageID)
+}
+
+// SetChannelID sets the "channel_id" field.
+func (m *RolePanelPlacedMutation) SetChannelID(s snowflake.ID) {
+	m.channel_id = &s
+	m.addchannel_id = nil
+}
+
+// ChannelID returns the value of the "channel_id" field in the mutation.
+func (m *RolePanelPlacedMutation) ChannelID() (r snowflake.ID, exists bool) {
+	v := m.channel_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldChannelID returns the old "channel_id" field's value of the RolePanelPlaced entity.
+// If the RolePanelPlaced object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelPlacedMutation) OldChannelID(ctx context.Context) (v snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldChannelID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldChannelID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldChannelID: %w", err)
+	}
+	return oldValue.ChannelID, nil
+}
+
+// AddChannelID adds s to the "channel_id" field.
+func (m *RolePanelPlacedMutation) AddChannelID(s snowflake.ID) {
+	if m.addchannel_id != nil {
+		*m.addchannel_id += s
+	} else {
+		m.addchannel_id = &s
+	}
+}
+
+// AddedChannelID returns the value that was added to the "channel_id" field in this mutation.
+func (m *RolePanelPlacedMutation) AddedChannelID() (r snowflake.ID, exists bool) {
+	v := m.addchannel_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetChannelID resets all changes to the "channel_id" field.
+func (m *RolePanelPlacedMutation) ResetChannelID() {
+	m.channel_id = nil
+	m.addchannel_id = nil
+}
+
+// SetType sets the "type" field.
+func (m *RolePanelPlacedMutation) SetType(r rolepanelplaced.Type) {
+	m._type = &r
+}
+
+// GetType returns the value of the "type" field in the mutation.
+func (m *RolePanelPlacedMutation) GetType() (r rolepanelplaced.Type, exists bool) {
+	v := m._type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldType returns the old "type" field's value of the RolePanelPlaced entity.
+// If the RolePanelPlaced object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelPlacedMutation) OldType(ctx context.Context) (v rolepanelplaced.Type, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldType: %w", err)
+	}
+	return oldValue.Type, nil
+}
+
+// ClearType clears the value of the "type" field.
+func (m *RolePanelPlacedMutation) ClearType() {
+	m._type = nil
+	m.clearedFields[rolepanelplaced.FieldType] = struct{}{}
+}
+
+// TypeCleared returns if the "type" field was cleared in this mutation.
+func (m *RolePanelPlacedMutation) TypeCleared() bool {
+	_, ok := m.clearedFields[rolepanelplaced.FieldType]
+	return ok
+}
+
+// ResetType resets all changes to the "type" field.
+func (m *RolePanelPlacedMutation) ResetType() {
+	m._type = nil
+	delete(m.clearedFields, rolepanelplaced.FieldType)
+}
+
+// SetButtonType sets the "button_type" field.
+func (m *RolePanelPlacedMutation) SetButtonType(ds discord.ButtonStyle) {
+	m.button_type = &ds
+	m.addbutton_type = nil
+}
+
+// ButtonType returns the value of the "button_type" field in the mutation.
+func (m *RolePanelPlacedMutation) ButtonType() (r discord.ButtonStyle, exists bool) {
+	v := m.button_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldButtonType returns the old "button_type" field's value of the RolePanelPlaced entity.
+// If the RolePanelPlaced object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelPlacedMutation) OldButtonType(ctx context.Context) (v discord.ButtonStyle, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldButtonType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldButtonType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldButtonType: %w", err)
+	}
+	return oldValue.ButtonType, nil
+}
+
+// AddButtonType adds ds to the "button_type" field.
+func (m *RolePanelPlacedMutation) AddButtonType(ds discord.ButtonStyle) {
+	if m.addbutton_type != nil {
+		*m.addbutton_type += ds
+	} else {
+		m.addbutton_type = &ds
+	}
+}
+
+// AddedButtonType returns the value that was added to the "button_type" field in this mutation.
+func (m *RolePanelPlacedMutation) AddedButtonType() (r discord.ButtonStyle, exists bool) {
+	v := m.addbutton_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetButtonType resets all changes to the "button_type" field.
+func (m *RolePanelPlacedMutation) ResetButtonType() {
+	m.button_type = nil
+	m.addbutton_type = nil
+}
+
+// SetShowName sets the "show_name" field.
+func (m *RolePanelPlacedMutation) SetShowName(b bool) {
+	m.show_name = &b
+}
+
+// ShowName returns the value of the "show_name" field in the mutation.
+func (m *RolePanelPlacedMutation) ShowName() (r bool, exists bool) {
+	v := m.show_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldShowName returns the old "show_name" field's value of the RolePanelPlaced entity.
+// If the RolePanelPlaced object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelPlacedMutation) OldShowName(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldShowName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldShowName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldShowName: %w", err)
+	}
+	return oldValue.ShowName, nil
+}
+
+// ResetShowName resets all changes to the "show_name" field.
+func (m *RolePanelPlacedMutation) ResetShowName() {
+	m.show_name = nil
+}
+
+// SetFoldingSelectMenu sets the "folding_select_menu" field.
+func (m *RolePanelPlacedMutation) SetFoldingSelectMenu(b bool) {
+	m.folding_select_menu = &b
+}
+
+// FoldingSelectMenu returns the value of the "folding_select_menu" field in the mutation.
+func (m *RolePanelPlacedMutation) FoldingSelectMenu() (r bool, exists bool) {
+	v := m.folding_select_menu
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFoldingSelectMenu returns the old "folding_select_menu" field's value of the RolePanelPlaced entity.
+// If the RolePanelPlaced object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelPlacedMutation) OldFoldingSelectMenu(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFoldingSelectMenu is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFoldingSelectMenu requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFoldingSelectMenu: %w", err)
+	}
+	return oldValue.FoldingSelectMenu, nil
+}
+
+// ResetFoldingSelectMenu resets all changes to the "folding_select_menu" field.
+func (m *RolePanelPlacedMutation) ResetFoldingSelectMenu() {
+	m.folding_select_menu = nil
+}
+
+// SetHideNotice sets the "hide_notice" field.
+func (m *RolePanelPlacedMutation) SetHideNotice(b bool) {
+	m.hide_notice = &b
+}
+
+// HideNotice returns the value of the "hide_notice" field in the mutation.
+func (m *RolePanelPlacedMutation) HideNotice() (r bool, exists bool) {
+	v := m.hide_notice
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHideNotice returns the old "hide_notice" field's value of the RolePanelPlaced entity.
+// If the RolePanelPlaced object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelPlacedMutation) OldHideNotice(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHideNotice is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHideNotice requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHideNotice: %w", err)
+	}
+	return oldValue.HideNotice, nil
+}
+
+// ResetHideNotice resets all changes to the "hide_notice" field.
+func (m *RolePanelPlacedMutation) ResetHideNotice() {
+	m.hide_notice = nil
+}
+
+// SetUseDisplayName sets the "use_display_name" field.
+func (m *RolePanelPlacedMutation) SetUseDisplayName(b bool) {
+	m.use_display_name = &b
+}
+
+// UseDisplayName returns the value of the "use_display_name" field in the mutation.
+func (m *RolePanelPlacedMutation) UseDisplayName() (r bool, exists bool) {
+	v := m.use_display_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUseDisplayName returns the old "use_display_name" field's value of the RolePanelPlaced entity.
+// If the RolePanelPlaced object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelPlacedMutation) OldUseDisplayName(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUseDisplayName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUseDisplayName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUseDisplayName: %w", err)
+	}
+	return oldValue.UseDisplayName, nil
+}
+
+// ResetUseDisplayName resets all changes to the "use_display_name" field.
+func (m *RolePanelPlacedMutation) ResetUseDisplayName() {
+	m.use_display_name = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *RolePanelPlacedMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *RolePanelPlacedMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the RolePanelPlaced entity.
+// If the RolePanelPlaced object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelPlacedMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *RolePanelPlacedMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUses sets the "uses" field.
+func (m *RolePanelPlacedMutation) SetUses(i int) {
+	m.uses = &i
+	m.adduses = nil
+}
+
+// Uses returns the value of the "uses" field in the mutation.
+func (m *RolePanelPlacedMutation) Uses() (r int, exists bool) {
+	v := m.uses
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUses returns the old "uses" field's value of the RolePanelPlaced entity.
+// If the RolePanelPlaced object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelPlacedMutation) OldUses(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUses is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUses requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUses: %w", err)
+	}
+	return oldValue.Uses, nil
+}
+
+// AddUses adds i to the "uses" field.
+func (m *RolePanelPlacedMutation) AddUses(i int) {
+	if m.adduses != nil {
+		*m.adduses += i
+	} else {
+		m.adduses = &i
+	}
+}
+
+// AddedUses returns the value that was added to the "uses" field in this mutation.
+func (m *RolePanelPlacedMutation) AddedUses() (r int, exists bool) {
+	v := m.adduses
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetUses resets all changes to the "uses" field.
+func (m *RolePanelPlacedMutation) ResetUses() {
+	m.uses = nil
+	m.adduses = nil
+}
+
+// SetGuildID sets the "guild" edge to the Guild entity by id.
+func (m *RolePanelPlacedMutation) SetGuildID(id snowflake.ID) {
+	m.guild = &id
+}
+
+// ClearGuild clears the "guild" edge to the Guild entity.
+func (m *RolePanelPlacedMutation) ClearGuild() {
+	m.clearedguild = true
+}
+
+// GuildCleared reports if the "guild" edge to the Guild entity was cleared.
+func (m *RolePanelPlacedMutation) GuildCleared() bool {
+	return m.clearedguild
+}
+
+// GuildID returns the "guild" edge ID in the mutation.
+func (m *RolePanelPlacedMutation) GuildID() (id snowflake.ID, exists bool) {
+	if m.guild != nil {
+		return *m.guild, true
+	}
+	return
+}
+
+// GuildIDs returns the "guild" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GuildID instead. It exists only for internal usage by the builders.
+func (m *RolePanelPlacedMutation) GuildIDs() (ids []snowflake.ID) {
+	if id := m.guild; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetGuild resets all changes to the "guild" edge.
+func (m *RolePanelPlacedMutation) ResetGuild() {
+	m.guild = nil
+	m.clearedguild = false
+}
+
+// SetRolePanelID sets the "role_panel" edge to the RolePanel entity by id.
+func (m *RolePanelPlacedMutation) SetRolePanelID(id uuid.UUID) {
+	m.role_panel = &id
+}
+
+// ClearRolePanel clears the "role_panel" edge to the RolePanel entity.
+func (m *RolePanelPlacedMutation) ClearRolePanel() {
+	m.clearedrole_panel = true
+}
+
+// RolePanelCleared reports if the "role_panel" edge to the RolePanel entity was cleared.
+func (m *RolePanelPlacedMutation) RolePanelCleared() bool {
+	return m.clearedrole_panel
+}
+
+// RolePanelID returns the "role_panel" edge ID in the mutation.
+func (m *RolePanelPlacedMutation) RolePanelID() (id uuid.UUID, exists bool) {
+	if m.role_panel != nil {
+		return *m.role_panel, true
+	}
+	return
+}
+
+// RolePanelIDs returns the "role_panel" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// RolePanelID instead. It exists only for internal usage by the builders.
+func (m *RolePanelPlacedMutation) RolePanelIDs() (ids []uuid.UUID) {
+	if id := m.role_panel; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetRolePanel resets all changes to the "role_panel" edge.
+func (m *RolePanelPlacedMutation) ResetRolePanel() {
+	m.role_panel = nil
+	m.clearedrole_panel = false
+}
+
+// Where appends a list predicates to the RolePanelPlacedMutation builder.
+func (m *RolePanelPlacedMutation) Where(ps ...predicate.RolePanelPlaced) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the RolePanelPlacedMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *RolePanelPlacedMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.RolePanelPlaced, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *RolePanelPlacedMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *RolePanelPlacedMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (RolePanelPlaced).
+func (m *RolePanelPlacedMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *RolePanelPlacedMutation) Fields() []string {
+	fields := make([]string, 0, 10)
+	if m.message_id != nil {
+		fields = append(fields, rolepanelplaced.FieldMessageID)
+	}
+	if m.channel_id != nil {
+		fields = append(fields, rolepanelplaced.FieldChannelID)
+	}
+	if m._type != nil {
+		fields = append(fields, rolepanelplaced.FieldType)
+	}
+	if m.button_type != nil {
+		fields = append(fields, rolepanelplaced.FieldButtonType)
+	}
+	if m.show_name != nil {
+		fields = append(fields, rolepanelplaced.FieldShowName)
+	}
+	if m.folding_select_menu != nil {
+		fields = append(fields, rolepanelplaced.FieldFoldingSelectMenu)
+	}
+	if m.hide_notice != nil {
+		fields = append(fields, rolepanelplaced.FieldHideNotice)
+	}
+	if m.use_display_name != nil {
+		fields = append(fields, rolepanelplaced.FieldUseDisplayName)
+	}
+	if m.created_at != nil {
+		fields = append(fields, rolepanelplaced.FieldCreatedAt)
+	}
+	if m.uses != nil {
+		fields = append(fields, rolepanelplaced.FieldUses)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *RolePanelPlacedMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case rolepanelplaced.FieldMessageID:
+		return m.MessageID()
+	case rolepanelplaced.FieldChannelID:
+		return m.ChannelID()
+	case rolepanelplaced.FieldType:
+		return m.GetType()
+	case rolepanelplaced.FieldButtonType:
+		return m.ButtonType()
+	case rolepanelplaced.FieldShowName:
+		return m.ShowName()
+	case rolepanelplaced.FieldFoldingSelectMenu:
+		return m.FoldingSelectMenu()
+	case rolepanelplaced.FieldHideNotice:
+		return m.HideNotice()
+	case rolepanelplaced.FieldUseDisplayName:
+		return m.UseDisplayName()
+	case rolepanelplaced.FieldCreatedAt:
+		return m.CreatedAt()
+	case rolepanelplaced.FieldUses:
+		return m.Uses()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *RolePanelPlacedMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case rolepanelplaced.FieldMessageID:
+		return m.OldMessageID(ctx)
+	case rolepanelplaced.FieldChannelID:
+		return m.OldChannelID(ctx)
+	case rolepanelplaced.FieldType:
+		return m.OldType(ctx)
+	case rolepanelplaced.FieldButtonType:
+		return m.OldButtonType(ctx)
+	case rolepanelplaced.FieldShowName:
+		return m.OldShowName(ctx)
+	case rolepanelplaced.FieldFoldingSelectMenu:
+		return m.OldFoldingSelectMenu(ctx)
+	case rolepanelplaced.FieldHideNotice:
+		return m.OldHideNotice(ctx)
+	case rolepanelplaced.FieldUseDisplayName:
+		return m.OldUseDisplayName(ctx)
+	case rolepanelplaced.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case rolepanelplaced.FieldUses:
+		return m.OldUses(ctx)
+	}
+	return nil, fmt.Errorf("unknown RolePanelPlaced field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RolePanelPlacedMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case rolepanelplaced.FieldMessageID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMessageID(v)
+		return nil
+	case rolepanelplaced.FieldChannelID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetChannelID(v)
+		return nil
+	case rolepanelplaced.FieldType:
+		v, ok := value.(rolepanelplaced.Type)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetType(v)
+		return nil
+	case rolepanelplaced.FieldButtonType:
+		v, ok := value.(discord.ButtonStyle)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetButtonType(v)
+		return nil
+	case rolepanelplaced.FieldShowName:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetShowName(v)
+		return nil
+	case rolepanelplaced.FieldFoldingSelectMenu:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFoldingSelectMenu(v)
+		return nil
+	case rolepanelplaced.FieldHideNotice:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHideNotice(v)
+		return nil
+	case rolepanelplaced.FieldUseDisplayName:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUseDisplayName(v)
+		return nil
+	case rolepanelplaced.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case rolepanelplaced.FieldUses:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUses(v)
+		return nil
+	}
+	return fmt.Errorf("unknown RolePanelPlaced field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *RolePanelPlacedMutation) AddedFields() []string {
+	var fields []string
+	if m.addmessage_id != nil {
+		fields = append(fields, rolepanelplaced.FieldMessageID)
+	}
+	if m.addchannel_id != nil {
+		fields = append(fields, rolepanelplaced.FieldChannelID)
+	}
+	if m.addbutton_type != nil {
+		fields = append(fields, rolepanelplaced.FieldButtonType)
+	}
+	if m.adduses != nil {
+		fields = append(fields, rolepanelplaced.FieldUses)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *RolePanelPlacedMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case rolepanelplaced.FieldMessageID:
+		return m.AddedMessageID()
+	case rolepanelplaced.FieldChannelID:
+		return m.AddedChannelID()
+	case rolepanelplaced.FieldButtonType:
+		return m.AddedButtonType()
+	case rolepanelplaced.FieldUses:
+		return m.AddedUses()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RolePanelPlacedMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case rolepanelplaced.FieldMessageID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMessageID(v)
+		return nil
+	case rolepanelplaced.FieldChannelID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddChannelID(v)
+		return nil
+	case rolepanelplaced.FieldButtonType:
+		v, ok := value.(discord.ButtonStyle)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddButtonType(v)
+		return nil
+	case rolepanelplaced.FieldUses:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddUses(v)
+		return nil
+	}
+	return fmt.Errorf("unknown RolePanelPlaced numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *RolePanelPlacedMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(rolepanelplaced.FieldMessageID) {
+		fields = append(fields, rolepanelplaced.FieldMessageID)
+	}
+	if m.FieldCleared(rolepanelplaced.FieldType) {
+		fields = append(fields, rolepanelplaced.FieldType)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *RolePanelPlacedMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *RolePanelPlacedMutation) ClearField(name string) error {
+	switch name {
+	case rolepanelplaced.FieldMessageID:
+		m.ClearMessageID()
+		return nil
+	case rolepanelplaced.FieldType:
+		m.ClearType()
+		return nil
+	}
+	return fmt.Errorf("unknown RolePanelPlaced nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *RolePanelPlacedMutation) ResetField(name string) error {
+	switch name {
+	case rolepanelplaced.FieldMessageID:
+		m.ResetMessageID()
+		return nil
+	case rolepanelplaced.FieldChannelID:
+		m.ResetChannelID()
+		return nil
+	case rolepanelplaced.FieldType:
+		m.ResetType()
+		return nil
+	case rolepanelplaced.FieldButtonType:
+		m.ResetButtonType()
+		return nil
+	case rolepanelplaced.FieldShowName:
+		m.ResetShowName()
+		return nil
+	case rolepanelplaced.FieldFoldingSelectMenu:
+		m.ResetFoldingSelectMenu()
+		return nil
+	case rolepanelplaced.FieldHideNotice:
+		m.ResetHideNotice()
+		return nil
+	case rolepanelplaced.FieldUseDisplayName:
+		m.ResetUseDisplayName()
+		return nil
+	case rolepanelplaced.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case rolepanelplaced.FieldUses:
+		m.ResetUses()
+		return nil
+	}
+	return fmt.Errorf("unknown RolePanelPlaced field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *RolePanelPlacedMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.guild != nil {
+		edges = append(edges, rolepanelplaced.EdgeGuild)
+	}
+	if m.role_panel != nil {
+		edges = append(edges, rolepanelplaced.EdgeRolePanel)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *RolePanelPlacedMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case rolepanelplaced.EdgeGuild:
+		if id := m.guild; id != nil {
+			return []ent.Value{*id}
+		}
+	case rolepanelplaced.EdgeRolePanel:
+		if id := m.role_panel; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *RolePanelPlacedMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *RolePanelPlacedMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *RolePanelPlacedMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedguild {
+		edges = append(edges, rolepanelplaced.EdgeGuild)
+	}
+	if m.clearedrole_panel {
+		edges = append(edges, rolepanelplaced.EdgeRolePanel)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *RolePanelPlacedMutation) EdgeCleared(name string) bool {
+	switch name {
+	case rolepanelplaced.EdgeGuild:
+		return m.clearedguild
+	case rolepanelplaced.EdgeRolePanel:
+		return m.clearedrole_panel
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *RolePanelPlacedMutation) ClearEdge(name string) error {
+	switch name {
+	case rolepanelplaced.EdgeGuild:
+		m.ClearGuild()
+		return nil
+	case rolepanelplaced.EdgeRolePanel:
+		m.ClearRolePanel()
+		return nil
+	}
+	return fmt.Errorf("unknown RolePanelPlaced unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *RolePanelPlacedMutation) ResetEdge(name string) error {
+	switch name {
+	case rolepanelplaced.EdgeGuild:
+		m.ResetGuild()
+		return nil
+	case rolepanelplaced.EdgeRolePanel:
+		m.ResetRolePanel()
+		return nil
+	}
+	return fmt.Errorf("unknown RolePanelPlaced edge %s", name)
 }
 
 // UserMutation represents an operation that mutates the User nodes in the graph.

@@ -9,6 +9,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/messagepin"
+	"github.com/sabafly/gobot/ent/rolepanel"
+	"github.com/sabafly/gobot/ent/rolepaneledit"
+	"github.com/sabafly/gobot/ent/rolepanelplaced"
 	"github.com/sabafly/gobot/ent/schema"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/ent/wordsuffix"
@@ -40,6 +43,94 @@ func init() {
 	messagepinDescID := messagepinFields[0].Descriptor()
 	// messagepin.DefaultID holds the default value on creation for the id field.
 	messagepin.DefaultID = messagepinDescID.Default.(func() uuid.UUID)
+	rolepanelFields := schema.RolePanel{}.Fields()
+	_ = rolepanelFields
+	// rolepanelDescName is the schema descriptor for name field.
+	rolepanelDescName := rolepanelFields[1].Descriptor()
+	// rolepanel.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	rolepanel.NameValidator = func() func(string) error {
+		validators := rolepanelDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// rolepanelDescDescription is the schema descriptor for description field.
+	rolepanelDescDescription := rolepanelFields[2].Descriptor()
+	// rolepanel.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	rolepanel.DescriptionValidator = rolepanelDescDescription.Validators[0].(func(string) error)
+	// rolepanelDescID is the schema descriptor for id field.
+	rolepanelDescID := rolepanelFields[0].Descriptor()
+	// rolepanel.DefaultID holds the default value on creation for the id field.
+	rolepanel.DefaultID = rolepanelDescID.Default.(func() uuid.UUID)
+	rolepaneleditFields := schema.RolePanelEdit{}.Fields()
+	_ = rolepaneleditFields
+	// rolepaneleditDescModified is the schema descriptor for modified field.
+	rolepaneleditDescModified := rolepaneleditFields[5].Descriptor()
+	// rolepaneledit.DefaultModified holds the default value on creation for the modified field.
+	rolepaneledit.DefaultModified = rolepaneleditDescModified.Default.(bool)
+	// rolepaneleditDescID is the schema descriptor for id field.
+	rolepaneleditDescID := rolepaneleditFields[0].Descriptor()
+	// rolepaneledit.DefaultID holds the default value on creation for the id field.
+	rolepaneledit.DefaultID = rolepaneleditDescID.Default.(func() uuid.UUID)
+	rolepanelplacedFields := schema.RolePanelPlaced{}.Fields()
+	_ = rolepanelplacedFields
+	// rolepanelplacedDescButtonType is the schema descriptor for button_type field.
+	rolepanelplacedDescButtonType := rolepanelplacedFields[4].Descriptor()
+	// rolepanelplaced.DefaultButtonType holds the default value on creation for the button_type field.
+	rolepanelplaced.DefaultButtonType = discord.ButtonStyle(rolepanelplacedDescButtonType.Default.(int))
+	// rolepanelplaced.ButtonTypeValidator is a validator for the "button_type" field. It is called by the builders before save.
+	rolepanelplaced.ButtonTypeValidator = func() func(int) error {
+		validators := rolepanelplacedDescButtonType.Validators
+		fns := [...]func(int) error{
+			validators[0].(func(int) error),
+			validators[1].(func(int) error),
+		}
+		return func(button_type int) error {
+			for _, fn := range fns {
+				if err := fn(button_type); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// rolepanelplacedDescShowName is the schema descriptor for show_name field.
+	rolepanelplacedDescShowName := rolepanelplacedFields[5].Descriptor()
+	// rolepanelplaced.DefaultShowName holds the default value on creation for the show_name field.
+	rolepanelplaced.DefaultShowName = rolepanelplacedDescShowName.Default.(bool)
+	// rolepanelplacedDescFoldingSelectMenu is the schema descriptor for folding_select_menu field.
+	rolepanelplacedDescFoldingSelectMenu := rolepanelplacedFields[6].Descriptor()
+	// rolepanelplaced.DefaultFoldingSelectMenu holds the default value on creation for the folding_select_menu field.
+	rolepanelplaced.DefaultFoldingSelectMenu = rolepanelplacedDescFoldingSelectMenu.Default.(bool)
+	// rolepanelplacedDescHideNotice is the schema descriptor for hide_notice field.
+	rolepanelplacedDescHideNotice := rolepanelplacedFields[7].Descriptor()
+	// rolepanelplaced.DefaultHideNotice holds the default value on creation for the hide_notice field.
+	rolepanelplaced.DefaultHideNotice = rolepanelplacedDescHideNotice.Default.(bool)
+	// rolepanelplacedDescUseDisplayName is the schema descriptor for use_display_name field.
+	rolepanelplacedDescUseDisplayName := rolepanelplacedFields[8].Descriptor()
+	// rolepanelplaced.DefaultUseDisplayName holds the default value on creation for the use_display_name field.
+	rolepanelplaced.DefaultUseDisplayName = rolepanelplacedDescUseDisplayName.Default.(bool)
+	// rolepanelplacedDescCreatedAt is the schema descriptor for created_at field.
+	rolepanelplacedDescCreatedAt := rolepanelplacedFields[9].Descriptor()
+	// rolepanelplaced.DefaultCreatedAt holds the default value on creation for the created_at field.
+	rolepanelplaced.DefaultCreatedAt = rolepanelplacedDescCreatedAt.Default.(func() time.Time)
+	// rolepanelplacedDescUses is the schema descriptor for uses field.
+	rolepanelplacedDescUses := rolepanelplacedFields[10].Descriptor()
+	// rolepanelplaced.DefaultUses holds the default value on creation for the uses field.
+	rolepanelplaced.DefaultUses = rolepanelplacedDescUses.Default.(int)
+	// rolepanelplacedDescID is the schema descriptor for id field.
+	rolepanelplacedDescID := rolepanelplacedFields[0].Descriptor()
+	// rolepanelplaced.DefaultID holds the default value on creation for the id field.
+	rolepanelplaced.DefaultID = rolepanelplacedDescID.Default.(func() uuid.UUID)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescName is the schema descriptor for name field.

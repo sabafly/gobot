@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/internal/permissions"
 )
 
@@ -16,9 +15,6 @@ type Member struct {
 // Fields of the Member.
 func (Member) Fields() []ent.Field {
 	return []ent.Field{
-		field.Uint64("user_id").
-			Immutable().
-			GoType(snowflake.ID(0)),
 		field.JSON("permission", permissions.Permission{}).
 			Optional(),
 	}
@@ -31,7 +27,8 @@ func (Member) Edges() []ent.Edge {
 			Ref("members").
 			Unique().
 			Required(),
-		edge.To("owner", User.Type).
+		edge.From("user", User.Type).
+			Ref("guilds").
 			Unique().
 			Required(),
 	}

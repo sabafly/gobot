@@ -15,6 +15,15 @@ type Member func(*sql.Selector)
 // MessagePin is the predicate function for messagepin builders.
 type MessagePin func(*sql.Selector)
 
+// RolePanel is the predicate function for rolepanel builders.
+type RolePanel func(*sql.Selector)
+
+// RolePanelEdit is the predicate function for rolepaneledit builders.
+type RolePanelEdit func(*sql.Selector)
+
+// RolePanelPlaced is the predicate function for rolepanelplaced builders.
+type RolePanelPlaced func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
 

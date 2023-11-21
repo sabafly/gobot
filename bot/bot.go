@@ -18,7 +18,7 @@ package bot
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -34,11 +34,11 @@ import (
 	"github.com/sabafly/gobot/bot/commands/debug"
 	"github.com/sabafly/gobot/bot/commands/message"
 	"github.com/sabafly/gobot/bot/commands/ping"
+	"github.com/sabafly/gobot/bot/commands/role"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/ent"
 	"github.com/sabafly/gobot/internal/translate"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
 
 var cmd = &cobra.Command{
@@ -52,7 +52,7 @@ var cmd = &cobra.Command{
 func Command() *cobra.Command { return cmd }
 
 var (
-	version = "v1.0"
+	version = "v1.0.0-alpha.0"
 )
 
 func run() error {
@@ -61,53 +61,46 @@ func run() error {
 		Level:     slog.LevelInfo,
 	})))
 	if err := godotenv.Load(); err != nil {
-		slog.Error(".envファイルを読み込めませんでした", "err", err)
-		return err
+		return fmt.Errorf(".envファイルを読み込めません: %w", err)
 	}
 
-	db, err := ent.Open("mysql", "root:admin@tcp(localhost:3306)/gobot_dev?parseTime=True")
+	config, err := components.Load("gobot.yml")
 	if err != nil {
-		slog.Error("mysqlとの接続を開けません", "err", err)
-		return err
+		return fmt.Errorf("設定ファイルを読み込めません: %w", err)
+	}
+
+	db, err := ent.Open("mysql", config.MySQL)
+	if err != nil {
+		return fmt.Errorf("mysqlとの接続を開けません: %w", err)
 	}
 	defer db.Close()
 
+	// c, err := caches.Open(config.Redis...)
+	// if err != nil {
+	// 	return fmt.Errorf("cacheを開けません: %w", err)
+	// }
+
 	if err := db.Schema.Create(context.Background()); err != nil {
-		slog.Error("スキーマを定義できません", "err", err)
-		return err
-	}
-
-	f, err := os.Open("gobot.yml")
-	if err != nil {
-		slog.Error("設定ファイルが見つかりません", "err", err)
-		return err
-	}
-	defer f.Close()
-
-	var config components.Config
-	if err := yaml.NewDecoder(f).Decode(&config); err != nil {
-		slog.Error("設定ファイルが読み込めません", "err", err)
-		return err
+		return fmt.Errorf("スキーマを定義できません: %w", err)
 	}
 
 	if _, err := translate.LoadDir(config.TranslateDir); err != nil {
-		slog.Error("翻訳ファイルが読み込めません", "err", err, "path", config.TranslateDir)
-		return err
+		return fmt.Errorf("翻訳ファイルが読み込めません path=%s: %w", config.TranslateDir, err)
 	}
 
-	component := components.New(db, config)
+	component := components.New(db, *config)
 	component.Version = version
 
 	component.AddCommands(
 		debug.Command(component),
 		ping.Command(),
 		message.Command(component),
+		role.Command(component),
 	)
 
 	token := os.Getenv("TOKEN")
 	if token == "" {
-		slog.Error("TOKEN が空です")
-		return errors.New("empty token")
+		return fmt.Errorf("TOKEN が空です")
 	}
 	client, err := disgo.New(token,
 		bot.WithCacheConfigOpts(cache.WithCaches(cache.FlagsAll)),
@@ -123,18 +116,15 @@ func run() error {
 		),
 	)
 	if err != nil {
-		slog.Error("クライアントを作成できません", "err", err)
-		return err
+		return fmt.Errorf("クライアントを作成できません: %w", err)
 	}
 
 	if err := component.Initialize(client); err != nil {
-		slog.Error("コンポーネントを初期化できません", "err", err)
-		return err
+		return fmt.Errorf("コンポーネントを初期化できません: %w", err)
 	}
 
 	if err := client.OpenShardManager(context.Background()); err != nil {
-		slog.Error("Discord ゲートウェイを開けません", "err", err)
-		return err
+		return fmt.Errorf("Discord ゲートウェイを開けません: %w", err)
 	}
 	defer client.Close(context.Background())
 

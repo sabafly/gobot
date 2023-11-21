@@ -37,6 +37,14 @@ func (wsu *WordSuffixUpdate) SetSuffix(s string) *WordSuffixUpdate {
 	return wsu
 }
 
+// SetNillableSuffix sets the "suffix" field if the given value is not nil.
+func (wsu *WordSuffixUpdate) SetNillableSuffix(s *string) *WordSuffixUpdate {
+	if s != nil {
+		wsu.SetSuffix(*s)
+	}
+	return wsu
+}
+
 // SetExpired sets the "expired" field.
 func (wsu *WordSuffixUpdate) SetExpired(t time.Time) *WordSuffixUpdate {
 	wsu.mutation.SetExpired(t)
@@ -274,6 +282,14 @@ type WordSuffixUpdateOne struct {
 // SetSuffix sets the "suffix" field.
 func (wsuo *WordSuffixUpdateOne) SetSuffix(s string) *WordSuffixUpdateOne {
 	wsuo.mutation.SetSuffix(s)
+	return wsuo
+}
+
+// SetNillableSuffix sets the "suffix" field if the given value is not nil.
+func (wsuo *WordSuffixUpdateOne) SetNillableSuffix(s *string) *WordSuffixUpdateOne {
+	if s != nil {
+		wsuo.SetSuffix(*s)
+	}
 	return wsuo
 }
 

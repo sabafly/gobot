@@ -45,6 +45,42 @@ func (f MessagePinFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MessagePinMutation", m)
 }
 
+// The RolePanelFunc type is an adapter to allow the use of ordinary
+// function as RolePanel mutator.
+type RolePanelFunc func(context.Context, *ent.RolePanelMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RolePanelFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.RolePanelMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RolePanelMutation", m)
+}
+
+// The RolePanelEditFunc type is an adapter to allow the use of ordinary
+// function as RolePanelEdit mutator.
+type RolePanelEditFunc func(context.Context, *ent.RolePanelEditMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RolePanelEditFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.RolePanelEditMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RolePanelEditMutation", m)
+}
+
+// The RolePanelPlacedFunc type is an adapter to allow the use of ordinary
+// function as RolePanelPlaced mutator.
+type RolePanelPlacedFunc func(context.Context, *ent.RolePanelPlacedMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RolePanelPlacedFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.RolePanelPlacedMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RolePanelPlacedMutation", m)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)

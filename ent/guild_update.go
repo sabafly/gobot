@@ -17,6 +17,9 @@ import (
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
 	"github.com/sabafly/gobot/ent/predicate"
+	"github.com/sabafly/gobot/ent/rolepanel"
+	"github.com/sabafly/gobot/ent/rolepaneledit"
+	"github.com/sabafly/gobot/ent/rolepanelplaced"
 	"github.com/sabafly/gobot/ent/user"
 )
 
@@ -36,6 +39,14 @@ func (gu *GuildUpdate) Where(ps ...predicate.Guild) *GuildUpdate {
 // SetName sets the "name" field.
 func (gu *GuildUpdate) SetName(s string) *GuildUpdate {
 	gu.mutation.SetName(s)
+	return gu
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableName(s *string) *GuildUpdate {
+	if s != nil {
+		gu.SetName(*s)
+	}
 	return gu
 }
 
@@ -94,6 +105,51 @@ func (gu *GuildUpdate) AddMessagePins(m ...*MessagePin) *GuildUpdate {
 	return gu.AddMessagePinIDs(ids...)
 }
 
+// AddRolePanelIDs adds the "role_panels" edge to the RolePanel entity by IDs.
+func (gu *GuildUpdate) AddRolePanelIDs(ids ...uuid.UUID) *GuildUpdate {
+	gu.mutation.AddRolePanelIDs(ids...)
+	return gu
+}
+
+// AddRolePanels adds the "role_panels" edges to the RolePanel entity.
+func (gu *GuildUpdate) AddRolePanels(r ...*RolePanel) *GuildUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return gu.AddRolePanelIDs(ids...)
+}
+
+// AddRolePanelPlacementIDs adds the "role_panel_placements" edge to the RolePanelPlaced entity by IDs.
+func (gu *GuildUpdate) AddRolePanelPlacementIDs(ids ...uuid.UUID) *GuildUpdate {
+	gu.mutation.AddRolePanelPlacementIDs(ids...)
+	return gu
+}
+
+// AddRolePanelPlacements adds the "role_panel_placements" edges to the RolePanelPlaced entity.
+func (gu *GuildUpdate) AddRolePanelPlacements(r ...*RolePanelPlaced) *GuildUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return gu.AddRolePanelPlacementIDs(ids...)
+}
+
+// AddRolePanelEditIDs adds the "role_panel_edits" edge to the RolePanelEdit entity by IDs.
+func (gu *GuildUpdate) AddRolePanelEditIDs(ids ...uuid.UUID) *GuildUpdate {
+	gu.mutation.AddRolePanelEditIDs(ids...)
+	return gu
+}
+
+// AddRolePanelEdits adds the "role_panel_edits" edges to the RolePanelEdit entity.
+func (gu *GuildUpdate) AddRolePanelEdits(r ...*RolePanelEdit) *GuildUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return gu.AddRolePanelEditIDs(ids...)
+}
+
 // Mutation returns the GuildMutation object of the builder.
 func (gu *GuildUpdate) Mutation() *GuildMutation {
 	return gu.mutation
@@ -145,6 +201,69 @@ func (gu *GuildUpdate) RemoveMessagePins(m ...*MessagePin) *GuildUpdate {
 		ids[i] = m[i].ID
 	}
 	return gu.RemoveMessagePinIDs(ids...)
+}
+
+// ClearRolePanels clears all "role_panels" edges to the RolePanel entity.
+func (gu *GuildUpdate) ClearRolePanels() *GuildUpdate {
+	gu.mutation.ClearRolePanels()
+	return gu
+}
+
+// RemoveRolePanelIDs removes the "role_panels" edge to RolePanel entities by IDs.
+func (gu *GuildUpdate) RemoveRolePanelIDs(ids ...uuid.UUID) *GuildUpdate {
+	gu.mutation.RemoveRolePanelIDs(ids...)
+	return gu
+}
+
+// RemoveRolePanels removes "role_panels" edges to RolePanel entities.
+func (gu *GuildUpdate) RemoveRolePanels(r ...*RolePanel) *GuildUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return gu.RemoveRolePanelIDs(ids...)
+}
+
+// ClearRolePanelPlacements clears all "role_panel_placements" edges to the RolePanelPlaced entity.
+func (gu *GuildUpdate) ClearRolePanelPlacements() *GuildUpdate {
+	gu.mutation.ClearRolePanelPlacements()
+	return gu
+}
+
+// RemoveRolePanelPlacementIDs removes the "role_panel_placements" edge to RolePanelPlaced entities by IDs.
+func (gu *GuildUpdate) RemoveRolePanelPlacementIDs(ids ...uuid.UUID) *GuildUpdate {
+	gu.mutation.RemoveRolePanelPlacementIDs(ids...)
+	return gu
+}
+
+// RemoveRolePanelPlacements removes "role_panel_placements" edges to RolePanelPlaced entities.
+func (gu *GuildUpdate) RemoveRolePanelPlacements(r ...*RolePanelPlaced) *GuildUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return gu.RemoveRolePanelPlacementIDs(ids...)
+}
+
+// ClearRolePanelEdits clears all "role_panel_edits" edges to the RolePanelEdit entity.
+func (gu *GuildUpdate) ClearRolePanelEdits() *GuildUpdate {
+	gu.mutation.ClearRolePanelEdits()
+	return gu
+}
+
+// RemoveRolePanelEditIDs removes the "role_panel_edits" edge to RolePanelEdit entities by IDs.
+func (gu *GuildUpdate) RemoveRolePanelEditIDs(ids ...uuid.UUID) *GuildUpdate {
+	gu.mutation.RemoveRolePanelEditIDs(ids...)
+	return gu
+}
+
+// RemoveRolePanelEdits removes "role_panel_edits" edges to RolePanelEdit entities.
+func (gu *GuildUpdate) RemoveRolePanelEdits(r ...*RolePanelEdit) *GuildUpdate {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return gu.RemoveRolePanelEditIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -329,6 +448,141 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if gu.mutation.RolePanelsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelsTable,
+			Columns: []string{guild.RolePanelsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepanel.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.RemovedRolePanelsIDs(); len(nodes) > 0 && !gu.mutation.RolePanelsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelsTable,
+			Columns: []string{guild.RolePanelsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepanel.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.RolePanelsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelsTable,
+			Columns: []string{guild.RolePanelsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepanel.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if gu.mutation.RolePanelPlacementsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelPlacementsTable,
+			Columns: []string{guild.RolePanelPlacementsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepanelplaced.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.RemovedRolePanelPlacementsIDs(); len(nodes) > 0 && !gu.mutation.RolePanelPlacementsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelPlacementsTable,
+			Columns: []string{guild.RolePanelPlacementsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepanelplaced.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.RolePanelPlacementsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelPlacementsTable,
+			Columns: []string{guild.RolePanelPlacementsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepanelplaced.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if gu.mutation.RolePanelEditsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelEditsTable,
+			Columns: []string{guild.RolePanelEditsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepaneledit.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.RemovedRolePanelEditsIDs(); len(nodes) > 0 && !gu.mutation.RolePanelEditsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelEditsTable,
+			Columns: []string{guild.RolePanelEditsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepaneledit.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.RolePanelEditsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelEditsTable,
+			Columns: []string{guild.RolePanelEditsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepaneledit.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, gu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{guild.Label}
@@ -352,6 +606,14 @@ type GuildUpdateOne struct {
 // SetName sets the "name" field.
 func (guo *GuildUpdateOne) SetName(s string) *GuildUpdateOne {
 	guo.mutation.SetName(s)
+	return guo
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableName(s *string) *GuildUpdateOne {
+	if s != nil {
+		guo.SetName(*s)
+	}
 	return guo
 }
 
@@ -410,6 +672,51 @@ func (guo *GuildUpdateOne) AddMessagePins(m ...*MessagePin) *GuildUpdateOne {
 	return guo.AddMessagePinIDs(ids...)
 }
 
+// AddRolePanelIDs adds the "role_panels" edge to the RolePanel entity by IDs.
+func (guo *GuildUpdateOne) AddRolePanelIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	guo.mutation.AddRolePanelIDs(ids...)
+	return guo
+}
+
+// AddRolePanels adds the "role_panels" edges to the RolePanel entity.
+func (guo *GuildUpdateOne) AddRolePanels(r ...*RolePanel) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return guo.AddRolePanelIDs(ids...)
+}
+
+// AddRolePanelPlacementIDs adds the "role_panel_placements" edge to the RolePanelPlaced entity by IDs.
+func (guo *GuildUpdateOne) AddRolePanelPlacementIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	guo.mutation.AddRolePanelPlacementIDs(ids...)
+	return guo
+}
+
+// AddRolePanelPlacements adds the "role_panel_placements" edges to the RolePanelPlaced entity.
+func (guo *GuildUpdateOne) AddRolePanelPlacements(r ...*RolePanelPlaced) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return guo.AddRolePanelPlacementIDs(ids...)
+}
+
+// AddRolePanelEditIDs adds the "role_panel_edits" edge to the RolePanelEdit entity by IDs.
+func (guo *GuildUpdateOne) AddRolePanelEditIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	guo.mutation.AddRolePanelEditIDs(ids...)
+	return guo
+}
+
+// AddRolePanelEdits adds the "role_panel_edits" edges to the RolePanelEdit entity.
+func (guo *GuildUpdateOne) AddRolePanelEdits(r ...*RolePanelEdit) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return guo.AddRolePanelEditIDs(ids...)
+}
+
 // Mutation returns the GuildMutation object of the builder.
 func (guo *GuildUpdateOne) Mutation() *GuildMutation {
 	return guo.mutation
@@ -461,6 +768,69 @@ func (guo *GuildUpdateOne) RemoveMessagePins(m ...*MessagePin) *GuildUpdateOne {
 		ids[i] = m[i].ID
 	}
 	return guo.RemoveMessagePinIDs(ids...)
+}
+
+// ClearRolePanels clears all "role_panels" edges to the RolePanel entity.
+func (guo *GuildUpdateOne) ClearRolePanels() *GuildUpdateOne {
+	guo.mutation.ClearRolePanels()
+	return guo
+}
+
+// RemoveRolePanelIDs removes the "role_panels" edge to RolePanel entities by IDs.
+func (guo *GuildUpdateOne) RemoveRolePanelIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	guo.mutation.RemoveRolePanelIDs(ids...)
+	return guo
+}
+
+// RemoveRolePanels removes "role_panels" edges to RolePanel entities.
+func (guo *GuildUpdateOne) RemoveRolePanels(r ...*RolePanel) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return guo.RemoveRolePanelIDs(ids...)
+}
+
+// ClearRolePanelPlacements clears all "role_panel_placements" edges to the RolePanelPlaced entity.
+func (guo *GuildUpdateOne) ClearRolePanelPlacements() *GuildUpdateOne {
+	guo.mutation.ClearRolePanelPlacements()
+	return guo
+}
+
+// RemoveRolePanelPlacementIDs removes the "role_panel_placements" edge to RolePanelPlaced entities by IDs.
+func (guo *GuildUpdateOne) RemoveRolePanelPlacementIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	guo.mutation.RemoveRolePanelPlacementIDs(ids...)
+	return guo
+}
+
+// RemoveRolePanelPlacements removes "role_panel_placements" edges to RolePanelPlaced entities.
+func (guo *GuildUpdateOne) RemoveRolePanelPlacements(r ...*RolePanelPlaced) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return guo.RemoveRolePanelPlacementIDs(ids...)
+}
+
+// ClearRolePanelEdits clears all "role_panel_edits" edges to the RolePanelEdit entity.
+func (guo *GuildUpdateOne) ClearRolePanelEdits() *GuildUpdateOne {
+	guo.mutation.ClearRolePanelEdits()
+	return guo
+}
+
+// RemoveRolePanelEditIDs removes the "role_panel_edits" edge to RolePanelEdit entities by IDs.
+func (guo *GuildUpdateOne) RemoveRolePanelEditIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	guo.mutation.RemoveRolePanelEditIDs(ids...)
+	return guo
+}
+
+// RemoveRolePanelEdits removes "role_panel_edits" edges to RolePanelEdit entities.
+func (guo *GuildUpdateOne) RemoveRolePanelEdits(r ...*RolePanelEdit) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(r))
+	for i := range r {
+		ids[i] = r[i].ID
+	}
+	return guo.RemoveRolePanelEditIDs(ids...)
 }
 
 // Where appends a list predicates to the GuildUpdate builder.
@@ -668,6 +1038,141 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(messagepin.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if guo.mutation.RolePanelsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelsTable,
+			Columns: []string{guild.RolePanelsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepanel.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.RemovedRolePanelsIDs(); len(nodes) > 0 && !guo.mutation.RolePanelsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelsTable,
+			Columns: []string{guild.RolePanelsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepanel.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.RolePanelsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelsTable,
+			Columns: []string{guild.RolePanelsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepanel.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if guo.mutation.RolePanelPlacementsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelPlacementsTable,
+			Columns: []string{guild.RolePanelPlacementsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepanelplaced.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.RemovedRolePanelPlacementsIDs(); len(nodes) > 0 && !guo.mutation.RolePanelPlacementsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelPlacementsTable,
+			Columns: []string{guild.RolePanelPlacementsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepanelplaced.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.RolePanelPlacementsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelPlacementsTable,
+			Columns: []string{guild.RolePanelPlacementsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepanelplaced.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if guo.mutation.RolePanelEditsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelEditsTable,
+			Columns: []string{guild.RolePanelEditsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepaneledit.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.RemovedRolePanelEditsIDs(); len(nodes) > 0 && !guo.mutation.RolePanelEditsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelEditsTable,
+			Columns: []string{guild.RolePanelEditsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepaneledit.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.RolePanelEditsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelEditsTable,
+			Columns: []string{guild.RolePanelEditsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepaneledit.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

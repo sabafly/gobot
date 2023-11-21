@@ -20,6 +20,9 @@ import (
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
+	"github.com/sabafly/gobot/ent/rolepanel"
+	"github.com/sabafly/gobot/ent/rolepaneledit"
+	"github.com/sabafly/gobot/ent/rolepanelplaced"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/ent/wordsuffix"
 )
@@ -35,6 +38,12 @@ type Client struct {
 	Member *MemberClient
 	// MessagePin is the client for interacting with the MessagePin builders.
 	MessagePin *MessagePinClient
+	// RolePanel is the client for interacting with the RolePanel builders.
+	RolePanel *RolePanelClient
+	// RolePanelEdit is the client for interacting with the RolePanelEdit builders.
+	RolePanelEdit *RolePanelEditClient
+	// RolePanelPlaced is the client for interacting with the RolePanelPlaced builders.
+	RolePanelPlaced *RolePanelPlacedClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// WordSuffix is the client for interacting with the WordSuffix builders.
@@ -43,9 +52,7 @@ type Client struct {
 
 // NewClient creates a new client configured with the given options.
 func NewClient(opts ...Option) *Client {
-	cfg := config{log: log.Println, hooks: &hooks{}, inters: &inters{}}
-	cfg.options(opts...)
-	client := &Client{config: cfg}
+	client := &Client{config: newConfig(opts...)}
 	client.init()
 	return client
 }
@@ -55,6 +62,9 @@ func (c *Client) init() {
 	c.Guild = NewGuildClient(c.config)
 	c.Member = NewMemberClient(c.config)
 	c.MessagePin = NewMessagePinClient(c.config)
+	c.RolePanel = NewRolePanelClient(c.config)
+	c.RolePanelEdit = NewRolePanelEditClient(c.config)
+	c.RolePanelPlaced = NewRolePanelPlacedClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.WordSuffix = NewWordSuffixClient(c.config)
 }
@@ -76,6 +86,13 @@ type (
 	// Option function to configure the client.
 	Option func(*config)
 )
+
+// newConfig creates a new config for the client.
+func newConfig(opts ...Option) config {
+	cfg := config{log: log.Println, hooks: &hooks{}, inters: &inters{}}
+	cfg.options(opts...)
+	return cfg
+}
 
 // options applies the options on the config object.
 func (c *config) options(opts ...Option) {
@@ -140,13 +157,16 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:        ctx,
-		config:     cfg,
-		Guild:      NewGuildClient(cfg),
-		Member:     NewMemberClient(cfg),
-		MessagePin: NewMessagePinClient(cfg),
-		User:       NewUserClient(cfg),
-		WordSuffix: NewWordSuffixClient(cfg),
+		ctx:             ctx,
+		config:          cfg,
+		Guild:           NewGuildClient(cfg),
+		Member:          NewMemberClient(cfg),
+		MessagePin:      NewMessagePinClient(cfg),
+		RolePanel:       NewRolePanelClient(cfg),
+		RolePanelEdit:   NewRolePanelEditClient(cfg),
+		RolePanelPlaced: NewRolePanelPlacedClient(cfg),
+		User:            NewUserClient(cfg),
+		WordSuffix:      NewWordSuffixClient(cfg),
 	}, nil
 }
 
@@ -164,13 +184,16 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:        ctx,
-		config:     cfg,
-		Guild:      NewGuildClient(cfg),
-		Member:     NewMemberClient(cfg),
-		MessagePin: NewMessagePinClient(cfg),
-		User:       NewUserClient(cfg),
-		WordSuffix: NewWordSuffixClient(cfg),
+		ctx:             ctx,
+		config:          cfg,
+		Guild:           NewGuildClient(cfg),
+		Member:          NewMemberClient(cfg),
+		MessagePin:      NewMessagePinClient(cfg),
+		RolePanel:       NewRolePanelClient(cfg),
+		RolePanelEdit:   NewRolePanelEditClient(cfg),
+		RolePanelPlaced: NewRolePanelPlacedClient(cfg),
+		User:            NewUserClient(cfg),
+		WordSuffix:      NewWordSuffixClient(cfg),
 	}, nil
 }
 
@@ -199,21 +222,23 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
-	c.Guild.Use(hooks...)
-	c.Member.Use(hooks...)
-	c.MessagePin.Use(hooks...)
-	c.User.Use(hooks...)
-	c.WordSuffix.Use(hooks...)
+	for _, n := range []interface{ Use(...Hook) }{
+		c.Guild, c.Member, c.MessagePin, c.RolePanel, c.RolePanelEdit,
+		c.RolePanelPlaced, c.User, c.WordSuffix,
+	} {
+		n.Use(hooks...)
+	}
 }
 
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
-	c.Guild.Intercept(interceptors...)
-	c.Member.Intercept(interceptors...)
-	c.MessagePin.Intercept(interceptors...)
-	c.User.Intercept(interceptors...)
-	c.WordSuffix.Intercept(interceptors...)
+	for _, n := range []interface{ Intercept(...Interceptor) }{
+		c.Guild, c.Member, c.MessagePin, c.RolePanel, c.RolePanelEdit,
+		c.RolePanelPlaced, c.User, c.WordSuffix,
+	} {
+		n.Intercept(interceptors...)
+	}
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -225,6 +250,12 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Member.mutate(ctx, m)
 	case *MessagePinMutation:
 		return c.MessagePin.mutate(ctx, m)
+	case *RolePanelMutation:
+		return c.RolePanel.mutate(ctx, m)
+	case *RolePanelEditMutation:
+		return c.RolePanelEdit.mutate(ctx, m)
+	case *RolePanelPlacedMutation:
+		return c.RolePanelPlaced.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	case *WordSuffixMutation:
@@ -390,6 +421,54 @@ func (c *GuildClient) QueryMessagePins(gu *Guild) *MessagePinQuery {
 	return query
 }
 
+// QueryRolePanels queries the role_panels edge of a Guild.
+func (c *GuildClient) QueryRolePanels(gu *Guild) *RolePanelQuery {
+	query := (&RolePanelClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := gu.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(guild.Table, guild.FieldID, id),
+			sqlgraph.To(rolepanel.Table, rolepanel.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, guild.RolePanelsTable, guild.RolePanelsColumn),
+		)
+		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRolePanelPlacements queries the role_panel_placements edge of a Guild.
+func (c *GuildClient) QueryRolePanelPlacements(gu *Guild) *RolePanelPlacedQuery {
+	query := (&RolePanelPlacedClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := gu.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(guild.Table, guild.FieldID, id),
+			sqlgraph.To(rolepanelplaced.Table, rolepanelplaced.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, guild.RolePanelPlacementsTable, guild.RolePanelPlacementsColumn),
+		)
+		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRolePanelEdits queries the role_panel_edits edge of a Guild.
+func (c *GuildClient) QueryRolePanelEdits(gu *Guild) *RolePanelEditQuery {
+	query := (&RolePanelEditClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := gu.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(guild.Table, guild.FieldID, id),
+			sqlgraph.To(rolepaneledit.Table, rolepaneledit.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, guild.RolePanelEditsTable, guild.RolePanelEditsColumn),
+		)
+		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *GuildClient) Hooks() []Hook {
 	return c.hooks.Guild
@@ -539,15 +618,15 @@ func (c *MemberClient) QueryGuild(m *Member) *GuildQuery {
 	return query
 }
 
-// QueryOwner queries the owner edge of a Member.
-func (c *MemberClient) QueryOwner(m *Member) *UserQuery {
+// QueryUser queries the user edge of a Member.
+func (c *MemberClient) QueryUser(m *Member) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(member.Table, member.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, member.OwnerTable, member.OwnerColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, member.UserTable, member.UserColumn),
 		)
 		fromV = sqlgraph.Neighbors(m.driver.Dialect(), step)
 		return fromV, nil
@@ -729,6 +808,517 @@ func (c *MessagePinClient) mutate(ctx context.Context, m *MessagePinMutation) (V
 	}
 }
 
+// RolePanelClient is a client for the RolePanel schema.
+type RolePanelClient struct {
+	config
+}
+
+// NewRolePanelClient returns a client for the RolePanel from the given config.
+func NewRolePanelClient(c config) *RolePanelClient {
+	return &RolePanelClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `rolepanel.Hooks(f(g(h())))`.
+func (c *RolePanelClient) Use(hooks ...Hook) {
+	c.hooks.RolePanel = append(c.hooks.RolePanel, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `rolepanel.Intercept(f(g(h())))`.
+func (c *RolePanelClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RolePanel = append(c.inters.RolePanel, interceptors...)
+}
+
+// Create returns a builder for creating a RolePanel entity.
+func (c *RolePanelClient) Create() *RolePanelCreate {
+	mutation := newRolePanelMutation(c.config, OpCreate)
+	return &RolePanelCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RolePanel entities.
+func (c *RolePanelClient) CreateBulk(builders ...*RolePanelCreate) *RolePanelCreateBulk {
+	return &RolePanelCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RolePanelClient) MapCreateBulk(slice any, setFunc func(*RolePanelCreate, int)) *RolePanelCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RolePanelCreateBulk{err: fmt.Errorf("calling to RolePanelClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RolePanelCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RolePanelCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RolePanel.
+func (c *RolePanelClient) Update() *RolePanelUpdate {
+	mutation := newRolePanelMutation(c.config, OpUpdate)
+	return &RolePanelUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RolePanelClient) UpdateOne(rp *RolePanel) *RolePanelUpdateOne {
+	mutation := newRolePanelMutation(c.config, OpUpdateOne, withRolePanel(rp))
+	return &RolePanelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RolePanelClient) UpdateOneID(id uuid.UUID) *RolePanelUpdateOne {
+	mutation := newRolePanelMutation(c.config, OpUpdateOne, withRolePanelID(id))
+	return &RolePanelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RolePanel.
+func (c *RolePanelClient) Delete() *RolePanelDelete {
+	mutation := newRolePanelMutation(c.config, OpDelete)
+	return &RolePanelDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RolePanelClient) DeleteOne(rp *RolePanel) *RolePanelDeleteOne {
+	return c.DeleteOneID(rp.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RolePanelClient) DeleteOneID(id uuid.UUID) *RolePanelDeleteOne {
+	builder := c.Delete().Where(rolepanel.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RolePanelDeleteOne{builder}
+}
+
+// Query returns a query builder for RolePanel.
+func (c *RolePanelClient) Query() *RolePanelQuery {
+	return &RolePanelQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRolePanel},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RolePanel entity by its id.
+func (c *RolePanelClient) Get(ctx context.Context, id uuid.UUID) (*RolePanel, error) {
+	return c.Query().Where(rolepanel.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RolePanelClient) GetX(ctx context.Context, id uuid.UUID) *RolePanel {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryGuild queries the guild edge of a RolePanel.
+func (c *RolePanelClient) QueryGuild(rp *RolePanel) *GuildQuery {
+	query := (&GuildClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := rp.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rolepanel.Table, rolepanel.FieldID, id),
+			sqlgraph.To(guild.Table, guild.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rolepanel.GuildTable, rolepanel.GuildColumn),
+		)
+		fromV = sqlgraph.Neighbors(rp.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPlacements queries the placements edge of a RolePanel.
+func (c *RolePanelClient) QueryPlacements(rp *RolePanel) *RolePanelPlacedQuery {
+	query := (&RolePanelPlacedClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := rp.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rolepanel.Table, rolepanel.FieldID, id),
+			sqlgraph.To(rolepanelplaced.Table, rolepanelplaced.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, rolepanel.PlacementsTable, rolepanel.PlacementsColumn),
+		)
+		fromV = sqlgraph.Neighbors(rp.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEdit queries the edit edge of a RolePanel.
+func (c *RolePanelClient) QueryEdit(rp *RolePanel) *RolePanelEditQuery {
+	query := (&RolePanelEditClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := rp.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rolepanel.Table, rolepanel.FieldID, id),
+			sqlgraph.To(rolepaneledit.Table, rolepaneledit.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, rolepanel.EditTable, rolepanel.EditColumn),
+		)
+		fromV = sqlgraph.Neighbors(rp.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RolePanelClient) Hooks() []Hook {
+	return c.hooks.RolePanel
+}
+
+// Interceptors returns the client interceptors.
+func (c *RolePanelClient) Interceptors() []Interceptor {
+	return c.inters.RolePanel
+}
+
+func (c *RolePanelClient) mutate(ctx context.Context, m *RolePanelMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RolePanelCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RolePanelUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RolePanelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RolePanelDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RolePanel mutation op: %q", m.Op())
+	}
+}
+
+// RolePanelEditClient is a client for the RolePanelEdit schema.
+type RolePanelEditClient struct {
+	config
+}
+
+// NewRolePanelEditClient returns a client for the RolePanelEdit from the given config.
+func NewRolePanelEditClient(c config) *RolePanelEditClient {
+	return &RolePanelEditClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `rolepaneledit.Hooks(f(g(h())))`.
+func (c *RolePanelEditClient) Use(hooks ...Hook) {
+	c.hooks.RolePanelEdit = append(c.hooks.RolePanelEdit, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `rolepaneledit.Intercept(f(g(h())))`.
+func (c *RolePanelEditClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RolePanelEdit = append(c.inters.RolePanelEdit, interceptors...)
+}
+
+// Create returns a builder for creating a RolePanelEdit entity.
+func (c *RolePanelEditClient) Create() *RolePanelEditCreate {
+	mutation := newRolePanelEditMutation(c.config, OpCreate)
+	return &RolePanelEditCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RolePanelEdit entities.
+func (c *RolePanelEditClient) CreateBulk(builders ...*RolePanelEditCreate) *RolePanelEditCreateBulk {
+	return &RolePanelEditCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RolePanelEditClient) MapCreateBulk(slice any, setFunc func(*RolePanelEditCreate, int)) *RolePanelEditCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RolePanelEditCreateBulk{err: fmt.Errorf("calling to RolePanelEditClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RolePanelEditCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RolePanelEditCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RolePanelEdit.
+func (c *RolePanelEditClient) Update() *RolePanelEditUpdate {
+	mutation := newRolePanelEditMutation(c.config, OpUpdate)
+	return &RolePanelEditUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RolePanelEditClient) UpdateOne(rpe *RolePanelEdit) *RolePanelEditUpdateOne {
+	mutation := newRolePanelEditMutation(c.config, OpUpdateOne, withRolePanelEdit(rpe))
+	return &RolePanelEditUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RolePanelEditClient) UpdateOneID(id uuid.UUID) *RolePanelEditUpdateOne {
+	mutation := newRolePanelEditMutation(c.config, OpUpdateOne, withRolePanelEditID(id))
+	return &RolePanelEditUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RolePanelEdit.
+func (c *RolePanelEditClient) Delete() *RolePanelEditDelete {
+	mutation := newRolePanelEditMutation(c.config, OpDelete)
+	return &RolePanelEditDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RolePanelEditClient) DeleteOne(rpe *RolePanelEdit) *RolePanelEditDeleteOne {
+	return c.DeleteOneID(rpe.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RolePanelEditClient) DeleteOneID(id uuid.UUID) *RolePanelEditDeleteOne {
+	builder := c.Delete().Where(rolepaneledit.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RolePanelEditDeleteOne{builder}
+}
+
+// Query returns a query builder for RolePanelEdit.
+func (c *RolePanelEditClient) Query() *RolePanelEditQuery {
+	return &RolePanelEditQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRolePanelEdit},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RolePanelEdit entity by its id.
+func (c *RolePanelEditClient) Get(ctx context.Context, id uuid.UUID) (*RolePanelEdit, error) {
+	return c.Query().Where(rolepaneledit.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RolePanelEditClient) GetX(ctx context.Context, id uuid.UUID) *RolePanelEdit {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryGuild queries the guild edge of a RolePanelEdit.
+func (c *RolePanelEditClient) QueryGuild(rpe *RolePanelEdit) *GuildQuery {
+	query := (&GuildClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := rpe.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rolepaneledit.Table, rolepaneledit.FieldID, id),
+			sqlgraph.To(guild.Table, guild.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rolepaneledit.GuildTable, rolepaneledit.GuildColumn),
+		)
+		fromV = sqlgraph.Neighbors(rpe.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryParent queries the parent edge of a RolePanelEdit.
+func (c *RolePanelEditClient) QueryParent(rpe *RolePanelEdit) *RolePanelQuery {
+	query := (&RolePanelClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := rpe.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rolepaneledit.Table, rolepaneledit.FieldID, id),
+			sqlgraph.To(rolepanel.Table, rolepanel.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, rolepaneledit.ParentTable, rolepaneledit.ParentColumn),
+		)
+		fromV = sqlgraph.Neighbors(rpe.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RolePanelEditClient) Hooks() []Hook {
+	return c.hooks.RolePanelEdit
+}
+
+// Interceptors returns the client interceptors.
+func (c *RolePanelEditClient) Interceptors() []Interceptor {
+	return c.inters.RolePanelEdit
+}
+
+func (c *RolePanelEditClient) mutate(ctx context.Context, m *RolePanelEditMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RolePanelEditCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RolePanelEditUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RolePanelEditUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RolePanelEditDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RolePanelEdit mutation op: %q", m.Op())
+	}
+}
+
+// RolePanelPlacedClient is a client for the RolePanelPlaced schema.
+type RolePanelPlacedClient struct {
+	config
+}
+
+// NewRolePanelPlacedClient returns a client for the RolePanelPlaced from the given config.
+func NewRolePanelPlacedClient(c config) *RolePanelPlacedClient {
+	return &RolePanelPlacedClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `rolepanelplaced.Hooks(f(g(h())))`.
+func (c *RolePanelPlacedClient) Use(hooks ...Hook) {
+	c.hooks.RolePanelPlaced = append(c.hooks.RolePanelPlaced, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `rolepanelplaced.Intercept(f(g(h())))`.
+func (c *RolePanelPlacedClient) Intercept(interceptors ...Interceptor) {
+	c.inters.RolePanelPlaced = append(c.inters.RolePanelPlaced, interceptors...)
+}
+
+// Create returns a builder for creating a RolePanelPlaced entity.
+func (c *RolePanelPlacedClient) Create() *RolePanelPlacedCreate {
+	mutation := newRolePanelPlacedMutation(c.config, OpCreate)
+	return &RolePanelPlacedCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of RolePanelPlaced entities.
+func (c *RolePanelPlacedClient) CreateBulk(builders ...*RolePanelPlacedCreate) *RolePanelPlacedCreateBulk {
+	return &RolePanelPlacedCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *RolePanelPlacedClient) MapCreateBulk(slice any, setFunc func(*RolePanelPlacedCreate, int)) *RolePanelPlacedCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &RolePanelPlacedCreateBulk{err: fmt.Errorf("calling to RolePanelPlacedClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*RolePanelPlacedCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &RolePanelPlacedCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for RolePanelPlaced.
+func (c *RolePanelPlacedClient) Update() *RolePanelPlacedUpdate {
+	mutation := newRolePanelPlacedMutation(c.config, OpUpdate)
+	return &RolePanelPlacedUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RolePanelPlacedClient) UpdateOne(rpp *RolePanelPlaced) *RolePanelPlacedUpdateOne {
+	mutation := newRolePanelPlacedMutation(c.config, OpUpdateOne, withRolePanelPlaced(rpp))
+	return &RolePanelPlacedUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RolePanelPlacedClient) UpdateOneID(id uuid.UUID) *RolePanelPlacedUpdateOne {
+	mutation := newRolePanelPlacedMutation(c.config, OpUpdateOne, withRolePanelPlacedID(id))
+	return &RolePanelPlacedUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for RolePanelPlaced.
+func (c *RolePanelPlacedClient) Delete() *RolePanelPlacedDelete {
+	mutation := newRolePanelPlacedMutation(c.config, OpDelete)
+	return &RolePanelPlacedDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *RolePanelPlacedClient) DeleteOne(rpp *RolePanelPlaced) *RolePanelPlacedDeleteOne {
+	return c.DeleteOneID(rpp.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *RolePanelPlacedClient) DeleteOneID(id uuid.UUID) *RolePanelPlacedDeleteOne {
+	builder := c.Delete().Where(rolepanelplaced.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RolePanelPlacedDeleteOne{builder}
+}
+
+// Query returns a query builder for RolePanelPlaced.
+func (c *RolePanelPlacedClient) Query() *RolePanelPlacedQuery {
+	return &RolePanelPlacedQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeRolePanelPlaced},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a RolePanelPlaced entity by its id.
+func (c *RolePanelPlacedClient) Get(ctx context.Context, id uuid.UUID) (*RolePanelPlaced, error) {
+	return c.Query().Where(rolepanelplaced.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RolePanelPlacedClient) GetX(ctx context.Context, id uuid.UUID) *RolePanelPlaced {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryGuild queries the guild edge of a RolePanelPlaced.
+func (c *RolePanelPlacedClient) QueryGuild(rpp *RolePanelPlaced) *GuildQuery {
+	query := (&GuildClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := rpp.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rolepanelplaced.Table, rolepanelplaced.FieldID, id),
+			sqlgraph.To(guild.Table, guild.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rolepanelplaced.GuildTable, rolepanelplaced.GuildColumn),
+		)
+		fromV = sqlgraph.Neighbors(rpp.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRolePanel queries the role_panel edge of a RolePanelPlaced.
+func (c *RolePanelPlacedClient) QueryRolePanel(rpp *RolePanelPlaced) *RolePanelQuery {
+	query := (&RolePanelClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := rpp.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(rolepanelplaced.Table, rolepanelplaced.FieldID, id),
+			sqlgraph.To(rolepanel.Table, rolepanel.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, rolepanelplaced.RolePanelTable, rolepanelplaced.RolePanelColumn),
+		)
+		fromV = sqlgraph.Neighbors(rpp.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *RolePanelPlacedClient) Hooks() []Hook {
+	return c.hooks.RolePanelPlaced
+}
+
+// Interceptors returns the client interceptors.
+func (c *RolePanelPlacedClient) Interceptors() []Interceptor {
+	return c.inters.RolePanelPlaced
+}
+
+func (c *RolePanelPlacedClient) mutate(ctx context.Context, m *RolePanelPlacedMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&RolePanelPlacedCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&RolePanelPlacedUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&RolePanelPlacedUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&RolePanelPlacedDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown RolePanelPlaced mutation op: %q", m.Op())
+	}
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -861,7 +1451,7 @@ func (c *UserClient) QueryGuilds(u *User) *MemberQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(member.Table, member.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, true, user.GuildsTable, user.GuildsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.GuildsTable, user.GuildsColumn),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil
@@ -1078,9 +1668,11 @@ func (c *WordSuffixClient) mutate(ctx context.Context, m *WordSuffixMutation) (V
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Guild, Member, MessagePin, User, WordSuffix []ent.Hook
+		Guild, Member, MessagePin, RolePanel, RolePanelEdit, RolePanelPlaced, User,
+		WordSuffix []ent.Hook
 	}
 	inters struct {
-		Guild, Member, MessagePin, User, WordSuffix []ent.Interceptor
+		Guild, Member, MessagePin, RolePanel, RolePanelEdit, RolePanelPlaced, User,
+		WordSuffix []ent.Interceptor
 	}
 )

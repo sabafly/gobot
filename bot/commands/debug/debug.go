@@ -9,6 +9,7 @@ import (
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/internal/builtin"
+	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/translate"
 )
 
@@ -53,7 +54,7 @@ func Command(c *components.Components) *generic.GenericCommand {
 			},
 		},
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
-			"/debug/translate/get": generic.CommandHandler(func(c *components.Components, event *events.ApplicationCommandInteractionCreate) generic.Error {
+			"/debug/translate/get": generic.CommandHandler(func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 				key := event.SlashCommandInteractionData().String("key")
 				locale := discord.Locale(event.SlashCommandInteractionData().String("locale"))
 				if err := event.CreateMessage(
@@ -61,21 +62,21 @@ func Command(c *components.Components) *generic.GenericCommand {
 						SetContent(translate.Message(locale, key)).
 						Create(),
 				); err != nil {
-					return generic.NewError(err)
+					return errors.NewError(err)
 				}
 				return nil
 			}),
-			"/debug/translate/reload": generic.CommandHandler(func(c *components.Components, event *events.ApplicationCommandInteractionCreate) generic.Error {
+			"/debug/translate/reload": generic.CommandHandler(func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 				if _, err := translate.LoadDir(c.Config().TranslateDir); err != nil {
 					slog.Error("翻訳ファイルを読み込めません", "err", err)
-					return generic.NewError(err)
+					return errors.NewError(err)
 				}
 				if err := event.CreateMessage(
 					discord.NewMessageBuilder().
 						SetContent("OK").
 						Create(),
 				); err != nil {
-					return generic.NewError(err)
+					return errors.NewError(err)
 				}
 				return nil
 			}),

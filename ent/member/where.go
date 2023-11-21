@@ -5,7 +5,6 @@ package member
 import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/ent/predicate"
 )
 
@@ -54,66 +53,6 @@ func IDLTE(id int) predicate.Member {
 	return predicate.Member(sql.FieldLTE(FieldID, id))
 }
 
-// UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
-func UserID(v snowflake.ID) predicate.Member {
-	vc := uint64(v)
-	return predicate.Member(sql.FieldEQ(FieldUserID, vc))
-}
-
-// UserIDEQ applies the EQ predicate on the "user_id" field.
-func UserIDEQ(v snowflake.ID) predicate.Member {
-	vc := uint64(v)
-	return predicate.Member(sql.FieldEQ(FieldUserID, vc))
-}
-
-// UserIDNEQ applies the NEQ predicate on the "user_id" field.
-func UserIDNEQ(v snowflake.ID) predicate.Member {
-	vc := uint64(v)
-	return predicate.Member(sql.FieldNEQ(FieldUserID, vc))
-}
-
-// UserIDIn applies the In predicate on the "user_id" field.
-func UserIDIn(vs ...snowflake.ID) predicate.Member {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = uint64(vs[i])
-	}
-	return predicate.Member(sql.FieldIn(FieldUserID, v...))
-}
-
-// UserIDNotIn applies the NotIn predicate on the "user_id" field.
-func UserIDNotIn(vs ...snowflake.ID) predicate.Member {
-	v := make([]any, len(vs))
-	for i := range v {
-		v[i] = uint64(vs[i])
-	}
-	return predicate.Member(sql.FieldNotIn(FieldUserID, v...))
-}
-
-// UserIDGT applies the GT predicate on the "user_id" field.
-func UserIDGT(v snowflake.ID) predicate.Member {
-	vc := uint64(v)
-	return predicate.Member(sql.FieldGT(FieldUserID, vc))
-}
-
-// UserIDGTE applies the GTE predicate on the "user_id" field.
-func UserIDGTE(v snowflake.ID) predicate.Member {
-	vc := uint64(v)
-	return predicate.Member(sql.FieldGTE(FieldUserID, vc))
-}
-
-// UserIDLT applies the LT predicate on the "user_id" field.
-func UserIDLT(v snowflake.ID) predicate.Member {
-	vc := uint64(v)
-	return predicate.Member(sql.FieldLT(FieldUserID, vc))
-}
-
-// UserIDLTE applies the LTE predicate on the "user_id" field.
-func UserIDLTE(v snowflake.ID) predicate.Member {
-	vc := uint64(v)
-	return predicate.Member(sql.FieldLTE(FieldUserID, vc))
-}
-
 // PermissionIsNil applies the IsNil predicate on the "permission" field.
 func PermissionIsNil() predicate.Member {
 	return predicate.Member(sql.FieldIsNull(FieldPermission))
@@ -147,21 +86,21 @@ func HasGuildWith(preds ...predicate.Guild) predicate.Member {
 	})
 }
 
-// HasOwner applies the HasEdge predicate on the "owner" edge.
-func HasOwner() predicate.Member {
+// HasUser applies the HasEdge predicate on the "user" edge.
+func HasUser() predicate.Member {
 	return predicate.Member(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, OwnerTable, OwnerColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasOwnerWith applies the HasEdge predicate on the "owner" edge with a given conditions (other predicates).
-func HasOwnerWith(preds ...predicate.User) predicate.Member {
+// HasUserWith applies the HasEdge predicate on the "user" edge with a given conditions (other predicates).
+func HasUserWith(preds ...predicate.User) predicate.Member {
 	return predicate.Member(func(s *sql.Selector) {
-		step := newOwnerStep()
+		step := newUserStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

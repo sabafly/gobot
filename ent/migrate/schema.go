@@ -32,10 +32,9 @@ var (
 	// MembersColumns holds the columns for the "members" table.
 	MembersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "user_id", Type: field.TypeUint64},
 		{Name: "permission", Type: field.TypeJSON, Nullable: true},
 		{Name: "guild_members", Type: field.TypeUint64},
-		{Name: "member_owner", Type: field.TypeUint64},
+		{Name: "user_guilds", Type: field.TypeUint64},
 	}
 	// MembersTable holds the schema information for the "members" table.
 	MembersTable = &schema.Table{
@@ -45,13 +44,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "members_guilds_members",
-				Columns:    []*schema.Column{MembersColumns[3]},
+				Columns:    []*schema.Column{MembersColumns[2]},
 				RefColumns: []*schema.Column{GuildsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
-				Symbol:     "members_users_owner",
-				Columns:    []*schema.Column{MembersColumns[4]},
+				Symbol:     "members_users_guilds",
+				Columns:    []*schema.Column{MembersColumns[3]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -77,6 +76,95 @@ var (
 				Symbol:     "message_pins_guilds_message_pins",
 				Columns:    []*schema.Column{MessagePinsColumns[6]},
 				RefColumns: []*schema.Column{GuildsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// RolePanelsColumns holds the columns for the "role_panels" table.
+	RolePanelsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "name", Type: field.TypeString, Size: 32},
+		{Name: "description", Type: field.TypeString, Size: 140},
+		{Name: "roles", Type: field.TypeJSON, Nullable: true},
+		{Name: "guild_role_panels", Type: field.TypeUint64},
+	}
+	// RolePanelsTable holds the schema information for the "role_panels" table.
+	RolePanelsTable = &schema.Table{
+		Name:       "role_panels",
+		Columns:    RolePanelsColumns,
+		PrimaryKey: []*schema.Column{RolePanelsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "role_panels_guilds_role_panels",
+				Columns:    []*schema.Column{RolePanelsColumns[4]},
+				RefColumns: []*schema.Column{GuildsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// RolePanelEditsColumns holds the columns for the "role_panel_edits" table.
+	RolePanelEditsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "channel_id", Type: field.TypeUint64},
+		{Name: "emoji_author", Type: field.TypeUint64, Nullable: true},
+		{Name: "token", Type: field.TypeString, Nullable: true},
+		{Name: "selected_role", Type: field.TypeUint64, Nullable: true},
+		{Name: "modified", Type: field.TypeBool, Default: false},
+		{Name: "guild_role_panel_edits", Type: field.TypeUint64},
+		{Name: "role_panel_edit", Type: field.TypeUUID, Unique: true},
+	}
+	// RolePanelEditsTable holds the schema information for the "role_panel_edits" table.
+	RolePanelEditsTable = &schema.Table{
+		Name:       "role_panel_edits",
+		Columns:    RolePanelEditsColumns,
+		PrimaryKey: []*schema.Column{RolePanelEditsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "role_panel_edits_guilds_role_panel_edits",
+				Columns:    []*schema.Column{RolePanelEditsColumns[6]},
+				RefColumns: []*schema.Column{GuildsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "role_panel_edits_role_panels_edit",
+				Columns:    []*schema.Column{RolePanelEditsColumns[7]},
+				RefColumns: []*schema.Column{RolePanelsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// RolePanelPlacedsColumns holds the columns for the "role_panel_placeds" table.
+	RolePanelPlacedsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "message_id", Type: field.TypeUint64, Nullable: true},
+		{Name: "channel_id", Type: field.TypeUint64},
+		{Name: "type", Type: field.TypeEnum, Nullable: true, Enums: []string{"button", "reaction", "select_menu"}},
+		{Name: "button_type", Type: field.TypeInt, Default: 1},
+		{Name: "show_name", Type: field.TypeBool, Default: false},
+		{Name: "folding_select_menu", Type: field.TypeBool, Default: true},
+		{Name: "hide_notice", Type: field.TypeBool, Default: false},
+		{Name: "use_display_name", Type: field.TypeBool, Default: false},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "uses", Type: field.TypeInt, Default: 0},
+		{Name: "guild_role_panel_placements", Type: field.TypeUint64},
+		{Name: "role_panel_placements", Type: field.TypeUUID},
+	}
+	// RolePanelPlacedsTable holds the schema information for the "role_panel_placeds" table.
+	RolePanelPlacedsTable = &schema.Table{
+		Name:       "role_panel_placeds",
+		Columns:    RolePanelPlacedsColumns,
+		PrimaryKey: []*schema.Column{RolePanelPlacedsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "role_panel_placeds_guilds_role_panel_placements",
+				Columns:    []*schema.Column{RolePanelPlacedsColumns[11]},
+				RefColumns: []*schema.Column{GuildsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "role_panel_placeds_role_panels_placements",
+				Columns:    []*schema.Column{RolePanelPlacedsColumns[12]},
+				RefColumns: []*schema.Column{RolePanelsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 		},
@@ -128,6 +216,9 @@ var (
 		GuildsTable,
 		MembersTable,
 		MessagePinsTable,
+		RolePanelsTable,
+		RolePanelEditsTable,
+		RolePanelPlacedsTable,
 		UsersTable,
 		WordSuffixesTable,
 	}
@@ -138,6 +229,11 @@ func init() {
 	MembersTable.ForeignKeys[0].RefTable = GuildsTable
 	MembersTable.ForeignKeys[1].RefTable = UsersTable
 	MessagePinsTable.ForeignKeys[0].RefTable = GuildsTable
+	RolePanelsTable.ForeignKeys[0].RefTable = GuildsTable
+	RolePanelEditsTable.ForeignKeys[0].RefTable = GuildsTable
+	RolePanelEditsTable.ForeignKeys[1].RefTable = RolePanelsTable
+	RolePanelPlacedsTable.ForeignKeys[0].RefTable = GuildsTable
+	RolePanelPlacedsTable.ForeignKeys[1].RefTable = RolePanelsTable
 	WordSuffixesTable.ForeignKeys[0].RefTable = UsersTable
 	WordSuffixesTable.ForeignKeys[1].RefTable = GuildsTable
 }

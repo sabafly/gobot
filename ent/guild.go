@@ -38,9 +38,15 @@ type GuildEdges struct {
 	Members []*Member `json:"members,omitempty"`
 	// MessagePins holds the value of the message_pins edge.
 	MessagePins []*MessagePin `json:"message_pins,omitempty"`
+	// RolePanels holds the value of the role_panels edge.
+	RolePanels []*RolePanel `json:"role_panels,omitempty"`
+	// RolePanelPlacements holds the value of the role_panel_placements edge.
+	RolePanelPlacements []*RolePanelPlaced `json:"role_panel_placements,omitempty"`
+	// RolePanelEdits holds the value of the role_panel_edits edge.
+	RolePanelEdits []*RolePanelEdit `json:"role_panel_edits,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [6]bool
 }
 
 // OwnerOrErr returns the Owner value or an error if the edge
@@ -72,6 +78,33 @@ func (e GuildEdges) MessagePinsOrErr() ([]*MessagePin, error) {
 		return e.MessagePins, nil
 	}
 	return nil, &NotLoadedError{edge: "message_pins"}
+}
+
+// RolePanelsOrErr returns the RolePanels value or an error if the edge
+// was not loaded in eager-loading.
+func (e GuildEdges) RolePanelsOrErr() ([]*RolePanel, error) {
+	if e.loadedTypes[3] {
+		return e.RolePanels, nil
+	}
+	return nil, &NotLoadedError{edge: "role_panels"}
+}
+
+// RolePanelPlacementsOrErr returns the RolePanelPlacements value or an error if the edge
+// was not loaded in eager-loading.
+func (e GuildEdges) RolePanelPlacementsOrErr() ([]*RolePanelPlaced, error) {
+	if e.loadedTypes[4] {
+		return e.RolePanelPlacements, nil
+	}
+	return nil, &NotLoadedError{edge: "role_panel_placements"}
+}
+
+// RolePanelEditsOrErr returns the RolePanelEdits value or an error if the edge
+// was not loaded in eager-loading.
+func (e GuildEdges) RolePanelEditsOrErr() ([]*RolePanelEdit, error) {
+	if e.loadedTypes[5] {
+		return e.RolePanelEdits, nil
+	}
+	return nil, &NotLoadedError{edge: "role_panel_edits"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -151,6 +184,21 @@ func (gu *Guild) QueryMembers() *MemberQuery {
 // QueryMessagePins queries the "message_pins" edge of the Guild entity.
 func (gu *Guild) QueryMessagePins() *MessagePinQuery {
 	return NewGuildClient(gu.config).QueryMessagePins(gu)
+}
+
+// QueryRolePanels queries the "role_panels" edge of the Guild entity.
+func (gu *Guild) QueryRolePanels() *RolePanelQuery {
+	return NewGuildClient(gu.config).QueryRolePanels(gu)
+}
+
+// QueryRolePanelPlacements queries the "role_panel_placements" edge of the Guild entity.
+func (gu *Guild) QueryRolePanelPlacements() *RolePanelPlacedQuery {
+	return NewGuildClient(gu.config).QueryRolePanelPlacements(gu)
+}
+
+// QueryRolePanelEdits queries the "role_panel_edits" edge of the Guild entity.
+func (gu *Guild) QueryRolePanelEdits() *RolePanelEditQuery {
+	return NewGuildClient(gu.config).QueryRolePanelEdits(gu)
 }
 
 // Update returns a builder for updating this Guild.

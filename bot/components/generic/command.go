@@ -1,10 +1,7 @@
 package generic
 
 import (
-	"errors"
 	"fmt"
-	"log/slog"
-	"runtime"
 	"runtime/debug"
 	"strings"
 
@@ -13,85 +10,19 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/sabafly/gobot/bot/components"
+	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/translate"
 )
 
-type Error interface {
-	error
-	File() string
-	Stack() string
-}
-
-type errorImpl struct {
-	err   error
-	file  string
-	stack string
-}
-
-var _ Error = (*errorImpl)(nil)
-
-func (e errorImpl) Error() string { return e.err.Error() }
-func (e errorImpl) File() string  { return e.file }
-func (e errorImpl) Stack() string { return e.stack }
-
-func NewError(err error) Error {
-	if err == nil {
-		return nil
-	}
-	return newError(err, 2)
-}
-
-func newError(err error, skip int) *errorImpl {
-	pc := make([]uintptr, 10) // at least 1 entry needed
-	runtime.Callers(skip, pc)
-	f := runtime.FuncForPC(pc[0])
-	file, line := f.FileLine(pc[0])
-	// XXX: なんかこうトラックIDとか言っていい感じに管理したい…
-	slog.Error("エラーが生成されました", "err", err, "file", fmt.Sprintf("%s:%d", file, line), "filename", f.Name())
-	e := errors.Unwrap(err)
-	if e == nil {
-		e = err
-	}
-	if err, ok := e.(rest.Error); ok {
-		slog.Error("", fmt.Errorf("%w\nrq: %s\nrs: %s\nhd: %v", err, string(err.RqBody), string(err.RsBody), err.Response.Header))
-	}
-	return &errorImpl{
-		err:   err,
-		file:  fmt.Sprintf("%s:%d %s\n", file, line, f.Name()),
-		stack: string(debug.Stack()),
-	}
-}
-
-type ErrorMessage interface {
-	Key() string
-}
-
-type errorMessageImpl struct {
-	*errorImpl
-	key string
-}
-
-func (e errorMessageImpl) Key() string { return e.key }
-
-func NewErrorWithMessage(err error, key string) Error {
-	if err == nil {
-		return nil
-	}
-	return &errorMessageImpl{
-		errorImpl: newError(err, 3),
-		key:       key,
-	}
-}
-
 func createErrorMessage(
-	err Error,
+	err errors.Error,
 	event interface {
 		CreateMessage(messageCreate discord.MessageCreate, opts ...rest.RequestOpt) error
 		Locale() discord.Locale
 	},
 ) {
 	key := "errors.generic.message"
-	if em, ok := err.(ErrorMessage); ok {
+	if em, ok := err.(errors.ErrorWithMessage); ok {
 		key = em.Key()
 	}
 	_ = event.CreateMessage(
@@ -106,6 +37,16 @@ func createErrorMessage(
 			SetFlags(discord.MessageFlagEphemeral).
 			Create(),
 	)
+}
+
+func rec(event interface {
+	RespondMessage(messageBuilder discord.MessageBuilder, opts ...rest.RequestOpt) error
+	Locale() discord.Locale
+}) {
+	if v := recover(); v != nil {
+		_ = errors.ErrorMessage("errors.panic.message", event, errors.WithDescription(fmt.Sprintf("```\nargs=%v stack=%s```", v, string(debug.Stack()))))
+		panic(v)
+	}
 }
 
 // Command
@@ -189,7 +130,7 @@ var _ PermissionComponentHandler = (*PComponentHandler)(nil)
 
 // Modal
 
-type ModalHandler func(component *components.Components, event *events.ModalSubmitInteractionCreate) Error
+type ModalHandler func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error
 
 // Permissions
 
@@ -199,7 +140,7 @@ type PermissionComponentHandler PermissionHandler[*events.ComponentInteractionCr
 
 // Generic Types
 
-type EventHandler[E bot.Event] func(c *components.Components, event E) Error
+type EventHandler[E bot.Event] func(c *components.Components, event E) errors.Error
 type PEventHandler[E bot.Event] func(c *components.Components, event E) bool
 
 type PermissionHandler[E bot.Event] interface {
@@ -230,12 +171,19 @@ func (gc *GenericCommand) SetDB(db *components.Components) *GenericCommand {
 func (gc *GenericCommand) Name() string                               { return gc.Namespace }
 func (gc *GenericCommand) Create() []discord.ApplicationCommandCreate { return gc.CommandCreate }
 func (gc *GenericCommand) IsPrivate() bool                            { return gc.Private }
-
 func (gc *GenericCommand) CommandHandler() func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
-		cmd, ok := gc.CommandHandlers[event.SlashCommandInteractionData().CommandPath()]
+		defer rec(event)
+		path := event.SlashCommandInteractionData().CommandPath()
+		switch event.Data.Type() {
+		case discord.ApplicationCommandTypeMessage:
+			path = "m" + path
+		case discord.ApplicationCommandTypeUser:
+			path = "u" + path
+		}
+		cmd, ok := gc.CommandHandlers[path]
 		if !ok {
-			return fmt.Errorf("unknown handler: command_path=%s", event.SlashCommandInteractionData().CommandPath())
+			return fmt.Errorf("unknown handler: command_path=%s", path)
 		}
 		if c := cmd.PermissionCheck(); c != nil {
 			if !c(gc.db, event) {
@@ -244,7 +192,7 @@ func (gc *GenericCommand) CommandHandler() func(event *events.ApplicationCommand
 		}
 		h := cmd.Handler()
 		if h == nil {
-			return fmt.Errorf("nil handler: command_path=%s", event.SlashCommandInteractionData().CommandPath())
+			return fmt.Errorf("nil handler: command_path=%s", path)
 		}
 		if err := h(gc.db, event); err != nil {
 			createErrorMessage(err, event)
@@ -256,6 +204,7 @@ func (gc *GenericCommand) CommandHandler() func(event *events.ApplicationCommand
 
 func (gc *GenericCommand) ComponentHandler() func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
+		defer rec(event)
 		customID := strings.Split(event.Data.CustomID(), ":")
 		cmd, ok := gc.ComponentHandlers[strings.Join(customID[:2], ":")]
 		if !ok {
@@ -280,6 +229,7 @@ func (gc *GenericCommand) ComponentHandler() func(event *events.ComponentInterac
 
 func (gc *GenericCommand) ModalHandler() func(event *events.ModalSubmitInteractionCreate) error {
 	return func(event *events.ModalSubmitInteractionCreate) error {
+		defer rec(event)
 		customID := strings.Split(event.Data.CustomID, ":")
 		cmd, ok := gc.ModalHandlers[strings.Join(customID[:2], ":")]
 		if !ok {
@@ -295,9 +245,16 @@ func (gc *GenericCommand) ModalHandler() func(event *events.ModalSubmitInteracti
 
 func (gc *GenericCommand) AutocompleteHandler() func(event *events.AutocompleteInteractionCreate) error {
 	return func(event *events.AutocompleteInteractionCreate) error {
-		cmd, ok := gc.AutocompleteHandlers[event.Data.CommandPath()]
+		var focused string
+		for _, ao := range event.Data.Options {
+			if ao.Focused {
+				focused = ao.Name
+			}
+		}
+		path := event.Data.CommandPath() + ":" + focused
+		cmd, ok := gc.AutocompleteHandlers[path]
 		if !ok {
-			return fmt.Errorf("unknown handler: command_path=%s", event.Data.CommandPath())
+			return fmt.Errorf("unknown handler: command_path=%s", path)
 		}
 		if c := cmd.PermissionCheck(); c != nil {
 			if !c(gc.db, event) {
@@ -306,7 +263,7 @@ func (gc *GenericCommand) AutocompleteHandler() func(event *events.AutocompleteI
 		}
 		h := cmd.Handler()
 		if h == nil {
-			return fmt.Errorf("nil handler: command_path=%s", event.Data.CommandPath())
+			return fmt.Errorf("nil handler: command_path=%s", path)
 		}
 		if err := h(gc.db, event); err != nil {
 			return err

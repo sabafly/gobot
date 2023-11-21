@@ -7,9 +7,13 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/sabafly/gobot/ent"
 	"github.com/sabafly/gobot/ent/user"
+	"github.com/sabafly/gobot/internal/errors"
 )
 
 func (c *Components) UserCreate(ctx context.Context, u discord.User) (*ent.User, error) {
+	if u.Bot || u.System {
+		return nil, errors.New("bot cannot use to create user")
+	}
 	if ok := c.db.User.
 		Query().
 		Where(user.ID(u.ID)).ExistX(ctx); ok {
