@@ -487,6 +487,16 @@ components.role.panel.use.changed.remove: 解除
 components.role.panel.use.changed.unchanged: 既存
 components.role.panel.delete.message.embed.title: 削除しました
 components.role.panel.delete.message.embed.description: "{{.RolePanel}} を削除しました"
+components.role.panel.create.command.description: 役職パネルを作成する
+components.role.panel.place.command.description: 役職パネルを設置する
+components.role.panel.place.command.options.panel.name: 役職パネル
+components.role.panel.place.command.options.panel.description: 設置する役職パネル
+components.role.panel.edit.command.description: 役職パネルを編集する
+components.role.panel.edit.command.options.panel.description: 編集する役職パネル
+components.role.panel.edit.command.options.panel.name: 役職パネル
+components.role.panel.delete.command.description: 役職パネルを削除する
+components.role.panel.delete.command.options.panel.name: 役職パネル
+components.role.panel.delete.command.options.panel.description: 削除する役職パネル
 
 errors.generic.message: エラーが発生しました
 errors.panic.message: 致命的なエラー
