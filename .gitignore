@@ -26,3 +26,6 @@ __**__**
 
 logs/
 dist/
+
+.docusaurus
+node_modules
