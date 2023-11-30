@@ -177,6 +177,7 @@ func Command(c *components.Components) components.Command {
 				return nil
 			}),
 			"/level/leaderboard": generic.CommandHandler(func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+				const pageCount = 25
 				g, err := c.GuildCreateID(event, *event.GuildID())
 				if err != nil {
 					return errors.NewError(err)
@@ -188,7 +189,7 @@ func Command(c *components.Components) components.Command {
 				page := event.SlashCommandInteractionData().Int("page")
 				page = builtin.Or(page > 0, page, 1)
 				count := g.QueryMembers().CountX(event)
-				if page > count/50+1 {
+				if page > count/pageCount+1 {
 					return errors.NewError(errors.ErrorMessage("errors.invalid.page", event))
 				}
 				members := g.QueryMembers().
@@ -197,13 +198,13 @@ func Command(c *components.Components) components.Command {
 							sql.OrderDesc(),
 						),
 					).
-					Offset((page - 1) * 50).
-					Limit(50).
+					Offset((page - 1) * pageCount).
+					Limit(pageCount).
 					AllX(event)
 				var leaderboard string
 				for i, m := range members {
 					leaderboard += fmt.Sprintf("**#%d | %s XP: `%d` Level: `%d`**\n",
-						i+1+((page-1)*50),
+						i+1+((page-1)*pageCount),
 						discord.UserMention(m.UserID),
 						m.Xp, m.Xp.Level(),
 					)
@@ -222,7 +223,7 @@ func Command(c *components.Components) components.Command {
 									SetTitlef("🏆%s(%d/%d)",
 										translate.Message(event.Locale(), "components.level.leaderboard.title"),
 										page,
-										count/50+1,
+										count/pageCount+1,
 									).
 									SetDescription(leaderboard).
 									Build(),
