@@ -1,89 +1,14 @@
 package db
 
 import (
-	"context"
 	"encoding/json"
 	"math/big"
 	"math/rand"
-	"sync"
 	"time"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/redis/go-redis/v9"
-	"github.com/sabafly/gobot/internal/smap"
 )
-
-type UserDataDB interface {
-	Get(id snowflake.ID) (*UserData, error)
-	Set(id snowflake.ID, data *UserData) error
-	Del(id snowflake.ID) error
-	Mu(id snowflake.ID) *sync.Mutex
-}
-
-type userDataDBImpl struct {
-	db            *redis.Client
-	userDataLocks smap.SyncedMap[snowflake.ID, *sync.Mutex]
-}
-
-func (self *userDataDBImpl) Get(id snowflake.ID) (*UserData, error) {
-	res := self.db.HGet(context.TODO(), "user-data", id.String())
-	if err := res.Err(); err != nil {
-		if err != redis.Nil {
-			return nil, err
-		} else {
-			return NewUserData(id)
-		}
-	}
-	var u *UserData = &UserData{}
-	if err := json.Unmarshal([]byte(res.Val()), u); err != nil {
-		return nil, err
-	}
-	return u, nil
-}
-
-func (self *userDataDBImpl) Set(id snowflake.ID, data *UserData) error {
-	buf, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-	res := self.db.HSet(context.TODO(), "user-data", id.String(), buf)
-	if err := res.Err(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (self *userDataDBImpl) Del(id snowflake.ID) error {
-	res := self.db.HDel(context.TODO(), "user-data", id.String())
-	if err := res.Err(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (self *userDataDBImpl) Mu(uid snowflake.ID) *sync.Mutex {
-	v, _ := self.userDataLocks.LoadOrStore(uid, new(sync.Mutex))
-	return v
-}
-
-func NewUserData(id snowflake.ID) (*UserData, error) {
-	return &UserData{
-		ID:          id,
-		CreatedAt:   time.Now(),
-		DataVersion: 0,
-		Location:    DataLocation{time.Local},
-		GlobalLevel: UserDataLevel{
-			Point: big.NewInt(0),
-		},
-		GlobalMessageLevel: UserDataLevel{
-			Point: big.NewInt(0),
-		},
-		GlobalVoiceLevel: UserDataLevel{
-			Point: big.NewInt(0),
-		},
-	}, nil
-}
 
 const UserDataVersion = 2
 
@@ -113,38 +38,7 @@ func (u *UserData) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	*u = UserData(v.userData)
-	if !u.isValid() {
-		if err := u.validate(b); err != nil {
-			return err
-		}
-	}
 	return nil
-}
-
-func (u *UserData) isValid() bool {
-	return u.DataVersion < UserDataVersion
-}
-
-func (u *UserData) validate(b []byte) error {
-	switch u.DataVersion {
-	case 0:
-		u.Locale = discord.LocaleJapanese
-		u.DataVersion = 1
-		fallthrough
-	case 1:
-		u.Location = DataLocation{time.Local}
-		u.DataVersion = 2
-		fallthrough
-	case UserDataVersion:
-		return nil
-	default:
-		v, err := NewUserData(u.ID)
-		if err != nil {
-			return err
-		}
-		*u = *v
-		return nil
-	}
 }
 
 func NewDataLocation(str string) (DataLocation, error) {

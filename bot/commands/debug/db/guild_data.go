@@ -1,70 +1,12 @@
 package db
 
 import (
-	"context"
-	"sync"
 	"time"
 
 	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
-	"github.com/sabafly/gobot/internal/smap"
 )
-
-type GuildDataDB interface {
-	Get(id snowflake.ID) (GuildData, error)
-	Set(id snowflake.ID, data GuildData) error
-	Del(id snowflake.ID) error
-	Mu(id snowflake.ID) *sync.Mutex
-}
-
-var _ GuildDataDB = (*guildDataDBImpl)(nil)
-
-type guildDataDBImpl struct {
-	db             *redis.Client
-	guildDataLocks smap.SyncedMap[snowflake.ID, *sync.Mutex]
-}
-
-func (g *guildDataDBImpl) Get(id snowflake.ID) (GuildData, error) {
-	res := g.db.HGet(context.TODO(), "guild-data", id.String())
-	if err := res.Err(); err != nil {
-		if err != redis.Nil {
-			return GuildData{}, err
-		}
-	}
-	buf := []byte(res.Val())
-	val := GuildData{}
-	if err := json.Unmarshal(buf, &val); err != nil {
-		return GuildData{}, err
-	}
-	return val, nil
-}
-
-func (g *guildDataDBImpl) Set(id snowflake.ID, data GuildData) error {
-	buf, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-	res := g.db.HSet(context.TODO(), "guild-data", id.String(), buf)
-	if err := res.Err(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (g *guildDataDBImpl) Del(id snowflake.ID) error {
-	res := g.db.HDel(context.TODO(), "guild-data", id.String())
-	if err := res.Err(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (g *guildDataDBImpl) Mu(gid snowflake.ID) *sync.Mutex {
-	v, _ := g.guildDataLocks.LoadOrStore(gid, new(sync.Mutex))
-	return v
-}
 
 const GuildDataVersion = 11
 
