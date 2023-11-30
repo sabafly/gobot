@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -12,6 +13,7 @@ import (
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/user"
+	"github.com/sabafly/gobot/internal/permissions"
 )
 
 // Guild is the model entity for the Guild schema.
@@ -23,6 +25,14 @@ type Guild struct {
 	Name string `json:"name,omitempty"`
 	// Locale holds the value of the "locale" field.
 	Locale discord.Locale `json:"locale,omitempty"`
+	// LevelUpMessage holds the value of the "level_up_message" field.
+	LevelUpMessage string `json:"level_up_message,omitempty"`
+	// LevelUpChannel holds the value of the "level_up_channel" field.
+	LevelUpChannel *snowflake.ID `json:"level_up_channel,omitempty"`
+	// LevelUpExcludeChannel holds the value of the "level_up_exclude_channel" field.
+	LevelUpExcludeChannel []snowflake.ID `json:"level_up_exclude_channel,omitempty"`
+	// Permissions holds the value of the "permissions" field.
+	Permissions map[snowflake.ID]permissions.Permission `json:"permissions,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the GuildQuery when eager-loading is set.
 	Edges           GuildEdges `json:"edges"`
@@ -112,9 +122,11 @@ func (*Guild) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case guild.FieldID:
+		case guild.FieldLevelUpExcludeChannel, guild.FieldPermissions:
+			values[i] = new([]byte)
+		case guild.FieldID, guild.FieldLevelUpChannel:
 			values[i] = new(sql.NullInt64)
-		case guild.FieldName, guild.FieldLocale:
+		case guild.FieldName, guild.FieldLocale, guild.FieldLevelUpMessage:
 			values[i] = new(sql.NullString)
 		case guild.ForeignKeys[0]: // user_own_guilds
 			values[i] = new(sql.NullInt64)
@@ -150,6 +162,35 @@ func (gu *Guild) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field locale", values[i])
 			} else if value.Valid {
 				gu.Locale = discord.Locale(value.String)
+			}
+		case guild.FieldLevelUpMessage:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field level_up_message", values[i])
+			} else if value.Valid {
+				gu.LevelUpMessage = value.String
+			}
+		case guild.FieldLevelUpChannel:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field level_up_channel", values[i])
+			} else if value.Valid {
+				gu.LevelUpChannel = new(snowflake.ID)
+				*gu.LevelUpChannel = snowflake.ID(value.Int64)
+			}
+		case guild.FieldLevelUpExcludeChannel:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field level_up_exclude_channel", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &gu.LevelUpExcludeChannel); err != nil {
+					return fmt.Errorf("unmarshal field level_up_exclude_channel: %w", err)
+				}
+			}
+		case guild.FieldPermissions:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field permissions", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &gu.Permissions); err != nil {
+					return fmt.Errorf("unmarshal field permissions: %w", err)
+				}
 			}
 		case guild.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -229,6 +270,20 @@ func (gu *Guild) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("locale=")
 	builder.WriteString(fmt.Sprintf("%v", gu.Locale))
+	builder.WriteString(", ")
+	builder.WriteString("level_up_message=")
+	builder.WriteString(gu.LevelUpMessage)
+	builder.WriteString(", ")
+	if v := gu.LevelUpChannel; v != nil {
+		builder.WriteString("level_up_channel=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("level_up_exclude_channel=")
+	builder.WriteString(fmt.Sprintf("%v", gu.LevelUpExcludeChannel))
+	builder.WriteString(", ")
+	builder.WriteString("permissions=")
+	builder.WriteString(fmt.Sprintf("%v", gu.Permissions))
 	builder.WriteByte(')')
 	return builder.String()
 }

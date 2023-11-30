@@ -28,13 +28,16 @@ import (
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/gateway"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/disgo/sharding"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"github.com/sabafly/gobot/bot/commands/debug"
+	"github.com/sabafly/gobot/bot/commands/level"
 	"github.com/sabafly/gobot/bot/commands/message"
 	"github.com/sabafly/gobot/bot/commands/ping"
 	"github.com/sabafly/gobot/bot/commands/role"
+	userinfo "github.com/sabafly/gobot/bot/commands/user_info"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/ent"
 	"github.com/sabafly/gobot/internal/translate"
@@ -60,9 +63,7 @@ func run() error {
 		AddSource: true,
 		Level:     slog.LevelInfo,
 	})))
-	if err := godotenv.Load(); err != nil {
-		return fmt.Errorf(".envファイルを読み込めません: %w", err)
-	}
+	_ = godotenv.Load()
 
 	config, err := components.Load("gobot.yml")
 	if err != nil {
@@ -96,6 +97,8 @@ func run() error {
 		ping.Command(),
 		message.Command(component),
 		role.Command(component),
+		level.Command(component),
+		userinfo.Command(component),
 	)
 
 	token := os.Getenv("TOKEN")
@@ -110,6 +113,9 @@ func run() error {
 				gateway.WithAutoReconnect(true),
 				gateway.WithIntents(gateway.IntentsGuild, gateway.IntentsPrivileged),
 			),
+		),
+		bot.WithRestClientConfigOpts(
+			rest.WithUserAgent(fmt.Sprintf("DiscordBot (%s, %s)", disgo.GitHub, disgo.Version)),
 		),
 		bot.WithEventManagerConfigOpts(
 			bot.WithAsyncEventsEnabled(),

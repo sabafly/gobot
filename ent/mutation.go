@@ -25,6 +25,7 @@ import (
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/ent/wordsuffix"
 	"github.com/sabafly/gobot/internal/permissions"
+	"github.com/sabafly/gobot/internal/xppoint"
 )
 
 const (
@@ -49,32 +50,38 @@ const (
 // GuildMutation represents an operation that mutates the Guild nodes in the graph.
 type GuildMutation struct {
 	config
-	op                           Op
-	typ                          string
-	id                           *snowflake.ID
-	name                         *string
-	locale                       *discord.Locale
-	clearedFields                map[string]struct{}
-	owner                        *snowflake.ID
-	clearedowner                 bool
-	members                      map[int]struct{}
-	removedmembers               map[int]struct{}
-	clearedmembers               bool
-	message_pins                 map[uuid.UUID]struct{}
-	removedmessage_pins          map[uuid.UUID]struct{}
-	clearedmessage_pins          bool
-	role_panels                  map[uuid.UUID]struct{}
-	removedrole_panels           map[uuid.UUID]struct{}
-	clearedrole_panels           bool
-	role_panel_placements        map[uuid.UUID]struct{}
-	removedrole_panel_placements map[uuid.UUID]struct{}
-	clearedrole_panel_placements bool
-	role_panel_edits             map[uuid.UUID]struct{}
-	removedrole_panel_edits      map[uuid.UUID]struct{}
-	clearedrole_panel_edits      bool
-	done                         bool
-	oldValue                     func(context.Context) (*Guild, error)
-	predicates                   []predicate.Guild
+	op                             Op
+	typ                            string
+	id                             *snowflake.ID
+	name                           *string
+	locale                         *discord.Locale
+	level_up_message               *string
+	level_up_channel               *snowflake.ID
+	addlevel_up_channel            *snowflake.ID
+	level_up_exclude_channel       *[]snowflake.ID
+	appendlevel_up_exclude_channel []snowflake.ID
+	permissions                    *map[snowflake.ID]permissions.Permission
+	clearedFields                  map[string]struct{}
+	owner                          *snowflake.ID
+	clearedowner                   bool
+	members                        map[int]struct{}
+	removedmembers                 map[int]struct{}
+	clearedmembers                 bool
+	message_pins                   map[uuid.UUID]struct{}
+	removedmessage_pins            map[uuid.UUID]struct{}
+	clearedmessage_pins            bool
+	role_panels                    map[uuid.UUID]struct{}
+	removedrole_panels             map[uuid.UUID]struct{}
+	clearedrole_panels             bool
+	role_panel_placements          map[uuid.UUID]struct{}
+	removedrole_panel_placements   map[uuid.UUID]struct{}
+	clearedrole_panel_placements   bool
+	role_panel_edits               map[uuid.UUID]struct{}
+	removedrole_panel_edits        map[uuid.UUID]struct{}
+	clearedrole_panel_edits        bool
+	done                           bool
+	oldValue                       func(context.Context) (*Guild, error)
+	predicates                     []predicate.Guild
 }
 
 var _ ent.Mutation = (*GuildMutation)(nil)
@@ -251,6 +258,226 @@ func (m *GuildMutation) OldLocale(ctx context.Context) (v discord.Locale, err er
 // ResetLocale resets all changes to the "locale" field.
 func (m *GuildMutation) ResetLocale() {
 	m.locale = nil
+}
+
+// SetLevelUpMessage sets the "level_up_message" field.
+func (m *GuildMutation) SetLevelUpMessage(s string) {
+	m.level_up_message = &s
+}
+
+// LevelUpMessage returns the value of the "level_up_message" field in the mutation.
+func (m *GuildMutation) LevelUpMessage() (r string, exists bool) {
+	v := m.level_up_message
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLevelUpMessage returns the old "level_up_message" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldLevelUpMessage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLevelUpMessage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLevelUpMessage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLevelUpMessage: %w", err)
+	}
+	return oldValue.LevelUpMessage, nil
+}
+
+// ResetLevelUpMessage resets all changes to the "level_up_message" field.
+func (m *GuildMutation) ResetLevelUpMessage() {
+	m.level_up_message = nil
+}
+
+// SetLevelUpChannel sets the "level_up_channel" field.
+func (m *GuildMutation) SetLevelUpChannel(s snowflake.ID) {
+	m.level_up_channel = &s
+	m.addlevel_up_channel = nil
+}
+
+// LevelUpChannel returns the value of the "level_up_channel" field in the mutation.
+func (m *GuildMutation) LevelUpChannel() (r snowflake.ID, exists bool) {
+	v := m.level_up_channel
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLevelUpChannel returns the old "level_up_channel" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldLevelUpChannel(ctx context.Context) (v *snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLevelUpChannel is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLevelUpChannel requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLevelUpChannel: %w", err)
+	}
+	return oldValue.LevelUpChannel, nil
+}
+
+// AddLevelUpChannel adds s to the "level_up_channel" field.
+func (m *GuildMutation) AddLevelUpChannel(s snowflake.ID) {
+	if m.addlevel_up_channel != nil {
+		*m.addlevel_up_channel += s
+	} else {
+		m.addlevel_up_channel = &s
+	}
+}
+
+// AddedLevelUpChannel returns the value that was added to the "level_up_channel" field in this mutation.
+func (m *GuildMutation) AddedLevelUpChannel() (r snowflake.ID, exists bool) {
+	v := m.addlevel_up_channel
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearLevelUpChannel clears the value of the "level_up_channel" field.
+func (m *GuildMutation) ClearLevelUpChannel() {
+	m.level_up_channel = nil
+	m.addlevel_up_channel = nil
+	m.clearedFields[guild.FieldLevelUpChannel] = struct{}{}
+}
+
+// LevelUpChannelCleared returns if the "level_up_channel" field was cleared in this mutation.
+func (m *GuildMutation) LevelUpChannelCleared() bool {
+	_, ok := m.clearedFields[guild.FieldLevelUpChannel]
+	return ok
+}
+
+// ResetLevelUpChannel resets all changes to the "level_up_channel" field.
+func (m *GuildMutation) ResetLevelUpChannel() {
+	m.level_up_channel = nil
+	m.addlevel_up_channel = nil
+	delete(m.clearedFields, guild.FieldLevelUpChannel)
+}
+
+// SetLevelUpExcludeChannel sets the "level_up_exclude_channel" field.
+func (m *GuildMutation) SetLevelUpExcludeChannel(s []snowflake.ID) {
+	m.level_up_exclude_channel = &s
+	m.appendlevel_up_exclude_channel = nil
+}
+
+// LevelUpExcludeChannel returns the value of the "level_up_exclude_channel" field in the mutation.
+func (m *GuildMutation) LevelUpExcludeChannel() (r []snowflake.ID, exists bool) {
+	v := m.level_up_exclude_channel
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLevelUpExcludeChannel returns the old "level_up_exclude_channel" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldLevelUpExcludeChannel(ctx context.Context) (v []snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLevelUpExcludeChannel is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLevelUpExcludeChannel requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLevelUpExcludeChannel: %w", err)
+	}
+	return oldValue.LevelUpExcludeChannel, nil
+}
+
+// AppendLevelUpExcludeChannel adds s to the "level_up_exclude_channel" field.
+func (m *GuildMutation) AppendLevelUpExcludeChannel(s []snowflake.ID) {
+	m.appendlevel_up_exclude_channel = append(m.appendlevel_up_exclude_channel, s...)
+}
+
+// AppendedLevelUpExcludeChannel returns the list of values that were appended to the "level_up_exclude_channel" field in this mutation.
+func (m *GuildMutation) AppendedLevelUpExcludeChannel() ([]snowflake.ID, bool) {
+	if len(m.appendlevel_up_exclude_channel) == 0 {
+		return nil, false
+	}
+	return m.appendlevel_up_exclude_channel, true
+}
+
+// ClearLevelUpExcludeChannel clears the value of the "level_up_exclude_channel" field.
+func (m *GuildMutation) ClearLevelUpExcludeChannel() {
+	m.level_up_exclude_channel = nil
+	m.appendlevel_up_exclude_channel = nil
+	m.clearedFields[guild.FieldLevelUpExcludeChannel] = struct{}{}
+}
+
+// LevelUpExcludeChannelCleared returns if the "level_up_exclude_channel" field was cleared in this mutation.
+func (m *GuildMutation) LevelUpExcludeChannelCleared() bool {
+	_, ok := m.clearedFields[guild.FieldLevelUpExcludeChannel]
+	return ok
+}
+
+// ResetLevelUpExcludeChannel resets all changes to the "level_up_exclude_channel" field.
+func (m *GuildMutation) ResetLevelUpExcludeChannel() {
+	m.level_up_exclude_channel = nil
+	m.appendlevel_up_exclude_channel = nil
+	delete(m.clearedFields, guild.FieldLevelUpExcludeChannel)
+}
+
+// SetPermissions sets the "permissions" field.
+func (m *GuildMutation) SetPermissions(value map[snowflake.ID]permissions.Permission) {
+	m.permissions = &value
+}
+
+// Permissions returns the value of the "permissions" field in the mutation.
+func (m *GuildMutation) Permissions() (r map[snowflake.ID]permissions.Permission, exists bool) {
+	v := m.permissions
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPermissions returns the old "permissions" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldPermissions(ctx context.Context) (v map[snowflake.ID]permissions.Permission, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPermissions is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPermissions requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPermissions: %w", err)
+	}
+	return oldValue.Permissions, nil
+}
+
+// ClearPermissions clears the value of the "permissions" field.
+func (m *GuildMutation) ClearPermissions() {
+	m.permissions = nil
+	m.clearedFields[guild.FieldPermissions] = struct{}{}
+}
+
+// PermissionsCleared returns if the "permissions" field was cleared in this mutation.
+func (m *GuildMutation) PermissionsCleared() bool {
+	_, ok := m.clearedFields[guild.FieldPermissions]
+	return ok
+}
+
+// ResetPermissions resets all changes to the "permissions" field.
+func (m *GuildMutation) ResetPermissions() {
+	m.permissions = nil
+	delete(m.clearedFields, guild.FieldPermissions)
 }
 
 // SetOwnerID sets the "owner" edge to the User entity by id.
@@ -596,12 +823,24 @@ func (m *GuildMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GuildMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+	fields := make([]string, 0, 6)
 	if m.name != nil {
 		fields = append(fields, guild.FieldName)
 	}
 	if m.locale != nil {
 		fields = append(fields, guild.FieldLocale)
+	}
+	if m.level_up_message != nil {
+		fields = append(fields, guild.FieldLevelUpMessage)
+	}
+	if m.level_up_channel != nil {
+		fields = append(fields, guild.FieldLevelUpChannel)
+	}
+	if m.level_up_exclude_channel != nil {
+		fields = append(fields, guild.FieldLevelUpExcludeChannel)
+	}
+	if m.permissions != nil {
+		fields = append(fields, guild.FieldPermissions)
 	}
 	return fields
 }
@@ -615,6 +854,14 @@ func (m *GuildMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case guild.FieldLocale:
 		return m.Locale()
+	case guild.FieldLevelUpMessage:
+		return m.LevelUpMessage()
+	case guild.FieldLevelUpChannel:
+		return m.LevelUpChannel()
+	case guild.FieldLevelUpExcludeChannel:
+		return m.LevelUpExcludeChannel()
+	case guild.FieldPermissions:
+		return m.Permissions()
 	}
 	return nil, false
 }
@@ -628,6 +875,14 @@ func (m *GuildMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldName(ctx)
 	case guild.FieldLocale:
 		return m.OldLocale(ctx)
+	case guild.FieldLevelUpMessage:
+		return m.OldLevelUpMessage(ctx)
+	case guild.FieldLevelUpChannel:
+		return m.OldLevelUpChannel(ctx)
+	case guild.FieldLevelUpExcludeChannel:
+		return m.OldLevelUpExcludeChannel(ctx)
+	case guild.FieldPermissions:
+		return m.OldPermissions(ctx)
 	}
 	return nil, fmt.Errorf("unknown Guild field %s", name)
 }
@@ -651,6 +906,34 @@ func (m *GuildMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetLocale(v)
 		return nil
+	case guild.FieldLevelUpMessage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLevelUpMessage(v)
+		return nil
+	case guild.FieldLevelUpChannel:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLevelUpChannel(v)
+		return nil
+	case guild.FieldLevelUpExcludeChannel:
+		v, ok := value.([]snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLevelUpExcludeChannel(v)
+		return nil
+	case guild.FieldPermissions:
+		v, ok := value.(map[snowflake.ID]permissions.Permission)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPermissions(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Guild field %s", name)
 }
@@ -658,13 +941,21 @@ func (m *GuildMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *GuildMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addlevel_up_channel != nil {
+		fields = append(fields, guild.FieldLevelUpChannel)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *GuildMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case guild.FieldLevelUpChannel:
+		return m.AddedLevelUpChannel()
+	}
 	return nil, false
 }
 
@@ -673,6 +964,13 @@ func (m *GuildMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *GuildMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case guild.FieldLevelUpChannel:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddLevelUpChannel(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Guild numeric field %s", name)
 }
@@ -680,7 +978,17 @@ func (m *GuildMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *GuildMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(guild.FieldLevelUpChannel) {
+		fields = append(fields, guild.FieldLevelUpChannel)
+	}
+	if m.FieldCleared(guild.FieldLevelUpExcludeChannel) {
+		fields = append(fields, guild.FieldLevelUpExcludeChannel)
+	}
+	if m.FieldCleared(guild.FieldPermissions) {
+		fields = append(fields, guild.FieldPermissions)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -693,6 +1001,17 @@ func (m *GuildMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *GuildMutation) ClearField(name string) error {
+	switch name {
+	case guild.FieldLevelUpChannel:
+		m.ClearLevelUpChannel()
+		return nil
+	case guild.FieldLevelUpExcludeChannel:
+		m.ClearLevelUpExcludeChannel()
+		return nil
+	case guild.FieldPermissions:
+		m.ClearPermissions()
+		return nil
+	}
 	return fmt.Errorf("unknown Guild nullable field %s", name)
 }
 
@@ -705,6 +1024,18 @@ func (m *GuildMutation) ResetField(name string) error {
 		return nil
 	case guild.FieldLocale:
 		m.ResetLocale()
+		return nil
+	case guild.FieldLevelUpMessage:
+		m.ResetLevelUpMessage()
+		return nil
+	case guild.FieldLevelUpChannel:
+		m.ResetLevelUpChannel()
+		return nil
+	case guild.FieldLevelUpExcludeChannel:
+		m.ResetLevelUpExcludeChannel()
+		return nil
+	case guild.FieldPermissions:
+		m.ResetPermissions()
 		return nil
 	}
 	return fmt.Errorf("unknown Guild field %s", name)
@@ -923,7 +1254,11 @@ type MemberMutation struct {
 	typ              string
 	id               *int
 	permission       *permissions.Permission
-	appendpermission permissions.Permission
+	xp               *xppoint.XP
+	addxp            *xppoint.XP
+	last_xp          *time.Time
+	message_count    *uint64
+	addmessage_count *int64
 	clearedFields    map[string]struct{}
 	guild            *snowflake.ID
 	clearedguild     bool
@@ -1035,7 +1370,6 @@ func (m *MemberMutation) IDs(ctx context.Context) ([]int, error) {
 // SetPermission sets the "permission" field.
 func (m *MemberMutation) SetPermission(pe permissions.Permission) {
 	m.permission = &pe
-	m.appendpermission = nil
 }
 
 // Permission returns the value of the "permission" field in the mutation.
@@ -1064,23 +1398,9 @@ func (m *MemberMutation) OldPermission(ctx context.Context) (v permissions.Permi
 	return oldValue.Permission, nil
 }
 
-// AppendPermission adds pe to the "permission" field.
-func (m *MemberMutation) AppendPermission(pe permissions.Permission) {
-	m.appendpermission = append(m.appendpermission, pe...)
-}
-
-// AppendedPermission returns the list of values that were appended to the "permission" field in this mutation.
-func (m *MemberMutation) AppendedPermission() (permissions.Permission, bool) {
-	if len(m.appendpermission) == 0 {
-		return nil, false
-	}
-	return m.appendpermission, true
-}
-
 // ClearPermission clears the value of the "permission" field.
 func (m *MemberMutation) ClearPermission() {
 	m.permission = nil
-	m.appendpermission = nil
 	m.clearedFields[member.FieldPermission] = struct{}{}
 }
 
@@ -1093,8 +1413,204 @@ func (m *MemberMutation) PermissionCleared() bool {
 // ResetPermission resets all changes to the "permission" field.
 func (m *MemberMutation) ResetPermission() {
 	m.permission = nil
-	m.appendpermission = nil
 	delete(m.clearedFields, member.FieldPermission)
+}
+
+// SetXp sets the "xp" field.
+func (m *MemberMutation) SetXp(x xppoint.XP) {
+	m.xp = &x
+	m.addxp = nil
+}
+
+// Xp returns the value of the "xp" field in the mutation.
+func (m *MemberMutation) Xp() (r xppoint.XP, exists bool) {
+	v := m.xp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldXp returns the old "xp" field's value of the Member entity.
+// If the Member object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MemberMutation) OldXp(ctx context.Context) (v xppoint.XP, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldXp is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldXp requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldXp: %w", err)
+	}
+	return oldValue.Xp, nil
+}
+
+// AddXp adds x to the "xp" field.
+func (m *MemberMutation) AddXp(x xppoint.XP) {
+	if m.addxp != nil {
+		*m.addxp += x
+	} else {
+		m.addxp = &x
+	}
+}
+
+// AddedXp returns the value that was added to the "xp" field in this mutation.
+func (m *MemberMutation) AddedXp() (r xppoint.XP, exists bool) {
+	v := m.addxp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetXp resets all changes to the "xp" field.
+func (m *MemberMutation) ResetXp() {
+	m.xp = nil
+	m.addxp = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *MemberMutation) SetUserID(s snowflake.ID) {
+	m.user = &s
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *MemberMutation) UserID() (r snowflake.ID, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the Member entity.
+// If the Member object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MemberMutation) OldUserID(ctx context.Context) (v snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *MemberMutation) ResetUserID() {
+	m.user = nil
+}
+
+// SetLastXp sets the "last_xp" field.
+func (m *MemberMutation) SetLastXp(t time.Time) {
+	m.last_xp = &t
+}
+
+// LastXp returns the value of the "last_xp" field in the mutation.
+func (m *MemberMutation) LastXp() (r time.Time, exists bool) {
+	v := m.last_xp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastXp returns the old "last_xp" field's value of the Member entity.
+// If the Member object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MemberMutation) OldLastXp(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastXp is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastXp requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastXp: %w", err)
+	}
+	return oldValue.LastXp, nil
+}
+
+// ClearLastXp clears the value of the "last_xp" field.
+func (m *MemberMutation) ClearLastXp() {
+	m.last_xp = nil
+	m.clearedFields[member.FieldLastXp] = struct{}{}
+}
+
+// LastXpCleared returns if the "last_xp" field was cleared in this mutation.
+func (m *MemberMutation) LastXpCleared() bool {
+	_, ok := m.clearedFields[member.FieldLastXp]
+	return ok
+}
+
+// ResetLastXp resets all changes to the "last_xp" field.
+func (m *MemberMutation) ResetLastXp() {
+	m.last_xp = nil
+	delete(m.clearedFields, member.FieldLastXp)
+}
+
+// SetMessageCount sets the "message_count" field.
+func (m *MemberMutation) SetMessageCount(u uint64) {
+	m.message_count = &u
+	m.addmessage_count = nil
+}
+
+// MessageCount returns the value of the "message_count" field in the mutation.
+func (m *MemberMutation) MessageCount() (r uint64, exists bool) {
+	v := m.message_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMessageCount returns the old "message_count" field's value of the Member entity.
+// If the Member object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MemberMutation) OldMessageCount(ctx context.Context) (v uint64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMessageCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMessageCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMessageCount: %w", err)
+	}
+	return oldValue.MessageCount, nil
+}
+
+// AddMessageCount adds u to the "message_count" field.
+func (m *MemberMutation) AddMessageCount(u int64) {
+	if m.addmessage_count != nil {
+		*m.addmessage_count += u
+	} else {
+		m.addmessage_count = &u
+	}
+}
+
+// AddedMessageCount returns the value that was added to the "message_count" field in this mutation.
+func (m *MemberMutation) AddedMessageCount() (r int64, exists bool) {
+	v := m.addmessage_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMessageCount resets all changes to the "message_count" field.
+func (m *MemberMutation) ResetMessageCount() {
+	m.message_count = nil
+	m.addmessage_count = nil
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by id.
@@ -1136,27 +1652,15 @@ func (m *MemberMutation) ResetGuild() {
 	m.clearedguild = false
 }
 
-// SetUserID sets the "user" edge to the User entity by id.
-func (m *MemberMutation) SetUserID(id snowflake.ID) {
-	m.user = &id
-}
-
 // ClearUser clears the "user" edge to the User entity.
 func (m *MemberMutation) ClearUser() {
 	m.cleareduser = true
+	m.clearedFields[member.FieldUserID] = struct{}{}
 }
 
 // UserCleared reports if the "user" edge to the User entity was cleared.
 func (m *MemberMutation) UserCleared() bool {
 	return m.cleareduser
-}
-
-// UserID returns the "user" edge ID in the mutation.
-func (m *MemberMutation) UserID() (id snowflake.ID, exists bool) {
-	if m.user != nil {
-		return *m.user, true
-	}
-	return
 }
 
 // UserIDs returns the "user" edge IDs in the mutation.
@@ -1209,9 +1713,21 @@ func (m *MemberMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MemberMutation) Fields() []string {
-	fields := make([]string, 0, 1)
+	fields := make([]string, 0, 5)
 	if m.permission != nil {
 		fields = append(fields, member.FieldPermission)
+	}
+	if m.xp != nil {
+		fields = append(fields, member.FieldXp)
+	}
+	if m.user != nil {
+		fields = append(fields, member.FieldUserID)
+	}
+	if m.last_xp != nil {
+		fields = append(fields, member.FieldLastXp)
+	}
+	if m.message_count != nil {
+		fields = append(fields, member.FieldMessageCount)
 	}
 	return fields
 }
@@ -1223,6 +1739,14 @@ func (m *MemberMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case member.FieldPermission:
 		return m.Permission()
+	case member.FieldXp:
+		return m.Xp()
+	case member.FieldUserID:
+		return m.UserID()
+	case member.FieldLastXp:
+		return m.LastXp()
+	case member.FieldMessageCount:
+		return m.MessageCount()
 	}
 	return nil, false
 }
@@ -1234,6 +1758,14 @@ func (m *MemberMutation) OldField(ctx context.Context, name string) (ent.Value, 
 	switch name {
 	case member.FieldPermission:
 		return m.OldPermission(ctx)
+	case member.FieldXp:
+		return m.OldXp(ctx)
+	case member.FieldUserID:
+		return m.OldUserID(ctx)
+	case member.FieldLastXp:
+		return m.OldLastXp(ctx)
+	case member.FieldMessageCount:
+		return m.OldMessageCount(ctx)
 	}
 	return nil, fmt.Errorf("unknown Member field %s", name)
 }
@@ -1250,6 +1782,34 @@ func (m *MemberMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetPermission(v)
 		return nil
+	case member.FieldXp:
+		v, ok := value.(xppoint.XP)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetXp(v)
+		return nil
+	case member.FieldUserID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case member.FieldLastXp:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastXp(v)
+		return nil
+	case member.FieldMessageCount:
+		v, ok := value.(uint64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMessageCount(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Member field %s", name)
 }
@@ -1257,13 +1817,26 @@ func (m *MemberMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *MemberMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addxp != nil {
+		fields = append(fields, member.FieldXp)
+	}
+	if m.addmessage_count != nil {
+		fields = append(fields, member.FieldMessageCount)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *MemberMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case member.FieldXp:
+		return m.AddedXp()
+	case member.FieldMessageCount:
+		return m.AddedMessageCount()
+	}
 	return nil, false
 }
 
@@ -1272,6 +1845,20 @@ func (m *MemberMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *MemberMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case member.FieldXp:
+		v, ok := value.(xppoint.XP)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddXp(v)
+		return nil
+	case member.FieldMessageCount:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMessageCount(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Member numeric field %s", name)
 }
@@ -1282,6 +1869,9 @@ func (m *MemberMutation) ClearedFields() []string {
 	var fields []string
 	if m.FieldCleared(member.FieldPermission) {
 		fields = append(fields, member.FieldPermission)
+	}
+	if m.FieldCleared(member.FieldLastXp) {
+		fields = append(fields, member.FieldLastXp)
 	}
 	return fields
 }
@@ -1300,6 +1890,9 @@ func (m *MemberMutation) ClearField(name string) error {
 	case member.FieldPermission:
 		m.ClearPermission()
 		return nil
+	case member.FieldLastXp:
+		m.ClearLastXp()
+		return nil
 	}
 	return fmt.Errorf("unknown Member nullable field %s", name)
 }
@@ -1310,6 +1903,18 @@ func (m *MemberMutation) ResetField(name string) error {
 	switch name {
 	case member.FieldPermission:
 		m.ResetPermission()
+		return nil
+	case member.FieldXp:
+		m.ResetXp()
+		return nil
+	case member.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case member.FieldLastXp:
+		m.ResetLastXp()
+		return nil
+	case member.FieldMessageCount:
+		m.ResetMessageCount()
 		return nil
 	}
 	return fmt.Errorf("unknown Member field %s", name)
@@ -4827,6 +5432,8 @@ type UserMutation struct {
 	name               *string
 	created_at         *time.Time
 	locale             *discord.Locale
+	xp                 *xppoint.XP
+	addxp              *xppoint.XP
 	clearedFields      map[string]struct{}
 	own_guilds         map[snowflake.ID]struct{}
 	removedown_guilds  map[snowflake.ID]struct{}
@@ -5054,6 +5661,62 @@ func (m *UserMutation) ResetLocale() {
 	m.locale = nil
 }
 
+// SetXp sets the "xp" field.
+func (m *UserMutation) SetXp(x xppoint.XP) {
+	m.xp = &x
+	m.addxp = nil
+}
+
+// Xp returns the value of the "xp" field in the mutation.
+func (m *UserMutation) Xp() (r xppoint.XP, exists bool) {
+	v := m.xp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldXp returns the old "xp" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldXp(ctx context.Context) (v xppoint.XP, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldXp is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldXp requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldXp: %w", err)
+	}
+	return oldValue.Xp, nil
+}
+
+// AddXp adds x to the "xp" field.
+func (m *UserMutation) AddXp(x xppoint.XP) {
+	if m.addxp != nil {
+		*m.addxp += x
+	} else {
+		m.addxp = &x
+	}
+}
+
+// AddedXp returns the value that was added to the "xp" field in this mutation.
+func (m *UserMutation) AddedXp() (r xppoint.XP, exists bool) {
+	v := m.addxp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetXp resets all changes to the "xp" field.
+func (m *UserMutation) ResetXp() {
+	m.xp = nil
+	m.addxp = nil
+}
+
 // AddOwnGuildIDs adds the "own_guilds" edge to the Guild entity by ids.
 func (m *UserMutation) AddOwnGuildIDs(ids ...snowflake.ID) {
 	if m.own_guilds == nil {
@@ -5250,7 +5913,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.name != nil {
 		fields = append(fields, user.FieldName)
 	}
@@ -5259,6 +5922,9 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.locale != nil {
 		fields = append(fields, user.FieldLocale)
+	}
+	if m.xp != nil {
+		fields = append(fields, user.FieldXp)
 	}
 	return fields
 }
@@ -5274,6 +5940,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case user.FieldLocale:
 		return m.Locale()
+	case user.FieldXp:
+		return m.Xp()
 	}
 	return nil, false
 }
@@ -5289,6 +5957,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldCreatedAt(ctx)
 	case user.FieldLocale:
 		return m.OldLocale(ctx)
+	case user.FieldXp:
+		return m.OldXp(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -5319,6 +5989,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetLocale(v)
 		return nil
+	case user.FieldXp:
+		v, ok := value.(xppoint.XP)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetXp(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
 }
@@ -5326,13 +6003,21 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *UserMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addxp != nil {
+		fields = append(fields, user.FieldXp)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case user.FieldXp:
+		return m.AddedXp()
+	}
 	return nil, false
 }
 
@@ -5341,6 +6026,13 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *UserMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case user.FieldXp:
+		v, ok := value.(xppoint.XP)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddXp(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User numeric field %s", name)
 }
@@ -5376,6 +6068,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldLocale:
 		m.ResetLocale()
+		return nil
+	case user.FieldXp:
+		m.ResetXp()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)

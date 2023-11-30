@@ -45,7 +45,7 @@ func (c *Components) Initialize(client bot.Client) error {
 		return err
 	}
 
-	for _, id := range c.Config().PrivateGuilds {
+	for _, id := range c.Config().Debug.DebugGuilds {
 		if _, err := client.Rest().SetGuildCommands(client.ApplicationID(), id, privCommands); err != nil {
 			slog.Error("プライベートコマンドの登録に失敗", "err", err, "guild", id)
 			return err

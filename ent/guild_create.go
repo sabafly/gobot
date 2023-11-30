@@ -19,6 +19,7 @@ import (
 	"github.com/sabafly/gobot/ent/rolepaneledit"
 	"github.com/sabafly/gobot/ent/rolepanelplaced"
 	"github.com/sabafly/gobot/ent/user"
+	"github.com/sabafly/gobot/internal/permissions"
 )
 
 // GuildCreate is the builder for creating a Guild entity.
@@ -45,6 +46,46 @@ func (gc *GuildCreate) SetNillableLocale(d *discord.Locale) *GuildCreate {
 	if d != nil {
 		gc.SetLocale(*d)
 	}
+	return gc
+}
+
+// SetLevelUpMessage sets the "level_up_message" field.
+func (gc *GuildCreate) SetLevelUpMessage(s string) *GuildCreate {
+	gc.mutation.SetLevelUpMessage(s)
+	return gc
+}
+
+// SetNillableLevelUpMessage sets the "level_up_message" field if the given value is not nil.
+func (gc *GuildCreate) SetNillableLevelUpMessage(s *string) *GuildCreate {
+	if s != nil {
+		gc.SetLevelUpMessage(*s)
+	}
+	return gc
+}
+
+// SetLevelUpChannel sets the "level_up_channel" field.
+func (gc *GuildCreate) SetLevelUpChannel(s snowflake.ID) *GuildCreate {
+	gc.mutation.SetLevelUpChannel(s)
+	return gc
+}
+
+// SetNillableLevelUpChannel sets the "level_up_channel" field if the given value is not nil.
+func (gc *GuildCreate) SetNillableLevelUpChannel(s *snowflake.ID) *GuildCreate {
+	if s != nil {
+		gc.SetLevelUpChannel(*s)
+	}
+	return gc
+}
+
+// SetLevelUpExcludeChannel sets the "level_up_exclude_channel" field.
+func (gc *GuildCreate) SetLevelUpExcludeChannel(s []snowflake.ID) *GuildCreate {
+	gc.mutation.SetLevelUpExcludeChannel(s)
+	return gc
+}
+
+// SetPermissions sets the "permissions" field.
+func (gc *GuildCreate) SetPermissions(m map[snowflake.ID]permissions.Permission) *GuildCreate {
+	gc.mutation.SetPermissions(m)
 	return gc
 }
 
@@ -179,6 +220,10 @@ func (gc *GuildCreate) defaults() {
 		v := guild.DefaultLocale
 		gc.mutation.SetLocale(v)
 	}
+	if _, ok := gc.mutation.LevelUpMessage(); !ok {
+		v := guild.DefaultLevelUpMessage
+		gc.mutation.SetLevelUpMessage(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -197,6 +242,14 @@ func (gc *GuildCreate) check() error {
 	if v, ok := gc.mutation.Locale(); ok {
 		if err := guild.LocaleValidator(string(v)); err != nil {
 			return &ValidationError{Name: "locale", err: fmt.Errorf(`ent: validator failed for field "Guild.locale": %w`, err)}
+		}
+	}
+	if _, ok := gc.mutation.LevelUpMessage(); !ok {
+		return &ValidationError{Name: "level_up_message", err: errors.New(`ent: missing required field "Guild.level_up_message"`)}
+	}
+	if v, ok := gc.mutation.LevelUpMessage(); ok {
+		if err := guild.LevelUpMessageValidator(v); err != nil {
+			return &ValidationError{Name: "level_up_message", err: fmt.Errorf(`ent: validator failed for field "Guild.level_up_message": %w`, err)}
 		}
 	}
 	if _, ok := gc.mutation.OwnerID(); !ok {
@@ -241,6 +294,22 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 	if value, ok := gc.mutation.Locale(); ok {
 		_spec.SetField(guild.FieldLocale, field.TypeString, value)
 		_node.Locale = value
+	}
+	if value, ok := gc.mutation.LevelUpMessage(); ok {
+		_spec.SetField(guild.FieldLevelUpMessage, field.TypeString, value)
+		_node.LevelUpMessage = value
+	}
+	if value, ok := gc.mutation.LevelUpChannel(); ok {
+		_spec.SetField(guild.FieldLevelUpChannel, field.TypeUint64, value)
+		_node.LevelUpChannel = &value
+	}
+	if value, ok := gc.mutation.LevelUpExcludeChannel(); ok {
+		_spec.SetField(guild.FieldLevelUpExcludeChannel, field.TypeJSON, value)
+		_node.LevelUpExcludeChannel = value
+	}
+	if value, ok := gc.mutation.Permissions(); ok {
+		_spec.SetField(guild.FieldPermissions, field.TypeJSON, value)
+		_node.Permissions = value
 	}
 	if nodes := gc.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

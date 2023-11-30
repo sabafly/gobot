@@ -9,6 +9,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/disgoorg/disgo/discord"
 	snowflake "github.com/disgoorg/snowflake/v2"
@@ -21,6 +22,7 @@ import (
 	"github.com/sabafly/gobot/ent/rolepaneledit"
 	"github.com/sabafly/gobot/ent/rolepanelplaced"
 	"github.com/sabafly/gobot/ent/user"
+	"github.com/sabafly/gobot/internal/permissions"
 )
 
 // GuildUpdate is the builder for updating Guild entities.
@@ -61,6 +63,77 @@ func (gu *GuildUpdate) SetNillableLocale(d *discord.Locale) *GuildUpdate {
 	if d != nil {
 		gu.SetLocale(*d)
 	}
+	return gu
+}
+
+// SetLevelUpMessage sets the "level_up_message" field.
+func (gu *GuildUpdate) SetLevelUpMessage(s string) *GuildUpdate {
+	gu.mutation.SetLevelUpMessage(s)
+	return gu
+}
+
+// SetNillableLevelUpMessage sets the "level_up_message" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableLevelUpMessage(s *string) *GuildUpdate {
+	if s != nil {
+		gu.SetLevelUpMessage(*s)
+	}
+	return gu
+}
+
+// SetLevelUpChannel sets the "level_up_channel" field.
+func (gu *GuildUpdate) SetLevelUpChannel(s snowflake.ID) *GuildUpdate {
+	gu.mutation.ResetLevelUpChannel()
+	gu.mutation.SetLevelUpChannel(s)
+	return gu
+}
+
+// SetNillableLevelUpChannel sets the "level_up_channel" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableLevelUpChannel(s *snowflake.ID) *GuildUpdate {
+	if s != nil {
+		gu.SetLevelUpChannel(*s)
+	}
+	return gu
+}
+
+// AddLevelUpChannel adds s to the "level_up_channel" field.
+func (gu *GuildUpdate) AddLevelUpChannel(s snowflake.ID) *GuildUpdate {
+	gu.mutation.AddLevelUpChannel(s)
+	return gu
+}
+
+// ClearLevelUpChannel clears the value of the "level_up_channel" field.
+func (gu *GuildUpdate) ClearLevelUpChannel() *GuildUpdate {
+	gu.mutation.ClearLevelUpChannel()
+	return gu
+}
+
+// SetLevelUpExcludeChannel sets the "level_up_exclude_channel" field.
+func (gu *GuildUpdate) SetLevelUpExcludeChannel(s []snowflake.ID) *GuildUpdate {
+	gu.mutation.SetLevelUpExcludeChannel(s)
+	return gu
+}
+
+// AppendLevelUpExcludeChannel appends s to the "level_up_exclude_channel" field.
+func (gu *GuildUpdate) AppendLevelUpExcludeChannel(s []snowflake.ID) *GuildUpdate {
+	gu.mutation.AppendLevelUpExcludeChannel(s)
+	return gu
+}
+
+// ClearLevelUpExcludeChannel clears the value of the "level_up_exclude_channel" field.
+func (gu *GuildUpdate) ClearLevelUpExcludeChannel() *GuildUpdate {
+	gu.mutation.ClearLevelUpExcludeChannel()
+	return gu
+}
+
+// SetPermissions sets the "permissions" field.
+func (gu *GuildUpdate) SetPermissions(m map[snowflake.ID]permissions.Permission) *GuildUpdate {
+	gu.mutation.SetPermissions(m)
+	return gu
+}
+
+// ClearPermissions clears the value of the "permissions" field.
+func (gu *GuildUpdate) ClearPermissions() *GuildUpdate {
+	gu.mutation.ClearPermissions()
 	return gu
 }
 
@@ -305,6 +378,11 @@ func (gu *GuildUpdate) check() error {
 			return &ValidationError{Name: "locale", err: fmt.Errorf(`ent: validator failed for field "Guild.locale": %w`, err)}
 		}
 	}
+	if v, ok := gu.mutation.LevelUpMessage(); ok {
+		if err := guild.LevelUpMessageValidator(v); err != nil {
+			return &ValidationError{Name: "level_up_message", err: fmt.Errorf(`ent: validator failed for field "Guild.level_up_message": %w`, err)}
+		}
+	}
 	if _, ok := gu.mutation.OwnerID(); gu.mutation.OwnerCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Guild.owner"`)
 	}
@@ -328,6 +406,35 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := gu.mutation.Locale(); ok {
 		_spec.SetField(guild.FieldLocale, field.TypeString, value)
+	}
+	if value, ok := gu.mutation.LevelUpMessage(); ok {
+		_spec.SetField(guild.FieldLevelUpMessage, field.TypeString, value)
+	}
+	if value, ok := gu.mutation.LevelUpChannel(); ok {
+		_spec.SetField(guild.FieldLevelUpChannel, field.TypeUint64, value)
+	}
+	if value, ok := gu.mutation.AddedLevelUpChannel(); ok {
+		_spec.AddField(guild.FieldLevelUpChannel, field.TypeUint64, value)
+	}
+	if gu.mutation.LevelUpChannelCleared() {
+		_spec.ClearField(guild.FieldLevelUpChannel, field.TypeUint64)
+	}
+	if value, ok := gu.mutation.LevelUpExcludeChannel(); ok {
+		_spec.SetField(guild.FieldLevelUpExcludeChannel, field.TypeJSON, value)
+	}
+	if value, ok := gu.mutation.AppendedLevelUpExcludeChannel(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, guild.FieldLevelUpExcludeChannel, value)
+		})
+	}
+	if gu.mutation.LevelUpExcludeChannelCleared() {
+		_spec.ClearField(guild.FieldLevelUpExcludeChannel, field.TypeJSON)
+	}
+	if value, ok := gu.mutation.Permissions(); ok {
+		_spec.SetField(guild.FieldPermissions, field.TypeJSON, value)
+	}
+	if gu.mutation.PermissionsCleared() {
+		_spec.ClearField(guild.FieldPermissions, field.TypeJSON)
 	}
 	if gu.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -631,6 +738,77 @@ func (guo *GuildUpdateOne) SetNillableLocale(d *discord.Locale) *GuildUpdateOne 
 	return guo
 }
 
+// SetLevelUpMessage sets the "level_up_message" field.
+func (guo *GuildUpdateOne) SetLevelUpMessage(s string) *GuildUpdateOne {
+	guo.mutation.SetLevelUpMessage(s)
+	return guo
+}
+
+// SetNillableLevelUpMessage sets the "level_up_message" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableLevelUpMessage(s *string) *GuildUpdateOne {
+	if s != nil {
+		guo.SetLevelUpMessage(*s)
+	}
+	return guo
+}
+
+// SetLevelUpChannel sets the "level_up_channel" field.
+func (guo *GuildUpdateOne) SetLevelUpChannel(s snowflake.ID) *GuildUpdateOne {
+	guo.mutation.ResetLevelUpChannel()
+	guo.mutation.SetLevelUpChannel(s)
+	return guo
+}
+
+// SetNillableLevelUpChannel sets the "level_up_channel" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableLevelUpChannel(s *snowflake.ID) *GuildUpdateOne {
+	if s != nil {
+		guo.SetLevelUpChannel(*s)
+	}
+	return guo
+}
+
+// AddLevelUpChannel adds s to the "level_up_channel" field.
+func (guo *GuildUpdateOne) AddLevelUpChannel(s snowflake.ID) *GuildUpdateOne {
+	guo.mutation.AddLevelUpChannel(s)
+	return guo
+}
+
+// ClearLevelUpChannel clears the value of the "level_up_channel" field.
+func (guo *GuildUpdateOne) ClearLevelUpChannel() *GuildUpdateOne {
+	guo.mutation.ClearLevelUpChannel()
+	return guo
+}
+
+// SetLevelUpExcludeChannel sets the "level_up_exclude_channel" field.
+func (guo *GuildUpdateOne) SetLevelUpExcludeChannel(s []snowflake.ID) *GuildUpdateOne {
+	guo.mutation.SetLevelUpExcludeChannel(s)
+	return guo
+}
+
+// AppendLevelUpExcludeChannel appends s to the "level_up_exclude_channel" field.
+func (guo *GuildUpdateOne) AppendLevelUpExcludeChannel(s []snowflake.ID) *GuildUpdateOne {
+	guo.mutation.AppendLevelUpExcludeChannel(s)
+	return guo
+}
+
+// ClearLevelUpExcludeChannel clears the value of the "level_up_exclude_channel" field.
+func (guo *GuildUpdateOne) ClearLevelUpExcludeChannel() *GuildUpdateOne {
+	guo.mutation.ClearLevelUpExcludeChannel()
+	return guo
+}
+
+// SetPermissions sets the "permissions" field.
+func (guo *GuildUpdateOne) SetPermissions(m map[snowflake.ID]permissions.Permission) *GuildUpdateOne {
+	guo.mutation.SetPermissions(m)
+	return guo
+}
+
+// ClearPermissions clears the value of the "permissions" field.
+func (guo *GuildUpdateOne) ClearPermissions() *GuildUpdateOne {
+	guo.mutation.ClearPermissions()
+	return guo
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (guo *GuildUpdateOne) SetOwnerID(id snowflake.ID) *GuildUpdateOne {
 	guo.mutation.SetOwnerID(id)
@@ -885,6 +1063,11 @@ func (guo *GuildUpdateOne) check() error {
 			return &ValidationError{Name: "locale", err: fmt.Errorf(`ent: validator failed for field "Guild.locale": %w`, err)}
 		}
 	}
+	if v, ok := guo.mutation.LevelUpMessage(); ok {
+		if err := guild.LevelUpMessageValidator(v); err != nil {
+			return &ValidationError{Name: "level_up_message", err: fmt.Errorf(`ent: validator failed for field "Guild.level_up_message": %w`, err)}
+		}
+	}
 	if _, ok := guo.mutation.OwnerID(); guo.mutation.OwnerCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Guild.owner"`)
 	}
@@ -925,6 +1108,35 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 	}
 	if value, ok := guo.mutation.Locale(); ok {
 		_spec.SetField(guild.FieldLocale, field.TypeString, value)
+	}
+	if value, ok := guo.mutation.LevelUpMessage(); ok {
+		_spec.SetField(guild.FieldLevelUpMessage, field.TypeString, value)
+	}
+	if value, ok := guo.mutation.LevelUpChannel(); ok {
+		_spec.SetField(guild.FieldLevelUpChannel, field.TypeUint64, value)
+	}
+	if value, ok := guo.mutation.AddedLevelUpChannel(); ok {
+		_spec.AddField(guild.FieldLevelUpChannel, field.TypeUint64, value)
+	}
+	if guo.mutation.LevelUpChannelCleared() {
+		_spec.ClearField(guild.FieldLevelUpChannel, field.TypeUint64)
+	}
+	if value, ok := guo.mutation.LevelUpExcludeChannel(); ok {
+		_spec.SetField(guild.FieldLevelUpExcludeChannel, field.TypeJSON, value)
+	}
+	if value, ok := guo.mutation.AppendedLevelUpExcludeChannel(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, guild.FieldLevelUpExcludeChannel, value)
+		})
+	}
+	if guo.mutation.LevelUpExcludeChannelCleared() {
+		_spec.ClearField(guild.FieldLevelUpExcludeChannel, field.TypeJSON)
+	}
+	if value, ok := guo.mutation.Permissions(); ok {
+		_spec.SetField(guild.FieldPermissions, field.TypeJSON, value)
+	}
+	if guo.mutation.PermissionsCleared() {
+		_spec.ClearField(guild.FieldPermissions, field.TypeJSON)
 	}
 	if guo.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{

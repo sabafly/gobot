@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -14,6 +15,7 @@ import (
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/internal/permissions"
+	"github.com/sabafly/gobot/internal/xppoint"
 )
 
 // Member is the model entity for the Member schema.
@@ -23,11 +25,18 @@ type Member struct {
 	ID int `json:"id,omitempty"`
 	// Permission holds the value of the "permission" field.
 	Permission permissions.Permission `json:"permission,omitempty"`
+	// Xp holds the value of the "xp" field.
+	Xp xppoint.XP `json:"xp,omitempty"`
+	// UserID holds the value of the "user_id" field.
+	UserID snowflake.ID `json:"user_id,omitempty"`
+	// LastXp holds the value of the "last_xp" field.
+	LastXp time.Time `json:"last_xp,omitempty"`
+	// MessageCount holds the value of the "message_count" field.
+	MessageCount uint64 `json:"message_count,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the MemberQuery when eager-loading is set.
 	Edges         MemberEdges `json:"edges"`
 	guild_members *snowflake.ID
-	user_guilds   *snowflake.ID
 	selectValues  sql.SelectValues
 }
 
@@ -75,11 +84,11 @@ func (*Member) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case member.FieldPermission:
 			values[i] = new([]byte)
-		case member.FieldID:
+		case member.FieldID, member.FieldXp, member.FieldUserID, member.FieldMessageCount:
 			values[i] = new(sql.NullInt64)
+		case member.FieldLastXp:
+			values[i] = new(sql.NullTime)
 		case member.ForeignKeys[0]: // guild_members
-			values[i] = new(sql.NullInt64)
-		case member.ForeignKeys[1]: // user_guilds
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -110,19 +119,36 @@ func (m *Member) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field permission: %w", err)
 				}
 			}
+		case member.FieldXp:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field xp", values[i])
+			} else if value.Valid {
+				m.Xp = xppoint.XP(value.Int64)
+			}
+		case member.FieldUserID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field user_id", values[i])
+			} else if value.Valid {
+				m.UserID = snowflake.ID(value.Int64)
+			}
+		case member.FieldLastXp:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field last_xp", values[i])
+			} else if value.Valid {
+				m.LastXp = value.Time
+			}
+		case member.FieldMessageCount:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field message_count", values[i])
+			} else if value.Valid {
+				m.MessageCount = uint64(value.Int64)
+			}
 		case member.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field guild_members", values[i])
 			} else if value.Valid {
 				m.guild_members = new(snowflake.ID)
 				*m.guild_members = snowflake.ID(value.Int64)
-			}
-		case member.ForeignKeys[1]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field user_guilds", values[i])
-			} else if value.Valid {
-				m.user_guilds = new(snowflake.ID)
-				*m.user_guilds = snowflake.ID(value.Int64)
 			}
 		default:
 			m.selectValues.Set(columns[i], values[i])
@@ -172,6 +198,18 @@ func (m *Member) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v, ", m.ID))
 	builder.WriteString("permission=")
 	builder.WriteString(fmt.Sprintf("%v", m.Permission))
+	builder.WriteString(", ")
+	builder.WriteString("xp=")
+	builder.WriteString(fmt.Sprintf("%v", m.Xp))
+	builder.WriteString(", ")
+	builder.WriteString("user_id=")
+	builder.WriteString(fmt.Sprintf("%v", m.UserID))
+	builder.WriteString(", ")
+	builder.WriteString("last_xp=")
+	builder.WriteString(m.LastXp.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("message_count=")
+	builder.WriteString(fmt.Sprintf("%v", m.MessageCount))
 	builder.WriteByte(')')
 	return builder.String()
 }

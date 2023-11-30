@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -14,6 +15,7 @@ import (
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/internal/permissions"
+	"github.com/sabafly/gobot/internal/xppoint"
 )
 
 // MemberCreate is the builder for creating a Member entity.
@@ -29,6 +31,54 @@ func (mc *MemberCreate) SetPermission(pe permissions.Permission) *MemberCreate {
 	return mc
 }
 
+// SetXp sets the "xp" field.
+func (mc *MemberCreate) SetXp(x xppoint.XP) *MemberCreate {
+	mc.mutation.SetXp(x)
+	return mc
+}
+
+// SetNillableXp sets the "xp" field if the given value is not nil.
+func (mc *MemberCreate) SetNillableXp(x *xppoint.XP) *MemberCreate {
+	if x != nil {
+		mc.SetXp(*x)
+	}
+	return mc
+}
+
+// SetUserID sets the "user_id" field.
+func (mc *MemberCreate) SetUserID(s snowflake.ID) *MemberCreate {
+	mc.mutation.SetUserID(s)
+	return mc
+}
+
+// SetLastXp sets the "last_xp" field.
+func (mc *MemberCreate) SetLastXp(t time.Time) *MemberCreate {
+	mc.mutation.SetLastXp(t)
+	return mc
+}
+
+// SetNillableLastXp sets the "last_xp" field if the given value is not nil.
+func (mc *MemberCreate) SetNillableLastXp(t *time.Time) *MemberCreate {
+	if t != nil {
+		mc.SetLastXp(*t)
+	}
+	return mc
+}
+
+// SetMessageCount sets the "message_count" field.
+func (mc *MemberCreate) SetMessageCount(u uint64) *MemberCreate {
+	mc.mutation.SetMessageCount(u)
+	return mc
+}
+
+// SetNillableMessageCount sets the "message_count" field if the given value is not nil.
+func (mc *MemberCreate) SetNillableMessageCount(u *uint64) *MemberCreate {
+	if u != nil {
+		mc.SetMessageCount(*u)
+	}
+	return mc
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
 func (mc *MemberCreate) SetGuildID(id snowflake.ID) *MemberCreate {
 	mc.mutation.SetGuildID(id)
@@ -38,12 +88,6 @@ func (mc *MemberCreate) SetGuildID(id snowflake.ID) *MemberCreate {
 // SetGuild sets the "guild" edge to the Guild entity.
 func (mc *MemberCreate) SetGuild(g *Guild) *MemberCreate {
 	return mc.SetGuildID(g.ID)
-}
-
-// SetUserID sets the "user" edge to the User entity by ID.
-func (mc *MemberCreate) SetUserID(id snowflake.ID) *MemberCreate {
-	mc.mutation.SetUserID(id)
-	return mc
 }
 
 // SetUser sets the "user" edge to the User entity.
@@ -58,6 +102,7 @@ func (mc *MemberCreate) Mutation() *MemberMutation {
 
 // Save creates the Member in the database.
 func (mc *MemberCreate) Save(ctx context.Context) (*Member, error) {
+	mc.defaults()
 	return withHooks(ctx, mc.sqlSave, mc.mutation, mc.hooks)
 }
 
@@ -83,8 +128,33 @@ func (mc *MemberCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (mc *MemberCreate) defaults() {
+	if _, ok := mc.mutation.Permission(); !ok {
+		v := member.DefaultPermission
+		mc.mutation.SetPermission(v)
+	}
+	if _, ok := mc.mutation.Xp(); !ok {
+		v := member.DefaultXp
+		mc.mutation.SetXp(v)
+	}
+	if _, ok := mc.mutation.MessageCount(); !ok {
+		v := member.DefaultMessageCount
+		mc.mutation.SetMessageCount(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (mc *MemberCreate) check() error {
+	if _, ok := mc.mutation.Xp(); !ok {
+		return &ValidationError{Name: "xp", err: errors.New(`ent: missing required field "Member.xp"`)}
+	}
+	if _, ok := mc.mutation.UserID(); !ok {
+		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "Member.user_id"`)}
+	}
+	if _, ok := mc.mutation.MessageCount(); !ok {
+		return &ValidationError{Name: "message_count", err: errors.New(`ent: missing required field "Member.message_count"`)}
+	}
 	if _, ok := mc.mutation.GuildID(); !ok {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "Member.guild"`)}
 	}
@@ -121,6 +191,18 @@ func (mc *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 		_spec.SetField(member.FieldPermission, field.TypeJSON, value)
 		_node.Permission = value
 	}
+	if value, ok := mc.mutation.Xp(); ok {
+		_spec.SetField(member.FieldXp, field.TypeUint64, value)
+		_node.Xp = value
+	}
+	if value, ok := mc.mutation.LastXp(); ok {
+		_spec.SetField(member.FieldLastXp, field.TypeTime, value)
+		_node.LastXp = value
+	}
+	if value, ok := mc.mutation.MessageCount(); ok {
+		_spec.SetField(member.FieldMessageCount, field.TypeUint64, value)
+		_node.MessageCount = value
+	}
 	if nodes := mc.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
@@ -152,7 +234,7 @@ func (mc *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_guilds = &nodes[0]
+		_node.UserID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
@@ -176,6 +258,7 @@ func (mcb *MemberCreateBulk) Save(ctx context.Context) ([]*Member, error) {
 	for i := range mcb.builders {
 		func(i int, root context.Context) {
 			builder := mcb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*MemberMutation)
 				if !ok {

@@ -1058,7 +1058,13 @@ func Command(c *components.Components) components.Command {
 			}
 			return nil
 		},
-	}).SetDB(c)
+	}).SetComponent(c)
+}
+
+func UpdateRolePanel(ctx context.Context, panel *ent.RolePanel, place *ent.RolePanelPlaced, locale discord.Locale, client bot.Client) {
+	if err := role_panel_place(ctx, panel, place, locale, client, true); err != nil {
+		slog.Error("アップデートに失敗", "err", err)
+	}
 }
 
 func update_role_panel(ctx context.Context, panel *ent.RolePanel, locale discord.Locale, client bot.Client, react bool) {

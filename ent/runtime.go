@@ -8,6 +8,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/google/uuid"
 	"github.com/sabafly/gobot/ent/guild"
+	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/ent/rolepaneledit"
@@ -15,6 +16,8 @@ import (
 	"github.com/sabafly/gobot/ent/schema"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/ent/wordsuffix"
+	"github.com/sabafly/gobot/internal/permissions"
+	"github.com/sabafly/gobot/internal/xppoint"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -33,6 +36,26 @@ func init() {
 	guild.DefaultLocale = discord.Locale(guildDescLocale.Default.(string))
 	// guild.LocaleValidator is a validator for the "locale" field. It is called by the builders before save.
 	guild.LocaleValidator = guildDescLocale.Validators[0].(func(string) error)
+	// guildDescLevelUpMessage is the schema descriptor for level_up_message field.
+	guildDescLevelUpMessage := guildFields[3].Descriptor()
+	// guild.DefaultLevelUpMessage holds the default value on creation for the level_up_message field.
+	guild.DefaultLevelUpMessage = guildDescLevelUpMessage.Default.(string)
+	// guild.LevelUpMessageValidator is a validator for the "level_up_message" field. It is called by the builders before save.
+	guild.LevelUpMessageValidator = guildDescLevelUpMessage.Validators[0].(func(string) error)
+	memberFields := schema.Member{}.Fields()
+	_ = memberFields
+	// memberDescPermission is the schema descriptor for permission field.
+	memberDescPermission := memberFields[0].Descriptor()
+	// member.DefaultPermission holds the default value on creation for the permission field.
+	member.DefaultPermission = memberDescPermission.Default.(permissions.Permission)
+	// memberDescXp is the schema descriptor for xp field.
+	memberDescXp := memberFields[1].Descriptor()
+	// member.DefaultXp holds the default value on creation for the xp field.
+	member.DefaultXp = xppoint.XP(memberDescXp.Default.(uint64))
+	// memberDescMessageCount is the schema descriptor for message_count field.
+	memberDescMessageCount := memberFields[4].Descriptor()
+	// member.DefaultMessageCount holds the default value on creation for the message_count field.
+	member.DefaultMessageCount = memberDescMessageCount.Default.(uint64)
 	messagepinFields := schema.MessagePin{}.Fields()
 	_ = messagepinFields
 	// messagepinDescRateLimit is the schema descriptor for rate_limit field.
@@ -147,6 +170,10 @@ func init() {
 	user.DefaultLocale = discord.Locale(userDescLocale.Default.(string))
 	// user.LocaleValidator is a validator for the "locale" field. It is called by the builders before save.
 	user.LocaleValidator = userDescLocale.Validators[0].(func(string) error)
+	// userDescXp is the schema descriptor for xp field.
+	userDescXp := userFields[4].Descriptor()
+	// user.DefaultXp holds the default value on creation for the xp field.
+	user.DefaultXp = xppoint.XP(userDescXp.Default.(uint64))
 	wordsuffixFields := schema.WordSuffix{}.Fields()
 	_ = wordsuffixFields
 	// wordsuffixDescSuffix is the schema descriptor for suffix field.

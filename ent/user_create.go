@@ -17,6 +17,7 @@ import (
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/ent/wordsuffix"
+	"github.com/sabafly/gobot/internal/xppoint"
 )
 
 // UserCreate is the builder for creating a User entity.
@@ -56,6 +57,20 @@ func (uc *UserCreate) SetLocale(d discord.Locale) *UserCreate {
 func (uc *UserCreate) SetNillableLocale(d *discord.Locale) *UserCreate {
 	if d != nil {
 		uc.SetLocale(*d)
+	}
+	return uc
+}
+
+// SetXp sets the "xp" field.
+func (uc *UserCreate) SetXp(x xppoint.XP) *UserCreate {
+	uc.mutation.SetXp(x)
+	return uc
+}
+
+// SetNillableXp sets the "xp" field if the given value is not nil.
+func (uc *UserCreate) SetNillableXp(x *xppoint.XP) *UserCreate {
+	if x != nil {
+		uc.SetXp(*x)
 	}
 	return uc
 }
@@ -154,6 +169,10 @@ func (uc *UserCreate) defaults() {
 		v := user.DefaultLocale
 		uc.mutation.SetLocale(v)
 	}
+	if _, ok := uc.mutation.Xp(); !ok {
+		v := user.DefaultXp
+		uc.mutation.SetXp(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -176,6 +195,9 @@ func (uc *UserCreate) check() error {
 		if err := user.LocaleValidator(string(v)); err != nil {
 			return &ValidationError{Name: "locale", err: fmt.Errorf(`ent: validator failed for field "User.locale": %w`, err)}
 		}
+	}
+	if _, ok := uc.mutation.Xp(); !ok {
+		return &ValidationError{Name: "xp", err: errors.New(`ent: missing required field "User.xp"`)}
 	}
 	return nil
 }
@@ -220,6 +242,10 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.Locale(); ok {
 		_spec.SetField(user.FieldLocale, field.TypeString, value)
 		_node.Locale = value
+	}
+	if value, ok := uc.mutation.Xp(); ok {
+		_spec.SetField(user.FieldXp, field.TypeUint64, value)
+		_node.Xp = value
 	}
 	if nodes := uc.mutation.OwnGuildsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

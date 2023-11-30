@@ -497,11 +497,34 @@ components.role.panel.edit.command.options.panel.name: 役職パネル
 components.role.panel.delete.command.description: 役職パネルを削除する
 components.role.panel.delete.command.options.panel.name: 役職パネル
 components.role.panel.delete.command.options.panel.description: 削除する役職パネル
+components.level.rank.embed.title: "{{.User}}の経験値"
+components.level.rank.embed.description: "{{.Level}} レベル `{{.Xp}}`xp"
+components.level.rank.embed.fields.place: 順位
+components.level.rank.embed.fields.next_level: "{{.NextLevel}} レベルまで"
+components.level.leaderboard.title: ギルド経験値リーダーボード
+components.level.up.message.modal.title: レベルアップメッセージを編集
+components.level.up.message.modal.input.message: メッセージ
+components.level.up.message.modal.input.message.placeholder: |-
+  {user}: ユーザーのメンション
+  {username}: ユーザーの名前
+  {before_level}: 前のレベル
+  {after_level}: 後のレベル
+
+components.level.up.message.message: レベルアップメッセージを設定しました
+components.level.up.message-channel.message: "レベルアップメッセージを{{.Channel}}に送信します"
+components.level.up.message-channel.default: 「レベルアップした時のチャンネル」
+components.level.exclude-channel.add.message: "{{.Channel}}を除外します"
+components.level.exclude-channel.clear.message: "除外チャンネルをクリアします"
+components.level.exclude-channel.remove.message: "{{.Channel}}の除外を解除します"
+
+# エラーメッセージ
 
 errors.generic.message: エラーが発生しました
 errors.panic.message: 致命的なエラー
 errors.invalid.bot.target: ボットは選択できません
 errors.invalid.bot.target.description: ボット以外のユーザーである必要があります
+errors.invalid.self.target: 自分自身は選択できません
+errors.invalid.self.target.description: 自分以外のユーザーである必要があります
 errors.invalid.permission: 権限が不足しています
 errors.invalid.permission.description: "`/permission add`コマンドで`{{.Permission}}`の権限を追加することで使用可能になります"
 errors.unavailable.message.pin: ピン留めメッセージが存在しません
@@ -513,3 +536,5 @@ errors.fail.role.panel: 役職の操作に失敗
 errors.fail.role.panel.description: |-
   役職の追加または解除に失敗しました
   役職がボットより下の順位にあることとボットに役職を操作する権限があるかを確認してください
+errors.invalid.page: 無効なページ
+errors.invalid.page.description: 範囲外のページ番号です

@@ -6,17 +6,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/predicate"
-	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/internal/permissions"
+	"github.com/sabafly/gobot/internal/xppoint"
 )
 
 // MemberUpdate is the builder for updating Member entities.
@@ -38,15 +38,71 @@ func (mu *MemberUpdate) SetPermission(pe permissions.Permission) *MemberUpdate {
 	return mu
 }
 
-// AppendPermission appends pe to the "permission" field.
-func (mu *MemberUpdate) AppendPermission(pe permissions.Permission) *MemberUpdate {
-	mu.mutation.AppendPermission(pe)
-	return mu
-}
-
 // ClearPermission clears the value of the "permission" field.
 func (mu *MemberUpdate) ClearPermission() *MemberUpdate {
 	mu.mutation.ClearPermission()
+	return mu
+}
+
+// SetXp sets the "xp" field.
+func (mu *MemberUpdate) SetXp(x xppoint.XP) *MemberUpdate {
+	mu.mutation.ResetXp()
+	mu.mutation.SetXp(x)
+	return mu
+}
+
+// SetNillableXp sets the "xp" field if the given value is not nil.
+func (mu *MemberUpdate) SetNillableXp(x *xppoint.XP) *MemberUpdate {
+	if x != nil {
+		mu.SetXp(*x)
+	}
+	return mu
+}
+
+// AddXp adds x to the "xp" field.
+func (mu *MemberUpdate) AddXp(x xppoint.XP) *MemberUpdate {
+	mu.mutation.AddXp(x)
+	return mu
+}
+
+// SetLastXp sets the "last_xp" field.
+func (mu *MemberUpdate) SetLastXp(t time.Time) *MemberUpdate {
+	mu.mutation.SetLastXp(t)
+	return mu
+}
+
+// SetNillableLastXp sets the "last_xp" field if the given value is not nil.
+func (mu *MemberUpdate) SetNillableLastXp(t *time.Time) *MemberUpdate {
+	if t != nil {
+		mu.SetLastXp(*t)
+	}
+	return mu
+}
+
+// ClearLastXp clears the value of the "last_xp" field.
+func (mu *MemberUpdate) ClearLastXp() *MemberUpdate {
+	mu.mutation.ClearLastXp()
+	return mu
+}
+
+// SetMessageCount sets the "message_count" field.
+func (mu *MemberUpdate) SetMessageCount(u uint64) *MemberUpdate {
+	mu.mutation.ResetMessageCount()
+	mu.mutation.SetMessageCount(u)
+	return mu
+}
+
+// SetNillableMessageCount sets the "message_count" field if the given value is not nil.
+func (mu *MemberUpdate) SetNillableMessageCount(u *uint64) *MemberUpdate {
+	if u != nil {
+		mu.SetMessageCount(*u)
+	}
+	return mu
+}
+
+// AddMessageCount adds u to the "message_count" field.
+func (mu *MemberUpdate) AddMessageCount(u int64) *MemberUpdate {
+	mu.mutation.AddMessageCount(u)
 	return mu
 }
 
@@ -61,17 +117,6 @@ func (mu *MemberUpdate) SetGuild(g *Guild) *MemberUpdate {
 	return mu.SetGuildID(g.ID)
 }
 
-// SetUserID sets the "user" edge to the User entity by ID.
-func (mu *MemberUpdate) SetUserID(id snowflake.ID) *MemberUpdate {
-	mu.mutation.SetUserID(id)
-	return mu
-}
-
-// SetUser sets the "user" edge to the User entity.
-func (mu *MemberUpdate) SetUser(u *User) *MemberUpdate {
-	return mu.SetUserID(u.ID)
-}
-
 // Mutation returns the MemberMutation object of the builder.
 func (mu *MemberUpdate) Mutation() *MemberMutation {
 	return mu.mutation
@@ -80,12 +125,6 @@ func (mu *MemberUpdate) Mutation() *MemberMutation {
 // ClearGuild clears the "guild" edge to the Guild entity.
 func (mu *MemberUpdate) ClearGuild() *MemberUpdate {
 	mu.mutation.ClearGuild()
-	return mu
-}
-
-// ClearUser clears the "user" edge to the User entity.
-func (mu *MemberUpdate) ClearUser() *MemberUpdate {
-	mu.mutation.ClearUser()
 	return mu
 }
 
@@ -142,13 +181,26 @@ func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := mu.mutation.Permission(); ok {
 		_spec.SetField(member.FieldPermission, field.TypeJSON, value)
 	}
-	if value, ok := mu.mutation.AppendedPermission(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, member.FieldPermission, value)
-		})
-	}
 	if mu.mutation.PermissionCleared() {
 		_spec.ClearField(member.FieldPermission, field.TypeJSON)
+	}
+	if value, ok := mu.mutation.Xp(); ok {
+		_spec.SetField(member.FieldXp, field.TypeUint64, value)
+	}
+	if value, ok := mu.mutation.AddedXp(); ok {
+		_spec.AddField(member.FieldXp, field.TypeUint64, value)
+	}
+	if value, ok := mu.mutation.LastXp(); ok {
+		_spec.SetField(member.FieldLastXp, field.TypeTime, value)
+	}
+	if mu.mutation.LastXpCleared() {
+		_spec.ClearField(member.FieldLastXp, field.TypeTime)
+	}
+	if value, ok := mu.mutation.MessageCount(); ok {
+		_spec.SetField(member.FieldMessageCount, field.TypeUint64, value)
+	}
+	if value, ok := mu.mutation.AddedMessageCount(); ok {
+		_spec.AddField(member.FieldMessageCount, field.TypeUint64, value)
 	}
 	if mu.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -172,35 +224,6 @@ func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(guild.FieldID, field.TypeUint64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if mu.mutation.UserCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   member.UserTable,
-			Columns: []string{member.UserColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := mu.mutation.UserIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   member.UserTable,
-			Columns: []string{member.UserColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),
 			},
 		}
 		for _, k := range nodes {
@@ -234,15 +257,71 @@ func (muo *MemberUpdateOne) SetPermission(pe permissions.Permission) *MemberUpda
 	return muo
 }
 
-// AppendPermission appends pe to the "permission" field.
-func (muo *MemberUpdateOne) AppendPermission(pe permissions.Permission) *MemberUpdateOne {
-	muo.mutation.AppendPermission(pe)
-	return muo
-}
-
 // ClearPermission clears the value of the "permission" field.
 func (muo *MemberUpdateOne) ClearPermission() *MemberUpdateOne {
 	muo.mutation.ClearPermission()
+	return muo
+}
+
+// SetXp sets the "xp" field.
+func (muo *MemberUpdateOne) SetXp(x xppoint.XP) *MemberUpdateOne {
+	muo.mutation.ResetXp()
+	muo.mutation.SetXp(x)
+	return muo
+}
+
+// SetNillableXp sets the "xp" field if the given value is not nil.
+func (muo *MemberUpdateOne) SetNillableXp(x *xppoint.XP) *MemberUpdateOne {
+	if x != nil {
+		muo.SetXp(*x)
+	}
+	return muo
+}
+
+// AddXp adds x to the "xp" field.
+func (muo *MemberUpdateOne) AddXp(x xppoint.XP) *MemberUpdateOne {
+	muo.mutation.AddXp(x)
+	return muo
+}
+
+// SetLastXp sets the "last_xp" field.
+func (muo *MemberUpdateOne) SetLastXp(t time.Time) *MemberUpdateOne {
+	muo.mutation.SetLastXp(t)
+	return muo
+}
+
+// SetNillableLastXp sets the "last_xp" field if the given value is not nil.
+func (muo *MemberUpdateOne) SetNillableLastXp(t *time.Time) *MemberUpdateOne {
+	if t != nil {
+		muo.SetLastXp(*t)
+	}
+	return muo
+}
+
+// ClearLastXp clears the value of the "last_xp" field.
+func (muo *MemberUpdateOne) ClearLastXp() *MemberUpdateOne {
+	muo.mutation.ClearLastXp()
+	return muo
+}
+
+// SetMessageCount sets the "message_count" field.
+func (muo *MemberUpdateOne) SetMessageCount(u uint64) *MemberUpdateOne {
+	muo.mutation.ResetMessageCount()
+	muo.mutation.SetMessageCount(u)
+	return muo
+}
+
+// SetNillableMessageCount sets the "message_count" field if the given value is not nil.
+func (muo *MemberUpdateOne) SetNillableMessageCount(u *uint64) *MemberUpdateOne {
+	if u != nil {
+		muo.SetMessageCount(*u)
+	}
+	return muo
+}
+
+// AddMessageCount adds u to the "message_count" field.
+func (muo *MemberUpdateOne) AddMessageCount(u int64) *MemberUpdateOne {
+	muo.mutation.AddMessageCount(u)
 	return muo
 }
 
@@ -257,17 +336,6 @@ func (muo *MemberUpdateOne) SetGuild(g *Guild) *MemberUpdateOne {
 	return muo.SetGuildID(g.ID)
 }
 
-// SetUserID sets the "user" edge to the User entity by ID.
-func (muo *MemberUpdateOne) SetUserID(id snowflake.ID) *MemberUpdateOne {
-	muo.mutation.SetUserID(id)
-	return muo
-}
-
-// SetUser sets the "user" edge to the User entity.
-func (muo *MemberUpdateOne) SetUser(u *User) *MemberUpdateOne {
-	return muo.SetUserID(u.ID)
-}
-
 // Mutation returns the MemberMutation object of the builder.
 func (muo *MemberUpdateOne) Mutation() *MemberMutation {
 	return muo.mutation
@@ -276,12 +344,6 @@ func (muo *MemberUpdateOne) Mutation() *MemberMutation {
 // ClearGuild clears the "guild" edge to the Guild entity.
 func (muo *MemberUpdateOne) ClearGuild() *MemberUpdateOne {
 	muo.mutation.ClearGuild()
-	return muo
-}
-
-// ClearUser clears the "user" edge to the User entity.
-func (muo *MemberUpdateOne) ClearUser() *MemberUpdateOne {
-	muo.mutation.ClearUser()
 	return muo
 }
 
@@ -368,13 +430,26 @@ func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err err
 	if value, ok := muo.mutation.Permission(); ok {
 		_spec.SetField(member.FieldPermission, field.TypeJSON, value)
 	}
-	if value, ok := muo.mutation.AppendedPermission(); ok {
-		_spec.AddModifier(func(u *sql.UpdateBuilder) {
-			sqljson.Append(u, member.FieldPermission, value)
-		})
-	}
 	if muo.mutation.PermissionCleared() {
 		_spec.ClearField(member.FieldPermission, field.TypeJSON)
+	}
+	if value, ok := muo.mutation.Xp(); ok {
+		_spec.SetField(member.FieldXp, field.TypeUint64, value)
+	}
+	if value, ok := muo.mutation.AddedXp(); ok {
+		_spec.AddField(member.FieldXp, field.TypeUint64, value)
+	}
+	if value, ok := muo.mutation.LastXp(); ok {
+		_spec.SetField(member.FieldLastXp, field.TypeTime, value)
+	}
+	if muo.mutation.LastXpCleared() {
+		_spec.ClearField(member.FieldLastXp, field.TypeTime)
+	}
+	if value, ok := muo.mutation.MessageCount(); ok {
+		_spec.SetField(member.FieldMessageCount, field.TypeUint64, value)
+	}
+	if value, ok := muo.mutation.AddedMessageCount(); ok {
+		_spec.AddField(member.FieldMessageCount, field.TypeUint64, value)
 	}
 	if muo.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -398,35 +473,6 @@ func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(guild.FieldID, field.TypeUint64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if muo.mutation.UserCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   member.UserTable,
-			Columns: []string{member.UserColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := muo.mutation.UserIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: true,
-			Table:   member.UserTable,
-			Columns: []string{member.UserColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64),
 			},
 		}
 		for _, k := range nodes {

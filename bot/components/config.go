@@ -8,12 +8,17 @@ import (
 )
 
 type Config struct {
-	PrivateGuilds []snowflake.ID `yaml:"private_guilds"`
-	TranslateDir  string         `yaml:"translate_dir"`
-	Message       ConfigMessage  `yaml:"message"`
+	TranslateDir string        `yaml:"translate_dir"`
+	Debug        ConfigDebug   `yaml:"debug"`
+	Message      ConfigMessage `yaml:"message"`
 
 	MySQL string   `yaml:"mysql"`
 	Redis []string `yaml:"redis"`
+}
+
+type ConfigDebug struct {
+	DebugUsers  []snowflake.ID `yaml:"users"`
+	DebugGuilds []snowflake.ID `yaml:"guilds"`
 }
 
 type ConfigMessage struct {

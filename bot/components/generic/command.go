@@ -160,11 +160,11 @@ type GenericCommand struct {
 	ModalHandlers        map[string]ModalHandler
 	AutocompleteHandlers map[string]PermissionAutocompleteHandler
 	EventHandler         EventHandler[bot.Event]
-	db                   *components.Components
+	component            *components.Components
 }
 
-func (gc *GenericCommand) SetDB(db *components.Components) *GenericCommand {
-	gc.db = db
+func (gc *GenericCommand) SetComponent(c *components.Components) *GenericCommand {
+	gc.component = c
 	return gc
 }
 
@@ -174,19 +174,21 @@ func (gc *GenericCommand) IsPrivate() bool                            { return g
 func (gc *GenericCommand) CommandHandler() func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		defer rec(event)
-		path := event.SlashCommandInteractionData().CommandPath()
+		var path string
 		switch event.Data.Type() {
+		case discord.ApplicationCommandTypeSlash:
+			path = event.SlashCommandInteractionData().CommandPath()
 		case discord.ApplicationCommandTypeMessage:
-			path = "m" + path
+			path = "m/" + event.MessageCommandInteractionData().CommandName()
 		case discord.ApplicationCommandTypeUser:
-			path = "u" + path
+			path = "u/" + event.UserCommandInteractionData().CommandName()
 		}
 		cmd, ok := gc.CommandHandlers[path]
 		if !ok {
 			return fmt.Errorf("unknown handler: command_path=%s", path)
 		}
 		if c := cmd.PermissionCheck(); c != nil {
-			if !c(gc.db, event) {
+			if !c(gc.component, event) {
 				return nil
 			}
 		}
@@ -194,7 +196,7 @@ func (gc *GenericCommand) CommandHandler() func(event *events.ApplicationCommand
 		if h == nil {
 			return fmt.Errorf("nil handler: command_path=%s", path)
 		}
-		if err := h(gc.db, event); err != nil {
+		if err := h(gc.component, event); err != nil {
 			createErrorMessage(err, event)
 			return err
 		}
@@ -211,7 +213,7 @@ func (gc *GenericCommand) ComponentHandler() func(event *events.ComponentInterac
 			return fmt.Errorf("unknown handler: custom_id=%s", event.Data.CustomID())
 		}
 		if c := cmd.PermissionCheck(); c != nil {
-			if !c(gc.db, event) {
+			if !c(gc.component, event) {
 				return nil
 			}
 		}
@@ -219,7 +221,7 @@ func (gc *GenericCommand) ComponentHandler() func(event *events.ComponentInterac
 		if h == nil {
 			return fmt.Errorf("nil handler: custom_id=%s", event.Data.CustomID())
 		}
-		if err := h(gc.db, event); err != nil {
+		if err := h(gc.component, event); err != nil {
 			createErrorMessage(err, event)
 			return err
 		}
@@ -235,7 +237,7 @@ func (gc *GenericCommand) ModalHandler() func(event *events.ModalSubmitInteracti
 		if !ok {
 			return fmt.Errorf("unknown handler: custom_id=%s", event.Data.CustomID)
 		}
-		if err := cmd(gc.db, event); err != nil {
+		if err := cmd(gc.component, event); err != nil {
 			createErrorMessage(err, event)
 			return err
 		}
@@ -257,7 +259,7 @@ func (gc *GenericCommand) AutocompleteHandler() func(event *events.AutocompleteI
 			return fmt.Errorf("unknown handler: command_path=%s", path)
 		}
 		if c := cmd.PermissionCheck(); c != nil {
-			if !c(gc.db, event) {
+			if !c(gc.component, event) {
 				return nil
 			}
 		}
@@ -265,7 +267,7 @@ func (gc *GenericCommand) AutocompleteHandler() func(event *events.AutocompleteI
 		if h == nil {
 			return fmt.Errorf("nil handler: command_path=%s", path)
 		}
-		if err := h(gc.db, event); err != nil {
+		if err := h(gc.component, event); err != nil {
 			return err
 		}
 		return nil
@@ -277,7 +279,7 @@ func (gc *GenericCommand) OnEvent() func(event bot.Event) error {
 		if gc.EventHandler == nil {
 			return nil
 		}
-		if err := gc.EventHandler(gc.db, event); err != nil {
+		if err := gc.EventHandler(gc.component, event); err != nil {
 			return err
 		}
 		return nil

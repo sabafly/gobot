@@ -17,6 +17,14 @@ const (
 	FieldName = "name"
 	// FieldLocale holds the string denoting the locale field in the database.
 	FieldLocale = "locale"
+	// FieldLevelUpMessage holds the string denoting the level_up_message field in the database.
+	FieldLevelUpMessage = "level_up_message"
+	// FieldLevelUpChannel holds the string denoting the level_up_channel field in the database.
+	FieldLevelUpChannel = "level_up_channel"
+	// FieldLevelUpExcludeChannel holds the string denoting the level_up_exclude_channel field in the database.
+	FieldLevelUpExcludeChannel = "level_up_exclude_channel"
+	// FieldPermissions holds the string denoting the permissions field in the database.
+	FieldPermissions = "permissions"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
 	// EdgeMembers holds the string denoting the members edge name in mutations.
@@ -80,6 +88,10 @@ var Columns = []string{
 	FieldID,
 	FieldName,
 	FieldLocale,
+	FieldLevelUpMessage,
+	FieldLevelUpChannel,
+	FieldLevelUpExcludeChannel,
+	FieldPermissions,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "guilds"
@@ -110,6 +122,10 @@ var (
 	DefaultLocale discord.Locale
 	// LocaleValidator is a validator for the "locale" field. It is called by the builders before save.
 	LocaleValidator func(string) error
+	// DefaultLevelUpMessage holds the default value on creation for the "level_up_message" field.
+	DefaultLevelUpMessage string
+	// LevelUpMessageValidator is a validator for the "level_up_message" field. It is called by the builders before save.
+	LevelUpMessageValidator func(string) error
 )
 
 // OrderOption defines the ordering options for the Guild queries.
@@ -128,6 +144,16 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByLocale orders the results by the locale field.
 func ByLocale(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLocale, opts...).ToFunc()
+}
+
+// ByLevelUpMessage orders the results by the level_up_message field.
+func ByLevelUpMessage(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLevelUpMessage, opts...).ToFunc()
+}
+
+// ByLevelUpChannel orders the results by the level_up_channel field.
+func ByLevelUpChannel(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLevelUpChannel, opts...).ToFunc()
 }
 
 // ByOwnerField orders the results by owner field.

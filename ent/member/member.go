@@ -5,6 +5,8 @@ package member
 import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/sabafly/gobot/internal/permissions"
+	"github.com/sabafly/gobot/internal/xppoint"
 )
 
 const (
@@ -14,6 +16,14 @@ const (
 	FieldID = "id"
 	// FieldPermission holds the string denoting the permission field in the database.
 	FieldPermission = "permission"
+	// FieldXp holds the string denoting the xp field in the database.
+	FieldXp = "xp"
+	// FieldUserID holds the string denoting the user_id field in the database.
+	FieldUserID = "user_id"
+	// FieldLastXp holds the string denoting the last_xp field in the database.
+	FieldLastXp = "last_xp"
+	// FieldMessageCount holds the string denoting the message_count field in the database.
+	FieldMessageCount = "message_count"
 	// EdgeGuild holds the string denoting the guild edge name in mutations.
 	EdgeGuild = "guild"
 	// EdgeUser holds the string denoting the user edge name in mutations.
@@ -33,20 +43,23 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	UserInverseTable = "users"
 	// UserColumn is the table column denoting the user relation/edge.
-	UserColumn = "user_guilds"
+	UserColumn = "user_id"
 )
 
 // Columns holds all SQL columns for member fields.
 var Columns = []string{
 	FieldID,
 	FieldPermission,
+	FieldXp,
+	FieldUserID,
+	FieldLastXp,
+	FieldMessageCount,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "members"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"guild_members",
-	"user_guilds",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -64,12 +77,41 @@ func ValidColumn(column string) bool {
 	return false
 }
 
+var (
+	// DefaultPermission holds the default value on creation for the "permission" field.
+	DefaultPermission permissions.Permission
+	// DefaultXp holds the default value on creation for the "xp" field.
+	DefaultXp xppoint.XP
+	// DefaultMessageCount holds the default value on creation for the "message_count" field.
+	DefaultMessageCount uint64
+)
+
 // OrderOption defines the ordering options for the Member queries.
 type OrderOption func(*sql.Selector)
 
 // ByID orders the results by the id field.
 func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
+}
+
+// ByXp orders the results by the xp field.
+func ByXp(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldXp, opts...).ToFunc()
+}
+
+// ByUserID orders the results by the user_id field.
+func ByUserID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUserID, opts...).ToFunc()
+}
+
+// ByLastXp orders the results by the last_xp field.
+func ByLastXp(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastXp, opts...).ToFunc()
+}
+
+// ByMessageCount orders the results by the message_count field.
+func ByMessageCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldMessageCount, opts...).ToFunc()
 }
 
 // ByGuildField orders the results by guild field.

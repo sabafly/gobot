@@ -13,6 +13,10 @@ var (
 		{Name: "id", Type: field.TypeUint64, Increment: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "locale", Type: field.TypeString, Default: "ja"},
+		{Name: "level_up_message", Type: field.TypeString, Default: "{user}がレベルアップしたよ！🥳\n**{before_level} レベル → {after_level} レベル**"},
+		{Name: "level_up_channel", Type: field.TypeUint64, Nullable: true},
+		{Name: "level_up_exclude_channel", Type: field.TypeJSON, Nullable: true},
+		{Name: "permissions", Type: field.TypeJSON, Nullable: true},
 		{Name: "user_own_guilds", Type: field.TypeUint64},
 	}
 	// GuildsTable holds the schema information for the "guilds" table.
@@ -23,7 +27,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "guilds_users_own_guilds",
-				Columns:    []*schema.Column{GuildsColumns[3]},
+				Columns:    []*schema.Column{GuildsColumns[7]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -33,8 +37,11 @@ var (
 	MembersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "permission", Type: field.TypeJSON, Nullable: true},
+		{Name: "xp", Type: field.TypeUint64, Default: 0},
+		{Name: "last_xp", Type: field.TypeTime, Nullable: true},
+		{Name: "message_count", Type: field.TypeUint64, Default: 0},
 		{Name: "guild_members", Type: field.TypeUint64},
-		{Name: "user_guilds", Type: field.TypeUint64},
+		{Name: "user_id", Type: field.TypeUint64},
 	}
 	// MembersTable holds the schema information for the "members" table.
 	MembersTable = &schema.Table{
@@ -44,13 +51,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "members_guilds_members",
-				Columns:    []*schema.Column{MembersColumns[2]},
+				Columns:    []*schema.Column{MembersColumns[5]},
 				RefColumns: []*schema.Column{GuildsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "members_users_guilds",
-				Columns:    []*schema.Column{MembersColumns[3]},
+				Columns:    []*schema.Column{MembersColumns[6]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -175,6 +182,7 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "locale", Type: field.TypeString, Default: "ja"},
+		{Name: "xp", Type: field.TypeUint64, Default: 0},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{

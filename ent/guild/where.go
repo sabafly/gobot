@@ -66,6 +66,17 @@ func Locale(v discord.Locale) predicate.Guild {
 	return predicate.Guild(sql.FieldEQ(FieldLocale, vc))
 }
 
+// LevelUpMessage applies equality check predicate on the "level_up_message" field. It's identical to LevelUpMessageEQ.
+func LevelUpMessage(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldLevelUpMessage, v))
+}
+
+// LevelUpChannel applies equality check predicate on the "level_up_channel" field. It's identical to LevelUpChannelEQ.
+func LevelUpChannel(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldEQ(FieldLevelUpChannel, vc))
+}
+
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.Guild {
 	return predicate.Guild(sql.FieldEQ(FieldName, v))
@@ -213,6 +224,155 @@ func LocaleEqualFold(v discord.Locale) predicate.Guild {
 func LocaleContainsFold(v discord.Locale) predicate.Guild {
 	vc := string(v)
 	return predicate.Guild(sql.FieldContainsFold(FieldLocale, vc))
+}
+
+// LevelUpMessageEQ applies the EQ predicate on the "level_up_message" field.
+func LevelUpMessageEQ(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldLevelUpMessage, v))
+}
+
+// LevelUpMessageNEQ applies the NEQ predicate on the "level_up_message" field.
+func LevelUpMessageNEQ(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldNEQ(FieldLevelUpMessage, v))
+}
+
+// LevelUpMessageIn applies the In predicate on the "level_up_message" field.
+func LevelUpMessageIn(vs ...string) predicate.Guild {
+	return predicate.Guild(sql.FieldIn(FieldLevelUpMessage, vs...))
+}
+
+// LevelUpMessageNotIn applies the NotIn predicate on the "level_up_message" field.
+func LevelUpMessageNotIn(vs ...string) predicate.Guild {
+	return predicate.Guild(sql.FieldNotIn(FieldLevelUpMessage, vs...))
+}
+
+// LevelUpMessageGT applies the GT predicate on the "level_up_message" field.
+func LevelUpMessageGT(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldGT(FieldLevelUpMessage, v))
+}
+
+// LevelUpMessageGTE applies the GTE predicate on the "level_up_message" field.
+func LevelUpMessageGTE(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldGTE(FieldLevelUpMessage, v))
+}
+
+// LevelUpMessageLT applies the LT predicate on the "level_up_message" field.
+func LevelUpMessageLT(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldLT(FieldLevelUpMessage, v))
+}
+
+// LevelUpMessageLTE applies the LTE predicate on the "level_up_message" field.
+func LevelUpMessageLTE(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldLTE(FieldLevelUpMessage, v))
+}
+
+// LevelUpMessageContains applies the Contains predicate on the "level_up_message" field.
+func LevelUpMessageContains(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldContains(FieldLevelUpMessage, v))
+}
+
+// LevelUpMessageHasPrefix applies the HasPrefix predicate on the "level_up_message" field.
+func LevelUpMessageHasPrefix(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldHasPrefix(FieldLevelUpMessage, v))
+}
+
+// LevelUpMessageHasSuffix applies the HasSuffix predicate on the "level_up_message" field.
+func LevelUpMessageHasSuffix(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldHasSuffix(FieldLevelUpMessage, v))
+}
+
+// LevelUpMessageEqualFold applies the EqualFold predicate on the "level_up_message" field.
+func LevelUpMessageEqualFold(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEqualFold(FieldLevelUpMessage, v))
+}
+
+// LevelUpMessageContainsFold applies the ContainsFold predicate on the "level_up_message" field.
+func LevelUpMessageContainsFold(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldContainsFold(FieldLevelUpMessage, v))
+}
+
+// LevelUpChannelEQ applies the EQ predicate on the "level_up_channel" field.
+func LevelUpChannelEQ(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldEQ(FieldLevelUpChannel, vc))
+}
+
+// LevelUpChannelNEQ applies the NEQ predicate on the "level_up_channel" field.
+func LevelUpChannelNEQ(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldNEQ(FieldLevelUpChannel, vc))
+}
+
+// LevelUpChannelIn applies the In predicate on the "level_up_channel" field.
+func LevelUpChannelIn(vs ...snowflake.ID) predicate.Guild {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = uint64(vs[i])
+	}
+	return predicate.Guild(sql.FieldIn(FieldLevelUpChannel, v...))
+}
+
+// LevelUpChannelNotIn applies the NotIn predicate on the "level_up_channel" field.
+func LevelUpChannelNotIn(vs ...snowflake.ID) predicate.Guild {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = uint64(vs[i])
+	}
+	return predicate.Guild(sql.FieldNotIn(FieldLevelUpChannel, v...))
+}
+
+// LevelUpChannelGT applies the GT predicate on the "level_up_channel" field.
+func LevelUpChannelGT(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldGT(FieldLevelUpChannel, vc))
+}
+
+// LevelUpChannelGTE applies the GTE predicate on the "level_up_channel" field.
+func LevelUpChannelGTE(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldGTE(FieldLevelUpChannel, vc))
+}
+
+// LevelUpChannelLT applies the LT predicate on the "level_up_channel" field.
+func LevelUpChannelLT(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldLT(FieldLevelUpChannel, vc))
+}
+
+// LevelUpChannelLTE applies the LTE predicate on the "level_up_channel" field.
+func LevelUpChannelLTE(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldLTE(FieldLevelUpChannel, vc))
+}
+
+// LevelUpChannelIsNil applies the IsNil predicate on the "level_up_channel" field.
+func LevelUpChannelIsNil() predicate.Guild {
+	return predicate.Guild(sql.FieldIsNull(FieldLevelUpChannel))
+}
+
+// LevelUpChannelNotNil applies the NotNil predicate on the "level_up_channel" field.
+func LevelUpChannelNotNil() predicate.Guild {
+	return predicate.Guild(sql.FieldNotNull(FieldLevelUpChannel))
+}
+
+// LevelUpExcludeChannelIsNil applies the IsNil predicate on the "level_up_exclude_channel" field.
+func LevelUpExcludeChannelIsNil() predicate.Guild {
+	return predicate.Guild(sql.FieldIsNull(FieldLevelUpExcludeChannel))
+}
+
+// LevelUpExcludeChannelNotNil applies the NotNil predicate on the "level_up_exclude_channel" field.
+func LevelUpExcludeChannelNotNil() predicate.Guild {
+	return predicate.Guild(sql.FieldNotNull(FieldLevelUpExcludeChannel))
+}
+
+// PermissionsIsNil applies the IsNil predicate on the "permissions" field.
+func PermissionsIsNil() predicate.Guild {
+	return predicate.Guild(sql.FieldIsNull(FieldPermissions))
+}
+
+// PermissionsNotNil applies the NotNil predicate on the "permissions" field.
+func PermissionsNotNil() predicate.Guild {
+	return predicate.Guild(sql.FieldNotNull(FieldPermissions))
 }
 
 // HasOwner applies the HasEdge predicate on the "owner" edge.

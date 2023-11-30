@@ -6,6 +6,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
+	"github.com/sabafly/gobot/internal/permissions"
 )
 
 // Guild holds the schema definition for the Guild entity.
@@ -26,6 +27,17 @@ func (Guild) Fields() []ent.Field {
 			NotEmpty().
 			Default(string(discord.LocaleJapanese)).
 			GoType(discord.Locale("")),
+		field.String("level_up_message").
+			NotEmpty().
+			Default("{user}がレベルアップしたよ！🥳\n**{before_level} レベル → {after_level} レベル**"),
+		field.Uint64("level_up_channel").
+			Optional().
+			Nillable().
+			GoType(snowflake.ID(0)),
+		field.JSON("level_up_exclude_channel", []snowflake.ID{}).
+			Optional(),
+		field.JSON("permissions", map[snowflake.ID]permissions.Permission{}).
+			Optional(),
 	}
 }
 

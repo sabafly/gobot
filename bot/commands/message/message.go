@@ -443,16 +443,20 @@ func Command(c *components.Components) *generic.GenericCommand {
 							return errors.NewError(err)
 						}
 
-						m.Update().SetBeforeID(message.ID).SetRateLimit(m.RateLimit).SaveX(e)
+						m.Update().SetBeforeID(message.ID).SetRateLimit(m.RateLimit).ExecX(e)
 						slog.Info("ピン留め更新", "cid", e.ChannelID, "mid", e.MessageID)
 					} else {
-						m.Update().SetRateLimit(m.RateLimit).SaveX(e)
+						m.Update().SetRateLimit(m.RateLimit).ExecX(e)
 					}
 					return nil
 				}(e, c); err != nil {
 					return err
 				}
 			case *events.GuildMessageDelete:
+				if ok := c.GetLock("message_pin").Mutex(e.ChannelID).TryLock(); !ok {
+					return nil
+				}
+				defer c.GetLock("message_pin").Mutex(e.ChannelID).Unlock()
 				if e.Message.WebhookID == nil {
 					return nil
 				}
@@ -481,17 +485,14 @@ func Command(c *components.Components) *generic.GenericCommand {
 			}
 			return nil
 		},
-	}).SetDB(c)
+	}).SetComponent(c)
 }
 
 func messageSuffixMessageCreateHandler(e *events.GuildMessageCreate, c *components.Components) errors.Error {
-	if e.Message.Author.Bot || e.Message.Author.System {
-		return nil
-	}
+	slog.Debug("メッセージ作成")
 	if e.Message.Content == "" {
 		return nil
 	}
-	slog.Debug("メッセージ作成")
 	if e.Message.Type.System() || e.Message.Author.System || e.Message.Author.Bot {
 		return nil
 	}

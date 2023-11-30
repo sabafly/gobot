@@ -3,9 +3,13 @@
 package member
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/ent/predicate"
+	"github.com/sabafly/gobot/internal/xppoint"
 )
 
 // ID filters vertices based on their ID field.
@@ -53,6 +57,28 @@ func IDLTE(id int) predicate.Member {
 	return predicate.Member(sql.FieldLTE(FieldID, id))
 }
 
+// Xp applies equality check predicate on the "xp" field. It's identical to XpEQ.
+func Xp(v xppoint.XP) predicate.Member {
+	vc := uint64(v)
+	return predicate.Member(sql.FieldEQ(FieldXp, vc))
+}
+
+// UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
+func UserID(v snowflake.ID) predicate.Member {
+	vc := uint64(v)
+	return predicate.Member(sql.FieldEQ(FieldUserID, vc))
+}
+
+// LastXp applies equality check predicate on the "last_xp" field. It's identical to LastXpEQ.
+func LastXp(v time.Time) predicate.Member {
+	return predicate.Member(sql.FieldEQ(FieldLastXp, v))
+}
+
+// MessageCount applies equality check predicate on the "message_count" field. It's identical to MessageCountEQ.
+func MessageCount(v uint64) predicate.Member {
+	return predicate.Member(sql.FieldEQ(FieldMessageCount, v))
+}
+
 // PermissionIsNil applies the IsNil predicate on the "permission" field.
 func PermissionIsNil() predicate.Member {
 	return predicate.Member(sql.FieldIsNull(FieldPermission))
@@ -61,6 +87,180 @@ func PermissionIsNil() predicate.Member {
 // PermissionNotNil applies the NotNil predicate on the "permission" field.
 func PermissionNotNil() predicate.Member {
 	return predicate.Member(sql.FieldNotNull(FieldPermission))
+}
+
+// XpEQ applies the EQ predicate on the "xp" field.
+func XpEQ(v xppoint.XP) predicate.Member {
+	vc := uint64(v)
+	return predicate.Member(sql.FieldEQ(FieldXp, vc))
+}
+
+// XpNEQ applies the NEQ predicate on the "xp" field.
+func XpNEQ(v xppoint.XP) predicate.Member {
+	vc := uint64(v)
+	return predicate.Member(sql.FieldNEQ(FieldXp, vc))
+}
+
+// XpIn applies the In predicate on the "xp" field.
+func XpIn(vs ...xppoint.XP) predicate.Member {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = uint64(vs[i])
+	}
+	return predicate.Member(sql.FieldIn(FieldXp, v...))
+}
+
+// XpNotIn applies the NotIn predicate on the "xp" field.
+func XpNotIn(vs ...xppoint.XP) predicate.Member {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = uint64(vs[i])
+	}
+	return predicate.Member(sql.FieldNotIn(FieldXp, v...))
+}
+
+// XpGT applies the GT predicate on the "xp" field.
+func XpGT(v xppoint.XP) predicate.Member {
+	vc := uint64(v)
+	return predicate.Member(sql.FieldGT(FieldXp, vc))
+}
+
+// XpGTE applies the GTE predicate on the "xp" field.
+func XpGTE(v xppoint.XP) predicate.Member {
+	vc := uint64(v)
+	return predicate.Member(sql.FieldGTE(FieldXp, vc))
+}
+
+// XpLT applies the LT predicate on the "xp" field.
+func XpLT(v xppoint.XP) predicate.Member {
+	vc := uint64(v)
+	return predicate.Member(sql.FieldLT(FieldXp, vc))
+}
+
+// XpLTE applies the LTE predicate on the "xp" field.
+func XpLTE(v xppoint.XP) predicate.Member {
+	vc := uint64(v)
+	return predicate.Member(sql.FieldLTE(FieldXp, vc))
+}
+
+// UserIDEQ applies the EQ predicate on the "user_id" field.
+func UserIDEQ(v snowflake.ID) predicate.Member {
+	vc := uint64(v)
+	return predicate.Member(sql.FieldEQ(FieldUserID, vc))
+}
+
+// UserIDNEQ applies the NEQ predicate on the "user_id" field.
+func UserIDNEQ(v snowflake.ID) predicate.Member {
+	vc := uint64(v)
+	return predicate.Member(sql.FieldNEQ(FieldUserID, vc))
+}
+
+// UserIDIn applies the In predicate on the "user_id" field.
+func UserIDIn(vs ...snowflake.ID) predicate.Member {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = uint64(vs[i])
+	}
+	return predicate.Member(sql.FieldIn(FieldUserID, v...))
+}
+
+// UserIDNotIn applies the NotIn predicate on the "user_id" field.
+func UserIDNotIn(vs ...snowflake.ID) predicate.Member {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = uint64(vs[i])
+	}
+	return predicate.Member(sql.FieldNotIn(FieldUserID, v...))
+}
+
+// LastXpEQ applies the EQ predicate on the "last_xp" field.
+func LastXpEQ(v time.Time) predicate.Member {
+	return predicate.Member(sql.FieldEQ(FieldLastXp, v))
+}
+
+// LastXpNEQ applies the NEQ predicate on the "last_xp" field.
+func LastXpNEQ(v time.Time) predicate.Member {
+	return predicate.Member(sql.FieldNEQ(FieldLastXp, v))
+}
+
+// LastXpIn applies the In predicate on the "last_xp" field.
+func LastXpIn(vs ...time.Time) predicate.Member {
+	return predicate.Member(sql.FieldIn(FieldLastXp, vs...))
+}
+
+// LastXpNotIn applies the NotIn predicate on the "last_xp" field.
+func LastXpNotIn(vs ...time.Time) predicate.Member {
+	return predicate.Member(sql.FieldNotIn(FieldLastXp, vs...))
+}
+
+// LastXpGT applies the GT predicate on the "last_xp" field.
+func LastXpGT(v time.Time) predicate.Member {
+	return predicate.Member(sql.FieldGT(FieldLastXp, v))
+}
+
+// LastXpGTE applies the GTE predicate on the "last_xp" field.
+func LastXpGTE(v time.Time) predicate.Member {
+	return predicate.Member(sql.FieldGTE(FieldLastXp, v))
+}
+
+// LastXpLT applies the LT predicate on the "last_xp" field.
+func LastXpLT(v time.Time) predicate.Member {
+	return predicate.Member(sql.FieldLT(FieldLastXp, v))
+}
+
+// LastXpLTE applies the LTE predicate on the "last_xp" field.
+func LastXpLTE(v time.Time) predicate.Member {
+	return predicate.Member(sql.FieldLTE(FieldLastXp, v))
+}
+
+// LastXpIsNil applies the IsNil predicate on the "last_xp" field.
+func LastXpIsNil() predicate.Member {
+	return predicate.Member(sql.FieldIsNull(FieldLastXp))
+}
+
+// LastXpNotNil applies the NotNil predicate on the "last_xp" field.
+func LastXpNotNil() predicate.Member {
+	return predicate.Member(sql.FieldNotNull(FieldLastXp))
+}
+
+// MessageCountEQ applies the EQ predicate on the "message_count" field.
+func MessageCountEQ(v uint64) predicate.Member {
+	return predicate.Member(sql.FieldEQ(FieldMessageCount, v))
+}
+
+// MessageCountNEQ applies the NEQ predicate on the "message_count" field.
+func MessageCountNEQ(v uint64) predicate.Member {
+	return predicate.Member(sql.FieldNEQ(FieldMessageCount, v))
+}
+
+// MessageCountIn applies the In predicate on the "message_count" field.
+func MessageCountIn(vs ...uint64) predicate.Member {
+	return predicate.Member(sql.FieldIn(FieldMessageCount, vs...))
+}
+
+// MessageCountNotIn applies the NotIn predicate on the "message_count" field.
+func MessageCountNotIn(vs ...uint64) predicate.Member {
+	return predicate.Member(sql.FieldNotIn(FieldMessageCount, vs...))
+}
+
+// MessageCountGT applies the GT predicate on the "message_count" field.
+func MessageCountGT(v uint64) predicate.Member {
+	return predicate.Member(sql.FieldGT(FieldMessageCount, v))
+}
+
+// MessageCountGTE applies the GTE predicate on the "message_count" field.
+func MessageCountGTE(v uint64) predicate.Member {
+	return predicate.Member(sql.FieldGTE(FieldMessageCount, v))
+}
+
+// MessageCountLT applies the LT predicate on the "message_count" field.
+func MessageCountLT(v uint64) predicate.Member {
+	return predicate.Member(sql.FieldLT(FieldMessageCount, v))
+}
+
+// MessageCountLTE applies the LTE predicate on the "message_count" field.
+func MessageCountLTE(v uint64) predicate.Member {
+	return predicate.Member(sql.FieldLTE(FieldMessageCount, v))
 }
 
 // HasGuild applies the HasEdge predicate on the "guild" edge.
