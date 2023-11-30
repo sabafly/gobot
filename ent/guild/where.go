@@ -77,6 +77,11 @@ func LevelUpChannel(v snowflake.ID) predicate.Guild {
 	return predicate.Guild(sql.FieldEQ(FieldLevelUpChannel, vc))
 }
 
+// LevelMee6Imported applies equality check predicate on the "level_mee6_imported" field. It's identical to LevelMee6ImportedEQ.
+func LevelMee6Imported(v bool) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldLevelMee6Imported, v))
+}
+
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.Guild {
 	return predicate.Guild(sql.FieldEQ(FieldName, v))
@@ -363,6 +368,16 @@ func LevelUpExcludeChannelIsNil() predicate.Guild {
 // LevelUpExcludeChannelNotNil applies the NotNil predicate on the "level_up_exclude_channel" field.
 func LevelUpExcludeChannelNotNil() predicate.Guild {
 	return predicate.Guild(sql.FieldNotNull(FieldLevelUpExcludeChannel))
+}
+
+// LevelMee6ImportedEQ applies the EQ predicate on the "level_mee6_imported" field.
+func LevelMee6ImportedEQ(v bool) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldLevelMee6Imported, v))
+}
+
+// LevelMee6ImportedNEQ applies the NEQ predicate on the "level_mee6_imported" field.
+func LevelMee6ImportedNEQ(v bool) predicate.Guild {
+	return predicate.Guild(sql.FieldNEQ(FieldLevelMee6Imported, v))
 }
 
 // PermissionsIsNil applies the IsNil predicate on the "permissions" field.

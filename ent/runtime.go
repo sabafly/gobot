@@ -42,6 +42,10 @@ func init() {
 	guild.DefaultLevelUpMessage = guildDescLevelUpMessage.Default.(string)
 	// guild.LevelUpMessageValidator is a validator for the "level_up_message" field. It is called by the builders before save.
 	guild.LevelUpMessageValidator = guildDescLevelUpMessage.Validators[0].(func(string) error)
+	// guildDescLevelMee6Imported is the schema descriptor for level_mee6_imported field.
+	guildDescLevelMee6Imported := guildFields[6].Descriptor()
+	// guild.DefaultLevelMee6Imported holds the default value on creation for the level_mee6_imported field.
+	guild.DefaultLevelMee6Imported = guildDescLevelMee6Imported.Default.(bool)
 	memberFields := schema.Member{}.Fields()
 	_ = memberFields
 	// memberDescPermission is the schema descriptor for permission field.

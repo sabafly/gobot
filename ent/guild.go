@@ -31,6 +31,8 @@ type Guild struct {
 	LevelUpChannel *snowflake.ID `json:"level_up_channel,omitempty"`
 	// LevelUpExcludeChannel holds the value of the "level_up_exclude_channel" field.
 	LevelUpExcludeChannel []snowflake.ID `json:"level_up_exclude_channel,omitempty"`
+	// LevelMee6Imported holds the value of the "level_mee6_imported" field.
+	LevelMee6Imported bool `json:"level_mee6_imported,omitempty"`
 	// Permissions holds the value of the "permissions" field.
 	Permissions map[snowflake.ID]permissions.Permission `json:"permissions,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -124,6 +126,8 @@ func (*Guild) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case guild.FieldLevelUpExcludeChannel, guild.FieldPermissions:
 			values[i] = new([]byte)
+		case guild.FieldLevelMee6Imported:
+			values[i] = new(sql.NullBool)
 		case guild.FieldID, guild.FieldLevelUpChannel:
 			values[i] = new(sql.NullInt64)
 		case guild.FieldName, guild.FieldLocale, guild.FieldLevelUpMessage:
@@ -183,6 +187,12 @@ func (gu *Guild) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &gu.LevelUpExcludeChannel); err != nil {
 					return fmt.Errorf("unmarshal field level_up_exclude_channel: %w", err)
 				}
+			}
+		case guild.FieldLevelMee6Imported:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field level_mee6_imported", values[i])
+			} else if value.Valid {
+				gu.LevelMee6Imported = value.Bool
 			}
 		case guild.FieldPermissions:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -281,6 +291,9 @@ func (gu *Guild) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("level_up_exclude_channel=")
 	builder.WriteString(fmt.Sprintf("%v", gu.LevelUpExcludeChannel))
+	builder.WriteString(", ")
+	builder.WriteString("level_mee6_imported=")
+	builder.WriteString(fmt.Sprintf("%v", gu.LevelMee6Imported))
 	builder.WriteString(", ")
 	builder.WriteString("permissions=")
 	builder.WriteString(fmt.Sprintf("%v", gu.Permissions))

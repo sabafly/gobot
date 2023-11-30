@@ -1,7 +1,10 @@
 package level
 
 import (
+	"encoding/json"
 	"fmt"
+	"log/slog"
+	"net/http"
 	"slices"
 	"strconv"
 	"strings"
@@ -11,6 +14,7 @@ import (
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/ent/member"
@@ -131,6 +135,10 @@ func Command(c *components.Components) components.Command {
 								Description: "clear exclude channels",
 							},
 						},
+					},
+					discord.ApplicationCommandOptionSubCommand{
+						Name:        "import-mee6",
+						Description: "import xp point from mee6",
 					},
 				},
 			},
@@ -422,6 +430,98 @@ func Command(c *components.Components) components.Command {
 						discord.NewMessageBuilder().
 							SetContent(translate.Message(event.Locale(), "components.level.exclude-channel.clear.message")).
 							Create(),
+					); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
+			"/level/import-mee6": generic.PCommandHandler{
+				PCommandHandler: generic.PermissionCommandCheck("level.import-mee6"),
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					g, err := c.GuildCreateID(event, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+
+					if g.LevelMee6Imported {
+						return errors.NewError(errors.ErrorMessage("components.level.import-mee6.message.already", event))
+					}
+
+					members := []discord.Member{}
+					member_count := 1000
+					afterID := snowflake.ID(0)
+					for member_count == 1000 {
+						m, err := event.Client().Rest().GetMembers(*event.GuildID(), member_count, afterID)
+						if err != nil {
+							return errors.NewError(err)
+						}
+						member_count = len(m)
+						members = append(members, m...)
+						afterID = m[len(m)-1].User.ID
+					}
+
+					slog.Info("mee6インポート", slog.Any("gid", event.GuildID()), slog.Int("member_count", len(members)))
+
+					member_count = 0
+					url := fmt.Sprintf("https://mee6.xyz/api/plugins/levels/leaderboard/%s", event.GuildID().String())
+					for page := 0; true; page++ {
+						response, err := http.Get(fmt.Sprintf("%s?page=%d", url, page))
+						if err != nil || response.StatusCode != http.StatusOK {
+							switch response.StatusCode {
+							case http.StatusUnauthorized:
+								if err := event.RespondMessage(
+									discord.NewMessageBuilder().
+										SetContent(
+											fmt.Sprintf("# FAILED\n```| STATUS CODE | %d\n| RESPONSE | %v```%s",
+												response.StatusCode,
+												err,
+												translate.Message(event.Locale(), "components.level.import-mee6.message.unauthorized",
+													translate.WithTemplate(map[string]any{"GuildID": *event.GuildID()}),
+												),
+											),
+										),
+								); err != nil {
+									return errors.NewError(err)
+								}
+								return nil
+							default:
+								if err := event.RespondMessage(
+									discord.NewMessageBuilder().
+										SetContent(fmt.Sprintf("# FAILED\n```| STATUS CODE | %d\n| RESPONSE | %v```", response.StatusCode, err)),
+								); err != nil {
+									return errors.NewError(err)
+								}
+								return nil
+							}
+						}
+						var leaderboard mee6LeaderBoard
+						if err := json.NewDecoder(response.Body).Decode(&leaderboard); err != nil {
+							return errors.NewError(err)
+						}
+						if len(leaderboard.Players) < 1 {
+							break
+						}
+						for _, player := range leaderboard.Players {
+							index := slices.IndexFunc(members, func(m discord.Member) bool { return m.User.ID == player.ID })
+							if index == -1 {
+								continue
+							}
+							slog.Info("mee6メンバーインポート", slog.Any("gid", event.GuildID()), slog.Any("member_id", player.ID))
+							m, err := c.MemberCreate(event, members[index].User, *event.GuildID())
+							if err != nil {
+								return errors.NewError(err)
+							}
+							m.Update().SetXp(xppoint.XP(player.Xp)).ExecX(event)
+							member_count++
+						}
+					}
+
+					g.Update().SetLevelMee6Imported(true).ExecX(event)
+
+					if err := event.RespondMessage(
+						discord.NewMessageBuilder().
+							SetContent(fmt.Sprintf("# SUCCEED\n```| IMPORTED MEMBER COUNT | %d```", member_count)),
 					); err != nil {
 						return errors.NewError(err)
 					}

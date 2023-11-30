@@ -516,9 +516,13 @@ components.level.up.message-channel.default: 「レベルアップした時の�
 components.level.exclude-channel.add.message: "{{.Channel}}を除外します"
 components.level.exclude-channel.clear.message: "除外チャンネルをクリアします"
 components.level.exclude-channel.remove.message: "{{.Channel}}の除外を解除します"
+components.level.import-mee6.message.already: インポートできません
+components.level.import-mee6.message.already.description: 二回以上インポートすることはできません
+components.level.import-mee6.message.unauthorized: |-
+  mee6リーダーボードがパブリックではありません。
+  [設定](<https://mee6.xyz/en/dashboard/{{.GuildID}}/leaderboard>)からリーダーボードを公開してください。
 
 # エラーメッセージ
-
 errors.generic.message: エラーが発生しました
 errors.panic.message: 致命的なエラー
 errors.invalid.bot.target: ボットは選択できません

@@ -36,6 +36,8 @@ func (Guild) Fields() []ent.Field {
 			GoType(snowflake.ID(0)),
 		field.JSON("level_up_exclude_channel", []snowflake.ID{}).
 			Optional(),
+		field.Bool("level_mee6_imported").
+			Default(false),
 		field.JSON("permissions", map[snowflake.ID]permissions.Permission{}).
 			Optional(),
 	}

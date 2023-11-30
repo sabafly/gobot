@@ -60,6 +60,7 @@ type GuildMutation struct {
 	addlevel_up_channel            *snowflake.ID
 	level_up_exclude_channel       *[]snowflake.ID
 	appendlevel_up_exclude_channel []snowflake.ID
+	level_mee6_imported            *bool
 	permissions                    *map[snowflake.ID]permissions.Permission
 	clearedFields                  map[string]struct{}
 	owner                          *snowflake.ID
@@ -429,6 +430,42 @@ func (m *GuildMutation) ResetLevelUpExcludeChannel() {
 	m.level_up_exclude_channel = nil
 	m.appendlevel_up_exclude_channel = nil
 	delete(m.clearedFields, guild.FieldLevelUpExcludeChannel)
+}
+
+// SetLevelMee6Imported sets the "level_mee6_imported" field.
+func (m *GuildMutation) SetLevelMee6Imported(b bool) {
+	m.level_mee6_imported = &b
+}
+
+// LevelMee6Imported returns the value of the "level_mee6_imported" field in the mutation.
+func (m *GuildMutation) LevelMee6Imported() (r bool, exists bool) {
+	v := m.level_mee6_imported
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLevelMee6Imported returns the old "level_mee6_imported" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldLevelMee6Imported(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLevelMee6Imported is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLevelMee6Imported requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLevelMee6Imported: %w", err)
+	}
+	return oldValue.LevelMee6Imported, nil
+}
+
+// ResetLevelMee6Imported resets all changes to the "level_mee6_imported" field.
+func (m *GuildMutation) ResetLevelMee6Imported() {
+	m.level_mee6_imported = nil
 }
 
 // SetPermissions sets the "permissions" field.
@@ -823,7 +860,7 @@ func (m *GuildMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GuildMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.name != nil {
 		fields = append(fields, guild.FieldName)
 	}
@@ -838,6 +875,9 @@ func (m *GuildMutation) Fields() []string {
 	}
 	if m.level_up_exclude_channel != nil {
 		fields = append(fields, guild.FieldLevelUpExcludeChannel)
+	}
+	if m.level_mee6_imported != nil {
+		fields = append(fields, guild.FieldLevelMee6Imported)
 	}
 	if m.permissions != nil {
 		fields = append(fields, guild.FieldPermissions)
@@ -860,6 +900,8 @@ func (m *GuildMutation) Field(name string) (ent.Value, bool) {
 		return m.LevelUpChannel()
 	case guild.FieldLevelUpExcludeChannel:
 		return m.LevelUpExcludeChannel()
+	case guild.FieldLevelMee6Imported:
+		return m.LevelMee6Imported()
 	case guild.FieldPermissions:
 		return m.Permissions()
 	}
@@ -881,6 +923,8 @@ func (m *GuildMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldLevelUpChannel(ctx)
 	case guild.FieldLevelUpExcludeChannel:
 		return m.OldLevelUpExcludeChannel(ctx)
+	case guild.FieldLevelMee6Imported:
+		return m.OldLevelMee6Imported(ctx)
 	case guild.FieldPermissions:
 		return m.OldPermissions(ctx)
 	}
@@ -926,6 +970,13 @@ func (m *GuildMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLevelUpExcludeChannel(v)
+		return nil
+	case guild.FieldLevelMee6Imported:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLevelMee6Imported(v)
 		return nil
 	case guild.FieldPermissions:
 		v, ok := value.(map[snowflake.ID]permissions.Permission)
@@ -1033,6 +1084,9 @@ func (m *GuildMutation) ResetField(name string) error {
 		return nil
 	case guild.FieldLevelUpExcludeChannel:
 		m.ResetLevelUpExcludeChannel()
+		return nil
+	case guild.FieldLevelMee6Imported:
+		m.ResetLevelMee6Imported()
 		return nil
 	case guild.FieldPermissions:
 		m.ResetPermissions()

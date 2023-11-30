@@ -83,6 +83,20 @@ func (gc *GuildCreate) SetLevelUpExcludeChannel(s []snowflake.ID) *GuildCreate {
 	return gc
 }
 
+// SetLevelMee6Imported sets the "level_mee6_imported" field.
+func (gc *GuildCreate) SetLevelMee6Imported(b bool) *GuildCreate {
+	gc.mutation.SetLevelMee6Imported(b)
+	return gc
+}
+
+// SetNillableLevelMee6Imported sets the "level_mee6_imported" field if the given value is not nil.
+func (gc *GuildCreate) SetNillableLevelMee6Imported(b *bool) *GuildCreate {
+	if b != nil {
+		gc.SetLevelMee6Imported(*b)
+	}
+	return gc
+}
+
 // SetPermissions sets the "permissions" field.
 func (gc *GuildCreate) SetPermissions(m map[snowflake.ID]permissions.Permission) *GuildCreate {
 	gc.mutation.SetPermissions(m)
@@ -224,6 +238,10 @@ func (gc *GuildCreate) defaults() {
 		v := guild.DefaultLevelUpMessage
 		gc.mutation.SetLevelUpMessage(v)
 	}
+	if _, ok := gc.mutation.LevelMee6Imported(); !ok {
+		v := guild.DefaultLevelMee6Imported
+		gc.mutation.SetLevelMee6Imported(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -251,6 +269,9 @@ func (gc *GuildCreate) check() error {
 		if err := guild.LevelUpMessageValidator(v); err != nil {
 			return &ValidationError{Name: "level_up_message", err: fmt.Errorf(`ent: validator failed for field "Guild.level_up_message": %w`, err)}
 		}
+	}
+	if _, ok := gc.mutation.LevelMee6Imported(); !ok {
+		return &ValidationError{Name: "level_mee6_imported", err: errors.New(`ent: missing required field "Guild.level_mee6_imported"`)}
 	}
 	if _, ok := gc.mutation.OwnerID(); !ok {
 		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Guild.owner"`)}
@@ -306,6 +327,10 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 	if value, ok := gc.mutation.LevelUpExcludeChannel(); ok {
 		_spec.SetField(guild.FieldLevelUpExcludeChannel, field.TypeJSON, value)
 		_node.LevelUpExcludeChannel = value
+	}
+	if value, ok := gc.mutation.LevelMee6Imported(); ok {
+		_spec.SetField(guild.FieldLevelMee6Imported, field.TypeBool, value)
+		_node.LevelMee6Imported = value
 	}
 	if value, ok := gc.mutation.Permissions(); ok {
 		_spec.SetField(guild.FieldPermissions, field.TypeJSON, value)

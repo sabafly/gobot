@@ -23,6 +23,8 @@ const (
 	FieldLevelUpChannel = "level_up_channel"
 	// FieldLevelUpExcludeChannel holds the string denoting the level_up_exclude_channel field in the database.
 	FieldLevelUpExcludeChannel = "level_up_exclude_channel"
+	// FieldLevelMee6Imported holds the string denoting the level_mee6_imported field in the database.
+	FieldLevelMee6Imported = "level_mee6_imported"
 	// FieldPermissions holds the string denoting the permissions field in the database.
 	FieldPermissions = "permissions"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
@@ -91,6 +93,7 @@ var Columns = []string{
 	FieldLevelUpMessage,
 	FieldLevelUpChannel,
 	FieldLevelUpExcludeChannel,
+	FieldLevelMee6Imported,
 	FieldPermissions,
 }
 
@@ -126,6 +129,8 @@ var (
 	DefaultLevelUpMessage string
 	// LevelUpMessageValidator is a validator for the "level_up_message" field. It is called by the builders before save.
 	LevelUpMessageValidator func(string) error
+	// DefaultLevelMee6Imported holds the default value on creation for the "level_mee6_imported" field.
+	DefaultLevelMee6Imported bool
 )
 
 // OrderOption defines the ordering options for the Guild queries.
@@ -154,6 +159,11 @@ func ByLevelUpMessage(opts ...sql.OrderTermOption) OrderOption {
 // ByLevelUpChannel orders the results by the level_up_channel field.
 func ByLevelUpChannel(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLevelUpChannel, opts...).ToFunc()
+}
+
+// ByLevelMee6Imported orders the results by the level_mee6_imported field.
+func ByLevelMee6Imported(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLevelMee6Imported, opts...).ToFunc()
 }
 
 // ByOwnerField orders the results by owner field.

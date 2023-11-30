@@ -125,6 +125,20 @@ func (gu *GuildUpdate) ClearLevelUpExcludeChannel() *GuildUpdate {
 	return gu
 }
 
+// SetLevelMee6Imported sets the "level_mee6_imported" field.
+func (gu *GuildUpdate) SetLevelMee6Imported(b bool) *GuildUpdate {
+	gu.mutation.SetLevelMee6Imported(b)
+	return gu
+}
+
+// SetNillableLevelMee6Imported sets the "level_mee6_imported" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableLevelMee6Imported(b *bool) *GuildUpdate {
+	if b != nil {
+		gu.SetLevelMee6Imported(*b)
+	}
+	return gu
+}
+
 // SetPermissions sets the "permissions" field.
 func (gu *GuildUpdate) SetPermissions(m map[snowflake.ID]permissions.Permission) *GuildUpdate {
 	gu.mutation.SetPermissions(m)
@@ -429,6 +443,9 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if gu.mutation.LevelUpExcludeChannelCleared() {
 		_spec.ClearField(guild.FieldLevelUpExcludeChannel, field.TypeJSON)
+	}
+	if value, ok := gu.mutation.LevelMee6Imported(); ok {
+		_spec.SetField(guild.FieldLevelMee6Imported, field.TypeBool, value)
 	}
 	if value, ok := gu.mutation.Permissions(); ok {
 		_spec.SetField(guild.FieldPermissions, field.TypeJSON, value)
@@ -797,6 +814,20 @@ func (guo *GuildUpdateOne) ClearLevelUpExcludeChannel() *GuildUpdateOne {
 	return guo
 }
 
+// SetLevelMee6Imported sets the "level_mee6_imported" field.
+func (guo *GuildUpdateOne) SetLevelMee6Imported(b bool) *GuildUpdateOne {
+	guo.mutation.SetLevelMee6Imported(b)
+	return guo
+}
+
+// SetNillableLevelMee6Imported sets the "level_mee6_imported" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableLevelMee6Imported(b *bool) *GuildUpdateOne {
+	if b != nil {
+		guo.SetLevelMee6Imported(*b)
+	}
+	return guo
+}
+
 // SetPermissions sets the "permissions" field.
 func (guo *GuildUpdateOne) SetPermissions(m map[snowflake.ID]permissions.Permission) *GuildUpdateOne {
 	guo.mutation.SetPermissions(m)
@@ -1131,6 +1162,9 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 	}
 	if guo.mutation.LevelUpExcludeChannelCleared() {
 		_spec.ClearField(guild.FieldLevelUpExcludeChannel, field.TypeJSON)
+	}
+	if value, ok := guo.mutation.LevelMee6Imported(); ok {
+		_spec.SetField(guild.FieldLevelMee6Imported, field.TypeBool, value)
 	}
 	if value, ok := guo.mutation.Permissions(); ok {
 		_spec.SetField(guild.FieldPermissions, field.TypeJSON, value)
