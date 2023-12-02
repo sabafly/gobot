@@ -681,7 +681,7 @@ func Command(c *components.Components) components.Command {
 					}
 					hi, _ := discordutil.GetHighestRolePosition(role_map)
 
-					if role.Managed || role.Position >= hi {
+					if role.Managed || role.Position >= hi || role.ID == *event.GuildID() {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.role", event))
 					}
 
