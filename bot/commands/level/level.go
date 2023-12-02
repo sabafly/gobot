@@ -1,6 +1,7 @@
 package level
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -17,10 +18,13 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
+	"github.com/sabafly/gobot/ent"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/internal/builtin"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/embeds"
 	"github.com/sabafly/gobot/internal/errors"
+	"github.com/sabafly/gobot/internal/smap"
 	"github.com/sabafly/gobot/internal/translate"
 	"github.com/sabafly/gobot/internal/xppoint"
 )
@@ -134,11 +138,67 @@ func Command(c *components.Components) components.Command {
 								Name:        "clear",
 								Description: "clear exclude channels",
 							},
+							{
+								Name:        "list",
+								Description: "list exclude channels",
+							},
 						},
 					},
 					discord.ApplicationCommandOptionSubCommand{
 						Name:        "import-mee6",
 						Description: "import xp point from mee6",
+					},
+					discord.ApplicationCommandOptionSubCommand{
+						Name:        "reset",
+						Description: "reset user xp",
+						Options: []discord.ApplicationCommandOption{
+							discord.ApplicationCommandOptionUser{
+								Name:        "target",
+								Description: "target user",
+								Required:    true,
+							},
+						},
+					},
+					discord.ApplicationCommandOptionSubCommandGroup{
+						Name:        "role",
+						Description: "role",
+						Options: []discord.ApplicationCommandOptionSubCommand{
+							{
+								Name:        "set",
+								Description: "set level role",
+								Options: []discord.ApplicationCommandOption{
+									discord.ApplicationCommandOptionInt{
+										Name:        "level",
+										Description: "level number",
+										Required:    true,
+										MinValue:    builtin.Ptr(1),
+										MaxValue:    builtin.Ptr(1000),
+									},
+									discord.ApplicationCommandOptionRole{
+										Name:        "role",
+										Description: "role",
+										Required:    true,
+									},
+								},
+							},
+							{
+								Name:        "remove",
+								Description: "remove level role",
+								Options: []discord.ApplicationCommandOption{
+									discord.ApplicationCommandOptionInt{
+										Name:        "level",
+										Description: "level number",
+										Required:    true,
+										MinValue:    builtin.Ptr(1),
+										MaxValue:    builtin.Ptr(1000),
+									},
+								},
+							},
+							{
+								Name:        "list",
+								Description: "list level roles",
+							},
+						},
 					},
 				},
 			},
@@ -268,10 +328,17 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 					movedXp := uint64(fromUser.Xp)
+					before := toUser.Xp.Level()
 					toUser.Xp.Add(movedXp)
+					after := toUser.Xp.Level()
 					fromUser.Xp = xppoint.XP(0)
 					toUser = toUser.Update().SetXp(toUser.Xp).SaveX(event)
 					fromUser = fromUser.Update().SetXp(fromUser.Xp).SaveX(event)
+					if before != after {
+						if err := level_up(g, after, event.Client(), *event.GuildID(), event.Channel().ID(), toUser, to.User, before); err != nil {
+							return errors.NewError(err)
+						}
+					}
 
 					ids := g.QueryMembers().Order(
 						member.ByXp(
@@ -333,7 +400,7 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/level/up/message-channel": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("level.up.message-channel"),
+				PCommandHandler: generic.PermissionCommandCheck("level.up.message-channel", discord.PermissionManageGuild),
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -366,19 +433,20 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/level/exclude-channel/add": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("level.exclude-channel.add"),
+				PCommandHandler: generic.PermissionCommandCheck("level.exclude-channel.add", discord.PermissionManageGuild),
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
 					channel := event.SlashCommandInteractionData().Channel("channel")
-					if !slices.Contains(g.LevelUpExcludeChannel, channel.ID) {
-						g.LevelUpExcludeChannel = append(g.LevelUpExcludeChannel, channel.ID)
-						g.Update().
-							SetLevelUpExcludeChannel(g.LevelUpExcludeChannel).
-							ExecX(event)
+					if slices.Contains(g.LevelUpExcludeChannel, channel.ID) {
+						return errors.NewError(errors.ErrorMessage("errors.already_exist", event))
 					}
+					g.LevelUpExcludeChannel = append(g.LevelUpExcludeChannel, channel.ID)
+					g.Update().
+						SetLevelUpExcludeChannel(g.LevelUpExcludeChannel).
+						ExecX(event)
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
 							SetContent(translate.Message(event.Locale(), "components.level.exclude-channel.add.message",
@@ -392,19 +460,21 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/level/exclude-channel/remove": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("level.exclude-channel.add"),
+				PCommandHandler: generic.PermissionCommandCheck("level.exclude-channel.add", discord.PermissionManageGuild),
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
 					channel := event.SlashCommandInteractionData().Channel("channel")
-					if index := slices.Index(g.LevelUpExcludeChannel, channel.ID); index != -1 {
-						g.LevelUpExcludeChannel = slices.Delete(g.LevelUpExcludeChannel, index, index+1)
-						g.Update().
-							SetLevelUpExcludeChannel(g.LevelUpExcludeChannel).
-							ExecX(event)
+					index := slices.Index(g.LevelUpExcludeChannel, channel.ID)
+					if index == -1 {
+						return errors.NewError(errors.ErrorMessage("errors.not_exist", event))
 					}
+					g.LevelUpExcludeChannel = slices.Delete(g.LevelUpExcludeChannel, index, index+1)
+					g.Update().
+						SetLevelUpExcludeChannel(g.LevelUpExcludeChannel).
+						ExecX(event)
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
 							SetContent(translate.Message(event.Locale(), "components.level.exclude-channel.remove.message",
@@ -418,7 +488,7 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/level/exclude-channel/clear": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("level.exclude-channel.add"),
+				PCommandHandler: generic.PermissionCommandCheck("level.exclude-channel.add", discord.PermissionManageGuild),
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -438,7 +508,7 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/level/import-mee6": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("level.import-mee6"),
+				PCommandHandler: generic.PermissionCommandCheck("level.import-mee6", discord.PermissionManageGuild),
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -529,6 +599,203 @@ func Command(c *components.Components) components.Command {
 					return nil
 				},
 			},
+			"/level/reset": generic.PCommandHandler{
+				PCommandHandler: generic.PermissionCommandCheck("level.reset", discord.PermissionManageGuild),
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					target := event.SlashCommandInteractionData().Member("target")
+					m, err := c.MemberCreate(event, target.User, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+					m.Update().SetXp(xppoint.XP(0)).ExecX(event)
+					if err := event.CreateMessage(
+						discord.NewMessageBuilder().
+							SetContent(translate.Message(event.Locale(), "components.level.reset.message",
+								translate.WithTemplate(map[string]any{"User": discord.UserMention(target.User.ID)}),
+							)).
+							Create(),
+					); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
+			"/level/exclude-channel/list": generic.PCommandHandler{
+				PCommandHandler: generic.PermissionCommandCheck("level.exclude-channel.list", discord.PermissionManageGuild),
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					g, err := c.GuildCreateID(event, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+					var listStr string
+					for i, id := range g.LevelUpExcludeChannel {
+						listStr += fmt.Sprintf("%d. %s\n", i+1, discord.ChannelMention(id))
+					}
+					if err := event.CreateMessage(
+						discord.NewMessageBuilder().
+							SetEmbeds(
+								embeds.SetEmbedProperties(
+									discord.NewEmbedBuilder().
+										SetTitle(translate.Message(event.Locale(), "components.level.exclude-channel.list.message")).
+										SetDescription(
+											builtin.Or(listStr != "",
+												listStr,
+												"- "+translate.Message(event.Locale(), "components.level.exclude-channel.list.message.none"),
+											),
+										).
+										Build(),
+								),
+							).
+							Create(),
+					); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
+			"/level/role/set": generic.PCommandHandler{
+				PCommandHandler: generic.PermissionCommandCheck("level.role.set", discord.PermissionManageGuild.Add(discord.PermissionManageRoles)),
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					g, err := c.GuildCreateID(event, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+					if len(g.LevelRole) >= 20 {
+						return errors.NewError(errors.ErrorMessage("errors.create.reach_max", event))
+					}
+					level := event.SlashCommandInteractionData().Int("level")
+					role := event.SlashCommandInteractionData().Role("role")
+					g.LevelRole = builtin.NonNilMap(g.LevelRole)
+					g.LevelRole[level] = role.ID
+					self, valid := event.Client().Caches().SelfMember(*event.GuildID())
+					if !valid {
+						return errors.NewError(errors.ErrorMessage("errors.invalid.self", event))
+					}
+					role_map := map[snowflake.ID]discord.Role{}
+					for _, id := range self.RoleIDs {
+						role, ok := event.Client().Caches().Role(*event.GuildID(), id)
+						if !ok {
+							continue
+						}
+						role_map[id] = role
+					}
+					hi, _ := discordutil.GetHighestRolePosition(role_map)
+
+					if role.Managed || role.Position >= hi {
+						return errors.NewError(errors.ErrorMessage("errors.invalid.role", event))
+					}
+
+					g.Update().
+						SetLevelRole(g.LevelRole).
+						ExecX(event)
+
+					if err := event.CreateMessage(
+						discord.NewMessageBuilder().
+							SetEmbeds(
+								embeds.SetEmbedProperties(
+									discord.NewEmbedBuilder().
+										SetTitle(translate.Message(event.Locale(), "components.level.role.set.message.embed.title")).
+										SetDescription(
+											translate.Message(event.Locale(), "components.level.role.set.message.embed.description",
+												translate.WithTemplate(map[string]any{
+													"Level": strconv.Itoa(level),
+													"Role":  discord.RoleMention(role.ID),
+												}),
+											),
+										).
+										Build(),
+								),
+							).
+							Create(),
+					); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
+			"/level/role/list": generic.PCommandHandler{
+				PCommandHandler: generic.PermissionCommandCheck("level.role.list", discord.PermissionManageGuild.Add(discord.PermissionManageRoles)),
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					g, err := c.GuildCreateID(event, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+					g.LevelRole = builtin.NonNilMap(g.LevelRole)
+					var listStr string
+					smap.MakeSortMap(g.LevelRole).Range(func(a, b int) int { return cmp.Compare(a, b) },
+						func(k int, v snowflake.ID) {
+							listStr += "- " + translate.Message(event.Locale(), "components.level.role.list.message",
+								translate.WithTemplate(map[string]any{
+									"Level": strconv.Itoa(k),
+									"Role":  discord.RoleMention(v),
+								}),
+							) + "\n"
+						},
+					)
+					if err := event.RespondMessage(
+						discord.NewMessageBuilder().
+							SetEmbeds(
+								embeds.SetEmbedProperties(
+									discord.NewEmbedBuilder().
+										SetTitle(translate.Message(event.Locale(), "components.level.role.list.message.embed.title")).
+										SetDescription(
+											builtin.Or(listStr != "",
+												listStr,
+												translate.Message(event.Locale(), "components.level.role.list.message.none"),
+											),
+										).
+										Build(),
+								),
+							),
+					); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
+			"/level/role/remove": generic.PCommandHandler{
+				PCommandHandler: generic.PermissionCommandCheck("level.role.remove", discord.PermissionManageGuild.Add(discord.PermissionManageRoles)),
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					g, err := c.GuildCreateID(event, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+					g.LevelRole = builtin.NonNilMap(g.LevelRole)
+					level := event.SlashCommandInteractionData().Int("level")
+					r, ok := g.LevelRole[level]
+					if !ok {
+						return errors.NewError(errors.ErrorMessage("errors.not_exist", event))
+					}
+					delete(g.LevelRole, level)
+
+					g.Update().
+						SetLevelRole(g.LevelRole).
+						ExecX(event)
+
+					if err := event.CreateMessage(
+						discord.NewMessageBuilder().
+							SetEmbeds(
+								embeds.SetEmbedProperties(
+									discord.NewEmbedBuilder().
+										SetTitle(translate.Message(event.Locale(), "components.level.role.remove.message.embed.title")).
+										SetDescription(
+											translate.Message(event.Locale(), "components.level.role.remove.message.embed.description",
+												translate.WithTemplate(map[string]any{
+													"Level": strconv.Itoa(level),
+													"Role":  discord.RoleMention(r),
+												}),
+											),
+										).
+										Build(),
+								),
+							).
+							Create(),
+					); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
 		},
 		ModalHandlers: map[string]generic.ModalHandler{
 			"level:up_message_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
@@ -592,20 +859,7 @@ func Command(c *components.Components) components.Command {
 					SetMessageCount(m.MessageCount + 1).
 					SaveX(event)
 				if before != after {
-					// レベルアップ通知
-					content := g.LevelUpMessage
-					content = strings.ReplaceAll(content, "{user}", discord.UserMention(m.UserID))
-					content = strings.ReplaceAll(content, "{username}", event.Message.Author.EffectiveName())
-					content = strings.ReplaceAll(content, "{before_level}", strconv.FormatInt(before, 10))
-					content = strings.ReplaceAll(content, "{after_level}", strconv.FormatInt(after, 10))
-					content = strings.ReplaceAll(content, "{xp}", strconv.FormatUint(uint64(m.Xp), 10))
-					if _, err := event.Client().Rest().
-						CreateMessage(
-							builtin.Or(builtin.NonNil(g.LevelUpChannel) != 0, builtin.NonNil(g.LevelUpChannel), event.ChannelID),
-							discord.NewMessageBuilder().
-								SetContent(content).
-								Create(),
-						); err != nil {
+					if err := level_up(g, after, event.Client(), event.GuildID, event.ChannelID, m, event.Message.Author, before); err != nil {
 						return errors.NewError(err)
 					}
 				}
@@ -613,4 +867,32 @@ func Command(c *components.Components) components.Command {
 			return nil
 		},
 	}).SetComponent(c)
+}
+
+func level_up(g *ent.Guild, after int64, client bot.Client, guildID, channelID snowflake.ID, m *ent.Member, user discord.User, before int64) error {
+	// レベルロール
+	r, ok := g.LevelRole[int(after)]
+	if ok {
+		if err := client.Rest().AddMemberRole(guildID, m.UserID, r); err != nil {
+			slog.Error("レベルロール付与に失敗", slog.Any("err", err))
+		}
+	}
+
+	// レベルアップ通知
+	content := g.LevelUpMessage
+	content = strings.ReplaceAll(content, "{user}", discord.UserMention(m.UserID))
+	content = strings.ReplaceAll(content, "{username}", user.EffectiveName())
+	content = strings.ReplaceAll(content, "{before_level}", strconv.FormatInt(before, 10))
+	content = strings.ReplaceAll(content, "{after_level}", strconv.FormatInt(after, 10))
+	content = strings.ReplaceAll(content, "{xp}", strconv.FormatUint(uint64(m.Xp), 10))
+	if _, err := client.Rest().
+		CreateMessage(
+			builtin.Or(builtin.NonNil(g.LevelUpChannel) != 0, builtin.NonNil(g.LevelUpChannel), channelID),
+			discord.NewMessageBuilder().
+				SetContent(content).
+				Create(),
+		); err != nil {
+		return err
+	}
+	return nil
 }

@@ -97,6 +97,12 @@ func (gc *GuildCreate) SetNillableLevelMee6Imported(b *bool) *GuildCreate {
 	return gc
 }
 
+// SetLevelRole sets the "level_role" field.
+func (gc *GuildCreate) SetLevelRole(m map[int]snowflake.ID) *GuildCreate {
+	gc.mutation.SetLevelRole(m)
+	return gc
+}
+
 // SetPermissions sets the "permissions" field.
 func (gc *GuildCreate) SetPermissions(m map[snowflake.ID]permissions.Permission) *GuildCreate {
 	gc.mutation.SetPermissions(m)
@@ -242,6 +248,14 @@ func (gc *GuildCreate) defaults() {
 		v := guild.DefaultLevelMee6Imported
 		gc.mutation.SetLevelMee6Imported(v)
 	}
+	if _, ok := gc.mutation.LevelRole(); !ok {
+		v := guild.DefaultLevelRole
+		gc.mutation.SetLevelRole(v)
+	}
+	if _, ok := gc.mutation.Permissions(); !ok {
+		v := guild.DefaultPermissions
+		gc.mutation.SetPermissions(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -331,6 +345,10 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 	if value, ok := gc.mutation.LevelMee6Imported(); ok {
 		_spec.SetField(guild.FieldLevelMee6Imported, field.TypeBool, value)
 		_node.LevelMee6Imported = value
+	}
+	if value, ok := gc.mutation.LevelRole(); ok {
+		_spec.SetField(guild.FieldLevelRole, field.TypeJSON, value)
+		_node.LevelRole = value
 	}
 	if value, ok := gc.mutation.Permissions(); ok {
 		_spec.SetField(guild.FieldPermissions, field.TypeJSON, value)

@@ -139,6 +139,18 @@ func (gu *GuildUpdate) SetNillableLevelMee6Imported(b *bool) *GuildUpdate {
 	return gu
 }
 
+// SetLevelRole sets the "level_role" field.
+func (gu *GuildUpdate) SetLevelRole(m map[int]snowflake.ID) *GuildUpdate {
+	gu.mutation.SetLevelRole(m)
+	return gu
+}
+
+// ClearLevelRole clears the value of the "level_role" field.
+func (gu *GuildUpdate) ClearLevelRole() *GuildUpdate {
+	gu.mutation.ClearLevelRole()
+	return gu
+}
+
 // SetPermissions sets the "permissions" field.
 func (gu *GuildUpdate) SetPermissions(m map[snowflake.ID]permissions.Permission) *GuildUpdate {
 	gu.mutation.SetPermissions(m)
@@ -446,6 +458,12 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := gu.mutation.LevelMee6Imported(); ok {
 		_spec.SetField(guild.FieldLevelMee6Imported, field.TypeBool, value)
+	}
+	if value, ok := gu.mutation.LevelRole(); ok {
+		_spec.SetField(guild.FieldLevelRole, field.TypeJSON, value)
+	}
+	if gu.mutation.LevelRoleCleared() {
+		_spec.ClearField(guild.FieldLevelRole, field.TypeJSON)
 	}
 	if value, ok := gu.mutation.Permissions(); ok {
 		_spec.SetField(guild.FieldPermissions, field.TypeJSON, value)
@@ -828,6 +846,18 @@ func (guo *GuildUpdateOne) SetNillableLevelMee6Imported(b *bool) *GuildUpdateOne
 	return guo
 }
 
+// SetLevelRole sets the "level_role" field.
+func (guo *GuildUpdateOne) SetLevelRole(m map[int]snowflake.ID) *GuildUpdateOne {
+	guo.mutation.SetLevelRole(m)
+	return guo
+}
+
+// ClearLevelRole clears the value of the "level_role" field.
+func (guo *GuildUpdateOne) ClearLevelRole() *GuildUpdateOne {
+	guo.mutation.ClearLevelRole()
+	return guo
+}
+
 // SetPermissions sets the "permissions" field.
 func (guo *GuildUpdateOne) SetPermissions(m map[snowflake.ID]permissions.Permission) *GuildUpdateOne {
 	guo.mutation.SetPermissions(m)
@@ -1165,6 +1195,12 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 	}
 	if value, ok := guo.mutation.LevelMee6Imported(); ok {
 		_spec.SetField(guild.FieldLevelMee6Imported, field.TypeBool, value)
+	}
+	if value, ok := guo.mutation.LevelRole(); ok {
+		_spec.SetField(guild.FieldLevelRole, field.TypeJSON, value)
+	}
+	if guo.mutation.LevelRoleCleared() {
+		_spec.ClearField(guild.FieldLevelRole, field.TypeJSON)
 	}
 	if value, ok := guo.mutation.Permissions(); ok {
 		_spec.SetField(guild.FieldPermissions, field.TypeJSON, value)

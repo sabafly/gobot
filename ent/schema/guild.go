@@ -38,7 +38,11 @@ func (Guild) Fields() []ent.Field {
 			Optional(),
 		field.Bool("level_mee6_imported").
 			Default(false),
+		field.JSON("level_role", map[int]snowflake.ID{}).
+			Default(make(map[int]snowflake.ID)).
+			Optional(),
 		field.JSON("permissions", map[snowflake.ID]permissions.Permission{}).
+			Default(make(map[snowflake.ID]permissions.Permission)).
 			Optional(),
 	}
 }

@@ -33,6 +33,8 @@ type Guild struct {
 	LevelUpExcludeChannel []snowflake.ID `json:"level_up_exclude_channel,omitempty"`
 	// LevelMee6Imported holds the value of the "level_mee6_imported" field.
 	LevelMee6Imported bool `json:"level_mee6_imported,omitempty"`
+	// LevelRole holds the value of the "level_role" field.
+	LevelRole map[int]snowflake.ID `json:"level_role,omitempty"`
 	// Permissions holds the value of the "permissions" field.
 	Permissions map[snowflake.ID]permissions.Permission `json:"permissions,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -124,7 +126,7 @@ func (*Guild) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case guild.FieldLevelUpExcludeChannel, guild.FieldPermissions:
+		case guild.FieldLevelUpExcludeChannel, guild.FieldLevelRole, guild.FieldPermissions:
 			values[i] = new([]byte)
 		case guild.FieldLevelMee6Imported:
 			values[i] = new(sql.NullBool)
@@ -193,6 +195,14 @@ func (gu *Guild) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field level_mee6_imported", values[i])
 			} else if value.Valid {
 				gu.LevelMee6Imported = value.Bool
+			}
+		case guild.FieldLevelRole:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field level_role", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &gu.LevelRole); err != nil {
+					return fmt.Errorf("unmarshal field level_role: %w", err)
+				}
 			}
 		case guild.FieldPermissions:
 			if value, ok := values[i].(*[]byte); !ok {
@@ -294,6 +304,9 @@ func (gu *Guild) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("level_mee6_imported=")
 	builder.WriteString(fmt.Sprintf("%v", gu.LevelMee6Imported))
+	builder.WriteString(", ")
+	builder.WriteString("level_role=")
+	builder.WriteString(fmt.Sprintf("%v", gu.LevelRole))
 	builder.WriteString(", ")
 	builder.WriteString("permissions=")
 	builder.WriteString(fmt.Sprintf("%v", gu.Permissions))

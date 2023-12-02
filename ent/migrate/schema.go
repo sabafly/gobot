@@ -17,6 +17,7 @@ var (
 		{Name: "level_up_channel", Type: field.TypeUint64, Nullable: true},
 		{Name: "level_up_exclude_channel", Type: field.TypeJSON, Nullable: true},
 		{Name: "level_mee6_imported", Type: field.TypeBool, Default: false},
+		{Name: "level_role", Type: field.TypeJSON, Nullable: true},
 		{Name: "permissions", Type: field.TypeJSON, Nullable: true},
 		{Name: "user_own_guilds", Type: field.TypeUint64},
 	}
@@ -28,7 +29,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "guilds_users_own_guilds",
-				Columns:    []*schema.Column{GuildsColumns[8]},
+				Columns:    []*schema.Column{GuildsColumns[9]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

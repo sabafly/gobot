@@ -61,6 +61,7 @@ type GuildMutation struct {
 	level_up_exclude_channel       *[]snowflake.ID
 	appendlevel_up_exclude_channel []snowflake.ID
 	level_mee6_imported            *bool
+	level_role                     *map[int]snowflake.ID
 	permissions                    *map[snowflake.ID]permissions.Permission
 	clearedFields                  map[string]struct{}
 	owner                          *snowflake.ID
@@ -468,6 +469,55 @@ func (m *GuildMutation) ResetLevelMee6Imported() {
 	m.level_mee6_imported = nil
 }
 
+// SetLevelRole sets the "level_role" field.
+func (m *GuildMutation) SetLevelRole(value map[int]snowflake.ID) {
+	m.level_role = &value
+}
+
+// LevelRole returns the value of the "level_role" field in the mutation.
+func (m *GuildMutation) LevelRole() (r map[int]snowflake.ID, exists bool) {
+	v := m.level_role
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLevelRole returns the old "level_role" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldLevelRole(ctx context.Context) (v map[int]snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLevelRole is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLevelRole requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLevelRole: %w", err)
+	}
+	return oldValue.LevelRole, nil
+}
+
+// ClearLevelRole clears the value of the "level_role" field.
+func (m *GuildMutation) ClearLevelRole() {
+	m.level_role = nil
+	m.clearedFields[guild.FieldLevelRole] = struct{}{}
+}
+
+// LevelRoleCleared returns if the "level_role" field was cleared in this mutation.
+func (m *GuildMutation) LevelRoleCleared() bool {
+	_, ok := m.clearedFields[guild.FieldLevelRole]
+	return ok
+}
+
+// ResetLevelRole resets all changes to the "level_role" field.
+func (m *GuildMutation) ResetLevelRole() {
+	m.level_role = nil
+	delete(m.clearedFields, guild.FieldLevelRole)
+}
+
 // SetPermissions sets the "permissions" field.
 func (m *GuildMutation) SetPermissions(value map[snowflake.ID]permissions.Permission) {
 	m.permissions = &value
@@ -860,7 +910,7 @@ func (m *GuildMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GuildMutation) Fields() []string {
-	fields := make([]string, 0, 7)
+	fields := make([]string, 0, 8)
 	if m.name != nil {
 		fields = append(fields, guild.FieldName)
 	}
@@ -878,6 +928,9 @@ func (m *GuildMutation) Fields() []string {
 	}
 	if m.level_mee6_imported != nil {
 		fields = append(fields, guild.FieldLevelMee6Imported)
+	}
+	if m.level_role != nil {
+		fields = append(fields, guild.FieldLevelRole)
 	}
 	if m.permissions != nil {
 		fields = append(fields, guild.FieldPermissions)
@@ -902,6 +955,8 @@ func (m *GuildMutation) Field(name string) (ent.Value, bool) {
 		return m.LevelUpExcludeChannel()
 	case guild.FieldLevelMee6Imported:
 		return m.LevelMee6Imported()
+	case guild.FieldLevelRole:
+		return m.LevelRole()
 	case guild.FieldPermissions:
 		return m.Permissions()
 	}
@@ -925,6 +980,8 @@ func (m *GuildMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldLevelUpExcludeChannel(ctx)
 	case guild.FieldLevelMee6Imported:
 		return m.OldLevelMee6Imported(ctx)
+	case guild.FieldLevelRole:
+		return m.OldLevelRole(ctx)
 	case guild.FieldPermissions:
 		return m.OldPermissions(ctx)
 	}
@@ -977,6 +1034,13 @@ func (m *GuildMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLevelMee6Imported(v)
+		return nil
+	case guild.FieldLevelRole:
+		v, ok := value.(map[int]snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLevelRole(v)
 		return nil
 	case guild.FieldPermissions:
 		v, ok := value.(map[snowflake.ID]permissions.Permission)
@@ -1036,6 +1100,9 @@ func (m *GuildMutation) ClearedFields() []string {
 	if m.FieldCleared(guild.FieldLevelUpExcludeChannel) {
 		fields = append(fields, guild.FieldLevelUpExcludeChannel)
 	}
+	if m.FieldCleared(guild.FieldLevelRole) {
+		fields = append(fields, guild.FieldLevelRole)
+	}
 	if m.FieldCleared(guild.FieldPermissions) {
 		fields = append(fields, guild.FieldPermissions)
 	}
@@ -1058,6 +1125,9 @@ func (m *GuildMutation) ClearField(name string) error {
 		return nil
 	case guild.FieldLevelUpExcludeChannel:
 		m.ClearLevelUpExcludeChannel()
+		return nil
+	case guild.FieldLevelRole:
+		m.ClearLevelRole()
 		return nil
 	case guild.FieldPermissions:
 		m.ClearPermissions()
@@ -1087,6 +1157,9 @@ func (m *GuildMutation) ResetField(name string) error {
 		return nil
 	case guild.FieldLevelMee6Imported:
 		m.ResetLevelMee6Imported()
+		return nil
+	case guild.FieldLevelRole:
+		m.ResetLevelRole()
 		return nil
 	case guild.FieldPermissions:
 		m.ResetPermissions()

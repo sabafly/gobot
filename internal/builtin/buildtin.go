@@ -17,3 +17,11 @@ func NonNil[T any](v *T) T {
 		return *new(T)
 	}
 }
+
+func NonNilMap[T map[K]V, K comparable, V any](v T) T {
+	if v != nil {
+		return v
+	} else {
+		return make(T)
+	}
+}

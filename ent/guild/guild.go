@@ -6,6 +6,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/disgoorg/disgo/discord"
+	snowflake "github.com/disgoorg/snowflake/v2"
+	"github.com/sabafly/gobot/internal/permissions"
 )
 
 const (
@@ -25,6 +27,8 @@ const (
 	FieldLevelUpExcludeChannel = "level_up_exclude_channel"
 	// FieldLevelMee6Imported holds the string denoting the level_mee6_imported field in the database.
 	FieldLevelMee6Imported = "level_mee6_imported"
+	// FieldLevelRole holds the string denoting the level_role field in the database.
+	FieldLevelRole = "level_role"
 	// FieldPermissions holds the string denoting the permissions field in the database.
 	FieldPermissions = "permissions"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
@@ -94,6 +98,7 @@ var Columns = []string{
 	FieldLevelUpChannel,
 	FieldLevelUpExcludeChannel,
 	FieldLevelMee6Imported,
+	FieldLevelRole,
 	FieldPermissions,
 }
 
@@ -131,6 +136,10 @@ var (
 	LevelUpMessageValidator func(string) error
 	// DefaultLevelMee6Imported holds the default value on creation for the "level_mee6_imported" field.
 	DefaultLevelMee6Imported bool
+	// DefaultLevelRole holds the default value on creation for the "level_role" field.
+	DefaultLevelRole map[int]snowflake.ID
+	// DefaultPermissions holds the default value on creation for the "permissions" field.
+	DefaultPermissions map[snowflake.ID]permissions.Permission
 )
 
 // OrderOption defines the ordering options for the Guild queries.

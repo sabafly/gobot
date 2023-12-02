@@ -380,6 +380,16 @@ func LevelMee6ImportedNEQ(v bool) predicate.Guild {
 	return predicate.Guild(sql.FieldNEQ(FieldLevelMee6Imported, v))
 }
 
+// LevelRoleIsNil applies the IsNil predicate on the "level_role" field.
+func LevelRoleIsNil() predicate.Guild {
+	return predicate.Guild(sql.FieldIsNull(FieldLevelRole))
+}
+
+// LevelRoleNotNil applies the NotNil predicate on the "level_role" field.
+func LevelRoleNotNil() predicate.Guild {
+	return predicate.Guild(sql.FieldNotNull(FieldLevelRole))
+}
+
 // PermissionsIsNil applies the IsNil predicate on the "permissions" field.
 func PermissionsIsNil() predicate.Guild {
 	return predicate.Guild(sql.FieldIsNull(FieldPermissions))

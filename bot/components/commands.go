@@ -7,6 +7,7 @@ import (
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/disgo/rest"
 )
 
 var (
@@ -41,7 +42,7 @@ func (c *Components) Initialize(client bot.Client) error {
 	}
 
 	if _, err := client.Rest().SetGlobalCommands(client.ApplicationID(), commands); err != nil {
-		slog.Error("コマンドの登録に失敗", "err", err)
+		slog.Error("コマンドの登録に失敗", slog.Any("err", err), slog.String("body", string(err.(rest.Error).RsBody)))
 		return err
 	}
 

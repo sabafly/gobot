@@ -509,19 +509,30 @@ components.level.up.message.modal.input.message.placeholder: |-
   {username}: ユーザーの名前
   {before_level}: 前のレベル
   {after_level}: 後のレベル
-
 components.level.up.message.message: レベルアップメッセージを設定しました
 components.level.up.message-channel.message: "レベルアップメッセージを{{.Channel}}に送信します"
 components.level.up.message-channel.default: 「レベルアップした時のチャンネル」
-components.level.exclude-channel.add.message: "{{.Channel}}を除外します"
-components.level.exclude-channel.clear.message: "除外チャンネルをクリアします"
-components.level.exclude-channel.remove.message: "{{.Channel}}の除外を解除します"
+components.level.exclude-channel.add.message: "{{.Channel}}を除外チャンネルに登録しました"
+components.level.exclude-channel.clear.message: 除外チャンネルをクリアしました
+components.level.exclude-channel.remove.message: "{{.Channel}}を除外チャンネルから解除しました"
 components.level.import-mee6.message.already: インポートできません
 components.level.import-mee6.message.already.description: 二回以上インポートすることはできません
 components.level.import-mee6.message.unauthorized: |-
   mee6リーダーボードがパブリックではありません。
   [設定](<https://mee6.xyz/en/dashboard/{{.GuildID}}/leaderboard>)からリーダーボードを公開してください。
-
+components.level.reset.message: "{{.User}}のレベルをリセットしました"
+components.level.exclude-channel.list.message: 除外チャンネル一覧
+components.level.exclude-channel.list.message.none: 登録されていません
+components.level.role.set.message.embed.title: レベルロールを設定しました
+components.level.role.set.message.embed.description: |-
+  {{.Level}} レベル：{{.Role}}
+components.level.role.list.message.embed.title: レベルロール一覧
+components.level.role.list.message.none: 登録されていません
+components.level.role.list.message: |-
+  {{.Level}} レベル：{{.Role}}
+components.level.role.remove.message.embed.title: レベルロールを削除しました
+components.level.role.remove.message.embed.description: |-
+  {{.Level}} レベル：{{.Role}}
 # エラーメッセージ
 errors.generic.message: エラーが発生しました
 errors.panic.message: 致命的なエラー
@@ -542,3 +553,13 @@ errors.fail.role.panel.description: |-
   役職がボットより下の順位にあることとボットに役職を操作する権限があるかを確認してください
 errors.invalid.page: 無効なページ
 errors.invalid.page.description: 範囲外のページ番号です
+errors.invalid.role: 無効なロール
+errors.invalid.role.description: |-
+  無効なロールが選択されました
+  役職がボットより下の順位にあることを確認してください
+errors.create.reach_max: 最大個数に達しています
+errors.create.reach_max.description: "それ以上作成することはできません"
+errors.not_exist: 存在しません
+errors.not_exist.description: 指定された項目がありません
+errors.already_exist: すでに存在します
+errors.already_exist.description: 同じ項目を登録することはできません

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/disgoorg/disgo/discord"
+	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
@@ -46,6 +47,14 @@ func init() {
 	guildDescLevelMee6Imported := guildFields[6].Descriptor()
 	// guild.DefaultLevelMee6Imported holds the default value on creation for the level_mee6_imported field.
 	guild.DefaultLevelMee6Imported = guildDescLevelMee6Imported.Default.(bool)
+	// guildDescLevelRole is the schema descriptor for level_role field.
+	guildDescLevelRole := guildFields[7].Descriptor()
+	// guild.DefaultLevelRole holds the default value on creation for the level_role field.
+	guild.DefaultLevelRole = guildDescLevelRole.Default.(map[int]snowflake.ID)
+	// guildDescPermissions is the schema descriptor for permissions field.
+	guildDescPermissions := guildFields[8].Descriptor()
+	// guild.DefaultPermissions holds the default value on creation for the permissions field.
+	guild.DefaultPermissions = guildDescPermissions.Default.(map[snowflake.ID]permissions.Permission)
 	memberFields := schema.Member{}.Fields()
 	_ = memberFields
 	// memberDescPermission is the schema descriptor for permission field.
