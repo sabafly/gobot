@@ -17,6 +17,7 @@ import (
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
+	"github.com/sabafly/gobot/ent/messageremind"
 	"github.com/sabafly/gobot/ent/predicate"
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/ent/rolepaneledit"
@@ -40,6 +41,7 @@ const (
 	TypeGuild           = "Guild"
 	TypeMember          = "Member"
 	TypeMessagePin      = "MessagePin"
+	TypeMessageRemind   = "MessageRemind"
 	TypeRolePanel       = "RolePanel"
 	TypeRolePanelEdit   = "RolePanelEdit"
 	TypeRolePanelPlaced = "RolePanelPlaced"
@@ -72,6 +74,9 @@ type GuildMutation struct {
 	message_pins                   map[uuid.UUID]struct{}
 	removedmessage_pins            map[uuid.UUID]struct{}
 	clearedmessage_pins            bool
+	reminds                        map[uuid.UUID]struct{}
+	removedreminds                 map[uuid.UUID]struct{}
+	clearedreminds                 bool
 	role_panels                    map[uuid.UUID]struct{}
 	removedrole_panels             map[uuid.UUID]struct{}
 	clearedrole_panels             bool
@@ -714,6 +719,60 @@ func (m *GuildMutation) ResetMessagePins() {
 	m.removedmessage_pins = nil
 }
 
+// AddRemindIDs adds the "reminds" edge to the MessageRemind entity by ids.
+func (m *GuildMutation) AddRemindIDs(ids ...uuid.UUID) {
+	if m.reminds == nil {
+		m.reminds = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.reminds[ids[i]] = struct{}{}
+	}
+}
+
+// ClearReminds clears the "reminds" edge to the MessageRemind entity.
+func (m *GuildMutation) ClearReminds() {
+	m.clearedreminds = true
+}
+
+// RemindsCleared reports if the "reminds" edge to the MessageRemind entity was cleared.
+func (m *GuildMutation) RemindsCleared() bool {
+	return m.clearedreminds
+}
+
+// RemoveRemindIDs removes the "reminds" edge to the MessageRemind entity by IDs.
+func (m *GuildMutation) RemoveRemindIDs(ids ...uuid.UUID) {
+	if m.removedreminds == nil {
+		m.removedreminds = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.reminds, ids[i])
+		m.removedreminds[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedReminds returns the removed IDs of the "reminds" edge to the MessageRemind entity.
+func (m *GuildMutation) RemovedRemindsIDs() (ids []uuid.UUID) {
+	for id := range m.removedreminds {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// RemindsIDs returns the "reminds" edge IDs in the mutation.
+func (m *GuildMutation) RemindsIDs() (ids []uuid.UUID) {
+	for id := range m.reminds {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetReminds resets all changes to the "reminds" edge.
+func (m *GuildMutation) ResetReminds() {
+	m.reminds = nil
+	m.clearedreminds = false
+	m.removedreminds = nil
+}
+
 // AddRolePanelIDs adds the "role_panels" edge to the RolePanel entity by ids.
 func (m *GuildMutation) AddRolePanelIDs(ids ...uuid.UUID) {
 	if m.role_panels == nil {
@@ -1170,7 +1229,7 @@ func (m *GuildMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *GuildMutation) AddedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
 	if m.owner != nil {
 		edges = append(edges, guild.EdgeOwner)
 	}
@@ -1179,6 +1238,9 @@ func (m *GuildMutation) AddedEdges() []string {
 	}
 	if m.message_pins != nil {
 		edges = append(edges, guild.EdgeMessagePins)
+	}
+	if m.reminds != nil {
+		edges = append(edges, guild.EdgeReminds)
 	}
 	if m.role_panels != nil {
 		edges = append(edges, guild.EdgeRolePanels)
@@ -1212,6 +1274,12 @@ func (m *GuildMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case guild.EdgeReminds:
+		ids := make([]ent.Value, 0, len(m.reminds))
+		for id := range m.reminds {
+			ids = append(ids, id)
+		}
+		return ids
 	case guild.EdgeRolePanels:
 		ids := make([]ent.Value, 0, len(m.role_panels))
 		for id := range m.role_panels {
@@ -1236,12 +1304,15 @@ func (m *GuildMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *GuildMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
 	if m.removedmembers != nil {
 		edges = append(edges, guild.EdgeMembers)
 	}
 	if m.removedmessage_pins != nil {
 		edges = append(edges, guild.EdgeMessagePins)
+	}
+	if m.removedreminds != nil {
+		edges = append(edges, guild.EdgeReminds)
 	}
 	if m.removedrole_panels != nil {
 		edges = append(edges, guild.EdgeRolePanels)
@@ -1271,6 +1342,12 @@ func (m *GuildMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case guild.EdgeReminds:
+		ids := make([]ent.Value, 0, len(m.removedreminds))
+		for id := range m.removedreminds {
+			ids = append(ids, id)
+		}
+		return ids
 	case guild.EdgeRolePanels:
 		ids := make([]ent.Value, 0, len(m.removedrole_panels))
 		for id := range m.removedrole_panels {
@@ -1295,7 +1372,7 @@ func (m *GuildMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *GuildMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
 	if m.clearedowner {
 		edges = append(edges, guild.EdgeOwner)
 	}
@@ -1304,6 +1381,9 @@ func (m *GuildMutation) ClearedEdges() []string {
 	}
 	if m.clearedmessage_pins {
 		edges = append(edges, guild.EdgeMessagePins)
+	}
+	if m.clearedreminds {
+		edges = append(edges, guild.EdgeReminds)
 	}
 	if m.clearedrole_panels {
 		edges = append(edges, guild.EdgeRolePanels)
@@ -1327,6 +1407,8 @@ func (m *GuildMutation) EdgeCleared(name string) bool {
 		return m.clearedmembers
 	case guild.EdgeMessagePins:
 		return m.clearedmessage_pins
+	case guild.EdgeReminds:
+		return m.clearedreminds
 	case guild.EdgeRolePanels:
 		return m.clearedrole_panels
 	case guild.EdgeRolePanelPlacements:
@@ -1360,6 +1442,9 @@ func (m *GuildMutation) ResetEdge(name string) error {
 		return nil
 	case guild.EdgeMessagePins:
 		m.ResetMessagePins()
+		return nil
+	case guild.EdgeReminds:
+		m.ResetReminds()
 		return nil
 	case guild.EdgeRolePanels:
 		m.ResetRolePanels()
@@ -2899,6 +2984,636 @@ func (m *MessagePinMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown MessagePin edge %s", name)
+}
+
+// MessageRemindMutation represents an operation that mutates the MessageRemind nodes in the graph.
+type MessageRemindMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *uuid.UUID
+	channel_id    *snowflake.ID
+	addchannel_id *snowflake.ID
+	author_id     *snowflake.ID
+	addauthor_id  *snowflake.ID
+	time          *time.Time
+	content       *string
+	clearedFields map[string]struct{}
+	guild         *snowflake.ID
+	clearedguild  bool
+	done          bool
+	oldValue      func(context.Context) (*MessageRemind, error)
+	predicates    []predicate.MessageRemind
+}
+
+var _ ent.Mutation = (*MessageRemindMutation)(nil)
+
+// messageremindOption allows management of the mutation configuration using functional options.
+type messageremindOption func(*MessageRemindMutation)
+
+// newMessageRemindMutation creates new mutation for the MessageRemind entity.
+func newMessageRemindMutation(c config, op Op, opts ...messageremindOption) *MessageRemindMutation {
+	m := &MessageRemindMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeMessageRemind,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withMessageRemindID sets the ID field of the mutation.
+func withMessageRemindID(id uuid.UUID) messageremindOption {
+	return func(m *MessageRemindMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *MessageRemind
+		)
+		m.oldValue = func(ctx context.Context) (*MessageRemind, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().MessageRemind.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withMessageRemind sets the old MessageRemind of the mutation.
+func withMessageRemind(node *MessageRemind) messageremindOption {
+	return func(m *MessageRemindMutation) {
+		m.oldValue = func(context.Context) (*MessageRemind, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m MessageRemindMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m MessageRemindMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of MessageRemind entities.
+func (m *MessageRemindMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *MessageRemindMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *MessageRemindMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().MessageRemind.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetChannelID sets the "channel_id" field.
+func (m *MessageRemindMutation) SetChannelID(s snowflake.ID) {
+	m.channel_id = &s
+	m.addchannel_id = nil
+}
+
+// ChannelID returns the value of the "channel_id" field in the mutation.
+func (m *MessageRemindMutation) ChannelID() (r snowflake.ID, exists bool) {
+	v := m.channel_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldChannelID returns the old "channel_id" field's value of the MessageRemind entity.
+// If the MessageRemind object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessageRemindMutation) OldChannelID(ctx context.Context) (v snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldChannelID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldChannelID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldChannelID: %w", err)
+	}
+	return oldValue.ChannelID, nil
+}
+
+// AddChannelID adds s to the "channel_id" field.
+func (m *MessageRemindMutation) AddChannelID(s snowflake.ID) {
+	if m.addchannel_id != nil {
+		*m.addchannel_id += s
+	} else {
+		m.addchannel_id = &s
+	}
+}
+
+// AddedChannelID returns the value that was added to the "channel_id" field in this mutation.
+func (m *MessageRemindMutation) AddedChannelID() (r snowflake.ID, exists bool) {
+	v := m.addchannel_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetChannelID resets all changes to the "channel_id" field.
+func (m *MessageRemindMutation) ResetChannelID() {
+	m.channel_id = nil
+	m.addchannel_id = nil
+}
+
+// SetAuthorID sets the "author_id" field.
+func (m *MessageRemindMutation) SetAuthorID(s snowflake.ID) {
+	m.author_id = &s
+	m.addauthor_id = nil
+}
+
+// AuthorID returns the value of the "author_id" field in the mutation.
+func (m *MessageRemindMutation) AuthorID() (r snowflake.ID, exists bool) {
+	v := m.author_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAuthorID returns the old "author_id" field's value of the MessageRemind entity.
+// If the MessageRemind object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessageRemindMutation) OldAuthorID(ctx context.Context) (v snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAuthorID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAuthorID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAuthorID: %w", err)
+	}
+	return oldValue.AuthorID, nil
+}
+
+// AddAuthorID adds s to the "author_id" field.
+func (m *MessageRemindMutation) AddAuthorID(s snowflake.ID) {
+	if m.addauthor_id != nil {
+		*m.addauthor_id += s
+	} else {
+		m.addauthor_id = &s
+	}
+}
+
+// AddedAuthorID returns the value that was added to the "author_id" field in this mutation.
+func (m *MessageRemindMutation) AddedAuthorID() (r snowflake.ID, exists bool) {
+	v := m.addauthor_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAuthorID resets all changes to the "author_id" field.
+func (m *MessageRemindMutation) ResetAuthorID() {
+	m.author_id = nil
+	m.addauthor_id = nil
+}
+
+// SetTime sets the "time" field.
+func (m *MessageRemindMutation) SetTime(t time.Time) {
+	m.time = &t
+}
+
+// Time returns the value of the "time" field in the mutation.
+func (m *MessageRemindMutation) Time() (r time.Time, exists bool) {
+	v := m.time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTime returns the old "time" field's value of the MessageRemind entity.
+// If the MessageRemind object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessageRemindMutation) OldTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTime: %w", err)
+	}
+	return oldValue.Time, nil
+}
+
+// ResetTime resets all changes to the "time" field.
+func (m *MessageRemindMutation) ResetTime() {
+	m.time = nil
+}
+
+// SetContent sets the "content" field.
+func (m *MessageRemindMutation) SetContent(s string) {
+	m.content = &s
+}
+
+// Content returns the value of the "content" field in the mutation.
+func (m *MessageRemindMutation) Content() (r string, exists bool) {
+	v := m.content
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContent returns the old "content" field's value of the MessageRemind entity.
+// If the MessageRemind object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessageRemindMutation) OldContent(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContent: %w", err)
+	}
+	return oldValue.Content, nil
+}
+
+// ResetContent resets all changes to the "content" field.
+func (m *MessageRemindMutation) ResetContent() {
+	m.content = nil
+}
+
+// SetGuildID sets the "guild" edge to the Guild entity by id.
+func (m *MessageRemindMutation) SetGuildID(id snowflake.ID) {
+	m.guild = &id
+}
+
+// ClearGuild clears the "guild" edge to the Guild entity.
+func (m *MessageRemindMutation) ClearGuild() {
+	m.clearedguild = true
+}
+
+// GuildCleared reports if the "guild" edge to the Guild entity was cleared.
+func (m *MessageRemindMutation) GuildCleared() bool {
+	return m.clearedguild
+}
+
+// GuildID returns the "guild" edge ID in the mutation.
+func (m *MessageRemindMutation) GuildID() (id snowflake.ID, exists bool) {
+	if m.guild != nil {
+		return *m.guild, true
+	}
+	return
+}
+
+// GuildIDs returns the "guild" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GuildID instead. It exists only for internal usage by the builders.
+func (m *MessageRemindMutation) GuildIDs() (ids []snowflake.ID) {
+	if id := m.guild; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetGuild resets all changes to the "guild" edge.
+func (m *MessageRemindMutation) ResetGuild() {
+	m.guild = nil
+	m.clearedguild = false
+}
+
+// Where appends a list predicates to the MessageRemindMutation builder.
+func (m *MessageRemindMutation) Where(ps ...predicate.MessageRemind) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the MessageRemindMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *MessageRemindMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.MessageRemind, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *MessageRemindMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *MessageRemindMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (MessageRemind).
+func (m *MessageRemindMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *MessageRemindMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.channel_id != nil {
+		fields = append(fields, messageremind.FieldChannelID)
+	}
+	if m.author_id != nil {
+		fields = append(fields, messageremind.FieldAuthorID)
+	}
+	if m.time != nil {
+		fields = append(fields, messageremind.FieldTime)
+	}
+	if m.content != nil {
+		fields = append(fields, messageremind.FieldContent)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *MessageRemindMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case messageremind.FieldChannelID:
+		return m.ChannelID()
+	case messageremind.FieldAuthorID:
+		return m.AuthorID()
+	case messageremind.FieldTime:
+		return m.Time()
+	case messageremind.FieldContent:
+		return m.Content()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *MessageRemindMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case messageremind.FieldChannelID:
+		return m.OldChannelID(ctx)
+	case messageremind.FieldAuthorID:
+		return m.OldAuthorID(ctx)
+	case messageremind.FieldTime:
+		return m.OldTime(ctx)
+	case messageremind.FieldContent:
+		return m.OldContent(ctx)
+	}
+	return nil, fmt.Errorf("unknown MessageRemind field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MessageRemindMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case messageremind.FieldChannelID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetChannelID(v)
+		return nil
+	case messageremind.FieldAuthorID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAuthorID(v)
+		return nil
+	case messageremind.FieldTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTime(v)
+		return nil
+	case messageremind.FieldContent:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContent(v)
+		return nil
+	}
+	return fmt.Errorf("unknown MessageRemind field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *MessageRemindMutation) AddedFields() []string {
+	var fields []string
+	if m.addchannel_id != nil {
+		fields = append(fields, messageremind.FieldChannelID)
+	}
+	if m.addauthor_id != nil {
+		fields = append(fields, messageremind.FieldAuthorID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *MessageRemindMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case messageremind.FieldChannelID:
+		return m.AddedChannelID()
+	case messageremind.FieldAuthorID:
+		return m.AddedAuthorID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MessageRemindMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case messageremind.FieldChannelID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddChannelID(v)
+		return nil
+	case messageremind.FieldAuthorID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAuthorID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown MessageRemind numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *MessageRemindMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *MessageRemindMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *MessageRemindMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown MessageRemind nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *MessageRemindMutation) ResetField(name string) error {
+	switch name {
+	case messageremind.FieldChannelID:
+		m.ResetChannelID()
+		return nil
+	case messageremind.FieldAuthorID:
+		m.ResetAuthorID()
+		return nil
+	case messageremind.FieldTime:
+		m.ResetTime()
+		return nil
+	case messageremind.FieldContent:
+		m.ResetContent()
+		return nil
+	}
+	return fmt.Errorf("unknown MessageRemind field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *MessageRemindMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.guild != nil {
+		edges = append(edges, messageremind.EdgeGuild)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *MessageRemindMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case messageremind.EdgeGuild:
+		if id := m.guild; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *MessageRemindMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *MessageRemindMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *MessageRemindMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedguild {
+		edges = append(edges, messageremind.EdgeGuild)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *MessageRemindMutation) EdgeCleared(name string) bool {
+	switch name {
+	case messageremind.EdgeGuild:
+		return m.clearedguild
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *MessageRemindMutation) ClearEdge(name string) error {
+	switch name {
+	case messageremind.EdgeGuild:
+		m.ClearGuild()
+		return nil
+	}
+	return fmt.Errorf("unknown MessageRemind unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *MessageRemindMutation) ResetEdge(name string) error {
+	switch name {
+	case messageremind.EdgeGuild:
+		m.ResetGuild()
+		return nil
+	}
+	return fmt.Errorf("unknown MessageRemind edge %s", name)
 }
 
 // RolePanelMutation represents an operation that mutates the RolePanel nodes in the graph.

@@ -469,6 +469,29 @@ func HasMessagePinsWith(preds ...predicate.MessagePin) predicate.Guild {
 	})
 }
 
+// HasReminds applies the HasEdge predicate on the "reminds" edge.
+func HasReminds() predicate.Guild {
+	return predicate.Guild(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, RemindsTable, RemindsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRemindsWith applies the HasEdge predicate on the "reminds" edge with a given conditions (other predicates).
+func HasRemindsWith(preds ...predicate.MessageRemind) predicate.Guild {
+	return predicate.Guild(func(s *sql.Selector) {
+		step := newRemindsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasRolePanels applies the HasEdge predicate on the "role_panels" edge.
 func HasRolePanels() predicate.Guild {
 	return predicate.Guild(func(s *sql.Selector) {

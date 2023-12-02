@@ -20,6 +20,7 @@ import (
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
+	"github.com/sabafly/gobot/ent/messageremind"
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/ent/rolepaneledit"
 	"github.com/sabafly/gobot/ent/rolepanelplaced"
@@ -38,6 +39,8 @@ type Client struct {
 	Member *MemberClient
 	// MessagePin is the client for interacting with the MessagePin builders.
 	MessagePin *MessagePinClient
+	// MessageRemind is the client for interacting with the MessageRemind builders.
+	MessageRemind *MessageRemindClient
 	// RolePanel is the client for interacting with the RolePanel builders.
 	RolePanel *RolePanelClient
 	// RolePanelEdit is the client for interacting with the RolePanelEdit builders.
@@ -62,6 +65,7 @@ func (c *Client) init() {
 	c.Guild = NewGuildClient(c.config)
 	c.Member = NewMemberClient(c.config)
 	c.MessagePin = NewMessagePinClient(c.config)
+	c.MessageRemind = NewMessageRemindClient(c.config)
 	c.RolePanel = NewRolePanelClient(c.config)
 	c.RolePanelEdit = NewRolePanelEditClient(c.config)
 	c.RolePanelPlaced = NewRolePanelPlacedClient(c.config)
@@ -162,6 +166,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Guild:           NewGuildClient(cfg),
 		Member:          NewMemberClient(cfg),
 		MessagePin:      NewMessagePinClient(cfg),
+		MessageRemind:   NewMessageRemindClient(cfg),
 		RolePanel:       NewRolePanelClient(cfg),
 		RolePanelEdit:   NewRolePanelEditClient(cfg),
 		RolePanelPlaced: NewRolePanelPlacedClient(cfg),
@@ -189,6 +194,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Guild:           NewGuildClient(cfg),
 		Member:          NewMemberClient(cfg),
 		MessagePin:      NewMessagePinClient(cfg),
+		MessageRemind:   NewMessageRemindClient(cfg),
 		RolePanel:       NewRolePanelClient(cfg),
 		RolePanelEdit:   NewRolePanelEditClient(cfg),
 		RolePanelPlaced: NewRolePanelPlacedClient(cfg),
@@ -223,7 +229,7 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Guild, c.Member, c.MessagePin, c.RolePanel, c.RolePanelEdit,
+		c.Guild, c.Member, c.MessagePin, c.MessageRemind, c.RolePanel, c.RolePanelEdit,
 		c.RolePanelPlaced, c.User, c.WordSuffix,
 	} {
 		n.Use(hooks...)
@@ -234,7 +240,7 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Guild, c.Member, c.MessagePin, c.RolePanel, c.RolePanelEdit,
+		c.Guild, c.Member, c.MessagePin, c.MessageRemind, c.RolePanel, c.RolePanelEdit,
 		c.RolePanelPlaced, c.User, c.WordSuffix,
 	} {
 		n.Intercept(interceptors...)
@@ -250,6 +256,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Member.mutate(ctx, m)
 	case *MessagePinMutation:
 		return c.MessagePin.mutate(ctx, m)
+	case *MessageRemindMutation:
+		return c.MessageRemind.mutate(ctx, m)
 	case *RolePanelMutation:
 		return c.RolePanel.mutate(ctx, m)
 	case *RolePanelEditMutation:
@@ -414,6 +422,22 @@ func (c *GuildClient) QueryMessagePins(gu *Guild) *MessagePinQuery {
 			sqlgraph.From(guild.Table, guild.FieldID, id),
 			sqlgraph.To(messagepin.Table, messagepin.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.MessagePinsTable, guild.MessagePinsColumn),
+		)
+		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryReminds queries the reminds edge of a Guild.
+func (c *GuildClient) QueryReminds(gu *Guild) *MessageRemindQuery {
+	query := (&MessageRemindClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := gu.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(guild.Table, guild.FieldID, id),
+			sqlgraph.To(messageremind.Table, messageremind.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, guild.RemindsTable, guild.RemindsColumn),
 		)
 		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
 		return fromV, nil
@@ -805,6 +829,155 @@ func (c *MessagePinClient) mutate(ctx context.Context, m *MessagePinMutation) (V
 		return (&MessagePinDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown MessagePin mutation op: %q", m.Op())
+	}
+}
+
+// MessageRemindClient is a client for the MessageRemind schema.
+type MessageRemindClient struct {
+	config
+}
+
+// NewMessageRemindClient returns a client for the MessageRemind from the given config.
+func NewMessageRemindClient(c config) *MessageRemindClient {
+	return &MessageRemindClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `messageremind.Hooks(f(g(h())))`.
+func (c *MessageRemindClient) Use(hooks ...Hook) {
+	c.hooks.MessageRemind = append(c.hooks.MessageRemind, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `messageremind.Intercept(f(g(h())))`.
+func (c *MessageRemindClient) Intercept(interceptors ...Interceptor) {
+	c.inters.MessageRemind = append(c.inters.MessageRemind, interceptors...)
+}
+
+// Create returns a builder for creating a MessageRemind entity.
+func (c *MessageRemindClient) Create() *MessageRemindCreate {
+	mutation := newMessageRemindMutation(c.config, OpCreate)
+	return &MessageRemindCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of MessageRemind entities.
+func (c *MessageRemindClient) CreateBulk(builders ...*MessageRemindCreate) *MessageRemindCreateBulk {
+	return &MessageRemindCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *MessageRemindClient) MapCreateBulk(slice any, setFunc func(*MessageRemindCreate, int)) *MessageRemindCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &MessageRemindCreateBulk{err: fmt.Errorf("calling to MessageRemindClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*MessageRemindCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &MessageRemindCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for MessageRemind.
+func (c *MessageRemindClient) Update() *MessageRemindUpdate {
+	mutation := newMessageRemindMutation(c.config, OpUpdate)
+	return &MessageRemindUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *MessageRemindClient) UpdateOne(mr *MessageRemind) *MessageRemindUpdateOne {
+	mutation := newMessageRemindMutation(c.config, OpUpdateOne, withMessageRemind(mr))
+	return &MessageRemindUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *MessageRemindClient) UpdateOneID(id uuid.UUID) *MessageRemindUpdateOne {
+	mutation := newMessageRemindMutation(c.config, OpUpdateOne, withMessageRemindID(id))
+	return &MessageRemindUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for MessageRemind.
+func (c *MessageRemindClient) Delete() *MessageRemindDelete {
+	mutation := newMessageRemindMutation(c.config, OpDelete)
+	return &MessageRemindDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *MessageRemindClient) DeleteOne(mr *MessageRemind) *MessageRemindDeleteOne {
+	return c.DeleteOneID(mr.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *MessageRemindClient) DeleteOneID(id uuid.UUID) *MessageRemindDeleteOne {
+	builder := c.Delete().Where(messageremind.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &MessageRemindDeleteOne{builder}
+}
+
+// Query returns a query builder for MessageRemind.
+func (c *MessageRemindClient) Query() *MessageRemindQuery {
+	return &MessageRemindQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeMessageRemind},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a MessageRemind entity by its id.
+func (c *MessageRemindClient) Get(ctx context.Context, id uuid.UUID) (*MessageRemind, error) {
+	return c.Query().Where(messageremind.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *MessageRemindClient) GetX(ctx context.Context, id uuid.UUID) *MessageRemind {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryGuild queries the guild edge of a MessageRemind.
+func (c *MessageRemindClient) QueryGuild(mr *MessageRemind) *GuildQuery {
+	query := (&GuildClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := mr.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(messageremind.Table, messageremind.FieldID, id),
+			sqlgraph.To(guild.Table, guild.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, messageremind.GuildTable, messageremind.GuildColumn),
+		)
+		fromV = sqlgraph.Neighbors(mr.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *MessageRemindClient) Hooks() []Hook {
+	return c.hooks.MessageRemind
+}
+
+// Interceptors returns the client interceptors.
+func (c *MessageRemindClient) Interceptors() []Interceptor {
+	return c.inters.MessageRemind
+}
+
+func (c *MessageRemindClient) mutate(ctx context.Context, m *MessageRemindMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&MessageRemindCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&MessageRemindUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&MessageRemindUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&MessageRemindDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown MessageRemind mutation op: %q", m.Op())
 	}
 }
 
@@ -1668,11 +1841,11 @@ func (c *WordSuffixClient) mutate(ctx context.Context, m *WordSuffixMutation) (V
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Guild, Member, MessagePin, RolePanel, RolePanelEdit, RolePanelPlaced, User,
-		WordSuffix []ent.Hook
+		Guild, Member, MessagePin, MessageRemind, RolePanel, RolePanelEdit,
+		RolePanelPlaced, User, WordSuffix []ent.Hook
 	}
 	inters struct {
-		Guild, Member, MessagePin, RolePanel, RolePanelEdit, RolePanelPlaced, User,
-		WordSuffix []ent.Interceptor
+		Guild, Member, MessagePin, MessageRemind, RolePanel, RolePanelEdit,
+		RolePanelPlaced, User, WordSuffix []ent.Interceptor
 	}
 )

@@ -160,8 +160,11 @@ type GenericCommand struct {
 	ModalHandlers        map[string]ModalHandler
 	AutocompleteHandlers map[string]PermissionAutocompleteHandler
 	EventHandler         EventHandler[bot.Event]
+	Schedulers           []components.Scheduler
 	component            *components.Components
 }
+
+func (gc *GenericCommand) Scheduler() []components.Scheduler { return gc.Schedulers }
 
 func (gc *GenericCommand) SetComponent(c *components.Components) *GenericCommand {
 	gc.component = c

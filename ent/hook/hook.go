@@ -45,6 +45,18 @@ func (f MessagePinFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MessagePinMutation", m)
 }
 
+// The MessageRemindFunc type is an adapter to allow the use of ordinary
+// function as MessageRemind mutator.
+type MessageRemindFunc func(context.Context, *ent.MessageRemindMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f MessageRemindFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.MessageRemindMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.MessageRemindMutation", m)
+}
+
 // The RolePanelFunc type is an adapter to allow the use of ordinary
 // function as RolePanel mutator.
 type RolePanelFunc func(context.Context, *ent.RolePanelMutation) (ent.Value, error)

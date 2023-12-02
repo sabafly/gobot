@@ -1,8 +1,11 @@
 package message
 
 import (
+	"context"
+	"fmt"
 	"log/slog"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,9 +17,11 @@ import (
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/ent"
 	"github.com/sabafly/gobot/ent/messagepin"
+	"github.com/sabafly/gobot/ent/messageremind"
 	"github.com/sabafly/gobot/ent/wordsuffix"
 	"github.com/sabafly/gobot/internal/builtin"
 	"github.com/sabafly/gobot/internal/errors"
+	"github.com/sabafly/gobot/internal/parse"
 	"github.com/sabafly/gobot/internal/translate"
 	"github.com/sabafly/gobot/internal/webhookutil"
 )
@@ -154,13 +159,32 @@ func Command(c *components.Components) *generic.GenericCommand {
 							},
 						},
 					},
+					discord.ApplicationCommandOptionSubCommandGroup{
+						Name:        "remind",
+						Description: "remind",
+						Options: []discord.ApplicationCommandOptionSubCommand{
+							{
+								Name:        "add",
+								Description: "add remind",
+								Options: []discord.ApplicationCommandOption{
+									discord.ApplicationCommandOptionString{
+										Name:        "time",
+										Description: "format 2023-01-23 15:16",
+										MinLength:   builtin.Ptr(1),
+										MaxLength:   builtin.Ptr(16),
+										Required:    true,
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
 
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
 			"/message/suffix/set": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("message.manage.suffix", discord.PermissionManageMessages),
+				PCommandHandler: generic.PermissionCommandCheck("message.suffix", discord.PermissionManageMessages),
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					if u := event.SlashCommandInteractionData().User("target"); u.Bot || u.System {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.bot.target", event))
@@ -245,7 +269,7 @@ func Command(c *components.Components) *generic.GenericCommand {
 				},
 			},
 			"/message/suffix/remove": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("message.manage.suffix", discord.PermissionManageMessages),
+				PCommandHandler: generic.PermissionCommandCheck("message.suffix", discord.PermissionManageMessages),
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					if u := event.SlashCommandInteractionData().User("target"); u.Bot || u.System {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.bot.target", event))
@@ -288,7 +312,7 @@ func Command(c *components.Components) *generic.GenericCommand {
 				},
 			},
 			"/message/pin/create": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("message.manage.pin", discord.PermissionManageChannels),
+				PCommandHandler: generic.PermissionCommandCheck("message.pin", discord.PermissionManageChannels),
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					if err := event.Modal(
 						discord.NewModalCreateBuilder().
@@ -313,7 +337,7 @@ func Command(c *components.Components) *generic.GenericCommand {
 				},
 			},
 			"/message/pin/delete": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("message.manage.pin.delete"),
+				PCommandHandler: generic.PermissionCommandCheck("message.pin.delete", discord.PermissionManageChannels),
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -338,6 +362,44 @@ func Command(c *components.Components) *generic.GenericCommand {
 						return errors.NewError(err)
 					}
 
+					return nil
+				},
+			},
+			"/message/remind/add": generic.PCommandHandler{
+				PCommandHandler: generic.PermissionCommandCheck("message.remind.add", discord.PermissionManageChannels),
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					tm := time.Now().Add(time.Hour)
+					if timeStr, ok := event.SlashCommandInteractionData().OptString("time"); ok {
+						t, err := parse.TimeFuture(timeStr)
+						if err != nil {
+							return errors.NewError(errors.ErrorMessage("errors.invalid.time.format", event))
+						}
+						if t.Before(time.Now()) {
+							return errors.NewError(errors.ErrorMessage("errors.invalid.time.before", event))
+						}
+						tm = t
+					}
+
+					if err := event.Modal(
+						discord.NewModalCreateBuilder().
+							SetTitle(translate.Message(event.Locale(), "components.message.remind.add.modal.title")).
+							SetCustomID(fmt.Sprintf("message:remind_create_modal:%d", tm.Unix())).
+							SetContainerComponents(
+								discord.NewActionRow(
+									discord.TextInputComponent{
+										CustomID:  "content",
+										Style:     discord.TextInputStyleParagraph,
+										Label:     translate.Message(event.Locale(), "components.message.remind.add.modal.input.content.label"),
+										MinLength: builtin.Ptr(1),
+										MaxLength: 1000,
+										Required:  true,
+									},
+								),
+							).
+							Build(),
+					); err != nil {
+						return errors.NewError(err)
+					}
 					return nil
 				},
 			},
@@ -388,6 +450,66 @@ func Command(c *components.Components) *generic.GenericCommand {
 					return errors.NewError(err)
 				}
 				return nil
+			},
+			"message:remind_create_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+				g, err := c.GuildCreateID(event, *event.GuildID())
+				if err != nil {
+					return errors.NewError(err)
+				}
+				args := strings.Split(event.Data.CustomID, ":")
+				tm := time.Unix(builtin.Must(strconv.ParseInt(args[2], 10, 64)), 0)
+				if time.Now().After(tm) {
+					return errors.NewError(errors.ErrorMessage("errors.invalid.time.before", event))
+				}
+				c.DB().MessageRemind.Create().
+					SetGuild(g).
+					SetTime(tm).
+					SetContent(event.Data.Text("content")).
+					SetChannelID(event.Channel().ID()).
+					SetAuthorID(event.Member().User.ID).
+					ExecX(event)
+
+				if err := event.CreateMessage(
+					discord.NewMessageBuilder().
+						SetContent(translate.Message(event.Locale(), "components.message.remind.add.message",
+							translate.WithTemplate(map[string]any{
+								"Time": discord.FormattedTimestampMention(tm.Unix(), discord.TimestampStyleLongDateTime),
+							}),
+						)).
+						Create(),
+				); err != nil {
+					return errors.NewError(err)
+				}
+				return nil
+			},
+		},
+
+		Schedulers: []components.Scheduler{
+			{
+				Duration: time.Minute,
+				Worker: func(c *components.Components, client bot.Client) error {
+					reminds := c.DB().MessageRemind.Query().
+						Where(
+							messageremind.TimeLT(time.Now().Add(time.Minute)),
+						).
+						AllX(context.Background())
+					for _, remind := range reminds {
+						if _, err := client.Rest().CreateMessage(remind.ChannelID,
+							discord.NewMessageBuilder().
+								SetContent(remind.Content).
+								Create(),
+						); err != nil {
+							return err
+						}
+					}
+
+					c.DB().MessageRemind.Delete().
+						Where(
+							messageremind.TimeLT(time.Now().Add(time.Minute)),
+						).
+						ExecX(context.Background())
+					return nil
+				},
 			},
 		},
 

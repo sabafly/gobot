@@ -11,6 +11,7 @@ import (
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
+	"github.com/sabafly/gobot/ent/messageremind"
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/ent/rolepaneledit"
 	"github.com/sabafly/gobot/ent/rolepanelplaced"
@@ -79,6 +80,16 @@ func init() {
 	messagepinDescID := messagepinFields[0].Descriptor()
 	// messagepin.DefaultID holds the default value on creation for the id field.
 	messagepin.DefaultID = messagepinDescID.Default.(func() uuid.UUID)
+	messageremindFields := schema.MessageRemind{}.Fields()
+	_ = messageremindFields
+	// messageremindDescContent is the schema descriptor for content field.
+	messageremindDescContent := messageremindFields[4].Descriptor()
+	// messageremind.ContentValidator is a validator for the "content" field. It is called by the builders before save.
+	messageremind.ContentValidator = messageremindDescContent.Validators[0].(func(string) error)
+	// messageremindDescID is the schema descriptor for id field.
+	messageremindDescID := messageremindFields[0].Descriptor()
+	// messageremind.DefaultID holds the default value on creation for the id field.
+	messageremind.DefaultID = messageremindDescID.Default.(func() uuid.UUID)
 	rolepanelFields := schema.RolePanel{}.Fields()
 	_ = rolepanelFields
 	// rolepanelDescName is the schema descriptor for name field.

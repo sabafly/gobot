@@ -25,3 +25,11 @@ func NonNilMap[T map[K]V, K comparable, V any](v T) T {
 		return make(T)
 	}
 }
+
+func Must[T any](v T, err error) T {
+	if err != nil {
+		panic(err)
+	} else {
+		return v
+	}
+}

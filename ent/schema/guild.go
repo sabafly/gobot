@@ -56,6 +56,7 @@ func (Guild) Edges() []ent.Edge {
 			Required(),
 		edge.To("members", Member.Type),
 		edge.To("message_pins", MessagePin.Type),
+		edge.To("reminds", MessageRemind.Type),
 		edge.To("role_panels", RolePanel.Type),
 		edge.To("role_panel_placements", RolePanelPlaced.Type),
 		edge.To("role_panel_edits", RolePanelEdit.Type),

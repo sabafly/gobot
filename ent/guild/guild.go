@@ -37,6 +37,8 @@ const (
 	EdgeMembers = "members"
 	// EdgeMessagePins holds the string denoting the message_pins edge name in mutations.
 	EdgeMessagePins = "message_pins"
+	// EdgeReminds holds the string denoting the reminds edge name in mutations.
+	EdgeReminds = "reminds"
 	// EdgeRolePanels holds the string denoting the role_panels edge name in mutations.
 	EdgeRolePanels = "role_panels"
 	// EdgeRolePanelPlacements holds the string denoting the role_panel_placements edge name in mutations.
@@ -66,6 +68,13 @@ const (
 	MessagePinsInverseTable = "message_pins"
 	// MessagePinsColumn is the table column denoting the message_pins relation/edge.
 	MessagePinsColumn = "guild_message_pins"
+	// RemindsTable is the table that holds the reminds relation/edge.
+	RemindsTable = "message_reminds"
+	// RemindsInverseTable is the table name for the MessageRemind entity.
+	// It exists in this package in order to avoid circular dependency with the "messageremind" package.
+	RemindsInverseTable = "message_reminds"
+	// RemindsColumn is the table column denoting the reminds relation/edge.
+	RemindsColumn = "guild_reminds"
 	// RolePanelsTable is the table that holds the role_panels relation/edge.
 	RolePanelsTable = "role_panels"
 	// RolePanelsInverseTable is the table name for the RolePanel entity.
@@ -210,6 +219,20 @@ func ByMessagePins(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByRemindsCount orders the results by reminds count.
+func ByRemindsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRemindsStep(), opts...)
+	}
+}
+
+// ByReminds orders the results by reminds terms.
+func ByReminds(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRemindsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByRolePanelsCount orders the results by role_panels count.
 func ByRolePanelsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -270,6 +293,13 @@ func newMessagePinsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(MessagePinsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, MessagePinsTable, MessagePinsColumn),
+	)
+}
+func newRemindsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RemindsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RemindsTable, RemindsColumn),
 	)
 }
 func newRolePanelsStep() *sqlgraph.Step {

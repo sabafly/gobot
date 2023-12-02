@@ -15,6 +15,7 @@ import (
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
+	"github.com/sabafly/gobot/ent/messageremind"
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/ent/rolepaneledit"
 	"github.com/sabafly/gobot/ent/rolepanelplaced"
@@ -154,6 +155,21 @@ func (gc *GuildCreate) AddMessagePins(m ...*MessagePin) *GuildCreate {
 		ids[i] = m[i].ID
 	}
 	return gc.AddMessagePinIDs(ids...)
+}
+
+// AddRemindIDs adds the "reminds" edge to the MessageRemind entity by IDs.
+func (gc *GuildCreate) AddRemindIDs(ids ...uuid.UUID) *GuildCreate {
+	gc.mutation.AddRemindIDs(ids...)
+	return gc
+}
+
+// AddReminds adds the "reminds" edges to the MessageRemind entity.
+func (gc *GuildCreate) AddReminds(m ...*MessageRemind) *GuildCreate {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return gc.AddRemindIDs(ids...)
 }
 
 // AddRolePanelIDs adds the "role_panels" edge to the RolePanel entity by IDs.
@@ -396,6 +412,22 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(messagepin.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := gc.mutation.RemindsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RemindsTable,
+			Columns: []string{guild.RemindsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(messageremind.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

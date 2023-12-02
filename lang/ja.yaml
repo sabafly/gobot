@@ -533,6 +533,9 @@ components.level.role.list.message: |-
 components.level.role.remove.message.embed.title: レベルロールを削除しました
 components.level.role.remove.message.embed.description: |-
   {{.Level}} レベル：{{.Role}}
+components.message.remind.add.modal.title: リマインドを作成
+components.message.remind.add.modal.input.content.label: 内容
+components.message.remind.add.message: "{{.Time}}に通知を予約しました"
 # エラーメッセージ
 errors.generic.message: エラーが発生しました
 errors.panic.message: 致命的なエラー
@@ -563,3 +566,7 @@ errors.not_exist: 存在しません
 errors.not_exist.description: 指定された項目がありません
 errors.already_exist: すでに存在します
 errors.already_exist.description: 同じ項目を登録することはできません
+errors.invalid.time.format: 無効な時間指定
+errors.invalid.time.format.description: それは時刻ではありません
+errors.invalid.time.before: 無効な時間指定
+errors.invalid.time.before.description: 過去を指定しているか短すぎます

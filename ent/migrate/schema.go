@@ -89,6 +89,29 @@ var (
 			},
 		},
 	}
+	// MessageRemindsColumns holds the columns for the "message_reminds" table.
+	MessageRemindsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "channel_id", Type: field.TypeUint64},
+		{Name: "author_id", Type: field.TypeUint64},
+		{Name: "time", Type: field.TypeTime},
+		{Name: "content", Type: field.TypeString},
+		{Name: "guild_reminds", Type: field.TypeUint64},
+	}
+	// MessageRemindsTable holds the schema information for the "message_reminds" table.
+	MessageRemindsTable = &schema.Table{
+		Name:       "message_reminds",
+		Columns:    MessageRemindsColumns,
+		PrimaryKey: []*schema.Column{MessageRemindsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "message_reminds_guilds_reminds",
+				Columns:    []*schema.Column{MessageRemindsColumns[5]},
+				RefColumns: []*schema.Column{GuildsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// RolePanelsColumns holds the columns for the "role_panels" table.
 	RolePanelsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
@@ -226,6 +249,7 @@ var (
 		GuildsTable,
 		MembersTable,
 		MessagePinsTable,
+		MessageRemindsTable,
 		RolePanelsTable,
 		RolePanelEditsTable,
 		RolePanelPlacedsTable,
@@ -239,6 +263,7 @@ func init() {
 	MembersTable.ForeignKeys[0].RefTable = GuildsTable
 	MembersTable.ForeignKeys[1].RefTable = UsersTable
 	MessagePinsTable.ForeignKeys[0].RefTable = GuildsTable
+	MessageRemindsTable.ForeignKeys[0].RefTable = GuildsTable
 	RolePanelsTable.ForeignKeys[0].RefTable = GuildsTable
 	RolePanelEditsTable.ForeignKeys[0].RefTable = GuildsTable
 	RolePanelEditsTable.ForeignKeys[1].RefTable = RolePanelsTable

@@ -17,6 +17,7 @@ import (
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
+	"github.com/sabafly/gobot/ent/messageremind"
 	"github.com/sabafly/gobot/ent/predicate"
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/ent/rolepaneledit"
@@ -204,6 +205,21 @@ func (gu *GuildUpdate) AddMessagePins(m ...*MessagePin) *GuildUpdate {
 	return gu.AddMessagePinIDs(ids...)
 }
 
+// AddRemindIDs adds the "reminds" edge to the MessageRemind entity by IDs.
+func (gu *GuildUpdate) AddRemindIDs(ids ...uuid.UUID) *GuildUpdate {
+	gu.mutation.AddRemindIDs(ids...)
+	return gu
+}
+
+// AddReminds adds the "reminds" edges to the MessageRemind entity.
+func (gu *GuildUpdate) AddReminds(m ...*MessageRemind) *GuildUpdate {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return gu.AddRemindIDs(ids...)
+}
+
 // AddRolePanelIDs adds the "role_panels" edge to the RolePanel entity by IDs.
 func (gu *GuildUpdate) AddRolePanelIDs(ids ...uuid.UUID) *GuildUpdate {
 	gu.mutation.AddRolePanelIDs(ids...)
@@ -300,6 +316,27 @@ func (gu *GuildUpdate) RemoveMessagePins(m ...*MessagePin) *GuildUpdate {
 		ids[i] = m[i].ID
 	}
 	return gu.RemoveMessagePinIDs(ids...)
+}
+
+// ClearReminds clears all "reminds" edges to the MessageRemind entity.
+func (gu *GuildUpdate) ClearReminds() *GuildUpdate {
+	gu.mutation.ClearReminds()
+	return gu
+}
+
+// RemoveRemindIDs removes the "reminds" edge to MessageRemind entities by IDs.
+func (gu *GuildUpdate) RemoveRemindIDs(ids ...uuid.UUID) *GuildUpdate {
+	gu.mutation.RemoveRemindIDs(ids...)
+	return gu
+}
+
+// RemoveReminds removes "reminds" edges to MessageRemind entities.
+func (gu *GuildUpdate) RemoveReminds(m ...*MessageRemind) *GuildUpdate {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return gu.RemoveRemindIDs(ids...)
 }
 
 // ClearRolePanels clears all "role_panels" edges to the RolePanel entity.
@@ -583,6 +620,51 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(messagepin.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if gu.mutation.RemindsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RemindsTable,
+			Columns: []string{guild.RemindsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(messageremind.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.RemovedRemindsIDs(); len(nodes) > 0 && !gu.mutation.RemindsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RemindsTable,
+			Columns: []string{guild.RemindsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(messageremind.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.RemindsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RemindsTable,
+			Columns: []string{guild.RemindsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(messageremind.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -911,6 +993,21 @@ func (guo *GuildUpdateOne) AddMessagePins(m ...*MessagePin) *GuildUpdateOne {
 	return guo.AddMessagePinIDs(ids...)
 }
 
+// AddRemindIDs adds the "reminds" edge to the MessageRemind entity by IDs.
+func (guo *GuildUpdateOne) AddRemindIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	guo.mutation.AddRemindIDs(ids...)
+	return guo
+}
+
+// AddReminds adds the "reminds" edges to the MessageRemind entity.
+func (guo *GuildUpdateOne) AddReminds(m ...*MessageRemind) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return guo.AddRemindIDs(ids...)
+}
+
 // AddRolePanelIDs adds the "role_panels" edge to the RolePanel entity by IDs.
 func (guo *GuildUpdateOne) AddRolePanelIDs(ids ...uuid.UUID) *GuildUpdateOne {
 	guo.mutation.AddRolePanelIDs(ids...)
@@ -1007,6 +1104,27 @@ func (guo *GuildUpdateOne) RemoveMessagePins(m ...*MessagePin) *GuildUpdateOne {
 		ids[i] = m[i].ID
 	}
 	return guo.RemoveMessagePinIDs(ids...)
+}
+
+// ClearReminds clears all "reminds" edges to the MessageRemind entity.
+func (guo *GuildUpdateOne) ClearReminds() *GuildUpdateOne {
+	guo.mutation.ClearReminds()
+	return guo
+}
+
+// RemoveRemindIDs removes the "reminds" edge to MessageRemind entities by IDs.
+func (guo *GuildUpdateOne) RemoveRemindIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	guo.mutation.RemoveRemindIDs(ids...)
+	return guo
+}
+
+// RemoveReminds removes "reminds" edges to MessageRemind entities.
+func (guo *GuildUpdateOne) RemoveReminds(m ...*MessageRemind) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return guo.RemoveRemindIDs(ids...)
 }
 
 // ClearRolePanels clears all "role_panels" edges to the RolePanel entity.
@@ -1320,6 +1438,51 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(messagepin.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if guo.mutation.RemindsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RemindsTable,
+			Columns: []string{guild.RemindsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(messageremind.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.RemovedRemindsIDs(); len(nodes) > 0 && !guo.mutation.RemindsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RemindsTable,
+			Columns: []string{guild.RemindsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(messageremind.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.RemindsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RemindsTable,
+			Columns: []string{guild.RemindsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(messageremind.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

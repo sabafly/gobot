@@ -52,6 +52,8 @@ type GuildEdges struct {
 	Members []*Member `json:"members,omitempty"`
 	// MessagePins holds the value of the message_pins edge.
 	MessagePins []*MessagePin `json:"message_pins,omitempty"`
+	// Reminds holds the value of the reminds edge.
+	Reminds []*MessageRemind `json:"reminds,omitempty"`
 	// RolePanels holds the value of the role_panels edge.
 	RolePanels []*RolePanel `json:"role_panels,omitempty"`
 	// RolePanelPlacements holds the value of the role_panel_placements edge.
@@ -60,7 +62,7 @@ type GuildEdges struct {
 	RolePanelEdits []*RolePanelEdit `json:"role_panel_edits,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [6]bool
+	loadedTypes [7]bool
 }
 
 // OwnerOrErr returns the Owner value or an error if the edge
@@ -94,10 +96,19 @@ func (e GuildEdges) MessagePinsOrErr() ([]*MessagePin, error) {
 	return nil, &NotLoadedError{edge: "message_pins"}
 }
 
+// RemindsOrErr returns the Reminds value or an error if the edge
+// was not loaded in eager-loading.
+func (e GuildEdges) RemindsOrErr() ([]*MessageRemind, error) {
+	if e.loadedTypes[3] {
+		return e.Reminds, nil
+	}
+	return nil, &NotLoadedError{edge: "reminds"}
+}
+
 // RolePanelsOrErr returns the RolePanels value or an error if the edge
 // was not loaded in eager-loading.
 func (e GuildEdges) RolePanelsOrErr() ([]*RolePanel, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[4] {
 		return e.RolePanels, nil
 	}
 	return nil, &NotLoadedError{edge: "role_panels"}
@@ -106,7 +117,7 @@ func (e GuildEdges) RolePanelsOrErr() ([]*RolePanel, error) {
 // RolePanelPlacementsOrErr returns the RolePanelPlacements value or an error if the edge
 // was not loaded in eager-loading.
 func (e GuildEdges) RolePanelPlacementsOrErr() ([]*RolePanelPlaced, error) {
-	if e.loadedTypes[4] {
+	if e.loadedTypes[5] {
 		return e.RolePanelPlacements, nil
 	}
 	return nil, &NotLoadedError{edge: "role_panel_placements"}
@@ -115,7 +126,7 @@ func (e GuildEdges) RolePanelPlacementsOrErr() ([]*RolePanelPlaced, error) {
 // RolePanelEditsOrErr returns the RolePanelEdits value or an error if the edge
 // was not loaded in eager-loading.
 func (e GuildEdges) RolePanelEditsOrErr() ([]*RolePanelEdit, error) {
-	if e.loadedTypes[5] {
+	if e.loadedTypes[6] {
 		return e.RolePanelEdits, nil
 	}
 	return nil, &NotLoadedError{edge: "role_panel_edits"}
@@ -245,6 +256,11 @@ func (gu *Guild) QueryMembers() *MemberQuery {
 // QueryMessagePins queries the "message_pins" edge of the Guild entity.
 func (gu *Guild) QueryMessagePins() *MessagePinQuery {
 	return NewGuildClient(gu.config).QueryMessagePins(gu)
+}
+
+// QueryReminds queries the "reminds" edge of the Guild entity.
+func (gu *Guild) QueryReminds() *MessageRemindQuery {
+	return NewGuildClient(gu.config).QueryReminds(gu)
 }
 
 // QueryRolePanels queries the "role_panels" edge of the Guild entity.

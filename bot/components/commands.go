@@ -31,6 +31,12 @@ func (c *Components) Initialize(client bot.Client) error {
 
 	var commands, privCommands []discord.ApplicationCommandCreate
 	for name, cmd := range c.commandsRegistry {
+		if len(cmd.Scheduler()) > 0 {
+			slog.Info("コマンドスケジューラ―を登録します", "name", name, "count", len(cmd.Create()))
+			for _, s := range cmd.Scheduler() {
+				go execSchedule(c, client, s)
+			}
+		}
 		if len(cmd.Create()) > 0 {
 			slog.Info("コマンドを登録します", "name", name, "count", len(cmd.Create()), "is_private", cmd.IsPrivate())
 			if cmd.IsPrivate() {
@@ -150,4 +156,5 @@ type Command interface {
 	ModalHandler() func(event *events.ModalSubmitInteractionCreate) error
 	AutocompleteHandler() func(event *events.AutocompleteInteractionCreate) error
 	OnEvent() func(event bot.Event) error
+	Scheduler() []Scheduler
 }
