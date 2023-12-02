@@ -335,7 +335,7 @@ func Command(c *components.Components) components.Command {
 					toUser = toUser.Update().SetXp(toUser.Xp).SaveX(event)
 					fromUser = fromUser.Update().SetXp(fromUser.Xp).SaveX(event)
 					if before != after {
-						if err := level_up(g, after, event.Client(), *event.GuildID(), event.Channel().ID(), toUser, to.User, before); err != nil {
+						if err := level_up(g, after, event.Client(), *event.GuildID(), builtin.Or(g.LevelUpChannel != nil, builtin.NonNil(g.LevelUpChannel), event.Channel().ID()), toUser, to.User, before); err != nil {
 							return errors.NewError(err)
 						}
 					}
@@ -859,7 +859,7 @@ func Command(c *components.Components) components.Command {
 					SetMessageCount(m.MessageCount + 1).
 					SaveX(event)
 				if before != after {
-					if err := level_up(g, after, event.Client(), event.GuildID, event.ChannelID, m, event.Message.Author, before); err != nil {
+					if err := level_up(g, after, event.Client(), event.GuildID, builtin.Or(g.LevelUpChannel != nil, builtin.NonNil(g.LevelUpChannel), event.ChannelID), m, event.Message.Author, before); err != nil {
 						return errors.NewError(err)
 					}
 				}
