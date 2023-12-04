@@ -38,6 +38,14 @@ func (mu *MemberUpdate) SetPermission(pe permissions.Permission) *MemberUpdate {
 	return mu
 }
 
+// SetNillablePermission sets the "permission" field if the given value is not nil.
+func (mu *MemberUpdate) SetNillablePermission(pe *permissions.Permission) *MemberUpdate {
+	if pe != nil {
+		mu.SetPermission(*pe)
+	}
+	return mu
+}
+
 // ClearPermission clears the value of the "permission" field.
 func (mu *MemberUpdate) ClearPermission() *MemberUpdate {
 	mu.mutation.ClearPermission()
@@ -254,6 +262,14 @@ type MemberUpdateOne struct {
 // SetPermission sets the "permission" field.
 func (muo *MemberUpdateOne) SetPermission(pe permissions.Permission) *MemberUpdateOne {
 	muo.mutation.SetPermission(pe)
+	return muo
+}
+
+// SetNillablePermission sets the "permission" field if the given value is not nil.
+func (muo *MemberUpdateOne) SetNillablePermission(pe *permissions.Permission) *MemberUpdateOne {
+	if pe != nil {
+		muo.SetPermission(*pe)
+	}
 	return muo
 }
 

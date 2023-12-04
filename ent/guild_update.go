@@ -158,12 +158,6 @@ func (gu *GuildUpdate) SetPermissions(m map[snowflake.ID]permissions.Permission)
 	return gu
 }
 
-// ClearPermissions clears the value of the "permissions" field.
-func (gu *GuildUpdate) ClearPermissions() *GuildUpdate {
-	gu.mutation.ClearPermissions()
-	return gu
-}
-
 // SetRemindCount sets the "remind_count" field.
 func (gu *GuildUpdate) SetRemindCount(i int) *GuildUpdate {
 	gu.mutation.ResetRemindCount()
@@ -525,9 +519,6 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := gu.mutation.Permissions(); ok {
 		_spec.SetField(guild.FieldPermissions, field.TypeJSON, value)
-	}
-	if gu.mutation.PermissionsCleared() {
-		_spec.ClearField(guild.FieldPermissions, field.TypeJSON)
 	}
 	if value, ok := gu.mutation.RemindCount(); ok {
 		_spec.SetField(guild.FieldRemindCount, field.TypeInt, value)
@@ -973,12 +964,6 @@ func (guo *GuildUpdateOne) SetPermissions(m map[snowflake.ID]permissions.Permiss
 	return guo
 }
 
-// ClearPermissions clears the value of the "permissions" field.
-func (guo *GuildUpdateOne) ClearPermissions() *GuildUpdateOne {
-	guo.mutation.ClearPermissions()
-	return guo
-}
-
 // SetRemindCount sets the "remind_count" field.
 func (guo *GuildUpdateOne) SetRemindCount(i int) *GuildUpdateOne {
 	guo.mutation.ResetRemindCount()
@@ -1370,9 +1355,6 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 	}
 	if value, ok := guo.mutation.Permissions(); ok {
 		_spec.SetField(guild.FieldPermissions, field.TypeJSON, value)
-	}
-	if guo.mutation.PermissionsCleared() {
-		_spec.ClearField(guild.FieldPermissions, field.TypeJSON)
 	}
 	if value, ok := guo.mutation.RemindCount(); ok {
 		_spec.SetField(guild.FieldRemindCount, field.TypeInt, value)

@@ -56,23 +56,24 @@ type CommandHandler EventHandler[*events.ApplicationCommandInteractionCreate]
 func (c CommandHandler) Handler() EventHandler[*events.ApplicationCommandInteractionCreate] {
 	return EventHandler[*events.ApplicationCommandInteractionCreate](c)
 }
-func (CommandHandler) PermissionCheck() PEventHandler[*events.ApplicationCommandInteractionCreate] {
-	return nil
-}
+func (c CommandHandler) Permissions() []Permission              { return nil }
+func (c CommandHandler) DiscordPermission() discord.Permissions { return 0 }
 
 var _ PermissionCommandHandler = (*CommandHandler)(nil)
 
 type PCommandHandler struct {
-	CommandHandler  EventHandler[*events.ApplicationCommandInteractionCreate]
-	PCommandHandler PEventHandler[*events.ApplicationCommandInteractionCreate]
+	CommandHandler EventHandler[*events.ApplicationCommandInteractionCreate]
+	Permission     []Permission
+	DiscordPerm    discord.Permissions
 }
 
 func (c PCommandHandler) Handler() EventHandler[*events.ApplicationCommandInteractionCreate] {
 	return EventHandler[*events.ApplicationCommandInteractionCreate](c.CommandHandler)
 }
-func (c PCommandHandler) PermissionCheck() PEventHandler[*events.ApplicationCommandInteractionCreate] {
-	return PEventHandler[*events.ApplicationCommandInteractionCreate](c.PCommandHandler)
-}
+func (c PCommandHandler) Permissions() []Permission              { return c.Permission }
+func (c PCommandHandler) DiscordPermission() discord.Permissions { return c.DiscordPerm }
+
+var _ PermissionCommandHandler = (*PCommandHandler)(nil)
 
 // AutoComplete
 
@@ -81,23 +82,22 @@ type AutocompleteHandler EventHandler[*events.AutocompleteInteractionCreate]
 func (c AutocompleteHandler) Handler() EventHandler[*events.AutocompleteInteractionCreate] {
 	return EventHandler[*events.AutocompleteInteractionCreate](c)
 }
-func (AutocompleteHandler) PermissionCheck() PEventHandler[*events.AutocompleteInteractionCreate] {
-	return nil
-}
+func (c AutocompleteHandler) Permissions() []Permission              { return nil }
+func (c AutocompleteHandler) DiscordPermission() discord.Permissions { return 0 }
 
 var _ PermissionAutocompleteHandler = (*AutocompleteHandler)(nil)
 
 type PAutocompleteHandler struct {
-	AutocompleteHandler  EventHandler[*events.AutocompleteInteractionCreate]
-	PAutocompleteHandler PEventHandler[*events.AutocompleteInteractionCreate]
+	AutocompleteHandler EventHandler[*events.AutocompleteInteractionCreate]
+	Permission          []Permission
+	DiscordPerm         discord.Permissions
 }
 
 func (c PAutocompleteHandler) Handler() EventHandler[*events.AutocompleteInteractionCreate] {
 	return EventHandler[*events.AutocompleteInteractionCreate](c.AutocompleteHandler)
 }
-func (c PAutocompleteHandler) PermissionCheck() PEventHandler[*events.AutocompleteInteractionCreate] {
-	return PEventHandler[*events.AutocompleteInteractionCreate](c.PAutocompleteHandler)
-}
+func (c PAutocompleteHandler) Permissions() []Permission              { return c.Permission }
+func (c PAutocompleteHandler) DiscordPermission() discord.Permissions { return c.DiscordPerm }
 
 var _ PermissionAutocompleteHandler = (*PAutocompleteHandler)(nil)
 
@@ -108,23 +108,22 @@ type ComponentHandler EventHandler[*events.ComponentInteractionCreate]
 func (c ComponentHandler) Handler() EventHandler[*events.ComponentInteractionCreate] {
 	return EventHandler[*events.ComponentInteractionCreate](c)
 }
-func (ComponentHandler) PermissionCheck() PEventHandler[*events.ComponentInteractionCreate] {
-	return nil
-}
+func (c ComponentHandler) Permissions() []Permission              { return nil }
+func (c ComponentHandler) DiscordPermission() discord.Permissions { return 0 }
 
 var _ PermissionComponentHandler = (*ComponentHandler)(nil)
 
 type PComponentHandler struct {
-	ComponentHandler  EventHandler[*events.ComponentInteractionCreate]
-	PComponentHandler PEventHandler[*events.ComponentInteractionCreate]
+	ComponentHandler EventHandler[*events.ComponentInteractionCreate]
+	Permission       []Permission
+	DiscordPerm      discord.Permissions
 }
 
 func (c PComponentHandler) Handler() EventHandler[*events.ComponentInteractionCreate] {
 	return EventHandler[*events.ComponentInteractionCreate](c.ComponentHandler)
 }
-func (c PComponentHandler) PermissionCheck() PEventHandler[*events.ComponentInteractionCreate] {
-	return PEventHandler[*events.ComponentInteractionCreate](c.PComponentHandler)
-}
+func (c PComponentHandler) Permissions() []Permission              { return c.Permission }
+func (c PComponentHandler) DiscordPermission() discord.Permissions { return c.DiscordPerm }
 
 var _ PermissionComponentHandler = (*PComponentHandler)(nil)
 
@@ -141,12 +140,27 @@ type PermissionComponentHandler PermissionHandler[*events.ComponentInteractionCr
 // Generic Types
 
 type EventHandler[E bot.Event] func(c *components.Components, event E) errors.Error
-type PEventHandler[E bot.Event] func(c *components.Components, event E) bool
 
 type PermissionHandler[E bot.Event] interface {
 	Handler() EventHandler[E]
-	PermissionCheck() PEventHandler[E]
+	Permissions() []Permission
+	DiscordPermission() discord.Permissions
 }
+
+type Permission interface {
+	PermString() string
+	Default() bool
+}
+
+type PermissionString string
+
+func (p PermissionString) PermString() string { return string(p) }
+func (p PermissionString) Default() bool      { return false }
+
+type PermissionDefaultString string
+
+func (p PermissionDefaultString) PermString() string { return string(p) }
+func (p PermissionDefaultString) Default() bool      { return true }
 
 var _ components.Command = (*GenericCommand)(nil)
 
@@ -190,9 +204,10 @@ func (gc *GenericCommand) CommandHandler() func(event *events.ApplicationCommand
 		if !ok {
 			return fmt.Errorf("unknown handler: command_path=%s", path)
 		}
-		if c := cmd.PermissionCheck(); c != nil {
-			if !c(gc.component, event) {
-				return nil
+		if c := permissionCheck(event, gc.component, cmd.Permissions(), cmd.DiscordPermission()); !c {
+			if err := noPermissionMessage(event, cmd.Permissions()); err != nil {
+				createErrorMessage(errors.NewError(err), event)
+				return err
 			}
 		}
 		h := cmd.Handler()
@@ -215,9 +230,10 @@ func (gc *GenericCommand) ComponentHandler() func(event *events.ComponentInterac
 		if !ok {
 			return fmt.Errorf("unknown handler: custom_id=%s", event.Data.CustomID())
 		}
-		if c := cmd.PermissionCheck(); c != nil {
-			if !c(gc.component, event) {
-				return nil
+		if c := permissionCheck(event, gc.component, cmd.Permissions(), cmd.DiscordPermission()); !c {
+			if err := noPermissionMessage(event, cmd.Permissions()); err != nil {
+				createErrorMessage(errors.NewError(err), event)
+				return err
 			}
 		}
 		h := cmd.Handler()
@@ -261,9 +277,9 @@ func (gc *GenericCommand) AutocompleteHandler() func(event *events.AutocompleteI
 		if !ok {
 			return fmt.Errorf("unknown handler: command_path=%s", path)
 		}
-		if c := cmd.PermissionCheck(); c != nil {
-			if !c(gc.component, event) {
-				return nil
+		if c := permissionCheck(event, gc.component, cmd.Permissions(), cmd.DiscordPermission()); !c {
+			if err := event.AutocompleteResult(make([]discord.AutocompleteChoice, 0)); err != nil {
+				return err
 			}
 		}
 		h := cmd.Handler()

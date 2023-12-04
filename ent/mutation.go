@@ -556,22 +556,9 @@ func (m *GuildMutation) OldPermissions(ctx context.Context) (v map[snowflake.ID]
 	return oldValue.Permissions, nil
 }
 
-// ClearPermissions clears the value of the "permissions" field.
-func (m *GuildMutation) ClearPermissions() {
-	m.permissions = nil
-	m.clearedFields[guild.FieldPermissions] = struct{}{}
-}
-
-// PermissionsCleared returns if the "permissions" field was cleared in this mutation.
-func (m *GuildMutation) PermissionsCleared() bool {
-	_, ok := m.clearedFields[guild.FieldPermissions]
-	return ok
-}
-
 // ResetPermissions resets all changes to the "permissions" field.
 func (m *GuildMutation) ResetPermissions() {
 	m.permissions = nil
-	delete(m.clearedFields, guild.FieldPermissions)
 }
 
 // SetRemindCount sets the "remind_count" field.
@@ -1246,9 +1233,6 @@ func (m *GuildMutation) ClearedFields() []string {
 	if m.FieldCleared(guild.FieldLevelRole) {
 		fields = append(fields, guild.FieldLevelRole)
 	}
-	if m.FieldCleared(guild.FieldPermissions) {
-		fields = append(fields, guild.FieldPermissions)
-	}
 	return fields
 }
 
@@ -1271,9 +1255,6 @@ func (m *GuildMutation) ClearField(name string) error {
 		return nil
 	case guild.FieldLevelRole:
 		m.ClearLevelRole()
-		return nil
-	case guild.FieldPermissions:
-		m.ClearPermissions()
 		return nil
 	}
 	return fmt.Errorf("unknown Guild nullable field %s", name)

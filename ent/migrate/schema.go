@@ -18,7 +18,7 @@ var (
 		{Name: "level_up_exclude_channel", Type: field.TypeJSON, Nullable: true},
 		{Name: "level_mee6_imported", Type: field.TypeBool, Default: false},
 		{Name: "level_role", Type: field.TypeJSON, Nullable: true},
-		{Name: "permissions", Type: field.TypeJSON, Nullable: true},
+		{Name: "permissions", Type: field.TypeJSON},
 		{Name: "remind_count", Type: field.TypeInt, Default: 0},
 		{Name: "user_own_guilds", Type: field.TypeUint64},
 	}

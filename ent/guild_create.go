@@ -321,6 +321,9 @@ func (gc *GuildCreate) check() error {
 	if _, ok := gc.mutation.LevelMee6Imported(); !ok {
 		return &ValidationError{Name: "level_mee6_imported", err: errors.New(`ent: missing required field "Guild.level_mee6_imported"`)}
 	}
+	if _, ok := gc.mutation.Permissions(); !ok {
+		return &ValidationError{Name: "permissions", err: errors.New(`ent: missing required field "Guild.permissions"`)}
+	}
 	if _, ok := gc.mutation.RemindCount(); !ok {
 		return &ValidationError{Name: "remind_count", err: errors.New(`ent: missing required field "Guild.remind_count"`)}
 	}

@@ -18,7 +18,7 @@ type Member struct {
 func (Member) Fields() []ent.Field {
 	return []ent.Field{
 		field.JSON("permission", permissions.Permission{}).
-			Default(make(permissions.Permission)).
+			Default(permissions.Permission{}).
 			Optional(),
 		field.Uint64("xp").
 			Default(0).

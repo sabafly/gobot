@@ -42,8 +42,7 @@ func (Guild) Fields() []ent.Field {
 			Default(make(map[int]snowflake.ID)).
 			Optional(),
 		field.JSON("permissions", map[snowflake.ID]permissions.Permission{}).
-			Default(make(map[snowflake.ID]permissions.Permission)).
-			Optional(),
+			Default(make(map[snowflake.ID]permissions.Permission)),
 		field.Int("remind_count").
 			Default(0),
 	}

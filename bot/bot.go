@@ -35,6 +35,7 @@ import (
 	"github.com/sabafly/gobot/bot/commands/debug"
 	"github.com/sabafly/gobot/bot/commands/level"
 	"github.com/sabafly/gobot/bot/commands/message"
+	"github.com/sabafly/gobot/bot/commands/permission"
 	"github.com/sabafly/gobot/bot/commands/ping"
 	"github.com/sabafly/gobot/bot/commands/role"
 	userinfo "github.com/sabafly/gobot/bot/commands/user_info"
@@ -94,11 +95,12 @@ func run() error {
 
 	component.AddCommands(
 		debug.Command(component),
-		ping.Command(),
+		ping.Command(component),
 		message.Command(component),
 		role.Command(component),
 		level.Command(component),
 		userinfo.Command(component),
+		permission.Command(component),
 	)
 
 	token := os.Getenv("TOKEN")
@@ -125,14 +127,14 @@ func run() error {
 		return fmt.Errorf("クライアントを作成できません: %w", err)
 	}
 
+	if err := component.Initialize(client); err != nil {
+		return fmt.Errorf("コンポーネントを初期化できません: %w", err)
+	}
+
 	if err := client.OpenShardManager(context.Background()); err != nil {
 		return fmt.Errorf("Discord ゲートウェイを開けません: %w", err)
 	}
 	defer client.Close(context.Background())
-
-	if err := component.Initialize(client); err != nil {
-		return fmt.Errorf("コンポーネントを初期化できません: %w", err)
-	}
 
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.Signal(0x13), syscall.Signal(0x14))

@@ -204,99 +204,112 @@ func Command(c *components.Components) components.Command {
 			},
 		},
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
-			"/level/rank": generic.CommandHandler(func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-				g, err := c.GuildCreateID(event, *event.GuildID())
-				if err != nil {
-					return errors.NewError(err)
-				}
-				m, err := c.MemberCreate(event, event.User(), *event.GuildID())
-				if err != nil {
-					return errors.NewError(err)
-				}
-				gl, err := c.GuildRequest(event.Client(), g.ID)
-				if err != nil {
-					return errors.NewError(err)
-				}
-				ids := g.QueryMembers().Order(
-					member.ByXp(
-						sql.OrderDesc(),
-					),
-				).IDsX(event)
-				index := slices.Index(ids, m.ID)
-				if err := event.CreateMessage(
-					discord.NewMessageBuilder().
-						SetEmbeds(
-							embeds.SetEmbedProperties(
-								level_message(g, gl, m, index, event.Member().Member, event),
-							),
-						).
-						Create(),
-				); err != nil {
-					return errors.NewError(err)
-				}
-				return nil
-			}),
-			"/level/leaderboard": generic.CommandHandler(func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-				const pageCount = 25
-				g, err := c.GuildCreateID(event, *event.GuildID())
-				if err != nil {
-					return errors.NewError(err)
-				}
-				gl, err := c.GuildRequest(event.Client(), g.ID)
-				if err != nil {
-					return errors.NewError(err)
-				}
-				page := event.SlashCommandInteractionData().Int("page")
-				page = builtin.Or(page > 0, page, 1)
-				count := g.QueryMembers().CountX(event)
-				if page > count/pageCount+1 {
-					return errors.NewError(errors.ErrorMessage("errors.invalid.page", event))
-				}
-				members := g.QueryMembers().
-					Order(
+			"/level/rank": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("level.rank"),
+				},
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					g, err := c.GuildCreateID(event, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+					m, err := c.MemberCreate(event, event.User(), *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+					gl, err := c.GuildRequest(event.Client(), g.ID)
+					if err != nil {
+						return errors.NewError(err)
+					}
+					ids := g.QueryMembers().Order(
 						member.ByXp(
 							sql.OrderDesc(),
 						),
-					).
-					Offset((page - 1) * pageCount).
-					Limit(pageCount).
-					AllX(event)
-				var leaderboard string
-				for i, m := range members {
-					leaderboard += fmt.Sprintf("**#%d | %s XP: `%d` Level: `%d`**\n",
-						i+1+((page-1)*pageCount),
-						discord.UserMention(m.UserID),
-						m.Xp, m.Xp.Level(),
-					)
-				}
-				if err := event.CreateMessage(
-					discord.NewMessageBuilder().
-						SetEmbeds(
-							embeds.SetEmbedProperties(
-								discord.NewEmbedBuilder().
-									SetEmbedAuthor(
-										&discord.EmbedAuthor{
-											Name:    g.Name,
-											IconURL: builtin.NonNil(gl.IconURL()),
-										},
-									).
-									SetTitlef("🏆%s(%d/%d)",
-										translate.Message(event.Locale(), "components.level.leaderboard.title"),
-										page,
-										count/pageCount+1,
-									).
-									SetDescription(leaderboard).
-									Build(),
+					).IDsX(event)
+					index := slices.Index(ids, m.ID)
+					if err := event.CreateMessage(
+						discord.NewMessageBuilder().
+							SetEmbeds(
+								embeds.SetEmbedProperties(
+									level_message(g, gl, m, index, event.Member().Member, event),
+								),
+							).
+							Create(),
+					); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
+			"/level/leaderboard": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("level.leaderboard"),
+				},
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					const pageCount = 25
+					g, err := c.GuildCreateID(event, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+					gl, err := c.GuildRequest(event.Client(), g.ID)
+					if err != nil {
+						return errors.NewError(err)
+					}
+					page := event.SlashCommandInteractionData().Int("page")
+					page = builtin.Or(page > 0, page, 1)
+					count := g.QueryMembers().CountX(event)
+					if page > count/pageCount+1 {
+						return errors.NewError(errors.ErrorMessage("errors.invalid.page", event))
+					}
+					members := g.QueryMembers().
+						Order(
+							member.ByXp(
+								sql.OrderDesc(),
 							),
 						).
-						Create(),
-				); err != nil {
-					return errors.NewError(err)
-				}
-				return nil
-			}),
+						Offset((page - 1) * pageCount).
+						Limit(pageCount).
+						AllX(event)
+					var leaderboard string
+					for i, m := range members {
+						leaderboard += fmt.Sprintf("**#%d | %s XP: `%d` Level: `%d`**\n",
+							i+1+((page-1)*pageCount),
+							discord.UserMention(m.UserID),
+							m.Xp, m.Xp.Level(),
+						)
+					}
+					if err := event.CreateMessage(
+						discord.NewMessageBuilder().
+							SetEmbeds(
+								embeds.SetEmbedProperties(
+									discord.NewEmbedBuilder().
+										SetEmbedAuthor(
+											&discord.EmbedAuthor{
+												Name:    g.Name,
+												IconURL: builtin.NonNil(gl.IconURL()),
+											},
+										).
+										SetTitlef("🏆%s(%d/%d)",
+											translate.Message(event.Locale(), "components.level.leaderboard.title"),
+											page,
+											count/pageCount+1,
+										).
+										SetDescription(leaderboard).
+										Build(),
+								),
+							).
+							Create(),
+					); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
 			"/level/transfer": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("level.transfer"),
+				Permission: []generic.Permission{
+					generic.PermissionString("level.transfer"),
+				},
+				DiscordPerm: discord.PermissionManageGuild.Add(discord.PermissionModerateMembers),
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -368,7 +381,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/level/up/message": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("level.up.message", discord.PermissionManageGuild),
+				Permission: []generic.Permission{
+					generic.PermissionString("level.up.message"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -400,7 +416,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/level/up/message-channel": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("level.up.message-channel", discord.PermissionManageGuild),
+				Permission: []generic.Permission{
+					generic.PermissionString("level.message-channel"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -433,7 +452,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/level/exclude-channel/add": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("level.exclude-channel.add", discord.PermissionManageGuild),
+				Permission: []generic.Permission{
+					generic.PermissionString("level.exclude-channel.add"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -460,7 +482,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/level/exclude-channel/remove": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("level.exclude-channel.add", discord.PermissionManageGuild),
+				Permission: []generic.Permission{
+					generic.PermissionString("level.exclude-channel.remove"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -488,7 +513,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/level/exclude-channel/clear": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("level.exclude-channel.add", discord.PermissionManageGuild),
+				Permission: []generic.Permission{
+					generic.PermissionString("level.exclude-channel.clear"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -508,7 +536,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/level/import-mee6": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("level.import-mee6", discord.PermissionManageGuild),
+				Permission: []generic.Permission{
+					generic.PermissionString("level.import-mee6"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -600,7 +631,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/level/reset": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("level.reset", discord.PermissionManageGuild),
+				Permission: []generic.Permission{
+					generic.PermissionString("level.reset"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					target := event.SlashCommandInteractionData().Member("target")
 					m, err := c.MemberCreate(event, target.User, *event.GuildID())
@@ -621,7 +655,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/level/exclude-channel/list": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("level.exclude-channel.list", discord.PermissionManageGuild),
+				Permission: []generic.Permission{
+					generic.PermissionString("level.exclude-channel.list"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -654,7 +691,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/level/role/set": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("level.role.set", discord.PermissionManageGuild.Add(discord.PermissionManageRoles)),
+				Permission: []generic.Permission{
+					generic.PermissionString("level.role.set"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -714,7 +754,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/level/role/list": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("level.role.list", discord.PermissionManageGuild.Add(discord.PermissionManageRoles)),
+				Permission: []generic.Permission{
+					generic.PermissionString("level.role.list"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -754,7 +797,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/level/role/remove": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("level.role.remove", discord.PermissionManageGuild.Add(discord.PermissionManageRoles)),
+				Permission: []generic.Permission{
+					generic.PermissionString("level.role.remove"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {

@@ -395,16 +395,6 @@ func LevelRoleNotNil() predicate.Guild {
 	return predicate.Guild(sql.FieldNotNull(FieldLevelRole))
 }
 
-// PermissionsIsNil applies the IsNil predicate on the "permissions" field.
-func PermissionsIsNil() predicate.Guild {
-	return predicate.Guild(sql.FieldIsNull(FieldPermissions))
-}
-
-// PermissionsNotNil applies the NotNil predicate on the "permissions" field.
-func PermissionsNotNil() predicate.Guild {
-	return predicate.Guild(sql.FieldNotNull(FieldPermissions))
-}
-
 // RemindCountEQ applies the EQ predicate on the "remind_count" field.
 func RemindCountEQ(v int) predicate.Guild {
 	return predicate.Guild(sql.FieldEQ(FieldRemindCount, v))

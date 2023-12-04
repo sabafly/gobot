@@ -208,7 +208,11 @@ func Command(c *components.Components) *generic.GenericCommand {
 
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
 			"/message/suffix/set": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("message.suffix.set", discord.PermissionManageMessages),
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("message.suffix.self.set"),
+					generic.PermissionString("message.suffix.set"),
+				},
+				DiscordPerm: discord.PermissionManageMessages,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					if u := event.SlashCommandInteractionData().User("target"); u.Bot || u.System {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.bot.target", event))
@@ -293,7 +297,11 @@ func Command(c *components.Components) *generic.GenericCommand {
 				},
 			},
 			"/message/suffix/remove": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("message.suffix.remove", discord.PermissionManageMessages),
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("message.suffix.self.remove"),
+					generic.PermissionString("message.suffix.remove"),
+				},
+				DiscordPerm: discord.PermissionManageMessages,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					if u := event.SlashCommandInteractionData().User("target"); u.Bot || u.System {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.bot.target", event))
@@ -336,7 +344,11 @@ func Command(c *components.Components) *generic.GenericCommand {
 				},
 			},
 			"/message/suffix/check": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("message.suffix.check", discord.PermissionManageMessages),
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("message.suffix.self.check"),
+					generic.PermissionString("message.suffix.check"),
+				},
+				DiscordPerm: discord.PermissionManageMessages,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					m, ok := event.SlashCommandInteractionData().OptMember("target")
 					if !ok {
@@ -392,7 +404,10 @@ func Command(c *components.Components) *generic.GenericCommand {
 				},
 			},
 			"/message/pin/create": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("message.pin.create", discord.PermissionManageChannels),
+				Permission: []generic.Permission{
+					generic.PermissionString("message.pin.create"),
+				},
+				DiscordPerm: discord.PermissionManageMessages,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					if err := event.Modal(
 						discord.NewModalCreateBuilder().
@@ -417,7 +432,10 @@ func Command(c *components.Components) *generic.GenericCommand {
 				},
 			},
 			"/message/pin/delete": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("message.pin.delete", discord.PermissionManageChannels),
+				Permission: []generic.Permission{
+					generic.PermissionString("message.pin.delete"),
+				},
+				DiscordPerm: discord.PermissionManageMessages,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -446,7 +464,10 @@ func Command(c *components.Components) *generic.GenericCommand {
 				},
 			},
 			"/message/remind/set": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("message.remind.add", discord.PermissionManageChannels),
+				Permission: []generic.Permission{
+					generic.PermissionString("message.remind.set"),
+				},
+				DiscordPerm: discord.PermissionManageMessages,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -502,7 +523,10 @@ func Command(c *components.Components) *generic.GenericCommand {
 				},
 			},
 			"/message/remind/cancel": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("message.remind.cancel", discord.PermissionManageChannels),
+				Permission: []generic.Permission{
+					generic.PermissionString("message.remind.cancel"),
+				},
+				DiscordPerm: discord.PermissionManageMessages,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					count := c.DB().MessageRemind.Delete().Where(
 						messageremind.HasGuildWith(guild.ID(*event.GuildID())),
@@ -526,7 +550,10 @@ func Command(c *components.Components) *generic.GenericCommand {
 
 		AutocompleteHandlers: map[string]generic.PermissionAutocompleteHandler{
 			"/message/remind/cancel:remind": generic.PAutocompleteHandler{
-				PAutocompleteHandler: generic.PermissionAutocompleteCheck("message.remind.cancel", discord.PermissionManageChannels),
+				Permission: []generic.Permission{
+					generic.PermissionString("message.remind.cancel"),
+				},
+				DiscordPerm: discord.PermissionManageMessages,
 				AutocompleteHandler: func(c *components.Components, event *events.AutocompleteInteractionCreate) errors.Error {
 					reminds := c.DB().MessageRemind.Query().Where(
 						messageremind.HasGuildWith(guild.ID(*event.GuildID())),

@@ -21,6 +21,8 @@ func rec_schedue() {
 }
 
 func execSchedule(c *Components, client bot.Client, s Scheduler) {
+	now := time.Now()
+	time.Sleep(time.Until(time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute()+1, 0, 0, now.Location())))
 	for {
 		doSchedule(c, client, s)
 		time.Sleep(s.Duration)

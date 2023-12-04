@@ -100,7 +100,10 @@ func Command(c *components.Components) components.Command {
 		},
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
 			"/role/panel/create": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("role.panel.create", discord.PermissionManageRoles),
+				Permission: []generic.Permission{
+					generic.PermissionString("role.panel.create"),
+				},
+				DiscordPerm: discord.PermissionManageRoles,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					if err := event.Modal(
 						discord.NewModalCreateBuilder().
@@ -136,7 +139,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/role/panel/edit": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("role.panel.edit", discord.PermissionManageRoles),
+				Permission: []generic.Permission{
+					generic.PermissionString("role.panel.edit"),
+				},
+				DiscordPerm: discord.PermissionManageRoles,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -172,7 +178,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/role/panel/place": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("role.panel.place", discord.PermissionManageRoles),
+				Permission: []generic.Permission{
+					generic.PermissionString("role.panel.place"),
+				},
+				DiscordPerm: discord.PermissionManageRoles,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -205,7 +214,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/role/panel/delete": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("role.panel.delete", discord.PermissionManageRoles),
+				Permission: []generic.Permission{
+					generic.PermissionString("role.panel.delete"),
+				},
+				DiscordPerm: discord.PermissionManageRoles,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -252,16 +264,25 @@ func Command(c *components.Components) components.Command {
 		},
 		AutocompleteHandlers: map[string]generic.PermissionAutocompleteHandler{
 			"/role/panel/place:panel": generic.PAutocompleteHandler{
-				PAutocompleteHandler: generic.PermissionAutocompleteCheck("role.panel.place", discord.PermissionManageRoles),
-				AutocompleteHandler:  panel_autocomplete,
+				Permission: []generic.Permission{
+					generic.PermissionString("role.panel.place"),
+				},
+				DiscordPerm:         discord.PermissionManageRoles,
+				AutocompleteHandler: panel_autocomplete,
 			},
 			"/role/panel/edit:panel": generic.PAutocompleteHandler{
-				PAutocompleteHandler: generic.PermissionAutocompleteCheck("role.panel.edit", discord.PermissionManageRoles),
-				AutocompleteHandler:  panel_autocomplete,
+				Permission: []generic.Permission{
+					generic.PermissionString("role.panel.edit"),
+				},
+				DiscordPerm:         discord.PermissionManageRoles,
+				AutocompleteHandler: panel_autocomplete,
 			},
 			"/role/panel/delete:panel": generic.PAutocompleteHandler{
-				PAutocompleteHandler: generic.PermissionAutocompleteCheck("role.panel.delete", discord.PermissionManageRoles),
-				AutocompleteHandler:  panel_autocomplete,
+				Permission: []generic.Permission{
+					generic.PermissionString("role.panel.delete"),
+				},
+				DiscordPerm:         discord.PermissionManageRoles,
+				AutocompleteHandler: panel_autocomplete,
 			},
 		},
 		ModalHandlers: map[string]generic.ModalHandler{
@@ -360,7 +381,10 @@ func Command(c *components.Components) components.Command {
 		},
 		ComponentHandlers: map[string]generic.PermissionComponentHandler{
 			"role:panel_edit_component": generic.PComponentHandler{
-				PComponentHandler: generic.PermissionComponentCheck("role.panel.edit", discord.PermissionManageRoles),
+				Permission: []generic.Permission{
+					generic.PermissionString("role.panel.edit"),
+				},
+				DiscordPerm: discord.PermissionManageRoles,
 				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
 					args := strings.Split(event.Data.CustomID(), ":")
 					action := args[2]
@@ -647,7 +671,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"role:panel_place_component": generic.PComponentHandler{
-				PComponentHandler: generic.PermissionComponentCheck("role.panel.place", discord.PermissionManageRoles),
+				Permission: []generic.Permission{
+					generic.PermissionString("role.panel.place"),
+				},
+				DiscordPerm: discord.PermissionManageRoles,
 				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
 					args := strings.Split(event.Data.CustomID(), ":")
 					action := args[2]

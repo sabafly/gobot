@@ -31,6 +31,14 @@ func (mc *MemberCreate) SetPermission(pe permissions.Permission) *MemberCreate {
 	return mc
 }
 
+// SetNillablePermission sets the "permission" field if the given value is not nil.
+func (mc *MemberCreate) SetNillablePermission(pe *permissions.Permission) *MemberCreate {
+	if pe != nil {
+		mc.SetPermission(*pe)
+	}
+	return mc
+}
+
 // SetXp sets the "xp" field.
 func (mc *MemberCreate) SetXp(x xppoint.XP) *MemberCreate {
 	mc.mutation.SetXp(x)
