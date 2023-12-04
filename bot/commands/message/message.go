@@ -209,7 +209,6 @@ func Command(c *components.Components) *generic.GenericCommand {
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
 			"/message/suffix/set": generic.PCommandHandler{
 				Permission: []generic.Permission{
-					generic.PermissionDefaultString("message.suffix.self.set"),
 					generic.PermissionString("message.suffix.set"),
 				},
 				DiscordPerm: discord.PermissionManageMessages,
@@ -298,7 +297,6 @@ func Command(c *components.Components) *generic.GenericCommand {
 			},
 			"/message/suffix/remove": generic.PCommandHandler{
 				Permission: []generic.Permission{
-					generic.PermissionDefaultString("message.suffix.self.remove"),
 					generic.PermissionString("message.suffix.remove"),
 				},
 				DiscordPerm: discord.PermissionManageMessages,
@@ -345,7 +343,6 @@ func Command(c *components.Components) *generic.GenericCommand {
 			},
 			"/message/suffix/check": generic.PCommandHandler{
 				Permission: []generic.Permission{
-					generic.PermissionDefaultString("message.suffix.self.check"),
 					generic.PermissionString("message.suffix.check"),
 				},
 				DiscordPerm: discord.PermissionManageMessages,
