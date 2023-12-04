@@ -79,6 +79,11 @@ func Content(v string) predicate.MessageRemind {
 	return predicate.MessageRemind(sql.FieldEQ(FieldContent, v))
 }
 
+// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
+func Name(v string) predicate.MessageRemind {
+	return predicate.MessageRemind(sql.FieldEQ(FieldName, v))
+}
+
 // ChannelIDEQ applies the EQ predicate on the "channel_id" field.
 func ChannelIDEQ(v snowflake.ID) predicate.MessageRemind {
 	vc := uint64(v)
@@ -290,6 +295,71 @@ func ContentEqualFold(v string) predicate.MessageRemind {
 // ContentContainsFold applies the ContainsFold predicate on the "content" field.
 func ContentContainsFold(v string) predicate.MessageRemind {
 	return predicate.MessageRemind(sql.FieldContainsFold(FieldContent, v))
+}
+
+// NameEQ applies the EQ predicate on the "name" field.
+func NameEQ(v string) predicate.MessageRemind {
+	return predicate.MessageRemind(sql.FieldEQ(FieldName, v))
+}
+
+// NameNEQ applies the NEQ predicate on the "name" field.
+func NameNEQ(v string) predicate.MessageRemind {
+	return predicate.MessageRemind(sql.FieldNEQ(FieldName, v))
+}
+
+// NameIn applies the In predicate on the "name" field.
+func NameIn(vs ...string) predicate.MessageRemind {
+	return predicate.MessageRemind(sql.FieldIn(FieldName, vs...))
+}
+
+// NameNotIn applies the NotIn predicate on the "name" field.
+func NameNotIn(vs ...string) predicate.MessageRemind {
+	return predicate.MessageRemind(sql.FieldNotIn(FieldName, vs...))
+}
+
+// NameGT applies the GT predicate on the "name" field.
+func NameGT(v string) predicate.MessageRemind {
+	return predicate.MessageRemind(sql.FieldGT(FieldName, v))
+}
+
+// NameGTE applies the GTE predicate on the "name" field.
+func NameGTE(v string) predicate.MessageRemind {
+	return predicate.MessageRemind(sql.FieldGTE(FieldName, v))
+}
+
+// NameLT applies the LT predicate on the "name" field.
+func NameLT(v string) predicate.MessageRemind {
+	return predicate.MessageRemind(sql.FieldLT(FieldName, v))
+}
+
+// NameLTE applies the LTE predicate on the "name" field.
+func NameLTE(v string) predicate.MessageRemind {
+	return predicate.MessageRemind(sql.FieldLTE(FieldName, v))
+}
+
+// NameContains applies the Contains predicate on the "name" field.
+func NameContains(v string) predicate.MessageRemind {
+	return predicate.MessageRemind(sql.FieldContains(FieldName, v))
+}
+
+// NameHasPrefix applies the HasPrefix predicate on the "name" field.
+func NameHasPrefix(v string) predicate.MessageRemind {
+	return predicate.MessageRemind(sql.FieldHasPrefix(FieldName, v))
+}
+
+// NameHasSuffix applies the HasSuffix predicate on the "name" field.
+func NameHasSuffix(v string) predicate.MessageRemind {
+	return predicate.MessageRemind(sql.FieldHasSuffix(FieldName, v))
+}
+
+// NameEqualFold applies the EqualFold predicate on the "name" field.
+func NameEqualFold(v string) predicate.MessageRemind {
+	return predicate.MessageRemind(sql.FieldEqualFold(FieldName, v))
+}
+
+// NameContainsFold applies the ContainsFold predicate on the "name" field.
+func NameContainsFold(v string) predicate.MessageRemind {
+	return predicate.MessageRemind(sql.FieldContainsFold(FieldName, v))
 }
 
 // HasGuild applies the HasEdge predicate on the "guild" edge.

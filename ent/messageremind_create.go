@@ -47,6 +47,12 @@ func (mrc *MessageRemindCreate) SetContent(s string) *MessageRemindCreate {
 	return mrc
 }
 
+// SetName sets the "name" field.
+func (mrc *MessageRemindCreate) SetName(s string) *MessageRemindCreate {
+	mrc.mutation.SetName(s)
+	return mrc
+}
+
 // SetID sets the "id" field.
 func (mrc *MessageRemindCreate) SetID(u uuid.UUID) *MessageRemindCreate {
 	mrc.mutation.SetID(u)
@@ -132,6 +138,14 @@ func (mrc *MessageRemindCreate) check() error {
 			return &ValidationError{Name: "content", err: fmt.Errorf(`ent: validator failed for field "MessageRemind.content": %w`, err)}
 		}
 	}
+	if _, ok := mrc.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "MessageRemind.name"`)}
+	}
+	if v, ok := mrc.mutation.Name(); ok {
+		if err := messageremind.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "MessageRemind.name": %w`, err)}
+		}
+	}
 	if _, ok := mrc.mutation.GuildID(); !ok {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "MessageRemind.guild"`)}
 	}
@@ -185,6 +199,10 @@ func (mrc *MessageRemindCreate) createSpec() (*MessageRemind, *sqlgraph.CreateSp
 	if value, ok := mrc.mutation.Content(); ok {
 		_spec.SetField(messageremind.FieldContent, field.TypeString, value)
 		_node.Content = value
+	}
+	if value, ok := mrc.mutation.Name(); ok {
+		_spec.SetField(messageremind.FieldName, field.TypeString, value)
+		_node.Name = value
 	}
 	if nodes := mrc.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

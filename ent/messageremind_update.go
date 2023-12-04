@@ -100,6 +100,20 @@ func (mru *MessageRemindUpdate) SetNillableContent(s *string) *MessageRemindUpda
 	return mru
 }
 
+// SetName sets the "name" field.
+func (mru *MessageRemindUpdate) SetName(s string) *MessageRemindUpdate {
+	mru.mutation.SetName(s)
+	return mru
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (mru *MessageRemindUpdate) SetNillableName(s *string) *MessageRemindUpdate {
+	if s != nil {
+		mru.SetName(*s)
+	}
+	return mru
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
 func (mru *MessageRemindUpdate) SetGuildID(id snowflake.ID) *MessageRemindUpdate {
 	mru.mutation.SetGuildID(id)
@@ -156,6 +170,11 @@ func (mru *MessageRemindUpdate) check() error {
 			return &ValidationError{Name: "content", err: fmt.Errorf(`ent: validator failed for field "MessageRemind.content": %w`, err)}
 		}
 	}
+	if v, ok := mru.mutation.Name(); ok {
+		if err := messageremind.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "MessageRemind.name": %w`, err)}
+		}
+	}
 	if _, ok := mru.mutation.GuildID(); mru.mutation.GuildCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "MessageRemind.guild"`)
 	}
@@ -191,6 +210,9 @@ func (mru *MessageRemindUpdate) sqlSave(ctx context.Context) (n int, err error) 
 	}
 	if value, ok := mru.mutation.Content(); ok {
 		_spec.SetField(messageremind.FieldContent, field.TypeString, value)
+	}
+	if value, ok := mru.mutation.Name(); ok {
+		_spec.SetField(messageremind.FieldName, field.TypeString, value)
 	}
 	if mru.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -311,6 +333,20 @@ func (mruo *MessageRemindUpdateOne) SetNillableContent(s *string) *MessageRemind
 	return mruo
 }
 
+// SetName sets the "name" field.
+func (mruo *MessageRemindUpdateOne) SetName(s string) *MessageRemindUpdateOne {
+	mruo.mutation.SetName(s)
+	return mruo
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (mruo *MessageRemindUpdateOne) SetNillableName(s *string) *MessageRemindUpdateOne {
+	if s != nil {
+		mruo.SetName(*s)
+	}
+	return mruo
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
 func (mruo *MessageRemindUpdateOne) SetGuildID(id snowflake.ID) *MessageRemindUpdateOne {
 	mruo.mutation.SetGuildID(id)
@@ -380,6 +416,11 @@ func (mruo *MessageRemindUpdateOne) check() error {
 			return &ValidationError{Name: "content", err: fmt.Errorf(`ent: validator failed for field "MessageRemind.content": %w`, err)}
 		}
 	}
+	if v, ok := mruo.mutation.Name(); ok {
+		if err := messageremind.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "MessageRemind.name": %w`, err)}
+		}
+	}
 	if _, ok := mruo.mutation.GuildID(); mruo.mutation.GuildCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "MessageRemind.guild"`)
 	}
@@ -432,6 +473,9 @@ func (mruo *MessageRemindUpdateOne) sqlSave(ctx context.Context) (_node *Message
 	}
 	if value, ok := mruo.mutation.Content(); ok {
 		_spec.SetField(messageremind.FieldContent, field.TypeString, value)
+	}
+	if value, ok := mruo.mutation.Name(); ok {
+		_spec.SetField(messageremind.FieldName, field.TypeString, value)
 	}
 	if mruo.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{

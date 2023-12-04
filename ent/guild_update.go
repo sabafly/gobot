@@ -164,6 +164,27 @@ func (gu *GuildUpdate) ClearPermissions() *GuildUpdate {
 	return gu
 }
 
+// SetRemindCount sets the "remind_count" field.
+func (gu *GuildUpdate) SetRemindCount(i int) *GuildUpdate {
+	gu.mutation.ResetRemindCount()
+	gu.mutation.SetRemindCount(i)
+	return gu
+}
+
+// SetNillableRemindCount sets the "remind_count" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableRemindCount(i *int) *GuildUpdate {
+	if i != nil {
+		gu.SetRemindCount(*i)
+	}
+	return gu
+}
+
+// AddRemindCount adds i to the "remind_count" field.
+func (gu *GuildUpdate) AddRemindCount(i int) *GuildUpdate {
+	gu.mutation.AddRemindCount(i)
+	return gu
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (gu *GuildUpdate) SetOwnerID(id snowflake.ID) *GuildUpdate {
 	gu.mutation.SetOwnerID(id)
@@ -507,6 +528,12 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if gu.mutation.PermissionsCleared() {
 		_spec.ClearField(guild.FieldPermissions, field.TypeJSON)
+	}
+	if value, ok := gu.mutation.RemindCount(); ok {
+		_spec.SetField(guild.FieldRemindCount, field.TypeInt, value)
+	}
+	if value, ok := gu.mutation.AddedRemindCount(); ok {
+		_spec.AddField(guild.FieldRemindCount, field.TypeInt, value)
 	}
 	if gu.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -952,6 +979,27 @@ func (guo *GuildUpdateOne) ClearPermissions() *GuildUpdateOne {
 	return guo
 }
 
+// SetRemindCount sets the "remind_count" field.
+func (guo *GuildUpdateOne) SetRemindCount(i int) *GuildUpdateOne {
+	guo.mutation.ResetRemindCount()
+	guo.mutation.SetRemindCount(i)
+	return guo
+}
+
+// SetNillableRemindCount sets the "remind_count" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableRemindCount(i *int) *GuildUpdateOne {
+	if i != nil {
+		guo.SetRemindCount(*i)
+	}
+	return guo
+}
+
+// AddRemindCount adds i to the "remind_count" field.
+func (guo *GuildUpdateOne) AddRemindCount(i int) *GuildUpdateOne {
+	guo.mutation.AddRemindCount(i)
+	return guo
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (guo *GuildUpdateOne) SetOwnerID(id snowflake.ID) *GuildUpdateOne {
 	guo.mutation.SetOwnerID(id)
@@ -1325,6 +1373,12 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 	}
 	if guo.mutation.PermissionsCleared() {
 		_spec.ClearField(guild.FieldPermissions, field.TypeJSON)
+	}
+	if value, ok := guo.mutation.RemindCount(); ok {
+		_spec.SetField(guild.FieldRemindCount, field.TypeInt, value)
+	}
+	if value, ok := guo.mutation.AddedRemindCount(); ok {
+		_spec.AddField(guild.FieldRemindCount, field.TypeInt, value)
 	}
 	if guo.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -28,6 +28,8 @@ type MessageRemind struct {
 	Time time.Time `json:"time,omitempty"`
 	// Content holds the value of the "content" field.
 	Content string `json:"content,omitempty"`
+	// Name holds the value of the "name" field.
+	Name string `json:"name,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the MessageRemindQuery when eager-loading is set.
 	Edges         MessageRemindEdges `json:"edges"`
@@ -64,7 +66,7 @@ func (*MessageRemind) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case messageremind.FieldChannelID, messageremind.FieldAuthorID:
 			values[i] = new(sql.NullInt64)
-		case messageremind.FieldContent:
+		case messageremind.FieldContent, messageremind.FieldName:
 			values[i] = new(sql.NullString)
 		case messageremind.FieldTime:
 			values[i] = new(sql.NullTime)
@@ -116,6 +118,12 @@ func (mr *MessageRemind) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field content", values[i])
 			} else if value.Valid {
 				mr.Content = value.String
+			}
+		case messageremind.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name", values[i])
+			} else if value.Valid {
+				mr.Name = value.String
 			}
 		case messageremind.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -176,6 +184,9 @@ func (mr *MessageRemind) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("content=")
 	builder.WriteString(mr.Content)
+	builder.WriteString(", ")
+	builder.WriteString("name=")
+	builder.WriteString(mr.Name)
 	builder.WriteByte(')')
 	return builder.String()
 }

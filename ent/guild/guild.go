@@ -31,6 +31,8 @@ const (
 	FieldLevelRole = "level_role"
 	// FieldPermissions holds the string denoting the permissions field in the database.
 	FieldPermissions = "permissions"
+	// FieldRemindCount holds the string denoting the remind_count field in the database.
+	FieldRemindCount = "remind_count"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
 	// EdgeMembers holds the string denoting the members edge name in mutations.
@@ -109,6 +111,7 @@ var Columns = []string{
 	FieldLevelMee6Imported,
 	FieldLevelRole,
 	FieldPermissions,
+	FieldRemindCount,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "guilds"
@@ -149,6 +152,8 @@ var (
 	DefaultLevelRole map[int]snowflake.ID
 	// DefaultPermissions holds the default value on creation for the "permissions" field.
 	DefaultPermissions map[snowflake.ID]permissions.Permission
+	// DefaultRemindCount holds the default value on creation for the "remind_count" field.
+	DefaultRemindCount int
 )
 
 // OrderOption defines the ordering options for the Guild queries.
@@ -182,6 +187,11 @@ func ByLevelUpChannel(opts ...sql.OrderTermOption) OrderOption {
 // ByLevelMee6Imported orders the results by the level_mee6_imported field.
 func ByLevelMee6Imported(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLevelMee6Imported, opts...).ToFunc()
+}
+
+// ByRemindCount orders the results by the remind_count field.
+func ByRemindCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRemindCount, opts...).ToFunc()
 }
 
 // ByOwnerField orders the results by owner field.

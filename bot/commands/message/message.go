@@ -16,6 +16,7 @@ import (
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/ent"
+	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/messagepin"
 	"github.com/sabafly/gobot/ent/messageremind"
 	"github.com/sabafly/gobot/ent/wordsuffix"
@@ -164,8 +165,8 @@ func Command(c *components.Components) *generic.GenericCommand {
 						Description: "remind",
 						Options: []discord.ApplicationCommandOptionSubCommand{
 							{
-								Name:        "add",
-								Description: "add remind",
+								Name:        "set",
+								Description: "set remind",
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionString{
 										Name:        "time",
@@ -173,6 +174,18 @@ func Command(c *components.Components) *generic.GenericCommand {
 										MinLength:   builtin.Ptr(1),
 										MaxLength:   builtin.Ptr(16),
 										Required:    true,
+									},
+								},
+							},
+							{
+								Name:        "cancel",
+								Description: "cancel remind",
+								Options: []discord.ApplicationCommandOption{
+									discord.ApplicationCommandOptionString{
+										Name:         "remind",
+										Description:  "remind name",
+										Autocomplete: true,
+										Required:     true,
 									},
 								},
 							},
@@ -365,9 +378,13 @@ func Command(c *components.Components) *generic.GenericCommand {
 					return nil
 				},
 			},
-			"/message/remind/add": generic.PCommandHandler{
+			"/message/remind/set": generic.PCommandHandler{
 				PCommandHandler: generic.PermissionCommandCheck("message.remind.add", discord.PermissionManageChannels),
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					g, err := c.GuildCreateID(event, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
 					tm := time.Now().Add(time.Hour)
 					if timeStr, ok := event.SlashCommandInteractionData().OptString("time"); ok {
 						t, err := parse.TimeFuture(timeStr)
@@ -395,9 +412,70 @@ func Command(c *components.Components) *generic.GenericCommand {
 										Required:  true,
 									},
 								),
+								discord.NewActionRow(
+									discord.TextInputComponent{
+										CustomID:  "name",
+										Style:     discord.TextInputStyleShort,
+										Label:     translate.Message(event.Locale(), "components.message.remind.add.modal.input.name.label"),
+										MinLength: builtin.Ptr(1),
+										MaxLength: 64,
+										Required:  true,
+										Value: fmt.Sprintf("%s#%d",
+											translate.Message(event.Locale(), "components.message.remind.add.modal.input.name.value"),
+											g.RemindCount+1,
+										),
+									},
+								),
 							).
 							Build(),
 					); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
+			"/message/remind/cancel": generic.PCommandHandler{
+				PCommandHandler: generic.PermissionCommandCheck("message.remind.cancel", discord.PermissionManageChannels),
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					count := c.DB().MessageRemind.Delete().Where(
+						messageremind.HasGuildWith(guild.ID(*event.GuildID())),
+						messageremind.NameContains(event.SlashCommandInteractionData().String("remind")),
+					).ExecX(event)
+					if err := event.CreateMessage(
+						discord.NewMessageBuilder().
+							SetContent(translate.Message(event.Locale(), "components.message.remind.cancel.message",
+								translate.WithTemplate(map[string]any{
+									"Count": strconv.Itoa(count),
+								}),
+							)).
+							Create(),
+					); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
+		},
+
+		AutocompleteHandlers: map[string]generic.PermissionAutocompleteHandler{
+			"/message/remind/cancel:remind": generic.PAutocompleteHandler{
+				PAutocompleteHandler: generic.PermissionAutocompleteCheck("message.remind.cancel", discord.PermissionManageChannels),
+				AutocompleteHandler: func(c *components.Components, event *events.AutocompleteInteractionCreate) errors.Error {
+					reminds := c.DB().MessageRemind.Query().Where(
+						messageremind.HasGuildWith(guild.ID(*event.GuildID())),
+						messageremind.NameContains(event.Data.String("remind")),
+					).
+						Limit(25).
+						AllX(event)
+
+					choices := make([]discord.AutocompleteChoice, len(reminds))
+					for i, mr := range reminds {
+						choices[i] = discord.AutocompleteChoiceString{
+							Name:  fmt.Sprintf("%s - %s", mr.Name, mr.Time.Local().Format("2006-01-02 15:04 MST")),
+							Value: mr.Name,
+						}
+					}
+					if err := event.AutocompleteResult(choices); err != nil {
 						return errors.NewError(err)
 					}
 					return nil
@@ -467,7 +545,9 @@ func Command(c *components.Components) *generic.GenericCommand {
 					SetContent(event.Data.Text("content")).
 					SetChannelID(event.Channel().ID()).
 					SetAuthorID(event.Member().User.ID).
+					SetName(event.Data.Text("name")).
 					ExecX(event)
+				g.Update().AddRemindCount(1).ExecX(event)
 
 				if err := event.CreateMessage(
 					discord.NewMessageBuilder().
@@ -490,7 +570,7 @@ func Command(c *components.Components) *generic.GenericCommand {
 				Worker: func(c *components.Components, client bot.Client) error {
 					reminds := c.DB().MessageRemind.Query().
 						Where(
-							messageremind.TimeLT(time.Now().Add(time.Minute)),
+							messageremind.TimeLT(time.Now()),
 						).
 						AllX(context.Background())
 					for _, remind := range reminds {
@@ -505,7 +585,7 @@ func Command(c *components.Components) *generic.GenericCommand {
 
 					c.DB().MessageRemind.Delete().
 						Where(
-							messageremind.TimeLT(time.Now().Add(time.Minute)),
+							messageremind.TimeLT(time.Now()),
 						).
 						ExecX(context.Background())
 					return nil

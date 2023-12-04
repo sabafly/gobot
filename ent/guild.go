@@ -37,6 +37,8 @@ type Guild struct {
 	LevelRole map[int]snowflake.ID `json:"level_role,omitempty"`
 	// Permissions holds the value of the "permissions" field.
 	Permissions map[snowflake.ID]permissions.Permission `json:"permissions,omitempty"`
+	// RemindCount holds the value of the "remind_count" field.
+	RemindCount int `json:"remind_count,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the GuildQuery when eager-loading is set.
 	Edges           GuildEdges `json:"edges"`
@@ -141,7 +143,7 @@ func (*Guild) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case guild.FieldLevelMee6Imported:
 			values[i] = new(sql.NullBool)
-		case guild.FieldID, guild.FieldLevelUpChannel:
+		case guild.FieldID, guild.FieldLevelUpChannel, guild.FieldRemindCount:
 			values[i] = new(sql.NullInt64)
 		case guild.FieldName, guild.FieldLocale, guild.FieldLevelUpMessage:
 			values[i] = new(sql.NullString)
@@ -222,6 +224,12 @@ func (gu *Guild) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &gu.Permissions); err != nil {
 					return fmt.Errorf("unmarshal field permissions: %w", err)
 				}
+			}
+		case guild.FieldRemindCount:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field remind_count", values[i])
+			} else if value.Valid {
+				gu.RemindCount = int(value.Int64)
 			}
 		case guild.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -326,6 +334,9 @@ func (gu *Guild) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("permissions=")
 	builder.WriteString(fmt.Sprintf("%v", gu.Permissions))
+	builder.WriteString(", ")
+	builder.WriteString("remind_count=")
+	builder.WriteString(fmt.Sprintf("%v", gu.RemindCount))
 	builder.WriteByte(')')
 	return builder.String()
 }

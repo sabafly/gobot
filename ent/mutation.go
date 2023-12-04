@@ -65,6 +65,8 @@ type GuildMutation struct {
 	level_mee6_imported            *bool
 	level_role                     *map[int]snowflake.ID
 	permissions                    *map[snowflake.ID]permissions.Permission
+	remind_count                   *int
+	addremind_count                *int
 	clearedFields                  map[string]struct{}
 	owner                          *snowflake.ID
 	clearedowner                   bool
@@ -572,6 +574,62 @@ func (m *GuildMutation) ResetPermissions() {
 	delete(m.clearedFields, guild.FieldPermissions)
 }
 
+// SetRemindCount sets the "remind_count" field.
+func (m *GuildMutation) SetRemindCount(i int) {
+	m.remind_count = &i
+	m.addremind_count = nil
+}
+
+// RemindCount returns the value of the "remind_count" field in the mutation.
+func (m *GuildMutation) RemindCount() (r int, exists bool) {
+	v := m.remind_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRemindCount returns the old "remind_count" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldRemindCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRemindCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRemindCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRemindCount: %w", err)
+	}
+	return oldValue.RemindCount, nil
+}
+
+// AddRemindCount adds i to the "remind_count" field.
+func (m *GuildMutation) AddRemindCount(i int) {
+	if m.addremind_count != nil {
+		*m.addremind_count += i
+	} else {
+		m.addremind_count = &i
+	}
+}
+
+// AddedRemindCount returns the value that was added to the "remind_count" field in this mutation.
+func (m *GuildMutation) AddedRemindCount() (r int, exists bool) {
+	v := m.addremind_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRemindCount resets all changes to the "remind_count" field.
+func (m *GuildMutation) ResetRemindCount() {
+	m.remind_count = nil
+	m.addremind_count = nil
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by id.
 func (m *GuildMutation) SetOwnerID(id snowflake.ID) {
 	m.owner = &id
@@ -969,7 +1027,7 @@ func (m *GuildMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GuildMutation) Fields() []string {
-	fields := make([]string, 0, 8)
+	fields := make([]string, 0, 9)
 	if m.name != nil {
 		fields = append(fields, guild.FieldName)
 	}
@@ -993,6 +1051,9 @@ func (m *GuildMutation) Fields() []string {
 	}
 	if m.permissions != nil {
 		fields = append(fields, guild.FieldPermissions)
+	}
+	if m.remind_count != nil {
+		fields = append(fields, guild.FieldRemindCount)
 	}
 	return fields
 }
@@ -1018,6 +1079,8 @@ func (m *GuildMutation) Field(name string) (ent.Value, bool) {
 		return m.LevelRole()
 	case guild.FieldPermissions:
 		return m.Permissions()
+	case guild.FieldRemindCount:
+		return m.RemindCount()
 	}
 	return nil, false
 }
@@ -1043,6 +1106,8 @@ func (m *GuildMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldLevelRole(ctx)
 	case guild.FieldPermissions:
 		return m.OldPermissions(ctx)
+	case guild.FieldRemindCount:
+		return m.OldRemindCount(ctx)
 	}
 	return nil, fmt.Errorf("unknown Guild field %s", name)
 }
@@ -1108,6 +1173,13 @@ func (m *GuildMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetPermissions(v)
 		return nil
+	case guild.FieldRemindCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRemindCount(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Guild field %s", name)
 }
@@ -1119,6 +1191,9 @@ func (m *GuildMutation) AddedFields() []string {
 	if m.addlevel_up_channel != nil {
 		fields = append(fields, guild.FieldLevelUpChannel)
 	}
+	if m.addremind_count != nil {
+		fields = append(fields, guild.FieldRemindCount)
+	}
 	return fields
 }
 
@@ -1129,6 +1204,8 @@ func (m *GuildMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
 	case guild.FieldLevelUpChannel:
 		return m.AddedLevelUpChannel()
+	case guild.FieldRemindCount:
+		return m.AddedRemindCount()
 	}
 	return nil, false
 }
@@ -1144,6 +1221,13 @@ func (m *GuildMutation) AddField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.AddLevelUpChannel(v)
+		return nil
+	case guild.FieldRemindCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRemindCount(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Guild numeric field %s", name)
@@ -1222,6 +1306,9 @@ func (m *GuildMutation) ResetField(name string) error {
 		return nil
 	case guild.FieldPermissions:
 		m.ResetPermissions()
+		return nil
+	case guild.FieldRemindCount:
+		m.ResetRemindCount()
 		return nil
 	}
 	return fmt.Errorf("unknown Guild field %s", name)
@@ -2998,6 +3085,7 @@ type MessageRemindMutation struct {
 	addauthor_id  *snowflake.ID
 	time          *time.Time
 	content       *string
+	name          *string
 	clearedFields map[string]struct{}
 	guild         *snowflake.ID
 	clearedguild  bool
@@ -3294,6 +3382,42 @@ func (m *MessageRemindMutation) ResetContent() {
 	m.content = nil
 }
 
+// SetName sets the "name" field.
+func (m *MessageRemindMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *MessageRemindMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the MessageRemind entity.
+// If the MessageRemind object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessageRemindMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *MessageRemindMutation) ResetName() {
+	m.name = nil
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by id.
 func (m *MessageRemindMutation) SetGuildID(id snowflake.ID) {
 	m.guild = &id
@@ -3367,7 +3491,7 @@ func (m *MessageRemindMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MessageRemindMutation) Fields() []string {
-	fields := make([]string, 0, 4)
+	fields := make([]string, 0, 5)
 	if m.channel_id != nil {
 		fields = append(fields, messageremind.FieldChannelID)
 	}
@@ -3379,6 +3503,9 @@ func (m *MessageRemindMutation) Fields() []string {
 	}
 	if m.content != nil {
 		fields = append(fields, messageremind.FieldContent)
+	}
+	if m.name != nil {
+		fields = append(fields, messageremind.FieldName)
 	}
 	return fields
 }
@@ -3396,6 +3523,8 @@ func (m *MessageRemindMutation) Field(name string) (ent.Value, bool) {
 		return m.Time()
 	case messageremind.FieldContent:
 		return m.Content()
+	case messageremind.FieldName:
+		return m.Name()
 	}
 	return nil, false
 }
@@ -3413,6 +3542,8 @@ func (m *MessageRemindMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldTime(ctx)
 	case messageremind.FieldContent:
 		return m.OldContent(ctx)
+	case messageremind.FieldName:
+		return m.OldName(ctx)
 	}
 	return nil, fmt.Errorf("unknown MessageRemind field %s", name)
 }
@@ -3449,6 +3580,13 @@ func (m *MessageRemindMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetContent(v)
+		return nil
+	case messageremind.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
 		return nil
 	}
 	return fmt.Errorf("unknown MessageRemind field %s", name)
@@ -3537,6 +3675,9 @@ func (m *MessageRemindMutation) ResetField(name string) error {
 		return nil
 	case messageremind.FieldContent:
 		m.ResetContent()
+		return nil
+	case messageremind.FieldName:
+		m.ResetName()
 		return nil
 	}
 	return fmt.Errorf("unknown MessageRemind field %s", name)

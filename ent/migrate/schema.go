@@ -19,6 +19,7 @@ var (
 		{Name: "level_mee6_imported", Type: field.TypeBool, Default: false},
 		{Name: "level_role", Type: field.TypeJSON, Nullable: true},
 		{Name: "permissions", Type: field.TypeJSON, Nullable: true},
+		{Name: "remind_count", Type: field.TypeInt, Default: 0},
 		{Name: "user_own_guilds", Type: field.TypeUint64},
 	}
 	// GuildsTable holds the schema information for the "guilds" table.
@@ -29,7 +30,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "guilds_users_own_guilds",
-				Columns:    []*schema.Column{GuildsColumns[9]},
+				Columns:    []*schema.Column{GuildsColumns[10]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -96,6 +97,7 @@ var (
 		{Name: "author_id", Type: field.TypeUint64},
 		{Name: "time", Type: field.TypeTime},
 		{Name: "content", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString},
 		{Name: "guild_reminds", Type: field.TypeUint64},
 	}
 	// MessageRemindsTable holds the schema information for the "message_reminds" table.
@@ -106,7 +108,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "message_reminds_guilds_reminds",
-				Columns:    []*schema.Column{MessageRemindsColumns[5]},
+				Columns:    []*schema.Column{MessageRemindsColumns[6]},
 				RefColumns: []*schema.Column{GuildsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

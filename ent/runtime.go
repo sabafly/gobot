@@ -56,6 +56,10 @@ func init() {
 	guildDescPermissions := guildFields[8].Descriptor()
 	// guild.DefaultPermissions holds the default value on creation for the permissions field.
 	guild.DefaultPermissions = guildDescPermissions.Default.(map[snowflake.ID]permissions.Permission)
+	// guildDescRemindCount is the schema descriptor for remind_count field.
+	guildDescRemindCount := guildFields[9].Descriptor()
+	// guild.DefaultRemindCount holds the default value on creation for the remind_count field.
+	guild.DefaultRemindCount = guildDescRemindCount.Default.(int)
 	memberFields := schema.Member{}.Fields()
 	_ = memberFields
 	// memberDescPermission is the schema descriptor for permission field.
@@ -86,6 +90,10 @@ func init() {
 	messageremindDescContent := messageremindFields[4].Descriptor()
 	// messageremind.ContentValidator is a validator for the "content" field. It is called by the builders before save.
 	messageremind.ContentValidator = messageremindDescContent.Validators[0].(func(string) error)
+	// messageremindDescName is the schema descriptor for name field.
+	messageremindDescName := messageremindFields[5].Descriptor()
+	// messageremind.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	messageremind.NameValidator = messageremindDescName.Validators[0].(func(string) error)
 	// messageremindDescID is the schema descriptor for id field.
 	messageremindDescID := messageremindFields[0].Descriptor()
 	// messageremind.DefaultID holds the default value on creation for the id field.

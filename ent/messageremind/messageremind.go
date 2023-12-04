@@ -21,6 +21,8 @@ const (
 	FieldTime = "time"
 	// FieldContent holds the string denoting the content field in the database.
 	FieldContent = "content"
+	// FieldName holds the string denoting the name field in the database.
+	FieldName = "name"
 	// EdgeGuild holds the string denoting the guild edge name in mutations.
 	EdgeGuild = "guild"
 	// Table holds the table name of the messageremind in the database.
@@ -41,6 +43,7 @@ var Columns = []string{
 	FieldAuthorID,
 	FieldTime,
 	FieldContent,
+	FieldName,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "message_reminds"
@@ -67,6 +70,8 @@ func ValidColumn(column string) bool {
 var (
 	// ContentValidator is a validator for the "content" field. It is called by the builders before save.
 	ContentValidator func(string) error
+	// NameValidator is a validator for the "name" field. It is called by the builders before save.
+	NameValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -97,6 +102,11 @@ func ByTime(opts ...sql.OrderTermOption) OrderOption {
 // ByContent orders the results by the content field.
 func ByContent(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldContent, opts...).ToFunc()
+}
+
+// ByName orders the results by the name field.
+func ByName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldName, opts...).ToFunc()
 }
 
 // ByGuildField orders the results by guild field.

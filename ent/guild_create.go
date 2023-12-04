@@ -110,6 +110,20 @@ func (gc *GuildCreate) SetPermissions(m map[snowflake.ID]permissions.Permission)
 	return gc
 }
 
+// SetRemindCount sets the "remind_count" field.
+func (gc *GuildCreate) SetRemindCount(i int) *GuildCreate {
+	gc.mutation.SetRemindCount(i)
+	return gc
+}
+
+// SetNillableRemindCount sets the "remind_count" field if the given value is not nil.
+func (gc *GuildCreate) SetNillableRemindCount(i *int) *GuildCreate {
+	if i != nil {
+		gc.SetRemindCount(*i)
+	}
+	return gc
+}
+
 // SetID sets the "id" field.
 func (gc *GuildCreate) SetID(s snowflake.ID) *GuildCreate {
 	gc.mutation.SetID(s)
@@ -272,6 +286,10 @@ func (gc *GuildCreate) defaults() {
 		v := guild.DefaultPermissions
 		gc.mutation.SetPermissions(v)
 	}
+	if _, ok := gc.mutation.RemindCount(); !ok {
+		v := guild.DefaultRemindCount
+		gc.mutation.SetRemindCount(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -302,6 +320,9 @@ func (gc *GuildCreate) check() error {
 	}
 	if _, ok := gc.mutation.LevelMee6Imported(); !ok {
 		return &ValidationError{Name: "level_mee6_imported", err: errors.New(`ent: missing required field "Guild.level_mee6_imported"`)}
+	}
+	if _, ok := gc.mutation.RemindCount(); !ok {
+		return &ValidationError{Name: "remind_count", err: errors.New(`ent: missing required field "Guild.remind_count"`)}
 	}
 	if _, ok := gc.mutation.OwnerID(); !ok {
 		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Guild.owner"`)}
@@ -369,6 +390,10 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 	if value, ok := gc.mutation.Permissions(); ok {
 		_spec.SetField(guild.FieldPermissions, field.TypeJSON, value)
 		_node.Permissions = value
+	}
+	if value, ok := gc.mutation.RemindCount(); ok {
+		_spec.SetField(guild.FieldRemindCount, field.TypeInt, value)
+		_node.RemindCount = value
 	}
 	if nodes := gc.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

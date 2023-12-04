@@ -82,6 +82,11 @@ func LevelMee6Imported(v bool) predicate.Guild {
 	return predicate.Guild(sql.FieldEQ(FieldLevelMee6Imported, v))
 }
 
+// RemindCount applies equality check predicate on the "remind_count" field. It's identical to RemindCountEQ.
+func RemindCount(v int) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldRemindCount, v))
+}
+
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.Guild {
 	return predicate.Guild(sql.FieldEQ(FieldName, v))
@@ -398,6 +403,46 @@ func PermissionsIsNil() predicate.Guild {
 // PermissionsNotNil applies the NotNil predicate on the "permissions" field.
 func PermissionsNotNil() predicate.Guild {
 	return predicate.Guild(sql.FieldNotNull(FieldPermissions))
+}
+
+// RemindCountEQ applies the EQ predicate on the "remind_count" field.
+func RemindCountEQ(v int) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldRemindCount, v))
+}
+
+// RemindCountNEQ applies the NEQ predicate on the "remind_count" field.
+func RemindCountNEQ(v int) predicate.Guild {
+	return predicate.Guild(sql.FieldNEQ(FieldRemindCount, v))
+}
+
+// RemindCountIn applies the In predicate on the "remind_count" field.
+func RemindCountIn(vs ...int) predicate.Guild {
+	return predicate.Guild(sql.FieldIn(FieldRemindCount, vs...))
+}
+
+// RemindCountNotIn applies the NotIn predicate on the "remind_count" field.
+func RemindCountNotIn(vs ...int) predicate.Guild {
+	return predicate.Guild(sql.FieldNotIn(FieldRemindCount, vs...))
+}
+
+// RemindCountGT applies the GT predicate on the "remind_count" field.
+func RemindCountGT(v int) predicate.Guild {
+	return predicate.Guild(sql.FieldGT(FieldRemindCount, v))
+}
+
+// RemindCountGTE applies the GTE predicate on the "remind_count" field.
+func RemindCountGTE(v int) predicate.Guild {
+	return predicate.Guild(sql.FieldGTE(FieldRemindCount, v))
+}
+
+// RemindCountLT applies the LT predicate on the "remind_count" field.
+func RemindCountLT(v int) predicate.Guild {
+	return predicate.Guild(sql.FieldLT(FieldRemindCount, v))
+}
+
+// RemindCountLTE applies the LTE predicate on the "remind_count" field.
+func RemindCountLTE(v int) predicate.Guild {
+	return predicate.Guild(sql.FieldLTE(FieldRemindCount, v))
 }
 
 // HasOwner applies the HasEdge predicate on the "owner" edge.

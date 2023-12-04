@@ -27,6 +27,8 @@ func (MessageRemind) Fields() []ent.Field {
 		field.Time("time"),
 		field.String("content").
 			NotEmpty(),
+		field.String("name").
+			NotEmpty(),
 	}
 }
 

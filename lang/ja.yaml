@@ -535,7 +535,10 @@ components.level.role.remove.message.embed.description: |-
   {{.Level}} レベル：{{.Role}}
 components.message.remind.add.modal.title: リマインドを作成
 components.message.remind.add.modal.input.content.label: 内容
+components.message.remind.add.modal.input.name.label: 名前
+components.message.remind.add.modal.input.name.value: 通知
 components.message.remind.add.message: "{{.Time}}に通知を予約しました"
+components.message.remind.cancel.message: "{{.Count}}件の通知をキャンセルしました"
 # エラーメッセージ
 errors.generic.message: エラーが発生しました
 errors.panic.message: 致命的なエラー
