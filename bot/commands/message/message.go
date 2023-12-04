@@ -144,6 +144,17 @@ func Command(c *components.Components) *generic.GenericCommand {
 									},
 								},
 							},
+							{
+								Name:        "check",
+								Description: "check member's suffix",
+								Options: []discord.ApplicationCommandOption{
+									discord.ApplicationCommandOptionUser{
+										Name:        "target",
+										Description: "target",
+										Required:    false,
+									},
+								},
+							},
 						},
 					},
 					discord.ApplicationCommandOptionSubCommandGroup{
@@ -197,7 +208,7 @@ func Command(c *components.Components) *generic.GenericCommand {
 
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
 			"/message/suffix/set": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("message.suffix", discord.PermissionManageMessages),
+				PCommandHandler: generic.PermissionCommandCheck("message.suffix.set", discord.PermissionManageMessages),
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					if u := event.SlashCommandInteractionData().User("target"); u.Bot || u.System {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.bot.target", event))
@@ -282,7 +293,7 @@ func Command(c *components.Components) *generic.GenericCommand {
 				},
 			},
 			"/message/suffix/remove": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("message.suffix", discord.PermissionManageMessages),
+				PCommandHandler: generic.PermissionCommandCheck("message.suffix.remove", discord.PermissionManageMessages),
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					if u := event.SlashCommandInteractionData().User("target"); u.Bot || u.System {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.bot.target", event))
@@ -324,8 +335,64 @@ func Command(c *components.Components) *generic.GenericCommand {
 					return nil
 				},
 			},
+			"/message/suffix/check": generic.PCommandHandler{
+				PCommandHandler: generic.PermissionCommandCheck("message.suffix.check", discord.PermissionManageMessages),
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					m, ok := event.SlashCommandInteractionData().OptMember("target")
+					if !ok {
+						m = *event.Member()
+					}
+					if m.User.Bot || m.User.System {
+						return errors.NewError(errors.ErrorMessage("errors.invalid.bot.target", event))
+					}
+
+					g, err := c.GuildCreateID(event, *event.GuildID())
+					if err != nil {
+						slog.Error("ユーザー取得に失敗", "err", err, "command", event.SlashCommandInteractionData().CommandPath())
+						return errors.NewError(err)
+					}
+					u, err := c.UserCreate(event, m.User)
+					if err != nil {
+						slog.Error("ユーザー取得に失敗", "err", err, "command", event.SlashCommandInteractionData().CommandPath())
+						return errors.NewError(err)
+					}
+
+					messageStr := translate.Message(event.Locale(), "components.message.suffix.check.message.none",
+						translate.WithTemplate(map[string]any{"User": discord.UserMention(u.ID)}),
+					)
+					if u.QueryWordSuffix().Where(
+						wordsuffix.GuildID(g.ID),
+					).ExistX(event) {
+						w := u.QueryWordSuffix().Where(
+							wordsuffix.GuildID(g.ID),
+						).FirstX(event)
+						messageStr = translate.Message(event.Locale(), "components.message.suffix.check.message",
+							translate.WithTemplate(
+								map[string]any{
+									"Duration": builtin.Or(w.Expired != nil,
+										discord.FormattedTimestampMention(builtin.NonNil(w.Expired).Unix(), discord.TimestampStyleRelative),
+										translate.Message(event.Locale(), "components.message.suffix.duration.none"),
+									),
+									"User":   discord.UserMention(u.ID),
+									"Suffix": w.Suffix,
+									"Rule":   translate.Message(event.Locale(), "components.message.suffix.set.command.options.rule."+w.Rule.String()),
+								},
+							),
+						)
+					}
+					if err := event.CreateMessage(
+						discord.NewMessageBuilder().
+							SetContent(messageStr).
+							SetAllowedMentions(&discord.AllowedMentions{}).
+							Create(),
+					); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
 			"/message/pin/create": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("message.pin", discord.PermissionManageChannels),
+				PCommandHandler: generic.PermissionCommandCheck("message.pin.create", discord.PermissionManageChannels),
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					if err := event.Modal(
 						discord.NewModalCreateBuilder().

@@ -416,6 +416,11 @@ components.message.suffix.remove.command.options.target.name: 対象
 components.message.suffix.remove.command.options.target.description: 語尾を解除するユーザー
 components.message.suffix.duration.message: "期限：{{.Duration}}"
 components.message.suffix.duration.none: 無期限
+components.message.suffix.check.message.none: "{{.User}}に語尾は設定されていません"
+components.message.suffix.check.message: |-
+  {{.User}}の語尾は「{{.Suffix}}」に強制されています
+  期限：{{.Duration}}
+  ルール：{{.Rule}}
 components.message.pin.create.modal.title: ピン留めメッセージを作成する
 components.message.pin.create.modal.input.1.label: メッセージの内容
 components.message.pin.create.message: ピン留めメッセージを作成しました
