@@ -281,6 +281,7 @@ func (gc *GenericCommand) AutocompleteHandler() func(event *events.AutocompleteI
 			if err := event.AutocompleteResult(make([]discord.AutocompleteChoice, 0)); err != nil {
 				return err
 			}
+			return nil
 		}
 		h := cmd.Handler()
 		if h == nil {
