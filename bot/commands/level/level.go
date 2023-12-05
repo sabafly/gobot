@@ -41,6 +41,12 @@ func Command(c *components.Components) components.Command {
 					discord.ApplicationCommandOptionSubCommand{
 						Name:        "rank",
 						Description: "view your level and points",
+						Options: []discord.ApplicationCommandOption{
+							discord.ApplicationCommandOptionUser{
+								Name:        "target",
+								Description: "target user",
+							},
+						},
 					},
 					discord.ApplicationCommandOptionSubCommand{
 						Name:        "leaderboard",
@@ -213,7 +219,14 @@ func Command(c *components.Components) components.Command {
 					if err != nil {
 						return errors.NewError(err)
 					}
-					m, err := c.MemberCreate(event, event.User(), *event.GuildID())
+					target, ok := event.SlashCommandInteractionData().OptMember("target")
+					if !ok {
+						target = *event.Member()
+					}
+					if target.User.Bot || target.User.System {
+						return errors.NewError(errors.ErrorMessage("errors.invalid.bot.target", event))
+					}
+					m, err := c.MemberCreate(event, target.User, *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
@@ -231,7 +244,7 @@ func Command(c *components.Components) components.Command {
 						discord.NewMessageBuilder().
 							SetEmbeds(
 								embeds.SetEmbedProperties(
-									level_message(g, gl, m, index, event.Member().Member, event),
+									level_message(g, gl, m, index, target.Member, event),
 								),
 							).
 							Create(),
