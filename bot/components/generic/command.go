@@ -209,6 +209,7 @@ func (gc *GenericCommand) CommandHandler() func(event *events.ApplicationCommand
 				createErrorMessage(errors.NewError(err), event)
 				return err
 			}
+			return nil
 		}
 		h := cmd.Handler()
 		if h == nil {
@@ -235,6 +236,7 @@ func (gc *GenericCommand) ComponentHandler() func(event *events.ComponentInterac
 				createErrorMessage(errors.NewError(err), event)
 				return err
 			}
+			return nil
 		}
 		h := cmd.Handler()
 		if h == nil {
