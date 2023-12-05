@@ -55,7 +55,7 @@ func level_message(
 					translate.WithTemplate(map[string]any{"NextLevel": m.Xp.Level() + 1}),
 				),
 				Value: fmt.Sprintf("`%d`xp / `%d`xp",
-					xppoint.RequiredPoint(m.Xp.Level())-(xppoint.RequiredPointTotal(m.Xp.Level()+1)-uint64(m.Xp)),
+					xppoint.RequiredPoint(m.Xp.Level())-(xppoint.TotalPoint(m.Xp.Level()+1)-uint64(m.Xp)),
 					xppoint.RequiredPoint(m.Xp.Level()),
 				),
 				Inline: builtin.Ptr(true),

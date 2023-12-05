@@ -1,7 +1,6 @@
 package xppoint
 
 import (
-	"math"
 	"math/big"
 	"math/rand"
 )
@@ -34,7 +33,7 @@ func RequiredPoint(level int64) uint64 {
 	switch {
 	case level < 16:
 		x = 2*n + 7
-	case 16 <= level && level < 31:
+	case level < 31:
 		x = 5*n - 38
 	case 31 <= level:
 		x = 9*n - 158
@@ -43,37 +42,65 @@ func RequiredPoint(level int64) uint64 {
 	return x
 }
 
-func RequiredPointTotal(level int64) uint64 {
-	n := big.NewInt(level)
-	x := new(big.Int)
+// 次の方程式を使用して、レベルに到達するまでにどれだけの経験値が収集されたかを決定できます。
+func TotalPoint(level int64) uint64 {
+	f := (&big.Float{}).SetInt64(level)
+	x := big.NewFloat(0)
 	switch {
-	case level < 16:
-		x.Add((&big.Int{}).Exp(n, big.NewInt(2), nil), (&big.Int{}).Mul(big.NewInt(6), n))
-	case 16 <= level && level < 31:
+	case level <= 16: // level^2 + 6 × level
+		x.Add((&big.Float{}).Mul(f, f), (&big.Float{}).Mul(big.NewFloat(6), f))
+	case level <= 31: // 2.5 × level^2 – 40.5 × level + 360
 		x.Add(
-			(&big.Int{}).Div((&big.Int{}).Mul(big.NewInt(5), (&big.Int{}).Exp(n, big.NewInt(2), nil)), big.NewInt(2)),
-			(&big.Int{}).Div((&big.Int{}).Mul(big.NewInt(-81), n), big.NewInt(2)),
-		).Add(x, big.NewInt(360))
-	case 31 < level:
+			(&big.Float{}).Mul(big.NewFloat(2.5), (&big.Float{}).Mul(f, f)),
+			(&big.Float{}).Mul(big.NewFloat(-40.5), f),
+		).Add(x, big.NewFloat(360))
+	case 32 <= level: // 4.5 × level^2 – 162.5 × level + 2220
 		x.Add(
-			(&big.Int{}).Div((&big.Int{}).Mul(big.NewInt(9), (&big.Int{}).Exp(n, big.NewInt(2), nil)), big.NewInt(2)),
-			(&big.Int{}).Div((&big.Int{}).Mul(big.NewInt(-325), n), big.NewInt(2)),
-		).Add(x, big.NewInt(2200))
+			(&big.Float{}).Mul(big.NewFloat(4.5), (&big.Float{}).Mul(f, f)),
+			(&big.Float{}).Mul(big.NewFloat(-162.5), f),
+		).Add(x, big.NewFloat(2220))
 	}
-	x.Mul(x, big.NewInt(multiplier))
-	return uint64(x.Int64())
+	x.Mul(x, big.NewFloat(multiplier))
+	u, _ := x.Uint64()
+	return u
 }
 
 func level(points uint64) int64 {
-	points /= multiplier
-	var x float64
+	points = points / multiplier
+	f := (&big.Float{}).SetUint64(points)
+	x := big.NewFloat(0)
 	switch {
-	case points < 353:
-		x = math.Sqrt(float64(points+9)) - 3
-	case 353 <= points && points < 1508:
-		x = math.Sqrt((2.0/5)*(float64(points)-(7839/40))) + (81 / 10)
+	case points <= 352:
+		x.Add(
+			(&big.Float{}).Sqrt((&big.Float{}).Add(f, big.NewFloat(9))),
+			big.NewFloat(-3),
+		)
+	case points <= 1507:
+		x.Add(
+			big.NewFloat(81.0/10.0),
+			(&big.Float{}).Sqrt(
+				(&big.Float{}).Mul(
+					big.NewFloat(2.0/5.0),
+					(&big.Float{}).Add(
+						f,
+						big.NewFloat(-7839.0/40.0)),
+				),
+			),
+		)
 	case 1508 <= points:
-		x = math.Sqrt((2.0/9)*(float64(points)-(54215/72))) + (325 / 18)
+		x.Add(
+			big.NewFloat(325.0/18.0),
+			(&big.Float{}).Sqrt(
+				(&big.Float{}).Mul(
+					big.NewFloat(2.0/9.0),
+					(&big.Float{}).Add(
+						f,
+						big.NewFloat(-54215.0/72.0),
+					),
+				),
+			),
+		)
 	}
-	return int64(x)
+	i, _ := x.Int64()
+	return i
 }
