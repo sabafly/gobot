@@ -118,7 +118,7 @@ func permissionCheck(event interface {
 	Client() bot.Client
 }, c *components.Components, perms []Permission, dPerm discord.Permissions) bool {
 
-	if event.Member().Permissions.Has(dPerm) {
+	if dPerm != 0 || event.Member().Permissions.Has(dPerm) {
 		return true
 	}
 
