@@ -1159,6 +1159,12 @@ func UpdateRolePanel(ctx context.Context, panel *ent.RolePanel, place *ent.RoleP
 func update_role_panel(ctx context.Context, panel *ent.RolePanel, locale discord.Locale, client bot.Client, react bool) {
 	places := panel.QueryPlacements().AllX(ctx)
 	for _, place := range places {
+		place = place.Update().
+			SetName(panel.Name).
+			SetDescription(panel.Description).
+			SetRoles(panel.Roles).
+			SetUpdatedAt(time.Now()).
+			SaveX(ctx)
 		if err := role_panel_place(ctx, place, locale, client, react); err != nil {
 			slog.Error("アップデートに失敗", "err", err)
 		}
