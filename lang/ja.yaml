@@ -445,6 +445,7 @@ components.role.panel.edit.menu.base.components.delete: 役職を削除
 components.role.panel.edit.menu.base.components.set_emoji: 絵文字の設定
 components.role.panel.edit.menu.base.components.set_display_name: 名前の設定
 components.role.panel.edit.menu.base.components.back_base_menu: 戻る
+components.role.panel.edit.menu.base.components.save_change: 変更を保存
 components.role.panel.edit.menu.base.components.apply_change: 変更を適用
 components.role.panel.edit.menu.modify_roles.title: 役職リストの編集
 components.role.panel.edit.menu.modify_roles.field.roles: 役職
@@ -582,3 +583,5 @@ errors.invalid.time.format: 無効な時間指定
 errors.invalid.time.format.description: それは時刻ではありません
 errors.invalid.time.before: 無効な時間指定
 errors.invalid.time.before.description: 過去を指定しているか短すぎます
+errors.ratelimited: 一時的に制限されています
+errors.ratelimited.description: しばらく待ってからやり直してください

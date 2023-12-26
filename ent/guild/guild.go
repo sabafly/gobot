@@ -3,6 +3,8 @@
 package guild
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/disgoorg/disgo/discord"
@@ -33,6 +35,8 @@ const (
 	FieldPermissions = "permissions"
 	// FieldRemindCount holds the string denoting the remind_count field in the database.
 	FieldRemindCount = "remind_count"
+	// FieldRolePanelEditTimes holds the string denoting the role_panel_edit_times field in the database.
+	FieldRolePanelEditTimes = "role_panel_edit_times"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
 	// EdgeMembers holds the string denoting the members edge name in mutations.
@@ -112,6 +116,7 @@ var Columns = []string{
 	FieldLevelRole,
 	FieldPermissions,
 	FieldRemindCount,
+	FieldRolePanelEditTimes,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "guilds"
@@ -154,6 +159,8 @@ var (
 	DefaultPermissions map[snowflake.ID]permissions.Permission
 	// DefaultRemindCount holds the default value on creation for the "remind_count" field.
 	DefaultRemindCount int
+	// DefaultRolePanelEditTimes holds the default value on creation for the "role_panel_edit_times" field.
+	DefaultRolePanelEditTimes []time.Time
 )
 
 // OrderOption defines the ordering options for the Guild queries.

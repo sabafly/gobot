@@ -19,6 +19,10 @@ const (
 	FieldDescription = "description"
 	// FieldRoles holds the string denoting the roles field in the database.
 	FieldRoles = "roles"
+	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
+	FieldUpdatedAt = "updated_at"
+	// FieldAppliedAt holds the string denoting the applied_at field in the database.
+	FieldAppliedAt = "applied_at"
 	// EdgeGuild holds the string denoting the guild edge name in mutations.
 	EdgeGuild = "guild"
 	// EdgePlacements holds the string denoting the placements edge name in mutations.
@@ -56,6 +60,8 @@ var Columns = []string{
 	FieldName,
 	FieldDescription,
 	FieldRoles,
+	FieldUpdatedAt,
+	FieldAppliedAt,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "role_panels"
@@ -104,6 +110,16 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByDescription orders the results by the description field.
 func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDescription, opts...).ToFunc()
+}
+
+// ByUpdatedAt orders the results by the updated_at field.
+func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+}
+
+// ByAppliedAt orders the results by the applied_at field.
+func ByAppliedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAppliedAt, opts...).ToFunc()
 }
 
 // ByGuildField orders the results by guild field.

@@ -23,6 +23,12 @@ const (
 	FieldSelectedRole = "selected_role"
 	// FieldModified holds the string denoting the modified field in the database.
 	FieldModified = "modified"
+	// FieldName holds the string denoting the name field in the database.
+	FieldName = "name"
+	// FieldDescription holds the string denoting the description field in the database.
+	FieldDescription = "description"
+	// FieldRoles holds the string denoting the roles field in the database.
+	FieldRoles = "roles"
 	// EdgeGuild holds the string denoting the guild edge name in mutations.
 	EdgeGuild = "guild"
 	// EdgeParent holds the string denoting the parent edge name in mutations.
@@ -53,6 +59,9 @@ var Columns = []string{
 	FieldToken,
 	FieldSelectedRole,
 	FieldModified,
+	FieldName,
+	FieldDescription,
+	FieldRoles,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "role_panel_edits"
@@ -80,6 +89,10 @@ func ValidColumn(column string) bool {
 var (
 	// DefaultModified holds the default value on creation for the "modified" field.
 	DefaultModified bool
+	// NameValidator is a validator for the "name" field. It is called by the builders before save.
+	NameValidator func(string) error
+	// DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	DescriptionValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -115,6 +128,16 @@ func BySelectedRole(opts ...sql.OrderTermOption) OrderOption {
 // ByModified orders the results by the modified field.
 func ByModified(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldModified, opts...).ToFunc()
+}
+
+// ByName orders the results by the name field.
+func ByName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByDescription orders the results by the description field.
+func ByDescription(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDescription, opts...).ToFunc()
 }
 
 // ByGuildField orders the results by guild field.

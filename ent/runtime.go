@@ -60,6 +60,10 @@ func init() {
 	guildDescRemindCount := guildFields[9].Descriptor()
 	// guild.DefaultRemindCount holds the default value on creation for the remind_count field.
 	guild.DefaultRemindCount = guildDescRemindCount.Default.(int)
+	// guildDescRolePanelEditTimes is the schema descriptor for role_panel_edit_times field.
+	guildDescRolePanelEditTimes := guildFields[10].Descriptor()
+	// guild.DefaultRolePanelEditTimes holds the default value on creation for the role_panel_edit_times field.
+	guild.DefaultRolePanelEditTimes = guildDescRolePanelEditTimes.Default.([]time.Time)
 	memberFields := schema.Member{}.Fields()
 	_ = memberFields
 	// memberDescPermission is the schema descriptor for permission field.
@@ -132,6 +136,28 @@ func init() {
 	rolepaneleditDescModified := rolepaneleditFields[5].Descriptor()
 	// rolepaneledit.DefaultModified holds the default value on creation for the modified field.
 	rolepaneledit.DefaultModified = rolepaneleditDescModified.Default.(bool)
+	// rolepaneleditDescName is the schema descriptor for name field.
+	rolepaneleditDescName := rolepaneleditFields[6].Descriptor()
+	// rolepaneledit.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	rolepaneledit.NameValidator = func() func(string) error {
+		validators := rolepaneleditDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// rolepaneleditDescDescription is the schema descriptor for description field.
+	rolepaneleditDescDescription := rolepaneleditFields[7].Descriptor()
+	// rolepaneledit.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	rolepaneledit.DescriptionValidator = rolepaneleditDescDescription.Validators[0].(func(string) error)
 	// rolepaneleditDescID is the schema descriptor for id field.
 	rolepaneleditDescID := rolepaneleditFields[0].Descriptor()
 	// rolepaneledit.DefaultID holds the default value on creation for the id field.
@@ -182,6 +208,28 @@ func init() {
 	rolepanelplacedDescUses := rolepanelplacedFields[10].Descriptor()
 	// rolepanelplaced.DefaultUses holds the default value on creation for the uses field.
 	rolepanelplaced.DefaultUses = rolepanelplacedDescUses.Default.(int)
+	// rolepanelplacedDescName is the schema descriptor for name field.
+	rolepanelplacedDescName := rolepanelplacedFields[11].Descriptor()
+	// rolepanelplaced.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	rolepanelplaced.NameValidator = func() func(string) error {
+		validators := rolepanelplacedDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// rolepanelplacedDescDescription is the schema descriptor for description field.
+	rolepanelplacedDescDescription := rolepanelplacedFields[12].Descriptor()
+	// rolepanelplaced.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	rolepanelplaced.DescriptionValidator = rolepanelplacedDescDescription.Validators[0].(func(string) error)
 	// rolepanelplacedDescID is the schema descriptor for id field.
 	rolepanelplacedDescID := rolepanelplacedFields[0].Descriptor()
 	// rolepanelplaced.DefaultID holds the default value on creation for the id field.

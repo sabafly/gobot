@@ -55,7 +55,7 @@ func (r *RateLimit) CheckLimit() bool {
 	if !((len(r.limit) < 3 || time.Since(r.limit[2]) >= time.Second*5) && (len(r.limit) < 10 || time.Since(r.limit[9]) >= time.Second*30)) {
 		return false
 	}
-	r.limit = append([]time.Time{time.Now()}, r.limit[0:min(9, len(r.limit))]...)
+	r.limit = append([]time.Time{time.Now()}, r.limit[0:min(10, len(r.limit))]...)
 	ok := (len(r.limit) < 3 || time.Since(r.limit[2]) >= time.Second*5) && (len(r.limit) < 10 || time.Since(r.limit[9]) >= time.Second*30)
 	return ok
 }

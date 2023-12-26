@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -28,6 +29,10 @@ type RolePanel struct {
 	Description string `json:"description,omitempty"`
 	// Roles holds the value of the "roles" field.
 	Roles []schema.Role `json:"roles,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// AppliedAt holds the value of the "applied_at" field.
+	AppliedAt time.Time `json:"applied_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RolePanelQuery when eager-loading is set.
 	Edges             RolePanelEdges `json:"edges"`
@@ -92,6 +97,8 @@ func (*RolePanel) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case rolepanel.FieldName, rolepanel.FieldDescription:
 			values[i] = new(sql.NullString)
+		case rolepanel.FieldUpdatedAt, rolepanel.FieldAppliedAt:
+			values[i] = new(sql.NullTime)
 		case rolepanel.FieldID:
 			values[i] = new(uuid.UUID)
 		case rolepanel.ForeignKeys[0]: // guild_role_panels
@@ -136,6 +143,18 @@ func (rp *RolePanel) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &rp.Roles); err != nil {
 					return fmt.Errorf("unmarshal field roles: %w", err)
 				}
+			}
+		case rolepanel.FieldUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
+			} else if value.Valid {
+				rp.UpdatedAt = value.Time
+			}
+		case rolepanel.FieldAppliedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field applied_at", values[i])
+			} else if value.Valid {
+				rp.AppliedAt = value.Time
 			}
 		case rolepanel.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -203,6 +222,12 @@ func (rp *RolePanel) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("roles=")
 	builder.WriteString(fmt.Sprintf("%v", rp.Roles))
+	builder.WriteString(", ")
+	builder.WriteString("updated_at=")
+	builder.WriteString(rp.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("applied_at=")
+	builder.WriteString(rp.AppliedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

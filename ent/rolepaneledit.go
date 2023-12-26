@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/ent/rolepaneledit"
+	"github.com/sabafly/gobot/ent/schema"
 )
 
 // RolePanelEdit is the model entity for the RolePanelEdit schema.
@@ -30,6 +32,12 @@ type RolePanelEdit struct {
 	SelectedRole *snowflake.ID `json:"selected_role,omitempty"`
 	// Modified holds the value of the "modified" field.
 	Modified bool `json:"modified,omitempty"`
+	// Name holds the value of the "name" field.
+	Name *string `json:"name,omitempty"`
+	// Description holds the value of the "description" field.
+	Description *string `json:"description,omitempty"`
+	// Roles holds the value of the "roles" field.
+	Roles []schema.Role `json:"roles,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RolePanelEditQuery when eager-loading is set.
 	Edges                  RolePanelEditEdges `json:"edges"`
@@ -80,11 +88,13 @@ func (*RolePanelEdit) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case rolepaneledit.FieldRoles:
+			values[i] = new([]byte)
 		case rolepaneledit.FieldModified:
 			values[i] = new(sql.NullBool)
 		case rolepaneledit.FieldChannelID, rolepaneledit.FieldEmojiAuthor, rolepaneledit.FieldSelectedRole:
 			values[i] = new(sql.NullInt64)
-		case rolepaneledit.FieldToken:
+		case rolepaneledit.FieldToken, rolepaneledit.FieldName, rolepaneledit.FieldDescription:
 			values[i] = new(sql.NullString)
 		case rolepaneledit.FieldID:
 			values[i] = new(uuid.UUID)
@@ -145,6 +155,28 @@ func (rpe *RolePanelEdit) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field modified", values[i])
 			} else if value.Valid {
 				rpe.Modified = value.Bool
+			}
+		case rolepaneledit.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name", values[i])
+			} else if value.Valid {
+				rpe.Name = new(string)
+				*rpe.Name = value.String
+			}
+		case rolepaneledit.FieldDescription:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field description", values[i])
+			} else if value.Valid {
+				rpe.Description = new(string)
+				*rpe.Description = value.String
+			}
+		case rolepaneledit.FieldRoles:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field roles", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &rpe.Roles); err != nil {
+					return fmt.Errorf("unmarshal field roles: %w", err)
+				}
 			}
 		case rolepaneledit.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -226,6 +258,19 @@ func (rpe *RolePanelEdit) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("modified=")
 	builder.WriteString(fmt.Sprintf("%v", rpe.Modified))
+	builder.WriteString(", ")
+	if v := rpe.Name; v != nil {
+		builder.WriteString("name=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := rpe.Description; v != nil {
+		builder.WriteString("description=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	builder.WriteString("roles=")
+	builder.WriteString(fmt.Sprintf("%v", rpe.Roles))
 	builder.WriteByte(')')
 	return builder.String()
 }

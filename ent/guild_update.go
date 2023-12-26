@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -176,6 +177,18 @@ func (gu *GuildUpdate) SetNillableRemindCount(i *int) *GuildUpdate {
 // AddRemindCount adds i to the "remind_count" field.
 func (gu *GuildUpdate) AddRemindCount(i int) *GuildUpdate {
 	gu.mutation.AddRemindCount(i)
+	return gu
+}
+
+// SetRolePanelEditTimes sets the "role_panel_edit_times" field.
+func (gu *GuildUpdate) SetRolePanelEditTimes(t []time.Time) *GuildUpdate {
+	gu.mutation.SetRolePanelEditTimes(t)
+	return gu
+}
+
+// AppendRolePanelEditTimes appends t to the "role_panel_edit_times" field.
+func (gu *GuildUpdate) AppendRolePanelEditTimes(t []time.Time) *GuildUpdate {
+	gu.mutation.AppendRolePanelEditTimes(t)
 	return gu
 }
 
@@ -525,6 +538,14 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := gu.mutation.AddedRemindCount(); ok {
 		_spec.AddField(guild.FieldRemindCount, field.TypeInt, value)
+	}
+	if value, ok := gu.mutation.RolePanelEditTimes(); ok {
+		_spec.SetField(guild.FieldRolePanelEditTimes, field.TypeJSON, value)
+	}
+	if value, ok := gu.mutation.AppendedRolePanelEditTimes(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, guild.FieldRolePanelEditTimes, value)
+		})
 	}
 	if gu.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -985,6 +1006,18 @@ func (guo *GuildUpdateOne) AddRemindCount(i int) *GuildUpdateOne {
 	return guo
 }
 
+// SetRolePanelEditTimes sets the "role_panel_edit_times" field.
+func (guo *GuildUpdateOne) SetRolePanelEditTimes(t []time.Time) *GuildUpdateOne {
+	guo.mutation.SetRolePanelEditTimes(t)
+	return guo
+}
+
+// AppendRolePanelEditTimes appends t to the "role_panel_edit_times" field.
+func (guo *GuildUpdateOne) AppendRolePanelEditTimes(t []time.Time) *GuildUpdateOne {
+	guo.mutation.AppendRolePanelEditTimes(t)
+	return guo
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (guo *GuildUpdateOne) SetOwnerID(id snowflake.ID) *GuildUpdateOne {
 	guo.mutation.SetOwnerID(id)
@@ -1361,6 +1394,14 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 	}
 	if value, ok := guo.mutation.AddedRemindCount(); ok {
 		_spec.AddField(guild.FieldRemindCount, field.TypeInt, value)
+	}
+	if value, ok := guo.mutation.RolePanelEditTimes(); ok {
+		_spec.SetField(guild.FieldRolePanelEditTimes, field.TypeJSON, value)
+	}
+	if value, ok := guo.mutation.AppendedRolePanelEditTimes(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, guild.FieldRolePanelEditTimes, value)
+		})
 	}
 	if guo.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{

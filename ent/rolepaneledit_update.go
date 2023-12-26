@@ -9,10 +9,12 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/ent/predicate"
 	"github.com/sabafly/gobot/ent/rolepaneledit"
+	"github.com/sabafly/gobot/ent/schema"
 )
 
 // RolePanelEditUpdate is the builder for updating RolePanelEdit entities.
@@ -137,6 +139,64 @@ func (rpeu *RolePanelEditUpdate) SetNillableModified(b *bool) *RolePanelEditUpda
 	return rpeu
 }
 
+// SetName sets the "name" field.
+func (rpeu *RolePanelEditUpdate) SetName(s string) *RolePanelEditUpdate {
+	rpeu.mutation.SetName(s)
+	return rpeu
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (rpeu *RolePanelEditUpdate) SetNillableName(s *string) *RolePanelEditUpdate {
+	if s != nil {
+		rpeu.SetName(*s)
+	}
+	return rpeu
+}
+
+// ClearName clears the value of the "name" field.
+func (rpeu *RolePanelEditUpdate) ClearName() *RolePanelEditUpdate {
+	rpeu.mutation.ClearName()
+	return rpeu
+}
+
+// SetDescription sets the "description" field.
+func (rpeu *RolePanelEditUpdate) SetDescription(s string) *RolePanelEditUpdate {
+	rpeu.mutation.SetDescription(s)
+	return rpeu
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (rpeu *RolePanelEditUpdate) SetNillableDescription(s *string) *RolePanelEditUpdate {
+	if s != nil {
+		rpeu.SetDescription(*s)
+	}
+	return rpeu
+}
+
+// ClearDescription clears the value of the "description" field.
+func (rpeu *RolePanelEditUpdate) ClearDescription() *RolePanelEditUpdate {
+	rpeu.mutation.ClearDescription()
+	return rpeu
+}
+
+// SetRoles sets the "roles" field.
+func (rpeu *RolePanelEditUpdate) SetRoles(s []schema.Role) *RolePanelEditUpdate {
+	rpeu.mutation.SetRoles(s)
+	return rpeu
+}
+
+// AppendRoles appends s to the "roles" field.
+func (rpeu *RolePanelEditUpdate) AppendRoles(s []schema.Role) *RolePanelEditUpdate {
+	rpeu.mutation.AppendRoles(s)
+	return rpeu
+}
+
+// ClearRoles clears the value of the "roles" field.
+func (rpeu *RolePanelEditUpdate) ClearRoles() *RolePanelEditUpdate {
+	rpeu.mutation.ClearRoles()
+	return rpeu
+}
+
 // Mutation returns the RolePanelEditMutation object of the builder.
 func (rpeu *RolePanelEditUpdate) Mutation() *RolePanelEditMutation {
 	return rpeu.mutation
@@ -171,6 +231,16 @@ func (rpeu *RolePanelEditUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (rpeu *RolePanelEditUpdate) check() error {
+	if v, ok := rpeu.mutation.Name(); ok {
+		if err := rolepaneledit.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanelEdit.name": %w`, err)}
+		}
+	}
+	if v, ok := rpeu.mutation.Description(); ok {
+		if err := rolepaneledit.DescriptionValidator(v); err != nil {
+			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "RolePanelEdit.description": %w`, err)}
+		}
+	}
 	if _, ok := rpeu.mutation.GuildID(); rpeu.mutation.GuildCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "RolePanelEdit.guild"`)
 	}
@@ -224,6 +294,29 @@ func (rpeu *RolePanelEditUpdate) sqlSave(ctx context.Context) (n int, err error)
 	}
 	if value, ok := rpeu.mutation.Modified(); ok {
 		_spec.SetField(rolepaneledit.FieldModified, field.TypeBool, value)
+	}
+	if value, ok := rpeu.mutation.Name(); ok {
+		_spec.SetField(rolepaneledit.FieldName, field.TypeString, value)
+	}
+	if rpeu.mutation.NameCleared() {
+		_spec.ClearField(rolepaneledit.FieldName, field.TypeString)
+	}
+	if value, ok := rpeu.mutation.Description(); ok {
+		_spec.SetField(rolepaneledit.FieldDescription, field.TypeString, value)
+	}
+	if rpeu.mutation.DescriptionCleared() {
+		_spec.ClearField(rolepaneledit.FieldDescription, field.TypeString)
+	}
+	if value, ok := rpeu.mutation.Roles(); ok {
+		_spec.SetField(rolepaneledit.FieldRoles, field.TypeJSON, value)
+	}
+	if value, ok := rpeu.mutation.AppendedRoles(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, rolepaneledit.FieldRoles, value)
+		})
+	}
+	if rpeu.mutation.RolesCleared() {
+		_spec.ClearField(rolepaneledit.FieldRoles, field.TypeJSON)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, rpeu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -354,6 +447,64 @@ func (rpeuo *RolePanelEditUpdateOne) SetNillableModified(b *bool) *RolePanelEdit
 	return rpeuo
 }
 
+// SetName sets the "name" field.
+func (rpeuo *RolePanelEditUpdateOne) SetName(s string) *RolePanelEditUpdateOne {
+	rpeuo.mutation.SetName(s)
+	return rpeuo
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (rpeuo *RolePanelEditUpdateOne) SetNillableName(s *string) *RolePanelEditUpdateOne {
+	if s != nil {
+		rpeuo.SetName(*s)
+	}
+	return rpeuo
+}
+
+// ClearName clears the value of the "name" field.
+func (rpeuo *RolePanelEditUpdateOne) ClearName() *RolePanelEditUpdateOne {
+	rpeuo.mutation.ClearName()
+	return rpeuo
+}
+
+// SetDescription sets the "description" field.
+func (rpeuo *RolePanelEditUpdateOne) SetDescription(s string) *RolePanelEditUpdateOne {
+	rpeuo.mutation.SetDescription(s)
+	return rpeuo
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (rpeuo *RolePanelEditUpdateOne) SetNillableDescription(s *string) *RolePanelEditUpdateOne {
+	if s != nil {
+		rpeuo.SetDescription(*s)
+	}
+	return rpeuo
+}
+
+// ClearDescription clears the value of the "description" field.
+func (rpeuo *RolePanelEditUpdateOne) ClearDescription() *RolePanelEditUpdateOne {
+	rpeuo.mutation.ClearDescription()
+	return rpeuo
+}
+
+// SetRoles sets the "roles" field.
+func (rpeuo *RolePanelEditUpdateOne) SetRoles(s []schema.Role) *RolePanelEditUpdateOne {
+	rpeuo.mutation.SetRoles(s)
+	return rpeuo
+}
+
+// AppendRoles appends s to the "roles" field.
+func (rpeuo *RolePanelEditUpdateOne) AppendRoles(s []schema.Role) *RolePanelEditUpdateOne {
+	rpeuo.mutation.AppendRoles(s)
+	return rpeuo
+}
+
+// ClearRoles clears the value of the "roles" field.
+func (rpeuo *RolePanelEditUpdateOne) ClearRoles() *RolePanelEditUpdateOne {
+	rpeuo.mutation.ClearRoles()
+	return rpeuo
+}
+
 // Mutation returns the RolePanelEditMutation object of the builder.
 func (rpeuo *RolePanelEditUpdateOne) Mutation() *RolePanelEditMutation {
 	return rpeuo.mutation
@@ -401,6 +552,16 @@ func (rpeuo *RolePanelEditUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (rpeuo *RolePanelEditUpdateOne) check() error {
+	if v, ok := rpeuo.mutation.Name(); ok {
+		if err := rolepaneledit.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanelEdit.name": %w`, err)}
+		}
+	}
+	if v, ok := rpeuo.mutation.Description(); ok {
+		if err := rolepaneledit.DescriptionValidator(v); err != nil {
+			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "RolePanelEdit.description": %w`, err)}
+		}
+	}
 	if _, ok := rpeuo.mutation.GuildID(); rpeuo.mutation.GuildCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "RolePanelEdit.guild"`)
 	}
@@ -471,6 +632,29 @@ func (rpeuo *RolePanelEditUpdateOne) sqlSave(ctx context.Context) (_node *RolePa
 	}
 	if value, ok := rpeuo.mutation.Modified(); ok {
 		_spec.SetField(rolepaneledit.FieldModified, field.TypeBool, value)
+	}
+	if value, ok := rpeuo.mutation.Name(); ok {
+		_spec.SetField(rolepaneledit.FieldName, field.TypeString, value)
+	}
+	if rpeuo.mutation.NameCleared() {
+		_spec.ClearField(rolepaneledit.FieldName, field.TypeString)
+	}
+	if value, ok := rpeuo.mutation.Description(); ok {
+		_spec.SetField(rolepaneledit.FieldDescription, field.TypeString, value)
+	}
+	if rpeuo.mutation.DescriptionCleared() {
+		_spec.ClearField(rolepaneledit.FieldDescription, field.TypeString)
+	}
+	if value, ok := rpeuo.mutation.Roles(); ok {
+		_spec.SetField(rolepaneledit.FieldRoles, field.TypeJSON, value)
+	}
+	if value, ok := rpeuo.mutation.AppendedRoles(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, rolepaneledit.FieldRoles, value)
+		})
+	}
+	if rpeuo.mutation.RolesCleared() {
+		_spec.ClearField(rolepaneledit.FieldRoles, field.TypeJSON)
 	}
 	_node = &RolePanelEdit{config: rpeuo.config}
 	_spec.Assign = _node.assignValues

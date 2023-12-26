@@ -7,6 +7,8 @@ import (
 	"github.com/sabafly/gobot/internal/builtin"
 )
 
+// TODO: 君たちはどう設定を作るか
+
 func Command(c *components.Components) components.Command {
 	return (&generic.GenericCommand{
 		Namespace: "setting",

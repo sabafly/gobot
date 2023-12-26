@@ -20,6 +20,7 @@ var (
 		{Name: "level_role", Type: field.TypeJSON, Nullable: true},
 		{Name: "permissions", Type: field.TypeJSON},
 		{Name: "remind_count", Type: field.TypeInt, Default: 0},
+		{Name: "role_panel_edit_times", Type: field.TypeJSON, Default: "[]"},
 		{Name: "user_own_guilds", Type: field.TypeUint64},
 	}
 	// GuildsTable holds the schema information for the "guilds" table.
@@ -30,7 +31,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "guilds_users_own_guilds",
-				Columns:    []*schema.Column{GuildsColumns[10]},
+				Columns:    []*schema.Column{GuildsColumns[11]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -120,6 +121,8 @@ var (
 		{Name: "name", Type: field.TypeString, Size: 32},
 		{Name: "description", Type: field.TypeString, Size: 140},
 		{Name: "roles", Type: field.TypeJSON, Nullable: true},
+		{Name: "updated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "applied_at", Type: field.TypeTime, Nullable: true},
 		{Name: "guild_role_panels", Type: field.TypeUint64},
 	}
 	// RolePanelsTable holds the schema information for the "role_panels" table.
@@ -130,7 +133,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "role_panels_guilds_role_panels",
-				Columns:    []*schema.Column{RolePanelsColumns[4]},
+				Columns:    []*schema.Column{RolePanelsColumns[6]},
 				RefColumns: []*schema.Column{GuildsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -144,6 +147,9 @@ var (
 		{Name: "token", Type: field.TypeString, Nullable: true},
 		{Name: "selected_role", Type: field.TypeUint64, Nullable: true},
 		{Name: "modified", Type: field.TypeBool, Default: false},
+		{Name: "name", Type: field.TypeString, Nullable: true, Size: 32},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 140},
+		{Name: "roles", Type: field.TypeJSON, Nullable: true},
 		{Name: "guild_role_panel_edits", Type: field.TypeUint64},
 		{Name: "role_panel_edit", Type: field.TypeUUID, Unique: true},
 	}
@@ -155,13 +161,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "role_panel_edits_guilds_role_panel_edits",
-				Columns:    []*schema.Column{RolePanelEditsColumns[6]},
+				Columns:    []*schema.Column{RolePanelEditsColumns[9]},
 				RefColumns: []*schema.Column{GuildsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "role_panel_edits_role_panels_edit",
-				Columns:    []*schema.Column{RolePanelEditsColumns[7]},
+				Columns:    []*schema.Column{RolePanelEditsColumns[10]},
 				RefColumns: []*schema.Column{RolePanelsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -180,6 +186,10 @@ var (
 		{Name: "use_display_name", Type: field.TypeBool, Default: false},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "uses", Type: field.TypeInt, Default: 0},
+		{Name: "name", Type: field.TypeString, Size: 32},
+		{Name: "description", Type: field.TypeString, Size: 140},
+		{Name: "roles", Type: field.TypeJSON, Nullable: true},
+		{Name: "updated_at", Type: field.TypeTime, Nullable: true},
 		{Name: "guild_role_panel_placements", Type: field.TypeUint64},
 		{Name: "role_panel_placements", Type: field.TypeUUID},
 	}
@@ -191,13 +201,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "role_panel_placeds_guilds_role_panel_placements",
-				Columns:    []*schema.Column{RolePanelPlacedsColumns[11]},
+				Columns:    []*schema.Column{RolePanelPlacedsColumns[15]},
 				RefColumns: []*schema.Column{GuildsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "role_panel_placeds_role_panels_placements",
-				Columns:    []*schema.Column{RolePanelPlacedsColumns[12]},
+				Columns:    []*schema.Column{RolePanelPlacedsColumns[16]},
 				RefColumns: []*schema.Column{RolePanelsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

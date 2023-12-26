@@ -1,7 +1,10 @@
 package schema
 
 import (
+	"time"
+
 	"entgo.io/ent"
+	"entgo.io/ent/dialect/entsql"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/disgoorg/disgo/discord"
@@ -45,6 +48,11 @@ func (Guild) Fields() []ent.Field {
 			Default(make(map[snowflake.ID]permissions.Permission)),
 		field.Int("remind_count").
 			Default(0),
+		field.JSON("role_panel_edit_times", []time.Time{}).
+			Default([]time.Time{}).
+			Annotations(
+				entsql.Default(`[]`),
+			),
 	}
 }
 

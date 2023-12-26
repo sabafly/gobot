@@ -28,6 +28,8 @@ func (RolePanel) Fields() []ent.Field {
 			MaxLen(140),
 		field.JSON("roles", []Role{}).
 			Optional(),
+		field.Time("updated_at").Optional(),
+		field.Time("applied_at").Optional(),
 	}
 }
 

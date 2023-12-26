@@ -67,6 +67,8 @@ type GuildMutation struct {
 	permissions                    *map[snowflake.ID]permissions.Permission
 	remind_count                   *int
 	addremind_count                *int
+	role_panel_edit_times          *[]time.Time
+	appendrole_panel_edit_times    []time.Time
 	clearedFields                  map[string]struct{}
 	owner                          *snowflake.ID
 	clearedowner                   bool
@@ -617,6 +619,57 @@ func (m *GuildMutation) ResetRemindCount() {
 	m.addremind_count = nil
 }
 
+// SetRolePanelEditTimes sets the "role_panel_edit_times" field.
+func (m *GuildMutation) SetRolePanelEditTimes(t []time.Time) {
+	m.role_panel_edit_times = &t
+	m.appendrole_panel_edit_times = nil
+}
+
+// RolePanelEditTimes returns the value of the "role_panel_edit_times" field in the mutation.
+func (m *GuildMutation) RolePanelEditTimes() (r []time.Time, exists bool) {
+	v := m.role_panel_edit_times
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRolePanelEditTimes returns the old "role_panel_edit_times" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldRolePanelEditTimes(ctx context.Context) (v []time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRolePanelEditTimes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRolePanelEditTimes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRolePanelEditTimes: %w", err)
+	}
+	return oldValue.RolePanelEditTimes, nil
+}
+
+// AppendRolePanelEditTimes adds t to the "role_panel_edit_times" field.
+func (m *GuildMutation) AppendRolePanelEditTimes(t []time.Time) {
+	m.appendrole_panel_edit_times = append(m.appendrole_panel_edit_times, t...)
+}
+
+// AppendedRolePanelEditTimes returns the list of values that were appended to the "role_panel_edit_times" field in this mutation.
+func (m *GuildMutation) AppendedRolePanelEditTimes() ([]time.Time, bool) {
+	if len(m.appendrole_panel_edit_times) == 0 {
+		return nil, false
+	}
+	return m.appendrole_panel_edit_times, true
+}
+
+// ResetRolePanelEditTimes resets all changes to the "role_panel_edit_times" field.
+func (m *GuildMutation) ResetRolePanelEditTimes() {
+	m.role_panel_edit_times = nil
+	m.appendrole_panel_edit_times = nil
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by id.
 func (m *GuildMutation) SetOwnerID(id snowflake.ID) {
 	m.owner = &id
@@ -1014,7 +1067,7 @@ func (m *GuildMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GuildMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 10)
 	if m.name != nil {
 		fields = append(fields, guild.FieldName)
 	}
@@ -1042,6 +1095,9 @@ func (m *GuildMutation) Fields() []string {
 	if m.remind_count != nil {
 		fields = append(fields, guild.FieldRemindCount)
 	}
+	if m.role_panel_edit_times != nil {
+		fields = append(fields, guild.FieldRolePanelEditTimes)
+	}
 	return fields
 }
 
@@ -1068,6 +1124,8 @@ func (m *GuildMutation) Field(name string) (ent.Value, bool) {
 		return m.Permissions()
 	case guild.FieldRemindCount:
 		return m.RemindCount()
+	case guild.FieldRolePanelEditTimes:
+		return m.RolePanelEditTimes()
 	}
 	return nil, false
 }
@@ -1095,6 +1153,8 @@ func (m *GuildMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldPermissions(ctx)
 	case guild.FieldRemindCount:
 		return m.OldRemindCount(ctx)
+	case guild.FieldRolePanelEditTimes:
+		return m.OldRolePanelEditTimes(ctx)
 	}
 	return nil, fmt.Errorf("unknown Guild field %s", name)
 }
@@ -1166,6 +1226,13 @@ func (m *GuildMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetRemindCount(v)
+		return nil
+	case guild.FieldRolePanelEditTimes:
+		v, ok := value.([]time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRolePanelEditTimes(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Guild field %s", name)
@@ -1290,6 +1357,9 @@ func (m *GuildMutation) ResetField(name string) error {
 		return nil
 	case guild.FieldRemindCount:
 		m.ResetRemindCount()
+		return nil
+	case guild.FieldRolePanelEditTimes:
+		m.ResetRolePanelEditTimes()
 		return nil
 	}
 	return fmt.Errorf("unknown Guild field %s", name)
@@ -3748,6 +3818,8 @@ type RolePanelMutation struct {
 	description       *string
 	roles             *[]schema.Role
 	appendroles       []schema.Role
+	updated_at        *time.Time
+	applied_at        *time.Time
 	clearedFields     map[string]struct{}
 	guild             *snowflake.ID
 	clearedguild      bool
@@ -4002,6 +4074,104 @@ func (m *RolePanelMutation) ResetRoles() {
 	delete(m.clearedFields, rolepanel.FieldRoles)
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (m *RolePanelMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *RolePanelMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the RolePanel entity.
+// If the RolePanel object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ClearUpdatedAt clears the value of the "updated_at" field.
+func (m *RolePanelMutation) ClearUpdatedAt() {
+	m.updated_at = nil
+	m.clearedFields[rolepanel.FieldUpdatedAt] = struct{}{}
+}
+
+// UpdatedAtCleared returns if the "updated_at" field was cleared in this mutation.
+func (m *RolePanelMutation) UpdatedAtCleared() bool {
+	_, ok := m.clearedFields[rolepanel.FieldUpdatedAt]
+	return ok
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *RolePanelMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+	delete(m.clearedFields, rolepanel.FieldUpdatedAt)
+}
+
+// SetAppliedAt sets the "applied_at" field.
+func (m *RolePanelMutation) SetAppliedAt(t time.Time) {
+	m.applied_at = &t
+}
+
+// AppliedAt returns the value of the "applied_at" field in the mutation.
+func (m *RolePanelMutation) AppliedAt() (r time.Time, exists bool) {
+	v := m.applied_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAppliedAt returns the old "applied_at" field's value of the RolePanel entity.
+// If the RolePanel object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelMutation) OldAppliedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAppliedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAppliedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAppliedAt: %w", err)
+	}
+	return oldValue.AppliedAt, nil
+}
+
+// ClearAppliedAt clears the value of the "applied_at" field.
+func (m *RolePanelMutation) ClearAppliedAt() {
+	m.applied_at = nil
+	m.clearedFields[rolepanel.FieldAppliedAt] = struct{}{}
+}
+
+// AppliedAtCleared returns if the "applied_at" field was cleared in this mutation.
+func (m *RolePanelMutation) AppliedAtCleared() bool {
+	_, ok := m.clearedFields[rolepanel.FieldAppliedAt]
+	return ok
+}
+
+// ResetAppliedAt resets all changes to the "applied_at" field.
+func (m *RolePanelMutation) ResetAppliedAt() {
+	m.applied_at = nil
+	delete(m.clearedFields, rolepanel.FieldAppliedAt)
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by id.
 func (m *RolePanelMutation) SetGuildID(id snowflake.ID) {
 	m.guild = &id
@@ -4168,7 +4338,7 @@ func (m *RolePanelMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RolePanelMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 5)
 	if m.name != nil {
 		fields = append(fields, rolepanel.FieldName)
 	}
@@ -4177,6 +4347,12 @@ func (m *RolePanelMutation) Fields() []string {
 	}
 	if m.roles != nil {
 		fields = append(fields, rolepanel.FieldRoles)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, rolepanel.FieldUpdatedAt)
+	}
+	if m.applied_at != nil {
+		fields = append(fields, rolepanel.FieldAppliedAt)
 	}
 	return fields
 }
@@ -4192,6 +4368,10 @@ func (m *RolePanelMutation) Field(name string) (ent.Value, bool) {
 		return m.Description()
 	case rolepanel.FieldRoles:
 		return m.Roles()
+	case rolepanel.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case rolepanel.FieldAppliedAt:
+		return m.AppliedAt()
 	}
 	return nil, false
 }
@@ -4207,6 +4387,10 @@ func (m *RolePanelMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldDescription(ctx)
 	case rolepanel.FieldRoles:
 		return m.OldRoles(ctx)
+	case rolepanel.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case rolepanel.FieldAppliedAt:
+		return m.OldAppliedAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown RolePanel field %s", name)
 }
@@ -4236,6 +4420,20 @@ func (m *RolePanelMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetRoles(v)
+		return nil
+	case rolepanel.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case rolepanel.FieldAppliedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAppliedAt(v)
 		return nil
 	}
 	return fmt.Errorf("unknown RolePanel field %s", name)
@@ -4270,6 +4468,12 @@ func (m *RolePanelMutation) ClearedFields() []string {
 	if m.FieldCleared(rolepanel.FieldRoles) {
 		fields = append(fields, rolepanel.FieldRoles)
 	}
+	if m.FieldCleared(rolepanel.FieldUpdatedAt) {
+		fields = append(fields, rolepanel.FieldUpdatedAt)
+	}
+	if m.FieldCleared(rolepanel.FieldAppliedAt) {
+		fields = append(fields, rolepanel.FieldAppliedAt)
+	}
 	return fields
 }
 
@@ -4287,6 +4491,12 @@ func (m *RolePanelMutation) ClearField(name string) error {
 	case rolepanel.FieldRoles:
 		m.ClearRoles()
 		return nil
+	case rolepanel.FieldUpdatedAt:
+		m.ClearUpdatedAt()
+		return nil
+	case rolepanel.FieldAppliedAt:
+		m.ClearAppliedAt()
+		return nil
 	}
 	return fmt.Errorf("unknown RolePanel nullable field %s", name)
 }
@@ -4303,6 +4513,12 @@ func (m *RolePanelMutation) ResetField(name string) error {
 		return nil
 	case rolepanel.FieldRoles:
 		m.ResetRoles()
+		return nil
+	case rolepanel.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case rolepanel.FieldAppliedAt:
+		m.ResetAppliedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown RolePanel field %s", name)
@@ -4442,6 +4658,10 @@ type RolePanelEditMutation struct {
 	selected_role    *snowflake.ID
 	addselected_role *snowflake.ID
 	modified         *bool
+	name             *string
+	description      *string
+	roles            *[]schema.Role
+	appendroles      []schema.Role
 	clearedFields    map[string]struct{}
 	guild            *snowflake.ID
 	clearedguild     bool
@@ -4837,6 +5057,169 @@ func (m *RolePanelEditMutation) ResetModified() {
 	m.modified = nil
 }
 
+// SetName sets the "name" field.
+func (m *RolePanelEditMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *RolePanelEditMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the RolePanelEdit entity.
+// If the RolePanelEdit object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelEditMutation) OldName(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *RolePanelEditMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[rolepaneledit.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *RolePanelEditMutation) NameCleared() bool {
+	_, ok := m.clearedFields[rolepaneledit.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *RolePanelEditMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, rolepaneledit.FieldName)
+}
+
+// SetDescription sets the "description" field.
+func (m *RolePanelEditMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *RolePanelEditMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the RolePanelEdit entity.
+// If the RolePanelEdit object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelEditMutation) OldDescription(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *RolePanelEditMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[rolepaneledit.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *RolePanelEditMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[rolepaneledit.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *RolePanelEditMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, rolepaneledit.FieldDescription)
+}
+
+// SetRoles sets the "roles" field.
+func (m *RolePanelEditMutation) SetRoles(s []schema.Role) {
+	m.roles = &s
+	m.appendroles = nil
+}
+
+// Roles returns the value of the "roles" field in the mutation.
+func (m *RolePanelEditMutation) Roles() (r []schema.Role, exists bool) {
+	v := m.roles
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRoles returns the old "roles" field's value of the RolePanelEdit entity.
+// If the RolePanelEdit object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelEditMutation) OldRoles(ctx context.Context) (v []schema.Role, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRoles is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRoles requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRoles: %w", err)
+	}
+	return oldValue.Roles, nil
+}
+
+// AppendRoles adds s to the "roles" field.
+func (m *RolePanelEditMutation) AppendRoles(s []schema.Role) {
+	m.appendroles = append(m.appendroles, s...)
+}
+
+// AppendedRoles returns the list of values that were appended to the "roles" field in this mutation.
+func (m *RolePanelEditMutation) AppendedRoles() ([]schema.Role, bool) {
+	if len(m.appendroles) == 0 {
+		return nil, false
+	}
+	return m.appendroles, true
+}
+
+// ClearRoles clears the value of the "roles" field.
+func (m *RolePanelEditMutation) ClearRoles() {
+	m.roles = nil
+	m.appendroles = nil
+	m.clearedFields[rolepaneledit.FieldRoles] = struct{}{}
+}
+
+// RolesCleared returns if the "roles" field was cleared in this mutation.
+func (m *RolePanelEditMutation) RolesCleared() bool {
+	_, ok := m.clearedFields[rolepaneledit.FieldRoles]
+	return ok
+}
+
+// ResetRoles resets all changes to the "roles" field.
+func (m *RolePanelEditMutation) ResetRoles() {
+	m.roles = nil
+	m.appendroles = nil
+	delete(m.clearedFields, rolepaneledit.FieldRoles)
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by id.
 func (m *RolePanelEditMutation) SetGuildID(id snowflake.ID) {
 	m.guild = &id
@@ -4949,7 +5332,7 @@ func (m *RolePanelEditMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RolePanelEditMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 8)
 	if m.channel_id != nil {
 		fields = append(fields, rolepaneledit.FieldChannelID)
 	}
@@ -4964,6 +5347,15 @@ func (m *RolePanelEditMutation) Fields() []string {
 	}
 	if m.modified != nil {
 		fields = append(fields, rolepaneledit.FieldModified)
+	}
+	if m.name != nil {
+		fields = append(fields, rolepaneledit.FieldName)
+	}
+	if m.description != nil {
+		fields = append(fields, rolepaneledit.FieldDescription)
+	}
+	if m.roles != nil {
+		fields = append(fields, rolepaneledit.FieldRoles)
 	}
 	return fields
 }
@@ -4983,6 +5375,12 @@ func (m *RolePanelEditMutation) Field(name string) (ent.Value, bool) {
 		return m.SelectedRole()
 	case rolepaneledit.FieldModified:
 		return m.Modified()
+	case rolepaneledit.FieldName:
+		return m.Name()
+	case rolepaneledit.FieldDescription:
+		return m.Description()
+	case rolepaneledit.FieldRoles:
+		return m.Roles()
 	}
 	return nil, false
 }
@@ -5002,6 +5400,12 @@ func (m *RolePanelEditMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldSelectedRole(ctx)
 	case rolepaneledit.FieldModified:
 		return m.OldModified(ctx)
+	case rolepaneledit.FieldName:
+		return m.OldName(ctx)
+	case rolepaneledit.FieldDescription:
+		return m.OldDescription(ctx)
+	case rolepaneledit.FieldRoles:
+		return m.OldRoles(ctx)
 	}
 	return nil, fmt.Errorf("unknown RolePanelEdit field %s", name)
 }
@@ -5045,6 +5449,27 @@ func (m *RolePanelEditMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetModified(v)
+		return nil
+	case rolepaneledit.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case rolepaneledit.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case rolepaneledit.FieldRoles:
+		v, ok := value.([]schema.Role)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRoles(v)
 		return nil
 	}
 	return fmt.Errorf("unknown RolePanelEdit field %s", name)
@@ -5124,6 +5549,15 @@ func (m *RolePanelEditMutation) ClearedFields() []string {
 	if m.FieldCleared(rolepaneledit.FieldSelectedRole) {
 		fields = append(fields, rolepaneledit.FieldSelectedRole)
 	}
+	if m.FieldCleared(rolepaneledit.FieldName) {
+		fields = append(fields, rolepaneledit.FieldName)
+	}
+	if m.FieldCleared(rolepaneledit.FieldDescription) {
+		fields = append(fields, rolepaneledit.FieldDescription)
+	}
+	if m.FieldCleared(rolepaneledit.FieldRoles) {
+		fields = append(fields, rolepaneledit.FieldRoles)
+	}
 	return fields
 }
 
@@ -5147,6 +5581,15 @@ func (m *RolePanelEditMutation) ClearField(name string) error {
 	case rolepaneledit.FieldSelectedRole:
 		m.ClearSelectedRole()
 		return nil
+	case rolepaneledit.FieldName:
+		m.ClearName()
+		return nil
+	case rolepaneledit.FieldDescription:
+		m.ClearDescription()
+		return nil
+	case rolepaneledit.FieldRoles:
+		m.ClearRoles()
+		return nil
 	}
 	return fmt.Errorf("unknown RolePanelEdit nullable field %s", name)
 }
@@ -5169,6 +5612,15 @@ func (m *RolePanelEditMutation) ResetField(name string) error {
 		return nil
 	case rolepaneledit.FieldModified:
 		m.ResetModified()
+		return nil
+	case rolepaneledit.FieldName:
+		m.ResetName()
+		return nil
+	case rolepaneledit.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case rolepaneledit.FieldRoles:
+		m.ResetRoles()
 		return nil
 	}
 	return fmt.Errorf("unknown RolePanelEdit field %s", name)
@@ -5286,6 +5738,11 @@ type RolePanelPlacedMutation struct {
 	created_at          *time.Time
 	uses                *int
 	adduses             *int
+	name                *string
+	description         *string
+	roles               *[]schema.Role
+	appendroles         []schema.Role
+	updated_at          *time.Time
 	clearedFields       map[string]struct{}
 	guild               *snowflake.ID
 	clearedguild        bool
@@ -5867,6 +6324,192 @@ func (m *RolePanelPlacedMutation) ResetUses() {
 	m.adduses = nil
 }
 
+// SetName sets the "name" field.
+func (m *RolePanelPlacedMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *RolePanelPlacedMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the RolePanelPlaced entity.
+// If the RolePanelPlaced object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelPlacedMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *RolePanelPlacedMutation) ResetName() {
+	m.name = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *RolePanelPlacedMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *RolePanelPlacedMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the RolePanelPlaced entity.
+// If the RolePanelPlaced object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelPlacedMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *RolePanelPlacedMutation) ResetDescription() {
+	m.description = nil
+}
+
+// SetRoles sets the "roles" field.
+func (m *RolePanelPlacedMutation) SetRoles(s []schema.Role) {
+	m.roles = &s
+	m.appendroles = nil
+}
+
+// Roles returns the value of the "roles" field in the mutation.
+func (m *RolePanelPlacedMutation) Roles() (r []schema.Role, exists bool) {
+	v := m.roles
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRoles returns the old "roles" field's value of the RolePanelPlaced entity.
+// If the RolePanelPlaced object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelPlacedMutation) OldRoles(ctx context.Context) (v []schema.Role, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRoles is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRoles requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRoles: %w", err)
+	}
+	return oldValue.Roles, nil
+}
+
+// AppendRoles adds s to the "roles" field.
+func (m *RolePanelPlacedMutation) AppendRoles(s []schema.Role) {
+	m.appendroles = append(m.appendroles, s...)
+}
+
+// AppendedRoles returns the list of values that were appended to the "roles" field in this mutation.
+func (m *RolePanelPlacedMutation) AppendedRoles() ([]schema.Role, bool) {
+	if len(m.appendroles) == 0 {
+		return nil, false
+	}
+	return m.appendroles, true
+}
+
+// ClearRoles clears the value of the "roles" field.
+func (m *RolePanelPlacedMutation) ClearRoles() {
+	m.roles = nil
+	m.appendroles = nil
+	m.clearedFields[rolepanelplaced.FieldRoles] = struct{}{}
+}
+
+// RolesCleared returns if the "roles" field was cleared in this mutation.
+func (m *RolePanelPlacedMutation) RolesCleared() bool {
+	_, ok := m.clearedFields[rolepanelplaced.FieldRoles]
+	return ok
+}
+
+// ResetRoles resets all changes to the "roles" field.
+func (m *RolePanelPlacedMutation) ResetRoles() {
+	m.roles = nil
+	m.appendroles = nil
+	delete(m.clearedFields, rolepanelplaced.FieldRoles)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *RolePanelPlacedMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *RolePanelPlacedMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the RolePanelPlaced entity.
+// If the RolePanelPlaced object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelPlacedMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ClearUpdatedAt clears the value of the "updated_at" field.
+func (m *RolePanelPlacedMutation) ClearUpdatedAt() {
+	m.updated_at = nil
+	m.clearedFields[rolepanelplaced.FieldUpdatedAt] = struct{}{}
+}
+
+// UpdatedAtCleared returns if the "updated_at" field was cleared in this mutation.
+func (m *RolePanelPlacedMutation) UpdatedAtCleared() bool {
+	_, ok := m.clearedFields[rolepanelplaced.FieldUpdatedAt]
+	return ok
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *RolePanelPlacedMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+	delete(m.clearedFields, rolepanelplaced.FieldUpdatedAt)
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by id.
 func (m *RolePanelPlacedMutation) SetGuildID(id snowflake.ID) {
 	m.guild = &id
@@ -5979,7 +6622,7 @@ func (m *RolePanelPlacedMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RolePanelPlacedMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 14)
 	if m.message_id != nil {
 		fields = append(fields, rolepanelplaced.FieldMessageID)
 	}
@@ -6010,6 +6653,18 @@ func (m *RolePanelPlacedMutation) Fields() []string {
 	if m.uses != nil {
 		fields = append(fields, rolepanelplaced.FieldUses)
 	}
+	if m.name != nil {
+		fields = append(fields, rolepanelplaced.FieldName)
+	}
+	if m.description != nil {
+		fields = append(fields, rolepanelplaced.FieldDescription)
+	}
+	if m.roles != nil {
+		fields = append(fields, rolepanelplaced.FieldRoles)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, rolepanelplaced.FieldUpdatedAt)
+	}
 	return fields
 }
 
@@ -6038,6 +6693,14 @@ func (m *RolePanelPlacedMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case rolepanelplaced.FieldUses:
 		return m.Uses()
+	case rolepanelplaced.FieldName:
+		return m.Name()
+	case rolepanelplaced.FieldDescription:
+		return m.Description()
+	case rolepanelplaced.FieldRoles:
+		return m.Roles()
+	case rolepanelplaced.FieldUpdatedAt:
+		return m.UpdatedAt()
 	}
 	return nil, false
 }
@@ -6067,6 +6730,14 @@ func (m *RolePanelPlacedMutation) OldField(ctx context.Context, name string) (en
 		return m.OldCreatedAt(ctx)
 	case rolepanelplaced.FieldUses:
 		return m.OldUses(ctx)
+	case rolepanelplaced.FieldName:
+		return m.OldName(ctx)
+	case rolepanelplaced.FieldDescription:
+		return m.OldDescription(ctx)
+	case rolepanelplaced.FieldRoles:
+		return m.OldRoles(ctx)
+	case rolepanelplaced.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown RolePanelPlaced field %s", name)
 }
@@ -6145,6 +6816,34 @@ func (m *RolePanelPlacedMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUses(v)
+		return nil
+	case rolepanelplaced.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case rolepanelplaced.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case rolepanelplaced.FieldRoles:
+		v, ok := value.([]schema.Role)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRoles(v)
+		return nil
+	case rolepanelplaced.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
 		return nil
 	}
 	return fmt.Errorf("unknown RolePanelPlaced field %s", name)
@@ -6233,6 +6932,12 @@ func (m *RolePanelPlacedMutation) ClearedFields() []string {
 	if m.FieldCleared(rolepanelplaced.FieldType) {
 		fields = append(fields, rolepanelplaced.FieldType)
 	}
+	if m.FieldCleared(rolepanelplaced.FieldRoles) {
+		fields = append(fields, rolepanelplaced.FieldRoles)
+	}
+	if m.FieldCleared(rolepanelplaced.FieldUpdatedAt) {
+		fields = append(fields, rolepanelplaced.FieldUpdatedAt)
+	}
 	return fields
 }
 
@@ -6252,6 +6957,12 @@ func (m *RolePanelPlacedMutation) ClearField(name string) error {
 		return nil
 	case rolepanelplaced.FieldType:
 		m.ClearType()
+		return nil
+	case rolepanelplaced.FieldRoles:
+		m.ClearRoles()
+		return nil
+	case rolepanelplaced.FieldUpdatedAt:
+		m.ClearUpdatedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown RolePanelPlaced nullable field %s", name)
@@ -6290,6 +7001,18 @@ func (m *RolePanelPlacedMutation) ResetField(name string) error {
 		return nil
 	case rolepanelplaced.FieldUses:
 		m.ResetUses()
+		return nil
+	case rolepanelplaced.FieldName:
+		m.ResetName()
+		return nil
+	case rolepanelplaced.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case rolepanelplaced.FieldRoles:
+		m.ResetRoles()
+		return nil
+	case rolepanelplaced.FieldUpdatedAt:
+		m.ResetUpdatedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown RolePanelPlaced field %s", name)

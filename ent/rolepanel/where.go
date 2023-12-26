@@ -3,6 +3,8 @@
 package rolepanel
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
@@ -62,6 +64,16 @@ func Name(v string) predicate.RolePanel {
 // Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
 func Description(v string) predicate.RolePanel {
 	return predicate.RolePanel(sql.FieldEQ(FieldDescription, v))
+}
+
+// UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
+func UpdatedAt(v time.Time) predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// AppliedAt applies equality check predicate on the "applied_at" field. It's identical to AppliedAtEQ.
+func AppliedAt(v time.Time) predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldEQ(FieldAppliedAt, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -202,6 +214,106 @@ func RolesIsNil() predicate.RolePanel {
 // RolesNotNil applies the NotNil predicate on the "roles" field.
 func RolesNotNil() predicate.RolePanel {
 	return predicate.RolePanel(sql.FieldNotNull(FieldRoles))
+}
+
+// UpdatedAtEQ applies the EQ predicate on the "updated_at" field.
+func UpdatedAtEQ(v time.Time) predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// UpdatedAtNEQ applies the NEQ predicate on the "updated_at" field.
+func UpdatedAtNEQ(v time.Time) predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldNEQ(FieldUpdatedAt, v))
+}
+
+// UpdatedAtIn applies the In predicate on the "updated_at" field.
+func UpdatedAtIn(vs ...time.Time) predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldIn(FieldUpdatedAt, vs...))
+}
+
+// UpdatedAtNotIn applies the NotIn predicate on the "updated_at" field.
+func UpdatedAtNotIn(vs ...time.Time) predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldNotIn(FieldUpdatedAt, vs...))
+}
+
+// UpdatedAtGT applies the GT predicate on the "updated_at" field.
+func UpdatedAtGT(v time.Time) predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldGT(FieldUpdatedAt, v))
+}
+
+// UpdatedAtGTE applies the GTE predicate on the "updated_at" field.
+func UpdatedAtGTE(v time.Time) predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldGTE(FieldUpdatedAt, v))
+}
+
+// UpdatedAtLT applies the LT predicate on the "updated_at" field.
+func UpdatedAtLT(v time.Time) predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldLT(FieldUpdatedAt, v))
+}
+
+// UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
+func UpdatedAtLTE(v time.Time) predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// UpdatedAtIsNil applies the IsNil predicate on the "updated_at" field.
+func UpdatedAtIsNil() predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldIsNull(FieldUpdatedAt))
+}
+
+// UpdatedAtNotNil applies the NotNil predicate on the "updated_at" field.
+func UpdatedAtNotNil() predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldNotNull(FieldUpdatedAt))
+}
+
+// AppliedAtEQ applies the EQ predicate on the "applied_at" field.
+func AppliedAtEQ(v time.Time) predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldEQ(FieldAppliedAt, v))
+}
+
+// AppliedAtNEQ applies the NEQ predicate on the "applied_at" field.
+func AppliedAtNEQ(v time.Time) predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldNEQ(FieldAppliedAt, v))
+}
+
+// AppliedAtIn applies the In predicate on the "applied_at" field.
+func AppliedAtIn(vs ...time.Time) predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldIn(FieldAppliedAt, vs...))
+}
+
+// AppliedAtNotIn applies the NotIn predicate on the "applied_at" field.
+func AppliedAtNotIn(vs ...time.Time) predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldNotIn(FieldAppliedAt, vs...))
+}
+
+// AppliedAtGT applies the GT predicate on the "applied_at" field.
+func AppliedAtGT(v time.Time) predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldGT(FieldAppliedAt, v))
+}
+
+// AppliedAtGTE applies the GTE predicate on the "applied_at" field.
+func AppliedAtGTE(v time.Time) predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldGTE(FieldAppliedAt, v))
+}
+
+// AppliedAtLT applies the LT predicate on the "applied_at" field.
+func AppliedAtLT(v time.Time) predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldLT(FieldAppliedAt, v))
+}
+
+// AppliedAtLTE applies the LTE predicate on the "applied_at" field.
+func AppliedAtLTE(v time.Time) predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldLTE(FieldAppliedAt, v))
+}
+
+// AppliedAtIsNil applies the IsNil predicate on the "applied_at" field.
+func AppliedAtIsNil() predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldIsNull(FieldAppliedAt))
+}
+
+// AppliedAtNotNil applies the NotNil predicate on the "applied_at" field.
+func AppliedAtNotNil() predicate.RolePanel {
+	return predicate.RolePanel(sql.FieldNotNull(FieldAppliedAt))
 }
 
 // HasGuild applies the HasEdge predicate on the "guild" edge.

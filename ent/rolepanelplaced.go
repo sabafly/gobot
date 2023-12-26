@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/ent/rolepanelplaced"
+	"github.com/sabafly/gobot/ent/schema"
 )
 
 // RolePanelPlaced is the model entity for the RolePanelPlaced schema.
@@ -42,6 +44,14 @@ type RolePanelPlaced struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Uses holds the value of the "uses" field.
 	Uses int `json:"uses,omitempty"`
+	// Name holds the value of the "name" field.
+	Name string `json:"name,omitempty"`
+	// Description holds the value of the "description" field.
+	Description string `json:"description,omitempty"`
+	// Roles holds the value of the "roles" field.
+	Roles []schema.Role `json:"roles,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RolePanelPlacedQuery when eager-loading is set.
 	Edges                       RolePanelPlacedEdges `json:"edges"`
@@ -92,13 +102,15 @@ func (*RolePanelPlaced) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case rolepanelplaced.FieldRoles:
+			values[i] = new([]byte)
 		case rolepanelplaced.FieldShowName, rolepanelplaced.FieldFoldingSelectMenu, rolepanelplaced.FieldHideNotice, rolepanelplaced.FieldUseDisplayName:
 			values[i] = new(sql.NullBool)
 		case rolepanelplaced.FieldMessageID, rolepanelplaced.FieldChannelID, rolepanelplaced.FieldButtonType, rolepanelplaced.FieldUses:
 			values[i] = new(sql.NullInt64)
-		case rolepanelplaced.FieldType:
+		case rolepanelplaced.FieldType, rolepanelplaced.FieldName, rolepanelplaced.FieldDescription:
 			values[i] = new(sql.NullString)
-		case rolepanelplaced.FieldCreatedAt:
+		case rolepanelplaced.FieldCreatedAt, rolepanelplaced.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		case rolepanelplaced.FieldID:
 			values[i] = new(uuid.UUID)
@@ -187,6 +199,32 @@ func (rpp *RolePanelPlaced) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field uses", values[i])
 			} else if value.Valid {
 				rpp.Uses = int(value.Int64)
+			}
+		case rolepanelplaced.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field name", values[i])
+			} else if value.Valid {
+				rpp.Name = value.String
+			}
+		case rolepanelplaced.FieldDescription:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field description", values[i])
+			} else if value.Valid {
+				rpp.Description = value.String
+			}
+		case rolepanelplaced.FieldRoles:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field roles", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &rpp.Roles); err != nil {
+					return fmt.Errorf("unmarshal field roles: %w", err)
+				}
+			}
+		case rolepanelplaced.FieldUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
+			} else if value.Valid {
+				rpp.UpdatedAt = value.Time
 			}
 		case rolepanelplaced.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -279,6 +317,18 @@ func (rpp *RolePanelPlaced) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("uses=")
 	builder.WriteString(fmt.Sprintf("%v", rpp.Uses))
+	builder.WriteString(", ")
+	builder.WriteString("name=")
+	builder.WriteString(rpp.Name)
+	builder.WriteString(", ")
+	builder.WriteString("description=")
+	builder.WriteString(rpp.Description)
+	builder.WriteString(", ")
+	builder.WriteString("roles=")
+	builder.WriteString(fmt.Sprintf("%v", rpp.Roles))
+	builder.WriteString(", ")
+	builder.WriteString("updated_at=")
+	builder.WriteString(rpp.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

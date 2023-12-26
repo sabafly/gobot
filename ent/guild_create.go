@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -121,6 +122,12 @@ func (gc *GuildCreate) SetNillableRemindCount(i *int) *GuildCreate {
 	if i != nil {
 		gc.SetRemindCount(*i)
 	}
+	return gc
+}
+
+// SetRolePanelEditTimes sets the "role_panel_edit_times" field.
+func (gc *GuildCreate) SetRolePanelEditTimes(t []time.Time) *GuildCreate {
+	gc.mutation.SetRolePanelEditTimes(t)
 	return gc
 }
 
@@ -290,6 +297,10 @@ func (gc *GuildCreate) defaults() {
 		v := guild.DefaultRemindCount
 		gc.mutation.SetRemindCount(v)
 	}
+	if _, ok := gc.mutation.RolePanelEditTimes(); !ok {
+		v := guild.DefaultRolePanelEditTimes
+		gc.mutation.SetRolePanelEditTimes(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -326,6 +337,9 @@ func (gc *GuildCreate) check() error {
 	}
 	if _, ok := gc.mutation.RemindCount(); !ok {
 		return &ValidationError{Name: "remind_count", err: errors.New(`ent: missing required field "Guild.remind_count"`)}
+	}
+	if _, ok := gc.mutation.RolePanelEditTimes(); !ok {
+		return &ValidationError{Name: "role_panel_edit_times", err: errors.New(`ent: missing required field "Guild.role_panel_edit_times"`)}
 	}
 	if _, ok := gc.mutation.OwnerID(); !ok {
 		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Guild.owner"`)}
@@ -397,6 +411,10 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 	if value, ok := gc.mutation.RemindCount(); ok {
 		_spec.SetField(guild.FieldRemindCount, field.TypeInt, value)
 		_node.RemindCount = value
+	}
+	if value, ok := gc.mutation.RolePanelEditTimes(); ok {
+		_spec.SetField(guild.FieldRolePanelEditTimes, field.TypeJSON, value)
+		_node.RolePanelEditTimes = value
 	}
 	if nodes := gc.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

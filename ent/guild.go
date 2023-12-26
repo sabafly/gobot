@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -39,6 +40,8 @@ type Guild struct {
 	Permissions map[snowflake.ID]permissions.Permission `json:"permissions,omitempty"`
 	// RemindCount holds the value of the "remind_count" field.
 	RemindCount int `json:"remind_count,omitempty"`
+	// RolePanelEditTimes holds the value of the "role_panel_edit_times" field.
+	RolePanelEditTimes []time.Time `json:"role_panel_edit_times,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the GuildQuery when eager-loading is set.
 	Edges           GuildEdges `json:"edges"`
@@ -139,7 +142,7 @@ func (*Guild) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case guild.FieldLevelUpExcludeChannel, guild.FieldLevelRole, guild.FieldPermissions:
+		case guild.FieldLevelUpExcludeChannel, guild.FieldLevelRole, guild.FieldPermissions, guild.FieldRolePanelEditTimes:
 			values[i] = new([]byte)
 		case guild.FieldLevelMee6Imported:
 			values[i] = new(sql.NullBool)
@@ -230,6 +233,14 @@ func (gu *Guild) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field remind_count", values[i])
 			} else if value.Valid {
 				gu.RemindCount = int(value.Int64)
+			}
+		case guild.FieldRolePanelEditTimes:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field role_panel_edit_times", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &gu.RolePanelEditTimes); err != nil {
+					return fmt.Errorf("unmarshal field role_panel_edit_times: %w", err)
+				}
 			}
 		case guild.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -337,6 +348,9 @@ func (gu *Guild) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("remind_count=")
 	builder.WriteString(fmt.Sprintf("%v", gu.RemindCount))
+	builder.WriteString(", ")
+	builder.WriteString("role_panel_edit_times=")
+	builder.WriteString(fmt.Sprintf("%v", gu.RolePanelEditTimes))
 	builder.WriteByte(')')
 	return builder.String()
 }

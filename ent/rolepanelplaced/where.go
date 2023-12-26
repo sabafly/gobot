@@ -106,6 +106,21 @@ func Uses(v int) predicate.RolePanelPlaced {
 	return predicate.RolePanelPlaced(sql.FieldEQ(FieldUses, v))
 }
 
+// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
+func Name(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldEQ(FieldName, v))
+}
+
+// Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
+func Description(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldEQ(FieldDescription, v))
+}
+
+// UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
+func UpdatedAt(v time.Time) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
 // MessageIDEQ applies the EQ predicate on the "message_id" field.
 func MessageIDEQ(v snowflake.ID) predicate.RolePanelPlaced {
 	vc := uint64(v)
@@ -426,6 +441,196 @@ func UsesLT(v int) predicate.RolePanelPlaced {
 // UsesLTE applies the LTE predicate on the "uses" field.
 func UsesLTE(v int) predicate.RolePanelPlaced {
 	return predicate.RolePanelPlaced(sql.FieldLTE(FieldUses, v))
+}
+
+// NameEQ applies the EQ predicate on the "name" field.
+func NameEQ(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldEQ(FieldName, v))
+}
+
+// NameNEQ applies the NEQ predicate on the "name" field.
+func NameNEQ(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldNEQ(FieldName, v))
+}
+
+// NameIn applies the In predicate on the "name" field.
+func NameIn(vs ...string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldIn(FieldName, vs...))
+}
+
+// NameNotIn applies the NotIn predicate on the "name" field.
+func NameNotIn(vs ...string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldNotIn(FieldName, vs...))
+}
+
+// NameGT applies the GT predicate on the "name" field.
+func NameGT(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldGT(FieldName, v))
+}
+
+// NameGTE applies the GTE predicate on the "name" field.
+func NameGTE(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldGTE(FieldName, v))
+}
+
+// NameLT applies the LT predicate on the "name" field.
+func NameLT(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldLT(FieldName, v))
+}
+
+// NameLTE applies the LTE predicate on the "name" field.
+func NameLTE(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldLTE(FieldName, v))
+}
+
+// NameContains applies the Contains predicate on the "name" field.
+func NameContains(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldContains(FieldName, v))
+}
+
+// NameHasPrefix applies the HasPrefix predicate on the "name" field.
+func NameHasPrefix(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldHasPrefix(FieldName, v))
+}
+
+// NameHasSuffix applies the HasSuffix predicate on the "name" field.
+func NameHasSuffix(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldHasSuffix(FieldName, v))
+}
+
+// NameEqualFold applies the EqualFold predicate on the "name" field.
+func NameEqualFold(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldEqualFold(FieldName, v))
+}
+
+// NameContainsFold applies the ContainsFold predicate on the "name" field.
+func NameContainsFold(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldContainsFold(FieldName, v))
+}
+
+// DescriptionEQ applies the EQ predicate on the "description" field.
+func DescriptionEQ(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldEQ(FieldDescription, v))
+}
+
+// DescriptionNEQ applies the NEQ predicate on the "description" field.
+func DescriptionNEQ(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldNEQ(FieldDescription, v))
+}
+
+// DescriptionIn applies the In predicate on the "description" field.
+func DescriptionIn(vs ...string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldIn(FieldDescription, vs...))
+}
+
+// DescriptionNotIn applies the NotIn predicate on the "description" field.
+func DescriptionNotIn(vs ...string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldNotIn(FieldDescription, vs...))
+}
+
+// DescriptionGT applies the GT predicate on the "description" field.
+func DescriptionGT(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldGT(FieldDescription, v))
+}
+
+// DescriptionGTE applies the GTE predicate on the "description" field.
+func DescriptionGTE(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldGTE(FieldDescription, v))
+}
+
+// DescriptionLT applies the LT predicate on the "description" field.
+func DescriptionLT(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldLT(FieldDescription, v))
+}
+
+// DescriptionLTE applies the LTE predicate on the "description" field.
+func DescriptionLTE(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldLTE(FieldDescription, v))
+}
+
+// DescriptionContains applies the Contains predicate on the "description" field.
+func DescriptionContains(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldContains(FieldDescription, v))
+}
+
+// DescriptionHasPrefix applies the HasPrefix predicate on the "description" field.
+func DescriptionHasPrefix(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldHasPrefix(FieldDescription, v))
+}
+
+// DescriptionHasSuffix applies the HasSuffix predicate on the "description" field.
+func DescriptionHasSuffix(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldHasSuffix(FieldDescription, v))
+}
+
+// DescriptionEqualFold applies the EqualFold predicate on the "description" field.
+func DescriptionEqualFold(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldEqualFold(FieldDescription, v))
+}
+
+// DescriptionContainsFold applies the ContainsFold predicate on the "description" field.
+func DescriptionContainsFold(v string) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldContainsFold(FieldDescription, v))
+}
+
+// RolesIsNil applies the IsNil predicate on the "roles" field.
+func RolesIsNil() predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldIsNull(FieldRoles))
+}
+
+// RolesNotNil applies the NotNil predicate on the "roles" field.
+func RolesNotNil() predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldNotNull(FieldRoles))
+}
+
+// UpdatedAtEQ applies the EQ predicate on the "updated_at" field.
+func UpdatedAtEQ(v time.Time) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// UpdatedAtNEQ applies the NEQ predicate on the "updated_at" field.
+func UpdatedAtNEQ(v time.Time) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldNEQ(FieldUpdatedAt, v))
+}
+
+// UpdatedAtIn applies the In predicate on the "updated_at" field.
+func UpdatedAtIn(vs ...time.Time) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldIn(FieldUpdatedAt, vs...))
+}
+
+// UpdatedAtNotIn applies the NotIn predicate on the "updated_at" field.
+func UpdatedAtNotIn(vs ...time.Time) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldNotIn(FieldUpdatedAt, vs...))
+}
+
+// UpdatedAtGT applies the GT predicate on the "updated_at" field.
+func UpdatedAtGT(v time.Time) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldGT(FieldUpdatedAt, v))
+}
+
+// UpdatedAtGTE applies the GTE predicate on the "updated_at" field.
+func UpdatedAtGTE(v time.Time) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldGTE(FieldUpdatedAt, v))
+}
+
+// UpdatedAtLT applies the LT predicate on the "updated_at" field.
+func UpdatedAtLT(v time.Time) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldLT(FieldUpdatedAt, v))
+}
+
+// UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
+func UpdatedAtLTE(v time.Time) predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldLTE(FieldUpdatedAt, v))
+}
+
+// UpdatedAtIsNil applies the IsNil predicate on the "updated_at" field.
+func UpdatedAtIsNil() predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldIsNull(FieldUpdatedAt))
+}
+
+// UpdatedAtNotNil applies the NotNil predicate on the "updated_at" field.
+func UpdatedAtNotNil() predicate.RolePanelPlaced {
+	return predicate.RolePanelPlaced(sql.FieldNotNull(FieldUpdatedAt))
 }
 
 // HasGuild applies the HasEdge predicate on the "guild" edge.
