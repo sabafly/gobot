@@ -213,6 +213,9 @@ func Command(c *components.Components) *generic.GenericCommand {
 							SetUseDisplayName(guildData.RolePanelV2PlacedConfig[keyString].UseDisplayName).
 							SetShowName(guildData.RolePanelV2PlacedConfig[keyString].ButtonShowName).
 							SetHideNotice(guildData.RolePanelV2PlacedConfig[keyString].HideNotice).
+							SetName(rolePanels[index].Name).
+							SetDescription(rolePanels[index].Description).
+							SetRoles(rolePanels[index].Roles).
 							SetRolePanel(rolePanels[index]).
 							SetGuild(g).
 							SaveX(event)
