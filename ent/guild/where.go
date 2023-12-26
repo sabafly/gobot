@@ -137,6 +137,18 @@ func UpRemindMessage(v string) predicate.Guild {
 	return predicate.Guild(sql.FieldEQ(FieldUpRemindMessage, v))
 }
 
+// BumpMention applies equality check predicate on the "bump_mention" field. It's identical to BumpMentionEQ.
+func BumpMention(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldEQ(FieldBumpMention, vc))
+}
+
+// UpMention applies equality check predicate on the "up_mention" field. It's identical to UpMentionEQ.
+func UpMention(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldEQ(FieldUpMention, vc))
+}
+
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.Guild {
 	return predicate.Guild(sql.FieldEQ(FieldName, v))
@@ -1023,6 +1035,134 @@ func UpRemindMessageEqualFold(v string) predicate.Guild {
 // UpRemindMessageContainsFold applies the ContainsFold predicate on the "up_remind_message" field.
 func UpRemindMessageContainsFold(v string) predicate.Guild {
 	return predicate.Guild(sql.FieldContainsFold(FieldUpRemindMessage, v))
+}
+
+// BumpMentionEQ applies the EQ predicate on the "bump_mention" field.
+func BumpMentionEQ(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldEQ(FieldBumpMention, vc))
+}
+
+// BumpMentionNEQ applies the NEQ predicate on the "bump_mention" field.
+func BumpMentionNEQ(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldNEQ(FieldBumpMention, vc))
+}
+
+// BumpMentionIn applies the In predicate on the "bump_mention" field.
+func BumpMentionIn(vs ...snowflake.ID) predicate.Guild {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = uint64(vs[i])
+	}
+	return predicate.Guild(sql.FieldIn(FieldBumpMention, v...))
+}
+
+// BumpMentionNotIn applies the NotIn predicate on the "bump_mention" field.
+func BumpMentionNotIn(vs ...snowflake.ID) predicate.Guild {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = uint64(vs[i])
+	}
+	return predicate.Guild(sql.FieldNotIn(FieldBumpMention, v...))
+}
+
+// BumpMentionGT applies the GT predicate on the "bump_mention" field.
+func BumpMentionGT(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldGT(FieldBumpMention, vc))
+}
+
+// BumpMentionGTE applies the GTE predicate on the "bump_mention" field.
+func BumpMentionGTE(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldGTE(FieldBumpMention, vc))
+}
+
+// BumpMentionLT applies the LT predicate on the "bump_mention" field.
+func BumpMentionLT(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldLT(FieldBumpMention, vc))
+}
+
+// BumpMentionLTE applies the LTE predicate on the "bump_mention" field.
+func BumpMentionLTE(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldLTE(FieldBumpMention, vc))
+}
+
+// BumpMentionIsNil applies the IsNil predicate on the "bump_mention" field.
+func BumpMentionIsNil() predicate.Guild {
+	return predicate.Guild(sql.FieldIsNull(FieldBumpMention))
+}
+
+// BumpMentionNotNil applies the NotNil predicate on the "bump_mention" field.
+func BumpMentionNotNil() predicate.Guild {
+	return predicate.Guild(sql.FieldNotNull(FieldBumpMention))
+}
+
+// UpMentionEQ applies the EQ predicate on the "up_mention" field.
+func UpMentionEQ(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldEQ(FieldUpMention, vc))
+}
+
+// UpMentionNEQ applies the NEQ predicate on the "up_mention" field.
+func UpMentionNEQ(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldNEQ(FieldUpMention, vc))
+}
+
+// UpMentionIn applies the In predicate on the "up_mention" field.
+func UpMentionIn(vs ...snowflake.ID) predicate.Guild {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = uint64(vs[i])
+	}
+	return predicate.Guild(sql.FieldIn(FieldUpMention, v...))
+}
+
+// UpMentionNotIn applies the NotIn predicate on the "up_mention" field.
+func UpMentionNotIn(vs ...snowflake.ID) predicate.Guild {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = uint64(vs[i])
+	}
+	return predicate.Guild(sql.FieldNotIn(FieldUpMention, v...))
+}
+
+// UpMentionGT applies the GT predicate on the "up_mention" field.
+func UpMentionGT(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldGT(FieldUpMention, vc))
+}
+
+// UpMentionGTE applies the GTE predicate on the "up_mention" field.
+func UpMentionGTE(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldGTE(FieldUpMention, vc))
+}
+
+// UpMentionLT applies the LT predicate on the "up_mention" field.
+func UpMentionLT(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldLT(FieldUpMention, vc))
+}
+
+// UpMentionLTE applies the LTE predicate on the "up_mention" field.
+func UpMentionLTE(v snowflake.ID) predicate.Guild {
+	vc := uint64(v)
+	return predicate.Guild(sql.FieldLTE(FieldUpMention, vc))
+}
+
+// UpMentionIsNil applies the IsNil predicate on the "up_mention" field.
+func UpMentionIsNil() predicate.Guild {
+	return predicate.Guild(sql.FieldIsNull(FieldUpMention))
+}
+
+// UpMentionNotNil applies the NotNil predicate on the "up_mention" field.
+func UpMentionNotNil() predicate.Guild {
+	return predicate.Guild(sql.FieldNotNull(FieldUpMention))
 }
 
 // HasOwner applies the HasEdge predicate on the "owner" edge.

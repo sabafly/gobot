@@ -62,6 +62,10 @@ type Guild struct {
 	UpRemindMessageTitle string `json:"up_remind_message_title,omitempty"`
 	// UpRemindMessage holds the value of the "up_remind_message" field.
 	UpRemindMessage string `json:"up_remind_message,omitempty"`
+	// BumpMention holds the value of the "bump_mention" field.
+	BumpMention *snowflake.ID `json:"bump_mention,omitempty"`
+	// UpMention holds the value of the "up_mention" field.
+	UpMention *snowflake.ID `json:"up_mention,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the GuildQuery when eager-loading is set.
 	Edges           GuildEdges `json:"edges"`
@@ -166,7 +170,7 @@ func (*Guild) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case guild.FieldLevelMee6Imported, guild.FieldBumpEnabled, guild.FieldUpEnabled:
 			values[i] = new(sql.NullBool)
-		case guild.FieldID, guild.FieldLevelUpChannel, guild.FieldRemindCount:
+		case guild.FieldID, guild.FieldLevelUpChannel, guild.FieldRemindCount, guild.FieldBumpMention, guild.FieldUpMention:
 			values[i] = new(sql.NullInt64)
 		case guild.FieldName, guild.FieldLocale, guild.FieldLevelUpMessage, guild.FieldBumpMessageTitle, guild.FieldBumpMessage, guild.FieldBumpRemindMessageTitle, guild.FieldBumpRemindMessage, guild.FieldUpMessageTitle, guild.FieldUpMessage, guild.FieldUpRemindMessageTitle, guild.FieldUpRemindMessage:
 			values[i] = new(sql.NullString)
@@ -322,6 +326,20 @@ func (gu *Guild) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				gu.UpRemindMessage = value.String
 			}
+		case guild.FieldBumpMention:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field bump_mention", values[i])
+			} else if value.Valid {
+				gu.BumpMention = new(snowflake.ID)
+				*gu.BumpMention = snowflake.ID(value.Int64)
+			}
+		case guild.FieldUpMention:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field up_mention", values[i])
+			} else if value.Valid {
+				gu.UpMention = new(snowflake.ID)
+				*gu.UpMention = snowflake.ID(value.Int64)
+			}
 		case guild.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field user_own_guilds", values[i])
@@ -461,6 +479,16 @@ func (gu *Guild) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("up_remind_message=")
 	builder.WriteString(gu.UpRemindMessage)
+	builder.WriteString(", ")
+	if v := gu.BumpMention; v != nil {
+		builder.WriteString("bump_mention=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := gu.UpMention; v != nil {
+		builder.WriteString("up_mention=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

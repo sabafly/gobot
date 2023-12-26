@@ -45,6 +45,12 @@ func Command(c *components.Components) components.Command {
 							{
 								Name:        "mention",
 								Description: "set mention target",
+								Options: []discord.ApplicationCommandOption{
+									discord.ApplicationCommandOptionRole{
+										Name:        "target",
+										Description: "target role",
+									},
+								},
 							},
 						},
 					},
@@ -63,6 +69,12 @@ func Command(c *components.Components) components.Command {
 							{
 								Name:        "mention",
 								Description: "set mention target",
+								Options: []discord.ApplicationCommandOption{
+									discord.ApplicationCommandOptionRole{
+										Name:        "target",
+										Description: "target role",
+									},
+								},
 							},
 						},
 					},
@@ -116,6 +128,242 @@ func Command(c *components.Components) components.Command {
 					return nil
 				},
 			},
+			"/setting/bump/mention": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionString("setting.bump.mention"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					g, err := c.GuildCreateID(event, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+					update := g.Update()
+					if r, ok := event.SlashCommandInteractionData().OptRole("target"); ok {
+						update.SetBumpMention(r.ID)
+					} else {
+						update.ClearBumpMention()
+					}
+					g = update.SaveX(event)
+					if err := event.CreateMessage(
+						discord.NewMessageBuilder().
+							SetContent(translate.Message(event.Locale(), "components.setting.bump.mention",
+								translate.WithTemplate(map[string]any{
+									"Role": builtin.Or(g.BumpMention != nil,
+										discord.RoleMention(builtin.NonNil(g.BumpMention)),
+										"`"+translate.Message(event.Locale(), "components.setting.mention.none")+"`",
+									),
+								}),
+							)).
+							Create(),
+					); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
+			"/setting/up/mention": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionString("setting.up.mention"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					g, err := c.GuildCreateID(event, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+					update := g.Update()
+					if r, ok := event.SlashCommandInteractionData().OptRole("target"); ok {
+						update.SetUpMention(r.ID)
+					} else {
+						update.ClearUpMention()
+					}
+					g = update.SaveX(event)
+					if err := event.CreateMessage(
+						discord.NewMessageBuilder().
+							SetContent(translate.Message(event.Locale(), "components.setting.up.mention",
+								translate.WithTemplate(map[string]any{
+									"Role": builtin.Or(g.UpMention != nil,
+										discord.RoleMention(builtin.NonNil(g.UpMention)),
+										"`"+translate.Message(event.Locale(), "components.setting.mention.none")+"`",
+									),
+								}),
+							)).
+							Create(),
+					); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
+			"/setting/bump/message": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionString("setting.bump.message"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					g, err := c.GuildCreateID(event, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+					if err := event.Modal(
+						discord.NewModalCreateBuilder().
+							SetTitle(translate.Message(event.Locale(), "components.setting.bump.message.modal.title")).
+							SetCustomID("setting:bump_message").
+							SetContainerComponents(
+								discord.NewActionRow(
+									discord.TextInputComponent{
+										CustomID:  "message_title",
+										Style:     discord.TextInputStyleShort,
+										Label:     translate.Message(event.Locale(), "components.setting.message.modal.message_title"),
+										MinLength: builtin.Ptr(1),
+										MaxLength: 30,
+										Required:  true,
+										Value:     g.BumpMessageTitle,
+									},
+								),
+								discord.NewActionRow(
+									discord.TextInputComponent{
+										CustomID:  "message",
+										Style:     discord.TextInputStyleParagraph,
+										Label:     translate.Message(event.Locale(), "components.setting.message.modal.message"),
+										MinLength: builtin.Ptr(1),
+										MaxLength: 300,
+										Required:  true,
+										Value:     g.BumpMessage,
+									},
+								),
+								discord.NewActionRow(
+									discord.TextInputComponent{
+										CustomID:  "remind.message_title",
+										Style:     discord.TextInputStyleShort,
+										Label:     translate.Message(event.Locale(), "components.setting.message.modal.remind.message_title"),
+										MinLength: builtin.Ptr(1),
+										MaxLength: 30,
+										Required:  true,
+										Value:     g.BumpRemindMessageTitle,
+									},
+								),
+								discord.NewActionRow(
+									discord.TextInputComponent{
+										CustomID:  "remind.message",
+										Style:     discord.TextInputStyleParagraph,
+										Label:     translate.Message(event.Locale(), "components.setting.message.modal.remind.message"),
+										MinLength: builtin.Ptr(1),
+										MaxLength: 300,
+										Required:  true,
+										Value:     g.BumpRemindMessage,
+									},
+								),
+							).
+							Build(),
+					); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
+			"/setting/up/message": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionString("setting.up.message"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					g, err := c.GuildCreateID(event, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+					if err := event.Modal(
+						discord.NewModalCreateBuilder().
+							SetTitle(translate.Message(event.Locale(), "components.setting.up.message.modal.title")).
+							SetCustomID("setting:up_message").
+							SetContainerComponents(
+								discord.NewActionRow(
+									discord.TextInputComponent{
+										CustomID:  "message_title",
+										Style:     discord.TextInputStyleShort,
+										Label:     translate.Message(event.Locale(), "components.setting.message.modal.message_title"),
+										MinLength: builtin.Ptr(1),
+										MaxLength: 30,
+										Required:  true,
+										Value:     g.UpMessageTitle,
+									},
+								),
+								discord.NewActionRow(
+									discord.TextInputComponent{
+										CustomID:  "message",
+										Style:     discord.TextInputStyleParagraph,
+										Label:     translate.Message(event.Locale(), "components.setting.message.modal.message"),
+										MinLength: builtin.Ptr(1),
+										MaxLength: 300,
+										Required:  true,
+										Value:     g.UpMessage,
+									},
+								),
+								discord.NewActionRow(
+									discord.TextInputComponent{
+										CustomID:  "remind.message_title",
+										Style:     discord.TextInputStyleShort,
+										Label:     translate.Message(event.Locale(), "components.setting.message.modal.remind.message_title"),
+										MinLength: builtin.Ptr(1),
+										MaxLength: 30,
+										Required:  true,
+										Value:     g.UpRemindMessageTitle,
+									},
+								),
+								discord.NewActionRow(
+									discord.TextInputComponent{
+										CustomID:  "remind.message",
+										Style:     discord.TextInputStyleParagraph,
+										Label:     translate.Message(event.Locale(), "components.setting.message.modal.remind.message"),
+										MinLength: builtin.Ptr(1),
+										MaxLength: 300,
+										Required:  true,
+										Value:     g.UpRemindMessage,
+									},
+								),
+							).
+							Build(),
+					); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
+		},
+		ModalHandlers: map[string]generic.ModalHandler{
+			"setting:bump_message": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+				g, err := c.GuildCreateID(event, *event.GuildID())
+				if err != nil {
+					return errors.NewError(err)
+				}
+				g.Update().
+					SetBumpMessageTitle(event.ModalSubmitInteraction.Data.Text("message_title")).
+					SetBumpMessage(event.ModalSubmitInteraction.Data.Text("message")).
+					SetBumpRemindMessageTitle(event.ModalSubmitInteraction.Data.Text("remind.message_title")).
+					SetBumpRemindMessage(event.ModalSubmitInteraction.Data.Text("remind.message")).
+					ExecX(event)
+				if err := event.DeferUpdateMessage(); err != nil {
+					return errors.NewError(err)
+				}
+				return nil
+			},
+			"setting:up_message": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+				g, err := c.GuildCreateID(event, *event.GuildID())
+				if err != nil {
+					return errors.NewError(err)
+				}
+				g.Update().
+					SetUpMessageTitle(event.ModalSubmitInteraction.Data.Text("message_title")).
+					SetUpMessage(event.ModalSubmitInteraction.Data.Text("message")).
+					SetUpRemindMessageTitle(event.ModalSubmitInteraction.Data.Text("remind.message_title")).
+					SetUpRemindMessage(event.ModalSubmitInteraction.Data.Text("remind.message")).
+					ExecX(event)
+				if err := event.DeferUpdateMessage(); err != nil {
+					return errors.NewError(err)
+				}
+				return nil
+			},
 		},
 
 		EventHandler: func(c *components.Components, event bot.Event) errors.Error {
@@ -166,7 +414,7 @@ func Command(c *components.Components) components.Command {
 						if time.Now().After(n.t.Add(-time.Minute * 2)) {
 							go func() {
 								time.Sleep(time.Until(n.t))
-								createNotice(g.BumpRemindMessageTitle, g.BumpRemindMessage, n, client)
+								createNotice(g.BumpRemindMessageTitle, g.BumpRemindMessage, n, client, builtin.Or(g.BumpMention != nil, discord.RoleMention(builtin.NonNil(g.BumpMention)), ""))
 							}()
 							delete(bumpNotice, k)
 						}
@@ -185,7 +433,7 @@ func Command(c *components.Components) components.Command {
 						if time.Now().After(n.t.Add(-time.Minute * 2)) {
 							go func() {
 								time.Sleep(time.Until(n.t))
-								createNotice(g.UpRemindMessageTitle, g.UpRemindMessage, n, client)
+								createNotice(g.UpRemindMessageTitle, g.UpRemindMessage, n, client, builtin.Or(g.UpMention != nil, discord.RoleMention(builtin.NonNil(g.UpMention)), ""))
 							}()
 							delete(bumpNotice, k)
 						}
@@ -226,7 +474,7 @@ func bumpHandler(c *components.Components, g *ent.Guild, event *events.GuildMess
 			t:         event.Message.CreatedAt.Add(time.Hour * 2),
 		}
 	bumpNotice[event.GuildID] = n
-	createNotice(g.BumpMessageTitle, g.BumpMessage, n, event.Client())
+	createNotice(g.BumpMessageTitle, g.BumpMessage, n, event.Client(), "")
 	return nil
 }
 
@@ -252,13 +500,14 @@ func upHandler(c *components.Components, g *ent.Guild, event *events.GuildMessag
 			t:         event.Message.CreatedAt.Add(time.Hour * 1),
 		}
 	upNotice[event.GuildID] = n
-	createNotice(g.UpMessageTitle, g.UpMessage, n, event.Client())
+	createNotice(g.UpMessageTitle, g.UpMessage, n, event.Client(), "")
 	return nil
 }
 
-func createNotice(title, message string, n notice, client bot.Client) {
+func createNotice(title, message string, n notice, client bot.Client, content string) {
 	if _, err := client.Rest().CreateMessage(n.channelID,
 		discord.NewMessageBuilder().
+			SetContent(content).
 			SetEmbeds(
 				embeds.SetEmbedProperties(
 					discord.NewEmbedBuilder().

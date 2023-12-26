@@ -271,6 +271,34 @@ func (gc *GuildCreate) SetNillableUpRemindMessage(s *string) *GuildCreate {
 	return gc
 }
 
+// SetBumpMention sets the "bump_mention" field.
+func (gc *GuildCreate) SetBumpMention(s snowflake.ID) *GuildCreate {
+	gc.mutation.SetBumpMention(s)
+	return gc
+}
+
+// SetNillableBumpMention sets the "bump_mention" field if the given value is not nil.
+func (gc *GuildCreate) SetNillableBumpMention(s *snowflake.ID) *GuildCreate {
+	if s != nil {
+		gc.SetBumpMention(*s)
+	}
+	return gc
+}
+
+// SetUpMention sets the "up_mention" field.
+func (gc *GuildCreate) SetUpMention(s snowflake.ID) *GuildCreate {
+	gc.mutation.SetUpMention(s)
+	return gc
+}
+
+// SetNillableUpMention sets the "up_mention" field if the given value is not nil.
+func (gc *GuildCreate) SetNillableUpMention(s *snowflake.ID) *GuildCreate {
+	if s != nil {
+		gc.SetUpMention(*s)
+	}
+	return gc
+}
+
 // SetID sets the "id" field.
 func (gc *GuildCreate) SetID(s snowflake.ID) *GuildCreate {
 	gc.mutation.SetID(s)
@@ -705,6 +733,14 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 	if value, ok := gc.mutation.UpRemindMessage(); ok {
 		_spec.SetField(guild.FieldUpRemindMessage, field.TypeString, value)
 		_node.UpRemindMessage = value
+	}
+	if value, ok := gc.mutation.BumpMention(); ok {
+		_spec.SetField(guild.FieldBumpMention, field.TypeUint64, value)
+		_node.BumpMention = &value
+	}
+	if value, ok := gc.mutation.UpMention(); ok {
+		_spec.SetField(guild.FieldUpMention, field.TypeUint64, value)
+		_node.UpMention = &value
 	}
 	if nodes := gc.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

@@ -31,6 +31,8 @@ var (
 		{Name: "up_message", Type: field.TypeString, Default: "１時間後に通知します"},
 		{Name: "up_remind_message_title", Type: field.TypeString, Default: "UPの時間です"},
 		{Name: "up_remind_message", Type: field.TypeString, Default: "</dissoku up:828002256690610256>でUPしましょう"},
+		{Name: "bump_mention", Type: field.TypeUint64, Nullable: true},
+		{Name: "up_mention", Type: field.TypeUint64, Nullable: true},
 		{Name: "user_own_guilds", Type: field.TypeUint64},
 	}
 	// GuildsTable holds the schema information for the "guilds" table.
@@ -41,7 +43,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "guilds_users_own_guilds",
-				Columns:    []*schema.Column{GuildsColumns[21]},
+				Columns:    []*schema.Column{GuildsColumns[23]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

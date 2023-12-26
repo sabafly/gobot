@@ -332,6 +332,60 @@ func (gu *GuildUpdate) SetNillableUpRemindMessage(s *string) *GuildUpdate {
 	return gu
 }
 
+// SetBumpMention sets the "bump_mention" field.
+func (gu *GuildUpdate) SetBumpMention(s snowflake.ID) *GuildUpdate {
+	gu.mutation.ResetBumpMention()
+	gu.mutation.SetBumpMention(s)
+	return gu
+}
+
+// SetNillableBumpMention sets the "bump_mention" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableBumpMention(s *snowflake.ID) *GuildUpdate {
+	if s != nil {
+		gu.SetBumpMention(*s)
+	}
+	return gu
+}
+
+// AddBumpMention adds s to the "bump_mention" field.
+func (gu *GuildUpdate) AddBumpMention(s snowflake.ID) *GuildUpdate {
+	gu.mutation.AddBumpMention(s)
+	return gu
+}
+
+// ClearBumpMention clears the value of the "bump_mention" field.
+func (gu *GuildUpdate) ClearBumpMention() *GuildUpdate {
+	gu.mutation.ClearBumpMention()
+	return gu
+}
+
+// SetUpMention sets the "up_mention" field.
+func (gu *GuildUpdate) SetUpMention(s snowflake.ID) *GuildUpdate {
+	gu.mutation.ResetUpMention()
+	gu.mutation.SetUpMention(s)
+	return gu
+}
+
+// SetNillableUpMention sets the "up_mention" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableUpMention(s *snowflake.ID) *GuildUpdate {
+	if s != nil {
+		gu.SetUpMention(*s)
+	}
+	return gu
+}
+
+// AddUpMention adds s to the "up_mention" field.
+func (gu *GuildUpdate) AddUpMention(s snowflake.ID) *GuildUpdate {
+	gu.mutation.AddUpMention(s)
+	return gu
+}
+
+// ClearUpMention clears the value of the "up_mention" field.
+func (gu *GuildUpdate) ClearUpMention() *GuildUpdate {
+	gu.mutation.ClearUpMention()
+	return gu
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (gu *GuildUpdate) SetOwnerID(id snowflake.ID) *GuildUpdate {
 	gu.mutation.SetOwnerID(id)
@@ -756,6 +810,24 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := gu.mutation.UpRemindMessage(); ok {
 		_spec.SetField(guild.FieldUpRemindMessage, field.TypeString, value)
+	}
+	if value, ok := gu.mutation.BumpMention(); ok {
+		_spec.SetField(guild.FieldBumpMention, field.TypeUint64, value)
+	}
+	if value, ok := gu.mutation.AddedBumpMention(); ok {
+		_spec.AddField(guild.FieldBumpMention, field.TypeUint64, value)
+	}
+	if gu.mutation.BumpMentionCleared() {
+		_spec.ClearField(guild.FieldBumpMention, field.TypeUint64)
+	}
+	if value, ok := gu.mutation.UpMention(); ok {
+		_spec.SetField(guild.FieldUpMention, field.TypeUint64, value)
+	}
+	if value, ok := gu.mutation.AddedUpMention(); ok {
+		_spec.AddField(guild.FieldUpMention, field.TypeUint64, value)
+	}
+	if gu.mutation.UpMentionCleared() {
+		_spec.ClearField(guild.FieldUpMention, field.TypeUint64)
 	}
 	if gu.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1368,6 +1440,60 @@ func (guo *GuildUpdateOne) SetNillableUpRemindMessage(s *string) *GuildUpdateOne
 	return guo
 }
 
+// SetBumpMention sets the "bump_mention" field.
+func (guo *GuildUpdateOne) SetBumpMention(s snowflake.ID) *GuildUpdateOne {
+	guo.mutation.ResetBumpMention()
+	guo.mutation.SetBumpMention(s)
+	return guo
+}
+
+// SetNillableBumpMention sets the "bump_mention" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableBumpMention(s *snowflake.ID) *GuildUpdateOne {
+	if s != nil {
+		guo.SetBumpMention(*s)
+	}
+	return guo
+}
+
+// AddBumpMention adds s to the "bump_mention" field.
+func (guo *GuildUpdateOne) AddBumpMention(s snowflake.ID) *GuildUpdateOne {
+	guo.mutation.AddBumpMention(s)
+	return guo
+}
+
+// ClearBumpMention clears the value of the "bump_mention" field.
+func (guo *GuildUpdateOne) ClearBumpMention() *GuildUpdateOne {
+	guo.mutation.ClearBumpMention()
+	return guo
+}
+
+// SetUpMention sets the "up_mention" field.
+func (guo *GuildUpdateOne) SetUpMention(s snowflake.ID) *GuildUpdateOne {
+	guo.mutation.ResetUpMention()
+	guo.mutation.SetUpMention(s)
+	return guo
+}
+
+// SetNillableUpMention sets the "up_mention" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableUpMention(s *snowflake.ID) *GuildUpdateOne {
+	if s != nil {
+		guo.SetUpMention(*s)
+	}
+	return guo
+}
+
+// AddUpMention adds s to the "up_mention" field.
+func (guo *GuildUpdateOne) AddUpMention(s snowflake.ID) *GuildUpdateOne {
+	guo.mutation.AddUpMention(s)
+	return guo
+}
+
+// ClearUpMention clears the value of the "up_mention" field.
+func (guo *GuildUpdateOne) ClearUpMention() *GuildUpdateOne {
+	guo.mutation.ClearUpMention()
+	return guo
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (guo *GuildUpdateOne) SetOwnerID(id snowflake.ID) *GuildUpdateOne {
 	guo.mutation.SetOwnerID(id)
@@ -1822,6 +1948,24 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 	}
 	if value, ok := guo.mutation.UpRemindMessage(); ok {
 		_spec.SetField(guild.FieldUpRemindMessage, field.TypeString, value)
+	}
+	if value, ok := guo.mutation.BumpMention(); ok {
+		_spec.SetField(guild.FieldBumpMention, field.TypeUint64, value)
+	}
+	if value, ok := guo.mutation.AddedBumpMention(); ok {
+		_spec.AddField(guild.FieldBumpMention, field.TypeUint64, value)
+	}
+	if guo.mutation.BumpMentionCleared() {
+		_spec.ClearField(guild.FieldBumpMention, field.TypeUint64)
+	}
+	if value, ok := guo.mutation.UpMention(); ok {
+		_spec.SetField(guild.FieldUpMention, field.TypeUint64, value)
+	}
+	if value, ok := guo.mutation.AddedUpMention(); ok {
+		_spec.AddField(guild.FieldUpMention, field.TypeUint64, value)
+	}
+	if guo.mutation.UpMentionCleared() {
+		_spec.ClearField(guild.FieldUpMention, field.TypeUint64)
 	}
 	if guo.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{

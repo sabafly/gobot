@@ -81,6 +81,14 @@ func (Guild) Fields() []ent.Field {
 		field.String("up_remind_message").
 			NotEmpty().
 			Default("</dissoku up:828002256690610256>でUPしましょう"),
+		field.Uint64("bump_mention").
+			Nillable().
+			Optional().
+			GoType(snowflake.ID(0)),
+		field.Uint64("up_mention").
+			Nillable().
+			Optional().
+			GoType(snowflake.ID(0)),
 	}
 }
 

@@ -79,6 +79,10 @@ type GuildMutation struct {
 	up_message                     *string
 	up_remind_message_title        *string
 	up_remind_message              *string
+	bump_mention                   *snowflake.ID
+	addbump_mention                *snowflake.ID
+	up_mention                     *snowflake.ID
+	addup_mention                  *snowflake.ID
 	clearedFields                  map[string]struct{}
 	owner                          *snowflake.ID
 	clearedowner                   bool
@@ -1040,6 +1044,146 @@ func (m *GuildMutation) ResetUpRemindMessage() {
 	m.up_remind_message = nil
 }
 
+// SetBumpMention sets the "bump_mention" field.
+func (m *GuildMutation) SetBumpMention(s snowflake.ID) {
+	m.bump_mention = &s
+	m.addbump_mention = nil
+}
+
+// BumpMention returns the value of the "bump_mention" field in the mutation.
+func (m *GuildMutation) BumpMention() (r snowflake.ID, exists bool) {
+	v := m.bump_mention
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBumpMention returns the old "bump_mention" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldBumpMention(ctx context.Context) (v *snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBumpMention is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBumpMention requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBumpMention: %w", err)
+	}
+	return oldValue.BumpMention, nil
+}
+
+// AddBumpMention adds s to the "bump_mention" field.
+func (m *GuildMutation) AddBumpMention(s snowflake.ID) {
+	if m.addbump_mention != nil {
+		*m.addbump_mention += s
+	} else {
+		m.addbump_mention = &s
+	}
+}
+
+// AddedBumpMention returns the value that was added to the "bump_mention" field in this mutation.
+func (m *GuildMutation) AddedBumpMention() (r snowflake.ID, exists bool) {
+	v := m.addbump_mention
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearBumpMention clears the value of the "bump_mention" field.
+func (m *GuildMutation) ClearBumpMention() {
+	m.bump_mention = nil
+	m.addbump_mention = nil
+	m.clearedFields[guild.FieldBumpMention] = struct{}{}
+}
+
+// BumpMentionCleared returns if the "bump_mention" field was cleared in this mutation.
+func (m *GuildMutation) BumpMentionCleared() bool {
+	_, ok := m.clearedFields[guild.FieldBumpMention]
+	return ok
+}
+
+// ResetBumpMention resets all changes to the "bump_mention" field.
+func (m *GuildMutation) ResetBumpMention() {
+	m.bump_mention = nil
+	m.addbump_mention = nil
+	delete(m.clearedFields, guild.FieldBumpMention)
+}
+
+// SetUpMention sets the "up_mention" field.
+func (m *GuildMutation) SetUpMention(s snowflake.ID) {
+	m.up_mention = &s
+	m.addup_mention = nil
+}
+
+// UpMention returns the value of the "up_mention" field in the mutation.
+func (m *GuildMutation) UpMention() (r snowflake.ID, exists bool) {
+	v := m.up_mention
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpMention returns the old "up_mention" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldUpMention(ctx context.Context) (v *snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpMention is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpMention requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpMention: %w", err)
+	}
+	return oldValue.UpMention, nil
+}
+
+// AddUpMention adds s to the "up_mention" field.
+func (m *GuildMutation) AddUpMention(s snowflake.ID) {
+	if m.addup_mention != nil {
+		*m.addup_mention += s
+	} else {
+		m.addup_mention = &s
+	}
+}
+
+// AddedUpMention returns the value that was added to the "up_mention" field in this mutation.
+func (m *GuildMutation) AddedUpMention() (r snowflake.ID, exists bool) {
+	v := m.addup_mention
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearUpMention clears the value of the "up_mention" field.
+func (m *GuildMutation) ClearUpMention() {
+	m.up_mention = nil
+	m.addup_mention = nil
+	m.clearedFields[guild.FieldUpMention] = struct{}{}
+}
+
+// UpMentionCleared returns if the "up_mention" field was cleared in this mutation.
+func (m *GuildMutation) UpMentionCleared() bool {
+	_, ok := m.clearedFields[guild.FieldUpMention]
+	return ok
+}
+
+// ResetUpMention resets all changes to the "up_mention" field.
+func (m *GuildMutation) ResetUpMention() {
+	m.up_mention = nil
+	m.addup_mention = nil
+	delete(m.clearedFields, guild.FieldUpMention)
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by id.
 func (m *GuildMutation) SetOwnerID(id snowflake.ID) {
 	m.owner = &id
@@ -1437,7 +1581,7 @@ func (m *GuildMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GuildMutation) Fields() []string {
-	fields := make([]string, 0, 20)
+	fields := make([]string, 0, 22)
 	if m.name != nil {
 		fields = append(fields, guild.FieldName)
 	}
@@ -1498,6 +1642,12 @@ func (m *GuildMutation) Fields() []string {
 	if m.up_remind_message != nil {
 		fields = append(fields, guild.FieldUpRemindMessage)
 	}
+	if m.bump_mention != nil {
+		fields = append(fields, guild.FieldBumpMention)
+	}
+	if m.up_mention != nil {
+		fields = append(fields, guild.FieldUpMention)
+	}
 	return fields
 }
 
@@ -1546,6 +1696,10 @@ func (m *GuildMutation) Field(name string) (ent.Value, bool) {
 		return m.UpRemindMessageTitle()
 	case guild.FieldUpRemindMessage:
 		return m.UpRemindMessage()
+	case guild.FieldBumpMention:
+		return m.BumpMention()
+	case guild.FieldUpMention:
+		return m.UpMention()
 	}
 	return nil, false
 }
@@ -1595,6 +1749,10 @@ func (m *GuildMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldUpRemindMessageTitle(ctx)
 	case guild.FieldUpRemindMessage:
 		return m.OldUpRemindMessage(ctx)
+	case guild.FieldBumpMention:
+		return m.OldBumpMention(ctx)
+	case guild.FieldUpMention:
+		return m.OldUpMention(ctx)
 	}
 	return nil, fmt.Errorf("unknown Guild field %s", name)
 }
@@ -1744,6 +1902,20 @@ func (m *GuildMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpRemindMessage(v)
 		return nil
+	case guild.FieldBumpMention:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBumpMention(v)
+		return nil
+	case guild.FieldUpMention:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpMention(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Guild field %s", name)
 }
@@ -1758,6 +1930,12 @@ func (m *GuildMutation) AddedFields() []string {
 	if m.addremind_count != nil {
 		fields = append(fields, guild.FieldRemindCount)
 	}
+	if m.addbump_mention != nil {
+		fields = append(fields, guild.FieldBumpMention)
+	}
+	if m.addup_mention != nil {
+		fields = append(fields, guild.FieldUpMention)
+	}
 	return fields
 }
 
@@ -1770,6 +1948,10 @@ func (m *GuildMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedLevelUpChannel()
 	case guild.FieldRemindCount:
 		return m.AddedRemindCount()
+	case guild.FieldBumpMention:
+		return m.AddedBumpMention()
+	case guild.FieldUpMention:
+		return m.AddedUpMention()
 	}
 	return nil, false
 }
@@ -1793,6 +1975,20 @@ func (m *GuildMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddRemindCount(v)
 		return nil
+	case guild.FieldBumpMention:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBumpMention(v)
+		return nil
+	case guild.FieldUpMention:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddUpMention(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Guild numeric field %s", name)
 }
@@ -1809,6 +2005,12 @@ func (m *GuildMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(guild.FieldLevelRole) {
 		fields = append(fields, guild.FieldLevelRole)
+	}
+	if m.FieldCleared(guild.FieldBumpMention) {
+		fields = append(fields, guild.FieldBumpMention)
+	}
+	if m.FieldCleared(guild.FieldUpMention) {
+		fields = append(fields, guild.FieldUpMention)
 	}
 	return fields
 }
@@ -1832,6 +2034,12 @@ func (m *GuildMutation) ClearField(name string) error {
 		return nil
 	case guild.FieldLevelRole:
 		m.ClearLevelRole()
+		return nil
+	case guild.FieldBumpMention:
+		m.ClearBumpMention()
+		return nil
+	case guild.FieldUpMention:
+		m.ClearUpMention()
 		return nil
 	}
 	return fmt.Errorf("unknown Guild nullable field %s", name)
@@ -1900,6 +2108,12 @@ func (m *GuildMutation) ResetField(name string) error {
 		return nil
 	case guild.FieldUpRemindMessage:
 		m.ResetUpRemindMessage()
+		return nil
+	case guild.FieldBumpMention:
+		m.ResetBumpMention()
+		return nil
+	case guild.FieldUpMention:
+		m.ResetUpMention()
 		return nil
 	}
 	return fmt.Errorf("unknown Guild field %s", name)

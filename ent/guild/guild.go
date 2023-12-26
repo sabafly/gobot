@@ -57,6 +57,10 @@ const (
 	FieldUpRemindMessageTitle = "up_remind_message_title"
 	// FieldUpRemindMessage holds the string denoting the up_remind_message field in the database.
 	FieldUpRemindMessage = "up_remind_message"
+	// FieldBumpMention holds the string denoting the bump_mention field in the database.
+	FieldBumpMention = "bump_mention"
+	// FieldUpMention holds the string denoting the up_mention field in the database.
+	FieldUpMention = "up_mention"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
 	// EdgeMembers holds the string denoting the members edge name in mutations.
@@ -147,6 +151,8 @@ var Columns = []string{
 	FieldUpMessage,
 	FieldUpRemindMessageTitle,
 	FieldUpRemindMessage,
+	FieldBumpMention,
+	FieldUpMention,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "guilds"
@@ -315,6 +321,16 @@ func ByUpRemindMessageTitle(opts ...sql.OrderTermOption) OrderOption {
 // ByUpRemindMessage orders the results by the up_remind_message field.
 func ByUpRemindMessage(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpRemindMessage, opts...).ToFunc()
+}
+
+// ByBumpMention orders the results by the bump_mention field.
+func ByBumpMention(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBumpMention, opts...).ToFunc()
+}
+
+// ByUpMention orders the results by the up_mention field.
+func ByUpMention(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpMention, opts...).ToFunc()
 }
 
 // ByOwnerField orders the results by owner field.
