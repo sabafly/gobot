@@ -119,6 +119,9 @@ func Command(c *components.Components) components.Command {
 		},
 
 		EventHandler: func(c *components.Components, event bot.Event) errors.Error {
+			if e, ok := event.(*events.GuildMessageUpdate); ok {
+				event = &events.GuildMessageCreate{GenericGuildMessage: e.GenericGuildMessage}
+			}
 			switch event := event.(type) {
 			case *events.GuildMessageCreate:
 				if event.Message.Interaction == nil || event.Message.ApplicationID == nil {
