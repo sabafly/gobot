@@ -192,6 +192,146 @@ func (gu *GuildUpdate) AppendRolePanelEditTimes(t []time.Time) *GuildUpdate {
 	return gu
 }
 
+// SetBumpEnabled sets the "bump_enabled" field.
+func (gu *GuildUpdate) SetBumpEnabled(b bool) *GuildUpdate {
+	gu.mutation.SetBumpEnabled(b)
+	return gu
+}
+
+// SetNillableBumpEnabled sets the "bump_enabled" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableBumpEnabled(b *bool) *GuildUpdate {
+	if b != nil {
+		gu.SetBumpEnabled(*b)
+	}
+	return gu
+}
+
+// SetBumpMessageTitle sets the "bump_message_title" field.
+func (gu *GuildUpdate) SetBumpMessageTitle(s string) *GuildUpdate {
+	gu.mutation.SetBumpMessageTitle(s)
+	return gu
+}
+
+// SetNillableBumpMessageTitle sets the "bump_message_title" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableBumpMessageTitle(s *string) *GuildUpdate {
+	if s != nil {
+		gu.SetBumpMessageTitle(*s)
+	}
+	return gu
+}
+
+// SetBumpMessage sets the "bump_message" field.
+func (gu *GuildUpdate) SetBumpMessage(s string) *GuildUpdate {
+	gu.mutation.SetBumpMessage(s)
+	return gu
+}
+
+// SetNillableBumpMessage sets the "bump_message" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableBumpMessage(s *string) *GuildUpdate {
+	if s != nil {
+		gu.SetBumpMessage(*s)
+	}
+	return gu
+}
+
+// SetBumpRemindMessageTitle sets the "bump_remind_message_title" field.
+func (gu *GuildUpdate) SetBumpRemindMessageTitle(s string) *GuildUpdate {
+	gu.mutation.SetBumpRemindMessageTitle(s)
+	return gu
+}
+
+// SetNillableBumpRemindMessageTitle sets the "bump_remind_message_title" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableBumpRemindMessageTitle(s *string) *GuildUpdate {
+	if s != nil {
+		gu.SetBumpRemindMessageTitle(*s)
+	}
+	return gu
+}
+
+// SetBumpRemindMessage sets the "bump_remind_message" field.
+func (gu *GuildUpdate) SetBumpRemindMessage(s string) *GuildUpdate {
+	gu.mutation.SetBumpRemindMessage(s)
+	return gu
+}
+
+// SetNillableBumpRemindMessage sets the "bump_remind_message" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableBumpRemindMessage(s *string) *GuildUpdate {
+	if s != nil {
+		gu.SetBumpRemindMessage(*s)
+	}
+	return gu
+}
+
+// SetUpEnabled sets the "up_enabled" field.
+func (gu *GuildUpdate) SetUpEnabled(b bool) *GuildUpdate {
+	gu.mutation.SetUpEnabled(b)
+	return gu
+}
+
+// SetNillableUpEnabled sets the "up_enabled" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableUpEnabled(b *bool) *GuildUpdate {
+	if b != nil {
+		gu.SetUpEnabled(*b)
+	}
+	return gu
+}
+
+// SetUpMessageTitle sets the "up_message_title" field.
+func (gu *GuildUpdate) SetUpMessageTitle(s string) *GuildUpdate {
+	gu.mutation.SetUpMessageTitle(s)
+	return gu
+}
+
+// SetNillableUpMessageTitle sets the "up_message_title" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableUpMessageTitle(s *string) *GuildUpdate {
+	if s != nil {
+		gu.SetUpMessageTitle(*s)
+	}
+	return gu
+}
+
+// SetUpMessage sets the "up_message" field.
+func (gu *GuildUpdate) SetUpMessage(s string) *GuildUpdate {
+	gu.mutation.SetUpMessage(s)
+	return gu
+}
+
+// SetNillableUpMessage sets the "up_message" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableUpMessage(s *string) *GuildUpdate {
+	if s != nil {
+		gu.SetUpMessage(*s)
+	}
+	return gu
+}
+
+// SetUpRemindMessageTitle sets the "up_remind_message_title" field.
+func (gu *GuildUpdate) SetUpRemindMessageTitle(s string) *GuildUpdate {
+	gu.mutation.SetUpRemindMessageTitle(s)
+	return gu
+}
+
+// SetNillableUpRemindMessageTitle sets the "up_remind_message_title" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableUpRemindMessageTitle(s *string) *GuildUpdate {
+	if s != nil {
+		gu.SetUpRemindMessageTitle(*s)
+	}
+	return gu
+}
+
+// SetUpRemindMessage sets the "up_remind_message" field.
+func (gu *GuildUpdate) SetUpRemindMessage(s string) *GuildUpdate {
+	gu.mutation.SetUpRemindMessage(s)
+	return gu
+}
+
+// SetNillableUpRemindMessage sets the "up_remind_message" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableUpRemindMessage(s *string) *GuildUpdate {
+	if s != nil {
+		gu.SetUpRemindMessage(*s)
+	}
+	return gu
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (gu *GuildUpdate) SetOwnerID(id snowflake.ID) *GuildUpdate {
 	gu.mutation.SetOwnerID(id)
@@ -474,6 +614,46 @@ func (gu *GuildUpdate) check() error {
 			return &ValidationError{Name: "level_up_message", err: fmt.Errorf(`ent: validator failed for field "Guild.level_up_message": %w`, err)}
 		}
 	}
+	if v, ok := gu.mutation.BumpMessageTitle(); ok {
+		if err := guild.BumpMessageTitleValidator(v); err != nil {
+			return &ValidationError{Name: "bump_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_message_title": %w`, err)}
+		}
+	}
+	if v, ok := gu.mutation.BumpMessage(); ok {
+		if err := guild.BumpMessageValidator(v); err != nil {
+			return &ValidationError{Name: "bump_message", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_message": %w`, err)}
+		}
+	}
+	if v, ok := gu.mutation.BumpRemindMessageTitle(); ok {
+		if err := guild.BumpRemindMessageTitleValidator(v); err != nil {
+			return &ValidationError{Name: "bump_remind_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_remind_message_title": %w`, err)}
+		}
+	}
+	if v, ok := gu.mutation.BumpRemindMessage(); ok {
+		if err := guild.BumpRemindMessageValidator(v); err != nil {
+			return &ValidationError{Name: "bump_remind_message", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_remind_message": %w`, err)}
+		}
+	}
+	if v, ok := gu.mutation.UpMessageTitle(); ok {
+		if err := guild.UpMessageTitleValidator(v); err != nil {
+			return &ValidationError{Name: "up_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.up_message_title": %w`, err)}
+		}
+	}
+	if v, ok := gu.mutation.UpMessage(); ok {
+		if err := guild.UpMessageValidator(v); err != nil {
+			return &ValidationError{Name: "up_message", err: fmt.Errorf(`ent: validator failed for field "Guild.up_message": %w`, err)}
+		}
+	}
+	if v, ok := gu.mutation.UpRemindMessageTitle(); ok {
+		if err := guild.UpRemindMessageTitleValidator(v); err != nil {
+			return &ValidationError{Name: "up_remind_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.up_remind_message_title": %w`, err)}
+		}
+	}
+	if v, ok := gu.mutation.UpRemindMessage(); ok {
+		if err := guild.UpRemindMessageValidator(v); err != nil {
+			return &ValidationError{Name: "up_remind_message", err: fmt.Errorf(`ent: validator failed for field "Guild.up_remind_message": %w`, err)}
+		}
+	}
 	if _, ok := gu.mutation.OwnerID(); gu.mutation.OwnerCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Guild.owner"`)
 	}
@@ -546,6 +726,36 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, guild.FieldRolePanelEditTimes, value)
 		})
+	}
+	if value, ok := gu.mutation.BumpEnabled(); ok {
+		_spec.SetField(guild.FieldBumpEnabled, field.TypeBool, value)
+	}
+	if value, ok := gu.mutation.BumpMessageTitle(); ok {
+		_spec.SetField(guild.FieldBumpMessageTitle, field.TypeString, value)
+	}
+	if value, ok := gu.mutation.BumpMessage(); ok {
+		_spec.SetField(guild.FieldBumpMessage, field.TypeString, value)
+	}
+	if value, ok := gu.mutation.BumpRemindMessageTitle(); ok {
+		_spec.SetField(guild.FieldBumpRemindMessageTitle, field.TypeString, value)
+	}
+	if value, ok := gu.mutation.BumpRemindMessage(); ok {
+		_spec.SetField(guild.FieldBumpRemindMessage, field.TypeString, value)
+	}
+	if value, ok := gu.mutation.UpEnabled(); ok {
+		_spec.SetField(guild.FieldUpEnabled, field.TypeBool, value)
+	}
+	if value, ok := gu.mutation.UpMessageTitle(); ok {
+		_spec.SetField(guild.FieldUpMessageTitle, field.TypeString, value)
+	}
+	if value, ok := gu.mutation.UpMessage(); ok {
+		_spec.SetField(guild.FieldUpMessage, field.TypeString, value)
+	}
+	if value, ok := gu.mutation.UpRemindMessageTitle(); ok {
+		_spec.SetField(guild.FieldUpRemindMessageTitle, field.TypeString, value)
+	}
+	if value, ok := gu.mutation.UpRemindMessage(); ok {
+		_spec.SetField(guild.FieldUpRemindMessage, field.TypeString, value)
 	}
 	if gu.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1018,6 +1228,146 @@ func (guo *GuildUpdateOne) AppendRolePanelEditTimes(t []time.Time) *GuildUpdateO
 	return guo
 }
 
+// SetBumpEnabled sets the "bump_enabled" field.
+func (guo *GuildUpdateOne) SetBumpEnabled(b bool) *GuildUpdateOne {
+	guo.mutation.SetBumpEnabled(b)
+	return guo
+}
+
+// SetNillableBumpEnabled sets the "bump_enabled" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableBumpEnabled(b *bool) *GuildUpdateOne {
+	if b != nil {
+		guo.SetBumpEnabled(*b)
+	}
+	return guo
+}
+
+// SetBumpMessageTitle sets the "bump_message_title" field.
+func (guo *GuildUpdateOne) SetBumpMessageTitle(s string) *GuildUpdateOne {
+	guo.mutation.SetBumpMessageTitle(s)
+	return guo
+}
+
+// SetNillableBumpMessageTitle sets the "bump_message_title" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableBumpMessageTitle(s *string) *GuildUpdateOne {
+	if s != nil {
+		guo.SetBumpMessageTitle(*s)
+	}
+	return guo
+}
+
+// SetBumpMessage sets the "bump_message" field.
+func (guo *GuildUpdateOne) SetBumpMessage(s string) *GuildUpdateOne {
+	guo.mutation.SetBumpMessage(s)
+	return guo
+}
+
+// SetNillableBumpMessage sets the "bump_message" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableBumpMessage(s *string) *GuildUpdateOne {
+	if s != nil {
+		guo.SetBumpMessage(*s)
+	}
+	return guo
+}
+
+// SetBumpRemindMessageTitle sets the "bump_remind_message_title" field.
+func (guo *GuildUpdateOne) SetBumpRemindMessageTitle(s string) *GuildUpdateOne {
+	guo.mutation.SetBumpRemindMessageTitle(s)
+	return guo
+}
+
+// SetNillableBumpRemindMessageTitle sets the "bump_remind_message_title" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableBumpRemindMessageTitle(s *string) *GuildUpdateOne {
+	if s != nil {
+		guo.SetBumpRemindMessageTitle(*s)
+	}
+	return guo
+}
+
+// SetBumpRemindMessage sets the "bump_remind_message" field.
+func (guo *GuildUpdateOne) SetBumpRemindMessage(s string) *GuildUpdateOne {
+	guo.mutation.SetBumpRemindMessage(s)
+	return guo
+}
+
+// SetNillableBumpRemindMessage sets the "bump_remind_message" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableBumpRemindMessage(s *string) *GuildUpdateOne {
+	if s != nil {
+		guo.SetBumpRemindMessage(*s)
+	}
+	return guo
+}
+
+// SetUpEnabled sets the "up_enabled" field.
+func (guo *GuildUpdateOne) SetUpEnabled(b bool) *GuildUpdateOne {
+	guo.mutation.SetUpEnabled(b)
+	return guo
+}
+
+// SetNillableUpEnabled sets the "up_enabled" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableUpEnabled(b *bool) *GuildUpdateOne {
+	if b != nil {
+		guo.SetUpEnabled(*b)
+	}
+	return guo
+}
+
+// SetUpMessageTitle sets the "up_message_title" field.
+func (guo *GuildUpdateOne) SetUpMessageTitle(s string) *GuildUpdateOne {
+	guo.mutation.SetUpMessageTitle(s)
+	return guo
+}
+
+// SetNillableUpMessageTitle sets the "up_message_title" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableUpMessageTitle(s *string) *GuildUpdateOne {
+	if s != nil {
+		guo.SetUpMessageTitle(*s)
+	}
+	return guo
+}
+
+// SetUpMessage sets the "up_message" field.
+func (guo *GuildUpdateOne) SetUpMessage(s string) *GuildUpdateOne {
+	guo.mutation.SetUpMessage(s)
+	return guo
+}
+
+// SetNillableUpMessage sets the "up_message" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableUpMessage(s *string) *GuildUpdateOne {
+	if s != nil {
+		guo.SetUpMessage(*s)
+	}
+	return guo
+}
+
+// SetUpRemindMessageTitle sets the "up_remind_message_title" field.
+func (guo *GuildUpdateOne) SetUpRemindMessageTitle(s string) *GuildUpdateOne {
+	guo.mutation.SetUpRemindMessageTitle(s)
+	return guo
+}
+
+// SetNillableUpRemindMessageTitle sets the "up_remind_message_title" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableUpRemindMessageTitle(s *string) *GuildUpdateOne {
+	if s != nil {
+		guo.SetUpRemindMessageTitle(*s)
+	}
+	return guo
+}
+
+// SetUpRemindMessage sets the "up_remind_message" field.
+func (guo *GuildUpdateOne) SetUpRemindMessage(s string) *GuildUpdateOne {
+	guo.mutation.SetUpRemindMessage(s)
+	return guo
+}
+
+// SetNillableUpRemindMessage sets the "up_remind_message" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableUpRemindMessage(s *string) *GuildUpdateOne {
+	if s != nil {
+		guo.SetUpRemindMessage(*s)
+	}
+	return guo
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (guo *GuildUpdateOne) SetOwnerID(id snowflake.ID) *GuildUpdateOne {
 	guo.mutation.SetOwnerID(id)
@@ -1313,6 +1663,46 @@ func (guo *GuildUpdateOne) check() error {
 			return &ValidationError{Name: "level_up_message", err: fmt.Errorf(`ent: validator failed for field "Guild.level_up_message": %w`, err)}
 		}
 	}
+	if v, ok := guo.mutation.BumpMessageTitle(); ok {
+		if err := guild.BumpMessageTitleValidator(v); err != nil {
+			return &ValidationError{Name: "bump_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_message_title": %w`, err)}
+		}
+	}
+	if v, ok := guo.mutation.BumpMessage(); ok {
+		if err := guild.BumpMessageValidator(v); err != nil {
+			return &ValidationError{Name: "bump_message", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_message": %w`, err)}
+		}
+	}
+	if v, ok := guo.mutation.BumpRemindMessageTitle(); ok {
+		if err := guild.BumpRemindMessageTitleValidator(v); err != nil {
+			return &ValidationError{Name: "bump_remind_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_remind_message_title": %w`, err)}
+		}
+	}
+	if v, ok := guo.mutation.BumpRemindMessage(); ok {
+		if err := guild.BumpRemindMessageValidator(v); err != nil {
+			return &ValidationError{Name: "bump_remind_message", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_remind_message": %w`, err)}
+		}
+	}
+	if v, ok := guo.mutation.UpMessageTitle(); ok {
+		if err := guild.UpMessageTitleValidator(v); err != nil {
+			return &ValidationError{Name: "up_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.up_message_title": %w`, err)}
+		}
+	}
+	if v, ok := guo.mutation.UpMessage(); ok {
+		if err := guild.UpMessageValidator(v); err != nil {
+			return &ValidationError{Name: "up_message", err: fmt.Errorf(`ent: validator failed for field "Guild.up_message": %w`, err)}
+		}
+	}
+	if v, ok := guo.mutation.UpRemindMessageTitle(); ok {
+		if err := guild.UpRemindMessageTitleValidator(v); err != nil {
+			return &ValidationError{Name: "up_remind_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.up_remind_message_title": %w`, err)}
+		}
+	}
+	if v, ok := guo.mutation.UpRemindMessage(); ok {
+		if err := guild.UpRemindMessageValidator(v); err != nil {
+			return &ValidationError{Name: "up_remind_message", err: fmt.Errorf(`ent: validator failed for field "Guild.up_remind_message": %w`, err)}
+		}
+	}
 	if _, ok := guo.mutation.OwnerID(); guo.mutation.OwnerCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "Guild.owner"`)
 	}
@@ -1402,6 +1792,36 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, guild.FieldRolePanelEditTimes, value)
 		})
+	}
+	if value, ok := guo.mutation.BumpEnabled(); ok {
+		_spec.SetField(guild.FieldBumpEnabled, field.TypeBool, value)
+	}
+	if value, ok := guo.mutation.BumpMessageTitle(); ok {
+		_spec.SetField(guild.FieldBumpMessageTitle, field.TypeString, value)
+	}
+	if value, ok := guo.mutation.BumpMessage(); ok {
+		_spec.SetField(guild.FieldBumpMessage, field.TypeString, value)
+	}
+	if value, ok := guo.mutation.BumpRemindMessageTitle(); ok {
+		_spec.SetField(guild.FieldBumpRemindMessageTitle, field.TypeString, value)
+	}
+	if value, ok := guo.mutation.BumpRemindMessage(); ok {
+		_spec.SetField(guild.FieldBumpRemindMessage, field.TypeString, value)
+	}
+	if value, ok := guo.mutation.UpEnabled(); ok {
+		_spec.SetField(guild.FieldUpEnabled, field.TypeBool, value)
+	}
+	if value, ok := guo.mutation.UpMessageTitle(); ok {
+		_spec.SetField(guild.FieldUpMessageTitle, field.TypeString, value)
+	}
+	if value, ok := guo.mutation.UpMessage(); ok {
+		_spec.SetField(guild.FieldUpMessage, field.TypeString, value)
+	}
+	if value, ok := guo.mutation.UpRemindMessageTitle(); ok {
+		_spec.SetField(guild.FieldUpRemindMessageTitle, field.TypeString, value)
+	}
+	if value, ok := guo.mutation.UpRemindMessage(); ok {
+		_spec.SetField(guild.FieldUpRemindMessage, field.TypeString, value)
 	}
 	if guo.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{

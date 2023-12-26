@@ -87,6 +87,56 @@ func RemindCount(v int) predicate.Guild {
 	return predicate.Guild(sql.FieldEQ(FieldRemindCount, v))
 }
 
+// BumpEnabled applies equality check predicate on the "bump_enabled" field. It's identical to BumpEnabledEQ.
+func BumpEnabled(v bool) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldBumpEnabled, v))
+}
+
+// BumpMessageTitle applies equality check predicate on the "bump_message_title" field. It's identical to BumpMessageTitleEQ.
+func BumpMessageTitle(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldBumpMessageTitle, v))
+}
+
+// BumpMessage applies equality check predicate on the "bump_message" field. It's identical to BumpMessageEQ.
+func BumpMessage(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldBumpMessage, v))
+}
+
+// BumpRemindMessageTitle applies equality check predicate on the "bump_remind_message_title" field. It's identical to BumpRemindMessageTitleEQ.
+func BumpRemindMessageTitle(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldBumpRemindMessageTitle, v))
+}
+
+// BumpRemindMessage applies equality check predicate on the "bump_remind_message" field. It's identical to BumpRemindMessageEQ.
+func BumpRemindMessage(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldBumpRemindMessage, v))
+}
+
+// UpEnabled applies equality check predicate on the "up_enabled" field. It's identical to UpEnabledEQ.
+func UpEnabled(v bool) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldUpEnabled, v))
+}
+
+// UpMessageTitle applies equality check predicate on the "up_message_title" field. It's identical to UpMessageTitleEQ.
+func UpMessageTitle(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldUpMessageTitle, v))
+}
+
+// UpMessage applies equality check predicate on the "up_message" field. It's identical to UpMessageEQ.
+func UpMessage(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldUpMessage, v))
+}
+
+// UpRemindMessageTitle applies equality check predicate on the "up_remind_message_title" field. It's identical to UpRemindMessageTitleEQ.
+func UpRemindMessageTitle(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldUpRemindMessageTitle, v))
+}
+
+// UpRemindMessage applies equality check predicate on the "up_remind_message" field. It's identical to UpRemindMessageEQ.
+func UpRemindMessage(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldUpRemindMessage, v))
+}
+
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.Guild {
 	return predicate.Guild(sql.FieldEQ(FieldName, v))
@@ -433,6 +483,546 @@ func RemindCountLT(v int) predicate.Guild {
 // RemindCountLTE applies the LTE predicate on the "remind_count" field.
 func RemindCountLTE(v int) predicate.Guild {
 	return predicate.Guild(sql.FieldLTE(FieldRemindCount, v))
+}
+
+// BumpEnabledEQ applies the EQ predicate on the "bump_enabled" field.
+func BumpEnabledEQ(v bool) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldBumpEnabled, v))
+}
+
+// BumpEnabledNEQ applies the NEQ predicate on the "bump_enabled" field.
+func BumpEnabledNEQ(v bool) predicate.Guild {
+	return predicate.Guild(sql.FieldNEQ(FieldBumpEnabled, v))
+}
+
+// BumpMessageTitleEQ applies the EQ predicate on the "bump_message_title" field.
+func BumpMessageTitleEQ(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldBumpMessageTitle, v))
+}
+
+// BumpMessageTitleNEQ applies the NEQ predicate on the "bump_message_title" field.
+func BumpMessageTitleNEQ(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldNEQ(FieldBumpMessageTitle, v))
+}
+
+// BumpMessageTitleIn applies the In predicate on the "bump_message_title" field.
+func BumpMessageTitleIn(vs ...string) predicate.Guild {
+	return predicate.Guild(sql.FieldIn(FieldBumpMessageTitle, vs...))
+}
+
+// BumpMessageTitleNotIn applies the NotIn predicate on the "bump_message_title" field.
+func BumpMessageTitleNotIn(vs ...string) predicate.Guild {
+	return predicate.Guild(sql.FieldNotIn(FieldBumpMessageTitle, vs...))
+}
+
+// BumpMessageTitleGT applies the GT predicate on the "bump_message_title" field.
+func BumpMessageTitleGT(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldGT(FieldBumpMessageTitle, v))
+}
+
+// BumpMessageTitleGTE applies the GTE predicate on the "bump_message_title" field.
+func BumpMessageTitleGTE(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldGTE(FieldBumpMessageTitle, v))
+}
+
+// BumpMessageTitleLT applies the LT predicate on the "bump_message_title" field.
+func BumpMessageTitleLT(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldLT(FieldBumpMessageTitle, v))
+}
+
+// BumpMessageTitleLTE applies the LTE predicate on the "bump_message_title" field.
+func BumpMessageTitleLTE(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldLTE(FieldBumpMessageTitle, v))
+}
+
+// BumpMessageTitleContains applies the Contains predicate on the "bump_message_title" field.
+func BumpMessageTitleContains(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldContains(FieldBumpMessageTitle, v))
+}
+
+// BumpMessageTitleHasPrefix applies the HasPrefix predicate on the "bump_message_title" field.
+func BumpMessageTitleHasPrefix(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldHasPrefix(FieldBumpMessageTitle, v))
+}
+
+// BumpMessageTitleHasSuffix applies the HasSuffix predicate on the "bump_message_title" field.
+func BumpMessageTitleHasSuffix(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldHasSuffix(FieldBumpMessageTitle, v))
+}
+
+// BumpMessageTitleEqualFold applies the EqualFold predicate on the "bump_message_title" field.
+func BumpMessageTitleEqualFold(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEqualFold(FieldBumpMessageTitle, v))
+}
+
+// BumpMessageTitleContainsFold applies the ContainsFold predicate on the "bump_message_title" field.
+func BumpMessageTitleContainsFold(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldContainsFold(FieldBumpMessageTitle, v))
+}
+
+// BumpMessageEQ applies the EQ predicate on the "bump_message" field.
+func BumpMessageEQ(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldBumpMessage, v))
+}
+
+// BumpMessageNEQ applies the NEQ predicate on the "bump_message" field.
+func BumpMessageNEQ(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldNEQ(FieldBumpMessage, v))
+}
+
+// BumpMessageIn applies the In predicate on the "bump_message" field.
+func BumpMessageIn(vs ...string) predicate.Guild {
+	return predicate.Guild(sql.FieldIn(FieldBumpMessage, vs...))
+}
+
+// BumpMessageNotIn applies the NotIn predicate on the "bump_message" field.
+func BumpMessageNotIn(vs ...string) predicate.Guild {
+	return predicate.Guild(sql.FieldNotIn(FieldBumpMessage, vs...))
+}
+
+// BumpMessageGT applies the GT predicate on the "bump_message" field.
+func BumpMessageGT(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldGT(FieldBumpMessage, v))
+}
+
+// BumpMessageGTE applies the GTE predicate on the "bump_message" field.
+func BumpMessageGTE(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldGTE(FieldBumpMessage, v))
+}
+
+// BumpMessageLT applies the LT predicate on the "bump_message" field.
+func BumpMessageLT(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldLT(FieldBumpMessage, v))
+}
+
+// BumpMessageLTE applies the LTE predicate on the "bump_message" field.
+func BumpMessageLTE(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldLTE(FieldBumpMessage, v))
+}
+
+// BumpMessageContains applies the Contains predicate on the "bump_message" field.
+func BumpMessageContains(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldContains(FieldBumpMessage, v))
+}
+
+// BumpMessageHasPrefix applies the HasPrefix predicate on the "bump_message" field.
+func BumpMessageHasPrefix(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldHasPrefix(FieldBumpMessage, v))
+}
+
+// BumpMessageHasSuffix applies the HasSuffix predicate on the "bump_message" field.
+func BumpMessageHasSuffix(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldHasSuffix(FieldBumpMessage, v))
+}
+
+// BumpMessageEqualFold applies the EqualFold predicate on the "bump_message" field.
+func BumpMessageEqualFold(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEqualFold(FieldBumpMessage, v))
+}
+
+// BumpMessageContainsFold applies the ContainsFold predicate on the "bump_message" field.
+func BumpMessageContainsFold(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldContainsFold(FieldBumpMessage, v))
+}
+
+// BumpRemindMessageTitleEQ applies the EQ predicate on the "bump_remind_message_title" field.
+func BumpRemindMessageTitleEQ(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldBumpRemindMessageTitle, v))
+}
+
+// BumpRemindMessageTitleNEQ applies the NEQ predicate on the "bump_remind_message_title" field.
+func BumpRemindMessageTitleNEQ(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldNEQ(FieldBumpRemindMessageTitle, v))
+}
+
+// BumpRemindMessageTitleIn applies the In predicate on the "bump_remind_message_title" field.
+func BumpRemindMessageTitleIn(vs ...string) predicate.Guild {
+	return predicate.Guild(sql.FieldIn(FieldBumpRemindMessageTitle, vs...))
+}
+
+// BumpRemindMessageTitleNotIn applies the NotIn predicate on the "bump_remind_message_title" field.
+func BumpRemindMessageTitleNotIn(vs ...string) predicate.Guild {
+	return predicate.Guild(sql.FieldNotIn(FieldBumpRemindMessageTitle, vs...))
+}
+
+// BumpRemindMessageTitleGT applies the GT predicate on the "bump_remind_message_title" field.
+func BumpRemindMessageTitleGT(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldGT(FieldBumpRemindMessageTitle, v))
+}
+
+// BumpRemindMessageTitleGTE applies the GTE predicate on the "bump_remind_message_title" field.
+func BumpRemindMessageTitleGTE(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldGTE(FieldBumpRemindMessageTitle, v))
+}
+
+// BumpRemindMessageTitleLT applies the LT predicate on the "bump_remind_message_title" field.
+func BumpRemindMessageTitleLT(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldLT(FieldBumpRemindMessageTitle, v))
+}
+
+// BumpRemindMessageTitleLTE applies the LTE predicate on the "bump_remind_message_title" field.
+func BumpRemindMessageTitleLTE(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldLTE(FieldBumpRemindMessageTitle, v))
+}
+
+// BumpRemindMessageTitleContains applies the Contains predicate on the "bump_remind_message_title" field.
+func BumpRemindMessageTitleContains(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldContains(FieldBumpRemindMessageTitle, v))
+}
+
+// BumpRemindMessageTitleHasPrefix applies the HasPrefix predicate on the "bump_remind_message_title" field.
+func BumpRemindMessageTitleHasPrefix(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldHasPrefix(FieldBumpRemindMessageTitle, v))
+}
+
+// BumpRemindMessageTitleHasSuffix applies the HasSuffix predicate on the "bump_remind_message_title" field.
+func BumpRemindMessageTitleHasSuffix(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldHasSuffix(FieldBumpRemindMessageTitle, v))
+}
+
+// BumpRemindMessageTitleEqualFold applies the EqualFold predicate on the "bump_remind_message_title" field.
+func BumpRemindMessageTitleEqualFold(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEqualFold(FieldBumpRemindMessageTitle, v))
+}
+
+// BumpRemindMessageTitleContainsFold applies the ContainsFold predicate on the "bump_remind_message_title" field.
+func BumpRemindMessageTitleContainsFold(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldContainsFold(FieldBumpRemindMessageTitle, v))
+}
+
+// BumpRemindMessageEQ applies the EQ predicate on the "bump_remind_message" field.
+func BumpRemindMessageEQ(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldBumpRemindMessage, v))
+}
+
+// BumpRemindMessageNEQ applies the NEQ predicate on the "bump_remind_message" field.
+func BumpRemindMessageNEQ(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldNEQ(FieldBumpRemindMessage, v))
+}
+
+// BumpRemindMessageIn applies the In predicate on the "bump_remind_message" field.
+func BumpRemindMessageIn(vs ...string) predicate.Guild {
+	return predicate.Guild(sql.FieldIn(FieldBumpRemindMessage, vs...))
+}
+
+// BumpRemindMessageNotIn applies the NotIn predicate on the "bump_remind_message" field.
+func BumpRemindMessageNotIn(vs ...string) predicate.Guild {
+	return predicate.Guild(sql.FieldNotIn(FieldBumpRemindMessage, vs...))
+}
+
+// BumpRemindMessageGT applies the GT predicate on the "bump_remind_message" field.
+func BumpRemindMessageGT(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldGT(FieldBumpRemindMessage, v))
+}
+
+// BumpRemindMessageGTE applies the GTE predicate on the "bump_remind_message" field.
+func BumpRemindMessageGTE(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldGTE(FieldBumpRemindMessage, v))
+}
+
+// BumpRemindMessageLT applies the LT predicate on the "bump_remind_message" field.
+func BumpRemindMessageLT(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldLT(FieldBumpRemindMessage, v))
+}
+
+// BumpRemindMessageLTE applies the LTE predicate on the "bump_remind_message" field.
+func BumpRemindMessageLTE(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldLTE(FieldBumpRemindMessage, v))
+}
+
+// BumpRemindMessageContains applies the Contains predicate on the "bump_remind_message" field.
+func BumpRemindMessageContains(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldContains(FieldBumpRemindMessage, v))
+}
+
+// BumpRemindMessageHasPrefix applies the HasPrefix predicate on the "bump_remind_message" field.
+func BumpRemindMessageHasPrefix(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldHasPrefix(FieldBumpRemindMessage, v))
+}
+
+// BumpRemindMessageHasSuffix applies the HasSuffix predicate on the "bump_remind_message" field.
+func BumpRemindMessageHasSuffix(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldHasSuffix(FieldBumpRemindMessage, v))
+}
+
+// BumpRemindMessageEqualFold applies the EqualFold predicate on the "bump_remind_message" field.
+func BumpRemindMessageEqualFold(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEqualFold(FieldBumpRemindMessage, v))
+}
+
+// BumpRemindMessageContainsFold applies the ContainsFold predicate on the "bump_remind_message" field.
+func BumpRemindMessageContainsFold(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldContainsFold(FieldBumpRemindMessage, v))
+}
+
+// UpEnabledEQ applies the EQ predicate on the "up_enabled" field.
+func UpEnabledEQ(v bool) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldUpEnabled, v))
+}
+
+// UpEnabledNEQ applies the NEQ predicate on the "up_enabled" field.
+func UpEnabledNEQ(v bool) predicate.Guild {
+	return predicate.Guild(sql.FieldNEQ(FieldUpEnabled, v))
+}
+
+// UpMessageTitleEQ applies the EQ predicate on the "up_message_title" field.
+func UpMessageTitleEQ(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldUpMessageTitle, v))
+}
+
+// UpMessageTitleNEQ applies the NEQ predicate on the "up_message_title" field.
+func UpMessageTitleNEQ(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldNEQ(FieldUpMessageTitle, v))
+}
+
+// UpMessageTitleIn applies the In predicate on the "up_message_title" field.
+func UpMessageTitleIn(vs ...string) predicate.Guild {
+	return predicate.Guild(sql.FieldIn(FieldUpMessageTitle, vs...))
+}
+
+// UpMessageTitleNotIn applies the NotIn predicate on the "up_message_title" field.
+func UpMessageTitleNotIn(vs ...string) predicate.Guild {
+	return predicate.Guild(sql.FieldNotIn(FieldUpMessageTitle, vs...))
+}
+
+// UpMessageTitleGT applies the GT predicate on the "up_message_title" field.
+func UpMessageTitleGT(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldGT(FieldUpMessageTitle, v))
+}
+
+// UpMessageTitleGTE applies the GTE predicate on the "up_message_title" field.
+func UpMessageTitleGTE(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldGTE(FieldUpMessageTitle, v))
+}
+
+// UpMessageTitleLT applies the LT predicate on the "up_message_title" field.
+func UpMessageTitleLT(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldLT(FieldUpMessageTitle, v))
+}
+
+// UpMessageTitleLTE applies the LTE predicate on the "up_message_title" field.
+func UpMessageTitleLTE(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldLTE(FieldUpMessageTitle, v))
+}
+
+// UpMessageTitleContains applies the Contains predicate on the "up_message_title" field.
+func UpMessageTitleContains(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldContains(FieldUpMessageTitle, v))
+}
+
+// UpMessageTitleHasPrefix applies the HasPrefix predicate on the "up_message_title" field.
+func UpMessageTitleHasPrefix(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldHasPrefix(FieldUpMessageTitle, v))
+}
+
+// UpMessageTitleHasSuffix applies the HasSuffix predicate on the "up_message_title" field.
+func UpMessageTitleHasSuffix(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldHasSuffix(FieldUpMessageTitle, v))
+}
+
+// UpMessageTitleEqualFold applies the EqualFold predicate on the "up_message_title" field.
+func UpMessageTitleEqualFold(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEqualFold(FieldUpMessageTitle, v))
+}
+
+// UpMessageTitleContainsFold applies the ContainsFold predicate on the "up_message_title" field.
+func UpMessageTitleContainsFold(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldContainsFold(FieldUpMessageTitle, v))
+}
+
+// UpMessageEQ applies the EQ predicate on the "up_message" field.
+func UpMessageEQ(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldUpMessage, v))
+}
+
+// UpMessageNEQ applies the NEQ predicate on the "up_message" field.
+func UpMessageNEQ(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldNEQ(FieldUpMessage, v))
+}
+
+// UpMessageIn applies the In predicate on the "up_message" field.
+func UpMessageIn(vs ...string) predicate.Guild {
+	return predicate.Guild(sql.FieldIn(FieldUpMessage, vs...))
+}
+
+// UpMessageNotIn applies the NotIn predicate on the "up_message" field.
+func UpMessageNotIn(vs ...string) predicate.Guild {
+	return predicate.Guild(sql.FieldNotIn(FieldUpMessage, vs...))
+}
+
+// UpMessageGT applies the GT predicate on the "up_message" field.
+func UpMessageGT(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldGT(FieldUpMessage, v))
+}
+
+// UpMessageGTE applies the GTE predicate on the "up_message" field.
+func UpMessageGTE(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldGTE(FieldUpMessage, v))
+}
+
+// UpMessageLT applies the LT predicate on the "up_message" field.
+func UpMessageLT(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldLT(FieldUpMessage, v))
+}
+
+// UpMessageLTE applies the LTE predicate on the "up_message" field.
+func UpMessageLTE(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldLTE(FieldUpMessage, v))
+}
+
+// UpMessageContains applies the Contains predicate on the "up_message" field.
+func UpMessageContains(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldContains(FieldUpMessage, v))
+}
+
+// UpMessageHasPrefix applies the HasPrefix predicate on the "up_message" field.
+func UpMessageHasPrefix(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldHasPrefix(FieldUpMessage, v))
+}
+
+// UpMessageHasSuffix applies the HasSuffix predicate on the "up_message" field.
+func UpMessageHasSuffix(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldHasSuffix(FieldUpMessage, v))
+}
+
+// UpMessageEqualFold applies the EqualFold predicate on the "up_message" field.
+func UpMessageEqualFold(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEqualFold(FieldUpMessage, v))
+}
+
+// UpMessageContainsFold applies the ContainsFold predicate on the "up_message" field.
+func UpMessageContainsFold(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldContainsFold(FieldUpMessage, v))
+}
+
+// UpRemindMessageTitleEQ applies the EQ predicate on the "up_remind_message_title" field.
+func UpRemindMessageTitleEQ(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldUpRemindMessageTitle, v))
+}
+
+// UpRemindMessageTitleNEQ applies the NEQ predicate on the "up_remind_message_title" field.
+func UpRemindMessageTitleNEQ(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldNEQ(FieldUpRemindMessageTitle, v))
+}
+
+// UpRemindMessageTitleIn applies the In predicate on the "up_remind_message_title" field.
+func UpRemindMessageTitleIn(vs ...string) predicate.Guild {
+	return predicate.Guild(sql.FieldIn(FieldUpRemindMessageTitle, vs...))
+}
+
+// UpRemindMessageTitleNotIn applies the NotIn predicate on the "up_remind_message_title" field.
+func UpRemindMessageTitleNotIn(vs ...string) predicate.Guild {
+	return predicate.Guild(sql.FieldNotIn(FieldUpRemindMessageTitle, vs...))
+}
+
+// UpRemindMessageTitleGT applies the GT predicate on the "up_remind_message_title" field.
+func UpRemindMessageTitleGT(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldGT(FieldUpRemindMessageTitle, v))
+}
+
+// UpRemindMessageTitleGTE applies the GTE predicate on the "up_remind_message_title" field.
+func UpRemindMessageTitleGTE(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldGTE(FieldUpRemindMessageTitle, v))
+}
+
+// UpRemindMessageTitleLT applies the LT predicate on the "up_remind_message_title" field.
+func UpRemindMessageTitleLT(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldLT(FieldUpRemindMessageTitle, v))
+}
+
+// UpRemindMessageTitleLTE applies the LTE predicate on the "up_remind_message_title" field.
+func UpRemindMessageTitleLTE(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldLTE(FieldUpRemindMessageTitle, v))
+}
+
+// UpRemindMessageTitleContains applies the Contains predicate on the "up_remind_message_title" field.
+func UpRemindMessageTitleContains(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldContains(FieldUpRemindMessageTitle, v))
+}
+
+// UpRemindMessageTitleHasPrefix applies the HasPrefix predicate on the "up_remind_message_title" field.
+func UpRemindMessageTitleHasPrefix(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldHasPrefix(FieldUpRemindMessageTitle, v))
+}
+
+// UpRemindMessageTitleHasSuffix applies the HasSuffix predicate on the "up_remind_message_title" field.
+func UpRemindMessageTitleHasSuffix(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldHasSuffix(FieldUpRemindMessageTitle, v))
+}
+
+// UpRemindMessageTitleEqualFold applies the EqualFold predicate on the "up_remind_message_title" field.
+func UpRemindMessageTitleEqualFold(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEqualFold(FieldUpRemindMessageTitle, v))
+}
+
+// UpRemindMessageTitleContainsFold applies the ContainsFold predicate on the "up_remind_message_title" field.
+func UpRemindMessageTitleContainsFold(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldContainsFold(FieldUpRemindMessageTitle, v))
+}
+
+// UpRemindMessageEQ applies the EQ predicate on the "up_remind_message" field.
+func UpRemindMessageEQ(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldUpRemindMessage, v))
+}
+
+// UpRemindMessageNEQ applies the NEQ predicate on the "up_remind_message" field.
+func UpRemindMessageNEQ(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldNEQ(FieldUpRemindMessage, v))
+}
+
+// UpRemindMessageIn applies the In predicate on the "up_remind_message" field.
+func UpRemindMessageIn(vs ...string) predicate.Guild {
+	return predicate.Guild(sql.FieldIn(FieldUpRemindMessage, vs...))
+}
+
+// UpRemindMessageNotIn applies the NotIn predicate on the "up_remind_message" field.
+func UpRemindMessageNotIn(vs ...string) predicate.Guild {
+	return predicate.Guild(sql.FieldNotIn(FieldUpRemindMessage, vs...))
+}
+
+// UpRemindMessageGT applies the GT predicate on the "up_remind_message" field.
+func UpRemindMessageGT(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldGT(FieldUpRemindMessage, v))
+}
+
+// UpRemindMessageGTE applies the GTE predicate on the "up_remind_message" field.
+func UpRemindMessageGTE(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldGTE(FieldUpRemindMessage, v))
+}
+
+// UpRemindMessageLT applies the LT predicate on the "up_remind_message" field.
+func UpRemindMessageLT(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldLT(FieldUpRemindMessage, v))
+}
+
+// UpRemindMessageLTE applies the LTE predicate on the "up_remind_message" field.
+func UpRemindMessageLTE(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldLTE(FieldUpRemindMessage, v))
+}
+
+// UpRemindMessageContains applies the Contains predicate on the "up_remind_message" field.
+func UpRemindMessageContains(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldContains(FieldUpRemindMessage, v))
+}
+
+// UpRemindMessageHasPrefix applies the HasPrefix predicate on the "up_remind_message" field.
+func UpRemindMessageHasPrefix(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldHasPrefix(FieldUpRemindMessage, v))
+}
+
+// UpRemindMessageHasSuffix applies the HasSuffix predicate on the "up_remind_message" field.
+func UpRemindMessageHasSuffix(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldHasSuffix(FieldUpRemindMessage, v))
+}
+
+// UpRemindMessageEqualFold applies the EqualFold predicate on the "up_remind_message" field.
+func UpRemindMessageEqualFold(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldEqualFold(FieldUpRemindMessage, v))
+}
+
+// UpRemindMessageContainsFold applies the ContainsFold predicate on the "up_remind_message" field.
+func UpRemindMessageContainsFold(v string) predicate.Guild {
+	return predicate.Guild(sql.FieldContainsFold(FieldUpRemindMessage, v))
 }
 
 // HasOwner applies the HasEdge predicate on the "owner" edge.

@@ -37,6 +37,26 @@ const (
 	FieldRemindCount = "remind_count"
 	// FieldRolePanelEditTimes holds the string denoting the role_panel_edit_times field in the database.
 	FieldRolePanelEditTimes = "role_panel_edit_times"
+	// FieldBumpEnabled holds the string denoting the bump_enabled field in the database.
+	FieldBumpEnabled = "bump_enabled"
+	// FieldBumpMessageTitle holds the string denoting the bump_message_title field in the database.
+	FieldBumpMessageTitle = "bump_message_title"
+	// FieldBumpMessage holds the string denoting the bump_message field in the database.
+	FieldBumpMessage = "bump_message"
+	// FieldBumpRemindMessageTitle holds the string denoting the bump_remind_message_title field in the database.
+	FieldBumpRemindMessageTitle = "bump_remind_message_title"
+	// FieldBumpRemindMessage holds the string denoting the bump_remind_message field in the database.
+	FieldBumpRemindMessage = "bump_remind_message"
+	// FieldUpEnabled holds the string denoting the up_enabled field in the database.
+	FieldUpEnabled = "up_enabled"
+	// FieldUpMessageTitle holds the string denoting the up_message_title field in the database.
+	FieldUpMessageTitle = "up_message_title"
+	// FieldUpMessage holds the string denoting the up_message field in the database.
+	FieldUpMessage = "up_message"
+	// FieldUpRemindMessageTitle holds the string denoting the up_remind_message_title field in the database.
+	FieldUpRemindMessageTitle = "up_remind_message_title"
+	// FieldUpRemindMessage holds the string denoting the up_remind_message field in the database.
+	FieldUpRemindMessage = "up_remind_message"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
 	// EdgeMembers holds the string denoting the members edge name in mutations.
@@ -117,6 +137,16 @@ var Columns = []string{
 	FieldPermissions,
 	FieldRemindCount,
 	FieldRolePanelEditTimes,
+	FieldBumpEnabled,
+	FieldBumpMessageTitle,
+	FieldBumpMessage,
+	FieldBumpRemindMessageTitle,
+	FieldBumpRemindMessage,
+	FieldUpEnabled,
+	FieldUpMessageTitle,
+	FieldUpMessage,
+	FieldUpRemindMessageTitle,
+	FieldUpRemindMessage,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "guilds"
@@ -161,6 +191,42 @@ var (
 	DefaultRemindCount int
 	// DefaultRolePanelEditTimes holds the default value on creation for the "role_panel_edit_times" field.
 	DefaultRolePanelEditTimes []time.Time
+	// DefaultBumpEnabled holds the default value on creation for the "bump_enabled" field.
+	DefaultBumpEnabled bool
+	// DefaultBumpMessageTitle holds the default value on creation for the "bump_message_title" field.
+	DefaultBumpMessageTitle string
+	// BumpMessageTitleValidator is a validator for the "bump_message_title" field. It is called by the builders before save.
+	BumpMessageTitleValidator func(string) error
+	// DefaultBumpMessage holds the default value on creation for the "bump_message" field.
+	DefaultBumpMessage string
+	// BumpMessageValidator is a validator for the "bump_message" field. It is called by the builders before save.
+	BumpMessageValidator func(string) error
+	// DefaultBumpRemindMessageTitle holds the default value on creation for the "bump_remind_message_title" field.
+	DefaultBumpRemindMessageTitle string
+	// BumpRemindMessageTitleValidator is a validator for the "bump_remind_message_title" field. It is called by the builders before save.
+	BumpRemindMessageTitleValidator func(string) error
+	// DefaultBumpRemindMessage holds the default value on creation for the "bump_remind_message" field.
+	DefaultBumpRemindMessage string
+	// BumpRemindMessageValidator is a validator for the "bump_remind_message" field. It is called by the builders before save.
+	BumpRemindMessageValidator func(string) error
+	// DefaultUpEnabled holds the default value on creation for the "up_enabled" field.
+	DefaultUpEnabled bool
+	// DefaultUpMessageTitle holds the default value on creation for the "up_message_title" field.
+	DefaultUpMessageTitle string
+	// UpMessageTitleValidator is a validator for the "up_message_title" field. It is called by the builders before save.
+	UpMessageTitleValidator func(string) error
+	// DefaultUpMessage holds the default value on creation for the "up_message" field.
+	DefaultUpMessage string
+	// UpMessageValidator is a validator for the "up_message" field. It is called by the builders before save.
+	UpMessageValidator func(string) error
+	// DefaultUpRemindMessageTitle holds the default value on creation for the "up_remind_message_title" field.
+	DefaultUpRemindMessageTitle string
+	// UpRemindMessageTitleValidator is a validator for the "up_remind_message_title" field. It is called by the builders before save.
+	UpRemindMessageTitleValidator func(string) error
+	// DefaultUpRemindMessage holds the default value on creation for the "up_remind_message" field.
+	DefaultUpRemindMessage string
+	// UpRemindMessageValidator is a validator for the "up_remind_message" field. It is called by the builders before save.
+	UpRemindMessageValidator func(string) error
 )
 
 // OrderOption defines the ordering options for the Guild queries.
@@ -199,6 +265,56 @@ func ByLevelMee6Imported(opts ...sql.OrderTermOption) OrderOption {
 // ByRemindCount orders the results by the remind_count field.
 func ByRemindCount(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldRemindCount, opts...).ToFunc()
+}
+
+// ByBumpEnabled orders the results by the bump_enabled field.
+func ByBumpEnabled(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBumpEnabled, opts...).ToFunc()
+}
+
+// ByBumpMessageTitle orders the results by the bump_message_title field.
+func ByBumpMessageTitle(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBumpMessageTitle, opts...).ToFunc()
+}
+
+// ByBumpMessage orders the results by the bump_message field.
+func ByBumpMessage(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBumpMessage, opts...).ToFunc()
+}
+
+// ByBumpRemindMessageTitle orders the results by the bump_remind_message_title field.
+func ByBumpRemindMessageTitle(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBumpRemindMessageTitle, opts...).ToFunc()
+}
+
+// ByBumpRemindMessage orders the results by the bump_remind_message field.
+func ByBumpRemindMessage(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBumpRemindMessage, opts...).ToFunc()
+}
+
+// ByUpEnabled orders the results by the up_enabled field.
+func ByUpEnabled(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpEnabled, opts...).ToFunc()
+}
+
+// ByUpMessageTitle orders the results by the up_message_title field.
+func ByUpMessageTitle(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpMessageTitle, opts...).ToFunc()
+}
+
+// ByUpMessage orders the results by the up_message field.
+func ByUpMessage(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpMessage, opts...).ToFunc()
+}
+
+// ByUpRemindMessageTitle orders the results by the up_remind_message_title field.
+func ByUpRemindMessageTitle(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpRemindMessageTitle, opts...).ToFunc()
+}
+
+// ByUpRemindMessage orders the results by the up_remind_message field.
+func ByUpRemindMessage(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpRemindMessage, opts...).ToFunc()
 }
 
 // ByOwnerField orders the results by owner field.

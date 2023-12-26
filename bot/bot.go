@@ -38,6 +38,7 @@ import (
 	"github.com/sabafly/gobot/bot/commands/permission"
 	"github.com/sabafly/gobot/bot/commands/ping"
 	"github.com/sabafly/gobot/bot/commands/role"
+	"github.com/sabafly/gobot/bot/commands/setting"
 	userinfo "github.com/sabafly/gobot/bot/commands/user_info"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/ent"
@@ -101,6 +102,7 @@ func run() error {
 		level.Command(component),
 		userinfo.Command(component),
 		permission.Command(component),
+		setting.Command(component),
 	)
 
 	token := os.Getenv("TOKEN")

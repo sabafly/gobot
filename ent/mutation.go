@@ -69,6 +69,16 @@ type GuildMutation struct {
 	addremind_count                *int
 	role_panel_edit_times          *[]time.Time
 	appendrole_panel_edit_times    []time.Time
+	bump_enabled                   *bool
+	bump_message_title             *string
+	bump_message                   *string
+	bump_remind_message_title      *string
+	bump_remind_message            *string
+	up_enabled                     *bool
+	up_message_title               *string
+	up_message                     *string
+	up_remind_message_title        *string
+	up_remind_message              *string
 	clearedFields                  map[string]struct{}
 	owner                          *snowflake.ID
 	clearedowner                   bool
@@ -670,6 +680,366 @@ func (m *GuildMutation) ResetRolePanelEditTimes() {
 	m.appendrole_panel_edit_times = nil
 }
 
+// SetBumpEnabled sets the "bump_enabled" field.
+func (m *GuildMutation) SetBumpEnabled(b bool) {
+	m.bump_enabled = &b
+}
+
+// BumpEnabled returns the value of the "bump_enabled" field in the mutation.
+func (m *GuildMutation) BumpEnabled() (r bool, exists bool) {
+	v := m.bump_enabled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBumpEnabled returns the old "bump_enabled" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldBumpEnabled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBumpEnabled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBumpEnabled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBumpEnabled: %w", err)
+	}
+	return oldValue.BumpEnabled, nil
+}
+
+// ResetBumpEnabled resets all changes to the "bump_enabled" field.
+func (m *GuildMutation) ResetBumpEnabled() {
+	m.bump_enabled = nil
+}
+
+// SetBumpMessageTitle sets the "bump_message_title" field.
+func (m *GuildMutation) SetBumpMessageTitle(s string) {
+	m.bump_message_title = &s
+}
+
+// BumpMessageTitle returns the value of the "bump_message_title" field in the mutation.
+func (m *GuildMutation) BumpMessageTitle() (r string, exists bool) {
+	v := m.bump_message_title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBumpMessageTitle returns the old "bump_message_title" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldBumpMessageTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBumpMessageTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBumpMessageTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBumpMessageTitle: %w", err)
+	}
+	return oldValue.BumpMessageTitle, nil
+}
+
+// ResetBumpMessageTitle resets all changes to the "bump_message_title" field.
+func (m *GuildMutation) ResetBumpMessageTitle() {
+	m.bump_message_title = nil
+}
+
+// SetBumpMessage sets the "bump_message" field.
+func (m *GuildMutation) SetBumpMessage(s string) {
+	m.bump_message = &s
+}
+
+// BumpMessage returns the value of the "bump_message" field in the mutation.
+func (m *GuildMutation) BumpMessage() (r string, exists bool) {
+	v := m.bump_message
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBumpMessage returns the old "bump_message" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldBumpMessage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBumpMessage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBumpMessage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBumpMessage: %w", err)
+	}
+	return oldValue.BumpMessage, nil
+}
+
+// ResetBumpMessage resets all changes to the "bump_message" field.
+func (m *GuildMutation) ResetBumpMessage() {
+	m.bump_message = nil
+}
+
+// SetBumpRemindMessageTitle sets the "bump_remind_message_title" field.
+func (m *GuildMutation) SetBumpRemindMessageTitle(s string) {
+	m.bump_remind_message_title = &s
+}
+
+// BumpRemindMessageTitle returns the value of the "bump_remind_message_title" field in the mutation.
+func (m *GuildMutation) BumpRemindMessageTitle() (r string, exists bool) {
+	v := m.bump_remind_message_title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBumpRemindMessageTitle returns the old "bump_remind_message_title" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldBumpRemindMessageTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBumpRemindMessageTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBumpRemindMessageTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBumpRemindMessageTitle: %w", err)
+	}
+	return oldValue.BumpRemindMessageTitle, nil
+}
+
+// ResetBumpRemindMessageTitle resets all changes to the "bump_remind_message_title" field.
+func (m *GuildMutation) ResetBumpRemindMessageTitle() {
+	m.bump_remind_message_title = nil
+}
+
+// SetBumpRemindMessage sets the "bump_remind_message" field.
+func (m *GuildMutation) SetBumpRemindMessage(s string) {
+	m.bump_remind_message = &s
+}
+
+// BumpRemindMessage returns the value of the "bump_remind_message" field in the mutation.
+func (m *GuildMutation) BumpRemindMessage() (r string, exists bool) {
+	v := m.bump_remind_message
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBumpRemindMessage returns the old "bump_remind_message" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldBumpRemindMessage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBumpRemindMessage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBumpRemindMessage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBumpRemindMessage: %w", err)
+	}
+	return oldValue.BumpRemindMessage, nil
+}
+
+// ResetBumpRemindMessage resets all changes to the "bump_remind_message" field.
+func (m *GuildMutation) ResetBumpRemindMessage() {
+	m.bump_remind_message = nil
+}
+
+// SetUpEnabled sets the "up_enabled" field.
+func (m *GuildMutation) SetUpEnabled(b bool) {
+	m.up_enabled = &b
+}
+
+// UpEnabled returns the value of the "up_enabled" field in the mutation.
+func (m *GuildMutation) UpEnabled() (r bool, exists bool) {
+	v := m.up_enabled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpEnabled returns the old "up_enabled" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldUpEnabled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpEnabled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpEnabled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpEnabled: %w", err)
+	}
+	return oldValue.UpEnabled, nil
+}
+
+// ResetUpEnabled resets all changes to the "up_enabled" field.
+func (m *GuildMutation) ResetUpEnabled() {
+	m.up_enabled = nil
+}
+
+// SetUpMessageTitle sets the "up_message_title" field.
+func (m *GuildMutation) SetUpMessageTitle(s string) {
+	m.up_message_title = &s
+}
+
+// UpMessageTitle returns the value of the "up_message_title" field in the mutation.
+func (m *GuildMutation) UpMessageTitle() (r string, exists bool) {
+	v := m.up_message_title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpMessageTitle returns the old "up_message_title" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldUpMessageTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpMessageTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpMessageTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpMessageTitle: %w", err)
+	}
+	return oldValue.UpMessageTitle, nil
+}
+
+// ResetUpMessageTitle resets all changes to the "up_message_title" field.
+func (m *GuildMutation) ResetUpMessageTitle() {
+	m.up_message_title = nil
+}
+
+// SetUpMessage sets the "up_message" field.
+func (m *GuildMutation) SetUpMessage(s string) {
+	m.up_message = &s
+}
+
+// UpMessage returns the value of the "up_message" field in the mutation.
+func (m *GuildMutation) UpMessage() (r string, exists bool) {
+	v := m.up_message
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpMessage returns the old "up_message" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldUpMessage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpMessage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpMessage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpMessage: %w", err)
+	}
+	return oldValue.UpMessage, nil
+}
+
+// ResetUpMessage resets all changes to the "up_message" field.
+func (m *GuildMutation) ResetUpMessage() {
+	m.up_message = nil
+}
+
+// SetUpRemindMessageTitle sets the "up_remind_message_title" field.
+func (m *GuildMutation) SetUpRemindMessageTitle(s string) {
+	m.up_remind_message_title = &s
+}
+
+// UpRemindMessageTitle returns the value of the "up_remind_message_title" field in the mutation.
+func (m *GuildMutation) UpRemindMessageTitle() (r string, exists bool) {
+	v := m.up_remind_message_title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpRemindMessageTitle returns the old "up_remind_message_title" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldUpRemindMessageTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpRemindMessageTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpRemindMessageTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpRemindMessageTitle: %w", err)
+	}
+	return oldValue.UpRemindMessageTitle, nil
+}
+
+// ResetUpRemindMessageTitle resets all changes to the "up_remind_message_title" field.
+func (m *GuildMutation) ResetUpRemindMessageTitle() {
+	m.up_remind_message_title = nil
+}
+
+// SetUpRemindMessage sets the "up_remind_message" field.
+func (m *GuildMutation) SetUpRemindMessage(s string) {
+	m.up_remind_message = &s
+}
+
+// UpRemindMessage returns the value of the "up_remind_message" field in the mutation.
+func (m *GuildMutation) UpRemindMessage() (r string, exists bool) {
+	v := m.up_remind_message
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpRemindMessage returns the old "up_remind_message" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldUpRemindMessage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpRemindMessage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpRemindMessage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpRemindMessage: %w", err)
+	}
+	return oldValue.UpRemindMessage, nil
+}
+
+// ResetUpRemindMessage resets all changes to the "up_remind_message" field.
+func (m *GuildMutation) ResetUpRemindMessage() {
+	m.up_remind_message = nil
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by id.
 func (m *GuildMutation) SetOwnerID(id snowflake.ID) {
 	m.owner = &id
@@ -1067,7 +1437,7 @@ func (m *GuildMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GuildMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 20)
 	if m.name != nil {
 		fields = append(fields, guild.FieldName)
 	}
@@ -1098,6 +1468,36 @@ func (m *GuildMutation) Fields() []string {
 	if m.role_panel_edit_times != nil {
 		fields = append(fields, guild.FieldRolePanelEditTimes)
 	}
+	if m.bump_enabled != nil {
+		fields = append(fields, guild.FieldBumpEnabled)
+	}
+	if m.bump_message_title != nil {
+		fields = append(fields, guild.FieldBumpMessageTitle)
+	}
+	if m.bump_message != nil {
+		fields = append(fields, guild.FieldBumpMessage)
+	}
+	if m.bump_remind_message_title != nil {
+		fields = append(fields, guild.FieldBumpRemindMessageTitle)
+	}
+	if m.bump_remind_message != nil {
+		fields = append(fields, guild.FieldBumpRemindMessage)
+	}
+	if m.up_enabled != nil {
+		fields = append(fields, guild.FieldUpEnabled)
+	}
+	if m.up_message_title != nil {
+		fields = append(fields, guild.FieldUpMessageTitle)
+	}
+	if m.up_message != nil {
+		fields = append(fields, guild.FieldUpMessage)
+	}
+	if m.up_remind_message_title != nil {
+		fields = append(fields, guild.FieldUpRemindMessageTitle)
+	}
+	if m.up_remind_message != nil {
+		fields = append(fields, guild.FieldUpRemindMessage)
+	}
 	return fields
 }
 
@@ -1126,6 +1526,26 @@ func (m *GuildMutation) Field(name string) (ent.Value, bool) {
 		return m.RemindCount()
 	case guild.FieldRolePanelEditTimes:
 		return m.RolePanelEditTimes()
+	case guild.FieldBumpEnabled:
+		return m.BumpEnabled()
+	case guild.FieldBumpMessageTitle:
+		return m.BumpMessageTitle()
+	case guild.FieldBumpMessage:
+		return m.BumpMessage()
+	case guild.FieldBumpRemindMessageTitle:
+		return m.BumpRemindMessageTitle()
+	case guild.FieldBumpRemindMessage:
+		return m.BumpRemindMessage()
+	case guild.FieldUpEnabled:
+		return m.UpEnabled()
+	case guild.FieldUpMessageTitle:
+		return m.UpMessageTitle()
+	case guild.FieldUpMessage:
+		return m.UpMessage()
+	case guild.FieldUpRemindMessageTitle:
+		return m.UpRemindMessageTitle()
+	case guild.FieldUpRemindMessage:
+		return m.UpRemindMessage()
 	}
 	return nil, false
 }
@@ -1155,6 +1575,26 @@ func (m *GuildMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldRemindCount(ctx)
 	case guild.FieldRolePanelEditTimes:
 		return m.OldRolePanelEditTimes(ctx)
+	case guild.FieldBumpEnabled:
+		return m.OldBumpEnabled(ctx)
+	case guild.FieldBumpMessageTitle:
+		return m.OldBumpMessageTitle(ctx)
+	case guild.FieldBumpMessage:
+		return m.OldBumpMessage(ctx)
+	case guild.FieldBumpRemindMessageTitle:
+		return m.OldBumpRemindMessageTitle(ctx)
+	case guild.FieldBumpRemindMessage:
+		return m.OldBumpRemindMessage(ctx)
+	case guild.FieldUpEnabled:
+		return m.OldUpEnabled(ctx)
+	case guild.FieldUpMessageTitle:
+		return m.OldUpMessageTitle(ctx)
+	case guild.FieldUpMessage:
+		return m.OldUpMessage(ctx)
+	case guild.FieldUpRemindMessageTitle:
+		return m.OldUpRemindMessageTitle(ctx)
+	case guild.FieldUpRemindMessage:
+		return m.OldUpRemindMessage(ctx)
 	}
 	return nil, fmt.Errorf("unknown Guild field %s", name)
 }
@@ -1233,6 +1673,76 @@ func (m *GuildMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetRolePanelEditTimes(v)
+		return nil
+	case guild.FieldBumpEnabled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBumpEnabled(v)
+		return nil
+	case guild.FieldBumpMessageTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBumpMessageTitle(v)
+		return nil
+	case guild.FieldBumpMessage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBumpMessage(v)
+		return nil
+	case guild.FieldBumpRemindMessageTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBumpRemindMessageTitle(v)
+		return nil
+	case guild.FieldBumpRemindMessage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBumpRemindMessage(v)
+		return nil
+	case guild.FieldUpEnabled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpEnabled(v)
+		return nil
+	case guild.FieldUpMessageTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpMessageTitle(v)
+		return nil
+	case guild.FieldUpMessage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpMessage(v)
+		return nil
+	case guild.FieldUpRemindMessageTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpRemindMessageTitle(v)
+		return nil
+	case guild.FieldUpRemindMessage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpRemindMessage(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Guild field %s", name)
@@ -1360,6 +1870,36 @@ func (m *GuildMutation) ResetField(name string) error {
 		return nil
 	case guild.FieldRolePanelEditTimes:
 		m.ResetRolePanelEditTimes()
+		return nil
+	case guild.FieldBumpEnabled:
+		m.ResetBumpEnabled()
+		return nil
+	case guild.FieldBumpMessageTitle:
+		m.ResetBumpMessageTitle()
+		return nil
+	case guild.FieldBumpMessage:
+		m.ResetBumpMessage()
+		return nil
+	case guild.FieldBumpRemindMessageTitle:
+		m.ResetBumpRemindMessageTitle()
+		return nil
+	case guild.FieldBumpRemindMessage:
+		m.ResetBumpRemindMessage()
+		return nil
+	case guild.FieldUpEnabled:
+		m.ResetUpEnabled()
+		return nil
+	case guild.FieldUpMessageTitle:
+		m.ResetUpMessageTitle()
+		return nil
+	case guild.FieldUpMessage:
+		m.ResetUpMessage()
+		return nil
+	case guild.FieldUpRemindMessageTitle:
+		m.ResetUpRemindMessageTitle()
+		return nil
+	case guild.FieldUpRemindMessage:
+		m.ResetUpRemindMessage()
 		return nil
 	}
 	return fmt.Errorf("unknown Guild field %s", name)

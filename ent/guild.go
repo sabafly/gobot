@@ -42,6 +42,26 @@ type Guild struct {
 	RemindCount int `json:"remind_count,omitempty"`
 	// RolePanelEditTimes holds the value of the "role_panel_edit_times" field.
 	RolePanelEditTimes []time.Time `json:"role_panel_edit_times,omitempty"`
+	// BumpEnabled holds the value of the "bump_enabled" field.
+	BumpEnabled bool `json:"bump_enabled,omitempty"`
+	// BumpMessageTitle holds the value of the "bump_message_title" field.
+	BumpMessageTitle string `json:"bump_message_title,omitempty"`
+	// BumpMessage holds the value of the "bump_message" field.
+	BumpMessage string `json:"bump_message,omitempty"`
+	// BumpRemindMessageTitle holds the value of the "bump_remind_message_title" field.
+	BumpRemindMessageTitle string `json:"bump_remind_message_title,omitempty"`
+	// BumpRemindMessage holds the value of the "bump_remind_message" field.
+	BumpRemindMessage string `json:"bump_remind_message,omitempty"`
+	// UpEnabled holds the value of the "up_enabled" field.
+	UpEnabled bool `json:"up_enabled,omitempty"`
+	// UpMessageTitle holds the value of the "up_message_title" field.
+	UpMessageTitle string `json:"up_message_title,omitempty"`
+	// UpMessage holds the value of the "up_message" field.
+	UpMessage string `json:"up_message,omitempty"`
+	// UpRemindMessageTitle holds the value of the "up_remind_message_title" field.
+	UpRemindMessageTitle string `json:"up_remind_message_title,omitempty"`
+	// UpRemindMessage holds the value of the "up_remind_message" field.
+	UpRemindMessage string `json:"up_remind_message,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the GuildQuery when eager-loading is set.
 	Edges           GuildEdges `json:"edges"`
@@ -144,11 +164,11 @@ func (*Guild) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case guild.FieldLevelUpExcludeChannel, guild.FieldLevelRole, guild.FieldPermissions, guild.FieldRolePanelEditTimes:
 			values[i] = new([]byte)
-		case guild.FieldLevelMee6Imported:
+		case guild.FieldLevelMee6Imported, guild.FieldBumpEnabled, guild.FieldUpEnabled:
 			values[i] = new(sql.NullBool)
 		case guild.FieldID, guild.FieldLevelUpChannel, guild.FieldRemindCount:
 			values[i] = new(sql.NullInt64)
-		case guild.FieldName, guild.FieldLocale, guild.FieldLevelUpMessage:
+		case guild.FieldName, guild.FieldLocale, guild.FieldLevelUpMessage, guild.FieldBumpMessageTitle, guild.FieldBumpMessage, guild.FieldBumpRemindMessageTitle, guild.FieldBumpRemindMessage, guild.FieldUpMessageTitle, guild.FieldUpMessage, guild.FieldUpRemindMessageTitle, guild.FieldUpRemindMessage:
 			values[i] = new(sql.NullString)
 		case guild.ForeignKeys[0]: // user_own_guilds
 			values[i] = new(sql.NullInt64)
@@ -241,6 +261,66 @@ func (gu *Guild) assignValues(columns []string, values []any) error {
 				if err := json.Unmarshal(*value, &gu.RolePanelEditTimes); err != nil {
 					return fmt.Errorf("unmarshal field role_panel_edit_times: %w", err)
 				}
+			}
+		case guild.FieldBumpEnabled:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field bump_enabled", values[i])
+			} else if value.Valid {
+				gu.BumpEnabled = value.Bool
+			}
+		case guild.FieldBumpMessageTitle:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field bump_message_title", values[i])
+			} else if value.Valid {
+				gu.BumpMessageTitle = value.String
+			}
+		case guild.FieldBumpMessage:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field bump_message", values[i])
+			} else if value.Valid {
+				gu.BumpMessage = value.String
+			}
+		case guild.FieldBumpRemindMessageTitle:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field bump_remind_message_title", values[i])
+			} else if value.Valid {
+				gu.BumpRemindMessageTitle = value.String
+			}
+		case guild.FieldBumpRemindMessage:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field bump_remind_message", values[i])
+			} else if value.Valid {
+				gu.BumpRemindMessage = value.String
+			}
+		case guild.FieldUpEnabled:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field up_enabled", values[i])
+			} else if value.Valid {
+				gu.UpEnabled = value.Bool
+			}
+		case guild.FieldUpMessageTitle:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field up_message_title", values[i])
+			} else if value.Valid {
+				gu.UpMessageTitle = value.String
+			}
+		case guild.FieldUpMessage:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field up_message", values[i])
+			} else if value.Valid {
+				gu.UpMessage = value.String
+			}
+		case guild.FieldUpRemindMessageTitle:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field up_remind_message_title", values[i])
+			} else if value.Valid {
+				gu.UpRemindMessageTitle = value.String
+			}
+		case guild.FieldUpRemindMessage:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field up_remind_message", values[i])
+			} else if value.Valid {
+				gu.UpRemindMessage = value.String
 			}
 		case guild.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -351,6 +431,36 @@ func (gu *Guild) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("role_panel_edit_times=")
 	builder.WriteString(fmt.Sprintf("%v", gu.RolePanelEditTimes))
+	builder.WriteString(", ")
+	builder.WriteString("bump_enabled=")
+	builder.WriteString(fmt.Sprintf("%v", gu.BumpEnabled))
+	builder.WriteString(", ")
+	builder.WriteString("bump_message_title=")
+	builder.WriteString(gu.BumpMessageTitle)
+	builder.WriteString(", ")
+	builder.WriteString("bump_message=")
+	builder.WriteString(gu.BumpMessage)
+	builder.WriteString(", ")
+	builder.WriteString("bump_remind_message_title=")
+	builder.WriteString(gu.BumpRemindMessageTitle)
+	builder.WriteString(", ")
+	builder.WriteString("bump_remind_message=")
+	builder.WriteString(gu.BumpRemindMessage)
+	builder.WriteString(", ")
+	builder.WriteString("up_enabled=")
+	builder.WriteString(fmt.Sprintf("%v", gu.UpEnabled))
+	builder.WriteString(", ")
+	builder.WriteString("up_message_title=")
+	builder.WriteString(gu.UpMessageTitle)
+	builder.WriteString(", ")
+	builder.WriteString("up_message=")
+	builder.WriteString(gu.UpMessage)
+	builder.WriteString(", ")
+	builder.WriteString("up_remind_message_title=")
+	builder.WriteString(gu.UpRemindMessageTitle)
+	builder.WriteString(", ")
+	builder.WriteString("up_remind_message=")
+	builder.WriteString(gu.UpRemindMessage)
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -64,6 +64,62 @@ func init() {
 	guildDescRolePanelEditTimes := guildFields[10].Descriptor()
 	// guild.DefaultRolePanelEditTimes holds the default value on creation for the role_panel_edit_times field.
 	guild.DefaultRolePanelEditTimes = guildDescRolePanelEditTimes.Default.([]time.Time)
+	// guildDescBumpEnabled is the schema descriptor for bump_enabled field.
+	guildDescBumpEnabled := guildFields[11].Descriptor()
+	// guild.DefaultBumpEnabled holds the default value on creation for the bump_enabled field.
+	guild.DefaultBumpEnabled = guildDescBumpEnabled.Default.(bool)
+	// guildDescBumpMessageTitle is the schema descriptor for bump_message_title field.
+	guildDescBumpMessageTitle := guildFields[12].Descriptor()
+	// guild.DefaultBumpMessageTitle holds the default value on creation for the bump_message_title field.
+	guild.DefaultBumpMessageTitle = guildDescBumpMessageTitle.Default.(string)
+	// guild.BumpMessageTitleValidator is a validator for the "bump_message_title" field. It is called by the builders before save.
+	guild.BumpMessageTitleValidator = guildDescBumpMessageTitle.Validators[0].(func(string) error)
+	// guildDescBumpMessage is the schema descriptor for bump_message field.
+	guildDescBumpMessage := guildFields[13].Descriptor()
+	// guild.DefaultBumpMessage holds the default value on creation for the bump_message field.
+	guild.DefaultBumpMessage = guildDescBumpMessage.Default.(string)
+	// guild.BumpMessageValidator is a validator for the "bump_message" field. It is called by the builders before save.
+	guild.BumpMessageValidator = guildDescBumpMessage.Validators[0].(func(string) error)
+	// guildDescBumpRemindMessageTitle is the schema descriptor for bump_remind_message_title field.
+	guildDescBumpRemindMessageTitle := guildFields[14].Descriptor()
+	// guild.DefaultBumpRemindMessageTitle holds the default value on creation for the bump_remind_message_title field.
+	guild.DefaultBumpRemindMessageTitle = guildDescBumpRemindMessageTitle.Default.(string)
+	// guild.BumpRemindMessageTitleValidator is a validator for the "bump_remind_message_title" field. It is called by the builders before save.
+	guild.BumpRemindMessageTitleValidator = guildDescBumpRemindMessageTitle.Validators[0].(func(string) error)
+	// guildDescBumpRemindMessage is the schema descriptor for bump_remind_message field.
+	guildDescBumpRemindMessage := guildFields[15].Descriptor()
+	// guild.DefaultBumpRemindMessage holds the default value on creation for the bump_remind_message field.
+	guild.DefaultBumpRemindMessage = guildDescBumpRemindMessage.Default.(string)
+	// guild.BumpRemindMessageValidator is a validator for the "bump_remind_message" field. It is called by the builders before save.
+	guild.BumpRemindMessageValidator = guildDescBumpRemindMessage.Validators[0].(func(string) error)
+	// guildDescUpEnabled is the schema descriptor for up_enabled field.
+	guildDescUpEnabled := guildFields[16].Descriptor()
+	// guild.DefaultUpEnabled holds the default value on creation for the up_enabled field.
+	guild.DefaultUpEnabled = guildDescUpEnabled.Default.(bool)
+	// guildDescUpMessageTitle is the schema descriptor for up_message_title field.
+	guildDescUpMessageTitle := guildFields[17].Descriptor()
+	// guild.DefaultUpMessageTitle holds the default value on creation for the up_message_title field.
+	guild.DefaultUpMessageTitle = guildDescUpMessageTitle.Default.(string)
+	// guild.UpMessageTitleValidator is a validator for the "up_message_title" field. It is called by the builders before save.
+	guild.UpMessageTitleValidator = guildDescUpMessageTitle.Validators[0].(func(string) error)
+	// guildDescUpMessage is the schema descriptor for up_message field.
+	guildDescUpMessage := guildFields[18].Descriptor()
+	// guild.DefaultUpMessage holds the default value on creation for the up_message field.
+	guild.DefaultUpMessage = guildDescUpMessage.Default.(string)
+	// guild.UpMessageValidator is a validator for the "up_message" field. It is called by the builders before save.
+	guild.UpMessageValidator = guildDescUpMessage.Validators[0].(func(string) error)
+	// guildDescUpRemindMessageTitle is the schema descriptor for up_remind_message_title field.
+	guildDescUpRemindMessageTitle := guildFields[19].Descriptor()
+	// guild.DefaultUpRemindMessageTitle holds the default value on creation for the up_remind_message_title field.
+	guild.DefaultUpRemindMessageTitle = guildDescUpRemindMessageTitle.Default.(string)
+	// guild.UpRemindMessageTitleValidator is a validator for the "up_remind_message_title" field. It is called by the builders before save.
+	guild.UpRemindMessageTitleValidator = guildDescUpRemindMessageTitle.Validators[0].(func(string) error)
+	// guildDescUpRemindMessage is the schema descriptor for up_remind_message field.
+	guildDescUpRemindMessage := guildFields[20].Descriptor()
+	// guild.DefaultUpRemindMessage holds the default value on creation for the up_remind_message field.
+	guild.DefaultUpRemindMessage = guildDescUpRemindMessage.Default.(string)
+	// guild.UpRemindMessageValidator is a validator for the "up_remind_message" field. It is called by the builders before save.
+	guild.UpRemindMessageValidator = guildDescUpRemindMessage.Validators[0].(func(string) error)
 	memberFields := schema.Member{}.Fields()
 	_ = memberFields
 	// memberDescPermission is the schema descriptor for permission field.

@@ -549,6 +549,10 @@ components.permission.set.message.embed.title: 権限を設定しました
 components.permission.unset.message.embed.title: 権限を解除しました
 components.permission.check.message.embed.title: 権限チェック
 components.permission.list.message.embed.title: 権限一覧
+components.setting.bump.toggle.enabled: Bump通知を有効化しました
+components.setting.bump.toggle.disabled: Bump通知を無効化しました
+components.setting.up.toggle.enabled: UP通知を有効化しました
+components.setting.up.toggle.disabled: UP通知を無効化しました
 # エラーメッセージ
 errors.generic.message: エラーが発生しました
 errors.panic.message: 致命的なエラー

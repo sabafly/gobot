@@ -53,6 +53,34 @@ func (Guild) Fields() []ent.Field {
 			Annotations(
 				entsql.Default(`[]`),
 			),
+		field.Bool("bump_enabled").
+			Default(true),
+		field.String("bump_message_title").
+			NotEmpty().
+			Default("Bumpを検知しました"),
+		field.String("bump_message").
+			NotEmpty().
+			Default("２時間後に通知します"),
+		field.String("bump_remind_message_title").
+			NotEmpty().
+			Default("Bumpの時間です"),
+		field.String("bump_remind_message").
+			NotEmpty().
+			Default("</bump:947088344167366698>でBumpしましょう"),
+		field.Bool("up_enabled").
+			Default(true),
+		field.String("up_message_title").
+			NotEmpty().
+			Default("UPを検知しました"),
+		field.String("up_message").
+			NotEmpty().
+			Default("１時間後に通知します"),
+		field.String("up_remind_message_title").
+			NotEmpty().
+			Default("UPの時間です"),
+		field.String("up_remind_message").
+			NotEmpty().
+			Default("</dissoku up:828002256690610256>でUPしましょう"),
 	}
 }
 

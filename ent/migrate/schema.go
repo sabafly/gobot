@@ -21,6 +21,16 @@ var (
 		{Name: "permissions", Type: field.TypeJSON},
 		{Name: "remind_count", Type: field.TypeInt, Default: 0},
 		{Name: "role_panel_edit_times", Type: field.TypeJSON, Default: "[]"},
+		{Name: "bump_enabled", Type: field.TypeBool, Default: true},
+		{Name: "bump_message_title", Type: field.TypeString, Default: "Bumpを検知しました"},
+		{Name: "bump_message", Type: field.TypeString, Default: "２時間後に通知します"},
+		{Name: "bump_remind_message_title", Type: field.TypeString, Default: "Bumpの時間です"},
+		{Name: "bump_remind_message", Type: field.TypeString, Default: "</bump:947088344167366698>でBumpしましょう"},
+		{Name: "up_enabled", Type: field.TypeBool, Default: true},
+		{Name: "up_message_title", Type: field.TypeString, Default: "UPを検知しました"},
+		{Name: "up_message", Type: field.TypeString, Default: "１時間後に通知します"},
+		{Name: "up_remind_message_title", Type: field.TypeString, Default: "UPの時間です"},
+		{Name: "up_remind_message", Type: field.TypeString, Default: "</dissoku up:828002256690610256>でUPしましょう"},
 		{Name: "user_own_guilds", Type: field.TypeUint64},
 	}
 	// GuildsTable holds the schema information for the "guilds" table.
@@ -31,7 +41,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "guilds_users_own_guilds",
-				Columns:    []*schema.Column{GuildsColumns[11]},
+				Columns:    []*schema.Column{GuildsColumns[21]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

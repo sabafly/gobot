@@ -14,6 +14,10 @@ type Config struct {
 
 	MySQL string   `yaml:"mysql"`
 	Redis []string `yaml:"redis"`
+
+	BumpUserID snowflake.ID `yaml:"bump_user"`
+	BumpImage  string       `yaml:"bump_image"`
+	UpUserID   snowflake.ID `yaml:"up_user"`
 }
 
 type ConfigDebug struct {
