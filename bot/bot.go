@@ -103,6 +103,7 @@ func run() error {
 		userinfo.Command(component),
 		permission.Command(component),
 		setting.Command(component),
+		role.ImportCommand(component),
 	)
 
 	token := os.Getenv("TOKEN")

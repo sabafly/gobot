@@ -589,3 +589,5 @@ errors.invalid.time.before: 無効な時間指定
 errors.invalid.time.before.description: 過去を指定しているか短すぎます
 errors.ratelimited: 一時的に制限されています
 errors.ratelimited.description: しばらく待ってからやり直してください
+errors.unsupported: 対応していません
+errors.unsupported.description: それはこの操作に対応していません
