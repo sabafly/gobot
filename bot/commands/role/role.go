@@ -508,8 +508,13 @@ func Command(c *components.Components) components.Command {
 						}
 						hi, _ := discordutil.GetHighestRolePosition(role_map)
 						deleted_role := []snowflake.ID{}
+
+						if edit.Roles == nil {
+							edit.Roles = panel.Roles
+						}
+
 						for i, r := range roles {
-							if slices.ContainsFunc(panel.Roles, func(r1 schema.Role) bool { return r1.ID == r.ID }) {
+							if slices.ContainsFunc(edit.Roles, func(r1 schema.Role) bool { return r1.ID == r.ID }) {
 								continue
 							}
 							if r.Managed || r.Position >= hi {
@@ -517,7 +522,7 @@ func Command(c *components.Components) components.Command {
 								deleted_role = append(deleted_role, i)
 								continue
 							}
-							panel.Roles = append(panel.Roles, schema.Role{
+							edit.Roles = append(edit.Roles, schema.Role{
 								ID:   r.ID,
 								Name: r.Name,
 							})
@@ -545,11 +550,6 @@ func Command(c *components.Components) components.Command {
 							}
 							return nil
 						}
-
-						if edit.Roles == nil {
-							edit.Roles = panel.Roles
-						}
-
 						edit.Roles = slices.DeleteFunc(edit.Roles, func(r schema.Role) bool { _, ok := roles[r.ID]; return !ok })
 
 						edit = edit.Update().
