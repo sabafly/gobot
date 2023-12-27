@@ -487,7 +487,7 @@ func upHandler(c *components.Components, g *ent.Guild, event *events.GuildMessag
 	if event.Message.Interaction == nil || event.Message.Interaction.Name != "dissoku up" {
 		return nil
 	}
-	if len(event.Message.Embeds) < 1 || event.Message.Embeds[0].Image == nil || event.Message.Embeds[0].Image.URL != c.Config().BumpImage {
+	if len(event.Message.Embeds) < 1 || event.Message.Embeds[0].Color != c.Config().UpColor {
 		return nil
 	}
 	if !g.UpEnabled {

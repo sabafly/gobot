@@ -18,6 +18,7 @@ type Config struct {
 	BumpUserID snowflake.ID `yaml:"bump_user"`
 	BumpImage  string       `yaml:"bump_image"`
 	UpUserID   snowflake.ID `yaml:"up_user"`
+	UpColor    int          `yaml:"up_color"`
 }
 
 type ConfigDebug struct {
