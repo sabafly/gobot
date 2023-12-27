@@ -730,7 +730,7 @@ func Command(c *components.Components) components.Command {
 						g.Update().
 							SetRolePanelEditTimes(g.RolePanelEditTimes).
 							SaveX(event)
-						if !ok {
+						if !ok || len(panel.Roles) < 1 {
 							return errors.NewError(errors.ErrorMessage("errors.ratelimited", event))
 						}
 
