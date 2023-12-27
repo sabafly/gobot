@@ -92,7 +92,7 @@ func rp_edit_base_message(panel *ent.RolePanel, edit *ent.RolePanelEdit, locale 
 				Style:    discord.ButtonStyleDanger,
 				Label:    translate.Message(locale, "components.role.panel.edit.menu.base.components.apply_change"),
 				CustomID: fmt.Sprintf("role:panel_edit_component:apply_change:%s", edit.ID),
-				Disabled: !panel.AppliedAt.Before(panel.UpdatedAt),
+				Disabled: !panel.AppliedAt.Before(panel.UpdatedAt) || len(panel.Roles) < 1,
 			},
 		),
 		discord.NewActionRow(

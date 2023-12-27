@@ -161,6 +161,33 @@ func Command(c *components.Components) components.Command {
 						c.DB().RolePanelEdit.DeleteOneID(rolePanel.QueryEdit().FirstIDX(event)).ExecX(event)
 					}
 
+					shouldUpdate := false
+					removeRoles := []snowflake.ID{}
+					var roles []discord.Role = nil
+					for _, r := range rolePanel.Roles {
+						if roles == nil {
+							roles, err = event.Client().Rest().GetRoles(*event.GuildID())
+							if err != nil {
+								return errors.NewError(err)
+							}
+						}
+						if slices.ContainsFunc(roles, func(role discord.Role) bool { return role.ID == r.ID }) {
+							continue
+						}
+						shouldUpdate = true
+						removeRoles = append(removeRoles, r.ID)
+					}
+					if shouldUpdate {
+						for _, id := range removeRoles {
+							rolePanel.Roles = slices.DeleteFunc(rolePanel.Roles, func(r schema.Role) bool { return r.ID == id })
+						}
+						rolePanel =
+							rolePanel.Update().
+								SetUpdatedAt(time.Now()).
+								SetRoles(rolePanel.Roles).
+								SaveX(event)
+					}
+
 					edit := c.DB().RolePanelEdit.Create().
 						SetGuild(g).
 						SetParent(rolePanel).
@@ -851,6 +878,14 @@ func Command(c *components.Components) components.Command {
 						return nil
 					}
 
+					_, ok := event.Client().Caches().Role(*event.GuildID(), roleID)
+					if !ok {
+						if err := event.DeferUpdateMessage(); err != nil {
+							return errors.NewError(err)
+						}
+						return nil
+					}
+
 					contain := slices.Contains(event.Member().RoleIDs, roleID)
 					if contain {
 						if err := event.Client().Rest().RemoveMemberRole(g.ID, event.User().ID, roleID, rest.WithReason(fmt.Sprintf("Role Panel \"%s\" (%s)", place.Name, place.ID))); err != nil {
@@ -926,6 +961,10 @@ func Command(c *components.Components) components.Command {
 								continue
 							} else {
 								// 持ってないなら
+								_, ok := event.Client().Caches().Role(*event.GuildID(), role.ID)
+								if !ok {
+									continue
+								}
 								add_roles = append(add_roles, role.ID)
 
 								if err := event.Client().Rest().AddMemberRole(*event.GuildID(), event.User().ID, role.ID); err != nil {
@@ -1092,6 +1131,10 @@ func Command(c *components.Components) components.Command {
 					}
 					if event.Emoji.Reaction() != discordutil.ReactionComponentEmoji(*role.Emoji) {
 						continue
+					}
+					_, ok := event.Client().Caches().Role(event.GuildID, role.ID)
+					if !ok {
+						return nil
 					}
 					contains := slices.Contains(event.Member.RoleIDs, role.ID)
 					if contains {
