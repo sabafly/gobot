@@ -435,7 +435,7 @@ func Command(c *components.Components) components.Command {
 								time.Sleep(time.Until(n.t))
 								createNotice(g.UpRemindMessageTitle, g.UpRemindMessage, n, client, builtin.Or(g.UpMention != nil, discord.RoleMention(builtin.NonNil(g.UpMention)), ""))
 							}()
-							delete(bumpNotice, k)
+							delete(upNotice, k)
 						}
 					}
 
