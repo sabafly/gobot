@@ -60,7 +60,7 @@ func (c *Components) Initialize(client bot.Client) error {
 	}
 
 	client.EventManager().AddEventListeners(
-		bot.NewListenerFunc(c.OnEvent(client)),
+		bot.NewListenerFunc(c.OnEvent()),
 		&events.ListenerAdapter{
 			OnGuildJoin:  c.OnGuildJoin(),
 			OnGuildLeave: c.OnGuildLeave(),
@@ -69,7 +69,7 @@ func (c *Components) Initialize(client bot.Client) error {
 	return nil
 }
 
-func (c *Components) OnEvent(client bot.Client) func(bot bot.Event) {
+func (c *Components) OnEvent() func(bot bot.Event) {
 	return func(event bot.Event) {
 		switch e := event.(type) {
 		case *events.ApplicationCommandInteractionCreate:

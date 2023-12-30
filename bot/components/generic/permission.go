@@ -72,19 +72,19 @@ func PermissionCheck(ctx context.Context, c *components.Components, g *ent.Guild
 
 	m.RoleIDs = append(m.RoleIDs, guildID)
 
-	return RolePermissionCheck(ctx, g, guildID, client, m.RoleIDs, perms)
+	return RolePermissionCheck(g, guildID, client, m.RoleIDs, perms)
 }
 
-func RolePermissionCheck(ctx context.Context, g *ent.Guild, guildID snowflake.ID, client bot.Client, roleIds []snowflake.ID, perms []Permission) bool {
+func RolePermissionCheck(g *ent.Guild, guildID snowflake.ID, client bot.Client, roleIds []snowflake.ID, perms []Permission) bool {
 
-	roles := []discord.Role{}
+	var roles []discord.Role
 	client.Caches().RolesForEach(guildID, func(role discord.Role) {
 		roles = append(roles, role)
 	})
 	slices.SortStableFunc(roles, func(a, b discord.Role) int {
 		return cmp.Compare(a.Position, b.Position)
 	})
-	memberRoles := []discord.Role{}
+	var memberRoles []discord.Role
 	for _, role := range roles {
 		if !slices.Contains(roleIds, role.ID) {
 			continue

@@ -68,7 +68,7 @@ type PCommandHandler struct {
 }
 
 func (c PCommandHandler) Handler() EventHandler[*events.ApplicationCommandInteractionCreate] {
-	return EventHandler[*events.ApplicationCommandInteractionCreate](c.CommandHandler)
+	return c.CommandHandler
 }
 func (c PCommandHandler) Permissions() []Permission              { return c.Permission }
 func (c PCommandHandler) DiscordPermission() discord.Permissions { return c.DiscordPerm }
@@ -94,7 +94,7 @@ type PAutocompleteHandler struct {
 }
 
 func (c PAutocompleteHandler) Handler() EventHandler[*events.AutocompleteInteractionCreate] {
-	return EventHandler[*events.AutocompleteInteractionCreate](c.AutocompleteHandler)
+	return c.AutocompleteHandler
 }
 func (c PAutocompleteHandler) Permissions() []Permission              { return c.Permission }
 func (c PAutocompleteHandler) DiscordPermission() discord.Permissions { return c.DiscordPerm }
@@ -120,7 +120,7 @@ type PComponentHandler struct {
 }
 
 func (c PComponentHandler) Handler() EventHandler[*events.ComponentInteractionCreate] {
-	return EventHandler[*events.ComponentInteractionCreate](c.ComponentHandler)
+	return c.ComponentHandler
 }
 func (c PComponentHandler) Permissions() []Permission              { return c.Permission }
 func (c PComponentHandler) DiscordPermission() discord.Permissions { return c.DiscordPerm }
@@ -162,9 +162,9 @@ type PermissionDefaultString string
 func (p PermissionDefaultString) PermString() string { return string(p) }
 func (p PermissionDefaultString) Default() bool      { return true }
 
-var _ components.Command = (*GenericCommand)(nil)
+var _ components.Command = (*Command)(nil)
 
-type GenericCommand struct {
+type Command struct {
 	Namespace     string
 	Private       bool
 	CommandCreate []discord.ApplicationCommandCreate
@@ -178,17 +178,17 @@ type GenericCommand struct {
 	component            *components.Components
 }
 
-func (gc *GenericCommand) Scheduler() []components.Scheduler { return gc.Schedulers }
+func (gc *Command) Scheduler() []components.Scheduler { return gc.Schedulers }
 
-func (gc *GenericCommand) SetComponent(c *components.Components) *GenericCommand {
+func (gc *Command) SetComponent(c *components.Components) *Command {
 	gc.component = c
 	return gc
 }
 
-func (gc *GenericCommand) Name() string                               { return gc.Namespace }
-func (gc *GenericCommand) Create() []discord.ApplicationCommandCreate { return gc.CommandCreate }
-func (gc *GenericCommand) IsPrivate() bool                            { return gc.Private }
-func (gc *GenericCommand) CommandHandler() func(event *events.ApplicationCommandInteractionCreate) error {
+func (gc *Command) Name() string                               { return gc.Namespace }
+func (gc *Command) Create() []discord.ApplicationCommandCreate { return gc.CommandCreate }
+func (gc *Command) IsPrivate() bool                            { return gc.Private }
+func (gc *Command) CommandHandler() func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		defer rec(event)
 		var path string
@@ -223,7 +223,7 @@ func (gc *GenericCommand) CommandHandler() func(event *events.ApplicationCommand
 	}
 }
 
-func (gc *GenericCommand) ComponentHandler() func(event *events.ComponentInteractionCreate) error {
+func (gc *Command) ComponentHandler() func(event *events.ComponentInteractionCreate) error {
 	return func(event *events.ComponentInteractionCreate) error {
 		defer rec(event)
 		customID := strings.Split(event.Data.CustomID(), ":")
@@ -250,7 +250,7 @@ func (gc *GenericCommand) ComponentHandler() func(event *events.ComponentInterac
 	}
 }
 
-func (gc *GenericCommand) ModalHandler() func(event *events.ModalSubmitInteractionCreate) error {
+func (gc *Command) ModalHandler() func(event *events.ModalSubmitInteractionCreate) error {
 	return func(event *events.ModalSubmitInteractionCreate) error {
 		defer rec(event)
 		customID := strings.Split(event.Data.CustomID, ":")
@@ -266,7 +266,7 @@ func (gc *GenericCommand) ModalHandler() func(event *events.ModalSubmitInteracti
 	}
 }
 
-func (gc *GenericCommand) AutocompleteHandler() func(event *events.AutocompleteInteractionCreate) error {
+func (gc *Command) AutocompleteHandler() func(event *events.AutocompleteInteractionCreate) error {
 	return func(event *events.AutocompleteInteractionCreate) error {
 		var focused string
 		for _, ao := range event.Data.Options {
@@ -296,7 +296,7 @@ func (gc *GenericCommand) AutocompleteHandler() func(event *events.AutocompleteI
 	}
 }
 
-func (gc *GenericCommand) OnEvent() func(event bot.Event) error {
+func (gc *Command) OnEvent() func(event bot.Event) error {
 	return func(event bot.Event) error {
 		if gc.EventHandler == nil {
 			return nil

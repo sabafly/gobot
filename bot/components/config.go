@@ -32,17 +32,22 @@ type ConfigMessage struct {
 
 func (c *Components) Config() Config { return c.config }
 
-func Load(path string) (*Config, error) {
+func Load(path string) (config *Config, err error) {
+	config = &Config{}
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func(f *os.File) {
+		e := f.Close()
+		if e != nil {
+			err = e
+		}
+	}(f)
 
-	var config Config
-	if err := yaml.NewDecoder(f).Decode(&config); err != nil {
+	if err := yaml.NewDecoder(f).Decode(config); err != nil {
 		return nil, err
 	}
 
-	return &config, nil
+	return config, nil
 }

@@ -14,7 +14,7 @@ import (
 )
 
 func Command(c *components.Components) components.Command {
-	return (&generic.GenericCommand{
+	return (&generic.Command{
 		Namespace: "userinfo",
 		Private:   true,
 		CommandCreate: []discord.ApplicationCommandCreate{

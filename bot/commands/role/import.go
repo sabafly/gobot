@@ -19,7 +19,7 @@ import (
 )
 
 func ImportCommand(c *components.Components) components.Command {
-	return (&generic.GenericCommand{
+	return (&generic.Command{
 		Namespace: "import-rolepanel",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.MessageCommandCreate{
@@ -39,39 +39,39 @@ func ImportCommand(c *components.Components) components.Command {
 					}
 					message := event.MessageCommandInteractionData().TargetMessage()
 					lines := strings.Split(message.Embeds[0].Description, "\n")
-					roles := []schema.Role{}
-					role_count := 0
+					var roles []schema.Role
+					roleCount := 0
 					for _, v := range lines {
-						if !role_regexp.MatchString(v) {
+						if !roleRegexp.MatchString(v) {
 							continue
 						}
 						var emojis []string
 						if !emoji.MatchString(v) {
-							emojis = append(emojis, discordutil.Number2Emoji(role_count+1))
+							emojis = append(emojis, discordutil.Number2Emoji(roleCount+1))
 						} else {
 							emojis = emoji.FindAllString(v)
 						}
-						component_emoji := discordutil.ParseComponentEmoji(emojis[0])
-						if _, ok := event.Client().Caches().Emoji(*event.GuildID(), component_emoji.ID); !ok && component_emoji.ID != 0 {
-							component_emoji = discordutil.ParseComponentEmoji(discordutil.Number2Emoji(role_count + 1))
+						componentEmoji := discordutil.ParseComponentEmoji(emojis[0])
+						if _, ok := event.Client().Caches().Emoji(*event.GuildID(), componentEmoji.ID); !ok && componentEmoji.ID != 0 {
+							componentEmoji = discordutil.ParseComponentEmoji(discordutil.Number2Emoji(roleCount + 1))
 						}
-						role_id, err := snowflake.Parse(role_id_regexp.FindString(role_regexp.FindString(v)))
+						roleId, err := snowflake.Parse(roleIdRegexp.FindString(roleRegexp.FindString(v)))
 						if err != nil {
 							continue
 						}
-						role, ok := event.Client().Caches().Role(*event.GuildID(), role_id)
+						role, ok := event.Client().Caches().Role(*event.GuildID(), roleId)
 						if !ok {
-							role_ptr, err := event.Client().Rest().GetRole(*event.GuildID(), role_id)
+							rolePtr, err := event.Client().Rest().GetRole(*event.GuildID(), roleId)
 							if err != nil {
 								continue
 							}
-							role = *role_ptr
+							role = *rolePtr
 						}
-						role_count++
+						roleCount++
 						roles = append(roles, schema.Role{
 							ID:    role.ID,
 							Name:  role.Name,
-							Emoji: &component_emoji,
+							Emoji: &componentEmoji,
 						})
 					}
 					if len(roles) < 1 {
@@ -101,7 +101,7 @@ func ImportCommand(c *components.Components) components.Command {
 						SaveX(event)
 
 					if err := event.CreateMessage(
-						rp_place_base_menu(place, event.Locale()).
+						rpPlaceBaseMenu(place, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
 							Create(),
 					); err != nil {
@@ -115,8 +115,8 @@ func ImportCommand(c *components.Components) components.Command {
 	}).SetComponent(c)
 }
 
-var role_regexp = regexp.MustCompile("<@&([0-9]{18,20})>")
-var role_id_regexp = regexp.MustCompile("[0-9]{18,20}")
+var roleRegexp = regexp.MustCompile("<@&([0-9]{18,20})>")
+var roleIdRegexp = regexp.MustCompile("[0-9]{18,20}")
 
 func check(event *events.ApplicationCommandInteractionCreate) bool {
 	message := event.MessageCommandInteractionData().TargetMessage()
@@ -135,14 +135,14 @@ func check(event *events.ApplicationCommandInteractionCreate) bool {
 			return false
 		}
 		lines := strings.Split(message.Embeds[0].Description, "\r")
-		valid_lines := 0
+		validLines := 0
 		for _, v := range lines {
-			if !role_regexp.MatchString(v) {
+			if !roleRegexp.MatchString(v) {
 				continue
 			}
-			valid_lines++
+			validLines++
 		}
-		return valid_lines > 0
+		return validLines > 0
 	default:
 		return false
 	}

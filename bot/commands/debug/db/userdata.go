@@ -10,8 +10,6 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 )
 
-const UserDataVersion = 2
-
 type UserData struct {
 	ID snowflake.ID `json:"id"`
 
@@ -41,19 +39,11 @@ func (u *UserData) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func NewDataLocation(str string) (DataLocation, error) {
-	tl, err := time.LoadLocation(str)
-	if err != nil {
-		return DataLocation{time.UTC}, err
-	}
-	return DataLocation{tl}, nil
-}
-
 type DataLocation struct {
 	*time.Location
 }
 
-func (u DataLocation) MarshalJSON() ([]byte, error) {
+func (u *DataLocation) MarshalJSON() ([]byte, error) {
 	return json.Marshal(u.Location.String())
 }
 
@@ -71,12 +61,6 @@ func (u *DataLocation) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func NewUserDataLevel() UserDataLevel {
-	return UserDataLevel{
-		Point: big.NewInt(0),
-	}
-}
-
 type UserDataLevel struct {
 	Point *big.Int `json:"point"`
 }
@@ -84,22 +68,22 @@ type UserDataLevel struct {
 var i = big.NewInt(10)
 var a = big.NewInt(2)
 
-func (UserDataLevel) sum_required_level_point(n *big.Int) *big.Int {
+func (UserDataLevel) sumRequiredLevelPoint(n *big.Int) *big.Int {
 	n.Add(n, big.NewInt(3))
 	return new(big.Int).Add(new(big.Int).Mul(i, new(big.Int).Div(new(big.Int).Sub(new(big.Int).Exp(a, n, nil), big.NewInt(1)), new(big.Int).Sub(a, big.NewInt(1)))), big.NewInt(0))
 }
 
-func (UserDataLevel) required_level_point(n *big.Int) *big.Int {
+func (UserDataLevel) requiredLevelPoint(n *big.Int) *big.Int {
 	n.Add(n, big.NewInt(3))
 	return new(big.Int).Add(new(big.Int).Mul(i, new(big.Int).Exp(a, n, nil)), big.NewInt(0))
 }
 
 func (u UserDataLevel) ReqPoint() *big.Int {
-	return u.required_level_point(u.Level())
+	return u.requiredLevelPoint(u.Level())
 }
 
 func (u UserDataLevel) SumReqPoint() *big.Int {
-	return u.sum_required_level_point(u.Level())
+	return u.sumRequiredLevelPoint(u.Level())
 }
 
 func (u UserDataLevel) Level() *big.Int {
@@ -107,7 +91,7 @@ func (u UserDataLevel) Level() *big.Int {
 		u.Point = big.NewInt(0)
 	}
 	for k := 0; k < 999; k++ {
-		lv := u.sum_required_level_point(big.NewInt(int64(k)))
+		lv := u.sumRequiredLevelPoint(big.NewInt(int64(k)))
 		if lv.Cmp(u.Point) == 1 {
 			return big.NewInt(int64(k))
 		}

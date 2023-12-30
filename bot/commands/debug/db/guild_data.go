@@ -8,8 +8,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const GuildDataVersion = 11
-
 type GuildData struct {
 	ID             snowflake.ID                        `json:"id"`
 	RolePanel      map[uuid.UUID]GuildDataRolePanel    `json:"role_panel"`
@@ -37,14 +35,6 @@ type GuildData struct {
 	DataVersion *int `json:"data_version,omitempty"`
 }
 
-func NewMessageSuffix(target snowflake.ID, suffix string, rule MessageSuffixRuleType) MessageSuffix {
-	return MessageSuffix{
-		Target:   target,
-		Suffix:   suffix,
-		RuleType: rule,
-	}
-}
-
 type MessageSuffix struct {
 	Target   snowflake.ID          `json:"target"`
 	Suffix   string                `json:"suffix"`
@@ -52,12 +42,6 @@ type MessageSuffix struct {
 }
 
 type MessageSuffixRuleType int
-
-const (
-	MessageSuffixRuleTypeWarning = iota
-	MessageSuffixRuleTypeDelete
-	MessageSuffixRuleTypeWebhook
-)
 
 type BumpStatus struct {
 	BumpEnabled     bool          `json:"bump_enabled"`

@@ -10,8 +10,8 @@ import (
 	"github.com/sabafly/gobot/internal/discordutil"
 )
 
-func role_panel_place(ctx context.Context, place *ent.RolePanelPlaced, locale discord.Locale, client bot.Client, react bool) error {
-	builder := rp_placed_message(place, locale)
+func rolePanelPlace(ctx context.Context, place *ent.RolePanelPlaced, locale discord.Locale, client bot.Client, react bool) error {
+	builder := rpPlacedMessage(place, locale)
 	if place.MessageID != nil {
 		if _, err := client.Rest().UpdateMessage(place.ChannelID, *place.MessageID, builder.Update()); err != nil {
 			return err

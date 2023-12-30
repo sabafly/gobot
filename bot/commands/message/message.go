@@ -27,8 +27,8 @@ import (
 	"github.com/sabafly/gobot/internal/webhookutil"
 )
 
-func Command(c *components.Components) *generic.GenericCommand {
-	return (&generic.GenericCommand{
+func Command(c *components.Components) *generic.Command {
+	return (&generic.Command{
 		Namespace: "message",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{

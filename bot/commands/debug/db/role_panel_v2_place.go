@@ -16,10 +16,3 @@ type RolePanelV2Place struct {
 }
 
 type RolePanelV2Type string
-
-const (
-	RolePanelV2TypeNone       = ""
-	RolePanelV2TypeReaction   = "reaction"
-	RolePanelV2TypeSelectMenu = "select_menu"
-	RolePanelV2TypeButton     = "button"
-)

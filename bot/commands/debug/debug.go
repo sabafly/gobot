@@ -24,8 +24,8 @@ import (
 	"github.com/sabafly/gobot/internal/translate"
 )
 
-func Command(c *components.Components) *generic.GenericCommand {
-	return (&generic.GenericCommand{
+func Command(c *components.Components) *generic.Command {
+	return (&generic.Command{
 		Namespace: "debug",
 		Private:   true,
 		CommandCreate: []discord.ApplicationCommandCreate{
@@ -156,7 +156,7 @@ func Command(c *components.Components) *generic.GenericCommand {
 						continue
 					}
 
-					createRolePanelBulk := []*ent.RolePanelCreate{}
+					var createRolePanelBulk []*ent.RolePanelCreate
 
 					for u := range guildData.RolePanelV2 {
 						rpv2, ok := rpv2List[u]
@@ -166,11 +166,11 @@ func Command(c *components.Components) *generic.GenericCommand {
 
 						roles := make([]schema.Role, len(rpv2.Roles))
 
-						for i, role := range rpv2.Roles {
+						for i, r := range rpv2.Roles {
 							roles[i] = schema.Role{
-								ID:    role.RoleID,
-								Name:  role.RoleName,
-								Emoji: role.Emoji,
+								ID:    r.RoleID,
+								Name:  r.RoleName,
+								Emoji: r.Emoji,
 							}
 						}
 
@@ -220,7 +220,7 @@ func Command(c *components.Components) *generic.GenericCommand {
 							SetGuild(g).
 							SaveX(event)
 
-						role.UpdateRolePanel(event, rolePanels[index], placed, event.Locale(), event.Client())
+						role.UpdateRolePanel(event, placed, event.Locale(), event.Client())
 					}
 
 				}

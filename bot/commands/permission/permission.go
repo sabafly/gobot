@@ -15,7 +15,7 @@ import (
 )
 
 func Command(c *components.Components) components.Command {
-	return (&generic.GenericCommand{
+	return (&generic.Command{
 		Namespace: "permission",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
@@ -230,7 +230,7 @@ func Command(c *components.Components) components.Command {
 					} else {
 						role := event.SlashCommandInteractionData().Role("target")
 						mention = discord.RoleMention(role.ID)
-						p = generic.RolePermissionCheck(event, g, *event.GuildID(), event.Client(), []snowflake.ID{role.ID}, []generic.Permission{generic.PermissionString(perm)})
+						p = generic.RolePermissionCheck(g, *event.GuildID(), event.Client(), []snowflake.ID{role.ID}, []generic.Permission{generic.PermissionString(perm)})
 					}
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().

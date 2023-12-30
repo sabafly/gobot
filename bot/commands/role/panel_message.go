@@ -15,7 +15,19 @@ import (
 	"github.com/sabafly/gobot/internal/translate"
 )
 
-func rp_edit_base_message(panel *ent.RolePanel, edit *ent.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
+func initialize(edit *ent.RolePanelEdit, panel *ent.RolePanel) {
+	if edit.Roles == nil {
+		edit.Roles = panel.Roles
+	}
+	if edit.Name == nil {
+		edit.Name = &panel.Name
+	}
+	if edit.Description == nil {
+		edit.Description = &panel.Description
+	}
+}
+
+func rpEditBaseMessage(panel *ent.RolePanel, edit *ent.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
 	builder := discord.NewMessageBuilder()
 	var roleField string
 	for i, r := range edit.Roles {
@@ -26,15 +38,7 @@ func rp_edit_base_message(panel *ent.RolePanel, edit *ent.RolePanelEdit, locale 
 		}
 		roleField += fmt.Sprintf("%s: %s: %s\n", discordutil.FormatComponentEmoji(*r.Emoji), r.Name, discord.RoleMention(r.ID))
 	}
-	if edit.Name == nil {
-		edit.Name = &panel.Name
-	}
-	if edit.Description == nil {
-		edit.Description = &panel.Description
-	}
-	if edit.Roles == nil {
-		edit.Roles = panel.Roles
-	}
+	initialize(edit, panel)
 	builder.SetEmbeds(
 		embeds.SetEmbedsProperties(
 			[]discord.Embed{
@@ -166,10 +170,10 @@ func rp_edit_base_message(panel *ent.RolePanel, edit *ent.RolePanelEdit, locale 
 	return builder
 }
 
-func rp_edit_modify_roles_message(p *ent.RolePanel, edit *ent.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
+func rpEditModifyRolesMessage(edit *ent.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
 	builder := discord.NewMessageBuilder()
 	var roleField string
-	for i, r := range p.Roles {
+	for i, r := range edit.Roles {
 		if r.Emoji == nil {
 			r.Emoji = &discord.ComponentEmoji{
 				Name: discordutil.Index2Emoji(i),
@@ -207,9 +211,9 @@ func rp_edit_modify_roles_message(p *ent.RolePanel, edit *ent.RolePanelEdit, loc
 				MinValues: builtin.Ptr(1),
 				MaxValues: 20,
 				DefaultValues: func() []discord.SelectMenuDefaultValue {
-					values := make([]discord.SelectMenuDefaultValue, len(p.Roles))
-					for i := range p.Roles {
-						values[i] = discord.NewSelectMenuDefaultRole(p.Roles[i].ID)
+					values := make([]discord.SelectMenuDefaultValue, len(edit.Roles))
+					for i := range edit.Roles {
+						values[i] = discord.NewSelectMenuDefaultRole(edit.Roles[i].ID)
 					}
 					return values
 				}(),
@@ -219,7 +223,7 @@ func rp_edit_modify_roles_message(p *ent.RolePanel, edit *ent.RolePanelEdit, loc
 	return builder
 }
 
-func rp_edit_set_emoji_message(p *ent.RolePanel, edit *ent.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
+func rpEditSetEmojiMessage(edit *ent.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
 	builder := discord.NewMessageBuilder()
 	builder.SetEmbeds(
 		embeds.SetEmbedProperties(
@@ -247,7 +251,7 @@ func rp_edit_set_emoji_message(p *ent.RolePanel, edit *ent.RolePanelEdit, locale
 	return builder
 }
 
-func rp_place_base_menu(place *ent.RolePanelPlaced, locale discord.Locale) discord.MessageBuilder {
+func rpPlaceBaseMenu(place *ent.RolePanelPlaced, locale discord.Locale) discord.MessageBuilder {
 	builder := discord.NewMessageBuilder()
 	var roleField string
 	for i, r := range place.Roles {
@@ -404,7 +408,7 @@ func rp_place_base_menu(place *ent.RolePanelPlaced, locale discord.Locale) disco
 	return builder
 }
 
-func rp_placed_message(place *ent.RolePanelPlaced, locale discord.Locale) discord.MessageBuilder {
+func rpPlacedMessage(place *ent.RolePanelPlaced, locale discord.Locale) discord.MessageBuilder {
 	builder := discord.NewMessageBuilder()
 	var roleField string
 	for i, r := range place.Roles {
@@ -475,13 +479,13 @@ func rp_placed_message(place *ent.RolePanelPlaced, locale discord.Locale) discor
 				),
 			)
 		} else {
-			builder.AddContainerComponents(rp_placed_select_menu(place, locale))
+			builder.AddContainerComponents(rpPlacedSelectMenu(place, locale))
 		}
 	}
 	return builder
 }
 
-func rp_placed_select_menu(place *ent.RolePanelPlaced, locale discord.Locale) discord.ActionRowComponent {
+func rpPlacedSelectMenu(place *ent.RolePanelPlaced, locale discord.Locale) discord.ActionRowComponent {
 	options := make([]discord.StringSelectMenuOption, len(place.Roles))
 	for i, role := range place.Roles {
 		if role.Emoji == nil {

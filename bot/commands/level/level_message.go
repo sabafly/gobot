@@ -10,7 +10,7 @@ import (
 	"github.com/sabafly/gobot/internal/xppoint"
 )
 
-func level_message(
+func levelMessage(
 	g *ent.Guild,
 	gl *discord.Guild,
 	m *ent.Member,

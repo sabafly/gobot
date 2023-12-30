@@ -19,10 +19,8 @@ import (
 	"github.com/sabafly/gobot/internal/translate"
 )
 
-// TODO: 君たちはどう設定を作るか
-
 func Command(c *components.Components) components.Command {
-	return (&generic.GenericCommand{
+	return (&generic.Command{
 		Namespace: "setting",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{

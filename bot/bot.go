@@ -76,7 +76,12 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("mysqlとの接続を開けません: %w", err)
 	}
-	defer db.Close()
+	defer func(db *ent.Client) {
+		err := db.Close()
+		if err != nil {
+			slog.Error("mysqlとの接続を閉じれません", slog.Any("error", err))
+		}
+	}(db)
 
 	// c, err := caches.Open(config.Redis...)
 	// if err != nil {
@@ -135,7 +140,7 @@ func run() error {
 	}
 
 	if err := client.OpenShardManager(context.Background()); err != nil {
-		return fmt.Errorf("Discord ゲートウェイを開けません: %w", err)
+		return fmt.Errorf("discord ゲートウェイを開けません: %w", err)
 	}
 	defer client.Close(context.Background())
 

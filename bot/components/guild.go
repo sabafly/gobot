@@ -44,7 +44,7 @@ func (c *Components) OnGuildLeave() func(event *events.GuildLeave) {
 	}
 }
 
-func (c *Components) GuildCreate(ctx context.Context, owner_id snowflake.ID, g *events.GenericGuild) (*ent.Guild, error) {
+func (c *Components) GuildCreate(ctx context.Context, ownerId snowflake.ID, g *events.GenericGuild) (*ent.Guild, error) {
 	if ok := c.db.Guild.
 		Query().
 		Where(guild.ID(g.Guild.ID)).ExistX(ctx); ok {
@@ -57,7 +57,7 @@ func (c *Components) GuildCreate(ctx context.Context, owner_id snowflake.ID, g *
 		return c.db.Guild.Create().
 			SetID(g.GuildID).
 			SetName(g.Guild.Name).
-			SetOwnerID(owner_id).
+			SetOwnerID(ownerId).
 			Save(ctx)
 	}
 }

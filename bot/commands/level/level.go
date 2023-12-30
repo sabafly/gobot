@@ -30,7 +30,7 @@ import (
 )
 
 func Command(c *components.Components) components.Command {
-	return (&generic.GenericCommand{
+	return (&generic.Command{
 		Namespace: "level",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
@@ -244,7 +244,7 @@ func Command(c *components.Components) components.Command {
 						discord.NewMessageBuilder().
 							SetEmbeds(
 								embeds.SetEmbedProperties(
-									level_message(g, gl, m, index, target.Member, event),
+									levelMessage(g, gl, m, index, target.Member, event),
 								),
 							).
 							Create(),
@@ -361,7 +361,7 @@ func Command(c *components.Components) components.Command {
 					toUser = toUser.Update().SetXp(toUser.Xp).SaveX(event)
 					fromUser = fromUser.Update().SetXp(fromUser.Xp).SaveX(event)
 					if before != after {
-						if err := level_up(g, after, event.Client(), *event.GuildID(), builtin.Or(g.LevelUpChannel != nil, builtin.NonNil(g.LevelUpChannel), event.Channel().ID()), toUser, to.User, before); err != nil {
+						if err := levelUp(g, after, event.Client(), *event.GuildID(), builtin.Or(g.LevelUpChannel != nil, builtin.NonNil(g.LevelUpChannel), event.Channel().ID()), toUser, to.User, before); err != nil {
 							return errors.NewError(err)
 						}
 					}
@@ -378,8 +378,8 @@ func Command(c *components.Components) components.Command {
 							SetEmbeds(
 								embeds.SetEmbedsProperties(
 									[]discord.Embed{
-										level_message(g, gl, fromUser, fromIndex, from.Member, event),
-										level_message(g, gl, toUser, toIndex, to.Member, event),
+										levelMessage(g, gl, fromUser, fromIndex, from.Member, event),
+										levelMessage(g, gl, toUser, toIndex, to.Member, event),
 										discord.NewEmbedBuilder().
 											SetTitlef("`%d`xp 移動しました", movedXp).
 											Build(),
@@ -563,22 +563,22 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(errors.ErrorMessage("components.level.import-mee6.message.already", event))
 					}
 
-					members := []discord.Member{}
-					member_count := 1000
+					var members []discord.Member
+					memberCount := 1000
 					afterID := snowflake.ID(0)
-					for member_count == 1000 {
-						m, err := event.Client().Rest().GetMembers(*event.GuildID(), member_count, afterID)
+					for memberCount == 1000 {
+						m, err := event.Client().Rest().GetMembers(*event.GuildID(), memberCount, afterID)
 						if err != nil {
 							return errors.NewError(err)
 						}
-						member_count = len(m)
+						memberCount = len(m)
 						members = append(members, m...)
 						afterID = m[len(m)-1].User.ID
 					}
 
 					slog.Info("mee6インポート", slog.Any("gid", event.GuildID()), slog.Int("member_count", len(members)))
 
-					member_count = 0
+					memberCount = 0
 					url := fmt.Sprintf("https://mee6.xyz/api/plugins/levels/leaderboard/%s", event.GuildID().String())
 					for page := 0; true; page++ {
 						response, err := http.Get(fmt.Sprintf("%s?page=%d", url, page))
@@ -628,7 +628,7 @@ func Command(c *components.Components) components.Command {
 								return errors.NewError(err)
 							}
 							m.Update().SetXp(xppoint.XP(player.Xp)).ExecX(event)
-							member_count++
+							memberCount++
 						}
 					}
 
@@ -636,7 +636,7 @@ func Command(c *components.Components) components.Command {
 
 					if err := event.RespondMessage(
 						discord.NewMessageBuilder().
-							SetContent(fmt.Sprintf("# SUCCEED\n```| IMPORTED MEMBER COUNT | %d```", member_count)),
+							SetContent(fmt.Sprintf("# SUCCEED\n```| IMPORTED MEMBER COUNT | %d```", memberCount)),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -724,15 +724,15 @@ func Command(c *components.Components) components.Command {
 					if !valid {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.self", event))
 					}
-					role_map := map[snowflake.ID]discord.Role{}
+					roleMap := map[snowflake.ID]discord.Role{}
 					for _, id := range self.RoleIDs {
 						role, ok := event.Client().Caches().Role(*event.GuildID(), id)
 						if !ok {
 							continue
 						}
-						role_map[id] = role
+						roleMap[id] = role
 					}
-					hi, _ := discordutil.GetHighestRolePosition(role_map)
+					hi, _ := discordutil.GetHighestRolePosition(roleMap)
 
 					if role.Managed || role.Position >= hi || role.ID == *event.GuildID() {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.role", event))
@@ -918,7 +918,7 @@ func Command(c *components.Components) components.Command {
 					SetMessageCount(m.MessageCount + 1).
 					SaveX(event)
 				if before != after {
-					if err := level_up(g, after, event.Client(), event.GuildID, builtin.Or(g.LevelUpChannel != nil, builtin.NonNil(g.LevelUpChannel), event.ChannelID), m, event.Message.Author, before); err != nil {
+					if err := levelUp(g, after, event.Client(), event.GuildID, builtin.Or(g.LevelUpChannel != nil, builtin.NonNil(g.LevelUpChannel), event.ChannelID), m, event.Message.Author, before); err != nil {
 						return errors.NewError(err)
 					}
 				}
@@ -928,7 +928,7 @@ func Command(c *components.Components) components.Command {
 	}).SetComponent(c)
 }
 
-func level_up(g *ent.Guild, after int64, client bot.Client, guildID, channelID snowflake.ID, m *ent.Member, user discord.User, before int64) error {
+func levelUp(g *ent.Guild, after int64, client bot.Client, guildID, channelID snowflake.ID, m *ent.Member, user discord.User, before int64) error {
 	// レベルロール
 	r, ok := g.LevelRole[int(after)]
 	if ok {
