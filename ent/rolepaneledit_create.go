@@ -214,11 +214,6 @@ func (rpec *RolePanelEditCreate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanelEdit.name": %w`, err)}
 		}
 	}
-	if v, ok := rpec.mutation.Description(); ok {
-		if err := rolepaneledit.DescriptionValidator(v); err != nil {
-			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "RolePanelEdit.description": %w`, err)}
-		}
-	}
 	if _, ok := rpec.mutation.GuildID(); !ok {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "RolePanelEdit.guild"`)}
 	}

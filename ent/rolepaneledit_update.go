@@ -236,11 +236,6 @@ func (rpeu *RolePanelEditUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanelEdit.name": %w`, err)}
 		}
 	}
-	if v, ok := rpeu.mutation.Description(); ok {
-		if err := rolepaneledit.DescriptionValidator(v); err != nil {
-			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "RolePanelEdit.description": %w`, err)}
-		}
-	}
 	if _, ok := rpeu.mutation.GuildID(); rpeu.mutation.GuildCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "RolePanelEdit.guild"`)
 	}
@@ -555,11 +550,6 @@ func (rpeuo *RolePanelEditUpdateOne) check() error {
 	if v, ok := rpeuo.mutation.Name(); ok {
 		if err := rolepaneledit.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanelEdit.name": %w`, err)}
-		}
-	}
-	if v, ok := rpeuo.mutation.Description(); ok {
-		if err := rolepaneledit.DescriptionValidator(v); err != nil {
-			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "RolePanelEdit.description": %w`, err)}
 		}
 	}
 	if _, ok := rpeuo.mutation.GuildID(); rpeuo.mutation.GuildCleared() && !ok {
