@@ -239,7 +239,7 @@ func Command(c *components.Components) *generic.Command {
 							SetChannelID(k[0]).
 							SetMessageID(k[1]).
 							SetType(rolepanelplaced.Type(guildData.RolePanelV2PlacedConfig[keyString].PanelType)).
-							SetButtonType(guildData.RolePanelV2PlacedConfig[keyString].ButtonStyle).
+							SetButtonType(builtin.Or(guildData.RolePanelV2PlacedConfig[keyString].ButtonStyle != 0, guildData.RolePanelV2PlacedConfig[keyString].ButtonStyle, 1)).
 							SetFoldingSelectMenu(guildData.RolePanelV2PlacedConfig[keyString].SimpleSelectMenu).
 							SetUseDisplayName(guildData.RolePanelV2PlacedConfig[keyString].UseDisplayName).
 							SetShowName(guildData.RolePanelV2PlacedConfig[keyString].ButtonShowName).
