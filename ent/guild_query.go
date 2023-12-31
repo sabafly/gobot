@@ -15,6 +15,7 @@ import (
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
+	"github.com/sabafly/gobot/ent/messageremind"
 	"github.com/sabafly/gobot/ent/predicate"
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/ent/rolepaneledit"
@@ -32,6 +33,7 @@ type GuildQuery struct {
 	withOwner               *UserQuery
 	withMembers             *MemberQuery
 	withMessagePins         *MessagePinQuery
+	withReminds             *MessageRemindQuery
 	withRolePanels          *RolePanelQuery
 	withRolePanelPlacements *RolePanelPlacedQuery
 	withRolePanelEdits      *RolePanelEditQuery
@@ -131,6 +133,28 @@ func (gq *GuildQuery) QueryMessagePins() *MessagePinQuery {
 			sqlgraph.From(guild.Table, guild.FieldID, selector),
 			sqlgraph.To(messagepin.Table, messagepin.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.MessagePinsTable, guild.MessagePinsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryReminds chains the current query on the "reminds" edge.
+func (gq *GuildQuery) QueryReminds() *MessageRemindQuery {
+	query := (&MessageRemindClient{config: gq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := gq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := gq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(guild.Table, guild.FieldID, selector),
+			sqlgraph.To(messageremind.Table, messageremind.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, guild.RemindsTable, guild.RemindsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
 		return fromU, nil
@@ -399,6 +423,7 @@ func (gq *GuildQuery) Clone() *GuildQuery {
 		withOwner:               gq.withOwner.Clone(),
 		withMembers:             gq.withMembers.Clone(),
 		withMessagePins:         gq.withMessagePins.Clone(),
+		withReminds:             gq.withReminds.Clone(),
 		withRolePanels:          gq.withRolePanels.Clone(),
 		withRolePanelPlacements: gq.withRolePanelPlacements.Clone(),
 		withRolePanelEdits:      gq.withRolePanelEdits.Clone(),
@@ -438,6 +463,17 @@ func (gq *GuildQuery) WithMessagePins(opts ...func(*MessagePinQuery)) *GuildQuer
 		opt(query)
 	}
 	gq.withMessagePins = query
+	return gq
+}
+
+// WithReminds tells the query-builder to eager-load the nodes that are connected to
+// the "reminds" edge. The optional arguments are used to configure the query builder of the edge.
+func (gq *GuildQuery) WithReminds(opts ...func(*MessageRemindQuery)) *GuildQuery {
+	query := (&MessageRemindClient{config: gq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	gq.withReminds = query
 	return gq
 }
 
@@ -553,10 +589,11 @@ func (gq *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild,
 		nodes       = []*Guild{}
 		withFKs     = gq.withFKs
 		_spec       = gq.querySpec()
-		loadedTypes = [6]bool{
+		loadedTypes = [7]bool{
 			gq.withOwner != nil,
 			gq.withMembers != nil,
 			gq.withMessagePins != nil,
+			gq.withReminds != nil,
 			gq.withRolePanels != nil,
 			gq.withRolePanelPlacements != nil,
 			gq.withRolePanelEdits != nil,
@@ -603,6 +640,13 @@ func (gq *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild,
 		if err := gq.loadMessagePins(ctx, query, nodes,
 			func(n *Guild) { n.Edges.MessagePins = []*MessagePin{} },
 			func(n *Guild, e *MessagePin) { n.Edges.MessagePins = append(n.Edges.MessagePins, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := gq.withReminds; query != nil {
+		if err := gq.loadReminds(ctx, query, nodes,
+			func(n *Guild) { n.Edges.Reminds = []*MessageRemind{} },
+			func(n *Guild, e *MessageRemind) { n.Edges.Reminds = append(n.Edges.Reminds, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -721,6 +765,37 @@ func (gq *GuildQuery) loadMessagePins(ctx context.Context, query *MessagePinQuer
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "guild_message_pins" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (gq *GuildQuery) loadReminds(ctx context.Context, query *MessageRemindQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *MessageRemind)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[snowflake.ID]*Guild)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.MessageRemind(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(guild.RemindsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.guild_reminds
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "guild_reminds" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "guild_reminds" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

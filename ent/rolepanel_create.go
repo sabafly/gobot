@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -40,6 +41,34 @@ func (rpc *RolePanelCreate) SetDescription(s string) *RolePanelCreate {
 // SetRoles sets the "roles" field.
 func (rpc *RolePanelCreate) SetRoles(s []schema.Role) *RolePanelCreate {
 	rpc.mutation.SetRoles(s)
+	return rpc
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (rpc *RolePanelCreate) SetUpdatedAt(t time.Time) *RolePanelCreate {
+	rpc.mutation.SetUpdatedAt(t)
+	return rpc
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (rpc *RolePanelCreate) SetNillableUpdatedAt(t *time.Time) *RolePanelCreate {
+	if t != nil {
+		rpc.SetUpdatedAt(*t)
+	}
+	return rpc
+}
+
+// SetAppliedAt sets the "applied_at" field.
+func (rpc *RolePanelCreate) SetAppliedAt(t time.Time) *RolePanelCreate {
+	rpc.mutation.SetAppliedAt(t)
+	return rpc
+}
+
+// SetNillableAppliedAt sets the "applied_at" field if the given value is not nil.
+func (rpc *RolePanelCreate) SetNillableAppliedAt(t *time.Time) *RolePanelCreate {
+	if t != nil {
+		rpc.SetAppliedAt(*t)
+	}
 	return rpc
 }
 
@@ -210,6 +239,14 @@ func (rpc *RolePanelCreate) createSpec() (*RolePanel, *sqlgraph.CreateSpec) {
 	if value, ok := rpc.mutation.Roles(); ok {
 		_spec.SetField(rolepanel.FieldRoles, field.TypeJSON, value)
 		_node.Roles = value
+	}
+	if value, ok := rpc.mutation.UpdatedAt(); ok {
+		_spec.SetField(rolepanel.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
+	if value, ok := rpc.mutation.AppliedAt(); ok {
+		_spec.SetField(rolepanel.FieldAppliedAt, field.TypeTime, value)
+		_node.AppliedAt = value
 	}
 	if nodes := rpc.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

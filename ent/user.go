@@ -12,6 +12,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/ent/user"
+	"github.com/sabafly/gobot/internal/xppoint"
 )
 
 // User is the model entity for the User schema.
@@ -25,6 +26,8 @@ type User struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// Locale holds the value of the "locale" field.
 	Locale discord.Locale `json:"locale,omitempty"`
+	// Xp holds the value of the "xp" field.
+	Xp xppoint.XP `json:"xp,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges        UserEdges `json:"edges"`
@@ -76,7 +79,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldID:
+		case user.FieldID, user.FieldXp:
 			values[i] = new(sql.NullInt64)
 		case user.FieldName, user.FieldLocale:
 			values[i] = new(sql.NullString)
@@ -120,6 +123,12 @@ func (u *User) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field locale", values[i])
 			} else if value.Valid {
 				u.Locale = discord.Locale(value.String)
+			}
+		case user.FieldXp:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field xp", values[i])
+			} else if value.Valid {
+				u.Xp = xppoint.XP(value.Int64)
 			}
 		default:
 			u.selectValues.Set(columns[i], values[i])
@@ -180,6 +189,9 @@ func (u *User) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("locale=")
 	builder.WriteString(fmt.Sprintf("%v", u.Locale))
+	builder.WriteString(", ")
+	builder.WriteString("xp=")
+	builder.WriteString(fmt.Sprintf("%v", u.Xp))
 	builder.WriteByte(')')
 	return builder.String()
 }

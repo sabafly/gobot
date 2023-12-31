@@ -7,6 +7,7 @@ import (
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/disgo/rest"
 )
 
 var (
@@ -30,6 +31,12 @@ func (c *Components) Initialize(client bot.Client) error {
 
 	var commands, privCommands []discord.ApplicationCommandCreate
 	for name, cmd := range c.commandsRegistry {
+		if len(cmd.Scheduler()) > 0 {
+			slog.Info("コマンドスケジューラ―を登録します", "name", name, "count", len(cmd.Create()))
+			for _, s := range cmd.Scheduler() {
+				go execSchedule(c, client, s)
+			}
+		}
 		if len(cmd.Create()) > 0 {
 			slog.Info("コマンドを登録します", "name", name, "count", len(cmd.Create()), "is_private", cmd.IsPrivate())
 			if cmd.IsPrivate() {
@@ -41,11 +48,11 @@ func (c *Components) Initialize(client bot.Client) error {
 	}
 
 	if _, err := client.Rest().SetGlobalCommands(client.ApplicationID(), commands); err != nil {
-		slog.Error("コマンドの登録に失敗", "err", err)
+		slog.Error("コマンドの登録に失敗", slog.Any("err", err), slog.String("body", string(err.(rest.Error).RsBody)))
 		return err
 	}
 
-	for _, id := range c.Config().PrivateGuilds {
+	for _, id := range c.Config().Debug.DebugGuilds {
 		if _, err := client.Rest().SetGuildCommands(client.ApplicationID(), id, privCommands); err != nil {
 			slog.Error("プライベートコマンドの登録に失敗", "err", err, "guild", id)
 			return err
@@ -53,7 +60,7 @@ func (c *Components) Initialize(client bot.Client) error {
 	}
 
 	client.EventManager().AddEventListeners(
-		bot.NewListenerFunc(c.OnEvent(client)),
+		bot.NewListenerFunc(c.OnEvent()),
 		&events.ListenerAdapter{
 			OnGuildJoin:  c.OnGuildJoin(),
 			OnGuildLeave: c.OnGuildLeave(),
@@ -62,7 +69,7 @@ func (c *Components) Initialize(client bot.Client) error {
 	return nil
 }
 
-func (c *Components) OnEvent(client bot.Client) func(bot bot.Event) {
+func (c *Components) OnEvent() func(bot bot.Event) {
 	return func(event bot.Event) {
 		switch e := event.(type) {
 		case *events.ApplicationCommandInteractionCreate:
@@ -149,4 +156,5 @@ type Command interface {
 	ModalHandler() func(event *events.ModalSubmitInteractionCreate) error
 	AutocompleteHandler() func(event *events.AutocompleteInteractionCreate) error
 	OnEvent() func(event bot.Event) error
+	Scheduler() []Scheduler
 }

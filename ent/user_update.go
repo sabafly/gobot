@@ -18,6 +18,7 @@ import (
 	"github.com/sabafly/gobot/ent/predicate"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/ent/wordsuffix"
+	"github.com/sabafly/gobot/internal/xppoint"
 )
 
 // UserUpdate is the builder for updating User entities.
@@ -58,6 +59,27 @@ func (uu *UserUpdate) SetNillableLocale(d *discord.Locale) *UserUpdate {
 	if d != nil {
 		uu.SetLocale(*d)
 	}
+	return uu
+}
+
+// SetXp sets the "xp" field.
+func (uu *UserUpdate) SetXp(x xppoint.XP) *UserUpdate {
+	uu.mutation.ResetXp()
+	uu.mutation.SetXp(x)
+	return uu
+}
+
+// SetNillableXp sets the "xp" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableXp(x *xppoint.XP) *UserUpdate {
+	if x != nil {
+		uu.SetXp(*x)
+	}
+	return uu
+}
+
+// AddXp adds x to the "xp" field.
+func (uu *UserUpdate) AddXp(x xppoint.XP) *UserUpdate {
+	uu.mutation.AddXp(x)
 	return uu
 }
 
@@ -233,6 +255,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := uu.mutation.Locale(); ok {
 		_spec.SetField(user.FieldLocale, field.TypeString, value)
+	}
+	if value, ok := uu.mutation.Xp(); ok {
+		_spec.SetField(user.FieldXp, field.TypeUint64, value)
+	}
+	if value, ok := uu.mutation.AddedXp(); ok {
+		_spec.AddField(user.FieldXp, field.TypeUint64, value)
 	}
 	if uu.mutation.OwnGuildsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -414,6 +442,27 @@ func (uuo *UserUpdateOne) SetNillableLocale(d *discord.Locale) *UserUpdateOne {
 	if d != nil {
 		uuo.SetLocale(*d)
 	}
+	return uuo
+}
+
+// SetXp sets the "xp" field.
+func (uuo *UserUpdateOne) SetXp(x xppoint.XP) *UserUpdateOne {
+	uuo.mutation.ResetXp()
+	uuo.mutation.SetXp(x)
+	return uuo
+}
+
+// SetNillableXp sets the "xp" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableXp(x *xppoint.XP) *UserUpdateOne {
+	if x != nil {
+		uuo.SetXp(*x)
+	}
+	return uuo
+}
+
+// AddXp adds x to the "xp" field.
+func (uuo *UserUpdateOne) AddXp(x xppoint.XP) *UserUpdateOne {
+	uuo.mutation.AddXp(x)
 	return uuo
 }
 
@@ -619,6 +668,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if value, ok := uuo.mutation.Locale(); ok {
 		_spec.SetField(user.FieldLocale, field.TypeString, value)
+	}
+	if value, ok := uuo.mutation.Xp(); ok {
+		_spec.SetField(user.FieldXp, field.TypeUint64, value)
+	}
+	if value, ok := uuo.mutation.AddedXp(); ok {
+		_spec.AddField(user.FieldXp, field.TypeUint64, value)
 	}
 	if uuo.mutation.OwnGuildsCleared() {
 		edge := &sqlgraph.EdgeSpec{

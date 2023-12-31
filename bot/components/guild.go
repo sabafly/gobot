@@ -4,6 +4,8 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/disgoorg/disgo/bot"
+	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/ent"
@@ -42,7 +44,7 @@ func (c *Components) OnGuildLeave() func(event *events.GuildLeave) {
 	}
 }
 
-func (c *Components) GuildCreate(ctx context.Context, owner_id snowflake.ID, g *events.GenericGuild) (*ent.Guild, error) {
+func (c *Components) GuildCreate(ctx context.Context, ownerId snowflake.ID, g *events.GenericGuild) (*ent.Guild, error) {
 	if ok := c.db.Guild.
 		Query().
 		Where(guild.ID(g.Guild.ID)).ExistX(ctx); ok {
@@ -55,7 +57,7 @@ func (c *Components) GuildCreate(ctx context.Context, owner_id snowflake.ID, g *
 		return c.db.Guild.Create().
 			SetID(g.GuildID).
 			SetName(g.Guild.Name).
-			SetOwnerID(owner_id).
+			SetOwnerID(ownerId).
 			Save(ctx)
 	}
 }
@@ -65,4 +67,15 @@ func (c *Components) GuildCreateID(ctx context.Context, gid snowflake.ID) (*ent.
 		Query().
 		Where(guild.ID(gid)).
 		Only(ctx)
+}
+
+func (c *Components) GuildRequest(client bot.Client, gid snowflake.ID) (*discord.Guild, error) {
+	if g, ok := client.Caches().Guild(gid); ok {
+		return &g, nil
+	}
+	g, err := client.Rest().GetGuild(gid, true)
+	if err != nil {
+		return nil, err
+	}
+	return &g.Guild, nil
 }

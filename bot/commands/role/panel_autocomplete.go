@@ -13,7 +13,7 @@ import (
 	"github.com/sabafly/gobot/internal/errors"
 )
 
-func panel_autocomplete(c *components.Components, event *events.AutocompleteInteractionCreate) errors.Error {
+func panelAutocomplete(c *components.Components, event *events.AutocompleteInteractionCreate) errors.Error {
 	g, err := c.GuildCreateID(event, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)

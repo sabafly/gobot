@@ -3,9 +3,13 @@
 package guild
 
 import (
+	"time"
+
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/disgoorg/disgo/discord"
+	snowflake "github.com/disgoorg/snowflake/v2"
+	"github.com/sabafly/gobot/internal/permissions"
 )
 
 const (
@@ -17,12 +21,54 @@ const (
 	FieldName = "name"
 	// FieldLocale holds the string denoting the locale field in the database.
 	FieldLocale = "locale"
+	// FieldLevelUpMessage holds the string denoting the level_up_message field in the database.
+	FieldLevelUpMessage = "level_up_message"
+	// FieldLevelUpChannel holds the string denoting the level_up_channel field in the database.
+	FieldLevelUpChannel = "level_up_channel"
+	// FieldLevelUpExcludeChannel holds the string denoting the level_up_exclude_channel field in the database.
+	FieldLevelUpExcludeChannel = "level_up_exclude_channel"
+	// FieldLevelMee6Imported holds the string denoting the level_mee6_imported field in the database.
+	FieldLevelMee6Imported = "level_mee6_imported"
+	// FieldLevelRole holds the string denoting the level_role field in the database.
+	FieldLevelRole = "level_role"
+	// FieldPermissions holds the string denoting the permissions field in the database.
+	FieldPermissions = "permissions"
+	// FieldRemindCount holds the string denoting the remind_count field in the database.
+	FieldRemindCount = "remind_count"
+	// FieldRolePanelEditTimes holds the string denoting the role_panel_edit_times field in the database.
+	FieldRolePanelEditTimes = "role_panel_edit_times"
+	// FieldBumpEnabled holds the string denoting the bump_enabled field in the database.
+	FieldBumpEnabled = "bump_enabled"
+	// FieldBumpMessageTitle holds the string denoting the bump_message_title field in the database.
+	FieldBumpMessageTitle = "bump_message_title"
+	// FieldBumpMessage holds the string denoting the bump_message field in the database.
+	FieldBumpMessage = "bump_message"
+	// FieldBumpRemindMessageTitle holds the string denoting the bump_remind_message_title field in the database.
+	FieldBumpRemindMessageTitle = "bump_remind_message_title"
+	// FieldBumpRemindMessage holds the string denoting the bump_remind_message field in the database.
+	FieldBumpRemindMessage = "bump_remind_message"
+	// FieldUpEnabled holds the string denoting the up_enabled field in the database.
+	FieldUpEnabled = "up_enabled"
+	// FieldUpMessageTitle holds the string denoting the up_message_title field in the database.
+	FieldUpMessageTitle = "up_message_title"
+	// FieldUpMessage holds the string denoting the up_message field in the database.
+	FieldUpMessage = "up_message"
+	// FieldUpRemindMessageTitle holds the string denoting the up_remind_message_title field in the database.
+	FieldUpRemindMessageTitle = "up_remind_message_title"
+	// FieldUpRemindMessage holds the string denoting the up_remind_message field in the database.
+	FieldUpRemindMessage = "up_remind_message"
+	// FieldBumpMention holds the string denoting the bump_mention field in the database.
+	FieldBumpMention = "bump_mention"
+	// FieldUpMention holds the string denoting the up_mention field in the database.
+	FieldUpMention = "up_mention"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
 	// EdgeMembers holds the string denoting the members edge name in mutations.
 	EdgeMembers = "members"
 	// EdgeMessagePins holds the string denoting the message_pins edge name in mutations.
 	EdgeMessagePins = "message_pins"
+	// EdgeReminds holds the string denoting the reminds edge name in mutations.
+	EdgeReminds = "reminds"
 	// EdgeRolePanels holds the string denoting the role_panels edge name in mutations.
 	EdgeRolePanels = "role_panels"
 	// EdgeRolePanelPlacements holds the string denoting the role_panel_placements edge name in mutations.
@@ -52,6 +98,13 @@ const (
 	MessagePinsInverseTable = "message_pins"
 	// MessagePinsColumn is the table column denoting the message_pins relation/edge.
 	MessagePinsColumn = "guild_message_pins"
+	// RemindsTable is the table that holds the reminds relation/edge.
+	RemindsTable = "message_reminds"
+	// RemindsInverseTable is the table name for the MessageRemind entity.
+	// It exists in this package in order to avoid circular dependency with the "messageremind" package.
+	RemindsInverseTable = "message_reminds"
+	// RemindsColumn is the table column denoting the reminds relation/edge.
+	RemindsColumn = "guild_reminds"
 	// RolePanelsTable is the table that holds the role_panels relation/edge.
 	RolePanelsTable = "role_panels"
 	// RolePanelsInverseTable is the table name for the RolePanel entity.
@@ -80,6 +133,26 @@ var Columns = []string{
 	FieldID,
 	FieldName,
 	FieldLocale,
+	FieldLevelUpMessage,
+	FieldLevelUpChannel,
+	FieldLevelUpExcludeChannel,
+	FieldLevelMee6Imported,
+	FieldLevelRole,
+	FieldPermissions,
+	FieldRemindCount,
+	FieldRolePanelEditTimes,
+	FieldBumpEnabled,
+	FieldBumpMessageTitle,
+	FieldBumpMessage,
+	FieldBumpRemindMessageTitle,
+	FieldBumpRemindMessage,
+	FieldUpEnabled,
+	FieldUpMessageTitle,
+	FieldUpMessage,
+	FieldUpRemindMessageTitle,
+	FieldUpRemindMessage,
+	FieldBumpMention,
+	FieldUpMention,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "guilds"
@@ -110,6 +183,56 @@ var (
 	DefaultLocale discord.Locale
 	// LocaleValidator is a validator for the "locale" field. It is called by the builders before save.
 	LocaleValidator func(string) error
+	// DefaultLevelUpMessage holds the default value on creation for the "level_up_message" field.
+	DefaultLevelUpMessage string
+	// LevelUpMessageValidator is a validator for the "level_up_message" field. It is called by the builders before save.
+	LevelUpMessageValidator func(string) error
+	// DefaultLevelMee6Imported holds the default value on creation for the "level_mee6_imported" field.
+	DefaultLevelMee6Imported bool
+	// DefaultLevelRole holds the default value on creation for the "level_role" field.
+	DefaultLevelRole map[int]snowflake.ID
+	// DefaultPermissions holds the default value on creation for the "permissions" field.
+	DefaultPermissions map[snowflake.ID]permissions.Permission
+	// DefaultRemindCount holds the default value on creation for the "remind_count" field.
+	DefaultRemindCount int
+	// DefaultRolePanelEditTimes holds the default value on creation for the "role_panel_edit_times" field.
+	DefaultRolePanelEditTimes []time.Time
+	// DefaultBumpEnabled holds the default value on creation for the "bump_enabled" field.
+	DefaultBumpEnabled bool
+	// DefaultBumpMessageTitle holds the default value on creation for the "bump_message_title" field.
+	DefaultBumpMessageTitle string
+	// BumpMessageTitleValidator is a validator for the "bump_message_title" field. It is called by the builders before save.
+	BumpMessageTitleValidator func(string) error
+	// DefaultBumpMessage holds the default value on creation for the "bump_message" field.
+	DefaultBumpMessage string
+	// BumpMessageValidator is a validator for the "bump_message" field. It is called by the builders before save.
+	BumpMessageValidator func(string) error
+	// DefaultBumpRemindMessageTitle holds the default value on creation for the "bump_remind_message_title" field.
+	DefaultBumpRemindMessageTitle string
+	// BumpRemindMessageTitleValidator is a validator for the "bump_remind_message_title" field. It is called by the builders before save.
+	BumpRemindMessageTitleValidator func(string) error
+	// DefaultBumpRemindMessage holds the default value on creation for the "bump_remind_message" field.
+	DefaultBumpRemindMessage string
+	// BumpRemindMessageValidator is a validator for the "bump_remind_message" field. It is called by the builders before save.
+	BumpRemindMessageValidator func(string) error
+	// DefaultUpEnabled holds the default value on creation for the "up_enabled" field.
+	DefaultUpEnabled bool
+	// DefaultUpMessageTitle holds the default value on creation for the "up_message_title" field.
+	DefaultUpMessageTitle string
+	// UpMessageTitleValidator is a validator for the "up_message_title" field. It is called by the builders before save.
+	UpMessageTitleValidator func(string) error
+	// DefaultUpMessage holds the default value on creation for the "up_message" field.
+	DefaultUpMessage string
+	// UpMessageValidator is a validator for the "up_message" field. It is called by the builders before save.
+	UpMessageValidator func(string) error
+	// DefaultUpRemindMessageTitle holds the default value on creation for the "up_remind_message_title" field.
+	DefaultUpRemindMessageTitle string
+	// UpRemindMessageTitleValidator is a validator for the "up_remind_message_title" field. It is called by the builders before save.
+	UpRemindMessageTitleValidator func(string) error
+	// DefaultUpRemindMessage holds the default value on creation for the "up_remind_message" field.
+	DefaultUpRemindMessage string
+	// UpRemindMessageValidator is a validator for the "up_remind_message" field. It is called by the builders before save.
+	UpRemindMessageValidator func(string) error
 )
 
 // OrderOption defines the ordering options for the Guild queries.
@@ -128,6 +251,86 @@ func ByName(opts ...sql.OrderTermOption) OrderOption {
 // ByLocale orders the results by the locale field.
 func ByLocale(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLocale, opts...).ToFunc()
+}
+
+// ByLevelUpMessage orders the results by the level_up_message field.
+func ByLevelUpMessage(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLevelUpMessage, opts...).ToFunc()
+}
+
+// ByLevelUpChannel orders the results by the level_up_channel field.
+func ByLevelUpChannel(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLevelUpChannel, opts...).ToFunc()
+}
+
+// ByLevelMee6Imported orders the results by the level_mee6_imported field.
+func ByLevelMee6Imported(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLevelMee6Imported, opts...).ToFunc()
+}
+
+// ByRemindCount orders the results by the remind_count field.
+func ByRemindCount(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRemindCount, opts...).ToFunc()
+}
+
+// ByBumpEnabled orders the results by the bump_enabled field.
+func ByBumpEnabled(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBumpEnabled, opts...).ToFunc()
+}
+
+// ByBumpMessageTitle orders the results by the bump_message_title field.
+func ByBumpMessageTitle(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBumpMessageTitle, opts...).ToFunc()
+}
+
+// ByBumpMessage orders the results by the bump_message field.
+func ByBumpMessage(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBumpMessage, opts...).ToFunc()
+}
+
+// ByBumpRemindMessageTitle orders the results by the bump_remind_message_title field.
+func ByBumpRemindMessageTitle(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBumpRemindMessageTitle, opts...).ToFunc()
+}
+
+// ByBumpRemindMessage orders the results by the bump_remind_message field.
+func ByBumpRemindMessage(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBumpRemindMessage, opts...).ToFunc()
+}
+
+// ByUpEnabled orders the results by the up_enabled field.
+func ByUpEnabled(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpEnabled, opts...).ToFunc()
+}
+
+// ByUpMessageTitle orders the results by the up_message_title field.
+func ByUpMessageTitle(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpMessageTitle, opts...).ToFunc()
+}
+
+// ByUpMessage orders the results by the up_message field.
+func ByUpMessage(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpMessage, opts...).ToFunc()
+}
+
+// ByUpRemindMessageTitle orders the results by the up_remind_message_title field.
+func ByUpRemindMessageTitle(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpRemindMessageTitle, opts...).ToFunc()
+}
+
+// ByUpRemindMessage orders the results by the up_remind_message field.
+func ByUpRemindMessage(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpRemindMessage, opts...).ToFunc()
+}
+
+// ByBumpMention orders the results by the bump_mention field.
+func ByBumpMention(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBumpMention, opts...).ToFunc()
+}
+
+// ByUpMention orders the results by the up_mention field.
+func ByUpMention(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpMention, opts...).ToFunc()
 }
 
 // ByOwnerField orders the results by owner field.
@@ -162,6 +365,20 @@ func ByMessagePinsCount(opts ...sql.OrderTermOption) OrderOption {
 func ByMessagePins(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newMessagePinsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByRemindsCount orders the results by reminds count.
+func ByRemindsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRemindsStep(), opts...)
+	}
+}
+
+// ByReminds orders the results by reminds terms.
+func ByReminds(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRemindsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
@@ -225,6 +442,13 @@ func newMessagePinsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(MessagePinsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, MessagePinsTable, MessagePinsColumn),
+	)
+}
+func newRemindsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RemindsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RemindsTable, RemindsColumn),
 	)
 }
 func newRolePanelsStep() *sqlgraph.Step {

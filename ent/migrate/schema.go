@@ -13,6 +13,26 @@ var (
 		{Name: "id", Type: field.TypeUint64, Increment: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "locale", Type: field.TypeString, Default: "ja"},
+		{Name: "level_up_message", Type: field.TypeString, Default: "{user}がレベルアップしたよ！🥳\n**{before_level} レベル → {after_level} レベル**"},
+		{Name: "level_up_channel", Type: field.TypeUint64, Nullable: true},
+		{Name: "level_up_exclude_channel", Type: field.TypeJSON, Nullable: true},
+		{Name: "level_mee6_imported", Type: field.TypeBool, Default: false},
+		{Name: "level_role", Type: field.TypeJSON, Nullable: true},
+		{Name: "permissions", Type: field.TypeJSON},
+		{Name: "remind_count", Type: field.TypeInt, Default: 0},
+		{Name: "role_panel_edit_times", Type: field.TypeJSON, Default: "[]"},
+		{Name: "bump_enabled", Type: field.TypeBool, Default: true},
+		{Name: "bump_message_title", Type: field.TypeString, Default: "Bumpを検知しました"},
+		{Name: "bump_message", Type: field.TypeString, Default: "２時間後に通知します"},
+		{Name: "bump_remind_message_title", Type: field.TypeString, Default: "Bumpの時間です"},
+		{Name: "bump_remind_message", Type: field.TypeString, Default: "</bump:947088344167366698>でBumpしましょう"},
+		{Name: "up_enabled", Type: field.TypeBool, Default: true},
+		{Name: "up_message_title", Type: field.TypeString, Default: "UPを検知しました"},
+		{Name: "up_message", Type: field.TypeString, Default: "１時間後に通知します"},
+		{Name: "up_remind_message_title", Type: field.TypeString, Default: "UPの時間です"},
+		{Name: "up_remind_message", Type: field.TypeString, Default: "</dissoku up:828002256690610256>でUPしましょう"},
+		{Name: "bump_mention", Type: field.TypeUint64, Nullable: true},
+		{Name: "up_mention", Type: field.TypeUint64, Nullable: true},
 		{Name: "user_own_guilds", Type: field.TypeUint64},
 	}
 	// GuildsTable holds the schema information for the "guilds" table.
@@ -23,7 +43,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "guilds_users_own_guilds",
-				Columns:    []*schema.Column{GuildsColumns[3]},
+				Columns:    []*schema.Column{GuildsColumns[23]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -33,8 +53,11 @@ var (
 	MembersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "permission", Type: field.TypeJSON, Nullable: true},
+		{Name: "xp", Type: field.TypeUint64, Default: 0},
+		{Name: "last_xp", Type: field.TypeTime, Nullable: true},
+		{Name: "message_count", Type: field.TypeUint64, Default: 0},
 		{Name: "guild_members", Type: field.TypeUint64},
-		{Name: "user_guilds", Type: field.TypeUint64},
+		{Name: "user_id", Type: field.TypeUint64},
 	}
 	// MembersTable holds the schema information for the "members" table.
 	MembersTable = &schema.Table{
@@ -44,13 +67,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "members_guilds_members",
-				Columns:    []*schema.Column{MembersColumns[2]},
+				Columns:    []*schema.Column{MembersColumns[5]},
 				RefColumns: []*schema.Column{GuildsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "members_users_guilds",
-				Columns:    []*schema.Column{MembersColumns[3]},
+				Columns:    []*schema.Column{MembersColumns[6]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -80,12 +103,38 @@ var (
 			},
 		},
 	}
+	// MessageRemindsColumns holds the columns for the "message_reminds" table.
+	MessageRemindsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "channel_id", Type: field.TypeUint64},
+		{Name: "author_id", Type: field.TypeUint64},
+		{Name: "time", Type: field.TypeTime},
+		{Name: "content", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString},
+		{Name: "guild_reminds", Type: field.TypeUint64},
+	}
+	// MessageRemindsTable holds the schema information for the "message_reminds" table.
+	MessageRemindsTable = &schema.Table{
+		Name:       "message_reminds",
+		Columns:    MessageRemindsColumns,
+		PrimaryKey: []*schema.Column{MessageRemindsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "message_reminds_guilds_reminds",
+				Columns:    []*schema.Column{MessageRemindsColumns[6]},
+				RefColumns: []*schema.Column{GuildsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// RolePanelsColumns holds the columns for the "role_panels" table.
 	RolePanelsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
 		{Name: "name", Type: field.TypeString, Size: 32},
 		{Name: "description", Type: field.TypeString, Size: 140},
 		{Name: "roles", Type: field.TypeJSON, Nullable: true},
+		{Name: "updated_at", Type: field.TypeTime, Nullable: true},
+		{Name: "applied_at", Type: field.TypeTime, Nullable: true},
 		{Name: "guild_role_panels", Type: field.TypeUint64},
 	}
 	// RolePanelsTable holds the schema information for the "role_panels" table.
@@ -96,7 +145,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "role_panels_guilds_role_panels",
-				Columns:    []*schema.Column{RolePanelsColumns[4]},
+				Columns:    []*schema.Column{RolePanelsColumns[6]},
 				RefColumns: []*schema.Column{GuildsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -110,6 +159,9 @@ var (
 		{Name: "token", Type: field.TypeString, Nullable: true},
 		{Name: "selected_role", Type: field.TypeUint64, Nullable: true},
 		{Name: "modified", Type: field.TypeBool, Default: false},
+		{Name: "name", Type: field.TypeString, Nullable: true, Size: 32},
+		{Name: "description", Type: field.TypeString, Nullable: true, Size: 140},
+		{Name: "roles", Type: field.TypeJSON, Nullable: true},
 		{Name: "guild_role_panel_edits", Type: field.TypeUint64},
 		{Name: "role_panel_edit", Type: field.TypeUUID, Unique: true},
 	}
@@ -121,13 +173,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "role_panel_edits_guilds_role_panel_edits",
-				Columns:    []*schema.Column{RolePanelEditsColumns[6]},
+				Columns:    []*schema.Column{RolePanelEditsColumns[9]},
 				RefColumns: []*schema.Column{GuildsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "role_panel_edits_role_panels_edit",
-				Columns:    []*schema.Column{RolePanelEditsColumns[7]},
+				Columns:    []*schema.Column{RolePanelEditsColumns[10]},
 				RefColumns: []*schema.Column{RolePanelsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -146,6 +198,10 @@ var (
 		{Name: "use_display_name", Type: field.TypeBool, Default: false},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "uses", Type: field.TypeInt, Default: 0},
+		{Name: "name", Type: field.TypeString, Size: 32},
+		{Name: "description", Type: field.TypeString, Size: 140},
+		{Name: "roles", Type: field.TypeJSON, Nullable: true},
+		{Name: "updated_at", Type: field.TypeTime, Nullable: true},
 		{Name: "guild_role_panel_placements", Type: field.TypeUint64},
 		{Name: "role_panel_placements", Type: field.TypeUUID},
 	}
@@ -157,13 +213,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "role_panel_placeds_guilds_role_panel_placements",
-				Columns:    []*schema.Column{RolePanelPlacedsColumns[11]},
+				Columns:    []*schema.Column{RolePanelPlacedsColumns[15]},
 				RefColumns: []*schema.Column{GuildsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "role_panel_placeds_role_panels_placements",
-				Columns:    []*schema.Column{RolePanelPlacedsColumns[12]},
+				Columns:    []*schema.Column{RolePanelPlacedsColumns[16]},
 				RefColumns: []*schema.Column{RolePanelsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -175,6 +231,7 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "locale", Type: field.TypeString, Default: "ja"},
+		{Name: "xp", Type: field.TypeUint64, Default: 0},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
@@ -216,6 +273,7 @@ var (
 		GuildsTable,
 		MembersTable,
 		MessagePinsTable,
+		MessageRemindsTable,
 		RolePanelsTable,
 		RolePanelEditsTable,
 		RolePanelPlacedsTable,
@@ -229,6 +287,7 @@ func init() {
 	MembersTable.ForeignKeys[0].RefTable = GuildsTable
 	MembersTable.ForeignKeys[1].RefTable = UsersTable
 	MessagePinsTable.ForeignKeys[0].RefTable = GuildsTable
+	MessageRemindsTable.ForeignKeys[0].RefTable = GuildsTable
 	RolePanelsTable.ForeignKeys[0].RefTable = GuildsTable
 	RolePanelEditsTable.ForeignKeys[0].RefTable = GuildsTable
 	RolePanelEditsTable.ForeignKeys[1].RefTable = RolePanelsTable

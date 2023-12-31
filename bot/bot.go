@@ -28,13 +28,18 @@ import (
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/gateway"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/disgo/sharding"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"github.com/sabafly/gobot/bot/commands/debug"
+	"github.com/sabafly/gobot/bot/commands/level"
 	"github.com/sabafly/gobot/bot/commands/message"
+	"github.com/sabafly/gobot/bot/commands/permission"
 	"github.com/sabafly/gobot/bot/commands/ping"
 	"github.com/sabafly/gobot/bot/commands/role"
+	"github.com/sabafly/gobot/bot/commands/setting"
+	userinfo "github.com/sabafly/gobot/bot/commands/user_info"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/ent"
 	"github.com/sabafly/gobot/internal/translate"
@@ -60,9 +65,7 @@ func run() error {
 		AddSource: true,
 		Level:     slog.LevelInfo,
 	})))
-	if err := godotenv.Load(); err != nil {
-		return fmt.Errorf(".envファイルを読み込めません: %w", err)
-	}
+	_ = godotenv.Load()
 
 	config, err := components.Load("gobot.yml")
 	if err != nil {
@@ -73,7 +76,12 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("mysqlとの接続を開けません: %w", err)
 	}
-	defer db.Close()
+	defer func(db *ent.Client) {
+		err := db.Close()
+		if err != nil {
+			slog.Error("mysqlとの接続を閉じれません", slog.Any("error", err))
+		}
+	}(db)
 
 	// c, err := caches.Open(config.Redis...)
 	// if err != nil {
@@ -93,9 +101,14 @@ func run() error {
 
 	component.AddCommands(
 		debug.Command(component),
-		ping.Command(),
+		ping.Command(component),
 		message.Command(component),
 		role.Command(component),
+		level.Command(component),
+		userinfo.Command(component),
+		permission.Command(component),
+		setting.Command(component),
+		role.ImportCommand(component),
 	)
 
 	token := os.Getenv("TOKEN")
@@ -111,6 +124,9 @@ func run() error {
 				gateway.WithIntents(gateway.IntentsGuild, gateway.IntentsPrivileged),
 			),
 		),
+		bot.WithRestClientConfigOpts(
+			rest.WithUserAgent(fmt.Sprintf("DiscordBot (%s, %s)", disgo.GitHub, disgo.Version)),
+		),
 		bot.WithEventManagerConfigOpts(
 			bot.WithAsyncEventsEnabled(),
 		),
@@ -124,7 +140,7 @@ func run() error {
 	}
 
 	if err := client.OpenShardManager(context.Background()); err != nil {
-		return fmt.Errorf("Discord ゲートウェイを開けません: %w", err)
+		return fmt.Errorf("discord ゲートウェイを開けません: %w", err)
 	}
 	defer client.Close(context.Background())
 

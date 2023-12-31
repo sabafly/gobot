@@ -27,11 +27,12 @@ import (
 	"github.com/sabafly/gobot/internal/embeds"
 	"github.com/sabafly/gobot/internal/emoji"
 	"github.com/sabafly/gobot/internal/errors"
+	"github.com/sabafly/gobot/internal/ratelimit"
 	"github.com/sabafly/gobot/internal/translate"
 )
 
 func Command(c *components.Components) components.Command {
-	return (&generic.GenericCommand{
+	return (&generic.Command{
 		Namespace: "role",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
@@ -44,42 +45,52 @@ func Command(c *components.Components) components.Command {
 						Description: "panel",
 						Options: []discord.ApplicationCommandOptionSubCommand{
 							{
-								Name:        "create",
-								Description: "create role panel",
+								Name:                     "create",
+								Description:              "create role panel",
+								DescriptionLocalizations: translate.MessageMap("components.role.panel.create.command.description", false),
 							},
 							{
-								Name:        "place",
-								Description: "place role panel",
+								Name:                     "place",
+								Description:              "place role panel",
+								DescriptionLocalizations: translate.MessageMap("components.role.panel.place.command.description", false),
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionString{
-										Name:         "panel",
-										Description:  "panel name or id",
-										Required:     true,
-										Autocomplete: true,
+										Name:                     "panel",
+										Description:              "panel name or id",
+										NameLocalizations:        translate.MessageMap("components.role.panel.place.command.options.panel.name", false),
+										DescriptionLocalizations: translate.MessageMap("components.role.panel.place.command.options.panel.description", false),
+										Required:                 true,
+										Autocomplete:             true,
 									},
 								},
 							},
 							{
-								Name:        "edit",
-								Description: "edit role panel",
+								Name:                     "edit",
+								Description:              "edit role panel",
+								DescriptionLocalizations: translate.MessageMap("components.role.panel.edit.command.description", false),
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionString{
-										Name:         "panel",
-										Description:  "panel name or id",
-										Required:     true,
-										Autocomplete: true,
+										Name:                     "panel",
+										Description:              "panel name or id",
+										NameLocalizations:        translate.MessageMap("components.role.panel.edit.command.options.panel.name", false),
+										DescriptionLocalizations: translate.MessageMap("components.role.panel.edit.command.options.panel.description", false),
+										Required:                 true,
+										Autocomplete:             true,
 									},
 								},
 							},
 							{
-								Name:        "delete",
-								Description: "delete role panel",
+								Name:                     "delete",
+								Description:              "delete role panel",
+								DescriptionLocalizations: translate.MessageMap("components.role.panel.delete.command.description", false),
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionString{
-										Name:         "panel",
-										Description:  "panel name or id",
-										Required:     true,
-										Autocomplete: true,
+										Name:                     "panel",
+										Description:              "panel name or id",
+										NameLocalizations:        translate.MessageMap("components.role.panel.delete.command.options.panel.name", false),
+										DescriptionLocalizations: translate.MessageMap("components.role.panel.delete.command.options.panel.description", false),
+										Required:                 true,
+										Autocomplete:             true,
 									},
 								},
 							},
@@ -90,7 +101,10 @@ func Command(c *components.Components) components.Command {
 		},
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
 			"/role/panel/create": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("role.panel.create", discord.PermissionManageRoles),
+				Permission: []generic.Permission{
+					generic.PermissionString("role.panel.create"),
+				},
+				DiscordPerm: discord.PermissionManageRoles,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					if err := event.Modal(
 						discord.NewModalCreateBuilder().
@@ -126,7 +140,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/role/panel/edit": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("role.panel.edit", discord.PermissionManageRoles),
+				Permission: []generic.Permission{
+					generic.PermissionString("role.panel.edit"),
+				},
+				DiscordPerm: discord.PermissionManageRoles,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -144,6 +161,33 @@ func Command(c *components.Components) components.Command {
 						c.DB().RolePanelEdit.DeleteOneID(rolePanel.QueryEdit().FirstIDX(event)).ExecX(event)
 					}
 
+					shouldUpdate := false
+					var removeRoles []snowflake.ID
+					var roles []discord.Role = nil
+					for _, r := range rolePanel.Roles {
+						if roles == nil {
+							roles, err = event.Client().Rest().GetRoles(*event.GuildID())
+							if err != nil {
+								return errors.NewError(err)
+							}
+						}
+						if slices.ContainsFunc(roles, func(role discord.Role) bool { return role.ID == r.ID }) {
+							continue
+						}
+						shouldUpdate = true
+						removeRoles = append(removeRoles, r.ID)
+					}
+					if shouldUpdate {
+						for _, id := range removeRoles {
+							rolePanel.Roles = slices.DeleteFunc(rolePanel.Roles, func(r schema.Role) bool { return r.ID == id })
+						}
+						rolePanel =
+							rolePanel.Update().
+								SetUpdatedAt(time.Now()).
+								SetRoles(rolePanel.Roles).
+								SaveX(event)
+					}
+
 					edit := c.DB().RolePanelEdit.Create().
 						SetGuild(g).
 						SetParent(rolePanel).
@@ -151,7 +195,7 @@ func Command(c *components.Components) components.Command {
 						SaveX(event)
 
 					if err := event.CreateMessage(
-						rp_edit_base_message(rolePanel, edit, event.Locale()).
+						rpEditBaseMessage(rolePanel, edit, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
 							Create(),
 					); err != nil {
@@ -162,7 +206,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/role/panel/place": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("role.panel.place", discord.PermissionManageRoles),
+				Permission: []generic.Permission{
+					generic.PermissionString("role.panel.place"),
+				},
+				DiscordPerm: discord.PermissionManageRoles,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -182,10 +229,14 @@ func Command(c *components.Components) components.Command {
 						SetGuild(g).
 						SetChannelID(event.Channel().ID()).
 						SetRolePanel(panel).
+						SetName(panel.Name).
+						SetDescription(panel.Description).
+						SetRoles(panel.Roles).
+						SetUpdatedAt(time.Now()).
 						SaveX(event)
 
 					if err := event.CreateMessage(
-						rp_place_base_menu(panel, place, event.Locale()).
+						rpPlaceBaseMenu(place, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
 							Create(),
 					); err != nil {
@@ -195,7 +246,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"/role/panel/delete": generic.PCommandHandler{
-				PCommandHandler: generic.PermissionCommandCheck("role.panel.delete", discord.PermissionManageRoles),
+				Permission: []generic.Permission{
+					generic.PermissionString("role.panel.delete"),
+				},
+				DiscordPerm: discord.PermissionManageRoles,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					g, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
@@ -218,6 +272,9 @@ func Command(c *components.Components) components.Command {
 
 					c.DB().RolePanelPlaced.Delete().
 						Where(rolepanelplaced.HasRolePanelWith(rolepanel.ID(panel.ID))).
+						ExecX(event)
+					c.DB().RolePanelEdit.Delete().
+						Where(rolepaneledit.HasParentWith(rolepanel.ID(panel.ID))).
 						ExecX(event)
 
 					c.DB().RolePanel.DeleteOne(panel).ExecX(event)
@@ -242,16 +299,25 @@ func Command(c *components.Components) components.Command {
 		},
 		AutocompleteHandlers: map[string]generic.PermissionAutocompleteHandler{
 			"/role/panel/place:panel": generic.PAutocompleteHandler{
-				PAutocompleteHandler: generic.PermissionAutocompleteCheck("role.panel.place", discord.PermissionManageRoles),
-				AutocompleteHandler:  panel_autocomplete,
+				Permission: []generic.Permission{
+					generic.PermissionString("role.panel.place"),
+				},
+				DiscordPerm:         discord.PermissionManageRoles,
+				AutocompleteHandler: panelAutocomplete,
 			},
 			"/role/panel/edit:panel": generic.PAutocompleteHandler{
-				PAutocompleteHandler: generic.PermissionAutocompleteCheck("role.panel.edit", discord.PermissionManageRoles),
-				AutocompleteHandler:  panel_autocomplete,
+				Permission: []generic.Permission{
+					generic.PermissionString("role.panel.edit"),
+				},
+				DiscordPerm:         discord.PermissionManageRoles,
+				AutocompleteHandler: panelAutocomplete,
 			},
 			"/role/panel/delete:panel": generic.PAutocompleteHandler{
-				PAutocompleteHandler: generic.PermissionAutocompleteCheck("role.panel.delete", discord.PermissionManageRoles),
-				AutocompleteHandler:  panel_autocomplete,
+				Permission: []generic.Permission{
+					generic.PermissionString("role.panel.delete"),
+				},
+				DiscordPerm:         discord.PermissionManageRoles,
+				AutocompleteHandler: panelAutocomplete,
 			},
 		},
 		ModalHandlers: map[string]generic.ModalHandler{
@@ -273,8 +339,10 @@ func Command(c *components.Components) components.Command {
 					SetChannelID(event.Channel().ID()).
 					SaveX(event)
 
+				initialize(edit, rolePanel)
+
 				if err := event.CreateMessage(
-					rp_edit_base_message(rolePanel, edit, event.Locale()).
+					rpEditBaseMessage(rolePanel, edit, event.Locale()).
 						SetFlags(discord.MessageFlagEphemeral).
 						Create(),
 				); err != nil {
@@ -301,30 +369,28 @@ func Command(c *components.Components) components.Command {
 				edit := g.QueryRolePanelEdits().Where(rolepaneledit.ID(editID)).FirstX(event)
 				panel := edit.QueryParent().OnlyX(event)
 
+				initialize(edit, panel)
+
 				switch action {
 				case "change_name":
-					panel = panel.Update().
-						SetName(event.Data.Text("name")).
-						SaveX(event)
 					edit = edit.Update().
 						SetModified(true).
+						SetName(event.Data.Text("name")).
 						SaveX(event)
 					if err := event.UpdateMessage(
-						rp_edit_base_message(panel, edit, event.Locale()).
+						rpEditBaseMessage(panel, edit, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
 							Update(),
 					); err != nil {
 						return errors.NewError(err)
 					}
 				case "change_description":
-					panel = panel.Update().
-						SetDescription(event.Data.Text("description")).
-						SaveX(event)
 					edit = edit.Update().
 						SetModified(true).
+						SetDescription(event.Data.Text("description")).
 						SaveX(event)
 					if err := event.UpdateMessage(
-						rp_edit_base_message(panel, edit, event.Locale()).
+						rpEditBaseMessage(panel, edit, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
 							Update(),
 					); err != nil {
@@ -332,12 +398,12 @@ func Command(c *components.Components) components.Command {
 					}
 				case "set_display_name":
 					if edit.SelectedRole != nil {
-						panel.Roles[slices.IndexFunc(panel.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole })].Name = event.Data.Text("display_name")
-						panel = panel.Update().SetRoles(panel.Roles).SaveX(event)
+						edit.Roles[slices.IndexFunc(edit.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole })].Name = event.Data.Text("display_name")
+						edit = edit.Update().SetRoles(panel.Roles).SaveX(event)
 					}
 
 					if err := event.UpdateMessage(
-						rp_edit_base_message(panel, edit, event.Locale()).
+						rpEditBaseMessage(panel, edit, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
 							Update(),
 					); err != nil {
@@ -350,7 +416,10 @@ func Command(c *components.Components) components.Command {
 		},
 		ComponentHandlers: map[string]generic.PermissionComponentHandler{
 			"role:panel_edit_component": generic.PComponentHandler{
-				PComponentHandler: generic.PermissionComponentCheck("role.panel.edit", discord.PermissionManageRoles),
+				Permission: []generic.Permission{
+					generic.PermissionString("role.panel.edit"),
+				},
+				DiscordPerm: discord.PermissionManageRoles,
 				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
 					args := strings.Split(event.Data.CustomID(), ":")
 					action := args[2]
@@ -368,6 +437,8 @@ func Command(c *components.Components) components.Command {
 					edit := g.QueryRolePanelEdits().Where(rolepaneledit.ID(editID)).FirstX(event)
 					panel := edit.QueryParent().OnlyX(event)
 
+					initialize(edit, panel)
+
 					switch action {
 					case "change_name", "change_description":
 						if err := event.Modal(
@@ -384,7 +455,7 @@ func Command(c *components.Components) components.Command {
 												MinLength: builtin.Ptr(1),
 												MaxLength: 32,
 												Required:  true,
-												Value:     panel.Name,
+												Value:     *edit.Name,
 											},
 										),
 										discord.NewActionRow(
@@ -393,7 +464,7 @@ func Command(c *components.Components) components.Command {
 												Style:     discord.TextInputStyleParagraph,
 												Label:     translate.Message(event.Locale(), "components.role.panel.create.modal.input.2.label"),
 												MaxLength: 140,
-												Value:     panel.Description,
+												Value:     *edit.Description,
 											},
 										),
 									),
@@ -404,7 +475,7 @@ func Command(c *components.Components) components.Command {
 						}
 					case "modify_roles":
 						if err := event.UpdateMessage(
-							rp_edit_modify_roles_message(panel, edit, event.Locale()).
+							rpEditModifyRolesMessage(edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
 								Update(),
 						); err != nil {
@@ -412,7 +483,7 @@ func Command(c *components.Components) components.Command {
 						}
 					case "base_menu":
 						if err := event.UpdateMessage(
-							rp_edit_base_message(panel, edit, event.Locale()).
+							rpEditBaseMessage(panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
 								Update(),
 						); err != nil {
@@ -424,35 +495,36 @@ func Command(c *components.Components) components.Command {
 						if !valid {
 							return errors.NewError(errors.ErrorMessage("errors.invalid.self", event))
 						}
-						role_map := map[snowflake.ID]discord.Role{}
+						roleMap := map[snowflake.ID]discord.Role{}
 						for _, id := range self.RoleIDs {
 							role, ok := event.Client().Caches().Role(*event.GuildID(), id)
 							if !ok {
 								continue
 							}
-							role_map[id] = role
+							roleMap[id] = role
 						}
-						hi, _ := discordutil.GetHighestRolePosition(role_map)
-						deleted_role := []snowflake.ID{}
+						hi, _ := discordutil.GetHighestRolePosition(roleMap)
+						var deletedRole []snowflake.ID
+
 						for i, r := range roles {
-							if slices.ContainsFunc(panel.Roles, func(r1 schema.Role) bool { return r1.ID == r.ID }) {
+							if slices.ContainsFunc(edit.Roles, func(r1 schema.Role) bool { return r1.ID == r.ID }) {
 								continue
 							}
 							if r.Managed || r.Position >= hi {
 								delete(roles, i)
-								deleted_role = append(deleted_role, i)
+								deletedRole = append(deletedRole, i)
 								continue
 							}
-							panel.Roles = append(panel.Roles, schema.Role{
+							edit.Roles = append(edit.Roles, schema.Role{
 								ID:   r.ID,
 								Name: r.Name,
 							})
 						}
 
-						if len(deleted_role) > 0 {
-							var deleted_role_string string
-							for _, id := range deleted_role {
-								deleted_role_string += fmt.Sprintf("- %s\r", discord.RoleMention(id))
+						if len(deletedRole) > 0 {
+							var deletedRoleString string
+							for _, id := range deletedRole {
+								deletedRoleString += fmt.Sprintf("- %s\r", discord.RoleMention(id))
 							}
 							if err := event.CreateMessage(
 								discord.NewMessageBuilder().
@@ -460,7 +532,7 @@ func Command(c *components.Components) components.Command {
 										embeds.SetEmbedProperties(
 											discord.NewEmbedBuilder().
 												SetTitle(translate.Message(event.Locale(), "components.role.panel.edit.add_role.deleted_role.embed.title")).
-												SetDescriptionf("%s\n"+deleted_role_string, translate.Message(event.Locale(), "components.role.panel.edit.add_role.deleted_role.embed.description")).
+												SetDescriptionf("%s\n"+deletedRoleString, translate.Message(event.Locale(), "components.role.panel.edit.add_role.deleted_role.embed.description")).
 												Build(),
 										),
 									).
@@ -471,20 +543,15 @@ func Command(c *components.Components) components.Command {
 							}
 							return nil
 						}
+						edit.Roles = slices.DeleteFunc(edit.Roles, func(r schema.Role) bool { _, ok := roles[r.ID]; return !ok })
 
-						panel.Roles = slices.DeleteFunc(panel.Roles, func(r schema.Role) bool { _, ok := roles[r.ID]; return !ok })
-
-						panel = panel.Update().
-							SetRoles(panel.Roles).
-							SaveX(event)
 						edit = edit.Update().
-							SetModified(false).
+							SetModified(true).
+							SetRoles(edit.Roles).
 							SaveX(event)
-
-						go update_role_panel(event, panel, event.Locale(), event.Client(), true)
 
 						if err := event.UpdateMessage(
-							rp_edit_base_message(panel, edit, event.Locale()).
+							rpEditBaseMessage(panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
 								Update(),
 						); err != nil {
@@ -506,7 +573,7 @@ func Command(c *components.Components) components.Command {
 						}
 
 						if err := event.UpdateMessage(
-							rp_edit_base_message(panel, edit, event.Locale()).
+							rpEditBaseMessage(panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
 								Update(),
 						); err != nil {
@@ -514,19 +581,15 @@ func Command(c *components.Components) components.Command {
 						}
 					case "delete":
 						if edit.SelectedRole != nil {
-							panel.Roles = slices.DeleteFunc(panel.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole })
-							panel = panel.Update().
-								SetRoles(panel.Roles).
-								SaveX(event)
+							edit.Roles = slices.DeleteFunc(edit.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole })
 							edit = edit.Update().
-								SetModified(false).
+								SetModified(true).
+								SetRoles(edit.Roles).
 								SaveX(event)
 						}
 
-						go update_role_panel(event, panel, event.Locale(), event.Client(), true)
-
 						if err := event.UpdateMessage(
-							rp_edit_base_message(panel, edit, event.Locale()).
+							rpEditBaseMessage(panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
 								Update(),
 						); err != nil {
@@ -534,20 +597,18 @@ func Command(c *components.Components) components.Command {
 						}
 					case "move_up", "move_down":
 						if edit.SelectedRole != nil {
-							index := slices.IndexFunc(panel.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole })
+							index := slices.IndexFunc(edit.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole })
 							mv := builtin.Or(action == "move_up", -1, 1)
+							edit.Roles[index+mv], edit.Roles[index] = edit.Roles[index], edit.Roles[index+mv]
 
 							edit = edit.Update().
 								SetModified(true).
-								SaveX(event)
-							panel.Roles[index+mv], panel.Roles[index] = panel.Roles[index], panel.Roles[index+mv]
-							panel = panel.Update().
-								SetRoles(panel.Roles).
+								SetRoles(edit.Roles).
 								SaveX(event)
 						}
 
 						if err := event.UpdateMessage(
-							rp_edit_base_message(panel, edit, event.Locale()).
+							rpEditBaseMessage(panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
 								Update(),
 						); err != nil {
@@ -568,7 +629,7 @@ func Command(c *components.Components) components.Command {
 												MinLength: builtin.Ptr(1),
 												MaxLength: 100,
 												Required:  true,
-												Value:     panel.Roles[slices.IndexFunc(panel.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole })].Name,
+												Value:     edit.Roles[slices.IndexFunc(edit.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole })].Name,
 											},
 										),
 									).
@@ -586,7 +647,7 @@ func Command(c *components.Components) components.Command {
 						}
 
 						if err := event.UpdateMessage(
-							rp_edit_set_emoji_message(panel, edit, event.Locale()).
+							rpEditSetEmojiMessage(edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
 								Update(),
 						); err != nil {
@@ -596,34 +657,71 @@ func Command(c *components.Components) components.Command {
 						edit = edit.Update().
 							ClearEmojiAuthor().
 							ClearToken().
-							SetModified(false).
 							SaveX(event)
 
 						if action == "reset_emoji" {
-							panel.Roles[slices.IndexFunc(panel.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole })].Emoji = nil
-							panel = panel.Update().
+							edit.Roles[slices.IndexFunc(edit.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole })].Emoji = nil
+							edit = edit.Update().
+								SetModified(true).
 								SetRoles(panel.Roles).
 								SaveX(event)
 						}
 
-						go update_role_panel(event, panel, event.Locale(), event.Client(), true)
+						if err := event.UpdateMessage(
+							rpEditBaseMessage(panel, edit, event.Locale()).
+								SetFlags(discord.MessageFlagEphemeral).
+								Update(),
+						); err != nil {
+							return errors.NewError(err)
+						}
+					case "save_change":
+
+						edit = edit.Update().
+							SetModified(false).
+							SaveX(event)
+
+						update := panel.Update().
+							SetUpdatedAt(time.Now()).
+							SetNillableName(edit.Name).
+							SetNillableDescription(edit.Description)
+						if edit.Roles != nil {
+							update.SetRoles(edit.Roles)
+						}
+						panel = update.SaveX(event)
 
 						if err := event.UpdateMessage(
-							rp_edit_base_message(panel, edit, event.Locale()).
+							rpEditBaseMessage(panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
 								Update(),
 						); err != nil {
 							return errors.NewError(err)
 						}
 					case "apply_change":
-						edit = edit.Update().
-							SetModified(false).
+						var ok bool
+						g.RolePanelEditTimes, ok = ratelimit.CheckLimit(g.RolePanelEditTimes, []ratelimit.Rule{
+							{
+								Limit: 3,
+								Unit:  time.Minute * 10,
+							},
+							{
+								Limit: 5,
+								Unit:  time.Minute * 30,
+							},
+						})
+						g.Update().
+							SetRolePanelEditTimes(g.RolePanelEditTimes).
+							SaveX(event)
+						if !ok || len(panel.Roles) < 1 {
+							return errors.NewError(errors.ErrorMessage("errors.ratelimited", event))
+						}
+
+						panel = panel.Update().
+							SetAppliedAt(time.Now()).
 							SaveX(event)
 
-						go update_role_panel(event, panel, event.Locale(), event.Client(), true)
-
+						go updateRolePanel(event, panel, event.Locale(), event.Client(), true)
 						if err := event.UpdateMessage(
-							rp_edit_base_message(panel, edit, event.Locale()).
+							rpEditBaseMessage(panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
 								Update(),
 						); err != nil {
@@ -637,7 +735,10 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 			"role:panel_place_component": generic.PComponentHandler{
-				PComponentHandler: generic.PermissionComponentCheck("role.panel.place", discord.PermissionManageRoles),
+				Permission: []generic.Permission{
+					generic.PermissionString("role.panel.place"),
+				},
+				DiscordPerm: discord.PermissionManageRoles,
 				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
 					args := strings.Split(event.Data.CustomID(), ":")
 					action := args[2]
@@ -661,7 +762,7 @@ func Command(c *components.Components) components.Command {
 							SetType(rolepanelplaced.Type(event.StringSelectMenuInteractionData().Values[0])).
 							SaveX(event)
 					case "button_type":
-						var t discord.ButtonStyle
+						var t discord.ButtonStyle = discord.ButtonStylePrimary
 						switch event.StringSelectMenuInteractionData().Values[0] {
 						case "green":
 							t = discord.ButtonStyleSuccess
@@ -671,8 +772,6 @@ func Command(c *components.Components) components.Command {
 							t = discord.ButtonStyleDanger
 						case "gray":
 							t = discord.ButtonStyleSecondary
-						default:
-							t = discord.ButtonStylePrimary
 						}
 						place = place.Update().
 							SetButtonType(t).
@@ -694,7 +793,10 @@ func Command(c *components.Components) components.Command {
 							SetUseDisplayName(!place.UseDisplayName).
 							SaveX(event)
 					case "create":
-						if err := role_panel_place(event, panel, place, event.Locale(), event.Client(), true); err != nil {
+						if len(panel.Roles) < 1 {
+							return errors.NewError(errors.ErrorMessage("errors.not_exist", event))
+						}
+						if err := rolePanelPlace(event, place, event.Locale(), event.Client(), true); err != nil {
 							return errors.NewError(err)
 						}
 
@@ -717,7 +819,7 @@ func Command(c *components.Components) components.Command {
 						return nil
 					}
 					if err := event.UpdateMessage(
-						rp_place_base_menu(panel, place, event.Locale()).
+						rpPlaceBaseMenu(place, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
 							Update(),
 					); err != nil {
@@ -741,14 +843,13 @@ func Command(c *components.Components) components.Command {
 					return errors.NewError(errors.ErrorMessage("errors.timeout", event))
 				}
 				place := g.QueryRolePanelPlacements().Where(rolepanelplaced.ID(placeID)).FirstX(event)
-				panel := place.QueryRolePanel().OnlyX(event)
 
 				switch action {
 				case "button":
 					roleID := snowflake.MustParse(args[4])
-					if !slices.ContainsFunc(panel.Roles, func(r schema.Role) bool { return r.ID == roleID }) {
+					if !slices.ContainsFunc(place.Roles, func(r schema.Role) bool { return r.ID == roleID }) {
 						if err := event.UpdateMessage(
-							rp_placed_message(panel, place, event.Locale()).
+							rpPlacedMessage(place, event.Locale()).
 								Update(),
 						); err != nil {
 							return errors.NewError(err)
@@ -756,13 +857,21 @@ func Command(c *components.Components) components.Command {
 						return nil
 					}
 
+					_, ok := event.Client().Caches().Role(*event.GuildID(), roleID)
+					if !ok {
+						if err := event.DeferUpdateMessage(); err != nil {
+							return errors.NewError(err)
+						}
+						return nil
+					}
+
 					contain := slices.Contains(event.Member().RoleIDs, roleID)
 					if contain {
-						if err := event.Client().Rest().RemoveMemberRole(g.ID, event.User().ID, roleID, rest.WithReason(fmt.Sprintf("Role Panel \"%s\" (%s)", panel.Name, panel.ID))); err != nil {
+						if err := event.Client().Rest().RemoveMemberRole(g.ID, event.User().ID, roleID, rest.WithReason(fmt.Sprintf("Role Panel \"%s\" (%s)", place.Name, place.ID))); err != nil {
 							return errors.NewError(errors.ErrorMessage("errors.fail.role.panel", event))
 						}
 					} else {
-						if err := event.Client().Rest().AddMemberRole(g.ID, event.User().ID, roleID, rest.WithReason(fmt.Sprintf("Role Panel \"%s\" (%s)", panel.Name, panel.ID))); err != nil {
+						if err := event.Client().Rest().AddMemberRole(g.ID, event.User().ID, roleID, rest.WithReason(fmt.Sprintf("Role Panel \"%s\" (%s)", place.Name, place.ID))); err != nil {
 							return errors.NewError(errors.ErrorMessage("errors.fail.role.panel", event))
 						}
 					}
@@ -782,8 +891,8 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 				case "select_menu_fold":
-					options := make([]discord.StringSelectMenuOption, len(panel.Roles))
-					for i, role := range panel.Roles {
+					options := make([]discord.StringSelectMenuOption, len(place.Roles))
+					for i, role := range place.Roles {
 						if role.Emoji == nil {
 							role.Emoji = &discord.ComponentEmoji{
 								Name: discordutil.Index2Emoji(i),
@@ -801,7 +910,7 @@ func Command(c *components.Components) components.Command {
 							CustomID:    fmt.Sprintf("role:panel_use:select_menu:%s", place.ID.String()),
 							Placeholder: translate.Message(event.Locale(), "components.role.panel.components.select_menu.placeholder"),
 							MinValues:   builtin.Ptr(0),
-							MaxValues:   len(panel.Roles),
+							MaxValues:   len(place.Roles),
 							Options:     options,
 						},
 					)
@@ -814,24 +923,28 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 				case "select_menu":
-					selected_roles := []snowflake.ID{}
+					var selectedRoles []snowflake.ID
 					for _, v := range event.StringSelectMenuInteractionData().Values {
-						selected_roles = append(selected_roles, snowflake.MustParse(v))
+						selectedRoles = append(selectedRoles, snowflake.MustParse(v))
 					}
 
-					add_roles := []snowflake.ID{}
-					removed_roles := []snowflake.ID{}
-					unchanged_role := []snowflake.ID{}
-					for _, role := range panel.Roles {
-						if slices.Contains(selected_roles, role.ID) {
+					var addRoles []snowflake.ID
+					var removedRoles []snowflake.ID
+					var unchangedRole []snowflake.ID
+					for _, role := range place.Roles {
+						if slices.Contains(selectedRoles, role.ID) {
 							// 選ばれたとき
 							if slices.Index(event.Member().RoleIDs, role.ID) != -1 {
 								// 持ってたなら
-								unchanged_role = append(unchanged_role, role.ID)
+								unchangedRole = append(unchangedRole, role.ID)
 								continue
 							} else {
 								// 持ってないなら
-								add_roles = append(add_roles, role.ID)
+								_, ok := event.Client().Caches().Role(*event.GuildID(), role.ID)
+								if !ok {
+									continue
+								}
+								addRoles = append(addRoles, role.ID)
 
 								if err := event.Client().Rest().AddMemberRole(*event.GuildID(), event.User().ID, role.ID); err != nil {
 									return errors.NewError(errors.ErrorMessage("errors.fail.role.panel", event))
@@ -841,7 +954,7 @@ func Command(c *components.Components) components.Command {
 							// 選ばれてないとき
 							if slices.Index(event.Member().RoleIDs, role.ID) != -1 {
 								// 持ってたなら
-								removed_roles = append(removed_roles, role.ID)
+								removedRoles = append(removedRoles, role.ID)
 
 								if err := event.Client().Rest().RemoveMemberRole(*event.GuildID(), event.User().ID, role.ID); err != nil {
 									return errors.NewError(errors.ErrorMessage("errors.fail.role.panel", event))
@@ -855,39 +968,39 @@ func Command(c *components.Components) components.Command {
 
 					embed := discord.NewEmbedBuilder().
 						SetTitle(translate.Message(event.Locale(), "components.role.panel.use.changed"))
-					if len(add_roles) > 0 {
-						var add_roles_string string
-						for _, id := range add_roles {
-							add_roles_string += fmt.Sprintf("%s\n", discord.RoleMention(id))
+					if len(addRoles) > 0 {
+						var addRolesString string
+						for _, id := range addRoles {
+							addRolesString += fmt.Sprintf("%s\n", discord.RoleMention(id))
 						}
 						embed.AddFields(
 							discord.EmbedField{
 								Name:  translate.Message(event.Locale(), "components.role.panel.use.changed.add"),
-								Value: add_roles_string,
+								Value: addRolesString,
 							},
 						)
 					}
-					if len(unchanged_role) > 0 {
-						var unchanged_role_string string
-						for _, id := range unchanged_role {
-							unchanged_role_string += fmt.Sprintf("%s\n", discord.RoleMention(id))
+					if len(unchangedRole) > 0 {
+						var unchangedRoleString string
+						for _, id := range unchangedRole {
+							unchangedRoleString += fmt.Sprintf("%s\n", discord.RoleMention(id))
 						}
 						embed.AddFields(
 							discord.EmbedField{
 								Name:  translate.Message(event.Locale(), "components.role.panel.use.changed.unchanged"),
-								Value: unchanged_role_string,
+								Value: unchangedRoleString,
 							},
 						)
 					}
-					if len(removed_roles) > 0 {
-						var removed_roles_string string
-						for _, id := range removed_roles {
-							removed_roles_string += fmt.Sprintf("%s\n", discord.RoleMention(id))
+					if len(removedRoles) > 0 {
+						var removedRolesString string
+						for _, id := range removedRoles {
+							removedRolesString += fmt.Sprintf("%s\n", discord.RoleMention(id))
 						}
 						embed.AddFields(
 							discord.EmbedField{
 								Name:  translate.Message(event.Locale(), "components.role.panel.use.changed.remove"),
-								Value: removed_roles_string,
+								Value: removedRolesString,
 							},
 						)
 					}
@@ -927,20 +1040,24 @@ func Command(c *components.Components) components.Command {
 					if len(emojis) < 1 {
 						continue
 					}
-					emoji := discordutil.ParseComponentEmoji(emojis[0])
+					componentEmoji := discordutil.ParseComponentEmoji(emojis[0])
 					panel := edit.QueryParent().OnlyX(event)
-					panel.Roles[slices.IndexFunc(panel.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole })].Emoji = &emoji
-					panel = panel.Update().SetRoles(panel.Roles).SaveX(event)
-					edit = edit.Update().ClearEmojiAuthor().ClearToken().SaveX(event)
+
+					initialize(edit, panel)
+
+					edit.Roles[slices.IndexFunc(edit.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole })].Emoji = &componentEmoji
+					edit = edit.Update().
+						ClearEmojiAuthor().
+						ClearToken().
+						SetRoles(edit.Roles).
+						SaveX(event)
 
 					if err := event.Client().Rest().AddReaction(event.ChannelID, event.MessageID, "✅"); err != nil {
 						return errors.NewError(err)
 					}
 
-					go update_role_panel(event, panel, u.Locale, event.Client(), true)
-
 					if _, err := event.Client().Rest().UpdateInteractionResponse(event.Client().ApplicationID(), token,
-						rp_edit_base_message(panel, edit, u.Locale).
+						rpEditBaseMessage(panel, edit, u.Locale).
 							SetFlags(discord.MessageFlagEphemeral).
 							Update(),
 					); err != nil {
@@ -993,6 +1110,10 @@ func Command(c *components.Components) components.Command {
 					}
 					if event.Emoji.Reaction() != discordutil.ReactionComponentEmoji(*role.Emoji) {
 						continue
+					}
+					_, ok := event.Client().Caches().Role(event.GuildID, role.ID)
+					if !ok {
+						return nil
 					}
 					contains := slices.Contains(event.Member.RoleIDs, role.ID)
 					if contains {
@@ -1048,13 +1169,25 @@ func Command(c *components.Components) components.Command {
 			}
 			return nil
 		},
-	}).SetDB(c)
+	}).SetComponent(c)
 }
 
-func update_role_panel(ctx context.Context, panel *ent.RolePanel, locale discord.Locale, client bot.Client, react bool) {
+func UpdateRolePanel(ctx context.Context, place *ent.RolePanelPlaced, locale discord.Locale, client bot.Client) {
+	if err := rolePanelPlace(ctx, place, locale, client, true); err != nil {
+		slog.Error("アップデートに失敗", "err", err)
+	}
+}
+
+func updateRolePanel(ctx context.Context, panel *ent.RolePanel, locale discord.Locale, client bot.Client, react bool) {
 	places := panel.QueryPlacements().AllX(ctx)
 	for _, place := range places {
-		if err := role_panel_place(ctx, panel, place, locale, client, react); err != nil {
+		place = place.Update().
+			SetName(panel.Name).
+			SetDescription(panel.Description).
+			SetRoles(panel.Roles).
+			SetUpdatedAt(time.Now()).
+			SaveX(ctx)
+		if err := rolePanelPlace(ctx, place, locale, client, react); err != nil {
 			slog.Error("アップデートに失敗", "err", err)
 		}
 	}

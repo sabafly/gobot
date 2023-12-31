@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/disgoorg/disgo/discord"
+	"github.com/sabafly/gobot/internal/xppoint"
 )
 
 const (
@@ -21,6 +22,8 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldLocale holds the string denoting the locale field in the database.
 	FieldLocale = "locale"
+	// FieldXp holds the string denoting the xp field in the database.
+	FieldXp = "xp"
 	// EdgeOwnGuilds holds the string denoting the own_guilds edge name in mutations.
 	EdgeOwnGuilds = "own_guilds"
 	// EdgeGuilds holds the string denoting the guilds edge name in mutations.
@@ -42,7 +45,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "member" package.
 	GuildsInverseTable = "members"
 	// GuildsColumn is the table column denoting the guilds relation/edge.
-	GuildsColumn = "user_guilds"
+	GuildsColumn = "user_id"
 	// WordSuffixTable is the table that holds the word_suffix relation/edge.
 	WordSuffixTable = "word_suffixes"
 	// WordSuffixInverseTable is the table name for the WordSuffix entity.
@@ -58,6 +61,7 @@ var Columns = []string{
 	FieldName,
 	FieldCreatedAt,
 	FieldLocale,
+	FieldXp,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -79,6 +83,8 @@ var (
 	DefaultLocale discord.Locale
 	// LocaleValidator is a validator for the "locale" field. It is called by the builders before save.
 	LocaleValidator func(string) error
+	// DefaultXp holds the default value on creation for the "xp" field.
+	DefaultXp xppoint.XP
 )
 
 // OrderOption defines the ordering options for the User queries.
@@ -102,6 +108,11 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByLocale orders the results by the locale field.
 func ByLocale(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLocale, opts...).ToFunc()
+}
+
+// ByXp orders the results by the xp field.
+func ByXp(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldXp, opts...).ToFunc()
 }
 
 // ByOwnGuildsCount orders the results by own_guilds count.

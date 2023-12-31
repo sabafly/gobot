@@ -8,6 +8,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
+	"github.com/sabafly/gobot/internal/xppoint"
 )
 
 // User holds the schema definition for the User entity.
@@ -31,6 +32,9 @@ func (User) Fields() []ent.Field {
 			NotEmpty().
 			Default(string(discord.LocaleJapanese)).
 			GoType(discord.Locale("")),
+		field.Uint64("xp").
+			Default(0).
+			GoType(xppoint.XP(0)),
 	}
 }
 

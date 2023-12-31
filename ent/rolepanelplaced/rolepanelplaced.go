@@ -37,6 +37,14 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUses holds the string denoting the uses field in the database.
 	FieldUses = "uses"
+	// FieldName holds the string denoting the name field in the database.
+	FieldName = "name"
+	// FieldDescription holds the string denoting the description field in the database.
+	FieldDescription = "description"
+	// FieldRoles holds the string denoting the roles field in the database.
+	FieldRoles = "roles"
+	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
+	FieldUpdatedAt = "updated_at"
 	// EdgeGuild holds the string denoting the guild edge name in mutations.
 	EdgeGuild = "guild"
 	// EdgeRolePanel holds the string denoting the role_panel edge name in mutations.
@@ -72,6 +80,10 @@ var Columns = []string{
 	FieldUseDisplayName,
 	FieldCreatedAt,
 	FieldUses,
+	FieldName,
+	FieldDescription,
+	FieldRoles,
+	FieldUpdatedAt,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "role_panel_placeds"
@@ -113,6 +125,10 @@ var (
 	DefaultCreatedAt func() time.Time
 	// DefaultUses holds the default value on creation for the "uses" field.
 	DefaultUses int
+	// NameValidator is a validator for the "name" field. It is called by the builders before save.
+	NameValidator func(string) error
+	// DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	DescriptionValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -197,6 +213,21 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUses orders the results by the uses field.
 func ByUses(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUses, opts...).ToFunc()
+}
+
+// ByName orders the results by the name field.
+func ByName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldName, opts...).ToFunc()
+}
+
+// ByDescription orders the results by the description field.
+func ByDescription(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldDescription, opts...).ToFunc()
+}
+
+// ByUpdatedAt orders the results by the updated_at field.
+func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
 // ByGuildField orders the results by guild field.

@@ -18,6 +18,8 @@ type Tx struct {
 	Member *MemberClient
 	// MessagePin is the client for interacting with the MessagePin builders.
 	MessagePin *MessagePinClient
+	// MessageRemind is the client for interacting with the MessageRemind builders.
+	MessageRemind *MessageRemindClient
 	// RolePanel is the client for interacting with the RolePanel builders.
 	RolePanel *RolePanelClient
 	// RolePanelEdit is the client for interacting with the RolePanelEdit builders.
@@ -162,6 +164,7 @@ func (tx *Tx) init() {
 	tx.Guild = NewGuildClient(tx.config)
 	tx.Member = NewMemberClient(tx.config)
 	tx.MessagePin = NewMessagePinClient(tx.config)
+	tx.MessageRemind = NewMessageRemindClient(tx.config)
 	tx.RolePanel = NewRolePanelClient(tx.config)
 	tx.RolePanelEdit = NewRolePanelEditClient(tx.config)
 	tx.RolePanelPlaced = NewRolePanelPlacedClient(tx.config)

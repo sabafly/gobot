@@ -16,6 +16,7 @@ import (
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/ent/rolepanelplaced"
+	"github.com/sabafly/gobot/ent/schema"
 )
 
 // RolePanelPlacedCreate is the builder for creating a RolePanelPlaced entity.
@@ -153,6 +154,38 @@ func (rppc *RolePanelPlacedCreate) SetUses(i int) *RolePanelPlacedCreate {
 func (rppc *RolePanelPlacedCreate) SetNillableUses(i *int) *RolePanelPlacedCreate {
 	if i != nil {
 		rppc.SetUses(*i)
+	}
+	return rppc
+}
+
+// SetName sets the "name" field.
+func (rppc *RolePanelPlacedCreate) SetName(s string) *RolePanelPlacedCreate {
+	rppc.mutation.SetName(s)
+	return rppc
+}
+
+// SetDescription sets the "description" field.
+func (rppc *RolePanelPlacedCreate) SetDescription(s string) *RolePanelPlacedCreate {
+	rppc.mutation.SetDescription(s)
+	return rppc
+}
+
+// SetRoles sets the "roles" field.
+func (rppc *RolePanelPlacedCreate) SetRoles(s []schema.Role) *RolePanelPlacedCreate {
+	rppc.mutation.SetRoles(s)
+	return rppc
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (rppc *RolePanelPlacedCreate) SetUpdatedAt(t time.Time) *RolePanelPlacedCreate {
+	rppc.mutation.SetUpdatedAt(t)
+	return rppc
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (rppc *RolePanelPlacedCreate) SetNillableUpdatedAt(t *time.Time) *RolePanelPlacedCreate {
+	if t != nil {
+		rppc.SetUpdatedAt(*t)
 	}
 	return rppc
 }
@@ -298,6 +331,22 @@ func (rppc *RolePanelPlacedCreate) check() error {
 	if _, ok := rppc.mutation.Uses(); !ok {
 		return &ValidationError{Name: "uses", err: errors.New(`ent: missing required field "RolePanelPlaced.uses"`)}
 	}
+	if _, ok := rppc.mutation.Name(); !ok {
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "RolePanelPlaced.name"`)}
+	}
+	if v, ok := rppc.mutation.Name(); ok {
+		if err := rolepanelplaced.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanelPlaced.name": %w`, err)}
+		}
+	}
+	if _, ok := rppc.mutation.Description(); !ok {
+		return &ValidationError{Name: "description", err: errors.New(`ent: missing required field "RolePanelPlaced.description"`)}
+	}
+	if v, ok := rppc.mutation.Description(); ok {
+		if err := rolepanelplaced.DescriptionValidator(v); err != nil {
+			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "RolePanelPlaced.description": %w`, err)}
+		}
+	}
 	if _, ok := rppc.mutation.GuildID(); !ok {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "RolePanelPlaced.guild"`)}
 	}
@@ -378,6 +427,22 @@ func (rppc *RolePanelPlacedCreate) createSpec() (*RolePanelPlaced, *sqlgraph.Cre
 	if value, ok := rppc.mutation.Uses(); ok {
 		_spec.SetField(rolepanelplaced.FieldUses, field.TypeInt, value)
 		_node.Uses = value
+	}
+	if value, ok := rppc.mutation.Name(); ok {
+		_spec.SetField(rolepanelplaced.FieldName, field.TypeString, value)
+		_node.Name = value
+	}
+	if value, ok := rppc.mutation.Description(); ok {
+		_spec.SetField(rolepanelplaced.FieldDescription, field.TypeString, value)
+		_node.Description = value
+	}
+	if value, ok := rppc.mutation.Roles(); ok {
+		_spec.SetField(rolepanelplaced.FieldRoles, field.TypeJSON, value)
+		_node.Roles = value
+	}
+	if value, ok := rppc.mutation.UpdatedAt(); ok {
+		_spec.SetField(rolepanelplaced.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
 	}
 	if nodes := rppc.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

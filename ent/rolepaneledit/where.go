@@ -83,6 +83,16 @@ func Modified(v bool) predicate.RolePanelEdit {
 	return predicate.RolePanelEdit(sql.FieldEQ(FieldModified, v))
 }
 
+// Name applies equality check predicate on the "name" field. It's identical to NameEQ.
+func Name(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldEQ(FieldName, v))
+}
+
+// Description applies equality check predicate on the "description" field. It's identical to DescriptionEQ.
+func Description(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldEQ(FieldDescription, v))
+}
+
 // ChannelIDEQ applies the EQ predicate on the "channel_id" field.
 func ChannelIDEQ(v snowflake.ID) predicate.RolePanelEdit {
 	vc := uint64(v)
@@ -348,6 +358,166 @@ func ModifiedEQ(v bool) predicate.RolePanelEdit {
 // ModifiedNEQ applies the NEQ predicate on the "modified" field.
 func ModifiedNEQ(v bool) predicate.RolePanelEdit {
 	return predicate.RolePanelEdit(sql.FieldNEQ(FieldModified, v))
+}
+
+// NameEQ applies the EQ predicate on the "name" field.
+func NameEQ(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldEQ(FieldName, v))
+}
+
+// NameNEQ applies the NEQ predicate on the "name" field.
+func NameNEQ(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldNEQ(FieldName, v))
+}
+
+// NameIn applies the In predicate on the "name" field.
+func NameIn(vs ...string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldIn(FieldName, vs...))
+}
+
+// NameNotIn applies the NotIn predicate on the "name" field.
+func NameNotIn(vs ...string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldNotIn(FieldName, vs...))
+}
+
+// NameGT applies the GT predicate on the "name" field.
+func NameGT(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldGT(FieldName, v))
+}
+
+// NameGTE applies the GTE predicate on the "name" field.
+func NameGTE(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldGTE(FieldName, v))
+}
+
+// NameLT applies the LT predicate on the "name" field.
+func NameLT(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldLT(FieldName, v))
+}
+
+// NameLTE applies the LTE predicate on the "name" field.
+func NameLTE(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldLTE(FieldName, v))
+}
+
+// NameContains applies the Contains predicate on the "name" field.
+func NameContains(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldContains(FieldName, v))
+}
+
+// NameHasPrefix applies the HasPrefix predicate on the "name" field.
+func NameHasPrefix(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldHasPrefix(FieldName, v))
+}
+
+// NameHasSuffix applies the HasSuffix predicate on the "name" field.
+func NameHasSuffix(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldHasSuffix(FieldName, v))
+}
+
+// NameIsNil applies the IsNil predicate on the "name" field.
+func NameIsNil() predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldIsNull(FieldName))
+}
+
+// NameNotNil applies the NotNil predicate on the "name" field.
+func NameNotNil() predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldNotNull(FieldName))
+}
+
+// NameEqualFold applies the EqualFold predicate on the "name" field.
+func NameEqualFold(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldEqualFold(FieldName, v))
+}
+
+// NameContainsFold applies the ContainsFold predicate on the "name" field.
+func NameContainsFold(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldContainsFold(FieldName, v))
+}
+
+// DescriptionEQ applies the EQ predicate on the "description" field.
+func DescriptionEQ(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldEQ(FieldDescription, v))
+}
+
+// DescriptionNEQ applies the NEQ predicate on the "description" field.
+func DescriptionNEQ(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldNEQ(FieldDescription, v))
+}
+
+// DescriptionIn applies the In predicate on the "description" field.
+func DescriptionIn(vs ...string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldIn(FieldDescription, vs...))
+}
+
+// DescriptionNotIn applies the NotIn predicate on the "description" field.
+func DescriptionNotIn(vs ...string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldNotIn(FieldDescription, vs...))
+}
+
+// DescriptionGT applies the GT predicate on the "description" field.
+func DescriptionGT(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldGT(FieldDescription, v))
+}
+
+// DescriptionGTE applies the GTE predicate on the "description" field.
+func DescriptionGTE(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldGTE(FieldDescription, v))
+}
+
+// DescriptionLT applies the LT predicate on the "description" field.
+func DescriptionLT(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldLT(FieldDescription, v))
+}
+
+// DescriptionLTE applies the LTE predicate on the "description" field.
+func DescriptionLTE(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldLTE(FieldDescription, v))
+}
+
+// DescriptionContains applies the Contains predicate on the "description" field.
+func DescriptionContains(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldContains(FieldDescription, v))
+}
+
+// DescriptionHasPrefix applies the HasPrefix predicate on the "description" field.
+func DescriptionHasPrefix(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldHasPrefix(FieldDescription, v))
+}
+
+// DescriptionHasSuffix applies the HasSuffix predicate on the "description" field.
+func DescriptionHasSuffix(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldHasSuffix(FieldDescription, v))
+}
+
+// DescriptionIsNil applies the IsNil predicate on the "description" field.
+func DescriptionIsNil() predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldIsNull(FieldDescription))
+}
+
+// DescriptionNotNil applies the NotNil predicate on the "description" field.
+func DescriptionNotNil() predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldNotNull(FieldDescription))
+}
+
+// DescriptionEqualFold applies the EqualFold predicate on the "description" field.
+func DescriptionEqualFold(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldEqualFold(FieldDescription, v))
+}
+
+// DescriptionContainsFold applies the ContainsFold predicate on the "description" field.
+func DescriptionContainsFold(v string) predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldContainsFold(FieldDescription, v))
+}
+
+// RolesIsNil applies the IsNil predicate on the "roles" field.
+func RolesIsNil() predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldIsNull(FieldRoles))
+}
+
+// RolesNotNil applies the NotNil predicate on the "roles" field.
+func RolesNotNil() predicate.RolePanelEdit {
+	return predicate.RolePanelEdit(sql.FieldNotNull(FieldRoles))
 }
 
 // HasGuild applies the HasEdge predicate on the "guild" edge.

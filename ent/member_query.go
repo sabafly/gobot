@@ -413,7 +413,7 @@ func (mq *MemberQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Membe
 			mq.withUser != nil,
 		}
 	)
-	if mq.withGuild != nil || mq.withUser != nil {
+	if mq.withGuild != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -488,10 +488,7 @@ func (mq *MemberQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*
 	ids := make([]snowflake.ID, 0, len(nodes))
 	nodeids := make(map[snowflake.ID][]*Member)
 	for i := range nodes {
-		if nodes[i].user_guilds == nil {
-			continue
-		}
-		fk := *nodes[i].user_guilds
+		fk := nodes[i].UserID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -508,7 +505,7 @@ func (mq *MemberQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_guilds" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "user_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -541,6 +538,9 @@ func (mq *MemberQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != member.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if mq.withUser != nil {
+			_spec.Node.AddColumnOnce(member.FieldUserID)
 		}
 	}
 	if ps := mq.predicates; len(ps) > 0 {

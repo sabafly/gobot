@@ -15,6 +15,7 @@ import (
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
+	"github.com/sabafly/gobot/ent/messageremind"
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/ent/rolepaneledit"
 	"github.com/sabafly/gobot/ent/rolepanelplaced"
@@ -83,6 +84,7 @@ func checkColumn(table, column string) error {
 			guild.Table:           guild.ValidColumn,
 			member.Table:          member.ValidColumn,
 			messagepin.Table:      messagepin.ValidColumn,
+			messageremind.Table:   messageremind.ValidColumn,
 			rolepanel.Table:       rolepanel.ValidColumn,
 			rolepaneledit.Table:   rolepaneledit.ValidColumn,
 			rolepanelplaced.Table: rolepanelplaced.ValidColumn,

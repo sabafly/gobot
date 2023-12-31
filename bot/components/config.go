@@ -8,12 +8,22 @@ import (
 )
 
 type Config struct {
-	PrivateGuilds []snowflake.ID `yaml:"private_guilds"`
-	TranslateDir  string         `yaml:"translate_dir"`
-	Message       ConfigMessage  `yaml:"message"`
+	TranslateDir string        `yaml:"translate_dir"`
+	Debug        ConfigDebug   `yaml:"debug"`
+	Message      ConfigMessage `yaml:"message"`
 
 	MySQL string   `yaml:"mysql"`
 	Redis []string `yaml:"redis"`
+
+	BumpUserID snowflake.ID `yaml:"bump_user"`
+	BumpImage  string       `yaml:"bump_image"`
+	UpUserID   snowflake.ID `yaml:"up_user"`
+	UpColor    int          `yaml:"up_color"`
+}
+
+type ConfigDebug struct {
+	DebugUsers  []snowflake.ID `yaml:"users"`
+	DebugGuilds []snowflake.ID `yaml:"guilds"`
 }
 
 type ConfigMessage struct {
@@ -22,17 +32,22 @@ type ConfigMessage struct {
 
 func (c *Components) Config() Config { return c.config }
 
-func Load(path string) (*Config, error) {
+func Load(path string) (config *Config, err error) {
+	config = &Config{}
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func(f *os.File) {
+		e := f.Close()
+		if e != nil {
+			err = e
+		}
+	}(f)
 
-	var config Config
-	if err := yaml.NewDecoder(f).Decode(&config); err != nil {
+	if err := yaml.NewDecoder(f).Decode(config); err != nil {
 		return nil, err
 	}
 
-	return &config, nil
+	return config, nil
 }

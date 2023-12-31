@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -77,6 +78,46 @@ func (rpu *RolePanelUpdate) AppendRoles(s []schema.Role) *RolePanelUpdate {
 // ClearRoles clears the value of the "roles" field.
 func (rpu *RolePanelUpdate) ClearRoles() *RolePanelUpdate {
 	rpu.mutation.ClearRoles()
+	return rpu
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (rpu *RolePanelUpdate) SetUpdatedAt(t time.Time) *RolePanelUpdate {
+	rpu.mutation.SetUpdatedAt(t)
+	return rpu
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (rpu *RolePanelUpdate) SetNillableUpdatedAt(t *time.Time) *RolePanelUpdate {
+	if t != nil {
+		rpu.SetUpdatedAt(*t)
+	}
+	return rpu
+}
+
+// ClearUpdatedAt clears the value of the "updated_at" field.
+func (rpu *RolePanelUpdate) ClearUpdatedAt() *RolePanelUpdate {
+	rpu.mutation.ClearUpdatedAt()
+	return rpu
+}
+
+// SetAppliedAt sets the "applied_at" field.
+func (rpu *RolePanelUpdate) SetAppliedAt(t time.Time) *RolePanelUpdate {
+	rpu.mutation.SetAppliedAt(t)
+	return rpu
+}
+
+// SetNillableAppliedAt sets the "applied_at" field if the given value is not nil.
+func (rpu *RolePanelUpdate) SetNillableAppliedAt(t *time.Time) *RolePanelUpdate {
+	if t != nil {
+		rpu.SetAppliedAt(*t)
+	}
+	return rpu
+}
+
+// ClearAppliedAt clears the value of the "applied_at" field.
+func (rpu *RolePanelUpdate) ClearAppliedAt() *RolePanelUpdate {
+	rpu.mutation.ClearAppliedAt()
 	return rpu
 }
 
@@ -236,6 +277,18 @@ func (rpu *RolePanelUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if rpu.mutation.RolesCleared() {
 		_spec.ClearField(rolepanel.FieldRoles, field.TypeJSON)
+	}
+	if value, ok := rpu.mutation.UpdatedAt(); ok {
+		_spec.SetField(rolepanel.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if rpu.mutation.UpdatedAtCleared() {
+		_spec.ClearField(rolepanel.FieldUpdatedAt, field.TypeTime)
+	}
+	if value, ok := rpu.mutation.AppliedAt(); ok {
+		_spec.SetField(rolepanel.FieldAppliedAt, field.TypeTime, value)
+	}
+	if rpu.mutation.AppliedAtCleared() {
+		_spec.ClearField(rolepanel.FieldAppliedAt, field.TypeTime)
 	}
 	if rpu.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -403,6 +456,46 @@ func (rpuo *RolePanelUpdateOne) AppendRoles(s []schema.Role) *RolePanelUpdateOne
 // ClearRoles clears the value of the "roles" field.
 func (rpuo *RolePanelUpdateOne) ClearRoles() *RolePanelUpdateOne {
 	rpuo.mutation.ClearRoles()
+	return rpuo
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (rpuo *RolePanelUpdateOne) SetUpdatedAt(t time.Time) *RolePanelUpdateOne {
+	rpuo.mutation.SetUpdatedAt(t)
+	return rpuo
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (rpuo *RolePanelUpdateOne) SetNillableUpdatedAt(t *time.Time) *RolePanelUpdateOne {
+	if t != nil {
+		rpuo.SetUpdatedAt(*t)
+	}
+	return rpuo
+}
+
+// ClearUpdatedAt clears the value of the "updated_at" field.
+func (rpuo *RolePanelUpdateOne) ClearUpdatedAt() *RolePanelUpdateOne {
+	rpuo.mutation.ClearUpdatedAt()
+	return rpuo
+}
+
+// SetAppliedAt sets the "applied_at" field.
+func (rpuo *RolePanelUpdateOne) SetAppliedAt(t time.Time) *RolePanelUpdateOne {
+	rpuo.mutation.SetAppliedAt(t)
+	return rpuo
+}
+
+// SetNillableAppliedAt sets the "applied_at" field if the given value is not nil.
+func (rpuo *RolePanelUpdateOne) SetNillableAppliedAt(t *time.Time) *RolePanelUpdateOne {
+	if t != nil {
+		rpuo.SetAppliedAt(*t)
+	}
+	return rpuo
+}
+
+// ClearAppliedAt clears the value of the "applied_at" field.
+func (rpuo *RolePanelUpdateOne) ClearAppliedAt() *RolePanelUpdateOne {
+	rpuo.mutation.ClearAppliedAt()
 	return rpuo
 }
 
@@ -592,6 +685,18 @@ func (rpuo *RolePanelUpdateOne) sqlSave(ctx context.Context) (_node *RolePanel, 
 	}
 	if rpuo.mutation.RolesCleared() {
 		_spec.ClearField(rolepanel.FieldRoles, field.TypeJSON)
+	}
+	if value, ok := rpuo.mutation.UpdatedAt(); ok {
+		_spec.SetField(rolepanel.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if rpuo.mutation.UpdatedAtCleared() {
+		_spec.ClearField(rolepanel.FieldUpdatedAt, field.TypeTime)
+	}
+	if value, ok := rpuo.mutation.AppliedAt(); ok {
+		_spec.SetField(rolepanel.FieldAppliedAt, field.TypeTime, value)
+	}
+	if rpuo.mutation.AppliedAtCleared() {
+		_spec.ClearField(rolepanel.FieldAppliedAt, field.TypeTime)
 	}
 	if rpuo.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{

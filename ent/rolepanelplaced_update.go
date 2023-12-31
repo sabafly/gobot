@@ -6,9 +6,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/disgoorg/disgo/discord"
 	snowflake "github.com/disgoorg/snowflake/v2"
@@ -17,6 +19,7 @@ import (
 	"github.com/sabafly/gobot/ent/predicate"
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/ent/rolepanelplaced"
+	"github.com/sabafly/gobot/ent/schema"
 )
 
 // RolePanelPlacedUpdate is the builder for updating RolePanelPlaced entities.
@@ -198,6 +201,72 @@ func (rppu *RolePanelPlacedUpdate) AddUses(i int) *RolePanelPlacedUpdate {
 	return rppu
 }
 
+// SetName sets the "name" field.
+func (rppu *RolePanelPlacedUpdate) SetName(s string) *RolePanelPlacedUpdate {
+	rppu.mutation.SetName(s)
+	return rppu
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (rppu *RolePanelPlacedUpdate) SetNillableName(s *string) *RolePanelPlacedUpdate {
+	if s != nil {
+		rppu.SetName(*s)
+	}
+	return rppu
+}
+
+// SetDescription sets the "description" field.
+func (rppu *RolePanelPlacedUpdate) SetDescription(s string) *RolePanelPlacedUpdate {
+	rppu.mutation.SetDescription(s)
+	return rppu
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (rppu *RolePanelPlacedUpdate) SetNillableDescription(s *string) *RolePanelPlacedUpdate {
+	if s != nil {
+		rppu.SetDescription(*s)
+	}
+	return rppu
+}
+
+// SetRoles sets the "roles" field.
+func (rppu *RolePanelPlacedUpdate) SetRoles(s []schema.Role) *RolePanelPlacedUpdate {
+	rppu.mutation.SetRoles(s)
+	return rppu
+}
+
+// AppendRoles appends s to the "roles" field.
+func (rppu *RolePanelPlacedUpdate) AppendRoles(s []schema.Role) *RolePanelPlacedUpdate {
+	rppu.mutation.AppendRoles(s)
+	return rppu
+}
+
+// ClearRoles clears the value of the "roles" field.
+func (rppu *RolePanelPlacedUpdate) ClearRoles() *RolePanelPlacedUpdate {
+	rppu.mutation.ClearRoles()
+	return rppu
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (rppu *RolePanelPlacedUpdate) SetUpdatedAt(t time.Time) *RolePanelPlacedUpdate {
+	rppu.mutation.SetUpdatedAt(t)
+	return rppu
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (rppu *RolePanelPlacedUpdate) SetNillableUpdatedAt(t *time.Time) *RolePanelPlacedUpdate {
+	if t != nil {
+		rppu.SetUpdatedAt(*t)
+	}
+	return rppu
+}
+
+// ClearUpdatedAt clears the value of the "updated_at" field.
+func (rppu *RolePanelPlacedUpdate) ClearUpdatedAt() *RolePanelPlacedUpdate {
+	rppu.mutation.ClearUpdatedAt()
+	return rppu
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
 func (rppu *RolePanelPlacedUpdate) SetGuildID(id snowflake.ID) *RolePanelPlacedUpdate {
 	rppu.mutation.SetGuildID(id)
@@ -276,6 +345,16 @@ func (rppu *RolePanelPlacedUpdate) check() error {
 			return &ValidationError{Name: "button_type", err: fmt.Errorf(`ent: validator failed for field "RolePanelPlaced.button_type": %w`, err)}
 		}
 	}
+	if v, ok := rppu.mutation.Name(); ok {
+		if err := rolepanelplaced.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanelPlaced.name": %w`, err)}
+		}
+	}
+	if v, ok := rppu.mutation.Description(); ok {
+		if err := rolepanelplaced.DescriptionValidator(v); err != nil {
+			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "RolePanelPlaced.description": %w`, err)}
+		}
+	}
 	if _, ok := rppu.mutation.GuildID(); rppu.mutation.GuildCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "RolePanelPlaced.guild"`)
 	}
@@ -341,6 +420,29 @@ func (rppu *RolePanelPlacedUpdate) sqlSave(ctx context.Context) (n int, err erro
 	}
 	if value, ok := rppu.mutation.AddedUses(); ok {
 		_spec.AddField(rolepanelplaced.FieldUses, field.TypeInt, value)
+	}
+	if value, ok := rppu.mutation.Name(); ok {
+		_spec.SetField(rolepanelplaced.FieldName, field.TypeString, value)
+	}
+	if value, ok := rppu.mutation.Description(); ok {
+		_spec.SetField(rolepanelplaced.FieldDescription, field.TypeString, value)
+	}
+	if value, ok := rppu.mutation.Roles(); ok {
+		_spec.SetField(rolepanelplaced.FieldRoles, field.TypeJSON, value)
+	}
+	if value, ok := rppu.mutation.AppendedRoles(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, rolepanelplaced.FieldRoles, value)
+		})
+	}
+	if rppu.mutation.RolesCleared() {
+		_spec.ClearField(rolepanelplaced.FieldRoles, field.TypeJSON)
+	}
+	if value, ok := rppu.mutation.UpdatedAt(); ok {
+		_spec.SetField(rolepanelplaced.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if rppu.mutation.UpdatedAtCleared() {
+		_spec.ClearField(rolepanelplaced.FieldUpdatedAt, field.TypeTime)
 	}
 	if rppu.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -586,6 +688,72 @@ func (rppuo *RolePanelPlacedUpdateOne) AddUses(i int) *RolePanelPlacedUpdateOne 
 	return rppuo
 }
 
+// SetName sets the "name" field.
+func (rppuo *RolePanelPlacedUpdateOne) SetName(s string) *RolePanelPlacedUpdateOne {
+	rppuo.mutation.SetName(s)
+	return rppuo
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (rppuo *RolePanelPlacedUpdateOne) SetNillableName(s *string) *RolePanelPlacedUpdateOne {
+	if s != nil {
+		rppuo.SetName(*s)
+	}
+	return rppuo
+}
+
+// SetDescription sets the "description" field.
+func (rppuo *RolePanelPlacedUpdateOne) SetDescription(s string) *RolePanelPlacedUpdateOne {
+	rppuo.mutation.SetDescription(s)
+	return rppuo
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (rppuo *RolePanelPlacedUpdateOne) SetNillableDescription(s *string) *RolePanelPlacedUpdateOne {
+	if s != nil {
+		rppuo.SetDescription(*s)
+	}
+	return rppuo
+}
+
+// SetRoles sets the "roles" field.
+func (rppuo *RolePanelPlacedUpdateOne) SetRoles(s []schema.Role) *RolePanelPlacedUpdateOne {
+	rppuo.mutation.SetRoles(s)
+	return rppuo
+}
+
+// AppendRoles appends s to the "roles" field.
+func (rppuo *RolePanelPlacedUpdateOne) AppendRoles(s []schema.Role) *RolePanelPlacedUpdateOne {
+	rppuo.mutation.AppendRoles(s)
+	return rppuo
+}
+
+// ClearRoles clears the value of the "roles" field.
+func (rppuo *RolePanelPlacedUpdateOne) ClearRoles() *RolePanelPlacedUpdateOne {
+	rppuo.mutation.ClearRoles()
+	return rppuo
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (rppuo *RolePanelPlacedUpdateOne) SetUpdatedAt(t time.Time) *RolePanelPlacedUpdateOne {
+	rppuo.mutation.SetUpdatedAt(t)
+	return rppuo
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (rppuo *RolePanelPlacedUpdateOne) SetNillableUpdatedAt(t *time.Time) *RolePanelPlacedUpdateOne {
+	if t != nil {
+		rppuo.SetUpdatedAt(*t)
+	}
+	return rppuo
+}
+
+// ClearUpdatedAt clears the value of the "updated_at" field.
+func (rppuo *RolePanelPlacedUpdateOne) ClearUpdatedAt() *RolePanelPlacedUpdateOne {
+	rppuo.mutation.ClearUpdatedAt()
+	return rppuo
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
 func (rppuo *RolePanelPlacedUpdateOne) SetGuildID(id snowflake.ID) *RolePanelPlacedUpdateOne {
 	rppuo.mutation.SetGuildID(id)
@@ -677,6 +845,16 @@ func (rppuo *RolePanelPlacedUpdateOne) check() error {
 			return &ValidationError{Name: "button_type", err: fmt.Errorf(`ent: validator failed for field "RolePanelPlaced.button_type": %w`, err)}
 		}
 	}
+	if v, ok := rppuo.mutation.Name(); ok {
+		if err := rolepanelplaced.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanelPlaced.name": %w`, err)}
+		}
+	}
+	if v, ok := rppuo.mutation.Description(); ok {
+		if err := rolepanelplaced.DescriptionValidator(v); err != nil {
+			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "RolePanelPlaced.description": %w`, err)}
+		}
+	}
 	if _, ok := rppuo.mutation.GuildID(); rppuo.mutation.GuildCleared() && !ok {
 		return errors.New(`ent: clearing a required unique edge "RolePanelPlaced.guild"`)
 	}
@@ -759,6 +937,29 @@ func (rppuo *RolePanelPlacedUpdateOne) sqlSave(ctx context.Context) (_node *Role
 	}
 	if value, ok := rppuo.mutation.AddedUses(); ok {
 		_spec.AddField(rolepanelplaced.FieldUses, field.TypeInt, value)
+	}
+	if value, ok := rppuo.mutation.Name(); ok {
+		_spec.SetField(rolepanelplaced.FieldName, field.TypeString, value)
+	}
+	if value, ok := rppuo.mutation.Description(); ok {
+		_spec.SetField(rolepanelplaced.FieldDescription, field.TypeString, value)
+	}
+	if value, ok := rppuo.mutation.Roles(); ok {
+		_spec.SetField(rolepanelplaced.FieldRoles, field.TypeJSON, value)
+	}
+	if value, ok := rppuo.mutation.AppendedRoles(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, rolepanelplaced.FieldRoles, value)
+		})
+	}
+	if rppuo.mutation.RolesCleared() {
+		_spec.ClearField(rolepanelplaced.FieldRoles, field.TypeJSON)
+	}
+	if value, ok := rppuo.mutation.UpdatedAt(); ok {
+		_spec.SetField(rolepanelplaced.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if rppuo.mutation.UpdatedAtCleared() {
+		_spec.ClearField(rolepanelplaced.FieldUpdatedAt, field.TypeTime)
 	}
 	if rppuo.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -17,6 +17,7 @@ import (
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
+	"github.com/sabafly/gobot/ent/messageremind"
 	"github.com/sabafly/gobot/ent/predicate"
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/ent/rolepaneledit"
@@ -25,6 +26,7 @@ import (
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/ent/wordsuffix"
 	"github.com/sabafly/gobot/internal/permissions"
+	"github.com/sabafly/gobot/internal/xppoint"
 )
 
 const (
@@ -39,6 +41,7 @@ const (
 	TypeGuild           = "Guild"
 	TypeMember          = "Member"
 	TypeMessagePin      = "MessagePin"
+	TypeMessageRemind   = "MessageRemind"
 	TypeRolePanel       = "RolePanel"
 	TypeRolePanelEdit   = "RolePanelEdit"
 	TypeRolePanelPlaced = "RolePanelPlaced"
@@ -49,32 +52,61 @@ const (
 // GuildMutation represents an operation that mutates the Guild nodes in the graph.
 type GuildMutation struct {
 	config
-	op                           Op
-	typ                          string
-	id                           *snowflake.ID
-	name                         *string
-	locale                       *discord.Locale
-	clearedFields                map[string]struct{}
-	owner                        *snowflake.ID
-	clearedowner                 bool
-	members                      map[int]struct{}
-	removedmembers               map[int]struct{}
-	clearedmembers               bool
-	message_pins                 map[uuid.UUID]struct{}
-	removedmessage_pins          map[uuid.UUID]struct{}
-	clearedmessage_pins          bool
-	role_panels                  map[uuid.UUID]struct{}
-	removedrole_panels           map[uuid.UUID]struct{}
-	clearedrole_panels           bool
-	role_panel_placements        map[uuid.UUID]struct{}
-	removedrole_panel_placements map[uuid.UUID]struct{}
-	clearedrole_panel_placements bool
-	role_panel_edits             map[uuid.UUID]struct{}
-	removedrole_panel_edits      map[uuid.UUID]struct{}
-	clearedrole_panel_edits      bool
-	done                         bool
-	oldValue                     func(context.Context) (*Guild, error)
-	predicates                   []predicate.Guild
+	op                             Op
+	typ                            string
+	id                             *snowflake.ID
+	name                           *string
+	locale                         *discord.Locale
+	level_up_message               *string
+	level_up_channel               *snowflake.ID
+	addlevel_up_channel            *snowflake.ID
+	level_up_exclude_channel       *[]snowflake.ID
+	appendlevel_up_exclude_channel []snowflake.ID
+	level_mee6_imported            *bool
+	level_role                     *map[int]snowflake.ID
+	permissions                    *map[snowflake.ID]permissions.Permission
+	remind_count                   *int
+	addremind_count                *int
+	role_panel_edit_times          *[]time.Time
+	appendrole_panel_edit_times    []time.Time
+	bump_enabled                   *bool
+	bump_message_title             *string
+	bump_message                   *string
+	bump_remind_message_title      *string
+	bump_remind_message            *string
+	up_enabled                     *bool
+	up_message_title               *string
+	up_message                     *string
+	up_remind_message_title        *string
+	up_remind_message              *string
+	bump_mention                   *snowflake.ID
+	addbump_mention                *snowflake.ID
+	up_mention                     *snowflake.ID
+	addup_mention                  *snowflake.ID
+	clearedFields                  map[string]struct{}
+	owner                          *snowflake.ID
+	clearedowner                   bool
+	members                        map[int]struct{}
+	removedmembers                 map[int]struct{}
+	clearedmembers                 bool
+	message_pins                   map[uuid.UUID]struct{}
+	removedmessage_pins            map[uuid.UUID]struct{}
+	clearedmessage_pins            bool
+	reminds                        map[uuid.UUID]struct{}
+	removedreminds                 map[uuid.UUID]struct{}
+	clearedreminds                 bool
+	role_panels                    map[uuid.UUID]struct{}
+	removedrole_panels             map[uuid.UUID]struct{}
+	clearedrole_panels             bool
+	role_panel_placements          map[uuid.UUID]struct{}
+	removedrole_panel_placements   map[uuid.UUID]struct{}
+	clearedrole_panel_placements   bool
+	role_panel_edits               map[uuid.UUID]struct{}
+	removedrole_panel_edits        map[uuid.UUID]struct{}
+	clearedrole_panel_edits        bool
+	done                           bool
+	oldValue                       func(context.Context) (*Guild, error)
+	predicates                     []predicate.Guild
 }
 
 var _ ent.Mutation = (*GuildMutation)(nil)
@@ -253,6 +285,905 @@ func (m *GuildMutation) ResetLocale() {
 	m.locale = nil
 }
 
+// SetLevelUpMessage sets the "level_up_message" field.
+func (m *GuildMutation) SetLevelUpMessage(s string) {
+	m.level_up_message = &s
+}
+
+// LevelUpMessage returns the value of the "level_up_message" field in the mutation.
+func (m *GuildMutation) LevelUpMessage() (r string, exists bool) {
+	v := m.level_up_message
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLevelUpMessage returns the old "level_up_message" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldLevelUpMessage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLevelUpMessage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLevelUpMessage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLevelUpMessage: %w", err)
+	}
+	return oldValue.LevelUpMessage, nil
+}
+
+// ResetLevelUpMessage resets all changes to the "level_up_message" field.
+func (m *GuildMutation) ResetLevelUpMessage() {
+	m.level_up_message = nil
+}
+
+// SetLevelUpChannel sets the "level_up_channel" field.
+func (m *GuildMutation) SetLevelUpChannel(s snowflake.ID) {
+	m.level_up_channel = &s
+	m.addlevel_up_channel = nil
+}
+
+// LevelUpChannel returns the value of the "level_up_channel" field in the mutation.
+func (m *GuildMutation) LevelUpChannel() (r snowflake.ID, exists bool) {
+	v := m.level_up_channel
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLevelUpChannel returns the old "level_up_channel" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldLevelUpChannel(ctx context.Context) (v *snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLevelUpChannel is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLevelUpChannel requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLevelUpChannel: %w", err)
+	}
+	return oldValue.LevelUpChannel, nil
+}
+
+// AddLevelUpChannel adds s to the "level_up_channel" field.
+func (m *GuildMutation) AddLevelUpChannel(s snowflake.ID) {
+	if m.addlevel_up_channel != nil {
+		*m.addlevel_up_channel += s
+	} else {
+		m.addlevel_up_channel = &s
+	}
+}
+
+// AddedLevelUpChannel returns the value that was added to the "level_up_channel" field in this mutation.
+func (m *GuildMutation) AddedLevelUpChannel() (r snowflake.ID, exists bool) {
+	v := m.addlevel_up_channel
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearLevelUpChannel clears the value of the "level_up_channel" field.
+func (m *GuildMutation) ClearLevelUpChannel() {
+	m.level_up_channel = nil
+	m.addlevel_up_channel = nil
+	m.clearedFields[guild.FieldLevelUpChannel] = struct{}{}
+}
+
+// LevelUpChannelCleared returns if the "level_up_channel" field was cleared in this mutation.
+func (m *GuildMutation) LevelUpChannelCleared() bool {
+	_, ok := m.clearedFields[guild.FieldLevelUpChannel]
+	return ok
+}
+
+// ResetLevelUpChannel resets all changes to the "level_up_channel" field.
+func (m *GuildMutation) ResetLevelUpChannel() {
+	m.level_up_channel = nil
+	m.addlevel_up_channel = nil
+	delete(m.clearedFields, guild.FieldLevelUpChannel)
+}
+
+// SetLevelUpExcludeChannel sets the "level_up_exclude_channel" field.
+func (m *GuildMutation) SetLevelUpExcludeChannel(s []snowflake.ID) {
+	m.level_up_exclude_channel = &s
+	m.appendlevel_up_exclude_channel = nil
+}
+
+// LevelUpExcludeChannel returns the value of the "level_up_exclude_channel" field in the mutation.
+func (m *GuildMutation) LevelUpExcludeChannel() (r []snowflake.ID, exists bool) {
+	v := m.level_up_exclude_channel
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLevelUpExcludeChannel returns the old "level_up_exclude_channel" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldLevelUpExcludeChannel(ctx context.Context) (v []snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLevelUpExcludeChannel is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLevelUpExcludeChannel requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLevelUpExcludeChannel: %w", err)
+	}
+	return oldValue.LevelUpExcludeChannel, nil
+}
+
+// AppendLevelUpExcludeChannel adds s to the "level_up_exclude_channel" field.
+func (m *GuildMutation) AppendLevelUpExcludeChannel(s []snowflake.ID) {
+	m.appendlevel_up_exclude_channel = append(m.appendlevel_up_exclude_channel, s...)
+}
+
+// AppendedLevelUpExcludeChannel returns the list of values that were appended to the "level_up_exclude_channel" field in this mutation.
+func (m *GuildMutation) AppendedLevelUpExcludeChannel() ([]snowflake.ID, bool) {
+	if len(m.appendlevel_up_exclude_channel) == 0 {
+		return nil, false
+	}
+	return m.appendlevel_up_exclude_channel, true
+}
+
+// ClearLevelUpExcludeChannel clears the value of the "level_up_exclude_channel" field.
+func (m *GuildMutation) ClearLevelUpExcludeChannel() {
+	m.level_up_exclude_channel = nil
+	m.appendlevel_up_exclude_channel = nil
+	m.clearedFields[guild.FieldLevelUpExcludeChannel] = struct{}{}
+}
+
+// LevelUpExcludeChannelCleared returns if the "level_up_exclude_channel" field was cleared in this mutation.
+func (m *GuildMutation) LevelUpExcludeChannelCleared() bool {
+	_, ok := m.clearedFields[guild.FieldLevelUpExcludeChannel]
+	return ok
+}
+
+// ResetLevelUpExcludeChannel resets all changes to the "level_up_exclude_channel" field.
+func (m *GuildMutation) ResetLevelUpExcludeChannel() {
+	m.level_up_exclude_channel = nil
+	m.appendlevel_up_exclude_channel = nil
+	delete(m.clearedFields, guild.FieldLevelUpExcludeChannel)
+}
+
+// SetLevelMee6Imported sets the "level_mee6_imported" field.
+func (m *GuildMutation) SetLevelMee6Imported(b bool) {
+	m.level_mee6_imported = &b
+}
+
+// LevelMee6Imported returns the value of the "level_mee6_imported" field in the mutation.
+func (m *GuildMutation) LevelMee6Imported() (r bool, exists bool) {
+	v := m.level_mee6_imported
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLevelMee6Imported returns the old "level_mee6_imported" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldLevelMee6Imported(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLevelMee6Imported is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLevelMee6Imported requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLevelMee6Imported: %w", err)
+	}
+	return oldValue.LevelMee6Imported, nil
+}
+
+// ResetLevelMee6Imported resets all changes to the "level_mee6_imported" field.
+func (m *GuildMutation) ResetLevelMee6Imported() {
+	m.level_mee6_imported = nil
+}
+
+// SetLevelRole sets the "level_role" field.
+func (m *GuildMutation) SetLevelRole(value map[int]snowflake.ID) {
+	m.level_role = &value
+}
+
+// LevelRole returns the value of the "level_role" field in the mutation.
+func (m *GuildMutation) LevelRole() (r map[int]snowflake.ID, exists bool) {
+	v := m.level_role
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLevelRole returns the old "level_role" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldLevelRole(ctx context.Context) (v map[int]snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLevelRole is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLevelRole requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLevelRole: %w", err)
+	}
+	return oldValue.LevelRole, nil
+}
+
+// ClearLevelRole clears the value of the "level_role" field.
+func (m *GuildMutation) ClearLevelRole() {
+	m.level_role = nil
+	m.clearedFields[guild.FieldLevelRole] = struct{}{}
+}
+
+// LevelRoleCleared returns if the "level_role" field was cleared in this mutation.
+func (m *GuildMutation) LevelRoleCleared() bool {
+	_, ok := m.clearedFields[guild.FieldLevelRole]
+	return ok
+}
+
+// ResetLevelRole resets all changes to the "level_role" field.
+func (m *GuildMutation) ResetLevelRole() {
+	m.level_role = nil
+	delete(m.clearedFields, guild.FieldLevelRole)
+}
+
+// SetPermissions sets the "permissions" field.
+func (m *GuildMutation) SetPermissions(value map[snowflake.ID]permissions.Permission) {
+	m.permissions = &value
+}
+
+// Permissions returns the value of the "permissions" field in the mutation.
+func (m *GuildMutation) Permissions() (r map[snowflake.ID]permissions.Permission, exists bool) {
+	v := m.permissions
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPermissions returns the old "permissions" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldPermissions(ctx context.Context) (v map[snowflake.ID]permissions.Permission, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPermissions is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPermissions requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPermissions: %w", err)
+	}
+	return oldValue.Permissions, nil
+}
+
+// ResetPermissions resets all changes to the "permissions" field.
+func (m *GuildMutation) ResetPermissions() {
+	m.permissions = nil
+}
+
+// SetRemindCount sets the "remind_count" field.
+func (m *GuildMutation) SetRemindCount(i int) {
+	m.remind_count = &i
+	m.addremind_count = nil
+}
+
+// RemindCount returns the value of the "remind_count" field in the mutation.
+func (m *GuildMutation) RemindCount() (r int, exists bool) {
+	v := m.remind_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRemindCount returns the old "remind_count" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldRemindCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRemindCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRemindCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRemindCount: %w", err)
+	}
+	return oldValue.RemindCount, nil
+}
+
+// AddRemindCount adds i to the "remind_count" field.
+func (m *GuildMutation) AddRemindCount(i int) {
+	if m.addremind_count != nil {
+		*m.addremind_count += i
+	} else {
+		m.addremind_count = &i
+	}
+}
+
+// AddedRemindCount returns the value that was added to the "remind_count" field in this mutation.
+func (m *GuildMutation) AddedRemindCount() (r int, exists bool) {
+	v := m.addremind_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetRemindCount resets all changes to the "remind_count" field.
+func (m *GuildMutation) ResetRemindCount() {
+	m.remind_count = nil
+	m.addremind_count = nil
+}
+
+// SetRolePanelEditTimes sets the "role_panel_edit_times" field.
+func (m *GuildMutation) SetRolePanelEditTimes(t []time.Time) {
+	m.role_panel_edit_times = &t
+	m.appendrole_panel_edit_times = nil
+}
+
+// RolePanelEditTimes returns the value of the "role_panel_edit_times" field in the mutation.
+func (m *GuildMutation) RolePanelEditTimes() (r []time.Time, exists bool) {
+	v := m.role_panel_edit_times
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRolePanelEditTimes returns the old "role_panel_edit_times" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldRolePanelEditTimes(ctx context.Context) (v []time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRolePanelEditTimes is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRolePanelEditTimes requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRolePanelEditTimes: %w", err)
+	}
+	return oldValue.RolePanelEditTimes, nil
+}
+
+// AppendRolePanelEditTimes adds t to the "role_panel_edit_times" field.
+func (m *GuildMutation) AppendRolePanelEditTimes(t []time.Time) {
+	m.appendrole_panel_edit_times = append(m.appendrole_panel_edit_times, t...)
+}
+
+// AppendedRolePanelEditTimes returns the list of values that were appended to the "role_panel_edit_times" field in this mutation.
+func (m *GuildMutation) AppendedRolePanelEditTimes() ([]time.Time, bool) {
+	if len(m.appendrole_panel_edit_times) == 0 {
+		return nil, false
+	}
+	return m.appendrole_panel_edit_times, true
+}
+
+// ResetRolePanelEditTimes resets all changes to the "role_panel_edit_times" field.
+func (m *GuildMutation) ResetRolePanelEditTimes() {
+	m.role_panel_edit_times = nil
+	m.appendrole_panel_edit_times = nil
+}
+
+// SetBumpEnabled sets the "bump_enabled" field.
+func (m *GuildMutation) SetBumpEnabled(b bool) {
+	m.bump_enabled = &b
+}
+
+// BumpEnabled returns the value of the "bump_enabled" field in the mutation.
+func (m *GuildMutation) BumpEnabled() (r bool, exists bool) {
+	v := m.bump_enabled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBumpEnabled returns the old "bump_enabled" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldBumpEnabled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBumpEnabled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBumpEnabled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBumpEnabled: %w", err)
+	}
+	return oldValue.BumpEnabled, nil
+}
+
+// ResetBumpEnabled resets all changes to the "bump_enabled" field.
+func (m *GuildMutation) ResetBumpEnabled() {
+	m.bump_enabled = nil
+}
+
+// SetBumpMessageTitle sets the "bump_message_title" field.
+func (m *GuildMutation) SetBumpMessageTitle(s string) {
+	m.bump_message_title = &s
+}
+
+// BumpMessageTitle returns the value of the "bump_message_title" field in the mutation.
+func (m *GuildMutation) BumpMessageTitle() (r string, exists bool) {
+	v := m.bump_message_title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBumpMessageTitle returns the old "bump_message_title" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldBumpMessageTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBumpMessageTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBumpMessageTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBumpMessageTitle: %w", err)
+	}
+	return oldValue.BumpMessageTitle, nil
+}
+
+// ResetBumpMessageTitle resets all changes to the "bump_message_title" field.
+func (m *GuildMutation) ResetBumpMessageTitle() {
+	m.bump_message_title = nil
+}
+
+// SetBumpMessage sets the "bump_message" field.
+func (m *GuildMutation) SetBumpMessage(s string) {
+	m.bump_message = &s
+}
+
+// BumpMessage returns the value of the "bump_message" field in the mutation.
+func (m *GuildMutation) BumpMessage() (r string, exists bool) {
+	v := m.bump_message
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBumpMessage returns the old "bump_message" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldBumpMessage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBumpMessage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBumpMessage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBumpMessage: %w", err)
+	}
+	return oldValue.BumpMessage, nil
+}
+
+// ResetBumpMessage resets all changes to the "bump_message" field.
+func (m *GuildMutation) ResetBumpMessage() {
+	m.bump_message = nil
+}
+
+// SetBumpRemindMessageTitle sets the "bump_remind_message_title" field.
+func (m *GuildMutation) SetBumpRemindMessageTitle(s string) {
+	m.bump_remind_message_title = &s
+}
+
+// BumpRemindMessageTitle returns the value of the "bump_remind_message_title" field in the mutation.
+func (m *GuildMutation) BumpRemindMessageTitle() (r string, exists bool) {
+	v := m.bump_remind_message_title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBumpRemindMessageTitle returns the old "bump_remind_message_title" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldBumpRemindMessageTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBumpRemindMessageTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBumpRemindMessageTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBumpRemindMessageTitle: %w", err)
+	}
+	return oldValue.BumpRemindMessageTitle, nil
+}
+
+// ResetBumpRemindMessageTitle resets all changes to the "bump_remind_message_title" field.
+func (m *GuildMutation) ResetBumpRemindMessageTitle() {
+	m.bump_remind_message_title = nil
+}
+
+// SetBumpRemindMessage sets the "bump_remind_message" field.
+func (m *GuildMutation) SetBumpRemindMessage(s string) {
+	m.bump_remind_message = &s
+}
+
+// BumpRemindMessage returns the value of the "bump_remind_message" field in the mutation.
+func (m *GuildMutation) BumpRemindMessage() (r string, exists bool) {
+	v := m.bump_remind_message
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBumpRemindMessage returns the old "bump_remind_message" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldBumpRemindMessage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBumpRemindMessage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBumpRemindMessage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBumpRemindMessage: %w", err)
+	}
+	return oldValue.BumpRemindMessage, nil
+}
+
+// ResetBumpRemindMessage resets all changes to the "bump_remind_message" field.
+func (m *GuildMutation) ResetBumpRemindMessage() {
+	m.bump_remind_message = nil
+}
+
+// SetUpEnabled sets the "up_enabled" field.
+func (m *GuildMutation) SetUpEnabled(b bool) {
+	m.up_enabled = &b
+}
+
+// UpEnabled returns the value of the "up_enabled" field in the mutation.
+func (m *GuildMutation) UpEnabled() (r bool, exists bool) {
+	v := m.up_enabled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpEnabled returns the old "up_enabled" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldUpEnabled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpEnabled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpEnabled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpEnabled: %w", err)
+	}
+	return oldValue.UpEnabled, nil
+}
+
+// ResetUpEnabled resets all changes to the "up_enabled" field.
+func (m *GuildMutation) ResetUpEnabled() {
+	m.up_enabled = nil
+}
+
+// SetUpMessageTitle sets the "up_message_title" field.
+func (m *GuildMutation) SetUpMessageTitle(s string) {
+	m.up_message_title = &s
+}
+
+// UpMessageTitle returns the value of the "up_message_title" field in the mutation.
+func (m *GuildMutation) UpMessageTitle() (r string, exists bool) {
+	v := m.up_message_title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpMessageTitle returns the old "up_message_title" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldUpMessageTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpMessageTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpMessageTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpMessageTitle: %w", err)
+	}
+	return oldValue.UpMessageTitle, nil
+}
+
+// ResetUpMessageTitle resets all changes to the "up_message_title" field.
+func (m *GuildMutation) ResetUpMessageTitle() {
+	m.up_message_title = nil
+}
+
+// SetUpMessage sets the "up_message" field.
+func (m *GuildMutation) SetUpMessage(s string) {
+	m.up_message = &s
+}
+
+// UpMessage returns the value of the "up_message" field in the mutation.
+func (m *GuildMutation) UpMessage() (r string, exists bool) {
+	v := m.up_message
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpMessage returns the old "up_message" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldUpMessage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpMessage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpMessage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpMessage: %w", err)
+	}
+	return oldValue.UpMessage, nil
+}
+
+// ResetUpMessage resets all changes to the "up_message" field.
+func (m *GuildMutation) ResetUpMessage() {
+	m.up_message = nil
+}
+
+// SetUpRemindMessageTitle sets the "up_remind_message_title" field.
+func (m *GuildMutation) SetUpRemindMessageTitle(s string) {
+	m.up_remind_message_title = &s
+}
+
+// UpRemindMessageTitle returns the value of the "up_remind_message_title" field in the mutation.
+func (m *GuildMutation) UpRemindMessageTitle() (r string, exists bool) {
+	v := m.up_remind_message_title
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpRemindMessageTitle returns the old "up_remind_message_title" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldUpRemindMessageTitle(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpRemindMessageTitle is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpRemindMessageTitle requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpRemindMessageTitle: %w", err)
+	}
+	return oldValue.UpRemindMessageTitle, nil
+}
+
+// ResetUpRemindMessageTitle resets all changes to the "up_remind_message_title" field.
+func (m *GuildMutation) ResetUpRemindMessageTitle() {
+	m.up_remind_message_title = nil
+}
+
+// SetUpRemindMessage sets the "up_remind_message" field.
+func (m *GuildMutation) SetUpRemindMessage(s string) {
+	m.up_remind_message = &s
+}
+
+// UpRemindMessage returns the value of the "up_remind_message" field in the mutation.
+func (m *GuildMutation) UpRemindMessage() (r string, exists bool) {
+	v := m.up_remind_message
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpRemindMessage returns the old "up_remind_message" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldUpRemindMessage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpRemindMessage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpRemindMessage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpRemindMessage: %w", err)
+	}
+	return oldValue.UpRemindMessage, nil
+}
+
+// ResetUpRemindMessage resets all changes to the "up_remind_message" field.
+func (m *GuildMutation) ResetUpRemindMessage() {
+	m.up_remind_message = nil
+}
+
+// SetBumpMention sets the "bump_mention" field.
+func (m *GuildMutation) SetBumpMention(s snowflake.ID) {
+	m.bump_mention = &s
+	m.addbump_mention = nil
+}
+
+// BumpMention returns the value of the "bump_mention" field in the mutation.
+func (m *GuildMutation) BumpMention() (r snowflake.ID, exists bool) {
+	v := m.bump_mention
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBumpMention returns the old "bump_mention" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldBumpMention(ctx context.Context) (v *snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBumpMention is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBumpMention requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBumpMention: %w", err)
+	}
+	return oldValue.BumpMention, nil
+}
+
+// AddBumpMention adds s to the "bump_mention" field.
+func (m *GuildMutation) AddBumpMention(s snowflake.ID) {
+	if m.addbump_mention != nil {
+		*m.addbump_mention += s
+	} else {
+		m.addbump_mention = &s
+	}
+}
+
+// AddedBumpMention returns the value that was added to the "bump_mention" field in this mutation.
+func (m *GuildMutation) AddedBumpMention() (r snowflake.ID, exists bool) {
+	v := m.addbump_mention
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearBumpMention clears the value of the "bump_mention" field.
+func (m *GuildMutation) ClearBumpMention() {
+	m.bump_mention = nil
+	m.addbump_mention = nil
+	m.clearedFields[guild.FieldBumpMention] = struct{}{}
+}
+
+// BumpMentionCleared returns if the "bump_mention" field was cleared in this mutation.
+func (m *GuildMutation) BumpMentionCleared() bool {
+	_, ok := m.clearedFields[guild.FieldBumpMention]
+	return ok
+}
+
+// ResetBumpMention resets all changes to the "bump_mention" field.
+func (m *GuildMutation) ResetBumpMention() {
+	m.bump_mention = nil
+	m.addbump_mention = nil
+	delete(m.clearedFields, guild.FieldBumpMention)
+}
+
+// SetUpMention sets the "up_mention" field.
+func (m *GuildMutation) SetUpMention(s snowflake.ID) {
+	m.up_mention = &s
+	m.addup_mention = nil
+}
+
+// UpMention returns the value of the "up_mention" field in the mutation.
+func (m *GuildMutation) UpMention() (r snowflake.ID, exists bool) {
+	v := m.up_mention
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpMention returns the old "up_mention" field's value of the Guild entity.
+// If the Guild object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *GuildMutation) OldUpMention(ctx context.Context) (v *snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpMention is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpMention requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpMention: %w", err)
+	}
+	return oldValue.UpMention, nil
+}
+
+// AddUpMention adds s to the "up_mention" field.
+func (m *GuildMutation) AddUpMention(s snowflake.ID) {
+	if m.addup_mention != nil {
+		*m.addup_mention += s
+	} else {
+		m.addup_mention = &s
+	}
+}
+
+// AddedUpMention returns the value that was added to the "up_mention" field in this mutation.
+func (m *GuildMutation) AddedUpMention() (r snowflake.ID, exists bool) {
+	v := m.addup_mention
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearUpMention clears the value of the "up_mention" field.
+func (m *GuildMutation) ClearUpMention() {
+	m.up_mention = nil
+	m.addup_mention = nil
+	m.clearedFields[guild.FieldUpMention] = struct{}{}
+}
+
+// UpMentionCleared returns if the "up_mention" field was cleared in this mutation.
+func (m *GuildMutation) UpMentionCleared() bool {
+	_, ok := m.clearedFields[guild.FieldUpMention]
+	return ok
+}
+
+// ResetUpMention resets all changes to the "up_mention" field.
+func (m *GuildMutation) ResetUpMention() {
+	m.up_mention = nil
+	m.addup_mention = nil
+	delete(m.clearedFields, guild.FieldUpMention)
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by id.
 func (m *GuildMutation) SetOwnerID(id snowflake.ID) {
 	m.owner = &id
@@ -398,6 +1329,60 @@ func (m *GuildMutation) ResetMessagePins() {
 	m.message_pins = nil
 	m.clearedmessage_pins = false
 	m.removedmessage_pins = nil
+}
+
+// AddRemindIDs adds the "reminds" edge to the MessageRemind entity by ids.
+func (m *GuildMutation) AddRemindIDs(ids ...uuid.UUID) {
+	if m.reminds == nil {
+		m.reminds = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.reminds[ids[i]] = struct{}{}
+	}
+}
+
+// ClearReminds clears the "reminds" edge to the MessageRemind entity.
+func (m *GuildMutation) ClearReminds() {
+	m.clearedreminds = true
+}
+
+// RemindsCleared reports if the "reminds" edge to the MessageRemind entity was cleared.
+func (m *GuildMutation) RemindsCleared() bool {
+	return m.clearedreminds
+}
+
+// RemoveRemindIDs removes the "reminds" edge to the MessageRemind entity by IDs.
+func (m *GuildMutation) RemoveRemindIDs(ids ...uuid.UUID) {
+	if m.removedreminds == nil {
+		m.removedreminds = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.reminds, ids[i])
+		m.removedreminds[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedReminds returns the removed IDs of the "reminds" edge to the MessageRemind entity.
+func (m *GuildMutation) RemovedRemindsIDs() (ids []uuid.UUID) {
+	for id := range m.removedreminds {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// RemindsIDs returns the "reminds" edge IDs in the mutation.
+func (m *GuildMutation) RemindsIDs() (ids []uuid.UUID) {
+	for id := range m.reminds {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetReminds resets all changes to the "reminds" edge.
+func (m *GuildMutation) ResetReminds() {
+	m.reminds = nil
+	m.clearedreminds = false
+	m.removedreminds = nil
 }
 
 // AddRolePanelIDs adds the "role_panels" edge to the RolePanel entity by ids.
@@ -596,12 +1581,72 @@ func (m *GuildMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GuildMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+	fields := make([]string, 0, 22)
 	if m.name != nil {
 		fields = append(fields, guild.FieldName)
 	}
 	if m.locale != nil {
 		fields = append(fields, guild.FieldLocale)
+	}
+	if m.level_up_message != nil {
+		fields = append(fields, guild.FieldLevelUpMessage)
+	}
+	if m.level_up_channel != nil {
+		fields = append(fields, guild.FieldLevelUpChannel)
+	}
+	if m.level_up_exclude_channel != nil {
+		fields = append(fields, guild.FieldLevelUpExcludeChannel)
+	}
+	if m.level_mee6_imported != nil {
+		fields = append(fields, guild.FieldLevelMee6Imported)
+	}
+	if m.level_role != nil {
+		fields = append(fields, guild.FieldLevelRole)
+	}
+	if m.permissions != nil {
+		fields = append(fields, guild.FieldPermissions)
+	}
+	if m.remind_count != nil {
+		fields = append(fields, guild.FieldRemindCount)
+	}
+	if m.role_panel_edit_times != nil {
+		fields = append(fields, guild.FieldRolePanelEditTimes)
+	}
+	if m.bump_enabled != nil {
+		fields = append(fields, guild.FieldBumpEnabled)
+	}
+	if m.bump_message_title != nil {
+		fields = append(fields, guild.FieldBumpMessageTitle)
+	}
+	if m.bump_message != nil {
+		fields = append(fields, guild.FieldBumpMessage)
+	}
+	if m.bump_remind_message_title != nil {
+		fields = append(fields, guild.FieldBumpRemindMessageTitle)
+	}
+	if m.bump_remind_message != nil {
+		fields = append(fields, guild.FieldBumpRemindMessage)
+	}
+	if m.up_enabled != nil {
+		fields = append(fields, guild.FieldUpEnabled)
+	}
+	if m.up_message_title != nil {
+		fields = append(fields, guild.FieldUpMessageTitle)
+	}
+	if m.up_message != nil {
+		fields = append(fields, guild.FieldUpMessage)
+	}
+	if m.up_remind_message_title != nil {
+		fields = append(fields, guild.FieldUpRemindMessageTitle)
+	}
+	if m.up_remind_message != nil {
+		fields = append(fields, guild.FieldUpRemindMessage)
+	}
+	if m.bump_mention != nil {
+		fields = append(fields, guild.FieldBumpMention)
+	}
+	if m.up_mention != nil {
+		fields = append(fields, guild.FieldUpMention)
 	}
 	return fields
 }
@@ -615,6 +1660,46 @@ func (m *GuildMutation) Field(name string) (ent.Value, bool) {
 		return m.Name()
 	case guild.FieldLocale:
 		return m.Locale()
+	case guild.FieldLevelUpMessage:
+		return m.LevelUpMessage()
+	case guild.FieldLevelUpChannel:
+		return m.LevelUpChannel()
+	case guild.FieldLevelUpExcludeChannel:
+		return m.LevelUpExcludeChannel()
+	case guild.FieldLevelMee6Imported:
+		return m.LevelMee6Imported()
+	case guild.FieldLevelRole:
+		return m.LevelRole()
+	case guild.FieldPermissions:
+		return m.Permissions()
+	case guild.FieldRemindCount:
+		return m.RemindCount()
+	case guild.FieldRolePanelEditTimes:
+		return m.RolePanelEditTimes()
+	case guild.FieldBumpEnabled:
+		return m.BumpEnabled()
+	case guild.FieldBumpMessageTitle:
+		return m.BumpMessageTitle()
+	case guild.FieldBumpMessage:
+		return m.BumpMessage()
+	case guild.FieldBumpRemindMessageTitle:
+		return m.BumpRemindMessageTitle()
+	case guild.FieldBumpRemindMessage:
+		return m.BumpRemindMessage()
+	case guild.FieldUpEnabled:
+		return m.UpEnabled()
+	case guild.FieldUpMessageTitle:
+		return m.UpMessageTitle()
+	case guild.FieldUpMessage:
+		return m.UpMessage()
+	case guild.FieldUpRemindMessageTitle:
+		return m.UpRemindMessageTitle()
+	case guild.FieldUpRemindMessage:
+		return m.UpRemindMessage()
+	case guild.FieldBumpMention:
+		return m.BumpMention()
+	case guild.FieldUpMention:
+		return m.UpMention()
 	}
 	return nil, false
 }
@@ -628,6 +1713,46 @@ func (m *GuildMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldName(ctx)
 	case guild.FieldLocale:
 		return m.OldLocale(ctx)
+	case guild.FieldLevelUpMessage:
+		return m.OldLevelUpMessage(ctx)
+	case guild.FieldLevelUpChannel:
+		return m.OldLevelUpChannel(ctx)
+	case guild.FieldLevelUpExcludeChannel:
+		return m.OldLevelUpExcludeChannel(ctx)
+	case guild.FieldLevelMee6Imported:
+		return m.OldLevelMee6Imported(ctx)
+	case guild.FieldLevelRole:
+		return m.OldLevelRole(ctx)
+	case guild.FieldPermissions:
+		return m.OldPermissions(ctx)
+	case guild.FieldRemindCount:
+		return m.OldRemindCount(ctx)
+	case guild.FieldRolePanelEditTimes:
+		return m.OldRolePanelEditTimes(ctx)
+	case guild.FieldBumpEnabled:
+		return m.OldBumpEnabled(ctx)
+	case guild.FieldBumpMessageTitle:
+		return m.OldBumpMessageTitle(ctx)
+	case guild.FieldBumpMessage:
+		return m.OldBumpMessage(ctx)
+	case guild.FieldBumpRemindMessageTitle:
+		return m.OldBumpRemindMessageTitle(ctx)
+	case guild.FieldBumpRemindMessage:
+		return m.OldBumpRemindMessage(ctx)
+	case guild.FieldUpEnabled:
+		return m.OldUpEnabled(ctx)
+	case guild.FieldUpMessageTitle:
+		return m.OldUpMessageTitle(ctx)
+	case guild.FieldUpMessage:
+		return m.OldUpMessage(ctx)
+	case guild.FieldUpRemindMessageTitle:
+		return m.OldUpRemindMessageTitle(ctx)
+	case guild.FieldUpRemindMessage:
+		return m.OldUpRemindMessage(ctx)
+	case guild.FieldBumpMention:
+		return m.OldBumpMention(ctx)
+	case guild.FieldUpMention:
+		return m.OldUpMention(ctx)
 	}
 	return nil, fmt.Errorf("unknown Guild field %s", name)
 }
@@ -651,6 +1776,146 @@ func (m *GuildMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetLocale(v)
 		return nil
+	case guild.FieldLevelUpMessage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLevelUpMessage(v)
+		return nil
+	case guild.FieldLevelUpChannel:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLevelUpChannel(v)
+		return nil
+	case guild.FieldLevelUpExcludeChannel:
+		v, ok := value.([]snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLevelUpExcludeChannel(v)
+		return nil
+	case guild.FieldLevelMee6Imported:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLevelMee6Imported(v)
+		return nil
+	case guild.FieldLevelRole:
+		v, ok := value.(map[int]snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLevelRole(v)
+		return nil
+	case guild.FieldPermissions:
+		v, ok := value.(map[snowflake.ID]permissions.Permission)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPermissions(v)
+		return nil
+	case guild.FieldRemindCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRemindCount(v)
+		return nil
+	case guild.FieldRolePanelEditTimes:
+		v, ok := value.([]time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRolePanelEditTimes(v)
+		return nil
+	case guild.FieldBumpEnabled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBumpEnabled(v)
+		return nil
+	case guild.FieldBumpMessageTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBumpMessageTitle(v)
+		return nil
+	case guild.FieldBumpMessage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBumpMessage(v)
+		return nil
+	case guild.FieldBumpRemindMessageTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBumpRemindMessageTitle(v)
+		return nil
+	case guild.FieldBumpRemindMessage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBumpRemindMessage(v)
+		return nil
+	case guild.FieldUpEnabled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpEnabled(v)
+		return nil
+	case guild.FieldUpMessageTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpMessageTitle(v)
+		return nil
+	case guild.FieldUpMessage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpMessage(v)
+		return nil
+	case guild.FieldUpRemindMessageTitle:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpRemindMessageTitle(v)
+		return nil
+	case guild.FieldUpRemindMessage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpRemindMessage(v)
+		return nil
+	case guild.FieldBumpMention:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBumpMention(v)
+		return nil
+	case guild.FieldUpMention:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpMention(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Guild field %s", name)
 }
@@ -658,13 +1923,36 @@ func (m *GuildMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *GuildMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addlevel_up_channel != nil {
+		fields = append(fields, guild.FieldLevelUpChannel)
+	}
+	if m.addremind_count != nil {
+		fields = append(fields, guild.FieldRemindCount)
+	}
+	if m.addbump_mention != nil {
+		fields = append(fields, guild.FieldBumpMention)
+	}
+	if m.addup_mention != nil {
+		fields = append(fields, guild.FieldUpMention)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *GuildMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case guild.FieldLevelUpChannel:
+		return m.AddedLevelUpChannel()
+	case guild.FieldRemindCount:
+		return m.AddedRemindCount()
+	case guild.FieldBumpMention:
+		return m.AddedBumpMention()
+	case guild.FieldUpMention:
+		return m.AddedUpMention()
+	}
 	return nil, false
 }
 
@@ -673,6 +1961,34 @@ func (m *GuildMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *GuildMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case guild.FieldLevelUpChannel:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddLevelUpChannel(v)
+		return nil
+	case guild.FieldRemindCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddRemindCount(v)
+		return nil
+	case guild.FieldBumpMention:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBumpMention(v)
+		return nil
+	case guild.FieldUpMention:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddUpMention(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Guild numeric field %s", name)
 }
@@ -680,7 +1996,23 @@ func (m *GuildMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *GuildMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(guild.FieldLevelUpChannel) {
+		fields = append(fields, guild.FieldLevelUpChannel)
+	}
+	if m.FieldCleared(guild.FieldLevelUpExcludeChannel) {
+		fields = append(fields, guild.FieldLevelUpExcludeChannel)
+	}
+	if m.FieldCleared(guild.FieldLevelRole) {
+		fields = append(fields, guild.FieldLevelRole)
+	}
+	if m.FieldCleared(guild.FieldBumpMention) {
+		fields = append(fields, guild.FieldBumpMention)
+	}
+	if m.FieldCleared(guild.FieldUpMention) {
+		fields = append(fields, guild.FieldUpMention)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -693,6 +2025,23 @@ func (m *GuildMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *GuildMutation) ClearField(name string) error {
+	switch name {
+	case guild.FieldLevelUpChannel:
+		m.ClearLevelUpChannel()
+		return nil
+	case guild.FieldLevelUpExcludeChannel:
+		m.ClearLevelUpExcludeChannel()
+		return nil
+	case guild.FieldLevelRole:
+		m.ClearLevelRole()
+		return nil
+	case guild.FieldBumpMention:
+		m.ClearBumpMention()
+		return nil
+	case guild.FieldUpMention:
+		m.ClearUpMention()
+		return nil
+	}
 	return fmt.Errorf("unknown Guild nullable field %s", name)
 }
 
@@ -706,13 +2055,73 @@ func (m *GuildMutation) ResetField(name string) error {
 	case guild.FieldLocale:
 		m.ResetLocale()
 		return nil
+	case guild.FieldLevelUpMessage:
+		m.ResetLevelUpMessage()
+		return nil
+	case guild.FieldLevelUpChannel:
+		m.ResetLevelUpChannel()
+		return nil
+	case guild.FieldLevelUpExcludeChannel:
+		m.ResetLevelUpExcludeChannel()
+		return nil
+	case guild.FieldLevelMee6Imported:
+		m.ResetLevelMee6Imported()
+		return nil
+	case guild.FieldLevelRole:
+		m.ResetLevelRole()
+		return nil
+	case guild.FieldPermissions:
+		m.ResetPermissions()
+		return nil
+	case guild.FieldRemindCount:
+		m.ResetRemindCount()
+		return nil
+	case guild.FieldRolePanelEditTimes:
+		m.ResetRolePanelEditTimes()
+		return nil
+	case guild.FieldBumpEnabled:
+		m.ResetBumpEnabled()
+		return nil
+	case guild.FieldBumpMessageTitle:
+		m.ResetBumpMessageTitle()
+		return nil
+	case guild.FieldBumpMessage:
+		m.ResetBumpMessage()
+		return nil
+	case guild.FieldBumpRemindMessageTitle:
+		m.ResetBumpRemindMessageTitle()
+		return nil
+	case guild.FieldBumpRemindMessage:
+		m.ResetBumpRemindMessage()
+		return nil
+	case guild.FieldUpEnabled:
+		m.ResetUpEnabled()
+		return nil
+	case guild.FieldUpMessageTitle:
+		m.ResetUpMessageTitle()
+		return nil
+	case guild.FieldUpMessage:
+		m.ResetUpMessage()
+		return nil
+	case guild.FieldUpRemindMessageTitle:
+		m.ResetUpRemindMessageTitle()
+		return nil
+	case guild.FieldUpRemindMessage:
+		m.ResetUpRemindMessage()
+		return nil
+	case guild.FieldBumpMention:
+		m.ResetBumpMention()
+		return nil
+	case guild.FieldUpMention:
+		m.ResetUpMention()
+		return nil
 	}
 	return fmt.Errorf("unknown Guild field %s", name)
 }
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *GuildMutation) AddedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
 	if m.owner != nil {
 		edges = append(edges, guild.EdgeOwner)
 	}
@@ -721,6 +2130,9 @@ func (m *GuildMutation) AddedEdges() []string {
 	}
 	if m.message_pins != nil {
 		edges = append(edges, guild.EdgeMessagePins)
+	}
+	if m.reminds != nil {
+		edges = append(edges, guild.EdgeReminds)
 	}
 	if m.role_panels != nil {
 		edges = append(edges, guild.EdgeRolePanels)
@@ -754,6 +2166,12 @@ func (m *GuildMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case guild.EdgeReminds:
+		ids := make([]ent.Value, 0, len(m.reminds))
+		for id := range m.reminds {
+			ids = append(ids, id)
+		}
+		return ids
 	case guild.EdgeRolePanels:
 		ids := make([]ent.Value, 0, len(m.role_panels))
 		for id := range m.role_panels {
@@ -778,12 +2196,15 @@ func (m *GuildMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *GuildMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
 	if m.removedmembers != nil {
 		edges = append(edges, guild.EdgeMembers)
 	}
 	if m.removedmessage_pins != nil {
 		edges = append(edges, guild.EdgeMessagePins)
+	}
+	if m.removedreminds != nil {
+		edges = append(edges, guild.EdgeReminds)
 	}
 	if m.removedrole_panels != nil {
 		edges = append(edges, guild.EdgeRolePanels)
@@ -813,6 +2234,12 @@ func (m *GuildMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case guild.EdgeReminds:
+		ids := make([]ent.Value, 0, len(m.removedreminds))
+		for id := range m.removedreminds {
+			ids = append(ids, id)
+		}
+		return ids
 	case guild.EdgeRolePanels:
 		ids := make([]ent.Value, 0, len(m.removedrole_panels))
 		for id := range m.removedrole_panels {
@@ -837,7 +2264,7 @@ func (m *GuildMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *GuildMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 6)
+	edges := make([]string, 0, 7)
 	if m.clearedowner {
 		edges = append(edges, guild.EdgeOwner)
 	}
@@ -846,6 +2273,9 @@ func (m *GuildMutation) ClearedEdges() []string {
 	}
 	if m.clearedmessage_pins {
 		edges = append(edges, guild.EdgeMessagePins)
+	}
+	if m.clearedreminds {
+		edges = append(edges, guild.EdgeReminds)
 	}
 	if m.clearedrole_panels {
 		edges = append(edges, guild.EdgeRolePanels)
@@ -869,6 +2299,8 @@ func (m *GuildMutation) EdgeCleared(name string) bool {
 		return m.clearedmembers
 	case guild.EdgeMessagePins:
 		return m.clearedmessage_pins
+	case guild.EdgeReminds:
+		return m.clearedreminds
 	case guild.EdgeRolePanels:
 		return m.clearedrole_panels
 	case guild.EdgeRolePanelPlacements:
@@ -903,6 +2335,9 @@ func (m *GuildMutation) ResetEdge(name string) error {
 	case guild.EdgeMessagePins:
 		m.ResetMessagePins()
 		return nil
+	case guild.EdgeReminds:
+		m.ResetReminds()
+		return nil
 	case guild.EdgeRolePanels:
 		m.ResetRolePanels()
 		return nil
@@ -923,7 +2358,11 @@ type MemberMutation struct {
 	typ              string
 	id               *int
 	permission       *permissions.Permission
-	appendpermission permissions.Permission
+	xp               *xppoint.XP
+	addxp            *xppoint.XP
+	last_xp          *time.Time
+	message_count    *uint64
+	addmessage_count *int64
 	clearedFields    map[string]struct{}
 	guild            *snowflake.ID
 	clearedguild     bool
@@ -1035,7 +2474,6 @@ func (m *MemberMutation) IDs(ctx context.Context) ([]int, error) {
 // SetPermission sets the "permission" field.
 func (m *MemberMutation) SetPermission(pe permissions.Permission) {
 	m.permission = &pe
-	m.appendpermission = nil
 }
 
 // Permission returns the value of the "permission" field in the mutation.
@@ -1064,23 +2502,9 @@ func (m *MemberMutation) OldPermission(ctx context.Context) (v permissions.Permi
 	return oldValue.Permission, nil
 }
 
-// AppendPermission adds pe to the "permission" field.
-func (m *MemberMutation) AppendPermission(pe permissions.Permission) {
-	m.appendpermission = append(m.appendpermission, pe...)
-}
-
-// AppendedPermission returns the list of values that were appended to the "permission" field in this mutation.
-func (m *MemberMutation) AppendedPermission() (permissions.Permission, bool) {
-	if len(m.appendpermission) == 0 {
-		return nil, false
-	}
-	return m.appendpermission, true
-}
-
 // ClearPermission clears the value of the "permission" field.
 func (m *MemberMutation) ClearPermission() {
 	m.permission = nil
-	m.appendpermission = nil
 	m.clearedFields[member.FieldPermission] = struct{}{}
 }
 
@@ -1093,8 +2517,204 @@ func (m *MemberMutation) PermissionCleared() bool {
 // ResetPermission resets all changes to the "permission" field.
 func (m *MemberMutation) ResetPermission() {
 	m.permission = nil
-	m.appendpermission = nil
 	delete(m.clearedFields, member.FieldPermission)
+}
+
+// SetXp sets the "xp" field.
+func (m *MemberMutation) SetXp(x xppoint.XP) {
+	m.xp = &x
+	m.addxp = nil
+}
+
+// Xp returns the value of the "xp" field in the mutation.
+func (m *MemberMutation) Xp() (r xppoint.XP, exists bool) {
+	v := m.xp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldXp returns the old "xp" field's value of the Member entity.
+// If the Member object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MemberMutation) OldXp(ctx context.Context) (v xppoint.XP, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldXp is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldXp requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldXp: %w", err)
+	}
+	return oldValue.Xp, nil
+}
+
+// AddXp adds x to the "xp" field.
+func (m *MemberMutation) AddXp(x xppoint.XP) {
+	if m.addxp != nil {
+		*m.addxp += x
+	} else {
+		m.addxp = &x
+	}
+}
+
+// AddedXp returns the value that was added to the "xp" field in this mutation.
+func (m *MemberMutation) AddedXp() (r xppoint.XP, exists bool) {
+	v := m.addxp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetXp resets all changes to the "xp" field.
+func (m *MemberMutation) ResetXp() {
+	m.xp = nil
+	m.addxp = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *MemberMutation) SetUserID(s snowflake.ID) {
+	m.user = &s
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *MemberMutation) UserID() (r snowflake.ID, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the Member entity.
+// If the Member object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MemberMutation) OldUserID(ctx context.Context) (v snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *MemberMutation) ResetUserID() {
+	m.user = nil
+}
+
+// SetLastXp sets the "last_xp" field.
+func (m *MemberMutation) SetLastXp(t time.Time) {
+	m.last_xp = &t
+}
+
+// LastXp returns the value of the "last_xp" field in the mutation.
+func (m *MemberMutation) LastXp() (r time.Time, exists bool) {
+	v := m.last_xp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastXp returns the old "last_xp" field's value of the Member entity.
+// If the Member object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MemberMutation) OldLastXp(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastXp is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastXp requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastXp: %w", err)
+	}
+	return oldValue.LastXp, nil
+}
+
+// ClearLastXp clears the value of the "last_xp" field.
+func (m *MemberMutation) ClearLastXp() {
+	m.last_xp = nil
+	m.clearedFields[member.FieldLastXp] = struct{}{}
+}
+
+// LastXpCleared returns if the "last_xp" field was cleared in this mutation.
+func (m *MemberMutation) LastXpCleared() bool {
+	_, ok := m.clearedFields[member.FieldLastXp]
+	return ok
+}
+
+// ResetLastXp resets all changes to the "last_xp" field.
+func (m *MemberMutation) ResetLastXp() {
+	m.last_xp = nil
+	delete(m.clearedFields, member.FieldLastXp)
+}
+
+// SetMessageCount sets the "message_count" field.
+func (m *MemberMutation) SetMessageCount(u uint64) {
+	m.message_count = &u
+	m.addmessage_count = nil
+}
+
+// MessageCount returns the value of the "message_count" field in the mutation.
+func (m *MemberMutation) MessageCount() (r uint64, exists bool) {
+	v := m.message_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMessageCount returns the old "message_count" field's value of the Member entity.
+// If the Member object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MemberMutation) OldMessageCount(ctx context.Context) (v uint64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMessageCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMessageCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMessageCount: %w", err)
+	}
+	return oldValue.MessageCount, nil
+}
+
+// AddMessageCount adds u to the "message_count" field.
+func (m *MemberMutation) AddMessageCount(u int64) {
+	if m.addmessage_count != nil {
+		*m.addmessage_count += u
+	} else {
+		m.addmessage_count = &u
+	}
+}
+
+// AddedMessageCount returns the value that was added to the "message_count" field in this mutation.
+func (m *MemberMutation) AddedMessageCount() (r int64, exists bool) {
+	v := m.addmessage_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMessageCount resets all changes to the "message_count" field.
+func (m *MemberMutation) ResetMessageCount() {
+	m.message_count = nil
+	m.addmessage_count = nil
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by id.
@@ -1136,27 +2756,15 @@ func (m *MemberMutation) ResetGuild() {
 	m.clearedguild = false
 }
 
-// SetUserID sets the "user" edge to the User entity by id.
-func (m *MemberMutation) SetUserID(id snowflake.ID) {
-	m.user = &id
-}
-
 // ClearUser clears the "user" edge to the User entity.
 func (m *MemberMutation) ClearUser() {
 	m.cleareduser = true
+	m.clearedFields[member.FieldUserID] = struct{}{}
 }
 
 // UserCleared reports if the "user" edge to the User entity was cleared.
 func (m *MemberMutation) UserCleared() bool {
 	return m.cleareduser
-}
-
-// UserID returns the "user" edge ID in the mutation.
-func (m *MemberMutation) UserID() (id snowflake.ID, exists bool) {
-	if m.user != nil {
-		return *m.user, true
-	}
-	return
 }
 
 // UserIDs returns the "user" edge IDs in the mutation.
@@ -1209,9 +2817,21 @@ func (m *MemberMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MemberMutation) Fields() []string {
-	fields := make([]string, 0, 1)
+	fields := make([]string, 0, 5)
 	if m.permission != nil {
 		fields = append(fields, member.FieldPermission)
+	}
+	if m.xp != nil {
+		fields = append(fields, member.FieldXp)
+	}
+	if m.user != nil {
+		fields = append(fields, member.FieldUserID)
+	}
+	if m.last_xp != nil {
+		fields = append(fields, member.FieldLastXp)
+	}
+	if m.message_count != nil {
+		fields = append(fields, member.FieldMessageCount)
 	}
 	return fields
 }
@@ -1223,6 +2843,14 @@ func (m *MemberMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case member.FieldPermission:
 		return m.Permission()
+	case member.FieldXp:
+		return m.Xp()
+	case member.FieldUserID:
+		return m.UserID()
+	case member.FieldLastXp:
+		return m.LastXp()
+	case member.FieldMessageCount:
+		return m.MessageCount()
 	}
 	return nil, false
 }
@@ -1234,6 +2862,14 @@ func (m *MemberMutation) OldField(ctx context.Context, name string) (ent.Value, 
 	switch name {
 	case member.FieldPermission:
 		return m.OldPermission(ctx)
+	case member.FieldXp:
+		return m.OldXp(ctx)
+	case member.FieldUserID:
+		return m.OldUserID(ctx)
+	case member.FieldLastXp:
+		return m.OldLastXp(ctx)
+	case member.FieldMessageCount:
+		return m.OldMessageCount(ctx)
 	}
 	return nil, fmt.Errorf("unknown Member field %s", name)
 }
@@ -1250,6 +2886,34 @@ func (m *MemberMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetPermission(v)
 		return nil
+	case member.FieldXp:
+		v, ok := value.(xppoint.XP)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetXp(v)
+		return nil
+	case member.FieldUserID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case member.FieldLastXp:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastXp(v)
+		return nil
+	case member.FieldMessageCount:
+		v, ok := value.(uint64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMessageCount(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Member field %s", name)
 }
@@ -1257,13 +2921,26 @@ func (m *MemberMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *MemberMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addxp != nil {
+		fields = append(fields, member.FieldXp)
+	}
+	if m.addmessage_count != nil {
+		fields = append(fields, member.FieldMessageCount)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *MemberMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case member.FieldXp:
+		return m.AddedXp()
+	case member.FieldMessageCount:
+		return m.AddedMessageCount()
+	}
 	return nil, false
 }
 
@@ -1272,6 +2949,20 @@ func (m *MemberMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *MemberMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case member.FieldXp:
+		v, ok := value.(xppoint.XP)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddXp(v)
+		return nil
+	case member.FieldMessageCount:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMessageCount(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Member numeric field %s", name)
 }
@@ -1282,6 +2973,9 @@ func (m *MemberMutation) ClearedFields() []string {
 	var fields []string
 	if m.FieldCleared(member.FieldPermission) {
 		fields = append(fields, member.FieldPermission)
+	}
+	if m.FieldCleared(member.FieldLastXp) {
+		fields = append(fields, member.FieldLastXp)
 	}
 	return fields
 }
@@ -1300,6 +2994,9 @@ func (m *MemberMutation) ClearField(name string) error {
 	case member.FieldPermission:
 		m.ClearPermission()
 		return nil
+	case member.FieldLastXp:
+		m.ClearLastXp()
+		return nil
 	}
 	return fmt.Errorf("unknown Member nullable field %s", name)
 }
@@ -1310,6 +3007,18 @@ func (m *MemberMutation) ResetField(name string) error {
 	switch name {
 	case member.FieldPermission:
 		m.ResetPermission()
+		return nil
+	case member.FieldXp:
+		m.ResetXp()
+		return nil
+	case member.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case member.FieldLastXp:
+		m.ResetLastXp()
+		return nil
+	case member.FieldMessageCount:
+		m.ResetMessageCount()
 		return nil
 	}
 	return fmt.Errorf("unknown Member field %s", name)
@@ -2169,6 +3878,690 @@ func (m *MessagePinMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown MessagePin edge %s", name)
 }
 
+// MessageRemindMutation represents an operation that mutates the MessageRemind nodes in the graph.
+type MessageRemindMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *uuid.UUID
+	channel_id    *snowflake.ID
+	addchannel_id *snowflake.ID
+	author_id     *snowflake.ID
+	addauthor_id  *snowflake.ID
+	time          *time.Time
+	content       *string
+	name          *string
+	clearedFields map[string]struct{}
+	guild         *snowflake.ID
+	clearedguild  bool
+	done          bool
+	oldValue      func(context.Context) (*MessageRemind, error)
+	predicates    []predicate.MessageRemind
+}
+
+var _ ent.Mutation = (*MessageRemindMutation)(nil)
+
+// messageremindOption allows management of the mutation configuration using functional options.
+type messageremindOption func(*MessageRemindMutation)
+
+// newMessageRemindMutation creates new mutation for the MessageRemind entity.
+func newMessageRemindMutation(c config, op Op, opts ...messageremindOption) *MessageRemindMutation {
+	m := &MessageRemindMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeMessageRemind,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withMessageRemindID sets the ID field of the mutation.
+func withMessageRemindID(id uuid.UUID) messageremindOption {
+	return func(m *MessageRemindMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *MessageRemind
+		)
+		m.oldValue = func(ctx context.Context) (*MessageRemind, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().MessageRemind.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withMessageRemind sets the old MessageRemind of the mutation.
+func withMessageRemind(node *MessageRemind) messageremindOption {
+	return func(m *MessageRemindMutation) {
+		m.oldValue = func(context.Context) (*MessageRemind, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m MessageRemindMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m MessageRemindMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of MessageRemind entities.
+func (m *MessageRemindMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *MessageRemindMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *MessageRemindMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().MessageRemind.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetChannelID sets the "channel_id" field.
+func (m *MessageRemindMutation) SetChannelID(s snowflake.ID) {
+	m.channel_id = &s
+	m.addchannel_id = nil
+}
+
+// ChannelID returns the value of the "channel_id" field in the mutation.
+func (m *MessageRemindMutation) ChannelID() (r snowflake.ID, exists bool) {
+	v := m.channel_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldChannelID returns the old "channel_id" field's value of the MessageRemind entity.
+// If the MessageRemind object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessageRemindMutation) OldChannelID(ctx context.Context) (v snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldChannelID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldChannelID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldChannelID: %w", err)
+	}
+	return oldValue.ChannelID, nil
+}
+
+// AddChannelID adds s to the "channel_id" field.
+func (m *MessageRemindMutation) AddChannelID(s snowflake.ID) {
+	if m.addchannel_id != nil {
+		*m.addchannel_id += s
+	} else {
+		m.addchannel_id = &s
+	}
+}
+
+// AddedChannelID returns the value that was added to the "channel_id" field in this mutation.
+func (m *MessageRemindMutation) AddedChannelID() (r snowflake.ID, exists bool) {
+	v := m.addchannel_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetChannelID resets all changes to the "channel_id" field.
+func (m *MessageRemindMutation) ResetChannelID() {
+	m.channel_id = nil
+	m.addchannel_id = nil
+}
+
+// SetAuthorID sets the "author_id" field.
+func (m *MessageRemindMutation) SetAuthorID(s snowflake.ID) {
+	m.author_id = &s
+	m.addauthor_id = nil
+}
+
+// AuthorID returns the value of the "author_id" field in the mutation.
+func (m *MessageRemindMutation) AuthorID() (r snowflake.ID, exists bool) {
+	v := m.author_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAuthorID returns the old "author_id" field's value of the MessageRemind entity.
+// If the MessageRemind object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessageRemindMutation) OldAuthorID(ctx context.Context) (v snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAuthorID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAuthorID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAuthorID: %w", err)
+	}
+	return oldValue.AuthorID, nil
+}
+
+// AddAuthorID adds s to the "author_id" field.
+func (m *MessageRemindMutation) AddAuthorID(s snowflake.ID) {
+	if m.addauthor_id != nil {
+		*m.addauthor_id += s
+	} else {
+		m.addauthor_id = &s
+	}
+}
+
+// AddedAuthorID returns the value that was added to the "author_id" field in this mutation.
+func (m *MessageRemindMutation) AddedAuthorID() (r snowflake.ID, exists bool) {
+	v := m.addauthor_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAuthorID resets all changes to the "author_id" field.
+func (m *MessageRemindMutation) ResetAuthorID() {
+	m.author_id = nil
+	m.addauthor_id = nil
+}
+
+// SetTime sets the "time" field.
+func (m *MessageRemindMutation) SetTime(t time.Time) {
+	m.time = &t
+}
+
+// Time returns the value of the "time" field in the mutation.
+func (m *MessageRemindMutation) Time() (r time.Time, exists bool) {
+	v := m.time
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTime returns the old "time" field's value of the MessageRemind entity.
+// If the MessageRemind object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessageRemindMutation) OldTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTime: %w", err)
+	}
+	return oldValue.Time, nil
+}
+
+// ResetTime resets all changes to the "time" field.
+func (m *MessageRemindMutation) ResetTime() {
+	m.time = nil
+}
+
+// SetContent sets the "content" field.
+func (m *MessageRemindMutation) SetContent(s string) {
+	m.content = &s
+}
+
+// Content returns the value of the "content" field in the mutation.
+func (m *MessageRemindMutation) Content() (r string, exists bool) {
+	v := m.content
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContent returns the old "content" field's value of the MessageRemind entity.
+// If the MessageRemind object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessageRemindMutation) OldContent(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContent is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContent requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContent: %w", err)
+	}
+	return oldValue.Content, nil
+}
+
+// ResetContent resets all changes to the "content" field.
+func (m *MessageRemindMutation) ResetContent() {
+	m.content = nil
+}
+
+// SetName sets the "name" field.
+func (m *MessageRemindMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *MessageRemindMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the MessageRemind entity.
+// If the MessageRemind object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessageRemindMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *MessageRemindMutation) ResetName() {
+	m.name = nil
+}
+
+// SetGuildID sets the "guild" edge to the Guild entity by id.
+func (m *MessageRemindMutation) SetGuildID(id snowflake.ID) {
+	m.guild = &id
+}
+
+// ClearGuild clears the "guild" edge to the Guild entity.
+func (m *MessageRemindMutation) ClearGuild() {
+	m.clearedguild = true
+}
+
+// GuildCleared reports if the "guild" edge to the Guild entity was cleared.
+func (m *MessageRemindMutation) GuildCleared() bool {
+	return m.clearedguild
+}
+
+// GuildID returns the "guild" edge ID in the mutation.
+func (m *MessageRemindMutation) GuildID() (id snowflake.ID, exists bool) {
+	if m.guild != nil {
+		return *m.guild, true
+	}
+	return
+}
+
+// GuildIDs returns the "guild" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GuildID instead. It exists only for internal usage by the builders.
+func (m *MessageRemindMutation) GuildIDs() (ids []snowflake.ID) {
+	if id := m.guild; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetGuild resets all changes to the "guild" edge.
+func (m *MessageRemindMutation) ResetGuild() {
+	m.guild = nil
+	m.clearedguild = false
+}
+
+// Where appends a list predicates to the MessageRemindMutation builder.
+func (m *MessageRemindMutation) Where(ps ...predicate.MessageRemind) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the MessageRemindMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *MessageRemindMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.MessageRemind, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *MessageRemindMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *MessageRemindMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (MessageRemind).
+func (m *MessageRemindMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *MessageRemindMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.channel_id != nil {
+		fields = append(fields, messageremind.FieldChannelID)
+	}
+	if m.author_id != nil {
+		fields = append(fields, messageremind.FieldAuthorID)
+	}
+	if m.time != nil {
+		fields = append(fields, messageremind.FieldTime)
+	}
+	if m.content != nil {
+		fields = append(fields, messageremind.FieldContent)
+	}
+	if m.name != nil {
+		fields = append(fields, messageremind.FieldName)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *MessageRemindMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case messageremind.FieldChannelID:
+		return m.ChannelID()
+	case messageremind.FieldAuthorID:
+		return m.AuthorID()
+	case messageremind.FieldTime:
+		return m.Time()
+	case messageremind.FieldContent:
+		return m.Content()
+	case messageremind.FieldName:
+		return m.Name()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *MessageRemindMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case messageremind.FieldChannelID:
+		return m.OldChannelID(ctx)
+	case messageremind.FieldAuthorID:
+		return m.OldAuthorID(ctx)
+	case messageremind.FieldTime:
+		return m.OldTime(ctx)
+	case messageremind.FieldContent:
+		return m.OldContent(ctx)
+	case messageremind.FieldName:
+		return m.OldName(ctx)
+	}
+	return nil, fmt.Errorf("unknown MessageRemind field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MessageRemindMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case messageremind.FieldChannelID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetChannelID(v)
+		return nil
+	case messageremind.FieldAuthorID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAuthorID(v)
+		return nil
+	case messageremind.FieldTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTime(v)
+		return nil
+	case messageremind.FieldContent:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContent(v)
+		return nil
+	case messageremind.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	}
+	return fmt.Errorf("unknown MessageRemind field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *MessageRemindMutation) AddedFields() []string {
+	var fields []string
+	if m.addchannel_id != nil {
+		fields = append(fields, messageremind.FieldChannelID)
+	}
+	if m.addauthor_id != nil {
+		fields = append(fields, messageremind.FieldAuthorID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *MessageRemindMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case messageremind.FieldChannelID:
+		return m.AddedChannelID()
+	case messageremind.FieldAuthorID:
+		return m.AddedAuthorID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *MessageRemindMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case messageremind.FieldChannelID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddChannelID(v)
+		return nil
+	case messageremind.FieldAuthorID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAuthorID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown MessageRemind numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *MessageRemindMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *MessageRemindMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *MessageRemindMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown MessageRemind nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *MessageRemindMutation) ResetField(name string) error {
+	switch name {
+	case messageremind.FieldChannelID:
+		m.ResetChannelID()
+		return nil
+	case messageremind.FieldAuthorID:
+		m.ResetAuthorID()
+		return nil
+	case messageremind.FieldTime:
+		m.ResetTime()
+		return nil
+	case messageremind.FieldContent:
+		m.ResetContent()
+		return nil
+	case messageremind.FieldName:
+		m.ResetName()
+		return nil
+	}
+	return fmt.Errorf("unknown MessageRemind field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *MessageRemindMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.guild != nil {
+		edges = append(edges, messageremind.EdgeGuild)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *MessageRemindMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case messageremind.EdgeGuild:
+		if id := m.guild; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *MessageRemindMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *MessageRemindMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *MessageRemindMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedguild {
+		edges = append(edges, messageremind.EdgeGuild)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *MessageRemindMutation) EdgeCleared(name string) bool {
+	switch name {
+	case messageremind.EdgeGuild:
+		return m.clearedguild
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *MessageRemindMutation) ClearEdge(name string) error {
+	switch name {
+	case messageremind.EdgeGuild:
+		m.ClearGuild()
+		return nil
+	}
+	return fmt.Errorf("unknown MessageRemind unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *MessageRemindMutation) ResetEdge(name string) error {
+	switch name {
+	case messageremind.EdgeGuild:
+		m.ResetGuild()
+		return nil
+	}
+	return fmt.Errorf("unknown MessageRemind edge %s", name)
+}
+
 // RolePanelMutation represents an operation that mutates the RolePanel nodes in the graph.
 type RolePanelMutation struct {
 	config
@@ -2179,6 +4572,8 @@ type RolePanelMutation struct {
 	description       *string
 	roles             *[]schema.Role
 	appendroles       []schema.Role
+	updated_at        *time.Time
+	applied_at        *time.Time
 	clearedFields     map[string]struct{}
 	guild             *snowflake.ID
 	clearedguild      bool
@@ -2433,6 +4828,104 @@ func (m *RolePanelMutation) ResetRoles() {
 	delete(m.clearedFields, rolepanel.FieldRoles)
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (m *RolePanelMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *RolePanelMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the RolePanel entity.
+// If the RolePanel object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ClearUpdatedAt clears the value of the "updated_at" field.
+func (m *RolePanelMutation) ClearUpdatedAt() {
+	m.updated_at = nil
+	m.clearedFields[rolepanel.FieldUpdatedAt] = struct{}{}
+}
+
+// UpdatedAtCleared returns if the "updated_at" field was cleared in this mutation.
+func (m *RolePanelMutation) UpdatedAtCleared() bool {
+	_, ok := m.clearedFields[rolepanel.FieldUpdatedAt]
+	return ok
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *RolePanelMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+	delete(m.clearedFields, rolepanel.FieldUpdatedAt)
+}
+
+// SetAppliedAt sets the "applied_at" field.
+func (m *RolePanelMutation) SetAppliedAt(t time.Time) {
+	m.applied_at = &t
+}
+
+// AppliedAt returns the value of the "applied_at" field in the mutation.
+func (m *RolePanelMutation) AppliedAt() (r time.Time, exists bool) {
+	v := m.applied_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAppliedAt returns the old "applied_at" field's value of the RolePanel entity.
+// If the RolePanel object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelMutation) OldAppliedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAppliedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAppliedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAppliedAt: %w", err)
+	}
+	return oldValue.AppliedAt, nil
+}
+
+// ClearAppliedAt clears the value of the "applied_at" field.
+func (m *RolePanelMutation) ClearAppliedAt() {
+	m.applied_at = nil
+	m.clearedFields[rolepanel.FieldAppliedAt] = struct{}{}
+}
+
+// AppliedAtCleared returns if the "applied_at" field was cleared in this mutation.
+func (m *RolePanelMutation) AppliedAtCleared() bool {
+	_, ok := m.clearedFields[rolepanel.FieldAppliedAt]
+	return ok
+}
+
+// ResetAppliedAt resets all changes to the "applied_at" field.
+func (m *RolePanelMutation) ResetAppliedAt() {
+	m.applied_at = nil
+	delete(m.clearedFields, rolepanel.FieldAppliedAt)
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by id.
 func (m *RolePanelMutation) SetGuildID(id snowflake.ID) {
 	m.guild = &id
@@ -2599,7 +5092,7 @@ func (m *RolePanelMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RolePanelMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 5)
 	if m.name != nil {
 		fields = append(fields, rolepanel.FieldName)
 	}
@@ -2608,6 +5101,12 @@ func (m *RolePanelMutation) Fields() []string {
 	}
 	if m.roles != nil {
 		fields = append(fields, rolepanel.FieldRoles)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, rolepanel.FieldUpdatedAt)
+	}
+	if m.applied_at != nil {
+		fields = append(fields, rolepanel.FieldAppliedAt)
 	}
 	return fields
 }
@@ -2623,6 +5122,10 @@ func (m *RolePanelMutation) Field(name string) (ent.Value, bool) {
 		return m.Description()
 	case rolepanel.FieldRoles:
 		return m.Roles()
+	case rolepanel.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case rolepanel.FieldAppliedAt:
+		return m.AppliedAt()
 	}
 	return nil, false
 }
@@ -2638,6 +5141,10 @@ func (m *RolePanelMutation) OldField(ctx context.Context, name string) (ent.Valu
 		return m.OldDescription(ctx)
 	case rolepanel.FieldRoles:
 		return m.OldRoles(ctx)
+	case rolepanel.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case rolepanel.FieldAppliedAt:
+		return m.OldAppliedAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown RolePanel field %s", name)
 }
@@ -2667,6 +5174,20 @@ func (m *RolePanelMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetRoles(v)
+		return nil
+	case rolepanel.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case rolepanel.FieldAppliedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAppliedAt(v)
 		return nil
 	}
 	return fmt.Errorf("unknown RolePanel field %s", name)
@@ -2701,6 +5222,12 @@ func (m *RolePanelMutation) ClearedFields() []string {
 	if m.FieldCleared(rolepanel.FieldRoles) {
 		fields = append(fields, rolepanel.FieldRoles)
 	}
+	if m.FieldCleared(rolepanel.FieldUpdatedAt) {
+		fields = append(fields, rolepanel.FieldUpdatedAt)
+	}
+	if m.FieldCleared(rolepanel.FieldAppliedAt) {
+		fields = append(fields, rolepanel.FieldAppliedAt)
+	}
 	return fields
 }
 
@@ -2718,6 +5245,12 @@ func (m *RolePanelMutation) ClearField(name string) error {
 	case rolepanel.FieldRoles:
 		m.ClearRoles()
 		return nil
+	case rolepanel.FieldUpdatedAt:
+		m.ClearUpdatedAt()
+		return nil
+	case rolepanel.FieldAppliedAt:
+		m.ClearAppliedAt()
+		return nil
 	}
 	return fmt.Errorf("unknown RolePanel nullable field %s", name)
 }
@@ -2734,6 +5267,12 @@ func (m *RolePanelMutation) ResetField(name string) error {
 		return nil
 	case rolepanel.FieldRoles:
 		m.ResetRoles()
+		return nil
+	case rolepanel.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case rolepanel.FieldAppliedAt:
+		m.ResetAppliedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown RolePanel field %s", name)
@@ -2873,6 +5412,10 @@ type RolePanelEditMutation struct {
 	selected_role    *snowflake.ID
 	addselected_role *snowflake.ID
 	modified         *bool
+	name             *string
+	description      *string
+	roles            *[]schema.Role
+	appendroles      []schema.Role
 	clearedFields    map[string]struct{}
 	guild            *snowflake.ID
 	clearedguild     bool
@@ -3268,6 +5811,169 @@ func (m *RolePanelEditMutation) ResetModified() {
 	m.modified = nil
 }
 
+// SetName sets the "name" field.
+func (m *RolePanelEditMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *RolePanelEditMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the RolePanelEdit entity.
+// If the RolePanelEdit object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelEditMutation) OldName(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *RolePanelEditMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[rolepaneledit.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *RolePanelEditMutation) NameCleared() bool {
+	_, ok := m.clearedFields[rolepaneledit.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *RolePanelEditMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, rolepaneledit.FieldName)
+}
+
+// SetDescription sets the "description" field.
+func (m *RolePanelEditMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *RolePanelEditMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the RolePanelEdit entity.
+// If the RolePanelEdit object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelEditMutation) OldDescription(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ClearDescription clears the value of the "description" field.
+func (m *RolePanelEditMutation) ClearDescription() {
+	m.description = nil
+	m.clearedFields[rolepaneledit.FieldDescription] = struct{}{}
+}
+
+// DescriptionCleared returns if the "description" field was cleared in this mutation.
+func (m *RolePanelEditMutation) DescriptionCleared() bool {
+	_, ok := m.clearedFields[rolepaneledit.FieldDescription]
+	return ok
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *RolePanelEditMutation) ResetDescription() {
+	m.description = nil
+	delete(m.clearedFields, rolepaneledit.FieldDescription)
+}
+
+// SetRoles sets the "roles" field.
+func (m *RolePanelEditMutation) SetRoles(s []schema.Role) {
+	m.roles = &s
+	m.appendroles = nil
+}
+
+// Roles returns the value of the "roles" field in the mutation.
+func (m *RolePanelEditMutation) Roles() (r []schema.Role, exists bool) {
+	v := m.roles
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRoles returns the old "roles" field's value of the RolePanelEdit entity.
+// If the RolePanelEdit object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelEditMutation) OldRoles(ctx context.Context) (v []schema.Role, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRoles is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRoles requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRoles: %w", err)
+	}
+	return oldValue.Roles, nil
+}
+
+// AppendRoles adds s to the "roles" field.
+func (m *RolePanelEditMutation) AppendRoles(s []schema.Role) {
+	m.appendroles = append(m.appendroles, s...)
+}
+
+// AppendedRoles returns the list of values that were appended to the "roles" field in this mutation.
+func (m *RolePanelEditMutation) AppendedRoles() ([]schema.Role, bool) {
+	if len(m.appendroles) == 0 {
+		return nil, false
+	}
+	return m.appendroles, true
+}
+
+// ClearRoles clears the value of the "roles" field.
+func (m *RolePanelEditMutation) ClearRoles() {
+	m.roles = nil
+	m.appendroles = nil
+	m.clearedFields[rolepaneledit.FieldRoles] = struct{}{}
+}
+
+// RolesCleared returns if the "roles" field was cleared in this mutation.
+func (m *RolePanelEditMutation) RolesCleared() bool {
+	_, ok := m.clearedFields[rolepaneledit.FieldRoles]
+	return ok
+}
+
+// ResetRoles resets all changes to the "roles" field.
+func (m *RolePanelEditMutation) ResetRoles() {
+	m.roles = nil
+	m.appendroles = nil
+	delete(m.clearedFields, rolepaneledit.FieldRoles)
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by id.
 func (m *RolePanelEditMutation) SetGuildID(id snowflake.ID) {
 	m.guild = &id
@@ -3380,7 +6086,7 @@ func (m *RolePanelEditMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RolePanelEditMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 8)
 	if m.channel_id != nil {
 		fields = append(fields, rolepaneledit.FieldChannelID)
 	}
@@ -3395,6 +6101,15 @@ func (m *RolePanelEditMutation) Fields() []string {
 	}
 	if m.modified != nil {
 		fields = append(fields, rolepaneledit.FieldModified)
+	}
+	if m.name != nil {
+		fields = append(fields, rolepaneledit.FieldName)
+	}
+	if m.description != nil {
+		fields = append(fields, rolepaneledit.FieldDescription)
+	}
+	if m.roles != nil {
+		fields = append(fields, rolepaneledit.FieldRoles)
 	}
 	return fields
 }
@@ -3414,6 +6129,12 @@ func (m *RolePanelEditMutation) Field(name string) (ent.Value, bool) {
 		return m.SelectedRole()
 	case rolepaneledit.FieldModified:
 		return m.Modified()
+	case rolepaneledit.FieldName:
+		return m.Name()
+	case rolepaneledit.FieldDescription:
+		return m.Description()
+	case rolepaneledit.FieldRoles:
+		return m.Roles()
 	}
 	return nil, false
 }
@@ -3433,6 +6154,12 @@ func (m *RolePanelEditMutation) OldField(ctx context.Context, name string) (ent.
 		return m.OldSelectedRole(ctx)
 	case rolepaneledit.FieldModified:
 		return m.OldModified(ctx)
+	case rolepaneledit.FieldName:
+		return m.OldName(ctx)
+	case rolepaneledit.FieldDescription:
+		return m.OldDescription(ctx)
+	case rolepaneledit.FieldRoles:
+		return m.OldRoles(ctx)
 	}
 	return nil, fmt.Errorf("unknown RolePanelEdit field %s", name)
 }
@@ -3476,6 +6203,27 @@ func (m *RolePanelEditMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetModified(v)
+		return nil
+	case rolepaneledit.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case rolepaneledit.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case rolepaneledit.FieldRoles:
+		v, ok := value.([]schema.Role)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRoles(v)
 		return nil
 	}
 	return fmt.Errorf("unknown RolePanelEdit field %s", name)
@@ -3555,6 +6303,15 @@ func (m *RolePanelEditMutation) ClearedFields() []string {
 	if m.FieldCleared(rolepaneledit.FieldSelectedRole) {
 		fields = append(fields, rolepaneledit.FieldSelectedRole)
 	}
+	if m.FieldCleared(rolepaneledit.FieldName) {
+		fields = append(fields, rolepaneledit.FieldName)
+	}
+	if m.FieldCleared(rolepaneledit.FieldDescription) {
+		fields = append(fields, rolepaneledit.FieldDescription)
+	}
+	if m.FieldCleared(rolepaneledit.FieldRoles) {
+		fields = append(fields, rolepaneledit.FieldRoles)
+	}
 	return fields
 }
 
@@ -3578,6 +6335,15 @@ func (m *RolePanelEditMutation) ClearField(name string) error {
 	case rolepaneledit.FieldSelectedRole:
 		m.ClearSelectedRole()
 		return nil
+	case rolepaneledit.FieldName:
+		m.ClearName()
+		return nil
+	case rolepaneledit.FieldDescription:
+		m.ClearDescription()
+		return nil
+	case rolepaneledit.FieldRoles:
+		m.ClearRoles()
+		return nil
 	}
 	return fmt.Errorf("unknown RolePanelEdit nullable field %s", name)
 }
@@ -3600,6 +6366,15 @@ func (m *RolePanelEditMutation) ResetField(name string) error {
 		return nil
 	case rolepaneledit.FieldModified:
 		m.ResetModified()
+		return nil
+	case rolepaneledit.FieldName:
+		m.ResetName()
+		return nil
+	case rolepaneledit.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case rolepaneledit.FieldRoles:
+		m.ResetRoles()
 		return nil
 	}
 	return fmt.Errorf("unknown RolePanelEdit field %s", name)
@@ -3717,6 +6492,11 @@ type RolePanelPlacedMutation struct {
 	created_at          *time.Time
 	uses                *int
 	adduses             *int
+	name                *string
+	description         *string
+	roles               *[]schema.Role
+	appendroles         []schema.Role
+	updated_at          *time.Time
 	clearedFields       map[string]struct{}
 	guild               *snowflake.ID
 	clearedguild        bool
@@ -4298,6 +7078,192 @@ func (m *RolePanelPlacedMutation) ResetUses() {
 	m.adduses = nil
 }
 
+// SetName sets the "name" field.
+func (m *RolePanelPlacedMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *RolePanelPlacedMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the RolePanelPlaced entity.
+// If the RolePanelPlaced object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelPlacedMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *RolePanelPlacedMutation) ResetName() {
+	m.name = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *RolePanelPlacedMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *RolePanelPlacedMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the RolePanelPlaced entity.
+// If the RolePanelPlaced object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelPlacedMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *RolePanelPlacedMutation) ResetDescription() {
+	m.description = nil
+}
+
+// SetRoles sets the "roles" field.
+func (m *RolePanelPlacedMutation) SetRoles(s []schema.Role) {
+	m.roles = &s
+	m.appendroles = nil
+}
+
+// Roles returns the value of the "roles" field in the mutation.
+func (m *RolePanelPlacedMutation) Roles() (r []schema.Role, exists bool) {
+	v := m.roles
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRoles returns the old "roles" field's value of the RolePanelPlaced entity.
+// If the RolePanelPlaced object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelPlacedMutation) OldRoles(ctx context.Context) (v []schema.Role, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRoles is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRoles requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRoles: %w", err)
+	}
+	return oldValue.Roles, nil
+}
+
+// AppendRoles adds s to the "roles" field.
+func (m *RolePanelPlacedMutation) AppendRoles(s []schema.Role) {
+	m.appendroles = append(m.appendroles, s...)
+}
+
+// AppendedRoles returns the list of values that were appended to the "roles" field in this mutation.
+func (m *RolePanelPlacedMutation) AppendedRoles() ([]schema.Role, bool) {
+	if len(m.appendroles) == 0 {
+		return nil, false
+	}
+	return m.appendroles, true
+}
+
+// ClearRoles clears the value of the "roles" field.
+func (m *RolePanelPlacedMutation) ClearRoles() {
+	m.roles = nil
+	m.appendroles = nil
+	m.clearedFields[rolepanelplaced.FieldRoles] = struct{}{}
+}
+
+// RolesCleared returns if the "roles" field was cleared in this mutation.
+func (m *RolePanelPlacedMutation) RolesCleared() bool {
+	_, ok := m.clearedFields[rolepanelplaced.FieldRoles]
+	return ok
+}
+
+// ResetRoles resets all changes to the "roles" field.
+func (m *RolePanelPlacedMutation) ResetRoles() {
+	m.roles = nil
+	m.appendroles = nil
+	delete(m.clearedFields, rolepanelplaced.FieldRoles)
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *RolePanelPlacedMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *RolePanelPlacedMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the RolePanelPlaced entity.
+// If the RolePanelPlaced object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RolePanelPlacedMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ClearUpdatedAt clears the value of the "updated_at" field.
+func (m *RolePanelPlacedMutation) ClearUpdatedAt() {
+	m.updated_at = nil
+	m.clearedFields[rolepanelplaced.FieldUpdatedAt] = struct{}{}
+}
+
+// UpdatedAtCleared returns if the "updated_at" field was cleared in this mutation.
+func (m *RolePanelPlacedMutation) UpdatedAtCleared() bool {
+	_, ok := m.clearedFields[rolepanelplaced.FieldUpdatedAt]
+	return ok
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *RolePanelPlacedMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+	delete(m.clearedFields, rolepanelplaced.FieldUpdatedAt)
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by id.
 func (m *RolePanelPlacedMutation) SetGuildID(id snowflake.ID) {
 	m.guild = &id
@@ -4410,7 +7376,7 @@ func (m *RolePanelPlacedMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RolePanelPlacedMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 14)
 	if m.message_id != nil {
 		fields = append(fields, rolepanelplaced.FieldMessageID)
 	}
@@ -4441,6 +7407,18 @@ func (m *RolePanelPlacedMutation) Fields() []string {
 	if m.uses != nil {
 		fields = append(fields, rolepanelplaced.FieldUses)
 	}
+	if m.name != nil {
+		fields = append(fields, rolepanelplaced.FieldName)
+	}
+	if m.description != nil {
+		fields = append(fields, rolepanelplaced.FieldDescription)
+	}
+	if m.roles != nil {
+		fields = append(fields, rolepanelplaced.FieldRoles)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, rolepanelplaced.FieldUpdatedAt)
+	}
 	return fields
 }
 
@@ -4469,6 +7447,14 @@ func (m *RolePanelPlacedMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case rolepanelplaced.FieldUses:
 		return m.Uses()
+	case rolepanelplaced.FieldName:
+		return m.Name()
+	case rolepanelplaced.FieldDescription:
+		return m.Description()
+	case rolepanelplaced.FieldRoles:
+		return m.Roles()
+	case rolepanelplaced.FieldUpdatedAt:
+		return m.UpdatedAt()
 	}
 	return nil, false
 }
@@ -4498,6 +7484,14 @@ func (m *RolePanelPlacedMutation) OldField(ctx context.Context, name string) (en
 		return m.OldCreatedAt(ctx)
 	case rolepanelplaced.FieldUses:
 		return m.OldUses(ctx)
+	case rolepanelplaced.FieldName:
+		return m.OldName(ctx)
+	case rolepanelplaced.FieldDescription:
+		return m.OldDescription(ctx)
+	case rolepanelplaced.FieldRoles:
+		return m.OldRoles(ctx)
+	case rolepanelplaced.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown RolePanelPlaced field %s", name)
 }
@@ -4576,6 +7570,34 @@ func (m *RolePanelPlacedMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUses(v)
+		return nil
+	case rolepanelplaced.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case rolepanelplaced.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case rolepanelplaced.FieldRoles:
+		v, ok := value.([]schema.Role)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRoles(v)
+		return nil
+	case rolepanelplaced.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
 		return nil
 	}
 	return fmt.Errorf("unknown RolePanelPlaced field %s", name)
@@ -4664,6 +7686,12 @@ func (m *RolePanelPlacedMutation) ClearedFields() []string {
 	if m.FieldCleared(rolepanelplaced.FieldType) {
 		fields = append(fields, rolepanelplaced.FieldType)
 	}
+	if m.FieldCleared(rolepanelplaced.FieldRoles) {
+		fields = append(fields, rolepanelplaced.FieldRoles)
+	}
+	if m.FieldCleared(rolepanelplaced.FieldUpdatedAt) {
+		fields = append(fields, rolepanelplaced.FieldUpdatedAt)
+	}
 	return fields
 }
 
@@ -4683,6 +7711,12 @@ func (m *RolePanelPlacedMutation) ClearField(name string) error {
 		return nil
 	case rolepanelplaced.FieldType:
 		m.ClearType()
+		return nil
+	case rolepanelplaced.FieldRoles:
+		m.ClearRoles()
+		return nil
+	case rolepanelplaced.FieldUpdatedAt:
+		m.ClearUpdatedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown RolePanelPlaced nullable field %s", name)
@@ -4721,6 +7755,18 @@ func (m *RolePanelPlacedMutation) ResetField(name string) error {
 		return nil
 	case rolepanelplaced.FieldUses:
 		m.ResetUses()
+		return nil
+	case rolepanelplaced.FieldName:
+		m.ResetName()
+		return nil
+	case rolepanelplaced.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case rolepanelplaced.FieldRoles:
+		m.ResetRoles()
+		return nil
+	case rolepanelplaced.FieldUpdatedAt:
+		m.ResetUpdatedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown RolePanelPlaced field %s", name)
@@ -4827,6 +7873,8 @@ type UserMutation struct {
 	name               *string
 	created_at         *time.Time
 	locale             *discord.Locale
+	xp                 *xppoint.XP
+	addxp              *xppoint.XP
 	clearedFields      map[string]struct{}
 	own_guilds         map[snowflake.ID]struct{}
 	removedown_guilds  map[snowflake.ID]struct{}
@@ -5054,6 +8102,62 @@ func (m *UserMutation) ResetLocale() {
 	m.locale = nil
 }
 
+// SetXp sets the "xp" field.
+func (m *UserMutation) SetXp(x xppoint.XP) {
+	m.xp = &x
+	m.addxp = nil
+}
+
+// Xp returns the value of the "xp" field in the mutation.
+func (m *UserMutation) Xp() (r xppoint.XP, exists bool) {
+	v := m.xp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldXp returns the old "xp" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldXp(ctx context.Context) (v xppoint.XP, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldXp is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldXp requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldXp: %w", err)
+	}
+	return oldValue.Xp, nil
+}
+
+// AddXp adds x to the "xp" field.
+func (m *UserMutation) AddXp(x xppoint.XP) {
+	if m.addxp != nil {
+		*m.addxp += x
+	} else {
+		m.addxp = &x
+	}
+}
+
+// AddedXp returns the value that was added to the "xp" field in this mutation.
+func (m *UserMutation) AddedXp() (r xppoint.XP, exists bool) {
+	v := m.addxp
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetXp resets all changes to the "xp" field.
+func (m *UserMutation) ResetXp() {
+	m.xp = nil
+	m.addxp = nil
+}
+
 // AddOwnGuildIDs adds the "own_guilds" edge to the Guild entity by ids.
 func (m *UserMutation) AddOwnGuildIDs(ids ...snowflake.ID) {
 	if m.own_guilds == nil {
@@ -5250,7 +8354,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.name != nil {
 		fields = append(fields, user.FieldName)
 	}
@@ -5259,6 +8363,9 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.locale != nil {
 		fields = append(fields, user.FieldLocale)
+	}
+	if m.xp != nil {
+		fields = append(fields, user.FieldXp)
 	}
 	return fields
 }
@@ -5274,6 +8381,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case user.FieldLocale:
 		return m.Locale()
+	case user.FieldXp:
+		return m.Xp()
 	}
 	return nil, false
 }
@@ -5289,6 +8398,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldCreatedAt(ctx)
 	case user.FieldLocale:
 		return m.OldLocale(ctx)
+	case user.FieldXp:
+		return m.OldXp(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -5319,6 +8430,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetLocale(v)
 		return nil
+	case user.FieldXp:
+		v, ok := value.(xppoint.XP)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetXp(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
 }
@@ -5326,13 +8444,21 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *UserMutation) AddedFields() []string {
-	return nil
+	var fields []string
+	if m.addxp != nil {
+		fields = append(fields, user.FieldXp)
+	}
+	return fields
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case user.FieldXp:
+		return m.AddedXp()
+	}
 	return nil, false
 }
 
@@ -5341,6 +8467,13 @@ func (m *UserMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *UserMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case user.FieldXp:
+		v, ok := value.(xppoint.XP)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddXp(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User numeric field %s", name)
 }
@@ -5376,6 +8509,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldLocale:
 		m.ResetLocale()
+		return nil
+	case user.FieldXp:
+		m.ResetXp()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)

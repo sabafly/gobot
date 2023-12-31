@@ -416,6 +416,11 @@ components.message.suffix.remove.command.options.target.name: 対象
 components.message.suffix.remove.command.options.target.description: 語尾を解除するユーザー
 components.message.suffix.duration.message: "期限：{{.Duration}}"
 components.message.suffix.duration.none: 無期限
+components.message.suffix.check.message.none: "{{.User}}に語尾は設定されていません"
+components.message.suffix.check.message: |-
+  {{.User}}の語尾は「{{.Suffix}}」に強制されています
+  期限：{{.Duration}}
+  ルール：{{.Rule}}
 components.message.pin.create.modal.title: ピン留めメッセージを作成する
 components.message.pin.create.modal.input.1.label: メッセージの内容
 components.message.pin.create.message: ピン留めメッセージを作成しました
@@ -440,6 +445,7 @@ components.role.panel.edit.menu.base.components.delete: 役職を削除
 components.role.panel.edit.menu.base.components.set_emoji: 絵文字の設定
 components.role.panel.edit.menu.base.components.set_display_name: 名前の設定
 components.role.panel.edit.menu.base.components.back_base_menu: 戻る
+components.role.panel.edit.menu.base.components.save_change: 変更を保存
 components.role.panel.edit.menu.base.components.apply_change: 変更を適用
 components.role.panel.edit.menu.modify_roles.title: 役職リストの編集
 components.role.panel.edit.menu.modify_roles.field.roles: 役職
@@ -487,13 +493,84 @@ components.role.panel.use.changed.remove: 解除
 components.role.panel.use.changed.unchanged: 既存
 components.role.panel.delete.message.embed.title: 削除しました
 components.role.panel.delete.message.embed.description: "{{.RolePanel}} を削除しました"
-
+components.role.panel.create.command.description: 役職パネルを作成する
+components.role.panel.place.command.description: 役職パネルを設置する
+components.role.panel.place.command.options.panel.name: 役職パネル
+components.role.panel.place.command.options.panel.description: 設置する役職パネル
+components.role.panel.edit.command.description: 役職パネルを編集する
+components.role.panel.edit.command.options.panel.description: 編集する役職パネル
+components.role.panel.edit.command.options.panel.name: 役職パネル
+components.role.panel.delete.command.description: 役職パネルを削除する
+components.role.panel.delete.command.options.panel.name: 役職パネル
+components.role.panel.delete.command.options.panel.description: 削除する役職パネル
+components.level.rank.embed.title: "{{.User}}の経験値"
+components.level.rank.embed.description: "{{.Level}} レベル `{{.Xp}}`xp"
+components.level.rank.embed.fields.place: 順位
+components.level.rank.embed.fields.next_level: "{{.NextLevel}} レベルまで"
+components.level.leaderboard.title: ギルド経験値リーダーボード
+components.level.up.message.modal.title: レベルアップメッセージを編集
+components.level.up.message.modal.input.message: メッセージ
+components.level.up.message.modal.input.message.placeholder: |-
+  {user}: ユーザーのメンション
+  {username}: ユーザーの名前
+  {before_level}: 前のレベル
+  {after_level}: 後のレベル
+components.level.up.message.message: レベルアップメッセージを設定しました
+components.level.up.message-channel.message: "レベルアップメッセージを{{.Channel}}に送信します"
+components.level.up.message-channel.default: 「レベルアップした時のチャンネル」
+components.level.exclude-channel.add.message: "{{.Channel}}を除外チャンネルに登録しました"
+components.level.exclude-channel.clear.message: 除外チャンネルをクリアしました
+components.level.exclude-channel.remove.message: "{{.Channel}}を除外チャンネルから解除しました"
+components.level.import-mee6.message.already: インポートできません
+components.level.import-mee6.message.already.description: 二回以上インポートすることはできません
+components.level.import-mee6.message.unauthorized: |-
+  mee6リーダーボードがパブリックではありません。
+  [設定](<https://mee6.xyz/en/dashboard/{{.GuildID}}/leaderboard>)からリーダーボードを公開してください。
+components.level.reset.message: "{{.User}}のレベルをリセットしました"
+components.level.exclude-channel.list.message: 除外チャンネル一覧
+components.level.exclude-channel.list.message.none: 登録されていません
+components.level.role.set.message.embed.title: レベルロールを設定しました
+components.level.role.set.message.embed.description: |-
+  {{.Level}} レベル：{{.Role}}
+components.level.role.list.message.embed.title: レベルロール一覧
+components.level.role.list.message.none: 登録されていません
+components.level.role.list.message: |-
+  {{.Level}} レベル：{{.Role}}
+components.level.role.remove.message.embed.title: レベルロールを削除しました
+components.level.role.remove.message.embed.description: |-
+  {{.Level}} レベル：{{.Role}}
+components.message.remind.add.modal.title: リマインドを作成
+components.message.remind.add.modal.input.content.label: 内容
+components.message.remind.add.modal.input.name.label: 名前
+components.message.remind.add.modal.input.name.value: 通知
+components.message.remind.add.message: "{{.Time}}に通知を予約しました"
+components.message.remind.cancel.message: "{{.Count}}件の通知をキャンセルしました"
+components.permission.set.message.embed.title: 権限を設定しました
+components.permission.unset.message.embed.title: 権限を解除しました
+components.permission.check.message.embed.title: 権限チェック
+components.permission.list.message.embed.title: 権限一覧
+components.setting.bump.toggle.enabled: Bump通知を有効化しました
+components.setting.bump.toggle.disabled: Bump通知を無効化しました
+components.setting.up.toggle.enabled: UP通知を有効化しました
+components.setting.up.toggle.disabled: UP通知を無効化しました
+components.setting.bump.mention: "Bump通知のメンション先を{{.Role}}に設定しました"
+components.setting.up.mention: "UP通知のメンション先を{{.Role}}に設定しました"
+components.setting.mention.none: なし
+components.setting.bump.message.modal.title: Bump通知メッセージ
+components.setting.up.message.modal.title: UP通知メッセージ
+components.setting.message.modal.message_title: 応答メッセージのタイトル
+components.setting.message.modal.message: 応答メッセージの内容
+components.setting.message.modal.remind.message_title: 催促メッセージのタイトル
+components.setting.message.modal.remind.message: 催促メッセージの内容
+# エラーメッセージ
 errors.generic.message: エラーが発生しました
 errors.panic.message: 致命的なエラー
 errors.invalid.bot.target: ボットは選択できません
 errors.invalid.bot.target.description: ボット以外のユーザーである必要があります
+errors.invalid.self.target: 自分自身は選択できません
+errors.invalid.self.target.description: 自分以外のユーザーである必要があります
 errors.invalid.permission: 権限が不足しています
-errors.invalid.permission.description: "`/permission add`コマンドで`{{.Permission}}`の権限を追加することで使用可能になります"
+errors.invalid.permission.description: "`/permission add`コマンドで{{.Permission}}の権限を追加することで使用可能になります"
 errors.unavailable.message.pin: ピン留めメッセージが存在しません
 errors.timeout: 期限切れ
 errors.timeout.description: 有効期限が切れています
@@ -503,3 +580,23 @@ errors.fail.role.panel: 役職の操作に失敗
 errors.fail.role.panel.description: |-
   役職の追加または解除に失敗しました
   役職がボットより下の順位にあることとボットに役職を操作する権限があるかを確認してください
+errors.invalid.page: 無効なページ
+errors.invalid.page.description: 範囲外のページ番号です
+errors.invalid.role: 無効なロール
+errors.invalid.role.description: |-
+  無効なロールが選択されました
+  役職がボットより下の順位にあることを確認してください
+errors.create.reach_max: 最大個数に達しています
+errors.create.reach_max.description: "それ以上作成することはできません"
+errors.not_exist: 存在しません
+errors.not_exist.description: 指定された項目がありません
+errors.already_exist: すでに存在します
+errors.already_exist.description: 同じ項目を登録することはできません
+errors.invalid.time.format: 無効な時間指定
+errors.invalid.time.format.description: それは時刻ではありません
+errors.invalid.time.before: 無効な時間指定
+errors.invalid.time.before.description: 過去を指定しているか短すぎます
+errors.ratelimited: 一時的に制限されています
+errors.ratelimited.description: しばらく待ってからやり直してください
+errors.unsupported: 対応していません
+errors.unsupported.description: それはこの操作に対応していません

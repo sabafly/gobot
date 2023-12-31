@@ -10,6 +10,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/ent/predicate"
+	"github.com/sabafly/gobot/internal/xppoint"
 )
 
 // ID filters vertices based on their ID field.
@@ -71,6 +72,12 @@ func CreatedAt(v time.Time) predicate.User {
 func Locale(v discord.Locale) predicate.User {
 	vc := string(v)
 	return predicate.User(sql.FieldEQ(FieldLocale, vc))
+}
+
+// Xp applies equality check predicate on the "xp" field. It's identical to XpEQ.
+func Xp(v xppoint.XP) predicate.User {
+	vc := uint64(v)
+	return predicate.User(sql.FieldEQ(FieldXp, vc))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -260,6 +267,60 @@ func LocaleEqualFold(v discord.Locale) predicate.User {
 func LocaleContainsFold(v discord.Locale) predicate.User {
 	vc := string(v)
 	return predicate.User(sql.FieldContainsFold(FieldLocale, vc))
+}
+
+// XpEQ applies the EQ predicate on the "xp" field.
+func XpEQ(v xppoint.XP) predicate.User {
+	vc := uint64(v)
+	return predicate.User(sql.FieldEQ(FieldXp, vc))
+}
+
+// XpNEQ applies the NEQ predicate on the "xp" field.
+func XpNEQ(v xppoint.XP) predicate.User {
+	vc := uint64(v)
+	return predicate.User(sql.FieldNEQ(FieldXp, vc))
+}
+
+// XpIn applies the In predicate on the "xp" field.
+func XpIn(vs ...xppoint.XP) predicate.User {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = uint64(vs[i])
+	}
+	return predicate.User(sql.FieldIn(FieldXp, v...))
+}
+
+// XpNotIn applies the NotIn predicate on the "xp" field.
+func XpNotIn(vs ...xppoint.XP) predicate.User {
+	v := make([]any, len(vs))
+	for i := range v {
+		v[i] = uint64(vs[i])
+	}
+	return predicate.User(sql.FieldNotIn(FieldXp, v...))
+}
+
+// XpGT applies the GT predicate on the "xp" field.
+func XpGT(v xppoint.XP) predicate.User {
+	vc := uint64(v)
+	return predicate.User(sql.FieldGT(FieldXp, vc))
+}
+
+// XpGTE applies the GTE predicate on the "xp" field.
+func XpGTE(v xppoint.XP) predicate.User {
+	vc := uint64(v)
+	return predicate.User(sql.FieldGTE(FieldXp, vc))
+}
+
+// XpLT applies the LT predicate on the "xp" field.
+func XpLT(v xppoint.XP) predicate.User {
+	vc := uint64(v)
+	return predicate.User(sql.FieldLT(FieldXp, vc))
+}
+
+// XpLTE applies the LTE predicate on the "xp" field.
+func XpLTE(v xppoint.XP) predicate.User {
+	vc := uint64(v)
+	return predicate.User(sql.FieldLTE(FieldXp, vc))
 }
 
 // HasOwnGuilds applies the HasEdge predicate on the "own_guilds" edge.

@@ -13,8 +13,8 @@ import (
 	"github.com/sabafly/gobot/internal/translate"
 )
 
-func Command() *generic.GenericCommand {
-	return &generic.GenericCommand{
+func Command(c *components.Components) *generic.Command {
+	return (&generic.Command{
 		Namespace: "ping",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
@@ -46,5 +46,5 @@ func Command() *generic.GenericCommand {
 				return nil
 			}),
 		},
-	}
+	}).SetComponent(c)
 }

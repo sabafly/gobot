@@ -14,6 +14,7 @@ import (
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/ent/rolepaneledit"
+	"github.com/sabafly/gobot/ent/schema"
 )
 
 // RolePanelEditCreate is the builder for creating a RolePanelEdit entity.
@@ -82,6 +83,40 @@ func (rpec *RolePanelEditCreate) SetNillableModified(b *bool) *RolePanelEditCrea
 	if b != nil {
 		rpec.SetModified(*b)
 	}
+	return rpec
+}
+
+// SetName sets the "name" field.
+func (rpec *RolePanelEditCreate) SetName(s string) *RolePanelEditCreate {
+	rpec.mutation.SetName(s)
+	return rpec
+}
+
+// SetNillableName sets the "name" field if the given value is not nil.
+func (rpec *RolePanelEditCreate) SetNillableName(s *string) *RolePanelEditCreate {
+	if s != nil {
+		rpec.SetName(*s)
+	}
+	return rpec
+}
+
+// SetDescription sets the "description" field.
+func (rpec *RolePanelEditCreate) SetDescription(s string) *RolePanelEditCreate {
+	rpec.mutation.SetDescription(s)
+	return rpec
+}
+
+// SetNillableDescription sets the "description" field if the given value is not nil.
+func (rpec *RolePanelEditCreate) SetNillableDescription(s *string) *RolePanelEditCreate {
+	if s != nil {
+		rpec.SetDescription(*s)
+	}
+	return rpec
+}
+
+// SetRoles sets the "roles" field.
+func (rpec *RolePanelEditCreate) SetRoles(s []schema.Role) *RolePanelEditCreate {
+	rpec.mutation.SetRoles(s)
 	return rpec
 }
 
@@ -174,6 +209,16 @@ func (rpec *RolePanelEditCreate) check() error {
 	if _, ok := rpec.mutation.Modified(); !ok {
 		return &ValidationError{Name: "modified", err: errors.New(`ent: missing required field "RolePanelEdit.modified"`)}
 	}
+	if v, ok := rpec.mutation.Name(); ok {
+		if err := rolepaneledit.NameValidator(v); err != nil {
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanelEdit.name": %w`, err)}
+		}
+	}
+	if v, ok := rpec.mutation.Description(); ok {
+		if err := rolepaneledit.DescriptionValidator(v); err != nil {
+			return &ValidationError{Name: "description", err: fmt.Errorf(`ent: validator failed for field "RolePanelEdit.description": %w`, err)}
+		}
+	}
 	if _, ok := rpec.mutation.GuildID(); !ok {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "RolePanelEdit.guild"`)}
 	}
@@ -234,6 +279,18 @@ func (rpec *RolePanelEditCreate) createSpec() (*RolePanelEdit, *sqlgraph.CreateS
 	if value, ok := rpec.mutation.Modified(); ok {
 		_spec.SetField(rolepaneledit.FieldModified, field.TypeBool, value)
 		_node.Modified = value
+	}
+	if value, ok := rpec.mutation.Name(); ok {
+		_spec.SetField(rolepaneledit.FieldName, field.TypeString, value)
+		_node.Name = &value
+	}
+	if value, ok := rpec.mutation.Description(); ok {
+		_spec.SetField(rolepaneledit.FieldDescription, field.TypeString, value)
+		_node.Description = &value
+	}
+	if value, ok := rpec.mutation.Roles(); ok {
+		_spec.SetField(rolepaneledit.FieldRoles, field.TypeJSON, value)
+		_node.Roles = value
 	}
 	if nodes := rpec.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
