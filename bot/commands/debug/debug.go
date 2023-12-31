@@ -83,6 +83,23 @@ func Command(c *components.Components) *generic.Command {
 							},
 						},
 					},
+					discord.ApplicationCommandOptionSubCommandGroup{
+						Name:        "guild",
+						Description: "guild",
+						Options: []discord.ApplicationCommandOptionSubCommand{
+							{
+								Name:        "leave",
+								Description: "leave",
+								Options: []discord.ApplicationCommandOption{
+									discord.ApplicationCommandOptionString{
+										Name:        "guild",
+										Description: "guild",
+										Required:    true,
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -102,6 +119,20 @@ func Command(c *components.Components) *generic.Command {
 			"/debug/translate/reload": generic.CommandHandler(func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 				if _, err := translate.LoadDir(c.Config().TranslateDir); err != nil {
 					slog.Error("翻訳ファイルを読み込めません", "err", err)
+					return errors.NewError(err)
+				}
+				if err := event.CreateMessage(
+					discord.NewMessageBuilder().
+						SetContent("OK").
+						Create(),
+				); err != nil {
+					return errors.NewError(err)
+				}
+				return nil
+			}),
+			"/debug/guild/leave": generic.CommandHandler(func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+				guildID := snowflake.MustParse(event.SlashCommandInteractionData().String("guild"))
+				if err := event.Client().Rest().LeaveGuild(guildID); err != nil {
 					return errors.NewError(err)
 				}
 				if err := event.CreateMessage(
