@@ -163,25 +163,7 @@ func init() {
 	// rolepanelDescName is the schema descriptor for name field.
 	rolepanelDescName := rolepanelFields[1].Descriptor()
 	// rolepanel.NameValidator is a validator for the "name" field. It is called by the builders before save.
-	rolepanel.NameValidator = func() func(string) error {
-		validators := rolepanelDescName.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(name string) error {
-			for _, fn := range fns {
-				if err := fn(name); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-	// rolepanelDescDescription is the schema descriptor for description field.
-	rolepanelDescDescription := rolepanelFields[2].Descriptor()
-	// rolepanel.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
-	rolepanel.DescriptionValidator = rolepanelDescDescription.Validators[0].(func(string) error)
+	rolepanel.NameValidator = rolepanelDescName.Validators[0].(func(string) error)
 	// rolepanelDescID is the schema descriptor for id field.
 	rolepanelDescID := rolepanelFields[0].Descriptor()
 	// rolepanel.DefaultID holds the default value on creation for the id field.

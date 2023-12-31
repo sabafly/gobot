@@ -130,8 +130,8 @@ var (
 	// RolePanelsColumns holds the columns for the "role_panels" table.
 	RolePanelsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID, Unique: true},
-		{Name: "name", Type: field.TypeString, Size: 32},
-		{Name: "description", Type: field.TypeString, Size: 140},
+		{Name: "name", Type: field.TypeString},
+		{Name: "description", Type: field.TypeString},
 		{Name: "roles", Type: field.TypeJSON, Nullable: true},
 		{Name: "updated_at", Type: field.TypeTime, Nullable: true},
 		{Name: "applied_at", Type: field.TypeTime, Nullable: true},
