@@ -48,7 +48,7 @@ func newError(err error, skip int) *errorImpl {
 	}
 	var restErr rest.Error
 	if errors.As(e, &restErr) {
-		slog.Error("request info", "err", fmt.Errorf("%w\nurl: %s\nrq: %s\nrs: %s\nhd: %v", restErr, restErr.Request.RequestURI, string(restErr.RqBody), string(restErr.RsBody), restErr.Response.Header))
+		slog.Error("request info", "err", fmt.Errorf("%w\nurl: %s\nrq: %s\nrs: %s\nhd: %v", restErr, restErr.Request.URL, string(restErr.RqBody), string(restErr.RsBody), restErr.Response.Header))
 	}
 	return &errorImpl{
 		err:   err,
