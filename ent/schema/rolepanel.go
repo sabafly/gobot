@@ -22,10 +22,8 @@ func (RolePanel) Fields() []ent.Field {
 			Unique().
 			Default(uuid.New),
 		field.String("name").
-			NotEmpty().
-			MaxLen(32),
-		field.String("description").
-			MaxLen(140),
+			NotEmpty(),
+		field.String("description"),
 		field.JSON("roles", []Role{}).
 			Optional(),
 		field.Time("updated_at").Optional(),
