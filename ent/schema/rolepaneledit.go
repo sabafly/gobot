@@ -38,12 +38,10 @@ func (RolePanelEdit) Fields() []ent.Field {
 		field.String("name").
 			Optional().
 			Nillable().
-			NotEmpty().
-			MaxLen(32),
+			NotEmpty(),
 		field.String("description").
 			Optional().
-			Nillable().
-			MaxLen(140),
+			Nillable(),
 		field.JSON("roles", []Role{}).
 			Optional(),
 	}

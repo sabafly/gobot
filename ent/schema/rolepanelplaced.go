@@ -51,10 +51,8 @@ func (RolePanelPlaced) Fields() []ent.Field {
 		field.Int("uses").
 			Default(0),
 		field.String("name").
-			NotEmpty().
-			MaxLen(32),
-		field.String("description").
-			MaxLen(140),
+			NotEmpty(),
+		field.String("description"),
 		field.JSON("roles", []Role{}).
 			Optional(),
 		field.Time("updated_at").
