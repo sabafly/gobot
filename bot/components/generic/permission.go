@@ -45,6 +45,10 @@ func noPermissionMessage(event interface {
 
 func PermissionCheck(ctx context.Context, c *components.Components, g *ent.Guild, client bot.Client, m discord.ResolvedMember, guildID snowflake.ID, perms []Permission) bool {
 
+	if len(perms) == 0 {
+		return true
+	}
+
 	if m := c.DB().Guild.Query().
 		Where(guild.ID(guildID)).
 		FirstX(ctx).
@@ -76,6 +80,10 @@ func PermissionCheck(ctx context.Context, c *components.Components, g *ent.Guild
 }
 
 func RolePermissionCheck(g *ent.Guild, guildID snowflake.ID, client bot.Client, roleIds []snowflake.ID, perms []Permission) bool {
+
+	if len(perms) == 0 {
+		return true
+	}
 
 	var roles []discord.Role
 	client.Caches().RolesForEach(guildID, func(role discord.Role) {
@@ -114,6 +122,11 @@ func permissionCheck(event interface {
 	User() discord.User
 	Client() bot.Client
 }, c *components.Components, perms []Permission, dPerm discord.Permissions) bool {
+
+	if len(perms) == 0 {
+		return true
+	}
+
 	if slices.Contains(c.Config().Debug.DebugUsers, event.User().ID) {
 		return true
 	}
