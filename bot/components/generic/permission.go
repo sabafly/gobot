@@ -60,6 +60,8 @@ func PermissionCheck(ctx context.Context, c *components.Components, g *ent.Guild
 			if p.Default() {
 				if m.Permission.Disabled(p.PermString()) {
 					return false
+				} else {
+					r = true
 				}
 			} else {
 				if m.Permission.Enabled(p.PermString()) {
