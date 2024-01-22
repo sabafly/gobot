@@ -32,7 +32,7 @@ func doTextCommand(ctx context.Context, event *events.GuildMessageCreate) (err e
 		for i := 0; i < diceCount; i++ {
 			roll := diceRoll(diceSize)
 			sum += roll
-			content += strconv.Itoa(sum) + " "
+			content += strconv.Itoa(roll) + " "
 		}
 
 		content += "\nSum:" + strconv.Itoa(sum)
