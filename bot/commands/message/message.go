@@ -690,6 +690,14 @@ func Command(c *components.Components) *generic.Command {
 			switch e := e.(type) {
 			case *events.GuildMessageCreate:
 
+				err, shouldContinue := doTextCommand(e, e)
+				if err != nil {
+					return errors.NewError(err)
+				}
+				if !shouldContinue {
+					return nil
+				}
+
 				// 語尾の処理
 				if err := messageSuffixMessageCreateHandler(e, c); err != nil {
 					return err
