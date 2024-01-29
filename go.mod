@@ -9,7 +9,7 @@ require (
 	github.com/disgoorg/snowflake/v2 v2.0.1
 	github.com/forPelevin/gomoji v1.1.8
 	github.com/go-sql-driver/mysql v1.7.1
-	github.com/google/uuid v1.4.0
+	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/markusmobius/go-dateparser v1.2.1
 	github.com/nicksnyder/go-i18n/v2 v2.2.2
