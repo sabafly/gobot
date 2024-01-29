@@ -12,7 +12,7 @@ import (
 
 func doTextCommand(ctx context.Context, event *events.GuildMessageCreate) (err error, shouldContinue bool) {
 	c, ok := strings.CutPrefix(event.Message.Content, discord.UserMention(event.Client().ApplicationID()))
-	if ok {
+	if !ok {
 		return nil, true
 	}
 	content := strings.Split(strings.TrimSpace(c), " ")
