@@ -5,7 +5,7 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/google/uuid"
+	"github.com/sabafly/gobot/internal/uuid"
 )
 
 // WordSuffix holds the schema definition for the WordSuffix entity.
@@ -16,7 +16,7 @@ type WordSuffix struct {
 // Fields of the WordSuffix.
 func (WordSuffix) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.UUID{}).
+		field.UUID("id", uuid.New()).
 			Default(uuid.New),
 		field.String("suffix").
 			MaxLen(120).

@@ -6,7 +6,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/google/uuid"
+	"github.com/sabafly/gobot/internal/uuid"
 )
 
 // RolePanel holds the schema definition for the RolePanel entity.

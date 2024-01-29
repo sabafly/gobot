@@ -3,7 +3,9 @@ package message
 import (
 	"context"
 	"fmt"
+	"github.com/disgoorg/disgo/rest"
 	"log/slog"
+	"net/http"
 	"slices"
 	"strconv"
 	"strings"
@@ -687,6 +689,15 @@ func Command(c *components.Components) *generic.Command {
 		EventHandler: func(c *components.Components, e bot.Event) errors.Error {
 			switch e := e.(type) {
 			case *events.GuildMessageCreate:
+
+				err, shouldContinue := doTextCommand(e, e)
+				if err != nil {
+					return errors.NewError(err)
+				}
+				if !shouldContinue {
+					return nil
+				}
+
 				// 語尾の処理
 				if err := messageSuffixMessageCreateHandler(e, c); err != nil {
 					return err
@@ -698,33 +709,38 @@ func Command(c *components.Components) *generic.Command {
 				defer c.GetLock("message_pin").Mutex(e.ChannelID).Unlock()
 
 				// ピン留めメッセージの処理
-				if err := func(e *events.GuildMessageCreate, c *components.Components) errors.Error {
-					id, _, err := webhookutil.GetWebhook(e.Client(), e.ChannelID)
+				if err := func(event *events.GuildMessageCreate, c *components.Components) errors.Error {
+					id, _, err := webhookutil.GetWebhook(event.Client(), event.ChannelID)
 					if err != nil {
+						err1 := rest.Error{}
+						if errors.As(err, &err1) && err1.Response.StatusCode == http.StatusForbidden {
+							// TODO: リファクタ
+							return errors.NewError(event.Client().Rest().LeaveGuild(event.GuildID))
+						}
 						return errors.NewError(err)
 					}
-					if e.Message.WebhookID != nil && id == *e.Message.WebhookID {
+					if event.Message.WebhookID != nil && id == *event.Message.WebhookID {
 						return nil
 					}
 
-					g, err := c.GuildCreateID(e, e.GuildID)
+					g, err := c.GuildCreateID(event, event.GuildID)
 					if err != nil {
 						return errors.NewError(err)
 					}
-					if !g.QueryMessagePins().Where(messagepin.ChannelID(e.ChannelID)).ExistX(e) {
+					if !g.QueryMessagePins().Where(messagepin.ChannelID(event.ChannelID)).ExistX(event) {
 						return nil
 					}
-					m := g.QueryMessagePins().Where(messagepin.ChannelID(e.ChannelID)).FirstX(e)
+					m := g.QueryMessagePins().Where(messagepin.ChannelID(event.ChannelID)).FirstX(event)
 
 					if m.RateLimit.CheckLimit() {
 						if m.BeforeID != nil {
-							if err := e.Client().Rest().DeleteMessage(e.ChannelID, *m.BeforeID); err != nil {
+							if err := event.Client().Rest().DeleteMessage(event.ChannelID, *m.BeforeID); err != nil {
 								slog.Error("削除に失敗", "err", err)
 								m.BeforeID = nil
 							}
 						}
 
-						message, err := webhookutil.SendWebhook(e.Client(), m.ChannelID,
+						message, err := webhookutil.SendWebhook(event.Client(), m.ChannelID,
 							discord.NewWebhookMessageCreateBuilder().
 								SetAvatarURL(c.Config().Message.PinIconImage).
 								SetUsername(translate.Message(g.Locale, "components.message.pin.username")).
@@ -736,10 +752,10 @@ func Command(c *components.Components) *generic.Command {
 							return errors.NewError(err)
 						}
 
-						m.Update().SetBeforeID(message.ID).SetRateLimit(m.RateLimit).ExecX(e)
-						slog.Info("ピン留め更新", "cid", e.ChannelID, "mid", e.MessageID)
+						m.Update().SetBeforeID(message.ID).SetRateLimit(m.RateLimit).ExecX(event)
+						slog.Info("ピン留め更新", "cid", event.ChannelID, "mid", event.MessageID)
 					} else {
-						m.Update().SetRateLimit(m.RateLimit).ExecX(e)
+						m.Update().SetRateLimit(m.RateLimit).ExecX(event)
 					}
 					return nil
 				}(e, c); err != nil {
@@ -853,15 +869,15 @@ func messageSuffixMessageCreateHandler(e *events.GuildMessageCreate, c *componen
 		if err != nil {
 			return errors.NewError(err)
 		}
-		mention_users := make([]snowflake.ID, len(e.Message.Mentions))
+		mentionUsers := make([]snowflake.ID, len(e.Message.Mentions))
 		for i, u := range e.Message.Mentions {
-			mention_users[i] = u.ID
+			mentionUsers[i] = u.ID
 		}
-		replied_user := false
+		repliedUser := false
 		if e.Message.MessageReference != nil && e.Message.MessageReference.ChannelID != nil && e.Message.MessageReference.MessageID != nil {
-			reply_message, err := e.Client().Rest().GetMessage(*e.Message.MessageReference.ChannelID, *e.Message.MessageReference.MessageID)
+			replyMessage, err := e.Client().Rest().GetMessage(*e.Message.MessageReference.ChannelID, *e.Message.MessageReference.MessageID)
 			if err == nil {
-				replied_user = slices.Index(mention_users, reply_message.Author.ID) != -1
+				repliedUser = slices.Index(mentionUsers, replyMessage.Author.ID) != -1
 			}
 		}
 		if _, err := webhookutil.SendWebhook(e.Client(), e.ChannelID,
@@ -871,9 +887,9 @@ func messageSuffixMessageCreateHandler(e *events.GuildMessageCreate, c *componen
 				SetContent(content).
 				SetAllowedMentions(
 					&discord.AllowedMentions{
-						Users:       mention_users,
+						Users:       mentionUsers,
 						Roles:       e.Message.MentionRoles,
-						RepliedUser: replied_user,
+						RepliedUser: repliedUser,
 					},
 				).
 				Build(),
