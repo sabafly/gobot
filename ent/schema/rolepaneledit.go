@@ -5,7 +5,7 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/google/uuid"
+	"github.com/sabafly/gobot/internal/uuid"
 )
 
 // RolePanelEdit holds the schema definition for the RolePanelEdit entity.

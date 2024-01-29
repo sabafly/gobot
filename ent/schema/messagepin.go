@@ -2,6 +2,7 @@ package schema
 
 import (
 	"encoding/json"
+	"github.com/sabafly/gobot/internal/uuid"
 	"time"
 
 	"entgo.io/ent"
@@ -9,7 +10,6 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/google/uuid"
 )
 
 // MessagePin holds the schema definition for the MessagePin entity.

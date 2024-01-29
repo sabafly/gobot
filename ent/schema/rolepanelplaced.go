@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"github.com/sabafly/gobot/internal/uuid"
 	"time"
 
 	"entgo.io/ent"
@@ -8,7 +9,6 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/google/uuid"
 )
 
 // RolePanelPlaced holds the schema definition for the RolePanelPlaced entity.
