@@ -58,5 +58,5 @@ func diceRoll(size int) int {
 }
 
 var (
-	diceRollRegex = regexp.MustCompile(`^(\d+)([dｄ])(\d+)$`)
+	diceRollRegex = regexp.MustCompile(`^(\d+)[dｄ](\d+)$`)
 )
