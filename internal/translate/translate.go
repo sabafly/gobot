@@ -29,9 +29,9 @@ import (
 )
 
 var (
-	defaultLang language.Tag    = language.Japanese
-	bundle      *i18n.Bundle    = i18n.NewBundle(defaultLang)
-	localizer   *i18n.Localizer = i18n.NewLocalizer(bundle)
+	defaultLang      = language.Japanese
+	bundle           = i18n.NewBundle(defaultLang)
+	defaultLocalizer = i18n.NewLocalizer(bundle)
 )
 
 func SetDefaultLanguage(lang language.Tag) {
@@ -86,7 +86,7 @@ func LoadDir(dir string) (*i18n.Bundle, error) {
 			return nil, err
 		}
 	}
-	localizer = i18n.NewLocalizer(bundle, locales...)
+	defaultLocalizer = i18n.NewLocalizer(bundle, locales...)
 	return bundle, nil
 }
 
@@ -126,28 +126,37 @@ var (
 	}
 )
 
-func Localize(locale discord.Locale, messageId string, template any, count int) (string, error) {
-	return localizer.Localize(&i18n.LocalizeConfig{
-		MessageID:    messageId,
+func Localize(locale discord.Locale, messageID string, template any, count int) (string, error) {
+	return i18n.NewLocalizer(bundle, locale.Code()).Localize(&i18n.LocalizeConfig{
+		MessageID:    messageID,
 		TemplateData: template,
 		PluralCount:  count,
 	})
 }
 
-func Message(locale discord.Locale, messageId string, opts ...Option) (res string) {
+func Message(locale discord.Locale, messageID string, opts ...Option) (res string) {
 	opt := new(Cfg)
 	opt.FallbackLanguage = discord.LocaleJapanese
 	for _, o := range opts {
 		o(opt)
 	}
-	res, err := Localize(locale, messageId, opt.TemplateData, opt.PluralCount)
-	if err != nil {
-		res = messageId
-		if opt.Fallback != "" {
-			res = opt.Fallback
-		}
+	res, err := Localize(locale, messageID, opt.TemplateData, opt.PluralCount)
+	if err == nil {
+		return res
 	}
-	return
+	alt, err := defaultLocalizer.Localize(&i18n.LocalizeConfig{
+		MessageID:    messageID,
+		TemplateData: opt.TemplateData,
+		PluralCount:  opt.PluralCount,
+	})
+	if err == nil {
+		return alt
+	}
+	res = messageID
+	if opt.Fallback != "" {
+		res = opt.Fallback
+	}
+	return res
 }
 
 func MessageMap(key string, replace bool, opts ...Option) map[discord.Locale]string {

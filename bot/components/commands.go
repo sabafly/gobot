@@ -29,7 +29,7 @@ func (c *Components) Initialize(client bot.Client) error {
 		c.AddCommand(cmd)
 	}
 
-	var commands, privCommands []discord.ApplicationCommandCreate
+	var commands, privateCommands []discord.ApplicationCommandCreate
 	for name, cmd := range c.commandsRegistry {
 		if len(cmd.Scheduler()) > 0 {
 			slog.Info("コマンドスケジューラ―を登録します", "name", name, "count", len(cmd.Create()))
@@ -40,7 +40,7 @@ func (c *Components) Initialize(client bot.Client) error {
 		if len(cmd.Create()) > 0 {
 			slog.Info("コマンドを登録します", "name", name, "count", len(cmd.Create()), "is_private", cmd.IsPrivate())
 			if cmd.IsPrivate() {
-				privCommands = append(privCommands, cmd.Create()...)
+				privateCommands = append(privateCommands, cmd.Create()...)
 			} else {
 				commands = append(commands, cmd.Create()...)
 			}
@@ -53,7 +53,7 @@ func (c *Components) Initialize(client bot.Client) error {
 	}
 
 	for _, id := range c.Config().Debug.DebugGuilds {
-		if _, err := client.Rest().SetGuildCommands(client.ApplicationID(), id, privCommands); err != nil {
+		if _, err := client.Rest().SetGuildCommands(client.ApplicationID(), id, privateCommands); err != nil {
 			slog.Error("プライベートコマンドの登録に失敗", "err", err, "guild", id)
 			return err
 		}

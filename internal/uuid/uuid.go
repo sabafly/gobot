@@ -1,6 +1,8 @@
 package uuid
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 // New returns a new UUID v7
 func New() uuid.UUID {

@@ -25,5 +25,8 @@
         <env name="PATH" value="$GoBinDirs$" />
       </envs>
     </TaskOptions>
+    <enabled-global>
+      <option value="golangci-lint" />
+    </enabled-global>
   </component>
 </project>

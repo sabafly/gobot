@@ -13,7 +13,8 @@ func (s *SyncedMap[K, V]) Delete(key K) {
 func (s *SyncedMap[K, V]) Load(key K) (V, bool) {
 	v, ok := s.m.Load(key)
 	if !ok {
-		return *new(V), false
+		var zero V
+		return zero, false
 	}
 	r, ok := v.(V)
 	return r, ok
@@ -22,7 +23,8 @@ func (s *SyncedMap[K, V]) Load(key K) (V, bool) {
 func (s *SyncedMap[K, V]) LoadAndDelete(key K) (V, bool) {
 	v, ok := s.m.LoadAndDelete(key)
 	if !ok {
-		return *new(V), false
+		var zero V
+		return zero, false
 	}
 	r, ok := v.(V)
 	return r, ok
@@ -30,9 +32,6 @@ func (s *SyncedMap[K, V]) LoadAndDelete(key K) (V, bool) {
 
 func (s *SyncedMap[K, V]) LoadOrStore(key K, value V) (V, bool) {
 	v, ok := s.m.LoadOrStore(key, value)
-	if !ok {
-		return v.(V), ok
-	}
 	return v.(V), ok
 }
 

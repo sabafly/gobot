@@ -55,13 +55,13 @@ func ImportCommand(c *components.Components) components.Command {
 						if _, ok := event.Client().Caches().Emoji(*event.GuildID(), componentEmoji.ID); !ok && componentEmoji.ID != 0 {
 							componentEmoji = discordutil.ParseComponentEmoji(discordutil.Number2Emoji(roleCount + 1))
 						}
-						roleId, err := snowflake.Parse(roleIdRegexp.FindString(roleRegexp.FindString(v)))
+						roleID, err := snowflake.Parse(roleIDRegexp.FindString(roleRegexp.FindString(v)))
 						if err != nil {
 							continue
 						}
-						role, ok := event.Client().Caches().Role(*event.GuildID(), roleId)
+						role, ok := event.Client().Caches().Role(*event.GuildID(), roleID)
 						if !ok {
-							rolePtr, err := event.Client().Rest().GetRole(*event.GuildID(), roleId)
+							rolePtr, err := event.Client().Rest().GetRole(*event.GuildID(), roleID)
 							if err != nil {
 								continue
 							}
@@ -116,7 +116,7 @@ func ImportCommand(c *components.Components) components.Command {
 }
 
 var roleRegexp = regexp.MustCompile("<@&([0-9]{18,20})>")
-var roleIdRegexp = regexp.MustCompile("[0-9]{18,20}")
+var roleIDRegexp = regexp.MustCompile("[0-9]{18,20}")
 
 func check(event *events.ApplicationCommandInteractionCreate) bool {
 	message := event.MessageCommandInteractionData().TargetMessage()

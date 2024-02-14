@@ -614,6 +614,7 @@ func Command(c *components.Components) components.Command {
 						if err := json.NewDecoder(response.Body).Decode(&leaderboard); err != nil {
 							return errors.NewError(err)
 						}
+						_ = response.Body.Close()
 						if len(leaderboard.Players) < 1 {
 							break
 						}
@@ -778,7 +779,7 @@ func Command(c *components.Components) components.Command {
 					}
 					g.LevelRole = builtin.NonNilMap(g.LevelRole)
 					var listStr string
-					smap.MakeSortMap(g.LevelRole).Range(func(a, b int) int { return cmp.Compare(a, b) },
+					smap.MakeSortMap(g.LevelRole).Range(cmp.Compare[int],
 						func(k int, v snowflake.ID) {
 							listStr += "- " + translate.Message(event.Locale(), "components.level.role.list.message",
 								translate.WithTemplate(map[string]any{

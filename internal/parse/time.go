@@ -23,5 +23,5 @@ func TimeFuture(str string) (time.Time, error) {
 	}, str); err == nil {
 		return t.Time.Local(), nil
 	}
-	return time.Now().Local(), errors.New("invalid format")
+	return time.Time{}, errors.New("invalid format")
 }

@@ -41,7 +41,7 @@ func Command(c *components.Components) components.Command {
 						return 0
 					})
 					memberRoleIDs := append(event.Member().RoleIDs, *event.GuildID())
-					memberRoles := []discord.Role{}
+					var memberRoles []discord.Role
 					for _, role := range roles {
 						index := slices.Index(memberRoleIDs, role.ID)
 						if index == -1 {

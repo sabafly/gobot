@@ -2,7 +2,7 @@ package xppoint
 
 import (
 	"math/big"
-	"math/rand"
+	"math/rand/v2"
 )
 
 type XP uint64
@@ -66,7 +66,7 @@ func TotalPoint(level int64) uint64 {
 }
 
 func level(points uint64) int64 {
-	points = points / multiplier
+	points /= multiplier
 	f := (&big.Float{}).SetUint64(points)
 	x := big.NewFloat(0)
 	switch {

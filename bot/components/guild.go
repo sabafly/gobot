@@ -44,22 +44,22 @@ func (c *Components) OnGuildLeave() func(event *events.GuildLeave) {
 	}
 }
 
-func (c *Components) GuildCreate(ctx context.Context, ownerId snowflake.ID, g *events.GenericGuild) (*ent.Guild, error) {
-	if ok := c.db.Guild.
+func (c *Components) GuildCreate(ctx context.Context, ownerID snowflake.ID, g *events.GenericGuild) (*ent.Guild, error) {
+	ok := c.db.Guild.
 		Query().
-		Where(guild.ID(g.Guild.ID)).ExistX(ctx); ok {
+		Where(guild.ID(g.Guild.ID)).ExistX(ctx)
+	if ok {
 		return c.db.Guild.
 			Query().
 			Where(guild.ID(g.GuildID)).
 			Only(ctx)
-	} else {
-		slog.Debug("新規ギルド作成", "gid", g.GuildID, "name", g.Guild.Name)
-		return c.db.Guild.Create().
-			SetID(g.GuildID).
-			SetName(g.Guild.Name).
-			SetOwnerID(ownerId).
-			Save(ctx)
 	}
+	slog.Debug("新規ギルド作成", "gid", g.GuildID, "name", g.Guild.Name)
+	return c.db.Guild.Create().
+		SetID(g.GuildID).
+		SetName(g.Guild.Name).
+		SetOwnerID(ownerID).
+		Save(ctx)
 }
 
 func (c *Components) GuildCreateID(ctx context.Context, gid snowflake.ID) (*ent.Guild, error) {

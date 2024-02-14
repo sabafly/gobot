@@ -9,7 +9,7 @@ type Rule struct {
 	Unit  time.Duration
 }
 
-// セーフならtrue
+// CheckLimit はセーフならtrueを返す
 func CheckLimit(t []time.Time, r []Rule) ([]time.Time, bool) {
 	m := 0
 	for _, v := range r {
@@ -23,5 +23,5 @@ func CheckLimit(t []time.Time, r []Rule) ([]time.Time, bool) {
 }
 
 func check(times []time.Time, limit int, unit time.Duration) bool {
-	return (len(times) < limit || time.Since(times[limit-1]) >= unit)
+	return len(times) < limit || time.Since(times[limit-1]) >= unit
 }

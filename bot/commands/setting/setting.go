@@ -390,6 +390,7 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 				}
+				return nil
 			}
 			return nil
 		},
