@@ -14,7 +14,7 @@ require (
 	github.com/markusmobius/go-dateparser v1.2.1
 	github.com/nicksnyder/go-i18n/v2 v2.3.0
 	github.com/pelletier/go-toml/v2 v2.1.1
-	github.com/redis/go-redis/v9 v9.4.0
+	github.com/redis/go-redis/v9 v9.5.1
 	github.com/spf13/cobra v1.8.0
 	github.com/tj/go-naturaldate v1.3.0
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a
@@ -38,7 +38,6 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jalaali/go-jalaali v0.0.0-20210801064154-80525e88d958 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
-	github.com/kr/text v0.2.0 // indirect
 	github.com/magefile/mage v1.15.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/rivo/uniseg v0.4.6 // indirect
