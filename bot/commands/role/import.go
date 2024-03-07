@@ -103,7 +103,7 @@ func ImportCommand(c *components.Components) components.Command {
 					if err := event.CreateMessage(
 						rpPlaceBaseMenu(place, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}

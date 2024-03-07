@@ -67,7 +67,7 @@ func Command(c *components.Components) components.Command {
 									Build(),
 							),
 						).
-						Create(),
+						BuildCreate(),
 				); err != nil {
 					return errors.NewError(err)
 				}

@@ -39,7 +39,7 @@ func noPermissionMessage(event interface {
 					Build(),
 			).
 			SetFlags(discord.MessageFlagEphemeral).
-			Create(),
+			BuildCreate(),
 	)
 }
 

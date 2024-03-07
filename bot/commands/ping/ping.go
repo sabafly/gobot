@@ -39,7 +39,7 @@ func Command(c *components.Components) *generic.Command {
 								).
 								Build()),
 						).
-						Create(),
+						BuildCreate(),
 				); err != nil {
 					return errors.NewError(err)
 				}

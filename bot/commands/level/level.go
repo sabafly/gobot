@@ -247,7 +247,7 @@ func Command(c *components.Components) components.Command {
 									levelMessage(g, gl, m, index, target.Member, event),
 								),
 							).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -311,7 +311,7 @@ func Command(c *components.Components) components.Command {
 										Build(),
 								),
 							).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -386,7 +386,7 @@ func Command(c *components.Components) components.Command {
 									},
 								)...,
 							).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -457,7 +457,7 @@ func Command(c *components.Components) components.Command {
 									),
 								}),
 							)).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -487,7 +487,7 @@ func Command(c *components.Components) components.Command {
 							SetContent(translate.Message(event.Locale(), "components.level.exclude-channel.add.message",
 								translate.WithTemplate(map[string]any{"Channel": discord.ChannelMention(channel.ID)}),
 							)).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -518,7 +518,7 @@ func Command(c *components.Components) components.Command {
 							SetContent(translate.Message(event.Locale(), "components.level.exclude-channel.remove.message",
 								translate.WithTemplate(map[string]any{"Channel": discord.ChannelMention(channel.ID)}),
 							)).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -541,7 +541,7 @@ func Command(c *components.Components) components.Command {
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
 							SetContent(translate.Message(event.Locale(), "components.level.exclude-channel.clear.message")).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -661,7 +661,7 @@ func Command(c *components.Components) components.Command {
 							SetContent(translate.Message(event.Locale(), "components.level.reset.message",
 								translate.WithTemplate(map[string]any{"User": discord.UserMention(target.User.ID)}),
 							)).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -697,7 +697,7 @@ func Command(c *components.Components) components.Command {
 										Build(),
 								),
 							).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -760,7 +760,7 @@ func Command(c *components.Components) components.Command {
 										Build(),
 								),
 							).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -849,7 +849,7 @@ func Command(c *components.Components) components.Command {
 										Build(),
 								),
 							).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -876,7 +876,7 @@ func Command(c *components.Components) components.Command {
 									Build(),
 							),
 						).
-						Create(),
+						BuildCreate(),
 				); err != nil {
 					return nil
 				}
@@ -950,7 +950,7 @@ func levelUp(g *ent.Guild, after int64, client bot.Client, guildID, channelID sn
 			builtin.Or(builtin.NonNil(g.LevelUpChannel) != 0, builtin.NonNil(g.LevelUpChannel), channelID),
 			discord.NewMessageBuilder().
 				SetContent(content).
-				Create(),
+				BuildCreate(),
 		); err != nil {
 		return err
 	}

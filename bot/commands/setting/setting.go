@@ -96,7 +96,7 @@ func Command(c *components.Components) components.Command {
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
 							SetContent(translate.Message(event.Locale(), "components.setting.bump.toggle."+builtin.Or(g.BumpEnabled, "enabled", "disabled"))).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -119,7 +119,7 @@ func Command(c *components.Components) components.Command {
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
 							SetContent(translate.Message(event.Locale(), "components.setting.up.toggle."+builtin.Or(g.UpEnabled, "enabled", "disabled"))).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -153,7 +153,7 @@ func Command(c *components.Components) components.Command {
 									),
 								}),
 							)).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -187,7 +187,7 @@ func Command(c *components.Components) components.Command {
 									),
 								}),
 							)).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -515,7 +515,7 @@ func createNotice(title, message string, n notice, client bot.Client, content st
 						Build(),
 				),
 			).
-			Create(),
+			BuildCreate(),
 	); err != nil {
 		slog.Error("通知作成に失敗", slog.Any("err", err))
 		return

@@ -26,7 +26,6 @@ import (
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/parse"
 	"github.com/sabafly/gobot/internal/translate"
-	"github.com/sabafly/gobot/internal/webhookutil"
 )
 
 func Command(c *components.Components) *generic.Command {
@@ -289,7 +288,7 @@ func Command(c *components.Components) *generic.Command {
 									translate.WithTemplate(map[string]any{"Duration": durationString}),
 								),
 							).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -324,7 +323,7 @@ func Command(c *components.Components) *generic.Command {
 								SetContent(translate.Message(event.Locale(), "components.message.suffix.remove.message.no_suffix", translate.WithTemplate(map[string]any{"User": discord.UserMention(u.ID)}))).
 								SetAllowedMentions(&discord.AllowedMentions{}).
 								SetFlags(discord.MessageFlagEphemeral).
-								Create(),
+								BuildCreate(),
 						); err != nil {
 							return errors.NewError(err)
 						}
@@ -335,7 +334,7 @@ func Command(c *components.Components) *generic.Command {
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
 							SetContent(translate.Message(event.Locale(), "components.message.suffix.remove.message", translate.WithTemplate(map[string]any{"User": discord.UserMention(u.ID)}))).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -395,7 +394,7 @@ func Command(c *components.Components) *generic.Command {
 						discord.NewMessageBuilder().
 							SetContent(messageStr).
 							SetAllowedMentions(&discord.AllowedMentions{}).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -454,7 +453,7 @@ func Command(c *components.Components) *generic.Command {
 						discord.NewMessageBuilder().
 							SetContent(translate.Message(event.Locale(), "components.message.pin.delete.message")).
 							SetFlags(discord.MessageFlagEphemeral).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -538,7 +537,7 @@ func Command(c *components.Components) *generic.Command {
 									"Count": strconv.Itoa(count),
 								}),
 							)).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -597,14 +596,22 @@ func Command(c *components.Components) *generic.Command {
 					SetContent(event.Data.Text("content")).
 					SetGuild(g).
 					SaveX(event)
+				channel, err := event.Client().Rest().GetChannel(m.ChannelID)
+				if err != nil {
+					return errors.NewError(err)
+				}
 
-				message, err := webhookutil.SendWebhook(event.Client(), m.ChannelID,
-					discord.NewWebhookMessageCreateBuilder().
-						SetAvatarURL(component.Config().Message.PinIconImage).
-						SetUsername(translate.Message(g.Locale, "components.message.pin.username")).
+				webhook, err := event.Client().WebhookManager().GetMessenger(channel)
+				if err != nil {
+					return errors.NewError(err)
+				}
+				message, err := webhook.SendWebhook(
+					discord.NewMessageBuilder().
 						SetContent(m.Content).
-						SetEmbeds(m.Embeds...).
-						Build(),
+						SetEmbeds(m.Embeds...),
+					translate.Message(g.Locale, "components.message.pin.username"),
+					component.Config().Message.PinIconImage,
+					"",
 				)
 				if err != nil {
 					return errors.NewError(err)
@@ -616,7 +623,7 @@ func Command(c *components.Components) *generic.Command {
 					discord.NewMessageBuilder().
 						SetContent(translate.Message(event.Locale(), "components.message.pin.create.message")).
 						SetFlags(discord.MessageFlagEphemeral).
-						Create(),
+						BuildCreate(),
 				); err != nil {
 					return errors.NewError(err)
 				}
@@ -649,7 +656,7 @@ func Command(c *components.Components) *generic.Command {
 								"Time": discord.FormattedTimestampMention(tm.Unix(), discord.TimestampStyleLongDateTime),
 							}),
 						)).
-						Create(),
+						BuildCreate(),
 				); err != nil {
 					return errors.NewError(err)
 				}
@@ -670,7 +677,7 @@ func Command(c *components.Components) *generic.Command {
 						if _, err := client.Rest().CreateMessage(remind.ChannelID,
 							discord.NewMessageBuilder().
 								SetContent(remind.Content).
-								Create(),
+								BuildCreate(),
 						); err != nil {
 							return err
 						}
@@ -710,16 +717,24 @@ func Command(c *components.Components) *generic.Command {
 
 				// ピン留めメッセージの処理
 				if err := func(event *events.GuildMessageCreate, c *components.Components) errors.Error {
-					id, _, err := webhookutil.GetWebhook(event.Client(), event.ChannelID)
+					var channel discord.Channel
+					channel, ok := event.Channel()
+					if !ok {
+						channel, err = event.Client().Rest().GetChannel(event.ChannelID)
+						if err != nil {
+							return errors.NewError(err)
+						}
+					}
+
+					webhook, err := event.Client().WebhookManager().GetMessenger(channel)
 					if err != nil {
 						err1 := rest.Error{}
 						if errors.As(err, &err1) && err1.Response.StatusCode == http.StatusForbidden {
-							// TODO: リファクタ
 							return errors.NewError(event.Client().Rest().LeaveGuild(event.GuildID))
 						}
 						return errors.NewError(err)
 					}
-					if event.Message.WebhookID != nil && id == *event.Message.WebhookID {
+					if event.Message.WebhookID != nil && webhook.Webhook().ID() == *event.Message.WebhookID {
 						return nil
 					}
 
@@ -740,13 +755,23 @@ func Command(c *components.Components) *generic.Command {
 							}
 						}
 
-						message, err := webhookutil.SendWebhook(event.Client(), m.ChannelID,
-							discord.NewWebhookMessageCreateBuilder().
-								SetAvatarURL(c.Config().Message.PinIconImage).
-								SetUsername(translate.Message(g.Locale, "components.message.pin.username")).
+						var channel discord.Channel
+						channel, ok := event.Channel()
+						if !ok {
+							channel, err = event.Client().Rest().GetChannel(event.ChannelID)
+							if err != nil {
+								return errors.NewError(err)
+							}
+						}
+						webhook, err := event.Client().WebhookManager().GetMessenger(channel)
+
+						message, err := webhook.SendWebhook(
+							discord.NewMessageBuilder().
 								SetContent(m.Content).
-								SetEmbeds(m.Embeds...).
-								Build(),
+								SetEmbeds(m.Embeds...),
+							translate.Message(g.Locale, "components.message.pin.username"),
+							c.Config().Message.PinIconImage,
+							"",
 						)
 						if err != nil {
 							return errors.NewError(err)
@@ -770,11 +795,21 @@ func Command(c *components.Components) *generic.Command {
 					return nil
 				}
 
-				id, _, err := webhookutil.GetWebhook(e.Client(), e.ChannelID)
+				var channel discord.Channel
+				var err error
+				channel, ok := e.Channel()
+				if !ok {
+					channel, err = e.Client().Rest().GetChannel(e.ChannelID)
+					if err != nil {
+						return errors.NewError(err)
+					}
+				}
+
+				webhook, err := e.Client().WebhookManager().GetMessenger(channel)
 				if err != nil {
 					return errors.NewError(err)
 				}
-				if e.Message.WebhookID != nil && id != *e.Message.WebhookID {
+				if e.Message.WebhookID != nil && webhook.Webhook().ID() != *e.Message.WebhookID {
 					return nil
 				}
 
@@ -852,7 +887,7 @@ func messageSuffixMessageCreateHandler(e *events.GuildMessageCreate, c *componen
 					translate.Message(u.Locale, "components.message.suffix.warn.message.2", translate.WithTemplate(map[string]any{"Suffix": w.Suffix})),
 				).
 				SetMessageReferenceByID(e.MessageID).
-				Create(),
+				BuildCreate(),
 		); err != nil {
 			slog.Error("メッセージを作成できません", "err", err)
 			return errors.NewError(err)
@@ -880,10 +915,20 @@ func messageSuffixMessageCreateHandler(e *events.GuildMessageCreate, c *componen
 				repliedUser = slices.Index(mentionUsers, replyMessage.Author.ID) != -1
 			}
 		}
-		if _, err := webhookutil.SendWebhook(e.Client(), e.ChannelID,
-			discord.NewWebhookMessageCreateBuilder().
-				SetAvatarURL(e.Message.Author.EffectiveAvatarURL()).
-				SetUsername(member.EffectiveName()).
+
+		var channel discord.Channel
+		channel, ok := e.Channel()
+		if !ok {
+			channel, err = e.Client().Rest().GetChannel(e.ChannelID)
+			if err != nil {
+				return errors.NewError(err)
+			}
+		}
+
+		webhook, err := e.Client().WebhookManager().GetMessenger(channel)
+
+		if _, err := webhook.SendWebhook(
+			discord.NewMessageBuilder().
 				SetContent(content).
 				SetAllowedMentions(
 					&discord.AllowedMentions{
@@ -891,8 +936,10 @@ func messageSuffixMessageCreateHandler(e *events.GuildMessageCreate, c *componen
 						Roles:       e.Message.MentionRoles,
 						RepliedUser: repliedUser,
 					},
-				).
-				Build(),
+				),
+			member.EffectiveName(),
+			e.Message.Author.EffectiveAvatarURL(),
+			"",
 		); err != nil {
 			return errors.NewError(err)
 		}

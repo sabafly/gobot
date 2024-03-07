@@ -41,7 +41,7 @@ func doTextCommand(ctx context.Context, event *events.GuildMessageCreate) (err e
 		_, err = event.Client().Rest().CreateMessage(event.ChannelID, discord.NewMessageBuilder().
 			SetContent(content).
 			SetMessageReferenceByID(event.Message.ID).
-			Create(),
+			BuildCreate(),
 		)
 		if err != nil {
 			return err, false

@@ -110,7 +110,7 @@ func Command(c *components.Components) *generic.Command {
 				if err := event.CreateMessage(
 					discord.NewMessageBuilder().
 						SetContent(translate.Message(locale, key)).
-						Create(),
+						BuildCreate(),
 				); err != nil {
 					return errors.NewError(err)
 				}
@@ -124,7 +124,7 @@ func Command(c *components.Components) *generic.Command {
 				if err := event.CreateMessage(
 					discord.NewMessageBuilder().
 						SetContent("OK").
-						Create(),
+						BuildCreate(),
 				); err != nil {
 					return errors.NewError(err)
 				}
@@ -138,7 +138,7 @@ func Command(c *components.Components) *generic.Command {
 				if err := event.CreateMessage(
 					discord.NewMessageBuilder().
 						SetContent("OK").
-						Create(),
+						BuildCreate(),
 				); err != nil {
 					return errors.NewError(err)
 				}

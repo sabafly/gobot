@@ -35,7 +35,7 @@ func createErrorMessage(
 					Build(),
 			).
 			SetFlags(discord.MessageFlagEphemeral).
-			Create(),
+			BuildCreate(),
 	)
 }
 

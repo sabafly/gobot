@@ -197,7 +197,7 @@ func Command(c *components.Components) components.Command {
 					if err := event.CreateMessage(
 						rpEditBaseMessage(rolePanel, edit, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -238,7 +238,7 @@ func Command(c *components.Components) components.Command {
 					if err := event.CreateMessage(
 						rpPlaceBaseMenu(place, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -289,7 +289,7 @@ func Command(c *components.Components) components.Command {
 										Build(),
 								),
 							).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -344,7 +344,7 @@ func Command(c *components.Components) components.Command {
 				if err := event.CreateMessage(
 					rpEditBaseMessage(rolePanel, edit, event.Locale()).
 						SetFlags(discord.MessageFlagEphemeral).
-						Create(),
+						BuildCreate(),
 				); err != nil {
 					return errors.NewError(err)
 				}
@@ -380,7 +380,7 @@ func Command(c *components.Components) components.Command {
 					if err := event.UpdateMessage(
 						rpEditBaseMessage(panel, edit, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
-							Update(),
+							BuildUpdate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -392,7 +392,7 @@ func Command(c *components.Components) components.Command {
 					if err := event.UpdateMessage(
 						rpEditBaseMessage(panel, edit, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
-							Update(),
+							BuildUpdate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -405,7 +405,7 @@ func Command(c *components.Components) components.Command {
 					if err := event.UpdateMessage(
 						rpEditBaseMessage(panel, edit, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
-							Update(),
+							BuildUpdate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -477,7 +477,7 @@ func Command(c *components.Components) components.Command {
 						if err := event.UpdateMessage(
 							rpEditModifyRolesMessage(edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
-								Update(),
+								BuildUpdate(),
 						); err != nil {
 							return errors.NewError(err)
 						}
@@ -485,7 +485,7 @@ func Command(c *components.Components) components.Command {
 						if err := event.UpdateMessage(
 							rpEditBaseMessage(panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
-								Update(),
+								BuildUpdate(),
 						); err != nil {
 							return errors.NewError(err)
 						}
@@ -537,7 +537,7 @@ func Command(c *components.Components) components.Command {
 										),
 									).
 									SetFlags(discord.MessageFlagEphemeral).
-									Create(),
+									BuildCreate(),
 							); err != nil {
 								return errors.NewError(err)
 							}
@@ -553,7 +553,7 @@ func Command(c *components.Components) components.Command {
 						if err := event.UpdateMessage(
 							rpEditBaseMessage(panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
-								Update(),
+								BuildUpdate(),
 						); err != nil {
 							return errors.NewError(err)
 						}
@@ -575,7 +575,7 @@ func Command(c *components.Components) components.Command {
 						if err := event.UpdateMessage(
 							rpEditBaseMessage(panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
-								Update(),
+								BuildUpdate(),
 						); err != nil {
 							return errors.NewError(err)
 						}
@@ -591,7 +591,7 @@ func Command(c *components.Components) components.Command {
 						if err := event.UpdateMessage(
 							rpEditBaseMessage(panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
-								Update(),
+								BuildUpdate(),
 						); err != nil {
 							return errors.NewError(err)
 						}
@@ -610,7 +610,7 @@ func Command(c *components.Components) components.Command {
 						if err := event.UpdateMessage(
 							rpEditBaseMessage(panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
-								Update(),
+								BuildUpdate(),
 						); err != nil {
 							return errors.NewError(err)
 						}
@@ -649,7 +649,7 @@ func Command(c *components.Components) components.Command {
 						if err := event.UpdateMessage(
 							rpEditSetEmojiMessage(edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
-								Update(),
+								BuildUpdate(),
 						); err != nil {
 							return errors.NewError(err)
 						}
@@ -670,7 +670,7 @@ func Command(c *components.Components) components.Command {
 						if err := event.UpdateMessage(
 							rpEditBaseMessage(panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
-								Update(),
+								BuildUpdate(),
 						); err != nil {
 							return errors.NewError(err)
 						}
@@ -692,7 +692,7 @@ func Command(c *components.Components) components.Command {
 						if err := event.UpdateMessage(
 							rpEditBaseMessage(panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
-								Update(),
+								BuildUpdate(),
 						); err != nil {
 							return errors.NewError(err)
 						}
@@ -723,7 +723,7 @@ func Command(c *components.Components) components.Command {
 						if err := event.UpdateMessage(
 							rpEditBaseMessage(panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
-								Update(),
+								BuildUpdate(),
 						); err != nil {
 							return errors.NewError(err)
 						}
@@ -809,7 +809,7 @@ func Command(c *components.Components) components.Command {
 										Build(),
 								),
 							).
-							Update()
+							BuildUpdate()
 						updateMessage.Components = &[]discord.ContainerComponent{}
 						if err := event.UpdateMessage(
 							updateMessage,
@@ -821,7 +821,7 @@ func Command(c *components.Components) components.Command {
 					if err := event.UpdateMessage(
 						rpPlaceBaseMenu(place, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
-							Update(),
+							BuildUpdate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -850,7 +850,7 @@ func Command(c *components.Components) components.Command {
 					if !slices.ContainsFunc(place.Roles, func(r schema.Role) bool { return r.ID == roleID }) {
 						if err := event.UpdateMessage(
 							rpPlacedMessage(place, event.Locale()).
-								Update(),
+								BuildUpdate(),
 						); err != nil {
 							return errors.NewError(err)
 						}
@@ -886,7 +886,7 @@ func Command(c *components.Components) components.Command {
 								),
 							).
 							SetFlags(discord.MessageFlagEphemeral).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -918,7 +918,7 @@ func Command(c *components.Components) components.Command {
 						discord.NewMessageBuilder().
 							SetContainerComponents(actionRow).
 							SetFlags(discord.MessageFlagEphemeral).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -1059,7 +1059,7 @@ func Command(c *components.Components) components.Command {
 					if _, err := event.Client().Rest().UpdateInteractionResponse(event.Client().ApplicationID(), token,
 						rpEditBaseMessage(panel, edit, u.Locale).
 							SetFlags(discord.MessageFlagEphemeral).
-							Update(),
+							BuildUpdate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -1133,7 +1133,7 @@ func Command(c *components.Components) components.Command {
 											Build(),
 									),
 								).
-								SetFlags(discord.MessageFlagEphemeral).Create(),
+								SetFlags(discord.MessageFlagEphemeral).BuildCreate(),
 						)
 						if err != nil {
 							return errors.NewError(err)
@@ -1157,7 +1157,7 @@ func Command(c *components.Components) components.Command {
 										Build(),
 								),
 							).
-							SetFlags(discord.MessageFlagEphemeral).Create(),
+							SetFlags(discord.MessageFlagEphemeral).BuildCreate(),
 					)
 					if err != nil {
 						return errors.NewError(err)
