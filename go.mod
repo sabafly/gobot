@@ -55,4 +55,4 @@ require (
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 
-replace github.com/disgoorg/disgo => github.com/sabafly/sabafly-disgo v0.13.13-0.20240307172017-2e4da8580286
+replace github.com/disgoorg/disgo => github.com/sabafly/sabafly-disgo v0.13.13-0.20240308010606-46899dab12d7
