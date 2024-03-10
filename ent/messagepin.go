@@ -51,12 +51,10 @@ type MessagePinEdges struct {
 // GuildOrErr returns the Guild value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e MessagePinEdges) GuildOrErr() (*Guild, error) {
-	if e.loadedTypes[0] {
-		if e.Guild == nil {
-			// Edge was loaded but was not found.
-			return nil, &NotFoundError{label: guild.Label}
-		}
+	if e.Guild != nil {
 		return e.Guild, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: guild.Label}
 	}
 	return nil, &NotLoadedError{edge: "guild"}
 }
