@@ -2,8 +2,6 @@ package userinfo
 
 import (
 	"fmt"
-	"slices"
-
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/sabafly/gobot/bot/components"
@@ -11,6 +9,8 @@ import (
 	"github.com/sabafly/gobot/internal/builtin"
 	"github.com/sabafly/gobot/internal/embeds"
 	"github.com/sabafly/gobot/internal/errors"
+	"github.com/sabafly/gobot/internal/translate"
+	"slices"
 )
 
 func Command(c *components.Components) components.Command {
@@ -19,12 +19,13 @@ func Command(c *components.Components) components.Command {
 		Private:   true,
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.UserCommandCreate{
-				Name:         "userinfo",
-				DMPermission: builtin.Ptr(false),
+				Name:              "userinfo",
+				NameLocalizations: translate.MessageMap("userinfo.command.name", false),
+				DMPermission:      builtin.Ptr(false),
 			},
 		},
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
-			"u/userinfo": generic.CommandHandler(func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+			"u/userinfo": generic.CommandHandler(func(_ *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 				var roleString string
 				{ // ロールを取得する
 					roles, err := event.Client().Rest().GetRoles(*event.GuildID())
@@ -32,15 +33,9 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 					slices.SortStableFunc(roles, func(a, b discord.Role) int {
-						switch {
-						case a.Position > b.Position:
-							return -1
-						case a.Position < b.Position:
-							return 1
-						}
-						return 0
+						return a.Compare(b)
 					})
-					memberRoleIDs := append(event.Member().RoleIDs, *event.GuildID())
+					memberRoleIDs := append(slices.Clone(event.Member().RoleIDs), *event.GuildID())
 					var memberRoles []discord.Role
 					for _, role := range roles {
 						index := slices.Index(memberRoleIDs, role.ID)
@@ -60,7 +55,7 @@ func Command(c *components.Components) components.Command {
 								discord.NewEmbedBuilder().
 									SetFields(
 										discord.EmbedField{
-											Name:  "role",
+											Name:  translate.Message(event.Locale(), "userinfo.roles"),
 											Value: roleString,
 										},
 									).

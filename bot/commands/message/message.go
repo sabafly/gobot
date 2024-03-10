@@ -764,6 +764,9 @@ func Command(c *components.Components) *generic.Command {
 							}
 						}
 						webhook, err := event.Client().WebhookManager().GetMessenger(channel)
+						if err != nil {
+							return errors.NewError(err)
+						}
 
 						message, err := webhook.SendWebhook(
 							discord.NewMessageBuilder().
@@ -926,6 +929,9 @@ func messageSuffixMessageCreateHandler(e *events.GuildMessageCreate, c *componen
 		}
 
 		webhook, err := e.Client().WebhookManager().GetMessenger(channel)
+		if err != nil {
+			return errors.NewError(err)
+		}
 
 		if _, err := webhook.SendWebhook(
 			discord.NewMessageBuilder().

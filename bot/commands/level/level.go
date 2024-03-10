@@ -896,9 +896,6 @@ func Command(c *components.Components) components.Command {
 				if err != nil {
 					return errors.NewError(err)
 				}
-				if err != nil {
-					return errors.NewError(err)
-				}
 				if slices.Contains(g.LevelUpExcludeChannel, event.ChannelID) {
 					return nil
 				}

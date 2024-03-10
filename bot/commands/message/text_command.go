@@ -46,11 +46,8 @@ func doTextCommand(ctx context.Context, event *events.GuildMessageCreate) (err e
 		if err != nil {
 			return err, false
 		}
-
 	}
-
 	return nil, true
-
 }
 
 func diceRoll(size int) int {
