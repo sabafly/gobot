@@ -33,20 +33,24 @@ func Command(c *components.Components) components.Command {
 						Description: "bump",
 						Options: []discord.ApplicationCommandOptionSubCommand{
 							{
-								Name:        "toggle",
-								Description: "toggle",
+								Name:                     "toggle",
+								Description:              "toggle",
+								DescriptionLocalizations: translate.MessageMap("components.setting.bump.toggle", false),
 							},
 							{
-								Name:        "message",
-								Description: "set message",
+								Name:                     "message",
+								Description:              "set message",
+								DescriptionLocalizations: translate.MessageMap("components.setting.bump.message", false),
 							},
 							{
-								Name:        "mention",
-								Description: "set mention target",
+								Name:                     "mention",
+								Description:              "set mention target",
+								DescriptionLocalizations: translate.MessageMap("components.setting.bump.mention", false),
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionRole{
-										Name:        "target",
-										Description: "target role",
+										Name:                     "target",
+										Description:              "target role",
+										DescriptionLocalizations: translate.MessageMap("components.setting.mention.target", false),
 									},
 								},
 							},
@@ -57,20 +61,47 @@ func Command(c *components.Components) components.Command {
 						Description: "up",
 						Options: []discord.ApplicationCommandOptionSubCommand{
 							{
-								Name:        "toggle",
-								Description: "toggle",
+								Name:                     "toggle",
+								Description:              "toggle",
+								DescriptionLocalizations: translate.MessageMap("components.setting.up.toggle", false),
 							},
 							{
-								Name:        "message",
-								Description: "set message",
+								Name:                     "message",
+								Description:              "set message",
+								DescriptionLocalizations: translate.MessageMap("components.setting.up.message", false),
 							},
 							{
-								Name:        "mention",
-								Description: "set mention target",
+								Name:                     "mention",
+								Description:              "set mention target",
+								DescriptionLocalizations: translate.MessageMap("components.setting.up.mention", false),
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionRole{
-										Name:        "target",
-										Description: "target role",
+										Name:                     "target",
+										Description:              "target role",
+										DescriptionLocalizations: translate.MessageMap("components.setting.mention.target", false),
+									},
+								},
+							},
+						},
+					},
+					discord.ApplicationCommandOptionSubCommandGroup{
+						Name:        "welcome",
+						Description: "welcome",
+						Options: []discord.ApplicationCommandOptionSubCommand{
+							{
+								Name:                     "set-message",
+								Description:              "set message",
+								DescriptionLocalizations: translate.MessageMap("components.setting.welcome.set-message", false),
+							},
+							{
+								Name:                     "set-channel",
+								Description:              "set channel",
+								DescriptionLocalizations: translate.MessageMap("components.setting.welcome.set-channel", false),
+								Options: []discord.ApplicationCommandOption{
+									discord.ApplicationCommandOptionChannel{
+										Name:                     "channel",
+										Description:              "channel",
+										DescriptionLocalizations: translate.MessageMap("components.setting.welcome.channel", false),
 									},
 								},
 							},
@@ -145,7 +176,7 @@ func Command(c *components.Components) components.Command {
 					g = update.SaveX(event)
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
-							SetContent(translate.Message(event.Locale(), "components.setting.bump.mention",
+							SetContent(translate.Message(event.Locale(), "components.setting.bump.mention.used",
 								translate.WithTemplate(map[string]any{
 									"Role": builtin.Or(g.BumpMention != nil,
 										discord.RoleMention(builtin.NonNil(g.BumpMention)),
@@ -179,7 +210,7 @@ func Command(c *components.Components) components.Command {
 					g = update.SaveX(event)
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
-							SetContent(translate.Message(event.Locale(), "components.setting.up.mention",
+							SetContent(translate.Message(event.Locale(), "components.setting.up.mention.used",
 								translate.WithTemplate(map[string]any{
 									"Role": builtin.Or(g.UpMention != nil,
 										discord.RoleMention(builtin.NonNil(g.UpMention)),
@@ -325,6 +356,16 @@ func Command(c *components.Components) components.Command {
 					); err != nil {
 						return errors.NewError(err)
 					}
+					return nil
+				},
+			},
+			"/setting/welcome/set-channel": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionString("setting.welcome.set-channel"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+
 					return nil
 				},
 			},

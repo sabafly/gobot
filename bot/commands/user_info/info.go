@@ -20,7 +20,7 @@ func Command(c *components.Components) components.Command {
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.UserCommandCreate{
 				Name:              "userinfo",
-				NameLocalizations: translate.MessageMap("userinfo.command.name", false),
+				NameLocalizations: translate.MessageMap("components.user.info.name", false),
 				DMPermission:      builtin.Ptr(false),
 			},
 		},

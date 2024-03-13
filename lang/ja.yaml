@@ -553,8 +553,8 @@ components.setting.bump.toggle.enabled: Bump通知を有効化しました
 components.setting.bump.toggle.disabled: Bump通知を無効化しました
 components.setting.up.toggle.enabled: UP通知を有効化しました
 components.setting.up.toggle.disabled: UP通知を無効化しました
-components.setting.bump.mention: "Bump通知のメンション先を{{.Role}}に設定しました"
-components.setting.up.mention: "UP通知のメンション先を{{.Role}}に設定しました"
+components.setting.bump.mention.used: "Bump通知のメンション先を{{.Role}}に設定しました"
+components.setting.up.mention.used: "UP通知のメンション先を{{.Role}}に設定しました"
 components.setting.mention.none: なし
 components.setting.bump.message.modal.title: Bump通知メッセージ
 components.setting.up.message.modal.title: UP通知メッセージ
@@ -562,6 +562,15 @@ components.setting.message.modal.message_title: 応答メッセージのタイ�
 components.setting.message.modal.message: 応答メッセージの内容
 components.setting.message.modal.remind.message_title: 催促メッセージのタイトル
 components.setting.message.modal.remind.message: 催促メッセージの内容
+components.role.panel.import.name: 役職パネルをインポート
+components.user.info.name: ユーザー情報
+components.setting.bump.toggle: Bump通知の有効化/無効化
+components.setting.bump.message: Bump通知メッセージの設定
+components.setting.bump.mention: Bump通知のメンション先の設定
+components.setting.mention.target: メンション先
+components.setting.up.toggle: UP通知の有効化/無効化
+components.setting.up.message: UP通知メッセージの設定
+components.setting.up.mention: UP通知のメンション先の設定
 # エラーメッセージ
 errors.generic.message: エラーが発生しました
 errors.panic.message: 致命的なエラー

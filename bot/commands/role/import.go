@@ -23,8 +23,9 @@ func ImportCommand(c *components.Components) components.Command {
 		Namespace: "import-rolepanel",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.MessageCommandCreate{
-				Name:         "import-rolepanel",
-				DMPermission: builtin.Ptr(false),
+				Name:              "import-rolepanel",
+				NameLocalizations: translate.MessageMap("components.role.panel.import.name", false),
+				DMPermission:      builtin.Ptr(false),
 			},
 		},
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
