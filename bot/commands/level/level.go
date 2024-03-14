@@ -898,7 +898,7 @@ func Command(c *components.Components) components.Command {
 				if err != nil {
 					return errors.NewError(err)
 				}
-				if m, err = addXp(event, m.Update(), rand.N[uint64](16)+15, event.Client(), m, g, event.ChannelID, event.Message.Author.EffectiveName()); err != nil {
+				if _, err = addXp(event, m.Update(), rand.N[uint64](16)+15, event.Client(), m, g, event.ChannelID, event.Message.Author.EffectiveName()); err != nil {
 					return errors.NewError(err)
 				}
 			}
@@ -922,7 +922,7 @@ func addXp(ctx context.Context, memberUpdate *ent.MemberUpdateOne, xp uint64, cl
 		SaveX(ctx)
 	if before < after {
 		for i := range after - before {
-			if err := levelUp(g, before+i+1, client, g.ID, builtin.Or(g.LevelUpChannel != nil, builtin.NonNil(g.LevelUpChannel), channelID), m, username, before+i); err != nil {
+			if err := levelUp(g, before+i+1, client, g.ID, builtin.NonNilOrDefault(g.LevelUpChannel, channelID), m, username, before+i); err != nil {
 				return m, err
 			}
 		}
