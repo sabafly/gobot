@@ -539,6 +539,9 @@ components.level.role.list.message: |-
 components.level.role.remove.message.embed.title: レベルロールを削除しました
 components.level.role.remove.message.embed.description: |-
   {{.Level}} レベル：{{.Role}}
+components.level.required-point.embed.title: "{{.Level}}レベルに必要な経験値"
+components.level.required-point.embed.description: "{{.User}}の経験値：`{{.Xp}}`xp"
+components.level.required-point.embed.description.diff: "不足している経験値：`{{.Xp}}`xp"
 components.message.remind.add.modal.title: リマインドを作成
 components.message.remind.add.modal.input.content.label: 内容
 components.message.remind.add.modal.input.name.label: 名前

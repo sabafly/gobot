@@ -208,10 +208,52 @@ func Command(c *components.Components) components.Command {
 							},
 						},
 					},
+					discord.ApplicationCommandOptionSubCommand{
+						Name:        "required-point",
+						Description: "required point",
+						Options: []discord.ApplicationCommandOption{
+							discord.ApplicationCommandOptionInt{
+								Name:        "level",
+								Description: "level number",
+							},
+						},
+					},
 				},
 			},
 		},
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
+			"/level/required-point": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("level.required-point"),
+				},
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					mem, err := c.MemberCreate(event, event.User(), *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+					level := uint64(0)
+					l, ok := event.SlashCommandInteractionData().OptInt("level")
+					level = uint64(l)
+					if !ok {
+						level = mem.Xp.Level() + 1
+					}
+					builder := discord.NewMessageBuilder()
+					builder.SetEmbeds(
+						embeds.SetEmbedProperties(discord.NewEmbedBuilder().
+							SetTitle(translate.Message(event.Locale(), "components.level.required-point.embed.title", translate.WithTemplate(map[string]any{"Level": level}))).
+							SetDescriptionf("# `%d`xp\n%s\n%s",
+								xppoint.TotalPoint(level),
+								translate.Message(event.Locale(), "components.level.required-point.embed.description", translate.WithTemplate(map[string]any{"User": event.Member().EffectiveName(), "Xp": mem.Xp})),
+								translate.Message(event.Locale(), "components.level.required-point.embed.description.diff", translate.WithTemplate(map[string]any{"Xp": max(xppoint.TotalPoint(level)-uint64(mem.Xp), 0)})),
+							).
+							Build()),
+					)
+					if err := event.CreateMessage(builder.BuildCreate()); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
 			"/level/rank": generic.PCommandHandler{
 				Permission: []generic.Permission{
 					generic.PermissionDefaultString("level.rank"),
