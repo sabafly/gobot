@@ -134,10 +134,6 @@ func init() {
 	memberDescMessageCount := memberFields[4].Descriptor()
 	// member.DefaultMessageCount holds the default value on creation for the message_count field.
 	member.DefaultMessageCount = memberDescMessageCount.Default.(uint64)
-	// memberDescLastNotifiedLevel is the schema descriptor for last_notified_level field.
-	memberDescLastNotifiedLevel := memberFields[5].Descriptor()
-	// member.DefaultLastNotifiedLevel holds the default value on creation for the last_notified_level field.
-	member.DefaultLastNotifiedLevel = memberDescLastNotifiedLevel.Default.(uint64)
 	messagepinFields := schema.MessagePin{}.Fields()
 	_ = messagepinFields
 	// messagepinDescRateLimit is the schema descriptor for rate_limit field.

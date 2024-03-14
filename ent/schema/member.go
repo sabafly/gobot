@@ -31,7 +31,6 @@ func (Member) Fields() []ent.Field {
 		field.Uint64("message_count").
 			Default(0),
 		field.Uint64("last_notified_level").
-			Default(0).
 			Nillable().
 			Optional(),
 	}

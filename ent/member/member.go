@@ -87,8 +87,6 @@ var (
 	DefaultXp xppoint.XP
 	// DefaultMessageCount holds the default value on creation for the "message_count" field.
 	DefaultMessageCount uint64
-	// DefaultLastNotifiedLevel holds the default value on creation for the "last_notified_level" field.
-	DefaultLastNotifiedLevel uint64
 )
 
 // OrderOption defines the ordering options for the Member queries.

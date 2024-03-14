@@ -56,7 +56,7 @@ var (
 		{Name: "xp", Type: field.TypeUint64, Default: 0},
 		{Name: "last_xp", Type: field.TypeTime, Nullable: true},
 		{Name: "message_count", Type: field.TypeUint64, Default: 0},
-		{Name: "last_notified_level", Type: field.TypeUint64, Nullable: true, Default: 0},
+		{Name: "last_notified_level", Type: field.TypeUint64, Nullable: true},
 		{Name: "guild_members", Type: field.TypeUint64},
 		{Name: "user_id", Type: field.TypeUint64},
 	}

@@ -164,10 +164,6 @@ func (mc *MemberCreate) defaults() {
 		v := member.DefaultMessageCount
 		mc.mutation.SetMessageCount(v)
 	}
-	if _, ok := mc.mutation.LastNotifiedLevel(); !ok {
-		v := member.DefaultLastNotifiedLevel
-		mc.mutation.SetLastNotifiedLevel(v)
-	}
 }
 
 // check runs all checks and user-defined validators on the builder.
