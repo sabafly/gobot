@@ -215,6 +215,7 @@ func Command(c *components.Components) components.Command {
 							discord.ApplicationCommandOptionInt{
 								Name:        "level",
 								Description: "level number",
+								MinValue:    builtin.Ptr(1),
 							},
 						},
 					},
@@ -244,7 +245,7 @@ func Command(c *components.Components) components.Command {
 							SetDescriptionf("# `%d`xp\n%s\n%s",
 								xppoint.TotalPoint(level),
 								translate.Message(event.Locale(), "components.level.required-point.embed.description", translate.WithTemplate(map[string]any{"User": event.Member().EffectiveName(), "Xp": mem.Xp})),
-								translate.Message(event.Locale(), "components.level.required-point.embed.description.diff", translate.WithTemplate(map[string]any{"Xp": max(xppoint.TotalPoint(level)-uint64(mem.Xp), 0)})),
+								translate.Message(event.Locale(), "components.level.required-point.embed.description.diff", translate.WithTemplate(map[string]any{"Xp": builtin.Or(xppoint.TotalPoint(level) > uint64(mem.Xp), xppoint.TotalPoint(level)-uint64(mem.Xp), 0)})),
 							).
 							Build()),
 					)
