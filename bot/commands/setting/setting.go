@@ -84,29 +84,29 @@ func Command(c *components.Components) components.Command {
 							},
 						},
 					},
-					discord.ApplicationCommandOptionSubCommandGroup{
-						Name:        "welcome",
-						Description: "welcome",
-						Options: []discord.ApplicationCommandOptionSubCommand{
-							{
-								Name:                     "set-message",
-								Description:              "set message",
-								DescriptionLocalizations: translate.MessageMap("components.setting.welcome.set-message", false),
-							},
-							{
-								Name:                     "set-channel",
-								Description:              "set channel",
-								DescriptionLocalizations: translate.MessageMap("components.setting.welcome.set-channel", false),
-								Options: []discord.ApplicationCommandOption{
-									discord.ApplicationCommandOptionChannel{
-										Name:                     "channel",
-										Description:              "channel",
-										DescriptionLocalizations: translate.MessageMap("components.setting.welcome.channel", false),
-									},
-								},
-							},
-						},
-					},
+					// discord.ApplicationCommandOptionSubCommandGroup{
+					// 	Name:        "welcome",
+					// 	Description: "welcome",
+					// 	Options: []discord.ApplicationCommandOptionSubCommand{
+					// 		{
+					// 			Name:                     "set-message",
+					// 			Description:              "set message",
+					// 			DescriptionLocalizations: translate.MessageMap("components.setting.welcome.set-message", false),
+					// 		},
+					// 		{
+					// 			Name:                     "set-channel",
+					// 			Description:              "set channel",
+					// 			DescriptionLocalizations: translate.MessageMap("components.setting.welcome.set-channel", false),
+					// 			Options: []discord.ApplicationCommandOption{
+					// 				discord.ApplicationCommandOptionChannel{
+					// 					Name:                     "channel",
+					// 					Description:              "channel",
+					// 					DescriptionLocalizations: translate.MessageMap("components.setting.welcome.channel", false),
+					// 				},
+					// 			},
+					// 		},
+					// 	},
+					// },
 				},
 			},
 		},

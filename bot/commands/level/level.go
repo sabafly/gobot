@@ -2,9 +2,11 @@ package level
 
 import (
 	"cmp"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math/rand/v2"
 	"net/http"
 	"slices"
 	"strconv"
@@ -354,18 +356,11 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 					movedXp := uint64(fromUser.Xp)
-					before := toUser.Xp.Level()
-					toUser.Xp.Add(movedXp)
-					after := toUser.Xp.Level()
 					fromUser.Xp = xppoint.XP(0)
-					toUser = toUser.Update().SetXp(toUser.Xp).SaveX(event)
 					fromUser = fromUser.Update().SetXp(fromUser.Xp).SaveX(event)
-					if before != after {
-						if err := levelUp(g, after, event.Client(), *event.GuildID(), builtin.Or(g.LevelUpChannel != nil, builtin.NonNil(g.LevelUpChannel), event.Channel().ID()), toUser, to.User, before); err != nil {
-							return errors.NewError(err)
-						}
+					if toUser, err = addXp(event, toUser.Update(), movedXp, event.Client(), toUser, g, event.Channel().ID(), to.EffectiveName()); err != nil {
+						return errors.NewError(err)
 					}
-
 					ids := g.QueryMembers().Order(
 						member.ByXp(
 							sql.OrderDesc(),
@@ -903,22 +898,8 @@ func Command(c *components.Components) components.Command {
 				if err != nil {
 					return errors.NewError(err)
 				}
-				memberUpdate := m.Update()
-				before := m.Xp.Level()
-				if time.Now().After(m.LastXp.Add(time.Minute * 3)) {
-					m.Xp.AddRandom()
-					memberUpdate.
-						SetXp(m.Xp).
-						SetLastXp(time.Now())
-				}
-				after := m.Xp.Level()
-				m = memberUpdate.
-					SetMessageCount(m.MessageCount + 1).
-					SaveX(event)
-				if before != after {
-					if err := levelUp(g, after, event.Client(), event.GuildID, builtin.Or(g.LevelUpChannel != nil, builtin.NonNil(g.LevelUpChannel), event.ChannelID), m, event.Message.Author, before); err != nil {
-						return errors.NewError(err)
-					}
+				if m, err = addXp(event, m.Update(), rand.N[uint64](16)+15, event.Client(), m, g, event.ChannelID, event.Message.Author.EffectiveName()); err != nil {
+					return errors.NewError(err)
 				}
 			}
 			return nil
@@ -926,7 +907,30 @@ func Command(c *components.Components) components.Command {
 	}).SetComponent(c)
 }
 
-func levelUp(g *ent.Guild, after int64, client bot.Client, guildID, channelID snowflake.ID, m *ent.Member, user discord.User, before int64) error {
+func addXp(ctx context.Context, memberUpdate *ent.MemberUpdateOne, xp uint64, client bot.Client, m *ent.Member, g *ent.Guild, channelID snowflake.ID, username string) (*ent.Member, error) {
+	before := builtin.NonNilOrDefault(m.LastNotifiedLevel, m.Xp.Level())
+	if time.Now().After(m.LastXp.Add(time.Minute * 3)) {
+		m.Xp.Add(xp)
+		memberUpdate.
+			SetXp(m.Xp).
+			SetLastXp(time.Now())
+	}
+	after := m.Xp.Level()
+	m = memberUpdate.
+		SetLastNotifiedLevel(after).
+		SetMessageCount(m.MessageCount + 1).
+		SaveX(ctx)
+	if before < after {
+		for i := range after - before {
+			if err := levelUp(g, before+i+1, client, g.ID, builtin.Or(g.LevelUpChannel != nil, builtin.NonNil(g.LevelUpChannel), channelID), m, username, before+i); err != nil {
+				return m, err
+			}
+		}
+	}
+	return m, nil
+}
+
+func levelUp(g *ent.Guild, after uint64, client bot.Client, guildID, channelID snowflake.ID, m *ent.Member, username string, before uint64) error {
 	// レベルロール
 	r, ok := g.LevelRole[int(after)]
 	if ok {
@@ -938,9 +942,9 @@ func levelUp(g *ent.Guild, after int64, client bot.Client, guildID, channelID sn
 	// レベルアップ通知
 	content := g.LevelUpMessage
 	content = strings.ReplaceAll(content, "{user}", discord.UserMention(m.UserID))
-	content = strings.ReplaceAll(content, "{username}", user.EffectiveName())
-	content = strings.ReplaceAll(content, "{before_level}", strconv.FormatInt(before, 10))
-	content = strings.ReplaceAll(content, "{after_level}", strconv.FormatInt(after, 10))
+	content = strings.ReplaceAll(content, "{username}", username)
+	content = strings.ReplaceAll(content, "{before_level}", strconv.FormatUint(before, 10))
+	content = strings.ReplaceAll(content, "{after_level}", strconv.FormatUint(after, 10))
 	content = strings.ReplaceAll(content, "{xp}", strconv.FormatUint(uint64(m.Xp), 10))
 	if _, err := client.Rest().
 		CreateMessage(

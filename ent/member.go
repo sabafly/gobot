@@ -33,6 +33,8 @@ type Member struct {
 	LastXp time.Time `json:"last_xp,omitempty"`
 	// MessageCount holds the value of the "message_count" field.
 	MessageCount uint64 `json:"message_count,omitempty"`
+	// LastNotifiedLevel holds the value of the "last_notified_level" field.
+	LastNotifiedLevel *uint64 `json:"last_notified_level,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the MemberQuery when eager-loading is set.
 	Edges         MemberEdges `json:"edges"`
@@ -80,7 +82,7 @@ func (*Member) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case member.FieldPermission:
 			values[i] = new([]byte)
-		case member.FieldID, member.FieldXp, member.FieldUserID, member.FieldMessageCount:
+		case member.FieldID, member.FieldXp, member.FieldUserID, member.FieldMessageCount, member.FieldLastNotifiedLevel:
 			values[i] = new(sql.NullInt64)
 		case member.FieldLastXp:
 			values[i] = new(sql.NullTime)
@@ -138,6 +140,13 @@ func (m *Member) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field message_count", values[i])
 			} else if value.Valid {
 				m.MessageCount = uint64(value.Int64)
+			}
+		case member.FieldLastNotifiedLevel:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field last_notified_level", values[i])
+			} else if value.Valid {
+				m.LastNotifiedLevel = new(uint64)
+				*m.LastNotifiedLevel = uint64(value.Int64)
 			}
 		case member.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -206,6 +215,11 @@ func (m *Member) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("message_count=")
 	builder.WriteString(fmt.Sprintf("%v", m.MessageCount))
+	builder.WriteString(", ")
+	if v := m.LastNotifiedLevel; v != nil {
+		builder.WriteString("last_notified_level=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

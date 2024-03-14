@@ -87,6 +87,20 @@ func (mc *MemberCreate) SetNillableMessageCount(u *uint64) *MemberCreate {
 	return mc
 }
 
+// SetLastNotifiedLevel sets the "last_notified_level" field.
+func (mc *MemberCreate) SetLastNotifiedLevel(u uint64) *MemberCreate {
+	mc.mutation.SetLastNotifiedLevel(u)
+	return mc
+}
+
+// SetNillableLastNotifiedLevel sets the "last_notified_level" field if the given value is not nil.
+func (mc *MemberCreate) SetNillableLastNotifiedLevel(u *uint64) *MemberCreate {
+	if u != nil {
+		mc.SetLastNotifiedLevel(*u)
+	}
+	return mc
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
 func (mc *MemberCreate) SetGuildID(id snowflake.ID) *MemberCreate {
 	mc.mutation.SetGuildID(id)
@@ -150,6 +164,10 @@ func (mc *MemberCreate) defaults() {
 		v := member.DefaultMessageCount
 		mc.mutation.SetMessageCount(v)
 	}
+	if _, ok := mc.mutation.LastNotifiedLevel(); !ok {
+		v := member.DefaultLastNotifiedLevel
+		mc.mutation.SetLastNotifiedLevel(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -210,6 +228,10 @@ func (mc *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 	if value, ok := mc.mutation.MessageCount(); ok {
 		_spec.SetField(member.FieldMessageCount, field.TypeUint64, value)
 		_node.MessageCount = value
+	}
+	if value, ok := mc.mutation.LastNotifiedLevel(); ok {
+		_spec.SetField(member.FieldLastNotifiedLevel, field.TypeUint64, value)
+		_node.LastNotifiedLevel = &value
 	}
 	if nodes := mc.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
