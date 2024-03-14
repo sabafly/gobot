@@ -243,7 +243,7 @@ var (
 	// WordSuffixesColumns holds the columns for the "word_suffixes" table.
 	WordSuffixesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "suffix", Type: field.TypeString, Size: 120},
+		{Name: "suffix", Type: field.TypeString},
 		{Name: "expired", Type: field.TypeTime, Nullable: true},
 		{Name: "rule", Type: field.TypeEnum, Enums: []string{"webhook", "warn", "delete"}, Default: "webhook"},
 		{Name: "user_word_suffix", Type: field.TypeUint64},

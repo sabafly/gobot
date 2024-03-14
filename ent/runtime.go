@@ -265,21 +265,7 @@ func init() {
 	// wordsuffixDescSuffix is the schema descriptor for suffix field.
 	wordsuffixDescSuffix := wordsuffixFields[1].Descriptor()
 	// wordsuffix.SuffixValidator is a validator for the "suffix" field. It is called by the builders before save.
-	wordsuffix.SuffixValidator = func() func(string) error {
-		validators := wordsuffixDescSuffix.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(suffix string) error {
-			for _, fn := range fns {
-				if err := fn(suffix); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
+	wordsuffix.SuffixValidator = wordsuffixDescSuffix.Validators[0].(func(string) error)
 	// wordsuffixDescID is the schema descriptor for id field.
 	wordsuffixDescID := wordsuffixFields[0].Descriptor()
 	// wordsuffix.DefaultID holds the default value on creation for the id field.

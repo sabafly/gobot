@@ -19,7 +19,6 @@ func (WordSuffix) Fields() []ent.Field {
 		field.UUID("id", uuid.New()).
 			Default(uuid.New),
 		field.String("suffix").
-			MaxLen(120).
 			NotEmpty(),
 		field.Time("expired").
 			Optional().
