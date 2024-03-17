@@ -2,17 +2,15 @@ package discordutil
 
 import (
 	"github.com/disgoorg/disgo/discord"
-	"github.com/disgoorg/snowflake/v2"
+	"slices"
 )
 
-func GetHighestRolePosition(role map[snowflake.ID]discord.Role) (int, snowflake.ID) {
-	var max int
-	var id snowflake.ID
-	for i, r := range role {
-		if max < r.Position {
-			max = r.Position
-			id = i
-		}
+func GetHighestRole(roles []discord.Role) *discord.Role {
+	slices.SortStableFunc(roles, func(a, b discord.Role) int {
+		return a.Compare(b)
+	})
+	if len(roles) < 1 {
+		return nil
 	}
-	return max, id
+	return &roles[0]
 }

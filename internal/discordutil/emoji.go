@@ -10,18 +10,18 @@ import (
 )
 
 func ParseCustomEmojis(str string) []discord.Emoji {
-	var toReturn []discord.Emoji
 	emojis := emoji.DiscordEmoji.FindAllString(str, -1)
+	toReturn := make([]discord.Emoji, len(emojis))
 	if len(emojis) < 1 {
 		return toReturn
 	}
-	for _, em := range emojis {
+	for i, em := range emojis {
 		parts := strings.Split(em, ":")
-		toReturn = append(toReturn, discord.Emoji{
+		toReturn[i] = discord.Emoji{
 			ID:       snowflake.MustParse(parts[2]),
 			Name:     parts[1],
 			Animated: strings.HasPrefix(em, "<a:"),
-		})
+		}
 	}
 	return toReturn
 }
@@ -52,9 +52,8 @@ func FormatComponentEmoji(e discord.ComponentEmoji) string {
 	}
 	if e.Animated {
 		return fmt.Sprintf("<a:%s:%d>", e.Name, e.ID)
-	} else {
-		return fmt.Sprintf("<:%s:%d>", e.Name, e.ID)
 	}
+	return fmt.Sprintf("<:%s:%d>", e.Name, e.ID)
 }
 
 func ReactionComponentEmoji(e discord.ComponentEmoji) string {
@@ -65,12 +64,12 @@ func ReactionComponentEmoji(e discord.ComponentEmoji) string {
 	return fmt.Sprintf("%s:%d", e.Name, e.ID)
 }
 
-// 1から始まる
+// Number2Emoji は1から始まる
 func Number2Emoji(n int) string {
 	return Index2Emoji(n - 1)
 }
 
-// 0から始まる
+// Index2Emoji は0から始まる
 func Index2Emoji(n int) string {
 	return string(rune('🇦' + n))
 }

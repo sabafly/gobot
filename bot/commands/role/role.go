@@ -490,11 +490,12 @@ func Command(c *components.Components) components.Command {
 							return errors.NewError(err)
 						}
 					case "add_role":
-						roles := event.RoleSelectMenuInteractionData().Resolved.Roles
+						selectedRoles := event.RoleSelectMenuInteractionData().Resolved.Roles
 						self, valid := event.Client().Caches().SelfMember(*event.GuildID())
 						if !valid {
 							return errors.NewError(errors.ErrorMessage("errors.invalid.self", event))
 						}
+						var roles []discord.Role
 						roleMap := map[snowflake.ID]discord.Role{}
 						for _, id := range self.RoleIDs {
 							role, ok := event.Client().Caches().Role(*event.GuildID(), id)
@@ -502,16 +503,20 @@ func Command(c *components.Components) components.Command {
 								continue
 							}
 							roleMap[id] = role
+							roles = append(roles, role)
 						}
-						hi, _ := discordutil.GetHighestRolePosition(roleMap)
+						highestRole := discordutil.GetHighestRole(roles)
+						if highestRole == nil {
+							return errors.NewError(errors.ErrorMessage("errors.invalid.self", event))
+						}
 						var deletedRole []snowflake.ID
 
-						for i, r := range roles {
+						for i, r := range selectedRoles {
 							if slices.ContainsFunc(edit.Roles, func(r1 schema.Role) bool { return r1.ID == r.ID }) {
 								continue
 							}
-							if r.Managed || r.Position >= hi {
-								delete(roles, i)
+							if r.Managed || r.Compare(*highestRole) != -1 {
+								delete(selectedRoles, i)
 								deletedRole = append(deletedRole, i)
 								continue
 							}
@@ -543,7 +548,7 @@ func Command(c *components.Components) components.Command {
 							}
 							return nil
 						}
-						edit.Roles = slices.DeleteFunc(edit.Roles, func(r schema.Role) bool { _, ok := roles[r.ID]; return !ok })
+						edit.Roles = slices.DeleteFunc(edit.Roles, func(r schema.Role) bool { _, ok := selectedRoles[r.ID]; return !ok })
 
 						edit = edit.Update().
 							SetModified(true).

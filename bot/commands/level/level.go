@@ -320,11 +320,7 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.page", event))
 					}
 					members := g.QueryMembers().
-						Order(
-							member.ByXp(
-								sql.OrderDesc(),
-							),
-						).
+						Order(member.ByXp(sql.OrderDesc())).
 						Offset((page - 1) * pageCount).
 						Limit(pageCount).
 						AllX(event)
@@ -763,17 +759,20 @@ func Command(c *components.Components) components.Command {
 					if !valid {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.self", event))
 					}
-					roleMap := map[snowflake.ID]discord.Role{}
+					var roles []discord.Role
 					for _, id := range self.RoleIDs {
 						role, ok := event.Client().Caches().Role(*event.GuildID(), id)
 						if !ok {
 							continue
 						}
-						roleMap[id] = role
+						roles = append(roles, role)
 					}
-					hi, _ := discordutil.GetHighestRolePosition(roleMap)
+					highestRole := discordutil.GetHighestRole(roles)
+					if highestRole == nil {
+						return errors.NewError(errors.ErrorMessage("errors.invalid.self", event))
+					}
 
-					if role.Managed || role.Position >= hi || role.ID == *event.GuildID() {
+					if role.Managed || role.Compare(*highestRole) != -1 || role.ID == *event.GuildID() {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.role", event))
 					}
 
