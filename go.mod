@@ -7,7 +7,7 @@ require (
 	github.com/disgoorg/disgo v0.17.2
 	github.com/disgoorg/json v1.1.0
 	github.com/disgoorg/snowflake/v2 v2.0.1
-	github.com/forPelevin/gomoji v1.1.8
+	github.com/forPelevin/gomoji v1.2.0
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
