@@ -1,7 +1,6 @@
 package generic
 
 import (
-	"cmp"
 	"context"
 	"fmt"
 	"log/slog"
@@ -39,7 +38,7 @@ func noPermissionMessage(event interface {
 					Build(),
 			).
 			SetFlags(discord.MessageFlagEphemeral).
-			Create(),
+			BuildCreate(),
 	)
 }
 
@@ -82,7 +81,6 @@ func PermissionCheck(ctx context.Context, c *components.Components, g *ent.Guild
 }
 
 func RolePermissionCheck(g *ent.Guild, guildID snowflake.ID, client bot.Client, roleIds []snowflake.ID, perms []Permission) bool {
-
 	if len(perms) == 0 {
 		return true
 	}
@@ -92,7 +90,7 @@ func RolePermissionCheck(g *ent.Guild, guildID snowflake.ID, client bot.Client, 
 		roles = append(roles, role)
 	})
 	slices.SortStableFunc(roles, func(a, b discord.Role) int {
-		return cmp.Compare(a.Position, b.Position)
+		return a.Compare(b)
 	})
 	var memberRoles []discord.Role
 	for _, role := range roles {

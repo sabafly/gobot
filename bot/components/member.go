@@ -16,16 +16,16 @@ func (c *Components) MemberCreate(ctx context.Context, u discord.User, gid snowf
 	if err != nil {
 		return nil, err
 	}
-	if ok := c.db.Member.
+	ok := c.db.Member.
 		Query().
-		Where(member.HasUserWith(user.ID(u.ID)), member.HasGuildWith(guild.ID(gid))).ExistX(ctx); ok {
+		Where(member.HasUserWith(user.ID(u.ID)), member.HasGuildWith(guild.ID(gid))).ExistX(ctx)
+	if ok {
 		return c.db.Member.
 			Query().
 			Where(member.HasUserWith(user.ID(u.ID)), member.HasGuildWith(guild.ID(gid))).Only(ctx)
-	} else {
-		return c.db.Member.Create().
-			SetUser(eu).
-			SetGuildID(gid).
-			Save(ctx)
 	}
+	return c.db.Member.Create().
+		SetUser(eu).
+		SetGuildID(gid).
+		Save(ctx)
 }

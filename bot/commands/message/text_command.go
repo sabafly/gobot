@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
-	"math/rand"
+	"math/rand/v2"
 	"regexp"
 	"strconv"
 	"strings"
@@ -41,20 +41,17 @@ func doTextCommand(ctx context.Context, event *events.GuildMessageCreate) (err e
 		_, err = event.Client().Rest().CreateMessage(event.ChannelID, discord.NewMessageBuilder().
 			SetContent(content).
 			SetMessageReferenceByID(event.Message.ID).
-			Create(),
+			BuildCreate(),
 		)
 		if err != nil {
 			return err, false
 		}
-
 	}
-
 	return nil, true
-
 }
 
 func diceRoll(size int) int {
-	return rand.Intn(size) + 1
+	return rand.N(size) + 1
 }
 
 var (

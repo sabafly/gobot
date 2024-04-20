@@ -539,6 +539,9 @@ components.level.role.list.message: |-
 components.level.role.remove.message.embed.title: レベルロールを削除しました
 components.level.role.remove.message.embed.description: |-
   {{.Level}} レベル：{{.Role}}
+components.level.required-point.embed.title: "{{.Level}}レベルに必要な経験値"
+components.level.required-point.embed.description: "{{.User}}の経験値：`{{.Xp}}`xp"
+components.level.required-point.embed.description.diff: "不足している経験値：`{{.Xp}}`xp"
 components.message.remind.add.modal.title: リマインドを作成
 components.message.remind.add.modal.input.content.label: 内容
 components.message.remind.add.modal.input.name.label: 名前
@@ -553,8 +556,8 @@ components.setting.bump.toggle.enabled: Bump通知を有効化しました
 components.setting.bump.toggle.disabled: Bump通知を無効化しました
 components.setting.up.toggle.enabled: UP通知を有効化しました
 components.setting.up.toggle.disabled: UP通知を無効化しました
-components.setting.bump.mention: "Bump通知のメンション先を{{.Role}}に設定しました"
-components.setting.up.mention: "UP通知のメンション先を{{.Role}}に設定しました"
+components.setting.bump.mention.used: "Bump通知のメンション先を{{.Role}}に設定しました"
+components.setting.up.mention.used: "UP通知のメンション先を{{.Role}}に設定しました"
 components.setting.mention.none: なし
 components.setting.bump.message.modal.title: Bump通知メッセージ
 components.setting.up.message.modal.title: UP通知メッセージ
@@ -562,6 +565,15 @@ components.setting.message.modal.message_title: 応答メッセージのタイ�
 components.setting.message.modal.message: 応答メッセージの内容
 components.setting.message.modal.remind.message_title: 催促メッセージのタイトル
 components.setting.message.modal.remind.message: 催促メッセージの内容
+components.role.panel.import.name: 役職パネルをインポート
+components.user.info.name: ユーザー情報
+components.setting.bump.toggle: Bump通知の有効化/無効化
+components.setting.bump.message: Bump通知メッセージの設定
+components.setting.bump.mention: Bump通知のメンション先の設定
+components.setting.mention.target: メンション先
+components.setting.up.toggle: UP通知の有効化/無効化
+components.setting.up.message: UP通知メッセージの設定
+components.setting.up.mention: UP通知のメンション先の設定
 # エラーメッセージ
 errors.generic.message: エラーが発生しました
 errors.panic.message: 致命的なエラー
@@ -600,3 +612,5 @@ errors.ratelimited: 一時的に制限されています
 errors.ratelimited.description: しばらく待ってからやり直してください
 errors.unsupported: 対応していません
 errors.unsupported.description: それはこの操作に対応していません
+errors.deleted: 削除されました
+errors.deleted.description: この項目はすでに削除されています

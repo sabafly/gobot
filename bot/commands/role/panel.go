@@ -13,7 +13,7 @@ import (
 func rolePanelPlace(ctx context.Context, place *ent.RolePanelPlaced, locale discord.Locale, client bot.Client, react bool) error {
 	builder := rpPlacedMessage(place, locale)
 	if place.MessageID != nil {
-		if _, err := client.Rest().UpdateMessage(place.ChannelID, *place.MessageID, builder.Update()); err != nil {
+		if _, err := client.Rest().UpdateMessage(place.ChannelID, *place.MessageID, builder.BuildUpdate()); err != nil {
 			return err
 		}
 		if place.Type == rolepanelplaced.TypeReaction && react {
@@ -22,7 +22,7 @@ func rolePanelPlace(ctx context.Context, place *ent.RolePanelPlaced, locale disc
 			}
 		}
 	} else {
-		m, err := client.Rest().CreateMessage(place.ChannelID, builder.Create())
+		m, err := client.Rest().CreateMessage(place.ChannelID, builder.BuildCreate())
 		if err != nil {
 			return err
 		}

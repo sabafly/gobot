@@ -5,7 +5,7 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/sabafly/gobot/internal/uuid"
+	"github.com/sabafly/gobot/internal/uuidv7"
 )
 
 // MessageRemind holds the schema definition for the MessageRemind entity.
@@ -16,10 +16,10 @@ type MessageRemind struct {
 // Fields of the MessageRemind.
 func (MessageRemind) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.New()).
+		field.UUID("id", uuidv7.New()).
 			Unique().
 			Immutable().
-			Default(uuid.New),
+			Default(uuidv7.New),
 		field.Uint64("channel_id").
 			GoType(snowflake.ID(0)),
 		field.Uint64("author_id").

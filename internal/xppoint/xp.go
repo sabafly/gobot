@@ -2,12 +2,11 @@ package xppoint
 
 import (
 	"math/big"
-	"math/rand"
 )
 
 type XP uint64
 
-func (xp XP) Level() int64 {
+func (xp XP) Level() uint64 {
 	return level(uint64(xp))
 }
 
@@ -15,20 +14,14 @@ func (xp *XP) Add(n uint64) {
 	*xp += XP(n)
 }
 
-func (xp *XP) AddRandom() uint64 {
-	add := rand.Uint64()%16 + 15
-	xp.Add(add)
-	return add
-}
-
 const multiplier = 25
 
-// 0から始まる
-// 次のレベルに経験値がどれだけいるか
-//
-// level=0 -> 1レベルに上がるまでの経験値
-func RequiredPoint(level int64) uint64 {
-	n := uint64(level)
+func RequiredPoint(level uint64) uint64 {
+	// 0から始まる
+	// 次のレベルに経験値がどれだけいるか
+	//
+	// level=0 -> 1レベルに上がるまでの経験値
+	n := level
 	var x uint64
 	switch {
 	case level < 16:
@@ -42,9 +35,9 @@ func RequiredPoint(level int64) uint64 {
 	return x
 }
 
-// 次の方程式を使用して、レベルに到達するまでにどれだけの経験値が収集されたかを決定できます。
-func TotalPoint(level int64) uint64 {
-	f := (&big.Float{}).SetInt64(level)
+func TotalPoint(level uint64) uint64 {
+	// 次の方程式を使用して、レベルに到達するまでにどれだけの経験値が収集されたかを決定できます。
+	f := (&big.Float{}).SetUint64(level)
 	x := big.NewFloat(0)
 	switch {
 	case level <= 16: // level^2 + 6 × level
@@ -65,8 +58,8 @@ func TotalPoint(level int64) uint64 {
 	return u
 }
 
-func level(points uint64) int64 {
-	points = points / multiplier
+func level(points uint64) uint64 {
+	points /= multiplier
 	f := (&big.Float{}).SetUint64(points)
 	x := big.NewFloat(0)
 	switch {
@@ -101,6 +94,6 @@ func level(points uint64) int64 {
 			),
 		)
 	}
-	i, _ := x.Int64()
+	i, _ := x.Uint64()
 	return i
 }

@@ -2354,23 +2354,25 @@ func (m *GuildMutation) ResetEdge(name string) error {
 // MemberMutation represents an operation that mutates the Member nodes in the graph.
 type MemberMutation struct {
 	config
-	op               Op
-	typ              string
-	id               *int
-	permission       *permissions.Permission
-	xp               *xppoint.XP
-	addxp            *xppoint.XP
-	last_xp          *time.Time
-	message_count    *uint64
-	addmessage_count *int64
-	clearedFields    map[string]struct{}
-	guild            *snowflake.ID
-	clearedguild     bool
-	user             *snowflake.ID
-	cleareduser      bool
-	done             bool
-	oldValue         func(context.Context) (*Member, error)
-	predicates       []predicate.Member
+	op                     Op
+	typ                    string
+	id                     *int
+	permission             *permissions.Permission
+	xp                     *xppoint.XP
+	addxp                  *xppoint.XP
+	last_xp                *time.Time
+	message_count          *uint64
+	addmessage_count       *int64
+	last_notified_level    *uint64
+	addlast_notified_level *int64
+	clearedFields          map[string]struct{}
+	guild                  *snowflake.ID
+	clearedguild           bool
+	user                   *snowflake.ID
+	cleareduser            bool
+	done                   bool
+	oldValue               func(context.Context) (*Member, error)
+	predicates             []predicate.Member
 }
 
 var _ ent.Mutation = (*MemberMutation)(nil)
@@ -2717,6 +2719,76 @@ func (m *MemberMutation) ResetMessageCount() {
 	m.addmessage_count = nil
 }
 
+// SetLastNotifiedLevel sets the "last_notified_level" field.
+func (m *MemberMutation) SetLastNotifiedLevel(u uint64) {
+	m.last_notified_level = &u
+	m.addlast_notified_level = nil
+}
+
+// LastNotifiedLevel returns the value of the "last_notified_level" field in the mutation.
+func (m *MemberMutation) LastNotifiedLevel() (r uint64, exists bool) {
+	v := m.last_notified_level
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastNotifiedLevel returns the old "last_notified_level" field's value of the Member entity.
+// If the Member object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MemberMutation) OldLastNotifiedLevel(ctx context.Context) (v *uint64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastNotifiedLevel is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastNotifiedLevel requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastNotifiedLevel: %w", err)
+	}
+	return oldValue.LastNotifiedLevel, nil
+}
+
+// AddLastNotifiedLevel adds u to the "last_notified_level" field.
+func (m *MemberMutation) AddLastNotifiedLevel(u int64) {
+	if m.addlast_notified_level != nil {
+		*m.addlast_notified_level += u
+	} else {
+		m.addlast_notified_level = &u
+	}
+}
+
+// AddedLastNotifiedLevel returns the value that was added to the "last_notified_level" field in this mutation.
+func (m *MemberMutation) AddedLastNotifiedLevel() (r int64, exists bool) {
+	v := m.addlast_notified_level
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearLastNotifiedLevel clears the value of the "last_notified_level" field.
+func (m *MemberMutation) ClearLastNotifiedLevel() {
+	m.last_notified_level = nil
+	m.addlast_notified_level = nil
+	m.clearedFields[member.FieldLastNotifiedLevel] = struct{}{}
+}
+
+// LastNotifiedLevelCleared returns if the "last_notified_level" field was cleared in this mutation.
+func (m *MemberMutation) LastNotifiedLevelCleared() bool {
+	_, ok := m.clearedFields[member.FieldLastNotifiedLevel]
+	return ok
+}
+
+// ResetLastNotifiedLevel resets all changes to the "last_notified_level" field.
+func (m *MemberMutation) ResetLastNotifiedLevel() {
+	m.last_notified_level = nil
+	m.addlast_notified_level = nil
+	delete(m.clearedFields, member.FieldLastNotifiedLevel)
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by id.
 func (m *MemberMutation) SetGuildID(id snowflake.ID) {
 	m.guild = &id
@@ -2817,7 +2889,7 @@ func (m *MemberMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MemberMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.permission != nil {
 		fields = append(fields, member.FieldPermission)
 	}
@@ -2832,6 +2904,9 @@ func (m *MemberMutation) Fields() []string {
 	}
 	if m.message_count != nil {
 		fields = append(fields, member.FieldMessageCount)
+	}
+	if m.last_notified_level != nil {
+		fields = append(fields, member.FieldLastNotifiedLevel)
 	}
 	return fields
 }
@@ -2851,6 +2926,8 @@ func (m *MemberMutation) Field(name string) (ent.Value, bool) {
 		return m.LastXp()
 	case member.FieldMessageCount:
 		return m.MessageCount()
+	case member.FieldLastNotifiedLevel:
+		return m.LastNotifiedLevel()
 	}
 	return nil, false
 }
@@ -2870,6 +2947,8 @@ func (m *MemberMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldLastXp(ctx)
 	case member.FieldMessageCount:
 		return m.OldMessageCount(ctx)
+	case member.FieldLastNotifiedLevel:
+		return m.OldLastNotifiedLevel(ctx)
 	}
 	return nil, fmt.Errorf("unknown Member field %s", name)
 }
@@ -2914,6 +2993,13 @@ func (m *MemberMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetMessageCount(v)
 		return nil
+	case member.FieldLastNotifiedLevel:
+		v, ok := value.(uint64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastNotifiedLevel(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Member field %s", name)
 }
@@ -2928,6 +3014,9 @@ func (m *MemberMutation) AddedFields() []string {
 	if m.addmessage_count != nil {
 		fields = append(fields, member.FieldMessageCount)
 	}
+	if m.addlast_notified_level != nil {
+		fields = append(fields, member.FieldLastNotifiedLevel)
+	}
 	return fields
 }
 
@@ -2940,6 +3029,8 @@ func (m *MemberMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedXp()
 	case member.FieldMessageCount:
 		return m.AddedMessageCount()
+	case member.FieldLastNotifiedLevel:
+		return m.AddedLastNotifiedLevel()
 	}
 	return nil, false
 }
@@ -2963,6 +3054,13 @@ func (m *MemberMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddMessageCount(v)
 		return nil
+	case member.FieldLastNotifiedLevel:
+		v, ok := value.(int64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddLastNotifiedLevel(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Member numeric field %s", name)
 }
@@ -2976,6 +3074,9 @@ func (m *MemberMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(member.FieldLastXp) {
 		fields = append(fields, member.FieldLastXp)
+	}
+	if m.FieldCleared(member.FieldLastNotifiedLevel) {
+		fields = append(fields, member.FieldLastNotifiedLevel)
 	}
 	return fields
 }
@@ -2996,6 +3097,9 @@ func (m *MemberMutation) ClearField(name string) error {
 		return nil
 	case member.FieldLastXp:
 		m.ClearLastXp()
+		return nil
+	case member.FieldLastNotifiedLevel:
+		m.ClearLastNotifiedLevel()
 		return nil
 	}
 	return fmt.Errorf("unknown Member nullable field %s", name)
@@ -3019,6 +3123,9 @@ func (m *MemberMutation) ResetField(name string) error {
 		return nil
 	case member.FieldMessageCount:
 		m.ResetMessageCount()
+		return nil
+	case member.FieldLastNotifiedLevel:
+		m.ResetLastNotifiedLevel()
 		return nil
 	}
 	return fmt.Errorf("unknown Member field %s", name)

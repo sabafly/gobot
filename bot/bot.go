@@ -19,7 +19,12 @@ package bot
 import (
 	"context"
 	"fmt"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
+	"io"
 	"log/slog"
+	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -111,6 +116,8 @@ func run() error {
 		role.ImportCommand(component),
 	)
 
+	ready := make(chan *events.Ready)
+
 	token := os.Getenv("TOKEN")
 	if token == "" {
 		return fmt.Errorf("TOKEN が空です")
@@ -129,6 +136,9 @@ func run() error {
 		),
 		bot.WithEventManagerConfigOpts(
 			bot.WithAsyncEventsEnabled(),
+			bot.WithListeners(
+				bot.NewListenerChan(ready),
+			),
 		),
 	)
 	if err != nil {
@@ -143,6 +153,27 @@ func run() error {
 		return fmt.Errorf("discord ゲートウェイを開けません: %w", err)
 	}
 	defer client.Close(context.Background())
+
+	<-ready
+
+	// set default webhook
+	bot.WebhookDefaultName = "gobot-webhook"
+	self, ok := client.Caches().SelfUser()
+	if !ok {
+		return fmt.Errorf("cannot cache self user")
+	}
+	if avatarURL, err := url.Parse(self.EffectiveAvatarURL(discord.WithFormat(discord.FileFormatPNG))); err != nil {
+		resp, err := http.Get(avatarURL.String())
+		if err != nil {
+			return fmt.Errorf("error on get: %w", err)
+		}
+		defer resp.Body.Close()
+		buf, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("error on read all: %w", err)
+		}
+		bot.WebhookDefaultAvatar = discord.NewIconRaw(discord.IconTypePNG, buf)
+	}
 
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.Signal(0x13), syscall.Signal(0x14))

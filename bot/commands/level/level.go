@@ -2,9 +2,11 @@ package level
 
 import (
 	"cmp"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math/rand/v2"
 	"net/http"
 	"slices"
 	"strconv"
@@ -37,6 +39,9 @@ func Command(c *components.Components) components.Command {
 				Name:         "level",
 				Description:  "level",
 				DMPermission: builtin.Ptr(false),
+				Contexts: []discord.InteractionContextType{
+					discord.InteractionContextTypeGuild,
+				},
 				Options: []discord.ApplicationCommandOption{
 					discord.ApplicationCommandOptionSubCommand{
 						Name:        "rank",
@@ -206,10 +211,53 @@ func Command(c *components.Components) components.Command {
 							},
 						},
 					},
+					discord.ApplicationCommandOptionSubCommand{
+						Name:        "required-point",
+						Description: "required point",
+						Options: []discord.ApplicationCommandOption{
+							discord.ApplicationCommandOptionInt{
+								Name:        "level",
+								Description: "level number",
+								MinValue:    builtin.Ptr(1),
+							},
+						},
+					},
 				},
 			},
 		},
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
+			"/level/required-point": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("level.required-point"),
+				},
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					mem, err := c.MemberCreate(event, event.User(), *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+					level := uint64(0)
+					l, ok := event.SlashCommandInteractionData().OptInt("level")
+					level = uint64(l)
+					if !ok {
+						level = mem.Xp.Level() + 1
+					}
+					builder := discord.NewMessageBuilder()
+					builder.SetEmbeds(
+						embeds.SetEmbedProperties(discord.NewEmbedBuilder().
+							SetTitle(translate.Message(event.Locale(), "components.level.required-point.embed.title", translate.WithTemplate(map[string]any{"Level": level}))).
+							SetDescriptionf("# `%d`xp\n%s\n%s",
+								xppoint.TotalPoint(level),
+								translate.Message(event.Locale(), "components.level.required-point.embed.description", translate.WithTemplate(map[string]any{"User": event.Member().EffectiveName(), "Xp": mem.Xp})),
+								translate.Message(event.Locale(), "components.level.required-point.embed.description.diff", translate.WithTemplate(map[string]any{"Xp": builtin.Or(xppoint.TotalPoint(level) > uint64(mem.Xp), xppoint.TotalPoint(level)-uint64(mem.Xp), 0)})),
+							).
+							Build()),
+					)
+					if err := event.CreateMessage(builder.BuildCreate()); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
 			"/level/rank": generic.PCommandHandler{
 				Permission: []generic.Permission{
 					generic.PermissionDefaultString("level.rank"),
@@ -247,7 +295,7 @@ func Command(c *components.Components) components.Command {
 									levelMessage(g, gl, m, index, target.Member, event),
 								),
 							).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -275,11 +323,7 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.page", event))
 					}
 					members := g.QueryMembers().
-						Order(
-							member.ByXp(
-								sql.OrderDesc(),
-							),
-						).
+						Order(member.ByXp(sql.OrderDesc())).
 						Offset((page - 1) * pageCount).
 						Limit(pageCount).
 						AllX(event)
@@ -311,7 +355,7 @@ func Command(c *components.Components) components.Command {
 										Build(),
 								),
 							).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -354,18 +398,11 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 					movedXp := uint64(fromUser.Xp)
-					before := toUser.Xp.Level()
-					toUser.Xp.Add(movedXp)
-					after := toUser.Xp.Level()
 					fromUser.Xp = xppoint.XP(0)
-					toUser = toUser.Update().SetXp(toUser.Xp).SaveX(event)
 					fromUser = fromUser.Update().SetXp(fromUser.Xp).SaveX(event)
-					if before != after {
-						if err := levelUp(g, after, event.Client(), *event.GuildID(), builtin.Or(g.LevelUpChannel != nil, builtin.NonNil(g.LevelUpChannel), event.Channel().ID()), toUser, to.User, before); err != nil {
-							return errors.NewError(err)
-						}
+					if toUser, err = addXp(event, toUser.Update(), movedXp, event.Client(), toUser, g, event.Channel().ID(), to.EffectiveName()); err != nil {
+						return errors.NewError(err)
 					}
-
 					ids := g.QueryMembers().Order(
 						member.ByXp(
 							sql.OrderDesc(),
@@ -386,7 +423,7 @@ func Command(c *components.Components) components.Command {
 									},
 								)...,
 							).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -457,7 +494,7 @@ func Command(c *components.Components) components.Command {
 									),
 								}),
 							)).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -487,7 +524,7 @@ func Command(c *components.Components) components.Command {
 							SetContent(translate.Message(event.Locale(), "components.level.exclude-channel.add.message",
 								translate.WithTemplate(map[string]any{"Channel": discord.ChannelMention(channel.ID)}),
 							)).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -518,7 +555,7 @@ func Command(c *components.Components) components.Command {
 							SetContent(translate.Message(event.Locale(), "components.level.exclude-channel.remove.message",
 								translate.WithTemplate(map[string]any{"Channel": discord.ChannelMention(channel.ID)}),
 							)).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -541,7 +578,7 @@ func Command(c *components.Components) components.Command {
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
 							SetContent(translate.Message(event.Locale(), "components.level.exclude-channel.clear.message")).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -614,6 +651,7 @@ func Command(c *components.Components) components.Command {
 						if err := json.NewDecoder(response.Body).Decode(&leaderboard); err != nil {
 							return errors.NewError(err)
 						}
+						_ = response.Body.Close()
 						if len(leaderboard.Players) < 1 {
 							break
 						}
@@ -660,7 +698,7 @@ func Command(c *components.Components) components.Command {
 							SetContent(translate.Message(event.Locale(), "components.level.reset.message",
 								translate.WithTemplate(map[string]any{"User": discord.UserMention(target.User.ID)}),
 							)).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -696,7 +734,7 @@ func Command(c *components.Components) components.Command {
 										Build(),
 								),
 							).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -724,17 +762,20 @@ func Command(c *components.Components) components.Command {
 					if !valid {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.self", event))
 					}
-					roleMap := map[snowflake.ID]discord.Role{}
+					var roles []discord.Role
 					for _, id := range self.RoleIDs {
 						role, ok := event.Client().Caches().Role(*event.GuildID(), id)
 						if !ok {
 							continue
 						}
-						roleMap[id] = role
+						roles = append(roles, role)
 					}
-					hi, _ := discordutil.GetHighestRolePosition(roleMap)
+					highestRole := discordutil.GetHighestRole(roles)
+					if highestRole == nil {
+						return errors.NewError(errors.ErrorMessage("errors.invalid.self", event))
+					}
 
-					if role.Managed || role.Position >= hi || role.ID == *event.GuildID() {
+					if role.Managed || role.Compare(*highestRole) != -1 || role.ID == *event.GuildID() {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.role", event))
 					}
 
@@ -759,7 +800,7 @@ func Command(c *components.Components) components.Command {
 										Build(),
 								),
 							).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -778,7 +819,7 @@ func Command(c *components.Components) components.Command {
 					}
 					g.LevelRole = builtin.NonNilMap(g.LevelRole)
 					var listStr string
-					smap.MakeSortMap(g.LevelRole).Range(func(a, b int) int { return cmp.Compare(a, b) },
+					smap.MakeSortMap(g.LevelRole).Range(cmp.Compare[int],
 						func(k int, v snowflake.ID) {
 							listStr += "- " + translate.Message(event.Locale(), "components.level.role.list.message",
 								translate.WithTemplate(map[string]any{
@@ -848,7 +889,7 @@ func Command(c *components.Components) components.Command {
 										Build(),
 								),
 							).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -875,7 +916,7 @@ func Command(c *components.Components) components.Command {
 									Build(),
 							),
 						).
-						Create(),
+						BuildCreate(),
 				); err != nil {
 					return nil
 				}
@@ -895,9 +936,6 @@ func Command(c *components.Components) components.Command {
 				if err != nil {
 					return errors.NewError(err)
 				}
-				if err != nil {
-					return errors.NewError(err)
-				}
 				if slices.Contains(g.LevelUpExcludeChannel, event.ChannelID) {
 					return nil
 				}
@@ -905,22 +943,8 @@ func Command(c *components.Components) components.Command {
 				if err != nil {
 					return errors.NewError(err)
 				}
-				memberUpdate := m.Update()
-				before := m.Xp.Level()
-				if time.Now().After(m.LastXp.Add(time.Minute * 3)) {
-					m.Xp.AddRandom()
-					memberUpdate.
-						SetXp(m.Xp).
-						SetLastXp(time.Now())
-				}
-				after := m.Xp.Level()
-				m = memberUpdate.
-					SetMessageCount(m.MessageCount + 1).
-					SaveX(event)
-				if before != after {
-					if err := levelUp(g, after, event.Client(), event.GuildID, builtin.Or(g.LevelUpChannel != nil, builtin.NonNil(g.LevelUpChannel), event.ChannelID), m, event.Message.Author, before); err != nil {
-						return errors.NewError(err)
-					}
+				if _, err = addXp(event, m.Update(), rand.N[uint64](16)+15, event.Client(), m, g, event.ChannelID, event.Message.Author.EffectiveName()); err != nil {
+					return errors.NewError(err)
 				}
 			}
 			return nil
@@ -928,7 +952,30 @@ func Command(c *components.Components) components.Command {
 	}).SetComponent(c)
 }
 
-func levelUp(g *ent.Guild, after int64, client bot.Client, guildID, channelID snowflake.ID, m *ent.Member, user discord.User, before int64) error {
+func addXp(ctx context.Context, memberUpdate *ent.MemberUpdateOne, xp uint64, client bot.Client, m *ent.Member, g *ent.Guild, channelID snowflake.ID, username string) (*ent.Member, error) {
+	before := builtin.NonNilOrDefault(m.LastNotifiedLevel, m.Xp.Level())
+	if time.Now().After(m.LastXp.Add(time.Minute * 3)) {
+		m.Xp.Add(xp)
+		memberUpdate.
+			SetXp(m.Xp).
+			SetLastXp(time.Now())
+	}
+	after := m.Xp.Level()
+	m = memberUpdate.
+		SetLastNotifiedLevel(after).
+		SetMessageCount(m.MessageCount + 1).
+		SaveX(ctx)
+	if before < after {
+		for i := range after - before {
+			if err := levelUp(g, before+i+1, client, g.ID, builtin.NonNilOrDefault(g.LevelUpChannel, channelID), m, username, before+i); err != nil {
+				return m, err
+			}
+		}
+	}
+	return m, nil
+}
+
+func levelUp(g *ent.Guild, after uint64, client bot.Client, guildID, channelID snowflake.ID, m *ent.Member, username string, before uint64) error {
 	// レベルロール
 	r, ok := g.LevelRole[int(after)]
 	if ok {
@@ -940,16 +987,16 @@ func levelUp(g *ent.Guild, after int64, client bot.Client, guildID, channelID sn
 	// レベルアップ通知
 	content := g.LevelUpMessage
 	content = strings.ReplaceAll(content, "{user}", discord.UserMention(m.UserID))
-	content = strings.ReplaceAll(content, "{username}", user.EffectiveName())
-	content = strings.ReplaceAll(content, "{before_level}", strconv.FormatInt(before, 10))
-	content = strings.ReplaceAll(content, "{after_level}", strconv.FormatInt(after, 10))
+	content = strings.ReplaceAll(content, "{username}", username)
+	content = strings.ReplaceAll(content, "{before_level}", strconv.FormatUint(before, 10))
+	content = strings.ReplaceAll(content, "{after_level}", strconv.FormatUint(after, 10))
 	content = strings.ReplaceAll(content, "{xp}", strconv.FormatUint(uint64(m.Xp), 10))
 	if _, err := client.Rest().
 		CreateMessage(
 			builtin.Or(builtin.NonNil(g.LevelUpChannel) != 0, builtin.NonNil(g.LevelUpChannel), channelID),
 			discord.NewMessageBuilder().
 				SetContent(content).
-				Create(),
+				BuildCreate(),
 		); err != nil {
 		return err
 	}

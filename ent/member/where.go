@@ -79,6 +79,11 @@ func MessageCount(v uint64) predicate.Member {
 	return predicate.Member(sql.FieldEQ(FieldMessageCount, v))
 }
 
+// LastNotifiedLevel applies equality check predicate on the "last_notified_level" field. It's identical to LastNotifiedLevelEQ.
+func LastNotifiedLevel(v uint64) predicate.Member {
+	return predicate.Member(sql.FieldEQ(FieldLastNotifiedLevel, v))
+}
+
 // PermissionIsNil applies the IsNil predicate on the "permission" field.
 func PermissionIsNil() predicate.Member {
 	return predicate.Member(sql.FieldIsNull(FieldPermission))
@@ -261,6 +266,56 @@ func MessageCountLT(v uint64) predicate.Member {
 // MessageCountLTE applies the LTE predicate on the "message_count" field.
 func MessageCountLTE(v uint64) predicate.Member {
 	return predicate.Member(sql.FieldLTE(FieldMessageCount, v))
+}
+
+// LastNotifiedLevelEQ applies the EQ predicate on the "last_notified_level" field.
+func LastNotifiedLevelEQ(v uint64) predicate.Member {
+	return predicate.Member(sql.FieldEQ(FieldLastNotifiedLevel, v))
+}
+
+// LastNotifiedLevelNEQ applies the NEQ predicate on the "last_notified_level" field.
+func LastNotifiedLevelNEQ(v uint64) predicate.Member {
+	return predicate.Member(sql.FieldNEQ(FieldLastNotifiedLevel, v))
+}
+
+// LastNotifiedLevelIn applies the In predicate on the "last_notified_level" field.
+func LastNotifiedLevelIn(vs ...uint64) predicate.Member {
+	return predicate.Member(sql.FieldIn(FieldLastNotifiedLevel, vs...))
+}
+
+// LastNotifiedLevelNotIn applies the NotIn predicate on the "last_notified_level" field.
+func LastNotifiedLevelNotIn(vs ...uint64) predicate.Member {
+	return predicate.Member(sql.FieldNotIn(FieldLastNotifiedLevel, vs...))
+}
+
+// LastNotifiedLevelGT applies the GT predicate on the "last_notified_level" field.
+func LastNotifiedLevelGT(v uint64) predicate.Member {
+	return predicate.Member(sql.FieldGT(FieldLastNotifiedLevel, v))
+}
+
+// LastNotifiedLevelGTE applies the GTE predicate on the "last_notified_level" field.
+func LastNotifiedLevelGTE(v uint64) predicate.Member {
+	return predicate.Member(sql.FieldGTE(FieldLastNotifiedLevel, v))
+}
+
+// LastNotifiedLevelLT applies the LT predicate on the "last_notified_level" field.
+func LastNotifiedLevelLT(v uint64) predicate.Member {
+	return predicate.Member(sql.FieldLT(FieldLastNotifiedLevel, v))
+}
+
+// LastNotifiedLevelLTE applies the LTE predicate on the "last_notified_level" field.
+func LastNotifiedLevelLTE(v uint64) predicate.Member {
+	return predicate.Member(sql.FieldLTE(FieldLastNotifiedLevel, v))
+}
+
+// LastNotifiedLevelIsNil applies the IsNil predicate on the "last_notified_level" field.
+func LastNotifiedLevelIsNil() predicate.Member {
+	return predicate.Member(sql.FieldIsNull(FieldLastNotifiedLevel))
+}
+
+// LastNotifiedLevelNotNil applies the NotNil predicate on the "last_notified_level" field.
+func LastNotifiedLevelNotNil() predicate.Member {
+	return predicate.Member(sql.FieldNotNull(FieldLastNotifiedLevel))
 }
 
 // HasGuild applies the HasEdge predicate on the "guild" edge.

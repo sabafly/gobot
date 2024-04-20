@@ -24,6 +24,8 @@ const (
 	FieldLastXp = "last_xp"
 	// FieldMessageCount holds the string denoting the message_count field in the database.
 	FieldMessageCount = "message_count"
+	// FieldLastNotifiedLevel holds the string denoting the last_notified_level field in the database.
+	FieldLastNotifiedLevel = "last_notified_level"
 	// EdgeGuild holds the string denoting the guild edge name in mutations.
 	EdgeGuild = "guild"
 	// EdgeUser holds the string denoting the user edge name in mutations.
@@ -54,6 +56,7 @@ var Columns = []string{
 	FieldUserID,
 	FieldLastXp,
 	FieldMessageCount,
+	FieldLastNotifiedLevel,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "members"
@@ -112,6 +115,11 @@ func ByLastXp(opts ...sql.OrderTermOption) OrderOption {
 // ByMessageCount orders the results by the message_count field.
 func ByMessageCount(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldMessageCount, opts...).ToFunc()
+}
+
+// ByLastNotifiedLevel orders the results by the last_notified_level field.
+func ByLastNotifiedLevel(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastNotifiedLevel, opts...).ToFunc()
 }
 
 // ByGuildField orders the results by guild field.

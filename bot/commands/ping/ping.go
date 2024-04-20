@@ -22,6 +22,9 @@ func Command(c *components.Components) *generic.Command {
 				Description:              "pong!",
 				DescriptionLocalizations: translate.MessageMap("components.ping.command.description", false),
 				DMPermission:             builtin.Ptr(false),
+				Contexts: []discord.InteractionContextType{
+					discord.InteractionContextTypeGuild,
+				},
 			},
 		},
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
@@ -39,7 +42,7 @@ func Command(c *components.Components) *generic.Command {
 								).
 								Build()),
 						).
-						Create(),
+						BuildCreate(),
 				); err != nil {
 					return errors.NewError(err)
 				}

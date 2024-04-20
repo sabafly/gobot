@@ -56,12 +56,10 @@ type RolePanelEdges struct {
 // GuildOrErr returns the Guild value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e RolePanelEdges) GuildOrErr() (*Guild, error) {
-	if e.loadedTypes[0] {
-		if e.Guild == nil {
-			// Edge was loaded but was not found.
-			return nil, &NotFoundError{label: guild.Label}
-		}
+	if e.Guild != nil {
 		return e.Guild, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: guild.Label}
 	}
 	return nil, &NotLoadedError{edge: "guild"}
 }
@@ -78,12 +76,10 @@ func (e RolePanelEdges) PlacementsOrErr() ([]*RolePanelPlaced, error) {
 // EditOrErr returns the Edit value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e RolePanelEdges) EditOrErr() (*RolePanelEdit, error) {
-	if e.loadedTypes[2] {
-		if e.Edit == nil {
-			// Edge was loaded but was not found.
-			return nil, &NotFoundError{label: rolepaneledit.Label}
-		}
+	if e.Edit != nil {
 		return e.Edit, nil
+	} else if e.loadedTypes[2] {
+		return nil, &NotFoundError{label: rolepaneledit.Label}
 	}
 	return nil, &NotLoadedError{edge: "edit"}
 }

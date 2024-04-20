@@ -30,9 +30,12 @@ func Command(c *components.Components) *generic.Command {
 		Private:   true,
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
-				Name:                     "debug",
-				Description:              "debug",
-				DMPermission:             builtin.Ptr(false),
+				Name:         "debug",
+				Description:  "debug",
+				DMPermission: builtin.Ptr(false),
+				Contexts: []discord.InteractionContextType{
+					discord.InteractionContextTypeGuild,
+				},
 				DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionAdministrator),
 				Options: []discord.ApplicationCommandOption{
 					discord.ApplicationCommandOptionSubCommandGroup{
@@ -110,7 +113,7 @@ func Command(c *components.Components) *generic.Command {
 				if err := event.CreateMessage(
 					discord.NewMessageBuilder().
 						SetContent(translate.Message(locale, key)).
-						Create(),
+						BuildCreate(),
 				); err != nil {
 					return errors.NewError(err)
 				}
@@ -124,7 +127,7 @@ func Command(c *components.Components) *generic.Command {
 				if err := event.CreateMessage(
 					discord.NewMessageBuilder().
 						SetContent("OK").
-						Create(),
+						BuildCreate(),
 				); err != nil {
 					return errors.NewError(err)
 				}
@@ -138,7 +141,7 @@ func Command(c *components.Components) *generic.Command {
 				if err := event.CreateMessage(
 					discord.NewMessageBuilder().
 						SetContent("OK").
-						Create(),
+						BuildCreate(),
 				); err != nil {
 					return errors.NewError(err)
 				}

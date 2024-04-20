@@ -114,6 +114,33 @@ func (mu *MemberUpdate) AddMessageCount(u int64) *MemberUpdate {
 	return mu
 }
 
+// SetLastNotifiedLevel sets the "last_notified_level" field.
+func (mu *MemberUpdate) SetLastNotifiedLevel(u uint64) *MemberUpdate {
+	mu.mutation.ResetLastNotifiedLevel()
+	mu.mutation.SetLastNotifiedLevel(u)
+	return mu
+}
+
+// SetNillableLastNotifiedLevel sets the "last_notified_level" field if the given value is not nil.
+func (mu *MemberUpdate) SetNillableLastNotifiedLevel(u *uint64) *MemberUpdate {
+	if u != nil {
+		mu.SetLastNotifiedLevel(*u)
+	}
+	return mu
+}
+
+// AddLastNotifiedLevel adds u to the "last_notified_level" field.
+func (mu *MemberUpdate) AddLastNotifiedLevel(u int64) *MemberUpdate {
+	mu.mutation.AddLastNotifiedLevel(u)
+	return mu
+}
+
+// ClearLastNotifiedLevel clears the value of the "last_notified_level" field.
+func (mu *MemberUpdate) ClearLastNotifiedLevel() *MemberUpdate {
+	mu.mutation.ClearLastNotifiedLevel()
+	return mu
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
 func (mu *MemberUpdate) SetGuildID(id snowflake.ID) *MemberUpdate {
 	mu.mutation.SetGuildID(id)
@@ -209,6 +236,15 @@ func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := mu.mutation.AddedMessageCount(); ok {
 		_spec.AddField(member.FieldMessageCount, field.TypeUint64, value)
+	}
+	if value, ok := mu.mutation.LastNotifiedLevel(); ok {
+		_spec.SetField(member.FieldLastNotifiedLevel, field.TypeUint64, value)
+	}
+	if value, ok := mu.mutation.AddedLastNotifiedLevel(); ok {
+		_spec.AddField(member.FieldLastNotifiedLevel, field.TypeUint64, value)
+	}
+	if mu.mutation.LastNotifiedLevelCleared() {
+		_spec.ClearField(member.FieldLastNotifiedLevel, field.TypeUint64)
 	}
 	if mu.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -341,6 +377,33 @@ func (muo *MemberUpdateOne) AddMessageCount(u int64) *MemberUpdateOne {
 	return muo
 }
 
+// SetLastNotifiedLevel sets the "last_notified_level" field.
+func (muo *MemberUpdateOne) SetLastNotifiedLevel(u uint64) *MemberUpdateOne {
+	muo.mutation.ResetLastNotifiedLevel()
+	muo.mutation.SetLastNotifiedLevel(u)
+	return muo
+}
+
+// SetNillableLastNotifiedLevel sets the "last_notified_level" field if the given value is not nil.
+func (muo *MemberUpdateOne) SetNillableLastNotifiedLevel(u *uint64) *MemberUpdateOne {
+	if u != nil {
+		muo.SetLastNotifiedLevel(*u)
+	}
+	return muo
+}
+
+// AddLastNotifiedLevel adds u to the "last_notified_level" field.
+func (muo *MemberUpdateOne) AddLastNotifiedLevel(u int64) *MemberUpdateOne {
+	muo.mutation.AddLastNotifiedLevel(u)
+	return muo
+}
+
+// ClearLastNotifiedLevel clears the value of the "last_notified_level" field.
+func (muo *MemberUpdateOne) ClearLastNotifiedLevel() *MemberUpdateOne {
+	muo.mutation.ClearLastNotifiedLevel()
+	return muo
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
 func (muo *MemberUpdateOne) SetGuildID(id snowflake.ID) *MemberUpdateOne {
 	muo.mutation.SetGuildID(id)
@@ -466,6 +529,15 @@ func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err err
 	}
 	if value, ok := muo.mutation.AddedMessageCount(); ok {
 		_spec.AddField(member.FieldMessageCount, field.TypeUint64, value)
+	}
+	if value, ok := muo.mutation.LastNotifiedLevel(); ok {
+		_spec.SetField(member.FieldLastNotifiedLevel, field.TypeUint64, value)
+	}
+	if value, ok := muo.mutation.AddedLastNotifiedLevel(); ok {
+		_spec.AddField(member.FieldLastNotifiedLevel, field.TypeUint64, value)
+	}
+	if muo.mutation.LastNotifiedLevelCleared() {
+		_spec.ClearField(member.FieldLastNotifiedLevel, field.TypeUint64)
 	}
 	if muo.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{

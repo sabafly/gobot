@@ -1,7 +1,7 @@
 package schema
 
 import (
-	"github.com/sabafly/gobot/internal/uuid"
+	"github.com/sabafly/gobot/internal/uuidv7"
 	"time"
 
 	"entgo.io/ent"
@@ -19,10 +19,10 @@ type RolePanelPlaced struct {
 // Fields of the RolePanelPlaced.
 func (RolePanelPlaced) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.New()).
+		field.UUID("id", uuidv7.New()).
 			Immutable().
 			Unique().
-			Default(uuid.New),
+			Default(uuidv7.New),
 		field.Uint64("message_id").
 			Optional().
 			Nillable().
@@ -33,9 +33,9 @@ func (RolePanelPlaced) Fields() []ent.Field {
 			Values("button", "reaction", "select_menu").
 			Optional(),
 		field.Int("button_type").
-			Min(discord.ButtonStylePrimary).
-			Max(discord.ButtonStyleDanger).
-			Default(discord.ButtonStylePrimary).
+			Min(int(discord.ButtonStylePrimary)).
+			Max(int(discord.ButtonStyleDanger)).
+			Default(int(discord.ButtonStylePrimary)).
 			GoType(discord.ButtonStyle(0)),
 		field.Bool("show_name").
 			Default(false),

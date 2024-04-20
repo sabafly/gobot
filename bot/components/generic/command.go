@@ -2,6 +2,7 @@ package generic
 
 import (
 	"fmt"
+	"log/slog"
 	"runtime/debug"
 	"strings"
 
@@ -31,11 +32,12 @@ func createErrorMessage(
 				discord.NewEmbedBuilder().
 					SetTitlef("🔥 %s", translate.Message(event.Locale(), key)).
 					SetDescriptionf("```%s``````%s``````%s```", err.Error(), err.Stack(), err.File()).
+					SetFooterText(err.ID().String()).
 					SetColor(0xff2121).
 					Build(),
 			).
 			SetFlags(discord.MessageFlagEphemeral).
-			Create(),
+			BuildCreate(),
 	)
 }
 
@@ -45,6 +47,7 @@ func rec(event interface {
 }) {
 	if v := recover(); v != nil {
 		_ = errors.ErrorMessage("errors.panic.message", event, errors.WithDescription(fmt.Sprintf("```\nargs=%v stack=%s```", v, string(debug.Stack()))))
+		slog.Error("panic", "args", v, "stack", string(debug.Stack()))
 		panic(v)
 	}
 }

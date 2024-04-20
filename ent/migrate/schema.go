@@ -56,6 +56,7 @@ var (
 		{Name: "xp", Type: field.TypeUint64, Default: 0},
 		{Name: "last_xp", Type: field.TypeTime, Nullable: true},
 		{Name: "message_count", Type: field.TypeUint64, Default: 0},
+		{Name: "last_notified_level", Type: field.TypeUint64, Nullable: true},
 		{Name: "guild_members", Type: field.TypeUint64},
 		{Name: "user_id", Type: field.TypeUint64},
 	}
@@ -67,13 +68,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "members_guilds_members",
-				Columns:    []*schema.Column{MembersColumns[5]},
+				Columns:    []*schema.Column{MembersColumns[6]},
 				RefColumns: []*schema.Column{GuildsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "members_users_guilds",
-				Columns:    []*schema.Column{MembersColumns[6]},
+				Columns:    []*schema.Column{MembersColumns[7]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -242,7 +243,7 @@ var (
 	// WordSuffixesColumns holds the columns for the "word_suffixes" table.
 	WordSuffixesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "suffix", Type: field.TypeString, Size: 120},
+		{Name: "suffix", Type: field.TypeString},
 		{Name: "expired", Type: field.TypeTime, Nullable: true},
 		{Name: "rule", Type: field.TypeEnum, Enums: []string{"webhook", "warn", "delete"}, Default: "webhook"},
 		{Name: "user_word_suffix", Type: field.TypeUint64},

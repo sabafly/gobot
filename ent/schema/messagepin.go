@@ -2,7 +2,7 @@ package schema
 
 import (
 	"encoding/json"
-	"github.com/sabafly/gobot/internal/uuid"
+	"github.com/sabafly/gobot/internal/uuidv7"
 	"time"
 
 	"entgo.io/ent"
@@ -20,10 +20,10 @@ type MessagePin struct {
 // Fields of the MessagePin.
 func (MessagePin) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.New()).
+		field.UUID("id", uuidv7.New()).
 			Unique().
 			Immutable().
-			Default(uuid.New),
+			Default(uuidv7.New),
 		field.Uint64("channel_id").
 			Unique().
 			GoType(snowflake.ID(0)),

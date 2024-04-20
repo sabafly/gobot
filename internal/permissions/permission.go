@@ -48,7 +48,7 @@ func (p Permission) Enabled(perm string) bool {
 	}
 	perms := strings.Split(perm, ".")
 	var pc string
-	var r bool = p.m["*"]
+	r := p.m["*"]
 	for _, v := range perms {
 		pc += v
 		if a, ok := p.m[pc]; ok {
@@ -66,7 +66,7 @@ func (p Permission) Disabled(perm string) bool {
 	perms := strings.Split(perm, ".")
 	var pc string
 	a, ok := p.m["*"]
-	var r bool = ok && !a
+	r := ok && !a
 	for _, v := range perms {
 		pc += v
 		if a, ok := p.m[pc]; ok {

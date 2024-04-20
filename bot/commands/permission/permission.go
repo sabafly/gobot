@@ -22,6 +22,9 @@ func Command(c *components.Components) components.Command {
 				Name:         "permission",
 				Description:  "permission",
 				DMPermission: builtin.Ptr(false),
+				Contexts: []discord.InteractionContextType{
+					discord.InteractionContextTypeGuild,
+				},
 				Options: []discord.ApplicationCommandOption{
 					discord.ApplicationCommandOptionSubCommand{
 						Name:        "set",
@@ -145,7 +148,7 @@ func Command(c *components.Components) components.Command {
 										Build(),
 								),
 							).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -197,7 +200,7 @@ func Command(c *components.Components) components.Command {
 										Build(),
 								),
 							).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -244,7 +247,7 @@ func Command(c *components.Components) components.Command {
 										Build(),
 								),
 							).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}
@@ -290,7 +293,7 @@ func Command(c *components.Components) components.Command {
 										Build(),
 								),
 							).
-							Create(),
+							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
 					}

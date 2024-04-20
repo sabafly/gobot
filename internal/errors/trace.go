@@ -3,6 +3,8 @@ package errors
 import (
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
+	"github.com/sabafly/gobot/internal/uuidv7"
 	"log/slog"
 	"runtime"
 	"runtime/debug"
@@ -14,12 +16,14 @@ type Error interface {
 	error
 	File() string
 	Stack() string
+	ID() uuid.UUID
 }
 
 type errorImpl struct {
 	err   error
 	file  string
 	stack string
+	id    uuid.UUID
 }
 
 var _ Error = (*errorImpl)(nil)
@@ -27,6 +31,7 @@ var _ Error = (*errorImpl)(nil)
 func (e errorImpl) Error() string { return e.err.Error() }
 func (e errorImpl) File() string  { return e.file }
 func (e errorImpl) Stack() string { return e.stack }
+func (e errorImpl) ID() uuid.UUID { return e.id }
 
 func NewError(err error) Error {
 	if err == nil {
@@ -41,6 +46,10 @@ func newError(err error, skip int) *errorImpl {
 	f := runtime.FuncForPC(pc[0])
 	file, line := f.FileLine(pc[0])
 	// TODO: なんかこうトラックIDとか言っていい感じに管理したい…
+
+	// トラッキング
+	id := uuidv7.New()
+
 	slog.Error("エラーが生成されました", "err", err, "file", fmt.Sprintf("%s:%d", file, line), "filename", f.Name())
 	e := Unwrap(err)
 	if e == nil {
@@ -54,6 +63,7 @@ func newError(err error, skip int) *errorImpl {
 		err:   err,
 		file:  fmt.Sprintf("%s:%d %s\n", file, line, f.Name()),
 		stack: string(debug.Stack()),
+		id:    id,
 	}
 }
 
