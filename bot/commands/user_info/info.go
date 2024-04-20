@@ -22,6 +22,9 @@ func Command(c *components.Components) components.Command {
 				Name:              "userinfo",
 				NameLocalizations: translate.MessageMap("components.user.info.name", false),
 				DMPermission:      builtin.Ptr(false),
+				Contexts: []discord.InteractionContextType{
+					discord.InteractionContextTypeGuild,
+				},
 			},
 		},
 		CommandHandlers: map[string]generic.PermissionCommandHandler{

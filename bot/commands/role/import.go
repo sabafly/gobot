@@ -26,6 +26,9 @@ func ImportCommand(c *components.Components) components.Command {
 				Name:              "import-rolepanel",
 				NameLocalizations: translate.MessageMap("components.role.panel.import.name", false),
 				DMPermission:      builtin.Ptr(false),
+				Contexts: []discord.InteractionContextType{
+					discord.InteractionContextTypeGuild,
+				},
 			},
 		},
 		CommandHandlers: map[string]generic.PermissionCommandHandler{

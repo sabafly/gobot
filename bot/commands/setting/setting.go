@@ -27,6 +27,9 @@ func Command(c *components.Components) components.Command {
 				Name:         "setting",
 				Description:  "setting",
 				DMPermission: builtin.Ptr(false),
+				Contexts: []discord.InteractionContextType{
+					discord.InteractionContextTypeGuild,
+				},
 				Options: []discord.ApplicationCommandOption{
 					discord.ApplicationCommandOptionSubCommandGroup{
 						Name:        "bump",

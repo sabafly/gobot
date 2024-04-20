@@ -39,6 +39,9 @@ func Command(c *components.Components) components.Command {
 				Name:         "level",
 				Description:  "level",
 				DMPermission: builtin.Ptr(false),
+				Contexts: []discord.InteractionContextType{
+					discord.InteractionContextTypeGuild,
+				},
 				Options: []discord.ApplicationCommandOption{
 					discord.ApplicationCommandOptionSubCommand{
 						Name:        "rank",

@@ -33,9 +33,9 @@ func (RolePanelPlaced) Fields() []ent.Field {
 			Values("button", "reaction", "select_menu").
 			Optional(),
 		field.Int("button_type").
-			Min(discord.ButtonStylePrimary).
-			Max(discord.ButtonStyleDanger).
-			Default(discord.ButtonStylePrimary).
+			Min(int(discord.ButtonStylePrimary)).
+			Max(int(discord.ButtonStyleDanger)).
+			Default(int(discord.ButtonStylePrimary)).
 			GoType(discord.ButtonStyle(0)),
 		field.Bool("show_name").
 			Default(false),

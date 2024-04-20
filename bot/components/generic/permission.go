@@ -81,7 +81,6 @@ func PermissionCheck(ctx context.Context, c *components.Components, g *ent.Guild
 }
 
 func RolePermissionCheck(g *ent.Guild, guildID snowflake.ID, client bot.Client, roleIds []snowflake.ID, perms []Permission) bool {
-
 	if len(perms) == 0 {
 		return true
 	}

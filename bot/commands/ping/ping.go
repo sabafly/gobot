@@ -22,6 +22,9 @@ func Command(c *components.Components) *generic.Command {
 				Description:              "pong!",
 				DescriptionLocalizations: translate.MessageMap("components.ping.command.description", false),
 				DMPermission:             builtin.Ptr(false),
+				Contexts: []discord.InteractionContextType{
+					discord.InteractionContextTypeGuild,
+				},
 			},
 		},
 		CommandHandlers: map[string]generic.PermissionCommandHandler{

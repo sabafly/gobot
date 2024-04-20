@@ -36,6 +36,9 @@ func Command(c *components.Components) *generic.Command {
 				Name:         "message",
 				Description:  "message",
 				DMPermission: builtin.Ptr(false),
+				Contexts: []discord.InteractionContextType{
+					discord.InteractionContextTypeGuild,
+				},
 				Options: []discord.ApplicationCommandOption{
 					discord.ApplicationCommandOptionSubCommandGroup{
 						Name:        "suffix",
