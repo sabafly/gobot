@@ -612,3 +612,5 @@ errors.ratelimited: 一時的に制限されています
 errors.ratelimited.description: しばらく待ってからやり直してください
 errors.unsupported: 対応していません
 errors.unsupported.description: それはこの操作に対応していません
+errors.deleted: 削除されました
+errors.deleted.description: この項目はすでに削除されています

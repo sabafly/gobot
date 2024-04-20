@@ -2,6 +2,13 @@ package components
 
 import (
 	"context"
+	"github.com/sabafly/gobot/ent/member"
+	"github.com/sabafly/gobot/ent/messagepin"
+	"github.com/sabafly/gobot/ent/messageremind"
+	"github.com/sabafly/gobot/ent/rolepanel"
+	"github.com/sabafly/gobot/ent/rolepaneledit"
+	"github.com/sabafly/gobot/ent/rolepanelplaced"
+	"github.com/sabafly/gobot/ent/wordsuffix"
 	"log/slog"
 
 	"github.com/disgoorg/disgo/bot"
@@ -40,6 +47,13 @@ func (c *Components) OnGuildJoin() func(event *events.GuildJoin) {
 func (c *Components) OnGuildLeave() func(event *events.GuildLeave) {
 	return func(event *events.GuildLeave) {
 		slog.Info("ギルド脱退", "id", event.Guild.ID, "name", event.Guild.Name)
+		c.db.Member.Delete().Where(member.HasGuildWith(guild.ID(event.Guild.ID))).ExecX(event)
+		c.db.MessagePin.Delete().Where(messagepin.HasGuildWith(guild.ID(event.Guild.ID))).ExecX(event)
+		c.db.MessageRemind.Delete().Where(messageremind.HasGuildWith(guild.ID(event.Guild.ID))).ExecX(event)
+		c.db.RolePanelPlaced.Delete().Where(rolepanelplaced.HasGuildWith(guild.ID(event.Guild.ID))).ExecX(event)
+		c.db.RolePanelEdit.Delete().Where(rolepaneledit.HasGuildWith(guild.ID(event.Guild.ID))).ExecX(event)
+		c.db.RolePanel.Delete().Where(rolepanel.HasGuildWith(guild.ID(event.Guild.ID))).ExecX(event)
+		c.db.WordSuffix.Delete().Where(wordsuffix.HasGuildWith(guild.ID(event.Guild.ID))).ExecX(event)
 		c.db.Guild.DeleteOneID(event.Guild.ID).ExecX(event)
 	}
 }

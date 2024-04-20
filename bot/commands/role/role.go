@@ -848,7 +848,10 @@ func Command(c *components.Components) components.Command {
 					return errors.NewError(err)
 				}
 				if !g.QueryRolePanelPlacements().Where(rolepanelplaced.ID(placeID)).ExistX(event) {
-					return errors.NewError(errors.ErrorMessage("errors.timeout", event))
+					if err := event.Client().Rest().DeleteMessage(event.Channel().ID(), event.Message.ID); err != nil {
+						return errors.NewError(err)
+					}
+					return errors.NewError(errors.ErrorMessage("errors.deleted", event))
 				}
 				place := g.QueryRolePanelPlacements().Where(rolepanelplaced.ID(placeID)).FirstX(event)
 
