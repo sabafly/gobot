@@ -6,7 +6,7 @@ import (
 	"entgo.io/ent/schema/field"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/sabafly/gobot/internal/uuid"
+	"github.com/sabafly/gobot/internal/uuidv7"
 )
 
 // RolePanel holds the schema definition for the RolePanel entity.
@@ -17,10 +17,10 @@ type RolePanel struct {
 // Fields of the RolePanel.
 func (RolePanel) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.New()).
+		field.UUID("id", uuidv7.New()).
 			Immutable().
 			Unique().
-			Default(uuid.New),
+			Default(uuidv7.New),
 		field.String("name").
 			NotEmpty(),
 		field.String("description"),
