@@ -20,8 +20,7 @@ func NonNil[T any](v *T) T {
 	if v != nil {
 		return *v
 	}
-	var zero T
-	return zero
+	return Zero[T]()
 }
 
 func NonNilMap[T map[K]V, K comparable, V any](v T) T {
@@ -43,4 +42,9 @@ func NonNilOrDefault[T any](v *T, def T) T {
 		return *v
 	}
 	return def
+}
+
+func Zero[T any]() T {
+	var zero T
+	return zero
 }

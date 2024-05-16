@@ -42,9 +42,13 @@ type UserEdges struct {
 	Guilds []*Member `json:"guilds,omitempty"`
 	// WordSuffix holds the value of the word_suffix edge.
 	WordSuffix []*WordSuffix `json:"word_suffix,omitempty"`
+	// ChinchiroSessions holds the value of the chinchiro_sessions edge.
+	ChinchiroSessions []*ChinchiroSession `json:"chinchiro_sessions,omitempty"`
+	// ChinchiroPlayers holds the value of the chinchiro_players edge.
+	ChinchiroPlayers []*ChinchiroPlayer `json:"chinchiro_players,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [5]bool
 }
 
 // OwnGuildsOrErr returns the OwnGuilds value or an error if the edge
@@ -72,6 +76,24 @@ func (e UserEdges) WordSuffixOrErr() ([]*WordSuffix, error) {
 		return e.WordSuffix, nil
 	}
 	return nil, &NotLoadedError{edge: "word_suffix"}
+}
+
+// ChinchiroSessionsOrErr returns the ChinchiroSessions value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) ChinchiroSessionsOrErr() ([]*ChinchiroSession, error) {
+	if e.loadedTypes[3] {
+		return e.ChinchiroSessions, nil
+	}
+	return nil, &NotLoadedError{edge: "chinchiro_sessions"}
+}
+
+// ChinchiroPlayersOrErr returns the ChinchiroPlayers value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) ChinchiroPlayersOrErr() ([]*ChinchiroPlayer, error) {
+	if e.loadedTypes[4] {
+		return e.ChinchiroPlayers, nil
+	}
+	return nil, &NotLoadedError{edge: "chinchiro_players"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -156,6 +178,16 @@ func (u *User) QueryGuilds() *MemberQuery {
 // QueryWordSuffix queries the "word_suffix" edge of the User entity.
 func (u *User) QueryWordSuffix() *WordSuffixQuery {
 	return NewUserClient(u.config).QueryWordSuffix(u)
+}
+
+// QueryChinchiroSessions queries the "chinchiro_sessions" edge of the User entity.
+func (u *User) QueryChinchiroSessions() *ChinchiroSessionQuery {
+	return NewUserClient(u.config).QueryChinchiroSessions(u)
+}
+
+// QueryChinchiroPlayers queries the "chinchiro_players" edge of the User entity.
+func (u *User) QueryChinchiroPlayers() *ChinchiroPlayerQuery {
+	return NewUserClient(u.config).QueryChinchiroPlayers(u)
 }
 
 // Update returns a builder for updating this User.

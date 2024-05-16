@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	snowflake "github.com/disgoorg/snowflake/v2"
+	"github.com/sabafly/gobot/ent/chinchirosession"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
@@ -37,6 +38,7 @@ type GuildQuery struct {
 	withRolePanels          *RolePanelQuery
 	withRolePanelPlacements *RolePanelPlacedQuery
 	withRolePanelEdits      *RolePanelEditQuery
+	withChinchiroSessions   *ChinchiroSessionQuery
 	withFKs                 bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -221,6 +223,28 @@ func (gq *GuildQuery) QueryRolePanelEdits() *RolePanelEditQuery {
 			sqlgraph.From(guild.Table, guild.FieldID, selector),
 			sqlgraph.To(rolepaneledit.Table, rolepaneledit.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.RolePanelEditsTable, guild.RolePanelEditsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryChinchiroSessions chains the current query on the "chinchiro_sessions" edge.
+func (gq *GuildQuery) QueryChinchiroSessions() *ChinchiroSessionQuery {
+	query := (&ChinchiroSessionClient{config: gq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := gq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := gq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(guild.Table, guild.FieldID, selector),
+			sqlgraph.To(chinchirosession.Table, chinchirosession.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, guild.ChinchiroSessionsTable, guild.ChinchiroSessionsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
 		return fromU, nil
@@ -427,6 +451,7 @@ func (gq *GuildQuery) Clone() *GuildQuery {
 		withRolePanels:          gq.withRolePanels.Clone(),
 		withRolePanelPlacements: gq.withRolePanelPlacements.Clone(),
 		withRolePanelEdits:      gq.withRolePanelEdits.Clone(),
+		withChinchiroSessions:   gq.withChinchiroSessions.Clone(),
 		// clone intermediate query.
 		sql:  gq.sql.Clone(),
 		path: gq.path,
@@ -510,6 +535,17 @@ func (gq *GuildQuery) WithRolePanelEdits(opts ...func(*RolePanelEditQuery)) *Gui
 	return gq
 }
 
+// WithChinchiroSessions tells the query-builder to eager-load the nodes that are connected to
+// the "chinchiro_sessions" edge. The optional arguments are used to configure the query builder of the edge.
+func (gq *GuildQuery) WithChinchiroSessions(opts ...func(*ChinchiroSessionQuery)) *GuildQuery {
+	query := (&ChinchiroSessionClient{config: gq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	gq.withChinchiroSessions = query
+	return gq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -589,7 +625,7 @@ func (gq *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild,
 		nodes       = []*Guild{}
 		withFKs     = gq.withFKs
 		_spec       = gq.querySpec()
-		loadedTypes = [7]bool{
+		loadedTypes = [8]bool{
 			gq.withOwner != nil,
 			gq.withMembers != nil,
 			gq.withMessagePins != nil,
@@ -597,6 +633,7 @@ func (gq *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild,
 			gq.withRolePanels != nil,
 			gq.withRolePanelPlacements != nil,
 			gq.withRolePanelEdits != nil,
+			gq.withChinchiroSessions != nil,
 		}
 	)
 	if gq.withOwner != nil {
@@ -670,6 +707,13 @@ func (gq *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild,
 		if err := gq.loadRolePanelEdits(ctx, query, nodes,
 			func(n *Guild) { n.Edges.RolePanelEdits = []*RolePanelEdit{} },
 			func(n *Guild, e *RolePanelEdit) { n.Edges.RolePanelEdits = append(n.Edges.RolePanelEdits, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := gq.withChinchiroSessions; query != nil {
+		if err := gq.loadChinchiroSessions(ctx, query, nodes,
+			func(n *Guild) { n.Edges.ChinchiroSessions = []*ChinchiroSession{} },
+			func(n *Guild, e *ChinchiroSession) { n.Edges.ChinchiroSessions = append(n.Edges.ChinchiroSessions, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -889,6 +933,37 @@ func (gq *GuildQuery) loadRolePanelEdits(ctx context.Context, query *RolePanelEd
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "guild_role_panel_edits" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (gq *GuildQuery) loadChinchiroSessions(ctx context.Context, query *ChinchiroSessionQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *ChinchiroSession)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[snowflake.ID]*Guild)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.ChinchiroSession(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(guild.ChinchiroSessionsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.guild_chinchiro_sessions
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "guild_chinchiro_sessions" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "guild_chinchiro_sessions" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

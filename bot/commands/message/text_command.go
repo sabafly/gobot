@@ -21,7 +21,7 @@ func doTextCommand(ctx context.Context, event *events.GuildMessageCreate) (err e
 	case diceRollRegex.MatchString(content[0]):
 		subMatch := diceRollRegex.FindStringSubmatch(content[0])
 		diceCount, err := strconv.Atoi(subMatch[1])
-		if err != nil || diceCount < 1 || diceCount > 1000 {
+		if err != nil || diceCount < 1 || diceCount > 10 {
 			return nil, true
 		}
 		diceSize, err := strconv.Atoi(subMatch[2])

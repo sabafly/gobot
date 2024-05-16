@@ -18,6 +18,7 @@ package translate
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 
@@ -152,11 +153,13 @@ func Message(locale discord.Locale, messageID string, opts ...Option) (res strin
 	if err == nil {
 		return alt
 	}
-	res = messageID
 	if opt.Fallback != "" {
-		res = opt.Fallback
+		return opt.Fallback
 	}
-	return res
+	if opt.TemplateData != nil {
+		return fmt.Sprintf("%s\n%v", messageID, opt.TemplateData)
+	}
+	return messageID
 }
 
 func MessageMap(key string, replace bool, opts ...Option) map[discord.Locale]string {

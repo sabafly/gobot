@@ -12,6 +12,10 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// ChinchiroPlayer is the client for interacting with the ChinchiroPlayer builders.
+	ChinchiroPlayer *ChinchiroPlayerClient
+	// ChinchiroSession is the client for interacting with the ChinchiroSession builders.
+	ChinchiroSession *ChinchiroSessionClient
 	// Guild is the client for interacting with the Guild builders.
 	Guild *GuildClient
 	// Member is the client for interacting with the Member builders.
@@ -161,6 +165,8 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.ChinchiroPlayer = NewChinchiroPlayerClient(tx.config)
+	tx.ChinchiroSession = NewChinchiroSessionClient(tx.config)
 	tx.Guild = NewGuildClient(tx.config)
 	tx.Member = NewMemberClient(tx.config)
 	tx.MessagePin = NewMessagePinClient(tx.config)
@@ -179,7 +185,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Guild.QueryXXX(), the query will be executed
+// applies a query, for example: ChinchiroPlayer.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

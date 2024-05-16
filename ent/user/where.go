@@ -392,6 +392,52 @@ func HasWordSuffixWith(preds ...predicate.WordSuffix) predicate.User {
 	})
 }
 
+// HasChinchiroSessions applies the HasEdge predicate on the "chinchiro_sessions" edge.
+func HasChinchiroSessions() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ChinchiroSessionsTable, ChinchiroSessionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasChinchiroSessionsWith applies the HasEdge predicate on the "chinchiro_sessions" edge with a given conditions (other predicates).
+func HasChinchiroSessionsWith(preds ...predicate.ChinchiroSession) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newChinchiroSessionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasChinchiroPlayers applies the HasEdge predicate on the "chinchiro_players" edge.
+func HasChinchiroPlayers() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ChinchiroPlayersTable, ChinchiroPlayersColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasChinchiroPlayersWith applies the HasEdge predicate on the "chinchiro_players" edge with a given conditions (other predicates).
+func HasChinchiroPlayersWith(preds ...predicate.ChinchiroPlayer) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newChinchiroPlayersStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(sql.AndPredicates(predicates...))

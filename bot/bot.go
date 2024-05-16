@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
+	"github.com/sabafly/gobot/bot/commands/game"
 	"io"
 	"log/slog"
 	"net/http"
@@ -114,6 +115,7 @@ func run() error {
 		permission.Command(component),
 		setting.Command(component),
 		role.ImportCommand(component),
+		game.Command(component),
 	)
 
 	ready := make(chan *events.Ready)

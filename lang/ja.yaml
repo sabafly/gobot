@@ -574,6 +574,7 @@ components.setting.mention.target: メンション先
 components.setting.up.toggle: UP通知の有効化/無効化
 components.setting.up.message: UP通知メッセージの設定
 components.setting.up.mention: UP通知のメンション先の設定
+component.game.cinchiro.game.bet.modal.input.label: 張る点数
 # エラーメッセージ
 errors.generic.message: エラーが発生しました
 errors.panic.message: 致命的なエラー
@@ -614,3 +615,5 @@ errors.unsupported: 対応していません
 errors.unsupported.description: それはこの操作に対応していません
 errors.deleted: 削除されました
 errors.deleted.description: この項目はすでに削除されています
+errors.not_enough: 不足しています
+errors.not_enough.player: プレイヤーが不足しています

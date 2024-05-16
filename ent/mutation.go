@@ -14,6 +14,8 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+	"github.com/sabafly/gobot/ent/chinchiroplayer"
+	"github.com/sabafly/gobot/ent/chinchirosession"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
@@ -38,16 +40,1414 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeGuild           = "Guild"
-	TypeMember          = "Member"
-	TypeMessagePin      = "MessagePin"
-	TypeMessageRemind   = "MessageRemind"
-	TypeRolePanel       = "RolePanel"
-	TypeRolePanelEdit   = "RolePanelEdit"
-	TypeRolePanelPlaced = "RolePanelPlaced"
-	TypeUser            = "User"
-	TypeWordSuffix      = "WordSuffix"
+	TypeChinchiroPlayer  = "ChinchiroPlayer"
+	TypeChinchiroSession = "ChinchiroSession"
+	TypeGuild            = "Guild"
+	TypeMember           = "Member"
+	TypeMessagePin       = "MessagePin"
+	TypeMessageRemind    = "MessageRemind"
+	TypeRolePanel        = "RolePanel"
+	TypeRolePanelEdit    = "RolePanelEdit"
+	TypeRolePanelPlaced  = "RolePanelPlaced"
+	TypeUser             = "User"
+	TypeWordSuffix       = "WordSuffix"
 )
+
+// ChinchiroPlayerMutation represents an operation that mutates the ChinchiroPlayer nodes in the graph.
+type ChinchiroPlayerMutation struct {
+	config
+	op             Op
+	typ            string
+	id             *uuid.UUID
+	point          *int
+	addpoint       *int
+	is_owner       *bool
+	bet            *int
+	addbet         *int
+	dices          *[]int
+	appenddices    []int
+	clearedFields  map[string]struct{}
+	user           *snowflake.ID
+	cleareduser    bool
+	session        *uuid.UUID
+	clearedsession bool
+	done           bool
+	oldValue       func(context.Context) (*ChinchiroPlayer, error)
+	predicates     []predicate.ChinchiroPlayer
+}
+
+var _ ent.Mutation = (*ChinchiroPlayerMutation)(nil)
+
+// chinchiroplayerOption allows management of the mutation configuration using functional options.
+type chinchiroplayerOption func(*ChinchiroPlayerMutation)
+
+// newChinchiroPlayerMutation creates new mutation for the ChinchiroPlayer entity.
+func newChinchiroPlayerMutation(c config, op Op, opts ...chinchiroplayerOption) *ChinchiroPlayerMutation {
+	m := &ChinchiroPlayerMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeChinchiroPlayer,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withChinchiroPlayerID sets the ID field of the mutation.
+func withChinchiroPlayerID(id uuid.UUID) chinchiroplayerOption {
+	return func(m *ChinchiroPlayerMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ChinchiroPlayer
+		)
+		m.oldValue = func(ctx context.Context) (*ChinchiroPlayer, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ChinchiroPlayer.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withChinchiroPlayer sets the old ChinchiroPlayer of the mutation.
+func withChinchiroPlayer(node *ChinchiroPlayer) chinchiroplayerOption {
+	return func(m *ChinchiroPlayerMutation) {
+		m.oldValue = func(context.Context) (*ChinchiroPlayer, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ChinchiroPlayerMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ChinchiroPlayerMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ChinchiroPlayer entities.
+func (m *ChinchiroPlayerMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ChinchiroPlayerMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ChinchiroPlayerMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ChinchiroPlayer.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetPoint sets the "point" field.
+func (m *ChinchiroPlayerMutation) SetPoint(i int) {
+	m.point = &i
+	m.addpoint = nil
+}
+
+// Point returns the value of the "point" field in the mutation.
+func (m *ChinchiroPlayerMutation) Point() (r int, exists bool) {
+	v := m.point
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPoint returns the old "point" field's value of the ChinchiroPlayer entity.
+// If the ChinchiroPlayer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChinchiroPlayerMutation) OldPoint(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPoint is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPoint requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPoint: %w", err)
+	}
+	return oldValue.Point, nil
+}
+
+// AddPoint adds i to the "point" field.
+func (m *ChinchiroPlayerMutation) AddPoint(i int) {
+	if m.addpoint != nil {
+		*m.addpoint += i
+	} else {
+		m.addpoint = &i
+	}
+}
+
+// AddedPoint returns the value that was added to the "point" field in this mutation.
+func (m *ChinchiroPlayerMutation) AddedPoint() (r int, exists bool) {
+	v := m.addpoint
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetPoint resets all changes to the "point" field.
+func (m *ChinchiroPlayerMutation) ResetPoint() {
+	m.point = nil
+	m.addpoint = nil
+}
+
+// SetIsOwner sets the "is_owner" field.
+func (m *ChinchiroPlayerMutation) SetIsOwner(b bool) {
+	m.is_owner = &b
+}
+
+// IsOwner returns the value of the "is_owner" field in the mutation.
+func (m *ChinchiroPlayerMutation) IsOwner() (r bool, exists bool) {
+	v := m.is_owner
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsOwner returns the old "is_owner" field's value of the ChinchiroPlayer entity.
+// If the ChinchiroPlayer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChinchiroPlayerMutation) OldIsOwner(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsOwner is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsOwner requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsOwner: %w", err)
+	}
+	return oldValue.IsOwner, nil
+}
+
+// ResetIsOwner resets all changes to the "is_owner" field.
+func (m *ChinchiroPlayerMutation) ResetIsOwner() {
+	m.is_owner = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *ChinchiroPlayerMutation) SetUserID(s snowflake.ID) {
+	m.user = &s
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *ChinchiroPlayerMutation) UserID() (r snowflake.ID, exists bool) {
+	v := m.user
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the ChinchiroPlayer entity.
+// If the ChinchiroPlayer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChinchiroPlayerMutation) OldUserID(ctx context.Context) (v snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *ChinchiroPlayerMutation) ResetUserID() {
+	m.user = nil
+}
+
+// SetBet sets the "bet" field.
+func (m *ChinchiroPlayerMutation) SetBet(i int) {
+	m.bet = &i
+	m.addbet = nil
+}
+
+// Bet returns the value of the "bet" field in the mutation.
+func (m *ChinchiroPlayerMutation) Bet() (r int, exists bool) {
+	v := m.bet
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBet returns the old "bet" field's value of the ChinchiroPlayer entity.
+// If the ChinchiroPlayer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChinchiroPlayerMutation) OldBet(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldBet is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldBet requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBet: %w", err)
+	}
+	return oldValue.Bet, nil
+}
+
+// AddBet adds i to the "bet" field.
+func (m *ChinchiroPlayerMutation) AddBet(i int) {
+	if m.addbet != nil {
+		*m.addbet += i
+	} else {
+		m.addbet = &i
+	}
+}
+
+// AddedBet returns the value that was added to the "bet" field in this mutation.
+func (m *ChinchiroPlayerMutation) AddedBet() (r int, exists bool) {
+	v := m.addbet
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearBet clears the value of the "bet" field.
+func (m *ChinchiroPlayerMutation) ClearBet() {
+	m.bet = nil
+	m.addbet = nil
+	m.clearedFields[chinchiroplayer.FieldBet] = struct{}{}
+}
+
+// BetCleared returns if the "bet" field was cleared in this mutation.
+func (m *ChinchiroPlayerMutation) BetCleared() bool {
+	_, ok := m.clearedFields[chinchiroplayer.FieldBet]
+	return ok
+}
+
+// ResetBet resets all changes to the "bet" field.
+func (m *ChinchiroPlayerMutation) ResetBet() {
+	m.bet = nil
+	m.addbet = nil
+	delete(m.clearedFields, chinchiroplayer.FieldBet)
+}
+
+// SetDices sets the "dices" field.
+func (m *ChinchiroPlayerMutation) SetDices(i []int) {
+	m.dices = &i
+	m.appenddices = nil
+}
+
+// Dices returns the value of the "dices" field in the mutation.
+func (m *ChinchiroPlayerMutation) Dices() (r []int, exists bool) {
+	v := m.dices
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDices returns the old "dices" field's value of the ChinchiroPlayer entity.
+// If the ChinchiroPlayer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChinchiroPlayerMutation) OldDices(ctx context.Context) (v []int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDices is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDices requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDices: %w", err)
+	}
+	return oldValue.Dices, nil
+}
+
+// AppendDices adds i to the "dices" field.
+func (m *ChinchiroPlayerMutation) AppendDices(i []int) {
+	m.appenddices = append(m.appenddices, i...)
+}
+
+// AppendedDices returns the list of values that were appended to the "dices" field in this mutation.
+func (m *ChinchiroPlayerMutation) AppendedDices() ([]int, bool) {
+	if len(m.appenddices) == 0 {
+		return nil, false
+	}
+	return m.appenddices, true
+}
+
+// ClearDices clears the value of the "dices" field.
+func (m *ChinchiroPlayerMutation) ClearDices() {
+	m.dices = nil
+	m.appenddices = nil
+	m.clearedFields[chinchiroplayer.FieldDices] = struct{}{}
+}
+
+// DicesCleared returns if the "dices" field was cleared in this mutation.
+func (m *ChinchiroPlayerMutation) DicesCleared() bool {
+	_, ok := m.clearedFields[chinchiroplayer.FieldDices]
+	return ok
+}
+
+// ResetDices resets all changes to the "dices" field.
+func (m *ChinchiroPlayerMutation) ResetDices() {
+	m.dices = nil
+	m.appenddices = nil
+	delete(m.clearedFields, chinchiroplayer.FieldDices)
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *ChinchiroPlayerMutation) ClearUser() {
+	m.cleareduser = true
+	m.clearedFields[chinchiroplayer.FieldUserID] = struct{}{}
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *ChinchiroPlayerMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *ChinchiroPlayerMutation) UserIDs() (ids []snowflake.ID) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *ChinchiroPlayerMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// SetSessionID sets the "session" edge to the ChinchiroSession entity by id.
+func (m *ChinchiroPlayerMutation) SetSessionID(id uuid.UUID) {
+	m.session = &id
+}
+
+// ClearSession clears the "session" edge to the ChinchiroSession entity.
+func (m *ChinchiroPlayerMutation) ClearSession() {
+	m.clearedsession = true
+}
+
+// SessionCleared reports if the "session" edge to the ChinchiroSession entity was cleared.
+func (m *ChinchiroPlayerMutation) SessionCleared() bool {
+	return m.clearedsession
+}
+
+// SessionID returns the "session" edge ID in the mutation.
+func (m *ChinchiroPlayerMutation) SessionID() (id uuid.UUID, exists bool) {
+	if m.session != nil {
+		return *m.session, true
+	}
+	return
+}
+
+// SessionIDs returns the "session" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// SessionID instead. It exists only for internal usage by the builders.
+func (m *ChinchiroPlayerMutation) SessionIDs() (ids []uuid.UUID) {
+	if id := m.session; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetSession resets all changes to the "session" edge.
+func (m *ChinchiroPlayerMutation) ResetSession() {
+	m.session = nil
+	m.clearedsession = false
+}
+
+// Where appends a list predicates to the ChinchiroPlayerMutation builder.
+func (m *ChinchiroPlayerMutation) Where(ps ...predicate.ChinchiroPlayer) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ChinchiroPlayerMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ChinchiroPlayerMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ChinchiroPlayer, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ChinchiroPlayerMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ChinchiroPlayerMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ChinchiroPlayer).
+func (m *ChinchiroPlayerMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ChinchiroPlayerMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.point != nil {
+		fields = append(fields, chinchiroplayer.FieldPoint)
+	}
+	if m.is_owner != nil {
+		fields = append(fields, chinchiroplayer.FieldIsOwner)
+	}
+	if m.user != nil {
+		fields = append(fields, chinchiroplayer.FieldUserID)
+	}
+	if m.bet != nil {
+		fields = append(fields, chinchiroplayer.FieldBet)
+	}
+	if m.dices != nil {
+		fields = append(fields, chinchiroplayer.FieldDices)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ChinchiroPlayerMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case chinchiroplayer.FieldPoint:
+		return m.Point()
+	case chinchiroplayer.FieldIsOwner:
+		return m.IsOwner()
+	case chinchiroplayer.FieldUserID:
+		return m.UserID()
+	case chinchiroplayer.FieldBet:
+		return m.Bet()
+	case chinchiroplayer.FieldDices:
+		return m.Dices()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ChinchiroPlayerMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case chinchiroplayer.FieldPoint:
+		return m.OldPoint(ctx)
+	case chinchiroplayer.FieldIsOwner:
+		return m.OldIsOwner(ctx)
+	case chinchiroplayer.FieldUserID:
+		return m.OldUserID(ctx)
+	case chinchiroplayer.FieldBet:
+		return m.OldBet(ctx)
+	case chinchiroplayer.FieldDices:
+		return m.OldDices(ctx)
+	}
+	return nil, fmt.Errorf("unknown ChinchiroPlayer field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ChinchiroPlayerMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case chinchiroplayer.FieldPoint:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPoint(v)
+		return nil
+	case chinchiroplayer.FieldIsOwner:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsOwner(v)
+		return nil
+	case chinchiroplayer.FieldUserID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case chinchiroplayer.FieldBet:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBet(v)
+		return nil
+	case chinchiroplayer.FieldDices:
+		v, ok := value.([]int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDices(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ChinchiroPlayer field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ChinchiroPlayerMutation) AddedFields() []string {
+	var fields []string
+	if m.addpoint != nil {
+		fields = append(fields, chinchiroplayer.FieldPoint)
+	}
+	if m.addbet != nil {
+		fields = append(fields, chinchiroplayer.FieldBet)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ChinchiroPlayerMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case chinchiroplayer.FieldPoint:
+		return m.AddedPoint()
+	case chinchiroplayer.FieldBet:
+		return m.AddedBet()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ChinchiroPlayerMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case chinchiroplayer.FieldPoint:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPoint(v)
+		return nil
+	case chinchiroplayer.FieldBet:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddBet(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ChinchiroPlayer numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ChinchiroPlayerMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(chinchiroplayer.FieldBet) {
+		fields = append(fields, chinchiroplayer.FieldBet)
+	}
+	if m.FieldCleared(chinchiroplayer.FieldDices) {
+		fields = append(fields, chinchiroplayer.FieldDices)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ChinchiroPlayerMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ChinchiroPlayerMutation) ClearField(name string) error {
+	switch name {
+	case chinchiroplayer.FieldBet:
+		m.ClearBet()
+		return nil
+	case chinchiroplayer.FieldDices:
+		m.ClearDices()
+		return nil
+	}
+	return fmt.Errorf("unknown ChinchiroPlayer nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ChinchiroPlayerMutation) ResetField(name string) error {
+	switch name {
+	case chinchiroplayer.FieldPoint:
+		m.ResetPoint()
+		return nil
+	case chinchiroplayer.FieldIsOwner:
+		m.ResetIsOwner()
+		return nil
+	case chinchiroplayer.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case chinchiroplayer.FieldBet:
+		m.ResetBet()
+		return nil
+	case chinchiroplayer.FieldDices:
+		m.ResetDices()
+		return nil
+	}
+	return fmt.Errorf("unknown ChinchiroPlayer field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ChinchiroPlayerMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.user != nil {
+		edges = append(edges, chinchiroplayer.EdgeUser)
+	}
+	if m.session != nil {
+		edges = append(edges, chinchiroplayer.EdgeSession)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ChinchiroPlayerMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case chinchiroplayer.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	case chinchiroplayer.EdgeSession:
+		if id := m.session; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ChinchiroPlayerMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ChinchiroPlayerMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ChinchiroPlayerMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.cleareduser {
+		edges = append(edges, chinchiroplayer.EdgeUser)
+	}
+	if m.clearedsession {
+		edges = append(edges, chinchiroplayer.EdgeSession)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ChinchiroPlayerMutation) EdgeCleared(name string) bool {
+	switch name {
+	case chinchiroplayer.EdgeUser:
+		return m.cleareduser
+	case chinchiroplayer.EdgeSession:
+		return m.clearedsession
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ChinchiroPlayerMutation) ClearEdge(name string) error {
+	switch name {
+	case chinchiroplayer.EdgeUser:
+		m.ClearUser()
+		return nil
+	case chinchiroplayer.EdgeSession:
+		m.ClearSession()
+		return nil
+	}
+	return fmt.Errorf("unknown ChinchiroPlayer unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ChinchiroPlayerMutation) ResetEdge(name string) error {
+	switch name {
+	case chinchiroplayer.EdgeUser:
+		m.ResetUser()
+		return nil
+	case chinchiroplayer.EdgeSession:
+		m.ResetSession()
+		return nil
+	}
+	return fmt.Errorf("unknown ChinchiroPlayer edge %s", name)
+}
+
+// ChinchiroSessionMutation represents an operation that mutates the ChinchiroSession nodes in the graph.
+type ChinchiroSessionMutation struct {
+	config
+	op             Op
+	typ            string
+	id             *uuid.UUID
+	turn           *int
+	addturn        *int
+	loop           *int
+	addloop        *int
+	clearedFields  map[string]struct{}
+	guild          *snowflake.ID
+	clearedguild   bool
+	players        map[uuid.UUID]struct{}
+	removedplayers map[uuid.UUID]struct{}
+	clearedplayers bool
+	done           bool
+	oldValue       func(context.Context) (*ChinchiroSession, error)
+	predicates     []predicate.ChinchiroSession
+}
+
+var _ ent.Mutation = (*ChinchiroSessionMutation)(nil)
+
+// chinchirosessionOption allows management of the mutation configuration using functional options.
+type chinchirosessionOption func(*ChinchiroSessionMutation)
+
+// newChinchiroSessionMutation creates new mutation for the ChinchiroSession entity.
+func newChinchiroSessionMutation(c config, op Op, opts ...chinchirosessionOption) *ChinchiroSessionMutation {
+	m := &ChinchiroSessionMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeChinchiroSession,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withChinchiroSessionID sets the ID field of the mutation.
+func withChinchiroSessionID(id uuid.UUID) chinchirosessionOption {
+	return func(m *ChinchiroSessionMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ChinchiroSession
+		)
+		m.oldValue = func(ctx context.Context) (*ChinchiroSession, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ChinchiroSession.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withChinchiroSession sets the old ChinchiroSession of the mutation.
+func withChinchiroSession(node *ChinchiroSession) chinchirosessionOption {
+	return func(m *ChinchiroSessionMutation) {
+		m.oldValue = func(context.Context) (*ChinchiroSession, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ChinchiroSessionMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ChinchiroSessionMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ChinchiroSession entities.
+func (m *ChinchiroSessionMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ChinchiroSessionMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ChinchiroSessionMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ChinchiroSession.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTurn sets the "turn" field.
+func (m *ChinchiroSessionMutation) SetTurn(i int) {
+	m.turn = &i
+	m.addturn = nil
+}
+
+// Turn returns the value of the "turn" field in the mutation.
+func (m *ChinchiroSessionMutation) Turn() (r int, exists bool) {
+	v := m.turn
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTurn returns the old "turn" field's value of the ChinchiroSession entity.
+// If the ChinchiroSession object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChinchiroSessionMutation) OldTurn(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTurn is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTurn requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTurn: %w", err)
+	}
+	return oldValue.Turn, nil
+}
+
+// AddTurn adds i to the "turn" field.
+func (m *ChinchiroSessionMutation) AddTurn(i int) {
+	if m.addturn != nil {
+		*m.addturn += i
+	} else {
+		m.addturn = &i
+	}
+}
+
+// AddedTurn returns the value that was added to the "turn" field in this mutation.
+func (m *ChinchiroSessionMutation) AddedTurn() (r int, exists bool) {
+	v := m.addturn
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetTurn resets all changes to the "turn" field.
+func (m *ChinchiroSessionMutation) ResetTurn() {
+	m.turn = nil
+	m.addturn = nil
+}
+
+// SetLoop sets the "loop" field.
+func (m *ChinchiroSessionMutation) SetLoop(i int) {
+	m.loop = &i
+	m.addloop = nil
+}
+
+// Loop returns the value of the "loop" field in the mutation.
+func (m *ChinchiroSessionMutation) Loop() (r int, exists bool) {
+	v := m.loop
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLoop returns the old "loop" field's value of the ChinchiroSession entity.
+// If the ChinchiroSession object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ChinchiroSessionMutation) OldLoop(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLoop is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLoop requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLoop: %w", err)
+	}
+	return oldValue.Loop, nil
+}
+
+// AddLoop adds i to the "loop" field.
+func (m *ChinchiroSessionMutation) AddLoop(i int) {
+	if m.addloop != nil {
+		*m.addloop += i
+	} else {
+		m.addloop = &i
+	}
+}
+
+// AddedLoop returns the value that was added to the "loop" field in this mutation.
+func (m *ChinchiroSessionMutation) AddedLoop() (r int, exists bool) {
+	v := m.addloop
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetLoop resets all changes to the "loop" field.
+func (m *ChinchiroSessionMutation) ResetLoop() {
+	m.loop = nil
+	m.addloop = nil
+}
+
+// SetGuildID sets the "guild" edge to the Guild entity by id.
+func (m *ChinchiroSessionMutation) SetGuildID(id snowflake.ID) {
+	m.guild = &id
+}
+
+// ClearGuild clears the "guild" edge to the Guild entity.
+func (m *ChinchiroSessionMutation) ClearGuild() {
+	m.clearedguild = true
+}
+
+// GuildCleared reports if the "guild" edge to the Guild entity was cleared.
+func (m *ChinchiroSessionMutation) GuildCleared() bool {
+	return m.clearedguild
+}
+
+// GuildID returns the "guild" edge ID in the mutation.
+func (m *ChinchiroSessionMutation) GuildID() (id snowflake.ID, exists bool) {
+	if m.guild != nil {
+		return *m.guild, true
+	}
+	return
+}
+
+// GuildIDs returns the "guild" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GuildID instead. It exists only for internal usage by the builders.
+func (m *ChinchiroSessionMutation) GuildIDs() (ids []snowflake.ID) {
+	if id := m.guild; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetGuild resets all changes to the "guild" edge.
+func (m *ChinchiroSessionMutation) ResetGuild() {
+	m.guild = nil
+	m.clearedguild = false
+}
+
+// AddPlayerIDs adds the "players" edge to the ChinchiroPlayer entity by ids.
+func (m *ChinchiroSessionMutation) AddPlayerIDs(ids ...uuid.UUID) {
+	if m.players == nil {
+		m.players = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.players[ids[i]] = struct{}{}
+	}
+}
+
+// ClearPlayers clears the "players" edge to the ChinchiroPlayer entity.
+func (m *ChinchiroSessionMutation) ClearPlayers() {
+	m.clearedplayers = true
+}
+
+// PlayersCleared reports if the "players" edge to the ChinchiroPlayer entity was cleared.
+func (m *ChinchiroSessionMutation) PlayersCleared() bool {
+	return m.clearedplayers
+}
+
+// RemovePlayerIDs removes the "players" edge to the ChinchiroPlayer entity by IDs.
+func (m *ChinchiroSessionMutation) RemovePlayerIDs(ids ...uuid.UUID) {
+	if m.removedplayers == nil {
+		m.removedplayers = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.players, ids[i])
+		m.removedplayers[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedPlayers returns the removed IDs of the "players" edge to the ChinchiroPlayer entity.
+func (m *ChinchiroSessionMutation) RemovedPlayersIDs() (ids []uuid.UUID) {
+	for id := range m.removedplayers {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// PlayersIDs returns the "players" edge IDs in the mutation.
+func (m *ChinchiroSessionMutation) PlayersIDs() (ids []uuid.UUID) {
+	for id := range m.players {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetPlayers resets all changes to the "players" edge.
+func (m *ChinchiroSessionMutation) ResetPlayers() {
+	m.players = nil
+	m.clearedplayers = false
+	m.removedplayers = nil
+}
+
+// Where appends a list predicates to the ChinchiroSessionMutation builder.
+func (m *ChinchiroSessionMutation) Where(ps ...predicate.ChinchiroSession) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ChinchiroSessionMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ChinchiroSessionMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ChinchiroSession, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ChinchiroSessionMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ChinchiroSessionMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ChinchiroSession).
+func (m *ChinchiroSessionMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ChinchiroSessionMutation) Fields() []string {
+	fields := make([]string, 0, 2)
+	if m.turn != nil {
+		fields = append(fields, chinchirosession.FieldTurn)
+	}
+	if m.loop != nil {
+		fields = append(fields, chinchirosession.FieldLoop)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ChinchiroSessionMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case chinchirosession.FieldTurn:
+		return m.Turn()
+	case chinchirosession.FieldLoop:
+		return m.Loop()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ChinchiroSessionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case chinchirosession.FieldTurn:
+		return m.OldTurn(ctx)
+	case chinchirosession.FieldLoop:
+		return m.OldLoop(ctx)
+	}
+	return nil, fmt.Errorf("unknown ChinchiroSession field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ChinchiroSessionMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case chinchirosession.FieldTurn:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTurn(v)
+		return nil
+	case chinchirosession.FieldLoop:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLoop(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ChinchiroSession field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ChinchiroSessionMutation) AddedFields() []string {
+	var fields []string
+	if m.addturn != nil {
+		fields = append(fields, chinchirosession.FieldTurn)
+	}
+	if m.addloop != nil {
+		fields = append(fields, chinchirosession.FieldLoop)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ChinchiroSessionMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case chinchirosession.FieldTurn:
+		return m.AddedTurn()
+	case chinchirosession.FieldLoop:
+		return m.AddedLoop()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ChinchiroSessionMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case chinchirosession.FieldTurn:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddTurn(v)
+		return nil
+	case chinchirosession.FieldLoop:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddLoop(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ChinchiroSession numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ChinchiroSessionMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ChinchiroSessionMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ChinchiroSessionMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ChinchiroSession nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ChinchiroSessionMutation) ResetField(name string) error {
+	switch name {
+	case chinchirosession.FieldTurn:
+		m.ResetTurn()
+		return nil
+	case chinchirosession.FieldLoop:
+		m.ResetLoop()
+		return nil
+	}
+	return fmt.Errorf("unknown ChinchiroSession field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ChinchiroSessionMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.guild != nil {
+		edges = append(edges, chinchirosession.EdgeGuild)
+	}
+	if m.players != nil {
+		edges = append(edges, chinchirosession.EdgePlayers)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ChinchiroSessionMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case chinchirosession.EdgeGuild:
+		if id := m.guild; id != nil {
+			return []ent.Value{*id}
+		}
+	case chinchirosession.EdgePlayers:
+		ids := make([]ent.Value, 0, len(m.players))
+		for id := range m.players {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ChinchiroSessionMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedplayers != nil {
+		edges = append(edges, chinchirosession.EdgePlayers)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ChinchiroSessionMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case chinchirosession.EdgePlayers:
+		ids := make([]ent.Value, 0, len(m.removedplayers))
+		for id := range m.removedplayers {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ChinchiroSessionMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedguild {
+		edges = append(edges, chinchirosession.EdgeGuild)
+	}
+	if m.clearedplayers {
+		edges = append(edges, chinchirosession.EdgePlayers)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ChinchiroSessionMutation) EdgeCleared(name string) bool {
+	switch name {
+	case chinchirosession.EdgeGuild:
+		return m.clearedguild
+	case chinchirosession.EdgePlayers:
+		return m.clearedplayers
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ChinchiroSessionMutation) ClearEdge(name string) error {
+	switch name {
+	case chinchirosession.EdgeGuild:
+		m.ClearGuild()
+		return nil
+	}
+	return fmt.Errorf("unknown ChinchiroSession unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ChinchiroSessionMutation) ResetEdge(name string) error {
+	switch name {
+	case chinchirosession.EdgeGuild:
+		m.ResetGuild()
+		return nil
+	case chinchirosession.EdgePlayers:
+		m.ResetPlayers()
+		return nil
+	}
+	return fmt.Errorf("unknown ChinchiroSession edge %s", name)
+}
 
 // GuildMutation represents an operation that mutates the Guild nodes in the graph.
 type GuildMutation struct {
@@ -104,6 +1504,9 @@ type GuildMutation struct {
 	role_panel_edits               map[uuid.UUID]struct{}
 	removedrole_panel_edits        map[uuid.UUID]struct{}
 	clearedrole_panel_edits        bool
+	chinchiro_sessions             map[uuid.UUID]struct{}
+	removedchinchiro_sessions      map[uuid.UUID]struct{}
+	clearedchinchiro_sessions      bool
 	done                           bool
 	oldValue                       func(context.Context) (*Guild, error)
 	predicates                     []predicate.Guild
@@ -1547,6 +2950,60 @@ func (m *GuildMutation) ResetRolePanelEdits() {
 	m.removedrole_panel_edits = nil
 }
 
+// AddChinchiroSessionIDs adds the "chinchiro_sessions" edge to the ChinchiroSession entity by ids.
+func (m *GuildMutation) AddChinchiroSessionIDs(ids ...uuid.UUID) {
+	if m.chinchiro_sessions == nil {
+		m.chinchiro_sessions = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.chinchiro_sessions[ids[i]] = struct{}{}
+	}
+}
+
+// ClearChinchiroSessions clears the "chinchiro_sessions" edge to the ChinchiroSession entity.
+func (m *GuildMutation) ClearChinchiroSessions() {
+	m.clearedchinchiro_sessions = true
+}
+
+// ChinchiroSessionsCleared reports if the "chinchiro_sessions" edge to the ChinchiroSession entity was cleared.
+func (m *GuildMutation) ChinchiroSessionsCleared() bool {
+	return m.clearedchinchiro_sessions
+}
+
+// RemoveChinchiroSessionIDs removes the "chinchiro_sessions" edge to the ChinchiroSession entity by IDs.
+func (m *GuildMutation) RemoveChinchiroSessionIDs(ids ...uuid.UUID) {
+	if m.removedchinchiro_sessions == nil {
+		m.removedchinchiro_sessions = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.chinchiro_sessions, ids[i])
+		m.removedchinchiro_sessions[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedChinchiroSessions returns the removed IDs of the "chinchiro_sessions" edge to the ChinchiroSession entity.
+func (m *GuildMutation) RemovedChinchiroSessionsIDs() (ids []uuid.UUID) {
+	for id := range m.removedchinchiro_sessions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ChinchiroSessionsIDs returns the "chinchiro_sessions" edge IDs in the mutation.
+func (m *GuildMutation) ChinchiroSessionsIDs() (ids []uuid.UUID) {
+	for id := range m.chinchiro_sessions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetChinchiroSessions resets all changes to the "chinchiro_sessions" edge.
+func (m *GuildMutation) ResetChinchiroSessions() {
+	m.chinchiro_sessions = nil
+	m.clearedchinchiro_sessions = false
+	m.removedchinchiro_sessions = nil
+}
+
 // Where appends a list predicates to the GuildMutation builder.
 func (m *GuildMutation) Where(ps ...predicate.Guild) {
 	m.predicates = append(m.predicates, ps...)
@@ -2121,7 +3578,7 @@ func (m *GuildMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *GuildMutation) AddedEdges() []string {
-	edges := make([]string, 0, 7)
+	edges := make([]string, 0, 8)
 	if m.owner != nil {
 		edges = append(edges, guild.EdgeOwner)
 	}
@@ -2142,6 +3599,9 @@ func (m *GuildMutation) AddedEdges() []string {
 	}
 	if m.role_panel_edits != nil {
 		edges = append(edges, guild.EdgeRolePanelEdits)
+	}
+	if m.chinchiro_sessions != nil {
+		edges = append(edges, guild.EdgeChinchiroSessions)
 	}
 	return edges
 }
@@ -2190,13 +3650,19 @@ func (m *GuildMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case guild.EdgeChinchiroSessions:
+		ids := make([]ent.Value, 0, len(m.chinchiro_sessions))
+		for id := range m.chinchiro_sessions {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *GuildMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 7)
+	edges := make([]string, 0, 8)
 	if m.removedmembers != nil {
 		edges = append(edges, guild.EdgeMembers)
 	}
@@ -2214,6 +3680,9 @@ func (m *GuildMutation) RemovedEdges() []string {
 	}
 	if m.removedrole_panel_edits != nil {
 		edges = append(edges, guild.EdgeRolePanelEdits)
+	}
+	if m.removedchinchiro_sessions != nil {
+		edges = append(edges, guild.EdgeChinchiroSessions)
 	}
 	return edges
 }
@@ -2258,13 +3727,19 @@ func (m *GuildMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case guild.EdgeChinchiroSessions:
+		ids := make([]ent.Value, 0, len(m.removedchinchiro_sessions))
+		for id := range m.removedchinchiro_sessions {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *GuildMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 7)
+	edges := make([]string, 0, 8)
 	if m.clearedowner {
 		edges = append(edges, guild.EdgeOwner)
 	}
@@ -2285,6 +3760,9 @@ func (m *GuildMutation) ClearedEdges() []string {
 	}
 	if m.clearedrole_panel_edits {
 		edges = append(edges, guild.EdgeRolePanelEdits)
+	}
+	if m.clearedchinchiro_sessions {
+		edges = append(edges, guild.EdgeChinchiroSessions)
 	}
 	return edges
 }
@@ -2307,6 +3785,8 @@ func (m *GuildMutation) EdgeCleared(name string) bool {
 		return m.clearedrole_panel_placements
 	case guild.EdgeRolePanelEdits:
 		return m.clearedrole_panel_edits
+	case guild.EdgeChinchiroSessions:
+		return m.clearedchinchiro_sessions
 	}
 	return false
 }
@@ -2346,6 +3826,9 @@ func (m *GuildMutation) ResetEdge(name string) error {
 		return nil
 	case guild.EdgeRolePanelEdits:
 		m.ResetRolePanelEdits()
+		return nil
+	case guild.EdgeChinchiroSessions:
+		m.ResetChinchiroSessions()
 		return nil
 	}
 	return fmt.Errorf("unknown Guild edge %s", name)
@@ -7974,27 +9457,33 @@ func (m *RolePanelPlacedMutation) ResetEdge(name string) error {
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
-	op                 Op
-	typ                string
-	id                 *snowflake.ID
-	name               *string
-	created_at         *time.Time
-	locale             *discord.Locale
-	xp                 *xppoint.XP
-	addxp              *xppoint.XP
-	clearedFields      map[string]struct{}
-	own_guilds         map[snowflake.ID]struct{}
-	removedown_guilds  map[snowflake.ID]struct{}
-	clearedown_guilds  bool
-	guilds             map[int]struct{}
-	removedguilds      map[int]struct{}
-	clearedguilds      bool
-	word_suffix        map[uuid.UUID]struct{}
-	removedword_suffix map[uuid.UUID]struct{}
-	clearedword_suffix bool
-	done               bool
-	oldValue           func(context.Context) (*User, error)
-	predicates         []predicate.User
+	op                        Op
+	typ                       string
+	id                        *snowflake.ID
+	name                      *string
+	created_at                *time.Time
+	locale                    *discord.Locale
+	xp                        *xppoint.XP
+	addxp                     *xppoint.XP
+	clearedFields             map[string]struct{}
+	own_guilds                map[snowflake.ID]struct{}
+	removedown_guilds         map[snowflake.ID]struct{}
+	clearedown_guilds         bool
+	guilds                    map[int]struct{}
+	removedguilds             map[int]struct{}
+	clearedguilds             bool
+	word_suffix               map[uuid.UUID]struct{}
+	removedword_suffix        map[uuid.UUID]struct{}
+	clearedword_suffix        bool
+	chinchiro_sessions        map[uuid.UUID]struct{}
+	removedchinchiro_sessions map[uuid.UUID]struct{}
+	clearedchinchiro_sessions bool
+	chinchiro_players         map[uuid.UUID]struct{}
+	removedchinchiro_players  map[uuid.UUID]struct{}
+	clearedchinchiro_players  bool
+	done                      bool
+	oldValue                  func(context.Context) (*User, error)
+	predicates                []predicate.User
 }
 
 var _ ent.Mutation = (*UserMutation)(nil)
@@ -8427,6 +9916,114 @@ func (m *UserMutation) ResetWordSuffix() {
 	m.removedword_suffix = nil
 }
 
+// AddChinchiroSessionIDs adds the "chinchiro_sessions" edge to the ChinchiroSession entity by ids.
+func (m *UserMutation) AddChinchiroSessionIDs(ids ...uuid.UUID) {
+	if m.chinchiro_sessions == nil {
+		m.chinchiro_sessions = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.chinchiro_sessions[ids[i]] = struct{}{}
+	}
+}
+
+// ClearChinchiroSessions clears the "chinchiro_sessions" edge to the ChinchiroSession entity.
+func (m *UserMutation) ClearChinchiroSessions() {
+	m.clearedchinchiro_sessions = true
+}
+
+// ChinchiroSessionsCleared reports if the "chinchiro_sessions" edge to the ChinchiroSession entity was cleared.
+func (m *UserMutation) ChinchiroSessionsCleared() bool {
+	return m.clearedchinchiro_sessions
+}
+
+// RemoveChinchiroSessionIDs removes the "chinchiro_sessions" edge to the ChinchiroSession entity by IDs.
+func (m *UserMutation) RemoveChinchiroSessionIDs(ids ...uuid.UUID) {
+	if m.removedchinchiro_sessions == nil {
+		m.removedchinchiro_sessions = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.chinchiro_sessions, ids[i])
+		m.removedchinchiro_sessions[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedChinchiroSessions returns the removed IDs of the "chinchiro_sessions" edge to the ChinchiroSession entity.
+func (m *UserMutation) RemovedChinchiroSessionsIDs() (ids []uuid.UUID) {
+	for id := range m.removedchinchiro_sessions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ChinchiroSessionsIDs returns the "chinchiro_sessions" edge IDs in the mutation.
+func (m *UserMutation) ChinchiroSessionsIDs() (ids []uuid.UUID) {
+	for id := range m.chinchiro_sessions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetChinchiroSessions resets all changes to the "chinchiro_sessions" edge.
+func (m *UserMutation) ResetChinchiroSessions() {
+	m.chinchiro_sessions = nil
+	m.clearedchinchiro_sessions = false
+	m.removedchinchiro_sessions = nil
+}
+
+// AddChinchiroPlayerIDs adds the "chinchiro_players" edge to the ChinchiroPlayer entity by ids.
+func (m *UserMutation) AddChinchiroPlayerIDs(ids ...uuid.UUID) {
+	if m.chinchiro_players == nil {
+		m.chinchiro_players = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.chinchiro_players[ids[i]] = struct{}{}
+	}
+}
+
+// ClearChinchiroPlayers clears the "chinchiro_players" edge to the ChinchiroPlayer entity.
+func (m *UserMutation) ClearChinchiroPlayers() {
+	m.clearedchinchiro_players = true
+}
+
+// ChinchiroPlayersCleared reports if the "chinchiro_players" edge to the ChinchiroPlayer entity was cleared.
+func (m *UserMutation) ChinchiroPlayersCleared() bool {
+	return m.clearedchinchiro_players
+}
+
+// RemoveChinchiroPlayerIDs removes the "chinchiro_players" edge to the ChinchiroPlayer entity by IDs.
+func (m *UserMutation) RemoveChinchiroPlayerIDs(ids ...uuid.UUID) {
+	if m.removedchinchiro_players == nil {
+		m.removedchinchiro_players = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.chinchiro_players, ids[i])
+		m.removedchinchiro_players[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedChinchiroPlayers returns the removed IDs of the "chinchiro_players" edge to the ChinchiroPlayer entity.
+func (m *UserMutation) RemovedChinchiroPlayersIDs() (ids []uuid.UUID) {
+	for id := range m.removedchinchiro_players {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ChinchiroPlayersIDs returns the "chinchiro_players" edge IDs in the mutation.
+func (m *UserMutation) ChinchiroPlayersIDs() (ids []uuid.UUID) {
+	for id := range m.chinchiro_players {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetChinchiroPlayers resets all changes to the "chinchiro_players" edge.
+func (m *UserMutation) ResetChinchiroPlayers() {
+	m.chinchiro_players = nil
+	m.clearedchinchiro_players = false
+	m.removedchinchiro_players = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -8626,7 +10223,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 5)
 	if m.own_guilds != nil {
 		edges = append(edges, user.EdgeOwnGuilds)
 	}
@@ -8635,6 +10232,12 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.word_suffix != nil {
 		edges = append(edges, user.EdgeWordSuffix)
+	}
+	if m.chinchiro_sessions != nil {
+		edges = append(edges, user.EdgeChinchiroSessions)
+	}
+	if m.chinchiro_players != nil {
+		edges = append(edges, user.EdgeChinchiroPlayers)
 	}
 	return edges
 }
@@ -8661,13 +10264,25 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeChinchiroSessions:
+		ids := make([]ent.Value, 0, len(m.chinchiro_sessions))
+		for id := range m.chinchiro_sessions {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgeChinchiroPlayers:
+		ids := make([]ent.Value, 0, len(m.chinchiro_players))
+		for id := range m.chinchiro_players {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 5)
 	if m.removedown_guilds != nil {
 		edges = append(edges, user.EdgeOwnGuilds)
 	}
@@ -8676,6 +10291,12 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedword_suffix != nil {
 		edges = append(edges, user.EdgeWordSuffix)
+	}
+	if m.removedchinchiro_sessions != nil {
+		edges = append(edges, user.EdgeChinchiroSessions)
+	}
+	if m.removedchinchiro_players != nil {
+		edges = append(edges, user.EdgeChinchiroPlayers)
 	}
 	return edges
 }
@@ -8702,13 +10323,25 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeChinchiroSessions:
+		ids := make([]ent.Value, 0, len(m.removedchinchiro_sessions))
+		for id := range m.removedchinchiro_sessions {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgeChinchiroPlayers:
+		ids := make([]ent.Value, 0, len(m.removedchinchiro_players))
+		for id := range m.removedchinchiro_players {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 5)
 	if m.clearedown_guilds {
 		edges = append(edges, user.EdgeOwnGuilds)
 	}
@@ -8717,6 +10350,12 @@ func (m *UserMutation) ClearedEdges() []string {
 	}
 	if m.clearedword_suffix {
 		edges = append(edges, user.EdgeWordSuffix)
+	}
+	if m.clearedchinchiro_sessions {
+		edges = append(edges, user.EdgeChinchiroSessions)
+	}
+	if m.clearedchinchiro_players {
+		edges = append(edges, user.EdgeChinchiroPlayers)
 	}
 	return edges
 }
@@ -8731,6 +10370,10 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedguilds
 	case user.EdgeWordSuffix:
 		return m.clearedword_suffix
+	case user.EdgeChinchiroSessions:
+		return m.clearedchinchiro_sessions
+	case user.EdgeChinchiroPlayers:
+		return m.clearedchinchiro_players
 	}
 	return false
 }
@@ -8755,6 +10398,12 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeWordSuffix:
 		m.ResetWordSuffix()
+		return nil
+	case user.EdgeChinchiroSessions:
+		m.ResetChinchiroSessions()
+		return nil
+	case user.EdgeChinchiroPlayers:
+		m.ResetChinchiroPlayers()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

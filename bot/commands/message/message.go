@@ -409,7 +409,7 @@ func Command(c *components.Components) *generic.Command {
 					generic.PermissionString("message.pin.create"),
 				},
 				DiscordPerm: discord.PermissionManageMessages,
-				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+				CommandHandler: func(_ *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					if err := event.Modal(
 						discord.NewModalCreateBuilder().
 							SetTitle(translate.Message(event.Locale(), "components.message.pin.create.modal.title")).
@@ -729,6 +729,15 @@ func Command(c *components.Components) *generic.Command {
 						}
 					}
 
+					g, err := c.GuildCreateID(event, event.GuildID)
+					if err != nil {
+						return errors.NewError(err)
+					}
+					if !g.QueryMessagePins().Where(messagepin.ChannelID(event.ChannelID)).ExistX(event) {
+						return nil
+					}
+					m := g.QueryMessagePins().Where(messagepin.ChannelID(event.ChannelID)).FirstX(event)
+
 					webhook, err := event.Client().WebhookManager().GetMessenger(channel)
 					if err != nil {
 						err1 := rest.Error{}
@@ -740,15 +749,6 @@ func Command(c *components.Components) *generic.Command {
 					if event.Message.WebhookID != nil && webhook.Webhook().ID() == *event.Message.WebhookID {
 						return nil
 					}
-
-					g, err := c.GuildCreateID(event, event.GuildID)
-					if err != nil {
-						return errors.NewError(err)
-					}
-					if !g.QueryMessagePins().Where(messagepin.ChannelID(event.ChannelID)).ExistX(event) {
-						return nil
-					}
-					m := g.QueryMessagePins().Where(messagepin.ChannelID(event.ChannelID)).FirstX(event)
 
 					if m.RateLimit.CheckLimit() {
 						if m.BeforeID != nil {
@@ -798,24 +798,6 @@ func Command(c *components.Components) *generic.Command {
 				}
 				defer c.GetLock("message_pin").Mutex(e.ChannelID).Unlock()
 				if e.Message.WebhookID == nil {
-					return nil
-				}
-
-				var channel discord.Channel
-				var err error
-				channel, ok := e.Channel()
-				if !ok {
-					channel, err = e.Client().Rest().GetChannel(e.ChannelID)
-					if err != nil {
-						return errors.NewError(err)
-					}
-				}
-
-				webhook, err := e.Client().WebhookManager().GetMessenger(channel)
-				if err != nil {
-					return errors.NewError(err)
-				}
-				if e.Message.WebhookID != nil && webhook.Webhook().ID() != *e.Message.WebhookID {
 					return nil
 				}
 

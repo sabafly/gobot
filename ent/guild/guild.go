@@ -75,6 +75,8 @@ const (
 	EdgeRolePanelPlacements = "role_panel_placements"
 	// EdgeRolePanelEdits holds the string denoting the role_panel_edits edge name in mutations.
 	EdgeRolePanelEdits = "role_panel_edits"
+	// EdgeChinchiroSessions holds the string denoting the chinchiro_sessions edge name in mutations.
+	EdgeChinchiroSessions = "chinchiro_sessions"
 	// Table holds the table name of the guild in the database.
 	Table = "guilds"
 	// OwnerTable is the table that holds the owner relation/edge.
@@ -126,6 +128,13 @@ const (
 	RolePanelEditsInverseTable = "role_panel_edits"
 	// RolePanelEditsColumn is the table column denoting the role_panel_edits relation/edge.
 	RolePanelEditsColumn = "guild_role_panel_edits"
+	// ChinchiroSessionsTable is the table that holds the chinchiro_sessions relation/edge.
+	ChinchiroSessionsTable = "chinchiro_sessions"
+	// ChinchiroSessionsInverseTable is the table name for the ChinchiroSession entity.
+	// It exists in this package in order to avoid circular dependency with the "chinchirosession" package.
+	ChinchiroSessionsInverseTable = "chinchiro_sessions"
+	// ChinchiroSessionsColumn is the table column denoting the chinchiro_sessions relation/edge.
+	ChinchiroSessionsColumn = "guild_chinchiro_sessions"
 )
 
 // Columns holds all SQL columns for guild fields.
@@ -423,6 +432,20 @@ func ByRolePanelEdits(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newRolePanelEditsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByChinchiroSessionsCount orders the results by chinchiro_sessions count.
+func ByChinchiroSessionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newChinchiroSessionsStep(), opts...)
+	}
+}
+
+// ByChinchiroSessions orders the results by chinchiro_sessions terms.
+func ByChinchiroSessions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newChinchiroSessionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newOwnerStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -470,5 +493,12 @@ func newRolePanelEditsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(RolePanelEditsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, RolePanelEditsTable, RolePanelEditsColumn),
+	)
+}
+func newChinchiroSessionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ChinchiroSessionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ChinchiroSessionsTable, ChinchiroSessionsColumn),
 	)
 }

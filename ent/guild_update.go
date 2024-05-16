@@ -15,6 +15,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+	"github.com/sabafly/gobot/ent/chinchirosession"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
@@ -487,6 +488,21 @@ func (gu *GuildUpdate) AddRolePanelEdits(r ...*RolePanelEdit) *GuildUpdate {
 	return gu.AddRolePanelEditIDs(ids...)
 }
 
+// AddChinchiroSessionIDs adds the "chinchiro_sessions" edge to the ChinchiroSession entity by IDs.
+func (gu *GuildUpdate) AddChinchiroSessionIDs(ids ...uuid.UUID) *GuildUpdate {
+	gu.mutation.AddChinchiroSessionIDs(ids...)
+	return gu
+}
+
+// AddChinchiroSessions adds the "chinchiro_sessions" edges to the ChinchiroSession entity.
+func (gu *GuildUpdate) AddChinchiroSessions(c ...*ChinchiroSession) *GuildUpdate {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return gu.AddChinchiroSessionIDs(ids...)
+}
+
 // Mutation returns the GuildMutation object of the builder.
 func (gu *GuildUpdate) Mutation() *GuildMutation {
 	return gu.mutation
@@ -622,6 +638,27 @@ func (gu *GuildUpdate) RemoveRolePanelEdits(r ...*RolePanelEdit) *GuildUpdate {
 		ids[i] = r[i].ID
 	}
 	return gu.RemoveRolePanelEditIDs(ids...)
+}
+
+// ClearChinchiroSessions clears all "chinchiro_sessions" edges to the ChinchiroSession entity.
+func (gu *GuildUpdate) ClearChinchiroSessions() *GuildUpdate {
+	gu.mutation.ClearChinchiroSessions()
+	return gu
+}
+
+// RemoveChinchiroSessionIDs removes the "chinchiro_sessions" edge to ChinchiroSession entities by IDs.
+func (gu *GuildUpdate) RemoveChinchiroSessionIDs(ids ...uuid.UUID) *GuildUpdate {
+	gu.mutation.RemoveChinchiroSessionIDs(ids...)
+	return gu
+}
+
+// RemoveChinchiroSessions removes "chinchiro_sessions" edges to ChinchiroSession entities.
+func (gu *GuildUpdate) RemoveChinchiroSessions(c ...*ChinchiroSession) *GuildUpdate {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return gu.RemoveChinchiroSessionIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -1128,6 +1165,51 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if gu.mutation.ChinchiroSessionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.ChinchiroSessionsTable,
+			Columns: []string{guild.ChinchiroSessionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(chinchirosession.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.RemovedChinchiroSessionsIDs(); len(nodes) > 0 && !gu.mutation.ChinchiroSessionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.ChinchiroSessionsTable,
+			Columns: []string{guild.ChinchiroSessionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(chinchirosession.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := gu.mutation.ChinchiroSessionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.ChinchiroSessionsTable,
+			Columns: []string{guild.ChinchiroSessionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(chinchirosession.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, gu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{guild.Label}
@@ -1595,6 +1677,21 @@ func (guo *GuildUpdateOne) AddRolePanelEdits(r ...*RolePanelEdit) *GuildUpdateOn
 	return guo.AddRolePanelEditIDs(ids...)
 }
 
+// AddChinchiroSessionIDs adds the "chinchiro_sessions" edge to the ChinchiroSession entity by IDs.
+func (guo *GuildUpdateOne) AddChinchiroSessionIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	guo.mutation.AddChinchiroSessionIDs(ids...)
+	return guo
+}
+
+// AddChinchiroSessions adds the "chinchiro_sessions" edges to the ChinchiroSession entity.
+func (guo *GuildUpdateOne) AddChinchiroSessions(c ...*ChinchiroSession) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return guo.AddChinchiroSessionIDs(ids...)
+}
+
 // Mutation returns the GuildMutation object of the builder.
 func (guo *GuildUpdateOne) Mutation() *GuildMutation {
 	return guo.mutation
@@ -1730,6 +1827,27 @@ func (guo *GuildUpdateOne) RemoveRolePanelEdits(r ...*RolePanelEdit) *GuildUpdat
 		ids[i] = r[i].ID
 	}
 	return guo.RemoveRolePanelEditIDs(ids...)
+}
+
+// ClearChinchiroSessions clears all "chinchiro_sessions" edges to the ChinchiroSession entity.
+func (guo *GuildUpdateOne) ClearChinchiroSessions() *GuildUpdateOne {
+	guo.mutation.ClearChinchiroSessions()
+	return guo
+}
+
+// RemoveChinchiroSessionIDs removes the "chinchiro_sessions" edge to ChinchiroSession entities by IDs.
+func (guo *GuildUpdateOne) RemoveChinchiroSessionIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	guo.mutation.RemoveChinchiroSessionIDs(ids...)
+	return guo
+}
+
+// RemoveChinchiroSessions removes "chinchiro_sessions" edges to ChinchiroSession entities.
+func (guo *GuildUpdateOne) RemoveChinchiroSessions(c ...*ChinchiroSession) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return guo.RemoveChinchiroSessionIDs(ids...)
 }
 
 // Where appends a list predicates to the GuildUpdate builder.
@@ -2259,6 +2377,51 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(rolepaneledit.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if guo.mutation.ChinchiroSessionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.ChinchiroSessionsTable,
+			Columns: []string{guild.ChinchiroSessionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(chinchirosession.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.RemovedChinchiroSessionsIDs(); len(nodes) > 0 && !guo.mutation.ChinchiroSessionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.ChinchiroSessionsTable,
+			Columns: []string{guild.ChinchiroSessionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(chinchirosession.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := guo.mutation.ChinchiroSessionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.ChinchiroSessionsTable,
+			Columns: []string{guild.ChinchiroSessionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(chinchirosession.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

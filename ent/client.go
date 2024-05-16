@@ -17,6 +17,8 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/sabafly/gobot/ent/chinchiroplayer"
+	"github.com/sabafly/gobot/ent/chinchirosession"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
@@ -33,6 +35,10 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// ChinchiroPlayer is the client for interacting with the ChinchiroPlayer builders.
+	ChinchiroPlayer *ChinchiroPlayerClient
+	// ChinchiroSession is the client for interacting with the ChinchiroSession builders.
+	ChinchiroSession *ChinchiroSessionClient
 	// Guild is the client for interacting with the Guild builders.
 	Guild *GuildClient
 	// Member is the client for interacting with the Member builders.
@@ -62,6 +68,8 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.ChinchiroPlayer = NewChinchiroPlayerClient(c.config)
+	c.ChinchiroSession = NewChinchiroSessionClient(c.config)
 	c.Guild = NewGuildClient(c.config)
 	c.Member = NewMemberClient(c.config)
 	c.MessagePin = NewMessagePinClient(c.config)
@@ -161,17 +169,19 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:             ctx,
-		config:          cfg,
-		Guild:           NewGuildClient(cfg),
-		Member:          NewMemberClient(cfg),
-		MessagePin:      NewMessagePinClient(cfg),
-		MessageRemind:   NewMessageRemindClient(cfg),
-		RolePanel:       NewRolePanelClient(cfg),
-		RolePanelEdit:   NewRolePanelEditClient(cfg),
-		RolePanelPlaced: NewRolePanelPlacedClient(cfg),
-		User:            NewUserClient(cfg),
-		WordSuffix:      NewWordSuffixClient(cfg),
+		ctx:              ctx,
+		config:           cfg,
+		ChinchiroPlayer:  NewChinchiroPlayerClient(cfg),
+		ChinchiroSession: NewChinchiroSessionClient(cfg),
+		Guild:            NewGuildClient(cfg),
+		Member:           NewMemberClient(cfg),
+		MessagePin:       NewMessagePinClient(cfg),
+		MessageRemind:    NewMessageRemindClient(cfg),
+		RolePanel:        NewRolePanelClient(cfg),
+		RolePanelEdit:    NewRolePanelEditClient(cfg),
+		RolePanelPlaced:  NewRolePanelPlacedClient(cfg),
+		User:             NewUserClient(cfg),
+		WordSuffix:       NewWordSuffixClient(cfg),
 	}, nil
 }
 
@@ -189,24 +199,26 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:             ctx,
-		config:          cfg,
-		Guild:           NewGuildClient(cfg),
-		Member:          NewMemberClient(cfg),
-		MessagePin:      NewMessagePinClient(cfg),
-		MessageRemind:   NewMessageRemindClient(cfg),
-		RolePanel:       NewRolePanelClient(cfg),
-		RolePanelEdit:   NewRolePanelEditClient(cfg),
-		RolePanelPlaced: NewRolePanelPlacedClient(cfg),
-		User:            NewUserClient(cfg),
-		WordSuffix:      NewWordSuffixClient(cfg),
+		ctx:              ctx,
+		config:           cfg,
+		ChinchiroPlayer:  NewChinchiroPlayerClient(cfg),
+		ChinchiroSession: NewChinchiroSessionClient(cfg),
+		Guild:            NewGuildClient(cfg),
+		Member:           NewMemberClient(cfg),
+		MessagePin:       NewMessagePinClient(cfg),
+		MessageRemind:    NewMessageRemindClient(cfg),
+		RolePanel:        NewRolePanelClient(cfg),
+		RolePanelEdit:    NewRolePanelEditClient(cfg),
+		RolePanelPlaced:  NewRolePanelPlacedClient(cfg),
+		User:             NewUserClient(cfg),
+		WordSuffix:       NewWordSuffixClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Guild.
+//		ChinchiroPlayer.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -229,8 +241,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Guild, c.Member, c.MessagePin, c.MessageRemind, c.RolePanel, c.RolePanelEdit,
-		c.RolePanelPlaced, c.User, c.WordSuffix,
+		c.ChinchiroPlayer, c.ChinchiroSession, c.Guild, c.Member, c.MessagePin,
+		c.MessageRemind, c.RolePanel, c.RolePanelEdit, c.RolePanelPlaced, c.User,
+		c.WordSuffix,
 	} {
 		n.Use(hooks...)
 	}
@@ -240,8 +253,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Guild, c.Member, c.MessagePin, c.MessageRemind, c.RolePanel, c.RolePanelEdit,
-		c.RolePanelPlaced, c.User, c.WordSuffix,
+		c.ChinchiroPlayer, c.ChinchiroSession, c.Guild, c.Member, c.MessagePin,
+		c.MessageRemind, c.RolePanel, c.RolePanelEdit, c.RolePanelPlaced, c.User,
+		c.WordSuffix,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -250,6 +264,10 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *ChinchiroPlayerMutation:
+		return c.ChinchiroPlayer.mutate(ctx, m)
+	case *ChinchiroSessionMutation:
+		return c.ChinchiroSession.mutate(ctx, m)
 	case *GuildMutation:
 		return c.Guild.mutate(ctx, m)
 	case *MemberMutation:
@@ -270,6 +288,336 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.WordSuffix.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// ChinchiroPlayerClient is a client for the ChinchiroPlayer schema.
+type ChinchiroPlayerClient struct {
+	config
+}
+
+// NewChinchiroPlayerClient returns a client for the ChinchiroPlayer from the given config.
+func NewChinchiroPlayerClient(c config) *ChinchiroPlayerClient {
+	return &ChinchiroPlayerClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `chinchiroplayer.Hooks(f(g(h())))`.
+func (c *ChinchiroPlayerClient) Use(hooks ...Hook) {
+	c.hooks.ChinchiroPlayer = append(c.hooks.ChinchiroPlayer, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `chinchiroplayer.Intercept(f(g(h())))`.
+func (c *ChinchiroPlayerClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ChinchiroPlayer = append(c.inters.ChinchiroPlayer, interceptors...)
+}
+
+// Create returns a builder for creating a ChinchiroPlayer entity.
+func (c *ChinchiroPlayerClient) Create() *ChinchiroPlayerCreate {
+	mutation := newChinchiroPlayerMutation(c.config, OpCreate)
+	return &ChinchiroPlayerCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ChinchiroPlayer entities.
+func (c *ChinchiroPlayerClient) CreateBulk(builders ...*ChinchiroPlayerCreate) *ChinchiroPlayerCreateBulk {
+	return &ChinchiroPlayerCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ChinchiroPlayerClient) MapCreateBulk(slice any, setFunc func(*ChinchiroPlayerCreate, int)) *ChinchiroPlayerCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ChinchiroPlayerCreateBulk{err: fmt.Errorf("calling to ChinchiroPlayerClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ChinchiroPlayerCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ChinchiroPlayerCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ChinchiroPlayer.
+func (c *ChinchiroPlayerClient) Update() *ChinchiroPlayerUpdate {
+	mutation := newChinchiroPlayerMutation(c.config, OpUpdate)
+	return &ChinchiroPlayerUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ChinchiroPlayerClient) UpdateOne(cp *ChinchiroPlayer) *ChinchiroPlayerUpdateOne {
+	mutation := newChinchiroPlayerMutation(c.config, OpUpdateOne, withChinchiroPlayer(cp))
+	return &ChinchiroPlayerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ChinchiroPlayerClient) UpdateOneID(id uuid.UUID) *ChinchiroPlayerUpdateOne {
+	mutation := newChinchiroPlayerMutation(c.config, OpUpdateOne, withChinchiroPlayerID(id))
+	return &ChinchiroPlayerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ChinchiroPlayer.
+func (c *ChinchiroPlayerClient) Delete() *ChinchiroPlayerDelete {
+	mutation := newChinchiroPlayerMutation(c.config, OpDelete)
+	return &ChinchiroPlayerDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ChinchiroPlayerClient) DeleteOne(cp *ChinchiroPlayer) *ChinchiroPlayerDeleteOne {
+	return c.DeleteOneID(cp.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ChinchiroPlayerClient) DeleteOneID(id uuid.UUID) *ChinchiroPlayerDeleteOne {
+	builder := c.Delete().Where(chinchiroplayer.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ChinchiroPlayerDeleteOne{builder}
+}
+
+// Query returns a query builder for ChinchiroPlayer.
+func (c *ChinchiroPlayerClient) Query() *ChinchiroPlayerQuery {
+	return &ChinchiroPlayerQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeChinchiroPlayer},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ChinchiroPlayer entity by its id.
+func (c *ChinchiroPlayerClient) Get(ctx context.Context, id uuid.UUID) (*ChinchiroPlayer, error) {
+	return c.Query().Where(chinchiroplayer.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ChinchiroPlayerClient) GetX(ctx context.Context, id uuid.UUID) *ChinchiroPlayer {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a ChinchiroPlayer.
+func (c *ChinchiroPlayerClient) QueryUser(cp *ChinchiroPlayer) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := cp.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(chinchiroplayer.Table, chinchiroplayer.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, chinchiroplayer.UserTable, chinchiroplayer.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(cp.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QuerySession queries the session edge of a ChinchiroPlayer.
+func (c *ChinchiroPlayerClient) QuerySession(cp *ChinchiroPlayer) *ChinchiroSessionQuery {
+	query := (&ChinchiroSessionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := cp.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(chinchiroplayer.Table, chinchiroplayer.FieldID, id),
+			sqlgraph.To(chinchirosession.Table, chinchirosession.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, chinchiroplayer.SessionTable, chinchiroplayer.SessionColumn),
+		)
+		fromV = sqlgraph.Neighbors(cp.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ChinchiroPlayerClient) Hooks() []Hook {
+	return c.hooks.ChinchiroPlayer
+}
+
+// Interceptors returns the client interceptors.
+func (c *ChinchiroPlayerClient) Interceptors() []Interceptor {
+	return c.inters.ChinchiroPlayer
+}
+
+func (c *ChinchiroPlayerClient) mutate(ctx context.Context, m *ChinchiroPlayerMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ChinchiroPlayerCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ChinchiroPlayerUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ChinchiroPlayerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ChinchiroPlayerDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ChinchiroPlayer mutation op: %q", m.Op())
+	}
+}
+
+// ChinchiroSessionClient is a client for the ChinchiroSession schema.
+type ChinchiroSessionClient struct {
+	config
+}
+
+// NewChinchiroSessionClient returns a client for the ChinchiroSession from the given config.
+func NewChinchiroSessionClient(c config) *ChinchiroSessionClient {
+	return &ChinchiroSessionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `chinchirosession.Hooks(f(g(h())))`.
+func (c *ChinchiroSessionClient) Use(hooks ...Hook) {
+	c.hooks.ChinchiroSession = append(c.hooks.ChinchiroSession, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `chinchirosession.Intercept(f(g(h())))`.
+func (c *ChinchiroSessionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ChinchiroSession = append(c.inters.ChinchiroSession, interceptors...)
+}
+
+// Create returns a builder for creating a ChinchiroSession entity.
+func (c *ChinchiroSessionClient) Create() *ChinchiroSessionCreate {
+	mutation := newChinchiroSessionMutation(c.config, OpCreate)
+	return &ChinchiroSessionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ChinchiroSession entities.
+func (c *ChinchiroSessionClient) CreateBulk(builders ...*ChinchiroSessionCreate) *ChinchiroSessionCreateBulk {
+	return &ChinchiroSessionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ChinchiroSessionClient) MapCreateBulk(slice any, setFunc func(*ChinchiroSessionCreate, int)) *ChinchiroSessionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ChinchiroSessionCreateBulk{err: fmt.Errorf("calling to ChinchiroSessionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ChinchiroSessionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ChinchiroSessionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ChinchiroSession.
+func (c *ChinchiroSessionClient) Update() *ChinchiroSessionUpdate {
+	mutation := newChinchiroSessionMutation(c.config, OpUpdate)
+	return &ChinchiroSessionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ChinchiroSessionClient) UpdateOne(cs *ChinchiroSession) *ChinchiroSessionUpdateOne {
+	mutation := newChinchiroSessionMutation(c.config, OpUpdateOne, withChinchiroSession(cs))
+	return &ChinchiroSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ChinchiroSessionClient) UpdateOneID(id uuid.UUID) *ChinchiroSessionUpdateOne {
+	mutation := newChinchiroSessionMutation(c.config, OpUpdateOne, withChinchiroSessionID(id))
+	return &ChinchiroSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ChinchiroSession.
+func (c *ChinchiroSessionClient) Delete() *ChinchiroSessionDelete {
+	mutation := newChinchiroSessionMutation(c.config, OpDelete)
+	return &ChinchiroSessionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ChinchiroSessionClient) DeleteOne(cs *ChinchiroSession) *ChinchiroSessionDeleteOne {
+	return c.DeleteOneID(cs.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ChinchiroSessionClient) DeleteOneID(id uuid.UUID) *ChinchiroSessionDeleteOne {
+	builder := c.Delete().Where(chinchirosession.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ChinchiroSessionDeleteOne{builder}
+}
+
+// Query returns a query builder for ChinchiroSession.
+func (c *ChinchiroSessionClient) Query() *ChinchiroSessionQuery {
+	return &ChinchiroSessionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeChinchiroSession},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ChinchiroSession entity by its id.
+func (c *ChinchiroSessionClient) Get(ctx context.Context, id uuid.UUID) (*ChinchiroSession, error) {
+	return c.Query().Where(chinchirosession.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ChinchiroSessionClient) GetX(ctx context.Context, id uuid.UUID) *ChinchiroSession {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryGuild queries the guild edge of a ChinchiroSession.
+func (c *ChinchiroSessionClient) QueryGuild(cs *ChinchiroSession) *GuildQuery {
+	query := (&GuildClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := cs.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(chinchirosession.Table, chinchirosession.FieldID, id),
+			sqlgraph.To(guild.Table, guild.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, chinchirosession.GuildTable, chinchirosession.GuildColumn),
+		)
+		fromV = sqlgraph.Neighbors(cs.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryPlayers queries the players edge of a ChinchiroSession.
+func (c *ChinchiroSessionClient) QueryPlayers(cs *ChinchiroSession) *ChinchiroPlayerQuery {
+	query := (&ChinchiroPlayerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := cs.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(chinchirosession.Table, chinchirosession.FieldID, id),
+			sqlgraph.To(chinchiroplayer.Table, chinchiroplayer.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, chinchirosession.PlayersTable, chinchirosession.PlayersColumn),
+		)
+		fromV = sqlgraph.Neighbors(cs.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *ChinchiroSessionClient) Hooks() []Hook {
+	return c.hooks.ChinchiroSession
+}
+
+// Interceptors returns the client interceptors.
+func (c *ChinchiroSessionClient) Interceptors() []Interceptor {
+	return c.inters.ChinchiroSession
+}
+
+func (c *ChinchiroSessionClient) mutate(ctx context.Context, m *ChinchiroSessionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ChinchiroSessionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ChinchiroSessionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ChinchiroSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ChinchiroSessionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ChinchiroSession mutation op: %q", m.Op())
 	}
 }
 
@@ -486,6 +834,22 @@ func (c *GuildClient) QueryRolePanelEdits(gu *Guild) *RolePanelEditQuery {
 			sqlgraph.From(guild.Table, guild.FieldID, id),
 			sqlgraph.To(rolepaneledit.Table, rolepaneledit.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.RolePanelEditsTable, guild.RolePanelEditsColumn),
+		)
+		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryChinchiroSessions queries the chinchiro_sessions edge of a Guild.
+func (c *GuildClient) QueryChinchiroSessions(gu *Guild) *ChinchiroSessionQuery {
+	query := (&ChinchiroSessionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := gu.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(guild.Table, guild.FieldID, id),
+			sqlgraph.To(chinchirosession.Table, chinchirosession.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, guild.ChinchiroSessionsTable, guild.ChinchiroSessionsColumn),
 		)
 		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
 		return fromV, nil
@@ -1648,6 +2012,38 @@ func (c *UserClient) QueryWordSuffix(u *User) *WordSuffixQuery {
 	return query
 }
 
+// QueryChinchiroSessions queries the chinchiro_sessions edge of a User.
+func (c *UserClient) QueryChinchiroSessions(u *User) *ChinchiroSessionQuery {
+	query := (&ChinchiroSessionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(chinchirosession.Table, chinchirosession.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ChinchiroSessionsTable, user.ChinchiroSessionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryChinchiroPlayers queries the chinchiro_players edge of a User.
+func (c *UserClient) QueryChinchiroPlayers(u *User) *ChinchiroPlayerQuery {
+	query := (&ChinchiroPlayerClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(chinchiroplayer.Table, chinchiroplayer.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.ChinchiroPlayersTable, user.ChinchiroPlayersColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -1841,11 +2237,11 @@ func (c *WordSuffixClient) mutate(ctx context.Context, m *WordSuffixMutation) (V
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Guild, Member, MessagePin, MessageRemind, RolePanel, RolePanelEdit,
-		RolePanelPlaced, User, WordSuffix []ent.Hook
+		ChinchiroPlayer, ChinchiroSession, Guild, Member, MessagePin, MessageRemind,
+		RolePanel, RolePanelEdit, RolePanelPlaced, User, WordSuffix []ent.Hook
 	}
 	inters struct {
-		Guild, Member, MessagePin, MessageRemind, RolePanel, RolePanelEdit,
-		RolePanelPlaced, User, WordSuffix []ent.Interceptor
+		ChinchiroPlayer, ChinchiroSession, Guild, Member, MessagePin, MessageRemind,
+		RolePanel, RolePanelEdit, RolePanelPlaced, User, WordSuffix []ent.Interceptor
 	}
 )

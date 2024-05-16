@@ -8,6 +8,8 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+	"github.com/sabafly/gobot/ent/chinchiroplayer"
+	"github.com/sabafly/gobot/ent/chinchirosession"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
@@ -26,6 +28,34 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	chinchiroplayerFields := schema.ChinchiroPlayer{}.Fields()
+	_ = chinchiroplayerFields
+	// chinchiroplayerDescPoint is the schema descriptor for point field.
+	chinchiroplayerDescPoint := chinchiroplayerFields[1].Descriptor()
+	// chinchiroplayer.DefaultPoint holds the default value on creation for the point field.
+	chinchiroplayer.DefaultPoint = chinchiroplayerDescPoint.Default.(int)
+	// chinchiroplayerDescIsOwner is the schema descriptor for is_owner field.
+	chinchiroplayerDescIsOwner := chinchiroplayerFields[2].Descriptor()
+	// chinchiroplayer.DefaultIsOwner holds the default value on creation for the is_owner field.
+	chinchiroplayer.DefaultIsOwner = chinchiroplayerDescIsOwner.Default.(bool)
+	// chinchiroplayerDescID is the schema descriptor for id field.
+	chinchiroplayerDescID := chinchiroplayerFields[0].Descriptor()
+	// chinchiroplayer.DefaultID holds the default value on creation for the id field.
+	chinchiroplayer.DefaultID = chinchiroplayerDescID.Default.(func() uuid.UUID)
+	chinchirosessionFields := schema.ChinchiroSession{}.Fields()
+	_ = chinchirosessionFields
+	// chinchirosessionDescTurn is the schema descriptor for turn field.
+	chinchirosessionDescTurn := chinchirosessionFields[1].Descriptor()
+	// chinchirosession.DefaultTurn holds the default value on creation for the turn field.
+	chinchirosession.DefaultTurn = chinchirosessionDescTurn.Default.(int)
+	// chinchirosessionDescLoop is the schema descriptor for loop field.
+	chinchirosessionDescLoop := chinchirosessionFields[2].Descriptor()
+	// chinchirosession.DefaultLoop holds the default value on creation for the loop field.
+	chinchirosession.DefaultLoop = chinchirosessionDescLoop.Default.(int)
+	// chinchirosessionDescID is the schema descriptor for id field.
+	chinchirosessionDescID := chinchirosessionFields[0].Descriptor()
+	// chinchirosession.DefaultID holds the default value on creation for the id field.
+	chinchirosession.DefaultID = chinchirosessionDescID.Default.(func() uuid.UUID)
 	guildFields := schema.Guild{}.Fields()
 	_ = guildFields
 	// guildDescName is the schema descriptor for name field.

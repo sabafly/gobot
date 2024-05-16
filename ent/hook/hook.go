@@ -9,6 +9,30 @@ import (
 	"github.com/sabafly/gobot/ent"
 )
 
+// The ChinchiroPlayerFunc type is an adapter to allow the use of ordinary
+// function as ChinchiroPlayer mutator.
+type ChinchiroPlayerFunc func(context.Context, *ent.ChinchiroPlayerMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ChinchiroPlayerFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ChinchiroPlayerMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ChinchiroPlayerMutation", m)
+}
+
+// The ChinchiroSessionFunc type is an adapter to allow the use of ordinary
+// function as ChinchiroSession mutator.
+type ChinchiroSessionFunc func(context.Context, *ent.ChinchiroSessionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ChinchiroSessionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ChinchiroSessionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ChinchiroSessionMutation", m)
+}
+
 // The GuildFunc type is an adapter to allow the use of ordinary
 // function as Guild mutator.
 type GuildFunc func(context.Context, *ent.GuildMutation) (ent.Value, error)

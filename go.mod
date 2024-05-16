@@ -4,7 +4,7 @@ go 1.22.0
 
 require (
 	entgo.io/ent v0.13.1
-	github.com/disgoorg/disgo v0.18.2
+	github.com/disgoorg/disgo v0.18.4
 	github.com/disgoorg/json v1.1.0
 	github.com/disgoorg/snowflake/v2 v2.0.1
 	github.com/forPelevin/gomoji v1.2.0
@@ -13,7 +13,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/markusmobius/go-dateparser v1.2.1
 	github.com/nicksnyder/go-i18n/v2 v2.4.0
-	github.com/pelletier/go-toml/v2 v2.2.1
+	github.com/pelletier/go-toml/v2 v2.2.2
 	github.com/redis/go-redis/v9 v9.5.1
 	github.com/spf13/cobra v1.8.0
 	github.com/tj/go-naturaldate v1.3.0
@@ -23,7 +23,7 @@ require (
 )
 
 require (
-	ariga.io/atlas v0.21.1 // indirect
+	ariga.io/atlas v0.22.0 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
@@ -57,4 +57,4 @@ require (
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
 
-replace github.com/disgoorg/disgo => github.com/sabafly/sabafly-disgo v0.13.13-0.20240420164318-79cb68abab87
+replace github.com/disgoorg/disgo => github.com/sabafly/sabafly-disgo v0.13.13-0.20240503155011-cc67f5710773

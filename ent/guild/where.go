@@ -1326,6 +1326,29 @@ func HasRolePanelEditsWith(preds ...predicate.RolePanelEdit) predicate.Guild {
 	})
 }
 
+// HasChinchiroSessions applies the HasEdge predicate on the "chinchiro_sessions" edge.
+func HasChinchiroSessions() predicate.Guild {
+	return predicate.Guild(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, ChinchiroSessionsTable, ChinchiroSessionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasChinchiroSessionsWith applies the HasEdge predicate on the "chinchiro_sessions" edge with a given conditions (other predicates).
+func HasChinchiroSessionsWith(preds ...predicate.ChinchiroSession) predicate.Guild {
+	return predicate.Guild(func(s *sql.Selector) {
+		step := newChinchiroSessionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Guild) predicate.Guild {
 	return predicate.Guild(sql.AndPredicates(predicates...))

@@ -8,6 +8,64 @@ import (
 )
 
 var (
+	// ChinchiroPlayersColumns holds the columns for the "chinchiro_players" table.
+	ChinchiroPlayersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "point", Type: field.TypeInt, Default: 0},
+		{Name: "is_owner", Type: field.TypeBool, Default: false},
+		{Name: "bet", Type: field.TypeInt, Nullable: true},
+		{Name: "dices", Type: field.TypeJSON, Nullable: true},
+		{Name: "chinchiro_session_players", Type: field.TypeUUID},
+		{Name: "user_id", Type: field.TypeUint64},
+	}
+	// ChinchiroPlayersTable holds the schema information for the "chinchiro_players" table.
+	ChinchiroPlayersTable = &schema.Table{
+		Name:       "chinchiro_players",
+		Columns:    ChinchiroPlayersColumns,
+		PrimaryKey: []*schema.Column{ChinchiroPlayersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "chinchiro_players_chinchiro_sessions_players",
+				Columns:    []*schema.Column{ChinchiroPlayersColumns[5]},
+				RefColumns: []*schema.Column{ChinchiroSessionsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "chinchiro_players_users_chinchiro_players",
+				Columns:    []*schema.Column{ChinchiroPlayersColumns[6]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// ChinchiroSessionsColumns holds the columns for the "chinchiro_sessions" table.
+	ChinchiroSessionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "turn", Type: field.TypeInt, Default: 0},
+		{Name: "loop", Type: field.TypeInt, Default: 0},
+		{Name: "guild_chinchiro_sessions", Type: field.TypeUint64, Nullable: true},
+		{Name: "user_chinchiro_sessions", Type: field.TypeUint64, Nullable: true},
+	}
+	// ChinchiroSessionsTable holds the schema information for the "chinchiro_sessions" table.
+	ChinchiroSessionsTable = &schema.Table{
+		Name:       "chinchiro_sessions",
+		Columns:    ChinchiroSessionsColumns,
+		PrimaryKey: []*schema.Column{ChinchiroSessionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "chinchiro_sessions_guilds_chinchiro_sessions",
+				Columns:    []*schema.Column{ChinchiroSessionsColumns[3]},
+				RefColumns: []*schema.Column{GuildsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "chinchiro_sessions_users_chinchiro_sessions",
+				Columns:    []*schema.Column{ChinchiroSessionsColumns[4]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// GuildsColumns holds the columns for the "guilds" table.
 	GuildsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUint64, Increment: true},
@@ -271,6 +329,8 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		ChinchiroPlayersTable,
+		ChinchiroSessionsTable,
 		GuildsTable,
 		MembersTable,
 		MessagePinsTable,
@@ -284,6 +344,10 @@ var (
 )
 
 func init() {
+	ChinchiroPlayersTable.ForeignKeys[0].RefTable = ChinchiroSessionsTable
+	ChinchiroPlayersTable.ForeignKeys[1].RefTable = UsersTable
+	ChinchiroSessionsTable.ForeignKeys[0].RefTable = GuildsTable
+	ChinchiroSessionsTable.ForeignKeys[1].RefTable = UsersTable
 	GuildsTable.ForeignKeys[0].RefTable = UsersTable
 	MembersTable.ForeignKeys[0].RefTable = GuildsTable
 	MembersTable.ForeignKeys[1].RefTable = UsersTable

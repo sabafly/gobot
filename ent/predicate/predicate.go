@@ -6,6 +6,12 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// ChinchiroPlayer is the predicate function for chinchiroplayer builders.
+type ChinchiroPlayer func(*sql.Selector)
+
+// ChinchiroSession is the predicate function for chinchirosession builders.
+type ChinchiroSession func(*sql.Selector)
+
 // Guild is the predicate function for guild builders.
 type Guild func(*sql.Selector)
 

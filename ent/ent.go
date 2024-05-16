@@ -12,6 +12,8 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/sabafly/gobot/ent/chinchiroplayer"
+	"github.com/sabafly/gobot/ent/chinchirosession"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
@@ -81,15 +83,17 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			guild.Table:           guild.ValidColumn,
-			member.Table:          member.ValidColumn,
-			messagepin.Table:      messagepin.ValidColumn,
-			messageremind.Table:   messageremind.ValidColumn,
-			rolepanel.Table:       rolepanel.ValidColumn,
-			rolepaneledit.Table:   rolepaneledit.ValidColumn,
-			rolepanelplaced.Table: rolepanelplaced.ValidColumn,
-			user.Table:            user.ValidColumn,
-			wordsuffix.Table:      wordsuffix.ValidColumn,
+			chinchiroplayer.Table:  chinchiroplayer.ValidColumn,
+			chinchirosession.Table: chinchirosession.ValidColumn,
+			guild.Table:            guild.ValidColumn,
+			member.Table:           member.ValidColumn,
+			messagepin.Table:       messagepin.ValidColumn,
+			messageremind.Table:    messageremind.ValidColumn,
+			rolepanel.Table:        rolepanel.ValidColumn,
+			rolepaneledit.Table:    rolepaneledit.ValidColumn,
+			rolepanelplaced.Table:  rolepanelplaced.ValidColumn,
+			user.Table:             user.ValidColumn,
+			wordsuffix.Table:       wordsuffix.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

@@ -13,6 +13,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+	"github.com/sabafly/gobot/ent/chinchirosession"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
@@ -404,6 +405,21 @@ func (gc *GuildCreate) AddRolePanelEdits(r ...*RolePanelEdit) *GuildCreate {
 		ids[i] = r[i].ID
 	}
 	return gc.AddRolePanelEditIDs(ids...)
+}
+
+// AddChinchiroSessionIDs adds the "chinchiro_sessions" edge to the ChinchiroSession entity by IDs.
+func (gc *GuildCreate) AddChinchiroSessionIDs(ids ...uuid.UUID) *GuildCreate {
+	gc.mutation.AddChinchiroSessionIDs(ids...)
+	return gc
+}
+
+// AddChinchiroSessions adds the "chinchiro_sessions" edges to the ChinchiroSession entity.
+func (gc *GuildCreate) AddChinchiroSessions(c ...*ChinchiroSession) *GuildCreate {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return gc.AddChinchiroSessionIDs(ids...)
 }
 
 // Mutation returns the GuildMutation object of the builder.
@@ -848,6 +864,22 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(rolepaneledit.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := gc.mutation.ChinchiroSessionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.ChinchiroSessionsTable,
+			Columns: []string{guild.ChinchiroSessionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(chinchirosession.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

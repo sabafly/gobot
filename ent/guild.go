@@ -89,9 +89,11 @@ type GuildEdges struct {
 	RolePanelPlacements []*RolePanelPlaced `json:"role_panel_placements,omitempty"`
 	// RolePanelEdits holds the value of the role_panel_edits edge.
 	RolePanelEdits []*RolePanelEdit `json:"role_panel_edits,omitempty"`
+	// ChinchiroSessions holds the value of the chinchiro_sessions edge.
+	ChinchiroSessions []*ChinchiroSession `json:"chinchiro_sessions,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [7]bool
+	loadedTypes [8]bool
 }
 
 // OwnerOrErr returns the Owner value or an error if the edge
@@ -157,6 +159,15 @@ func (e GuildEdges) RolePanelEditsOrErr() ([]*RolePanelEdit, error) {
 		return e.RolePanelEdits, nil
 	}
 	return nil, &NotLoadedError{edge: "role_panel_edits"}
+}
+
+// ChinchiroSessionsOrErr returns the ChinchiroSessions value or an error if the edge
+// was not loaded in eager-loading.
+func (e GuildEdges) ChinchiroSessionsOrErr() ([]*ChinchiroSession, error) {
+	if e.loadedTypes[7] {
+		return e.ChinchiroSessions, nil
+	}
+	return nil, &NotLoadedError{edge: "chinchiro_sessions"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -391,6 +402,11 @@ func (gu *Guild) QueryRolePanelPlacements() *RolePanelPlacedQuery {
 // QueryRolePanelEdits queries the "role_panel_edits" edge of the Guild entity.
 func (gu *Guild) QueryRolePanelEdits() *RolePanelEditQuery {
 	return NewGuildClient(gu.config).QueryRolePanelEdits(gu)
+}
+
+// QueryChinchiroSessions queries the "chinchiro_sessions" edge of the Guild entity.
+func (gu *Guild) QueryChinchiroSessions() *ChinchiroSessionQuery {
+	return NewGuildClient(gu.config).QueryChinchiroSessions(gu)
 }
 
 // Update returns a builder for updating this Guild.

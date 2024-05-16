@@ -30,6 +30,10 @@ const (
 	EdgeGuilds = "guilds"
 	// EdgeWordSuffix holds the string denoting the word_suffix edge name in mutations.
 	EdgeWordSuffix = "word_suffix"
+	// EdgeChinchiroSessions holds the string denoting the chinchiro_sessions edge name in mutations.
+	EdgeChinchiroSessions = "chinchiro_sessions"
+	// EdgeChinchiroPlayers holds the string denoting the chinchiro_players edge name in mutations.
+	EdgeChinchiroPlayers = "chinchiro_players"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// OwnGuildsTable is the table that holds the own_guilds relation/edge.
@@ -53,6 +57,20 @@ const (
 	WordSuffixInverseTable = "word_suffixes"
 	// WordSuffixColumn is the table column denoting the word_suffix relation/edge.
 	WordSuffixColumn = "user_word_suffix"
+	// ChinchiroSessionsTable is the table that holds the chinchiro_sessions relation/edge.
+	ChinchiroSessionsTable = "chinchiro_sessions"
+	// ChinchiroSessionsInverseTable is the table name for the ChinchiroSession entity.
+	// It exists in this package in order to avoid circular dependency with the "chinchirosession" package.
+	ChinchiroSessionsInverseTable = "chinchiro_sessions"
+	// ChinchiroSessionsColumn is the table column denoting the chinchiro_sessions relation/edge.
+	ChinchiroSessionsColumn = "user_chinchiro_sessions"
+	// ChinchiroPlayersTable is the table that holds the chinchiro_players relation/edge.
+	ChinchiroPlayersTable = "chinchiro_players"
+	// ChinchiroPlayersInverseTable is the table name for the ChinchiroPlayer entity.
+	// It exists in this package in order to avoid circular dependency with the "chinchiroplayer" package.
+	ChinchiroPlayersInverseTable = "chinchiro_players"
+	// ChinchiroPlayersColumn is the table column denoting the chinchiro_players relation/edge.
+	ChinchiroPlayersColumn = "user_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -156,6 +174,34 @@ func ByWordSuffix(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newWordSuffixStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByChinchiroSessionsCount orders the results by chinchiro_sessions count.
+func ByChinchiroSessionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newChinchiroSessionsStep(), opts...)
+	}
+}
+
+// ByChinchiroSessions orders the results by chinchiro_sessions terms.
+func ByChinchiroSessions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newChinchiroSessionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByChinchiroPlayersCount orders the results by chinchiro_players count.
+func ByChinchiroPlayersCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newChinchiroPlayersStep(), opts...)
+	}
+}
+
+// ByChinchiroPlayers orders the results by chinchiro_players terms.
+func ByChinchiroPlayers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newChinchiroPlayersStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newOwnGuildsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -175,5 +221,19 @@ func newWordSuffixStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(WordSuffixInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, WordSuffixTable, WordSuffixColumn),
+	)
+}
+func newChinchiroSessionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ChinchiroSessionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ChinchiroSessionsTable, ChinchiroSessionsColumn),
+	)
+}
+func newChinchiroPlayersStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ChinchiroPlayersInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, ChinchiroPlayersTable, ChinchiroPlayersColumn),
 	)
 }

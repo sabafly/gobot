@@ -44,5 +44,7 @@ func (User) Edges() []ent.Edge {
 		edge.To("own_guilds", Guild.Type),
 		edge.To("guilds", Member.Type),
 		edge.To("word_suffix", WordSuffix.Type),
+		edge.To("chinchiro_sessions", ChinchiroSession.Type),
+		edge.To("chinchiro_players", ChinchiroPlayer.Type),
 	}
 }

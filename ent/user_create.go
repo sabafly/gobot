@@ -13,6 +13,8 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+	"github.com/sabafly/gobot/ent/chinchiroplayer"
+	"github.com/sabafly/gobot/ent/chinchirosession"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/user"
@@ -124,6 +126,36 @@ func (uc *UserCreate) AddWordSuffix(w ...*WordSuffix) *UserCreate {
 		ids[i] = w[i].ID
 	}
 	return uc.AddWordSuffixIDs(ids...)
+}
+
+// AddChinchiroSessionIDs adds the "chinchiro_sessions" edge to the ChinchiroSession entity by IDs.
+func (uc *UserCreate) AddChinchiroSessionIDs(ids ...uuid.UUID) *UserCreate {
+	uc.mutation.AddChinchiroSessionIDs(ids...)
+	return uc
+}
+
+// AddChinchiroSessions adds the "chinchiro_sessions" edges to the ChinchiroSession entity.
+func (uc *UserCreate) AddChinchiroSessions(c ...*ChinchiroSession) *UserCreate {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uc.AddChinchiroSessionIDs(ids...)
+}
+
+// AddChinchiroPlayerIDs adds the "chinchiro_players" edge to the ChinchiroPlayer entity by IDs.
+func (uc *UserCreate) AddChinchiroPlayerIDs(ids ...uuid.UUID) *UserCreate {
+	uc.mutation.AddChinchiroPlayerIDs(ids...)
+	return uc
+}
+
+// AddChinchiroPlayers adds the "chinchiro_players" edges to the ChinchiroPlayer entity.
+func (uc *UserCreate) AddChinchiroPlayers(c ...*ChinchiroPlayer) *UserCreate {
+	ids := make([]uuid.UUID, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return uc.AddChinchiroPlayerIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -288,6 +320,38 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(wordsuffix.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.ChinchiroSessionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ChinchiroSessionsTable,
+			Columns: []string{user.ChinchiroSessionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(chinchirosession.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.ChinchiroPlayersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.ChinchiroPlayersTable,
+			Columns: []string{user.ChinchiroPlayersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(chinchiroplayer.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

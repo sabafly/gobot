@@ -31,23 +31,12 @@ func Command(c *components.Components) components.Command {
 			"u/userinfo": generic.CommandHandler(func(_ *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 				var roleString string
 				{ // ロールを取得する
-					roles, err := event.Client().Rest().GetRoles(*event.GuildID())
-					if err != nil {
-						return errors.NewError(err)
-					}
+					event.Member().RoleIDs = append(event.Member().RoleIDs, *event.GuildID())
+					roles := event.Client().Caches().MemberRoles(event.Member().Member)
 					slices.SortStableFunc(roles, func(a, b discord.Role) int {
 						return a.Compare(b)
 					})
-					memberRoleIDs := append(slices.Clone(event.Member().RoleIDs), *event.GuildID())
-					var memberRoles []discord.Role
-					for _, role := range roles {
-						index := slices.Index(memberRoleIDs, role.ID)
-						if index == -1 {
-							continue
-						}
-						memberRoles = append(memberRoles, role)
-					}
-					for i, r := range memberRoles {
+					for i, r := range roles {
 						roleString += fmt.Sprintf("%d %s\n", i+1, discord.RoleMention(r.ID))
 					}
 				}

@@ -105,5 +105,6 @@ func (Guild) Edges() []ent.Edge {
 		edge.To("role_panels", RolePanel.Type),
 		edge.To("role_panel_placements", RolePanelPlaced.Type),
 		edge.To("role_panel_edits", RolePanelEdit.Type),
+		edge.To("chinchiro_sessions", ChinchiroSession.Type),
 	}
 }
