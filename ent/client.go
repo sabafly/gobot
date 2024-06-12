@@ -26,6 +26,8 @@ import (
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/ent/rolepaneledit"
 	"github.com/sabafly/gobot/ent/rolepanelplaced"
+	"github.com/sabafly/gobot/ent/thread1000"
+	"github.com/sabafly/gobot/ent/thread1000channel"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/ent/wordsuffix"
 )
@@ -53,6 +55,10 @@ type Client struct {
 	RolePanelEdit *RolePanelEditClient
 	// RolePanelPlaced is the client for interacting with the RolePanelPlaced builders.
 	RolePanelPlaced *RolePanelPlacedClient
+	// Thread1000 is the client for interacting with the Thread1000 builders.
+	Thread1000 *Thread1000Client
+	// Thread1000Channel is the client for interacting with the Thread1000Channel builders.
+	Thread1000Channel *Thread1000ChannelClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// WordSuffix is the client for interacting with the WordSuffix builders.
@@ -77,6 +83,8 @@ func (c *Client) init() {
 	c.RolePanel = NewRolePanelClient(c.config)
 	c.RolePanelEdit = NewRolePanelEditClient(c.config)
 	c.RolePanelPlaced = NewRolePanelPlacedClient(c.config)
+	c.Thread1000 = NewThread1000Client(c.config)
+	c.Thread1000Channel = NewThread1000ChannelClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.WordSuffix = NewWordSuffixClient(c.config)
 }
@@ -169,19 +177,21 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:              ctx,
-		config:           cfg,
-		ChinchiroPlayer:  NewChinchiroPlayerClient(cfg),
-		ChinchiroSession: NewChinchiroSessionClient(cfg),
-		Guild:            NewGuildClient(cfg),
-		Member:           NewMemberClient(cfg),
-		MessagePin:       NewMessagePinClient(cfg),
-		MessageRemind:    NewMessageRemindClient(cfg),
-		RolePanel:        NewRolePanelClient(cfg),
-		RolePanelEdit:    NewRolePanelEditClient(cfg),
-		RolePanelPlaced:  NewRolePanelPlacedClient(cfg),
-		User:             NewUserClient(cfg),
-		WordSuffix:       NewWordSuffixClient(cfg),
+		ctx:               ctx,
+		config:            cfg,
+		ChinchiroPlayer:   NewChinchiroPlayerClient(cfg),
+		ChinchiroSession:  NewChinchiroSessionClient(cfg),
+		Guild:             NewGuildClient(cfg),
+		Member:            NewMemberClient(cfg),
+		MessagePin:        NewMessagePinClient(cfg),
+		MessageRemind:     NewMessageRemindClient(cfg),
+		RolePanel:         NewRolePanelClient(cfg),
+		RolePanelEdit:     NewRolePanelEditClient(cfg),
+		RolePanelPlaced:   NewRolePanelPlacedClient(cfg),
+		Thread1000:        NewThread1000Client(cfg),
+		Thread1000Channel: NewThread1000ChannelClient(cfg),
+		User:              NewUserClient(cfg),
+		WordSuffix:        NewWordSuffixClient(cfg),
 	}, nil
 }
 
@@ -199,19 +209,21 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:              ctx,
-		config:           cfg,
-		ChinchiroPlayer:  NewChinchiroPlayerClient(cfg),
-		ChinchiroSession: NewChinchiroSessionClient(cfg),
-		Guild:            NewGuildClient(cfg),
-		Member:           NewMemberClient(cfg),
-		MessagePin:       NewMessagePinClient(cfg),
-		MessageRemind:    NewMessageRemindClient(cfg),
-		RolePanel:        NewRolePanelClient(cfg),
-		RolePanelEdit:    NewRolePanelEditClient(cfg),
-		RolePanelPlaced:  NewRolePanelPlacedClient(cfg),
-		User:             NewUserClient(cfg),
-		WordSuffix:       NewWordSuffixClient(cfg),
+		ctx:               ctx,
+		config:            cfg,
+		ChinchiroPlayer:   NewChinchiroPlayerClient(cfg),
+		ChinchiroSession:  NewChinchiroSessionClient(cfg),
+		Guild:             NewGuildClient(cfg),
+		Member:            NewMemberClient(cfg),
+		MessagePin:        NewMessagePinClient(cfg),
+		MessageRemind:     NewMessageRemindClient(cfg),
+		RolePanel:         NewRolePanelClient(cfg),
+		RolePanelEdit:     NewRolePanelEditClient(cfg),
+		RolePanelPlaced:   NewRolePanelPlacedClient(cfg),
+		Thread1000:        NewThread1000Client(cfg),
+		Thread1000Channel: NewThread1000ChannelClient(cfg),
+		User:              NewUserClient(cfg),
+		WordSuffix:        NewWordSuffixClient(cfg),
 	}, nil
 }
 
@@ -242,8 +254,8 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.ChinchiroPlayer, c.ChinchiroSession, c.Guild, c.Member, c.MessagePin,
-		c.MessageRemind, c.RolePanel, c.RolePanelEdit, c.RolePanelPlaced, c.User,
-		c.WordSuffix,
+		c.MessageRemind, c.RolePanel, c.RolePanelEdit, c.RolePanelPlaced, c.Thread1000,
+		c.Thread1000Channel, c.User, c.WordSuffix,
 	} {
 		n.Use(hooks...)
 	}
@@ -254,8 +266,8 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.ChinchiroPlayer, c.ChinchiroSession, c.Guild, c.Member, c.MessagePin,
-		c.MessageRemind, c.RolePanel, c.RolePanelEdit, c.RolePanelPlaced, c.User,
-		c.WordSuffix,
+		c.MessageRemind, c.RolePanel, c.RolePanelEdit, c.RolePanelPlaced, c.Thread1000,
+		c.Thread1000Channel, c.User, c.WordSuffix,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -282,6 +294,10 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.RolePanelEdit.mutate(ctx, m)
 	case *RolePanelPlacedMutation:
 		return c.RolePanelPlaced.mutate(ctx, m)
+	case *Thread1000Mutation:
+		return c.Thread1000.mutate(ctx, m)
+	case *Thread1000ChannelMutation:
+		return c.Thread1000Channel.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	case *WordSuffixMutation:
@@ -850,6 +866,38 @@ func (c *GuildClient) QueryChinchiroSessions(gu *Guild) *ChinchiroSessionQuery {
 			sqlgraph.From(guild.Table, guild.FieldID, id),
 			sqlgraph.To(chinchirosession.Table, chinchirosession.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.ChinchiroSessionsTable, guild.ChinchiroSessionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryThreads1000 queries the threads1000 edge of a Guild.
+func (c *GuildClient) QueryThreads1000(gu *Guild) *Thread1000Query {
+	query := (&Thread1000Client{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := gu.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(guild.Table, guild.FieldID, id),
+			sqlgraph.To(thread1000.Table, thread1000.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, guild.Threads1000Table, guild.Threads1000Column),
+		)
+		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryThread1000Channels queries the thread1000_channels edge of a Guild.
+func (c *GuildClient) QueryThread1000Channels(gu *Guild) *Thread1000ChannelQuery {
+	query := (&Thread1000ChannelClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := gu.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(guild.Table, guild.FieldID, id),
+			sqlgraph.To(thread1000channel.Table, thread1000channel.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, guild.Thread1000ChannelsTable, guild.Thread1000ChannelsColumn),
 		)
 		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
 		return fromV, nil
@@ -1856,6 +1904,336 @@ func (c *RolePanelPlacedClient) mutate(ctx context.Context, m *RolePanelPlacedMu
 	}
 }
 
+// Thread1000Client is a client for the Thread1000 schema.
+type Thread1000Client struct {
+	config
+}
+
+// NewThread1000Client returns a client for the Thread1000 from the given config.
+func NewThread1000Client(c config) *Thread1000Client {
+	return &Thread1000Client{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `thread1000.Hooks(f(g(h())))`.
+func (c *Thread1000Client) Use(hooks ...Hook) {
+	c.hooks.Thread1000 = append(c.hooks.Thread1000, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `thread1000.Intercept(f(g(h())))`.
+func (c *Thread1000Client) Intercept(interceptors ...Interceptor) {
+	c.inters.Thread1000 = append(c.inters.Thread1000, interceptors...)
+}
+
+// Create returns a builder for creating a Thread1000 entity.
+func (c *Thread1000Client) Create() *Thread1000Create {
+	mutation := newThread1000Mutation(c.config, OpCreate)
+	return &Thread1000Create{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Thread1000 entities.
+func (c *Thread1000Client) CreateBulk(builders ...*Thread1000Create) *Thread1000CreateBulk {
+	return &Thread1000CreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *Thread1000Client) MapCreateBulk(slice any, setFunc func(*Thread1000Create, int)) *Thread1000CreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &Thread1000CreateBulk{err: fmt.Errorf("calling to Thread1000Client.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*Thread1000Create, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &Thread1000CreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Thread1000.
+func (c *Thread1000Client) Update() *Thread1000Update {
+	mutation := newThread1000Mutation(c.config, OpUpdate)
+	return &Thread1000Update{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *Thread1000Client) UpdateOne(t *Thread1000) *Thread1000UpdateOne {
+	mutation := newThread1000Mutation(c.config, OpUpdateOne, withThread1000(t))
+	return &Thread1000UpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *Thread1000Client) UpdateOneID(id uuid.UUID) *Thread1000UpdateOne {
+	mutation := newThread1000Mutation(c.config, OpUpdateOne, withThread1000ID(id))
+	return &Thread1000UpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Thread1000.
+func (c *Thread1000Client) Delete() *Thread1000Delete {
+	mutation := newThread1000Mutation(c.config, OpDelete)
+	return &Thread1000Delete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *Thread1000Client) DeleteOne(t *Thread1000) *Thread1000DeleteOne {
+	return c.DeleteOneID(t.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *Thread1000Client) DeleteOneID(id uuid.UUID) *Thread1000DeleteOne {
+	builder := c.Delete().Where(thread1000.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &Thread1000DeleteOne{builder}
+}
+
+// Query returns a query builder for Thread1000.
+func (c *Thread1000Client) Query() *Thread1000Query {
+	return &Thread1000Query{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeThread1000},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Thread1000 entity by its id.
+func (c *Thread1000Client) Get(ctx context.Context, id uuid.UUID) (*Thread1000, error) {
+	return c.Query().Where(thread1000.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *Thread1000Client) GetX(ctx context.Context, id uuid.UUID) *Thread1000 {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryGuild queries the guild edge of a Thread1000.
+func (c *Thread1000Client) QueryGuild(t *Thread1000) *GuildQuery {
+	query := (&GuildClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(thread1000.Table, thread1000.FieldID, id),
+			sqlgraph.To(guild.Table, guild.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, thread1000.GuildTable, thread1000.GuildColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryChannel queries the channel edge of a Thread1000.
+func (c *Thread1000Client) QueryChannel(t *Thread1000) *Thread1000ChannelQuery {
+	query := (&Thread1000ChannelClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(thread1000.Table, thread1000.FieldID, id),
+			sqlgraph.To(thread1000channel.Table, thread1000channel.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, thread1000.ChannelTable, thread1000.ChannelColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *Thread1000Client) Hooks() []Hook {
+	return c.hooks.Thread1000
+}
+
+// Interceptors returns the client interceptors.
+func (c *Thread1000Client) Interceptors() []Interceptor {
+	return c.inters.Thread1000
+}
+
+func (c *Thread1000Client) mutate(ctx context.Context, m *Thread1000Mutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&Thread1000Create{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&Thread1000Update{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&Thread1000UpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&Thread1000Delete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Thread1000 mutation op: %q", m.Op())
+	}
+}
+
+// Thread1000ChannelClient is a client for the Thread1000Channel schema.
+type Thread1000ChannelClient struct {
+	config
+}
+
+// NewThread1000ChannelClient returns a client for the Thread1000Channel from the given config.
+func NewThread1000ChannelClient(c config) *Thread1000ChannelClient {
+	return &Thread1000ChannelClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `thread1000channel.Hooks(f(g(h())))`.
+func (c *Thread1000ChannelClient) Use(hooks ...Hook) {
+	c.hooks.Thread1000Channel = append(c.hooks.Thread1000Channel, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `thread1000channel.Intercept(f(g(h())))`.
+func (c *Thread1000ChannelClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Thread1000Channel = append(c.inters.Thread1000Channel, interceptors...)
+}
+
+// Create returns a builder for creating a Thread1000Channel entity.
+func (c *Thread1000ChannelClient) Create() *Thread1000ChannelCreate {
+	mutation := newThread1000ChannelMutation(c.config, OpCreate)
+	return &Thread1000ChannelCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Thread1000Channel entities.
+func (c *Thread1000ChannelClient) CreateBulk(builders ...*Thread1000ChannelCreate) *Thread1000ChannelCreateBulk {
+	return &Thread1000ChannelCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *Thread1000ChannelClient) MapCreateBulk(slice any, setFunc func(*Thread1000ChannelCreate, int)) *Thread1000ChannelCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &Thread1000ChannelCreateBulk{err: fmt.Errorf("calling to Thread1000ChannelClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*Thread1000ChannelCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &Thread1000ChannelCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Thread1000Channel.
+func (c *Thread1000ChannelClient) Update() *Thread1000ChannelUpdate {
+	mutation := newThread1000ChannelMutation(c.config, OpUpdate)
+	return &Thread1000ChannelUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *Thread1000ChannelClient) UpdateOne(t *Thread1000Channel) *Thread1000ChannelUpdateOne {
+	mutation := newThread1000ChannelMutation(c.config, OpUpdateOne, withThread1000Channel(t))
+	return &Thread1000ChannelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *Thread1000ChannelClient) UpdateOneID(id uuid.UUID) *Thread1000ChannelUpdateOne {
+	mutation := newThread1000ChannelMutation(c.config, OpUpdateOne, withThread1000ChannelID(id))
+	return &Thread1000ChannelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Thread1000Channel.
+func (c *Thread1000ChannelClient) Delete() *Thread1000ChannelDelete {
+	mutation := newThread1000ChannelMutation(c.config, OpDelete)
+	return &Thread1000ChannelDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *Thread1000ChannelClient) DeleteOne(t *Thread1000Channel) *Thread1000ChannelDeleteOne {
+	return c.DeleteOneID(t.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *Thread1000ChannelClient) DeleteOneID(id uuid.UUID) *Thread1000ChannelDeleteOne {
+	builder := c.Delete().Where(thread1000channel.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &Thread1000ChannelDeleteOne{builder}
+}
+
+// Query returns a query builder for Thread1000Channel.
+func (c *Thread1000ChannelClient) Query() *Thread1000ChannelQuery {
+	return &Thread1000ChannelQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeThread1000Channel},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Thread1000Channel entity by its id.
+func (c *Thread1000ChannelClient) Get(ctx context.Context, id uuid.UUID) (*Thread1000Channel, error) {
+	return c.Query().Where(thread1000channel.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *Thread1000ChannelClient) GetX(ctx context.Context, id uuid.UUID) *Thread1000Channel {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryGuild queries the guild edge of a Thread1000Channel.
+func (c *Thread1000ChannelClient) QueryGuild(t *Thread1000Channel) *GuildQuery {
+	query := (&GuildClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(thread1000channel.Table, thread1000channel.FieldID, id),
+			sqlgraph.To(guild.Table, guild.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, thread1000channel.GuildTable, thread1000channel.GuildColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryThreads queries the threads edge of a Thread1000Channel.
+func (c *Thread1000ChannelClient) QueryThreads(t *Thread1000Channel) *Thread1000Query {
+	query := (&Thread1000Client{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(thread1000channel.Table, thread1000channel.FieldID, id),
+			sqlgraph.To(thread1000.Table, thread1000.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, thread1000channel.ThreadsTable, thread1000channel.ThreadsColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *Thread1000ChannelClient) Hooks() []Hook {
+	return c.hooks.Thread1000Channel
+}
+
+// Interceptors returns the client interceptors.
+func (c *Thread1000ChannelClient) Interceptors() []Interceptor {
+	return c.inters.Thread1000Channel
+}
+
+func (c *Thread1000ChannelClient) mutate(ctx context.Context, m *Thread1000ChannelMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&Thread1000ChannelCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&Thread1000ChannelUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&Thread1000ChannelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&Thread1000ChannelDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Thread1000Channel mutation op: %q", m.Op())
+	}
+}
+
 // UserClient is a client for the User schema.
 type UserClient struct {
 	config
@@ -2238,10 +2616,12 @@ func (c *WordSuffixClient) mutate(ctx context.Context, m *WordSuffixMutation) (V
 type (
 	hooks struct {
 		ChinchiroPlayer, ChinchiroSession, Guild, Member, MessagePin, MessageRemind,
-		RolePanel, RolePanelEdit, RolePanelPlaced, User, WordSuffix []ent.Hook
+		RolePanel, RolePanelEdit, RolePanelPlaced, Thread1000, Thread1000Channel, User,
+		WordSuffix []ent.Hook
 	}
 	inters struct {
 		ChinchiroPlayer, ChinchiroSession, Guild, Member, MessagePin, MessageRemind,
-		RolePanel, RolePanelEdit, RolePanelPlaced, User, WordSuffix []ent.Interceptor
+		RolePanel, RolePanelEdit, RolePanelPlaced, Thread1000, Thread1000Channel, User,
+		WordSuffix []ent.Interceptor
 	}
 )

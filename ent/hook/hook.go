@@ -117,6 +117,30 @@ func (f RolePanelPlacedFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Va
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RolePanelPlacedMutation", m)
 }
 
+// The Thread1000Func type is an adapter to allow the use of ordinary
+// function as Thread1000 mutator.
+type Thread1000Func func(context.Context, *ent.Thread1000Mutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f Thread1000Func) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.Thread1000Mutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.Thread1000Mutation", m)
+}
+
+// The Thread1000ChannelFunc type is an adapter to allow the use of ordinary
+// function as Thread1000Channel mutator.
+type Thread1000ChannelFunc func(context.Context, *ent.Thread1000ChannelMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f Thread1000ChannelFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.Thread1000ChannelMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.Thread1000ChannelMutation", m)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)

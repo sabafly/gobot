@@ -25,6 +25,8 @@ import (
 	"github.com/sabafly/gobot/ent/rolepaneledit"
 	"github.com/sabafly/gobot/ent/rolepanelplaced"
 	"github.com/sabafly/gobot/ent/schema"
+	"github.com/sabafly/gobot/ent/thread1000"
+	"github.com/sabafly/gobot/ent/thread1000channel"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/ent/wordsuffix"
 	"github.com/sabafly/gobot/internal/permissions"
@@ -40,17 +42,19 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeChinchiroPlayer  = "ChinchiroPlayer"
-	TypeChinchiroSession = "ChinchiroSession"
-	TypeGuild            = "Guild"
-	TypeMember           = "Member"
-	TypeMessagePin       = "MessagePin"
-	TypeMessageRemind    = "MessageRemind"
-	TypeRolePanel        = "RolePanel"
-	TypeRolePanelEdit    = "RolePanelEdit"
-	TypeRolePanelPlaced  = "RolePanelPlaced"
-	TypeUser             = "User"
-	TypeWordSuffix       = "WordSuffix"
+	TypeChinchiroPlayer   = "ChinchiroPlayer"
+	TypeChinchiroSession  = "ChinchiroSession"
+	TypeGuild             = "Guild"
+	TypeMember            = "Member"
+	TypeMessagePin        = "MessagePin"
+	TypeMessageRemind     = "MessageRemind"
+	TypeRolePanel         = "RolePanel"
+	TypeRolePanelEdit     = "RolePanelEdit"
+	TypeRolePanelPlaced   = "RolePanelPlaced"
+	TypeThread1000        = "Thread1000"
+	TypeThread1000Channel = "Thread1000Channel"
+	TypeUser              = "User"
+	TypeWordSuffix        = "WordSuffix"
 )
 
 // ChinchiroPlayerMutation represents an operation that mutates the ChinchiroPlayer nodes in the graph.
@@ -1507,6 +1511,12 @@ type GuildMutation struct {
 	chinchiro_sessions             map[uuid.UUID]struct{}
 	removedchinchiro_sessions      map[uuid.UUID]struct{}
 	clearedchinchiro_sessions      bool
+	threads1000                    map[uuid.UUID]struct{}
+	removedthreads1000             map[uuid.UUID]struct{}
+	clearedthreads1000             bool
+	thread1000_channels            map[uuid.UUID]struct{}
+	removedthread1000_channels     map[uuid.UUID]struct{}
+	clearedthread1000_channels     bool
 	done                           bool
 	oldValue                       func(context.Context) (*Guild, error)
 	predicates                     []predicate.Guild
@@ -3004,6 +3014,114 @@ func (m *GuildMutation) ResetChinchiroSessions() {
 	m.removedchinchiro_sessions = nil
 }
 
+// AddThreads1000IDs adds the "threads1000" edge to the Thread1000 entity by ids.
+func (m *GuildMutation) AddThreads1000IDs(ids ...uuid.UUID) {
+	if m.threads1000 == nil {
+		m.threads1000 = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.threads1000[ids[i]] = struct{}{}
+	}
+}
+
+// ClearThreads1000 clears the "threads1000" edge to the Thread1000 entity.
+func (m *GuildMutation) ClearThreads1000() {
+	m.clearedthreads1000 = true
+}
+
+// Threads1000Cleared reports if the "threads1000" edge to the Thread1000 entity was cleared.
+func (m *GuildMutation) Threads1000Cleared() bool {
+	return m.clearedthreads1000
+}
+
+// RemoveThreads1000IDs removes the "threads1000" edge to the Thread1000 entity by IDs.
+func (m *GuildMutation) RemoveThreads1000IDs(ids ...uuid.UUID) {
+	if m.removedthreads1000 == nil {
+		m.removedthreads1000 = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.threads1000, ids[i])
+		m.removedthreads1000[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedThreads1000 returns the removed IDs of the "threads1000" edge to the Thread1000 entity.
+func (m *GuildMutation) RemovedThreads1000IDs() (ids []uuid.UUID) {
+	for id := range m.removedthreads1000 {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// Threads1000IDs returns the "threads1000" edge IDs in the mutation.
+func (m *GuildMutation) Threads1000IDs() (ids []uuid.UUID) {
+	for id := range m.threads1000 {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetThreads1000 resets all changes to the "threads1000" edge.
+func (m *GuildMutation) ResetThreads1000() {
+	m.threads1000 = nil
+	m.clearedthreads1000 = false
+	m.removedthreads1000 = nil
+}
+
+// AddThread1000ChannelIDs adds the "thread1000_channels" edge to the Thread1000Channel entity by ids.
+func (m *GuildMutation) AddThread1000ChannelIDs(ids ...uuid.UUID) {
+	if m.thread1000_channels == nil {
+		m.thread1000_channels = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.thread1000_channels[ids[i]] = struct{}{}
+	}
+}
+
+// ClearThread1000Channels clears the "thread1000_channels" edge to the Thread1000Channel entity.
+func (m *GuildMutation) ClearThread1000Channels() {
+	m.clearedthread1000_channels = true
+}
+
+// Thread1000ChannelsCleared reports if the "thread1000_channels" edge to the Thread1000Channel entity was cleared.
+func (m *GuildMutation) Thread1000ChannelsCleared() bool {
+	return m.clearedthread1000_channels
+}
+
+// RemoveThread1000ChannelIDs removes the "thread1000_channels" edge to the Thread1000Channel entity by IDs.
+func (m *GuildMutation) RemoveThread1000ChannelIDs(ids ...uuid.UUID) {
+	if m.removedthread1000_channels == nil {
+		m.removedthread1000_channels = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.thread1000_channels, ids[i])
+		m.removedthread1000_channels[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedThread1000Channels returns the removed IDs of the "thread1000_channels" edge to the Thread1000Channel entity.
+func (m *GuildMutation) RemovedThread1000ChannelsIDs() (ids []uuid.UUID) {
+	for id := range m.removedthread1000_channels {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// Thread1000ChannelsIDs returns the "thread1000_channels" edge IDs in the mutation.
+func (m *GuildMutation) Thread1000ChannelsIDs() (ids []uuid.UUID) {
+	for id := range m.thread1000_channels {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetThread1000Channels resets all changes to the "thread1000_channels" edge.
+func (m *GuildMutation) ResetThread1000Channels() {
+	m.thread1000_channels = nil
+	m.clearedthread1000_channels = false
+	m.removedthread1000_channels = nil
+}
+
 // Where appends a list predicates to the GuildMutation builder.
 func (m *GuildMutation) Where(ps ...predicate.Guild) {
 	m.predicates = append(m.predicates, ps...)
@@ -3578,7 +3696,7 @@ func (m *GuildMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *GuildMutation) AddedEdges() []string {
-	edges := make([]string, 0, 8)
+	edges := make([]string, 0, 10)
 	if m.owner != nil {
 		edges = append(edges, guild.EdgeOwner)
 	}
@@ -3602,6 +3720,12 @@ func (m *GuildMutation) AddedEdges() []string {
 	}
 	if m.chinchiro_sessions != nil {
 		edges = append(edges, guild.EdgeChinchiroSessions)
+	}
+	if m.threads1000 != nil {
+		edges = append(edges, guild.EdgeThreads1000)
+	}
+	if m.thread1000_channels != nil {
+		edges = append(edges, guild.EdgeThread1000Channels)
 	}
 	return edges
 }
@@ -3656,13 +3780,25 @@ func (m *GuildMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case guild.EdgeThreads1000:
+		ids := make([]ent.Value, 0, len(m.threads1000))
+		for id := range m.threads1000 {
+			ids = append(ids, id)
+		}
+		return ids
+	case guild.EdgeThread1000Channels:
+		ids := make([]ent.Value, 0, len(m.thread1000_channels))
+		for id := range m.thread1000_channels {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *GuildMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 8)
+	edges := make([]string, 0, 10)
 	if m.removedmembers != nil {
 		edges = append(edges, guild.EdgeMembers)
 	}
@@ -3683,6 +3819,12 @@ func (m *GuildMutation) RemovedEdges() []string {
 	}
 	if m.removedchinchiro_sessions != nil {
 		edges = append(edges, guild.EdgeChinchiroSessions)
+	}
+	if m.removedthreads1000 != nil {
+		edges = append(edges, guild.EdgeThreads1000)
+	}
+	if m.removedthread1000_channels != nil {
+		edges = append(edges, guild.EdgeThread1000Channels)
 	}
 	return edges
 }
@@ -3733,13 +3875,25 @@ func (m *GuildMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case guild.EdgeThreads1000:
+		ids := make([]ent.Value, 0, len(m.removedthreads1000))
+		for id := range m.removedthreads1000 {
+			ids = append(ids, id)
+		}
+		return ids
+	case guild.EdgeThread1000Channels:
+		ids := make([]ent.Value, 0, len(m.removedthread1000_channels))
+		for id := range m.removedthread1000_channels {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *GuildMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 8)
+	edges := make([]string, 0, 10)
 	if m.clearedowner {
 		edges = append(edges, guild.EdgeOwner)
 	}
@@ -3764,6 +3918,12 @@ func (m *GuildMutation) ClearedEdges() []string {
 	if m.clearedchinchiro_sessions {
 		edges = append(edges, guild.EdgeChinchiroSessions)
 	}
+	if m.clearedthreads1000 {
+		edges = append(edges, guild.EdgeThreads1000)
+	}
+	if m.clearedthread1000_channels {
+		edges = append(edges, guild.EdgeThread1000Channels)
+	}
 	return edges
 }
 
@@ -3787,6 +3947,10 @@ func (m *GuildMutation) EdgeCleared(name string) bool {
 		return m.clearedrole_panel_edits
 	case guild.EdgeChinchiroSessions:
 		return m.clearedchinchiro_sessions
+	case guild.EdgeThreads1000:
+		return m.clearedthreads1000
+	case guild.EdgeThread1000Channels:
+		return m.clearedthread1000_channels
 	}
 	return false
 }
@@ -3829,6 +3993,12 @@ func (m *GuildMutation) ResetEdge(name string) error {
 		return nil
 	case guild.EdgeChinchiroSessions:
 		m.ResetChinchiroSessions()
+		return nil
+	case guild.EdgeThreads1000:
+		m.ResetThreads1000()
+		return nil
+	case guild.EdgeThread1000Channels:
+		m.ResetThread1000Channels()
 		return nil
 	}
 	return fmt.Errorf("unknown Guild edge %s", name)
@@ -9452,6 +9622,1364 @@ func (m *RolePanelPlacedMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown RolePanelPlaced edge %s", name)
+}
+
+// Thread1000Mutation represents an operation that mutates the Thread1000 nodes in the graph.
+type Thread1000Mutation struct {
+	config
+	op               Op
+	typ              string
+	id               *uuid.UUID
+	name             *string
+	message_count    *int
+	addmessage_count *int
+	is_archived      *bool
+	thread_id        *snowflake.ID
+	addthread_id     *snowflake.ID
+	clearedFields    map[string]struct{}
+	guild            *snowflake.ID
+	clearedguild     bool
+	channel          *uuid.UUID
+	clearedchannel   bool
+	done             bool
+	oldValue         func(context.Context) (*Thread1000, error)
+	predicates       []predicate.Thread1000
+}
+
+var _ ent.Mutation = (*Thread1000Mutation)(nil)
+
+// thread1000Option allows management of the mutation configuration using functional options.
+type thread1000Option func(*Thread1000Mutation)
+
+// newThread1000Mutation creates new mutation for the Thread1000 entity.
+func newThread1000Mutation(c config, op Op, opts ...thread1000Option) *Thread1000Mutation {
+	m := &Thread1000Mutation{
+		config:        c,
+		op:            op,
+		typ:           TypeThread1000,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withThread1000ID sets the ID field of the mutation.
+func withThread1000ID(id uuid.UUID) thread1000Option {
+	return func(m *Thread1000Mutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Thread1000
+		)
+		m.oldValue = func(ctx context.Context) (*Thread1000, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Thread1000.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withThread1000 sets the old Thread1000 of the mutation.
+func withThread1000(node *Thread1000) thread1000Option {
+	return func(m *Thread1000Mutation) {
+		m.oldValue = func(context.Context) (*Thread1000, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m Thread1000Mutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m Thread1000Mutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Thread1000 entities.
+func (m *Thread1000Mutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *Thread1000Mutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *Thread1000Mutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Thread1000.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetName sets the "name" field.
+func (m *Thread1000Mutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *Thread1000Mutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Thread1000 entity.
+// If the Thread1000 object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *Thread1000Mutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *Thread1000Mutation) ResetName() {
+	m.name = nil
+}
+
+// SetMessageCount sets the "message_count" field.
+func (m *Thread1000Mutation) SetMessageCount(i int) {
+	m.message_count = &i
+	m.addmessage_count = nil
+}
+
+// MessageCount returns the value of the "message_count" field in the mutation.
+func (m *Thread1000Mutation) MessageCount() (r int, exists bool) {
+	v := m.message_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMessageCount returns the old "message_count" field's value of the Thread1000 entity.
+// If the Thread1000 object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *Thread1000Mutation) OldMessageCount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMessageCount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMessageCount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMessageCount: %w", err)
+	}
+	return oldValue.MessageCount, nil
+}
+
+// AddMessageCount adds i to the "message_count" field.
+func (m *Thread1000Mutation) AddMessageCount(i int) {
+	if m.addmessage_count != nil {
+		*m.addmessage_count += i
+	} else {
+		m.addmessage_count = &i
+	}
+}
+
+// AddedMessageCount returns the value that was added to the "message_count" field in this mutation.
+func (m *Thread1000Mutation) AddedMessageCount() (r int, exists bool) {
+	v := m.addmessage_count
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMessageCount resets all changes to the "message_count" field.
+func (m *Thread1000Mutation) ResetMessageCount() {
+	m.message_count = nil
+	m.addmessage_count = nil
+}
+
+// SetIsArchived sets the "is_archived" field.
+func (m *Thread1000Mutation) SetIsArchived(b bool) {
+	m.is_archived = &b
+}
+
+// IsArchived returns the value of the "is_archived" field in the mutation.
+func (m *Thread1000Mutation) IsArchived() (r bool, exists bool) {
+	v := m.is_archived
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsArchived returns the old "is_archived" field's value of the Thread1000 entity.
+// If the Thread1000 object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *Thread1000Mutation) OldIsArchived(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsArchived is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsArchived requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsArchived: %w", err)
+	}
+	return oldValue.IsArchived, nil
+}
+
+// ResetIsArchived resets all changes to the "is_archived" field.
+func (m *Thread1000Mutation) ResetIsArchived() {
+	m.is_archived = nil
+}
+
+// SetThreadID sets the "thread_id" field.
+func (m *Thread1000Mutation) SetThreadID(s snowflake.ID) {
+	m.thread_id = &s
+	m.addthread_id = nil
+}
+
+// ThreadID returns the value of the "thread_id" field in the mutation.
+func (m *Thread1000Mutation) ThreadID() (r snowflake.ID, exists bool) {
+	v := m.thread_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldThreadID returns the old "thread_id" field's value of the Thread1000 entity.
+// If the Thread1000 object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *Thread1000Mutation) OldThreadID(ctx context.Context) (v snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldThreadID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldThreadID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldThreadID: %w", err)
+	}
+	return oldValue.ThreadID, nil
+}
+
+// AddThreadID adds s to the "thread_id" field.
+func (m *Thread1000Mutation) AddThreadID(s snowflake.ID) {
+	if m.addthread_id != nil {
+		*m.addthread_id += s
+	} else {
+		m.addthread_id = &s
+	}
+}
+
+// AddedThreadID returns the value that was added to the "thread_id" field in this mutation.
+func (m *Thread1000Mutation) AddedThreadID() (r snowflake.ID, exists bool) {
+	v := m.addthread_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetThreadID resets all changes to the "thread_id" field.
+func (m *Thread1000Mutation) ResetThreadID() {
+	m.thread_id = nil
+	m.addthread_id = nil
+}
+
+// SetGuildID sets the "guild" edge to the Guild entity by id.
+func (m *Thread1000Mutation) SetGuildID(id snowflake.ID) {
+	m.guild = &id
+}
+
+// ClearGuild clears the "guild" edge to the Guild entity.
+func (m *Thread1000Mutation) ClearGuild() {
+	m.clearedguild = true
+}
+
+// GuildCleared reports if the "guild" edge to the Guild entity was cleared.
+func (m *Thread1000Mutation) GuildCleared() bool {
+	return m.clearedguild
+}
+
+// GuildID returns the "guild" edge ID in the mutation.
+func (m *Thread1000Mutation) GuildID() (id snowflake.ID, exists bool) {
+	if m.guild != nil {
+		return *m.guild, true
+	}
+	return
+}
+
+// GuildIDs returns the "guild" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GuildID instead. It exists only for internal usage by the builders.
+func (m *Thread1000Mutation) GuildIDs() (ids []snowflake.ID) {
+	if id := m.guild; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetGuild resets all changes to the "guild" edge.
+func (m *Thread1000Mutation) ResetGuild() {
+	m.guild = nil
+	m.clearedguild = false
+}
+
+// SetChannelID sets the "channel" edge to the Thread1000Channel entity by id.
+func (m *Thread1000Mutation) SetChannelID(id uuid.UUID) {
+	m.channel = &id
+}
+
+// ClearChannel clears the "channel" edge to the Thread1000Channel entity.
+func (m *Thread1000Mutation) ClearChannel() {
+	m.clearedchannel = true
+}
+
+// ChannelCleared reports if the "channel" edge to the Thread1000Channel entity was cleared.
+func (m *Thread1000Mutation) ChannelCleared() bool {
+	return m.clearedchannel
+}
+
+// ChannelID returns the "channel" edge ID in the mutation.
+func (m *Thread1000Mutation) ChannelID() (id uuid.UUID, exists bool) {
+	if m.channel != nil {
+		return *m.channel, true
+	}
+	return
+}
+
+// ChannelIDs returns the "channel" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ChannelID instead. It exists only for internal usage by the builders.
+func (m *Thread1000Mutation) ChannelIDs() (ids []uuid.UUID) {
+	if id := m.channel; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetChannel resets all changes to the "channel" edge.
+func (m *Thread1000Mutation) ResetChannel() {
+	m.channel = nil
+	m.clearedchannel = false
+}
+
+// Where appends a list predicates to the Thread1000Mutation builder.
+func (m *Thread1000Mutation) Where(ps ...predicate.Thread1000) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the Thread1000Mutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *Thread1000Mutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Thread1000, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *Thread1000Mutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *Thread1000Mutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Thread1000).
+func (m *Thread1000Mutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *Thread1000Mutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.name != nil {
+		fields = append(fields, thread1000.FieldName)
+	}
+	if m.message_count != nil {
+		fields = append(fields, thread1000.FieldMessageCount)
+	}
+	if m.is_archived != nil {
+		fields = append(fields, thread1000.FieldIsArchived)
+	}
+	if m.thread_id != nil {
+		fields = append(fields, thread1000.FieldThreadID)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *Thread1000Mutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case thread1000.FieldName:
+		return m.Name()
+	case thread1000.FieldMessageCount:
+		return m.MessageCount()
+	case thread1000.FieldIsArchived:
+		return m.IsArchived()
+	case thread1000.FieldThreadID:
+		return m.ThreadID()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *Thread1000Mutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case thread1000.FieldName:
+		return m.OldName(ctx)
+	case thread1000.FieldMessageCount:
+		return m.OldMessageCount(ctx)
+	case thread1000.FieldIsArchived:
+		return m.OldIsArchived(ctx)
+	case thread1000.FieldThreadID:
+		return m.OldThreadID(ctx)
+	}
+	return nil, fmt.Errorf("unknown Thread1000 field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *Thread1000Mutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case thread1000.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case thread1000.FieldMessageCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMessageCount(v)
+		return nil
+	case thread1000.FieldIsArchived:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsArchived(v)
+		return nil
+	case thread1000.FieldThreadID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetThreadID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Thread1000 field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *Thread1000Mutation) AddedFields() []string {
+	var fields []string
+	if m.addmessage_count != nil {
+		fields = append(fields, thread1000.FieldMessageCount)
+	}
+	if m.addthread_id != nil {
+		fields = append(fields, thread1000.FieldThreadID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *Thread1000Mutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case thread1000.FieldMessageCount:
+		return m.AddedMessageCount()
+	case thread1000.FieldThreadID:
+		return m.AddedThreadID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *Thread1000Mutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case thread1000.FieldMessageCount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMessageCount(v)
+		return nil
+	case thread1000.FieldThreadID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddThreadID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Thread1000 numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *Thread1000Mutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *Thread1000Mutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *Thread1000Mutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Thread1000 nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *Thread1000Mutation) ResetField(name string) error {
+	switch name {
+	case thread1000.FieldName:
+		m.ResetName()
+		return nil
+	case thread1000.FieldMessageCount:
+		m.ResetMessageCount()
+		return nil
+	case thread1000.FieldIsArchived:
+		m.ResetIsArchived()
+		return nil
+	case thread1000.FieldThreadID:
+		m.ResetThreadID()
+		return nil
+	}
+	return fmt.Errorf("unknown Thread1000 field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *Thread1000Mutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.guild != nil {
+		edges = append(edges, thread1000.EdgeGuild)
+	}
+	if m.channel != nil {
+		edges = append(edges, thread1000.EdgeChannel)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *Thread1000Mutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case thread1000.EdgeGuild:
+		if id := m.guild; id != nil {
+			return []ent.Value{*id}
+		}
+	case thread1000.EdgeChannel:
+		if id := m.channel; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *Thread1000Mutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *Thread1000Mutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *Thread1000Mutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedguild {
+		edges = append(edges, thread1000.EdgeGuild)
+	}
+	if m.clearedchannel {
+		edges = append(edges, thread1000.EdgeChannel)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *Thread1000Mutation) EdgeCleared(name string) bool {
+	switch name {
+	case thread1000.EdgeGuild:
+		return m.clearedguild
+	case thread1000.EdgeChannel:
+		return m.clearedchannel
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *Thread1000Mutation) ClearEdge(name string) error {
+	switch name {
+	case thread1000.EdgeGuild:
+		m.ClearGuild()
+		return nil
+	case thread1000.EdgeChannel:
+		m.ClearChannel()
+		return nil
+	}
+	return fmt.Errorf("unknown Thread1000 unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *Thread1000Mutation) ResetEdge(name string) error {
+	switch name {
+	case thread1000.EdgeGuild:
+		m.ResetGuild()
+		return nil
+	case thread1000.EdgeChannel:
+		m.ResetChannel()
+		return nil
+	}
+	return fmt.Errorf("unknown Thread1000 edge %s", name)
+}
+
+// Thread1000ChannelMutation represents an operation that mutates the Thread1000Channel nodes in the graph.
+type Thread1000ChannelMutation struct {
+	config
+	op             Op
+	typ            string
+	id             *uuid.UUID
+	name           *string
+	anonymous_name *string
+	channel_id     *snowflake.ID
+	addchannel_id  *snowflake.ID
+	clearedFields  map[string]struct{}
+	guild          *snowflake.ID
+	clearedguild   bool
+	threads        map[uuid.UUID]struct{}
+	removedthreads map[uuid.UUID]struct{}
+	clearedthreads bool
+	done           bool
+	oldValue       func(context.Context) (*Thread1000Channel, error)
+	predicates     []predicate.Thread1000Channel
+}
+
+var _ ent.Mutation = (*Thread1000ChannelMutation)(nil)
+
+// thread1000channelOption allows management of the mutation configuration using functional options.
+type thread1000channelOption func(*Thread1000ChannelMutation)
+
+// newThread1000ChannelMutation creates new mutation for the Thread1000Channel entity.
+func newThread1000ChannelMutation(c config, op Op, opts ...thread1000channelOption) *Thread1000ChannelMutation {
+	m := &Thread1000ChannelMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeThread1000Channel,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withThread1000ChannelID sets the ID field of the mutation.
+func withThread1000ChannelID(id uuid.UUID) thread1000channelOption {
+	return func(m *Thread1000ChannelMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Thread1000Channel
+		)
+		m.oldValue = func(ctx context.Context) (*Thread1000Channel, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Thread1000Channel.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withThread1000Channel sets the old Thread1000Channel of the mutation.
+func withThread1000Channel(node *Thread1000Channel) thread1000channelOption {
+	return func(m *Thread1000ChannelMutation) {
+		m.oldValue = func(context.Context) (*Thread1000Channel, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m Thread1000ChannelMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m Thread1000ChannelMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Thread1000Channel entities.
+func (m *Thread1000ChannelMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *Thread1000ChannelMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *Thread1000ChannelMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Thread1000Channel.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetName sets the "name" field.
+func (m *Thread1000ChannelMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *Thread1000ChannelMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Thread1000Channel entity.
+// If the Thread1000Channel object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *Thread1000ChannelMutation) OldName(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ClearName clears the value of the "name" field.
+func (m *Thread1000ChannelMutation) ClearName() {
+	m.name = nil
+	m.clearedFields[thread1000channel.FieldName] = struct{}{}
+}
+
+// NameCleared returns if the "name" field was cleared in this mutation.
+func (m *Thread1000ChannelMutation) NameCleared() bool {
+	_, ok := m.clearedFields[thread1000channel.FieldName]
+	return ok
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *Thread1000ChannelMutation) ResetName() {
+	m.name = nil
+	delete(m.clearedFields, thread1000channel.FieldName)
+}
+
+// SetAnonymousName sets the "anonymous_name" field.
+func (m *Thread1000ChannelMutation) SetAnonymousName(s string) {
+	m.anonymous_name = &s
+}
+
+// AnonymousName returns the value of the "anonymous_name" field in the mutation.
+func (m *Thread1000ChannelMutation) AnonymousName() (r string, exists bool) {
+	v := m.anonymous_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAnonymousName returns the old "anonymous_name" field's value of the Thread1000Channel entity.
+// If the Thread1000Channel object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *Thread1000ChannelMutation) OldAnonymousName(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAnonymousName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAnonymousName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAnonymousName: %w", err)
+	}
+	return oldValue.AnonymousName, nil
+}
+
+// ClearAnonymousName clears the value of the "anonymous_name" field.
+func (m *Thread1000ChannelMutation) ClearAnonymousName() {
+	m.anonymous_name = nil
+	m.clearedFields[thread1000channel.FieldAnonymousName] = struct{}{}
+}
+
+// AnonymousNameCleared returns if the "anonymous_name" field was cleared in this mutation.
+func (m *Thread1000ChannelMutation) AnonymousNameCleared() bool {
+	_, ok := m.clearedFields[thread1000channel.FieldAnonymousName]
+	return ok
+}
+
+// ResetAnonymousName resets all changes to the "anonymous_name" field.
+func (m *Thread1000ChannelMutation) ResetAnonymousName() {
+	m.anonymous_name = nil
+	delete(m.clearedFields, thread1000channel.FieldAnonymousName)
+}
+
+// SetChannelID sets the "channel_id" field.
+func (m *Thread1000ChannelMutation) SetChannelID(s snowflake.ID) {
+	m.channel_id = &s
+	m.addchannel_id = nil
+}
+
+// ChannelID returns the value of the "channel_id" field in the mutation.
+func (m *Thread1000ChannelMutation) ChannelID() (r snowflake.ID, exists bool) {
+	v := m.channel_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldChannelID returns the old "channel_id" field's value of the Thread1000Channel entity.
+// If the Thread1000Channel object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *Thread1000ChannelMutation) OldChannelID(ctx context.Context) (v snowflake.ID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldChannelID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldChannelID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldChannelID: %w", err)
+	}
+	return oldValue.ChannelID, nil
+}
+
+// AddChannelID adds s to the "channel_id" field.
+func (m *Thread1000ChannelMutation) AddChannelID(s snowflake.ID) {
+	if m.addchannel_id != nil {
+		*m.addchannel_id += s
+	} else {
+		m.addchannel_id = &s
+	}
+}
+
+// AddedChannelID returns the value that was added to the "channel_id" field in this mutation.
+func (m *Thread1000ChannelMutation) AddedChannelID() (r snowflake.ID, exists bool) {
+	v := m.addchannel_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetChannelID resets all changes to the "channel_id" field.
+func (m *Thread1000ChannelMutation) ResetChannelID() {
+	m.channel_id = nil
+	m.addchannel_id = nil
+}
+
+// SetGuildID sets the "guild" edge to the Guild entity by id.
+func (m *Thread1000ChannelMutation) SetGuildID(id snowflake.ID) {
+	m.guild = &id
+}
+
+// ClearGuild clears the "guild" edge to the Guild entity.
+func (m *Thread1000ChannelMutation) ClearGuild() {
+	m.clearedguild = true
+}
+
+// GuildCleared reports if the "guild" edge to the Guild entity was cleared.
+func (m *Thread1000ChannelMutation) GuildCleared() bool {
+	return m.clearedguild
+}
+
+// GuildID returns the "guild" edge ID in the mutation.
+func (m *Thread1000ChannelMutation) GuildID() (id snowflake.ID, exists bool) {
+	if m.guild != nil {
+		return *m.guild, true
+	}
+	return
+}
+
+// GuildIDs returns the "guild" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// GuildID instead. It exists only for internal usage by the builders.
+func (m *Thread1000ChannelMutation) GuildIDs() (ids []snowflake.ID) {
+	if id := m.guild; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetGuild resets all changes to the "guild" edge.
+func (m *Thread1000ChannelMutation) ResetGuild() {
+	m.guild = nil
+	m.clearedguild = false
+}
+
+// AddThreadIDs adds the "threads" edge to the Thread1000 entity by ids.
+func (m *Thread1000ChannelMutation) AddThreadIDs(ids ...uuid.UUID) {
+	if m.threads == nil {
+		m.threads = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.threads[ids[i]] = struct{}{}
+	}
+}
+
+// ClearThreads clears the "threads" edge to the Thread1000 entity.
+func (m *Thread1000ChannelMutation) ClearThreads() {
+	m.clearedthreads = true
+}
+
+// ThreadsCleared reports if the "threads" edge to the Thread1000 entity was cleared.
+func (m *Thread1000ChannelMutation) ThreadsCleared() bool {
+	return m.clearedthreads
+}
+
+// RemoveThreadIDs removes the "threads" edge to the Thread1000 entity by IDs.
+func (m *Thread1000ChannelMutation) RemoveThreadIDs(ids ...uuid.UUID) {
+	if m.removedthreads == nil {
+		m.removedthreads = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.threads, ids[i])
+		m.removedthreads[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedThreads returns the removed IDs of the "threads" edge to the Thread1000 entity.
+func (m *Thread1000ChannelMutation) RemovedThreadsIDs() (ids []uuid.UUID) {
+	for id := range m.removedthreads {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ThreadsIDs returns the "threads" edge IDs in the mutation.
+func (m *Thread1000ChannelMutation) ThreadsIDs() (ids []uuid.UUID) {
+	for id := range m.threads {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetThreads resets all changes to the "threads" edge.
+func (m *Thread1000ChannelMutation) ResetThreads() {
+	m.threads = nil
+	m.clearedthreads = false
+	m.removedthreads = nil
+}
+
+// Where appends a list predicates to the Thread1000ChannelMutation builder.
+func (m *Thread1000ChannelMutation) Where(ps ...predicate.Thread1000Channel) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the Thread1000ChannelMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *Thread1000ChannelMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Thread1000Channel, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *Thread1000ChannelMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *Thread1000ChannelMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Thread1000Channel).
+func (m *Thread1000ChannelMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *Thread1000ChannelMutation) Fields() []string {
+	fields := make([]string, 0, 3)
+	if m.name != nil {
+		fields = append(fields, thread1000channel.FieldName)
+	}
+	if m.anonymous_name != nil {
+		fields = append(fields, thread1000channel.FieldAnonymousName)
+	}
+	if m.channel_id != nil {
+		fields = append(fields, thread1000channel.FieldChannelID)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *Thread1000ChannelMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case thread1000channel.FieldName:
+		return m.Name()
+	case thread1000channel.FieldAnonymousName:
+		return m.AnonymousName()
+	case thread1000channel.FieldChannelID:
+		return m.ChannelID()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *Thread1000ChannelMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case thread1000channel.FieldName:
+		return m.OldName(ctx)
+	case thread1000channel.FieldAnonymousName:
+		return m.OldAnonymousName(ctx)
+	case thread1000channel.FieldChannelID:
+		return m.OldChannelID(ctx)
+	}
+	return nil, fmt.Errorf("unknown Thread1000Channel field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *Thread1000ChannelMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case thread1000channel.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case thread1000channel.FieldAnonymousName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAnonymousName(v)
+		return nil
+	case thread1000channel.FieldChannelID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetChannelID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Thread1000Channel field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *Thread1000ChannelMutation) AddedFields() []string {
+	var fields []string
+	if m.addchannel_id != nil {
+		fields = append(fields, thread1000channel.FieldChannelID)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *Thread1000ChannelMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case thread1000channel.FieldChannelID:
+		return m.AddedChannelID()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *Thread1000ChannelMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case thread1000channel.FieldChannelID:
+		v, ok := value.(snowflake.ID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddChannelID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Thread1000Channel numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *Thread1000ChannelMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(thread1000channel.FieldName) {
+		fields = append(fields, thread1000channel.FieldName)
+	}
+	if m.FieldCleared(thread1000channel.FieldAnonymousName) {
+		fields = append(fields, thread1000channel.FieldAnonymousName)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *Thread1000ChannelMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *Thread1000ChannelMutation) ClearField(name string) error {
+	switch name {
+	case thread1000channel.FieldName:
+		m.ClearName()
+		return nil
+	case thread1000channel.FieldAnonymousName:
+		m.ClearAnonymousName()
+		return nil
+	}
+	return fmt.Errorf("unknown Thread1000Channel nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *Thread1000ChannelMutation) ResetField(name string) error {
+	switch name {
+	case thread1000channel.FieldName:
+		m.ResetName()
+		return nil
+	case thread1000channel.FieldAnonymousName:
+		m.ResetAnonymousName()
+		return nil
+	case thread1000channel.FieldChannelID:
+		m.ResetChannelID()
+		return nil
+	}
+	return fmt.Errorf("unknown Thread1000Channel field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *Thread1000ChannelMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.guild != nil {
+		edges = append(edges, thread1000channel.EdgeGuild)
+	}
+	if m.threads != nil {
+		edges = append(edges, thread1000channel.EdgeThreads)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *Thread1000ChannelMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case thread1000channel.EdgeGuild:
+		if id := m.guild; id != nil {
+			return []ent.Value{*id}
+		}
+	case thread1000channel.EdgeThreads:
+		ids := make([]ent.Value, 0, len(m.threads))
+		for id := range m.threads {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *Thread1000ChannelMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.removedthreads != nil {
+		edges = append(edges, thread1000channel.EdgeThreads)
+	}
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *Thread1000ChannelMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case thread1000channel.EdgeThreads:
+		ids := make([]ent.Value, 0, len(m.removedthreads))
+		for id := range m.removedthreads {
+			ids = append(ids, id)
+		}
+		return ids
+	}
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *Thread1000ChannelMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedguild {
+		edges = append(edges, thread1000channel.EdgeGuild)
+	}
+	if m.clearedthreads {
+		edges = append(edges, thread1000channel.EdgeThreads)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *Thread1000ChannelMutation) EdgeCleared(name string) bool {
+	switch name {
+	case thread1000channel.EdgeGuild:
+		return m.clearedguild
+	case thread1000channel.EdgeThreads:
+		return m.clearedthreads
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *Thread1000ChannelMutation) ClearEdge(name string) error {
+	switch name {
+	case thread1000channel.EdgeGuild:
+		m.ClearGuild()
+		return nil
+	}
+	return fmt.Errorf("unknown Thread1000Channel unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *Thread1000ChannelMutation) ResetEdge(name string) error {
+	switch name {
+	case thread1000channel.EdgeGuild:
+		m.ResetGuild()
+		return nil
+	case thread1000channel.EdgeThreads:
+		m.ResetThreads()
+		return nil
+	}
+	return fmt.Errorf("unknown Thread1000Channel edge %s", name)
 }
 
 // UserMutation represents an operation that mutates the User nodes in the graph.

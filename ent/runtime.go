@@ -18,6 +18,8 @@ import (
 	"github.com/sabafly/gobot/ent/rolepaneledit"
 	"github.com/sabafly/gobot/ent/rolepanelplaced"
 	"github.com/sabafly/gobot/ent/schema"
+	"github.com/sabafly/gobot/ent/thread1000"
+	"github.com/sabafly/gobot/ent/thread1000channel"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/ent/wordsuffix"
 	"github.com/sabafly/gobot/internal/permissions"
@@ -266,6 +268,30 @@ func init() {
 	rolepanelplacedDescID := rolepanelplacedFields[0].Descriptor()
 	// rolepanelplaced.DefaultID holds the default value on creation for the id field.
 	rolepanelplaced.DefaultID = rolepanelplacedDescID.Default.(func() uuid.UUID)
+	thread1000Fields := schema.Thread1000{}.Fields()
+	_ = thread1000Fields
+	// thread1000DescName is the schema descriptor for name field.
+	thread1000DescName := thread1000Fields[1].Descriptor()
+	// thread1000.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	thread1000.NameValidator = thread1000DescName.Validators[0].(func(string) error)
+	// thread1000DescMessageCount is the schema descriptor for message_count field.
+	thread1000DescMessageCount := thread1000Fields[2].Descriptor()
+	// thread1000.DefaultMessageCount holds the default value on creation for the message_count field.
+	thread1000.DefaultMessageCount = thread1000DescMessageCount.Default.(int)
+	// thread1000DescIsArchived is the schema descriptor for is_archived field.
+	thread1000DescIsArchived := thread1000Fields[3].Descriptor()
+	// thread1000.DefaultIsArchived holds the default value on creation for the is_archived field.
+	thread1000.DefaultIsArchived = thread1000DescIsArchived.Default.(bool)
+	// thread1000DescID is the schema descriptor for id field.
+	thread1000DescID := thread1000Fields[0].Descriptor()
+	// thread1000.DefaultID holds the default value on creation for the id field.
+	thread1000.DefaultID = thread1000DescID.Default.(func() uuid.UUID)
+	thread1000channelFields := schema.Thread1000Channel{}.Fields()
+	_ = thread1000channelFields
+	// thread1000channelDescID is the schema descriptor for id field.
+	thread1000channelDescID := thread1000channelFields[0].Descriptor()
+	// thread1000channel.DefaultID holds the default value on creation for the id field.
+	thread1000channel.DefaultID = thread1000channelDescID.Default.(func() uuid.UUID)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescName is the schema descriptor for name field.

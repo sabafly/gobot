@@ -21,6 +21,8 @@ import (
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/ent/rolepaneledit"
 	"github.com/sabafly/gobot/ent/rolepanelplaced"
+	"github.com/sabafly/gobot/ent/thread1000"
+	"github.com/sabafly/gobot/ent/thread1000channel"
 	"github.com/sabafly/gobot/ent/user"
 )
 
@@ -39,6 +41,8 @@ type GuildQuery struct {
 	withRolePanelPlacements *RolePanelPlacedQuery
 	withRolePanelEdits      *RolePanelEditQuery
 	withChinchiroSessions   *ChinchiroSessionQuery
+	withThreads1000         *Thread1000Query
+	withThread1000Channels  *Thread1000ChannelQuery
 	withFKs                 bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -252,6 +256,50 @@ func (gq *GuildQuery) QueryChinchiroSessions() *ChinchiroSessionQuery {
 	return query
 }
 
+// QueryThreads1000 chains the current query on the "threads1000" edge.
+func (gq *GuildQuery) QueryThreads1000() *Thread1000Query {
+	query := (&Thread1000Client{config: gq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := gq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := gq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(guild.Table, guild.FieldID, selector),
+			sqlgraph.To(thread1000.Table, thread1000.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, guild.Threads1000Table, guild.Threads1000Column),
+		)
+		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryThread1000Channels chains the current query on the "thread1000_channels" edge.
+func (gq *GuildQuery) QueryThread1000Channels() *Thread1000ChannelQuery {
+	query := (&Thread1000ChannelClient{config: gq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := gq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := gq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(guild.Table, guild.FieldID, selector),
+			sqlgraph.To(thread1000channel.Table, thread1000channel.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, guild.Thread1000ChannelsTable, guild.Thread1000ChannelsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
 // First returns the first Guild entity from the query.
 // Returns a *NotFoundError when no Guild was found.
 func (gq *GuildQuery) First(ctx context.Context) (*Guild, error) {
@@ -452,6 +500,8 @@ func (gq *GuildQuery) Clone() *GuildQuery {
 		withRolePanelPlacements: gq.withRolePanelPlacements.Clone(),
 		withRolePanelEdits:      gq.withRolePanelEdits.Clone(),
 		withChinchiroSessions:   gq.withChinchiroSessions.Clone(),
+		withThreads1000:         gq.withThreads1000.Clone(),
+		withThread1000Channels:  gq.withThread1000Channels.Clone(),
 		// clone intermediate query.
 		sql:  gq.sql.Clone(),
 		path: gq.path,
@@ -546,6 +596,28 @@ func (gq *GuildQuery) WithChinchiroSessions(opts ...func(*ChinchiroSessionQuery)
 	return gq
 }
 
+// WithThreads1000 tells the query-builder to eager-load the nodes that are connected to
+// the "threads1000" edge. The optional arguments are used to configure the query builder of the edge.
+func (gq *GuildQuery) WithThreads1000(opts ...func(*Thread1000Query)) *GuildQuery {
+	query := (&Thread1000Client{config: gq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	gq.withThreads1000 = query
+	return gq
+}
+
+// WithThread1000Channels tells the query-builder to eager-load the nodes that are connected to
+// the "thread1000_channels" edge. The optional arguments are used to configure the query builder of the edge.
+func (gq *GuildQuery) WithThread1000Channels(opts ...func(*Thread1000ChannelQuery)) *GuildQuery {
+	query := (&Thread1000ChannelClient{config: gq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	gq.withThread1000Channels = query
+	return gq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -625,7 +697,7 @@ func (gq *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild,
 		nodes       = []*Guild{}
 		withFKs     = gq.withFKs
 		_spec       = gq.querySpec()
-		loadedTypes = [8]bool{
+		loadedTypes = [10]bool{
 			gq.withOwner != nil,
 			gq.withMembers != nil,
 			gq.withMessagePins != nil,
@@ -634,6 +706,8 @@ func (gq *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild,
 			gq.withRolePanelPlacements != nil,
 			gq.withRolePanelEdits != nil,
 			gq.withChinchiroSessions != nil,
+			gq.withThreads1000 != nil,
+			gq.withThread1000Channels != nil,
 		}
 	)
 	if gq.withOwner != nil {
@@ -714,6 +788,22 @@ func (gq *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild,
 		if err := gq.loadChinchiroSessions(ctx, query, nodes,
 			func(n *Guild) { n.Edges.ChinchiroSessions = []*ChinchiroSession{} },
 			func(n *Guild, e *ChinchiroSession) { n.Edges.ChinchiroSessions = append(n.Edges.ChinchiroSessions, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := gq.withThreads1000; query != nil {
+		if err := gq.loadThreads1000(ctx, query, nodes,
+			func(n *Guild) { n.Edges.Threads1000 = []*Thread1000{} },
+			func(n *Guild, e *Thread1000) { n.Edges.Threads1000 = append(n.Edges.Threads1000, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := gq.withThread1000Channels; query != nil {
+		if err := gq.loadThread1000Channels(ctx, query, nodes,
+			func(n *Guild) { n.Edges.Thread1000Channels = []*Thread1000Channel{} },
+			func(n *Guild, e *Thread1000Channel) {
+				n.Edges.Thread1000Channels = append(n.Edges.Thread1000Channels, e)
+			}); err != nil {
 			return nil, err
 		}
 	}
@@ -964,6 +1054,68 @@ func (gq *GuildQuery) loadChinchiroSessions(ctx context.Context, query *Chinchir
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "guild_chinchiro_sessions" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (gq *GuildQuery) loadThreads1000(ctx context.Context, query *Thread1000Query, nodes []*Guild, init func(*Guild), assign func(*Guild, *Thread1000)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[snowflake.ID]*Guild)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Thread1000(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(guild.Threads1000Column), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.guild_threads1000
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "guild_threads1000" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "guild_threads1000" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (gq *GuildQuery) loadThread1000Channels(ctx context.Context, query *Thread1000ChannelQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *Thread1000Channel)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[snowflake.ID]*Guild)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Thread1000Channel(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(guild.Thread1000ChannelsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.guild_thread1000_channels
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "guild_thread1000_channels" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "guild_thread1000_channels" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

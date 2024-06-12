@@ -77,6 +77,10 @@ const (
 	EdgeRolePanelEdits = "role_panel_edits"
 	// EdgeChinchiroSessions holds the string denoting the chinchiro_sessions edge name in mutations.
 	EdgeChinchiroSessions = "chinchiro_sessions"
+	// EdgeThreads1000 holds the string denoting the threads1000 edge name in mutations.
+	EdgeThreads1000 = "threads1000"
+	// EdgeThread1000Channels holds the string denoting the thread1000_channels edge name in mutations.
+	EdgeThread1000Channels = "thread1000_channels"
 	// Table holds the table name of the guild in the database.
 	Table = "guilds"
 	// OwnerTable is the table that holds the owner relation/edge.
@@ -135,6 +139,20 @@ const (
 	ChinchiroSessionsInverseTable = "chinchiro_sessions"
 	// ChinchiroSessionsColumn is the table column denoting the chinchiro_sessions relation/edge.
 	ChinchiroSessionsColumn = "guild_chinchiro_sessions"
+	// Threads1000Table is the table that holds the threads1000 relation/edge.
+	Threads1000Table = "thread1000s"
+	// Threads1000InverseTable is the table name for the Thread1000 entity.
+	// It exists in this package in order to avoid circular dependency with the "thread1000" package.
+	Threads1000InverseTable = "thread1000s"
+	// Threads1000Column is the table column denoting the threads1000 relation/edge.
+	Threads1000Column = "guild_threads1000"
+	// Thread1000ChannelsTable is the table that holds the thread1000_channels relation/edge.
+	Thread1000ChannelsTable = "thread1000channels"
+	// Thread1000ChannelsInverseTable is the table name for the Thread1000Channel entity.
+	// It exists in this package in order to avoid circular dependency with the "thread1000channel" package.
+	Thread1000ChannelsInverseTable = "thread1000channels"
+	// Thread1000ChannelsColumn is the table column denoting the thread1000_channels relation/edge.
+	Thread1000ChannelsColumn = "guild_thread1000_channels"
 )
 
 // Columns holds all SQL columns for guild fields.
@@ -446,6 +464,34 @@ func ByChinchiroSessions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption
 		sqlgraph.OrderByNeighborTerms(s, newChinchiroSessionsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByThreads1000Count orders the results by threads1000 count.
+func ByThreads1000Count(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newThreads1000Step(), opts...)
+	}
+}
+
+// ByThreads1000 orders the results by threads1000 terms.
+func ByThreads1000(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newThreads1000Step(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByThread1000ChannelsCount orders the results by thread1000_channels count.
+func ByThread1000ChannelsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newThread1000ChannelsStep(), opts...)
+	}
+}
+
+// ByThread1000Channels orders the results by thread1000_channels terms.
+func ByThread1000Channels(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newThread1000ChannelsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newOwnerStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -500,5 +546,19 @@ func newChinchiroSessionsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ChinchiroSessionsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, ChinchiroSessionsTable, ChinchiroSessionsColumn),
+	)
+}
+func newThreads1000Step() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Threads1000InverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, Threads1000Table, Threads1000Column),
+	)
+}
+func newThread1000ChannelsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(Thread1000ChannelsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, Thread1000ChannelsTable, Thread1000ChannelsColumn),
 	)
 }

@@ -284,6 +284,58 @@ var (
 			},
 		},
 	}
+	// Thread1000sColumns holds the columns for the "thread1000s" table.
+	Thread1000sColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "message_count", Type: field.TypeInt, Default: 0},
+		{Name: "is_archived", Type: field.TypeBool, Default: false},
+		{Name: "thread_id", Type: field.TypeUint64},
+		{Name: "guild_threads1000", Type: field.TypeUint64},
+		{Name: "thread1000channel_threads", Type: field.TypeUUID},
+	}
+	// Thread1000sTable holds the schema information for the "thread1000s" table.
+	Thread1000sTable = &schema.Table{
+		Name:       "thread1000s",
+		Columns:    Thread1000sColumns,
+		PrimaryKey: []*schema.Column{Thread1000sColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "thread1000s_guilds_threads1000",
+				Columns:    []*schema.Column{Thread1000sColumns[5]},
+				RefColumns: []*schema.Column{GuildsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "thread1000s_thread1000channels_threads",
+				Columns:    []*schema.Column{Thread1000sColumns[6]},
+				RefColumns: []*schema.Column{Thread1000channelsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
+	// Thread1000channelsColumns holds the columns for the "thread1000channels" table.
+	Thread1000channelsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID, Unique: true},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "anonymous_name", Type: field.TypeString, Nullable: true},
+		{Name: "channel_id", Type: field.TypeUint64},
+		{Name: "guild_thread1000_channels", Type: field.TypeUint64},
+	}
+	// Thread1000channelsTable holds the schema information for the "thread1000channels" table.
+	Thread1000channelsTable = &schema.Table{
+		Name:       "thread1000channels",
+		Columns:    Thread1000channelsColumns,
+		PrimaryKey: []*schema.Column{Thread1000channelsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "thread1000channels_guilds_thread1000_channels",
+				Columns:    []*schema.Column{Thread1000channelsColumns[4]},
+				RefColumns: []*schema.Column{GuildsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUint64, Increment: true},
@@ -338,6 +390,8 @@ var (
 		RolePanelsTable,
 		RolePanelEditsTable,
 		RolePanelPlacedsTable,
+		Thread1000sTable,
+		Thread1000channelsTable,
 		UsersTable,
 		WordSuffixesTable,
 	}
@@ -358,6 +412,9 @@ func init() {
 	RolePanelEditsTable.ForeignKeys[1].RefTable = RolePanelsTable
 	RolePanelPlacedsTable.ForeignKeys[0].RefTable = GuildsTable
 	RolePanelPlacedsTable.ForeignKeys[1].RefTable = RolePanelsTable
+	Thread1000sTable.ForeignKeys[0].RefTable = GuildsTable
+	Thread1000sTable.ForeignKeys[1].RefTable = Thread1000channelsTable
+	Thread1000channelsTable.ForeignKeys[0].RefTable = GuildsTable
 	WordSuffixesTable.ForeignKeys[0].RefTable = UsersTable
 	WordSuffixesTable.ForeignKeys[1].RefTable = GuildsTable
 }

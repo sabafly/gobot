@@ -2,6 +2,13 @@ package role
 
 import (
 	"context"
+	"github.com/disgoorg/snowflake/v2"
+	"github.com/google/uuid"
+	"github.com/sabafly/gobot/bot/components"
+	"github.com/sabafly/gobot/ent/guild"
+	"github.com/sabafly/gobot/ent/rolepanel"
+	"github.com/sabafly/gobot/internal/errors"
+	"time"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
@@ -42,4 +49,25 @@ func rolePanelPlace(ctx context.Context, place *ent.RolePanelPlaced, locale disc
 		}
 	}
 	return nil
+}
+
+func createPanelPlace(ctx context.Context, c *components.Components, panelID uuid.UUID, channelID snowflake.ID, g *ent.Guild) (*ent.RolePanelPlaced, error) {
+
+	c.DB().RolePanelPlaced.Delete().Where(rolepanelplaced.And(rolepanelplaced.Or(rolepanelplaced.MessageIDIsNil(), rolepanelplaced.TypeIsNil()), rolepanelplaced.HasGuildWith(guild.ID(g.ID)))).ExecX(ctx)
+
+	if !g.QueryRolePanels().Where(rolepanel.ID(panelID)).ExistX(ctx) {
+		return nil, errors.New("rolepanel not found")
+	}
+
+	panel := g.QueryRolePanels().Where(rolepanel.ID(panelID)).FirstX(ctx)
+
+	return c.DB().RolePanelPlaced.Create().
+		SetGuild(g).
+		SetChannelID(channelID).
+		SetRolePanel(panel).
+		SetName(panel.Name).
+		SetDescription(panel.Description).
+		SetRoles(panel.Roles).
+		SetUpdatedAt(time.Now()).
+		SaveX(ctx), nil
 }

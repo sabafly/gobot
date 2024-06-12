@@ -1,6 +1,7 @@
 package role
 
 import (
+	"context"
 	"fmt"
 	"slices"
 
@@ -27,7 +28,7 @@ func initialize(edit *ent.RolePanelEdit, panel *ent.RolePanel) {
 	}
 }
 
-func rpEditBaseMessage(panel *ent.RolePanel, edit *ent.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
+func rpEditBaseMessage(ctx context.Context, panel *ent.RolePanel, edit *ent.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
 	builder := discord.NewMessageBuilder()
 	var roleField string
 	for i, r := range edit.Roles {
@@ -60,11 +61,13 @@ func rpEditBaseMessage(panel *ent.RolePanel, edit *ent.RolePanelEdit, locale dis
 							Value: builtin.Or(roleField != "", roleField, fmt.Sprintf("`%s`", translate.Message(locale, "components.role.panel.edit.menu.base.field.value.empty"))),
 						},
 					).
-					SetFooterTextf("id: %s", edit.ID).
+					SetFooterTextf("id: %s", panel.ID).
 					Build(),
 			},
 		)...,
 	)
+
+	placeCount := panel.QueryPlacements().CountX(ctx)
 
 	disabled := len(edit.Roles) < 1 || edit.SelectedRole == nil || !slices.ContainsFunc(edit.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole })
 	builder.SetContainerComponents(
@@ -96,7 +99,13 @@ func rpEditBaseMessage(panel *ent.RolePanel, edit *ent.RolePanelEdit, locale dis
 				Style:    discord.ButtonStyleDanger,
 				Label:    translate.Message(locale, "components.role.panel.edit.menu.base.components.apply_change"),
 				CustomID: fmt.Sprintf("role:panel_edit_component:apply_change:%s", edit.ID),
-				Disabled: !panel.AppliedAt.Before(panel.UpdatedAt) || len(panel.Roles) < 1,
+				Disabled: !panel.AppliedAt.Before(panel.UpdatedAt) || len(panel.Roles) < 1 || placeCount < 1,
+			},
+			discord.ButtonComponent{
+				Style:    discord.ButtonStylePrimary,
+				Label:    translate.Message(locale, "components.role.panel.edit.menu.base.components.place"),
+				CustomID: fmt.Sprintf("role:panel_edit_component:place:%s", edit.ID),
+				Disabled: (panel.AppliedAt.Before(panel.UpdatedAt) || len(panel.Roles) < 1) && placeCount > 0,
 			},
 		),
 		discord.NewActionRow(

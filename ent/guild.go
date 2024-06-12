@@ -91,9 +91,13 @@ type GuildEdges struct {
 	RolePanelEdits []*RolePanelEdit `json:"role_panel_edits,omitempty"`
 	// ChinchiroSessions holds the value of the chinchiro_sessions edge.
 	ChinchiroSessions []*ChinchiroSession `json:"chinchiro_sessions,omitempty"`
+	// Threads1000 holds the value of the threads1000 edge.
+	Threads1000 []*Thread1000 `json:"threads1000,omitempty"`
+	// Thread1000Channels holds the value of the thread1000_channels edge.
+	Thread1000Channels []*Thread1000Channel `json:"thread1000_channels,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [8]bool
+	loadedTypes [10]bool
 }
 
 // OwnerOrErr returns the Owner value or an error if the edge
@@ -168,6 +172,24 @@ func (e GuildEdges) ChinchiroSessionsOrErr() ([]*ChinchiroSession, error) {
 		return e.ChinchiroSessions, nil
 	}
 	return nil, &NotLoadedError{edge: "chinchiro_sessions"}
+}
+
+// Threads1000OrErr returns the Threads1000 value or an error if the edge
+// was not loaded in eager-loading.
+func (e GuildEdges) Threads1000OrErr() ([]*Thread1000, error) {
+	if e.loadedTypes[8] {
+		return e.Threads1000, nil
+	}
+	return nil, &NotLoadedError{edge: "threads1000"}
+}
+
+// Thread1000ChannelsOrErr returns the Thread1000Channels value or an error if the edge
+// was not loaded in eager-loading.
+func (e GuildEdges) Thread1000ChannelsOrErr() ([]*Thread1000Channel, error) {
+	if e.loadedTypes[9] {
+		return e.Thread1000Channels, nil
+	}
+	return nil, &NotLoadedError{edge: "thread1000_channels"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -407,6 +429,16 @@ func (gu *Guild) QueryRolePanelEdits() *RolePanelEditQuery {
 // QueryChinchiroSessions queries the "chinchiro_sessions" edge of the Guild entity.
 func (gu *Guild) QueryChinchiroSessions() *ChinchiroSessionQuery {
 	return NewGuildClient(gu.config).QueryChinchiroSessions(gu)
+}
+
+// QueryThreads1000 queries the "threads1000" edge of the Guild entity.
+func (gu *Guild) QueryThreads1000() *Thread1000Query {
+	return NewGuildClient(gu.config).QueryThreads1000(gu)
+}
+
+// QueryThread1000Channels queries the "thread1000_channels" edge of the Guild entity.
+func (gu *Guild) QueryThread1000Channels() *Thread1000ChannelQuery {
+	return NewGuildClient(gu.config).QueryThread1000Channels(gu)
 }
 
 // Update returns a builder for updating this Guild.

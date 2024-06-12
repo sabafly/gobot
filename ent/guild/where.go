@@ -1349,6 +1349,52 @@ func HasChinchiroSessionsWith(preds ...predicate.ChinchiroSession) predicate.Gui
 	})
 }
 
+// HasThreads1000 applies the HasEdge predicate on the "threads1000" edge.
+func HasThreads1000() predicate.Guild {
+	return predicate.Guild(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, Threads1000Table, Threads1000Column),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasThreads1000With applies the HasEdge predicate on the "threads1000" edge with a given conditions (other predicates).
+func HasThreads1000With(preds ...predicate.Thread1000) predicate.Guild {
+	return predicate.Guild(func(s *sql.Selector) {
+		step := newThreads1000Step()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasThread1000Channels applies the HasEdge predicate on the "thread1000_channels" edge.
+func HasThread1000Channels() predicate.Guild {
+	return predicate.Guild(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, Thread1000ChannelsTable, Thread1000ChannelsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasThread1000ChannelsWith applies the HasEdge predicate on the "thread1000_channels" edge with a given conditions (other predicates).
+func HasThread1000ChannelsWith(preds ...predicate.Thread1000Channel) predicate.Guild {
+	return predicate.Guild(func(s *sql.Selector) {
+		step := newThread1000ChannelsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Guild) predicate.Guild {
 	return predicate.Guild(sql.AndPredicates(predicates...))

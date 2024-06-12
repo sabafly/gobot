@@ -158,6 +158,10 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 
+					if !g.QueryRolePanels().Where(rolepanel.ID(panelID)).ExistX(event) {
+						return errors.NewError(errors.ErrorMessage("errors.not_exist", event))
+					}
+
 					rolePanel := g.QueryRolePanels().WithEdit().Where(rolepanel.ID(panelID)).FirstX(event)
 
 					if rolePanel.QueryEdit().ExistX(event) {
@@ -198,7 +202,7 @@ func Command(c *components.Components) components.Command {
 						SaveX(event)
 
 					if err := event.CreateMessage(
-						rpEditBaseMessage(rolePanel, edit, event.Locale()).
+						rpEditBaseMessage(event, rolePanel, edit, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
 							BuildCreate(),
 					); err != nil {
@@ -219,24 +223,15 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 
-					c.DB().RolePanelPlaced.Delete().Where(rolepanelplaced.And(rolepanelplaced.MessageIDIsNil(), rolepanelplaced.HasGuildWith(guild.ID(g.ID)))).ExecX(event)
-
 					panelID, err := uuid.Parse(event.SlashCommandInteractionData().String("panel"))
 					if err != nil {
 						return errors.NewError(err)
 					}
 
-					panel := g.QueryRolePanels().Where(rolepanel.ID(panelID)).FirstX(event)
-
-					place := c.DB().RolePanelPlaced.Create().
-						SetGuild(g).
-						SetChannelID(event.Channel().ID()).
-						SetRolePanel(panel).
-						SetName(panel.Name).
-						SetDescription(panel.Description).
-						SetRoles(panel.Roles).
-						SetUpdatedAt(time.Now()).
-						SaveX(event)
+					place, err := createPanelPlace(event, c, panelID, event.Channel().ID(), g)
+					if err != nil {
+						return errors.NewError(errors.ErrorMessage("errors.not_exist", event))
+					}
 
 					if err := event.CreateMessage(
 						rpPlaceBaseMenu(place, event.Locale()).
@@ -261,6 +256,10 @@ func Command(c *components.Components) components.Command {
 					panelID, err := uuid.Parse(event.SlashCommandInteractionData().String("panel"))
 					if err != nil {
 						return errors.NewError(err)
+					}
+
+					if !g.QueryRolePanels().Where(rolepanel.ID(panelID)).ExistX(event) {
+						return errors.NewError(errors.ErrorMessage("errors.not_exist", event))
 					}
 
 					panel := g.QueryRolePanels().Where(rolepanel.ID(panelID)).FirstX(event)
@@ -345,7 +344,7 @@ func Command(c *components.Components) components.Command {
 				initialize(edit, rolePanel)
 
 				if err := event.CreateMessage(
-					rpEditBaseMessage(rolePanel, edit, event.Locale()).
+					rpEditBaseMessage(event, rolePanel, edit, event.Locale()).
 						SetFlags(discord.MessageFlagEphemeral).
 						BuildCreate(),
 				); err != nil {
@@ -381,7 +380,7 @@ func Command(c *components.Components) components.Command {
 						SetName(event.Data.Text("name")).
 						SaveX(event)
 					if err := event.UpdateMessage(
-						rpEditBaseMessage(panel, edit, event.Locale()).
+						rpEditBaseMessage(event, panel, edit, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
 							BuildUpdate(),
 					); err != nil {
@@ -393,7 +392,7 @@ func Command(c *components.Components) components.Command {
 						SetDescription(event.Data.Text("description")).
 						SaveX(event)
 					if err := event.UpdateMessage(
-						rpEditBaseMessage(panel, edit, event.Locale()).
+						rpEditBaseMessage(event, panel, edit, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
 							BuildUpdate(),
 					); err != nil {
@@ -406,7 +405,7 @@ func Command(c *components.Components) components.Command {
 					}
 
 					if err := event.UpdateMessage(
-						rpEditBaseMessage(panel, edit, event.Locale()).
+						rpEditBaseMessage(event, panel, edit, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
 							BuildUpdate(),
 					); err != nil {
@@ -486,7 +485,7 @@ func Command(c *components.Components) components.Command {
 						}
 					case "base_menu":
 						if err := event.UpdateMessage(
-							rpEditBaseMessage(panel, edit, event.Locale()).
+							rpEditBaseMessage(event, panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
 								BuildUpdate(),
 						); err != nil {
@@ -559,7 +558,7 @@ func Command(c *components.Components) components.Command {
 							SaveX(event)
 
 						if err := event.UpdateMessage(
-							rpEditBaseMessage(panel, edit, event.Locale()).
+							rpEditBaseMessage(event, panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
 								BuildUpdate(),
 						); err != nil {
@@ -581,7 +580,7 @@ func Command(c *components.Components) components.Command {
 						}
 
 						if err := event.UpdateMessage(
-							rpEditBaseMessage(panel, edit, event.Locale()).
+							rpEditBaseMessage(event, panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
 								BuildUpdate(),
 						); err != nil {
@@ -597,7 +596,7 @@ func Command(c *components.Components) components.Command {
 						}
 
 						if err := event.UpdateMessage(
-							rpEditBaseMessage(panel, edit, event.Locale()).
+							rpEditBaseMessage(event, panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
 								BuildUpdate(),
 						); err != nil {
@@ -616,7 +615,7 @@ func Command(c *components.Components) components.Command {
 						}
 
 						if err := event.UpdateMessage(
-							rpEditBaseMessage(panel, edit, event.Locale()).
+							rpEditBaseMessage(event, panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
 								BuildUpdate(),
 						); err != nil {
@@ -676,7 +675,7 @@ func Command(c *components.Components) components.Command {
 						}
 
 						if err := event.UpdateMessage(
-							rpEditBaseMessage(panel, edit, event.Locale()).
+							rpEditBaseMessage(event, panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
 								BuildUpdate(),
 						); err != nil {
@@ -698,7 +697,7 @@ func Command(c *components.Components) components.Command {
 						panel = update.SaveX(event)
 
 						if err := event.UpdateMessage(
-							rpEditBaseMessage(panel, edit, event.Locale()).
+							rpEditBaseMessage(event, panel, edit, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
 								BuildUpdate(),
 						); err != nil {
@@ -727,9 +726,28 @@ func Command(c *components.Components) components.Command {
 							SetAppliedAt(time.Now()).
 							SaveX(event)
 
+						c.DB().RolePanelPlaced.Delete().Where(rolepanelplaced.And(rolepanelplaced.Or(rolepanelplaced.MessageIDIsNil(), rolepanelplaced.TypeIsNil()), rolepanelplaced.HasGuildWith(guild.ID(g.ID)))).ExecX(event)
 						go updateRolePanel(event, panel, event.Locale(), event.Client(), true)
 						if err := event.UpdateMessage(
-							rpEditBaseMessage(panel, edit, event.Locale()).
+							rpEditBaseMessage(event, panel, edit, event.Locale()).
+								SetFlags(discord.MessageFlagEphemeral).
+								BuildUpdate(),
+						); err != nil {
+							return errors.NewError(err)
+						}
+					case "place":
+						g, err := c.GuildCreateID(event, *event.GuildID())
+						if err != nil {
+							return errors.NewError(err)
+						}
+
+						place, err := createPanelPlace(event, c, panel.ID, event.Channel().ID(), g)
+						if err != nil {
+							return errors.NewError(errors.ErrorMessage("errors.not_exist", event))
+						}
+
+						if err := event.UpdateMessage(
+							rpPlaceBaseMenu(place, event.Locale()).
 								SetFlags(discord.MessageFlagEphemeral).
 								BuildUpdate(),
 						); err != nil {
@@ -1068,7 +1086,7 @@ func Command(c *components.Components) components.Command {
 					}
 
 					if _, err := event.Client().Rest().UpdateInteractionResponse(event.Client().ApplicationID(), token,
-						rpEditBaseMessage(panel, edit, u.Locale).
+						rpEditBaseMessage(event, panel, edit, u.Locale).
 							SetFlags(discord.MessageFlagEphemeral).
 							BuildUpdate(),
 					); err != nil {

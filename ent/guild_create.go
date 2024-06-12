@@ -21,6 +21,8 @@ import (
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/ent/rolepaneledit"
 	"github.com/sabafly/gobot/ent/rolepanelplaced"
+	"github.com/sabafly/gobot/ent/thread1000"
+	"github.com/sabafly/gobot/ent/thread1000channel"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/internal/permissions"
 )
@@ -420,6 +422,36 @@ func (gc *GuildCreate) AddChinchiroSessions(c ...*ChinchiroSession) *GuildCreate
 		ids[i] = c[i].ID
 	}
 	return gc.AddChinchiroSessionIDs(ids...)
+}
+
+// AddThreads1000IDs adds the "threads1000" edge to the Thread1000 entity by IDs.
+func (gc *GuildCreate) AddThreads1000IDs(ids ...uuid.UUID) *GuildCreate {
+	gc.mutation.AddThreads1000IDs(ids...)
+	return gc
+}
+
+// AddThreads1000 adds the "threads1000" edges to the Thread1000 entity.
+func (gc *GuildCreate) AddThreads1000(t ...*Thread1000) *GuildCreate {
+	ids := make([]uuid.UUID, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return gc.AddThreads1000IDs(ids...)
+}
+
+// AddThread1000ChannelIDs adds the "thread1000_channels" edge to the Thread1000Channel entity by IDs.
+func (gc *GuildCreate) AddThread1000ChannelIDs(ids ...uuid.UUID) *GuildCreate {
+	gc.mutation.AddThread1000ChannelIDs(ids...)
+	return gc
+}
+
+// AddThread1000Channels adds the "thread1000_channels" edges to the Thread1000Channel entity.
+func (gc *GuildCreate) AddThread1000Channels(t ...*Thread1000Channel) *GuildCreate {
+	ids := make([]uuid.UUID, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return gc.AddThread1000ChannelIDs(ids...)
 }
 
 // Mutation returns the GuildMutation object of the builder.
@@ -880,6 +912,38 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(chinchirosession.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := gc.mutation.Threads1000IDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.Threads1000Table,
+			Columns: []string{guild.Threads1000Column},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread1000.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := gc.mutation.Thread1000ChannelsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.Thread1000ChannelsTable,
+			Columns: []string{guild.Thread1000ChannelsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(thread1000channel.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

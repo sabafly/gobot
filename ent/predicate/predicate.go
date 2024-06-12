@@ -33,6 +33,12 @@ type RolePanelEdit func(*sql.Selector)
 // RolePanelPlaced is the predicate function for rolepanelplaced builders.
 type RolePanelPlaced func(*sql.Selector)
 
+// Thread1000 is the predicate function for thread1000 builders.
+type Thread1000 func(*sql.Selector)
+
+// Thread1000Channel is the predicate function for thread1000channel builders.
+type Thread1000Channel func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
 

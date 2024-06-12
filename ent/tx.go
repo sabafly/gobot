@@ -30,6 +30,10 @@ type Tx struct {
 	RolePanelEdit *RolePanelEditClient
 	// RolePanelPlaced is the client for interacting with the RolePanelPlaced builders.
 	RolePanelPlaced *RolePanelPlacedClient
+	// Thread1000 is the client for interacting with the Thread1000 builders.
+	Thread1000 *Thread1000Client
+	// Thread1000Channel is the client for interacting with the Thread1000Channel builders.
+	Thread1000Channel *Thread1000ChannelClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 	// WordSuffix is the client for interacting with the WordSuffix builders.
@@ -174,6 +178,8 @@ func (tx *Tx) init() {
 	tx.RolePanel = NewRolePanelClient(tx.config)
 	tx.RolePanelEdit = NewRolePanelEditClient(tx.config)
 	tx.RolePanelPlaced = NewRolePanelPlacedClient(tx.config)
+	tx.Thread1000 = NewThread1000Client(tx.config)
+	tx.Thread1000Channel = NewThread1000ChannelClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.WordSuffix = NewWordSuffixClient(tx.config)
 }

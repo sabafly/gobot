@@ -21,6 +21,8 @@ import (
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/ent/rolepaneledit"
 	"github.com/sabafly/gobot/ent/rolepanelplaced"
+	"github.com/sabafly/gobot/ent/thread1000"
+	"github.com/sabafly/gobot/ent/thread1000channel"
 	"github.com/sabafly/gobot/ent/user"
 	"github.com/sabafly/gobot/ent/wordsuffix"
 )
@@ -83,17 +85,19 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			chinchiroplayer.Table:  chinchiroplayer.ValidColumn,
-			chinchirosession.Table: chinchirosession.ValidColumn,
-			guild.Table:            guild.ValidColumn,
-			member.Table:           member.ValidColumn,
-			messagepin.Table:       messagepin.ValidColumn,
-			messageremind.Table:    messageremind.ValidColumn,
-			rolepanel.Table:        rolepanel.ValidColumn,
-			rolepaneledit.Table:    rolepaneledit.ValidColumn,
-			rolepanelplaced.Table:  rolepanelplaced.ValidColumn,
-			user.Table:             user.ValidColumn,
-			wordsuffix.Table:       wordsuffix.ValidColumn,
+			chinchiroplayer.Table:   chinchiroplayer.ValidColumn,
+			chinchirosession.Table:  chinchirosession.ValidColumn,
+			guild.Table:             guild.ValidColumn,
+			member.Table:            member.ValidColumn,
+			messagepin.Table:        messagepin.ValidColumn,
+			messageremind.Table:     messageremind.ValidColumn,
+			rolepanel.Table:         rolepanel.ValidColumn,
+			rolepaneledit.Table:     rolepaneledit.ValidColumn,
+			rolepanelplaced.Table:   rolepanelplaced.ValidColumn,
+			thread1000.Table:        thread1000.ValidColumn,
+			thread1000channel.Table: thread1000channel.ValidColumn,
+			user.Table:              user.ValidColumn,
+			wordsuffix.Table:        wordsuffix.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)
