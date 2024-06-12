@@ -168,7 +168,6 @@ func Command(c *components.Components) components.Command {
 						c.DB().RolePanelEdit.DeleteOneID(rolePanel.QueryEdit().FirstIDX(event)).ExecX(event)
 					}
 
-					shouldUpdate := false
 					var removeRoles []snowflake.ID
 					var roles []discord.Role = nil
 					for _, r := range rolePanel.Roles {
@@ -181,19 +180,16 @@ func Command(c *components.Components) components.Command {
 						if slices.ContainsFunc(roles, func(role discord.Role) bool { return role.ID == r.ID }) {
 							continue
 						}
-						shouldUpdate = true
 						removeRoles = append(removeRoles, r.ID)
 					}
-					if shouldUpdate {
-						for _, id := range removeRoles {
-							rolePanel.Roles = slices.DeleteFunc(rolePanel.Roles, func(r schema.Role) bool { return r.ID == id })
-						}
-						rolePanel =
-							rolePanel.Update().
-								SetUpdatedAt(time.Now()).
-								SetRoles(rolePanel.Roles).
-								SaveX(event)
+					for _, id := range removeRoles {
+						rolePanel.Roles = slices.DeleteFunc(rolePanel.Roles, func(r schema.Role) bool { return r.ID == id })
 					}
+					rolePanel =
+						rolePanel.Update().
+							SetUpdatedAt(time.Now()).
+							SetRoles(rolePanel.Roles).
+							SaveX(event)
 
 					edit := c.DB().RolePanelEdit.Create().
 						SetGuild(g).
