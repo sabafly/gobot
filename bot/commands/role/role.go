@@ -169,7 +169,7 @@ func Command(c *components.Components) components.Command {
 					}
 
 					var removeRoles []snowflake.ID
-					var roles []discord.Role = nil
+					var roles []discord.Role
 					for _, r := range rolePanel.Roles {
 						if roles == nil {
 							roles, err = event.Client().Rest().GetRoles(*event.GuildID())

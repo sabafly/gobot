@@ -29,6 +29,7 @@ func initialize(edit *ent.RolePanelEdit, panel *ent.RolePanel) {
 }
 
 func rpEditBaseMessage(ctx context.Context, panel *ent.RolePanel, edit *ent.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
+	initialize(edit, panel)
 	builder := discord.NewMessageBuilder()
 	var roleField string
 	for i, r := range edit.Roles {
@@ -39,7 +40,6 @@ func rpEditBaseMessage(ctx context.Context, panel *ent.RolePanel, edit *ent.Role
 		}
 		roleField += fmt.Sprintf("%s: %s: %s\n", discordutil.FormatComponentEmoji(*r.Emoji), r.Name, discord.RoleMention(r.ID))
 	}
-	initialize(edit, panel)
 	builder.SetEmbeds(
 		embeds.SetEmbedsProperties(
 			[]discord.Embed{
