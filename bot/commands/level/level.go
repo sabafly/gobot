@@ -939,6 +939,18 @@ func Command(c *components.Components) components.Command {
 				if slices.Contains(g.LevelUpExcludeChannel, event.ChannelID) {
 					return nil
 				}
+				var channel discord.GuildChannel
+				channel, ok := event.Channel()
+				if !ok {
+					c, err := event.Client().Rest().GetChannel(event.ChannelID)
+					if err != nil {
+						return errors.NewError(err)
+					}
+					channel, _ = c.(discord.GuildChannel)
+				}
+				if channel.ParentID() != nil && slices.Contains(g.LevelUpExcludeChannel, *channel.ParentID()) {
+					return nil
+				}
 				m, err := c.MemberCreate(event, event.Message.Author, event.GuildID)
 				if err != nil {
 					return errors.NewError(err)
