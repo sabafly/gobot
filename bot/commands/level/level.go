@@ -36,9 +36,8 @@ func Command(c *components.Components) components.Command {
 		Namespace: "level",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
-				Name:         "level",
-				Description:  "level",
-				DMPermission: builtin.Ptr(false),
+				Name:        "level",
+				Description: "level",
 				Contexts: []discord.InteractionContextType{
 					discord.InteractionContextTypeGuild,
 				},
@@ -399,8 +398,8 @@ func Command(c *components.Components) components.Command {
 					}
 					movedXp := uint64(fromUser.Xp)
 					fromUser.Xp = xppoint.XP(0)
-					fromUser = fromUser.Update().SetXp(fromUser.Xp).SaveX(event)
-					if toUser, err = addXp(event, toUser.Update(), movedXp, event.Client(), toUser, g, event.Channel().ID(), to.EffectiveName()); err != nil {
+					fromUser = fromUser.Update().SetXp(fromUser.Xp).ClearLastNotifiedLevel().SaveX(event)
+					if toUser, err = addXp(event, toUser.Update(), movedXp, event.Client(), toUser, g, event.Channel().ID(), to.EffectiveName(), true); err != nil {
 						return errors.NewError(err)
 					}
 					ids := g.QueryMembers().Order(
@@ -955,7 +954,7 @@ func Command(c *components.Components) components.Command {
 				if err != nil {
 					return errors.NewError(err)
 				}
-				if _, err = addXp(event, m.Update(), rand.N[uint64](16)+15, event.Client(), m, g, event.ChannelID, event.Message.Author.EffectiveName()); err != nil {
+				if _, err = addXp(event, m.Update(), rand.N[uint64](16)+15, event.Client(), m, g, event.ChannelID, event.Message.Author.EffectiveName(), false); err != nil {
 					return errors.NewError(err)
 				}
 			}
@@ -964,9 +963,9 @@ func Command(c *components.Components) components.Command {
 	}).SetComponent(c)
 }
 
-func addXp(ctx context.Context, memberUpdate *ent.MemberUpdateOne, xp uint64, client bot.Client, m *ent.Member, g *ent.Guild, channelID snowflake.ID, username string) (*ent.Member, error) {
+func addXp(ctx context.Context, memberUpdate *ent.MemberUpdateOne, xp uint64, client bot.Client, m *ent.Member, g *ent.Guild, channelID snowflake.ID, username string, ignoreCooldown bool) (*ent.Member, error) {
 	before := builtin.NonNilOrDefault(m.LastNotifiedLevel, m.Xp.Level())
-	if time.Now().After(m.LastXp.Add(time.Minute * 3)) {
+	if ignoreCooldown || time.Now().After(m.LastXp.Add(time.Minute*3)) {
 		m.Xp.Add(xp)
 		memberUpdate.
 			SetXp(m.Xp).
@@ -979,15 +978,31 @@ func addXp(ctx context.Context, memberUpdate *ent.MemberUpdateOne, xp uint64, cl
 		SaveX(ctx)
 	if before < after {
 		for i := range after - before {
-			if err := levelUp(g, before+i+1, client, g.ID, builtin.NonNilOrDefault(g.LevelUpChannel, channelID), m, username, before+i); err != nil {
+			if err := levelUp(g, before+i+1, client, g.ID, m); err != nil {
 				return m, err
 			}
+		}
+		// レベルアップ通知
+		content := g.LevelUpMessage
+		content = strings.ReplaceAll(content, "{user}", discord.UserMention(m.UserID))
+		content = strings.ReplaceAll(content, "{username}", username)
+		content = strings.ReplaceAll(content, "{before_level}", strconv.FormatUint(before, 10))
+		content = strings.ReplaceAll(content, "{after_level}", strconv.FormatUint(after, 10))
+		content = strings.ReplaceAll(content, "{xp}", strconv.FormatUint(uint64(m.Xp), 10))
+		if _, err := client.Rest().
+			CreateMessage(
+				builtin.Or(builtin.NonNil(g.LevelUpChannel) != 0, builtin.NonNil(g.LevelUpChannel), channelID),
+				discord.NewMessageBuilder().
+					SetContent(content).
+					BuildCreate(),
+			); err != nil {
+			return m, err
 		}
 	}
 	return m, nil
 }
 
-func levelUp(g *ent.Guild, after uint64, client bot.Client, guildID, channelID snowflake.ID, m *ent.Member, username string, before uint64) error {
+func levelUp(g *ent.Guild, after uint64, client bot.Client, guildID snowflake.ID, m *ent.Member) error {
 	// レベルロール
 	r, ok := g.LevelRole[int(after)]
 	if ok {
@@ -996,21 +1011,5 @@ func levelUp(g *ent.Guild, after uint64, client bot.Client, guildID, channelID s
 		}
 	}
 
-	// レベルアップ通知
-	content := g.LevelUpMessage
-	content = strings.ReplaceAll(content, "{user}", discord.UserMention(m.UserID))
-	content = strings.ReplaceAll(content, "{username}", username)
-	content = strings.ReplaceAll(content, "{before_level}", strconv.FormatUint(before, 10))
-	content = strings.ReplaceAll(content, "{after_level}", strconv.FormatUint(after, 10))
-	content = strings.ReplaceAll(content, "{xp}", strconv.FormatUint(uint64(m.Xp), 10))
-	if _, err := client.Rest().
-		CreateMessage(
-			builtin.Or(builtin.NonNil(g.LevelUpChannel) != 0, builtin.NonNil(g.LevelUpChannel), channelID),
-			discord.NewMessageBuilder().
-				SetContent(content).
-				BuildCreate(),
-		); err != nil {
-		return err
-	}
 	return nil
 }
