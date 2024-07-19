@@ -720,10 +720,10 @@ func Command(c *components.Components) *generic.Command {
 				// 語尾の処理
 
 				if e.Message.Type.System() || e.Message.Author.System || e.Message.Author.Bot {
-					return nil
+					goto messagePin
 				}
 				if e.Message.Type != discord.MessageTypeDefault && e.Message.Type != discord.MessageTypeReply {
-					return nil
+					goto messagePin
 				}
 
 				u, err := c.UserCreate(e, e.Message.Author)
