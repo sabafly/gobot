@@ -11,6 +11,10 @@ import (
 )
 
 func doTextCommand(ctx context.Context, event *events.GuildMessageCreate) (err error, shouldContinue bool) {
+	if event.Message.Author.Bot || event.Message.WebhookID != nil {
+		return nil, true
+	}
+
 	c, ok := strings.CutPrefix(event.Message.Content, discord.UserMention(event.Client().ApplicationID()))
 	if !ok {
 		return nil, true

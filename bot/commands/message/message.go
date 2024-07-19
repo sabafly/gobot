@@ -43,9 +43,8 @@ func Command(c *components.Components) *generic.Command {
 		Namespace: "message",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
-				Name:         "message",
-				Description:  "message",
-				DMPermission: builtin.Ptr(false),
+				Name:        "message",
+				Description: "message",
 				Contexts: []discord.InteractionContextType{
 					discord.InteractionContextTypeGuild,
 				},
@@ -718,6 +717,15 @@ func Command(c *components.Components) *generic.Command {
 					return nil
 				}
 
+				// 語尾の処理
+
+				if e.Message.Type.System() || e.Message.Author.System || e.Message.Author.Bot {
+					return nil
+				}
+				if e.Message.Type != discord.MessageTypeDefault && e.Message.Type != discord.MessageTypeReply {
+					return nil
+				}
+
 				u, err := c.UserCreate(e, e.Message.Author)
 				if err != nil {
 					slog.Error("メッセージ著者取得に失敗", "err", err, "uid", e.Message.Author.ID)
@@ -742,15 +750,15 @@ func Command(c *components.Components) *generic.Command {
 					c.GetLock("message_pin").Mutex(e.ChannelID).Lock()
 				}
 
-				// 語尾の処理
 				err = messageSuffixMessageCreateHandler(w, u, e, c)
 				c.GetLock("message_pin").Mutex(e.ChannelID).Unlock()
 				if err != nil {
 					return errors.NewError(err)
 				}
 
-			messagePin:
 				// ピン留めメッセージの処理
+			messagePin:
+
 				if err := func(event *events.GuildMessageCreate, c *components.Components) errors.Error {
 					var channel discord.Channel
 					channel, ok := event.Channel()
@@ -857,12 +865,6 @@ func Command(c *components.Components) *generic.Command {
 func messageSuffixMessageCreateHandler(w *ent.WordSuffix, u *ent.User, e *events.GuildMessageCreate, c *components.Components) errors.Error {
 	slog.Debug("メッセージ作成")
 	if e.Message.Content == "" {
-		return nil
-	}
-	if e.Message.Type.System() || e.Message.Author.System || e.Message.Author.Bot {
-		return nil
-	}
-	if e.Message.Type != discord.MessageTypeDefault && e.Message.Type != discord.MessageTypeReply {
 		return nil
 	}
 
