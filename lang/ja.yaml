@@ -584,7 +584,7 @@ errors.invalid.bot.target.description: ボット以外のユーザーである�
 errors.invalid.self.target: 自分自身は選択できません
 errors.invalid.self.target.description: 自分以外のユーザーである必要があります
 errors.invalid.permission: 権限が不足しています
-errors.invalid.permission.description: "`/permission add`コマンドで{{.Permission}}の権限を追加することで使用可能になります"
+errors.invalid.permission.description: "`/permission set`コマンドで{{.Permission}}の権限を追加することで使用可能になります"
 errors.unavailable.message.pin: ピン留めメッセージが存在しません
 errors.timeout: 期限切れ
 errors.timeout.description: 有効期限が切れています
