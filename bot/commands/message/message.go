@@ -28,6 +28,16 @@ import (
 	"github.com/sabafly/gobot/internal/translate"
 )
 
+const (
+	MessagePinArgumentTypeDuration1m = iota
+	MessagePinArgumentTypeDuration1h
+	MessagePinArgumentTypeDuration3h
+	MessagePinArgumentTypeDuration6h
+	MessagePinArgumentTypeDuration1d
+	MessagePinArgumentTypeDuration3d
+	MessagePinArgumentTypeDuration1w
+)
+
 func Command(c *components.Components) *generic.Command {
 	return (&generic.Command{
 		Namespace: "message",
@@ -98,37 +108,37 @@ func Command(c *components.Components) *generic.Command {
 											{
 												Name:              "1m",
 												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.1m", false),
-												Value:             0,
+												Value:             MessagePinArgumentTypeDuration1m,
 											},
 											{
 												Name:              "1h",
 												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.1h", false),
-												Value:             1,
+												Value:             MessagePinArgumentTypeDuration1h,
 											},
 											{
 												Name:              "3h",
 												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.3h", false),
-												Value:             2,
+												Value:             MessagePinArgumentTypeDuration3h,
 											},
 											{
 												Name:              "6h",
 												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.6h", false),
-												Value:             3,
+												Value:             MessagePinArgumentTypeDuration6h,
 											},
 											{
 												Name:              "1d",
 												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.1d", false),
-												Value:             4,
+												Value:             MessagePinArgumentTypeDuration1d,
 											},
 											{
 												Name:              "3d",
 												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.3d", false),
-												Value:             5,
+												Value:             MessagePinArgumentTypeDuration3d,
 											},
 											{
 												Name:              "1w",
 												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.1w", false),
-												Value:             6,
+												Value:             MessagePinArgumentTypeDuration1w,
 											},
 										},
 									},
@@ -235,19 +245,19 @@ func Command(c *components.Components) *generic.Command {
 					if duration, ok := event.SlashCommandInteractionData().OptInt("duration"); ok {
 						var d time.Duration
 						switch duration {
-						case 0:
+						case MessagePinArgumentTypeDuration1m:
 							d = time.Minute
-						case 1:
+						case MessagePinArgumentTypeDuration1h:
 							d = time.Hour
-						case 2:
+						case MessagePinArgumentTypeDuration3h:
 							d = time.Hour * 3
-						case 3:
+						case MessagePinArgumentTypeDuration6h:
 							d = time.Hour * 6
-						case 4:
+						case MessagePinArgumentTypeDuration1d:
 							d = time.Hour * 24
-						case 5:
+						case MessagePinArgumentTypeDuration3d:
 							d = time.Hour * 24 * 3
-						case 6:
+						case MessagePinArgumentTypeDuration1w:
 							d = time.Hour * 24 * 7
 						}
 						expired = builtin.Or(d != 0, builtin.Ptr(time.Now().Add(d)), nil)
@@ -255,7 +265,7 @@ func Command(c *components.Components) *generic.Command {
 					var w *ent.WordSuffix
 					if u.QueryWordSuffix().Where(wordsuffix.GuildID(g.ID)).ExistX(event) {
 						w = u.QueryWordSuffix().Where(wordsuffix.GuildID(g.ID)).OnlyX(event)
-						w.Update().
+						w = w.Update().
 							SetSuffix(event.SlashCommandInteractionData().String("suffix")).
 							SetOwner(u).
 							SetRule(wordsuffix.Rule(event.SlashCommandInteractionData().String("rule"))).
@@ -708,16 +718,38 @@ func Command(c *components.Components) *generic.Command {
 					return nil
 				}
 
+				u, err := c.UserCreate(e, e.Message.Author)
+				if err != nil {
+					slog.Error("メッセージ著者取得に失敗", "err", err, "uid", e.Message.Author.ID)
+					return errors.NewError(err)
+				}
+
+				var w *ent.WordSuffix
+
+				if u.QueryWordSuffix().Where(wordsuffix.GuildID(e.GuildID)).ExistX(e) {
+					// Guild
+					w = u.QueryWordSuffix().Where(wordsuffix.GuildID(e.GuildID)).FirstX(e)
+				} else {
+					// Global
+					if !u.QueryWordSuffix().Where(wordsuffix.GuildIDIsNil()).ExistX(e) {
+						slog.Debug("語尾が存在しません")
+						goto messagePin
+					}
+					w = u.QueryWordSuffix().Where(wordsuffix.GuildIDIsNil()).FirstX(e)
+				}
+
+				if w.Rule == wordsuffix.RuleWebhook {
+					c.GetLock("message_pin").Mutex(e.ChannelID).Lock()
+				}
+
 				// 語尾の処理
-				if err := messageSuffixMessageCreateHandler(e, c); err != nil {
-					return err
+				err = messageSuffixMessageCreateHandler(w, u, e, c)
+				c.GetLock("message_pin").Mutex(e.ChannelID).Unlock()
+				if err != nil {
+					return errors.NewError(err)
 				}
 
-				if ok := c.GetLock("message_pin").Mutex(e.ChannelID).TryLock(); !ok {
-					return nil
-				}
-				defer c.GetLock("message_pin").Mutex(e.ChannelID).Unlock()
-
+			messagePin:
 				// ピン留めメッセージの処理
 				if err := func(event *events.GuildMessageCreate, c *components.Components) errors.Error {
 					var channel discord.Channel
@@ -736,6 +768,8 @@ func Command(c *components.Components) *generic.Command {
 					if !g.QueryMessagePins().Where(messagepin.ChannelID(event.ChannelID)).ExistX(event) {
 						return nil
 					}
+					c.GetLock("message_pin").Mutex(e.ChannelID).Lock()
+					defer c.GetLock("message_pin").Mutex(e.ChannelID).Unlock()
 					m := g.QueryMessagePins().Where(messagepin.ChannelID(event.ChannelID)).FirstX(event)
 
 					webhook, err := event.Client().WebhookManager().GetMessenger(channel)
@@ -820,7 +854,7 @@ func Command(c *components.Components) *generic.Command {
 	}).SetComponent(c)
 }
 
-func messageSuffixMessageCreateHandler(e *events.GuildMessageCreate, c *components.Components) errors.Error {
+func messageSuffixMessageCreateHandler(w *ent.WordSuffix, u *ent.User, e *events.GuildMessageCreate, c *components.Components) errors.Error {
 	slog.Debug("メッセージ作成")
 	if e.Message.Content == "" {
 		return nil
@@ -832,25 +866,6 @@ func messageSuffixMessageCreateHandler(e *events.GuildMessageCreate, c *componen
 		return nil
 	}
 
-	u, err := c.UserCreate(e, e.Message.Author)
-	if err != nil {
-		slog.Error("メッセージ著者取得に失敗", "err", err, "uid", e.Message.Author.ID)
-		return errors.NewError(err)
-	}
-
-	var w *ent.WordSuffix
-
-	if u.QueryWordSuffix().Where(wordsuffix.GuildID(e.GuildID)).ExistX(e) {
-		// Guild
-		w = u.QueryWordSuffix().Where(wordsuffix.GuildID(e.GuildID)).FirstX(e)
-	} else {
-		// Global
-		if !u.QueryWordSuffix().Where(wordsuffix.GuildIDIsNil()).ExistX(e) {
-			slog.Debug("語尾が存在しません")
-			return nil
-		}
-		w = u.QueryWordSuffix().Where(wordsuffix.GuildIDIsNil()).FirstX(e)
-	}
 	if w.Expired != nil && time.Now().Compare(*w.Expired) == 1 {
 		c.DB().WordSuffix.DeleteOneID(w.ID).ExecX(e)
 		return nil

@@ -41,6 +41,10 @@ func NewError(err error) Error {
 }
 
 func newError(err error, skip int) *errorImpl {
+	var ei *errorImpl
+	if errors.As(err, &ei) {
+		return ei
+	}
 	pc := make([]uintptr, 10) // at least 1 entry needed
 	runtime.Callers(skip, pc)
 	f := runtime.FuncForPC(pc[0])
