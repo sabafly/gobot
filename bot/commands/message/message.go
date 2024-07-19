@@ -718,6 +718,7 @@ func Command(c *components.Components) *generic.Command {
 				}
 
 				// 語尾の処理
+				var w *ent.WordSuffix
 
 				if e.Message.Type.System() || e.Message.Author.System || e.Message.Author.Bot {
 					goto messagePin
@@ -731,8 +732,6 @@ func Command(c *components.Components) *generic.Command {
 					slog.Error("メッセージ著者取得に失敗", "err", err, "uid", e.Message.Author.ID)
 					return errors.NewError(err)
 				}
-
-				var w *ent.WordSuffix
 
 				if u.QueryWordSuffix().Where(wordsuffix.GuildID(e.GuildID)).ExistX(e) {
 					// Guild
