@@ -397,7 +397,7 @@ func Command(c *components.Components) components.Command {
 				case "set_display_name":
 					if edit.SelectedRole != nil {
 						edit.Roles[slices.IndexFunc(edit.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole })].Name = event.Data.Text("display_name")
-						edit = edit.Update().SetRoles(panel.Roles).SaveX(event)
+						edit = edit.Update().SetRoles(edit.Roles).SaveX(event)
 					}
 
 					if err := event.UpdateMessage(
@@ -667,7 +667,7 @@ func Command(c *components.Components) components.Command {
 							edit.Roles[slices.IndexFunc(edit.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole })].Emoji = nil
 							edit = edit.Update().
 								SetModified(true).
-								SetRoles(panel.Roles).
+								SetRoles(edit.Roles).
 								SaveX(event)
 						}
 
@@ -785,7 +785,7 @@ func Command(c *components.Components) components.Command {
 							SetType(rolepanelplaced.Type(event.StringSelectMenuInteractionData().Values[0])).
 							SaveX(event)
 					case "button_type":
-						var t discord.ButtonStyle = discord.ButtonStylePrimary
+						var t = discord.ButtonStylePrimary
 						switch event.StringSelectMenuInteractionData().Values[0] {
 						case "green":
 							t = discord.ButtonStyleSuccess
