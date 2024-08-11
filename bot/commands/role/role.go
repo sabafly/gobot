@@ -397,7 +397,10 @@ func Command(c *components.Components) components.Command {
 				case "set_display_name":
 					if edit.SelectedRole != nil {
 						edit.Roles[slices.IndexFunc(edit.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole })].Name = event.Data.Text("display_name")
-						edit = edit.Update().SetRoles(edit.Roles).SaveX(event)
+						edit = edit.Update().
+							SetModified(true).
+							SetRoles(edit.Roles).
+							SaveX(event)
 					}
 
 					if err := event.UpdateMessage(
