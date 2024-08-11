@@ -164,7 +164,7 @@ func run() error {
 	if !ok {
 		return fmt.Errorf("cannot cache self user")
 	}
-	if avatarURL, err := url.Parse(self.EffectiveAvatarURL(discord.WithFormat(discord.FileFormatPNG))); err != nil {
+	if avatarURL, err := url.Parse(self.EffectiveAvatarURL(discord.WithFormat(discord.FileFormatPNG))); err == nil {
 		resp, err := http.Get(avatarURL.String())
 		if err != nil {
 			return fmt.Errorf("error on get: %w", err)

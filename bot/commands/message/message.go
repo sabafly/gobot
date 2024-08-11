@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/disgoorg/disgo/rest"
+	"github.com/disgoorg/snowflake/v2"
 	"log/slog"
 	"net/http"
 	"slices"
@@ -14,7 +15,6 @@ import (
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
-	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/ent"
@@ -29,13 +29,13 @@ import (
 )
 
 const (
-	MessagePinArgumentTypeDuration1m = iota
-	MessagePinArgumentTypeDuration1h
-	MessagePinArgumentTypeDuration3h
-	MessagePinArgumentTypeDuration6h
-	MessagePinArgumentTypeDuration1d
-	MessagePinArgumentTypeDuration3d
-	MessagePinArgumentTypeDuration1w
+	PinArgumentTypeDuration1m = iota
+	PinArgumentTypeDuration1h
+	PinArgumentTypeDuration3h
+	PinArgumentTypeDuration6h
+	PinArgumentTypeDuration1d
+	PinArgumentTypeDuration3d
+	PinArgumentTypeDuration1w
 )
 
 func Command(c *components.Components) *generic.Command {
@@ -107,37 +107,37 @@ func Command(c *components.Components) *generic.Command {
 											{
 												Name:              "1m",
 												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.1m", false),
-												Value:             MessagePinArgumentTypeDuration1m,
+												Value:             PinArgumentTypeDuration1m,
 											},
 											{
 												Name:              "1h",
 												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.1h", false),
-												Value:             MessagePinArgumentTypeDuration1h,
+												Value:             PinArgumentTypeDuration1h,
 											},
 											{
 												Name:              "3h",
 												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.3h", false),
-												Value:             MessagePinArgumentTypeDuration3h,
+												Value:             PinArgumentTypeDuration3h,
 											},
 											{
 												Name:              "6h",
 												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.6h", false),
-												Value:             MessagePinArgumentTypeDuration6h,
+												Value:             PinArgumentTypeDuration6h,
 											},
 											{
 												Name:              "1d",
 												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.1d", false),
-												Value:             MessagePinArgumentTypeDuration1d,
+												Value:             PinArgumentTypeDuration1d,
 											},
 											{
 												Name:              "3d",
 												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.3d", false),
-												Value:             MessagePinArgumentTypeDuration3d,
+												Value:             PinArgumentTypeDuration3d,
 											},
 											{
 												Name:              "1w",
 												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.1w", false),
-												Value:             MessagePinArgumentTypeDuration1w,
+												Value:             PinArgumentTypeDuration1w,
 											},
 										},
 									},
@@ -244,19 +244,19 @@ func Command(c *components.Components) *generic.Command {
 					if duration, ok := event.SlashCommandInteractionData().OptInt("duration"); ok {
 						var d time.Duration
 						switch duration {
-						case MessagePinArgumentTypeDuration1m:
+						case PinArgumentTypeDuration1m:
 							d = time.Minute
-						case MessagePinArgumentTypeDuration1h:
+						case PinArgumentTypeDuration1h:
 							d = time.Hour
-						case MessagePinArgumentTypeDuration3h:
+						case PinArgumentTypeDuration3h:
 							d = time.Hour * 3
-						case MessagePinArgumentTypeDuration6h:
+						case PinArgumentTypeDuration6h:
 							d = time.Hour * 6
-						case MessagePinArgumentTypeDuration1d:
+						case PinArgumentTypeDuration1d:
 							d = time.Hour * 24
-						case MessagePinArgumentTypeDuration3d:
+						case PinArgumentTypeDuration3d:
 							d = time.Hour * 24 * 3
-						case MessagePinArgumentTypeDuration1w:
+						case PinArgumentTypeDuration1w:
 							d = time.Hour * 24 * 7
 						}
 						expired = builtin.Or(d != 0, builtin.Ptr(time.Now().Add(d)), nil)
@@ -716,6 +716,9 @@ func Command(c *components.Components) *generic.Command {
 				if !shouldContinue {
 					return nil
 				}
+
+				// TODO: refactor
+				// 変数が初期化されていないことが潜在的なバグの原因になりかねない
 
 				// 語尾の処理
 				var w *ent.WordSuffix

@@ -496,12 +496,13 @@ func Command(c *components.Components) components.Command {
 						var roles []discord.Role
 						roleMap := map[snowflake.ID]discord.Role{}
 						for _, id := range self.RoleIDs {
-							role, ok := event.Client().Caches().Role(*event.GuildID(), id)
-							if !ok {
+							role, err := event.Client().Rest().GetRole(*event.GuildID(), id)
+							if err != nil {
+								slog.Error("API ERROR GetRole", "error", err, "guild_id", *event.GuildID(), "id", id)
 								continue
 							}
-							roleMap[id] = role
-							roles = append(roles, role)
+							roleMap[id] = *role
+							roles = append(roles, *role)
 						}
 						highestRole := discordutil.GetHighestRole(roles)
 						if highestRole == nil {
