@@ -130,7 +130,7 @@ func run() error {
 			sharding.WithAutoScaling(true),
 			sharding.WithGatewayConfigOpts(
 				gateway.WithAutoReconnect(true),
-				gateway.WithIntents(gateway.IntentsGuild, gateway.IntentsPrivileged),
+				gateway.WithIntents(gateway.IntentsGuild, gateway.IntentsPrivileged.Remove(gateway.IntentGuildPresences)),
 			),
 		),
 		bot.WithRestClientConfigOpts(
