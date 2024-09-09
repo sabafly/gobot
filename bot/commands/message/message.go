@@ -748,16 +748,18 @@ func Command(c *components.Components) *generic.Command {
 					w = u.QueryWordSuffix().Where(wordsuffix.GuildIDIsNil()).FirstX(e)
 				}
 
-				webhookFlag := false
-				if w.Rule == wordsuffix.RuleWebhook {
-					c.GetLock("message_pin").Mutex(e.ChannelID).Lock()
-					webhookFlag = true
-				}
+				{
+					webhookFlag := false
+					if w.Rule == wordsuffix.RuleWebhook {
+						c.GetLock("message_pin").Mutex(e.ChannelID).Lock()
+						webhookFlag = true
+					}
 
-				err = messageSuffixMessageCreateHandler(w, u, e, c)
+					err = messageSuffixMessageCreateHandler(w, u, e, c)
 
-				if webhookFlag {
-					c.GetLock("message_pin").Mutex(e.ChannelID).Unlock()
+					if webhookFlag {
+						c.GetLock("message_pin").Mutex(e.ChannelID).Unlock()
+					}
 				}
 
 				if err != nil {
