@@ -1,8 +1,6 @@
 package permission
 
 import (
-	"fmt"
-
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
@@ -19,9 +17,8 @@ func Command(c *components.Components) components.Command {
 		Namespace: "permission",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
-				Name:         "permission",
-				Description:  "permission",
-				DMPermission: builtin.Ptr(false),
+				Name:        "permission",
+				Description: "permission",
 				Contexts: []discord.InteractionContextType{
 					discord.InteractionContextTypeGuild,
 				},
@@ -284,11 +281,9 @@ func Command(c *components.Components) components.Command {
 								embeds.SetEmbedProperties(
 									discord.NewEmbedBuilder().
 										SetTitle(translate.Message(event.Locale(), "components.permission.list.message.embed.title")).
-										SetDescriptionf(
-											fmt.Sprintf("%s```yaml\n%s```",
-												mention,
-												builtin.Or(str != "", str, "Empty"),
-											),
+										SetDescriptionf("%s```yaml\n%s```",
+											mention,
+											builtin.Or(str != "", str, "Empty"),
 										).
 										Build(),
 								),
