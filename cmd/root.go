@@ -23,7 +23,6 @@ package cmd
 import (
 	"fmt"
 	"github.com/sabafly/gobot/bot"
-	"github.com/sabafly/gobot/gobot"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -34,7 +33,7 @@ var root = &cobra.Command{
 }
 
 func init() {
-	root.AddCommand(bot.Command(), gobot.Command())
+	root.AddCommand(bot.Command())
 }
 
 func Execute() {
