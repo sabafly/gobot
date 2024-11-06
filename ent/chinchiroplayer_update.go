@@ -142,10 +142,10 @@ func (cpu *ChinchiroPlayerUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (cpu *ChinchiroPlayerUpdate) check() error {
-	if _, ok := cpu.mutation.UserID(); cpu.mutation.UserCleared() && !ok {
+	if cpu.mutation.UserCleared() && len(cpu.mutation.UserIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ChinchiroPlayer.user"`)
 	}
-	if _, ok := cpu.mutation.SessionID(); cpu.mutation.SessionCleared() && !ok {
+	if cpu.mutation.SessionCleared() && len(cpu.mutation.SessionIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ChinchiroPlayer.session"`)
 	}
 	return nil
@@ -339,10 +339,10 @@ func (cpuo *ChinchiroPlayerUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (cpuo *ChinchiroPlayerUpdateOne) check() error {
-	if _, ok := cpuo.mutation.UserID(); cpuo.mutation.UserCleared() && !ok {
+	if cpuo.mutation.UserCleared() && len(cpuo.mutation.UserIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ChinchiroPlayer.user"`)
 	}
-	if _, ok := cpuo.mutation.SessionID(); cpuo.mutation.SessionCleared() && !ok {
+	if cpuo.mutation.SessionCleared() && len(cpuo.mutation.SessionIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ChinchiroPlayer.session"`)
 	}
 	return nil

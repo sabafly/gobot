@@ -18,34 +18,31 @@
  *
  */
 
-package components
+package cmd
 
 import (
-	"context"
-
-	"github.com/disgoorg/disgo/discord"
-	"github.com/disgoorg/snowflake/v2"
-	"github.com/sabafly/gobot/ent"
-	"github.com/sabafly/gobot/ent/guild"
-	"github.com/sabafly/gobot/ent/member"
-	"github.com/sabafly/gobot/ent/user"
+	"fmt"
+	"github.com/sabafly/gobot/bot"
+	"github.com/sabafly/gobot/gobot"
+	"github.com/spf13/cobra"
+	"os"
 )
 
-func (c *Components) MemberCreate(ctx context.Context, u discord.User, gid snowflake.ID) (*ent.Member, error) {
-	eu, err := c.UserCreate(ctx, u)
-	if err != nil {
-		return nil, err
+var root = &cobra.Command{
+	Use:   "gobot",
+	Short: "とても便利でおいしいディスコードボット",
+}
+
+func init() {
+	root.AddCommand(bot.Command(), gobot.Command())
+}
+
+func Execute() {
+	if err := root.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
-	ok := c.db.Member.
-		Query().
-		Where(member.HasUserWith(user.ID(u.ID)), member.HasGuildWith(guild.ID(gid))).ExistX(ctx)
-	if ok {
-		return c.db.Member.
-			Query().
-			Where(member.HasUserWith(user.ID(u.ID)), member.HasGuildWith(guild.ID(gid))).Only(ctx)
-	}
-	return c.db.Member.Create().
-		SetUser(eu).
-		SetGuildID(gid).
-		Save(ctx)
+}
+
+func initConfig() {
 }

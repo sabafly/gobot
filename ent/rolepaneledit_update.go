@@ -236,10 +236,10 @@ func (rpeu *RolePanelEditUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanelEdit.name": %w`, err)}
 		}
 	}
-	if _, ok := rpeu.mutation.GuildID(); rpeu.mutation.GuildCleared() && !ok {
+	if rpeu.mutation.GuildCleared() && len(rpeu.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "RolePanelEdit.guild"`)
 	}
-	if _, ok := rpeu.mutation.ParentID(); rpeu.mutation.ParentCleared() && !ok {
+	if rpeu.mutation.ParentCleared() && len(rpeu.mutation.ParentIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "RolePanelEdit.parent"`)
 	}
 	return nil
@@ -552,10 +552,10 @@ func (rpeuo *RolePanelEditUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanelEdit.name": %w`, err)}
 		}
 	}
-	if _, ok := rpeuo.mutation.GuildID(); rpeuo.mutation.GuildCleared() && !ok {
+	if rpeuo.mutation.GuildCleared() && len(rpeuo.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "RolePanelEdit.guild"`)
 	}
-	if _, ok := rpeuo.mutation.ParentID(); rpeuo.mutation.ParentCleared() && !ok {
+	if rpeuo.mutation.ParentCleared() && len(rpeuo.mutation.ParentIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "RolePanelEdit.parent"`)
 	}
 	return nil

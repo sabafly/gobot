@@ -185,7 +185,7 @@ func (rpc *RolePanelCreate) check() error {
 	if _, ok := rpc.mutation.Description(); !ok {
 		return &ValidationError{Name: "description", err: errors.New(`ent: missing required field "RolePanel.description"`)}
 	}
-	if _, ok := rpc.mutation.GuildID(); !ok {
+	if len(rpc.mutation.GuildIDs()) == 0 {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "RolePanel.guild"`)}
 	}
 	return nil

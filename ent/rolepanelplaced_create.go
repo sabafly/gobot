@@ -342,10 +342,10 @@ func (rppc *RolePanelPlacedCreate) check() error {
 	if _, ok := rppc.mutation.Description(); !ok {
 		return &ValidationError{Name: "description", err: errors.New(`ent: missing required field "RolePanelPlaced.description"`)}
 	}
-	if _, ok := rppc.mutation.GuildID(); !ok {
+	if len(rppc.mutation.GuildIDs()) == 0 {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "RolePanelPlaced.guild"`)}
 	}
-	if _, ok := rppc.mutation.RolePanelID(); !ok {
+	if len(rppc.mutation.RolePanelIDs()) == 0 {
 		return &ValidationError{Name: "role_panel", err: errors.New(`ent: missing required edge "RolePanelPlaced.role_panel"`)}
 	}
 	return nil

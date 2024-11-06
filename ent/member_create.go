@@ -177,10 +177,10 @@ func (mc *MemberCreate) check() error {
 	if _, ok := mc.mutation.MessageCount(); !ok {
 		return &ValidationError{Name: "message_count", err: errors.New(`ent: missing required field "Member.message_count"`)}
 	}
-	if _, ok := mc.mutation.GuildID(); !ok {
+	if len(mc.mutation.GuildIDs()) == 0 {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "Member.guild"`)}
 	}
-	if _, ok := mc.mutation.UserID(); !ok {
+	if len(mc.mutation.UserIDs()) == 0 {
 		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "Member.user"`)}
 	}
 	return nil

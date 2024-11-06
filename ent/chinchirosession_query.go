@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -112,7 +113,7 @@ func (csq *ChinchiroSessionQuery) QueryPlayers() *ChinchiroPlayerQuery {
 // First returns the first ChinchiroSession entity from the query.
 // Returns a *NotFoundError when no ChinchiroSession was found.
 func (csq *ChinchiroSessionQuery) First(ctx context.Context) (*ChinchiroSession, error) {
-	nodes, err := csq.Limit(1).All(setContextOp(ctx, csq.ctx, "First"))
+	nodes, err := csq.Limit(1).All(setContextOp(ctx, csq.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +136,7 @@ func (csq *ChinchiroSessionQuery) FirstX(ctx context.Context) *ChinchiroSession 
 // Returns a *NotFoundError when no ChinchiroSession ID was found.
 func (csq *ChinchiroSessionQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = csq.Limit(1).IDs(setContextOp(ctx, csq.ctx, "FirstID")); err != nil {
+	if ids, err = csq.Limit(1).IDs(setContextOp(ctx, csq.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -158,7 +159,7 @@ func (csq *ChinchiroSessionQuery) FirstIDX(ctx context.Context) uuid.UUID {
 // Returns a *NotSingularError when more than one ChinchiroSession entity is found.
 // Returns a *NotFoundError when no ChinchiroSession entities are found.
 func (csq *ChinchiroSessionQuery) Only(ctx context.Context) (*ChinchiroSession, error) {
-	nodes, err := csq.Limit(2).All(setContextOp(ctx, csq.ctx, "Only"))
+	nodes, err := csq.Limit(2).All(setContextOp(ctx, csq.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +187,7 @@ func (csq *ChinchiroSessionQuery) OnlyX(ctx context.Context) *ChinchiroSession {
 // Returns a *NotFoundError when no entities are found.
 func (csq *ChinchiroSessionQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = csq.Limit(2).IDs(setContextOp(ctx, csq.ctx, "OnlyID")); err != nil {
+	if ids, err = csq.Limit(2).IDs(setContextOp(ctx, csq.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -211,7 +212,7 @@ func (csq *ChinchiroSessionQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 
 // All executes the query and returns a list of ChinchiroSessions.
 func (csq *ChinchiroSessionQuery) All(ctx context.Context) ([]*ChinchiroSession, error) {
-	ctx = setContextOp(ctx, csq.ctx, "All")
+	ctx = setContextOp(ctx, csq.ctx, ent.OpQueryAll)
 	if err := csq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
@@ -233,7 +234,7 @@ func (csq *ChinchiroSessionQuery) IDs(ctx context.Context) (ids []uuid.UUID, err
 	if csq.ctx.Unique == nil && csq.path != nil {
 		csq.Unique(true)
 	}
-	ctx = setContextOp(ctx, csq.ctx, "IDs")
+	ctx = setContextOp(ctx, csq.ctx, ent.OpQueryIDs)
 	if err = csq.Select(chinchirosession.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -251,7 +252,7 @@ func (csq *ChinchiroSessionQuery) IDsX(ctx context.Context) []uuid.UUID {
 
 // Count returns the count of the given query.
 func (csq *ChinchiroSessionQuery) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, csq.ctx, "Count")
+	ctx = setContextOp(ctx, csq.ctx, ent.OpQueryCount)
 	if err := csq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
@@ -269,7 +270,7 @@ func (csq *ChinchiroSessionQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (csq *ChinchiroSessionQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, csq.ctx, "Exist")
+	ctx = setContextOp(ctx, csq.ctx, ent.OpQueryExist)
 	switch _, err := csq.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
@@ -614,7 +615,7 @@ func (csgb *ChinchiroSessionGroupBy) Aggregate(fns ...AggregateFunc) *ChinchiroS
 
 // Scan applies the selector query and scans the result into the given value.
 func (csgb *ChinchiroSessionGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, csgb.build.ctx, "GroupBy")
+	ctx = setContextOp(ctx, csgb.build.ctx, ent.OpQueryGroupBy)
 	if err := csgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
@@ -662,7 +663,7 @@ func (css *ChinchiroSessionSelect) Aggregate(fns ...AggregateFunc) *ChinchiroSes
 
 // Scan applies the selector query and scans the result into the given value.
 func (css *ChinchiroSessionSelect) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, css.ctx, "Select")
+	ctx = setContextOp(ctx, css.ctx, ent.OpQuerySelect)
 	if err := css.prepareQuery(ctx); err != nil {
 		return err
 	}

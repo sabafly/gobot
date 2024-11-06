@@ -167,10 +167,10 @@ func (cpc *ChinchiroPlayerCreate) check() error {
 	if _, ok := cpc.mutation.UserID(); !ok {
 		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "ChinchiroPlayer.user_id"`)}
 	}
-	if _, ok := cpc.mutation.UserID(); !ok {
+	if len(cpc.mutation.UserIDs()) == 0 {
 		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "ChinchiroPlayer.user"`)}
 	}
-	if _, ok := cpc.mutation.SessionID(); !ok {
+	if len(cpc.mutation.SessionIDs()) == 0 {
 		return &ValidationError{Name: "session", err: errors.New(`ent: missing required edge "ChinchiroPlayer.session"`)}
 	}
 	return nil

@@ -165,7 +165,7 @@ func (wsc *WordSuffixCreate) check() error {
 			return &ValidationError{Name: "rule", err: fmt.Errorf(`ent: validator failed for field "WordSuffix.rule": %w`, err)}
 		}
 	}
-	if _, ok := wsc.mutation.OwnerID(); !ok {
+	if len(wsc.mutation.OwnerIDs()) == 0 {
 		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "WordSuffix.owner"`)}
 	}
 	return nil

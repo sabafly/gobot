@@ -143,7 +143,7 @@ func (tc *Thread1000ChannelCreate) check() error {
 	if _, ok := tc.mutation.ChannelID(); !ok {
 		return &ValidationError{Name: "channel_id", err: errors.New(`ent: missing required field "Thread1000Channel.channel_id"`)}
 	}
-	if _, ok := tc.mutation.GuildID(); !ok {
+	if len(tc.mutation.GuildIDs()) == 0 {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "Thread1000Channel.guild"`)}
 	}
 	return nil

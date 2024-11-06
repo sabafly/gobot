@@ -146,7 +146,7 @@ func (mrc *MessageRemindCreate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "MessageRemind.name": %w`, err)}
 		}
 	}
-	if _, ok := mrc.mutation.GuildID(); !ok {
+	if len(mrc.mutation.GuildIDs()) == 0 {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "MessageRemind.guild"`)}
 	}
 	return nil

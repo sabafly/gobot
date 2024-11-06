@@ -183,7 +183,7 @@ func (mpu *MessagePinUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (mpu *MessagePinUpdate) check() error {
-	if _, ok := mpu.mutation.GuildID(); mpu.mutation.GuildCleared() && !ok {
+	if mpu.mutation.GuildCleared() && len(mpu.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "MessagePin.guild"`)
 	}
 	return nil
@@ -449,7 +449,7 @@ func (mpuo *MessagePinUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (mpuo *MessagePinUpdateOne) check() error {
-	if _, ok := mpuo.mutation.GuildID(); mpuo.mutation.GuildCleared() && !ok {
+	if mpuo.mutation.GuildCleared() && len(mpuo.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "MessagePin.guild"`)
 	}
 	return nil

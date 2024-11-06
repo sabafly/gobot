@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -111,7 +112,7 @@ func (t *Thread1000Query) QueryChannel() *Thread1000ChannelQuery {
 // First returns the first Thread1000 entity from the query.
 // Returns a *NotFoundError when no Thread1000 was found.
 func (t *Thread1000Query) First(ctx context.Context) (*Thread1000, error) {
-	nodes, err := t.Limit(1).All(setContextOp(ctx, t.ctx, "First"))
+	nodes, err := t.Limit(1).All(setContextOp(ctx, t.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +135,7 @@ func (t *Thread1000Query) FirstX(ctx context.Context) *Thread1000 {
 // Returns a *NotFoundError when no Thread1000 ID was found.
 func (t *Thread1000Query) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = t.Limit(1).IDs(setContextOp(ctx, t.ctx, "FirstID")); err != nil {
+	if ids, err = t.Limit(1).IDs(setContextOp(ctx, t.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -157,7 +158,7 @@ func (t *Thread1000Query) FirstIDX(ctx context.Context) uuid.UUID {
 // Returns a *NotSingularError when more than one Thread1000 entity is found.
 // Returns a *NotFoundError when no Thread1000 entities are found.
 func (t *Thread1000Query) Only(ctx context.Context) (*Thread1000, error) {
-	nodes, err := t.Limit(2).All(setContextOp(ctx, t.ctx, "Only"))
+	nodes, err := t.Limit(2).All(setContextOp(ctx, t.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +186,7 @@ func (t *Thread1000Query) OnlyX(ctx context.Context) *Thread1000 {
 // Returns a *NotFoundError when no entities are found.
 func (t *Thread1000Query) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = t.Limit(2).IDs(setContextOp(ctx, t.ctx, "OnlyID")); err != nil {
+	if ids, err = t.Limit(2).IDs(setContextOp(ctx, t.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -210,7 +211,7 @@ func (t *Thread1000Query) OnlyIDX(ctx context.Context) uuid.UUID {
 
 // All executes the query and returns a list of Thread1000s.
 func (t *Thread1000Query) All(ctx context.Context) ([]*Thread1000, error) {
-	ctx = setContextOp(ctx, t.ctx, "All")
+	ctx = setContextOp(ctx, t.ctx, ent.OpQueryAll)
 	if err := t.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
@@ -232,7 +233,7 @@ func (t *Thread1000Query) IDs(ctx context.Context) (ids []uuid.UUID, err error) 
 	if t.ctx.Unique == nil && t.path != nil {
 		t.Unique(true)
 	}
-	ctx = setContextOp(ctx, t.ctx, "IDs")
+	ctx = setContextOp(ctx, t.ctx, ent.OpQueryIDs)
 	if err = t.Select(thread1000.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -250,7 +251,7 @@ func (t *Thread1000Query) IDsX(ctx context.Context) []uuid.UUID {
 
 // Count returns the count of the given query.
 func (t *Thread1000Query) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, t.ctx, "Count")
+	ctx = setContextOp(ctx, t.ctx, ent.OpQueryCount)
 	if err := t.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
@@ -268,7 +269,7 @@ func (t *Thread1000Query) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (t *Thread1000Query) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, t.ctx, "Exist")
+	ctx = setContextOp(ctx, t.ctx, ent.OpQueryExist)
 	switch _, err := t.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
@@ -613,7 +614,7 @@ func (tb *Thread1000GroupBy) Aggregate(fns ...AggregateFunc) *Thread1000GroupBy 
 
 // Scan applies the selector query and scans the result into the given value.
 func (tb *Thread1000GroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, tb.build.ctx, "GroupBy")
+	ctx = setContextOp(ctx, tb.build.ctx, ent.OpQueryGroupBy)
 	if err := tb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
@@ -661,7 +662,7 @@ func (t *Thread1000Select) Aggregate(fns ...AggregateFunc) *Thread1000Select {
 
 // Scan applies the selector query and scans the result into the given value.
 func (t *Thread1000Select) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, t.ctx, "Select")
+	ctx = setContextOp(ctx, t.ctx, ent.OpQuerySelect)
 	if err := t.prepareQuery(ctx); err != nil {
 		return err
 	}

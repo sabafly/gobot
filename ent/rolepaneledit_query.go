@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -111,7 +112,7 @@ func (rpeq *RolePanelEditQuery) QueryParent() *RolePanelQuery {
 // First returns the first RolePanelEdit entity from the query.
 // Returns a *NotFoundError when no RolePanelEdit was found.
 func (rpeq *RolePanelEditQuery) First(ctx context.Context) (*RolePanelEdit, error) {
-	nodes, err := rpeq.Limit(1).All(setContextOp(ctx, rpeq.ctx, "First"))
+	nodes, err := rpeq.Limit(1).All(setContextOp(ctx, rpeq.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +135,7 @@ func (rpeq *RolePanelEditQuery) FirstX(ctx context.Context) *RolePanelEdit {
 // Returns a *NotFoundError when no RolePanelEdit ID was found.
 func (rpeq *RolePanelEditQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = rpeq.Limit(1).IDs(setContextOp(ctx, rpeq.ctx, "FirstID")); err != nil {
+	if ids, err = rpeq.Limit(1).IDs(setContextOp(ctx, rpeq.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -157,7 +158,7 @@ func (rpeq *RolePanelEditQuery) FirstIDX(ctx context.Context) uuid.UUID {
 // Returns a *NotSingularError when more than one RolePanelEdit entity is found.
 // Returns a *NotFoundError when no RolePanelEdit entities are found.
 func (rpeq *RolePanelEditQuery) Only(ctx context.Context) (*RolePanelEdit, error) {
-	nodes, err := rpeq.Limit(2).All(setContextOp(ctx, rpeq.ctx, "Only"))
+	nodes, err := rpeq.Limit(2).All(setContextOp(ctx, rpeq.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +186,7 @@ func (rpeq *RolePanelEditQuery) OnlyX(ctx context.Context) *RolePanelEdit {
 // Returns a *NotFoundError when no entities are found.
 func (rpeq *RolePanelEditQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = rpeq.Limit(2).IDs(setContextOp(ctx, rpeq.ctx, "OnlyID")); err != nil {
+	if ids, err = rpeq.Limit(2).IDs(setContextOp(ctx, rpeq.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -210,7 +211,7 @@ func (rpeq *RolePanelEditQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 
 // All executes the query and returns a list of RolePanelEdits.
 func (rpeq *RolePanelEditQuery) All(ctx context.Context) ([]*RolePanelEdit, error) {
-	ctx = setContextOp(ctx, rpeq.ctx, "All")
+	ctx = setContextOp(ctx, rpeq.ctx, ent.OpQueryAll)
 	if err := rpeq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
@@ -232,7 +233,7 @@ func (rpeq *RolePanelEditQuery) IDs(ctx context.Context) (ids []uuid.UUID, err e
 	if rpeq.ctx.Unique == nil && rpeq.path != nil {
 		rpeq.Unique(true)
 	}
-	ctx = setContextOp(ctx, rpeq.ctx, "IDs")
+	ctx = setContextOp(ctx, rpeq.ctx, ent.OpQueryIDs)
 	if err = rpeq.Select(rolepaneledit.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -250,7 +251,7 @@ func (rpeq *RolePanelEditQuery) IDsX(ctx context.Context) []uuid.UUID {
 
 // Count returns the count of the given query.
 func (rpeq *RolePanelEditQuery) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, rpeq.ctx, "Count")
+	ctx = setContextOp(ctx, rpeq.ctx, ent.OpQueryCount)
 	if err := rpeq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
@@ -268,7 +269,7 @@ func (rpeq *RolePanelEditQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (rpeq *RolePanelEditQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, rpeq.ctx, "Exist")
+	ctx = setContextOp(ctx, rpeq.ctx, ent.OpQueryExist)
 	switch _, err := rpeq.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
@@ -613,7 +614,7 @@ func (rpegb *RolePanelEditGroupBy) Aggregate(fns ...AggregateFunc) *RolePanelEdi
 
 // Scan applies the selector query and scans the result into the given value.
 func (rpegb *RolePanelEditGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, rpegb.build.ctx, "GroupBy")
+	ctx = setContextOp(ctx, rpegb.build.ctx, ent.OpQueryGroupBy)
 	if err := rpegb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
@@ -661,7 +662,7 @@ func (rpes *RolePanelEditSelect) Aggregate(fns ...AggregateFunc) *RolePanelEditS
 
 // Scan applies the selector query and scans the result into the given value.
 func (rpes *RolePanelEditSelect) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, rpes.ctx, "Select")
+	ctx = setContextOp(ctx, rpes.ctx, ent.OpQuerySelect)
 	if err := rpes.prepareQuery(ctx); err != nil {
 		return err
 	}

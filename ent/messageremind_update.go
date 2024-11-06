@@ -175,7 +175,7 @@ func (mru *MessageRemindUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "MessageRemind.name": %w`, err)}
 		}
 	}
-	if _, ok := mru.mutation.GuildID(); mru.mutation.GuildCleared() && !ok {
+	if mru.mutation.GuildCleared() && len(mru.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "MessageRemind.guild"`)
 	}
 	return nil
@@ -421,7 +421,7 @@ func (mruo *MessageRemindUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "MessageRemind.name": %w`, err)}
 		}
 	}
-	if _, ok := mruo.mutation.GuildID(); mruo.mutation.GuildCleared() && !ok {
+	if mruo.mutation.GuildCleared() && len(mruo.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "MessageRemind.guild"`)
 	}
 	return nil

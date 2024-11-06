@@ -192,10 +192,10 @@ func (mu *MemberUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (mu *MemberUpdate) check() error {
-	if _, ok := mu.mutation.GuildID(); mu.mutation.GuildCleared() && !ok {
+	if mu.mutation.GuildCleared() && len(mu.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Member.guild"`)
 	}
-	if _, ok := mu.mutation.UserID(); mu.mutation.UserCleared() && !ok {
+	if mu.mutation.UserCleared() && len(mu.mutation.UserIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Member.user"`)
 	}
 	return nil
@@ -468,10 +468,10 @@ func (muo *MemberUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (muo *MemberUpdateOne) check() error {
-	if _, ok := muo.mutation.GuildID(); muo.mutation.GuildCleared() && !ok {
+	if muo.mutation.GuildCleared() && len(muo.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Member.guild"`)
 	}
-	if _, ok := muo.mutation.UserID(); muo.mutation.UserCleared() && !ok {
+	if muo.mutation.UserCleared() && len(muo.mutation.UserIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Member.user"`)
 	}
 	return nil

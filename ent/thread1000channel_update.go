@@ -179,7 +179,7 @@ func (tu *Thread1000ChannelUpdate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (tu *Thread1000ChannelUpdate) check() error {
-	if _, ok := tu.mutation.GuildID(); tu.mutation.GuildCleared() && !ok {
+	if tu.mutation.GuildCleared() && len(tu.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Thread1000Channel.guild"`)
 	}
 	return nil
@@ -470,7 +470,7 @@ func (tuo *Thread1000ChannelUpdateOne) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (tuo *Thread1000ChannelUpdateOne) check() error {
-	if _, ok := tuo.mutation.GuildID(); tuo.mutation.GuildCleared() && !ok {
+	if tuo.mutation.GuildCleared() && len(tuo.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Thread1000Channel.guild"`)
 	}
 	return nil

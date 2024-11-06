@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -87,7 +88,7 @@ func (mrq *MessageRemindQuery) QueryGuild() *GuildQuery {
 // First returns the first MessageRemind entity from the query.
 // Returns a *NotFoundError when no MessageRemind was found.
 func (mrq *MessageRemindQuery) First(ctx context.Context) (*MessageRemind, error) {
-	nodes, err := mrq.Limit(1).All(setContextOp(ctx, mrq.ctx, "First"))
+	nodes, err := mrq.Limit(1).All(setContextOp(ctx, mrq.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +111,7 @@ func (mrq *MessageRemindQuery) FirstX(ctx context.Context) *MessageRemind {
 // Returns a *NotFoundError when no MessageRemind ID was found.
 func (mrq *MessageRemindQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = mrq.Limit(1).IDs(setContextOp(ctx, mrq.ctx, "FirstID")); err != nil {
+	if ids, err = mrq.Limit(1).IDs(setContextOp(ctx, mrq.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -133,7 +134,7 @@ func (mrq *MessageRemindQuery) FirstIDX(ctx context.Context) uuid.UUID {
 // Returns a *NotSingularError when more than one MessageRemind entity is found.
 // Returns a *NotFoundError when no MessageRemind entities are found.
 func (mrq *MessageRemindQuery) Only(ctx context.Context) (*MessageRemind, error) {
-	nodes, err := mrq.Limit(2).All(setContextOp(ctx, mrq.ctx, "Only"))
+	nodes, err := mrq.Limit(2).All(setContextOp(ctx, mrq.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +162,7 @@ func (mrq *MessageRemindQuery) OnlyX(ctx context.Context) *MessageRemind {
 // Returns a *NotFoundError when no entities are found.
 func (mrq *MessageRemindQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = mrq.Limit(2).IDs(setContextOp(ctx, mrq.ctx, "OnlyID")); err != nil {
+	if ids, err = mrq.Limit(2).IDs(setContextOp(ctx, mrq.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -186,7 +187,7 @@ func (mrq *MessageRemindQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 
 // All executes the query and returns a list of MessageReminds.
 func (mrq *MessageRemindQuery) All(ctx context.Context) ([]*MessageRemind, error) {
-	ctx = setContextOp(ctx, mrq.ctx, "All")
+	ctx = setContextOp(ctx, mrq.ctx, ent.OpQueryAll)
 	if err := mrq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
@@ -208,7 +209,7 @@ func (mrq *MessageRemindQuery) IDs(ctx context.Context) (ids []uuid.UUID, err er
 	if mrq.ctx.Unique == nil && mrq.path != nil {
 		mrq.Unique(true)
 	}
-	ctx = setContextOp(ctx, mrq.ctx, "IDs")
+	ctx = setContextOp(ctx, mrq.ctx, ent.OpQueryIDs)
 	if err = mrq.Select(messageremind.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -226,7 +227,7 @@ func (mrq *MessageRemindQuery) IDsX(ctx context.Context) []uuid.UUID {
 
 // Count returns the count of the given query.
 func (mrq *MessageRemindQuery) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, mrq.ctx, "Count")
+	ctx = setContextOp(ctx, mrq.ctx, ent.OpQueryCount)
 	if err := mrq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
@@ -244,7 +245,7 @@ func (mrq *MessageRemindQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (mrq *MessageRemindQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, mrq.ctx, "Exist")
+	ctx = setContextOp(ctx, mrq.ctx, ent.OpQueryExist)
 	switch _, err := mrq.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
@@ -538,7 +539,7 @@ func (mrgb *MessageRemindGroupBy) Aggregate(fns ...AggregateFunc) *MessageRemind
 
 // Scan applies the selector query and scans the result into the given value.
 func (mrgb *MessageRemindGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, mrgb.build.ctx, "GroupBy")
+	ctx = setContextOp(ctx, mrgb.build.ctx, ent.OpQueryGroupBy)
 	if err := mrgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
@@ -586,7 +587,7 @@ func (mrs *MessageRemindSelect) Aggregate(fns ...AggregateFunc) *MessageRemindSe
 
 // Scan applies the selector query and scans the result into the given value.
 func (mrs *MessageRemindSelect) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, mrs.ctx, "Select")
+	ctx = setContextOp(ctx, mrs.ctx, ent.OpQuerySelect)
 	if err := mrs.prepareQuery(ctx); err != nil {
 		return err
 	}

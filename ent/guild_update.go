@@ -819,7 +819,7 @@ func (gu *GuildUpdate) check() error {
 			return &ValidationError{Name: "up_remind_message", err: fmt.Errorf(`ent: validator failed for field "Guild.up_remind_message": %w`, err)}
 		}
 	}
-	if _, ok := gu.mutation.OwnerID(); gu.mutation.OwnerCleared() && !ok {
+	if gu.mutation.OwnerCleared() && len(gu.mutation.OwnerIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Guild.owner"`)
 	}
 	return nil
@@ -2183,7 +2183,7 @@ func (guo *GuildUpdateOne) check() error {
 			return &ValidationError{Name: "up_remind_message", err: fmt.Errorf(`ent: validator failed for field "Guild.up_remind_message": %w`, err)}
 		}
 	}
-	if _, ok := guo.mutation.OwnerID(); guo.mutation.OwnerCleared() && !ok {
+	if guo.mutation.OwnerCleared() && len(guo.mutation.OwnerIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Guild.owner"`)
 	}
 	return nil

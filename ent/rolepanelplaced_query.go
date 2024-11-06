@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -111,7 +112,7 @@ func (rppq *RolePanelPlacedQuery) QueryRolePanel() *RolePanelQuery {
 // First returns the first RolePanelPlaced entity from the query.
 // Returns a *NotFoundError when no RolePanelPlaced was found.
 func (rppq *RolePanelPlacedQuery) First(ctx context.Context) (*RolePanelPlaced, error) {
-	nodes, err := rppq.Limit(1).All(setContextOp(ctx, rppq.ctx, "First"))
+	nodes, err := rppq.Limit(1).All(setContextOp(ctx, rppq.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +135,7 @@ func (rppq *RolePanelPlacedQuery) FirstX(ctx context.Context) *RolePanelPlaced {
 // Returns a *NotFoundError when no RolePanelPlaced ID was found.
 func (rppq *RolePanelPlacedQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = rppq.Limit(1).IDs(setContextOp(ctx, rppq.ctx, "FirstID")); err != nil {
+	if ids, err = rppq.Limit(1).IDs(setContextOp(ctx, rppq.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -157,7 +158,7 @@ func (rppq *RolePanelPlacedQuery) FirstIDX(ctx context.Context) uuid.UUID {
 // Returns a *NotSingularError when more than one RolePanelPlaced entity is found.
 // Returns a *NotFoundError when no RolePanelPlaced entities are found.
 func (rppq *RolePanelPlacedQuery) Only(ctx context.Context) (*RolePanelPlaced, error) {
-	nodes, err := rppq.Limit(2).All(setContextOp(ctx, rppq.ctx, "Only"))
+	nodes, err := rppq.Limit(2).All(setContextOp(ctx, rppq.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +186,7 @@ func (rppq *RolePanelPlacedQuery) OnlyX(ctx context.Context) *RolePanelPlaced {
 // Returns a *NotFoundError when no entities are found.
 func (rppq *RolePanelPlacedQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = rppq.Limit(2).IDs(setContextOp(ctx, rppq.ctx, "OnlyID")); err != nil {
+	if ids, err = rppq.Limit(2).IDs(setContextOp(ctx, rppq.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -210,7 +211,7 @@ func (rppq *RolePanelPlacedQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 
 // All executes the query and returns a list of RolePanelPlaceds.
 func (rppq *RolePanelPlacedQuery) All(ctx context.Context) ([]*RolePanelPlaced, error) {
-	ctx = setContextOp(ctx, rppq.ctx, "All")
+	ctx = setContextOp(ctx, rppq.ctx, ent.OpQueryAll)
 	if err := rppq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
@@ -232,7 +233,7 @@ func (rppq *RolePanelPlacedQuery) IDs(ctx context.Context) (ids []uuid.UUID, err
 	if rppq.ctx.Unique == nil && rppq.path != nil {
 		rppq.Unique(true)
 	}
-	ctx = setContextOp(ctx, rppq.ctx, "IDs")
+	ctx = setContextOp(ctx, rppq.ctx, ent.OpQueryIDs)
 	if err = rppq.Select(rolepanelplaced.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -250,7 +251,7 @@ func (rppq *RolePanelPlacedQuery) IDsX(ctx context.Context) []uuid.UUID {
 
 // Count returns the count of the given query.
 func (rppq *RolePanelPlacedQuery) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, rppq.ctx, "Count")
+	ctx = setContextOp(ctx, rppq.ctx, ent.OpQueryCount)
 	if err := rppq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
@@ -268,7 +269,7 @@ func (rppq *RolePanelPlacedQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (rppq *RolePanelPlacedQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, rppq.ctx, "Exist")
+	ctx = setContextOp(ctx, rppq.ctx, ent.OpQueryExist)
 	switch _, err := rppq.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
@@ -613,7 +614,7 @@ func (rppgb *RolePanelPlacedGroupBy) Aggregate(fns ...AggregateFunc) *RolePanelP
 
 // Scan applies the selector query and scans the result into the given value.
 func (rppgb *RolePanelPlacedGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, rppgb.build.ctx, "GroupBy")
+	ctx = setContextOp(ctx, rppgb.build.ctx, ent.OpQueryGroupBy)
 	if err := rppgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
@@ -661,7 +662,7 @@ func (rpps *RolePanelPlacedSelect) Aggregate(fns ...AggregateFunc) *RolePanelPla
 
 // Scan applies the selector query and scans the result into the given value.
 func (rpps *RolePanelPlacedSelect) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, rpps.ctx, "Select")
+	ctx = setContextOp(ctx, rpps.ctx, ent.OpQuerySelect)
 	if err := rpps.prepareQuery(ctx); err != nil {
 		return err
 	}

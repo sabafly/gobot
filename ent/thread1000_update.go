@@ -174,10 +174,10 @@ func (t *Thread1000Update) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Thread1000.name": %w`, err)}
 		}
 	}
-	if _, ok := t.mutation.GuildID(); t.mutation.GuildCleared() && !ok {
+	if t.mutation.GuildCleared() && len(t.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Thread1000.guild"`)
 	}
-	if _, ok := t.mutation.ChannelID(); t.mutation.ChannelCleared() && !ok {
+	if t.mutation.ChannelCleared() && len(t.mutation.ChannelIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Thread1000.channel"`)
 	}
 	return nil
@@ -447,10 +447,10 @@ func (to *Thread1000UpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Thread1000.name": %w`, err)}
 		}
 	}
-	if _, ok := to.mutation.GuildID(); to.mutation.GuildCleared() && !ok {
+	if to.mutation.GuildCleared() && len(to.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Thread1000.guild"`)
 	}
-	if _, ok := to.mutation.ChannelID(); to.mutation.ChannelCleared() && !ok {
+	if to.mutation.ChannelCleared() && len(to.mutation.ChannelIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Thread1000.channel"`)
 	}
 	return nil

@@ -667,7 +667,7 @@ func (gc *GuildCreate) check() error {
 			return &ValidationError{Name: "up_remind_message", err: fmt.Errorf(`ent: validator failed for field "Guild.up_remind_message": %w`, err)}
 		}
 	}
-	if _, ok := gc.mutation.OwnerID(); !ok {
+	if len(gc.mutation.OwnerIDs()) == 0 {
 		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Guild.owner"`)}
 	}
 	return nil

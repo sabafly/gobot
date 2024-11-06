@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 
+	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -111,7 +112,7 @@ func (wsq *WordSuffixQuery) QueryOwner() *UserQuery {
 // First returns the first WordSuffix entity from the query.
 // Returns a *NotFoundError when no WordSuffix was found.
 func (wsq *WordSuffixQuery) First(ctx context.Context) (*WordSuffix, error) {
-	nodes, err := wsq.Limit(1).All(setContextOp(ctx, wsq.ctx, "First"))
+	nodes, err := wsq.Limit(1).All(setContextOp(ctx, wsq.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +135,7 @@ func (wsq *WordSuffixQuery) FirstX(ctx context.Context) *WordSuffix {
 // Returns a *NotFoundError when no WordSuffix ID was found.
 func (wsq *WordSuffixQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = wsq.Limit(1).IDs(setContextOp(ctx, wsq.ctx, "FirstID")); err != nil {
+	if ids, err = wsq.Limit(1).IDs(setContextOp(ctx, wsq.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -157,7 +158,7 @@ func (wsq *WordSuffixQuery) FirstIDX(ctx context.Context) uuid.UUID {
 // Returns a *NotSingularError when more than one WordSuffix entity is found.
 // Returns a *NotFoundError when no WordSuffix entities are found.
 func (wsq *WordSuffixQuery) Only(ctx context.Context) (*WordSuffix, error) {
-	nodes, err := wsq.Limit(2).All(setContextOp(ctx, wsq.ctx, "Only"))
+	nodes, err := wsq.Limit(2).All(setContextOp(ctx, wsq.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +186,7 @@ func (wsq *WordSuffixQuery) OnlyX(ctx context.Context) *WordSuffix {
 // Returns a *NotFoundError when no entities are found.
 func (wsq *WordSuffixQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = wsq.Limit(2).IDs(setContextOp(ctx, wsq.ctx, "OnlyID")); err != nil {
+	if ids, err = wsq.Limit(2).IDs(setContextOp(ctx, wsq.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -210,7 +211,7 @@ func (wsq *WordSuffixQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 
 // All executes the query and returns a list of WordSuffixes.
 func (wsq *WordSuffixQuery) All(ctx context.Context) ([]*WordSuffix, error) {
-	ctx = setContextOp(ctx, wsq.ctx, "All")
+	ctx = setContextOp(ctx, wsq.ctx, ent.OpQueryAll)
 	if err := wsq.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
@@ -232,7 +233,7 @@ func (wsq *WordSuffixQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error
 	if wsq.ctx.Unique == nil && wsq.path != nil {
 		wsq.Unique(true)
 	}
-	ctx = setContextOp(ctx, wsq.ctx, "IDs")
+	ctx = setContextOp(ctx, wsq.ctx, ent.OpQueryIDs)
 	if err = wsq.Select(wordsuffix.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
@@ -250,7 +251,7 @@ func (wsq *WordSuffixQuery) IDsX(ctx context.Context) []uuid.UUID {
 
 // Count returns the count of the given query.
 func (wsq *WordSuffixQuery) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, wsq.ctx, "Count")
+	ctx = setContextOp(ctx, wsq.ctx, ent.OpQueryCount)
 	if err := wsq.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
@@ -268,7 +269,7 @@ func (wsq *WordSuffixQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (wsq *WordSuffixQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, wsq.ctx, "Exist")
+	ctx = setContextOp(ctx, wsq.ctx, ent.OpQueryExist)
 	switch _, err := wsq.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
@@ -616,7 +617,7 @@ func (wsgb *WordSuffixGroupBy) Aggregate(fns ...AggregateFunc) *WordSuffixGroupB
 
 // Scan applies the selector query and scans the result into the given value.
 func (wsgb *WordSuffixGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, wsgb.build.ctx, "GroupBy")
+	ctx = setContextOp(ctx, wsgb.build.ctx, ent.OpQueryGroupBy)
 	if err := wsgb.build.prepareQuery(ctx); err != nil {
 		return err
 	}
@@ -664,7 +665,7 @@ func (wss *WordSuffixSelect) Aggregate(fns ...AggregateFunc) *WordSuffixSelect {
 
 // Scan applies the selector query and scans the result into the given value.
 func (wss *WordSuffixSelect) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, wss.ctx, "Select")
+	ctx = setContextOp(ctx, wss.ctx, ent.OpQuerySelect)
 	if err := wss.prepareQuery(ctx); err != nil {
 		return err
 	}

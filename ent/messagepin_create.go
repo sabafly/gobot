@@ -156,7 +156,7 @@ func (mpc *MessagePinCreate) check() error {
 	if _, ok := mpc.mutation.RateLimit(); !ok {
 		return &ValidationError{Name: "rate_limit", err: errors.New(`ent: missing required field "MessagePin.rate_limit"`)}
 	}
-	if _, ok := mpc.mutation.GuildID(); !ok {
+	if len(mpc.mutation.GuildIDs()) == 0 {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "MessagePin.guild"`)}
 	}
 	return nil

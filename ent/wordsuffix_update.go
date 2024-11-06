@@ -171,7 +171,7 @@ func (wsu *WordSuffixUpdate) check() error {
 			return &ValidationError{Name: "rule", err: fmt.Errorf(`ent: validator failed for field "WordSuffix.rule": %w`, err)}
 		}
 	}
-	if _, ok := wsu.mutation.OwnerID(); wsu.mutation.OwnerCleared() && !ok {
+	if wsu.mutation.OwnerCleared() && len(wsu.mutation.OwnerIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "WordSuffix.owner"`)
 	}
 	return nil
@@ -432,7 +432,7 @@ func (wsuo *WordSuffixUpdateOne) check() error {
 			return &ValidationError{Name: "rule", err: fmt.Errorf(`ent: validator failed for field "WordSuffix.rule": %w`, err)}
 		}
 	}
-	if _, ok := wsuo.mutation.OwnerID(); wsuo.mutation.OwnerCleared() && !ok {
+	if wsuo.mutation.OwnerCleared() && len(wsuo.mutation.OwnerIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "WordSuffix.owner"`)
 	}
 	return nil
