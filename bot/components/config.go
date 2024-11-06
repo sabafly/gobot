@@ -39,6 +39,8 @@ type Config struct {
 	BumpImage  string       `yaml:"bump_image"`
 	UpUserID   snowflake.ID `yaml:"up_user"`
 	UpColor    int          `yaml:"up_color"`
+
+	DisableForeignKeys bool `yaml:"foreign_keys"`
 }
 
 type ConfigDebug struct {

@@ -100,7 +100,7 @@ func run() error {
 	// }
 
 	if err := db.Schema.Create(context.Background(),
-		migrate.WithForeignKeys(false)); err != nil {
+		migrate.WithForeignKeys(!config.DisableForeignKeys)); err != nil {
 		return fmt.Errorf("スキーマを定義できません: %w", err)
 	}
 
