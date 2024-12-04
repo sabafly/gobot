@@ -42,9 +42,9 @@ func (RolePanel) Fields() []ent.Field {
 			Immutable().
 			Unique().
 			Default(uuidv7.New),
-		field.String("name").
+		field.Text("name").
 			NotEmpty(),
-		field.String("description"),
+		field.Text("description"),
 		field.JSON("roles", []Role{}).
 			Optional(),
 		field.Time("updated_at").Optional(),

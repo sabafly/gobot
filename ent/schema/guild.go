@@ -44,13 +44,13 @@ func (Guild) Fields() []ent.Field {
 			Unique().
 			Immutable().
 			GoType(snowflake.ID(0)),
-		field.String("name").
+		field.Text("name").
 			NotEmpty(),
 		field.String("locale").
 			NotEmpty().
 			Default(string(discord.LocaleJapanese)).
 			GoType(discord.Locale("")),
-		field.String("level_up_message").
+		field.Text("level_up_message").
 			NotEmpty().
 			Default("{user}がレベルアップしたよ！🥳\n**{before_level} レベル → {after_level} レベル**"),
 		field.Uint64("level_up_channel").
@@ -75,30 +75,30 @@ func (Guild) Fields() []ent.Field {
 			),
 		field.Bool("bump_enabled").
 			Default(true),
-		field.String("bump_message_title").
+		field.Text("bump_message_title").
 			NotEmpty().
 			Default("Bumpを検知しました"),
-		field.String("bump_message").
+		field.Text("bump_message").
 			NotEmpty().
 			Default("２時間後に通知します"),
-		field.String("bump_remind_message_title").
+		field.Text("bump_remind_message_title").
 			NotEmpty().
 			Default("Bumpの時間です"),
-		field.String("bump_remind_message").
+		field.Text("bump_remind_message").
 			NotEmpty().
 			Default("</bump:947088344167366698>でBumpしましょう"),
 		field.Bool("up_enabled").
 			Default(true),
-		field.String("up_message_title").
+		field.Text("up_message_title").
 			NotEmpty().
 			Default("UPを検知しました"),
-		field.String("up_message").
+		field.Text("up_message").
 			NotEmpty().
 			Default("１時間後に通知します"),
-		field.String("up_remind_message_title").
+		field.Text("up_remind_message_title").
 			NotEmpty().
 			Default("UPの時間です"),
-		field.String("up_remind_message").
+		field.Text("up_remind_message").
 			NotEmpty().
 			Default("</dissoku up:828002256690610256>でUPしましょう"),
 		field.Uint64("bump_mention").

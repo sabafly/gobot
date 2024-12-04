@@ -31,13 +31,13 @@ func MatchString(str string) bool {
 }
 
 func FindAllString(str string) []string {
-	s := []string{}
+	var s []string
 	emojis := gomoji.CollectAll(str)
 	for _, e := range emojis {
 		s = append(s, e.Character)
 	}
-	discord_emojis := DiscordEmoji.FindAllString(str, -1)
-	s = append(s, discord_emojis...)
+	discordEmojis := DiscordEmoji.FindAllString(str, -1)
+	s = append(s, discordEmojis...)
 	return s
 }
 

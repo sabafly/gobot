@@ -43,7 +43,7 @@ func (User) Fields() []ent.Field {
 			Unique().
 			Immutable().
 			GoType(snowflake.ID(0)),
-		field.String("name").
+		field.Text("name").
 			NotEmpty(),
 		field.Time("created_at").
 			Default(time.Now).

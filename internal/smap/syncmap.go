@@ -20,7 +20,10 @@
 
 package smap
 
-import "sync"
+import (
+	"iter"
+	"sync"
+)
 
 type SyncedMap[K, V any] struct {
 	m sync.Map
@@ -59,6 +62,14 @@ func (s *SyncedMap[K, V]) Range(f func(k K, v V) bool) {
 	s.m.Range(func(key, value any) bool {
 		return f(key.(K), value.(V))
 	})
+}
+
+func (s *SyncedMap[K, V]) Iter() iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		s.m.Range(func(key, value any) bool {
+			return yield(key.(K), value.(V))
+		})
+	}
 }
 
 func (s *SyncedMap[K, V]) Store(key K, value V) {

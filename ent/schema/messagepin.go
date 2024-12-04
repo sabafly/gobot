@@ -48,7 +48,7 @@ func (MessagePin) Fields() []ent.Field {
 		field.Uint64("channel_id").
 			Unique().
 			GoType(snowflake.ID(0)),
-		field.String("content").
+		field.Text("content").
 			Optional(),
 		field.JSON("embeds", []discord.Embed{}).
 			Optional(),

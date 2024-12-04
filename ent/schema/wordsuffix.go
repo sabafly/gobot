@@ -38,7 +38,7 @@ func (WordSuffix) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuidv7.New()).
 			Default(uuidv7.New),
-		field.String("suffix").
+		field.Text("suffix").
 			NotEmpty(),
 		field.Time("expired").
 			Optional().

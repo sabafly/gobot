@@ -46,9 +46,9 @@ func (MessageRemind) Fields() []ent.Field {
 		field.Uint64("author_id").
 			GoType(snowflake.ID(0)),
 		field.Time("time"),
-		field.String("content").
+		field.Text("content").
 			NotEmpty(),
-		field.String("name").
+		field.Text("name").
 			NotEmpty(),
 	}
 }

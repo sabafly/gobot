@@ -21,6 +21,7 @@
 package smap
 
 import (
+	"iter"
 	"slices"
 
 	"golang.org/x/exp/maps"
@@ -46,9 +47,13 @@ func (m SortMap[M, K, V]) SortKey(f func(a, b K) int) ([]K, []V) {
 	return k, v
 }
 
-func (m SortMap[M, K, V]) Range(s func(a, b K) int, f func(k K, v V)) {
-	k, v := m.SortKey(s)
-	for i, k := range k {
-		f(k, v[i])
+func (m SortMap[M, K, V]) Iter(s func(a, b K) int) iter.Seq2[K, V] {
+	return func(yield func(K, V) bool) {
+		k, v := m.SortKey(s)
+		for i, k := range k {
+			if !yield(k, v[i]) {
+				return
+			}
+		}
 	}
 }

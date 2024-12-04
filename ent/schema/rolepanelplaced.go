@@ -71,9 +71,9 @@ func (RolePanelPlaced) Fields() []ent.Field {
 			Default(time.Now),
 		field.Int("uses").
 			Default(0),
-		field.String("name").
+		field.Text("name").
 			NotEmpty(),
-		field.String("description"),
+		field.Text("description"),
 		field.JSON("roles", []Role{}).
 			Optional(),
 		field.Time("updated_at").

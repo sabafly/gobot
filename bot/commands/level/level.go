@@ -838,16 +838,14 @@ func Command(c *components.Components) components.Command {
 					}
 					g.LevelRole = builtin.NonNilMap(g.LevelRole)
 					var listStr string
-					smap.MakeSortMap(g.LevelRole).Range(cmp.Compare[int],
-						func(k int, v snowflake.ID) {
-							listStr += "- " + translate.Message(event.Locale(), "components.level.role.list.message",
-								translate.WithTemplate(map[string]any{
-									"Level": strconv.Itoa(k),
-									"Role":  discord.RoleMention(v),
-								}),
-							) + "\n"
-						},
-					)
+					for k, v := range smap.MakeSortMap(g.LevelRole).Iter(cmp.Compare[int]) {
+						listStr += "- " + translate.Message(event.Locale(), "components.level.role.list.message",
+							translate.WithTemplate(map[string]any{
+								"Level": strconv.Itoa(k),
+								"Role":  discord.RoleMention(v),
+							}),
+						) + "\n"
+					}
 					if err := event.RespondMessage(
 						discord.NewMessageBuilder().
 							SetEmbeds(

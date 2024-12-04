@@ -55,11 +55,11 @@ func (RolePanelEdit) Fields() []ent.Field {
 			GoType(snowflake.ID(0)),
 		field.Bool("modified").
 			Default(false),
-		field.String("name").
+		field.Text("name").
 			Optional().
 			Nillable().
 			NotEmpty(),
-		field.String("description").
+		field.Text("description").
 			Optional().
 			Nillable(),
 		field.JSON("roles", []Role{}).
