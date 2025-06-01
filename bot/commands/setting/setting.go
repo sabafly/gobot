@@ -43,10 +43,17 @@ func Command(c *components.Components) components.Command {
 	return (&generic.Command{
 		Namespace: "setting",
 		CommandCreate: []discord.ApplicationCommandCreate{
+			// discord.SlashCommandCreate{
+			// 	Name:                     "settings",
+			// 	Description:              "view settings",
+			// 	DescriptionLocalizations: translate.MessageMap("components.settings", false),
+			// 	Contexts: []discord.InteractionContextType{
+			// 		discord.InteractionContextTypeGuild,
+			// 	},
+			// },
 			discord.SlashCommandCreate{
-				Name:         "setting",
-				Description:  "setting",
-				DMPermission: builtin.Ptr(false),
+				Name:        "setting",
+				Description: "setting",
 				Contexts: []discord.InteractionContextType{
 					discord.InteractionContextTypeGuild,
 				},
@@ -107,6 +114,17 @@ func Command(c *components.Components) components.Command {
 							},
 						},
 					},
+					discord.ApplicationCommandOptionSubCommandGroup{
+						Name:        "leveling",
+						Description: "leveling",
+						Options: []discord.ApplicationCommandOptionSubCommand{
+							{
+								Name:                     "toggle",
+								Description:              "toggle leveling",
+								DescriptionLocalizations: translate.MessageMap("components.setting.leveling.toggle", false),
+							},
+						},
+					},
 					// discord.ApplicationCommandOptionSubCommandGroup{
 					// 	Name:        "welcome",
 					// 	Description: "welcome",
@@ -134,6 +152,33 @@ func Command(c *components.Components) components.Command {
 			},
 		},
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
+			"/settings": generic.PCommandHandler{
+				// TODO: implement settings view
+				Permission: []generic.Permission{
+					generic.PermissionString("setting.view"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					g, err := c.GuildCreateID(event, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+					if err := event.CreateMessage(
+						discord.NewMessageBuilder().
+							SetContent(translate.Message(event.Locale(), "components.settings.view",
+								translate.WithTemplate(map[string]any{
+									"BumpEnabled": builtin.Or(g.BumpEnabled, translate.Message(event.Locale(), "components.setting.enabled"), translate.Message(event.Locale(), "components.setting.disabled")),
+									"UpEnabled":   builtin.Or(g.UpEnabled, translate.Message(event.Locale(), "components.setting.enabled"), translate.Message(event.Locale(), "components.setting.disabled")),
+									"Leveling":    builtin.Or(!g.LevelingDisabled, translate.Message(event.Locale(), "components.setting.enabled"), translate.Message(event.Locale(), "components.setting.disabled")),
+								}),
+							)).
+							BuildCreate(),
+					); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
 			"/setting/bump/toggle": generic.PCommandHandler{
 				Permission: []generic.Permission{
 					generic.PermissionString("setting.bump.toggle"),
@@ -262,7 +307,7 @@ func Command(c *components.Components) components.Command {
 						discord.NewModalCreateBuilder().
 							SetTitle(translate.Message(event.Locale(), "components.setting.bump.message.modal.title")).
 							SetCustomID("setting:bump_message").
-							SetContainerComponents(
+							SetComponents(
 								discord.NewActionRow(
 									discord.TextInputComponent{
 										CustomID:  "message_title",
@@ -329,7 +374,7 @@ func Command(c *components.Components) components.Command {
 						discord.NewModalCreateBuilder().
 							SetTitle(translate.Message(event.Locale(), "components.setting.up.message.modal.title")).
 							SetCustomID("setting:up_message").
-							SetContainerComponents(
+							SetComponents(
 								discord.NewActionRow(
 									discord.TextInputComponent{
 										CustomID:  "message_title",
@@ -389,6 +434,29 @@ func Command(c *components.Components) components.Command {
 				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 
+					return nil
+				},
+			},
+			"/setting/leveling/toggle": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionString("setting.leveling.toggle"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					g, err := c.GuildCreateID(event, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+					g = g.Update().
+						SetLevelingDisabled(!g.LevelingDisabled).
+						SaveX(event)
+					if err := event.CreateMessage(
+						discord.NewMessageBuilder().
+							SetContent(translate.Message(event.Locale(), "components.setting.leveling.enable."+builtin.Or(!g.LevelingDisabled, "enabled", "disabled"))).
+							BuildCreate(),
+					); err != nil {
+						return errors.NewError(err)
+					}
 					return nil
 				},
 			},
@@ -462,7 +530,7 @@ func Command(c *components.Components) components.Command {
 		Schedulers: []components.Scheduler{
 			{
 				Duration: time.Minute,
-				Worker: func(c *components.Components, client bot.Client) error {
+				Worker: func(c *components.Components, client *bot.Client) error {
 					bumpLock.Lock()
 					defer bumpLock.Unlock()
 					for k, n := range bumpNotice {
@@ -567,8 +635,8 @@ func upHandler(c *components.Components, g *ent.Guild, event *events.GuildMessag
 	return nil
 }
 
-func createNotice(title, message string, n notice, client bot.Client, content string) {
-	if _, err := client.Rest().CreateMessage(n.channelID,
+func createNotice(title, message string, n notice, client *bot.Client, content string) {
+	if _, err := client.Rest.CreateMessage(n.channelID,
 		discord.NewMessageBuilder().
 			SetContent(content).
 			SetEmbeds(

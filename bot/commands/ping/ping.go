@@ -27,7 +27,6 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
-	"github.com/sabafly/gobot/internal/builtin"
 	"github.com/sabafly/gobot/internal/embeds"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/translate"
@@ -41,7 +40,6 @@ func Command(c *components.Components) *generic.Command {
 				Name:                     "ping",
 				Description:              "pong!",
 				DescriptionLocalizations: translate.MessageMap("components.ping.command.description", false),
-				DMPermission:             builtin.Ptr(false),
 				Contexts: []discord.InteractionContextType{
 					discord.InteractionContextTypeGuild,
 				},
@@ -57,7 +55,7 @@ func Command(c *components.Components) *generic.Command {
 								SetFields(
 									discord.EmbedField{
 										Name:  fmt.Sprintf("**Discord API(#%d)**", event.ShardID()),
-										Value: event.Client().ShardManager().Shard(event.ShardID()).Latency().String(),
+										Value: event.Client().ShardManager.Shard(event.ShardID()).Latency().String(),
 									},
 								).
 								Build()),

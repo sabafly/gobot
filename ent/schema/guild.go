@@ -109,6 +109,8 @@ func (Guild) Fields() []ent.Field {
 			Nillable().
 			Optional().
 			GoType(snowflake.ID(0)),
+		field.Bool("leveling_disabled").
+			Default(false),
 	}
 }
 

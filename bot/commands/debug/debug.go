@@ -29,6 +29,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/json"
+	"github.com/disgoorg/omit"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -50,13 +51,12 @@ func Command(c *components.Components) *generic.Command {
 		Private:   true,
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
-				Name:         "debug",
-				Description:  "debug",
-				DMPermission: builtin.Ptr(false),
+				Name:        "debug",
+				Description: "debug",
 				Contexts: []discord.InteractionContextType{
 					discord.InteractionContextTypeGuild,
 				},
-				DefaultMemberPermissions: json.NewNullablePtr(discord.PermissionAdministrator),
+				DefaultMemberPermissions: omit.NewPtr(discord.PermissionAdministrator),
 				Options: []discord.ApplicationCommandOption{
 					discord.ApplicationCommandOptionSubCommandGroup{
 						Name:        "translate",
@@ -155,7 +155,7 @@ func Command(c *components.Components) *generic.Command {
 			}),
 			"/debug/guild/leave": generic.CommandHandler(func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 				guildID := snowflake.MustParse(event.SlashCommandInteractionData().String("guild"))
-				if err := event.Client().Rest().LeaveGuild(guildID); err != nil {
+				if err := event.Client().Rest.LeaveGuild(guildID); err != nil {
 					return errors.NewError(err)
 				}
 				if err := event.CreateMessage(

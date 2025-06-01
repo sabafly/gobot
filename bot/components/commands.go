@@ -22,6 +22,7 @@ package components
 
 import (
 	"log/slog"
+	"maps"
 	"strings"
 
 	"github.com/disgoorg/disgo/bot"
@@ -44,7 +45,7 @@ func (c *Components) AddCommand(cmd Command) {
 	c.commandsRegistry[cmd.Name()] = cmd
 }
 
-func (c *Components) Initialize(client bot.Client) error {
+func (c *Components) Initialize(client *bot.Client) error {
 	for _, cmd := range DefaultCommands {
 		c.AddCommand(cmd)
 	}
@@ -67,21 +68,22 @@ func (c *Components) Initialize(client bot.Client) error {
 		}
 	}
 
-	if _, err := client.Rest().SetGlobalCommands(client.ApplicationID(), commands); err != nil {
+	if _, err := client.Rest.SetGlobalCommands(client.ApplicationID, commands); err != nil {
 		slog.Error("コマンドの登録に失敗", slog.Any("err", err), slog.String("body", string(err.(rest.Error).RsBody)))
 		return err
 	}
 
 	for _, id := range c.Config().Debug.DebugGuilds {
-		if _, err := client.Rest().SetGuildCommands(client.ApplicationID(), id, privateCommands); err != nil {
+		if _, err := client.Rest.SetGuildCommands(client.ApplicationID, id, privateCommands); err != nil {
 			slog.Error("プライベートコマンドの登録に失敗", "err", err, "guild", id)
 			return err
 		}
 	}
 
-	client.EventManager().AddEventListeners(
+	client.EventManager.AddEventListeners(
 		bot.NewListenerFunc(c.OnEvent()),
 		&events.ListenerAdapter{
+			OnGuildReady: c.OnGuildReady(),
 			OnGuildJoin:  c.OnGuildJoin(),
 			OnGuildLeave: c.OnGuildLeave(),
 		},
@@ -95,8 +97,16 @@ func (c *Components) OnEvent() func(bot bot.Event) {
 		case *events.ApplicationCommandInteractionCreate:
 			cmd, ok := c.commandsRegistry[e.Data.CommandName()]
 			if !ok {
-				slog.Warn("不明なコマンド", "command_name", e.Data.CommandName())
-				return
+				for v := range maps.Values(c.commandsRegistry) {
+					if v.HasCommand(e) {
+						cmd = v
+						break
+					}
+				}
+				if cmd == nil {
+					slog.Warn("不明なコマンド", "command_name", e.Data.CommandName())
+					return
+				}
 			}
 			h := cmd.CommandHandler()
 			if h == nil {
@@ -177,4 +187,5 @@ type Command interface {
 	AutocompleteHandler() func(event *events.AutocompleteInteractionCreate) error
 	OnEvent() func(event bot.Event) error
 	Scheduler() []Scheduler
+	HasCommand(cmd *events.ApplicationCommandInteractionCreate) bool
 }

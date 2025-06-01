@@ -211,21 +211,34 @@ func (gc *Command) SetComponent(c *components.Components) *Command {
 func (gc *Command) Name() string                               { return gc.Namespace }
 func (gc *Command) Create() []discord.ApplicationCommandCreate { return gc.CommandCreate }
 func (gc *Command) IsPrivate() bool                            { return gc.Private }
+
+func (gc *Command) getCommand(event *events.ApplicationCommandInteractionCreate) (PermissionCommandHandler, error) {
+	var path string
+	switch event.Data.Type() {
+	case discord.ApplicationCommandTypeSlash:
+		path = event.SlashCommandInteractionData().CommandPath()
+	case discord.ApplicationCommandTypeMessage:
+		path = "m/" + event.MessageCommandInteractionData().CommandName()
+	case discord.ApplicationCommandTypeUser:
+		path = "u/" + event.UserCommandInteractionData().CommandName()
+	}
+	cmd, ok := gc.CommandHandlers[path]
+	if !ok {
+		return nil, fmt.Errorf("unknown handler: command_path=%s", path)
+	}
+	return cmd, nil
+}
+
+func (gc *Command) HasCommand(cmd *events.ApplicationCommandInteractionCreate) bool {
+	_, err := gc.getCommand(cmd)
+	return err == nil
+}
 func (gc *Command) CommandHandler() func(event *events.ApplicationCommandInteractionCreate) error {
 	return func(event *events.ApplicationCommandInteractionCreate) error {
 		defer rec(event)
-		var path string
-		switch event.Data.Type() {
-		case discord.ApplicationCommandTypeSlash:
-			path = event.SlashCommandInteractionData().CommandPath()
-		case discord.ApplicationCommandTypeMessage:
-			path = "m/" + event.MessageCommandInteractionData().CommandName()
-		case discord.ApplicationCommandTypeUser:
-			path = "u/" + event.UserCommandInteractionData().CommandName()
-		}
-		cmd, ok := gc.CommandHandlers[path]
-		if !ok {
-			return fmt.Errorf("unknown handler: command_path=%s", path)
+		cmd, err := gc.getCommand(event)
+		if err != nil {
+			return err
 		}
 		if c := permissionCheck(event, gc.component, cmd.Permissions(), cmd.DiscordPermission()); !c {
 			if err := noPermissionMessage(event, cmd.Permissions()); err != nil {
@@ -236,7 +249,7 @@ func (gc *Command) CommandHandler() func(event *events.ApplicationCommandInterac
 		}
 		h := cmd.Handler()
 		if h == nil {
-			return fmt.Errorf("nil handler: command_path=%s", path)
+			return fmt.Errorf("nil handler: command=%v", event)
 		}
 		if err := h(gc.component, event); err != nil {
 			createErrorMessage(err, event)

@@ -318,6 +318,16 @@ func LastNotifiedLevelNotNil() predicate.Member {
 	return predicate.Member(sql.FieldNotNull(FieldLastNotifiedLevel))
 }
 
+// LastMessageHashesIsNil applies the IsNil predicate on the "last_message_hashes" field.
+func LastMessageHashesIsNil() predicate.Member {
+	return predicate.Member(sql.FieldIsNull(FieldLastMessageHashes))
+}
+
+// LastMessageHashesNotNil applies the NotNil predicate on the "last_message_hashes" field.
+func LastMessageHashesNotNil() predicate.Member {
+	return predicate.Member(sql.FieldNotNull(FieldLastMessageHashes))
+}
+
 // HasGuild applies the HasEdge predicate on the "guild" edge.
 func HasGuild() predicate.Member {
 	return predicate.Member(func(s *sql.Selector) {

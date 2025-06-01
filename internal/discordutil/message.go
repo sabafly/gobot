@@ -27,7 +27,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 )
 
-func DeleteMessageAfter(client bot.Client, channelID, messageID snowflake.ID, after time.Duration) error {
+func DeleteMessageAfter(client *bot.Client, channelID, messageID snowflake.ID, after time.Duration) error {
 	time.Sleep(after)
-	return client.Rest().DeleteMessage(channelID, messageID)
+	return client.Rest.DeleteMessage(channelID, messageID)
 }

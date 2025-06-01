@@ -23,14 +23,15 @@ package message
 import (
 	"context"
 	"fmt"
-	"github.com/disgoorg/disgo/rest"
-	"github.com/disgoorg/snowflake/v2"
 	"log/slog"
 	"net/http"
 	"slices"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/disgoorg/disgo/rest"
+	"github.com/disgoorg/snowflake/v2"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
@@ -443,7 +444,7 @@ func Command(c *components.Components) *generic.Command {
 						discord.NewModalCreateBuilder().
 							SetTitle(translate.Message(event.Locale(), "components.message.pin.create.modal.title")).
 							SetCustomID("message:pin_create_modal").
-							SetContainerComponents(
+							SetComponents(
 								discord.NewActionRow(
 									discord.TextInputComponent{
 										CustomID:  "content",
@@ -476,7 +477,7 @@ func Command(c *components.Components) *generic.Command {
 						return errors.NewError(errors.ErrorMessage("errors.unavailable.message.pin", event))
 					}
 					if beforeID := g.QueryMessagePins().Where(messagepin.ChannelID(event.Channel().ID())).FirstX(event).BeforeID; beforeID != nil {
-						_ = event.Client().Rest().DeleteMessage(event.Channel().ID(), *beforeID)
+						_ = event.Client().Rest.DeleteMessage(event.Channel().ID(), *beforeID)
 					}
 
 					c.DB().MessagePin.Delete().Where(messagepin.ChannelID(event.Channel().ID())).ExecX(event)
@@ -519,7 +520,7 @@ func Command(c *components.Components) *generic.Command {
 						discord.NewModalCreateBuilder().
 							SetTitle(translate.Message(event.Locale(), "components.message.remind.add.modal.title")).
 							SetCustomID(fmt.Sprintf("message:remind_create_modal:%d", tm.Unix())).
-							SetContainerComponents(
+							SetComponents(
 								discord.NewActionRow(
 									discord.TextInputComponent{
 										CustomID:  "content",
@@ -617,7 +618,7 @@ func Command(c *components.Components) *generic.Command {
 				// もし既にあったら抹消する
 				if g.QueryMessagePins().Where(messagepin.ChannelID(event.Channel().ID())).ExistX(event) {
 					if beforeID := g.QueryMessagePins().Where(messagepin.ChannelID(event.Channel().ID())).FirstX(event).BeforeID; beforeID != nil {
-						_ = event.Client().Rest().DeleteMessage(event.Channel().ID(), *beforeID)
+						_ = event.Client().Rest.DeleteMessage(event.Channel().ID(), *beforeID)
 					}
 
 					component.DB().MessagePin.Delete().Where(messagepin.ChannelID(event.Channel().ID())).ExecX(event)
@@ -628,12 +629,12 @@ func Command(c *components.Components) *generic.Command {
 					SetContent(event.Data.Text("content")).
 					SetGuild(g).
 					SaveX(event)
-				channel, err := event.Client().Rest().GetChannel(m.ChannelID)
+				channel, err := event.Client().Rest.GetChannel(m.ChannelID)
 				if err != nil {
 					return errors.NewError(err)
 				}
 
-				webhook, err := event.Client().WebhookManager().GetMessenger(channel)
+				webhook, err := event.Client().WebhookManager.GetMessenger(channel)
 				if err != nil {
 					return errors.NewError(err)
 				}
@@ -699,14 +700,14 @@ func Command(c *components.Components) *generic.Command {
 		Schedulers: []components.Scheduler{
 			{
 				Duration: time.Minute,
-				Worker: func(c *components.Components, client bot.Client) error {
+				Worker: func(c *components.Components, client *bot.Client) error {
 					reminds := c.DB().MessageRemind.Query().
 						Where(
 							messageremind.TimeLT(time.Now()),
 						).
 						AllX(context.Background())
 					for _, remind := range reminds {
-						if _, err := client.Rest().CreateMessage(remind.ChannelID,
+						if _, err := client.Rest.CreateMessage(remind.ChannelID,
 							discord.NewMessageBuilder().
 								SetContent(remind.Content).
 								BuildCreate(),
@@ -793,7 +794,7 @@ func Command(c *components.Components) *generic.Command {
 					var channel discord.Channel
 					channel, ok := event.Channel()
 					if !ok {
-						channel, err = event.Client().Rest().GetChannel(event.ChannelID)
+						channel, err = event.Client().Rest.GetChannel(event.ChannelID)
 						if err != nil {
 							return errors.NewError(err)
 						}
@@ -810,11 +811,11 @@ func Command(c *components.Components) *generic.Command {
 					defer c.GetLock("message_pin").Mutex(e.ChannelID).Unlock()
 					m := g.QueryMessagePins().Where(messagepin.ChannelID(event.ChannelID)).FirstX(event)
 
-					webhook, err := event.Client().WebhookManager().GetMessenger(channel)
+					webhook, err := event.Client().WebhookManager.GetMessenger(channel)
 					if err != nil {
 						err1 := rest.Error{}
 						if errors.As(err, &err1) && err1.Response.StatusCode == http.StatusForbidden {
-							return errors.NewError(event.Client().Rest().LeaveGuild(event.GuildID))
+							return errors.NewError(event.Client().Rest.LeaveGuild(event.GuildID))
 						}
 						return errors.NewError(err)
 					}
@@ -824,7 +825,7 @@ func Command(c *components.Components) *generic.Command {
 
 					if m.RateLimit.CheckLimit() {
 						if m.BeforeID != nil {
-							if err := event.Client().Rest().DeleteMessage(event.ChannelID, *m.BeforeID); err != nil {
+							if err := event.Client().Rest.DeleteMessage(event.ChannelID, *m.BeforeID); err != nil {
 								slog.Error("削除に失敗", "err", err)
 								m.BeforeID = nil
 							}
@@ -833,12 +834,12 @@ func Command(c *components.Components) *generic.Command {
 						var channel discord.Channel
 						channel, ok := event.Channel()
 						if !ok {
-							channel, err = event.Client().Rest().GetChannel(event.ChannelID)
+							channel, err = event.Client().Rest.GetChannel(event.ChannelID)
 							if err != nil {
 								return errors.NewError(err)
 							}
 						}
-						webhook, err := event.Client().WebhookManager().GetMessenger(channel)
+						webhook, err := event.Client().WebhookManager.GetMessenger(channel)
 						if err != nil {
 							return errors.NewError(err)
 						}
@@ -907,7 +908,7 @@ func messageSuffixMessageCreateHandler(w *ent.WordSuffix, u *ent.User, e *events
 		if strings.HasSuffix(e.Message.Content, w.Suffix) {
 			return nil
 		}
-		if err := e.Client().Rest().DeleteMessage(e.ChannelID, e.MessageID); err != nil {
+		if err := e.Client().Rest.DeleteMessage(e.ChannelID, e.MessageID); err != nil {
 			slog.Error("メッセージを削除できません", "err", err)
 			return errors.NewError(err)
 		}
@@ -915,7 +916,7 @@ func messageSuffixMessageCreateHandler(w *ent.WordSuffix, u *ent.User, e *events
 		if strings.HasSuffix(e.Message.Content, w.Suffix) {
 			return nil
 		}
-		if _, err := e.Client().Rest().CreateMessage(e.ChannelID,
+		if _, err := e.Client().Rest.CreateMessage(e.ChannelID,
 			discord.NewMessageBuilder().
 				SetContentf("%s\n%s",
 					translate.Message(u.Locale, "components.message.suffix.warn.message.1"),
@@ -932,10 +933,10 @@ func messageSuffixMessageCreateHandler(w *ent.WordSuffix, u *ent.User, e *events
 		if !strings.HasSuffix(e.Message.Content, w.Suffix) {
 			content += w.Suffix
 		}
-		if err := e.Client().Rest().DeleteMessage(e.ChannelID, e.MessageID); err != nil {
+		if err := e.Client().Rest.DeleteMessage(e.ChannelID, e.MessageID); err != nil {
 			return errors.NewError(err)
 		}
-		member, err := e.Client().Rest().GetMember(e.GuildID, e.Message.Author.ID)
+		member, err := e.Client().Rest.GetMember(e.GuildID, e.Message.Author.ID)
 		if err != nil {
 			return errors.NewError(err)
 		}
@@ -945,7 +946,7 @@ func messageSuffixMessageCreateHandler(w *ent.WordSuffix, u *ent.User, e *events
 		}
 		repliedUser := false
 		if e.Message.MessageReference != nil && e.Message.MessageReference.ChannelID != nil && e.Message.MessageReference.MessageID != nil {
-			replyMessage, err := e.Client().Rest().GetMessage(*e.Message.MessageReference.ChannelID, *e.Message.MessageReference.MessageID)
+			replyMessage, err := e.Client().Rest.GetMessage(*e.Message.MessageReference.ChannelID, *e.Message.MessageReference.MessageID)
 			if err == nil {
 				repliedUser = slices.Index(mentionUsers, replyMessage.Author.ID) != -1
 			}
@@ -954,13 +955,13 @@ func messageSuffixMessageCreateHandler(w *ent.WordSuffix, u *ent.User, e *events
 		var channel discord.Channel
 		channel, ok := e.Channel()
 		if !ok {
-			channel, err = e.Client().Rest().GetChannel(e.ChannelID)
+			channel, err = e.Client().Rest.GetChannel(e.ChannelID)
 			if err != nil {
 				return errors.NewError(err)
 			}
 		}
 
-		webhook, err := e.Client().WebhookManager().GetMessenger(channel)
+		webhook, err := e.Client().WebhookManager.GetMessenger(channel)
 		if err != nil {
 			return errors.NewError(err)
 		}

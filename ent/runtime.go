@@ -152,6 +152,10 @@ func init() {
 	guild.DefaultUpRemindMessage = guildDescUpRemindMessage.Default.(string)
 	// guild.UpRemindMessageValidator is a validator for the "up_remind_message" field. It is called by the builders before save.
 	guild.UpRemindMessageValidator = guildDescUpRemindMessage.Validators[0].(func(string) error)
+	// guildDescLevelingDisabled is the schema descriptor for leveling_disabled field.
+	guildDescLevelingDisabled := guildFields[23].Descriptor()
+	// guild.DefaultLevelingDisabled holds the default value on creation for the leveling_disabled field.
+	guild.DefaultLevelingDisabled = guildDescLevelingDisabled.Default.(bool)
 	memberFields := schema.Member{}.Fields()
 	_ = memberFields
 	// memberDescPermission is the schema descriptor for permission field.

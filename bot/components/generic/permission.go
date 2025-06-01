@@ -62,7 +62,7 @@ func noPermissionMessage(event interface {
 	)
 }
 
-func PermissionCheck(ctx context.Context, c *components.Components, g *ent.Guild, client bot.Client, m discord.ResolvedMember, guildID snowflake.ID, perms []Permission) bool {
+func PermissionCheck(ctx context.Context, c *components.Components, g *ent.Guild, client *bot.Client, m discord.ResolvedMember, guildID snowflake.ID, perms []Permission) bool {
 
 	if len(perms) == 0 {
 		return true
@@ -100,15 +100,15 @@ func PermissionCheck(ctx context.Context, c *components.Components, g *ent.Guild
 	return RolePermissionCheck(g, guildID, client, m.RoleIDs, perms)
 }
 
-func RolePermissionCheck(g *ent.Guild, guildID snowflake.ID, client bot.Client, roleIds []snowflake.ID, perms []Permission) bool {
+func RolePermissionCheck(g *ent.Guild, guildID snowflake.ID, client *bot.Client, roleIds []snowflake.ID, perms []Permission) bool {
 	if len(perms) == 0 {
 		return true
 	}
 
 	var roles []discord.Role
-	client.Caches().RolesForEach(guildID, func(role discord.Role) {
+	for role := range client.Caches.Roles(guildID) {
 		roles = append(roles, role)
-	})
+	}
 	slices.SortStableFunc(roles, func(a, b discord.Role) int {
 		return a.Compare(b)
 	})
@@ -140,7 +140,7 @@ func permissionCheck(event interface {
 	Member() *discord.ResolvedMember
 	GuildID() *snowflake.ID
 	User() discord.User
-	Client() bot.Client
+	Client() *bot.Client
 }, c *components.Components, perms []Permission, dPerm discord.Permissions) bool {
 
 	if len(perms) == 0 {

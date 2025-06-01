@@ -1,0 +1,41 @@
+services:
+  go:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    tty: true
+    env_file:
+      - ./mysql/.env
+      - ./.env
+    volumes:
+      - type: bind
+        source: ./lang
+        target: /app/lang
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mysql:
+    build:
+      context: ./mysql
+      dockerfile: Dockerfile
+    tty: true
+    platform: linux/x86_64
+    env_file:
+      - ./mysql/.env
+    volumes:
+      - type: volume
+        source: mysql_volume
+        target: /var/lib/mysql
+      - type: bind
+        source: ./mysql/init
+        target: /docker-entrypoint-initdb.d
+    restart: unless-stopped
+
+volumes:
+  mysql_volume:
+
+networks:
+  default:
+    driver: bridge

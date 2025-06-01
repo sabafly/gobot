@@ -45,7 +45,6 @@ func ImportCommand(c *components.Components) components.Command {
 			discord.MessageCommandCreate{
 				Name:              "import-rolepanel",
 				NameLocalizations: translate.MessageMap("components.role.panel.import.name", false),
-				DMPermission:      builtin.Ptr(false),
 				Contexts: []discord.InteractionContextType{
 					discord.InteractionContextTypeGuild,
 				},
@@ -76,16 +75,16 @@ func ImportCommand(c *components.Components) components.Command {
 							emojis = emoji.FindAllString(v)
 						}
 						componentEmoji := discordutil.ParseComponentEmoji(emojis[0])
-						if _, ok := event.Client().Caches().Emoji(*event.GuildID(), componentEmoji.ID); !ok && componentEmoji.ID != 0 {
+						if _, ok := event.Client().Caches.Emoji(*event.GuildID(), componentEmoji.ID); !ok && componentEmoji.ID != 0 {
 							componentEmoji = discordutil.ParseComponentEmoji(discordutil.Number2Emoji(roleCount + 1))
 						}
 						roleID, err := snowflake.Parse(roleIDRegexp.FindString(roleRegexp.FindString(v)))
 						if err != nil {
 							continue
 						}
-						role, ok := event.Client().Caches().Role(*event.GuildID(), roleID)
+						role, ok := event.Client().Caches.Role(*event.GuildID(), roleID)
 						if !ok {
-							rolePtr, err := event.Client().Rest().GetRole(*event.GuildID(), roleID)
+							rolePtr, err := event.Client().Rest.GetRole(*event.GuildID(), roleID)
 							if err != nil {
 								continue
 							}
@@ -146,7 +145,7 @@ func check(event *events.ApplicationCommandInteractionCreate) bool {
 	message := event.MessageCommandInteractionData().TargetMessage()
 	var wid snowflake.ID
 	if message.WebhookID != nil {
-		wh, err := event.Client().Rest().GetWebhook(*message.WebhookID)
+		wh, err := event.Client().Rest.GetWebhook(*message.WebhookID)
 		if err != nil {
 			return false
 		} else if wh.Type() == discord.WebhookTypeIncoming && wh.(discord.IncomingWebhook).User.ID == 716496407212589087 {

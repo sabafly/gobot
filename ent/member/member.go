@@ -26,6 +26,8 @@ const (
 	FieldMessageCount = "message_count"
 	// FieldLastNotifiedLevel holds the string denoting the last_notified_level field in the database.
 	FieldLastNotifiedLevel = "last_notified_level"
+	// FieldLastMessageHashes holds the string denoting the last_message_hashes field in the database.
+	FieldLastMessageHashes = "last_message_hashes"
 	// EdgeGuild holds the string denoting the guild edge name in mutations.
 	EdgeGuild = "guild"
 	// EdgeUser holds the string denoting the user edge name in mutations.
@@ -57,6 +59,7 @@ var Columns = []string{
 	FieldLastXp,
 	FieldMessageCount,
 	FieldLastNotifiedLevel,
+	FieldLastMessageHashes,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "members"

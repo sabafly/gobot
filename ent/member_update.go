@@ -10,6 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	snowflake "github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/ent/guild"
@@ -141,6 +142,24 @@ func (mu *MemberUpdate) ClearLastNotifiedLevel() *MemberUpdate {
 	return mu
 }
 
+// SetLastMessageHashes sets the "last_message_hashes" field.
+func (mu *MemberUpdate) SetLastMessageHashes(s []string) *MemberUpdate {
+	mu.mutation.SetLastMessageHashes(s)
+	return mu
+}
+
+// AppendLastMessageHashes appends s to the "last_message_hashes" field.
+func (mu *MemberUpdate) AppendLastMessageHashes(s []string) *MemberUpdate {
+	mu.mutation.AppendLastMessageHashes(s)
+	return mu
+}
+
+// ClearLastMessageHashes clears the value of the "last_message_hashes" field.
+func (mu *MemberUpdate) ClearLastMessageHashes() *MemberUpdate {
+	mu.mutation.ClearLastMessageHashes()
+	return mu
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
 func (mu *MemberUpdate) SetGuildID(id snowflake.ID) *MemberUpdate {
 	mu.mutation.SetGuildID(id)
@@ -245,6 +264,17 @@ func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if mu.mutation.LastNotifiedLevelCleared() {
 		_spec.ClearField(member.FieldLastNotifiedLevel, field.TypeUint64)
+	}
+	if value, ok := mu.mutation.LastMessageHashes(); ok {
+		_spec.SetField(member.FieldLastMessageHashes, field.TypeJSON, value)
+	}
+	if value, ok := mu.mutation.AppendedLastMessageHashes(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, member.FieldLastMessageHashes, value)
+		})
+	}
+	if mu.mutation.LastMessageHashesCleared() {
+		_spec.ClearField(member.FieldLastMessageHashes, field.TypeJSON)
 	}
 	if mu.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -404,6 +434,24 @@ func (muo *MemberUpdateOne) ClearLastNotifiedLevel() *MemberUpdateOne {
 	return muo
 }
 
+// SetLastMessageHashes sets the "last_message_hashes" field.
+func (muo *MemberUpdateOne) SetLastMessageHashes(s []string) *MemberUpdateOne {
+	muo.mutation.SetLastMessageHashes(s)
+	return muo
+}
+
+// AppendLastMessageHashes appends s to the "last_message_hashes" field.
+func (muo *MemberUpdateOne) AppendLastMessageHashes(s []string) *MemberUpdateOne {
+	muo.mutation.AppendLastMessageHashes(s)
+	return muo
+}
+
+// ClearLastMessageHashes clears the value of the "last_message_hashes" field.
+func (muo *MemberUpdateOne) ClearLastMessageHashes() *MemberUpdateOne {
+	muo.mutation.ClearLastMessageHashes()
+	return muo
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
 func (muo *MemberUpdateOne) SetGuildID(id snowflake.ID) *MemberUpdateOne {
 	muo.mutation.SetGuildID(id)
@@ -538,6 +586,17 @@ func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err err
 	}
 	if muo.mutation.LastNotifiedLevelCleared() {
 		_spec.ClearField(member.FieldLastNotifiedLevel, field.TypeUint64)
+	}
+	if value, ok := muo.mutation.LastMessageHashes(); ok {
+		_spec.SetField(member.FieldLastMessageHashes, field.TypeJSON, value)
+	}
+	if value, ok := muo.mutation.AppendedLastMessageHashes(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, member.FieldLastMessageHashes, value)
+		})
+	}
+	if muo.mutation.LastMessageHashesCleared() {
+		_spec.ClearField(member.FieldLastMessageHashes, field.TypeJSON)
 	}
 	if muo.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{

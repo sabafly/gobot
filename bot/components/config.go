@@ -32,8 +32,7 @@ type Config struct {
 	Debug        ConfigDebug   `yaml:"debug"`
 	Message      ConfigMessage `yaml:"message"`
 
-	MySQL string   `yaml:"mysql"`
-	Redis []string `yaml:"redis"`
+	MySQL string `yaml:"mysql"`
 
 	BumpUserID snowflake.ID `yaml:"bump_user"`
 	BumpImage  string       `yaml:"bump_image"`
@@ -54,7 +53,7 @@ type ConfigMessage struct {
 
 func (c *Components) Config() Config { return c.config }
 
-func Load(path string) (config *Config, err error) {
+func LoadConfig(path string) (config *Config, err error) {
 	config = &Config{}
 	f, err := os.Open(path)
 	if err != nil {

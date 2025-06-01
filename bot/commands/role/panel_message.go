@@ -90,7 +90,7 @@ func rpEditBaseMessage(ctx context.Context, panel *ent.RolePanel, edit *ent.Role
 	placeCount := panel.QueryPlacements().CountX(ctx)
 
 	disabled := len(edit.Roles) < 1 || edit.SelectedRole == nil || !slices.ContainsFunc(edit.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole })
-	builder.SetContainerComponents(
+	builder.SetComponents(
 		discord.NewActionRow(
 			discord.ButtonComponent{
 				Style:    discord.ButtonStylePrimary,
@@ -226,7 +226,7 @@ func rpEditModifyRolesMessage(edit *ent.RolePanelEdit, locale discord.Locale) di
 		)...,
 	)
 
-	builder.SetContainerComponents(
+	builder.SetComponents(
 		discord.NewActionRow(
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyleSecondary,
@@ -263,7 +263,7 @@ func rpEditSetEmojiMessage(edit *ent.RolePanelEdit, locale discord.Locale) disco
 		),
 	)
 
-	builder.SetContainerComponents(
+	builder.SetComponents(
 		discord.NewActionRow(
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyleSecondary,
@@ -311,7 +311,7 @@ func rpPlaceBaseMenu(place *ent.RolePanelPlaced, locale discord.Locale) discord.
 		)...,
 	)
 
-	builder.AddContainerComponents(
+	builder.AddComponents(
 		discord.NewActionRow(
 			discord.StringSelectMenuComponent{
 				CustomID:    fmt.Sprintf("role:panel_place_component:type:%s", place.ID),
@@ -347,7 +347,7 @@ func rpPlaceBaseMenu(place *ent.RolePanelPlaced, locale discord.Locale) discord.
 
 	switch place.Type {
 	case rolepanelplaced.TypeButton:
-		builder.AddContainerComponents(
+		builder.AddComponents(
 			discord.NewActionRow(
 				discord.StringSelectMenuComponent{
 					CustomID:  fmt.Sprintf("role:panel_place_component:button_type:%s", place.ID),
@@ -391,7 +391,7 @@ func rpPlaceBaseMenu(place *ent.RolePanelPlaced, locale discord.Locale) discord.
 			),
 		)
 	case rolepanelplaced.TypeSelectMenu:
-		builder.AddContainerComponents(
+		builder.AddComponents(
 			discord.NewActionRow(
 				discord.ButtonComponent{
 					Style:    discord.ButtonStyleSecondary,
@@ -402,7 +402,7 @@ func rpPlaceBaseMenu(place *ent.RolePanelPlaced, locale discord.Locale) discord.
 			),
 		)
 	case rolepanelplaced.TypeReaction:
-		builder.AddContainerComponents(
+		builder.AddComponents(
 			discord.NewActionRow(
 				discord.ButtonComponent{
 					Style:    discord.ButtonStyleSecondary,
@@ -414,7 +414,7 @@ func rpPlaceBaseMenu(place *ent.RolePanelPlaced, locale discord.Locale) discord.
 		)
 	}
 
-	builder.AddContainerComponents(
+	builder.AddComponents(
 		discord.NewActionRow(
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyleSecondary,
@@ -484,7 +484,7 @@ func rpPlacedMessage(place *ent.RolePanelPlaced, locale discord.Locale) discord.
 				CustomID: fmt.Sprintf("role:panel_use:button:%s:%s", place.ID, role.ID),
 			}
 		}
-		components := make([]discord.ContainerComponent, (len(place.Roles)-1)/5+1)
+		components := make([]discord.LayoutComponent, (len(place.Roles)-1)/5+1)
 		for i := range components {
 			count := 5
 			if len(buttons) < 5 {
@@ -493,12 +493,12 @@ func rpPlacedMessage(place *ent.RolePanelPlaced, locale discord.Locale) discord.
 			components[i] = discord.NewActionRow(buttons[:count]...)
 			buttons = buttons[count:]
 		}
-		builder.AddContainerComponents(
+		builder.AddComponents(
 			components...,
 		)
 	case rolepanelplaced.TypeSelectMenu:
 		if place.FoldingSelectMenu {
-			builder.AddContainerComponents(
+			builder.AddComponents(
 				discord.NewActionRow(
 					discord.ButtonComponent{
 						Style:    discord.ButtonStyleSuccess,
@@ -508,7 +508,7 @@ func rpPlacedMessage(place *ent.RolePanelPlaced, locale discord.Locale) discord.
 				),
 			)
 		} else {
-			builder.AddContainerComponents(rpPlacedSelectMenu(place, locale))
+			builder.AddComponents(rpPlacedSelectMenu(place, locale))
 		}
 	}
 	return builder

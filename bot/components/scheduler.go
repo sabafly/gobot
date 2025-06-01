@@ -27,7 +27,7 @@ import (
 	"github.com/disgoorg/disgo/bot"
 )
 
-type SchedulerFunc func(c *Components, client bot.Client) error
+type SchedulerFunc func(c *Components, client *bot.Client) error
 
 type Scheduler struct {
 	Duration time.Duration
@@ -40,7 +40,7 @@ func recoverSchedule() {
 	}
 }
 
-func execSchedule(c *Components, client bot.Client, s Scheduler) {
+func execSchedule(c *Components, client *bot.Client, s Scheduler) {
 	now := time.Now()
 	time.Sleep(time.Until(time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), now.Minute()+1, 0, 0, now.Location())))
 	for {
@@ -49,7 +49,7 @@ func execSchedule(c *Components, client bot.Client, s Scheduler) {
 	}
 }
 
-func doSchedule(c *Components, client bot.Client, s Scheduler) {
+func doSchedule(c *Components, client *bot.Client, s Scheduler) {
 	defer recoverSchedule()
 	if err := s.Worker(c, client); err != nil {
 		slog.Error("コンポーネント処理中にエラーが発生しました", "err", err)

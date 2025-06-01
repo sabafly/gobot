@@ -23,10 +23,6 @@ package bot
 import (
 	"context"
 	"fmt"
-	"github.com/disgoorg/disgo/discord"
-	"github.com/disgoorg/disgo/events"
-	"github.com/sabafly/gobot/bot/commands/game"
-	"github.com/sabafly/gobot/ent/migrate"
 	"io"
 	"log/slog"
 	"net/http"
@@ -34,6 +30,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
+	"github.com/sabafly/gobot/ent/migrate"
 
 	"github.com/disgoorg/disgo"
 	"github.com/disgoorg/disgo/bot"
@@ -50,7 +50,6 @@ import (
 	"github.com/sabafly/gobot/bot/commands/ping"
 	"github.com/sabafly/gobot/bot/commands/role"
 	"github.com/sabafly/gobot/bot/commands/setting"
-	userinfo "github.com/sabafly/gobot/bot/commands/user_info"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/ent"
 	"github.com/sabafly/gobot/internal/translate"
@@ -78,7 +77,7 @@ func run() error {
 	})))
 	_ = godotenv.Load()
 
-	config, err := components.Load("gobot.yml")
+	config, err := components.LoadConfig("gobot.yml")
 	if err != nil {
 		return fmt.Errorf("設定ファイルを読み込めません: %w", err)
 	}
@@ -117,18 +116,16 @@ func run() error {
 		message.Command(component),
 		role.Command(component),
 		level.Command(component),
-		userinfo.Command(component),
 		permission.Command(component),
 		setting.Command(component),
 		role.ImportCommand(component),
-		game.Command(component),
 	)
 
 	ready := make(chan *events.Ready)
 
-	token := os.Getenv("TOKEN")
+	token := os.Getenv("DISCORD_TOKEN")
 	if token == "" {
-		return fmt.Errorf("TOKEN が空です")
+		return fmt.Errorf("DISCORD_TOKEN が空です")
 	}
 	client, err := disgo.New(token,
 		bot.WithCacheConfigOpts(cache.WithCaches(cache.FlagsAll)),
@@ -166,7 +163,7 @@ func run() error {
 
 	// set default webhook
 	bot.WebhookDefaultName = "gobot-webhook"
-	self, ok := client.Caches().SelfUser()
+	self, ok := client.Caches.SelfUser()
 	if !ok {
 		return fmt.Errorf("cannot cache self user")
 	}

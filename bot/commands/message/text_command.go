@@ -22,12 +22,13 @@ package message
 
 import (
 	"context"
-	"github.com/disgoorg/disgo/discord"
-	"github.com/disgoorg/disgo/events"
 	"math/rand/v2"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
 )
 
 func doTextCommand(ctx context.Context, event *events.GuildMessageCreate) (err error, shouldContinue bool) {
@@ -35,7 +36,7 @@ func doTextCommand(ctx context.Context, event *events.GuildMessageCreate) (err e
 		return nil, true
 	}
 
-	c, ok := strings.CutPrefix(event.Message.Content, discord.UserMention(event.Client().ApplicationID()))
+	c, ok := strings.CutPrefix(event.Message.Content, discord.UserMention(event.Client().ApplicationID))
 	if !ok {
 		return nil, true
 	}
@@ -62,7 +63,7 @@ func doTextCommand(ctx context.Context, event *events.GuildMessageCreate) (err e
 
 		content += "\nSum: " + strconv.Itoa(sum)
 
-		_, err = event.Client().Rest().CreateMessage(event.ChannelID, discord.NewMessageBuilder().
+		_, err = event.Client().Rest.CreateMessage(event.ChannelID, discord.NewMessageBuilder().
 			SetContent(content).
 			SetMessageReferenceByID(event.Message.ID).
 			BuildCreate(),

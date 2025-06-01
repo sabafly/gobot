@@ -23,6 +23,8 @@ package level
 import (
 	"cmp"
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -301,11 +303,18 @@ func Command(c *components.Components) components.Command {
 					if err != nil {
 						return errors.NewError(err)
 					}
-					ids := g.QueryMembers().Order(
+					members, err := g.QueryMembers().Order(
 						member.ByXp(
 							sql.OrderDesc(),
 						),
-					).IDsX(event)
+					).All(event)
+					if err != nil {
+						return errors.NewError(err)
+					}
+					ids := make([]int, len(members))
+					for i, m := range slices.All(members) {
+						ids[i] = m.ID
+					}
 					index := slices.Index(ids, m.ID)
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
@@ -463,7 +472,7 @@ func Command(c *components.Components) components.Command {
 						discord.NewModalCreateBuilder().
 							SetTitle(translate.Message(event.Locale(), "components.level.up.message.modal.title")).
 							SetCustomID("level:up_message_modal").
-							SetContainerComponents(
+							SetComponents(
 								discord.NewActionRow(
 									discord.TextInputComponent{
 										CustomID:    "message",
@@ -623,7 +632,7 @@ func Command(c *components.Components) components.Command {
 					memberCount := 1000
 					afterID := snowflake.ID(0)
 					for memberCount == 1000 {
-						m, err := event.Client().Rest().GetMembers(*event.GuildID(), memberCount, afterID)
+						m, err := event.Client().Rest.GetMembers(*event.GuildID(), memberCount, afterID)
 						if err != nil {
 							return errors.NewError(err)
 						}
@@ -777,13 +786,13 @@ func Command(c *components.Components) components.Command {
 					role := event.SlashCommandInteractionData().Role("role")
 					g.LevelRole = builtin.NonNilMap(g.LevelRole)
 					g.LevelRole[level] = role.ID
-					self, valid := event.Client().Caches().SelfMember(*event.GuildID())
+					self, valid := event.Client().Caches.SelfMember(*event.GuildID())
 					if !valid {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.self", event))
 					}
 					var roles []discord.Role
 					for _, id := range self.RoleIDs {
-						role, ok := event.Client().Caches().Role(*event.GuildID(), id)
+						role, ok := event.Client().Caches.Role(*event.GuildID(), id)
 						if !ok {
 							continue
 						}
@@ -953,13 +962,16 @@ func Command(c *components.Components) components.Command {
 				if err != nil {
 					return errors.NewError(err)
 				}
+				if g.LevelingDisabled {
+					return nil
+				}
 				if slices.Contains(g.LevelUpExcludeChannel, event.ChannelID) {
 					return nil
 				}
 				var channel discord.GuildChannel
 				channel, ok := event.Channel()
 				if !ok {
-					c, err := event.Client().Rest().GetChannel(event.ChannelID)
+					c, err := event.Client().Rest.GetChannel(event.ChannelID)
 					if err != nil {
 						return errors.NewError(err)
 					}
@@ -972,6 +984,19 @@ func Command(c *components.Components) components.Command {
 				if err != nil {
 					return errors.NewError(err)
 				}
+				hash := sha1.Sum([]byte(event.Message.Content))
+				hashStr := hex.EncodeToString(hash[:])
+				if slices.Contains(m.LastMessageHashes, hashStr) {
+					return nil
+				}
+				if len(m.LastMessageHashes) >= 10 {
+					m.LastMessageHashes = slices.Delete(m.LastMessageHashes, 0, 1)
+				}
+				m.LastMessageHashes = append(m.LastMessageHashes, hashStr)
+				m.Update().
+					SetLastMessageHashes(m.LastMessageHashes).
+					SaveX(event)
+
 				if _, err = addXp(event, m.Update(), rand.N[uint64](16)+15, event.Client(), m, g, event.ChannelID, event.Message.Author.EffectiveName(), false); err != nil {
 					return errors.NewError(err)
 				}
@@ -981,7 +1006,7 @@ func Command(c *components.Components) components.Command {
 	}).SetComponent(c)
 }
 
-func addXp(ctx context.Context, memberUpdate *ent.MemberUpdateOne, xp uint64, client bot.Client, m *ent.Member, g *ent.Guild, channelID snowflake.ID, username string, ignoreCooldown bool) (*ent.Member, error) {
+func addXp(ctx context.Context, memberUpdate *ent.MemberUpdateOne, xp uint64, client *bot.Client, m *ent.Member, g *ent.Guild, channelID snowflake.ID, username string, ignoreCooldown bool) (*ent.Member, error) {
 	before := builtin.NonNilOrDefault(m.LastNotifiedLevel, m.Xp.Level())
 	if ignoreCooldown || time.Now().After(m.LastXp.Add(time.Minute*3)) {
 		m.Xp.Add(xp)
@@ -1007,7 +1032,7 @@ func addXp(ctx context.Context, memberUpdate *ent.MemberUpdateOne, xp uint64, cl
 		content = strings.ReplaceAll(content, "{before_level}", strconv.FormatUint(before, 10))
 		content = strings.ReplaceAll(content, "{after_level}", strconv.FormatUint(after, 10))
 		content = strings.ReplaceAll(content, "{xp}", strconv.FormatUint(uint64(m.Xp), 10))
-		if _, err := client.Rest().
+		if _, err := client.Rest.
 			CreateMessage(
 				builtin.Or(builtin.NonNil(g.LevelUpChannel) != 0, builtin.NonNil(g.LevelUpChannel), channelID),
 				discord.NewMessageBuilder().
@@ -1020,11 +1045,11 @@ func addXp(ctx context.Context, memberUpdate *ent.MemberUpdateOne, xp uint64, cl
 	return m, nil
 }
 
-func levelUp(g *ent.Guild, after uint64, client bot.Client, guildID snowflake.ID, m *ent.Member) error {
+func levelUp(g *ent.Guild, after uint64, client *bot.Client, guildID snowflake.ID, m *ent.Member) error {
 	// レベルロール
 	r, ok := g.LevelRole[int(after)]
 	if ok {
-		if err := client.Rest().AddMemberRole(guildID, m.UserID, r); err != nil {
+		if err := client.Rest.AddMemberRole(guildID, m.UserID, r); err != nil {
 			slog.Error("レベルロール付与に失敗", slog.Any("err", err))
 		}
 	}

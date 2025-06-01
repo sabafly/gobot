@@ -101,6 +101,12 @@ func (mc *MemberCreate) SetNillableLastNotifiedLevel(u *uint64) *MemberCreate {
 	return mc
 }
 
+// SetLastMessageHashes sets the "last_message_hashes" field.
+func (mc *MemberCreate) SetLastMessageHashes(s []string) *MemberCreate {
+	mc.mutation.SetLastMessageHashes(s)
+	return mc
+}
+
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
 func (mc *MemberCreate) SetGuildID(id snowflake.ID) *MemberCreate {
 	mc.mutation.SetGuildID(id)
@@ -228,6 +234,10 @@ func (mc *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 	if value, ok := mc.mutation.LastNotifiedLevel(); ok {
 		_spec.SetField(member.FieldLastNotifiedLevel, field.TypeUint64, value)
 		_node.LastNotifiedLevel = &value
+	}
+	if value, ok := mc.mutation.LastMessageHashes(); ok {
+		_spec.SetField(member.FieldLastMessageHashes, field.TypeJSON, value)
+		_node.LastMessageHashes = value
 	}
 	if nodes := mc.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

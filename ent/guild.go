@@ -66,6 +66,8 @@ type Guild struct {
 	BumpMention *snowflake.ID `json:"bump_mention,omitempty"`
 	// UpMention holds the value of the "up_mention" field.
 	UpMention *snowflake.ID `json:"up_mention,omitempty"`
+	// LevelingDisabled holds the value of the "leveling_disabled" field.
+	LevelingDisabled bool `json:"leveling_disabled,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the GuildQuery when eager-loading is set.
 	Edges           GuildEdges `json:"edges"`
@@ -199,7 +201,7 @@ func (*Guild) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case guild.FieldLevelUpExcludeChannel, guild.FieldLevelRole, guild.FieldPermissions, guild.FieldRolePanelEditTimes:
 			values[i] = new([]byte)
-		case guild.FieldLevelMee6Imported, guild.FieldBumpEnabled, guild.FieldUpEnabled:
+		case guild.FieldLevelMee6Imported, guild.FieldBumpEnabled, guild.FieldUpEnabled, guild.FieldLevelingDisabled:
 			values[i] = new(sql.NullBool)
 		case guild.FieldID, guild.FieldLevelUpChannel, guild.FieldRemindCount, guild.FieldBumpMention, guild.FieldUpMention:
 			values[i] = new(sql.NullInt64)
@@ -371,6 +373,12 @@ func (gu *Guild) assignValues(columns []string, values []any) error {
 				gu.UpMention = new(snowflake.ID)
 				*gu.UpMention = snowflake.ID(value.Int64)
 			}
+		case guild.FieldLevelingDisabled:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field leveling_disabled", values[i])
+			} else if value.Valid {
+				gu.LevelingDisabled = value.Bool
+			}
 		case guild.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field user_own_guilds", values[i])
@@ -535,6 +543,9 @@ func (gu *Guild) String() string {
 		builder.WriteString("up_mention=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("leveling_disabled=")
+	builder.WriteString(fmt.Sprintf("%v", gu.LevelingDisabled))
 	builder.WriteByte(')')
 	return builder.String()
 }

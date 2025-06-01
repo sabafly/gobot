@@ -22,13 +22,14 @@ package role
 
 import (
 	"context"
+	"time"
+
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/ent/guild"
 	"github.com/sabafly/gobot/ent/rolepanel"
 	"github.com/sabafly/gobot/internal/errors"
-	"time"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
@@ -37,19 +38,19 @@ import (
 	"github.com/sabafly/gobot/internal/discordutil"
 )
 
-func rolePanelPlace(ctx context.Context, place *ent.RolePanelPlaced, locale discord.Locale, client bot.Client, react bool) error {
+func rolePanelPlace(ctx context.Context, place *ent.RolePanelPlaced, locale discord.Locale, client *bot.Client, react bool) error {
 	builder := rpPlacedMessage(place, locale)
 	if place.MessageID != nil {
-		if _, err := client.Rest().UpdateMessage(place.ChannelID, *place.MessageID, builder.BuildUpdate()); err != nil {
+		if _, err := client.Rest.UpdateMessage(place.ChannelID, *place.MessageID, builder.BuildUpdate()); err != nil {
 			return err
 		}
 		if place.Type == rolepanelplaced.TypeReaction && react {
-			if err := client.Rest().RemoveAllReactions(place.ChannelID, *place.MessageID); err != nil {
+			if err := client.Rest.RemoveAllReactions(place.ChannelID, *place.MessageID); err != nil {
 				return err
 			}
 		}
 	} else {
-		m, err := client.Rest().CreateMessage(place.ChannelID, builder.BuildCreate())
+		m, err := client.Rest.CreateMessage(place.ChannelID, builder.BuildCreate())
 		if err != nil {
 			return err
 		}
@@ -63,7 +64,7 @@ func rolePanelPlace(ctx context.Context, place *ent.RolePanelPlaced, locale disc
 					Name: discordutil.Index2Emoji(i),
 				}
 			}
-			if err := client.Rest().AddReaction(place.ChannelID, *place.MessageID, discordutil.FormatComponentEmoji(*r.Emoji)); err != nil {
+			if err := client.Rest.AddReaction(place.ChannelID, *place.MessageID, discordutil.FormatComponentEmoji(*r.Emoji)); err != nil {
 				return err
 			}
 		}

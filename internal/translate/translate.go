@@ -166,7 +166,7 @@ func Message(locale discord.Locale, messageID string, opts ...Option) (res strin
 	return messageID
 }
 
-func MessageMap(key string, replace bool, opts ...Option) map[discord.Locale]string {
+func MessageMap(key string, replaceSpace bool, opts ...Option) map[discord.Locale]string {
 	res := map[discord.Locale]string{
 		discord.LocaleEnglishUS:    Message(discord.LocaleEnglishUS, key, opts...),
 		discord.LocaleEnglishGB:    Message(discord.LocaleEnglishGB, key, opts...),
@@ -200,7 +200,7 @@ func MessageMap(key string, replace bool, opts ...Option) map[discord.Locale]str
 		discord.LocaleUkrainian:    Message(discord.LocaleUkrainian, key, opts...),
 		discord.LocaleVietnamese:   Message(discord.LocaleVietnamese, key, opts...),
 	}
-	if replace {
+	if replaceSpace {
 		for l, v := range res {
 			res[l] = strings.ReplaceAll(v, " ", "-")
 		}

@@ -149,6 +149,11 @@ func UpMention(v snowflake.ID) predicate.Guild {
 	return predicate.Guild(sql.FieldEQ(FieldUpMention, vc))
 }
 
+// LevelingDisabled applies equality check predicate on the "leveling_disabled" field. It's identical to LevelingDisabledEQ.
+func LevelingDisabled(v bool) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldLevelingDisabled, v))
+}
+
 // NameEQ applies the EQ predicate on the "name" field.
 func NameEQ(v string) predicate.Guild {
 	return predicate.Guild(sql.FieldEQ(FieldName, v))
@@ -1163,6 +1168,16 @@ func UpMentionIsNil() predicate.Guild {
 // UpMentionNotNil applies the NotNil predicate on the "up_mention" field.
 func UpMentionNotNil() predicate.Guild {
 	return predicate.Guild(sql.FieldNotNull(FieldUpMention))
+}
+
+// LevelingDisabledEQ applies the EQ predicate on the "leveling_disabled" field.
+func LevelingDisabledEQ(v bool) predicate.Guild {
+	return predicate.Guild(sql.FieldEQ(FieldLevelingDisabled, v))
+}
+
+// LevelingDisabledNEQ applies the NEQ predicate on the "leveling_disabled" field.
+func LevelingDisabledNEQ(v bool) predicate.Guild {
+	return predicate.Guild(sql.FieldNEQ(FieldLevelingDisabled, v))
 }
 
 // HasOwner applies the HasEdge predicate on the "owner" edge.

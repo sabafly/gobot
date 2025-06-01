@@ -91,6 +91,7 @@ var (
 		{Name: "up_remind_message", Type: field.TypeString, Size: 2147483647, Default: "</dissoku up:828002256690610256>でUPしましょう"},
 		{Name: "bump_mention", Type: field.TypeUint64, Nullable: true},
 		{Name: "up_mention", Type: field.TypeUint64, Nullable: true},
+		{Name: "leveling_disabled", Type: field.TypeBool, Default: false},
 		{Name: "user_own_guilds", Type: field.TypeUint64},
 	}
 	// GuildsTable holds the schema information for the "guilds" table.
@@ -101,7 +102,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "guilds_users_own_guilds",
-				Columns:    []*schema.Column{GuildsColumns[23]},
+				Columns:    []*schema.Column{GuildsColumns[24]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -115,6 +116,7 @@ var (
 		{Name: "last_xp", Type: field.TypeTime, Nullable: true},
 		{Name: "message_count", Type: field.TypeUint64, Default: 0},
 		{Name: "last_notified_level", Type: field.TypeUint64, Nullable: true},
+		{Name: "last_message_hashes", Type: field.TypeJSON, Nullable: true},
 		{Name: "guild_members", Type: field.TypeUint64},
 		{Name: "user_id", Type: field.TypeUint64},
 	}
@@ -126,13 +128,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "members_guilds_members",
-				Columns:    []*schema.Column{MembersColumns[6]},
+				Columns:    []*schema.Column{MembersColumns[7]},
 				RefColumns: []*schema.Column{GuildsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "members_users_guilds",
-				Columns:    []*schema.Column{MembersColumns[7]},
+				Columns:    []*schema.Column{MembersColumns[8]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

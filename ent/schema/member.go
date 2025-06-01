@@ -54,6 +54,8 @@ func (Member) Fields() []ent.Field {
 		field.Uint64("last_notified_level").
 			Nillable().
 			Optional(),
+		field.Strings("last_message_hashes").
+			Optional(),
 	}
 }
 

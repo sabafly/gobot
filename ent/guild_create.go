@@ -302,6 +302,20 @@ func (gc *GuildCreate) SetNillableUpMention(s *snowflake.ID) *GuildCreate {
 	return gc
 }
 
+// SetLevelingDisabled sets the "leveling_disabled" field.
+func (gc *GuildCreate) SetLevelingDisabled(b bool) *GuildCreate {
+	gc.mutation.SetLevelingDisabled(b)
+	return gc
+}
+
+// SetNillableLevelingDisabled sets the "leveling_disabled" field if the given value is not nil.
+func (gc *GuildCreate) SetNillableLevelingDisabled(b *bool) *GuildCreate {
+	if b != nil {
+		gc.SetLevelingDisabled(*b)
+	}
+	return gc
+}
+
 // SetID sets the "id" field.
 func (gc *GuildCreate) SetID(s snowflake.ID) *GuildCreate {
 	gc.mutation.SetID(s)
@@ -557,6 +571,10 @@ func (gc *GuildCreate) defaults() {
 		v := guild.DefaultUpRemindMessage
 		gc.mutation.SetUpRemindMessage(v)
 	}
+	if _, ok := gc.mutation.LevelingDisabled(); !ok {
+		v := guild.DefaultLevelingDisabled
+		gc.mutation.SetLevelingDisabled(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -666,6 +684,9 @@ func (gc *GuildCreate) check() error {
 		if err := guild.UpRemindMessageValidator(v); err != nil {
 			return &ValidationError{Name: "up_remind_message", err: fmt.Errorf(`ent: validator failed for field "Guild.up_remind_message": %w`, err)}
 		}
+	}
+	if _, ok := gc.mutation.LevelingDisabled(); !ok {
+		return &ValidationError{Name: "leveling_disabled", err: errors.New(`ent: missing required field "Guild.leveling_disabled"`)}
 	}
 	if len(gc.mutation.OwnerIDs()) == 0 {
 		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Guild.owner"`)}
@@ -789,6 +810,10 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 	if value, ok := gc.mutation.UpMention(); ok {
 		_spec.SetField(guild.FieldUpMention, field.TypeUint64, value)
 		_node.UpMention = &value
+	}
+	if value, ok := gc.mutation.LevelingDisabled(); ok {
+		_spec.SetField(guild.FieldLevelingDisabled, field.TypeBool, value)
+		_node.LevelingDisabled = value
 	}
 	if nodes := gc.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

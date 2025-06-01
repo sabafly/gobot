@@ -56,9 +56,8 @@ func Command(c *components.Components) components.Command {
 		Namespace: "role",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
-				Name:         "role",
-				Description:  "role",
-				DMPermission: builtin.Ptr(false),
+				Name:        "role",
+				Description: "role",
 				Contexts: []discord.InteractionContextType{
 					discord.InteractionContextTypeGuild,
 				},
@@ -133,7 +132,7 @@ func Command(c *components.Components) components.Command {
 						discord.NewModalCreateBuilder().
 							SetTitle(translate.Message(event.Locale(), "components.role.panel.create.modal.title")).
 							SetCustomID("role:panel_create_modal").
-							SetContainerComponents(
+							SetComponents(
 								discord.NewActionRow(
 									discord.TextInputComponent{
 										CustomID:  "name",
@@ -192,7 +191,7 @@ func Command(c *components.Components) components.Command {
 					var roles []discord.Role
 					for _, r := range rolePanel.Roles {
 						if roles == nil {
-							roles, err = event.Client().Rest().GetRoles(*event.GuildID())
+							roles, err = event.Client().Rest.GetRoles(*event.GuildID())
 							if err != nil {
 								return errors.NewError(err)
 							}
@@ -285,7 +284,7 @@ func Command(c *components.Components) components.Command {
 						if place.MessageID == nil {
 							continue
 						}
-						_ = event.Client().Rest().DeleteMessage(place.ChannelID, *place.MessageID)
+						_ = event.Client().Rest.DeleteMessage(place.ChannelID, *place.MessageID)
 					}
 
 					c.DB().RolePanelPlaced.Delete().
@@ -466,7 +465,7 @@ func Command(c *components.Components) components.Command {
 							discord.NewModalCreateBuilder().
 								SetTitle(translate.Message(event.Locale(), fmt.Sprintf("components.role.panel.edit.action.%s.title", action))).
 								SetCustomID(fmt.Sprintf("role:panel_edit_modal:%s:%s", action, edit.ID)).
-								SetContainerComponents(
+								SetComponents(
 									builtin.Or(action == "change_name",
 										discord.NewActionRow(
 											discord.TextInputComponent{
@@ -512,14 +511,14 @@ func Command(c *components.Components) components.Command {
 						}
 					case "add_role":
 						selectedRoles := event.RoleSelectMenuInteractionData().Resolved.Roles
-						self, valid := event.Client().Caches().SelfMember(*event.GuildID())
+						self, valid := event.Client().Caches.SelfMember(*event.GuildID())
 						if !valid {
 							return errors.NewError(errors.ErrorMessage("errors.invalid.self", event))
 						}
 						var roles []discord.Role
 						roleMap := map[snowflake.ID]discord.Role{}
 						for _, id := range self.RoleIDs {
-							role, err := event.Client().Rest().GetRole(*event.GuildID(), id)
+							role, err := event.Client().Rest.GetRole(*event.GuildID(), id)
 							if err != nil {
 								slog.Error("API ERROR GetRole", "error", err, "guild_id", *event.GuildID(), "id", id)
 								continue
@@ -647,7 +646,7 @@ func Command(c *components.Components) components.Command {
 								discord.NewModalCreateBuilder().
 									SetTitle(translate.Message(event.Locale(), "components.role.panel.edit.set_display.name.modal.title")).
 									SetCustomID(fmt.Sprintf("role:panel_edit_modal:set_display_name:%s", edit.ID)).
-									SetContainerComponents(
+									SetComponents(
 										discord.NewActionRow(
 											discord.TextInputComponent{
 												CustomID:  "display_name",
@@ -856,7 +855,7 @@ func Command(c *components.Components) components.Command {
 								),
 							).
 							BuildUpdate()
-						updateMessage.Components = &[]discord.ContainerComponent{}
+						updateMessage.Components = &[]discord.LayoutComponent{}
 						if err := event.UpdateMessage(
 							updateMessage,
 						); err != nil {
@@ -886,7 +885,7 @@ func Command(c *components.Components) components.Command {
 					return errors.NewError(err)
 				}
 				if !g.QueryRolePanelPlacements().Where(rolepanelplaced.ID(placeID)).ExistX(event) {
-					if err := event.Client().Rest().DeleteMessage(event.Channel().ID(), event.Message.ID); err != nil {
+					if err := event.Client().Rest.DeleteMessage(event.Channel().ID(), event.Message.ID); err != nil {
 						return errors.NewError(err)
 					}
 					return errors.NewError(errors.ErrorMessage("errors.deleted", event))
@@ -906,7 +905,7 @@ func Command(c *components.Components) components.Command {
 						return nil
 					}
 
-					_, ok := event.Client().Caches().Role(*event.GuildID(), roleID)
+					_, ok := event.Client().Caches.Role(*event.GuildID(), roleID)
 					if !ok {
 						if err := event.DeferUpdateMessage(); err != nil {
 							return errors.NewError(err)
@@ -916,11 +915,11 @@ func Command(c *components.Components) components.Command {
 
 					contain := slices.Contains(event.Member().RoleIDs, roleID)
 					if contain {
-						if err := event.Client().Rest().RemoveMemberRole(g.ID, event.User().ID, roleID, rest.WithReason(fmt.Sprintf("Role Panel \"%s\" (%s)", place.Name, place.ID))); err != nil {
+						if err := event.Client().Rest.RemoveMemberRole(g.ID, event.User().ID, roleID, rest.WithReason(fmt.Sprintf("Role Panel \"%s\" (%s)", place.Name, place.ID))); err != nil {
 							return errors.NewError(errors.ErrorMessage("errors.fail.role.panel", event))
 						}
 					} else {
-						if err := event.Client().Rest().AddMemberRole(g.ID, event.User().ID, roleID, rest.WithReason(fmt.Sprintf("Role Panel \"%s\" (%s)", place.Name, place.ID))); err != nil {
+						if err := event.Client().Rest.AddMemberRole(g.ID, event.User().ID, roleID, rest.WithReason(fmt.Sprintf("Role Panel \"%s\" (%s)", place.Name, place.ID))); err != nil {
 							return errors.NewError(errors.ErrorMessage("errors.fail.role.panel", event))
 						}
 					}
@@ -965,7 +964,7 @@ func Command(c *components.Components) components.Command {
 					)
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
-							SetContainerComponents(actionRow).
+							SetComponents(actionRow).
 							SetFlags(discord.MessageFlagEphemeral).
 							BuildCreate(),
 					); err != nil {
@@ -989,13 +988,13 @@ func Command(c *components.Components) components.Command {
 								continue
 							} else {
 								// 持ってないなら
-								_, ok := event.Client().Caches().Role(*event.GuildID(), role.ID)
+								_, ok := event.Client().Caches.Role(*event.GuildID(), role.ID)
 								if !ok {
 									continue
 								}
 								addRoles = append(addRoles, role.ID)
 
-								if err := event.Client().Rest().AddMemberRole(*event.GuildID(), event.User().ID, role.ID); err != nil {
+								if err := event.Client().Rest.AddMemberRole(*event.GuildID(), event.User().ID, role.ID); err != nil {
 									return errors.NewError(errors.ErrorMessage("errors.fail.role.panel", event))
 								}
 							}
@@ -1005,7 +1004,7 @@ func Command(c *components.Components) components.Command {
 								// 持ってたなら
 								removedRoles = append(removedRoles, role.ID)
 
-								if err := event.Client().Rest().RemoveMemberRole(*event.GuildID(), event.User().ID, role.ID); err != nil {
+								if err := event.Client().Rest.RemoveMemberRole(*event.GuildID(), event.User().ID, role.ID); err != nil {
 									return errors.NewError(errors.ErrorMessage("errors.fail.role.panel", event))
 								}
 							} else {
@@ -1101,11 +1100,11 @@ func Command(c *components.Components) components.Command {
 						SetRoles(edit.Roles).
 						SaveX(event)
 
-					if err := event.Client().Rest().AddReaction(event.ChannelID, event.MessageID, "✅"); err != nil {
+					if err := event.Client().Rest.AddReaction(event.ChannelID, event.MessageID, "✅"); err != nil {
 						return errors.NewError(err)
 					}
 
-					if _, err := event.Client().Rest().UpdateInteractionResponse(event.Client().ApplicationID(), token,
+					if _, err := event.Client().Rest.UpdateInteractionResponse(event.Client().ApplicationID, token,
 						rpEditBaseMessage(event, panel, edit, u.Locale).
 							SetFlags(discord.MessageFlagEphemeral).
 							BuildUpdate(),
@@ -1147,7 +1146,7 @@ func Command(c *components.Components) components.Command {
 				place := g.QueryRolePanelPlacements().Where(rolepanelplaced.ChannelID(event.ChannelID), rolepanelplaced.MessageID(event.MessageID)).FirstX(event)
 				panel := place.QueryRolePanel().OnlyX(event)
 
-				if err := event.Client().Rest().RemoveUserReaction(event.ChannelID, event.MessageID, event.Emoji.Reaction(), event.UserID); err != nil {
+				if err := event.Client().Rest.RemoveUserReaction(event.ChannelID, event.MessageID, event.Emoji.Reaction(), event.UserID); err != nil {
 					return errors.NewError(err)
 				}
 
@@ -1160,18 +1159,18 @@ func Command(c *components.Components) components.Command {
 					if event.Emoji.Reaction() != discordutil.ReactionComponentEmoji(*role.Emoji) {
 						continue
 					}
-					_, ok := event.Client().Caches().Role(event.GuildID, role.ID)
+					_, ok := event.Client().Caches.Role(event.GuildID, role.ID)
 					if !ok {
 						return nil
 					}
 					contains := slices.Contains(event.Member.RoleIDs, role.ID)
 					if contains {
-						err = event.Client().Rest().RemoveMemberRole(event.GuildID, event.UserID, role.ID)
+						err = event.Client().Rest.RemoveMemberRole(event.GuildID, event.UserID, role.ID)
 					} else {
-						err = event.Client().Rest().AddMemberRole(event.GuildID, event.UserID, role.ID)
+						err = event.Client().Rest.AddMemberRole(event.GuildID, event.UserID, role.ID)
 					}
 					if err != nil {
-						m, err := event.Client().Rest().CreateMessage(event.ChannelID,
+						m, err := event.Client().Rest.CreateMessage(event.ChannelID,
 							discord.NewMessageBuilder().
 								SetEmbeds(
 									embeds.SetEmbedProperties(
@@ -1187,15 +1186,17 @@ func Command(c *components.Components) components.Command {
 						if err != nil {
 							return errors.NewError(err)
 						}
-						if err := discordutil.DeleteMessageAfter(event.Client(), event.ChannelID, m.ID, time.Second*10); err != nil {
-							return errors.NewError(err)
-						}
+						go func() {
+							if err := discordutil.DeleteMessageAfter(event.Client(), event.ChannelID, m.ID, time.Second*10); err != nil {
+								slog.Error("削除に失敗", "err", err, "channel_id", event.ChannelID, "message_id", m.ID)
+							}
+						}()
 						return nil
 					}
 					if place.HideNotice {
 						return nil
 					}
-					m, err := event.Client().Rest().CreateMessage(event.ChannelID,
+					m, err := event.Client().Rest.CreateMessage(event.ChannelID,
 						discord.NewMessageBuilder().
 							SetContent(discord.UserMention(event.UserID)).
 							SetEmbeds(
@@ -1211,9 +1212,11 @@ func Command(c *components.Components) components.Command {
 					if err != nil {
 						return errors.NewError(err)
 					}
-					if err := discordutil.DeleteMessageAfter(event.Client(), event.ChannelID, m.ID, time.Second*10); err != nil {
-						return errors.NewError(err)
-					}
+					go func() {
+						if err := discordutil.DeleteMessageAfter(event.Client(), event.ChannelID, m.ID, time.Second*10); err != nil {
+							slog.Error("削除に失敗", "err", err, "channel_id", event.ChannelID, "message_id", m.ID)
+						}
+					}()
 				}
 			}
 			return nil
@@ -1221,13 +1224,13 @@ func Command(c *components.Components) components.Command {
 	}).SetComponent(c)
 }
 
-func UpdateRolePanel(ctx context.Context, place *ent.RolePanelPlaced, locale discord.Locale, client bot.Client) {
+func UpdateRolePanel(ctx context.Context, place *ent.RolePanelPlaced, locale discord.Locale, client *bot.Client) {
 	if err := rolePanelPlace(ctx, place, locale, client, true); err != nil {
 		slog.Error("アップデートに失敗", "err", err)
 	}
 }
 
-func updateRolePanel(ctx context.Context, panel *ent.RolePanel, locale discord.Locale, client bot.Client, react bool) {
+func updateRolePanel(ctx context.Context, panel *ent.RolePanel, locale discord.Locale, client *bot.Client, react bool) {
 	places := panel.QueryPlacements().AllX(ctx)
 	for _, place := range places {
 		place = place.Update().

@@ -22,9 +22,10 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/sabafly/gobot/bot"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 var root = &cobra.Command{

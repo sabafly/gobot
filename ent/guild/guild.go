@@ -61,6 +61,8 @@ const (
 	FieldBumpMention = "bump_mention"
 	// FieldUpMention holds the string denoting the up_mention field in the database.
 	FieldUpMention = "up_mention"
+	// FieldLevelingDisabled holds the string denoting the leveling_disabled field in the database.
+	FieldLevelingDisabled = "leveling_disabled"
 	// EdgeOwner holds the string denoting the owner edge name in mutations.
 	EdgeOwner = "owner"
 	// EdgeMembers holds the string denoting the members edge name in mutations.
@@ -180,6 +182,7 @@ var Columns = []string{
 	FieldUpRemindMessage,
 	FieldBumpMention,
 	FieldUpMention,
+	FieldLevelingDisabled,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "guilds"
@@ -260,6 +263,8 @@ var (
 	DefaultUpRemindMessage string
 	// UpRemindMessageValidator is a validator for the "up_remind_message" field. It is called by the builders before save.
 	UpRemindMessageValidator func(string) error
+	// DefaultLevelingDisabled holds the default value on creation for the "leveling_disabled" field.
+	DefaultLevelingDisabled bool
 )
 
 // OrderOption defines the ordering options for the Guild queries.
@@ -358,6 +363,11 @@ func ByBumpMention(opts ...sql.OrderTermOption) OrderOption {
 // ByUpMention orders the results by the up_mention field.
 func ByUpMention(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpMention, opts...).ToFunc()
+}
+
+// ByLevelingDisabled orders the results by the leveling_disabled field.
+func ByLevelingDisabled(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLevelingDisabled, opts...).ToFunc()
 }
 
 // ByOwnerField orders the results by owner field.

@@ -389,6 +389,20 @@ func (gu *GuildUpdate) ClearUpMention() *GuildUpdate {
 	return gu
 }
 
+// SetLevelingDisabled sets the "leveling_disabled" field.
+func (gu *GuildUpdate) SetLevelingDisabled(b bool) *GuildUpdate {
+	gu.mutation.SetLevelingDisabled(b)
+	return gu
+}
+
+// SetNillableLevelingDisabled sets the "leveling_disabled" field if the given value is not nil.
+func (gu *GuildUpdate) SetNillableLevelingDisabled(b *bool) *GuildUpdate {
+	if b != nil {
+		gu.SetLevelingDisabled(*b)
+	}
+	return gu
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (gu *GuildUpdate) SetOwnerID(id snowflake.ID) *GuildUpdate {
 	gu.mutation.SetOwnerID(id)
@@ -939,6 +953,9 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if gu.mutation.UpMentionCleared() {
 		_spec.ClearField(guild.FieldUpMention, field.TypeUint64)
+	}
+	if value, ok := gu.mutation.LevelingDisabled(); ok {
+		_spec.SetField(guild.FieldLevelingDisabled, field.TypeBool, value)
 	}
 	if gu.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1740,6 +1757,20 @@ func (guo *GuildUpdateOne) ClearUpMention() *GuildUpdateOne {
 	return guo
 }
 
+// SetLevelingDisabled sets the "leveling_disabled" field.
+func (guo *GuildUpdateOne) SetLevelingDisabled(b bool) *GuildUpdateOne {
+	guo.mutation.SetLevelingDisabled(b)
+	return guo
+}
+
+// SetNillableLevelingDisabled sets the "leveling_disabled" field if the given value is not nil.
+func (guo *GuildUpdateOne) SetNillableLevelingDisabled(b *bool) *GuildUpdateOne {
+	if b != nil {
+		guo.SetLevelingDisabled(*b)
+	}
+	return guo
+}
+
 // SetOwnerID sets the "owner" edge to the User entity by ID.
 func (guo *GuildUpdateOne) SetOwnerID(id snowflake.ID) *GuildUpdateOne {
 	guo.mutation.SetOwnerID(id)
@@ -2320,6 +2351,9 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 	}
 	if guo.mutation.UpMentionCleared() {
 		_spec.ClearField(guild.FieldUpMention, field.TypeUint64)
+	}
+	if value, ok := guo.mutation.LevelingDisabled(); ok {
+		_spec.SetField(guild.FieldLevelingDisabled, field.TypeBool, value)
 	}
 	if guo.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
