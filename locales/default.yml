@@ -1,0 +1,51 @@
+locale: ja
+strings:
+  general.state.enabled: "有効"
+  general.state.disabled: "無効"
+  general.value.none: "なし"
+  general.value.everyone: "全員"
+  general.value.all: "全て"
+  general.value.all_channels: "全てのチャンネル"
+  general.value.all_roles: "全てのロール"
+  general.value.all_users: "全てのユーザー"
+  general.value.all_guilds: "全てのサーバー"
+components:
+  command.settings.view:
+    - type: container
+      components:
+        - "# {guild_name}の設定"
+        - "## BUMP通知設定"
+        - |-
+          - **Bump通知**：{bump_enabled}
+          - **Bump通知メッセージ**：
+          ```
+          {bump_message_title}
+          ``````
+          {bump_message}
+          ```
+          - **Bumpリマインド通知**：
+          ```
+          {bump_remind_message_title}
+          ``````
+          {bump_remind_message}
+          ```
+          - **Bump通知ロール**：{bump_mention}
+        - "## UP通知設定"
+        - |-
+          - **UP通知**：{up_enabled}
+          - **UP通知メッセージ**：
+          ```
+          {up_message_title}
+          ``````
+          {up_message}
+          ```
+          - **UPリマインド通知**：
+          ```
+          {up_remind_message_title}
+          ``````
+          {up_remind_message}
+          ```
+          - **UP通知ロール**：{up_mention}
+        - "## レベリング機能設定"
+        - |-
+          - **レベリング機能**：{leveling_enabled}

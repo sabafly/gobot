@@ -42,6 +42,7 @@ import (
 	"github.com/sabafly/gobot/ent/schema"
 	"github.com/sabafly/gobot/internal/builtin"
 	"github.com/sabafly/gobot/internal/errors"
+	"github.com/sabafly/gobot/internal/i18n"
 	"github.com/sabafly/gobot/internal/translate"
 )
 
@@ -142,6 +143,10 @@ func Command(c *components.Components) *generic.Command {
 			"/debug/translate/reload": generic.CommandHandler(func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 				if _, err := translate.LoadDir(c.Config().TranslateDir); err != nil {
 					slog.Error("翻訳ファイルを読み込めません", "err", err)
+					return errors.NewError(err)
+				}
+				if err := i18n.LoadLocales(c.Config().LocaleDir); err != nil {
+					slog.Error("ロケールファイルを読み込めません", "err", err)
 					return errors.NewError(err)
 				}
 				if err := event.CreateMessage(

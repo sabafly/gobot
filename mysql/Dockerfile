@@ -1,4 +1,6 @@
-FROM mysql:9.3
+FROM mariadb:11.7
+
+ENV MARIADB_MYSQL_LOCALHOST_USER=1
 
 HEALTHCHECK --interval=5s --timeout=3s --retries=3 \
-    CMD mysqladmin ping -h localhost || exit 1
+    CMD mariadb-admin ping -h localhost -p$MYSQL_ROOT_PASSWORD || exit 1

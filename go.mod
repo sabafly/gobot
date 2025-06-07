@@ -21,6 +21,7 @@ require (
 	golang.org/x/exp v0.0.0-20241004190924-225e2abe05e6
 	golang.org/x/text v0.24.0
 	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

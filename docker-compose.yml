@@ -11,6 +11,9 @@ services:
       - type: bind
         source: ./lang
         target: /app/lang
+      - type: bind
+        source: ./locales
+        target: /app/locales
     depends_on:
       mysql:
         condition: service_healthy
@@ -26,7 +29,7 @@ services:
       - ./mysql/.env
     volumes:
       - type: volume
-        source: mysql_volume
+        source: gobot_volume
         target: /var/lib/mysql
       - type: bind
         source: ./mysql/init
@@ -34,7 +37,8 @@ services:
     restart: unless-stopped
 
 volumes:
-  mysql_volume:
+  gobot_volume:
+    driver: local
 
 networks:
   default:

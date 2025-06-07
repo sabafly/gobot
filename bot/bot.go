@@ -52,6 +52,7 @@ import (
 	"github.com/sabafly/gobot/bot/commands/setting"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/ent"
+	"github.com/sabafly/gobot/internal/i18n"
 	"github.com/sabafly/gobot/internal/translate"
 	"github.com/spf13/cobra"
 )
@@ -105,6 +106,9 @@ func run() error {
 
 	if _, err := translate.LoadDir(config.TranslateDir); err != nil {
 		return fmt.Errorf("翻訳ファイルが読み込めません path=%s: %w", config.TranslateDir, err)
+	}
+	if err := i18n.LoadLocales(config.LocaleDir); err != nil {
+		return fmt.Errorf("ロケールファイルが読み込めません path=%s: %w", config.LocaleDir, err)
 	}
 
 	component := components.New(db, *config)

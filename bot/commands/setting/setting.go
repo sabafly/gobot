@@ -36,6 +36,7 @@ import (
 	"github.com/sabafly/gobot/internal/builtin"
 	"github.com/sabafly/gobot/internal/embeds"
 	"github.com/sabafly/gobot/internal/errors"
+	"github.com/sabafly/gobot/internal/i18n"
 	"github.com/sabafly/gobot/internal/translate"
 )
 
@@ -43,14 +44,14 @@ func Command(c *components.Components) components.Command {
 	return (&generic.Command{
 		Namespace: "setting",
 		CommandCreate: []discord.ApplicationCommandCreate{
-			// discord.SlashCommandCreate{
-			// 	Name:                     "settings",
-			// 	Description:              "view settings",
-			// 	DescriptionLocalizations: translate.MessageMap("components.settings", false),
-			// 	Contexts: []discord.InteractionContextType{
-			// 		discord.InteractionContextTypeGuild,
-			// 	},
-			// },
+			discord.SlashCommandCreate{
+				Name:                     "settings",
+				Description:              "view settings",
+				DescriptionLocalizations: translate.MessageMap("components.settings", false),
+				Contexts: []discord.InteractionContextType{
+					discord.InteractionContextTypeGuild,
+				},
+			},
 			discord.SlashCommandCreate{
 				Name:        "setting",
 				Description: "setting",
@@ -153,7 +154,6 @@ func Command(c *components.Components) components.Command {
 		},
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
 			"/settings": generic.PCommandHandler{
-				// TODO: implement settings view
 				Permission: []generic.Permission{
 					generic.PermissionString("setting.view"),
 				},
@@ -163,15 +163,27 @@ func Command(c *components.Components) components.Command {
 					if err != nil {
 						return errors.NewError(err)
 					}
+					l := i18n.TranslateLayout(event.Locale(), "command.settings.view")
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
-							SetContent(translate.Message(event.Locale(), "components.settings.view",
-								translate.WithTemplate(map[string]any{
-									"BumpEnabled": builtin.Or(g.BumpEnabled, translate.Message(event.Locale(), "components.setting.enabled"), translate.Message(event.Locale(), "components.setting.disabled")),
-									"UpEnabled":   builtin.Or(g.UpEnabled, translate.Message(event.Locale(), "components.setting.enabled"), translate.Message(event.Locale(), "components.setting.disabled")),
-									"Leveling":    builtin.Or(!g.LevelingDisabled, translate.Message(event.Locale(), "components.setting.enabled"), translate.Message(event.Locale(), "components.setting.disabled")),
-								}),
-							)).
+							SetIsComponentsV2(true).
+							SetComponents(i18n.BuildContext().
+								WithText("guild_name", g.Name).
+								WithText("guild_id", g.ID.String()).
+								WithText("bump_enabled", builtin.Or(g.BumpEnabled, i18n.TranslateString(event.Locale(), "general.state.enabled"), i18n.TranslateString(event.Locale(), "general.state.disabled"))).
+								WithText("bump_mention", builtin.Or(g.BumpMention != nil, discord.RoleMention(builtin.NonNil(g.BumpMention)), i18n.TranslateString(event.Locale(), "general.value.none"))).
+								WithText("bump_message_title", g.BumpMessageTitle).
+								WithText("bump_message", g.BumpMessage).
+								WithText("bump_remind_message_title", g.BumpRemindMessageTitle).
+								WithText("bump_remind_message", g.BumpRemindMessage).
+								WithText("up_enabled", builtin.Or(g.UpEnabled, i18n.TranslateString(event.Locale(), "general.state.enabled"), i18n.TranslateString(event.Locale(), "general.state.disabled"))).
+								WithText("up_mention", builtin.Or(g.UpMention != nil, discord.RoleMention(builtin.NonNil(g.UpMention)), i18n.TranslateString(event.Locale(), "general.value.none"))).
+								WithText("up_message_title", g.UpMessageTitle).
+								WithText("up_message", g.UpMessage).
+								WithText("up_remind_message_title", g.UpRemindMessageTitle).
+								WithText("up_remind_message", g.UpRemindMessage).
+								WithText("leveling_enabled", builtin.Or(!g.LevelingDisabled, i18n.TranslateString(event.Locale(), "general.state.enabled"), i18n.TranslateString(event.Locale(), "general.state.disabled"))).
+								Translate(l)...).
 							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)

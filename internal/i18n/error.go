@@ -1,0 +1,33 @@
+package i18n
+
+import "fmt"
+
+var (
+	ErrInvalidEmojiFormat   = newError("invalid emoji format: %s")
+	ErrUnknownComponentType = newError("unknown component type: %s")
+	ErrDuplicateLocale      = newError("duplicate locale: %s")
+	ErrUnknownLocale        = newError("unknown locale: %s")
+)
+
+type Error struct {
+	Message string `json:"message"`
+	Args    []any  `json:"args,omitempty"`
+}
+
+func (e *Error) Error() string {
+	return fmt.Sprintf(e.Message, e.Args...)
+}
+
+func (e *Error) Format(args ...any) error {
+	if len(args) == 0 {
+		return e
+	}
+	return &Error{Message: e.Message, Args: append(e.Args, args...)}
+}
+
+func newError(message string, args ...any) *Error {
+	if len(args) == 0 {
+		return &Error{Message: message}
+	}
+	return &Error{Message: message, Args: args}
+}
