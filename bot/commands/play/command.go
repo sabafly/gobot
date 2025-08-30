@@ -177,8 +177,7 @@ func Command(c *components.Components) components.Command {
 					data := HALData{
 						id:           uuid.New(),
 						userID:       event.User().ID,
-						currentPoint: 10,
-						turn:         1,
+						currentPoint: 3,
 					}
 					data.Roll()
 
@@ -210,7 +209,9 @@ func Command(c *components.Components) components.Command {
 					if !success && !equal {
 						return HALFinish(c, *data, event.User().ID, *event.GuildID(), event)
 					}
-					data.currentPoint += 10
+					if success {
+						data.currentPoint *= 2
+					}
 					hal_values.Set(data.id, *data)
 					if err := event.UpdateMessage(discord.NewMessageBuilder().
 						SetIsComponentsV2(true).
@@ -237,7 +238,9 @@ func Command(c *components.Components) components.Command {
 					if !success && !equal {
 						return HALFinish(c, *data, event.User().ID, *event.GuildID(), event)
 					}
-					data.currentPoint += 10
+					if success {
+						data.currentPoint *= 2
+					}
 					hal_values.Set(data.id, *data)
 					if err := event.UpdateMessage(discord.NewMessageBuilder().
 						SetIsComponentsV2(true).
