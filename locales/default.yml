@@ -31,6 +31,12 @@ strings:
   error.gopoint.give.invalid_target.description: "指定されたユーザーは無効なユーザーです。"
   error.gopoint.give.invalid_point: "無効なポイント数指定"
   error.gopoint.give.invalid_point.description: "譲渡するGoポイントの数は1以上でなければなりません。"
+  error.play.high-and-low.expired: "ゲームが期限切れです"
+  error.play.high-and-low.expired.description: "このハイアンドローゲームは期限切れです。新しいゲームを開始してください。"
+  error.play.high-and-low.not_your_game: "このゲームはあなたのものではありません"
+  error.play.high-and-low.not_your_game.description: "他のユーザーのハイアンドローゲームに参加することはできません。"
+  error.play.high-and-low.insufficient_points: "ポイントが不足しています"
+  error.play.high-and-low.insufficient_points.description: "このハイアンドローゲームに参加するには、最低でも25ポイントが必要です。"
 components:
   command.settings.view:
     - type: container
