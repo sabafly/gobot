@@ -159,7 +159,7 @@ func Command(c *components.Components) components.Command {
 					generic.PermissionDefaultString("play.high-and-low"),
 				},
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					const cost = 10
+					const cost = 25
 
 					point, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
 					if err != nil {
@@ -177,7 +177,7 @@ func Command(c *components.Components) components.Command {
 					data := HALData{
 						id:           uuid.New(),
 						userID:       event.User().ID,
-						currentPoint: cost,
+						currentPoint: 10,
 						turn:         1,
 					}
 					data.Roll()

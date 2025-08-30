@@ -112,7 +112,7 @@ components:
           - **ターン**：{turn}
           - **現在のポイント**：`{point} ポイント`
           - **現在のカード**：{current_card}
-          - **前回の選択**：[[{last_choice}]]
+          - **前回の選択**：**{last_choice}**
         - "### {message}"
         - type: action_row
           components:
