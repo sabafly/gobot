@@ -22,6 +22,7 @@ package debug
 
 import (
 	"fmt"
+	"iter"
 	"log/slog"
 	"slices"
 	"strings"
@@ -122,6 +123,10 @@ func Command(c *components.Components) *generic.Command {
 									},
 								},
 							},
+							{
+								Name:        "load_members",
+								Description: "load members",
+							},
 						},
 					},
 				},
@@ -168,6 +173,51 @@ func Command(c *components.Components) *generic.Command {
 						SetContent("OK").
 						BuildCreate(),
 				); err != nil {
+					return errors.NewError(err)
+				}
+				return nil
+			}),
+			"/debug/guild/load_members": generic.CommandHandler(func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+				if err := event.DeferCreateMessage(false); err != nil {
+					return errors.NewError(err)
+				}
+				for guild := range event.Client().Caches.Guilds() {
+					members, err := event.Client().Rest.GetMembers(guild.ID, 1000, 0)
+					if err != nil {
+						slog.Error("ギルドメンバーの取得に失敗", "guild", guild.ID, "err", err)
+						continue
+					}
+					if len(members) == 1000 {
+						idFunc := func(members []discord.Member) iter.Seq[snowflake.ID] {
+							return func(yield func(snowflake.ID) bool) {
+								for _, m := range slices.All(members) {
+									if !yield(m.User.ID) {
+										return
+									}
+								}
+							}
+						}
+						highest := slices.Max(slices.Collect(idFunc(members)))
+						for {
+							moreMembers, err := event.Client().Rest.GetMembers(guild.ID, 1000, highest)
+							if err != nil {
+								slog.Error("ギルドメンバーの取得に失敗", "guild", guild.ID, "err", err)
+								break
+							}
+							if len(moreMembers) < 1000 {
+								break
+							}
+							members = append(members, moreMembers...)
+							highest = slices.Max(slices.Collect(idFunc(moreMembers)))
+						}
+					}
+					if err := c.InitializeGuildMember(event, *event.GuildID(), members); err != nil {
+						slog.Error("ギルドメンバーの初期化に失敗", "guild", guild.ID, "err", err)
+						return errors.NewError(err)
+					}
+					slog.Info("ギルドメンバーの初期化に成功", "guild", guild.ID, "count", len(members))
+				}
+				if err := event.RespondMessage(discord.NewMessageBuilder().SetContent("OK")); err != nil {
 					return errors.NewError(err)
 				}
 				return nil

@@ -813,7 +813,7 @@ func Command(c *components.Components) *generic.Command {
 
 					webhook, err := event.Client().WebhookManager.GetMessenger(channel)
 					if err != nil {
-						err1 := rest.Error{}
+						err1 := &rest.Error{}
 						if errors.As(err, &err1) && err1.Response.StatusCode == http.StatusForbidden {
 							return errors.NewError(event.Client().Rest.LeaveGuild(event.GuildID))
 						}

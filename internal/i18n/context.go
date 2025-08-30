@@ -27,6 +27,7 @@ type MapContext struct {
 	minValues      map[string]int
 	disabled       map[string]bool
 	urls           map[string]string
+	customId       map[string]string
 }
 
 func (m *MapContext) WithText(key, value string) *MapContext {
@@ -109,6 +110,18 @@ func (m *MapContext) WithURL(key, url string) *MapContext {
 	return m
 }
 
+func (m *MapContext) WithCustomID(key, customID string) *MapContext {
+	if m.customId == nil {
+		m.customId = make(map[string]string)
+	}
+	if customID == "" {
+		delete(m.customId, key)
+		return m
+	}
+	m.customId[key] = customID
+	return m
+}
+
 func (m MapContext) Translate(layouts []LayoutComponent) []discord.LayoutComponent {
 	if len(layouts) == 0 {
 		return nil
@@ -125,17 +138,17 @@ func (m MapContext) GetText(key string) (string, bool) {
 	return value, ok
 }
 
-func (m MapContext) ReplaceText(str string) string {
+func (m MapContext) ReplaceText(id string) string {
 	if len(m.texts) == 0 {
-		return str
+		return id
 	}
 	for key, value := range m.texts {
 		if value == "" {
 			continue
 		}
-		str = strings.ReplaceAll(str, "{"+key+"}", value)
+		id = strings.ReplaceAll(id, "{"+key+"}", value)
 	}
-	return str
+	return id
 }
 
 func (m MapContext) GetDefaultValues(customID string, t discord.SelectMenuDefaultValueType) []discord.SelectMenuDefaultValue {
@@ -216,4 +229,17 @@ func (m MapContext) GetURL(key string) string {
 	}
 	url := m.urls[key]
 	return url
+}
+
+func (m MapContext) ReplaceCustomID(id string) string {
+	if len(m.customId) == 0 {
+		return id
+	}
+	for key, value := range m.customId {
+		if value == "" {
+			continue
+		}
+		id = strings.ReplaceAll(id, "{"+key+"}", value)
+	}
+	return id
 }

@@ -170,19 +170,19 @@ func Command(c *components.Components) components.Command {
 							SetComponents(i18n.BuildContext().
 								WithText("guild_name", g.Name).
 								WithText("guild_id", g.ID.String()).
-								WithText("bump_enabled", builtin.Or(g.BumpEnabled, i18n.TranslateString(event.Locale(), "general.state.enabled"), i18n.TranslateString(event.Locale(), "general.state.disabled"))).
-								WithText("bump_mention", builtin.Or(g.BumpMention != nil, discord.RoleMention(builtin.NonNil(g.BumpMention)), i18n.TranslateString(event.Locale(), "general.value.none"))).
+								WithText("bump_enabled", builtin.Or(g.BumpEnabled, i18n.TranslateText(event.Locale(), "general.state.enabled"), i18n.TranslateText(event.Locale(), "general.state.disabled"))).
+								WithText("bump_mention", builtin.Or(g.BumpMention != nil, discord.RoleMention(builtin.NonNil(g.BumpMention)), i18n.TranslateText(event.Locale(), "general.value.none"))).
 								WithText("bump_message_title", g.BumpMessageTitle).
 								WithText("bump_message", g.BumpMessage).
 								WithText("bump_remind_message_title", g.BumpRemindMessageTitle).
 								WithText("bump_remind_message", g.BumpRemindMessage).
-								WithText("up_enabled", builtin.Or(g.UpEnabled, i18n.TranslateString(event.Locale(), "general.state.enabled"), i18n.TranslateString(event.Locale(), "general.state.disabled"))).
-								WithText("up_mention", builtin.Or(g.UpMention != nil, discord.RoleMention(builtin.NonNil(g.UpMention)), i18n.TranslateString(event.Locale(), "general.value.none"))).
+								WithText("up_enabled", builtin.Or(g.UpEnabled, i18n.TranslateText(event.Locale(), "general.state.enabled"), i18n.TranslateText(event.Locale(), "general.state.disabled"))).
+								WithText("up_mention", builtin.Or(g.UpMention != nil, discord.RoleMention(builtin.NonNil(g.UpMention)), i18n.TranslateText(event.Locale(), "general.value.none"))).
 								WithText("up_message_title", g.UpMessageTitle).
 								WithText("up_message", g.UpMessage).
 								WithText("up_remind_message_title", g.UpRemindMessageTitle).
 								WithText("up_remind_message", g.UpRemindMessage).
-								WithText("leveling_enabled", builtin.Or(!g.LevelingDisabled, i18n.TranslateString(event.Locale(), "general.state.enabled"), i18n.TranslateString(event.Locale(), "general.state.disabled"))).
+								WithText("leveling_enabled", builtin.Or(!g.LevelingDisabled, i18n.TranslateText(event.Locale(), "general.state.enabled"), i18n.TranslateText(event.Locale(), "general.state.disabled"))).
 								Translate(l)...).
 							BuildCreate(),
 					); err != nil {

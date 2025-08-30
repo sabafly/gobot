@@ -25,7 +25,7 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
-	"github.com/sabafly/gobot/internal/embeds"
+	"github.com/sabafly/gobot/internal/i18n"
 	"github.com/sabafly/gobot/internal/translate"
 )
 
@@ -38,22 +38,24 @@ var (
 )
 
 type (
-	config struct {
-		desc *string
+	Config struct {
+		Description string
 	}
 
-	Option func(*config)
+	Option func(*Config)
 )
 
-func (c *config) options(opts ...Option) {
+var DefaultConfig = Config{}
+
+func (c *Config) options(opts ...Option) {
 	for _, opt := range opts {
 		opt(c)
 	}
 }
 
 func WithDescription(s string) Option {
-	return func(c *config) {
-		c.desc = &s
+	return func(c *Config) {
+		c.Description = s
 	}
 }
 
@@ -65,30 +67,38 @@ func ErrorMessage(
 	},
 	opts ...Option,
 ) error {
-	cfg := config{}
+	cfg := Config{}
 	cfg.options(opts...)
 
 	var desc string
-	if cfg.desc != nil {
-		desc = *cfg.desc
+	if cfg.Description != "" {
+		desc = cfg.Description
 	} else {
 		d, err := translate.Localize(event.Locale(), key+".description", nil, 0)
 		if err == nil {
 			desc = d
+		} else {
+			desc = i18n.TranslateText(event.Locale(), key+".description")
 		}
+	}
+
+	title := translate.Message(event.Locale(), key)
+	if title == "" || title == key {
+		title = i18n.TranslateText(event.Locale(), key)
 	}
 
 	return event.RespondMessage(
 		discord.NewMessageBuilder().
-			SetEmbeds(
-				embeds.SetEmbedProperties(
-					discord.NewEmbedBuilder().
-						SetTitlef("❗ %s", translate.Message(event.Locale(), key)).
-						SetDescription(desc).
-						SetColor(0xff2121).
-						Build(),
-				),
-			).
-			SetFlags(discord.MessageFlagEphemeral),
+			SetEphemeral(true).
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.ContainerComponent{
+					Components: []discord.ContainerSubComponent{
+						discord.NewTextDisplayf("## ❗ %s", title),
+						discord.NewTextDisplayf("%s", desc),
+					},
+					AccentColor: 0xff2121,
+				},
+			),
 	)
 }

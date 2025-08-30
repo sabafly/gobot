@@ -7,6 +7,7 @@ var (
 	ErrUnknownComponentType = newError("unknown component type: %s")
 	ErrDuplicateLocale      = newError("duplicate locale: %s")
 	ErrUnknownLocale        = newError("unknown locale: %s")
+	ErrInvalidButtonStyle   = newError("invalid button style: %s")
 )
 
 type Error struct {

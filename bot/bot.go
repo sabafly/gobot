@@ -33,6 +33,7 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
+	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/ent/migrate"
 
 	"github.com/disgoorg/disgo"
@@ -44,17 +45,23 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"github.com/sabafly/gobot/bot/commands/debug"
+	"github.com/sabafly/gobot/bot/commands/gopoint"
 	"github.com/sabafly/gobot/bot/commands/level"
 	"github.com/sabafly/gobot/bot/commands/message"
 	"github.com/sabafly/gobot/bot/commands/permission"
 	"github.com/sabafly/gobot/bot/commands/ping"
+	"github.com/sabafly/gobot/bot/commands/play"
 	"github.com/sabafly/gobot/bot/commands/role"
 	"github.com/sabafly/gobot/bot/commands/setting"
 	"github.com/sabafly/gobot/bot/components"
+	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/ent"
+	"github.com/sabafly/gobot/internal/emoji"
 	"github.com/sabafly/gobot/internal/i18n"
 	"github.com/sabafly/gobot/internal/translate"
 	"github.com/spf13/cobra"
+
+	_ "net/http/pprof"
 )
 
 var cmd = &cobra.Command{
@@ -65,22 +72,56 @@ var cmd = &cobra.Command{
 	},
 }
 
-func Command() *cobra.Command { return cmd }
+func init() {
+	cmd.Flags().BoolVarP(&usePprof, "pprof", "p", false, "pprofを有効にする")
+	cmd.Flags().BoolVarP(&isDebug, "debug", "d", false, "デバッグモードを有効にする")
+}
+
+var (
+	usePprof bool
+	isDebug  bool
+)
+
+func Command() *cobra.Command {
+	return cmd
+}
 
 var (
 	version = "v1.0.0-alpha.0"
 )
 
+type LogLevel struct{}
+
+func (l LogLevel) Level() slog.Level {
+	if isDebug {
+		return slog.LevelDebug
+	}
+	return slog.LevelInfo
+}
+
 func run() error {
+	if usePprof {
+		slog.Info("pprofが有効になっています")
+		go func() {
+			if err := http.ListenAndServe(":6060", nil); err != nil {
+				slog.Error("pprofを起動できません", slog.Any("error", err))
+			}
+		}()
+	}
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		AddSource: true,
-		Level:     slog.LevelInfo,
+		Level:     LogLevel{},
 	})))
 	_ = godotenv.Load()
 
 	config, err := components.LoadConfig("gobot.yml")
 	if err != nil {
 		return fmt.Errorf("設定ファイルを読み込めません: %w", err)
+	}
+
+	if config.Debug.Trace {
+		slog.Info("トレースモードが有効になっています")
+		generic.PrintDebugInfo = true
 	}
 
 	db, err := ent.Open("mysql", config.MySQL)
@@ -93,6 +134,11 @@ func run() error {
 			slog.Error("mysqlとの接続を閉じれません", slog.Any("error", err))
 		}
 	}(db)
+
+	gormDB, err := database.NewDB(config.GormDSN)
+	if err != nil {
+		return fmt.Errorf("gormとの接続を開けません: %w", err)
+	}
 
 	// c, err := caches.Open(config.Redis...)
 	// if err != nil {
@@ -111,7 +157,13 @@ func run() error {
 		return fmt.Errorf("ロケールファイルが読み込めません path=%s: %w", config.LocaleDir, err)
 	}
 
-	component := components.New(db, *config)
+	reg, err := emoji.LoadRegistry(config.EmojiRegistryFile)
+	if err != nil {
+		return fmt.Errorf("絵文字レジストリを読み込めません path=%s: %w", config.EmojiRegistryFile, err)
+	}
+	emoji.SetDefaultRegistry(reg)
+
+	component := components.New(db, *config, gormDB)
 	component.Version = version
 
 	component.AddCommands(
@@ -123,6 +175,8 @@ func run() error {
 		permission.Command(component),
 		setting.Command(component),
 		role.ImportCommand(component),
+		gopoint.Command(component),
+		play.Command(component),
 	)
 
 	ready := make(chan *events.Ready)

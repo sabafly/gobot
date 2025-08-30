@@ -24,6 +24,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/ent/member"
 	"github.com/sabafly/gobot/ent/messagepin"
 	"github.com/sabafly/gobot/ent/messageremind"
@@ -60,6 +61,11 @@ func (c *Components) OnGuildReady() func(event *events.GuildReady) {
 			return
 		}
 
+		if err := c.InitializeGuild(event, event.Guild.Guild); err != nil {
+			slog.Error("ギルドの初期化に失敗", "err", err, "guild_id", event.Guild.ID)
+			return
+		}
+
 		u = c.db.User.Query().Where(user.ID(u.ID)).OnlyX(event)
 		slog.Debug("ギルドオーナー情報", "id", u.ID, "name", u.Name, "own_guilds", u.QueryOwnGuilds().AllX(event), "guilds", u.QueryGuilds().AllX(event))
 	}
@@ -81,6 +87,11 @@ func (c *Components) OnGuildJoin() func(event *events.GuildJoin) {
 
 		if _, err := c.GuildCreate(event, u.ID, &event.Guild.Guild); err != nil {
 			slog.Error("ギルドの作成に失敗", "err", err)
+			return
+		}
+
+		if err := c.InitializeGuild(event, event.Guild.Guild); err != nil {
+			slog.Error("ギルドの初期化に失敗", "err", err, "guild_id", event.Guild.ID)
 			return
 		}
 
@@ -137,4 +148,36 @@ func (c *Components) GuildRequest(client *bot.Client, gid snowflake.ID) (*discor
 		return nil, err
 	}
 	return &g.Guild, nil
+}
+
+func (c *Components) InitializeGuild(ctx context.Context, guild discord.Guild) error {
+	g := models.Guild{
+		ID: guild.ID,
+	}
+	if err := c.GormDB().Where(g).FirstOrCreate(&g).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Components) InitializeGuildMember(ctx context.Context, guildID snowflake.ID, members []discord.Member) error {
+	for _, member := range members {
+		if err := c.InitializeUser(ctx, member); err != nil {
+			slog.Error("ユーザーの初期化に失敗", "error", err, "user_id", member.User.ID)
+		}
+	}
+	return nil
+}
+
+func (c *Components) InitializeUser(ctx context.Context, member discord.Member) error {
+	if member.User.Bot || member.User.System {
+		return nil // Botやシステムユーザーは初期化しない
+	}
+	user := models.User{
+		ID: member.User.ID,
+	}
+	if err := c.GormDB().Where(user).FirstOrCreate(&user).Error; err != nil {
+		return err
+	}
+	return nil
 }

@@ -69,7 +69,7 @@ func (c *Components) Initialize(client *bot.Client) error {
 	}
 
 	if _, err := client.Rest.SetGlobalCommands(client.ApplicationID, commands); err != nil {
-		slog.Error("コマンドの登録に失敗", slog.Any("err", err), slog.String("body", string(err.(rest.Error).RsBody)))
+		slog.Error("コマンドの登録に失敗", slog.Any("err", err), slog.String("body", string(err.(*rest.Error).RsBody)))
 		return err
 	}
 

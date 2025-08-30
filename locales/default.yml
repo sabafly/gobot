@@ -9,11 +9,34 @@ strings:
   general.value.all_roles: "全てのロール"
   general.value.all_users: "全てのユーザー"
   general.value.all_guilds: "全てのサーバー"
+  command.gopoint.view.description: "Goポイントの管理を行います。"
+  command.gopoint.ranking.entry: |-
+    **#{rank}**. {name} - `{points} ポイント`
+  command.gopoint.ranking.entry.you: "**<<あなた>>**"
+  command.gopoint.ranking.no_data: あなたのGoポイントはまだ登録されていません。
+  command.gopoint.ranking.no_guild_data: このサーバーのGoポイントはまだ登録されていません。
+  command.gopoint.ranking.no_result: "該当するエントリがありません。"
+  command.gopoint.ranking.description: Goポイントのランキングを表示します。
+  command.gopoint.ranking.limit.description: ランキングの表示件数
+  command.gopoint.ranking.skip.description: ランキングのスキップ件数
+  command.gopoint.give.description: "Goポイントを他のユーザーに譲渡します。"
+  command.gopoint.give.point.description: "譲渡するGoポイントの数"
+  command.gopoint.give.target.description: "譲渡先のユーザー"
+  command.play.slotmachine.description: "スロットマシンをプレイします。"
+  command.play.high-and-low.guess-next: 次のカードを予想してください
+  command.play.high-and-low.equal-retry: 結果が同じでした。もう一度予想してください
+  error.gopoint.give.self: "無効な譲渡先"
+  error.gopoint.give.self.description: "自分自身にGoポイントを譲渡することはできません。"
+  error.gopoint.give.invalid_target: "無効な譲渡先"
+  error.gopoint.give.invalid_target.description: "指定されたユーザーは無効なユーザーです。"
+  error.gopoint.give.invalid_point: "無効なポイント数指定"
+  error.gopoint.give.invalid_point.description: "譲渡するGoポイントの数は1以上でなければなりません。"
 components:
   command.settings.view:
     - type: container
       components:
         - "# {guild_name}の設定"
+        - type: separator
         - "## BUMP通知設定"
         - |-
           - **Bump通知**：{bump_enabled}
@@ -49,3 +72,68 @@ components:
         - "## レベリング機能設定"
         - |-
           - **レベリング機能**：{leveling_enabled}
+  command.gopoint.view:
+    - type: container
+      components:
+        - type: section
+          accessory:
+            type: thumbnail
+            url: "{user_icon}"
+          components:
+            - "## {user_name}のGoポイント"
+            - |-
+              ### Goポイントの残高
+              - **残高**：`{point} ポイント`
+        - type: separator
+          height: 2
+        - |-
+          ### Goポイントのランキング
+          {ranking}
+  command.gopoint.ranking:
+    - type: container
+      components:
+        - "## 👑 {guild_name} Goポイントランキング"
+        - |-
+          ランキングの表示件数：`{limit} 件`
+          -# {skip}件目以降を表示しています。
+        - |-
+          {ranking}
+  command.gopoint.give.not_enough_point:
+    - "あなたのGoポイントが不足しているため`{point} ポイント`を譲渡できません。"
+    - "あなたの現在のGoポイントは`{current_point} ポイント`です。"
+  command.gopoint.give.success:
+    - "Goポイントの譲渡が完了しました。"
+    - "`{point} ポイント`を`{target_user_name}`に譲渡しました。"
+  command.play.high-and-low.game:
+    - type: container
+      components:
+        - "## ハイアンドロー"
+        - |-
+          - **ターン**：{turn}
+          - **現在のポイント**：`{point} ポイント`
+          - **現在のカード**：{current_card}
+          - **前回の選択**：[[{last_choice}]]
+        - "### {message}"
+        - type: action_row
+          components:
+            - type: button
+              style: success
+              label: "HIGH"
+              id: "play:hal_high:{uuid}"
+            - type: button
+              style: danger
+              label: "LOW"
+              id: "play:hal_low:{uuid}"
+            - type: button
+              style: secondary
+              label: "終了"
+              id: "play:hal_cancel:{uuid}"
+  command.play.high-and-low.result:
+    - type: container
+      components:
+        - "## ハイアンドロー"
+        - |-
+          - **ターン**：{turn}
+          - **結果**：`{point} ポイント`
+          - **最後のカード**：{current_card}
+          - **最後の選択**：**{last_choice}**

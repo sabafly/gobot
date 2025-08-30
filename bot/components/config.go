@@ -28,12 +28,14 @@ import (
 )
 
 type Config struct {
-	LocaleDir    string        `yaml:"locale_dir"`
-	TranslateDir string        `yaml:"translate_dir"`
-	Debug        ConfigDebug   `yaml:"debug"`
-	Message      ConfigMessage `yaml:"message"`
+	LocaleDir         string        `yaml:"locale_dir"`
+	TranslateDir      string        `yaml:"translate_dir"`
+	EmojiRegistryFile string        `yaml:"emoji_registry_file"`
+	Debug             ConfigDebug   `yaml:"debug"`
+	Message           ConfigMessage `yaml:"message"`
 
-	MySQL string `yaml:"mysql"`
+	MySQL   string `yaml:"mysql"`
+	GormDSN string `yaml:"gorm_dsn"`
 
 	BumpUserID snowflake.ID `yaml:"bump_user"`
 	BumpImage  string       `yaml:"bump_image"`
@@ -44,6 +46,7 @@ type Config struct {
 }
 
 type ConfigDebug struct {
+	Trace       bool           `yaml:"trace"`
 	DebugUsers  []snowflake.ID `yaml:"users"`
 	DebugGuilds []snowflake.ID `yaml:"guilds"`
 }

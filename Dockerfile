@@ -1,4 +1,4 @@
-FROM golang:1.24.3
+FROM golang:1.24.4
 
 WORKDIR /app
 
@@ -9,4 +9,4 @@ RUN go generate ./...
 COPY . .
 RUN go build -ldflags="-s -w" -o gobot .
 
-CMD ["./gobot", "bot"]
+CMD ["./gobot", "bot", "--pprof", "--debug"]

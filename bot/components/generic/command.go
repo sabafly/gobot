@@ -35,10 +35,12 @@ import (
 	"github.com/sabafly/gobot/internal/translate"
 )
 
+var PrintDebugInfo = false
+
 func createErrorMessage(
 	err errors.Error,
 	event interface {
-		CreateMessage(messageCreate discord.MessageCreate, opts ...rest.RequestOpt) error
+		RespondMessage(builder discord.MessageBuilder, opts ...rest.RequestOpt) error
 		Locale() discord.Locale
 	},
 ) {
@@ -46,19 +48,24 @@ func createErrorMessage(
 	if em, ok := err.(errors.ErrorWithMessage); ok {
 		key = em.Key()
 	}
-	_ = event.CreateMessage(
-		discord.NewMessageBuilder().
-			SetEmbeds(
-				discord.NewEmbedBuilder().
-					SetTitlef("🔥 %s", translate.Message(event.Locale(), key)).
-					SetDescriptionf("```%s``````%s``````%s```", err.Error(), err.Stack(), err.File()).
-					SetFooterText(err.ID().String()).
-					SetColor(0xff2121).
-					Build(),
-			).
-			SetFlags(discord.MessageFlagEphemeral).
-			BuildCreate(),
-	)
+	builder := discord.NewMessageBuilder().
+		SetIsComponentsV2(true).
+		SetComponents(
+			discord.NewContainer(
+				discord.NewTextDisplayf("🔥 %s", translate.Message(event.Locale(), key)),
+				discord.NewTextDisplayf("```%s``````%s``````%s```", err.Error(), err.Stack(), err.File()),
+				discord.NewTextDisplayf("-# %s", err.ID().String()),
+			).WithAccentColor(0xff2121),
+		).
+		SetFlags(discord.MessageFlagEphemeral)
+	if PrintDebugInfo {
+		builder.AddComponents(discord.NewTextDisplayf("**[DEBUG]**\n```%s```", err.DebugInfo()))
+	}
+	if err := event.RespondMessage(
+		builder,
+	); err != nil {
+		slog.Error("failed to respond to message", "error", err)
+	}
 }
 
 func rec(event interface {

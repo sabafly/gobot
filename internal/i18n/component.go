@@ -256,18 +256,33 @@ type Button struct {
 	Emoji *Emoji              `yaml:"emoji,omitempty"`
 }
 
+var buttonStyles = map[string]discord.ButtonStyle{
+	"primary":   discord.ButtonStylePrimary,
+	"secondary": discord.ButtonStyleSecondary,
+	"success":   discord.ButtonStyleSuccess,
+	"danger":    discord.ButtonStyleDanger,
+	"link":      discord.ButtonStyleLink,
+}
+
 func (l *Button) UnmarshalYAML(value *yaml.Node) error {
 	var v struct {
-		Label string              `yaml:"label"`
-		Style discord.ButtonStyle `yaml:"style"`
-		ID    string              `yaml:"id"`
-		Emoji *Emoji              `yaml:"emoji,omitempty"`
+		Label string `yaml:"label"`
+		Style any    `yaml:"style"`
+		ID    string `yaml:"id"`
+		Emoji *Emoji `yaml:"emoji,omitempty"`
 	}
 	if err := value.Decode(&v); err != nil {
 		return err
 	}
 	l.Label = v.Label
-	l.Style = v.Style
+	switch v.Style.(type) {
+	case int:
+		l.Style = discord.ButtonStyle(v.Style.(int))
+	case string:
+		l.Style = buttonStyles[strings.ToLower(v.Style.(string))]
+	default:
+		return ErrInvalidButtonStyle.Format(v.Style)
+	}
 	l.ID = v.ID
 	l.Emoji = v.Emoji
 	return nil
@@ -280,7 +295,7 @@ func (l Button) layoutComponent(ctx MapContext) discord.LayoutComponent {
 	return discord.NewActionRow(l.button(ctx))
 }
 func (l Button) button(ctx MapContext) discord.ButtonComponent {
-	button := discord.NewButton(l.Style, ctx.ReplaceText(l.Label), l.ID, ctx.GetURL(l.ID), 0)
+	button := discord.NewButton(l.Style, ctx.ReplaceText(l.Label), ctx.ReplaceCustomID(l.ID), ctx.GetURL(l.ID), 0)
 	if l.Emoji != nil {
 		button.Emoji = l.Emoji.Emoji()
 	}
@@ -330,7 +345,7 @@ func (l StringSelectMenu) stringSelectMenu(ctx MapContext) discord.StringSelectM
 		options = append(options, option.option(ctx))
 	}
 	return discord.StringSelectMenuComponent{
-		CustomID:    l.ID,
+		CustomID:    ctx.ReplaceCustomID(l.ID),
 		Placeholder: ctx.ReplaceText(l.Placeholder),
 		Options:     ctx.GetDefaultOptions(l.ID, options),
 		MinValues:   ctx.GetMinValues(l.ID),
@@ -379,7 +394,7 @@ func (s StringSelectMenuOption) option(ctx MapContext) discord.StringSelectMenuO
 	return discord.StringSelectMenuOption{
 		Label:       ctx.ReplaceText(s.Label),
 		Description: ctx.ReplaceText(s.Description),
-		Value:       s.Value,
+		Value:       ctx.ReplaceCustomID(s.Value),
 		Emoji:       s.Emoji.Emoji(),
 	}
 }
@@ -408,7 +423,7 @@ func (l UserSelectMenu) Type() ComponentType {
 func (l UserSelectMenu) userSelectMenu(ctx MapContext) discord.UserSelectMenuComponent {
 	// DefaultValues is not used for UserSelectMenu, so we pass an empty string
 	return discord.UserSelectMenuComponent{
-		CustomID:      l.ID,
+		CustomID:      ctx.ReplaceCustomID(l.ID),
 		Placeholder:   ctx.ReplaceText(l.Placeholder),
 		DefaultValues: ctx.GetDefaultValues(l.ID, discord.SelectMenuDefaultValueTypeUser),
 		MinValues:     ctx.GetMinValues(l.ID),
@@ -453,7 +468,7 @@ func (l RoleSelectMenu) Type() ComponentType {
 
 func (l RoleSelectMenu) roleSelectMenu(ctx MapContext) discord.RoleSelectMenuComponent {
 	return discord.RoleSelectMenuComponent{
-		CustomID:      l.ID,
+		CustomID:      ctx.ReplaceCustomID(l.ID),
 		Placeholder:   ctx.ReplaceText(l.Placeholder),
 		DefaultValues: ctx.GetDefaultValues(l.ID, discord.SelectMenuDefaultValueTypeRole),
 		MinValues:     ctx.GetMinValues(l.ID),
@@ -497,7 +512,7 @@ func (l MentionableSelectMenu) Type() ComponentType {
 }
 func (l MentionableSelectMenu) mentionableSelectMenu(ctx MapContext) discord.MentionableSelectMenuComponent {
 	return discord.MentionableSelectMenuComponent{
-		CustomID:      l.ID,
+		CustomID:      ctx.ReplaceCustomID(l.ID),
 		Placeholder:   ctx.ReplaceText(l.Placeholder),
 		DefaultValues: ctx.GetDefaultValues(l.ID, ""),
 		MinValues:     ctx.GetMinValues(l.ID),
@@ -544,7 +559,7 @@ func (l ChannelSelectMenu) Type() ComponentType {
 }
 func (l ChannelSelectMenu) channelSelectMenu(ctx MapContext) discord.ChannelSelectMenuComponent {
 	return discord.ChannelSelectMenuComponent{
-		CustomID:      l.ID,
+		CustomID:      ctx.ReplaceCustomID(l.ID),
 		Placeholder:   ctx.ReplaceText(l.Placeholder),
 		DefaultValues: ctx.GetDefaultValues(l.ID, discord.SelectMenuDefaultValueTypeChannel),
 		ChannelTypes:  l.ChannelTypes,

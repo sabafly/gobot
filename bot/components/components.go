@@ -21,20 +21,25 @@
 package components
 
 import (
+	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/ent"
 	"github.com/sabafly/gobot/internal/smap"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
-func New(db *ent.Client, conf Config) *Components {
+func New(db *ent.Client, conf Config, gormDb *database.DB) *Components {
 	return &Components{
 		db:               db,
 		commandsRegistry: make(map[string]Command),
 		config:           conf,
+		gormDb:           gormDb,
 	}
 }
 
 type Components struct {
-	db *ent.Client
+	db     *ent.Client
+	gormDb *database.DB
 
 	config Config
 
@@ -45,4 +50,5 @@ type Components struct {
 	Version string
 }
 
-func (c *Components) DB() *ent.Client { return c.db }
+func (c *Components) DB() *ent.Client  { return c.db }
+func (c *Components) GormDB() *gorm.DB { return c.gormDb.DB.Preload(clause.Associations) }

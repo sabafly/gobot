@@ -40,6 +40,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
+	"github.com/sabafly/gobot/bot/commands/gopoint"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/ent"
@@ -1000,6 +1001,11 @@ func Command(c *components.Components) components.Command {
 				if _, err = addXp(event, m.Update(), rand.N[uint64](16)+15, event.Client(), m, g, event.ChannelID, event.Message.Author.EffectiveName(), false); err != nil {
 					return errors.NewError(err)
 				}
+
+				if err := gopoint.AddPoint(c, m.UserID, g.ID, rand.Int64N(1)*50); err != nil {
+					slog.Error("ポイント追加に失敗", slog.Any("err", err), slog.Any("user_id", m.UserID), slog.Any("guild_id", g.ID))
+				}
+
 			}
 			return nil
 		},

@@ -15,7 +15,7 @@ var (
 	globalLocales = make(map[discord.Locale]*LocalizedValues, 0)
 )
 
-func TranslateString(locale discord.Locale, key string) string {
+func TranslateText(locale discord.Locale, key string) string {
 	if locale == discord.LocaleUnknown {
 		locale = defaultLocale
 	}
@@ -32,8 +32,29 @@ func TranslateString(locale discord.Locale, key string) string {
 		}
 	}
 
-	slog.Warn("TranslateString: no translation found", "key", key, "locale", locale)
+	slog.Warn("TranslateText: no translation found", "key", key, "locale", locale)
 	return key // Fallback to the key itself if no translation is found
+}
+
+func TranslateTextMap(key string) map[discord.Locale]string {
+	translations := make(map[discord.Locale]string, len(globalLocales))
+	for locale, values := range globalLocales {
+		if value, exists := values.Strings[key]; exists {
+			translations[locale] = value
+		} else {
+			slog.Warn("TranslateTextMap: no translation found", "key", key, "locale", locale)
+			translations[locale] = key // Fallback to the key itself if no translation is found
+		}
+	}
+	return translations
+}
+
+func TranslateCommandOptionMap(key string) map[discord.Locale]string {
+	translations := TranslateTextMap(key)
+	for locale, value := range translations {
+		translations[locale] = strings.ReplaceAll(value, " ", "-")
+	}
+	return translations
 }
 
 func TranslateComponent(locale discord.Locale, key string) []Component {

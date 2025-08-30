@@ -22,7 +22,6 @@ package discordutil
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
@@ -30,50 +29,15 @@ import (
 )
 
 func ParseCustomEmojis(str string) []discord.Emoji {
-	emojis := emoji.DiscordEmoji.FindAllString(str, -1)
-	toReturn := make([]discord.Emoji, len(emojis))
-	if len(emojis) < 1 {
-		return toReturn
-	}
-	for i, em := range emojis {
-		parts := strings.Split(em, ":")
-		toReturn[i] = discord.Emoji{
-			ID:       snowflake.MustParse(parts[2]),
-			Name:     parts[1],
-			Animated: strings.HasPrefix(em, "<a:"),
-		}
-	}
-	return toReturn
+	return emoji.ParseCustomEmojis(str)
 }
 
 func ParseComponentEmoji(str string) discord.ComponentEmoji {
-	e := discord.ComponentEmoji{
-		Name: str,
-	}
-	if !emoji.MatchString(str) {
-		return e
-	}
-	emojis := ParseCustomEmojis(str)
-	if len(emojis) < 1 {
-		return e
-	}
-	e = discord.ComponentEmoji{
-		ID:       emojis[0].ID,
-		Name:     emojis[0].Name,
-		Animated: emojis[0].Animated,
-	}
-	return e
+	return emoji.ParseComponentEmoji(str)
 }
 
 func FormatComponentEmoji(e discord.ComponentEmoji) string {
-	var zeroID snowflake.ID
-	if e.ID == zeroID {
-		return e.Name
-	}
-	if e.Animated {
-		return fmt.Sprintf("<a:%s:%d>", e.Name, e.ID)
-	}
-	return fmt.Sprintf("<:%s:%d>", e.Name, e.ID)
+	return emoji.FormatComponentEmoji(e)
 }
 
 func ReactionComponentEmoji(e discord.ComponentEmoji) string {

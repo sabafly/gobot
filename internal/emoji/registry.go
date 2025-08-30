@@ -20,7 +20,15 @@
 
 package emoji
 
-import "github.com/disgoorg/disgo/discord"
+import (
+	"errors"
+	"log/slog"
+	"os"
+
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/snowflake/v2"
+	"gopkg.in/yaml.v3"
+)
 
 var (
 	Reaction = &discord.ComponentEmoji{
@@ -60,3 +68,107 @@ var (
 		Name: "off",
 	}
 )
+
+type EmojiRegistry map[string]*ComponentEmoji
+
+type ComponentEmoji struct {
+	ID       snowflake.ID
+	Name     string
+	Animated bool
+}
+
+func (c *ComponentEmoji) ToDiscord() *discord.ComponentEmoji {
+	if c == nil {
+		return nil
+	}
+	return &discord.ComponentEmoji{
+		ID:       c.ID,
+		Name:     c.Name,
+		Animated: c.Animated,
+	}
+}
+
+var _ yaml.Unmarshaler = (*ComponentEmoji)(nil)
+var _ yaml.Marshaler = (*ComponentEmoji)(nil)
+
+func (e *ComponentEmoji) UnmarshalYAML(node *yaml.Node) error {
+	var emojiStr string
+	if err := node.Decode(&emojiStr); err != nil {
+		return err
+	}
+	if emojiStr == "" {
+		return nil
+	}
+	// Parse the emoji string
+	emoji := ParseComponentEmoji(emojiStr)
+	e.ID = emoji.ID
+	e.Name = emoji.Name
+	e.Animated = emoji.Animated
+	return nil
+}
+
+func (e *ComponentEmoji) MarshalYAML() (any, error) {
+	if e == nil || e.ID == 0 || e.Name == "" {
+		return "", nil // Return empty string for nil or invalid emojis
+	}
+	// Return the emoji as a string
+	return FormatComponentEmoji(discord.ComponentEmoji{
+		ID:       e.ID,
+		Name:     e.Name,
+		Animated: e.Animated,
+	}), nil
+}
+
+func LoadRegistry(file string) (EmojiRegistry, error) {
+	registry := make(EmojiRegistry)
+
+	// Load the emoji registry from the file
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := yaml.Unmarshal(data, &registry); err != nil {
+		return nil, err
+	}
+
+	// Ensure all emojis have a valid ID and name
+	for key, emoji := range registry {
+		if emoji.ID == 0 || emoji.Name == "" {
+			return nil, errors.New("invalid emoji in registry: " + key)
+		}
+	}
+
+	return registry, nil
+}
+
+var defaultRegistry EmojiRegistry
+
+func SetDefaultRegistry(registry EmojiRegistry) {
+	if registry == nil {
+		registry = make(EmojiRegistry)
+	}
+	defaultRegistry = registry
+}
+
+func GetDefaultRegistry() EmojiRegistry {
+	if defaultRegistry == nil {
+		defaultRegistry = make(EmojiRegistry)
+	}
+	return defaultRegistry
+}
+
+func GetEmoji(name string) (*discord.ComponentEmoji, bool) {
+	if emoji, exists := GetDefaultRegistry()[name]; exists {
+		return emoji.ToDiscord(), true
+	}
+	return nil, false
+}
+
+func Emoji(name string) *discord.ComponentEmoji {
+	if emoji, exists := GetDefaultRegistry()[name]; exists {
+		return emoji.ToDiscord()
+	}
+	slog.Warn("Emoji not found in registry", "name", name)
+	return nil
+}
