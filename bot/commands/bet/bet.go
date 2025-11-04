@@ -79,15 +79,20 @@ func Command(c *components.Components) components.Command {
 			},
 		},
 		ModalHandlers: map[string]generic.ModalHandler{
-			"bet:create": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
-				// Extract form data (variables prefixed with _ to avoid unused warnings until implementation is complete)
-				_ = event.Data.Text("title")
-				_ = models.BetVoteType(event.Data.StringValues("vote_type")[0])
-				// TODO: Implement bet session creation logic
-				// - Create BetHost with OwnerID from event.User().ID
-				// - Set GuildID, ChannelID from event context
-				// - Store in database
-				return nil
+			"bet:create":      handleBetCreate,
+			"bet:config:poll": handlePollConfig,
+			"bet:vote":        handleVote,
+			"bet:decide":      handleDecideResult,
+		},
+		ComponentHandlers: map[string]generic.PermissionComponentHandler{
+			"bet:setup": generic.PComponentHandler{
+				ComponentHandler: handleSetupButton,
+			},
+			"bet:vote_btn": generic.PComponentHandler{
+				ComponentHandler: handleVoteButton,
+			},
+			"bet:decide_btn": generic.PComponentHandler{
+				ComponentHandler: handleDecideButton,
 			},
 		},
 	}).SetComponent(c)

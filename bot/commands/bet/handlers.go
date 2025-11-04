@@ -1,0 +1,654 @@
+package bet
+
+import (
+	"fmt"
+	"log/slog"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
+	"github.com/google/uuid"
+	"github.com/sabafly/gobot/bot/components"
+	"github.com/sabafly/gobot/database/models"
+	"github.com/sabafly/gobot/internal/errors"
+	"gorm.io/gorm"
+)
+
+// handleBetCreate handles the initial bet creation modal
+func handleBetCreate(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+	title := event.Data.Text("title")
+	voteType := models.BetVoteType(event.Data.StringValues("vote_type")[0])
+	
+	// For poll mode, show configuration button
+	if voteType == models.BetVoteTypeGuess {
+		customID := fmt.Sprintf("bet:setup:poll:%s", title)
+		
+		embed := discord.NewEmbedBuilder().
+			SetTitle(title).
+			SetDescription("通常モード（投票）のBetセッションを作成します。\n設定を続けるには下のボタンをクリックしてください。").
+			SetColor(0x3498db).
+			Build()
+		
+		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			SetEmbeds(embed).
+			AddActionRow(
+				discord.NewPrimaryButton("選択肢を設定", customID),
+			).
+			SetFlags(discord.MessageFlagEphemeral).
+			Build()); err != nil {
+			return errors.NewError(err)
+		}
+		return nil
+	}
+	
+	// For other modes, show not implemented message
+	if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+		SetContent("このモードはまだ実装されていません。通常モード（予想）を選択してください。").
+		SetFlags(discord.MessageFlagEphemeral).
+		Build()); err != nil {
+		return errors.NewError(err)
+	}
+	return nil
+}
+
+// handleSetupButton handles the setup button click
+func handleSetupButton(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+	parts := strings.Split(event.Data.CustomID(), ":")
+	if len(parts) < 3 {
+		return errors.NewError(fmt.Errorf("invalid custom ID"))
+	}
+	
+	mode := parts[2]
+	title := strings.Join(parts[3:], ":")
+	
+	if mode == "poll" {
+		if err := event.Modal(discord.NewModalCreateBuilder().
+			SetCustomID(fmt.Sprintf("bet:config:poll:%s", title)).
+			SetTitle(title).
+			SetComponents(
+				discord.NewLabel("選択肢",
+					discord.TextInputComponent{
+						CustomID:    "options",
+						Style:       discord.TextInputStyleParagraph,
+						Placeholder: "選択肢をカンマ区切りで入力 (例: 選択肢1,選択肢2,選択肢3)",
+						Required:    true,
+						MinLength:   ptr(3),
+						MaxLength:   500,
+					}),
+			).
+			Build()); err != nil {
+			return errors.NewError(err)
+		}
+		return nil
+	}
+	
+	return errors.NewError(fmt.Errorf("unknown mode: %s", mode))
+}
+
+// handlePollConfig handles poll mode configuration
+func handlePollConfig(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+	parts := strings.Split(event.Data.CustomID, ":")
+	if len(parts) < 4 {
+		return errors.NewError(fmt.Errorf("invalid custom ID"))
+	}
+	title := strings.Join(parts[3:], ":")
+	
+	optionsText := event.Data.Text("options")
+	options := strings.Split(optionsText, ",")
+	for i := range options {
+		options[i] = strings.TrimSpace(options[i])
+	}
+	
+	// Filter empty options
+	validOptions := make([]string, 0)
+	for _, opt := range options {
+		if opt != "" {
+			validOptions = append(validOptions, opt)
+		}
+	}
+	
+	if len(validOptions) < 2 {
+		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			SetContent("少なくとも2つの選択肢が必要です。").
+			SetFlags(discord.MessageFlagEphemeral).
+			Build()); err != nil {
+			return errors.NewError(err)
+		}
+		return nil
+	}
+	
+	if event.GuildID() == nil {
+		return errors.NewError(fmt.Errorf("this command can only be used in a guild"))
+	}
+	
+	// Create bet host
+	betHost := &models.BetHost{
+		ID:        uuid.New(),
+		GuildID:   *event.GuildID(),
+		ChannelID: event.Channel().ID(),
+		Title:     title,
+		Mode:      string(models.BetVoteTypeGuess),
+		Status:    string(models.BetStatusVoting),
+		OwnerID:   event.User().ID,
+	}
+	
+	// Save to database
+	db := c.GormDB()
+	if err := db.Create(betHost).Error; err != nil {
+		slog.Error("failed to create bet host", "error", err)
+		return errors.NewError(err)
+	}
+	
+	// Create options
+	for _, opt := range validOptions {
+		option := &models.BetOption{
+			ID:         uuid.New(),
+			HostID:     betHost.ID,
+			OptionText: opt,
+		}
+		if err := db.Create(option).Error; err != nil {
+			slog.Error("failed to create bet option", "error", err)
+			return errors.NewError(err)
+		}
+	}
+	
+	// Reload options
+	var optionModels []models.BetOption
+	db.Where("host_id = ?", betHost.ID).Find(&optionModels)
+	
+	// Create embed and buttons
+	embed := createBetEmbed(betHost, optionModels, db)
+	buttons := createBetButtons(betHost, optionModels)
+	
+	// Send the bet message
+	msg, err := event.Client().Rest.CreateMessage(event.Channel().ID(), discord.MessageCreate{
+		Embeds:     []discord.Embed{embed},
+		Components: buttons,
+	})
+	
+	if err != nil {
+		slog.Error("failed to send bet message", "error", err)
+		return errors.NewError(err)
+	}
+	
+	// Update message ID
+	betHost.MessageID = msg.ID
+	if err := db.Save(betHost).Error; err != nil {
+		slog.Error("failed to update bet message ID", "error", err)
+	}
+	
+	// Send confirmation
+	if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+		SetContent(fmt.Sprintf("Betセッションを作成しました: %s", title)).
+		SetFlags(discord.MessageFlagEphemeral).
+		Build()); err != nil {
+		return errors.NewError(err)
+	}
+	return nil
+}
+
+// handleVoteButton handles clicking a vote button
+func handleVoteButton(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+	parts := strings.Split(event.Data.CustomID(), ":")
+	if len(parts) < 3 {
+		return errors.NewError(fmt.Errorf("invalid custom ID"))
+	}
+	
+	hostID, err := uuid.Parse(parts[1])
+	if err != nil {
+		return errors.NewError(err)
+	}
+	
+	optionID, err := uuid.Parse(parts[2])
+	if err != nil {
+		return errors.NewError(err)
+	}
+	
+	// Get bet host
+	db := c.GormDB()
+	var betHost models.BetHost
+	if err := db.First(&betHost, "id = ?", hostID).Error; err != nil {
+		return errors.NewError(err)
+	}
+	
+	// Check if voting is open
+	if betHost.Status != string(models.BetStatusVoting) {
+		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			SetContent("投票は現在受け付けていません。").
+			SetFlags(discord.MessageFlagEphemeral).
+			Build()); err != nil {
+			return errors.NewError(err)
+		}
+		return nil
+	}
+	
+	// Get option
+	var option models.BetOption
+	if err := db.First(&option, "id = ?", optionID).Error; err != nil {
+		return errors.NewError(err)
+	}
+	
+	// Show modal to enter bet amount
+	if err := event.Modal(discord.NewModalCreateBuilder().
+		SetCustomID(fmt.Sprintf("bet:vote:%s:%s", hostID, optionID)).
+		SetTitle(fmt.Sprintf("%s に投票", option.OptionText)).
+		SetComponents(
+			discord.NewLabel("投票するポイント数",
+				discord.TextInputComponent{
+					CustomID:    "amount",
+					Style:       discord.TextInputStyleShort,
+					Placeholder: "投票するGoポイント数を入力",
+					Required:    true,
+					MinLength:   ptr(1),
+					MaxLength:   10,
+					Value:       "100",
+				}),
+		).
+		Build()); err != nil {
+		return errors.NewError(err)
+	}
+	return nil
+}
+
+// handleVote handles the vote submission
+func handleVote(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+	parts := strings.Split(event.Data.CustomID, ":")
+	if len(parts) < 4 {
+		return errors.NewError(fmt.Errorf("invalid custom ID"))
+	}
+	
+	hostID, err := uuid.Parse(parts[2])
+	if err != nil {
+		return errors.NewError(err)
+	}
+	
+	optionID, err := uuid.Parse(parts[3])
+	if err != nil {
+		return errors.NewError(err)
+	}
+	
+	amountStr := event.Data.Text("amount")
+	amount, err := strconv.ParseInt(amountStr, 10, 64)
+	if err != nil || amount <= 0 {
+		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			SetContent("有効なポイント数を入力してください。").
+			SetFlags(discord.MessageFlagEphemeral).
+			Build()); err != nil {
+			return errors.NewError(err)
+		}
+		return nil
+	}
+	
+	if event.GuildID() == nil {
+		return errors.NewError(fmt.Errorf("this command can only be used in a guild"))
+	}
+	
+	db := c.GormDB()
+	
+	// Check user's gopoint balance
+	var gopoint models.GoPoint
+	if err := db.FirstOrCreate(&gopoint, models.GoPoint{
+		UserID:  event.User().ID,
+		GuildID: *event.GuildID(),
+	}).Error; err != nil {
+		return errors.NewError(err)
+	}
+	
+	if gopoint.Points < amount {
+		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			SetContent(fmt.Sprintf("Goポイントが不足しています。現在: %dpt", gopoint.Points)).
+			SetFlags(discord.MessageFlagEphemeral).
+			Build()); err != nil {
+			return errors.NewError(err)
+		}
+		return nil
+	}
+	
+	// Check if user already voted
+	var existingBet models.Bet
+	result := db.Where("host_id = ? AND user_id = ?", hostID, event.User().ID).First(&existingBet)
+	if result.Error == nil {
+		// User already voted, update the bet
+		oldAmount := existingBet.Amount
+		existingBet.Amount = amount
+		existingBet.OptionID = optionID
+		existingBet.Timestamp = time.Now().Unix()
+		
+		if err := db.Save(&existingBet).Error; err != nil {
+			return errors.NewError(err)
+		}
+		
+		// Adjust points
+		diff := amount - oldAmount
+		gopoint.Points -= diff
+		if err := db.Save(&gopoint).Error; err != nil {
+			return errors.NewError(err)
+		}
+		
+		updateBetMessage(c, db, hostID)
+		
+		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			SetContent(fmt.Sprintf("投票を更新しました: %dpt", amount)).
+			SetFlags(discord.MessageFlagEphemeral).
+			Build()); err != nil {
+			return errors.NewError(err)
+		}
+		return nil
+	}
+	
+	// Create new bet
+	bet := &models.Bet{
+		ID:        uuid.New(),
+		HostID:    hostID,
+		UserID:    event.User().ID,
+		OptionID:  optionID,
+		Amount:    amount,
+		Timestamp: time.Now().Unix(),
+	}
+	
+	if err := db.Create(bet).Error; err != nil {
+		return errors.NewError(err)
+	}
+	
+	// Deduct points
+	gopoint.Points -= amount
+	if err := db.Save(&gopoint).Error; err != nil {
+		return errors.NewError(err)
+	}
+	
+	// Update the bet message
+	updateBetMessage(c, db, hostID)
+	
+	if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+		SetContent(fmt.Sprintf("投票しました: %dpt", amount)).
+		SetFlags(discord.MessageFlagEphemeral).
+		Build()); err != nil {
+		return errors.NewError(err)
+	}
+	return nil
+}
+
+func updateBetMessage(c *components.Components, db *gorm.DB, hostID uuid.UUID) {
+	var betHost models.BetHost
+	if err := db.First(&betHost, "id = ?", hostID).Error; err != nil {
+		return
+	}
+	
+	var options []models.BetOption
+	db.Where("host_id = ?", hostID).Find(&options)
+	
+	embed := createBetEmbed(&betHost, options, db)
+	buttons := createBetButtons(&betHost, options)
+	
+	// Note: We don't have access to the event client here, so we skip the update
+	// The message will be updated when the next user interacts with it
+	_ = embed
+	_ = buttons
+}
+
+// handleDecideButton handles the decide result button
+func handleDecideButton(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+	parts := strings.Split(event.Data.CustomID(), ":")
+	if len(parts) < 2 {
+		return errors.NewError(fmt.Errorf("invalid custom ID"))
+	}
+	
+	hostID, err := uuid.Parse(parts[1])
+	if err != nil {
+		return errors.NewError(err)
+	}
+	
+	db := c.GormDB()
+	var betHost models.BetHost
+	if err := db.First(&betHost, "id = ?", hostID).Error; err != nil {
+		return errors.NewError(err)
+	}
+	
+	// Check if user is owner
+	if !betHost.IsOwner(event.User().ID) {
+		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			SetContent("結果の決定は主催者のみが行えます。").
+			SetFlags(discord.MessageFlagEphemeral).
+			Build()); err != nil {
+			return errors.NewError(err)
+		}
+		return nil
+	}
+	
+	// Get options
+	var options []models.BetOption
+	db.Where("host_id = ?", hostID).Find(&options)
+	
+	// Create select menu with options
+	selectOptions := make([]discord.StringSelectMenuOption, 0, len(options))
+	for _, opt := range options {
+		selectOptions = append(selectOptions, discord.StringSelectMenuOption{
+			Label: opt.OptionText,
+			Value: opt.ID.String(),
+		})
+	}
+	
+	if err := event.Modal(discord.NewModalCreateBuilder().
+		SetCustomID(fmt.Sprintf("bet:decide:%s", hostID)).
+		SetTitle("結果を決定").
+		SetComponents(
+			discord.NewLabel("勝利した選択肢",
+				discord.StringSelectMenuComponent{
+					CustomID:    "winner",
+					Placeholder: "勝利した選択肢を選択",
+					Options:     selectOptions,
+					MinValues:   ptr(1),
+					MaxValues:   1,
+				}),
+		).
+		Build()); err != nil {
+		return errors.NewError(err)
+	}
+	return nil
+}
+
+// handleDecideResult handles the result decision
+func handleDecideResult(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+	parts := strings.Split(event.Data.CustomID, ":")
+	if len(parts) < 3 {
+		return errors.NewError(fmt.Errorf("invalid custom ID"))
+	}
+	
+	hostID, err := uuid.Parse(parts[2])
+	if err != nil {
+		return errors.NewError(err)
+	}
+	
+	winnerID, err := uuid.Parse(event.Data.StringValues("winner")[0])
+	if err != nil {
+		return errors.NewError(err)
+	}
+	
+	if event.GuildID() == nil {
+		return errors.NewError(fmt.Errorf("this command can only be used in a guild"))
+	}
+	
+	db := c.GormDB()
+	var betHost models.BetHost
+	if err := db.First(&betHost, "id = ?", hostID).Error; err != nil {
+		return errors.NewError(err)
+	}
+	
+	// Double check ownership
+	if !betHost.IsOwner(event.User().ID) {
+		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			SetContent("結果の決定は主催者のみが行えます。").
+			SetFlags(discord.MessageFlagEphemeral).
+			Build()); err != nil {
+			return errors.NewError(err)
+		}
+		return nil
+	}
+	
+	// Get winner option
+	var winnerOption models.BetOption
+	if err := db.First(&winnerOption, "id = ?", winnerID).Error; err != nil {
+		return errors.NewError(err)
+	}
+	
+	// Get all bets
+	var allBets []models.Bet
+	db.Where("host_id = ?", hostID).Find(&allBets)
+	
+	// Calculate total pool and winners' share
+	totalPool := int64(0)
+	winnersBets := make([]models.Bet, 0)
+	
+	for _, bet := range allBets {
+		totalPool += bet.Amount
+		if bet.OptionID == winnerID {
+			winnersBets = append(winnersBets, bet)
+		}
+	}
+	
+	winnersTotal := int64(0)
+	for _, bet := range winnersBets {
+		winnersTotal += bet.Amount
+	}
+	
+	// Distribute winnings
+	if winnersTotal > 0 {
+		for _, bet := range winnersBets {
+			// Calculate proportional share
+			share := (bet.Amount * totalPool) / winnersTotal
+			
+			var gopoint models.GoPoint
+			db.FirstOrCreate(&gopoint, models.GoPoint{
+				UserID:  bet.UserID,
+				GuildID: betHost.GuildID,
+			})
+			
+			gopoint.Points += share
+			db.Save(&gopoint)
+		}
+	}
+	
+	// Update bet host status
+	betHost.Status = string(models.BetStatusFinished)
+	betHost.Winner = &winnerID
+	db.Save(&betHost)
+	
+	// Update message
+	var options []models.BetOption
+	db.Where("host_id = ?", hostID).Find(&options)
+	
+	embed := createBetEmbed(&betHost, options, db)
+	
+	emptyComps := []discord.LayoutComponent{}
+	_, _ = event.Client().Rest.UpdateMessage(betHost.ChannelID, betHost.MessageID, discord.MessageUpdate{
+		Embeds:     &[]discord.Embed{embed},
+		Components: &emptyComps,
+	})
+	
+	if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+		SetContent(fmt.Sprintf("結果を決定しました。勝利: %s\n総額: %dpt が分配されました。", winnerOption.OptionText, totalPool)).
+		SetFlags(discord.MessageFlagEphemeral).
+		Build()); err != nil {
+		return errors.NewError(err)
+	}
+	return nil
+}
+
+func createBetEmbed(host *models.BetHost, options []models.BetOption, db *gorm.DB) discord.Embed {
+	embed := discord.NewEmbedBuilder().
+		SetTitle(host.Title).
+		SetColor(0x3498db)
+	
+	// Add status field
+	statusEmoji := map[string]string{
+		string(models.BetStatusEntry):    "📝",
+		string(models.BetStatusVoting):   "🗳️",
+		string(models.BetStatusClosed):   "🔒",
+		string(models.BetStatusFinished): "✅",
+	}
+	
+	statusText := map[string]string{
+		string(models.BetStatusEntry):    "エントリー受付中",
+		string(models.BetStatusVoting):   "投票受付中",
+		string(models.BetStatusClosed):   "受付終了",
+		string(models.BetStatusFinished): "終了",
+	}
+	
+	emoji := statusEmoji[host.Status]
+	text := statusText[host.Status]
+	embed.AddField("ステータス", fmt.Sprintf("%s %s", emoji, text), false)
+	
+	// Add organizer field
+	embed.AddField("主催者", fmt.Sprintf("<@%d>", host.OwnerID), true)
+	
+	// Add mode
+	embed.AddField("モード", "通常モード（投票）", true)
+	
+	// Add options with vote counts
+	if len(options) > 0 {
+		optionsText := ""
+		totalVotes := int64(0)
+		totalAmount := int64(0)
+		
+		for i, opt := range options {
+			var voteCount int64
+			var amount int64
+			db.Model(&models.Bet{}).Where("option_id = ?", opt.ID).Count(&voteCount)
+			db.Model(&models.Bet{}).Where("option_id = ?", opt.ID).Select("COALESCE(SUM(amount), 0)").Scan(&amount)
+			
+			totalVotes += voteCount
+			totalAmount += amount
+			
+			optionMarker := fmt.Sprintf("%d.", i+1)
+			if host.Winner != nil && *host.Winner == opt.ID {
+				optionMarker = "🏆"
+			}
+			
+			optionsText += fmt.Sprintf("%s %s - %d票 (%dpt)\n", optionMarker, opt.OptionText, voteCount, amount)
+		}
+		
+		embed.AddField("選択肢", optionsText, false)
+		embed.AddField("合計", fmt.Sprintf("%d票 / %dpt", totalVotes, totalAmount), false)
+	}
+	
+	return embed.Build()
+}
+
+func createBetButtons(host *models.BetHost, options []models.BetOption) []discord.LayoutComponent {
+	if host.Status != string(models.BetStatusVoting) {
+		return nil
+	}
+	
+	var buttons []discord.InteractiveComponent
+	
+	// Add vote buttons for each option (max 5 per row)
+	for i, opt := range options {
+		if i >= 5 { // Discord limit
+			break
+		}
+		buttons = append(buttons, discord.NewSecondaryButton(
+			opt.OptionText,
+			fmt.Sprintf("bet:vote_btn:%s:%s", host.ID, opt.ID),
+		))
+	}
+	
+	// Add decide button
+	buttons = append(buttons, discord.NewSuccessButton(
+		"結果を決定",
+		fmt.Sprintf("bet:decide_btn:%s", host.ID),
+	))
+	
+	// Create action row and return as layout component
+	row := discord.NewActionRow(buttons...)
+	return []discord.LayoutComponent{row}
+}
+
+func convertToLayoutComponents(containers []discord.ContainerComponent) []discord.LayoutComponent {
+	result := make([]discord.LayoutComponent, len(containers))
+	for i, c := range containers {
+		result[i] = c
+	}
+	return result
+}
