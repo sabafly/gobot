@@ -58,7 +58,7 @@ func createErrorMessage(
 			).WithAccentColor(0xff2121),
 		).
 		AddFlags(discord.MessageFlagEphemeral)
-	if PrintDebugInfo {
+	if PrintDebugInfo && strings.TrimSpace(err.DebugInfo()) != "" {
 		builder.AddComponents(discord.NewTextDisplayf("**[DEBUG]**\n```%s```", err.DebugInfo()))
 	}
 	if err := event.RespondMessage(
