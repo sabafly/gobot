@@ -43,15 +43,32 @@ type BetOption struct {
 	OptionText string    `gorm:"not null;"`
 }
 
-type BetParticipant struct {
+// Bet represents a user's bet on an option (used in poll and race modes)
+type Bet struct {
+	ID        uuid.UUID    `gorm:"type:uuid;primary_key;"`
+	HostID    uuid.UUID    `gorm:"type:uuid;index:idx_bet;not null"`
+	Host      BetHost      `gorm:"foreignKey:HostID;constraint:OnDelete:CASCADE;"`
+	UserID    snowflake.ID `gorm:"type:bigint(20);index:idx_bet;not null;"`
+	User      User         `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
+	OptionID  uuid.UUID    `gorm:"type:uuid;not null"`
+	Option    BetOption    `gorm:"foreignKey:OptionID;constraint:OnDelete:CASCADE;"`
+	Amount    int64        `gorm:"not null;"`
+	Timestamp int64        `gorm:"not null;"`
+}
+
+// BetEntrant represents a user entering as a competitor (used in race and battle_royale modes)
+type BetEntrant struct {
 	ID       uuid.UUID    `gorm:"type:uuid;primary_key;"`
-	HostID   uuid.UUID    `gorm:"type:uuid;index:idx_participant;not null"`
+	HostID   uuid.UUID    `gorm:"type:uuid;index:idx_entrant;not null"`
 	Host     BetHost      `gorm:"foreignKey:HostID;constraint:OnDelete:CASCADE;"`
-	UserID   snowflake.ID `gorm:"type:bigint(20);index:idx_participant;not null;"`
+	UserID   snowflake.ID `gorm:"type:bigint(20);index:idx_entrant;not null;unique:idx_host_user"`
 	User     User         `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
 	OptionID uuid.UUID    `gorm:"type:uuid;not null"`
 	Option   BetOption    `gorm:"foreignKey:OptionID;constraint:OnDelete:CASCADE;"`
 }
+
+// BetParticipant is an alias for backward compatibility
+type BetParticipant = Bet
 
 // IsOwner checks if the given userID is the owner of this bet session
 func (b *BetHost) IsOwner(userID snowflake.ID) bool {

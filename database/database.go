@@ -30,7 +30,8 @@ func NewDB(dsn string) (*DB, error) {
 		&models.GoPoint{},
 		&models.BetHost{},
 		&models.BetOption{},
-		&models.BetParticipant{},
+		&models.Bet{},
+		&models.BetEntrant{},
 	); err != nil {
 		return nil, err
 	}
