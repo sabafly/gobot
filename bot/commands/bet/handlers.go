@@ -87,13 +87,13 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	var optionModels []models.BetOption
 	db.Where("host_id = ?", betHost.ID).Find(&optionModels)
 	
-	// Create embed and buttons
-	embed := createBetEmbed(betHost, optionModels, db)
+	// Create content and buttons
+	content := createBetContent(betHost, optionModels, db)
 	buttons := createBetButtons(betHost, optionModels)
 	
 	// Send the bet message
 	msg, err := event.Client().Rest.CreateMessage(event.Channel().ID(), discord.MessageCreate{
-		Embeds:     []discord.Embed{embed},
+		Content:    content,
 		Components: buttons,
 	})
 	
@@ -308,12 +308,12 @@ func updateBetMessage(c *components.Components, db *gorm.DB, hostID uuid.UUID) {
 	var options []models.BetOption
 	db.Where("host_id = ?", hostID).Find(&options)
 	
-	embed := createBetEmbed(&betHost, options, db)
+	content := createBetContent(&betHost, options, db)
 	buttons := createBetButtons(&betHost, options)
 	
 	// Note: We don't have access to the event client here, so we skip the update
 	// The message will be updated when the next user interacts with it
-	_ = embed
+	_ = content
 	_ = buttons
 }
 
@@ -468,11 +468,11 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 	var options []models.BetOption
 	db.Where("host_id = ?", hostID).Find(&options)
 	
-	embed := createBetEmbed(&betHost, options, db)
+	content := createBetContent(&betHost, options, db)
 	
 	emptyComps := []discord.LayoutComponent{}
 	_, _ = event.Client().Rest.UpdateMessage(betHost.ChannelID, betHost.MessageID, discord.MessageUpdate{
-		Embeds:     &[]discord.Embed{embed},
+		Content:    &content,
 		Components: &emptyComps,
 	})
 	
@@ -485,12 +485,13 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 	return nil
 }
 
-func createBetEmbed(host *models.BetHost, options []models.BetOption, db *gorm.DB) discord.Embed {
-	embed := discord.NewEmbedBuilder().
-		SetTitle(host.Title).
-		SetColor(0x3498db)
+func createBetContent(host *models.BetHost, options []models.BetOption, db *gorm.DB) string {
+	var content strings.Builder
 	
-	// Add status field
+	// Title
+	content.WriteString(fmt.Sprintf("# %s\n\n", host.Title))
+	
+	// Status
 	statusEmoji := map[string]string{
 		string(models.BetStatusEntry):    "📝",
 		string(models.BetStatusVoting):   "🗳️",
@@ -507,17 +508,14 @@ func createBetEmbed(host *models.BetHost, options []models.BetOption, db *gorm.D
 	
 	emoji := statusEmoji[host.Status]
 	text := statusText[host.Status]
-	embed.AddField("ステータス", fmt.Sprintf("%s %s", emoji, text), false)
+	content.WriteString(fmt.Sprintf("**ステータス:** %s %s\n", emoji, text))
 	
-	// Add organizer field
-	embed.AddField("主催者", fmt.Sprintf("<@%d>", host.OwnerID), true)
+	// Organizer and mode
+	content.WriteString(fmt.Sprintf("**主催者:** <@%d> | **モード:** 通常モード（投票）\n\n", host.OwnerID))
 	
-	// Add mode
-	embed.AddField("モード", "通常モード（投票）", true)
-	
-	// Add options with vote counts
+	// Options with vote counts
 	if len(options) > 0 {
-		optionsText := ""
+		content.WriteString("**選択肢:**\n")
 		totalVotes := int64(0)
 		totalAmount := int64(0)
 		
@@ -535,14 +533,13 @@ func createBetEmbed(host *models.BetHost, options []models.BetOption, db *gorm.D
 				optionMarker = "🏆"
 			}
 			
-			optionsText += fmt.Sprintf("%s %s - %d票 (%dpt)\n", optionMarker, opt.OptionText, voteCount, amount)
+			content.WriteString(fmt.Sprintf("%s %s - %d票 (%dpt)\n", optionMarker, opt.OptionText, voteCount, amount))
 		}
 		
-		embed.AddField("選択肢", optionsText, false)
-		embed.AddField("合計", fmt.Sprintf("%d票 / %dpt", totalVotes, totalAmount), false)
+		content.WriteString(fmt.Sprintf("\n**合計:** %d票 / %dpt", totalVotes, totalAmount))
 	}
 	
-	return embed.Build()
+	return content.String()
 }
 
 func createBetButtons(host *models.BetHost, options []models.BetOption) []discord.LayoutComponent {
