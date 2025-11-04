@@ -474,11 +474,10 @@ func Command(c *components.Components) components.Command {
 							SetTitle(translate.Message(event.Locale(), "components.level.up.message.modal.title")).
 							SetCustomID("level:up_message_modal").
 							SetComponents(
-								discord.NewActionRow(
+								discord.NewLabel(translate.Message(event.Locale(), "components.level.up.message.modal.input.message"),
 									discord.TextInputComponent{
 										CustomID:    "message",
 										Style:       discord.TextInputStyleParagraph,
-										Label:       translate.Message(event.Locale(), "components.level.up.message.modal.input.message"),
 										MinLength:   builtin.Ptr(1),
 										MaxLength:   140,
 										Required:    true,
@@ -1002,7 +1001,7 @@ func Command(c *components.Components) components.Command {
 					return errors.NewError(err)
 				}
 
-				if err := gopoint.AddPoint(c, m.UserID, g.ID, rand.Int64N(1)*50); err != nil {
+				if err := gopoint.AddPoint(c, m.UserID, g.ID, rand.Int64N(2)*50); err != nil {
 					slog.Error("ポイント追加に失敗", slog.Any("err", err), slog.Any("user_id", m.UserID), slog.Any("guild_id", g.ID))
 				}
 

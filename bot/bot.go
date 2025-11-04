@@ -44,6 +44,7 @@ import (
 	"github.com/disgoorg/disgo/sharding"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
+	"github.com/sabafly/gobot/bot/commands/bet"
 	"github.com/sabafly/gobot/bot/commands/debug"
 	"github.com/sabafly/gobot/bot/commands/gopoint"
 	"github.com/sabafly/gobot/bot/commands/level"
@@ -177,6 +178,7 @@ func run() error {
 		role.ImportCommand(component),
 		gopoint.Command(component),
 		play.Command(component),
+		bet.Command(component),
 	)
 
 	ready := make(chan *events.Ready)

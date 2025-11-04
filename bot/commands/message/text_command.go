@@ -50,7 +50,7 @@ func doTextCommand(ctx context.Context, event *events.GuildMessageCreate) (err e
 			return nil, true
 		}
 		diceSize, err := strconv.Atoi(subMatch[2])
-		if err != nil || diceSize < 1 || diceSize > 1000 {
+		if err != nil || diceSize < 1 || diceSize > 10000 {
 			return nil, true
 		}
 		content := "Dice Roll: "
@@ -65,6 +65,74 @@ func doTextCommand(ctx context.Context, event *events.GuildMessageCreate) (err e
 
 		_, err = event.Client().Rest.CreateMessage(event.ChannelID, discord.NewMessageBuilder().
 			SetContent(content).
+			SetMessageReferenceByID(event.Message.ID).
+			BuildCreate(),
+		)
+		if err != nil {
+			return err, false
+		}
+	case strings.EqualFold(content[0], "slot"):
+		role := []string{"NONE", "GRAPES", "WATERMELON", "CHERRIES", "LEMON", "ORANGE", "PLUM", "BELL", "BAR", "SEVEN"}
+		roleWeights := []int{1400, 30, 25, 20, 15, 10, 8, 5, 3, 1}
+		totalWeight := 0
+		for _, w := range roleWeights {
+			totalWeight += w
+		}
+
+		getRole := func() string {
+			r := rand.N(totalWeight)
+			accumulatedWeight := 0
+			for i, w := range roleWeights {
+				accumulatedWeight += w
+				if r < accumulatedWeight {
+					return role[i]
+				}
+			}
+			return role[len(role)-1]
+		}
+		genSlot := func(role string) string {
+			switch role {
+			case "GRAPES":
+				return "🍇"
+			case "WATERMELON":
+				return "🍉"
+			case "CHERRIES":
+				return "🍒"
+			case "LEMON":
+				return "🍋"
+			case "ORANGE":
+				return "🍊"
+			case "PLUM":
+				return "🍑"
+			case "BELL":
+				return "🔔"
+			case "BAR":
+				return "💵"
+			case "SEVEN":
+				return "7️⃣"
+			default:
+				return ""
+			}
+		}
+
+		selectedRole := getRole()
+		result := genSlot(selectedRole)
+		if result == "" {
+			// ja: 全ての絵柄
+			// en: All symbols
+			symbols := []string{"🍇", "🍉", "🍒", "🍋", "🍊", "🍑", "🔔", "💵", "7️⃣"}
+			symbols = append(symbols[:0], symbols...)
+			rand.Shuffle(len(symbols), func(i, j int) {
+				symbols[i], symbols[j] = symbols[j], symbols[i]
+			})
+			slotResults := []string{symbols[0], symbols[1], symbols[2]}
+			result = strings.Join(slotResults, " | ")
+		} else {
+			result += " | " + result + " | " + result
+		}
+
+		_, err = event.Client().Rest.CreateMessage(event.ChannelID, discord.NewMessageBuilder().
+			SetContent("Slots: "+result).
 			SetMessageReferenceByID(event.Message.ID).
 			BuildCreate(),
 		)

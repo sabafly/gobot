@@ -1,6 +1,7 @@
 package database
 
 import (
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/database/models"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -27,6 +28,9 @@ func NewDB(dsn string) (*DB, error) {
 		&models.User{},
 		&models.Guild{},
 		&models.GoPoint{},
+		&models.BetHost{},
+		&models.BetOption{},
+		&models.BetParticipant{},
 	); err != nil {
 		return nil, err
 	}
@@ -36,4 +40,22 @@ func NewDB(dsn string) (*DB, error) {
 
 type DB struct {
 	DB *gorm.DB
+}
+
+func GetOrCreateUser(db *gorm.DB, userID snowflake.ID) (*models.User, error) {
+	user := &models.User{
+		ID: userID,
+	}
+	if err := db.FirstOrCreate(user, models.User{ID: userID}).Error; err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func GetGuild(db *gorm.DB, guildID snowflake.ID) (*models.Guild, error) {
+	var guild models.Guild
+	if err := db.First(&guild, "id = ?", guildID).Error; err != nil {
+		return nil, err
+	}
+	return &guild, nil
 }

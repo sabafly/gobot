@@ -18,16 +18,18 @@ import (
 )
 
 var (
-	hal_values = database.NewMemoryValues[uuid.UUID, HALData](time.Minute * 10)
+	hal_values = database.NewMemoryValues[uuid.UUID, *HALData](time.Minute * 10)
 )
 
 type HALData struct {
-	id            uuid.UUID
-	userID        snowflake.ID
-	currentPoint  int64
-	currentNumber int
-	lastChoice    HALChoice
-	turn          int
+	id             uuid.UUID
+	userID         snowflake.ID
+	currentPoint   int64
+	previousNumber int
+	currentNumber  int
+	multiplier     int64
+	lastChoice     HALChoice
+	turn           int
 }
 
 func (h HALData) OnDelete() error {
@@ -36,6 +38,7 @@ func (h HALData) OnDelete() error {
 
 func (h *HALData) Roll() HALChoice {
 	prev := h.currentNumber
+	h.previousNumber = h.currentNumber
 	h.currentNumber = 1 + rand.N(10)
 
 	if h.currentNumber > prev {
@@ -68,20 +71,20 @@ func (c HALChoice) String() string {
 func HALPrecondition(event *events.ComponentInteractionCreate) (*HALData, errors.Error) {
 	args := strings.Split(event.Data.CustomID(), ":")
 	id := uuid.MustParse(args[2])
-	v, ok := hal_values.Get(id)
+	data, ok := hal_values.Get(id)
 	if !ok {
 		if err := errors.ErrorMessage("error.play.high-and-low.expired", event); err != nil {
 			return nil, errors.NewError(err)
 		}
 		return nil, nil
 	}
-	if v.userID != event.User().ID {
+	if data.userID != event.User().ID {
 		if err := errors.ErrorMessage("error.play.high-and-low.not_your_game", event); err != nil {
 			return nil, errors.NewError(err)
 		}
 		return nil, nil
 	}
-	return &v, nil
+	return data, nil
 }
 
 func HALPlay(data *HALData, choice HALChoice) (success, equal bool) {
@@ -92,7 +95,7 @@ func HALPlay(data *HALData, choice HALChoice) (success, equal bool) {
 		return false, true
 	}
 	if result == choice {
-		data.currentPoint *= 2
+		data.currentPoint *= data.multiplier
 		return true, false
 	} else {
 		data.currentPoint = 0
@@ -111,8 +114,10 @@ func HALFinish(c *components.Components, data HALData, userID, guildID snowflake
 		SetComponents(i18n.BuildContext().
 			WithText("point", strconv.FormatInt(data.currentPoint, 10)).
 			WithText("current_card", strconv.Itoa(data.currentNumber)).
+			WithText("last_card", strconv.Itoa(data.previousNumber)).
 			WithText("turn", strconv.Itoa(data.turn)).
 			WithText("last_choice", data.lastChoice.String()).
+			WithText("multiplier", strconv.FormatInt(data.multiplier, 10)).
 			Translate(i18n.TranslateLayout(event.Locale(), "command.play.high-and-low.result"))...,
 		).BuildUpdate()); err != nil {
 		return errors.NewError(err)
@@ -127,11 +132,17 @@ func HALMessage(data HALData, locale discord.Locale, equal bool) []discord.Layou
 	} else {
 		ctx.WithText("message", i18n.TranslateText(locale, "command.play.high-and-low.guess-next"))
 	}
+	previousNumText := "N/A"
+	if data.previousNumber != 0 {
+		previousNumText = strconv.Itoa(data.previousNumber)
+	}
 	return ctx.
 		WithText("point", strconv.FormatInt(data.currentPoint, 10)).
 		WithText("current_card", strconv.Itoa(data.currentNumber)).
+		WithText("last_card", previousNumText).
 		WithText("turn", strconv.Itoa(data.turn)).
 		WithText("last_choice", data.lastChoice.String()).
+		WithText("multiplier", strconv.FormatInt(data.multiplier, 10)).
 		WithCustomID("uuid", data.id.String()).
 		Translate(i18n.TranslateLayout(locale, "command.play.high-and-low.game"))
 }
