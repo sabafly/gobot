@@ -248,6 +248,7 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 			oldAmount := existingBet.Amount
 			existingBet.Amount = amount
 			existingBet.OptionID = optionID
+			existingBet.Option = models.BetOption{ID: optionID}
 			existingBet.Timestamp = time.Now().Unix()
 
 			if err := tx.Save(&existingBet).Error; err != nil {
