@@ -50,5 +50,7 @@ type Components struct {
 	Version string
 }
 
-func (c *Components) DB() *ent.Client  { return c.db }
+func (c *Components) DB() *ent.Client { return c.db }
+
+// DO NOT REUSE RETURN VALUE, MUST CALL EACH TIME TO GET NEW SESSION
 func (c *Components) GormDB() *gorm.DB { return c.gormDb.DB.Preload(clause.Associations) }
