@@ -80,6 +80,7 @@ func Command(c *components.Components) components.Command {
 		},
 		ModalHandlers: map[string]generic.ModalHandler{
 			"bet:create": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+				// Extract form data (variables prefixed with _ to avoid unused warnings until implementation is complete)
 				_ = event.Data.Text("title")
 				_ = models.BetVoteType(event.Data.StringValues("vote_type")[0])
 				// TODO: Implement bet session creation logic
