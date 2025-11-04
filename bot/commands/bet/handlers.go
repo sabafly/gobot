@@ -70,8 +70,7 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	}
 
 	// Save to database
-	db := c.GormDB()
-	if err := db.Transaction(func(tx *gorm.DB) error {
+	if err := c.GormDB().Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(betHost).Error; err != nil {
 			slog.Error("failed to create bet host", "error", err)
 			return err
@@ -95,10 +94,10 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 
 	// Reload options
 	var optionModels []models.BetOption
-	db.Where("host_id = ?", betHost.ID).Find(&optionModels)
+	c.GormDB().Where("host_id = ?", betHost.ID).Find(&optionModels)
 
 	// Create layout components
-	layoutComponents := createBetLayout(betHost, optionModels, db)
+	layoutComponents := createBetLayout(betHost, optionModels, c.GormDB())
 
 	// Respond with the bet message using MessageBuilder with ComponentV2
 	if err := event.RespondMessage(discord.NewMessageBuilder().
@@ -117,7 +116,7 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 
 	// Update message ID
 	betHost.MessageID = msg.ID
-	if err := db.Save(betHost).Error; err != nil {
+	if err := c.GormDB().Save(betHost).Error; err != nil {
 		slog.Error("failed to update bet message ID", "error", err)
 	}
 
