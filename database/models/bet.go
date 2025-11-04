@@ -11,7 +11,7 @@ type BetHost struct {
 	ChannelID snowflake.ID `gorm:"type:bigint(20);not null;"`
 	MessageID snowflake.ID `gorm:"type:bigint(20);"`
 	Title     string       `gorm:"not null;"`
-	Mode      string       `gorm:"not null;"` // poll, race, battle_royale
+	Mode      string       `gorm:"not null;"`                // poll, race, battle_royale
 	Status    string       `gorm:"not null;default:'entry'"` // entry, voting, closed, finished
 	Winner    *uuid.UUID   `gorm:"type:uuid;"`
 	EntryFee  *int64
@@ -30,9 +30,9 @@ const (
 type BetStatus string
 
 const (
-	BetStatusEntry   BetStatus = "entry"
-	BetStatusVoting  BetStatus = "voting"
-	BetStatusClosed  BetStatus = "closed"
+	BetStatusEntry    BetStatus = "entry"
+	BetStatusVoting   BetStatus = "voting"
+	BetStatusClosed   BetStatus = "closed"
 	BetStatusFinished BetStatus = "finished"
 )
 

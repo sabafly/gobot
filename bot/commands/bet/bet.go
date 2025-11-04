@@ -87,11 +87,11 @@ func Command(c *components.Components) components.Command {
 // handleBetCommand handles the /bet command with title and mode arguments
 func handleBetCommand(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 	data := event.SlashCommandInteractionData()
-	
+
 	title, _ := data.OptString("title")
 	mode, _ := data.OptString("mode")
 	voteType := models.BetVoteType(mode)
-	
+
 	// For poll mode, show modal for options directly
 	if voteType == models.BetVoteTypeGuess {
 		if err := event.Modal(discord.NewModalCreateBuilder().
@@ -113,7 +113,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 		}
 		return nil
 	}
-	
+
 	// For other modes, show not implemented message
 	if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 		SetContent("このモードはまだ実装されていません。通常モード（予想）を選択してください。").
