@@ -69,7 +69,7 @@ func Command(c *components.Components) components.Command {
 			},
 		},
 		ModalHandlers: map[string]generic.ModalHandler{
-			"bet:config:poll": handlePollConfig,
+			"bet:config_poll": handlePollConfig,
 			"bet:vote":        handleVote,
 			"bet:decide":      handleDecideResult,
 		},
@@ -95,7 +95,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 	// For poll mode, show modal for options directly
 	if voteType == models.BetVoteTypeGuess {
 		if err := event.Modal(discord.NewModalCreateBuilder().
-			SetCustomID(fmt.Sprintf("bet:config:poll:%s", title)).
+			SetCustomID(fmt.Sprintf("bet:config_poll:%s", title)).
 			SetTitle(title).
 			SetComponents(
 				discord.NewLabel("選択肢",

@@ -19,10 +19,10 @@ import (
 // handlePollConfig handles poll mode configuration
 func handlePollConfig(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
 	parts := strings.Split(event.Data.CustomID, ":")
-	if len(parts) < 4 {
+	if len(parts) < 3 {
 		return errors.NewError(fmt.Errorf("invalid custom ID"))
 	}
-	title := strings.Join(parts[3:], ":")
+	title := strings.Join(parts[2:], ":")
 	
 	optionsText := event.Data.Text("options")
 	options := strings.Split(optionsText, ",")
@@ -121,16 +121,16 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 // handleVoteButton handles clicking a vote button
 func handleVoteButton(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
 	parts := strings.Split(event.Data.CustomID(), ":")
-	if len(parts) < 3 {
+	if len(parts) < 4 {
 		return errors.NewError(fmt.Errorf("invalid custom ID"))
 	}
 	
-	hostID, err := uuid.Parse(parts[1])
+	hostID, err := uuid.Parse(parts[2])
 	if err != nil {
 		return errors.NewError(err)
 	}
 	
-	optionID, err := uuid.Parse(parts[2])
+	optionID, err := uuid.Parse(parts[3])
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -320,11 +320,11 @@ func updateBetMessage(c *components.Components, db *gorm.DB, hostID uuid.UUID) {
 // handleDecideButton handles the decide result button
 func handleDecideButton(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
 	parts := strings.Split(event.Data.CustomID(), ":")
-	if len(parts) < 2 {
+	if len(parts) < 3 {
 		return errors.NewError(fmt.Errorf("invalid custom ID"))
 	}
 	
-	hostID, err := uuid.Parse(parts[1])
+	hostID, err := uuid.Parse(parts[2])
 	if err != nil {
 		return errors.NewError(err)
 	}
