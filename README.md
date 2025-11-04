@@ -15,6 +15,50 @@ sabaflyが開発する多機能、便利なディスコードボットです。
 
 [![Document page](docs/img/badge.svg)](https://gobot.sabafly.net)
 
+## Docker
+
+gobotはDockerを使用して簡単にデプロイできます。
+
+### GitHub Container Registryから取得
+
+最新版のイメージを取得:
+```bash
+docker pull ghcr.io/sabafly/gobot:latest
+```
+
+特定のバージョンを取得:
+```bash
+docker pull ghcr.io/sabafly/gobot:v1.0.0
+```
+
+### docker-composeを使用した実行
+
+リポジトリに含まれる`docker-compose.yml`を使用して実行できます:
+
+```bash
+# 環境変数の設定
+cp .env-sample .env
+# .env ファイルを編集して必要な環境変数を設定
+
+# コンテナの起動
+docker-compose up -d
+```
+
+### 利用可能なイメージタグ
+
+- `latest` - mainブランチの最新版
+- `develop` - developブランチの最新版
+- `v*.*.*` - 特定のリリースバージョン
+- `sha-*` - 特定のコミット
+
+### マルチアーキテクチャサポート
+
+以下のプラットフォームに対応しています:
+- `linux/amd64`
+- `linux/arm64`
+
+Dockerが自動的にお使いのプラットフォームに適したイメージを選択します。
+
 ## Contributing
 
 コントリビュートはいつでも歓迎していますが、以下の項目を守ってください。
