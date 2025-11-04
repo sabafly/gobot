@@ -59,6 +59,7 @@ type MemoryValues[K comparable, T any] struct {
 	timeout  time.Duration
 	mu       sync.RWMutex
 	stopChan chan struct{}
+	stopOnce sync.Once
 }
 
 func (m *MemoryValues[K, T]) Get(key K) (T, bool) {
@@ -70,21 +71,25 @@ func (m *MemoryValues[K, T]) Get(key K) (T, bool) {
 		return zero, false
 	}
 
-	// Check expiration while holding read lock
-	if value.IsExpired() {
+	if !value.IsExpired() {
 		m.mu.RUnlock()
-		// Upgrade to write lock to remove expired value
-		m.mu.Lock()
-		// Double-check the value still exists and is still expired
-		if v, exists := m.values[key]; exists && v.IsExpired() {
-			m.delete(key)
-		}
-		m.mu.Unlock()
+		return value.Value, true
+	}
+	m.mu.RUnlock()
 
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	value, ok = m.values[key]
+	if !ok {
 		var zero T
 		return zero, false
 	}
-	m.mu.RUnlock()
+	if value.IsExpired() {
+		m.delete(key)
+		var zero T
+		return zero, false
+	}
 
 	return value.Value, true
 }
@@ -107,7 +112,9 @@ func (m *MemoryValues[K, T]) Delete(key K) {
 }
 
 func (m *MemoryValues[K, T]) Close() {
-	close(m.stopChan)
+	m.stopOnce.Do(func() {
+		close(m.stopChan)
+	})
 }
 
 // Len returns the number of items currently stored (including expired items).

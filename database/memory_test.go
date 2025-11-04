@@ -211,6 +211,27 @@ func TestMemoryValues_Close(t *testing.T) {
 	// but at least we verify Close doesn't panic
 }
 
+// Test Close is idempotent (can be called multiple times without panic)
+func TestMemoryValues_CloseIdempotent(t *testing.T) {
+	mv := NewMemoryValues[string, string](time.Second)
+
+	// Close multiple times should not panic
+	mv.Close()
+	mv.Close()
+	mv.Close()
+
+	// Also test concurrent closes
+	var wg sync.WaitGroup
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			mv.Close()
+		}()
+	}
+	wg.Wait()
+}
+
 // Test zero timeout (no expiration)
 func TestMemoryValues_NoExpiration(t *testing.T) {
 	mv := NewMemoryValues[string, string](0)
@@ -284,6 +305,48 @@ func TestMemoryValues_ImmediateCleanupOnGet(t *testing.T) {
 	// Note: this is a best-effort test since cleanup goroutine might also run
 	if mv.Len() != 0 {
 		t.Logf("Warning: Expected length 0 after expired Get, got %d (cleanup goroutine may have run)", mv.Len())
+	}
+}
+
+// Test Get returns fresh value after concurrent Set on expired key
+func TestMemoryValues_GetAfterConcurrentSet(t *testing.T) {
+	mv := NewMemoryValues[string, string](50 * time.Millisecond)
+	defer mv.Close()
+
+	// Set initial value
+	mv.Set("key1", "value1")
+
+	// Wait for it to expire
+	time.Sleep(100 * time.Millisecond)
+
+	// Concurrent goroutines: one trying to Get, one trying to Set
+	var wg sync.WaitGroup
+	results := make(chan string, 100)
+
+	// Start multiple Gets and Sets concurrently
+	for i := 0; i < 50; i++ {
+		wg.Add(2)
+		go func(idx int) {
+			defer wg.Done()
+			val, ok := mv.Get("key1")
+			if ok {
+				results <- val
+			}
+		}(i)
+		go func(idx int) {
+			defer wg.Done()
+			mv.Set("key1", "new-value")
+		}(i)
+	}
+
+	wg.Wait()
+	close(results)
+
+	// If we got any results, they should all be the new value
+	for val := range results {
+		if val != "new-value" {
+			t.Fatalf("Expected 'new-value', got '%s'", val)
+		}
 	}
 }
 
