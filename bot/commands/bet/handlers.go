@@ -87,15 +87,14 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	var optionModels []models.BetOption
 	db.Where("host_id = ?", betHost.ID).Find(&optionModels)
 	
-	// Create content and buttons
-	content := createBetContent(betHost, optionModels, db)
-	buttons := createBetButtons(betHost, optionModels)
+	// Create layout components
+	layoutComponents := createBetLayout(betHost, optionModels, db)
 	
-	// Send the bet message
-	msg, err := event.Client().Rest.CreateMessage(event.Channel().ID(), discord.MessageCreate{
-		Content:    content,
-		Components: buttons,
-	})
+	// Send the bet message using MessageBuilder with ComponentV2
+	msg, err := event.Client().Rest.CreateMessage(event.Channel().ID(), discord.NewMessageBuilder().
+		SetIsComponentsV2(true).
+		SetComponents(layoutComponents...).
+		BuildCreate())
 	
 	if err != nil {
 		slog.Error("failed to send bet message", "error", err)
@@ -308,13 +307,11 @@ func updateBetMessage(c *components.Components, db *gorm.DB, hostID uuid.UUID) {
 	var options []models.BetOption
 	db.Where("host_id = ?", hostID).Find(&options)
 	
-	content := createBetContent(&betHost, options, db)
-	buttons := createBetButtons(&betHost, options)
+	layoutComponents := createBetLayout(&betHost, options, db)
 	
 	// Note: We don't have access to the event client here, so we skip the update
 	// The message will be updated when the next user interacts with it
-	_ = content
-	_ = buttons
+	_ = layoutComponents
 }
 
 // handleDecideButton handles the decide result button
@@ -468,13 +465,13 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 	var options []models.BetOption
 	db.Where("host_id = ?", hostID).Find(&options)
 	
-	content := createBetContent(&betHost, options, db)
+	layoutComponents := createBetLayout(&betHost, options, db)
 	
-	emptyComps := []discord.LayoutComponent{}
-	_, _ = event.Client().Rest.UpdateMessage(betHost.ChannelID, betHost.MessageID, discord.MessageUpdate{
-		Content:    &content,
-		Components: &emptyComps,
-	})
+	// Update message with ComponentV2
+	_, _ = event.Client().Rest.UpdateMessage(betHost.ChannelID, betHost.MessageID, discord.NewMessageBuilder().
+		SetIsComponentsV2(true).
+		SetComponents(layoutComponents...).
+		BuildUpdate())
 	
 	if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 		SetContent(fmt.Sprintf("結果を決定しました。勝利: %s\n総額: %dpt が分配されました。", winnerOption.OptionText, totalPool)).
@@ -485,11 +482,11 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 	return nil
 }
 
-func createBetContent(host *models.BetHost, options []models.BetOption, db *gorm.DB) string {
-	var content strings.Builder
+func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.DB) []discord.LayoutComponent {
+	var layoutComponents []discord.LayoutComponent
 	
 	// Title
-	content.WriteString(fmt.Sprintf("# %s\n\n", host.Title))
+	layoutComponents = append(layoutComponents, discord.NewTextDisplay(fmt.Sprintf("# %s", host.Title)))
 	
 	// Status
 	statusEmoji := map[string]string{
@@ -508,14 +505,15 @@ func createBetContent(host *models.BetHost, options []models.BetOption, db *gorm
 	
 	emoji := statusEmoji[host.Status]
 	text := statusText[host.Status]
-	content.WriteString(fmt.Sprintf("**ステータス:** %s %s\n", emoji, text))
+	layoutComponents = append(layoutComponents, discord.NewTextDisplay(fmt.Sprintf("**ステータス:** %s %s", emoji, text)))
 	
 	// Organizer and mode
-	content.WriteString(fmt.Sprintf("**主催者:** <@%d> | **モード:** 通常モード（投票）\n\n", host.OwnerID))
+	layoutComponents = append(layoutComponents, discord.NewTextDisplay(fmt.Sprintf("**主催者:** <@%d> | **モード:** 通常モード（投票）", host.OwnerID)))
 	
 	// Options with vote counts
 	if len(options) > 0 {
-		content.WriteString("**選択肢:**\n")
+		layoutComponents = append(layoutComponents, discord.NewTextDisplay("**選択肢:**"))
+		
 		totalVotes := int64(0)
 		totalAmount := int64(0)
 		
@@ -533,13 +531,38 @@ func createBetContent(host *models.BetHost, options []models.BetOption, db *gorm
 				optionMarker = "🏆"
 			}
 			
-			content.WriteString(fmt.Sprintf("%s %s - %d票 (%dpt)\n", optionMarker, opt.OptionText, voteCount, amount))
+			layoutComponents = append(layoutComponents, discord.NewTextDisplay(fmt.Sprintf("%s %s - %d票 (%dpt)", optionMarker, opt.OptionText, voteCount, amount)))
 		}
 		
-		content.WriteString(fmt.Sprintf("\n**合計:** %d票 / %dpt", totalVotes, totalAmount))
+		layoutComponents = append(layoutComponents, discord.NewTextDisplay(fmt.Sprintf("**合計:** %d票 / %dpt", totalVotes, totalAmount)))
 	}
 	
-	return content.String()
+	// Add buttons if voting is active
+	if host.Status == string(models.BetStatusVoting) {
+		var buttons []discord.InteractiveComponent
+		
+		// Add vote buttons for each option (max 5 per row)
+		for i, opt := range options {
+			if i >= 5 { // Discord limit
+				break
+			}
+			buttons = append(buttons, discord.NewSecondaryButton(
+				opt.OptionText,
+				fmt.Sprintf("bet:vote_btn:%s:%s", host.ID, opt.ID),
+			))
+		}
+		
+		// Add decide button
+		buttons = append(buttons, discord.NewSuccessButton(
+			"結果を決定",
+			fmt.Sprintf("bet:decide_btn:%s", host.ID),
+		))
+		
+		// Create action row
+		layoutComponents = append(layoutComponents, discord.NewActionRow(buttons...))
+	}
+	
+	return layoutComponents
 }
 
 func createBetButtons(host *models.BetHost, options []models.BetOption) []discord.LayoutComponent {
