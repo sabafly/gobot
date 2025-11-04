@@ -62,6 +62,11 @@ func Command(c *components.Components) components.Command {
 											Description: i18n.TranslateText(event.Locale(), "command.bet.vote_type.race.description"),
 											Value:       string(models.BetVoteTypeRace),
 										},
+										{
+											Label:       i18n.TranslateText(event.Locale(), "command.bet.vote_type.battle_royale"),
+											Description: i18n.TranslateText(event.Locale(), "command.bet.vote_type.battle_royale.description"),
+											Value:       string(models.BetVoteTypeBattleRoyale),
+										},
 									},
 								},
 							),
@@ -75,8 +80,12 @@ func Command(c *components.Components) components.Command {
 		},
 		ModalHandlers: map[string]generic.ModalHandler{
 			"bet:create": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
-				title := event.Data.Text("title")
-				voteType := models.BetVoteType(event.Data.StringValues("vote_type")[0])
+				_ = event.Data.Text("title")
+				_ = models.BetVoteType(event.Data.StringValues("vote_type")[0])
+				// TODO: Implement bet session creation logic
+				// - Create BetHost with OwnerID from event.User().ID
+				// - Set GuildID, ChannelID from event context
+				// - Store in database
 				return nil
 			},
 		},
