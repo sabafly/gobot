@@ -53,6 +53,11 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 		return errors.NewError(fmt.Errorf("this command can only be used in a guild"))
 	}
 
+	// Defer the response to acknowledge the interaction
+	if err := event.DeferCreateMessage(false); err != nil {
+		return errors.NewError(err)
+	}
+
 	// Create bet host
 	betHost := &models.BetHost{
 		ID:        uuid.New(),
@@ -65,7 +70,8 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	}
 
 	// Save to database
-	if err := c.GormDB().Transaction(func(tx *gorm.DB) error {
+	db := c.GormDB()
+	if err := db.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(betHost).Error; err != nil {
 			slog.Error("failed to create bet host", "error", err)
 			return err
@@ -82,38 +88,37 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 				return err
 			}
 		}
-		// Reload options
-		var optionModels []models.BetOption
-		tx.Where("host_id = ?", betHost.ID).Find(&optionModels)
-
-		// Create layout components
-		layoutComponents := createBetLayout(betHost, optionModels, tx)
-
-		// Send the bet message using MessageBuilder with ComponentV2
-		msg, err := event.Client().Rest.CreateMessage(event.Channel().ID(), discord.NewMessageBuilder().
-			SetIsComponentsV2(true).
-			SetComponents(layoutComponents...).
-			BuildCreate())
-		if err != nil {
-			slog.Error("failed to send bet message", "error", err)
-			return err
-		}
-		// Update message ID
-		betHost.MessageID = msg.ID
-		if err := tx.Save(betHost).Error; err != nil {
-			slog.Error("failed to update bet message ID", "error", err)
-		}
-
-		// Send confirmation
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
-			SetContent(fmt.Sprintf("Betセッションを作成しました: %s", title)).
-			SetFlags(discord.MessageFlagEphemeral).
-			Build()); err != nil {
-			return err
-		}
 		return nil
 	}); err != nil {
 		return errors.NewError(err)
+	}
+
+	// Reload options
+	var optionModels []models.BetOption
+	db.Where("host_id = ?", betHost.ID).Find(&optionModels)
+
+	// Create layout components
+	layoutComponents := createBetLayout(betHost, optionModels, db)
+
+	// Respond with the bet message using MessageBuilder with ComponentV2
+	if err := event.RespondMessage(discord.NewMessageBuilder().
+		SetIsComponentsV2(true).
+		SetComponents(layoutComponents...)); err != nil {
+		slog.Error("failed to send bet message", "error", err)
+		return errors.NewError(err)
+	}
+
+	// Get the interaction response to obtain the message ID
+	msg, err := event.Client().Rest.GetInteractionResponse(event.Client().ApplicationID, event.Token())
+	if err != nil {
+		slog.Error("failed to get interaction response", "error", err)
+		return errors.NewError(err)
+	}
+
+	// Update message ID
+	betHost.MessageID = msg.ID
+	if err := db.Save(betHost).Error; err != nil {
+		slog.Error("failed to update bet message ID", "error", err)
 	}
 
 	return nil
