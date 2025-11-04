@@ -64,25 +64,28 @@ type MemoryValues[K comparable, T any] struct {
 func (m *MemoryValues[K, T]) Get(key K) (T, bool) {
 	m.mu.RLock()
 	value, ok := m.values[key]
-	m.mu.RUnlock()
-
 	if !ok {
+		m.mu.RUnlock()
 		var zero T
 		return zero, false
 	}
 
+	// Check expiration while holding read lock
 	if value.IsExpired() {
-		// Remove expired value immediately to prevent memory leaks
+		m.mu.RUnlock()
+		// Upgrade to write lock to remove expired value
 		m.mu.Lock()
 		// Double-check the value still exists and is still expired
 		if v, exists := m.values[key]; exists && v.IsExpired() {
 			m.delete(key)
 		}
 		m.mu.Unlock()
-		
+
 		var zero T
 		return zero, false
 	}
+	m.mu.RUnlock()
+
 	return value.Value, true
 }
 
