@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/google/uuid"
@@ -260,7 +261,9 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 				return err
 			}
 
-			updateBetMessage(c, tx, hostID)
+			if err := updateBetMessage(c, tx, event.Client(), hostID); err != nil {
+				return err
+			}
 
 			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 				SetContent(fmt.Sprintf("投票を更新しました: %dpt", amount)).
@@ -292,7 +295,9 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 		}
 
 		// Update the bet message
-		updateBetMessage(c, tx, hostID)
+		if err := updateBetMessage(c, tx, event.Client(), hostID); err != nil {
+			return err
+		}
 
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 			SetContent(fmt.Sprintf("投票しました: %dpt", amount)).
@@ -307,20 +312,21 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 	return nil
 }
 
-func updateBetMessage(c *components.Components, db *gorm.DB, hostID uuid.UUID) {
+func updateBetMessage(c *components.Components, db *gorm.DB, client *bot.Client, hostID uuid.UUID) error {
 	var betHost models.BetHost
 	if err := db.First(&betHost, "id = ?", hostID).Error; err != nil {
-		return
+		return err
 	}
 
 	var options []models.BetOption
 	db.Where("host_id = ?", hostID).Find(&options)
 
 	layoutComponents := createBetLayout(&betHost, options, db)
-
-	// Note: We don't have access to the event client here, so we skip the update
-	// The message will be updated when the next user interacts with it
-	_ = layoutComponents
+	_, err := client.Rest.UpdateMessage(betHost.ChannelID, betHost.MessageID, discord.NewMessageBuilder().
+		SetIsComponentsV2(true).
+		SetComponents(layoutComponents...).
+		BuildUpdate())
+	return err
 }
 
 // handleDecideButton handles the decide result button
