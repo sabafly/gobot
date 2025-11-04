@@ -57,7 +57,7 @@ func createErrorMessage(
 				discord.NewTextDisplayf("-# %s", err.ID().String()),
 			).WithAccentColor(0xff2121),
 		).
-		SetFlags(discord.MessageFlagEphemeral)
+		AddFlags(discord.MessageFlagEphemeral)
 	if PrintDebugInfo {
 		builder.AddComponents(discord.NewTextDisplayf("**[DEBUG]**\n```%s```", err.DebugInfo()))
 	}

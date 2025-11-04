@@ -23,13 +23,13 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 		return errors.NewError(fmt.Errorf("invalid custom ID"))
 	}
 	title := strings.Join(parts[2:], ":")
-	
+
 	optionsText := event.Data.Text("options")
 	options := strings.Split(optionsText, ",")
 	for i := range options {
 		options[i] = strings.TrimSpace(options[i])
 	}
-	
+
 	// Filter empty options
 	validOptions := make([]string, 0)
 	for _, opt := range options {
@@ -37,7 +37,7 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 			validOptions = append(validOptions, opt)
 		}
 	}
-	
+
 	if len(validOptions) < 2 {
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 			SetContent("少なくとも2つの選択肢が必要です。").
@@ -47,11 +47,11 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 		}
 		return nil
 	}
-	
+
 	if event.GuildID() == nil {
 		return errors.NewError(fmt.Errorf("this command can only be used in a guild"))
 	}
-	
+
 	// Create bet host
 	betHost := &models.BetHost{
 		ID:        uuid.New(),
@@ -62,14 +62,14 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 		Status:    string(models.BetStatusVoting),
 		OwnerID:   event.User().ID,
 	}
-	
+
 	// Save to database
 	db := c.GormDB()
 	if err := db.Create(betHost).Error; err != nil {
 		slog.Error("failed to create bet host", "error", err)
 		return errors.NewError(err)
 	}
-	
+
 	// Create options
 	for _, opt := range validOptions {
 		option := &models.BetOption{
@@ -82,31 +82,31 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 			return errors.NewError(err)
 		}
 	}
-	
+
 	// Reload options
 	var optionModels []models.BetOption
 	db.Where("host_id = ?", betHost.ID).Find(&optionModels)
-	
+
 	// Create layout components
 	layoutComponents := createBetLayout(betHost, optionModels, db)
-	
+
 	// Send the bet message using MessageBuilder with ComponentV2
 	msg, err := event.Client().Rest.CreateMessage(event.Channel().ID(), discord.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(layoutComponents...).
 		BuildCreate())
-	
+
 	if err != nil {
 		slog.Error("failed to send bet message", "error", err)
 		return errors.NewError(err)
 	}
-	
+
 	// Update message ID
 	betHost.MessageID = msg.ID
 	if err := db.Save(betHost).Error; err != nil {
 		slog.Error("failed to update bet message ID", "error", err)
 	}
-	
+
 	// Send confirmation
 	if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 		SetContent(fmt.Sprintf("Betセッションを作成しました: %s", title)).
@@ -123,24 +123,24 @@ func handleVoteButton(c *components.Components, event *events.ComponentInteracti
 	if len(parts) < 4 {
 		return errors.NewError(fmt.Errorf("invalid custom ID"))
 	}
-	
+
 	hostID, err := uuid.Parse(parts[2])
 	if err != nil {
 		return errors.NewError(err)
 	}
-	
+
 	optionID, err := uuid.Parse(parts[3])
 	if err != nil {
 		return errors.NewError(err)
 	}
-	
+
 	// Get bet host
 	db := c.GormDB()
 	var betHost models.BetHost
 	if err := db.First(&betHost, "id = ?", hostID).Error; err != nil {
 		return errors.NewError(err)
 	}
-	
+
 	// Check if voting is open
 	if betHost.Status != string(models.BetStatusVoting) {
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
@@ -151,13 +151,13 @@ func handleVoteButton(c *components.Components, event *events.ComponentInteracti
 		}
 		return nil
 	}
-	
+
 	// Get option
 	var option models.BetOption
 	if err := db.First(&option, "id = ?", optionID).Error; err != nil {
 		return errors.NewError(err)
 	}
-	
+
 	// Show modal to enter bet amount
 	if err := event.Modal(discord.NewModalCreateBuilder().
 		SetCustomID(fmt.Sprintf("bet:vote:%s:%s", hostID, optionID)).
@@ -186,17 +186,17 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 	if len(parts) < 4 {
 		return errors.NewError(fmt.Errorf("invalid custom ID"))
 	}
-	
+
 	hostID, err := uuid.Parse(parts[2])
 	if err != nil {
 		return errors.NewError(err)
 	}
-	
+
 	optionID, err := uuid.Parse(parts[3])
 	if err != nil {
 		return errors.NewError(err)
 	}
-	
+
 	amountStr := event.Data.Text("amount")
 	amount, err := strconv.ParseInt(amountStr, 10, 64)
 	if err != nil || amount <= 0 {
@@ -208,13 +208,13 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 		}
 		return nil
 	}
-	
+
 	if event.GuildID() == nil {
 		return errors.NewError(fmt.Errorf("this command can only be used in a guild"))
 	}
-	
+
 	db := c.GormDB()
-	
+
 	// Check user's gopoint balance
 	var gopoint models.GoPoint
 	if err := db.FirstOrCreate(&gopoint, models.GoPoint{
@@ -223,7 +223,7 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 	}).Error; err != nil {
 		return errors.NewError(err)
 	}
-	
+
 	if gopoint.Points < amount {
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 			SetContent(fmt.Sprintf("Goポイントが不足しています。現在: %dpt", gopoint.Points)).
@@ -233,7 +233,7 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 		}
 		return nil
 	}
-	
+
 	// Check if user already voted
 	var existingBet models.Bet
 	result := db.Where("host_id = ? AND user_id = ?", hostID, event.User().ID).First(&existingBet)
@@ -243,20 +243,20 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 		existingBet.Amount = amount
 		existingBet.OptionID = optionID
 		existingBet.Timestamp = time.Now().Unix()
-		
+
 		if err := db.Save(&existingBet).Error; err != nil {
 			return errors.NewError(err)
 		}
-		
+
 		// Adjust points
 		diff := amount - oldAmount
 		gopoint.Points -= diff
 		if err := db.Save(&gopoint).Error; err != nil {
 			return errors.NewError(err)
 		}
-		
+
 		updateBetMessage(c, db, hostID)
-		
+
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 			SetContent(fmt.Sprintf("投票を更新しました: %dpt", amount)).
 			SetFlags(discord.MessageFlagEphemeral).
@@ -265,7 +265,7 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 		}
 		return nil
 	}
-	
+
 	// Create new bet
 	bet := &models.Bet{
 		ID:        uuid.New(),
@@ -275,20 +275,20 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 		Amount:    amount,
 		Timestamp: time.Now().Unix(),
 	}
-	
+
 	if err := db.Create(bet).Error; err != nil {
 		return errors.NewError(err)
 	}
-	
+
 	// Deduct points
 	gopoint.Points -= amount
 	if err := db.Save(&gopoint).Error; err != nil {
 		return errors.NewError(err)
 	}
-	
+
 	// Update the bet message
 	updateBetMessage(c, db, hostID)
-	
+
 	if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 		SetContent(fmt.Sprintf("投票しました: %dpt", amount)).
 		SetFlags(discord.MessageFlagEphemeral).
@@ -303,12 +303,12 @@ func updateBetMessage(c *components.Components, db *gorm.DB, hostID uuid.UUID) {
 	if err := db.First(&betHost, "id = ?", hostID).Error; err != nil {
 		return
 	}
-	
+
 	var options []models.BetOption
 	db.Where("host_id = ?", hostID).Find(&options)
-	
+
 	layoutComponents := createBetLayout(&betHost, options, db)
-	
+
 	// Note: We don't have access to the event client here, so we skip the update
 	// The message will be updated when the next user interacts with it
 	_ = layoutComponents
@@ -320,18 +320,18 @@ func handleDecideButton(c *components.Components, event *events.ComponentInterac
 	if len(parts) < 3 {
 		return errors.NewError(fmt.Errorf("invalid custom ID"))
 	}
-	
+
 	hostID, err := uuid.Parse(parts[2])
 	if err != nil {
 		return errors.NewError(err)
 	}
-	
+
 	db := c.GormDB()
 	var betHost models.BetHost
 	if err := db.First(&betHost, "id = ?", hostID).Error; err != nil {
 		return errors.NewError(err)
 	}
-	
+
 	// Check if user is owner
 	if !betHost.IsOwner(event.User().ID) {
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
@@ -342,11 +342,11 @@ func handleDecideButton(c *components.Components, event *events.ComponentInterac
 		}
 		return nil
 	}
-	
+
 	// Get options
 	var options []models.BetOption
 	db.Where("host_id = ?", hostID).Find(&options)
-	
+
 	// Create select menu with options
 	selectOptions := make([]discord.StringSelectMenuOption, 0, len(options))
 	for _, opt := range options {
@@ -355,7 +355,7 @@ func handleDecideButton(c *components.Components, event *events.ComponentInterac
 			Value: opt.ID.String(),
 		})
 	}
-	
+
 	if err := event.Modal(discord.NewModalCreateBuilder().
 		SetCustomID(fmt.Sprintf("bet:decide:%s", hostID)).
 		SetTitle("結果を決定").
@@ -381,27 +381,27 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 	if len(parts) < 3 {
 		return errors.NewError(fmt.Errorf("invalid custom ID"))
 	}
-	
+
 	hostID, err := uuid.Parse(parts[2])
 	if err != nil {
 		return errors.NewError(err)
 	}
-	
+
 	winnerID, err := uuid.Parse(event.Data.StringValues("winner")[0])
 	if err != nil {
 		return errors.NewError(err)
 	}
-	
+
 	if event.GuildID() == nil {
 		return errors.NewError(fmt.Errorf("this command can only be used in a guild"))
 	}
-	
+
 	db := c.GormDB()
 	var betHost models.BetHost
 	if err := db.First(&betHost, "id = ?", hostID).Error; err != nil {
 		return errors.NewError(err)
 	}
-	
+
 	// Double check ownership
 	if !betHost.IsOwner(event.User().ID) {
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
@@ -412,67 +412,67 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 		}
 		return nil
 	}
-	
+
 	// Get winner option
 	var winnerOption models.BetOption
 	if err := db.First(&winnerOption, "id = ?", winnerID).Error; err != nil {
 		return errors.NewError(err)
 	}
-	
+
 	// Get all bets
 	var allBets []models.Bet
 	db.Where("host_id = ?", hostID).Find(&allBets)
-	
+
 	// Calculate total pool and winners' share
 	totalPool := int64(0)
 	winnersBets := make([]models.Bet, 0)
-	
+
 	for _, bet := range allBets {
 		totalPool += bet.Amount
 		if bet.OptionID == winnerID {
 			winnersBets = append(winnersBets, bet)
 		}
 	}
-	
+
 	winnersTotal := int64(0)
 	for _, bet := range winnersBets {
 		winnersTotal += bet.Amount
 	}
-	
+
 	// Distribute winnings
 	if winnersTotal > 0 {
 		for _, bet := range winnersBets {
 			// Calculate proportional share
 			share := (bet.Amount * totalPool) / winnersTotal
-			
+
 			var gopoint models.GoPoint
 			db.FirstOrCreate(&gopoint, models.GoPoint{
 				UserID:  bet.UserID,
 				GuildID: betHost.GuildID,
 			})
-			
+
 			gopoint.Points += share
 			db.Save(&gopoint)
 		}
 	}
-	
+
 	// Update bet host status
 	betHost.Status = string(models.BetStatusFinished)
 	betHost.Winner = &winnerID
 	db.Save(&betHost)
-	
+
 	// Update message
 	var options []models.BetOption
 	db.Where("host_id = ?", hostID).Find(&options)
-	
+
 	layoutComponents := createBetLayout(&betHost, options, db)
-	
+
 	// Update message with ComponentV2
 	_, _ = event.Client().Rest.UpdateMessage(betHost.ChannelID, betHost.MessageID, discord.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(layoutComponents...).
 		BuildUpdate())
-	
+
 	if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 		SetContent(fmt.Sprintf("結果を決定しました。勝利: %s\n総額: %dpt が分配されました。", winnerOption.OptionText, totalPool)).
 		SetFlags(discord.MessageFlagEphemeral).
@@ -484,10 +484,10 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 
 func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.DB) []discord.LayoutComponent {
 	var layoutComponents []discord.LayoutComponent
-	
+
 	// Title
 	layoutComponents = append(layoutComponents, discord.NewTextDisplay(fmt.Sprintf("# %s", host.Title)))
-	
+
 	// Status
 	statusEmoji := map[string]string{
 		string(models.BetStatusEntry):    "📝",
@@ -495,52 +495,52 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 		string(models.BetStatusClosed):   "🔒",
 		string(models.BetStatusFinished): "✅",
 	}
-	
+
 	statusText := map[string]string{
 		string(models.BetStatusEntry):    "エントリー受付中",
 		string(models.BetStatusVoting):   "投票受付中",
 		string(models.BetStatusClosed):   "受付終了",
 		string(models.BetStatusFinished): "終了",
 	}
-	
+
 	emoji := statusEmoji[host.Status]
 	text := statusText[host.Status]
 	layoutComponents = append(layoutComponents, discord.NewTextDisplay(fmt.Sprintf("**ステータス:** %s %s", emoji, text)))
-	
+
 	// Organizer and mode
 	layoutComponents = append(layoutComponents, discord.NewTextDisplay(fmt.Sprintf("**主催者:** <@%d> | **モード:** 通常モード（投票）", host.OwnerID)))
-	
+
 	// Options with vote counts
 	if len(options) > 0 {
 		layoutComponents = append(layoutComponents, discord.NewTextDisplay("**選択肢:**"))
-		
+
 		totalVotes := int64(0)
 		totalAmount := int64(0)
-		
+
 		for i, opt := range options {
 			var voteCount int64
 			var amount int64
 			db.Model(&models.Bet{}).Where("option_id = ?", opt.ID).Count(&voteCount)
 			db.Model(&models.Bet{}).Where("option_id = ?", opt.ID).Select("COALESCE(SUM(amount), 0)").Scan(&amount)
-			
+
 			totalVotes += voteCount
 			totalAmount += amount
-			
+
 			optionMarker := fmt.Sprintf("%d.", i+1)
 			if host.Winner != nil && *host.Winner == opt.ID {
 				optionMarker = "🏆"
 			}
-			
+
 			layoutComponents = append(layoutComponents, discord.NewTextDisplay(fmt.Sprintf("%s %s - %d票 (%dpt)", optionMarker, opt.OptionText, voteCount, amount)))
 		}
-		
+
 		layoutComponents = append(layoutComponents, discord.NewTextDisplay(fmt.Sprintf("**合計:** %d票 / %dpt", totalVotes, totalAmount)))
 	}
-	
+
 	// Add buttons if voting is active
 	if host.Status == string(models.BetStatusVoting) {
 		var buttons []discord.InteractiveComponent
-		
+
 		// Add vote buttons for each option (max 5 per row)
 		for i, opt := range options {
 			if i >= 5 { // Discord limit
@@ -551,17 +551,17 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 				fmt.Sprintf("bet:vote_btn:%s:%s", host.ID, opt.ID),
 			))
 		}
-		
+
 		// Add decide button
 		buttons = append(buttons, discord.NewSuccessButton(
 			"結果を決定",
 			fmt.Sprintf("bet:decide_btn:%s", host.ID),
 		))
-		
+
 		// Create action row
 		layoutComponents = append(layoutComponents, discord.NewActionRow(buttons...))
 	}
-	
+
 	return layoutComponents
 }
 
@@ -569,9 +569,9 @@ func createBetButtons(host *models.BetHost, options []models.BetOption) []discor
 	if host.Status != string(models.BetStatusVoting) {
 		return nil
 	}
-	
+
 	var buttons []discord.InteractiveComponent
-	
+
 	// Add vote buttons for each option (max 5 per row)
 	for i, opt := range options {
 		if i >= 5 { // Discord limit
@@ -582,13 +582,13 @@ func createBetButtons(host *models.BetHost, options []models.BetOption) []discor
 			fmt.Sprintf("bet:vote_btn:%s:%s", host.ID, opt.ID),
 		))
 	}
-	
+
 	// Add decide button
 	buttons = append(buttons, discord.NewSuccessButton(
 		"結果を決定",
 		fmt.Sprintf("bet:decide_btn:%s", host.ID),
 	))
-	
+
 	// Create action row and return as layout component
 	row := discord.NewActionRow(buttons...)
 	return []discord.LayoutComponent{row}
