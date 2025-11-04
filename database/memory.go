@@ -63,17 +63,23 @@ type MemoryValues[K comparable, T any] struct {
 
 func (m *MemoryValues[K, T]) Get(key K) (T, bool) {
 	m.mu.RLock()
-	defer m.mu.RUnlock()
-
 	value, ok := m.values[key]
+	m.mu.RUnlock()
+
 	if !ok {
 		var zero T
 		return zero, false
 	}
 
 	if value.IsExpired() {
-		// Return zero value if expired
-		// The cleanup goroutine will remove it later
+		// Remove expired value immediately to prevent memory leaks
+		m.mu.Lock()
+		// Double-check the value still exists and is still expired
+		if v, exists := m.values[key]; exists && v.IsExpired() {
+			m.delete(key)
+		}
+		m.mu.Unlock()
+		
 		var zero T
 		return zero, false
 	}
@@ -99,6 +105,14 @@ func (m *MemoryValues[K, T]) Delete(key K) {
 
 func (m *MemoryValues[K, T]) Close() {
 	close(m.stopChan)
+}
+
+// Len returns the number of items currently stored (including expired items).
+// This is primarily useful for testing and monitoring.
+func (m *MemoryValues[K, T]) Len() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return len(m.values)
 }
 
 // delete removes a key from the map and calls OnDelete if the value implements DeleteHandler.

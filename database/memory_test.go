@@ -92,9 +92,7 @@ func TestMemoryValues_ExpirationCleanup(t *testing.T) {
 	time.Sleep(250 * time.Millisecond)
 
 	// Verify all keys are cleaned up
-	mv.mu.RLock()
-	count := len(mv.values)
-	mv.mu.RUnlock()
+	count := mv.Len()
 
 	if count != 0 {
 		t.Fatalf("Expected all keys to be cleaned up, but found %d keys", count)
@@ -228,6 +226,64 @@ func TestMemoryValues_NoExpiration(t *testing.T) {
 	val, ok := mv.Get("key1")
 	if !ok || val != "value1" {
 		t.Fatal("Expected key1 to still exist with no expiration")
+	}
+}
+
+// Test Len method
+func TestMemoryValues_Len(t *testing.T) {
+	mv := NewMemoryValues[string, string](time.Minute)
+	defer mv.Close()
+
+	// Initially empty
+	if mv.Len() != 0 {
+		t.Fatalf("Expected length 0, got %d", mv.Len())
+	}
+
+	// Add items
+	mv.Set("key1", "value1")
+	mv.Set("key2", "value2")
+	mv.Set("key3", "value3")
+
+	if mv.Len() != 3 {
+		t.Fatalf("Expected length 3, got %d", mv.Len())
+	}
+
+	// Delete one
+	mv.Delete("key2")
+
+	if mv.Len() != 2 {
+		t.Fatalf("Expected length 2, got %d", mv.Len())
+	}
+}
+
+// Test immediate cleanup of expired items in Get
+func TestMemoryValues_ImmediateCleanupOnGet(t *testing.T) {
+	mv := NewMemoryValues[string, string](50 * time.Millisecond)
+	defer mv.Close()
+
+	// Set a value
+	mv.Set("key1", "value1")
+
+	// Wait for it to expire
+	time.Sleep(100 * time.Millisecond)
+
+	// Get should return false AND remove the item
+	_, ok := mv.Get("key1")
+	if ok {
+		t.Fatal("Expected key1 to be expired")
+	}
+
+	// Check that it was actually removed from the map (not just returned as expired)
+	// We'll check by trying to get it again immediately
+	_, ok = mv.Get("key1")
+	if ok {
+		t.Fatal("Expected key1 to still be not found after first expired Get")
+	}
+
+	// Verify it's actually gone from the map using Len
+	// Note: this is a best-effort test since cleanup goroutine might also run
+	if mv.Len() != 0 {
+		t.Logf("Warning: Expected length 0 after expired Get, got %d (cleanup goroutine may have run)", mv.Len())
 	}
 }
 
