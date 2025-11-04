@@ -1,6 +1,8 @@
 package bet
 
 import (
+	"fmt"
+
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/sabafly/gobot/bot/components"
@@ -23,6 +25,39 @@ func Command(c *components.Components) components.Command {
 				Name:                     "bet",
 				Description:              "Bet gopoints on various games",
 				DescriptionLocalizations: i18n.TranslateTextMap("command.bet.description"),
+				Options: []discord.ApplicationCommandOption{
+					discord.ApplicationCommandOptionString{
+						Name:                     "title",
+						Description:              "Bet title",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.bet.option.title.description"),
+						Required:                 true,
+						MinLength:                ptr(1),
+						MaxLength:                ptr(100),
+					},
+					discord.ApplicationCommandOptionString{
+						Name:                     "mode",
+						Description:              "Bet mode",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.bet.option.mode.description"),
+						Required:                 true,
+						Choices: []discord.ApplicationCommandOptionChoiceString{
+							{
+								Name:              i18n.TranslateText(discord.LocaleJapanese, "command.bet.vote_type.guess"),
+								NameLocalizations: i18n.TranslateTextMap("command.bet.vote_type.guess"),
+								Value:             string(models.BetVoteTypeGuess),
+							},
+							{
+								Name:              i18n.TranslateText(discord.LocaleJapanese, "command.bet.vote_type.race"),
+								NameLocalizations: i18n.TranslateTextMap("command.bet.vote_type.race"),
+								Value:             string(models.BetVoteTypeRace),
+							},
+							{
+								Name:              i18n.TranslateText(discord.LocaleJapanese, "command.bet.vote_type.battle_royale"),
+								NameLocalizations: i18n.TranslateTextMap("command.bet.vote_type.battle_royale"),
+								Value:             string(models.BetVoteTypeBattleRoyale),
+							},
+						},
+					},
+				},
 			},
 		},
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
@@ -30,64 +65,15 @@ func Command(c *components.Components) components.Command {
 				Permission: []generic.Permission{
 					generic.PermissionString("bet.use"),
 				},
-				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					if err := event.Modal(discord.NewModalCreateBuilder().
-						SetCustomID("bet:create").
-						SetTitle(i18n.TranslateText(event.Locale(), "command.bet.create.title")).
-						SetComponents(
-							discord.NewLabel(i18n.TranslateText(event.Locale(), "command.bet.create.input.title.label"),
-								discord.TextInputComponent{
-									CustomID:    "title",
-									Style:       discord.TextInputStyleShort,
-									Placeholder: i18n.TranslateText(event.Locale(), "command.bet.create.input.title.placeholder"),
-									Required:    true,
-									MinLength:   ptr(1),
-									MaxLength:   100,
-								}),
-							discord.NewLabel(i18n.TranslateText(event.Locale(), "command.bet.create.select.vote_type.label"),
-								discord.StringSelectMenuComponent{
-									CustomID:    "vote_type",
-									Placeholder: i18n.TranslateText(event.Locale(), "command.bet.create.select.vote_type.placeholder"),
-									MinValues:   ptr(1),
-									MaxValues:   1,
-									Required:    true,
-									Options: []discord.StringSelectMenuOption{
-										{
-											Label:       i18n.TranslateText(event.Locale(), "command.bet.vote_type.guess"),
-											Description: i18n.TranslateText(event.Locale(), "command.bet.vote_type.guess.description"),
-											Value:       string(models.BetVoteTypeGuess),
-										},
-										{
-											Label:       i18n.TranslateText(event.Locale(), "command.bet.vote_type.race"),
-											Description: i18n.TranslateText(event.Locale(), "command.bet.vote_type.race.description"),
-											Value:       string(models.BetVoteTypeRace),
-										},
-										{
-											Label:       i18n.TranslateText(event.Locale(), "command.bet.vote_type.battle_royale"),
-											Description: i18n.TranslateText(event.Locale(), "command.bet.vote_type.battle_royale.description"),
-											Value:       string(models.BetVoteTypeBattleRoyale),
-										},
-									},
-								},
-							),
-						).
-						Build()); err != nil {
-						return errors.NewError(err)
-					}
-					return nil
-				},
+				CommandHandler: handleBetCommand,
 			},
 		},
 		ModalHandlers: map[string]generic.ModalHandler{
-			"bet:create":      handleBetCreate,
 			"bet:config:poll": handlePollConfig,
 			"bet:vote":        handleVote,
 			"bet:decide":      handleDecideResult,
 		},
 		ComponentHandlers: map[string]generic.PermissionComponentHandler{
-			"bet:setup": generic.PComponentHandler{
-				ComponentHandler: handleSetupButton,
-			},
 			"bet:vote_btn": generic.PComponentHandler{
 				ComponentHandler: handleVoteButton,
 			},
@@ -96,4 +82,44 @@ func Command(c *components.Components) components.Command {
 			},
 		},
 	}).SetComponent(c)
+}
+
+// handleBetCommand handles the /bet command with title and mode arguments
+func handleBetCommand(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+	data := event.SlashCommandInteractionData()
+	
+	title, _ := data.OptString("title")
+	mode, _ := data.OptString("mode")
+	voteType := models.BetVoteType(mode)
+	
+	// For poll mode, show modal for options directly
+	if voteType == models.BetVoteTypeGuess {
+		if err := event.Modal(discord.NewModalCreateBuilder().
+			SetCustomID(fmt.Sprintf("bet:config:poll:%s", title)).
+			SetTitle(title).
+			SetComponents(
+				discord.NewLabel("選択肢",
+					discord.TextInputComponent{
+						CustomID:    "options",
+						Style:       discord.TextInputStyleParagraph,
+						Placeholder: "選択肢をカンマ区切りで入力 (例: 選択肢1,選択肢2,選択肢3)",
+						Required:    true,
+						MinLength:   ptr(3),
+						MaxLength:   500,
+					}),
+			).
+			Build()); err != nil {
+			return errors.NewError(err)
+		}
+		return nil
+	}
+	
+	// For other modes, show not implemented message
+	if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+		SetContent("このモードはまだ実装されていません。通常モード（予想）を選択してください。").
+		SetFlags(discord.MessageFlagEphemeral).
+		Build()); err != nil {
+		return errors.NewError(err)
+	}
+	return nil
 }
