@@ -567,11 +567,16 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 	// Options with vote counts
 	if len(options) > 0 {
 		layoutComponents = append(layoutComponents, discord.NewTextDisplay("**選択肢:**"))
+		layoutComponents = append(layoutComponents, discord.NewLargeSeparator())
 
 		totalVotes := int64(0)
 		totalAmount := int64(0)
 
 		for i, opt := range options {
+			if i > 0 {
+				layoutComponents = append(layoutComponents, discord.NewSmallSeparator())
+			}
+
 			var voteCount int64
 			var amount int64
 			db.Model(&models.Bet{}).Where("option_id = ?", opt.ID).Count(&voteCount)
@@ -585,35 +590,29 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 				optionMarker = "🏆"
 			}
 
-			layoutComponents = append(layoutComponents, discord.NewTextDisplay(fmt.Sprintf("%s %s - %d票 (%dpt)", optionMarker, opt.OptionText, voteCount, amount)))
+			text := discord.NewTextDisplayf("%s %s - %d票 (%dpt)", optionMarker, opt.OptionText, voteCount, amount)
+			if host.Status == string(models.BetStatusVoting) {
+				layoutComponents = append(layoutComponents, discord.NewSection(text).
+					WithAccessory(discord.NewSecondaryButton(
+						fmt.Sprintf("%sに投票", opt.OptionText),
+						fmt.Sprintf("bet:vote_btn:%s:%s", host.ID, opt.ID),
+					)),
+				)
+			} else {
+				layoutComponents = append(layoutComponents, text)
+			}
 		}
-
+		layoutComponents = append(layoutComponents, discord.NewLargeSeparator())
 		layoutComponents = append(layoutComponents, discord.NewTextDisplay(fmt.Sprintf("**合計:** %d票 / %dpt", totalVotes, totalAmount)))
 	}
 
 	// Add buttons if voting is active
 	if host.Status == string(models.BetStatusVoting) {
-		var buttons []discord.InteractiveComponent
-
-		// Add vote buttons for each option (max 5 per row)
-		for i, opt := range options {
-			if i >= 5 { // Discord limit
-				break
-			}
-			buttons = append(buttons, discord.NewSecondaryButton(
-				opt.OptionText,
-				fmt.Sprintf("bet:vote_btn:%s:%s", host.ID, opt.ID),
-			))
-		}
-
-		// Add decide button
-		buttons = append(buttons, discord.NewSuccessButton(
+		// Create action row
+		layoutComponents = append(layoutComponents, discord.NewActionRow(discord.NewSuccessButton(
 			"結果を決定",
 			fmt.Sprintf("bet:decide_btn:%s", host.ID),
-		))
-
-		// Create action row
-		layoutComponents = append(layoutComponents, discord.NewActionRow(buttons...))
+		)))
 	}
 
 	return layoutComponents
