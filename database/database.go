@@ -43,6 +43,13 @@ type DB struct {
 	DB *gorm.DB
 }
 
+// GetOrCreateUser retrieves an existing user from the database or creates a new one if it doesn't exist.
+// Parameters:
+//   - db: The GORM database instance to use for the query
+//   - userID: The Discord snowflake ID of the user
+// Returns:
+//   - *models.User: The user model (either existing or newly created)
+//   - error: Any error encountered during the database operation
 func GetOrCreateUser(db *gorm.DB, userID snowflake.ID) (*models.User, error) {
 	user := &models.User{
 		ID: userID,
@@ -53,6 +60,13 @@ func GetOrCreateUser(db *gorm.DB, userID snowflake.ID) (*models.User, error) {
 	return user, nil
 }
 
+// GetGuild retrieves a guild from the database by its ID.
+// Parameters:
+//   - db: The GORM database instance to use for the query
+//   - guildID: The Discord snowflake ID of the guild
+// Returns:
+//   - *models.Guild: The guild model if found
+//   - error: Any error encountered during the database operation (e.g., gorm.ErrRecordNotFound if guild doesn't exist)
 func GetGuild(db *gorm.DB, guildID snowflake.ID) (*models.Guild, error) {
 	var guild models.Guild
 	if err := db.First(&guild, "id = ?", guildID).Error; err != nil {
