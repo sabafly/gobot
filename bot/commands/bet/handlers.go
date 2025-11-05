@@ -47,6 +47,7 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 				SetFlags(discord.MessageFlagEphemeral)); err != nil {
 				return errors.NewError(err)
 			}
+			return nil
 		}
 		if opt != "" {
 			validOptions = append(validOptions, opt)
