@@ -16,6 +16,7 @@ import (
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/errors"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // handlePollConfig handles poll mode configuration
@@ -91,11 +92,12 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 			return err
 		}
 		// Create options
-		for _, opt := range validOptions {
+		for i, opt := range validOptions {
 			option := &models.BetOption{
 				ID:         uuid.New(),
 				HostID:     betHost.ID,
 				OptionText: opt,
+				Index:      i,
 			}
 			if err := tx.Create(option).Error; err != nil {
 				slog.Error("failed to create bet option", "error", err)
@@ -109,7 +111,9 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 
 	// Reload options
 	var optionModels []models.BetOption
-	c.GormDB().Where("host_id = ?", betHost.ID).Find(&optionModels)
+	c.GormDB().Order(
+		clause.OrderByColumn{Column: clause.Column{Name: "index"}, Desc: false},
+	).Where("host_id = ?", betHost.ID).Find(&optionModels)
 
 	// Create layout components
 	layoutComponents := createBetLayout(betHost, optionModels, c.GormDB())
@@ -340,7 +344,9 @@ func updateBetMessage(c *components.Components, db *gorm.DB, client *bot.Client,
 	}
 
 	var options []models.BetOption
-	db.Where("host_id = ?", hostID).Find(&options)
+	db.Order(
+		clause.OrderByColumn{Column: clause.Column{Name: "index"}, Desc: false},
+	).Where("host_id = ?", hostID).Find(&options)
 
 	layoutComponents := createBetLayout(&betHost, options, db)
 	_, err := client.Rest.UpdateMessage(betHost.ChannelID, betHost.MessageID, discord.NewMessageBuilder().
@@ -381,7 +387,9 @@ func handleDecideButton(c *components.Components, event *events.ComponentInterac
 
 		// Get options
 		var options []models.BetOption
-		tx.Where("host_id = ?", hostID).Find(&options)
+		tx.Order(
+			clause.OrderByColumn{Column: clause.Column{Name: "index"}, Desc: false},
+		).Where("host_id = ?", hostID).Find(&options)
 
 		// Create select menu with options
 		selectOptions := make([]discord.StringSelectMenuOption, 0, len(options))
@@ -503,7 +511,9 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 
 		// Update message
 		var options []models.BetOption
-		tx.Where("host_id = ?", hostID).Find(&options)
+		tx.Order(
+			clause.OrderByColumn{Column: clause.Column{Name: "index"}, Desc: false},
+		).Where("host_id = ?", hostID).Find(&options)
 
 		layoutComponents := createBetLayout(&betHost, options, tx)
 

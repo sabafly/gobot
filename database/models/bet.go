@@ -41,6 +41,7 @@ type BetOption struct {
 	HostID     uuid.UUID `gorm:"type:uuid;not null"`
 	Host       BetHost   `gorm:"foreignKey:HostID;constraint:OnDelete:CASCADE;"`
 	OptionText string    `gorm:"not null;"`
+	Index      int
 }
 
 // Bet represents a user's bet on an option (used in poll and race modes)
