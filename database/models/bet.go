@@ -1,6 +1,8 @@
 package models
 
 import (
+	"strings"
+
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 )
@@ -12,8 +14,8 @@ type BetHost struct {
 	MessageID snowflake.ID `gorm:"type:bigint(20);"`
 	Title     string       `gorm:"not null;"`
 	Mode      string       `gorm:"not null;"`                // poll, race, battle_royale
-	Status    string       `gorm:"not null;default:'entry'"` // entry, voting, closed, finished
-	Winner    *uuid.UUID   `gorm:"type:uuid;"`
+	Status    string       `gorm:"not null;default:'entry'"` // entry, voting, closed, finished, cancelled
+	Winners   string       `gorm:"type:text;"`               // Comma-separated winner UUIDs, empty for cancellation
 	EntryFee  *int64
 	OwnerID   snowflake.ID `gorm:"type:bigint(20);not null;"`
 	Owner     User         `gorm:"foreignKey:OwnerID;constraint:OnDelete:CASCADE;"`
@@ -30,10 +32,11 @@ const (
 type BetStatus string
 
 const (
-	BetStatusEntry    BetStatus = "entry"
-	BetStatusVoting   BetStatus = "voting"
-	BetStatusClosed   BetStatus = "closed"
-	BetStatusFinished BetStatus = "finished"
+	BetStatusEntry     BetStatus = "entry"
+	BetStatusVoting    BetStatus = "voting"
+	BetStatusClosed    BetStatus = "closed"
+	BetStatusFinished  BetStatus = "finished"
+	BetStatusCancelled BetStatus = "cancelled"
 )
 
 type BetOption struct {
@@ -74,4 +77,37 @@ type BetParticipant = Bet
 // IsOwner checks if the given userID is the owner of this bet session
 func (b *BetHost) IsOwner(userID snowflake.ID) bool {
 	return b.OwnerID == userID
+}
+
+// GetWinners returns the list of winner UUIDs
+func (b *BetHost) GetWinners() []uuid.UUID {
+	if b.Winners == "" {
+		return []uuid.UUID{}
+	}
+	parts := strings.Split(b.Winners, ",")
+	winners := make([]uuid.UUID, 0, len(parts))
+	for _, part := range parts {
+		if id, err := uuid.Parse(strings.TrimSpace(part)); err == nil {
+			winners = append(winners, id)
+		}
+	}
+	return winners
+}
+
+// SetWinners sets the winners from a list of UUIDs
+func (b *BetHost) SetWinners(winners []uuid.UUID) {
+	if len(winners) == 0 {
+		b.Winners = ""
+		return
+	}
+	parts := make([]string, len(winners))
+	for i, w := range winners {
+		parts[i] = w.String()
+	}
+	b.Winners = strings.Join(parts, ",")
+}
+
+// IsCancelled checks if the bet session was cancelled
+func (b *BetHost) IsCancelled() bool {
+	return b.Status == string(BetStatusCancelled)
 }

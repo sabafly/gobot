@@ -391,8 +391,15 @@ func handleDecideButton(c *components.Components, event *events.ComponentInterac
 			clause.OrderByColumn{Column: clause.Column{Name: "index"}, Desc: false},
 		).Where("host_id = ?", hostID).Find(&options)
 
-		// Create select menu with options
-		selectOptions := make([]discord.StringSelectMenuOption, 0, len(options))
+		// Create select menu with options plus a cancellation option
+		selectOptions := make([]discord.StringSelectMenuOption, 0, len(options)+1)
+		// Add cancellation option first
+		selectOptions = append(selectOptions, discord.StringSelectMenuOption{
+			Label:       "キャンセル（全額返金）",
+			Value:       "cancel",
+			Description: "ベットをキャンセルし、全員にポイントを返還します",
+			Emoji:       &discord.ComponentEmoji{Name: "❌"},
+		})
 		for _, opt := range options {
 			selectOptions = append(selectOptions, discord.StringSelectMenuOption{
 				Label: opt.OptionText,
@@ -404,13 +411,13 @@ func handleDecideButton(c *components.Components, event *events.ComponentInterac
 			SetCustomID(fmt.Sprintf("bet:decide:%s", hostID)).
 			SetTitle("結果を決定").
 			SetComponents(
-				discord.NewLabel("勝利した選択肢",
+				discord.NewLabel("勝利した選択肢（複数選択可）",
 					discord.StringSelectMenuComponent{
 						CustomID:    "winner",
-						Placeholder: "勝利した選択肢を選択",
+						Placeholder: "勝利した選択肢を選択（キャンセルも可能）",
 						Options:     selectOptions,
 						MinValues:   ptr(1),
-						MaxValues:   1,
+						MaxValues:   len(selectOptions),
 					}),
 			).
 			Build()); err != nil {
@@ -435,13 +442,26 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 		return errors.NewError(err)
 	}
 
-	winnerID, err := uuid.Parse(event.Data.StringValues("winner")[0])
-	if err != nil {
-		return errors.NewError(err)
+	selectedValues := event.Data.StringValues("winner")
+	if len(selectedValues) == 0 {
+		return errors.NewError(fmt.Errorf("no winner selected"))
 	}
 
 	if event.GuildID() == nil {
 		return errors.NewError(fmt.Errorf("this command can only be used in a guild"))
+	}
+
+	// Check if cancellation was selected
+	isCancelled := false
+	winnerIDs := make([]uuid.UUID, 0)
+	for _, val := range selectedValues {
+		if val == "cancel" {
+			isCancelled = true
+			break
+		}
+		if id, err := uuid.Parse(val); err == nil {
+			winnerIDs = append(winnerIDs, id)
+		}
 	}
 
 	if err := c.GormDB().Transaction(func(tx *gorm.DB) error {
@@ -461,53 +481,89 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 			return nil
 		}
 
-		// Get winner option
-		var winnerOption models.BetOption
-		if err := tx.First(&winnerOption, "id = ?", winnerID).Error; err != nil {
-			return err
-		}
-
 		// Get all bets
 		var allBets []models.Bet
 		tx.Where("host_id = ?", hostID).Find(&allBets)
 
-		// Calculate total pool and winners' share
-		totalPool := int64(0)
-		winnersBets := make([]models.Bet, 0)
+		var resultMessage string
 
-		for _, bet := range allBets {
-			totalPool += bet.Amount
-			if bet.OptionID == winnerID {
-				winnersBets = append(winnersBets, bet)
-			}
-		}
-
-		winnersTotal := int64(0)
-		for _, bet := range winnersBets {
-			winnersTotal += bet.Amount
-		}
-
-		// Distribute winnings
-		if winnersTotal > 0 {
-			for _, bet := range winnersBets {
-				// Calculate proportional share
-				share := (bet.Amount * totalPool) / winnersTotal
-
+		if isCancelled {
+			// Cancellation: refund all bets
+			totalRefunded := int64(0)
+			for _, bet := range allBets {
 				var gopoint models.GoPoint
 				tx.FirstOrCreate(&gopoint, models.GoPoint{
 					UserID:  bet.UserID,
 					GuildID: betHost.GuildID,
 				})
 
-				gopoint.Points += share
+				gopoint.Points += bet.Amount
 				tx.Save(&gopoint)
+				totalRefunded += bet.Amount
 			}
-		}
 
-		// Update bet host status
-		betHost.Status = string(models.BetStatusFinished)
-		betHost.Winner = &winnerID
-		tx.Save(&betHost)
+			// Update bet host status
+			betHost.Status = string(models.BetStatusCancelled)
+			betHost.Winners = ""
+			tx.Save(&betHost)
+
+			resultMessage = fmt.Sprintf("ベットをキャンセルしました。%dpt が返金されました。", totalRefunded)
+		} else {
+			// Normal win: distribute to winners
+			// Calculate total pool
+			totalPool := int64(0)
+			for _, bet := range allBets {
+				totalPool += bet.Amount
+			}
+
+			// Get winners' bets
+			winnersBets := make([]models.Bet, 0)
+			for _, bet := range allBets {
+				for _, winnerID := range winnerIDs {
+					if bet.OptionID == winnerID {
+						winnersBets = append(winnersBets, bet)
+						break
+					}
+				}
+			}
+
+			winnersTotal := int64(0)
+			for _, bet := range winnersBets {
+				winnersTotal += bet.Amount
+			}
+
+			// Distribute winnings proportionally
+			if winnersTotal > 0 {
+				for _, bet := range winnersBets {
+					// Calculate proportional share
+					share := (bet.Amount * totalPool) / winnersTotal
+
+					var gopoint models.GoPoint
+					tx.FirstOrCreate(&gopoint, models.GoPoint{
+						UserID:  bet.UserID,
+						GuildID: betHost.GuildID,
+					})
+
+					gopoint.Points += share
+					tx.Save(&gopoint)
+				}
+			}
+
+			// Update bet host status
+			betHost.Status = string(models.BetStatusFinished)
+			betHost.SetWinners(winnerIDs)
+			tx.Save(&betHost)
+
+			// Get winner option names
+			var winnerOptions []models.BetOption
+			tx.Where("id IN ?", winnerIDs).Find(&winnerOptions)
+			winnerNames := make([]string, len(winnerOptions))
+			for i, opt := range winnerOptions {
+				winnerNames[i] = opt.OptionText
+			}
+
+			resultMessage = fmt.Sprintf("結果を決定しました。勝利: %s\n総額: %dpt が分配されました。", strings.Join(winnerNames, ", "), totalPool)
+		}
 
 		// Update message
 		var options []models.BetOption
@@ -524,7 +580,7 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 			BuildUpdate())
 
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
-			SetContent(fmt.Sprintf("結果を決定しました。勝利: %s\n総額: %dpt が分配されました。", winnerOption.OptionText, totalPool)).
+			SetContent(resultMessage).
 			SetFlags(discord.MessageFlagEphemeral).
 			Build()); err != nil {
 			return err
@@ -544,17 +600,19 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 
 	// Status
 	statusEmoji := map[string]string{
-		string(models.BetStatusEntry):    "📝",
-		string(models.BetStatusVoting):   "🗳️",
-		string(models.BetStatusClosed):   "🔒",
-		string(models.BetStatusFinished): "✅",
+		string(models.BetStatusEntry):     "📝",
+		string(models.BetStatusVoting):    "🗳️",
+		string(models.BetStatusClosed):    "🔒",
+		string(models.BetStatusFinished):  "✅",
+		string(models.BetStatusCancelled): "❌",
 	}
 
 	statusText := map[string]string{
-		string(models.BetStatusEntry):    "エントリー受付中",
-		string(models.BetStatusVoting):   "投票受付中",
-		string(models.BetStatusClosed):   "受付終了",
-		string(models.BetStatusFinished): "終了",
+		string(models.BetStatusEntry):     "エントリー受付中",
+		string(models.BetStatusVoting):    "投票受付中",
+		string(models.BetStatusClosed):    "受付終了",
+		string(models.BetStatusFinished):  "終了",
+		string(models.BetStatusCancelled): "キャンセル（返金済み）",
 	}
 
 	emoji := statusEmoji[host.Status]
@@ -586,8 +644,12 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 			totalAmount += amount
 
 			optionMarker := fmt.Sprintf("%d.", i+1)
-			if host.Winner != nil && *host.Winner == opt.ID {
-				optionMarker = "🏆"
+			winners := host.GetWinners()
+			for _, winnerID := range winners {
+				if winnerID == opt.ID {
+					optionMarker = "🏆"
+					break
+				}
 			}
 
 			text := discord.NewTextDisplayf("%s %s - %d票 (%dpt)", optionMarker, opt.OptionText, voteCount, amount)
