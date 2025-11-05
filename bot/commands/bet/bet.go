@@ -57,6 +57,11 @@ func Command(c *components.Components) components.Command {
 							},
 						},
 					},
+					discord.ApplicationCommandOptionBool{
+						Name:        "allow_vote_change",
+						Description: "Allow users to change their vote destination after voting (optional, default: true)",
+						Required:    false,
+					},
 				},
 			},
 		},
@@ -90,12 +95,18 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 
 	title, _ := data.OptString("title")
 	mode, _ := data.OptString("mode")
+	allowVoteChange, ok := data.OptBool("allow_vote_change")
+	if !ok {
+		allowVoteChange = true // default value
+	}
 	voteType := models.BetVoteType(mode)
 
 	// For poll mode, show modal for options directly
 	if voteType == models.BetVoteTypeGuess {
+		// Encode allow_vote_change in custom ID
+		customID := fmt.Sprintf("bet:config_poll:%t:%s", allowVoteChange, title)
 		if err := event.Modal(discord.NewModalCreateBuilder().
-			SetCustomID(fmt.Sprintf("bet:config_poll:%s", title)).
+			SetCustomID(customID).
 			SetTitle(title).
 			SetComponents(
 				discord.NewLabel("選択肢",

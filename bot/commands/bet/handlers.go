@@ -27,10 +27,17 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	}
 
 	parts := strings.Split(event.Data.CustomID, ":")
-	if len(parts) < 3 {
+	if len(parts) < 4 {
 		return errors.NewError(fmt.Errorf("invalid custom ID"))
 	}
-	title := strings.Join(parts[2:], ":")
+	
+	// Parse allow_vote_change
+	allowVoteChange, err := strconv.ParseBool(parts[2])
+	if err != nil {
+		return errors.NewError(err)
+	}
+	
+	title := strings.Join(parts[3:], ":")
 
 	optionsText := event.Data.Text("options")
 	options := strings.Split(optionsText, "\n")
@@ -77,13 +84,14 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 
 	// Create bet host
 	betHost := &models.BetHost{
-		ID:        uuid.New(),
-		GuildID:   *event.GuildID(),
-		ChannelID: event.Channel().ID(),
-		Title:     title,
-		Mode:      string(models.BetVoteTypeGuess),
-		Status:    string(models.BetStatusVoting),
-		OwnerID:   event.User().ID,
+		ID:                  uuid.New(),
+		GuildID:             *event.GuildID(),
+		ChannelID:           event.Channel().ID(),
+		Title:               title,
+		Mode:                string(models.BetVoteTypeGuess),
+		Status:              string(models.BetStatusVoting),
+		OwnerID:             event.User().ID,
+		AllowVoteDestChange: allowVoteChange,
 	}
 
 	// Save to database
@@ -269,7 +277,39 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 		var existingBet models.Bet
 		result := tx.Where("host_id = ? AND user_id = ?", hostID, event.User().ID).First(&existingBet)
 		if result.Error == nil {
-			// User already voted, update the bet
+			// User already voted, check if update is allowed
+			
+			// Check if amount decrease is attempted (always prohibited)
+			if amount < existingBet.Amount {
+				if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+					SetContent("投票額を減らすことはできません。").
+					SetFlags(discord.MessageFlagEphemeral).
+					Build()); err != nil {
+					return err
+				}
+				return nil
+			}
+			
+			// Check if vote destination change is attempted
+			if existingBet.OptionID != optionID {
+				// Get bet host to check if vote destination change is allowed
+				var betHost models.BetHost
+				if err := tx.First(&betHost, "id = ?", hostID).Error; err != nil {
+					return err
+				}
+				
+				if !betHost.AllowVoteDestChange {
+					if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+						SetContent("投票先を変更することはできません。").
+						SetFlags(discord.MessageFlagEphemeral).
+						Build()); err != nil {
+						return err
+					}
+					return nil
+				}
+			}
+			
+			// Update the bet
 			oldAmount := existingBet.Amount
 			existingBet.Amount = amount
 			existingBet.OptionID = optionID
