@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
@@ -19,6 +20,11 @@ import (
 
 // handlePollConfig handles poll mode configuration
 func handlePollConfig(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+	// Defer the response to acknowledge the interaction
+	if err := event.DeferCreateMessage(true); err != nil {
+		return errors.NewError(err)
+	}
+
 	parts := strings.Split(event.Data.CustomID, ":")
 	if len(parts) < 3 {
 		return errors.NewError(fmt.Errorf("invalid custom ID"))
@@ -26,7 +32,7 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	title := strings.Join(parts[2:], ":")
 
 	optionsText := event.Data.Text("options")
-	options := strings.Split(optionsText, ",")
+	options := strings.Split(optionsText, "\n")
 	for i := range options {
 		options[i] = strings.TrimSpace(options[i])
 	}
@@ -34,16 +40,30 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	// Filter empty options
 	validOptions := make([]string, 0)
 	for _, opt := range options {
+		if utf8.RuneCountInString(opt) > 100 {
+			if err := event.RespondMessage(discord.NewMessageBuilder().
+				SetContent(fmt.Sprintf("選択肢 '%s' が長すぎます。100文字以内にしてください。", opt)).
+				SetFlags(discord.MessageFlagEphemeral)); err != nil {
+				return errors.NewError(err)
+			}
+		}
 		if opt != "" {
 			validOptions = append(validOptions, opt)
 		}
 	}
 
 	if len(validOptions) < 2 {
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+		if err := event.RespondMessage(discord.NewMessageBuilder().
 			SetContent("少なくとも2つの選択肢が必要です。").
-			SetFlags(discord.MessageFlagEphemeral).
-			Build()); err != nil {
+			SetFlags(discord.MessageFlagEphemeral)); err != nil {
+			return errors.NewError(err)
+		}
+		return nil
+	}
+	if len(validOptions) > 25 {
+		if err := event.RespondMessage(discord.NewMessageBuilder().
+			SetContent("選択肢は最大25個までです。").
+			SetFlags(discord.MessageFlagEphemeral)); err != nil {
 			return errors.NewError(err)
 		}
 		return nil
@@ -51,11 +71,6 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 
 	if event.GuildID() == nil {
 		return errors.NewError(fmt.Errorf("this command can only be used in a guild"))
-	}
-
-	// Defer the response to acknowledge the interaction
-	if err := event.DeferCreateMessage(false); err != nil {
-		return errors.NewError(err)
 	}
 
 	// Create bet host
@@ -100,17 +115,12 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	layoutComponents := createBetLayout(betHost, optionModels, c.GormDB())
 
 	// Respond with the bet message using MessageBuilder with ComponentV2
-	if err := event.RespondMessage(discord.NewMessageBuilder().
+	msg, err := event.Client().Rest.CreateMessage(event.Channel().ID(), discord.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(layoutComponents...)); err != nil {
-		slog.Error("failed to send bet message", "error", err)
-		return errors.NewError(err)
-	}
-
-	// Get the interaction response to obtain the message ID
-	msg, err := event.Client().Rest.GetInteractionResponse(event.Client().ApplicationID, event.Token())
+		SetComponents(layoutComponents...).
+		BuildCreate())
 	if err != nil {
-		slog.Error("failed to get interaction response", "error", err)
+		slog.Error("failed to send bet message", "error", err)
 		return errors.NewError(err)
 	}
 
@@ -118,6 +128,12 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	betHost.MessageID = msg.ID
 	if err := c.GormDB().Save(betHost).Error; err != nil {
 		slog.Error("failed to update bet message ID", "error", err)
+	}
+
+	if err := event.RespondMessage(discord.NewMessageBuilder().
+		SetContent("投票を作成しました").
+		SetFlags(discord.MessageFlagEphemeral)); err != nil {
+		return errors.NewError(err)
 	}
 
 	return nil

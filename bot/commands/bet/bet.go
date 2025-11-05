@@ -102,10 +102,10 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 					discord.TextInputComponent{
 						CustomID:    "options",
 						Style:       discord.TextInputStyleParagraph,
-						Placeholder: "選択肢をカンマ区切りで入力 (例: 選択肢1,選択肢2,選択肢3)",
+						Placeholder: "選択肢を改行で区切って入力してください\n選択肢1\n選択肢2\n選択肢3",
 						Required:    true,
 						MinLength:   ptr(3),
-						MaxLength:   500,
+						MaxLength:   4000,
 					}),
 			).
 			Build()); err != nil {
