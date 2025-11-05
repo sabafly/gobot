@@ -47,6 +47,7 @@ type DB struct {
 // Parameters:
 //   - db: The GORM database instance to use for the query
 //   - userID: The Discord snowflake ID of the user
+//
 // Returns:
 //   - *models.User: The user model (either existing or newly created)
 //   - error: Any error encountered during the database operation
@@ -64,6 +65,7 @@ func GetOrCreateUser(db *gorm.DB, userID snowflake.ID) (*models.User, error) {
 // Parameters:
 //   - db: The GORM database instance to use for the query
 //   - guildID: The Discord snowflake ID of the guild
+//
 // Returns:
 //   - *models.Guild: The guild model if found
 //   - error: Any error encountered during the database operation (e.g., gorm.ErrRecordNotFound if guild doesn't exist)
