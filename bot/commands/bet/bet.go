@@ -97,7 +97,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 	mode, _ := data.OptString("mode")
 	allowVoteChange, ok := data.OptBool("allow_vote_change")
 	if !ok {
-		allowVoteChange = true // default value
+		allowVoteChange = false // default value
 	}
 	voteType := models.BetVoteType(mode)
 

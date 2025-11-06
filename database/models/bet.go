@@ -8,18 +8,18 @@ import (
 )
 
 type BetHost struct {
-	ID                    uuid.UUID    `gorm:"type:uuid;primary_key;"`
-	GuildID               snowflake.ID `gorm:"type:bigint(20);not null;index:idx_bet_guild"`
-	ChannelID             snowflake.ID `gorm:"type:bigint(20);not null;"`
-	MessageID             snowflake.ID `gorm:"type:bigint(20);"`
-	Title                 string       `gorm:"not null;"`
-	Mode                  string       `gorm:"not null;"`                // poll, race, battle_royale
-	Status                string       `gorm:"not null;default:'entry'"` // entry, voting, closed, finished, cancelled
-	Winners               string       `gorm:"type:text;"`               // Comma-separated winner UUIDs, empty for cancellation
-	EntryFee              *int64
-	OwnerID               snowflake.ID `gorm:"type:bigint(20);not null;"`
-	Owner                 User         `gorm:"foreignKey:OwnerID;constraint:OnDelete:CASCADE;"`
-	AllowVoteDestChange   bool         `gorm:"not null;default:true"`    // Allow users to change their vote destination after voting
+	ID                  uuid.UUID    `gorm:"type:uuid;primary_key;"`
+	GuildID             snowflake.ID `gorm:"type:bigint(20);not null;index:idx_bet_guild"`
+	ChannelID           snowflake.ID `gorm:"type:bigint(20);not null;"`
+	MessageID           snowflake.ID `gorm:"type:bigint(20);"`
+	Title               string       `gorm:"not null;"`
+	Mode                string       `gorm:"not null;"`                // poll, race, battle_royale
+	Status              string       `gorm:"not null;default:'entry'"` // entry, voting, closed, finished, cancelled
+	Winners             string       `gorm:"type:text;"`               // Comma-separated winner UUIDs, empty for cancellation
+	EntryFee            *int64
+	OwnerID             snowflake.ID `gorm:"type:bigint(20);not null;"`
+	Owner               User         `gorm:"foreignKey:OwnerID;constraint:OnDelete:CASCADE;"`
+	AllowVoteDestChange bool         `gorm:"not null;"` // Allow users to change their vote destination after voting
 }
 
 type BetVoteType string
