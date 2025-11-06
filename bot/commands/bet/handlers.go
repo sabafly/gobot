@@ -210,15 +210,17 @@ func handleVoteButton(c *components.Components, event *events.ComponentInteracti
 		}
 
 		var totalBets int64
-		var totalAmount int64
+		var totalAmount struct {
+			Total int64
+		}
 		if err := tx.Model(&models.Bet{}).Where("host_id = ?", hostID).Count(&totalBets).Error; err != nil {
 			return err
 		}
-		if err := tx.Model(&models.Bet{}).Where("host_id = ?", hostID).Select("SUM(amount)").Scan(&totalAmount).Error; err != nil {
+		if err := tx.Model(&models.Bet{}).Where("host_id = ?", hostID).Select("SUM(amount) as total").Scan(&totalAmount).Error; err != nil {
 			return err
 		}
 
-		status += fmt.Sprintf("現在の総投票数: %d票, 総投票額: %dpt\n", totalBets, totalAmount)
+		status += fmt.Sprintf("現在の総投票数: %d票, 総投票額: %dpt\n", totalBets, totalAmount.Total)
 
 		// Show modal to enter bet amount
 		if err := event.Modal(discord.NewModalCreateBuilder().
