@@ -60,7 +60,7 @@ func Command(c *components.Components) components.Command {
 					},
 					discord.ApplicationCommandOptionBool{
 						Name:        "allow_vote_change",
-						Description: "Allow users to change their vote destination after voting (optional, default: true)",
+						Description: "Allow users to change their vote destination after voting (optional, default: false)",
 						Required:    false,
 					},
 				},
