@@ -45,6 +45,21 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 		options[i] = strings.TrimSpace(options[i])
 	}
 
+	deadlineStr, ok := event.Data.OptText("vote_deadline")
+	var voteDeadline *time.Time
+	if ok && strings.TrimSpace(deadlineStr) != "" {
+		mins, err := strconv.Atoi(deadlineStr)
+		if err != nil {
+			if err := event.RespondMessage(discord.NewMessageBuilder().
+				SetContent("有効な投票締め切り時間を分単位で入力してください。").
+				SetFlags(discord.MessageFlagEphemeral)); err != nil {
+				return errors.NewError(err)
+			}
+			return nil
+		}
+		voteDeadline = ptr(time.Now().Add(time.Duration(mins) * time.Minute))
+	}
+
 	// Filter empty options
 	validOptions := make([]string, 0)
 	for _, opt := range options {
@@ -92,6 +107,7 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 		Status:              string(models.BetStatusVoting),
 		OwnerID:             event.User().ID,
 		AllowVoteDestChange: allowVoteChange,
+		VoteDeadline:        voteDeadline,
 	}
 
 	// Save to database
@@ -663,127 +679,51 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 	return nil
 }
 
-func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.DB) []discord.LayoutComponent {
-	var layoutComponents []discord.LayoutComponent
-
-	// Title
-	layoutComponents = append(layoutComponents, discord.NewTextDisplay(fmt.Sprintf("# %s", host.Title)))
-
-	// Status
-	statusEmoji := map[string]string{
-		string(models.BetStatusEntry):     "📝",
-		string(models.BetStatusVoting):    "🗳️",
-		string(models.BetStatusClosed):    "🔒",
-		string(models.BetStatusFinished):  "✅",
-		string(models.BetStatusCancelled): "❌",
+func handleCloseVoteButton(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+	parts := strings.Split(event.Data.CustomID(), ":")
+	if len(parts) < 3 {
+		return errors.NewError(fmt.Errorf("invalid custom ID"))
 	}
 
-	statusText := map[string]string{
-		string(models.BetStatusEntry):     "エントリー受付中",
-		string(models.BetStatusVoting):    "投票受付中",
-		string(models.BetStatusClosed):    "受付終了",
-		string(models.BetStatusFinished):  "終了",
-		string(models.BetStatusCancelled): "キャンセル（返金済み）",
+	hostID, err := uuid.Parse(parts[2])
+	if err != nil {
+		return errors.NewError(err)
 	}
 
-	emoji := statusEmoji[host.Status]
-	text := statusText[host.Status]
-	layoutComponents = append(layoutComponents, discord.NewTextDisplay(fmt.Sprintf("**ステータス:** %s %s", emoji, text)))
-
-	// Organizer and mode
-	layoutComponents = append(layoutComponents, discord.NewTextDisplay(fmt.Sprintf("**主催者:** <@%d> | **モード:** 通常モード（投票）", host.OwnerID)))
-
-	// Options with vote counts
-	if len(options) > 0 {
-		layoutComponents = append(layoutComponents, discord.NewTextDisplay("**選択肢:**"))
-		layoutComponents = append(layoutComponents, discord.NewLargeSeparator())
-
-		totalVotes := int64(0)
-		totalAmount := int64(0)
-
-		for i, opt := range options {
-			if i > 0 {
-				layoutComponents = append(layoutComponents, discord.NewSmallSeparator())
-			}
-
-			var voteCount int64
-			var amount int64
-			db.Model(&models.Bet{}).Where("option_id = ?", opt.ID).Count(&voteCount)
-			db.Model(&models.Bet{}).Where("option_id = ?", opt.ID).Select("COALESCE(SUM(amount), 0)").Scan(&amount)
-
-			totalVotes += voteCount
-			totalAmount += amount
-
-			optionMarker := fmt.Sprintf("%d.", i+1)
-			winners := host.GetWinners()
-			for _, winnerID := range winners {
-				if winnerID == opt.ID {
-					optionMarker = "🏆"
-					break
-				}
-			}
-
-			text := discord.NewTextDisplayf("%s %s - %d票 (%dpt)", optionMarker, opt.OptionText, voteCount, amount)
-			if host.Status == string(models.BetStatusVoting) {
-				layoutComponents = append(layoutComponents, discord.NewSection(text).
-					WithAccessory(discord.NewSecondaryButton(
-						fmt.Sprintf("%sに投票", opt.OptionText),
-						fmt.Sprintf("bet:vote_btn:%s:%s", host.ID, opt.ID),
-					)),
-				)
-			} else {
-				layoutComponents = append(layoutComponents, text)
-			}
+	if err := c.GormDB().Transaction(func(tx *gorm.DB) error {
+		var betHost models.BetHost
+		if err := tx.First(&betHost, "id = ?", hostID).Error; err != nil {
+			return err
 		}
-		layoutComponents = append(layoutComponents, discord.NewLargeSeparator())
-		layoutComponents = append(layoutComponents, discord.NewTextDisplay(fmt.Sprintf("**合計:** %d票 / %dpt", totalVotes, totalAmount)))
-	}
 
-	// Add buttons if voting is active
-	if host.Status == string(models.BetStatusVoting) {
-		// Create action row
-		layoutComponents = append(layoutComponents, discord.NewActionRow(discord.NewSuccessButton(
-			"結果を決定",
-			fmt.Sprintf("bet:decide_btn:%s", host.ID),
-		)))
-	}
+		// Check if user is owner
+		if !betHost.IsOwner(event.User().ID) {
+			if err := event.RespondMessage(discord.NewMessageBuilder().
+				SetContent("投票の締め切りは主催者のみが行えます。").
+				SetFlags(discord.MessageFlagEphemeral)); err != nil {
+				return err
+			}
+			return nil
+		}
 
-	return layoutComponents
-}
+		// Update status to closed
+		betHost.Status = string(models.BetStatusClosed)
+		if err := tx.Save(&betHost).Error; err != nil {
+			return err
+		}
+		// Update bet message
+		if err := updateBetMessage(c, tx, event.Client(), hostID); err != nil {
+			return err
+		}
 
-func createBetButtons(host *models.BetHost, options []models.BetOption) []discord.LayoutComponent {
-	if host.Status != string(models.BetStatusVoting) {
+		if err := event.RespondMessage(discord.NewMessageBuilder().
+			SetContent("投票を締め切りました。").
+			SetFlags(discord.MessageFlagEphemeral)); err != nil {
+			return err
+		}
 		return nil
+	}); err != nil {
+		return errors.NewError(err)
 	}
-
-	var buttons []discord.InteractiveComponent
-
-	// Add vote buttons for each option (max 5 per row)
-	for i, opt := range options {
-		if i >= 5 { // Discord limit
-			break
-		}
-		buttons = append(buttons, discord.NewSecondaryButton(
-			opt.OptionText,
-			fmt.Sprintf("bet:vote_btn:%s:%s", host.ID, opt.ID),
-		))
-	}
-
-	// Add decide button
-	buttons = append(buttons, discord.NewSuccessButton(
-		"結果を決定",
-		fmt.Sprintf("bet:decide_btn:%s", host.ID),
-	))
-
-	// Create action row and return as layout component
-	row := discord.NewActionRow(buttons...)
-	return []discord.LayoutComponent{row}
-}
-
-func convertToLayoutComponents(containers []discord.ContainerComponent) []discord.LayoutComponent {
-	result := make([]discord.LayoutComponent, len(containers))
-	for i, c := range containers {
-		result[i] = c
-	}
-	return result
+	return nil
 }

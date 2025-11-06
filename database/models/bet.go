@@ -2,6 +2,7 @@ package models
 
 import (
 	"strings"
+	"time"
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
@@ -20,6 +21,8 @@ type BetHost struct {
 	OwnerID             snowflake.ID `gorm:"type:bigint(20);not null;"`
 	Owner               User         `gorm:"foreignKey:OwnerID;constraint:OnDelete:CASCADE;"`
 	AllowVoteDestChange bool         `gorm:"not null;"` // Allow users to change their vote destination after voting
+	CreatedAt           time.Time
+	VoteDeadline        *time.Time `gorm:"index:idx_vote_deadline;"`
 }
 
 type BetVoteType string
@@ -33,11 +36,11 @@ const (
 type BetStatus string
 
 const (
-	BetStatusEntry     BetStatus = "entry"
-	BetStatusVoting    BetStatus = "voting"
-	BetStatusClosed    BetStatus = "closed"
-	BetStatusFinished  BetStatus = "finished"
-	BetStatusCancelled BetStatus = "cancelled"
+	BetStatusEntry     BetStatus = "entry"     // Accepting entries
+	BetStatusVoting    BetStatus = "voting"    // Accepting votes
+	BetStatusClosed    BetStatus = "closed"    // No more bets can be placed
+	BetStatusFinished  BetStatus = "finished"  // Bet session finished
+	BetStatusCancelled BetStatus = "cancelled" // Bet session cancelled
 )
 
 type BetOption struct {
@@ -58,7 +61,7 @@ type Bet struct {
 	OptionID  uuid.UUID    `gorm:"type:uuid;not null"`
 	Option    BetOption    `gorm:"foreignKey:OptionID;constraint:OnDelete:CASCADE;"`
 	Amount    int64        `gorm:"not null;"`
-	Timestamp int64        `gorm:"not null;"`
+	Timestamp int64        `gorm:"not null;"` // Unix timestamp of when the bet was placed
 }
 
 // BetEntrant represents a user entering as a competitor (used in race and battle_royale modes)

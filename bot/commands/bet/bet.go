@@ -2,6 +2,7 @@ package bet
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
@@ -85,6 +86,16 @@ func Command(c *components.Components) components.Command {
 			"bet:decide_btn": generic.PComponentHandler{
 				ComponentHandler: handleDecideButton,
 			},
+			"bet:close_vote_btn": generic.PComponentHandler{
+				ComponentHandler: handleCloseVoteButton,
+			},
+		},
+
+		Schedulers: []components.Scheduler{
+			{
+				Duration: time.Minute,
+				Worker:   betSchedulerWorker,
+			},
 		},
 	}).SetComponent(c)
 }
@@ -128,6 +139,15 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 						Required:    true,
 						MinLength:   ptr(3),
 						MaxLength:   4000,
+					}),
+				discord.NewLabel("投票期限",
+					discord.TextInputComponent{
+						CustomID:    "vote_deadline",
+						Style:       discord.TextInputStyleShort,
+						Placeholder: "投票の締め切り時間を分単位で入力してください（例: 60）",
+						Required:    false,
+						MinLength:   ptr(1),
+						MaxLength:   10,
 					}),
 			).
 			Build()); err != nil {
