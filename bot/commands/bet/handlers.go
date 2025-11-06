@@ -550,7 +550,7 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 			}
 			return nil
 		}
-		if err := event.DeferCreateMessage(true); err != nil {
+		if err := event.DeferCreateMessage(false); err != nil {
 			return errors.NewError(err)
 		}
 
@@ -580,7 +580,7 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 			betHost.Winners = ""
 			tx.Save(&betHost)
 
-			resultMessage = fmt.Sprintf("ベットをキャンセルしました。%dpt が返金されました。", totalRefunded)
+			resultMessage = fmt.Sprintf("ベットはキャンセルされました。合計%dpt が返金されました。", totalRefunded)
 		} else {
 			// Normal win: distribute to winners
 			// Calculate total pool
@@ -635,7 +635,7 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 				winnerNames[i] = opt.OptionText
 			}
 
-			resultMessage = fmt.Sprintf("結果を決定しました。勝利: %s\n総額: %dpt が分配されました。", strings.Join(winnerNames, ", "), totalPool)
+			resultMessage = fmt.Sprintf("# 勝利: %s\n結果が決定されました。\n総額: %dpt が分配されました。", strings.Join(winnerNames, ", "), totalPool)
 		}
 
 		// Update message
