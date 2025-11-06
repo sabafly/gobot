@@ -193,11 +193,39 @@ func handleVoteButton(c *components.Components, event *events.ComponentInteracti
 			return err
 		}
 
+		var status = ""
+
+		var existingBet models.Bet
+		result := tx.Where("host_id = ? AND user_id = ?", hostID, event.User().ID).First(&existingBet)
+		if result.Error == nil {
+			if !betHost.AllowVoteDestChange && existingBet.OptionID != optionID {
+				if err := event.RespondMessage(discord.NewMessageBuilder().
+					SetContent("投票先を変更することはできません。").
+					SetFlags(discord.MessageFlagEphemeral)); err != nil {
+					return err
+				}
+				return nil
+			}
+			status += fmt.Sprintf("あなたは既に %dpt 投票しています。\n", existingBet.Amount)
+		}
+
+		var totalBets int64
+		var totalAmount int64
+		if err := tx.Model(&models.Bet{}).Where("host_id = ?", hostID).Count(&totalBets).Error; err != nil {
+			return err
+		}
+		if err := tx.Model(&models.Bet{}).Where("host_id = ?", hostID).Select("SUM(amount)").Scan(&totalAmount).Error; err != nil {
+			return err
+		}
+
+		status += fmt.Sprintf("現在の総投票数: %d票, 総投票額: %dpt\n", totalBets, totalAmount)
+
 		// Show modal to enter bet amount
 		if err := event.Modal(discord.NewModalCreateBuilder().
 			SetCustomID(fmt.Sprintf("bet:vote:%s:%s", hostID, optionID)).
 			SetTitle(fmt.Sprintf("%s に投票", option.OptionText)).
 			SetComponents(
+				discord.NewTextDisplay(status),
 				discord.NewLabel("投票するポイント数",
 					discord.TextInputComponent{
 						CustomID:    "amount",
