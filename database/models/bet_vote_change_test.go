@@ -60,8 +60,8 @@ func TestBetHost_DefaultAllowVoteDestChange(t *testing.T) {
 	}
 
 	// Note: The database default is set via GORM tags as `default:true`
-	// This test just verifies the field exists and can be set
+	// This test verifies the Go zero value is false (not set explicitly)
 	if betHost.AllowVoteDestChange {
-		t.Log("AllowVoteDestChange has Go zero value (false), database default will be true")
+		t.Fatalf("expected AllowVoteDestChange to be false (Go zero value), got true")
 	}
 }
