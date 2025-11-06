@@ -5,6 +5,7 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/sabafly/gobot/database/models"
+	"github.com/sabafly/gobot/internal/i18n"
 	"gorm.io/gorm"
 )
 
@@ -17,16 +18,6 @@ var (
 		models.BetStatusCancelled: "❌",
 	}
 
-	statusText = func(key models.BetStatus) string {
-		return map[models.BetStatus]string{
-			models.BetStatusEntry:     "エントリー受付中",
-			models.BetStatusVoting:    "投票受付中",
-			models.BetStatusClosed:    "受付終了",
-			models.BetStatusFinished:  "終了",
-			models.BetStatusCancelled: "キャンセル（返金済み）",
-		}[key]
-	}
-
 	statusColor = map[models.BetStatus]int{
 		models.BetStatusEntry:     0x3498DB, // Blue
 		models.BetStatusVoting:    0xF1C40F, // Yellow
@@ -36,7 +27,17 @@ var (
 	}
 )
 
-func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.DB) []discord.LayoutComponent {
+func statusText(key models.BetStatus, locale discord.Locale) string {
+	return map[models.BetStatus]string{
+		models.BetStatusEntry:     i18n.TranslateText(locale, "command.bet.status.entry"),
+		models.BetStatusVoting:    i18n.TranslateText(locale, "command.bet.status.voting"),
+		models.BetStatusClosed:    i18n.TranslateText(locale, "command.bet.status.closed"),
+		models.BetStatusFinished:  i18n.TranslateText(locale, "command.bet.status.finished"),
+		models.BetStatusCancelled: i18n.TranslateText(locale, "command.bet.status.cancelled"),
+	}[key]
+}
+
+func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.DB, locale discord.Locale) []discord.LayoutComponent {
 	var layoutComponents []discord.LayoutComponent
 
 	// Header
@@ -50,21 +51,21 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 
 	// Status
 	emoji := statusEmoji[models.BetStatus(host.Status)]
-	text := statusText(models.BetStatus(host.Status))
+	text := statusText(models.BetStatus(host.Status), locale)
 	headerComponent = headerComponent.AddComponents(
-		discord.NewTextDisplay(fmt.Sprintf("**状態:** %s %s", emoji, text)),
+		discord.NewTextDisplay(fmt.Sprintf("%s %s %s", i18n.TranslateText(locale, "command.bet.layout.status_label"), emoji, text)),
 	)
 
 	// Organizer and mode
 	headerComponent = headerComponent.AddComponents(
-		discord.NewTextDisplay(fmt.Sprintf("**主催者:** <@%d> | **モード:** %s", host.OwnerID, host.Mode)),
+		discord.NewTextDisplay(fmt.Sprintf("%s <@%d> | %s %s", i18n.TranslateText(locale, "command.bet.layout.organizer_label"), host.OwnerID, i18n.TranslateText(locale, "command.bet.layout.mode_label"), host.Mode)),
 	)
 
 	// Deadline
 	if host.VoteDeadline != nil {
 		headerComponent = headerComponent.AddComponents(
 			discord.NewLargeSeparator(),
-			discord.NewTextDisplayf("**投票締め切り:** %s (%s)", discord.FormattedTimestampMention(host.VoteDeadline.Unix(), discord.TimestampStyleShortDateShortTime), discord.FormattedTimestampMention(host.VoteDeadline.Unix(), discord.TimestampStyleRelative)),
+			discord.NewTextDisplayf("%s %s (%s)", i18n.TranslateText(locale, "command.bet.layout.deadline_label"), discord.FormattedTimestampMention(host.VoteDeadline.Unix(), discord.TimestampStyleShortDateShortTime), discord.FormattedTimestampMention(host.VoteDeadline.Unix(), discord.TimestampStyleRelative)),
 		)
 	}
 
@@ -73,7 +74,7 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 	// Options with vote counts
 	optionsComponent := discord.NewContainer().WithAccentColor(0x95A5A6) // Gray
 	optionsComponent = optionsComponent.AddComponents(
-		discord.NewTextDisplay("### **選択肢**"),
+		discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.options_title")),
 		discord.NewLargeSeparator(),
 	)
 	if len(options) > 0 {
@@ -102,11 +103,17 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 				}
 			}
 
-			text := discord.NewTextDisplayf("%s %s - %d票 (%dpt)", optionMarker, opt.OptionText, voteCount, amount)
+			text := discord.NewTextDisplay(fmt.Sprintf("%s %s - ", optionMarker, opt.OptionText) +
+				i18n.BuildContext().
+					WithText("votes", fmt.Sprintf("%d", voteCount)).
+					WithText("points", fmt.Sprintf("%d", amount)).
+					ReplaceText(i18n.TranslateText(locale, "command.bet.layout.option_votes")))
 			if host.Status == string(models.BetStatusVoting) {
 				optionsComponent = optionsComponent.AddComponents(discord.NewSection(text).
 					WithAccessory(discord.NewSecondaryButton(
-						fmt.Sprintf("%sに投票", opt.OptionText),
+						i18n.BuildContext().
+							WithText("option", opt.OptionText).
+							ReplaceText(i18n.TranslateText(locale, "command.bet.button.vote")),
 						fmt.Sprintf("bet:vote_btn:%s:%s", host.ID, opt.ID),
 					)),
 				)
@@ -116,11 +123,15 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 		}
 		optionsComponent = optionsComponent.AddComponents(
 			discord.NewLargeSeparator(),
-			discord.NewTextDisplay(fmt.Sprintf("**合計:** %d票 / %dpt", totalVotes, totalAmount)),
+			discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.total_label")+" "+
+				i18n.BuildContext().
+					WithText("votes", fmt.Sprintf("%d", totalVotes)).
+					WithText("points", fmt.Sprintf("%d", totalAmount)).
+					ReplaceText(i18n.TranslateText(locale, "command.bet.layout.votes_points"))),
 		)
 	} else {
 		optionsComponent = optionsComponent.AddComponents(
-			discord.NewTextDisplay("_選択肢がまだ追加されていません_"),
+			discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.no_options")),
 		)
 	}
 	layoutComponents = append(layoutComponents, optionsComponent)
@@ -130,19 +141,19 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 	case models.BetStatusEntry:
 		// Add buttons if entry is active
 		actionRow = actionRow.AddComponents(discord.NewPrimaryButton(
-			"エントリーする",
+			i18n.TranslateText(locale, "command.bet.button.entry"),
 			fmt.Sprintf("bet:enter_btn:%s", host.ID),
 		))
 	case models.BetStatusVoting:
 		// Add buttons if voting is active
 		actionRow = actionRow.AddComponents(discord.NewDangerButton(
-			"投票を締め切る",
+			i18n.TranslateText(locale, "command.bet.button.close_vote"),
 			fmt.Sprintf("bet:close_vote_btn:%s", host.ID),
 		))
 	case models.BetStatusClosed:
 		// Add buttons if voting is active
 		actionRow = actionRow.AddComponents(discord.NewSuccessButton(
-			"結果を決定",
+			i18n.TranslateText(locale, "command.bet.button.decide_result"),
 			fmt.Sprintf("bet:decide_btn:%s", host.ID),
 		))
 	}

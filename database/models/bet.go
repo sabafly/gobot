@@ -23,6 +23,7 @@ type BetHost struct {
 	AllowVoteDestChange bool         `gorm:"not null;"` // Allow users to change their vote destination after voting
 	CreatedAt           time.Time
 	VoteDeadline        *time.Time `gorm:"index:idx_vote_deadline;"`
+	Locale              string     `gorm:"type:varchar(10);not null;default:'en';"`
 }
 
 type BetVoteType string

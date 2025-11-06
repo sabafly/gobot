@@ -59,9 +59,11 @@ func Command(c *components.Components) components.Command {
 						},
 					},
 					discord.ApplicationCommandOptionBool{
-						Name:        "allow_vote_change",
-						Description: "Allow users to change their vote destination after voting (optional, default: false)",
-						Required:    false,
+						Name:                     "allow_vote_change",
+						NameLocalizations:        i18n.TranslateCommandOptionMap("command.bet.option.allow_vote_change.name"),
+						Description:              "Allow users to change their vote destination after voting (optional, default: false)",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.bet.option.allow_vote_change.description"),
+						Required:                 false,
 					},
 				},
 			},
@@ -103,6 +105,7 @@ func Command(c *components.Components) components.Command {
 // handleBetCommand handles the /bet command with title and mode arguments
 func handleBetCommand(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 	data := event.SlashCommandInteractionData()
+	locale := event.Locale()
 
 	title, _ := data.OptString("title")
 	mode, _ := data.OptString("mode")
@@ -118,33 +121,33 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 		customID := fmt.Sprintf("bet:config_poll:%t", allowVoteChange)
 		if err := event.Modal(discord.NewModalCreateBuilder().
 			SetCustomID(customID).
-			SetTitle("投票を作成").
+			SetTitle(i18n.TranslateText(locale, "command.bet.modal.create_poll.title")).
 			SetComponents(
-				discord.NewLabel("タイトル",
+				discord.NewLabel(i18n.TranslateText(locale, "command.bet.modal.create_poll.input.title.label"),
 					discord.TextInputComponent{
 						CustomID:    "title",
 						Style:       discord.TextInputStyleShort,
-						Placeholder: "投票のタイトルを入力してください",
+						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_poll.input.title.placeholder"),
 						Required:    true,
 						MinLength:   ptr(1),
 						MaxLength:   100,
 						Value:       title,
 					},
 				),
-				discord.NewLabel("選択肢",
+				discord.NewLabel(i18n.TranslateText(locale, "command.bet.modal.create_poll.input.options.label"),
 					discord.TextInputComponent{
 						CustomID:    "options",
 						Style:       discord.TextInputStyleParagraph,
-						Placeholder: "選択肢を改行で区切って入力してください\n選択肢1\n選択肢2\n選択肢3",
+						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_poll.input.options.placeholder"),
 						Required:    true,
 						MinLength:   ptr(3),
 						MaxLength:   4000,
 					}),
-				discord.NewLabel("投票期限",
+				discord.NewLabel(i18n.TranslateText(locale, "command.bet.modal.create_poll.input.deadline.label"),
 					discord.TextInputComponent{
 						CustomID:    "vote_deadline",
 						Style:       discord.TextInputStyleShort,
-						Placeholder: "投票の締め切り時間を分単位で入力してください（例: 60）",
+						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_poll.input.deadline.placeholder"),
 						Required:    false,
 						MinLength:   ptr(1),
 						MaxLength:   10,
@@ -158,7 +161,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 
 	// For other modes, show not implemented message
 	if err := event.CreateMessage(discord.NewMessageCreateBuilder().
-		SetContent("このモードはまだ実装されていません。通常モード（予想）を選択してください。").
+		SetContent(i18n.TranslateText(locale, "command.bet.error.mode_not_implemented")).
 		SetFlags(discord.MessageFlagEphemeral).
 		Build()); err != nil {
 		return errors.NewError(err)
