@@ -104,11 +104,22 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 	// For poll mode, show modal for options directly
 	if voteType == models.BetVoteTypeGuess {
 		// Encode allow_vote_change in custom ID
-		customID := fmt.Sprintf("bet:config_poll:%t:%s", allowVoteChange, title)
+		customID := fmt.Sprintf("bet:config_poll:%t", allowVoteChange)
 		if err := event.Modal(discord.NewModalCreateBuilder().
 			SetCustomID(customID).
-			SetTitle(title).
+			SetTitle("投票を作成").
 			SetComponents(
+				discord.NewLabel("タイトル",
+					discord.TextInputComponent{
+						CustomID:    "title",
+						Style:       discord.TextInputStyleShort,
+						Placeholder: "投票のタイトルを入力してください",
+						Required:    true,
+						MinLength:   ptr(1),
+						MaxLength:   100,
+						Value:       title,
+					},
+				),
 				discord.NewLabel("選択肢",
 					discord.TextInputComponent{
 						CustomID:    "options",

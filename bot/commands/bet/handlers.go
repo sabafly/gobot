@@ -27,17 +27,17 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	}
 
 	parts := strings.Split(event.Data.CustomID, ":")
-	if len(parts) < 4 {
+	if len(parts) < 3 {
 		return errors.NewError(fmt.Errorf("invalid custom ID"))
 	}
-	
+
 	// Parse allow_vote_change
 	allowVoteChange, err := strconv.ParseBool(parts[2])
 	if err != nil {
 		return errors.NewError(err)
 	}
-	
-	title := strings.Join(parts[3:], ":")
+
+	title := event.Data.Text("title")
 
 	optionsText := event.Data.Text("options")
 	options := strings.Split(optionsText, "\n")
@@ -278,7 +278,7 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 		result := tx.Where("host_id = ? AND user_id = ?", hostID, event.User().ID).First(&existingBet)
 		if result.Error == nil {
 			// User already voted, check if update is allowed
-			
+
 			// Check if amount decrease is attempted (always prohibited)
 			if amount < existingBet.Amount {
 				if err := event.CreateMessage(discord.NewMessageCreateBuilder().
@@ -289,7 +289,7 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 				}
 				return nil
 			}
-			
+
 			// Check if vote destination change is attempted
 			if existingBet.OptionID != optionID {
 				// Get bet host to check if vote destination change is allowed
@@ -297,7 +297,7 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 				if err := tx.First(&betHost, "id = ?", hostID).Error; err != nil {
 					return err
 				}
-				
+
 				if !betHost.AllowVoteDestChange {
 					if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 						SetContent("投票先を変更することはできません。").
@@ -308,7 +308,7 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 					return nil
 				}
 			}
-			
+
 			// Update the bet
 			oldAmount := existingBet.Amount
 			existingBet.Amount = amount
@@ -455,7 +455,7 @@ func handleDecideButton(c *components.Components, event *events.ComponentInterac
 				discord.NewLabel("勝利した選択肢（複数選択可）",
 					discord.StringSelectMenuComponent{
 						CustomID:    "winner",
-						Placeholder: "勝利した選択肢を選択（キャンセルも可能）",
+						Placeholder: "勝利した選択肢を選択（キャンセル可）",
 						Options:     selectOptions,
 						MinValues:   ptr(1),
 						MaxValues:   len(selectOptions),
