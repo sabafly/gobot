@@ -40,6 +40,8 @@ var (
 type (
 	Config struct {
 		Description string
+		Template    any
+		MapContext  *i18n.MapContext
 	}
 
 	Option func(*Config)
@@ -59,6 +61,18 @@ func WithDescription(s string) Option {
 	}
 }
 
+func WithTemplate(t any) Option {
+	return func(c *Config) {
+		c.Template = t
+	}
+}
+
+func WithMapContext(mc *i18n.MapContext) Option {
+	return func(c *Config) {
+		c.MapContext = mc
+	}
+}
+
 func ErrorMessage(
 	key string,
 	event interface {
@@ -67,24 +81,30 @@ func ErrorMessage(
 	},
 	opts ...Option,
 ) error {
-	cfg := Config{}
+	cfg := DefaultConfig
 	cfg.options(opts...)
 
 	var desc string
 	if cfg.Description != "" {
 		desc = cfg.Description
 	} else {
-		d, err := translate.Localize(event.Locale(), key+".description", nil, 0)
+		d, err := translate.Localize(event.Locale(), key+".description", cfg.Template, 0)
 		if err == nil {
 			desc = d
 		} else {
 			desc = i18n.TranslateText(event.Locale(), key+".description")
+			if cfg.MapContext != nil {
+				desc = cfg.MapContext.ReplaceText(desc)
+			}
 		}
 	}
 
 	title := translate.Message(event.Locale(), key)
 	if title == "" || title == key {
 		title = i18n.TranslateText(event.Locale(), key)
+	}
+	if cfg.MapContext != nil {
+		title = cfg.MapContext.ReplaceText(title)
 	}
 
 	return event.RespondMessage(

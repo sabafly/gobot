@@ -133,22 +133,20 @@ func Command(c *components.Components) components.Command {
 							SetTitle(translate.Message(event.Locale(), "components.role.panel.create.modal.title")).
 							SetCustomID("role:panel_create_modal").
 							SetComponents(
-								discord.NewActionRow(
+								discord.NewLabel(translate.Message(event.Locale(), "components.role.panel.create.modal.input.1.label"),
 									discord.TextInputComponent{
 										CustomID:  "name",
 										Style:     discord.TextInputStyleShort,
-										Label:     translate.Message(event.Locale(), "components.role.panel.create.modal.input.1.label"),
 										MinLength: builtin.Ptr(1),
 										MaxLength: 32,
 										Required:  true,
 										Value:     translate.Message(event.Locale(), "components.role.panel.default_name"),
 									},
 								),
-								discord.NewActionRow(
+								discord.NewLabel(translate.Message(event.Locale(), "components.role.panel.create.modal.input.2.label"),
 									discord.TextInputComponent{
 										CustomID:  "description",
 										Style:     discord.TextInputStyleParagraph,
-										Label:     translate.Message(event.Locale(), "components.role.panel.create.modal.input.2.label"),
 										MaxLength: 140,
 									},
 								),
@@ -467,22 +465,20 @@ func Command(c *components.Components) components.Command {
 								SetCustomID(fmt.Sprintf("role:panel_edit_modal:%s:%s", action, edit.ID)).
 								SetComponents(
 									builtin.Or(action == "change_name",
-										discord.NewActionRow(
+										discord.NewLabel(translate.Message(event.Locale(), "components.role.panel.edit.change_name.modal.input.name.label"),
 											discord.TextInputComponent{
 												CustomID:  "name",
 												Style:     discord.TextInputStyleShort,
-												Label:     translate.Message(event.Locale(), "components.role.panel.create.modal.input.1.label"),
 												MinLength: builtin.Ptr(1),
 												MaxLength: 32,
 												Required:  true,
 												Value:     *edit.Name,
 											},
 										),
-										discord.NewActionRow(
+										discord.NewLabel(translate.Message(event.Locale(), "components.role.panel.edit.change_description.modal.input.description.label"),
 											discord.TextInputComponent{
 												CustomID:  "description",
 												Style:     discord.TextInputStyleParagraph,
-												Label:     translate.Message(event.Locale(), "components.role.panel.create.modal.input.2.label"),
 												MaxLength: 140,
 												Value:     *edit.Description,
 											},
@@ -647,11 +643,10 @@ func Command(c *components.Components) components.Command {
 									SetTitle(translate.Message(event.Locale(), "components.role.panel.edit.set_display.name.modal.title")).
 									SetCustomID(fmt.Sprintf("role:panel_edit_modal:set_display_name:%s", edit.ID)).
 									SetComponents(
-										discord.NewActionRow(
+										discord.NewLabel(translate.Message(event.Locale(), "components.role.panel.edit.set_display.name.modal.input.display_name.label"),
 											discord.TextInputComponent{
 												CustomID:  "display_name",
 												Style:     discord.TextInputStyleShort,
-												Label:     translate.Message(event.Locale(), "components.role.panel.edit.set_display.name.modal.input.display_name.label"),
 												MinLength: builtin.Ptr(1),
 												MaxLength: 100,
 												Required:  true,

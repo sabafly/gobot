@@ -25,6 +25,20 @@ strings:
   command.play.slotmachine.description: "スロットマシンをプレイします。"
   command.play.high-and-low.guess-next: 次のカードを予想してください
   command.play.high-and-low.equal-retry: 結果が同じでした。もう一度予想してください
+  command.play.high-and-low.description: "ハイアンドローゲームをプレイします。"
+  command.play.high-and-low.option.extra_bet.name: "追加ベット"
+  command.play.high-and-low.option.extra_bet.description: "追加ベットを行い、初期ポイントを増やします 4ポイント以上増やした場合1ポイントごとに倍率が(増やしたポイント-3)増える (10^(追加初期ポイント+1) )ポイント支払う"
+  command.play.slot.description: "スロットマシンをプレイします。"
+  command.bet.description: "Goポイントを賭けます。"
+  command.bet.create.title: "ベットを作成"
+  command.bet.create.input.title.placeholder: "ベット内容を入力してください"
+  command.bet.create.input.title.label: "ベットタイトル"
+  command.bet.create.select.vote_type.label: "投票タイプ"
+  command.bet.create.select.vote_type.placeholder: "投票タイプを選択してください"
+  command.bet.vote_type.guess: "予想"
+  command.bet.vote_type.guess.description: "選択肢の中から正解を予想します。"
+  command.bet.vote_type.race: "レース"
+  command.bet.vote_type.race.description: "参加者で競い合います。"
   error.gopoint.give.self: "無効な譲渡先"
   error.gopoint.give.self.description: "自分自身にGoポイントを譲渡することはできません。"
   error.gopoint.give.invalid_target: "無効な譲渡先"
@@ -36,7 +50,9 @@ strings:
   error.play.high-and-low.not_your_game: "このゲームはあなたのものではありません"
   error.play.high-and-low.not_your_game.description: "他のユーザーのハイアンドローゲームに参加することはできません。"
   error.play.high-and-low.insufficient_points: "ポイントが不足しています"
-  error.play.high-and-low.insufficient_points.description: "このハイアンドローゲームに参加するには、最低でも25ポイントが必要です。"
+  error.play.high-and-low.insufficient_points.description: "このハイアンドローゲームに参加するには、{point}ポイントが必要です。"
+  error.play.slot.insufficient_points: "ポイントが不足しています"
+  error.play.slot.insufficient_points.description: "このスロットマシンをプレイするには、{point}ポイントが必要です。"
 components:
   command.settings.view:
     - type: container
@@ -116,8 +132,10 @@ components:
         - "## ハイアンドロー"
         - |-
           - **ターン**：{turn}
-          - **現在のポイント**：`{point} ポイント`
-          - **現在のカード**：{current_card}
+          - **現在のカード**
+          # {current_card}
+          - **前回のカード**: {last_card}
+          - **現在のポイント**：`{point} ポイント` (x{multiplier}倍)
           - **前回の選択**：**{last_choice}**
         - "### {message}"
         - type: action_row
@@ -140,6 +158,8 @@ components:
         - "## ハイアンドロー"
         - |-
           - **ターン**：{turn}
-          - **結果**：`{point} ポイント`
-          - **最後のカード**：{current_card}
+          - **最後のカード**
+          # {current_card}
+          - **前回のカード**: {last_card}
+          - **結果**：`{point} ポイント` (x{multiplier}倍)
           - **最後の選択**：**{last_choice}**
