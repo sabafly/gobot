@@ -513,13 +513,15 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 
 		// Double check ownership
 		if !betHost.IsOwner(event.User().ID) {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			if err := event.RespondMessage(discord.NewMessageBuilder().
 				SetContent("結果の決定は主催者のみが行えます。").
-				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+				SetFlags(discord.MessageFlagEphemeral)); err != nil {
 				return err
 			}
 			return nil
+		}
+		if err := event.DeferCreateMessage(true); err != nil {
+			return errors.NewError(err)
 		}
 
 		// Get all bets
@@ -620,10 +622,8 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 			SetComponents(layoutComponents...).
 			BuildUpdate())
 
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
-			SetContent(resultMessage).
-			SetFlags(discord.MessageFlagEphemeral).
-			Build()); err != nil {
+		if err := event.RespondMessage(discord.NewMessageBuilder().
+			SetContent(resultMessage)); err != nil {
 			return err
 		}
 		return nil
