@@ -200,13 +200,13 @@ func handleVoteButton(c *components.Components, event *events.ComponentInteracti
 		if result.Error == nil {
 			if !betHost.AllowVoteDestChange && existingBet.OptionID != optionID {
 				if err := event.RespondMessage(discord.NewMessageBuilder().
-					SetContent("投票先を変更することはできません。").
+					SetContentf("あなたは既に %s に %dpt 投票しています。\n投票先を変更することはできません。", existingBet.Option.OptionText, existingBet.Amount).
 					SetFlags(discord.MessageFlagEphemeral)); err != nil {
 					return err
 				}
 				return nil
 			}
-			status += fmt.Sprintf("あなたは既に %dpt 投票しています。\n", existingBet.Amount)
+			status += fmt.Sprintf("あなたは既に %s に %dpt 投票しています。\n", existingBet.Option.OptionText, existingBet.Amount)
 		}
 
 		var totalBets int64
