@@ -20,7 +20,6 @@ func ptr[T any](v T) *T {
 func Command(c *components.Components) components.Command {
 	return (&generic.Command{
 		Namespace: "bet",
-		Private:   true,
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
 				Name:                     "bet",
