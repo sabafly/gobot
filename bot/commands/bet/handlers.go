@@ -327,23 +327,22 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 			return err
 		}
 
-		if gopoint.Points < amount {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
-				SetContent(i18n.BuildContext().
-					WithText("points", fmt.Sprintf("%d", gopoint.Points)).
-					ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_points"))).
-				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
-				return err
-			}
-			return nil
-		}
-
 		// Check if user already voted
 		var existingBet models.Bet
 		result := tx.Where("host_id = ? AND user_id = ?", hostID, event.User().ID).First(&existingBet)
 		if result.Error == nil {
 			// User already voted, check if update is allowed
+
+			// If no change in amount or option, return early to avoid unnecessary updates
+			if amount == existingBet.Amount && optionID == existingBet.OptionID {
+				if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+					SetContent(i18n.TranslateText(locale, "command.bet.message.no_change")).
+					SetFlags(discord.MessageFlagEphemeral).
+					Build()); err != nil {
+					return err
+				}
+				return nil
+			}
 
 			// Check if amount decrease is attempted (always prohibited)
 			if amount < existingBet.Amount {
@@ -375,8 +374,21 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 				}
 			}
 
+			// Check if user has sufficient points for the difference
+			pointsDifference := amount - existingBet.Amount
+			if pointsDifference > 0 && gopoint.Points < pointsDifference {
+				if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+					SetContent(i18n.BuildContext().
+						WithText("points", fmt.Sprintf("%d", gopoint.Points)).
+						ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_points"))).
+					SetFlags(discord.MessageFlagEphemeral).
+					Build()); err != nil {
+					return err
+				}
+				return nil
+			}
+
 			// Update the bet
-			oldAmount := existingBet.Amount
 			existingBet.Amount = amount
 			existingBet.OptionID = optionID
 			existingBet.Option = models.BetOption{ID: optionID}
@@ -386,9 +398,8 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 				return err
 			}
 
-			// Adjust points
-			diff := amount - oldAmount
-			gopoint.Points -= diff
+			// Adjust points by the difference
+			gopoint.Points -= pointsDifference
 			if err := tx.Save(&gopoint).Error; err != nil {
 				return err
 			}
@@ -401,6 +412,19 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 				SetContent(i18n.BuildContext().
 					WithText("amount", fmt.Sprintf("%d", amount)).
 					ReplaceText(i18n.TranslateText(locale, "command.bet.message.updated"))).
+				SetFlags(discord.MessageFlagEphemeral).
+				Build()); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		// Check if user has sufficient points for new bet
+		if gopoint.Points < amount {
+			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+				SetContent(i18n.BuildContext().
+					WithText("points", fmt.Sprintf("%d", gopoint.Points)).
+					ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_points"))).
 				SetFlags(discord.MessageFlagEphemeral).
 				Build()); err != nil {
 				return err

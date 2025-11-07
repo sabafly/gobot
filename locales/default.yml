@@ -75,6 +75,7 @@ strings:
   command.bet.message.created: "投票を作成しました"
   command.bet.message.voted: "投票しました: {amount}pt"
   command.bet.message.updated: "投票を更新しました: {amount}pt"
+  command.bet.message.no_change: "投票内容に変更はありません。"
   command.bet.message.closed: "投票を締め切りました。"
   command.bet.message.current_stats: "現在の総投票数: {votes}票, 総投票額: {total_amount}pt\n"
   command.bet.message.cancelled: "ベットはキャンセルされました。合計{amount}pt が返金されました。"
