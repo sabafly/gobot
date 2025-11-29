@@ -60,7 +60,7 @@ func Command(c *components.Components) components.Command {
 					cost := int64(15)
 
 					// Lookup table for power of 10 costs (more efficient than math.Pow10 for integer calculations)
-					costTable := []int64{0, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 10000000000, 100000000000}
+					costTable := []int64{0, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 10000000000, 100000000000, 1000000000000}
 					extra := int64(event.SlashCommandInteractionData().Int("extra_bet"))
 					if extra > 0 && int(extra+1) < len(costTable) {
 						cost += costTable[extra+1]
