@@ -57,12 +57,35 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 	)
 
 	// Organizer and mode
+	modeText := modeDisplayText(host.Mode, locale)
 	headerComponent = headerComponent.AddComponents(
-		discord.NewTextDisplay(fmt.Sprintf("%s <@%d> | %s %s", i18n.TranslateText(locale, "command.bet.layout.organizer_label"), host.OwnerID, i18n.TranslateText(locale, "command.bet.layout.mode_label"), host.Mode)),
+		discord.NewTextDisplay(fmt.Sprintf("%s <@%d> | %s %s", i18n.TranslateText(locale, "command.bet.layout.organizer_label"), host.OwnerID, i18n.TranslateText(locale, "command.bet.layout.mode_label"), modeText)),
 	)
 
-	// Deadline
-	if host.VoteDeadline != nil {
+	// Entry Fee (for race mode with entry fee)
+	if host.EntryFee != nil && *host.EntryFee > 0 {
+		headerComponent = headerComponent.AddComponents(
+			discord.NewTextDisplayf("%s %dpt", i18n.TranslateText(locale, "command.bet.layout.entry_fee_label"), *host.EntryFee),
+		)
+	}
+
+	// Prize Pool (organizer-contributed)
+	if host.PrizePool != nil && *host.PrizePool > 0 {
+		headerComponent = headerComponent.AddComponents(
+			discord.NewTextDisplayf("%s %dpt", i18n.TranslateText(locale, "command.bet.layout.prize_pool_label"), *host.PrizePool),
+		)
+	}
+
+	// Entry Deadline (for race mode)
+	if host.Mode == string(models.BetVoteTypeRace) && host.EntryDeadline != nil && host.Status == string(models.BetStatusEntry) {
+		headerComponent = headerComponent.AddComponents(
+			discord.NewLargeSeparator(),
+			discord.NewTextDisplayf("%s %s (%s)", i18n.TranslateText(locale, "command.bet.layout.entry_deadline_label"), discord.FormattedTimestampMention(host.EntryDeadline.Unix(), discord.TimestampStyleShortDateShortTime), discord.FormattedTimestampMention(host.EntryDeadline.Unix(), discord.TimestampStyleRelative)),
+		)
+	}
+
+	// Vote Deadline
+	if host.VoteDeadline != nil && (host.Status == string(models.BetStatusVoting) || (host.Mode == string(models.BetVoteTypeRace) && host.Status == string(models.BetStatusEntry))) {
 		headerComponent = headerComponent.AddComponents(
 			discord.NewLargeSeparator(),
 			discord.NewTextDisplayf("%s %s (%s)", i18n.TranslateText(locale, "command.bet.layout.deadline_label"), discord.FormattedTimestampMention(host.VoteDeadline.Unix(), discord.TimestampStyleShortDateShortTime), discord.FormattedTimestampMention(host.VoteDeadline.Unix(), discord.TimestampStyleRelative)),
@@ -71,79 +94,137 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 
 	layoutComponents = append(layoutComponents, headerComponent)
 
-	// Options with vote counts
+	// Options with vote counts (or entrants for race mode)
 	optionsComponent := discord.NewContainer().WithAccentColor(0x95A5A6) // Gray
-	optionsComponent = optionsComponent.AddComponents(
-		discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.options_title")),
-		discord.NewLargeSeparator(),
-	)
-	if len(options) > 0 {
-		totalVotes := int64(0)
-		totalAmount := int64(0)
 
-		for i, opt := range options {
-			if i > 0 {
-				optionsComponent = optionsComponent.AddComponents(discord.NewSmallSeparator())
-			}
-
-			var voteCount int64
-			var amount int64
-			db.Model(&models.Bet{}).Where("option_id = ?", opt.ID).Count(&voteCount)
-			db.Model(&models.Bet{}).Where("option_id = ?", opt.ID).Select("COALESCE(SUM(amount), 0)").Scan(&amount)
-
-			totalVotes += voteCount
-			totalAmount += amount
-
-			optionMarker := fmt.Sprintf("%d.", i+1)
-			winners := host.GetWinners()
-			for _, winnerID := range winners {
-				if winnerID == opt.ID {
-					optionMarker = "🏆"
-					break
+	if host.Mode == string(models.BetVoteTypeRace) && host.Status == string(models.BetStatusEntry) {
+		// Race mode in entry phase - show entrants
+		optionsComponent = optionsComponent.AddComponents(
+			discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.entrants_title")),
+			discord.NewLargeSeparator(),
+		)
+		if len(options) > 0 {
+			for i, opt := range options {
+				if i > 0 {
+					optionsComponent = optionsComponent.AddComponents(discord.NewSmallSeparator())
 				}
-			}
 
-			text := discord.NewTextDisplay(fmt.Sprintf("%s %s - ", optionMarker, opt.OptionText) +
-				i18n.BuildContext().
-					WithText("votes", fmt.Sprintf("%d", voteCount)).
-					WithText("points", fmt.Sprintf("%d", amount)).
-					ReplaceText(i18n.TranslateText(locale, "command.bet.layout.option_votes")))
-			if host.Status == string(models.BetStatusVoting) {
-				optionsComponent = optionsComponent.AddComponents(discord.NewSection(text).
-					WithAccessory(discord.NewSecondaryButton(
-						i18n.BuildContext().
-							WithText("option", opt.OptionText).
-							ReplaceText(i18n.TranslateText(locale, "command.bet.button.vote")),
-						fmt.Sprintf("bet:vote_btn:%s:%s", host.ID, opt.ID),
-					)),
-				)
-			} else {
+				// Get entrant user info
+				var entrant models.BetEntrant
+				db.Where("option_id = ?", opt.ID).First(&entrant)
+
+				optionMarker := fmt.Sprintf("%d.", i+1)
+				text := discord.NewTextDisplay(fmt.Sprintf("%s <@%d>", optionMarker, entrant.UserID))
 				optionsComponent = optionsComponent.AddComponents(text)
 			}
+			optionsComponent = optionsComponent.AddComponents(
+				discord.NewLargeSeparator(),
+				discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.total_entrants_label")+" "+
+					fmt.Sprintf("%d", len(options))),
+			)
+			// Show entry fee pool if applicable
+			if host.EntryFee != nil && *host.EntryFee > 0 {
+				entryPool := *host.EntryFee * int64(len(options))
+				optionsComponent = optionsComponent.AddComponents(
+					discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.entry_pool_label") + " " +
+						fmt.Sprintf("%dpt", entryPool)),
+				)
+			}
+		} else {
+			optionsComponent = optionsComponent.AddComponents(
+				discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.no_entrants")),
+			)
 		}
-		optionsComponent = optionsComponent.AddComponents(
-			discord.NewLargeSeparator(),
-			discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.total_label")+" "+
-				i18n.BuildContext().
-					WithText("votes", fmt.Sprintf("%d", totalVotes)).
-					WithText("points", fmt.Sprintf("%d", totalAmount)).
-					ReplaceText(i18n.TranslateText(locale, "command.bet.layout.votes_points"))),
-		)
 	} else {
+		// Normal poll mode or race mode in voting phase - show options with vote counts
 		optionsComponent = optionsComponent.AddComponents(
-			discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.no_options")),
+			discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.options_title")),
+			discord.NewLargeSeparator(),
 		)
+		if len(options) > 0 {
+			totalVotes := int64(0)
+			totalAmount := int64(0)
+
+			for i, opt := range options {
+				if i > 0 {
+					optionsComponent = optionsComponent.AddComponents(discord.NewSmallSeparator())
+				}
+
+				var voteCount int64
+				var amount int64
+				db.Model(&models.Bet{}).Where("option_id = ?", opt.ID).Count(&voteCount)
+				db.Model(&models.Bet{}).Where("option_id = ?", opt.ID).Select("COALESCE(SUM(amount), 0)").Scan(&amount)
+
+				totalVotes += voteCount
+				totalAmount += amount
+
+				optionMarker := fmt.Sprintf("%d.", i+1)
+				winners := host.GetWinners()
+				for _, winnerID := range winners {
+					if winnerID == opt.ID {
+						optionMarker = "🏆"
+						break
+					}
+				}
+
+				// For race mode, show user mention instead of option text
+				var displayText string
+				if host.Mode == string(models.BetVoteTypeRace) {
+					var entrant models.BetEntrant
+					db.Where("option_id = ?", opt.ID).First(&entrant)
+					displayText = fmt.Sprintf("<@%d>", entrant.UserID)
+				} else {
+					displayText = opt.OptionText
+				}
+
+				text := discord.NewTextDisplay(fmt.Sprintf("%s %s - ", optionMarker, displayText) +
+					i18n.BuildContext().
+						WithText("votes", fmt.Sprintf("%d", voteCount)).
+						WithText("points", fmt.Sprintf("%d", amount)).
+						ReplaceText(i18n.TranslateText(locale, "command.bet.layout.option_votes")))
+				if host.Status == string(models.BetStatusVoting) {
+					optionsComponent = optionsComponent.AddComponents(discord.NewSection(text).
+						WithAccessory(discord.NewSecondaryButton(
+							i18n.BuildContext().
+								WithText("option", opt.OptionText).
+								ReplaceText(i18n.TranslateText(locale, "command.bet.button.vote")),
+							fmt.Sprintf("bet:vote_btn:%s:%s", host.ID, opt.ID),
+						)),
+					)
+				} else {
+					optionsComponent = optionsComponent.AddComponents(text)
+				}
+			}
+			optionsComponent = optionsComponent.AddComponents(
+				discord.NewLargeSeparator(),
+				discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.total_label")+" "+
+					i18n.BuildContext().
+						WithText("votes", fmt.Sprintf("%d", totalVotes)).
+						WithText("points", fmt.Sprintf("%d", totalAmount)).
+						ReplaceText(i18n.TranslateText(locale, "command.bet.layout.votes_points"))),
+			)
+		} else {
+			optionsComponent = optionsComponent.AddComponents(
+				discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.no_options")),
+			)
+		}
 	}
 	layoutComponents = append(layoutComponents, optionsComponent)
 
 	actionRow := discord.NewActionRow()
 	switch models.BetStatus(host.Status) {
 	case models.BetStatusEntry:
-		// Add buttons if entry is active
-		actionRow = actionRow.AddComponents(discord.NewPrimaryButton(
-			i18n.TranslateText(locale, "command.bet.button.entry"),
-			fmt.Sprintf("bet:enter_btn:%s", host.ID),
-		))
+		// Add buttons if entry is active (for race mode)
+		if host.Mode == string(models.BetVoteTypeRace) {
+			actionRow = actionRow.AddComponents(discord.NewPrimaryButton(
+				i18n.TranslateText(locale, "command.bet.button.entry"),
+				fmt.Sprintf("bet:entry_btn:%s", host.ID),
+			))
+			actionRow = actionRow.AddComponents(discord.NewSuccessButton(
+				i18n.TranslateText(locale, "command.bet.button.start_vote"),
+				fmt.Sprintf("bet:start_vote_btn:%s", host.ID),
+			))
+		}
 	case models.BetStatusVoting:
 		// Add buttons if voting is active
 		actionRow = actionRow.AddComponents(discord.NewDangerButton(
@@ -162,4 +243,17 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 	}
 
 	return layoutComponents
+}
+
+func modeDisplayText(mode string, locale discord.Locale) string {
+	switch mode {
+	case string(models.BetVoteTypeGuess):
+		return i18n.TranslateText(locale, "command.bet.vote_type.guess")
+	case string(models.BetVoteTypeRace):
+		return i18n.TranslateText(locale, "command.bet.vote_type.race")
+	case string(models.BetVoteTypeBattleRoyale):
+		return i18n.TranslateText(locale, "command.bet.vote_type.battle_royale")
+	default:
+		return mode
+	}
 }

@@ -47,6 +47,24 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 		options[i] = strings.TrimSpace(options[i])
 	}
 
+	// Parse prize pool (optional)
+	prizePoolStr, ok := event.Data.OptText("prize_pool")
+	var prizePool *int64
+	if ok && strings.TrimSpace(prizePoolStr) != "" {
+		pool, err := strconv.ParseInt(prizePoolStr, 10, 64)
+		if err != nil || pool < 0 {
+			if err := event.RespondMessage(discord.NewMessageBuilder().
+				SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_prize_pool")).
+				SetFlags(discord.MessageFlagEphemeral)); err != nil {
+				return errors.NewError(err)
+			}
+			return nil
+		}
+		if pool > 0 {
+			prizePool = &pool
+		}
+	}
+
 	deadlineStr, ok := event.Data.OptText("vote_deadline")
 	var voteDeadline *time.Time
 	if ok && strings.TrimSpace(deadlineStr) != "" {
@@ -101,6 +119,35 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 		return errors.NewError(fmt.Errorf("this command can only be used in a guild"))
 	}
 
+	// Check and deduct prize pool from organizer's points
+	if prizePool != nil && *prizePool > 0 {
+		var gopoint models.GoPoint
+		if err := c.GormDB().FirstOrCreate(&gopoint, models.GoPoint{
+			UserID:  event.User().ID,
+			GuildID: *event.GuildID(),
+		}).Error; err != nil {
+			return errors.NewError(err)
+		}
+
+		if gopoint.Points < *prizePool {
+			if err := event.RespondMessage(discord.NewMessageBuilder().
+				SetContent(i18n.BuildContext().
+					WithText("pool", fmt.Sprintf("%d", *prizePool)).
+					WithText("points", fmt.Sprintf("%d", gopoint.Points)).
+					ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool"))).
+				SetFlags(discord.MessageFlagEphemeral)); err != nil {
+				return errors.NewError(err)
+			}
+			return nil
+		}
+
+		// Deduct prize pool from organizer
+		gopoint.Points -= *prizePool
+		if err := c.GormDB().Save(&gopoint).Error; err != nil {
+			return errors.NewError(err)
+		}
+	}
+
 	// Create bet host
 	betHost := &models.BetHost{
 		ID:                  uuid.New(),
@@ -111,6 +158,7 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 		Status:              string(models.BetStatusVoting),
 		OwnerID:             event.User().ID,
 		AllowVoteDestChange: allowVoteChange,
+		PrizePool:           prizePool,
 		VoteDeadline:        voteDeadline,
 		Locale:              string(locale),
 	}
@@ -624,6 +672,16 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 		var allBets []models.Bet
 		tx.Where("host_id = ?", hostID).Find(&allBets)
 
+		// Get all entrants (for entry fee refund/distribution in race mode)
+		var allEntrants []models.BetEntrant
+		tx.Where("host_id = ?", hostID).Find(&allEntrants)
+
+		// Calculate entry fee pool
+		entryFeePool := int64(0)
+		if betHost.EntryFee != nil && *betHost.EntryFee > 0 {
+			entryFeePool = *betHost.EntryFee * int64(len(allEntrants))
+		}
+
 		var resultMessage string
 
 		if isCancelled {
@@ -639,6 +697,34 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 				gopoint.Points += bet.Amount
 				tx.Save(&gopoint)
 				totalRefunded += bet.Amount
+			}
+
+			// Refund entry fees to all entrants
+			if betHost.EntryFee != nil && *betHost.EntryFee > 0 {
+				for _, entrant := range allEntrants {
+					var gopoint models.GoPoint
+					tx.FirstOrCreate(&gopoint, models.GoPoint{
+						UserID:  entrant.UserID,
+						GuildID: betHost.GuildID,
+					})
+
+					gopoint.Points += *betHost.EntryFee
+					tx.Save(&gopoint)
+					totalRefunded += *betHost.EntryFee
+				}
+			}
+
+			// Refund prize pool to organizer
+			if betHost.PrizePool != nil && *betHost.PrizePool > 0 {
+				var gopoint models.GoPoint
+				tx.FirstOrCreate(&gopoint, models.GoPoint{
+					UserID:  betHost.OwnerID,
+					GuildID: betHost.GuildID,
+				})
+
+				gopoint.Points += *betHost.PrizePool
+				tx.Save(&gopoint)
+				totalRefunded += *betHost.PrizePool
 			}
 
 			// Update bet host status
@@ -675,9 +761,15 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 
 			// Distribute winnings proportionally
 			if winnersTotal > 0 {
+				// Total pool includes bet pool and organizer's prize pool
+				totalDistributablePool := totalPool
+				if betHost.PrizePool != nil && *betHost.PrizePool > 0 {
+					totalDistributablePool += *betHost.PrizePool
+				}
+
 				for _, bet := range winnersBets {
 					// Calculate proportional share
-					share := (bet.Amount * totalPool) / winnersTotal
+					share := (bet.Amount * totalDistributablePool) / winnersTotal
 
 					var gopoint models.GoPoint
 					tx.FirstOrCreate(&gopoint, models.GoPoint{
@@ -687,6 +779,54 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 
 					gopoint.Points += share
 					tx.Save(&gopoint)
+				}
+			} else if betHost.PrizePool != nil && *betHost.PrizePool > 0 && len(winnerIDs) > 0 {
+				// No bets but prize pool exists - distribute prize pool equally to winners
+				sharePerWinner := *betHost.PrizePool / int64(len(winnerIDs))
+				for _, winnerID := range winnerIDs {
+					// Find the entrant for this winner option
+					for _, entrant := range allEntrants {
+						if entrant.OptionID == winnerID {
+							var gopoint models.GoPoint
+							tx.FirstOrCreate(&gopoint, models.GoPoint{
+								UserID:  entrant.UserID,
+								GuildID: betHost.GuildID,
+							})
+
+							gopoint.Points += sharePerWinner
+							tx.Save(&gopoint)
+							break
+						}
+					}
+				}
+			}
+
+			// Distribute entry fee pool to winning entrants (for race mode)
+			if entryFeePool > 0 && len(winnerIDs) > 0 {
+				// Find winning entrants
+				winningEntrants := make([]models.BetEntrant, 0)
+				for _, entrant := range allEntrants {
+					for _, winnerID := range winnerIDs {
+						if entrant.OptionID == winnerID {
+							winningEntrants = append(winningEntrants, entrant)
+							break
+						}
+					}
+				}
+
+				// Distribute entry fee pool equally among winning entrants
+				if len(winningEntrants) > 0 {
+					sharePerWinner := entryFeePool / int64(len(winningEntrants))
+					for _, entrant := range winningEntrants {
+						var gopoint models.GoPoint
+						tx.FirstOrCreate(&gopoint, models.GoPoint{
+							UserID:  entrant.UserID,
+							GuildID: betHost.GuildID,
+						})
+
+						gopoint.Points += sharePerWinner
+						tx.Save(&gopoint)
+					}
 				}
 			}
 
@@ -703,10 +843,25 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 				winnerNames[i] = opt.OptionText
 			}
 
-			resultMessage = i18n.BuildContext().
-				WithText("winners", strings.Join(winnerNames, ", ")).
-				WithText("total_pool", fmt.Sprintf("%d", totalPool)).
-				ReplaceText(i18n.TranslateText(locale, "command.bet.message.result"))
+			// Build result message with entry fee pool and prize pool info if applicable
+			prizePoolAmount := int64(0)
+			if betHost.PrizePool != nil {
+				prizePoolAmount = *betHost.PrizePool
+			}
+
+			if entryFeePool > 0 || prizePoolAmount > 0 {
+				resultMessage = i18n.BuildContext().
+					WithText("winners", strings.Join(winnerNames, ", ")).
+					WithText("total_pool", fmt.Sprintf("%d", totalPool)).
+					WithText("entry_pool", fmt.Sprintf("%d", entryFeePool)).
+					WithText("prize_pool", fmt.Sprintf("%d", prizePoolAmount)).
+					ReplaceText(i18n.TranslateText(locale, "command.bet.message.result_with_pools"))
+			} else {
+				resultMessage = i18n.BuildContext().
+					WithText("winners", strings.Join(winnerNames, ", ")).
+					WithText("total_pool", fmt.Sprintf("%d", totalPool)).
+					ReplaceText(i18n.TranslateText(locale, "command.bet.message.result"))
+			}
 		}
 
 		// Update message
@@ -775,6 +930,377 @@ func handleCloseVoteButton(c *components.Components, event *events.ComponentInte
 		if err := event.RespondMessage(discord.NewMessageBuilder().
 			SetContent(i18n.TranslateText(locale, "command.bet.message.closed")).
 			SetFlags(discord.MessageFlagEphemeral)); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return errors.NewError(err)
+	}
+	return nil
+}
+
+// handleRaceConfig handles race mode configuration
+func handleRaceConfig(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+	// Defer the response to acknowledge the interaction
+	if err := event.DeferCreateMessage(true); err != nil {
+		return errors.NewError(err)
+	}
+
+	locale := event.Locale()
+	parts := strings.Split(event.Data.CustomID, ":")
+	if len(parts) < 3 {
+		return errors.NewError(fmt.Errorf("invalid custom ID"))
+	}
+
+	// Parse allow_vote_change
+	allowVoteChange, err := strconv.ParseBool(parts[2])
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	title := event.Data.Text("title")
+
+	// Parse prize pool (optional)
+	prizePoolStr, ok := event.Data.OptText("prize_pool")
+	var prizePool *int64
+	if ok && strings.TrimSpace(prizePoolStr) != "" {
+		pool, err := strconv.ParseInt(prizePoolStr, 10, 64)
+		if err != nil || pool < 0 {
+			if err := event.RespondMessage(discord.NewMessageBuilder().
+				SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_prize_pool")).
+				SetFlags(discord.MessageFlagEphemeral)); err != nil {
+				return errors.NewError(err)
+			}
+			return nil
+		}
+		if pool > 0 {
+			prizePool = &pool
+		}
+	}
+
+	// Parse entry fee (optional)
+	entryFeeStr, ok := event.Data.OptText("entry_fee")
+	var entryFee *int64
+	if ok && strings.TrimSpace(entryFeeStr) != "" {
+		fee, err := strconv.ParseInt(entryFeeStr, 10, 64)
+		if err != nil || fee < 0 {
+			if err := event.RespondMessage(discord.NewMessageBuilder().
+				SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_entry_fee")).
+				SetFlags(discord.MessageFlagEphemeral)); err != nil {
+				return errors.NewError(err)
+			}
+			return nil
+		}
+		if fee > 0 {
+			entryFee = &fee
+		}
+	}
+
+	// Parse entry deadline (optional)
+	entryDeadlineStr, ok := event.Data.OptText("entry_deadline")
+	var entryDeadline *time.Time
+	if ok && strings.TrimSpace(entryDeadlineStr) != "" {
+		mins, err := strconv.Atoi(entryDeadlineStr)
+		if err != nil {
+			if err := event.RespondMessage(discord.NewMessageBuilder().
+				SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_entry_deadline")).
+				SetFlags(discord.MessageFlagEphemeral)); err != nil {
+				return errors.NewError(err)
+			}
+			return nil
+		}
+		entryDeadline = ptr(time.Now().Add(time.Duration(mins) * time.Minute))
+	}
+
+	if event.GuildID() == nil {
+		return errors.NewError(fmt.Errorf("this command can only be used in a guild"))
+	}
+
+	// Check and deduct prize pool from organizer's points
+	if prizePool != nil && *prizePool > 0 {
+		var gopoint models.GoPoint
+		if err := c.GormDB().FirstOrCreate(&gopoint, models.GoPoint{
+			UserID:  event.User().ID,
+			GuildID: *event.GuildID(),
+		}).Error; err != nil {
+			return errors.NewError(err)
+		}
+
+		if gopoint.Points < *prizePool {
+			if err := event.RespondMessage(discord.NewMessageBuilder().
+				SetContent(i18n.BuildContext().
+					WithText("pool", fmt.Sprintf("%d", *prizePool)).
+					WithText("points", fmt.Sprintf("%d", gopoint.Points)).
+					ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool"))).
+				SetFlags(discord.MessageFlagEphemeral)); err != nil {
+				return errors.NewError(err)
+			}
+			return nil
+		}
+
+		// Deduct prize pool from organizer
+		gopoint.Points -= *prizePool
+		if err := c.GormDB().Save(&gopoint).Error; err != nil {
+			return errors.NewError(err)
+		}
+	}
+
+	// Create bet host for race mode
+	betHost := &models.BetHost{
+		ID:                  uuid.New(),
+		GuildID:             *event.GuildID(),
+		ChannelID:           event.Channel().ID(),
+		Title:               title,
+		Mode:                string(models.BetVoteTypeRace),
+		Status:              string(models.BetStatusEntry), // Start with entry phase
+		OwnerID:             event.User().ID,
+		AllowVoteDestChange: allowVoteChange,
+		EntryFee:            entryFee,
+		PrizePool:           prizePool,
+		EntryDeadline:       entryDeadline,
+		VoteDeadline:        nil, // Vote deadline can be set manually via start_vote button
+		Locale:              string(locale),
+	}
+
+	// Save to database
+	if err := c.GormDB().Create(betHost).Error; err != nil {
+		slog.Error("failed to create bet host", "error", err)
+		return errors.NewError(err)
+	}
+
+	// Create layout components (no options yet for race mode)
+	layoutComponents := createBetLayout(betHost, []models.BetOption{}, c.GormDB(), locale)
+
+	// Respond with the bet message using MessageBuilder with ComponentV2
+	msg, err := event.Client().Rest.CreateMessage(event.Channel().ID(), discord.NewMessageBuilder().
+		SetIsComponentsV2(true).
+		SetComponents(layoutComponents...).
+		BuildCreate())
+	if err != nil {
+		slog.Error("failed to send bet message", "error", err)
+		return errors.NewError(err)
+	}
+
+	// Update message ID
+	betHost.MessageID = msg.ID
+	if err := c.GormDB().Save(betHost).Error; err != nil {
+		slog.Error("failed to update bet message ID", "error", err)
+	}
+
+	if err := event.RespondMessage(discord.NewMessageBuilder().
+		SetContent(i18n.TranslateText(locale, "command.bet.message.race_created")).
+		SetFlags(discord.MessageFlagEphemeral)); err != nil {
+		return errors.NewError(err)
+	}
+
+	return nil
+}
+
+// handleEntryButton handles the entry button click for race mode
+func handleEntryButton(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+	locale := event.Locale()
+	parts := strings.Split(event.Data.CustomID(), ":")
+	if len(parts) < 3 {
+		return errors.NewError(fmt.Errorf("invalid custom ID"))
+	}
+
+	hostID, err := uuid.Parse(parts[2])
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	if event.GuildID() == nil {
+		return errors.NewError(fmt.Errorf("this command can only be used in a guild"))
+	}
+
+	if err := c.GormDB().Transaction(func(tx *gorm.DB) error {
+		var betHost models.BetHost
+		if err := tx.First(&betHost, "id = ?", hostID).Error; err != nil {
+			return err
+		}
+
+		// Check if entry is open
+		if betHost.Status != string(models.BetStatusEntry) {
+			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+				SetContent(i18n.TranslateText(locale, "command.bet.error.entry_closed")).
+				SetFlags(discord.MessageFlagEphemeral).
+				Build()); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		// Check if user is already entered
+		var existingEntrant models.BetEntrant
+		result := tx.Where("host_id = ? AND user_id = ?", hostID, event.User().ID).First(&existingEntrant)
+		if result.Error == nil {
+			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+				SetContent(i18n.TranslateText(locale, "command.bet.error.already_entered")).
+				SetFlags(discord.MessageFlagEphemeral).
+				Build()); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		// Check and deduct entry fee if set
+		if betHost.EntryFee != nil && *betHost.EntryFee > 0 {
+			var gopoint models.GoPoint
+			if err := tx.FirstOrCreate(&gopoint, models.GoPoint{
+				UserID:  event.User().ID,
+				GuildID: *event.GuildID(),
+			}).Error; err != nil {
+				return err
+			}
+
+			if gopoint.Points < *betHost.EntryFee {
+				if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+					SetContent(i18n.BuildContext().
+						WithText("fee", fmt.Sprintf("%d", *betHost.EntryFee)).
+						WithText("points", fmt.Sprintf("%d", gopoint.Points)).
+						ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_entry_fee"))).
+					SetFlags(discord.MessageFlagEphemeral).
+					Build()); err != nil {
+					return err
+				}
+				return nil
+			}
+
+			// Deduct entry fee
+			gopoint.Points -= *betHost.EntryFee
+			if err := tx.Save(&gopoint).Error; err != nil {
+				return err
+			}
+		}
+
+		// Create a new option for this entrant
+		optionText := event.User().EffectiveName()
+
+		option := &models.BetOption{
+			ID:         uuid.New(),
+			HostID:     hostID,
+			OptionText: optionText,
+			Index:      0, // Will be updated
+		}
+
+		// Get current max index
+		var maxIndex int
+		tx.Model(&models.BetOption{}).Where("host_id = ?", hostID).Select("COALESCE(MAX(\"index\"), -1)").Scan(&maxIndex)
+		option.Index = maxIndex + 1
+
+		if err := tx.Create(option).Error; err != nil {
+			return err
+		}
+
+		// Create entrant record
+		entrant := &models.BetEntrant{
+			ID:       uuid.New(),
+			HostID:   hostID,
+			UserID:   event.User().ID,
+			OptionID: option.ID,
+		}
+
+		if err := tx.Create(entrant).Error; err != nil {
+			return err
+		}
+
+		// Update the bet message
+		if err := updateBetMessage(c, tx, event.Client(), hostID, locale); err != nil {
+			return err
+		}
+
+		// Build response message
+		var responseMsg string
+		if betHost.EntryFee != nil && *betHost.EntryFee > 0 {
+			responseMsg = i18n.BuildContext().
+				WithText("fee", fmt.Sprintf("%d", *betHost.EntryFee)).
+				ReplaceText(i18n.TranslateText(locale, "command.bet.message.entered_with_fee"))
+		} else {
+			responseMsg = i18n.TranslateText(locale, "command.bet.message.entered")
+		}
+
+		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			SetContent(responseMsg).
+			SetFlags(discord.MessageFlagEphemeral).
+			Build()); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return errors.NewError(err)
+	}
+	return nil
+}
+
+// handleStartVoteButton handles the start vote button click for race mode
+func handleStartVoteButton(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+	locale := event.Locale()
+	parts := strings.Split(event.Data.CustomID(), ":")
+	if len(parts) < 3 {
+		return errors.NewError(fmt.Errorf("invalid custom ID"))
+	}
+
+	hostID, err := uuid.Parse(parts[2])
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	if err := c.GormDB().Transaction(func(tx *gorm.DB) error {
+		var betHost models.BetHost
+		if err := tx.First(&betHost, "id = ?", hostID).Error; err != nil {
+			return err
+		}
+
+		// Check if user is owner
+		if !betHost.IsOwner(event.User().ID) {
+			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+				SetContent(i18n.TranslateText(locale, "command.bet.error.only_organizer_start_vote")).
+				SetFlags(discord.MessageFlagEphemeral).
+				Build()); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		// Check if still in entry phase
+		if betHost.Status != string(models.BetStatusEntry) {
+			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+				SetContent(i18n.TranslateText(locale, "command.bet.error.not_in_entry_phase")).
+				SetFlags(discord.MessageFlagEphemeral).
+				Build()); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		// Check if there are at least 2 entrants
+		var entrantCount int64
+		tx.Model(&models.BetEntrant{}).Where("host_id = ?", hostID).Count(&entrantCount)
+		if entrantCount < 2 {
+			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+				SetContent(i18n.TranslateText(locale, "command.bet.error.min_entrants")).
+				SetFlags(discord.MessageFlagEphemeral).
+				Build()); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		// Update status to voting
+		betHost.Status = string(models.BetStatusVoting)
+		if err := tx.Save(&betHost).Error; err != nil {
+			return err
+		}
+
+		// Update the bet message
+		if err := updateBetMessage(c, tx, event.Client(), hostID, locale); err != nil {
+			return err
+		}
+
+		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			SetContent(i18n.TranslateText(locale, "command.bet.message.vote_started")).
+			SetFlags(discord.MessageFlagEphemeral).
+			Build()); err != nil {
 			return err
 		}
 		return nil
