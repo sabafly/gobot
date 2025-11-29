@@ -29,19 +29,19 @@ type BetHost struct {
 type BetVoteType string
 
 const (
-	BetVoteTypeGuess        BetVoteType = "poll"
-	BetVoteTypeRace         BetVoteType = "race"
-	BetVoteTypeBattleRoyale BetVoteType = "battle_royale"
+	BetVoteTypeGuess        = "poll"
+	BetVoteTypeRace         = "race"
+	BetVoteTypeBattleRoyale = "battle_royale"
 )
 
 type BetStatus string
 
 const (
-	BetStatusEntry     BetStatus = "entry"     // Accepting entries
-	BetStatusVoting    BetStatus = "voting"    // Accepting votes
-	BetStatusClosed    BetStatus = "closed"    // No more bets can be placed
-	BetStatusFinished  BetStatus = "finished"  // Bet session finished
-	BetStatusCancelled BetStatus = "cancelled" // Bet session cancelled
+	BetStatusEntry     = "entry"     // Accepting entries
+	BetStatusVoting    = "voting"    // Accepting votes
+	BetStatusClosed    = "closed"    // No more bets can be placed
+	BetStatusFinished  = "finished"  // Bet session finished
+	BetStatusCancelled = "cancelled" // Bet session cancelled
 )
 
 type BetOption struct {

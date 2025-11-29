@@ -1,6 +1,8 @@
 package bet
 
 import (
+	"log/slog"
+	"slices"
 	"time"
 
 	"github.com/disgoorg/disgo/bot"
@@ -20,22 +22,19 @@ var (
 
 func betSchedulerWorker(c *components.Components, client *bot.Client) error {
 	return c.GormDB().Transaction(func(tx *gorm.DB) error {
+		slog.Debug("Running bet scheduler worker")
 		var bets []models.BetHost
-		if err := tx.Where("vote_deadline IS NOT NULL AND vote_deadline <= ? AND (status = ? OR status = ?)", time.Now(), models.BetStatusEntry, models.BetStatusVoting).Find(&bets).Error; err != nil {
+		if err := tx.Model(&models.BetHost{}).Where("vote_deadline IS NOT NULL AND vote_deadline <= NOW() AND (status = ? OR status = ?)", models.BetStatusEntry, models.BetStatusVoting).Find(&bets).Error; err != nil {
 			return err
 		}
+		slog.Debug("Found scheduled bets", "count", len(bets))
 		for _, betHost := range bets {
 			// すでに処理されたベットはスキップ
+			slog.Debug("Processing scheduled bet", "betID", betHost.ID, "guildID", betHost.GuildID)
 			processedBets, ok := schedulerCache.Get(betHost.GuildID)
 			if ok {
-				skipped := false
-				for _, processedBetID := range processedBets {
-					if processedBetID == betHost.ID {
-						skipped = true
-						break
-					}
-				}
-				if skipped {
+				if slices.Contains(processedBets, betHost.ID) {
+					slog.Debug("Skipping already processed bet", "betID", betHost.ID, "guildID", betHost.GuildID)
 					continue
 				}
 			}
@@ -47,11 +46,14 @@ func betSchedulerWorker(c *components.Components, client *bot.Client) error {
 				betHost.Status = string(models.BetStatusClosed)
 			}
 
+			if err := tx.Save(&betHost).Error; err != nil {
+				return err
+			}
+			slog.Info("Updating scheduled bet", "betID", betHost.ID, "guildID", betHost.GuildID, "newStatus", betHost.Status)
 			// ハンドラーを呼び出してメッセージを更新
 			if err := updateBetMessage(c, tx, client, betHost.ID, discord.Locale(betHost.Locale)); err != nil {
 				return err
 			}
-			tx.Save(&betHost)
 
 			// キャッシュに追加
 			processedBets, _ = schedulerCache.Get(betHost.GuildID)

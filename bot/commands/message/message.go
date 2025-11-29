@@ -21,7 +21,6 @@
 package message
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -702,7 +701,7 @@ func Command(c *components.Components) *generic.Command {
 						Where(
 							messageremind.TimeLT(time.Now()),
 						).
-						AllX(context.Background())
+						AllX(c.Ctx())
 					for _, remind := range reminds {
 						if _, err := client.Rest.CreateMessage(remind.ChannelID,
 							discord.NewMessageBuilder().
@@ -717,7 +716,7 @@ func Command(c *components.Components) *generic.Command {
 						Where(
 							messageremind.TimeLT(time.Now()),
 						).
-						ExecX(context.Background())
+						ExecX(c.Ctx())
 					return nil
 				},
 			},

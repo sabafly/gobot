@@ -21,7 +21,6 @@
 package setting
 
 import (
-	"context"
 	"log/slog"
 	"sync"
 	"time"
@@ -538,7 +537,7 @@ func Command(c *components.Components) components.Command {
 					bumpLock.Lock()
 					defer bumpLock.Unlock()
 					for k, n := range bumpNotice {
-						g, err := c.GuildCreateID(context.Background(), n.guildID)
+						g, err := c.GuildCreateID(c.Ctx(), n.guildID)
 						if err != nil {
 							continue
 						}
@@ -557,7 +556,7 @@ func Command(c *components.Components) components.Command {
 					upLock.Lock()
 					defer upLock.Unlock()
 					for k, n := range upNotice {
-						g, err := c.GuildCreateID(context.Background(), n.guildID)
+						g, err := c.GuildCreateID(c.Ctx(), n.guildID)
 						if err != nil {
 							continue
 						}

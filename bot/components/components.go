@@ -21,6 +21,8 @@
 package components
 
 import (
+	"context"
+
 	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/ent"
 	"github.com/sabafly/gobot/internal/smap"
@@ -28,8 +30,9 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func New(db *ent.Client, conf Config, gormDb *database.DB) *Components {
+func New(ctx context.Context, db *ent.Client, conf Config, gormDb *database.DB) *Components {
 	return &Components{
+		ctx:              ctx,
 		db:               db,
 		commandsRegistry: make(map[string]Command),
 		config:           conf,
@@ -38,6 +41,7 @@ func New(db *ent.Client, conf Config, gormDb *database.DB) *Components {
 }
 
 type Components struct {
+	ctx    context.Context
 	db     *ent.Client
 	gormDb *database.DB
 
@@ -50,7 +54,12 @@ type Components struct {
 	Version string
 }
 
+func (c *Components) Ctx() context.Context { return c.ctx }
+
 func (c *Components) DB() *ent.Client { return c.db }
 
 // DO NOT REUSE RETURN VALUE, MUST CALL EACH TIME TO GET NEW SESSION
-func (c *Components) GormDB() *gorm.DB { return c.gormDb.DB.Preload(clause.Associations) }
+func (c *Components) GormDB() *gorm.DB {
+	return c.gormDb.DB.WithContext(c.ctx).
+		Preload(clause.Associations)
+}
