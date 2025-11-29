@@ -76,10 +76,11 @@ func Command(c *components.Components) components.Command {
 			},
 		},
 		ModalHandlers: map[string]generic.ModalHandler{
-			"bet:config_poll": handlePollConfig,
-			"bet:config_race": handleRaceConfig,
-			"bet:vote":        handleVote,
-			"bet:decide":      handleDecideResult,
+			"bet:config_poll":          handlePollConfig,
+			"bet:config_race":          handleRaceConfig,
+			"bet:config_battle_royale": handleBattleRoyaleConfig,
+			"bet:vote":                 handleVote,
+			"bet:decide":               handleDecideResult,
 		},
 		ComponentHandlers: map[string]generic.PermissionComponentHandler{
 			"bet:vote_btn": generic.PComponentHandler{
@@ -96,6 +97,15 @@ func Command(c *components.Components) components.Command {
 			},
 			"bet:start_vote_btn": generic.PComponentHandler{
 				ComponentHandler: handleStartVoteButton,
+			},
+			"bet:br_entry_btn": generic.PComponentHandler{
+				ComponentHandler: handleBattleRoyaleEntryButton,
+			},
+			"bet:br_close_entry_btn": generic.PComponentHandler{
+				ComponentHandler: handleBattleRoyaleCloseEntryButton,
+			},
+			"bet:cancel_entry_btn": generic.PComponentHandler{
+				ComponentHandler: handleCancelEntryButton,
 			},
 		},
 
@@ -216,6 +226,58 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 						CustomID:    "entry_deadline",
 						Style:       discord.TextInputStyleShort,
 						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_race.input.entry_deadline.placeholder"),
+						Required:    false,
+						MinLength:   ptr(1),
+						MaxLength:   10,
+					}),
+			).
+			Build()); err != nil {
+			return errors.NewError(err)
+		}
+		return nil
+	}
+
+	// For battle royale mode, show modal for battle royale configuration
+	if voteType == models.BetVoteTypeBattleRoyale {
+		customID := "bet:config_battle_royale"
+		if err := event.Modal(discord.NewModalCreateBuilder().
+			SetCustomID(customID).
+			SetTitle(i18n.TranslateText(locale, "command.bet.modal.create_battle_royale.title")).
+			SetComponents(
+				discord.NewLabel(i18n.TranslateText(locale, "command.bet.modal.create_battle_royale.input.title.label"),
+					discord.TextInputComponent{
+						CustomID:    "title",
+						Style:       discord.TextInputStyleShort,
+						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_battle_royale.input.title.placeholder"),
+						Required:    true,
+						MinLength:   ptr(1),
+						MaxLength:   100,
+						Value:       title,
+					},
+				),
+				discord.NewLabel(i18n.TranslateText(locale, "command.bet.modal.create_battle_royale.input.entry_fee.label"),
+					discord.TextInputComponent{
+						CustomID:    "entry_fee",
+						Style:       discord.TextInputStyleShort,
+						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_battle_royale.input.entry_fee.placeholder"),
+						Required:    true,
+						MinLength:   ptr(1),
+						MaxLength:   10,
+					}),
+				discord.NewLabel(i18n.TranslateText(locale, "command.bet.modal.create_battle_royale.input.prize_pool.label"),
+					discord.TextInputComponent{
+						CustomID:    "prize_pool",
+						Style:       discord.TextInputStyleShort,
+						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_battle_royale.input.prize_pool.placeholder"),
+						Required:    false,
+						MinLength:   ptr(1),
+						MaxLength:   10,
+					}),
+				discord.NewLabel(i18n.TranslateText(locale, "command.bet.modal.create_battle_royale.input.entry_deadline.label"),
+					discord.TextInputComponent{
+						CustomID:    "entry_deadline",
+						Style:       discord.TextInputStyleShort,
+						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_battle_royale.input.entry_deadline.placeholder"),
 						Required:    false,
 						MinLength:   ptr(1),
 						MaxLength:   10,

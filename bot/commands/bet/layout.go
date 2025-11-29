@@ -77,7 +77,7 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 	}
 
 	// Entry Deadline (for race mode)
-	if host.Mode == string(models.BetVoteTypeRace) && host.EntryDeadline != nil && host.Status == string(models.BetStatusEntry) {
+	if (host.Mode == string(models.BetVoteTypeRace) || host.Mode == string(models.BetVoteTypeBattleRoyale)) && host.EntryDeadline != nil && host.Status == string(models.BetStatusEntry) {
 		headerComponent = headerComponent.AddComponents(
 			discord.NewLargeSeparator(),
 			discord.NewTextDisplayf("%s %s (%s)", i18n.TranslateText(locale, "command.bet.layout.entry_deadline_label"), discord.FormattedTimestampMention(host.EntryDeadline.Unix(), discord.TimestampStyleShortDateShortTime), discord.FormattedTimestampMention(host.EntryDeadline.Unix(), discord.TimestampStyleRelative)),
@@ -94,11 +94,11 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 
 	layoutComponents = append(layoutComponents, headerComponent)
 
-	// Options with vote counts (or entrants for race mode)
+	// Options with vote counts (or entrants for race/battle royale mode)
 	optionsComponent := discord.NewContainer().WithAccentColor(0x95A5A6) // Gray
 
-	if host.Mode == string(models.BetVoteTypeRace) && host.Status == string(models.BetStatusEntry) {
-		// Race mode in entry phase - show entrants
+	if (host.Mode == string(models.BetVoteTypeRace) || host.Mode == string(models.BetVoteTypeBattleRoyale)) && host.Status == string(models.BetStatusEntry) {
+		// Race/Battle Royale mode in entry phase - show entrants
 		optionsComponent = optionsComponent.AddComponents(
 			discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.entrants_title")),
 			discord.NewLargeSeparator(),
@@ -123,6 +123,52 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 					fmt.Sprintf("%d", len(options))),
 			)
 			// Show entry fee pool if applicable
+			if host.EntryFee != nil && *host.EntryFee > 0 {
+				entryPool := *host.EntryFee * int64(len(options))
+				optionsComponent = optionsComponent.AddComponents(
+					discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.entry_pool_label") + " " +
+						fmt.Sprintf("%dpt", entryPool)),
+				)
+			}
+		} else {
+			optionsComponent = optionsComponent.AddComponents(
+				discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.no_entrants")),
+			)
+		}
+	} else if host.Mode == string(models.BetVoteTypeBattleRoyale) && (host.Status == string(models.BetStatusClosed) || host.Status == string(models.BetStatusFinished) || host.Status == string(models.BetStatusCancelled)) {
+		// Battle Royale mode after entry phase - show entrants with winners
+		optionsComponent = optionsComponent.AddComponents(
+			discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.entrants_title")),
+			discord.NewLargeSeparator(),
+		)
+		if len(options) > 0 {
+			for i, opt := range options {
+				if i > 0 {
+					optionsComponent = optionsComponent.AddComponents(discord.NewSmallSeparator())
+				}
+
+				// Get entrant user info
+				var entrant models.BetEntrant
+				db.Where("option_id = ?", opt.ID).First(&entrant)
+
+				optionMarker := fmt.Sprintf("%d.", i+1)
+				winners := host.GetWinners()
+				for _, winnerID := range winners {
+					if winnerID == opt.ID {
+						optionMarker = "🏆"
+						break
+					}
+				}
+
+				text := discord.NewTextDisplay(fmt.Sprintf("%s <@%d>", optionMarker, entrant.UserID))
+				optionsComponent = optionsComponent.AddComponents(text)
+			}
+			optionsComponent = optionsComponent.AddComponents(
+				discord.NewLargeSeparator(),
+				discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.total_entrants_label")+" "+
+					fmt.Sprintf("%d", len(options))),
+			)
+			// Show entry fee pool
 			if host.EntryFee != nil && *host.EntryFee > 0 {
 				entryPool := *host.EntryFee * int64(len(options))
 				optionsComponent = optionsComponent.AddComponents(
@@ -223,6 +269,17 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 			actionRow = actionRow.AddComponents(discord.NewSuccessButton(
 				i18n.TranslateText(locale, "command.bet.button.start_vote"),
 				fmt.Sprintf("bet:start_vote_btn:%s", host.ID),
+			))
+		}
+		// Add buttons if entry is active (for battle royale mode)
+		if host.Mode == string(models.BetVoteTypeBattleRoyale) {
+			actionRow = actionRow.AddComponents(discord.NewPrimaryButton(
+				i18n.TranslateText(locale, "command.bet.button.entry_br"),
+				fmt.Sprintf("bet:br_entry_btn:%s", host.ID),
+			))
+			actionRow = actionRow.AddComponents(discord.NewSuccessButton(
+				i18n.TranslateText(locale, "command.bet.button.close_entry"),
+				fmt.Sprintf("bet:br_close_entry_btn:%s", host.ID),
 			))
 		}
 	case models.BetStatusVoting:

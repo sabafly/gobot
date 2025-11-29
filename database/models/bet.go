@@ -51,7 +51,8 @@ type BetOption struct {
 	HostID     uuid.UUID `gorm:"type:uuid;not null"`
 	Host       BetHost   `gorm:"foreignKey:HostID;constraint:OnDelete:CASCADE;"`
 	OptionText string    `gorm:"not null;"`
-	Index      int
+	// auto-incremented index for ordering options
+	Index int `gorm:"not null;"`
 }
 
 // Bet represents a user's bet on an option (used in poll and race modes)
@@ -70,9 +71,9 @@ type Bet struct {
 // BetEntrant represents a user entering as a competitor (used in race and battle_royale modes)
 type BetEntrant struct {
 	ID       uuid.UUID    `gorm:"type:uuid;primary_key;"`
-	HostID   uuid.UUID    `gorm:"type:uuid;index:idx_entrant;not null"`
+	HostID   uuid.UUID    `gorm:"type:uuid;index:idx_entrant;not null;uniqueIndex:idx_host_user"`
 	Host     BetHost      `gorm:"foreignKey:HostID;constraint:OnDelete:CASCADE;"`
-	UserID   snowflake.ID `gorm:"type:bigint(20);index:idx_entrant;not null;unique:idx_host_user"`
+	UserID   snowflake.ID `gorm:"type:bigint(20);index:idx_entrant;not null;uniqueIndex:idx_host_user"`
 	User     User         `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
 	OptionID uuid.UUID    `gorm:"type:uuid;not null"`
 	Option   BetOption    `gorm:"foreignKey:OptionID;constraint:OnDelete:CASCADE;"`
