@@ -1219,7 +1219,9 @@ func handleEntryButton(c *components.Components, event *events.ComponentInteract
 
 		// Get current max index
 		var maxIndex int
-		tx.Model(&models.BetOption{}).Where("host_id = ?", hostID).Select("COALESCE(MAX(\"index\"), -1)").Scan(&maxIndex)
+		if err := tx.Model(&models.BetOption{}).Where("host_id = ?", hostID).Select("COALESCE(MAX(\"index\"), -1)").Scan(&maxIndex).Error; err != nil {
+			return err
+		}
 		option.Index = maxIndex + 1
 
 		if err := tx.Create(option).Error; err != nil {
@@ -1595,7 +1597,9 @@ func handleBattleRoyaleEntryButton(c *components.Components, event *events.Compo
 
 		// Get current max index
 		var maxIndex int
-		tx.Model(&models.BetOption{}).Where("host_id = ?", hostID).Select("COALESCE(MAX(\"index\"), -1)").Scan(&maxIndex)
+		if err := tx.Model(&models.BetOption{}).Where("host_id = ?", hostID).Select("COALESCE(MAX(\"index\"), -1)").Scan(&maxIndex).Error; err != nil {
+			return err
+		}
 		option.Index = maxIndex + 1
 
 		if err := tx.Create(option).Error; err != nil {
