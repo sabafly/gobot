@@ -27,7 +27,11 @@ var (
 )
 
 func betSchedulerWorker(c *components.Components, client *bot.Client) error {
-	return c.GormDB().Transaction(func(tx *gorm.DB) error {
+	// トランザクション成功後にキャッシュに追加するためのローカルマップ
+	// key: GuildID, value: 処理されたcacheKeyのリスト
+	pendingCacheUpdates := make(map[snowflake.ID][]cacheKey)
+
+	err := c.GormDB().Transaction(func(tx *gorm.DB) error {
 		slog.Debug("Running bet scheduler worker")
 
 		// Handle vote deadline
@@ -60,10 +64,8 @@ func betSchedulerWorker(c *components.Components, client *bot.Client) error {
 				return err
 			}
 
-			// キャッシュに追加
-			processedBets, _ = schedulerCache.Get(betHost.GuildID)
-			processedBets = append(processedBets, key)
-			schedulerCache.Set(betHost.GuildID, processedBets)
+			// ローカルマップに追加（トランザクション成功後にキャッシュに反映）
+			pendingCacheUpdates[betHost.GuildID] = append(pendingCacheUpdates[betHost.GuildID], key)
 		}
 
 		// Handle entry deadline (for race mode)
@@ -86,7 +88,9 @@ func betSchedulerWorker(c *components.Components, client *bot.Client) error {
 
 			// Check if there are at least 2 entrants
 			var entrantCount int64
-			tx.Model(&models.BetEntrant{}).Where("host_id = ?", betHost.ID).Count(&entrantCount)
+			if err := tx.Model(&models.BetEntrant{}).Where("host_id = ?", betHost.ID).Count(&entrantCount).Error; err != nil {
+				return err
+			}
 			if entrantCount >= 2 {
 				// Move to voting phase
 				betHost.Status = string(models.BetStatusVoting)
@@ -94,7 +98,9 @@ func betSchedulerWorker(c *components.Components, client *bot.Client) error {
 				// Cancel if not enough entrants
 				betHost.Status = string(models.BetStatusCancelled)
 				// Refund entry fees
-				refundEntryFees(tx, &betHost)
+				if err := refundEntryFees(tx, &betHost); err != nil {
+					return err
+				}
 			}
 
 			if err := tx.Save(&betHost).Error; err != nil {
@@ -106,10 +112,8 @@ func betSchedulerWorker(c *components.Components, client *bot.Client) error {
 				return err
 			}
 
-			// キャッシュに追加
-			processedBets, _ = schedulerCache.Get(betHost.GuildID)
-			processedBets = append(processedBets, key)
-			schedulerCache.Set(betHost.GuildID, processedBets)
+			// ローカルマップに追加（トランザクション成功後にキャッシュに反映）
+			pendingCacheUpdates[betHost.GuildID] = append(pendingCacheUpdates[betHost.GuildID], key)
 		}
 
 		// Handle entry deadline (for battle royale mode)
@@ -132,7 +136,9 @@ func betSchedulerWorker(c *components.Components, client *bot.Client) error {
 
 			// Check if there are at least 2 entrants
 			var entrantCount int64
-			tx.Model(&models.BetEntrant{}).Where("host_id = ?", betHost.ID).Count(&entrantCount)
+			if err := tx.Model(&models.BetEntrant{}).Where("host_id = ?", betHost.ID).Count(&entrantCount).Error; err != nil {
+				return err
+			}
 			if entrantCount >= 2 {
 				// Move to closed phase (ready for result decision)
 				betHost.Status = string(models.BetStatusClosed)
@@ -140,7 +146,9 @@ func betSchedulerWorker(c *components.Components, client *bot.Client) error {
 				// Cancel if not enough entrants
 				betHost.Status = string(models.BetStatusCancelled)
 				// Refund entry fees
-				refundEntryFees(tx, &betHost)
+				if err := refundEntryFees(tx, &betHost); err != nil {
+					return err
+				}
 			}
 
 			if err := tx.Save(&betHost).Error; err != nil {
@@ -152,45 +160,68 @@ func betSchedulerWorker(c *components.Components, client *bot.Client) error {
 				return err
 			}
 
-			// キャッシュに追加
-			processedBets, _ = schedulerCache.Get(betHost.GuildID)
-			processedBets = append(processedBets, key)
-			schedulerCache.Set(betHost.GuildID, processedBets)
+			// ローカルマップに追加（トランザクション成功後にキャッシュに反映）
+			pendingCacheUpdates[betHost.GuildID] = append(pendingCacheUpdates[betHost.GuildID], key)
 		}
 
 		return nil
 	})
+
+	if err != nil {
+		return err
+	}
+
+	// トランザクションが成功した場合のみキャッシュを更新
+	for guildID, keys := range pendingCacheUpdates {
+		existingKeys, _ := schedulerCache.Get(guildID)
+		existingKeys = append(existingKeys, keys...)
+		schedulerCache.Set(guildID, existingKeys)
+	}
+
+	return nil
 }
 
 // refundEntryFees refunds entry fees to all entrants
-func refundEntryFees(tx *gorm.DB, betHost *models.BetHost) {
+func refundEntryFees(tx *gorm.DB, betHost *models.BetHost) error {
 	if betHost.EntryFee == nil || *betHost.EntryFee <= 0 {
-		return
+		return nil
 	}
 
 	var entrants []models.BetEntrant
-	tx.Where("host_id = ?", betHost.ID).Find(&entrants)
+	if err := tx.Where("host_id = ?", betHost.ID).Find(&entrants).Error; err != nil {
+		return err
+	}
 
 	for _, entrant := range entrants {
 		var gopoint models.GoPoint
-		tx.FirstOrCreate(&gopoint, models.GoPoint{
+		if err := tx.FirstOrCreate(&gopoint, models.GoPoint{
 			UserID:  entrant.UserID,
 			GuildID: betHost.GuildID,
-		})
+		}).Error; err != nil {
+			return err
+		}
 
 		gopoint.Points += *betHost.EntryFee
-		tx.Save(&gopoint)
+		if err := tx.Save(&gopoint).Error; err != nil {
+			return err
+		}
 	}
 
 	// Also refund prize pool to organizer
 	if betHost.PrizePool != nil && *betHost.PrizePool > 0 {
 		var gopoint models.GoPoint
-		tx.FirstOrCreate(&gopoint, models.GoPoint{
+		if err := tx.FirstOrCreate(&gopoint, models.GoPoint{
 			UserID:  betHost.OwnerID,
 			GuildID: betHost.GuildID,
-		})
+		}).Error; err != nil {
+			return err
+		}
 
 		gopoint.Points += *betHost.PrizePool
-		tx.Save(&gopoint)
+		if err := tx.Save(&gopoint).Error; err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
