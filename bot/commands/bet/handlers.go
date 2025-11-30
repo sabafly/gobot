@@ -593,9 +593,11 @@ func handleDecideButton(c *components.Components, event *events.ComponentInterac
 
 		// Get options
 		var options []models.BetOption
-		tx.Order(
+		if err := tx.Order(
 			clause.OrderByColumn{Column: clause.Column{Name: "index"}, Desc: false},
-		).Where("host_id = ?", hostID).Find(&options)
+		).Where("host_id = ?", hostID).Find(&options).Error; err != nil {
+			return err
+		}
 
 		// Create select menu with options plus a cancellation option
 		selectOptions := make([]discord.StringSelectMenuOption, 0, len(options)+1)
