@@ -1057,10 +1057,27 @@ func (l FileUpload) Type() ComponentType {
 	return ComponentTypeFileUpload
 }
 func (l FileUpload) fileUpload(ctx MapContext) discord.FileUploadComponent {
+	// Determine MinValues: context overrides YAML if present
+	minValues := l.MinValues
+	if ctxMin := ctx.GetMinValues(l.CustomID); ctxMin != nil {
+		minValues = ctxMin
+	}
+
+	// Determine MaxValues: context overrides YAML if present (non-default)
+	maxValues := l.MaxValues
+	if ctxMax := ctx.GetMaxValues(l.CustomID); ctxMax != 1 || maxValues == 0 {
+		// Use context value if it's explicitly set (not default 1) or if YAML value is 0
+		if maxValues == 0 {
+			maxValues = ctxMax
+		} else if ctxMax != 1 {
+			maxValues = ctxMax
+		}
+	}
+
 	return discord.FileUploadComponent{
 		CustomID:  ctx.ReplaceCustomID(l.CustomID),
-		MinValues: ctx.GetMinValues(l.CustomID),
-		MaxValues: ctx.GetMaxValues(l.CustomID),
+		MinValues: minValues,
+		MaxValues: maxValues,
 		Required:  l.Required,
 	}
 }
