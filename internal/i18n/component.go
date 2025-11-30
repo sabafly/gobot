@@ -216,6 +216,14 @@ func (u *UnmarshalComponent) UnmarshalYAML(value *yaml.Node) error {
 		var v TextInput
 		err = value.Decode(&v)
 		component = v
+	case ComponentTypeFileUpload:
+		var v FileUpload
+		err = value.Decode(&v)
+		component = v
+	case ComponentTypeLabel:
+		var v Label
+		err = value.Decode(&v)
+		component = v
 	default:
 		err = ErrUnknownComponentType.Format(cType.Type)
 	}
