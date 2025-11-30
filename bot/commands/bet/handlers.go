@@ -890,9 +890,11 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 
 		// Update message
 		var options []models.BetOption
-		tx.Order(
+		if err := tx.Order(
 			clause.OrderByColumn{Column: clause.Column{Name: "index"}, Desc: false},
-		).Where("host_id = ?", hostID).Find(&options)
+		).Where("host_id = ?", hostID).Find(&options).Error; err != nil {
+			return err
+		}
 
 		layoutComponents, err := createBetLayout(&betHost, options, tx, locale)
 		if err != nil {
@@ -900,10 +902,12 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 		}
 
 		// Update message with ComponentV2
-		_, _ = event.Client().Rest.UpdateMessage(betHost.ChannelID, betHost.MessageID, discord.NewMessageBuilder().
+		if _, err := event.Client().Rest.UpdateMessage(betHost.ChannelID, betHost.MessageID, discord.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(layoutComponents...).
-			BuildUpdate())
+			BuildUpdate()); err != nil {
+			slog.Error("failed to update bet message", "error", err, "channelID", betHost.ChannelID, "messageID", betHost.MessageID, "hostID", hostID)
+		}
 
 		if err := event.RespondMessage(discord.NewMessageBuilder().
 			SetContent(resultMessage)); err != nil {
