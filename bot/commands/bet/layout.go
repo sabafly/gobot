@@ -37,7 +37,7 @@ func statusText(key models.BetStatus, locale discord.Locale) string {
 	}[key]
 }
 
-func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.DB, locale discord.Locale) []discord.LayoutComponent {
+func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.DB, locale discord.Locale) ([]discord.LayoutComponent, error) {
 	var layoutComponents []discord.LayoutComponent
 
 	// Header
@@ -111,7 +111,9 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 
 				// Get entrant user info
 				var entrant models.BetEntrant
-				db.Where("option_id = ?", opt.ID).First(&entrant)
+				if err := db.Where("option_id = ?", opt.ID).First(&entrant).Error; err != nil {
+					return nil, fmt.Errorf("failed to get entrant: %w", err)
+				}
 
 				optionMarker := fmt.Sprintf("%d.", i+1)
 				text := discord.NewTextDisplay(fmt.Sprintf("%s <@%d>", optionMarker, entrant.UserID))
@@ -149,7 +151,9 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 
 				// Get entrant user info
 				var entrant models.BetEntrant
-				db.Where("option_id = ?", opt.ID).First(&entrant)
+				if err := db.Where("option_id = ?", opt.ID).First(&entrant).Error; err != nil {
+					return nil, fmt.Errorf("failed to get entrant: %w", err)
+				}
 
 				optionMarker := fmt.Sprintf("%d.", i+1)
 				winners := host.GetWinners()
@@ -198,8 +202,12 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 
 				var voteCount int64
 				var amount int64
-				db.Model(&models.Bet{}).Where("option_id = ?", opt.ID).Count(&voteCount)
-				db.Model(&models.Bet{}).Where("option_id = ?", opt.ID).Select("COALESCE(SUM(amount), 0)").Scan(&amount)
+				if err := db.Model(&models.Bet{}).Where("option_id = ?", opt.ID).Count(&voteCount).Error; err != nil {
+					return nil, fmt.Errorf("failed to count votes: %w", err)
+				}
+				if err := db.Model(&models.Bet{}).Where("option_id = ?", opt.ID).Select("COALESCE(SUM(amount), 0)").Scan(&amount).Error; err != nil {
+					return nil, fmt.Errorf("failed to sum amounts: %w", err)
+				}
 
 				totalVotes += voteCount
 				totalAmount += amount
@@ -217,7 +225,9 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 				var displayText string
 				if host.Mode == string(models.BetVoteTypeRace) {
 					var entrant models.BetEntrant
-					db.Where("option_id = ?", opt.ID).First(&entrant)
+					if err := db.Where("option_id = ?", opt.ID).First(&entrant).Error; err != nil {
+						return nil, fmt.Errorf("failed to get entrant for race mode: %w", err)
+					}
 					displayText = fmt.Sprintf("<@%d>", entrant.UserID)
 				} else {
 					displayText = opt.OptionText
@@ -299,7 +309,7 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 		layoutComponents = append(layoutComponents, actionRow)
 	}
 
-	return layoutComponents
+	return layoutComponents, nil
 }
 
 func modeDisplayText(mode string, locale discord.Locale) string {

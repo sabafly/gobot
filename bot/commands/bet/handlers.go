@@ -195,7 +195,11 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	).Where("host_id = ?", betHost.ID).Find(&optionModels)
 
 	// Create layout components
-	layoutComponents := createBetLayout(betHost, optionModels, c.GormDB(), locale)
+	layoutComponents, err := createBetLayout(betHost, optionModels, c.GormDB(), locale)
+	if err != nil {
+		slog.Error("failed to create bet layout", "error", err)
+		return errors.NewError(err)
+	}
 
 	// Respond with the bet message using MessageBuilder with ComponentV2
 	msg, err := event.Client().Rest.CreateMessage(event.Channel().ID(), discord.NewMessageBuilder().
@@ -540,8 +544,11 @@ func updateBetMessage(c *components.Components, db *gorm.DB, client *bot.Client,
 		clause.OrderByColumn{Column: clause.Column{Name: "index"}, Desc: false},
 	).Where("host_id = ?", hostID).Find(&options)
 
-	layoutComponents := createBetLayout(&betHost, options, db, locale)
-	_, err := client.Rest.UpdateMessage(betHost.ChannelID, betHost.MessageID, discord.NewMessageBuilder().
+	layoutComponents, err := createBetLayout(&betHost, options, db, locale)
+	if err != nil {
+		return err
+	}
+	_, err = client.Rest.UpdateMessage(betHost.ChannelID, betHost.MessageID, discord.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(layoutComponents...).
 		BuildUpdate())
@@ -879,7 +886,10 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 			clause.OrderByColumn{Column: clause.Column{Name: "index"}, Desc: false},
 		).Where("host_id = ?", hostID).Find(&options)
 
-		layoutComponents := createBetLayout(&betHost, options, tx, locale)
+		layoutComponents, err := createBetLayout(&betHost, options, tx, locale)
+		if err != nil {
+			return err
+		}
 
 		// Update message with ComponentV2
 		_, _ = event.Client().Rest.UpdateMessage(betHost.ChannelID, betHost.MessageID, discord.NewMessageBuilder().
@@ -1078,7 +1088,11 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 	}
 
 	// Create layout components (no options yet for race mode)
-	layoutComponents := createBetLayout(betHost, []models.BetOption{}, c.GormDB(), locale)
+	layoutComponents, err := createBetLayout(betHost, []models.BetOption{}, c.GormDB(), locale)
+	if err != nil {
+		slog.Error("failed to create bet layout", "error", err)
+		return errors.NewError(err)
+	}
 
 	// Respond with the bet message using MessageBuilder with ComponentV2
 	msg, err := event.Client().Rest.CreateMessage(event.Channel().ID(), discord.NewMessageBuilder().
@@ -1446,7 +1460,11 @@ func handleBattleRoyaleConfig(c *components.Components, event *events.ModalSubmi
 	}
 
 	// Create layout components (no options yet for battle royale mode)
-	layoutComponents := createBetLayout(betHost, []models.BetOption{}, c.GormDB(), locale)
+	layoutComponents, err := createBetLayout(betHost, []models.BetOption{}, c.GormDB(), locale)
+	if err != nil {
+		slog.Error("failed to create bet layout", "error", err)
+		return errors.NewError(err)
+	}
 
 	// Respond with the bet message using MessageBuilder with ComponentV2
 	msg, err := event.Client().Rest.CreateMessage(event.Channel().ID(), discord.NewMessageBuilder().
