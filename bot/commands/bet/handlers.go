@@ -1309,7 +1309,9 @@ func handleStartVoteButton(c *components.Components, event *events.ComponentInte
 
 		// Check if there are at least 2 entrants
 		var entrantCount int64
-		tx.Model(&models.BetEntrant{}).Where("host_id = ?", hostID).Count(&entrantCount)
+		if err := tx.Model(&models.BetEntrant{}).Where("host_id = ?", hostID).Count(&entrantCount).Error; err != nil {
+			return err
+		}
 		if entrantCount < 2 {
 			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.min_entrants")).
@@ -1677,7 +1679,9 @@ func handleBattleRoyaleCloseEntryButton(c *components.Components, event *events.
 
 		// Check if there are at least 2 entrants
 		var entrantCount int64
-		tx.Model(&models.BetEntrant{}).Where("host_id = ?", hostID).Count(&entrantCount)
+		if err := tx.Model(&models.BetEntrant{}).Where("host_id = ?", hostID).Count(&entrantCount).Error; err != nil {
+			return err
+		}
 		if entrantCount < 2 {
 			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.min_entrants_br")).
