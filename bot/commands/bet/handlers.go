@@ -120,35 +120,6 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 		return errors.NewError(fmt.Errorf("this command can only be used in a guild"))
 	}
 
-	// Check and deduct prize pool from organizer's points
-	if prizePool != nil && *prizePool > 0 {
-		var gopoint models.GoPoint
-		if err := c.GormDB().FirstOrCreate(&gopoint, models.GoPoint{
-			UserID:  event.User().ID,
-			GuildID: *event.GuildID(),
-		}).Error; err != nil {
-			return errors.NewError(err)
-		}
-
-		if gopoint.Points < *prizePool {
-			if err := event.RespondMessage(discord.NewMessageBuilder().
-				SetContent(i18n.BuildContext().
-					WithText("pool", fmt.Sprintf("%d", *prizePool)).
-					WithText("points", fmt.Sprintf("%d", gopoint.Points)).
-					ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool"))).
-				SetFlags(discord.MessageFlagEphemeral)); err != nil {
-				return errors.NewError(err)
-			}
-			return nil
-		}
-
-		// Deduct prize pool from organizer
-		gopoint.Points -= *prizePool
-		if err := c.GormDB().Save(&gopoint).Error; err != nil {
-			return errors.NewError(err)
-		}
-	}
-
 	// Create bet host
 	betHost := &models.BetHost{
 		ID:                  uuid.New(),
@@ -164,12 +135,43 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 		Locale:              string(locale),
 	}
 
-	// Save to database
+	// Use a single transaction for prize pool deduction and bet host creation
 	if err := c.GormDB().Transaction(func(tx *gorm.DB) error {
+		// Check and deduct prize pool from organizer's points
+		if prizePool != nil && *prizePool > 0 {
+			var gopoint models.GoPoint
+			if err := tx.FirstOrCreate(&gopoint, models.GoPoint{
+				UserID:  event.User().ID,
+				GuildID: *event.GuildID(),
+			}).Error; err != nil {
+				return err
+			}
+
+			if gopoint.Points < *prizePool {
+				if err := event.RespondMessage(discord.NewMessageBuilder().
+					SetContent(i18n.BuildContext().
+						WithText("pool", fmt.Sprintf("%d", *prizePool)).
+						WithText("points", fmt.Sprintf("%d", gopoint.Points)).
+						ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool"))).
+					SetFlags(discord.MessageFlagEphemeral)); err != nil {
+					return err
+				}
+				return nil
+			}
+
+			// Deduct prize pool from organizer
+			gopoint.Points -= *prizePool
+			if err := tx.Save(&gopoint).Error; err != nil {
+				return err
+			}
+		}
+
+		// Create bet host
 		if err := tx.Create(betHost).Error; err != nil {
 			slog.Error("failed to create bet host", "error", err)
 			return err
 		}
+
 		// Create options
 		for i, opt := range validOptions {
 			option := &models.BetOption{
