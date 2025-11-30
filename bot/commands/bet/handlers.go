@@ -190,9 +190,11 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 
 	// Reload options
 	var optionModels []models.BetOption
-	c.GormDB().Order(
+	if err := c.GormDB().Order(
 		clause.OrderByColumn{Column: clause.Column{Name: "index"}, Desc: false},
-	).Where("host_id = ?", betHost.ID).Find(&optionModels)
+	).Where("host_id = ?", betHost.ID).Find(&optionModels).Error; err != nil {
+		return errors.NewError(err)
+	}
 
 	// Create layout components
 	layoutComponents, err := createBetLayout(betHost, optionModels, c.GormDB(), locale)
