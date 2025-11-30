@@ -544,9 +544,11 @@ func updateBetMessage(c *components.Components, db *gorm.DB, client *bot.Client,
 	}
 
 	var options []models.BetOption
-	db.Order(
+	if err := db.Order(
 		clause.OrderByColumn{Column: clause.Column{Name: "index"}, Desc: false},
-	).Where("host_id = ?", hostID).Find(&options)
+	).Where("host_id = ?", hostID).Find(&options).Error; err != nil {
+		return fmt.Errorf("failed to load options: %w", err)
+	}
 
 	layoutComponents, err := createBetLayout(&betHost, options, db, locale)
 	if err != nil {
