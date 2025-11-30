@@ -418,12 +418,15 @@ func (s *StringSelectMenuOption) UnmarshalYAML(value *yaml.Node) error {
 }
 
 func (s StringSelectMenuOption) option(ctx MapContext) discord.StringSelectMenuOption {
-	return discord.StringSelectMenuOption{
+	option := discord.StringSelectMenuOption{
 		Label:       ctx.ReplaceText(s.Label),
 		Description: ctx.ReplaceText(s.Description),
 		Value:       ctx.ReplaceCustomID(s.Value),
-		Emoji:       s.Emoji.Emoji(),
 	}
+	if s.Emoji != nil {
+		option.Emoji = s.Emoji.Emoji()
+	}
+	return option
 }
 
 // [discord.RoleSelectMenuComponent]
