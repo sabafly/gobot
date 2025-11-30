@@ -58,9 +58,9 @@ type BetOption struct {
 // Bet represents a user's bet on an option (used in poll and race modes)
 type Bet struct {
 	ID        uuid.UUID    `gorm:"type:uuid;primary_key;"`
-	HostID    uuid.UUID    `gorm:"type:uuid;index:idx_bet;not null"`
+	HostID    uuid.UUID    `gorm:"type:uuid;index:idx_bet;not null;uniqueIndex:idx_bet_host_user"`
 	Host      BetHost      `gorm:"foreignKey:HostID;constraint:OnDelete:CASCADE;"`
-	UserID    snowflake.ID `gorm:"type:bigint(20);index:idx_bet;not null;"`
+	UserID    snowflake.ID `gorm:"type:bigint(20);index:idx_bet;not null;uniqueIndex:idx_bet_host_user"`
 	User      User         `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
 	OptionID  uuid.UUID    `gorm:"type:uuid;not null"`
 	Option    BetOption    `gorm:"foreignKey:OptionID;constraint:OnDelete:CASCADE;"`

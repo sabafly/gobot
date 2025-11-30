@@ -1,6 +1,7 @@
 package bet
 
 import (
+	stderrors "errors"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -267,7 +268,12 @@ func handleVoteButton(c *components.Components, event *events.ComponentInteracti
 
 		var existingBet models.Bet
 		result := tx.Where("host_id = ? AND user_id = ?", hostID, event.User().ID).First(&existingBet)
-		if result.Error == nil {
+		if result.Error != nil {
+			if !stderrors.Is(result.Error, gorm.ErrRecordNotFound) {
+				return result.Error
+			}
+			// No existing bet, continue
+		} else {
 			if !betHost.AllowVoteDestChange && existingBet.OptionID != optionID {
 				if err := event.RespondMessage(discord.NewMessageBuilder().
 					SetContent(i18n.BuildContext().
@@ -378,6 +384,9 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 		// Check if user already voted
 		var existingBet models.Bet
 		result := tx.Where("host_id = ? AND user_id = ?", hostID, event.User().ID).First(&existingBet)
+		if result.Error != nil && !stderrors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return result.Error
+		}
 		if result.Error == nil {
 			// User already voted, check if update is allowed
 
@@ -1133,7 +1142,12 @@ func handleEntryButton(c *components.Components, event *events.ComponentInteract
 		// Check if user is already entered
 		var existingEntrant models.BetEntrant
 		result := tx.Where("host_id = ? AND user_id = ?", hostID, event.User().ID).First(&existingEntrant)
-		if result.Error == nil {
+		if result.Error != nil {
+			if !stderrors.Is(result.Error, gorm.ErrRecordNotFound) {
+				return result.Error
+			}
+			// No existing entrant, continue
+		} else {
 			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.already_entered")).
 				SetFlags(discord.MessageFlagEphemeral).
@@ -1496,7 +1510,12 @@ func handleBattleRoyaleEntryButton(c *components.Components, event *events.Compo
 		// Check if user is already entered
 		var existingEntrant models.BetEntrant
 		result := tx.Where("host_id = ? AND user_id = ?", hostID, event.User().ID).First(&existingEntrant)
-		if result.Error == nil {
+		if result.Error != nil {
+			if !stderrors.Is(result.Error, gorm.ErrRecordNotFound) {
+				return result.Error
+			}
+			// No existing entrant, continue
+		} else {
 			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.already_entered_br")).
 				SetFlags(discord.MessageFlagEphemeral).
