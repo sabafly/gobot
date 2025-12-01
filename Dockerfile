@@ -13,12 +13,13 @@ RUN go mod download
 COPY . .
 
 # generate が必要な場合は実行
-RUN go generate ./...
+# RUN go generate ./...
 
 # バイナリをビルド
 # CGO_ENABLED=0: 静的リンクでビルド（distrolessイメージで実行可能）
 # -ldflags="-s -w": デバッグ情報を削除してバイナリサイズを削減
 RUN CGO_ENABLED=0 GOOS=linux go build \
+    -trimpath \
     -ldflags="-s -w" \
     -o gobot \
     .
