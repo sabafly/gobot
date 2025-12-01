@@ -138,17 +138,17 @@ func (m MapContext) GetText(key string) (string, bool) {
 	return value, ok
 }
 
-func (m MapContext) ReplaceText(id string) string {
+func (m MapContext) ReplaceText(text string) string {
 	if len(m.texts) == 0 {
-		return id
+		return text
 	}
 	for key, value := range m.texts {
 		if value == "" {
 			continue
 		}
-		id = strings.ReplaceAll(id, "{"+key+"}", value)
+		text = strings.ReplaceAll(text, "{"+key+"}", value)
 	}
-	return id
+	return text
 }
 
 func (m MapContext) GetDefaultValues(customID string, t discord.SelectMenuDefaultValueType) []discord.SelectMenuDefaultValue {

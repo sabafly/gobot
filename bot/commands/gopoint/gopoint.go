@@ -12,6 +12,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
+	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/builtin"
 	"github.com/sabafly/gobot/internal/errors"
@@ -313,15 +314,13 @@ func inGuildRanking(c *components.Components, locale discord.Locale, client *bot
 }
 
 func AddPoint(c *components.Components, userID snowflake.ID, guildID snowflake.ID, point int64) error {
-	user := models.User{
-		ID: userID,
-	}
-	if err := c.GormDB().Where(user).FirstOrCreate(&user).Error; err != nil {
+	user, err := database.GetOrCreateUser(c.GormDB(), userID)
+	if err != nil {
 		slog.Error("failed to find or create user", "error", err, "user_id", userID)
 		return errors.NewError(err)
 	}
 	userPoint := models.GoPoint{
-		UserID:  userID,
+		UserID:  user.ID,
 		GuildID: guildID,
 		Points:  0,
 	}
@@ -341,22 +340,18 @@ func GivePoint(c *components.Components, userID snowflake.ID, targetUserID snowf
 	if userID == targetUserID {
 		return errors.NewError(fmt.Errorf("cannot give points to yourself"))
 	}
-	user := models.User{
-		ID: userID,
-	}
-	if err := c.GormDB().Where(user).FirstOrCreate(&user).Error; err != nil {
+	user, err := database.GetOrCreateUser(c.GormDB(), userID)
+	if err != nil {
 		slog.Error("failed to find or create user", "error", err, "user_id", userID)
 		return errors.NewError(err)
 	}
-	targetUser := models.User{
-		ID: targetUserID,
-	}
-	if err := c.GormDB().Where(targetUser).FirstOrCreate(&targetUser).Error; err != nil {
+	targetUser, err := database.GetOrCreateUser(c.GormDB(), targetUserID)
+	if err != nil {
 		slog.Error("failed to find or create target user", "error", err, "target_user_id", targetUserID)
 		return errors.NewError(err)
 	}
 	userPoint := models.GoPoint{
-		UserID:  userID,
+		UserID:  user.ID,
 		GuildID: guildID,
 	}
 	if err := c.GormDB().Where(userPoint).FirstOrInit(&userPoint).Error; err != nil {
@@ -364,7 +359,7 @@ func GivePoint(c *components.Components, userID snowflake.ID, targetUserID snowf
 		return errors.NewError(err)
 	}
 	if userPoint.Points < point {
-		slog.Error("not enough points to give", "user_id", userID, "target_user_id", targetUserID, "guild_id", guildID, "points", point)
+		slog.Error("not enough points to give", "user_id", userID, "target_user_id", targetUser.ID, "guild_id", guildID, "points", point)
 		return errors.NewError(fmt.Errorf("not enough points to give"))
 	}
 	userPoint.Points -= point // Deduct points from the giver

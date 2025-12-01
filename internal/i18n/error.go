@@ -1,6 +1,8 @@
 package i18n
 
-import "fmt"
+import (
+	"fmt"
+)
 
 var (
 	ErrInvalidEmojiFormat   = newError("invalid emoji format: %s")
@@ -15,8 +17,17 @@ type Error struct {
 	Args    []any  `json:"args,omitempty"`
 }
 
+var _ error = (*Error)(nil)
+
 func (e *Error) Error() string {
 	return fmt.Sprintf(e.Message, e.Args...)
+}
+
+func (e *Error) Is(target error) bool {
+	if targetErr, ok := target.(*Error); ok {
+		return e.Message == targetErr.Message
+	}
+	return false
 }
 
 func (e *Error) Format(args ...any) error {
