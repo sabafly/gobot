@@ -22,9 +22,10 @@ package schema
 
 import (
 	"encoding/json"
+	"time"
+
 	"entgo.io/ent/dialect/entsql"
 	"github.com/sabafly/gobot/internal/uuidv7"
-	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
@@ -73,7 +74,7 @@ func (r *RateLimit) UnmarshalJSON(b []byte) error {
 }
 
 func (r *RateLimit) CheckLimit() bool {
-	if !((len(r.limit) < 3 || time.Since(r.limit[2]) >= time.Second*5) && (len(r.limit) < 10 || time.Since(r.limit[9]) >= time.Second*30)) {
+	if (len(r.limit) >= 3 && time.Since(r.limit[2]) < time.Second*5) || (len(r.limit) >= 10 && time.Since(r.limit[9]) < time.Second*30) {
 		return false
 	}
 	r.limit = append([]time.Time{time.Now()}, r.limit[0:min(10, len(r.limit))]...)

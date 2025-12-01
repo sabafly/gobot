@@ -632,7 +632,7 @@ func (l *ActionRow) UnmarshalYAML(value *yaml.Node) error {
 		var ok bool
 		l.Components[i], ok = c.Component.(InteractiveComponent)
 		if !ok {
-			return fmt.Errorf("component %d is type %s not InteractiveComponent", i, c.Component.Type())
+			return fmt.Errorf("component %d is type %s not InteractiveComponent", i, c.Type())
 		}
 	}
 	return nil
@@ -677,14 +677,14 @@ func (l *Section) UnmarshalYAML(value *yaml.Node) error {
 		var ok bool
 		l.Components[i], ok = c.Component.(SectionSubComponent)
 		if !ok {
-			return fmt.Errorf("component %d is type %s not SectionSubComponent", i, c.Component.Type())
+			return fmt.Errorf("component %d is type %s not SectionSubComponent", i, c.Type())
 		}
 	}
 	if v.Accessory.Component != nil {
 		var ok bool
 		l.Accessory, ok = v.Accessory.Component.(SectionAccessoryComponent)
 		if !ok {
-			return fmt.Errorf("accessory is type %s not SectionAccessoryComponent", v.Accessory.Component.Type())
+			return fmt.Errorf("accessory is type %s not SectionAccessoryComponent", v.Accessory.Type())
 		}
 	} else {
 		l.Accessory = nil
@@ -930,7 +930,7 @@ func (l *Container) UnmarshalYAML(value *yaml.Node) error {
 		var ok bool
 		l.Components[i], ok = c.Component.(ContainerSubComponent)
 		if !ok {
-			return fmt.Errorf("component %d is type %s not ContainerSubComponent", i, c.Component.Type())
+			return fmt.Errorf("component %d is type %s not ContainerSubComponent", i, c.Type())
 		}
 	}
 	return nil
