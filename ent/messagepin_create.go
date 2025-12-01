@@ -25,98 +25,98 @@ type MessagePinCreate struct {
 }
 
 // SetChannelID sets the "channel_id" field.
-func (mpc *MessagePinCreate) SetChannelID(s snowflake.ID) *MessagePinCreate {
-	mpc.mutation.SetChannelID(s)
-	return mpc
+func (_c *MessagePinCreate) SetChannelID(v snowflake.ID) *MessagePinCreate {
+	_c.mutation.SetChannelID(v)
+	return _c
 }
 
 // SetContent sets the "content" field.
-func (mpc *MessagePinCreate) SetContent(s string) *MessagePinCreate {
-	mpc.mutation.SetContent(s)
-	return mpc
+func (_c *MessagePinCreate) SetContent(v string) *MessagePinCreate {
+	_c.mutation.SetContent(v)
+	return _c
 }
 
 // SetNillableContent sets the "content" field if the given value is not nil.
-func (mpc *MessagePinCreate) SetNillableContent(s *string) *MessagePinCreate {
-	if s != nil {
-		mpc.SetContent(*s)
+func (_c *MessagePinCreate) SetNillableContent(v *string) *MessagePinCreate {
+	if v != nil {
+		_c.SetContent(*v)
 	}
-	return mpc
+	return _c
 }
 
 // SetEmbeds sets the "embeds" field.
-func (mpc *MessagePinCreate) SetEmbeds(d []discord.Embed) *MessagePinCreate {
-	mpc.mutation.SetEmbeds(d)
-	return mpc
+func (_c *MessagePinCreate) SetEmbeds(v []discord.Embed) *MessagePinCreate {
+	_c.mutation.SetEmbeds(v)
+	return _c
 }
 
 // SetBeforeID sets the "before_id" field.
-func (mpc *MessagePinCreate) SetBeforeID(s snowflake.ID) *MessagePinCreate {
-	mpc.mutation.SetBeforeID(s)
-	return mpc
+func (_c *MessagePinCreate) SetBeforeID(v snowflake.ID) *MessagePinCreate {
+	_c.mutation.SetBeforeID(v)
+	return _c
 }
 
 // SetNillableBeforeID sets the "before_id" field if the given value is not nil.
-func (mpc *MessagePinCreate) SetNillableBeforeID(s *snowflake.ID) *MessagePinCreate {
-	if s != nil {
-		mpc.SetBeforeID(*s)
+func (_c *MessagePinCreate) SetNillableBeforeID(v *snowflake.ID) *MessagePinCreate {
+	if v != nil {
+		_c.SetBeforeID(*v)
 	}
-	return mpc
+	return _c
 }
 
 // SetRateLimit sets the "rate_limit" field.
-func (mpc *MessagePinCreate) SetRateLimit(sl schema.RateLimit) *MessagePinCreate {
-	mpc.mutation.SetRateLimit(sl)
-	return mpc
+func (_c *MessagePinCreate) SetRateLimit(v schema.RateLimit) *MessagePinCreate {
+	_c.mutation.SetRateLimit(v)
+	return _c
 }
 
 // SetNillableRateLimit sets the "rate_limit" field if the given value is not nil.
-func (mpc *MessagePinCreate) SetNillableRateLimit(sl *schema.RateLimit) *MessagePinCreate {
-	if sl != nil {
-		mpc.SetRateLimit(*sl)
+func (_c *MessagePinCreate) SetNillableRateLimit(v *schema.RateLimit) *MessagePinCreate {
+	if v != nil {
+		_c.SetRateLimit(*v)
 	}
-	return mpc
+	return _c
 }
 
 // SetID sets the "id" field.
-func (mpc *MessagePinCreate) SetID(u uuid.UUID) *MessagePinCreate {
-	mpc.mutation.SetID(u)
-	return mpc
+func (_c *MessagePinCreate) SetID(v uuid.UUID) *MessagePinCreate {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (mpc *MessagePinCreate) SetNillableID(u *uuid.UUID) *MessagePinCreate {
-	if u != nil {
-		mpc.SetID(*u)
+func (_c *MessagePinCreate) SetNillableID(v *uuid.UUID) *MessagePinCreate {
+	if v != nil {
+		_c.SetID(*v)
 	}
-	return mpc
+	return _c
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (mpc *MessagePinCreate) SetGuildID(id snowflake.ID) *MessagePinCreate {
-	mpc.mutation.SetGuildID(id)
-	return mpc
+func (_c *MessagePinCreate) SetGuildID(id snowflake.ID) *MessagePinCreate {
+	_c.mutation.SetGuildID(id)
+	return _c
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (mpc *MessagePinCreate) SetGuild(g *Guild) *MessagePinCreate {
-	return mpc.SetGuildID(g.ID)
+func (_c *MessagePinCreate) SetGuild(v *Guild) *MessagePinCreate {
+	return _c.SetGuildID(v.ID)
 }
 
 // Mutation returns the MessagePinMutation object of the builder.
-func (mpc *MessagePinCreate) Mutation() *MessagePinMutation {
-	return mpc.mutation
+func (_c *MessagePinCreate) Mutation() *MessagePinMutation {
+	return _c.mutation
 }
 
 // Save creates the MessagePin in the database.
-func (mpc *MessagePinCreate) Save(ctx context.Context) (*MessagePin, error) {
-	mpc.defaults()
-	return withHooks(ctx, mpc.sqlSave, mpc.mutation, mpc.hooks)
+func (_c *MessagePinCreate) Save(ctx context.Context) (*MessagePin, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (mpc *MessagePinCreate) SaveX(ctx context.Context) *MessagePin {
-	v, err := mpc.Save(ctx)
+func (_c *MessagePinCreate) SaveX(ctx context.Context) *MessagePin {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -124,50 +124,50 @@ func (mpc *MessagePinCreate) SaveX(ctx context.Context) *MessagePin {
 }
 
 // Exec executes the query.
-func (mpc *MessagePinCreate) Exec(ctx context.Context) error {
-	_, err := mpc.Save(ctx)
+func (_c *MessagePinCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (mpc *MessagePinCreate) ExecX(ctx context.Context) {
-	if err := mpc.Exec(ctx); err != nil {
+func (_c *MessagePinCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (mpc *MessagePinCreate) defaults() {
-	if _, ok := mpc.mutation.RateLimit(); !ok {
+func (_c *MessagePinCreate) defaults() {
+	if _, ok := _c.mutation.RateLimit(); !ok {
 		v := messagepin.DefaultRateLimit
-		mpc.mutation.SetRateLimit(v)
+		_c.mutation.SetRateLimit(v)
 	}
-	if _, ok := mpc.mutation.ID(); !ok {
+	if _, ok := _c.mutation.ID(); !ok {
 		v := messagepin.DefaultID()
-		mpc.mutation.SetID(v)
+		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (mpc *MessagePinCreate) check() error {
-	if _, ok := mpc.mutation.ChannelID(); !ok {
+func (_c *MessagePinCreate) check() error {
+	if _, ok := _c.mutation.ChannelID(); !ok {
 		return &ValidationError{Name: "channel_id", err: errors.New(`ent: missing required field "MessagePin.channel_id"`)}
 	}
-	if _, ok := mpc.mutation.RateLimit(); !ok {
+	if _, ok := _c.mutation.RateLimit(); !ok {
 		return &ValidationError{Name: "rate_limit", err: errors.New(`ent: missing required field "MessagePin.rate_limit"`)}
 	}
-	if len(mpc.mutation.GuildIDs()) == 0 {
+	if len(_c.mutation.GuildIDs()) == 0 {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "MessagePin.guild"`)}
 	}
 	return nil
 }
 
-func (mpc *MessagePinCreate) sqlSave(ctx context.Context) (*MessagePin, error) {
-	if err := mpc.check(); err != nil {
+func (_c *MessagePinCreate) sqlSave(ctx context.Context) (*MessagePin, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := mpc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, mpc.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -180,41 +180,41 @@ func (mpc *MessagePinCreate) sqlSave(ctx context.Context) (*MessagePin, error) {
 			return nil, err
 		}
 	}
-	mpc.mutation.id = &_node.ID
-	mpc.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (mpc *MessagePinCreate) createSpec() (*MessagePin, *sqlgraph.CreateSpec) {
+func (_c *MessagePinCreate) createSpec() (*MessagePin, *sqlgraph.CreateSpec) {
 	var (
-		_node = &MessagePin{config: mpc.config}
+		_node = &MessagePin{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(messagepin.Table, sqlgraph.NewFieldSpec(messagepin.FieldID, field.TypeUUID))
 	)
-	if id, ok := mpc.mutation.ID(); ok {
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := mpc.mutation.ChannelID(); ok {
+	if value, ok := _c.mutation.ChannelID(); ok {
 		_spec.SetField(messagepin.FieldChannelID, field.TypeUint64, value)
 		_node.ChannelID = value
 	}
-	if value, ok := mpc.mutation.Content(); ok {
+	if value, ok := _c.mutation.Content(); ok {
 		_spec.SetField(messagepin.FieldContent, field.TypeString, value)
 		_node.Content = value
 	}
-	if value, ok := mpc.mutation.Embeds(); ok {
+	if value, ok := _c.mutation.Embeds(); ok {
 		_spec.SetField(messagepin.FieldEmbeds, field.TypeJSON, value)
 		_node.Embeds = value
 	}
-	if value, ok := mpc.mutation.BeforeID(); ok {
+	if value, ok := _c.mutation.BeforeID(); ok {
 		_spec.SetField(messagepin.FieldBeforeID, field.TypeUint64, value)
 		_node.BeforeID = &value
 	}
-	if value, ok := mpc.mutation.RateLimit(); ok {
+	if value, ok := _c.mutation.RateLimit(); ok {
 		_spec.SetField(messagepin.FieldRateLimit, field.TypeJSON, value)
 		_node.RateLimit = value
 	}
-	if nodes := mpc.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -242,16 +242,16 @@ type MessagePinCreateBulk struct {
 }
 
 // Save creates the MessagePin entities in the database.
-func (mpcb *MessagePinCreateBulk) Save(ctx context.Context) ([]*MessagePin, error) {
-	if mpcb.err != nil {
-		return nil, mpcb.err
+func (_c *MessagePinCreateBulk) Save(ctx context.Context) ([]*MessagePin, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(mpcb.builders))
-	nodes := make([]*MessagePin, len(mpcb.builders))
-	mutators := make([]Mutator, len(mpcb.builders))
-	for i := range mpcb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*MessagePin, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := mpcb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*MessagePinMutation)
@@ -265,11 +265,11 @@ func (mpcb *MessagePinCreateBulk) Save(ctx context.Context) ([]*MessagePin, erro
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, mpcb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, mpcb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -289,7 +289,7 @@ func (mpcb *MessagePinCreateBulk) Save(ctx context.Context) ([]*MessagePin, erro
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, mpcb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -297,8 +297,8 @@ func (mpcb *MessagePinCreateBulk) Save(ctx context.Context) ([]*MessagePin, erro
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (mpcb *MessagePinCreateBulk) SaveX(ctx context.Context) []*MessagePin {
-	v, err := mpcb.Save(ctx)
+func (_c *MessagePinCreateBulk) SaveX(ctx context.Context) []*MessagePin {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -306,14 +306,14 @@ func (mpcb *MessagePinCreateBulk) SaveX(ctx context.Context) []*MessagePin {
 }
 
 // Exec executes the query.
-func (mpcb *MessagePinCreateBulk) Exec(ctx context.Context) error {
-	_, err := mpcb.Save(ctx)
+func (_c *MessagePinCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (mpcb *MessagePinCreateBulk) ExecX(ctx context.Context) {
-	if err := mpcb.Exec(ctx); err != nil {
+func (_c *MessagePinCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

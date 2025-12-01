@@ -38,725 +38,725 @@ type GuildUpdate struct {
 }
 
 // Where appends a list predicates to the GuildUpdate builder.
-func (gu *GuildUpdate) Where(ps ...predicate.Guild) *GuildUpdate {
-	gu.mutation.Where(ps...)
-	return gu
+func (_u *GuildUpdate) Where(ps ...predicate.Guild) *GuildUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetName sets the "name" field.
-func (gu *GuildUpdate) SetName(s string) *GuildUpdate {
-	gu.mutation.SetName(s)
-	return gu
+func (_u *GuildUpdate) SetName(v string) *GuildUpdate {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableName(s *string) *GuildUpdate {
-	if s != nil {
-		gu.SetName(*s)
+func (_u *GuildUpdate) SetNillableName(v *string) *GuildUpdate {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return gu
+	return _u
 }
 
 // SetLocale sets the "locale" field.
-func (gu *GuildUpdate) SetLocale(d discord.Locale) *GuildUpdate {
-	gu.mutation.SetLocale(d)
-	return gu
+func (_u *GuildUpdate) SetLocale(v discord.Locale) *GuildUpdate {
+	_u.mutation.SetLocale(v)
+	return _u
 }
 
 // SetNillableLocale sets the "locale" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableLocale(d *discord.Locale) *GuildUpdate {
-	if d != nil {
-		gu.SetLocale(*d)
+func (_u *GuildUpdate) SetNillableLocale(v *discord.Locale) *GuildUpdate {
+	if v != nil {
+		_u.SetLocale(*v)
 	}
-	return gu
+	return _u
 }
 
 // SetLevelUpMessage sets the "level_up_message" field.
-func (gu *GuildUpdate) SetLevelUpMessage(s string) *GuildUpdate {
-	gu.mutation.SetLevelUpMessage(s)
-	return gu
+func (_u *GuildUpdate) SetLevelUpMessage(v string) *GuildUpdate {
+	_u.mutation.SetLevelUpMessage(v)
+	return _u
 }
 
 // SetNillableLevelUpMessage sets the "level_up_message" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableLevelUpMessage(s *string) *GuildUpdate {
-	if s != nil {
-		gu.SetLevelUpMessage(*s)
+func (_u *GuildUpdate) SetNillableLevelUpMessage(v *string) *GuildUpdate {
+	if v != nil {
+		_u.SetLevelUpMessage(*v)
 	}
-	return gu
+	return _u
 }
 
 // SetLevelUpChannel sets the "level_up_channel" field.
-func (gu *GuildUpdate) SetLevelUpChannel(s snowflake.ID) *GuildUpdate {
-	gu.mutation.ResetLevelUpChannel()
-	gu.mutation.SetLevelUpChannel(s)
-	return gu
+func (_u *GuildUpdate) SetLevelUpChannel(v snowflake.ID) *GuildUpdate {
+	_u.mutation.ResetLevelUpChannel()
+	_u.mutation.SetLevelUpChannel(v)
+	return _u
 }
 
 // SetNillableLevelUpChannel sets the "level_up_channel" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableLevelUpChannel(s *snowflake.ID) *GuildUpdate {
-	if s != nil {
-		gu.SetLevelUpChannel(*s)
+func (_u *GuildUpdate) SetNillableLevelUpChannel(v *snowflake.ID) *GuildUpdate {
+	if v != nil {
+		_u.SetLevelUpChannel(*v)
 	}
-	return gu
+	return _u
 }
 
-// AddLevelUpChannel adds s to the "level_up_channel" field.
-func (gu *GuildUpdate) AddLevelUpChannel(s snowflake.ID) *GuildUpdate {
-	gu.mutation.AddLevelUpChannel(s)
-	return gu
+// AddLevelUpChannel adds value to the "level_up_channel" field.
+func (_u *GuildUpdate) AddLevelUpChannel(v snowflake.ID) *GuildUpdate {
+	_u.mutation.AddLevelUpChannel(v)
+	return _u
 }
 
 // ClearLevelUpChannel clears the value of the "level_up_channel" field.
-func (gu *GuildUpdate) ClearLevelUpChannel() *GuildUpdate {
-	gu.mutation.ClearLevelUpChannel()
-	return gu
+func (_u *GuildUpdate) ClearLevelUpChannel() *GuildUpdate {
+	_u.mutation.ClearLevelUpChannel()
+	return _u
 }
 
 // SetLevelUpExcludeChannel sets the "level_up_exclude_channel" field.
-func (gu *GuildUpdate) SetLevelUpExcludeChannel(s []snowflake.ID) *GuildUpdate {
-	gu.mutation.SetLevelUpExcludeChannel(s)
-	return gu
+func (_u *GuildUpdate) SetLevelUpExcludeChannel(v []snowflake.ID) *GuildUpdate {
+	_u.mutation.SetLevelUpExcludeChannel(v)
+	return _u
 }
 
-// AppendLevelUpExcludeChannel appends s to the "level_up_exclude_channel" field.
-func (gu *GuildUpdate) AppendLevelUpExcludeChannel(s []snowflake.ID) *GuildUpdate {
-	gu.mutation.AppendLevelUpExcludeChannel(s)
-	return gu
+// AppendLevelUpExcludeChannel appends value to the "level_up_exclude_channel" field.
+func (_u *GuildUpdate) AppendLevelUpExcludeChannel(v []snowflake.ID) *GuildUpdate {
+	_u.mutation.AppendLevelUpExcludeChannel(v)
+	return _u
 }
 
 // ClearLevelUpExcludeChannel clears the value of the "level_up_exclude_channel" field.
-func (gu *GuildUpdate) ClearLevelUpExcludeChannel() *GuildUpdate {
-	gu.mutation.ClearLevelUpExcludeChannel()
-	return gu
+func (_u *GuildUpdate) ClearLevelUpExcludeChannel() *GuildUpdate {
+	_u.mutation.ClearLevelUpExcludeChannel()
+	return _u
 }
 
 // SetLevelMee6Imported sets the "level_mee6_imported" field.
-func (gu *GuildUpdate) SetLevelMee6Imported(b bool) *GuildUpdate {
-	gu.mutation.SetLevelMee6Imported(b)
-	return gu
+func (_u *GuildUpdate) SetLevelMee6Imported(v bool) *GuildUpdate {
+	_u.mutation.SetLevelMee6Imported(v)
+	return _u
 }
 
 // SetNillableLevelMee6Imported sets the "level_mee6_imported" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableLevelMee6Imported(b *bool) *GuildUpdate {
-	if b != nil {
-		gu.SetLevelMee6Imported(*b)
+func (_u *GuildUpdate) SetNillableLevelMee6Imported(v *bool) *GuildUpdate {
+	if v != nil {
+		_u.SetLevelMee6Imported(*v)
 	}
-	return gu
+	return _u
 }
 
 // SetLevelRole sets the "level_role" field.
-func (gu *GuildUpdate) SetLevelRole(m map[int]snowflake.ID) *GuildUpdate {
-	gu.mutation.SetLevelRole(m)
-	return gu
+func (_u *GuildUpdate) SetLevelRole(v map[int]snowflake.ID) *GuildUpdate {
+	_u.mutation.SetLevelRole(v)
+	return _u
 }
 
 // ClearLevelRole clears the value of the "level_role" field.
-func (gu *GuildUpdate) ClearLevelRole() *GuildUpdate {
-	gu.mutation.ClearLevelRole()
-	return gu
+func (_u *GuildUpdate) ClearLevelRole() *GuildUpdate {
+	_u.mutation.ClearLevelRole()
+	return _u
 }
 
 // SetPermissions sets the "permissions" field.
-func (gu *GuildUpdate) SetPermissions(m map[snowflake.ID]permissions.Permission) *GuildUpdate {
-	gu.mutation.SetPermissions(m)
-	return gu
+func (_u *GuildUpdate) SetPermissions(v map[snowflake.ID]permissions.Permission) *GuildUpdate {
+	_u.mutation.SetPermissions(v)
+	return _u
 }
 
 // SetRemindCount sets the "remind_count" field.
-func (gu *GuildUpdate) SetRemindCount(i int) *GuildUpdate {
-	gu.mutation.ResetRemindCount()
-	gu.mutation.SetRemindCount(i)
-	return gu
+func (_u *GuildUpdate) SetRemindCount(v int) *GuildUpdate {
+	_u.mutation.ResetRemindCount()
+	_u.mutation.SetRemindCount(v)
+	return _u
 }
 
 // SetNillableRemindCount sets the "remind_count" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableRemindCount(i *int) *GuildUpdate {
-	if i != nil {
-		gu.SetRemindCount(*i)
+func (_u *GuildUpdate) SetNillableRemindCount(v *int) *GuildUpdate {
+	if v != nil {
+		_u.SetRemindCount(*v)
 	}
-	return gu
+	return _u
 }
 
-// AddRemindCount adds i to the "remind_count" field.
-func (gu *GuildUpdate) AddRemindCount(i int) *GuildUpdate {
-	gu.mutation.AddRemindCount(i)
-	return gu
+// AddRemindCount adds value to the "remind_count" field.
+func (_u *GuildUpdate) AddRemindCount(v int) *GuildUpdate {
+	_u.mutation.AddRemindCount(v)
+	return _u
 }
 
 // SetRolePanelEditTimes sets the "role_panel_edit_times" field.
-func (gu *GuildUpdate) SetRolePanelEditTimes(t []time.Time) *GuildUpdate {
-	gu.mutation.SetRolePanelEditTimes(t)
-	return gu
+func (_u *GuildUpdate) SetRolePanelEditTimes(v []time.Time) *GuildUpdate {
+	_u.mutation.SetRolePanelEditTimes(v)
+	return _u
 }
 
-// AppendRolePanelEditTimes appends t to the "role_panel_edit_times" field.
-func (gu *GuildUpdate) AppendRolePanelEditTimes(t []time.Time) *GuildUpdate {
-	gu.mutation.AppendRolePanelEditTimes(t)
-	return gu
+// AppendRolePanelEditTimes appends value to the "role_panel_edit_times" field.
+func (_u *GuildUpdate) AppendRolePanelEditTimes(v []time.Time) *GuildUpdate {
+	_u.mutation.AppendRolePanelEditTimes(v)
+	return _u
 }
 
 // SetBumpEnabled sets the "bump_enabled" field.
-func (gu *GuildUpdate) SetBumpEnabled(b bool) *GuildUpdate {
-	gu.mutation.SetBumpEnabled(b)
-	return gu
+func (_u *GuildUpdate) SetBumpEnabled(v bool) *GuildUpdate {
+	_u.mutation.SetBumpEnabled(v)
+	return _u
 }
 
 // SetNillableBumpEnabled sets the "bump_enabled" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableBumpEnabled(b *bool) *GuildUpdate {
-	if b != nil {
-		gu.SetBumpEnabled(*b)
+func (_u *GuildUpdate) SetNillableBumpEnabled(v *bool) *GuildUpdate {
+	if v != nil {
+		_u.SetBumpEnabled(*v)
 	}
-	return gu
+	return _u
 }
 
 // SetBumpMessageTitle sets the "bump_message_title" field.
-func (gu *GuildUpdate) SetBumpMessageTitle(s string) *GuildUpdate {
-	gu.mutation.SetBumpMessageTitle(s)
-	return gu
+func (_u *GuildUpdate) SetBumpMessageTitle(v string) *GuildUpdate {
+	_u.mutation.SetBumpMessageTitle(v)
+	return _u
 }
 
 // SetNillableBumpMessageTitle sets the "bump_message_title" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableBumpMessageTitle(s *string) *GuildUpdate {
-	if s != nil {
-		gu.SetBumpMessageTitle(*s)
+func (_u *GuildUpdate) SetNillableBumpMessageTitle(v *string) *GuildUpdate {
+	if v != nil {
+		_u.SetBumpMessageTitle(*v)
 	}
-	return gu
+	return _u
 }
 
 // SetBumpMessage sets the "bump_message" field.
-func (gu *GuildUpdate) SetBumpMessage(s string) *GuildUpdate {
-	gu.mutation.SetBumpMessage(s)
-	return gu
+func (_u *GuildUpdate) SetBumpMessage(v string) *GuildUpdate {
+	_u.mutation.SetBumpMessage(v)
+	return _u
 }
 
 // SetNillableBumpMessage sets the "bump_message" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableBumpMessage(s *string) *GuildUpdate {
-	if s != nil {
-		gu.SetBumpMessage(*s)
+func (_u *GuildUpdate) SetNillableBumpMessage(v *string) *GuildUpdate {
+	if v != nil {
+		_u.SetBumpMessage(*v)
 	}
-	return gu
+	return _u
 }
 
 // SetBumpRemindMessageTitle sets the "bump_remind_message_title" field.
-func (gu *GuildUpdate) SetBumpRemindMessageTitle(s string) *GuildUpdate {
-	gu.mutation.SetBumpRemindMessageTitle(s)
-	return gu
+func (_u *GuildUpdate) SetBumpRemindMessageTitle(v string) *GuildUpdate {
+	_u.mutation.SetBumpRemindMessageTitle(v)
+	return _u
 }
 
 // SetNillableBumpRemindMessageTitle sets the "bump_remind_message_title" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableBumpRemindMessageTitle(s *string) *GuildUpdate {
-	if s != nil {
-		gu.SetBumpRemindMessageTitle(*s)
+func (_u *GuildUpdate) SetNillableBumpRemindMessageTitle(v *string) *GuildUpdate {
+	if v != nil {
+		_u.SetBumpRemindMessageTitle(*v)
 	}
-	return gu
+	return _u
 }
 
 // SetBumpRemindMessage sets the "bump_remind_message" field.
-func (gu *GuildUpdate) SetBumpRemindMessage(s string) *GuildUpdate {
-	gu.mutation.SetBumpRemindMessage(s)
-	return gu
+func (_u *GuildUpdate) SetBumpRemindMessage(v string) *GuildUpdate {
+	_u.mutation.SetBumpRemindMessage(v)
+	return _u
 }
 
 // SetNillableBumpRemindMessage sets the "bump_remind_message" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableBumpRemindMessage(s *string) *GuildUpdate {
-	if s != nil {
-		gu.SetBumpRemindMessage(*s)
+func (_u *GuildUpdate) SetNillableBumpRemindMessage(v *string) *GuildUpdate {
+	if v != nil {
+		_u.SetBumpRemindMessage(*v)
 	}
-	return gu
+	return _u
 }
 
 // SetUpEnabled sets the "up_enabled" field.
-func (gu *GuildUpdate) SetUpEnabled(b bool) *GuildUpdate {
-	gu.mutation.SetUpEnabled(b)
-	return gu
+func (_u *GuildUpdate) SetUpEnabled(v bool) *GuildUpdate {
+	_u.mutation.SetUpEnabled(v)
+	return _u
 }
 
 // SetNillableUpEnabled sets the "up_enabled" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableUpEnabled(b *bool) *GuildUpdate {
-	if b != nil {
-		gu.SetUpEnabled(*b)
+func (_u *GuildUpdate) SetNillableUpEnabled(v *bool) *GuildUpdate {
+	if v != nil {
+		_u.SetUpEnabled(*v)
 	}
-	return gu
+	return _u
 }
 
 // SetUpMessageTitle sets the "up_message_title" field.
-func (gu *GuildUpdate) SetUpMessageTitle(s string) *GuildUpdate {
-	gu.mutation.SetUpMessageTitle(s)
-	return gu
+func (_u *GuildUpdate) SetUpMessageTitle(v string) *GuildUpdate {
+	_u.mutation.SetUpMessageTitle(v)
+	return _u
 }
 
 // SetNillableUpMessageTitle sets the "up_message_title" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableUpMessageTitle(s *string) *GuildUpdate {
-	if s != nil {
-		gu.SetUpMessageTitle(*s)
+func (_u *GuildUpdate) SetNillableUpMessageTitle(v *string) *GuildUpdate {
+	if v != nil {
+		_u.SetUpMessageTitle(*v)
 	}
-	return gu
+	return _u
 }
 
 // SetUpMessage sets the "up_message" field.
-func (gu *GuildUpdate) SetUpMessage(s string) *GuildUpdate {
-	gu.mutation.SetUpMessage(s)
-	return gu
+func (_u *GuildUpdate) SetUpMessage(v string) *GuildUpdate {
+	_u.mutation.SetUpMessage(v)
+	return _u
 }
 
 // SetNillableUpMessage sets the "up_message" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableUpMessage(s *string) *GuildUpdate {
-	if s != nil {
-		gu.SetUpMessage(*s)
+func (_u *GuildUpdate) SetNillableUpMessage(v *string) *GuildUpdate {
+	if v != nil {
+		_u.SetUpMessage(*v)
 	}
-	return gu
+	return _u
 }
 
 // SetUpRemindMessageTitle sets the "up_remind_message_title" field.
-func (gu *GuildUpdate) SetUpRemindMessageTitle(s string) *GuildUpdate {
-	gu.mutation.SetUpRemindMessageTitle(s)
-	return gu
+func (_u *GuildUpdate) SetUpRemindMessageTitle(v string) *GuildUpdate {
+	_u.mutation.SetUpRemindMessageTitle(v)
+	return _u
 }
 
 // SetNillableUpRemindMessageTitle sets the "up_remind_message_title" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableUpRemindMessageTitle(s *string) *GuildUpdate {
-	if s != nil {
-		gu.SetUpRemindMessageTitle(*s)
+func (_u *GuildUpdate) SetNillableUpRemindMessageTitle(v *string) *GuildUpdate {
+	if v != nil {
+		_u.SetUpRemindMessageTitle(*v)
 	}
-	return gu
+	return _u
 }
 
 // SetUpRemindMessage sets the "up_remind_message" field.
-func (gu *GuildUpdate) SetUpRemindMessage(s string) *GuildUpdate {
-	gu.mutation.SetUpRemindMessage(s)
-	return gu
+func (_u *GuildUpdate) SetUpRemindMessage(v string) *GuildUpdate {
+	_u.mutation.SetUpRemindMessage(v)
+	return _u
 }
 
 // SetNillableUpRemindMessage sets the "up_remind_message" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableUpRemindMessage(s *string) *GuildUpdate {
-	if s != nil {
-		gu.SetUpRemindMessage(*s)
+func (_u *GuildUpdate) SetNillableUpRemindMessage(v *string) *GuildUpdate {
+	if v != nil {
+		_u.SetUpRemindMessage(*v)
 	}
-	return gu
+	return _u
 }
 
 // SetBumpMention sets the "bump_mention" field.
-func (gu *GuildUpdate) SetBumpMention(s snowflake.ID) *GuildUpdate {
-	gu.mutation.ResetBumpMention()
-	gu.mutation.SetBumpMention(s)
-	return gu
+func (_u *GuildUpdate) SetBumpMention(v snowflake.ID) *GuildUpdate {
+	_u.mutation.ResetBumpMention()
+	_u.mutation.SetBumpMention(v)
+	return _u
 }
 
 // SetNillableBumpMention sets the "bump_mention" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableBumpMention(s *snowflake.ID) *GuildUpdate {
-	if s != nil {
-		gu.SetBumpMention(*s)
+func (_u *GuildUpdate) SetNillableBumpMention(v *snowflake.ID) *GuildUpdate {
+	if v != nil {
+		_u.SetBumpMention(*v)
 	}
-	return gu
+	return _u
 }
 
-// AddBumpMention adds s to the "bump_mention" field.
-func (gu *GuildUpdate) AddBumpMention(s snowflake.ID) *GuildUpdate {
-	gu.mutation.AddBumpMention(s)
-	return gu
+// AddBumpMention adds value to the "bump_mention" field.
+func (_u *GuildUpdate) AddBumpMention(v snowflake.ID) *GuildUpdate {
+	_u.mutation.AddBumpMention(v)
+	return _u
 }
 
 // ClearBumpMention clears the value of the "bump_mention" field.
-func (gu *GuildUpdate) ClearBumpMention() *GuildUpdate {
-	gu.mutation.ClearBumpMention()
-	return gu
+func (_u *GuildUpdate) ClearBumpMention() *GuildUpdate {
+	_u.mutation.ClearBumpMention()
+	return _u
 }
 
 // SetUpMention sets the "up_mention" field.
-func (gu *GuildUpdate) SetUpMention(s snowflake.ID) *GuildUpdate {
-	gu.mutation.ResetUpMention()
-	gu.mutation.SetUpMention(s)
-	return gu
+func (_u *GuildUpdate) SetUpMention(v snowflake.ID) *GuildUpdate {
+	_u.mutation.ResetUpMention()
+	_u.mutation.SetUpMention(v)
+	return _u
 }
 
 // SetNillableUpMention sets the "up_mention" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableUpMention(s *snowflake.ID) *GuildUpdate {
-	if s != nil {
-		gu.SetUpMention(*s)
+func (_u *GuildUpdate) SetNillableUpMention(v *snowflake.ID) *GuildUpdate {
+	if v != nil {
+		_u.SetUpMention(*v)
 	}
-	return gu
+	return _u
 }
 
-// AddUpMention adds s to the "up_mention" field.
-func (gu *GuildUpdate) AddUpMention(s snowflake.ID) *GuildUpdate {
-	gu.mutation.AddUpMention(s)
-	return gu
+// AddUpMention adds value to the "up_mention" field.
+func (_u *GuildUpdate) AddUpMention(v snowflake.ID) *GuildUpdate {
+	_u.mutation.AddUpMention(v)
+	return _u
 }
 
 // ClearUpMention clears the value of the "up_mention" field.
-func (gu *GuildUpdate) ClearUpMention() *GuildUpdate {
-	gu.mutation.ClearUpMention()
-	return gu
+func (_u *GuildUpdate) ClearUpMention() *GuildUpdate {
+	_u.mutation.ClearUpMention()
+	return _u
 }
 
 // SetLevelingDisabled sets the "leveling_disabled" field.
-func (gu *GuildUpdate) SetLevelingDisabled(b bool) *GuildUpdate {
-	gu.mutation.SetLevelingDisabled(b)
-	return gu
+func (_u *GuildUpdate) SetLevelingDisabled(v bool) *GuildUpdate {
+	_u.mutation.SetLevelingDisabled(v)
+	return _u
 }
 
 // SetNillableLevelingDisabled sets the "leveling_disabled" field if the given value is not nil.
-func (gu *GuildUpdate) SetNillableLevelingDisabled(b *bool) *GuildUpdate {
-	if b != nil {
-		gu.SetLevelingDisabled(*b)
+func (_u *GuildUpdate) SetNillableLevelingDisabled(v *bool) *GuildUpdate {
+	if v != nil {
+		_u.SetLevelingDisabled(*v)
 	}
-	return gu
+	return _u
 }
 
 // SetOwnerID sets the "owner" edge to the User entity by ID.
-func (gu *GuildUpdate) SetOwnerID(id snowflake.ID) *GuildUpdate {
-	gu.mutation.SetOwnerID(id)
-	return gu
+func (_u *GuildUpdate) SetOwnerID(id snowflake.ID) *GuildUpdate {
+	_u.mutation.SetOwnerID(id)
+	return _u
 }
 
 // SetOwner sets the "owner" edge to the User entity.
-func (gu *GuildUpdate) SetOwner(u *User) *GuildUpdate {
-	return gu.SetOwnerID(u.ID)
+func (_u *GuildUpdate) SetOwner(v *User) *GuildUpdate {
+	return _u.SetOwnerID(v.ID)
 }
 
 // AddMemberIDs adds the "members" edge to the Member entity by IDs.
-func (gu *GuildUpdate) AddMemberIDs(ids ...int) *GuildUpdate {
-	gu.mutation.AddMemberIDs(ids...)
-	return gu
+func (_u *GuildUpdate) AddMemberIDs(ids ...int) *GuildUpdate {
+	_u.mutation.AddMemberIDs(ids...)
+	return _u
 }
 
 // AddMembers adds the "members" edges to the Member entity.
-func (gu *GuildUpdate) AddMembers(m ...*Member) *GuildUpdate {
-	ids := make([]int, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_u *GuildUpdate) AddMembers(v ...*Member) *GuildUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gu.AddMemberIDs(ids...)
+	return _u.AddMemberIDs(ids...)
 }
 
 // AddMessagePinIDs adds the "message_pins" edge to the MessagePin entity by IDs.
-func (gu *GuildUpdate) AddMessagePinIDs(ids ...uuid.UUID) *GuildUpdate {
-	gu.mutation.AddMessagePinIDs(ids...)
-	return gu
+func (_u *GuildUpdate) AddMessagePinIDs(ids ...uuid.UUID) *GuildUpdate {
+	_u.mutation.AddMessagePinIDs(ids...)
+	return _u
 }
 
 // AddMessagePins adds the "message_pins" edges to the MessagePin entity.
-func (gu *GuildUpdate) AddMessagePins(m ...*MessagePin) *GuildUpdate {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_u *GuildUpdate) AddMessagePins(v ...*MessagePin) *GuildUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gu.AddMessagePinIDs(ids...)
+	return _u.AddMessagePinIDs(ids...)
 }
 
 // AddRemindIDs adds the "reminds" edge to the MessageRemind entity by IDs.
-func (gu *GuildUpdate) AddRemindIDs(ids ...uuid.UUID) *GuildUpdate {
-	gu.mutation.AddRemindIDs(ids...)
-	return gu
+func (_u *GuildUpdate) AddRemindIDs(ids ...uuid.UUID) *GuildUpdate {
+	_u.mutation.AddRemindIDs(ids...)
+	return _u
 }
 
 // AddReminds adds the "reminds" edges to the MessageRemind entity.
-func (gu *GuildUpdate) AddReminds(m ...*MessageRemind) *GuildUpdate {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_u *GuildUpdate) AddReminds(v ...*MessageRemind) *GuildUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gu.AddRemindIDs(ids...)
+	return _u.AddRemindIDs(ids...)
 }
 
 // AddRolePanelIDs adds the "role_panels" edge to the RolePanel entity by IDs.
-func (gu *GuildUpdate) AddRolePanelIDs(ids ...uuid.UUID) *GuildUpdate {
-	gu.mutation.AddRolePanelIDs(ids...)
-	return gu
+func (_u *GuildUpdate) AddRolePanelIDs(ids ...uuid.UUID) *GuildUpdate {
+	_u.mutation.AddRolePanelIDs(ids...)
+	return _u
 }
 
 // AddRolePanels adds the "role_panels" edges to the RolePanel entity.
-func (gu *GuildUpdate) AddRolePanels(r ...*RolePanel) *GuildUpdate {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_u *GuildUpdate) AddRolePanels(v ...*RolePanel) *GuildUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gu.AddRolePanelIDs(ids...)
+	return _u.AddRolePanelIDs(ids...)
 }
 
 // AddRolePanelPlacementIDs adds the "role_panel_placements" edge to the RolePanelPlaced entity by IDs.
-func (gu *GuildUpdate) AddRolePanelPlacementIDs(ids ...uuid.UUID) *GuildUpdate {
-	gu.mutation.AddRolePanelPlacementIDs(ids...)
-	return gu
+func (_u *GuildUpdate) AddRolePanelPlacementIDs(ids ...uuid.UUID) *GuildUpdate {
+	_u.mutation.AddRolePanelPlacementIDs(ids...)
+	return _u
 }
 
 // AddRolePanelPlacements adds the "role_panel_placements" edges to the RolePanelPlaced entity.
-func (gu *GuildUpdate) AddRolePanelPlacements(r ...*RolePanelPlaced) *GuildUpdate {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_u *GuildUpdate) AddRolePanelPlacements(v ...*RolePanelPlaced) *GuildUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gu.AddRolePanelPlacementIDs(ids...)
+	return _u.AddRolePanelPlacementIDs(ids...)
 }
 
 // AddRolePanelEditIDs adds the "role_panel_edits" edge to the RolePanelEdit entity by IDs.
-func (gu *GuildUpdate) AddRolePanelEditIDs(ids ...uuid.UUID) *GuildUpdate {
-	gu.mutation.AddRolePanelEditIDs(ids...)
-	return gu
+func (_u *GuildUpdate) AddRolePanelEditIDs(ids ...uuid.UUID) *GuildUpdate {
+	_u.mutation.AddRolePanelEditIDs(ids...)
+	return _u
 }
 
 // AddRolePanelEdits adds the "role_panel_edits" edges to the RolePanelEdit entity.
-func (gu *GuildUpdate) AddRolePanelEdits(r ...*RolePanelEdit) *GuildUpdate {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_u *GuildUpdate) AddRolePanelEdits(v ...*RolePanelEdit) *GuildUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gu.AddRolePanelEditIDs(ids...)
+	return _u.AddRolePanelEditIDs(ids...)
 }
 
 // AddChinchiroSessionIDs adds the "chinchiro_sessions" edge to the ChinchiroSession entity by IDs.
-func (gu *GuildUpdate) AddChinchiroSessionIDs(ids ...uuid.UUID) *GuildUpdate {
-	gu.mutation.AddChinchiroSessionIDs(ids...)
-	return gu
+func (_u *GuildUpdate) AddChinchiroSessionIDs(ids ...uuid.UUID) *GuildUpdate {
+	_u.mutation.AddChinchiroSessionIDs(ids...)
+	return _u
 }
 
 // AddChinchiroSessions adds the "chinchiro_sessions" edges to the ChinchiroSession entity.
-func (gu *GuildUpdate) AddChinchiroSessions(c ...*ChinchiroSession) *GuildUpdate {
-	ids := make([]uuid.UUID, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
+func (_u *GuildUpdate) AddChinchiroSessions(v ...*ChinchiroSession) *GuildUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gu.AddChinchiroSessionIDs(ids...)
+	return _u.AddChinchiroSessionIDs(ids...)
 }
 
 // AddThreads1000IDs adds the "threads1000" edge to the Thread1000 entity by IDs.
-func (gu *GuildUpdate) AddThreads1000IDs(ids ...uuid.UUID) *GuildUpdate {
-	gu.mutation.AddThreads1000IDs(ids...)
-	return gu
+func (_u *GuildUpdate) AddThreads1000IDs(ids ...uuid.UUID) *GuildUpdate {
+	_u.mutation.AddThreads1000IDs(ids...)
+	return _u
 }
 
 // AddThreads1000 adds the "threads1000" edges to the Thread1000 entity.
-func (gu *GuildUpdate) AddThreads1000(t ...*Thread1000) *GuildUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *GuildUpdate) AddThreads1000(v ...*Thread1000) *GuildUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gu.AddThreads1000IDs(ids...)
+	return _u.AddThreads1000IDs(ids...)
 }
 
 // AddThread1000ChannelIDs adds the "thread1000_channels" edge to the Thread1000Channel entity by IDs.
-func (gu *GuildUpdate) AddThread1000ChannelIDs(ids ...uuid.UUID) *GuildUpdate {
-	gu.mutation.AddThread1000ChannelIDs(ids...)
-	return gu
+func (_u *GuildUpdate) AddThread1000ChannelIDs(ids ...uuid.UUID) *GuildUpdate {
+	_u.mutation.AddThread1000ChannelIDs(ids...)
+	return _u
 }
 
 // AddThread1000Channels adds the "thread1000_channels" edges to the Thread1000Channel entity.
-func (gu *GuildUpdate) AddThread1000Channels(t ...*Thread1000Channel) *GuildUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *GuildUpdate) AddThread1000Channels(v ...*Thread1000Channel) *GuildUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gu.AddThread1000ChannelIDs(ids...)
+	return _u.AddThread1000ChannelIDs(ids...)
 }
 
 // Mutation returns the GuildMutation object of the builder.
-func (gu *GuildUpdate) Mutation() *GuildMutation {
-	return gu.mutation
+func (_u *GuildUpdate) Mutation() *GuildMutation {
+	return _u.mutation
 }
 
 // ClearOwner clears the "owner" edge to the User entity.
-func (gu *GuildUpdate) ClearOwner() *GuildUpdate {
-	gu.mutation.ClearOwner()
-	return gu
+func (_u *GuildUpdate) ClearOwner() *GuildUpdate {
+	_u.mutation.ClearOwner()
+	return _u
 }
 
 // ClearMembers clears all "members" edges to the Member entity.
-func (gu *GuildUpdate) ClearMembers() *GuildUpdate {
-	gu.mutation.ClearMembers()
-	return gu
+func (_u *GuildUpdate) ClearMembers() *GuildUpdate {
+	_u.mutation.ClearMembers()
+	return _u
 }
 
 // RemoveMemberIDs removes the "members" edge to Member entities by IDs.
-func (gu *GuildUpdate) RemoveMemberIDs(ids ...int) *GuildUpdate {
-	gu.mutation.RemoveMemberIDs(ids...)
-	return gu
+func (_u *GuildUpdate) RemoveMemberIDs(ids ...int) *GuildUpdate {
+	_u.mutation.RemoveMemberIDs(ids...)
+	return _u
 }
 
 // RemoveMembers removes "members" edges to Member entities.
-func (gu *GuildUpdate) RemoveMembers(m ...*Member) *GuildUpdate {
-	ids := make([]int, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_u *GuildUpdate) RemoveMembers(v ...*Member) *GuildUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gu.RemoveMemberIDs(ids...)
+	return _u.RemoveMemberIDs(ids...)
 }
 
 // ClearMessagePins clears all "message_pins" edges to the MessagePin entity.
-func (gu *GuildUpdate) ClearMessagePins() *GuildUpdate {
-	gu.mutation.ClearMessagePins()
-	return gu
+func (_u *GuildUpdate) ClearMessagePins() *GuildUpdate {
+	_u.mutation.ClearMessagePins()
+	return _u
 }
 
 // RemoveMessagePinIDs removes the "message_pins" edge to MessagePin entities by IDs.
-func (gu *GuildUpdate) RemoveMessagePinIDs(ids ...uuid.UUID) *GuildUpdate {
-	gu.mutation.RemoveMessagePinIDs(ids...)
-	return gu
+func (_u *GuildUpdate) RemoveMessagePinIDs(ids ...uuid.UUID) *GuildUpdate {
+	_u.mutation.RemoveMessagePinIDs(ids...)
+	return _u
 }
 
 // RemoveMessagePins removes "message_pins" edges to MessagePin entities.
-func (gu *GuildUpdate) RemoveMessagePins(m ...*MessagePin) *GuildUpdate {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_u *GuildUpdate) RemoveMessagePins(v ...*MessagePin) *GuildUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gu.RemoveMessagePinIDs(ids...)
+	return _u.RemoveMessagePinIDs(ids...)
 }
 
 // ClearReminds clears all "reminds" edges to the MessageRemind entity.
-func (gu *GuildUpdate) ClearReminds() *GuildUpdate {
-	gu.mutation.ClearReminds()
-	return gu
+func (_u *GuildUpdate) ClearReminds() *GuildUpdate {
+	_u.mutation.ClearReminds()
+	return _u
 }
 
 // RemoveRemindIDs removes the "reminds" edge to MessageRemind entities by IDs.
-func (gu *GuildUpdate) RemoveRemindIDs(ids ...uuid.UUID) *GuildUpdate {
-	gu.mutation.RemoveRemindIDs(ids...)
-	return gu
+func (_u *GuildUpdate) RemoveRemindIDs(ids ...uuid.UUID) *GuildUpdate {
+	_u.mutation.RemoveRemindIDs(ids...)
+	return _u
 }
 
 // RemoveReminds removes "reminds" edges to MessageRemind entities.
-func (gu *GuildUpdate) RemoveReminds(m ...*MessageRemind) *GuildUpdate {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_u *GuildUpdate) RemoveReminds(v ...*MessageRemind) *GuildUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gu.RemoveRemindIDs(ids...)
+	return _u.RemoveRemindIDs(ids...)
 }
 
 // ClearRolePanels clears all "role_panels" edges to the RolePanel entity.
-func (gu *GuildUpdate) ClearRolePanels() *GuildUpdate {
-	gu.mutation.ClearRolePanels()
-	return gu
+func (_u *GuildUpdate) ClearRolePanels() *GuildUpdate {
+	_u.mutation.ClearRolePanels()
+	return _u
 }
 
 // RemoveRolePanelIDs removes the "role_panels" edge to RolePanel entities by IDs.
-func (gu *GuildUpdate) RemoveRolePanelIDs(ids ...uuid.UUID) *GuildUpdate {
-	gu.mutation.RemoveRolePanelIDs(ids...)
-	return gu
+func (_u *GuildUpdate) RemoveRolePanelIDs(ids ...uuid.UUID) *GuildUpdate {
+	_u.mutation.RemoveRolePanelIDs(ids...)
+	return _u
 }
 
 // RemoveRolePanels removes "role_panels" edges to RolePanel entities.
-func (gu *GuildUpdate) RemoveRolePanels(r ...*RolePanel) *GuildUpdate {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_u *GuildUpdate) RemoveRolePanels(v ...*RolePanel) *GuildUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gu.RemoveRolePanelIDs(ids...)
+	return _u.RemoveRolePanelIDs(ids...)
 }
 
 // ClearRolePanelPlacements clears all "role_panel_placements" edges to the RolePanelPlaced entity.
-func (gu *GuildUpdate) ClearRolePanelPlacements() *GuildUpdate {
-	gu.mutation.ClearRolePanelPlacements()
-	return gu
+func (_u *GuildUpdate) ClearRolePanelPlacements() *GuildUpdate {
+	_u.mutation.ClearRolePanelPlacements()
+	return _u
 }
 
 // RemoveRolePanelPlacementIDs removes the "role_panel_placements" edge to RolePanelPlaced entities by IDs.
-func (gu *GuildUpdate) RemoveRolePanelPlacementIDs(ids ...uuid.UUID) *GuildUpdate {
-	gu.mutation.RemoveRolePanelPlacementIDs(ids...)
-	return gu
+func (_u *GuildUpdate) RemoveRolePanelPlacementIDs(ids ...uuid.UUID) *GuildUpdate {
+	_u.mutation.RemoveRolePanelPlacementIDs(ids...)
+	return _u
 }
 
 // RemoveRolePanelPlacements removes "role_panel_placements" edges to RolePanelPlaced entities.
-func (gu *GuildUpdate) RemoveRolePanelPlacements(r ...*RolePanelPlaced) *GuildUpdate {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_u *GuildUpdate) RemoveRolePanelPlacements(v ...*RolePanelPlaced) *GuildUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gu.RemoveRolePanelPlacementIDs(ids...)
+	return _u.RemoveRolePanelPlacementIDs(ids...)
 }
 
 // ClearRolePanelEdits clears all "role_panel_edits" edges to the RolePanelEdit entity.
-func (gu *GuildUpdate) ClearRolePanelEdits() *GuildUpdate {
-	gu.mutation.ClearRolePanelEdits()
-	return gu
+func (_u *GuildUpdate) ClearRolePanelEdits() *GuildUpdate {
+	_u.mutation.ClearRolePanelEdits()
+	return _u
 }
 
 // RemoveRolePanelEditIDs removes the "role_panel_edits" edge to RolePanelEdit entities by IDs.
-func (gu *GuildUpdate) RemoveRolePanelEditIDs(ids ...uuid.UUID) *GuildUpdate {
-	gu.mutation.RemoveRolePanelEditIDs(ids...)
-	return gu
+func (_u *GuildUpdate) RemoveRolePanelEditIDs(ids ...uuid.UUID) *GuildUpdate {
+	_u.mutation.RemoveRolePanelEditIDs(ids...)
+	return _u
 }
 
 // RemoveRolePanelEdits removes "role_panel_edits" edges to RolePanelEdit entities.
-func (gu *GuildUpdate) RemoveRolePanelEdits(r ...*RolePanelEdit) *GuildUpdate {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_u *GuildUpdate) RemoveRolePanelEdits(v ...*RolePanelEdit) *GuildUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gu.RemoveRolePanelEditIDs(ids...)
+	return _u.RemoveRolePanelEditIDs(ids...)
 }
 
 // ClearChinchiroSessions clears all "chinchiro_sessions" edges to the ChinchiroSession entity.
-func (gu *GuildUpdate) ClearChinchiroSessions() *GuildUpdate {
-	gu.mutation.ClearChinchiroSessions()
-	return gu
+func (_u *GuildUpdate) ClearChinchiroSessions() *GuildUpdate {
+	_u.mutation.ClearChinchiroSessions()
+	return _u
 }
 
 // RemoveChinchiroSessionIDs removes the "chinchiro_sessions" edge to ChinchiroSession entities by IDs.
-func (gu *GuildUpdate) RemoveChinchiroSessionIDs(ids ...uuid.UUID) *GuildUpdate {
-	gu.mutation.RemoveChinchiroSessionIDs(ids...)
-	return gu
+func (_u *GuildUpdate) RemoveChinchiroSessionIDs(ids ...uuid.UUID) *GuildUpdate {
+	_u.mutation.RemoveChinchiroSessionIDs(ids...)
+	return _u
 }
 
 // RemoveChinchiroSessions removes "chinchiro_sessions" edges to ChinchiroSession entities.
-func (gu *GuildUpdate) RemoveChinchiroSessions(c ...*ChinchiroSession) *GuildUpdate {
-	ids := make([]uuid.UUID, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
+func (_u *GuildUpdate) RemoveChinchiroSessions(v ...*ChinchiroSession) *GuildUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gu.RemoveChinchiroSessionIDs(ids...)
+	return _u.RemoveChinchiroSessionIDs(ids...)
 }
 
 // ClearThreads1000 clears all "threads1000" edges to the Thread1000 entity.
-func (gu *GuildUpdate) ClearThreads1000() *GuildUpdate {
-	gu.mutation.ClearThreads1000()
-	return gu
+func (_u *GuildUpdate) ClearThreads1000() *GuildUpdate {
+	_u.mutation.ClearThreads1000()
+	return _u
 }
 
 // RemoveThreads1000IDs removes the "threads1000" edge to Thread1000 entities by IDs.
-func (gu *GuildUpdate) RemoveThreads1000IDs(ids ...uuid.UUID) *GuildUpdate {
-	gu.mutation.RemoveThreads1000IDs(ids...)
-	return gu
+func (_u *GuildUpdate) RemoveThreads1000IDs(ids ...uuid.UUID) *GuildUpdate {
+	_u.mutation.RemoveThreads1000IDs(ids...)
+	return _u
 }
 
 // RemoveThreads1000 removes "threads1000" edges to Thread1000 entities.
-func (gu *GuildUpdate) RemoveThreads1000(t ...*Thread1000) *GuildUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *GuildUpdate) RemoveThreads1000(v ...*Thread1000) *GuildUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gu.RemoveThreads1000IDs(ids...)
+	return _u.RemoveThreads1000IDs(ids...)
 }
 
 // ClearThread1000Channels clears all "thread1000_channels" edges to the Thread1000Channel entity.
-func (gu *GuildUpdate) ClearThread1000Channels() *GuildUpdate {
-	gu.mutation.ClearThread1000Channels()
-	return gu
+func (_u *GuildUpdate) ClearThread1000Channels() *GuildUpdate {
+	_u.mutation.ClearThread1000Channels()
+	return _u
 }
 
 // RemoveThread1000ChannelIDs removes the "thread1000_channels" edge to Thread1000Channel entities by IDs.
-func (gu *GuildUpdate) RemoveThread1000ChannelIDs(ids ...uuid.UUID) *GuildUpdate {
-	gu.mutation.RemoveThread1000ChannelIDs(ids...)
-	return gu
+func (_u *GuildUpdate) RemoveThread1000ChannelIDs(ids ...uuid.UUID) *GuildUpdate {
+	_u.mutation.RemoveThread1000ChannelIDs(ids...)
+	return _u
 }
 
 // RemoveThread1000Channels removes "thread1000_channels" edges to Thread1000Channel entities.
-func (gu *GuildUpdate) RemoveThread1000Channels(t ...*Thread1000Channel) *GuildUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *GuildUpdate) RemoveThread1000Channels(v ...*Thread1000Channel) *GuildUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gu.RemoveThread1000ChannelIDs(ids...)
+	return _u.RemoveThread1000ChannelIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (gu *GuildUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, gu.sqlSave, gu.mutation, gu.hooks)
+func (_u *GuildUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (gu *GuildUpdate) SaveX(ctx context.Context) int {
-	affected, err := gu.Save(ctx)
+func (_u *GuildUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -764,200 +764,200 @@ func (gu *GuildUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (gu *GuildUpdate) Exec(ctx context.Context) error {
-	_, err := gu.Save(ctx)
+func (_u *GuildUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (gu *GuildUpdate) ExecX(ctx context.Context) {
-	if err := gu.Exec(ctx); err != nil {
+func (_u *GuildUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (gu *GuildUpdate) check() error {
-	if v, ok := gu.mutation.Name(); ok {
+func (_u *GuildUpdate) check() error {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := guild.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Guild.name": %w`, err)}
 		}
 	}
-	if v, ok := gu.mutation.Locale(); ok {
+	if v, ok := _u.mutation.Locale(); ok {
 		if err := guild.LocaleValidator(string(v)); err != nil {
 			return &ValidationError{Name: "locale", err: fmt.Errorf(`ent: validator failed for field "Guild.locale": %w`, err)}
 		}
 	}
-	if v, ok := gu.mutation.LevelUpMessage(); ok {
+	if v, ok := _u.mutation.LevelUpMessage(); ok {
 		if err := guild.LevelUpMessageValidator(v); err != nil {
 			return &ValidationError{Name: "level_up_message", err: fmt.Errorf(`ent: validator failed for field "Guild.level_up_message": %w`, err)}
 		}
 	}
-	if v, ok := gu.mutation.BumpMessageTitle(); ok {
+	if v, ok := _u.mutation.BumpMessageTitle(); ok {
 		if err := guild.BumpMessageTitleValidator(v); err != nil {
 			return &ValidationError{Name: "bump_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_message_title": %w`, err)}
 		}
 	}
-	if v, ok := gu.mutation.BumpMessage(); ok {
+	if v, ok := _u.mutation.BumpMessage(); ok {
 		if err := guild.BumpMessageValidator(v); err != nil {
 			return &ValidationError{Name: "bump_message", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_message": %w`, err)}
 		}
 	}
-	if v, ok := gu.mutation.BumpRemindMessageTitle(); ok {
+	if v, ok := _u.mutation.BumpRemindMessageTitle(); ok {
 		if err := guild.BumpRemindMessageTitleValidator(v); err != nil {
 			return &ValidationError{Name: "bump_remind_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_remind_message_title": %w`, err)}
 		}
 	}
-	if v, ok := gu.mutation.BumpRemindMessage(); ok {
+	if v, ok := _u.mutation.BumpRemindMessage(); ok {
 		if err := guild.BumpRemindMessageValidator(v); err != nil {
 			return &ValidationError{Name: "bump_remind_message", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_remind_message": %w`, err)}
 		}
 	}
-	if v, ok := gu.mutation.UpMessageTitle(); ok {
+	if v, ok := _u.mutation.UpMessageTitle(); ok {
 		if err := guild.UpMessageTitleValidator(v); err != nil {
 			return &ValidationError{Name: "up_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.up_message_title": %w`, err)}
 		}
 	}
-	if v, ok := gu.mutation.UpMessage(); ok {
+	if v, ok := _u.mutation.UpMessage(); ok {
 		if err := guild.UpMessageValidator(v); err != nil {
 			return &ValidationError{Name: "up_message", err: fmt.Errorf(`ent: validator failed for field "Guild.up_message": %w`, err)}
 		}
 	}
-	if v, ok := gu.mutation.UpRemindMessageTitle(); ok {
+	if v, ok := _u.mutation.UpRemindMessageTitle(); ok {
 		if err := guild.UpRemindMessageTitleValidator(v); err != nil {
 			return &ValidationError{Name: "up_remind_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.up_remind_message_title": %w`, err)}
 		}
 	}
-	if v, ok := gu.mutation.UpRemindMessage(); ok {
+	if v, ok := _u.mutation.UpRemindMessage(); ok {
 		if err := guild.UpRemindMessageValidator(v); err != nil {
 			return &ValidationError{Name: "up_remind_message", err: fmt.Errorf(`ent: validator failed for field "Guild.up_remind_message": %w`, err)}
 		}
 	}
-	if gu.mutation.OwnerCleared() && len(gu.mutation.OwnerIDs()) > 0 {
+	if _u.mutation.OwnerCleared() && len(_u.mutation.OwnerIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Guild.owner"`)
 	}
 	return nil
 }
 
-func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := gu.check(); err != nil {
-		return n, err
+func (_u *GuildUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(guild.Table, guild.Columns, sqlgraph.NewFieldSpec(guild.FieldID, field.TypeUint64))
-	if ps := gu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := gu.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(guild.FieldName, field.TypeString, value)
 	}
-	if value, ok := gu.mutation.Locale(); ok {
+	if value, ok := _u.mutation.Locale(); ok {
 		_spec.SetField(guild.FieldLocale, field.TypeString, value)
 	}
-	if value, ok := gu.mutation.LevelUpMessage(); ok {
+	if value, ok := _u.mutation.LevelUpMessage(); ok {
 		_spec.SetField(guild.FieldLevelUpMessage, field.TypeString, value)
 	}
-	if value, ok := gu.mutation.LevelUpChannel(); ok {
+	if value, ok := _u.mutation.LevelUpChannel(); ok {
 		_spec.SetField(guild.FieldLevelUpChannel, field.TypeUint64, value)
 	}
-	if value, ok := gu.mutation.AddedLevelUpChannel(); ok {
+	if value, ok := _u.mutation.AddedLevelUpChannel(); ok {
 		_spec.AddField(guild.FieldLevelUpChannel, field.TypeUint64, value)
 	}
-	if gu.mutation.LevelUpChannelCleared() {
+	if _u.mutation.LevelUpChannelCleared() {
 		_spec.ClearField(guild.FieldLevelUpChannel, field.TypeUint64)
 	}
-	if value, ok := gu.mutation.LevelUpExcludeChannel(); ok {
+	if value, ok := _u.mutation.LevelUpExcludeChannel(); ok {
 		_spec.SetField(guild.FieldLevelUpExcludeChannel, field.TypeJSON, value)
 	}
-	if value, ok := gu.mutation.AppendedLevelUpExcludeChannel(); ok {
+	if value, ok := _u.mutation.AppendedLevelUpExcludeChannel(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, guild.FieldLevelUpExcludeChannel, value)
 		})
 	}
-	if gu.mutation.LevelUpExcludeChannelCleared() {
+	if _u.mutation.LevelUpExcludeChannelCleared() {
 		_spec.ClearField(guild.FieldLevelUpExcludeChannel, field.TypeJSON)
 	}
-	if value, ok := gu.mutation.LevelMee6Imported(); ok {
+	if value, ok := _u.mutation.LevelMee6Imported(); ok {
 		_spec.SetField(guild.FieldLevelMee6Imported, field.TypeBool, value)
 	}
-	if value, ok := gu.mutation.LevelRole(); ok {
+	if value, ok := _u.mutation.LevelRole(); ok {
 		_spec.SetField(guild.FieldLevelRole, field.TypeJSON, value)
 	}
-	if gu.mutation.LevelRoleCleared() {
+	if _u.mutation.LevelRoleCleared() {
 		_spec.ClearField(guild.FieldLevelRole, field.TypeJSON)
 	}
-	if value, ok := gu.mutation.Permissions(); ok {
+	if value, ok := _u.mutation.Permissions(); ok {
 		_spec.SetField(guild.FieldPermissions, field.TypeJSON, value)
 	}
-	if value, ok := gu.mutation.RemindCount(); ok {
+	if value, ok := _u.mutation.RemindCount(); ok {
 		_spec.SetField(guild.FieldRemindCount, field.TypeInt, value)
 	}
-	if value, ok := gu.mutation.AddedRemindCount(); ok {
+	if value, ok := _u.mutation.AddedRemindCount(); ok {
 		_spec.AddField(guild.FieldRemindCount, field.TypeInt, value)
 	}
-	if value, ok := gu.mutation.RolePanelEditTimes(); ok {
+	if value, ok := _u.mutation.RolePanelEditTimes(); ok {
 		_spec.SetField(guild.FieldRolePanelEditTimes, field.TypeJSON, value)
 	}
-	if value, ok := gu.mutation.AppendedRolePanelEditTimes(); ok {
+	if value, ok := _u.mutation.AppendedRolePanelEditTimes(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, guild.FieldRolePanelEditTimes, value)
 		})
 	}
-	if value, ok := gu.mutation.BumpEnabled(); ok {
+	if value, ok := _u.mutation.BumpEnabled(); ok {
 		_spec.SetField(guild.FieldBumpEnabled, field.TypeBool, value)
 	}
-	if value, ok := gu.mutation.BumpMessageTitle(); ok {
+	if value, ok := _u.mutation.BumpMessageTitle(); ok {
 		_spec.SetField(guild.FieldBumpMessageTitle, field.TypeString, value)
 	}
-	if value, ok := gu.mutation.BumpMessage(); ok {
+	if value, ok := _u.mutation.BumpMessage(); ok {
 		_spec.SetField(guild.FieldBumpMessage, field.TypeString, value)
 	}
-	if value, ok := gu.mutation.BumpRemindMessageTitle(); ok {
+	if value, ok := _u.mutation.BumpRemindMessageTitle(); ok {
 		_spec.SetField(guild.FieldBumpRemindMessageTitle, field.TypeString, value)
 	}
-	if value, ok := gu.mutation.BumpRemindMessage(); ok {
+	if value, ok := _u.mutation.BumpRemindMessage(); ok {
 		_spec.SetField(guild.FieldBumpRemindMessage, field.TypeString, value)
 	}
-	if value, ok := gu.mutation.UpEnabled(); ok {
+	if value, ok := _u.mutation.UpEnabled(); ok {
 		_spec.SetField(guild.FieldUpEnabled, field.TypeBool, value)
 	}
-	if value, ok := gu.mutation.UpMessageTitle(); ok {
+	if value, ok := _u.mutation.UpMessageTitle(); ok {
 		_spec.SetField(guild.FieldUpMessageTitle, field.TypeString, value)
 	}
-	if value, ok := gu.mutation.UpMessage(); ok {
+	if value, ok := _u.mutation.UpMessage(); ok {
 		_spec.SetField(guild.FieldUpMessage, field.TypeString, value)
 	}
-	if value, ok := gu.mutation.UpRemindMessageTitle(); ok {
+	if value, ok := _u.mutation.UpRemindMessageTitle(); ok {
 		_spec.SetField(guild.FieldUpRemindMessageTitle, field.TypeString, value)
 	}
-	if value, ok := gu.mutation.UpRemindMessage(); ok {
+	if value, ok := _u.mutation.UpRemindMessage(); ok {
 		_spec.SetField(guild.FieldUpRemindMessage, field.TypeString, value)
 	}
-	if value, ok := gu.mutation.BumpMention(); ok {
+	if value, ok := _u.mutation.BumpMention(); ok {
 		_spec.SetField(guild.FieldBumpMention, field.TypeUint64, value)
 	}
-	if value, ok := gu.mutation.AddedBumpMention(); ok {
+	if value, ok := _u.mutation.AddedBumpMention(); ok {
 		_spec.AddField(guild.FieldBumpMention, field.TypeUint64, value)
 	}
-	if gu.mutation.BumpMentionCleared() {
+	if _u.mutation.BumpMentionCleared() {
 		_spec.ClearField(guild.FieldBumpMention, field.TypeUint64)
 	}
-	if value, ok := gu.mutation.UpMention(); ok {
+	if value, ok := _u.mutation.UpMention(); ok {
 		_spec.SetField(guild.FieldUpMention, field.TypeUint64, value)
 	}
-	if value, ok := gu.mutation.AddedUpMention(); ok {
+	if value, ok := _u.mutation.AddedUpMention(); ok {
 		_spec.AddField(guild.FieldUpMention, field.TypeUint64, value)
 	}
-	if gu.mutation.UpMentionCleared() {
+	if _u.mutation.UpMentionCleared() {
 		_spec.ClearField(guild.FieldUpMention, field.TypeUint64)
 	}
-	if value, ok := gu.mutation.LevelingDisabled(); ok {
+	if value, ok := _u.mutation.LevelingDisabled(); ok {
 		_spec.SetField(guild.FieldLevelingDisabled, field.TypeBool, value)
 	}
-	if gu.mutation.OwnerCleared() {
+	if _u.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -970,7 +970,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.OwnerIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -986,7 +986,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if gu.mutation.MembersCleared() {
+	if _u.mutation.MembersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -999,23 +999,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.RemovedMembersIDs(); len(nodes) > 0 && !gu.mutation.MembersCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   guild.MembersTable,
-			Columns: []string{guild.MembersColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := gu.mutation.MembersIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RemovedMembersIDs(); len(nodes) > 0 && !_u.mutation.MembersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1029,9 +1013,25 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.MembersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.MembersTable,
+			Columns: []string{guild.MembersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if gu.mutation.MessagePinsCleared() {
+	if _u.mutation.MessagePinsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1044,7 +1044,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.RemovedMessagePinsIDs(); len(nodes) > 0 && !gu.mutation.MessagePinsCleared() {
+	if nodes := _u.mutation.RemovedMessagePinsIDs(); len(nodes) > 0 && !_u.mutation.MessagePinsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1060,7 +1060,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.MessagePinsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.MessagePinsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1076,7 +1076,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if gu.mutation.RemindsCleared() {
+	if _u.mutation.RemindsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1089,23 +1089,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.RemovedRemindsIDs(); len(nodes) > 0 && !gu.mutation.RemindsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   guild.RemindsTable,
-			Columns: []string{guild.RemindsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(messageremind.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := gu.mutation.RemindsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RemovedRemindsIDs(); len(nodes) > 0 && !_u.mutation.RemindsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1119,9 +1103,25 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemindsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RemindsTable,
+			Columns: []string{guild.RemindsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(messageremind.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if gu.mutation.RolePanelsCleared() {
+	if _u.mutation.RolePanelsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1134,7 +1134,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.RemovedRolePanelsIDs(); len(nodes) > 0 && !gu.mutation.RolePanelsCleared() {
+	if nodes := _u.mutation.RemovedRolePanelsIDs(); len(nodes) > 0 && !_u.mutation.RolePanelsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1150,7 +1150,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.RolePanelsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RolePanelsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1166,7 +1166,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if gu.mutation.RolePanelPlacementsCleared() {
+	if _u.mutation.RolePanelPlacementsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1179,23 +1179,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.RemovedRolePanelPlacementsIDs(); len(nodes) > 0 && !gu.mutation.RolePanelPlacementsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   guild.RolePanelPlacementsTable,
-			Columns: []string{guild.RolePanelPlacementsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(rolepanelplaced.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := gu.mutation.RolePanelPlacementsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RemovedRolePanelPlacementsIDs(); len(nodes) > 0 && !_u.mutation.RolePanelPlacementsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1209,9 +1193,25 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RolePanelPlacementsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelPlacementsTable,
+			Columns: []string{guild.RolePanelPlacementsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepanelplaced.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if gu.mutation.RolePanelEditsCleared() {
+	if _u.mutation.RolePanelEditsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1224,7 +1224,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.RemovedRolePanelEditsIDs(); len(nodes) > 0 && !gu.mutation.RolePanelEditsCleared() {
+	if nodes := _u.mutation.RemovedRolePanelEditsIDs(); len(nodes) > 0 && !_u.mutation.RolePanelEditsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1240,7 +1240,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.RolePanelEditsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RolePanelEditsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1256,7 +1256,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if gu.mutation.ChinchiroSessionsCleared() {
+	if _u.mutation.ChinchiroSessionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1269,7 +1269,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.RemovedChinchiroSessionsIDs(); len(nodes) > 0 && !gu.mutation.ChinchiroSessionsCleared() {
+	if nodes := _u.mutation.RemovedChinchiroSessionsIDs(); len(nodes) > 0 && !_u.mutation.ChinchiroSessionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1285,7 +1285,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.ChinchiroSessionsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.ChinchiroSessionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1301,7 +1301,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if gu.mutation.Threads1000Cleared() {
+	if _u.mutation.Threads1000Cleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1314,7 +1314,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.RemovedThreads1000IDs(); len(nodes) > 0 && !gu.mutation.Threads1000Cleared() {
+	if nodes := _u.mutation.RemovedThreads1000IDs(); len(nodes) > 0 && !_u.mutation.Threads1000Cleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1330,7 +1330,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.Threads1000IDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.Threads1000IDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1346,7 +1346,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if gu.mutation.Thread1000ChannelsCleared() {
+	if _u.mutation.Thread1000ChannelsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1359,7 +1359,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.RemovedThread1000ChannelsIDs(); len(nodes) > 0 && !gu.mutation.Thread1000ChannelsCleared() {
+	if nodes := _u.mutation.RemovedThread1000ChannelsIDs(); len(nodes) > 0 && !_u.mutation.Thread1000ChannelsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1375,7 +1375,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := gu.mutation.Thread1000ChannelsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.Thread1000ChannelsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1391,7 +1391,7 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, gu.driver, _spec); err != nil {
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{guild.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -1399,8 +1399,8 @@ func (gu *GuildUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
-	gu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // GuildUpdateOne is the builder for updating a single Guild entity.
@@ -1412,732 +1412,732 @@ type GuildUpdateOne struct {
 }
 
 // SetName sets the "name" field.
-func (guo *GuildUpdateOne) SetName(s string) *GuildUpdateOne {
-	guo.mutation.SetName(s)
-	return guo
+func (_u *GuildUpdateOne) SetName(v string) *GuildUpdateOne {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableName(s *string) *GuildUpdateOne {
-	if s != nil {
-		guo.SetName(*s)
+func (_u *GuildUpdateOne) SetNillableName(v *string) *GuildUpdateOne {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return guo
+	return _u
 }
 
 // SetLocale sets the "locale" field.
-func (guo *GuildUpdateOne) SetLocale(d discord.Locale) *GuildUpdateOne {
-	guo.mutation.SetLocale(d)
-	return guo
+func (_u *GuildUpdateOne) SetLocale(v discord.Locale) *GuildUpdateOne {
+	_u.mutation.SetLocale(v)
+	return _u
 }
 
 // SetNillableLocale sets the "locale" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableLocale(d *discord.Locale) *GuildUpdateOne {
-	if d != nil {
-		guo.SetLocale(*d)
+func (_u *GuildUpdateOne) SetNillableLocale(v *discord.Locale) *GuildUpdateOne {
+	if v != nil {
+		_u.SetLocale(*v)
 	}
-	return guo
+	return _u
 }
 
 // SetLevelUpMessage sets the "level_up_message" field.
-func (guo *GuildUpdateOne) SetLevelUpMessage(s string) *GuildUpdateOne {
-	guo.mutation.SetLevelUpMessage(s)
-	return guo
+func (_u *GuildUpdateOne) SetLevelUpMessage(v string) *GuildUpdateOne {
+	_u.mutation.SetLevelUpMessage(v)
+	return _u
 }
 
 // SetNillableLevelUpMessage sets the "level_up_message" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableLevelUpMessage(s *string) *GuildUpdateOne {
-	if s != nil {
-		guo.SetLevelUpMessage(*s)
+func (_u *GuildUpdateOne) SetNillableLevelUpMessage(v *string) *GuildUpdateOne {
+	if v != nil {
+		_u.SetLevelUpMessage(*v)
 	}
-	return guo
+	return _u
 }
 
 // SetLevelUpChannel sets the "level_up_channel" field.
-func (guo *GuildUpdateOne) SetLevelUpChannel(s snowflake.ID) *GuildUpdateOne {
-	guo.mutation.ResetLevelUpChannel()
-	guo.mutation.SetLevelUpChannel(s)
-	return guo
+func (_u *GuildUpdateOne) SetLevelUpChannel(v snowflake.ID) *GuildUpdateOne {
+	_u.mutation.ResetLevelUpChannel()
+	_u.mutation.SetLevelUpChannel(v)
+	return _u
 }
 
 // SetNillableLevelUpChannel sets the "level_up_channel" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableLevelUpChannel(s *snowflake.ID) *GuildUpdateOne {
-	if s != nil {
-		guo.SetLevelUpChannel(*s)
+func (_u *GuildUpdateOne) SetNillableLevelUpChannel(v *snowflake.ID) *GuildUpdateOne {
+	if v != nil {
+		_u.SetLevelUpChannel(*v)
 	}
-	return guo
+	return _u
 }
 
-// AddLevelUpChannel adds s to the "level_up_channel" field.
-func (guo *GuildUpdateOne) AddLevelUpChannel(s snowflake.ID) *GuildUpdateOne {
-	guo.mutation.AddLevelUpChannel(s)
-	return guo
+// AddLevelUpChannel adds value to the "level_up_channel" field.
+func (_u *GuildUpdateOne) AddLevelUpChannel(v snowflake.ID) *GuildUpdateOne {
+	_u.mutation.AddLevelUpChannel(v)
+	return _u
 }
 
 // ClearLevelUpChannel clears the value of the "level_up_channel" field.
-func (guo *GuildUpdateOne) ClearLevelUpChannel() *GuildUpdateOne {
-	guo.mutation.ClearLevelUpChannel()
-	return guo
+func (_u *GuildUpdateOne) ClearLevelUpChannel() *GuildUpdateOne {
+	_u.mutation.ClearLevelUpChannel()
+	return _u
 }
 
 // SetLevelUpExcludeChannel sets the "level_up_exclude_channel" field.
-func (guo *GuildUpdateOne) SetLevelUpExcludeChannel(s []snowflake.ID) *GuildUpdateOne {
-	guo.mutation.SetLevelUpExcludeChannel(s)
-	return guo
+func (_u *GuildUpdateOne) SetLevelUpExcludeChannel(v []snowflake.ID) *GuildUpdateOne {
+	_u.mutation.SetLevelUpExcludeChannel(v)
+	return _u
 }
 
-// AppendLevelUpExcludeChannel appends s to the "level_up_exclude_channel" field.
-func (guo *GuildUpdateOne) AppendLevelUpExcludeChannel(s []snowflake.ID) *GuildUpdateOne {
-	guo.mutation.AppendLevelUpExcludeChannel(s)
-	return guo
+// AppendLevelUpExcludeChannel appends value to the "level_up_exclude_channel" field.
+func (_u *GuildUpdateOne) AppendLevelUpExcludeChannel(v []snowflake.ID) *GuildUpdateOne {
+	_u.mutation.AppendLevelUpExcludeChannel(v)
+	return _u
 }
 
 // ClearLevelUpExcludeChannel clears the value of the "level_up_exclude_channel" field.
-func (guo *GuildUpdateOne) ClearLevelUpExcludeChannel() *GuildUpdateOne {
-	guo.mutation.ClearLevelUpExcludeChannel()
-	return guo
+func (_u *GuildUpdateOne) ClearLevelUpExcludeChannel() *GuildUpdateOne {
+	_u.mutation.ClearLevelUpExcludeChannel()
+	return _u
 }
 
 // SetLevelMee6Imported sets the "level_mee6_imported" field.
-func (guo *GuildUpdateOne) SetLevelMee6Imported(b bool) *GuildUpdateOne {
-	guo.mutation.SetLevelMee6Imported(b)
-	return guo
+func (_u *GuildUpdateOne) SetLevelMee6Imported(v bool) *GuildUpdateOne {
+	_u.mutation.SetLevelMee6Imported(v)
+	return _u
 }
 
 // SetNillableLevelMee6Imported sets the "level_mee6_imported" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableLevelMee6Imported(b *bool) *GuildUpdateOne {
-	if b != nil {
-		guo.SetLevelMee6Imported(*b)
+func (_u *GuildUpdateOne) SetNillableLevelMee6Imported(v *bool) *GuildUpdateOne {
+	if v != nil {
+		_u.SetLevelMee6Imported(*v)
 	}
-	return guo
+	return _u
 }
 
 // SetLevelRole sets the "level_role" field.
-func (guo *GuildUpdateOne) SetLevelRole(m map[int]snowflake.ID) *GuildUpdateOne {
-	guo.mutation.SetLevelRole(m)
-	return guo
+func (_u *GuildUpdateOne) SetLevelRole(v map[int]snowflake.ID) *GuildUpdateOne {
+	_u.mutation.SetLevelRole(v)
+	return _u
 }
 
 // ClearLevelRole clears the value of the "level_role" field.
-func (guo *GuildUpdateOne) ClearLevelRole() *GuildUpdateOne {
-	guo.mutation.ClearLevelRole()
-	return guo
+func (_u *GuildUpdateOne) ClearLevelRole() *GuildUpdateOne {
+	_u.mutation.ClearLevelRole()
+	return _u
 }
 
 // SetPermissions sets the "permissions" field.
-func (guo *GuildUpdateOne) SetPermissions(m map[snowflake.ID]permissions.Permission) *GuildUpdateOne {
-	guo.mutation.SetPermissions(m)
-	return guo
+func (_u *GuildUpdateOne) SetPermissions(v map[snowflake.ID]permissions.Permission) *GuildUpdateOne {
+	_u.mutation.SetPermissions(v)
+	return _u
 }
 
 // SetRemindCount sets the "remind_count" field.
-func (guo *GuildUpdateOne) SetRemindCount(i int) *GuildUpdateOne {
-	guo.mutation.ResetRemindCount()
-	guo.mutation.SetRemindCount(i)
-	return guo
+func (_u *GuildUpdateOne) SetRemindCount(v int) *GuildUpdateOne {
+	_u.mutation.ResetRemindCount()
+	_u.mutation.SetRemindCount(v)
+	return _u
 }
 
 // SetNillableRemindCount sets the "remind_count" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableRemindCount(i *int) *GuildUpdateOne {
-	if i != nil {
-		guo.SetRemindCount(*i)
+func (_u *GuildUpdateOne) SetNillableRemindCount(v *int) *GuildUpdateOne {
+	if v != nil {
+		_u.SetRemindCount(*v)
 	}
-	return guo
+	return _u
 }
 
-// AddRemindCount adds i to the "remind_count" field.
-func (guo *GuildUpdateOne) AddRemindCount(i int) *GuildUpdateOne {
-	guo.mutation.AddRemindCount(i)
-	return guo
+// AddRemindCount adds value to the "remind_count" field.
+func (_u *GuildUpdateOne) AddRemindCount(v int) *GuildUpdateOne {
+	_u.mutation.AddRemindCount(v)
+	return _u
 }
 
 // SetRolePanelEditTimes sets the "role_panel_edit_times" field.
-func (guo *GuildUpdateOne) SetRolePanelEditTimes(t []time.Time) *GuildUpdateOne {
-	guo.mutation.SetRolePanelEditTimes(t)
-	return guo
+func (_u *GuildUpdateOne) SetRolePanelEditTimes(v []time.Time) *GuildUpdateOne {
+	_u.mutation.SetRolePanelEditTimes(v)
+	return _u
 }
 
-// AppendRolePanelEditTimes appends t to the "role_panel_edit_times" field.
-func (guo *GuildUpdateOne) AppendRolePanelEditTimes(t []time.Time) *GuildUpdateOne {
-	guo.mutation.AppendRolePanelEditTimes(t)
-	return guo
+// AppendRolePanelEditTimes appends value to the "role_panel_edit_times" field.
+func (_u *GuildUpdateOne) AppendRolePanelEditTimes(v []time.Time) *GuildUpdateOne {
+	_u.mutation.AppendRolePanelEditTimes(v)
+	return _u
 }
 
 // SetBumpEnabled sets the "bump_enabled" field.
-func (guo *GuildUpdateOne) SetBumpEnabled(b bool) *GuildUpdateOne {
-	guo.mutation.SetBumpEnabled(b)
-	return guo
+func (_u *GuildUpdateOne) SetBumpEnabled(v bool) *GuildUpdateOne {
+	_u.mutation.SetBumpEnabled(v)
+	return _u
 }
 
 // SetNillableBumpEnabled sets the "bump_enabled" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableBumpEnabled(b *bool) *GuildUpdateOne {
-	if b != nil {
-		guo.SetBumpEnabled(*b)
+func (_u *GuildUpdateOne) SetNillableBumpEnabled(v *bool) *GuildUpdateOne {
+	if v != nil {
+		_u.SetBumpEnabled(*v)
 	}
-	return guo
+	return _u
 }
 
 // SetBumpMessageTitle sets the "bump_message_title" field.
-func (guo *GuildUpdateOne) SetBumpMessageTitle(s string) *GuildUpdateOne {
-	guo.mutation.SetBumpMessageTitle(s)
-	return guo
+func (_u *GuildUpdateOne) SetBumpMessageTitle(v string) *GuildUpdateOne {
+	_u.mutation.SetBumpMessageTitle(v)
+	return _u
 }
 
 // SetNillableBumpMessageTitle sets the "bump_message_title" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableBumpMessageTitle(s *string) *GuildUpdateOne {
-	if s != nil {
-		guo.SetBumpMessageTitle(*s)
+func (_u *GuildUpdateOne) SetNillableBumpMessageTitle(v *string) *GuildUpdateOne {
+	if v != nil {
+		_u.SetBumpMessageTitle(*v)
 	}
-	return guo
+	return _u
 }
 
 // SetBumpMessage sets the "bump_message" field.
-func (guo *GuildUpdateOne) SetBumpMessage(s string) *GuildUpdateOne {
-	guo.mutation.SetBumpMessage(s)
-	return guo
+func (_u *GuildUpdateOne) SetBumpMessage(v string) *GuildUpdateOne {
+	_u.mutation.SetBumpMessage(v)
+	return _u
 }
 
 // SetNillableBumpMessage sets the "bump_message" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableBumpMessage(s *string) *GuildUpdateOne {
-	if s != nil {
-		guo.SetBumpMessage(*s)
+func (_u *GuildUpdateOne) SetNillableBumpMessage(v *string) *GuildUpdateOne {
+	if v != nil {
+		_u.SetBumpMessage(*v)
 	}
-	return guo
+	return _u
 }
 
 // SetBumpRemindMessageTitle sets the "bump_remind_message_title" field.
-func (guo *GuildUpdateOne) SetBumpRemindMessageTitle(s string) *GuildUpdateOne {
-	guo.mutation.SetBumpRemindMessageTitle(s)
-	return guo
+func (_u *GuildUpdateOne) SetBumpRemindMessageTitle(v string) *GuildUpdateOne {
+	_u.mutation.SetBumpRemindMessageTitle(v)
+	return _u
 }
 
 // SetNillableBumpRemindMessageTitle sets the "bump_remind_message_title" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableBumpRemindMessageTitle(s *string) *GuildUpdateOne {
-	if s != nil {
-		guo.SetBumpRemindMessageTitle(*s)
+func (_u *GuildUpdateOne) SetNillableBumpRemindMessageTitle(v *string) *GuildUpdateOne {
+	if v != nil {
+		_u.SetBumpRemindMessageTitle(*v)
 	}
-	return guo
+	return _u
 }
 
 // SetBumpRemindMessage sets the "bump_remind_message" field.
-func (guo *GuildUpdateOne) SetBumpRemindMessage(s string) *GuildUpdateOne {
-	guo.mutation.SetBumpRemindMessage(s)
-	return guo
+func (_u *GuildUpdateOne) SetBumpRemindMessage(v string) *GuildUpdateOne {
+	_u.mutation.SetBumpRemindMessage(v)
+	return _u
 }
 
 // SetNillableBumpRemindMessage sets the "bump_remind_message" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableBumpRemindMessage(s *string) *GuildUpdateOne {
-	if s != nil {
-		guo.SetBumpRemindMessage(*s)
+func (_u *GuildUpdateOne) SetNillableBumpRemindMessage(v *string) *GuildUpdateOne {
+	if v != nil {
+		_u.SetBumpRemindMessage(*v)
 	}
-	return guo
+	return _u
 }
 
 // SetUpEnabled sets the "up_enabled" field.
-func (guo *GuildUpdateOne) SetUpEnabled(b bool) *GuildUpdateOne {
-	guo.mutation.SetUpEnabled(b)
-	return guo
+func (_u *GuildUpdateOne) SetUpEnabled(v bool) *GuildUpdateOne {
+	_u.mutation.SetUpEnabled(v)
+	return _u
 }
 
 // SetNillableUpEnabled sets the "up_enabled" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableUpEnabled(b *bool) *GuildUpdateOne {
-	if b != nil {
-		guo.SetUpEnabled(*b)
+func (_u *GuildUpdateOne) SetNillableUpEnabled(v *bool) *GuildUpdateOne {
+	if v != nil {
+		_u.SetUpEnabled(*v)
 	}
-	return guo
+	return _u
 }
 
 // SetUpMessageTitle sets the "up_message_title" field.
-func (guo *GuildUpdateOne) SetUpMessageTitle(s string) *GuildUpdateOne {
-	guo.mutation.SetUpMessageTitle(s)
-	return guo
+func (_u *GuildUpdateOne) SetUpMessageTitle(v string) *GuildUpdateOne {
+	_u.mutation.SetUpMessageTitle(v)
+	return _u
 }
 
 // SetNillableUpMessageTitle sets the "up_message_title" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableUpMessageTitle(s *string) *GuildUpdateOne {
-	if s != nil {
-		guo.SetUpMessageTitle(*s)
+func (_u *GuildUpdateOne) SetNillableUpMessageTitle(v *string) *GuildUpdateOne {
+	if v != nil {
+		_u.SetUpMessageTitle(*v)
 	}
-	return guo
+	return _u
 }
 
 // SetUpMessage sets the "up_message" field.
-func (guo *GuildUpdateOne) SetUpMessage(s string) *GuildUpdateOne {
-	guo.mutation.SetUpMessage(s)
-	return guo
+func (_u *GuildUpdateOne) SetUpMessage(v string) *GuildUpdateOne {
+	_u.mutation.SetUpMessage(v)
+	return _u
 }
 
 // SetNillableUpMessage sets the "up_message" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableUpMessage(s *string) *GuildUpdateOne {
-	if s != nil {
-		guo.SetUpMessage(*s)
+func (_u *GuildUpdateOne) SetNillableUpMessage(v *string) *GuildUpdateOne {
+	if v != nil {
+		_u.SetUpMessage(*v)
 	}
-	return guo
+	return _u
 }
 
 // SetUpRemindMessageTitle sets the "up_remind_message_title" field.
-func (guo *GuildUpdateOne) SetUpRemindMessageTitle(s string) *GuildUpdateOne {
-	guo.mutation.SetUpRemindMessageTitle(s)
-	return guo
+func (_u *GuildUpdateOne) SetUpRemindMessageTitle(v string) *GuildUpdateOne {
+	_u.mutation.SetUpRemindMessageTitle(v)
+	return _u
 }
 
 // SetNillableUpRemindMessageTitle sets the "up_remind_message_title" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableUpRemindMessageTitle(s *string) *GuildUpdateOne {
-	if s != nil {
-		guo.SetUpRemindMessageTitle(*s)
+func (_u *GuildUpdateOne) SetNillableUpRemindMessageTitle(v *string) *GuildUpdateOne {
+	if v != nil {
+		_u.SetUpRemindMessageTitle(*v)
 	}
-	return guo
+	return _u
 }
 
 // SetUpRemindMessage sets the "up_remind_message" field.
-func (guo *GuildUpdateOne) SetUpRemindMessage(s string) *GuildUpdateOne {
-	guo.mutation.SetUpRemindMessage(s)
-	return guo
+func (_u *GuildUpdateOne) SetUpRemindMessage(v string) *GuildUpdateOne {
+	_u.mutation.SetUpRemindMessage(v)
+	return _u
 }
 
 // SetNillableUpRemindMessage sets the "up_remind_message" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableUpRemindMessage(s *string) *GuildUpdateOne {
-	if s != nil {
-		guo.SetUpRemindMessage(*s)
+func (_u *GuildUpdateOne) SetNillableUpRemindMessage(v *string) *GuildUpdateOne {
+	if v != nil {
+		_u.SetUpRemindMessage(*v)
 	}
-	return guo
+	return _u
 }
 
 // SetBumpMention sets the "bump_mention" field.
-func (guo *GuildUpdateOne) SetBumpMention(s snowflake.ID) *GuildUpdateOne {
-	guo.mutation.ResetBumpMention()
-	guo.mutation.SetBumpMention(s)
-	return guo
+func (_u *GuildUpdateOne) SetBumpMention(v snowflake.ID) *GuildUpdateOne {
+	_u.mutation.ResetBumpMention()
+	_u.mutation.SetBumpMention(v)
+	return _u
 }
 
 // SetNillableBumpMention sets the "bump_mention" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableBumpMention(s *snowflake.ID) *GuildUpdateOne {
-	if s != nil {
-		guo.SetBumpMention(*s)
+func (_u *GuildUpdateOne) SetNillableBumpMention(v *snowflake.ID) *GuildUpdateOne {
+	if v != nil {
+		_u.SetBumpMention(*v)
 	}
-	return guo
+	return _u
 }
 
-// AddBumpMention adds s to the "bump_mention" field.
-func (guo *GuildUpdateOne) AddBumpMention(s snowflake.ID) *GuildUpdateOne {
-	guo.mutation.AddBumpMention(s)
-	return guo
+// AddBumpMention adds value to the "bump_mention" field.
+func (_u *GuildUpdateOne) AddBumpMention(v snowflake.ID) *GuildUpdateOne {
+	_u.mutation.AddBumpMention(v)
+	return _u
 }
 
 // ClearBumpMention clears the value of the "bump_mention" field.
-func (guo *GuildUpdateOne) ClearBumpMention() *GuildUpdateOne {
-	guo.mutation.ClearBumpMention()
-	return guo
+func (_u *GuildUpdateOne) ClearBumpMention() *GuildUpdateOne {
+	_u.mutation.ClearBumpMention()
+	return _u
 }
 
 // SetUpMention sets the "up_mention" field.
-func (guo *GuildUpdateOne) SetUpMention(s snowflake.ID) *GuildUpdateOne {
-	guo.mutation.ResetUpMention()
-	guo.mutation.SetUpMention(s)
-	return guo
+func (_u *GuildUpdateOne) SetUpMention(v snowflake.ID) *GuildUpdateOne {
+	_u.mutation.ResetUpMention()
+	_u.mutation.SetUpMention(v)
+	return _u
 }
 
 // SetNillableUpMention sets the "up_mention" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableUpMention(s *snowflake.ID) *GuildUpdateOne {
-	if s != nil {
-		guo.SetUpMention(*s)
+func (_u *GuildUpdateOne) SetNillableUpMention(v *snowflake.ID) *GuildUpdateOne {
+	if v != nil {
+		_u.SetUpMention(*v)
 	}
-	return guo
+	return _u
 }
 
-// AddUpMention adds s to the "up_mention" field.
-func (guo *GuildUpdateOne) AddUpMention(s snowflake.ID) *GuildUpdateOne {
-	guo.mutation.AddUpMention(s)
-	return guo
+// AddUpMention adds value to the "up_mention" field.
+func (_u *GuildUpdateOne) AddUpMention(v snowflake.ID) *GuildUpdateOne {
+	_u.mutation.AddUpMention(v)
+	return _u
 }
 
 // ClearUpMention clears the value of the "up_mention" field.
-func (guo *GuildUpdateOne) ClearUpMention() *GuildUpdateOne {
-	guo.mutation.ClearUpMention()
-	return guo
+func (_u *GuildUpdateOne) ClearUpMention() *GuildUpdateOne {
+	_u.mutation.ClearUpMention()
+	return _u
 }
 
 // SetLevelingDisabled sets the "leveling_disabled" field.
-func (guo *GuildUpdateOne) SetLevelingDisabled(b bool) *GuildUpdateOne {
-	guo.mutation.SetLevelingDisabled(b)
-	return guo
+func (_u *GuildUpdateOne) SetLevelingDisabled(v bool) *GuildUpdateOne {
+	_u.mutation.SetLevelingDisabled(v)
+	return _u
 }
 
 // SetNillableLevelingDisabled sets the "leveling_disabled" field if the given value is not nil.
-func (guo *GuildUpdateOne) SetNillableLevelingDisabled(b *bool) *GuildUpdateOne {
-	if b != nil {
-		guo.SetLevelingDisabled(*b)
+func (_u *GuildUpdateOne) SetNillableLevelingDisabled(v *bool) *GuildUpdateOne {
+	if v != nil {
+		_u.SetLevelingDisabled(*v)
 	}
-	return guo
+	return _u
 }
 
 // SetOwnerID sets the "owner" edge to the User entity by ID.
-func (guo *GuildUpdateOne) SetOwnerID(id snowflake.ID) *GuildUpdateOne {
-	guo.mutation.SetOwnerID(id)
-	return guo
+func (_u *GuildUpdateOne) SetOwnerID(id snowflake.ID) *GuildUpdateOne {
+	_u.mutation.SetOwnerID(id)
+	return _u
 }
 
 // SetOwner sets the "owner" edge to the User entity.
-func (guo *GuildUpdateOne) SetOwner(u *User) *GuildUpdateOne {
-	return guo.SetOwnerID(u.ID)
+func (_u *GuildUpdateOne) SetOwner(v *User) *GuildUpdateOne {
+	return _u.SetOwnerID(v.ID)
 }
 
 // AddMemberIDs adds the "members" edge to the Member entity by IDs.
-func (guo *GuildUpdateOne) AddMemberIDs(ids ...int) *GuildUpdateOne {
-	guo.mutation.AddMemberIDs(ids...)
-	return guo
+func (_u *GuildUpdateOne) AddMemberIDs(ids ...int) *GuildUpdateOne {
+	_u.mutation.AddMemberIDs(ids...)
+	return _u
 }
 
 // AddMembers adds the "members" edges to the Member entity.
-func (guo *GuildUpdateOne) AddMembers(m ...*Member) *GuildUpdateOne {
-	ids := make([]int, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_u *GuildUpdateOne) AddMembers(v ...*Member) *GuildUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return guo.AddMemberIDs(ids...)
+	return _u.AddMemberIDs(ids...)
 }
 
 // AddMessagePinIDs adds the "message_pins" edge to the MessagePin entity by IDs.
-func (guo *GuildUpdateOne) AddMessagePinIDs(ids ...uuid.UUID) *GuildUpdateOne {
-	guo.mutation.AddMessagePinIDs(ids...)
-	return guo
+func (_u *GuildUpdateOne) AddMessagePinIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	_u.mutation.AddMessagePinIDs(ids...)
+	return _u
 }
 
 // AddMessagePins adds the "message_pins" edges to the MessagePin entity.
-func (guo *GuildUpdateOne) AddMessagePins(m ...*MessagePin) *GuildUpdateOne {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_u *GuildUpdateOne) AddMessagePins(v ...*MessagePin) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return guo.AddMessagePinIDs(ids...)
+	return _u.AddMessagePinIDs(ids...)
 }
 
 // AddRemindIDs adds the "reminds" edge to the MessageRemind entity by IDs.
-func (guo *GuildUpdateOne) AddRemindIDs(ids ...uuid.UUID) *GuildUpdateOne {
-	guo.mutation.AddRemindIDs(ids...)
-	return guo
+func (_u *GuildUpdateOne) AddRemindIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	_u.mutation.AddRemindIDs(ids...)
+	return _u
 }
 
 // AddReminds adds the "reminds" edges to the MessageRemind entity.
-func (guo *GuildUpdateOne) AddReminds(m ...*MessageRemind) *GuildUpdateOne {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_u *GuildUpdateOne) AddReminds(v ...*MessageRemind) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return guo.AddRemindIDs(ids...)
+	return _u.AddRemindIDs(ids...)
 }
 
 // AddRolePanelIDs adds the "role_panels" edge to the RolePanel entity by IDs.
-func (guo *GuildUpdateOne) AddRolePanelIDs(ids ...uuid.UUID) *GuildUpdateOne {
-	guo.mutation.AddRolePanelIDs(ids...)
-	return guo
+func (_u *GuildUpdateOne) AddRolePanelIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	_u.mutation.AddRolePanelIDs(ids...)
+	return _u
 }
 
 // AddRolePanels adds the "role_panels" edges to the RolePanel entity.
-func (guo *GuildUpdateOne) AddRolePanels(r ...*RolePanel) *GuildUpdateOne {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_u *GuildUpdateOne) AddRolePanels(v ...*RolePanel) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return guo.AddRolePanelIDs(ids...)
+	return _u.AddRolePanelIDs(ids...)
 }
 
 // AddRolePanelPlacementIDs adds the "role_panel_placements" edge to the RolePanelPlaced entity by IDs.
-func (guo *GuildUpdateOne) AddRolePanelPlacementIDs(ids ...uuid.UUID) *GuildUpdateOne {
-	guo.mutation.AddRolePanelPlacementIDs(ids...)
-	return guo
+func (_u *GuildUpdateOne) AddRolePanelPlacementIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	_u.mutation.AddRolePanelPlacementIDs(ids...)
+	return _u
 }
 
 // AddRolePanelPlacements adds the "role_panel_placements" edges to the RolePanelPlaced entity.
-func (guo *GuildUpdateOne) AddRolePanelPlacements(r ...*RolePanelPlaced) *GuildUpdateOne {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_u *GuildUpdateOne) AddRolePanelPlacements(v ...*RolePanelPlaced) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return guo.AddRolePanelPlacementIDs(ids...)
+	return _u.AddRolePanelPlacementIDs(ids...)
 }
 
 // AddRolePanelEditIDs adds the "role_panel_edits" edge to the RolePanelEdit entity by IDs.
-func (guo *GuildUpdateOne) AddRolePanelEditIDs(ids ...uuid.UUID) *GuildUpdateOne {
-	guo.mutation.AddRolePanelEditIDs(ids...)
-	return guo
+func (_u *GuildUpdateOne) AddRolePanelEditIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	_u.mutation.AddRolePanelEditIDs(ids...)
+	return _u
 }
 
 // AddRolePanelEdits adds the "role_panel_edits" edges to the RolePanelEdit entity.
-func (guo *GuildUpdateOne) AddRolePanelEdits(r ...*RolePanelEdit) *GuildUpdateOne {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_u *GuildUpdateOne) AddRolePanelEdits(v ...*RolePanelEdit) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return guo.AddRolePanelEditIDs(ids...)
+	return _u.AddRolePanelEditIDs(ids...)
 }
 
 // AddChinchiroSessionIDs adds the "chinchiro_sessions" edge to the ChinchiroSession entity by IDs.
-func (guo *GuildUpdateOne) AddChinchiroSessionIDs(ids ...uuid.UUID) *GuildUpdateOne {
-	guo.mutation.AddChinchiroSessionIDs(ids...)
-	return guo
+func (_u *GuildUpdateOne) AddChinchiroSessionIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	_u.mutation.AddChinchiroSessionIDs(ids...)
+	return _u
 }
 
 // AddChinchiroSessions adds the "chinchiro_sessions" edges to the ChinchiroSession entity.
-func (guo *GuildUpdateOne) AddChinchiroSessions(c ...*ChinchiroSession) *GuildUpdateOne {
-	ids := make([]uuid.UUID, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
+func (_u *GuildUpdateOne) AddChinchiroSessions(v ...*ChinchiroSession) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return guo.AddChinchiroSessionIDs(ids...)
+	return _u.AddChinchiroSessionIDs(ids...)
 }
 
 // AddThreads1000IDs adds the "threads1000" edge to the Thread1000 entity by IDs.
-func (guo *GuildUpdateOne) AddThreads1000IDs(ids ...uuid.UUID) *GuildUpdateOne {
-	guo.mutation.AddThreads1000IDs(ids...)
-	return guo
+func (_u *GuildUpdateOne) AddThreads1000IDs(ids ...uuid.UUID) *GuildUpdateOne {
+	_u.mutation.AddThreads1000IDs(ids...)
+	return _u
 }
 
 // AddThreads1000 adds the "threads1000" edges to the Thread1000 entity.
-func (guo *GuildUpdateOne) AddThreads1000(t ...*Thread1000) *GuildUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *GuildUpdateOne) AddThreads1000(v ...*Thread1000) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return guo.AddThreads1000IDs(ids...)
+	return _u.AddThreads1000IDs(ids...)
 }
 
 // AddThread1000ChannelIDs adds the "thread1000_channels" edge to the Thread1000Channel entity by IDs.
-func (guo *GuildUpdateOne) AddThread1000ChannelIDs(ids ...uuid.UUID) *GuildUpdateOne {
-	guo.mutation.AddThread1000ChannelIDs(ids...)
-	return guo
+func (_u *GuildUpdateOne) AddThread1000ChannelIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	_u.mutation.AddThread1000ChannelIDs(ids...)
+	return _u
 }
 
 // AddThread1000Channels adds the "thread1000_channels" edges to the Thread1000Channel entity.
-func (guo *GuildUpdateOne) AddThread1000Channels(t ...*Thread1000Channel) *GuildUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *GuildUpdateOne) AddThread1000Channels(v ...*Thread1000Channel) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return guo.AddThread1000ChannelIDs(ids...)
+	return _u.AddThread1000ChannelIDs(ids...)
 }
 
 // Mutation returns the GuildMutation object of the builder.
-func (guo *GuildUpdateOne) Mutation() *GuildMutation {
-	return guo.mutation
+func (_u *GuildUpdateOne) Mutation() *GuildMutation {
+	return _u.mutation
 }
 
 // ClearOwner clears the "owner" edge to the User entity.
-func (guo *GuildUpdateOne) ClearOwner() *GuildUpdateOne {
-	guo.mutation.ClearOwner()
-	return guo
+func (_u *GuildUpdateOne) ClearOwner() *GuildUpdateOne {
+	_u.mutation.ClearOwner()
+	return _u
 }
 
 // ClearMembers clears all "members" edges to the Member entity.
-func (guo *GuildUpdateOne) ClearMembers() *GuildUpdateOne {
-	guo.mutation.ClearMembers()
-	return guo
+func (_u *GuildUpdateOne) ClearMembers() *GuildUpdateOne {
+	_u.mutation.ClearMembers()
+	return _u
 }
 
 // RemoveMemberIDs removes the "members" edge to Member entities by IDs.
-func (guo *GuildUpdateOne) RemoveMemberIDs(ids ...int) *GuildUpdateOne {
-	guo.mutation.RemoveMemberIDs(ids...)
-	return guo
+func (_u *GuildUpdateOne) RemoveMemberIDs(ids ...int) *GuildUpdateOne {
+	_u.mutation.RemoveMemberIDs(ids...)
+	return _u
 }
 
 // RemoveMembers removes "members" edges to Member entities.
-func (guo *GuildUpdateOne) RemoveMembers(m ...*Member) *GuildUpdateOne {
-	ids := make([]int, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_u *GuildUpdateOne) RemoveMembers(v ...*Member) *GuildUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return guo.RemoveMemberIDs(ids...)
+	return _u.RemoveMemberIDs(ids...)
 }
 
 // ClearMessagePins clears all "message_pins" edges to the MessagePin entity.
-func (guo *GuildUpdateOne) ClearMessagePins() *GuildUpdateOne {
-	guo.mutation.ClearMessagePins()
-	return guo
+func (_u *GuildUpdateOne) ClearMessagePins() *GuildUpdateOne {
+	_u.mutation.ClearMessagePins()
+	return _u
 }
 
 // RemoveMessagePinIDs removes the "message_pins" edge to MessagePin entities by IDs.
-func (guo *GuildUpdateOne) RemoveMessagePinIDs(ids ...uuid.UUID) *GuildUpdateOne {
-	guo.mutation.RemoveMessagePinIDs(ids...)
-	return guo
+func (_u *GuildUpdateOne) RemoveMessagePinIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	_u.mutation.RemoveMessagePinIDs(ids...)
+	return _u
 }
 
 // RemoveMessagePins removes "message_pins" edges to MessagePin entities.
-func (guo *GuildUpdateOne) RemoveMessagePins(m ...*MessagePin) *GuildUpdateOne {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_u *GuildUpdateOne) RemoveMessagePins(v ...*MessagePin) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return guo.RemoveMessagePinIDs(ids...)
+	return _u.RemoveMessagePinIDs(ids...)
 }
 
 // ClearReminds clears all "reminds" edges to the MessageRemind entity.
-func (guo *GuildUpdateOne) ClearReminds() *GuildUpdateOne {
-	guo.mutation.ClearReminds()
-	return guo
+func (_u *GuildUpdateOne) ClearReminds() *GuildUpdateOne {
+	_u.mutation.ClearReminds()
+	return _u
 }
 
 // RemoveRemindIDs removes the "reminds" edge to MessageRemind entities by IDs.
-func (guo *GuildUpdateOne) RemoveRemindIDs(ids ...uuid.UUID) *GuildUpdateOne {
-	guo.mutation.RemoveRemindIDs(ids...)
-	return guo
+func (_u *GuildUpdateOne) RemoveRemindIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	_u.mutation.RemoveRemindIDs(ids...)
+	return _u
 }
 
 // RemoveReminds removes "reminds" edges to MessageRemind entities.
-func (guo *GuildUpdateOne) RemoveReminds(m ...*MessageRemind) *GuildUpdateOne {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_u *GuildUpdateOne) RemoveReminds(v ...*MessageRemind) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return guo.RemoveRemindIDs(ids...)
+	return _u.RemoveRemindIDs(ids...)
 }
 
 // ClearRolePanels clears all "role_panels" edges to the RolePanel entity.
-func (guo *GuildUpdateOne) ClearRolePanels() *GuildUpdateOne {
-	guo.mutation.ClearRolePanels()
-	return guo
+func (_u *GuildUpdateOne) ClearRolePanels() *GuildUpdateOne {
+	_u.mutation.ClearRolePanels()
+	return _u
 }
 
 // RemoveRolePanelIDs removes the "role_panels" edge to RolePanel entities by IDs.
-func (guo *GuildUpdateOne) RemoveRolePanelIDs(ids ...uuid.UUID) *GuildUpdateOne {
-	guo.mutation.RemoveRolePanelIDs(ids...)
-	return guo
+func (_u *GuildUpdateOne) RemoveRolePanelIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	_u.mutation.RemoveRolePanelIDs(ids...)
+	return _u
 }
 
 // RemoveRolePanels removes "role_panels" edges to RolePanel entities.
-func (guo *GuildUpdateOne) RemoveRolePanels(r ...*RolePanel) *GuildUpdateOne {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_u *GuildUpdateOne) RemoveRolePanels(v ...*RolePanel) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return guo.RemoveRolePanelIDs(ids...)
+	return _u.RemoveRolePanelIDs(ids...)
 }
 
 // ClearRolePanelPlacements clears all "role_panel_placements" edges to the RolePanelPlaced entity.
-func (guo *GuildUpdateOne) ClearRolePanelPlacements() *GuildUpdateOne {
-	guo.mutation.ClearRolePanelPlacements()
-	return guo
+func (_u *GuildUpdateOne) ClearRolePanelPlacements() *GuildUpdateOne {
+	_u.mutation.ClearRolePanelPlacements()
+	return _u
 }
 
 // RemoveRolePanelPlacementIDs removes the "role_panel_placements" edge to RolePanelPlaced entities by IDs.
-func (guo *GuildUpdateOne) RemoveRolePanelPlacementIDs(ids ...uuid.UUID) *GuildUpdateOne {
-	guo.mutation.RemoveRolePanelPlacementIDs(ids...)
-	return guo
+func (_u *GuildUpdateOne) RemoveRolePanelPlacementIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	_u.mutation.RemoveRolePanelPlacementIDs(ids...)
+	return _u
 }
 
 // RemoveRolePanelPlacements removes "role_panel_placements" edges to RolePanelPlaced entities.
-func (guo *GuildUpdateOne) RemoveRolePanelPlacements(r ...*RolePanelPlaced) *GuildUpdateOne {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_u *GuildUpdateOne) RemoveRolePanelPlacements(v ...*RolePanelPlaced) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return guo.RemoveRolePanelPlacementIDs(ids...)
+	return _u.RemoveRolePanelPlacementIDs(ids...)
 }
 
 // ClearRolePanelEdits clears all "role_panel_edits" edges to the RolePanelEdit entity.
-func (guo *GuildUpdateOne) ClearRolePanelEdits() *GuildUpdateOne {
-	guo.mutation.ClearRolePanelEdits()
-	return guo
+func (_u *GuildUpdateOne) ClearRolePanelEdits() *GuildUpdateOne {
+	_u.mutation.ClearRolePanelEdits()
+	return _u
 }
 
 // RemoveRolePanelEditIDs removes the "role_panel_edits" edge to RolePanelEdit entities by IDs.
-func (guo *GuildUpdateOne) RemoveRolePanelEditIDs(ids ...uuid.UUID) *GuildUpdateOne {
-	guo.mutation.RemoveRolePanelEditIDs(ids...)
-	return guo
+func (_u *GuildUpdateOne) RemoveRolePanelEditIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	_u.mutation.RemoveRolePanelEditIDs(ids...)
+	return _u
 }
 
 // RemoveRolePanelEdits removes "role_panel_edits" edges to RolePanelEdit entities.
-func (guo *GuildUpdateOne) RemoveRolePanelEdits(r ...*RolePanelEdit) *GuildUpdateOne {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_u *GuildUpdateOne) RemoveRolePanelEdits(v ...*RolePanelEdit) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return guo.RemoveRolePanelEditIDs(ids...)
+	return _u.RemoveRolePanelEditIDs(ids...)
 }
 
 // ClearChinchiroSessions clears all "chinchiro_sessions" edges to the ChinchiroSession entity.
-func (guo *GuildUpdateOne) ClearChinchiroSessions() *GuildUpdateOne {
-	guo.mutation.ClearChinchiroSessions()
-	return guo
+func (_u *GuildUpdateOne) ClearChinchiroSessions() *GuildUpdateOne {
+	_u.mutation.ClearChinchiroSessions()
+	return _u
 }
 
 // RemoveChinchiroSessionIDs removes the "chinchiro_sessions" edge to ChinchiroSession entities by IDs.
-func (guo *GuildUpdateOne) RemoveChinchiroSessionIDs(ids ...uuid.UUID) *GuildUpdateOne {
-	guo.mutation.RemoveChinchiroSessionIDs(ids...)
-	return guo
+func (_u *GuildUpdateOne) RemoveChinchiroSessionIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	_u.mutation.RemoveChinchiroSessionIDs(ids...)
+	return _u
 }
 
 // RemoveChinchiroSessions removes "chinchiro_sessions" edges to ChinchiroSession entities.
-func (guo *GuildUpdateOne) RemoveChinchiroSessions(c ...*ChinchiroSession) *GuildUpdateOne {
-	ids := make([]uuid.UUID, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
+func (_u *GuildUpdateOne) RemoveChinchiroSessions(v ...*ChinchiroSession) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return guo.RemoveChinchiroSessionIDs(ids...)
+	return _u.RemoveChinchiroSessionIDs(ids...)
 }
 
 // ClearThreads1000 clears all "threads1000" edges to the Thread1000 entity.
-func (guo *GuildUpdateOne) ClearThreads1000() *GuildUpdateOne {
-	guo.mutation.ClearThreads1000()
-	return guo
+func (_u *GuildUpdateOne) ClearThreads1000() *GuildUpdateOne {
+	_u.mutation.ClearThreads1000()
+	return _u
 }
 
 // RemoveThreads1000IDs removes the "threads1000" edge to Thread1000 entities by IDs.
-func (guo *GuildUpdateOne) RemoveThreads1000IDs(ids ...uuid.UUID) *GuildUpdateOne {
-	guo.mutation.RemoveThreads1000IDs(ids...)
-	return guo
+func (_u *GuildUpdateOne) RemoveThreads1000IDs(ids ...uuid.UUID) *GuildUpdateOne {
+	_u.mutation.RemoveThreads1000IDs(ids...)
+	return _u
 }
 
 // RemoveThreads1000 removes "threads1000" edges to Thread1000 entities.
-func (guo *GuildUpdateOne) RemoveThreads1000(t ...*Thread1000) *GuildUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *GuildUpdateOne) RemoveThreads1000(v ...*Thread1000) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return guo.RemoveThreads1000IDs(ids...)
+	return _u.RemoveThreads1000IDs(ids...)
 }
 
 // ClearThread1000Channels clears all "thread1000_channels" edges to the Thread1000Channel entity.
-func (guo *GuildUpdateOne) ClearThread1000Channels() *GuildUpdateOne {
-	guo.mutation.ClearThread1000Channels()
-	return guo
+func (_u *GuildUpdateOne) ClearThread1000Channels() *GuildUpdateOne {
+	_u.mutation.ClearThread1000Channels()
+	return _u
 }
 
 // RemoveThread1000ChannelIDs removes the "thread1000_channels" edge to Thread1000Channel entities by IDs.
-func (guo *GuildUpdateOne) RemoveThread1000ChannelIDs(ids ...uuid.UUID) *GuildUpdateOne {
-	guo.mutation.RemoveThread1000ChannelIDs(ids...)
-	return guo
+func (_u *GuildUpdateOne) RemoveThread1000ChannelIDs(ids ...uuid.UUID) *GuildUpdateOne {
+	_u.mutation.RemoveThread1000ChannelIDs(ids...)
+	return _u
 }
 
 // RemoveThread1000Channels removes "thread1000_channels" edges to Thread1000Channel entities.
-func (guo *GuildUpdateOne) RemoveThread1000Channels(t ...*Thread1000Channel) *GuildUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *GuildUpdateOne) RemoveThread1000Channels(v ...*Thread1000Channel) *GuildUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return guo.RemoveThread1000ChannelIDs(ids...)
+	return _u.RemoveThread1000ChannelIDs(ids...)
 }
 
 // Where appends a list predicates to the GuildUpdate builder.
-func (guo *GuildUpdateOne) Where(ps ...predicate.Guild) *GuildUpdateOne {
-	guo.mutation.Where(ps...)
-	return guo
+func (_u *GuildUpdateOne) Where(ps ...predicate.Guild) *GuildUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (guo *GuildUpdateOne) Select(field string, fields ...string) *GuildUpdateOne {
-	guo.fields = append([]string{field}, fields...)
-	return guo
+func (_u *GuildUpdateOne) Select(field string, fields ...string) *GuildUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated Guild entity.
-func (guo *GuildUpdateOne) Save(ctx context.Context) (*Guild, error) {
-	return withHooks(ctx, guo.sqlSave, guo.mutation, guo.hooks)
+func (_u *GuildUpdateOne) Save(ctx context.Context) (*Guild, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (guo *GuildUpdateOne) SaveX(ctx context.Context) *Guild {
-	node, err := guo.Save(ctx)
+func (_u *GuildUpdateOne) SaveX(ctx context.Context) *Guild {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -2145,92 +2145,92 @@ func (guo *GuildUpdateOne) SaveX(ctx context.Context) *Guild {
 }
 
 // Exec executes the query on the entity.
-func (guo *GuildUpdateOne) Exec(ctx context.Context) error {
-	_, err := guo.Save(ctx)
+func (_u *GuildUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (guo *GuildUpdateOne) ExecX(ctx context.Context) {
-	if err := guo.Exec(ctx); err != nil {
+func (_u *GuildUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (guo *GuildUpdateOne) check() error {
-	if v, ok := guo.mutation.Name(); ok {
+func (_u *GuildUpdateOne) check() error {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := guild.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Guild.name": %w`, err)}
 		}
 	}
-	if v, ok := guo.mutation.Locale(); ok {
+	if v, ok := _u.mutation.Locale(); ok {
 		if err := guild.LocaleValidator(string(v)); err != nil {
 			return &ValidationError{Name: "locale", err: fmt.Errorf(`ent: validator failed for field "Guild.locale": %w`, err)}
 		}
 	}
-	if v, ok := guo.mutation.LevelUpMessage(); ok {
+	if v, ok := _u.mutation.LevelUpMessage(); ok {
 		if err := guild.LevelUpMessageValidator(v); err != nil {
 			return &ValidationError{Name: "level_up_message", err: fmt.Errorf(`ent: validator failed for field "Guild.level_up_message": %w`, err)}
 		}
 	}
-	if v, ok := guo.mutation.BumpMessageTitle(); ok {
+	if v, ok := _u.mutation.BumpMessageTitle(); ok {
 		if err := guild.BumpMessageTitleValidator(v); err != nil {
 			return &ValidationError{Name: "bump_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_message_title": %w`, err)}
 		}
 	}
-	if v, ok := guo.mutation.BumpMessage(); ok {
+	if v, ok := _u.mutation.BumpMessage(); ok {
 		if err := guild.BumpMessageValidator(v); err != nil {
 			return &ValidationError{Name: "bump_message", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_message": %w`, err)}
 		}
 	}
-	if v, ok := guo.mutation.BumpRemindMessageTitle(); ok {
+	if v, ok := _u.mutation.BumpRemindMessageTitle(); ok {
 		if err := guild.BumpRemindMessageTitleValidator(v); err != nil {
 			return &ValidationError{Name: "bump_remind_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_remind_message_title": %w`, err)}
 		}
 	}
-	if v, ok := guo.mutation.BumpRemindMessage(); ok {
+	if v, ok := _u.mutation.BumpRemindMessage(); ok {
 		if err := guild.BumpRemindMessageValidator(v); err != nil {
 			return &ValidationError{Name: "bump_remind_message", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_remind_message": %w`, err)}
 		}
 	}
-	if v, ok := guo.mutation.UpMessageTitle(); ok {
+	if v, ok := _u.mutation.UpMessageTitle(); ok {
 		if err := guild.UpMessageTitleValidator(v); err != nil {
 			return &ValidationError{Name: "up_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.up_message_title": %w`, err)}
 		}
 	}
-	if v, ok := guo.mutation.UpMessage(); ok {
+	if v, ok := _u.mutation.UpMessage(); ok {
 		if err := guild.UpMessageValidator(v); err != nil {
 			return &ValidationError{Name: "up_message", err: fmt.Errorf(`ent: validator failed for field "Guild.up_message": %w`, err)}
 		}
 	}
-	if v, ok := guo.mutation.UpRemindMessageTitle(); ok {
+	if v, ok := _u.mutation.UpRemindMessageTitle(); ok {
 		if err := guild.UpRemindMessageTitleValidator(v); err != nil {
 			return &ValidationError{Name: "up_remind_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.up_remind_message_title": %w`, err)}
 		}
 	}
-	if v, ok := guo.mutation.UpRemindMessage(); ok {
+	if v, ok := _u.mutation.UpRemindMessage(); ok {
 		if err := guild.UpRemindMessageValidator(v); err != nil {
 			return &ValidationError{Name: "up_remind_message", err: fmt.Errorf(`ent: validator failed for field "Guild.up_remind_message": %w`, err)}
 		}
 	}
-	if guo.mutation.OwnerCleared() && len(guo.mutation.OwnerIDs()) > 0 {
+	if _u.mutation.OwnerCleared() && len(_u.mutation.OwnerIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Guild.owner"`)
 	}
 	return nil
 }
 
-func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error) {
-	if err := guo.check(); err != nil {
+func (_u *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(guild.Table, guild.Columns, sqlgraph.NewFieldSpec(guild.FieldID, field.TypeUint64))
-	id, ok := guo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Guild.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := guo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, guild.FieldID)
 		for _, f := range fields {
@@ -2242,120 +2242,120 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 			}
 		}
 	}
-	if ps := guo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := guo.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(guild.FieldName, field.TypeString, value)
 	}
-	if value, ok := guo.mutation.Locale(); ok {
+	if value, ok := _u.mutation.Locale(); ok {
 		_spec.SetField(guild.FieldLocale, field.TypeString, value)
 	}
-	if value, ok := guo.mutation.LevelUpMessage(); ok {
+	if value, ok := _u.mutation.LevelUpMessage(); ok {
 		_spec.SetField(guild.FieldLevelUpMessage, field.TypeString, value)
 	}
-	if value, ok := guo.mutation.LevelUpChannel(); ok {
+	if value, ok := _u.mutation.LevelUpChannel(); ok {
 		_spec.SetField(guild.FieldLevelUpChannel, field.TypeUint64, value)
 	}
-	if value, ok := guo.mutation.AddedLevelUpChannel(); ok {
+	if value, ok := _u.mutation.AddedLevelUpChannel(); ok {
 		_spec.AddField(guild.FieldLevelUpChannel, field.TypeUint64, value)
 	}
-	if guo.mutation.LevelUpChannelCleared() {
+	if _u.mutation.LevelUpChannelCleared() {
 		_spec.ClearField(guild.FieldLevelUpChannel, field.TypeUint64)
 	}
-	if value, ok := guo.mutation.LevelUpExcludeChannel(); ok {
+	if value, ok := _u.mutation.LevelUpExcludeChannel(); ok {
 		_spec.SetField(guild.FieldLevelUpExcludeChannel, field.TypeJSON, value)
 	}
-	if value, ok := guo.mutation.AppendedLevelUpExcludeChannel(); ok {
+	if value, ok := _u.mutation.AppendedLevelUpExcludeChannel(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, guild.FieldLevelUpExcludeChannel, value)
 		})
 	}
-	if guo.mutation.LevelUpExcludeChannelCleared() {
+	if _u.mutation.LevelUpExcludeChannelCleared() {
 		_spec.ClearField(guild.FieldLevelUpExcludeChannel, field.TypeJSON)
 	}
-	if value, ok := guo.mutation.LevelMee6Imported(); ok {
+	if value, ok := _u.mutation.LevelMee6Imported(); ok {
 		_spec.SetField(guild.FieldLevelMee6Imported, field.TypeBool, value)
 	}
-	if value, ok := guo.mutation.LevelRole(); ok {
+	if value, ok := _u.mutation.LevelRole(); ok {
 		_spec.SetField(guild.FieldLevelRole, field.TypeJSON, value)
 	}
-	if guo.mutation.LevelRoleCleared() {
+	if _u.mutation.LevelRoleCleared() {
 		_spec.ClearField(guild.FieldLevelRole, field.TypeJSON)
 	}
-	if value, ok := guo.mutation.Permissions(); ok {
+	if value, ok := _u.mutation.Permissions(); ok {
 		_spec.SetField(guild.FieldPermissions, field.TypeJSON, value)
 	}
-	if value, ok := guo.mutation.RemindCount(); ok {
+	if value, ok := _u.mutation.RemindCount(); ok {
 		_spec.SetField(guild.FieldRemindCount, field.TypeInt, value)
 	}
-	if value, ok := guo.mutation.AddedRemindCount(); ok {
+	if value, ok := _u.mutation.AddedRemindCount(); ok {
 		_spec.AddField(guild.FieldRemindCount, field.TypeInt, value)
 	}
-	if value, ok := guo.mutation.RolePanelEditTimes(); ok {
+	if value, ok := _u.mutation.RolePanelEditTimes(); ok {
 		_spec.SetField(guild.FieldRolePanelEditTimes, field.TypeJSON, value)
 	}
-	if value, ok := guo.mutation.AppendedRolePanelEditTimes(); ok {
+	if value, ok := _u.mutation.AppendedRolePanelEditTimes(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, guild.FieldRolePanelEditTimes, value)
 		})
 	}
-	if value, ok := guo.mutation.BumpEnabled(); ok {
+	if value, ok := _u.mutation.BumpEnabled(); ok {
 		_spec.SetField(guild.FieldBumpEnabled, field.TypeBool, value)
 	}
-	if value, ok := guo.mutation.BumpMessageTitle(); ok {
+	if value, ok := _u.mutation.BumpMessageTitle(); ok {
 		_spec.SetField(guild.FieldBumpMessageTitle, field.TypeString, value)
 	}
-	if value, ok := guo.mutation.BumpMessage(); ok {
+	if value, ok := _u.mutation.BumpMessage(); ok {
 		_spec.SetField(guild.FieldBumpMessage, field.TypeString, value)
 	}
-	if value, ok := guo.mutation.BumpRemindMessageTitle(); ok {
+	if value, ok := _u.mutation.BumpRemindMessageTitle(); ok {
 		_spec.SetField(guild.FieldBumpRemindMessageTitle, field.TypeString, value)
 	}
-	if value, ok := guo.mutation.BumpRemindMessage(); ok {
+	if value, ok := _u.mutation.BumpRemindMessage(); ok {
 		_spec.SetField(guild.FieldBumpRemindMessage, field.TypeString, value)
 	}
-	if value, ok := guo.mutation.UpEnabled(); ok {
+	if value, ok := _u.mutation.UpEnabled(); ok {
 		_spec.SetField(guild.FieldUpEnabled, field.TypeBool, value)
 	}
-	if value, ok := guo.mutation.UpMessageTitle(); ok {
+	if value, ok := _u.mutation.UpMessageTitle(); ok {
 		_spec.SetField(guild.FieldUpMessageTitle, field.TypeString, value)
 	}
-	if value, ok := guo.mutation.UpMessage(); ok {
+	if value, ok := _u.mutation.UpMessage(); ok {
 		_spec.SetField(guild.FieldUpMessage, field.TypeString, value)
 	}
-	if value, ok := guo.mutation.UpRemindMessageTitle(); ok {
+	if value, ok := _u.mutation.UpRemindMessageTitle(); ok {
 		_spec.SetField(guild.FieldUpRemindMessageTitle, field.TypeString, value)
 	}
-	if value, ok := guo.mutation.UpRemindMessage(); ok {
+	if value, ok := _u.mutation.UpRemindMessage(); ok {
 		_spec.SetField(guild.FieldUpRemindMessage, field.TypeString, value)
 	}
-	if value, ok := guo.mutation.BumpMention(); ok {
+	if value, ok := _u.mutation.BumpMention(); ok {
 		_spec.SetField(guild.FieldBumpMention, field.TypeUint64, value)
 	}
-	if value, ok := guo.mutation.AddedBumpMention(); ok {
+	if value, ok := _u.mutation.AddedBumpMention(); ok {
 		_spec.AddField(guild.FieldBumpMention, field.TypeUint64, value)
 	}
-	if guo.mutation.BumpMentionCleared() {
+	if _u.mutation.BumpMentionCleared() {
 		_spec.ClearField(guild.FieldBumpMention, field.TypeUint64)
 	}
-	if value, ok := guo.mutation.UpMention(); ok {
+	if value, ok := _u.mutation.UpMention(); ok {
 		_spec.SetField(guild.FieldUpMention, field.TypeUint64, value)
 	}
-	if value, ok := guo.mutation.AddedUpMention(); ok {
+	if value, ok := _u.mutation.AddedUpMention(); ok {
 		_spec.AddField(guild.FieldUpMention, field.TypeUint64, value)
 	}
-	if guo.mutation.UpMentionCleared() {
+	if _u.mutation.UpMentionCleared() {
 		_spec.ClearField(guild.FieldUpMention, field.TypeUint64)
 	}
-	if value, ok := guo.mutation.LevelingDisabled(); ok {
+	if value, ok := _u.mutation.LevelingDisabled(); ok {
 		_spec.SetField(guild.FieldLevelingDisabled, field.TypeBool, value)
 	}
-	if guo.mutation.OwnerCleared() {
+	if _u.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -2368,7 +2368,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.OwnerIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -2384,7 +2384,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if guo.mutation.MembersCleared() {
+	if _u.mutation.MembersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2397,23 +2397,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.RemovedMembersIDs(); len(nodes) > 0 && !guo.mutation.MembersCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   guild.MembersTable,
-			Columns: []string{guild.MembersColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := guo.mutation.MembersIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RemovedMembersIDs(); len(nodes) > 0 && !_u.mutation.MembersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2427,9 +2411,25 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.MembersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.MembersTable,
+			Columns: []string{guild.MembersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if guo.mutation.MessagePinsCleared() {
+	if _u.mutation.MessagePinsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2442,7 +2442,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.RemovedMessagePinsIDs(); len(nodes) > 0 && !guo.mutation.MessagePinsCleared() {
+	if nodes := _u.mutation.RemovedMessagePinsIDs(); len(nodes) > 0 && !_u.mutation.MessagePinsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2458,7 +2458,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.MessagePinsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.MessagePinsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2474,7 +2474,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if guo.mutation.RemindsCleared() {
+	if _u.mutation.RemindsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2487,23 +2487,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.RemovedRemindsIDs(); len(nodes) > 0 && !guo.mutation.RemindsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   guild.RemindsTable,
-			Columns: []string{guild.RemindsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(messageremind.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := guo.mutation.RemindsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RemovedRemindsIDs(); len(nodes) > 0 && !_u.mutation.RemindsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2517,9 +2501,25 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemindsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RemindsTable,
+			Columns: []string{guild.RemindsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(messageremind.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if guo.mutation.RolePanelsCleared() {
+	if _u.mutation.RolePanelsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2532,7 +2532,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.RemovedRolePanelsIDs(); len(nodes) > 0 && !guo.mutation.RolePanelsCleared() {
+	if nodes := _u.mutation.RemovedRolePanelsIDs(); len(nodes) > 0 && !_u.mutation.RolePanelsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2548,7 +2548,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.RolePanelsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RolePanelsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2564,7 +2564,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if guo.mutation.RolePanelPlacementsCleared() {
+	if _u.mutation.RolePanelPlacementsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2577,23 +2577,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.RemovedRolePanelPlacementsIDs(); len(nodes) > 0 && !guo.mutation.RolePanelPlacementsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   guild.RolePanelPlacementsTable,
-			Columns: []string{guild.RolePanelPlacementsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(rolepanelplaced.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := guo.mutation.RolePanelPlacementsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RemovedRolePanelPlacementsIDs(); len(nodes) > 0 && !_u.mutation.RolePanelPlacementsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2607,9 +2591,25 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RolePanelPlacementsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   guild.RolePanelPlacementsTable,
+			Columns: []string{guild.RolePanelPlacementsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(rolepanelplaced.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if guo.mutation.RolePanelEditsCleared() {
+	if _u.mutation.RolePanelEditsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2622,7 +2622,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.RemovedRolePanelEditsIDs(); len(nodes) > 0 && !guo.mutation.RolePanelEditsCleared() {
+	if nodes := _u.mutation.RemovedRolePanelEditsIDs(); len(nodes) > 0 && !_u.mutation.RolePanelEditsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2638,7 +2638,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.RolePanelEditsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RolePanelEditsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2654,7 +2654,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if guo.mutation.ChinchiroSessionsCleared() {
+	if _u.mutation.ChinchiroSessionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2667,7 +2667,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.RemovedChinchiroSessionsIDs(); len(nodes) > 0 && !guo.mutation.ChinchiroSessionsCleared() {
+	if nodes := _u.mutation.RemovedChinchiroSessionsIDs(); len(nodes) > 0 && !_u.mutation.ChinchiroSessionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2683,7 +2683,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.ChinchiroSessionsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.ChinchiroSessionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2699,7 +2699,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if guo.mutation.Threads1000Cleared() {
+	if _u.mutation.Threads1000Cleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2712,7 +2712,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.RemovedThreads1000IDs(); len(nodes) > 0 && !guo.mutation.Threads1000Cleared() {
+	if nodes := _u.mutation.RemovedThreads1000IDs(); len(nodes) > 0 && !_u.mutation.Threads1000Cleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2728,7 +2728,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.Threads1000IDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.Threads1000IDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2744,7 +2744,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if guo.mutation.Thread1000ChannelsCleared() {
+	if _u.mutation.Thread1000ChannelsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2757,7 +2757,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.RemovedThread1000ChannelsIDs(); len(nodes) > 0 && !guo.mutation.Thread1000ChannelsCleared() {
+	if nodes := _u.mutation.RemovedThread1000ChannelsIDs(); len(nodes) > 0 && !_u.mutation.Thread1000ChannelsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2773,7 +2773,7 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := guo.mutation.Thread1000ChannelsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.Thread1000ChannelsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -2789,10 +2789,10 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_node = &Guild{config: guo.config}
+	_node = &Guild{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, guo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{guild.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -2800,6 +2800,6 @@ func (guo *GuildUpdateOne) sqlSave(ctx context.Context) (_node *Guild, err error
 		}
 		return nil, err
 	}
-	guo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

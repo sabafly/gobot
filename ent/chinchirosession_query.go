@@ -36,44 +36,44 @@ type ChinchiroSessionQuery struct {
 }
 
 // Where adds a new predicate for the ChinchiroSessionQuery builder.
-func (csq *ChinchiroSessionQuery) Where(ps ...predicate.ChinchiroSession) *ChinchiroSessionQuery {
-	csq.predicates = append(csq.predicates, ps...)
-	return csq
+func (_q *ChinchiroSessionQuery) Where(ps ...predicate.ChinchiroSession) *ChinchiroSessionQuery {
+	_q.predicates = append(_q.predicates, ps...)
+	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (csq *ChinchiroSessionQuery) Limit(limit int) *ChinchiroSessionQuery {
-	csq.ctx.Limit = &limit
-	return csq
+func (_q *ChinchiroSessionQuery) Limit(limit int) *ChinchiroSessionQuery {
+	_q.ctx.Limit = &limit
+	return _q
 }
 
 // Offset to start from.
-func (csq *ChinchiroSessionQuery) Offset(offset int) *ChinchiroSessionQuery {
-	csq.ctx.Offset = &offset
-	return csq
+func (_q *ChinchiroSessionQuery) Offset(offset int) *ChinchiroSessionQuery {
+	_q.ctx.Offset = &offset
+	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (csq *ChinchiroSessionQuery) Unique(unique bool) *ChinchiroSessionQuery {
-	csq.ctx.Unique = &unique
-	return csq
+func (_q *ChinchiroSessionQuery) Unique(unique bool) *ChinchiroSessionQuery {
+	_q.ctx.Unique = &unique
+	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (csq *ChinchiroSessionQuery) Order(o ...chinchirosession.OrderOption) *ChinchiroSessionQuery {
-	csq.order = append(csq.order, o...)
-	return csq
+func (_q *ChinchiroSessionQuery) Order(o ...chinchirosession.OrderOption) *ChinchiroSessionQuery {
+	_q.order = append(_q.order, o...)
+	return _q
 }
 
 // QueryGuild chains the current query on the "guild" edge.
-func (csq *ChinchiroSessionQuery) QueryGuild() *GuildQuery {
-	query := (&GuildClient{config: csq.config}).Query()
+func (_q *ChinchiroSessionQuery) QueryGuild() *GuildQuery {
+	query := (&GuildClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := csq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := csq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -82,20 +82,20 @@ func (csq *ChinchiroSessionQuery) QueryGuild() *GuildQuery {
 			sqlgraph.To(guild.Table, guild.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, chinchirosession.GuildTable, chinchirosession.GuildColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(csq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
 }
 
 // QueryPlayers chains the current query on the "players" edge.
-func (csq *ChinchiroSessionQuery) QueryPlayers() *ChinchiroPlayerQuery {
-	query := (&ChinchiroPlayerClient{config: csq.config}).Query()
+func (_q *ChinchiroSessionQuery) QueryPlayers() *ChinchiroPlayerQuery {
+	query := (&ChinchiroPlayerClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := csq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := csq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -104,7 +104,7 @@ func (csq *ChinchiroSessionQuery) QueryPlayers() *ChinchiroPlayerQuery {
 			sqlgraph.To(chinchiroplayer.Table, chinchiroplayer.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, chinchirosession.PlayersTable, chinchirosession.PlayersColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(csq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
@@ -112,8 +112,8 @@ func (csq *ChinchiroSessionQuery) QueryPlayers() *ChinchiroPlayerQuery {
 
 // First returns the first ChinchiroSession entity from the query.
 // Returns a *NotFoundError when no ChinchiroSession was found.
-func (csq *ChinchiroSessionQuery) First(ctx context.Context) (*ChinchiroSession, error) {
-	nodes, err := csq.Limit(1).All(setContextOp(ctx, csq.ctx, ent.OpQueryFirst))
+func (_q *ChinchiroSessionQuery) First(ctx context.Context) (*ChinchiroSession, error) {
+	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -124,8 +124,8 @@ func (csq *ChinchiroSessionQuery) First(ctx context.Context) (*ChinchiroSession,
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (csq *ChinchiroSessionQuery) FirstX(ctx context.Context) *ChinchiroSession {
-	node, err := csq.First(ctx)
+func (_q *ChinchiroSessionQuery) FirstX(ctx context.Context) *ChinchiroSession {
+	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -134,9 +134,9 @@ func (csq *ChinchiroSessionQuery) FirstX(ctx context.Context) *ChinchiroSession 
 
 // FirstID returns the first ChinchiroSession ID from the query.
 // Returns a *NotFoundError when no ChinchiroSession ID was found.
-func (csq *ChinchiroSessionQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *ChinchiroSessionQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = csq.Limit(1).IDs(setContextOp(ctx, csq.ctx, ent.OpQueryFirstID)); err != nil {
+	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -147,8 +147,8 @@ func (csq *ChinchiroSessionQuery) FirstID(ctx context.Context) (id uuid.UUID, er
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (csq *ChinchiroSessionQuery) FirstIDX(ctx context.Context) uuid.UUID {
-	id, err := csq.FirstID(ctx)
+func (_q *ChinchiroSessionQuery) FirstIDX(ctx context.Context) uuid.UUID {
+	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -158,8 +158,8 @@ func (csq *ChinchiroSessionQuery) FirstIDX(ctx context.Context) uuid.UUID {
 // Only returns a single ChinchiroSession entity found by the query, ensuring it only returns one.
 // Returns a *NotSingularError when more than one ChinchiroSession entity is found.
 // Returns a *NotFoundError when no ChinchiroSession entities are found.
-func (csq *ChinchiroSessionQuery) Only(ctx context.Context) (*ChinchiroSession, error) {
-	nodes, err := csq.Limit(2).All(setContextOp(ctx, csq.ctx, ent.OpQueryOnly))
+func (_q *ChinchiroSessionQuery) Only(ctx context.Context) (*ChinchiroSession, error) {
+	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -174,8 +174,8 @@ func (csq *ChinchiroSessionQuery) Only(ctx context.Context) (*ChinchiroSession, 
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (csq *ChinchiroSessionQuery) OnlyX(ctx context.Context) *ChinchiroSession {
-	node, err := csq.Only(ctx)
+func (_q *ChinchiroSessionQuery) OnlyX(ctx context.Context) *ChinchiroSession {
+	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -185,9 +185,9 @@ func (csq *ChinchiroSessionQuery) OnlyX(ctx context.Context) *ChinchiroSession {
 // OnlyID is like Only, but returns the only ChinchiroSession ID in the query.
 // Returns a *NotSingularError when more than one ChinchiroSession ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (csq *ChinchiroSessionQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *ChinchiroSessionQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = csq.Limit(2).IDs(setContextOp(ctx, csq.ctx, ent.OpQueryOnlyID)); err != nil {
+	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -202,8 +202,8 @@ func (csq *ChinchiroSessionQuery) OnlyID(ctx context.Context) (id uuid.UUID, err
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (csq *ChinchiroSessionQuery) OnlyIDX(ctx context.Context) uuid.UUID {
-	id, err := csq.OnlyID(ctx)
+func (_q *ChinchiroSessionQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -211,18 +211,18 @@ func (csq *ChinchiroSessionQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 }
 
 // All executes the query and returns a list of ChinchiroSessions.
-func (csq *ChinchiroSessionQuery) All(ctx context.Context) ([]*ChinchiroSession, error) {
-	ctx = setContextOp(ctx, csq.ctx, ent.OpQueryAll)
-	if err := csq.prepareQuery(ctx); err != nil {
+func (_q *ChinchiroSessionQuery) All(ctx context.Context) ([]*ChinchiroSession, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
 	qr := querierAll[[]*ChinchiroSession, *ChinchiroSessionQuery]()
-	return withInterceptors[[]*ChinchiroSession](ctx, csq, qr, csq.inters)
+	return withInterceptors[[]*ChinchiroSession](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (csq *ChinchiroSessionQuery) AllX(ctx context.Context) []*ChinchiroSession {
-	nodes, err := csq.All(ctx)
+func (_q *ChinchiroSessionQuery) AllX(ctx context.Context) []*ChinchiroSession {
+	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -230,20 +230,20 @@ func (csq *ChinchiroSessionQuery) AllX(ctx context.Context) []*ChinchiroSession 
 }
 
 // IDs executes the query and returns a list of ChinchiroSession IDs.
-func (csq *ChinchiroSessionQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
-	if csq.ctx.Unique == nil && csq.path != nil {
-		csq.Unique(true)
+func (_q *ChinchiroSessionQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+	if _q.ctx.Unique == nil && _q.path != nil {
+		_q.Unique(true)
 	}
-	ctx = setContextOp(ctx, csq.ctx, ent.OpQueryIDs)
-	if err = csq.Select(chinchirosession.FieldID).Scan(ctx, &ids); err != nil {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
+	if err = _q.Select(chinchirosession.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (csq *ChinchiroSessionQuery) IDsX(ctx context.Context) []uuid.UUID {
-	ids, err := csq.IDs(ctx)
+func (_q *ChinchiroSessionQuery) IDsX(ctx context.Context) []uuid.UUID {
+	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -251,17 +251,17 @@ func (csq *ChinchiroSessionQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (csq *ChinchiroSessionQuery) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, csq.ctx, ent.OpQueryCount)
-	if err := csq.prepareQuery(ctx); err != nil {
+func (_q *ChinchiroSessionQuery) Count(ctx context.Context) (int, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, csq, querierCount[*ChinchiroSessionQuery](), csq.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*ChinchiroSessionQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (csq *ChinchiroSessionQuery) CountX(ctx context.Context) int {
-	count, err := csq.Count(ctx)
+func (_q *ChinchiroSessionQuery) CountX(ctx context.Context) int {
+	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -269,9 +269,9 @@ func (csq *ChinchiroSessionQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (csq *ChinchiroSessionQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, csq.ctx, ent.OpQueryExist)
-	switch _, err := csq.FirstID(ctx); {
+func (_q *ChinchiroSessionQuery) Exist(ctx context.Context) (bool, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
+	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
 	case err != nil:
@@ -282,8 +282,8 @@ func (csq *ChinchiroSessionQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (csq *ChinchiroSessionQuery) ExistX(ctx context.Context) bool {
-	exist, err := csq.Exist(ctx)
+func (_q *ChinchiroSessionQuery) ExistX(ctx context.Context) bool {
+	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -292,44 +292,44 @@ func (csq *ChinchiroSessionQuery) ExistX(ctx context.Context) bool {
 
 // Clone returns a duplicate of the ChinchiroSessionQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (csq *ChinchiroSessionQuery) Clone() *ChinchiroSessionQuery {
-	if csq == nil {
+func (_q *ChinchiroSessionQuery) Clone() *ChinchiroSessionQuery {
+	if _q == nil {
 		return nil
 	}
 	return &ChinchiroSessionQuery{
-		config:      csq.config,
-		ctx:         csq.ctx.Clone(),
-		order:       append([]chinchirosession.OrderOption{}, csq.order...),
-		inters:      append([]Interceptor{}, csq.inters...),
-		predicates:  append([]predicate.ChinchiroSession{}, csq.predicates...),
-		withGuild:   csq.withGuild.Clone(),
-		withPlayers: csq.withPlayers.Clone(),
+		config:      _q.config,
+		ctx:         _q.ctx.Clone(),
+		order:       append([]chinchirosession.OrderOption{}, _q.order...),
+		inters:      append([]Interceptor{}, _q.inters...),
+		predicates:  append([]predicate.ChinchiroSession{}, _q.predicates...),
+		withGuild:   _q.withGuild.Clone(),
+		withPlayers: _q.withPlayers.Clone(),
 		// clone intermediate query.
-		sql:  csq.sql.Clone(),
-		path: csq.path,
+		sql:  _q.sql.Clone(),
+		path: _q.path,
 	}
 }
 
 // WithGuild tells the query-builder to eager-load the nodes that are connected to
 // the "guild" edge. The optional arguments are used to configure the query builder of the edge.
-func (csq *ChinchiroSessionQuery) WithGuild(opts ...func(*GuildQuery)) *ChinchiroSessionQuery {
-	query := (&GuildClient{config: csq.config}).Query()
+func (_q *ChinchiroSessionQuery) WithGuild(opts ...func(*GuildQuery)) *ChinchiroSessionQuery {
+	query := (&GuildClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	csq.withGuild = query
-	return csq
+	_q.withGuild = query
+	return _q
 }
 
 // WithPlayers tells the query-builder to eager-load the nodes that are connected to
 // the "players" edge. The optional arguments are used to configure the query builder of the edge.
-func (csq *ChinchiroSessionQuery) WithPlayers(opts ...func(*ChinchiroPlayerQuery)) *ChinchiroSessionQuery {
-	query := (&ChinchiroPlayerClient{config: csq.config}).Query()
+func (_q *ChinchiroSessionQuery) WithPlayers(opts ...func(*ChinchiroPlayerQuery)) *ChinchiroSessionQuery {
+	query := (&ChinchiroPlayerClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	csq.withPlayers = query
-	return csq
+	_q.withPlayers = query
+	return _q
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -346,10 +346,10 @@ func (csq *ChinchiroSessionQuery) WithPlayers(opts ...func(*ChinchiroPlayerQuery
 //		GroupBy(chinchirosession.FieldTurn).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (csq *ChinchiroSessionQuery) GroupBy(field string, fields ...string) *ChinchiroSessionGroupBy {
-	csq.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &ChinchiroSessionGroupBy{build: csq}
-	grbuild.flds = &csq.ctx.Fields
+func (_q *ChinchiroSessionQuery) GroupBy(field string, fields ...string) *ChinchiroSessionGroupBy {
+	_q.ctx.Fields = append([]string{field}, fields...)
+	grbuild := &ChinchiroSessionGroupBy{build: _q}
+	grbuild.flds = &_q.ctx.Fields
 	grbuild.label = chinchirosession.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
@@ -367,56 +367,56 @@ func (csq *ChinchiroSessionQuery) GroupBy(field string, fields ...string) *Chinc
 //	client.ChinchiroSession.Query().
 //		Select(chinchirosession.FieldTurn).
 //		Scan(ctx, &v)
-func (csq *ChinchiroSessionQuery) Select(fields ...string) *ChinchiroSessionSelect {
-	csq.ctx.Fields = append(csq.ctx.Fields, fields...)
-	sbuild := &ChinchiroSessionSelect{ChinchiroSessionQuery: csq}
+func (_q *ChinchiroSessionQuery) Select(fields ...string) *ChinchiroSessionSelect {
+	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
+	sbuild := &ChinchiroSessionSelect{ChinchiroSessionQuery: _q}
 	sbuild.label = chinchirosession.Label
-	sbuild.flds, sbuild.scan = &csq.ctx.Fields, sbuild.Scan
+	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
 // Aggregate returns a ChinchiroSessionSelect configured with the given aggregations.
-func (csq *ChinchiroSessionQuery) Aggregate(fns ...AggregateFunc) *ChinchiroSessionSelect {
-	return csq.Select().Aggregate(fns...)
+func (_q *ChinchiroSessionQuery) Aggregate(fns ...AggregateFunc) *ChinchiroSessionSelect {
+	return _q.Select().Aggregate(fns...)
 }
 
-func (csq *ChinchiroSessionQuery) prepareQuery(ctx context.Context) error {
-	for _, inter := range csq.inters {
+func (_q *ChinchiroSessionQuery) prepareQuery(ctx context.Context) error {
+	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
 		}
 		if trv, ok := inter.(Traverser); ok {
-			if err := trv.Traverse(ctx, csq); err != nil {
+			if err := trv.Traverse(ctx, _q); err != nil {
 				return err
 			}
 		}
 	}
-	for _, f := range csq.ctx.Fields {
+	for _, f := range _q.ctx.Fields {
 		if !chinchirosession.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
-	if csq.path != nil {
-		prev, err := csq.path(ctx)
+	if _q.path != nil {
+		prev, err := _q.path(ctx)
 		if err != nil {
 			return err
 		}
-		csq.sql = prev
+		_q.sql = prev
 	}
 	return nil
 }
 
-func (csq *ChinchiroSessionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*ChinchiroSession, error) {
+func (_q *ChinchiroSessionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*ChinchiroSession, error) {
 	var (
 		nodes       = []*ChinchiroSession{}
-		withFKs     = csq.withFKs
-		_spec       = csq.querySpec()
+		withFKs     = _q.withFKs
+		_spec       = _q.querySpec()
 		loadedTypes = [2]bool{
-			csq.withGuild != nil,
-			csq.withPlayers != nil,
+			_q.withGuild != nil,
+			_q.withPlayers != nil,
 		}
 	)
-	if csq.withGuild != nil {
+	if _q.withGuild != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -426,7 +426,7 @@ func (csq *ChinchiroSessionQuery) sqlAll(ctx context.Context, hooks ...queryHook
 		return (*ChinchiroSession).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &ChinchiroSession{config: csq.config}
+		node := &ChinchiroSession{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -434,20 +434,20 @@ func (csq *ChinchiroSessionQuery) sqlAll(ctx context.Context, hooks ...queryHook
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
-	if err := sqlgraph.QueryNodes(ctx, csq.driver, _spec); err != nil {
+	if err := sqlgraph.QueryNodes(ctx, _q.driver, _spec); err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := csq.withGuild; query != nil {
-		if err := csq.loadGuild(ctx, query, nodes, nil,
+	if query := _q.withGuild; query != nil {
+		if err := _q.loadGuild(ctx, query, nodes, nil,
 			func(n *ChinchiroSession, e *Guild) { n.Edges.Guild = e }); err != nil {
 			return nil, err
 		}
 	}
-	if query := csq.withPlayers; query != nil {
-		if err := csq.loadPlayers(ctx, query, nodes,
+	if query := _q.withPlayers; query != nil {
+		if err := _q.loadPlayers(ctx, query, nodes,
 			func(n *ChinchiroSession) { n.Edges.Players = []*ChinchiroPlayer{} },
 			func(n *ChinchiroSession, e *ChinchiroPlayer) { n.Edges.Players = append(n.Edges.Players, e) }); err != nil {
 			return nil, err
@@ -456,7 +456,7 @@ func (csq *ChinchiroSessionQuery) sqlAll(ctx context.Context, hooks ...queryHook
 	return nodes, nil
 }
 
-func (csq *ChinchiroSessionQuery) loadGuild(ctx context.Context, query *GuildQuery, nodes []*ChinchiroSession, init func(*ChinchiroSession), assign func(*ChinchiroSession, *Guild)) error {
+func (_q *ChinchiroSessionQuery) loadGuild(ctx context.Context, query *GuildQuery, nodes []*ChinchiroSession, init func(*ChinchiroSession), assign func(*ChinchiroSession, *Guild)) error {
 	ids := make([]snowflake.ID, 0, len(nodes))
 	nodeids := make(map[snowflake.ID][]*ChinchiroSession)
 	for i := range nodes {
@@ -488,7 +488,7 @@ func (csq *ChinchiroSessionQuery) loadGuild(ctx context.Context, query *GuildQue
 	}
 	return nil
 }
-func (csq *ChinchiroSessionQuery) loadPlayers(ctx context.Context, query *ChinchiroPlayerQuery, nodes []*ChinchiroSession, init func(*ChinchiroSession), assign func(*ChinchiroSession, *ChinchiroPlayer)) error {
+func (_q *ChinchiroSessionQuery) loadPlayers(ctx context.Context, query *ChinchiroPlayerQuery, nodes []*ChinchiroSession, init func(*ChinchiroSession), assign func(*ChinchiroSession, *ChinchiroPlayer)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*ChinchiroSession)
 	for i := range nodes {
@@ -520,24 +520,24 @@ func (csq *ChinchiroSessionQuery) loadPlayers(ctx context.Context, query *Chinch
 	return nil
 }
 
-func (csq *ChinchiroSessionQuery) sqlCount(ctx context.Context) (int, error) {
-	_spec := csq.querySpec()
-	_spec.Node.Columns = csq.ctx.Fields
-	if len(csq.ctx.Fields) > 0 {
-		_spec.Unique = csq.ctx.Unique != nil && *csq.ctx.Unique
+func (_q *ChinchiroSessionQuery) sqlCount(ctx context.Context) (int, error) {
+	_spec := _q.querySpec()
+	_spec.Node.Columns = _q.ctx.Fields
+	if len(_q.ctx.Fields) > 0 {
+		_spec.Unique = _q.ctx.Unique != nil && *_q.ctx.Unique
 	}
-	return sqlgraph.CountNodes(ctx, csq.driver, _spec)
+	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (csq *ChinchiroSessionQuery) querySpec() *sqlgraph.QuerySpec {
+func (_q *ChinchiroSessionQuery) querySpec() *sqlgraph.QuerySpec {
 	_spec := sqlgraph.NewQuerySpec(chinchirosession.Table, chinchirosession.Columns, sqlgraph.NewFieldSpec(chinchirosession.FieldID, field.TypeUUID))
-	_spec.From = csq.sql
-	if unique := csq.ctx.Unique; unique != nil {
+	_spec.From = _q.sql
+	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
-	} else if csq.path != nil {
+	} else if _q.path != nil {
 		_spec.Unique = true
 	}
-	if fields := csq.ctx.Fields; len(fields) > 0 {
+	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, chinchirosession.FieldID)
 		for i := range fields {
@@ -546,20 +546,20 @@ func (csq *ChinchiroSessionQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if ps := csq.predicates; len(ps) > 0 {
+	if ps := _q.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if limit := csq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := csq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
-	if ps := csq.order; len(ps) > 0 {
+	if ps := _q.order; len(ps) > 0 {
 		_spec.Order = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
@@ -569,33 +569,33 @@ func (csq *ChinchiroSessionQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (csq *ChinchiroSessionQuery) sqlQuery(ctx context.Context) *sql.Selector {
-	builder := sql.Dialect(csq.driver.Dialect())
+func (_q *ChinchiroSessionQuery) sqlQuery(ctx context.Context) *sql.Selector {
+	builder := sql.Dialect(_q.driver.Dialect())
 	t1 := builder.Table(chinchirosession.Table)
-	columns := csq.ctx.Fields
+	columns := _q.ctx.Fields
 	if len(columns) == 0 {
 		columns = chinchirosession.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
-	if csq.sql != nil {
-		selector = csq.sql
+	if _q.sql != nil {
+		selector = _q.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if csq.ctx.Unique != nil && *csq.ctx.Unique {
+	if _q.ctx.Unique != nil && *_q.ctx.Unique {
 		selector.Distinct()
 	}
-	for _, p := range csq.predicates {
+	for _, p := range _q.predicates {
 		p(selector)
 	}
-	for _, p := range csq.order {
+	for _, p := range _q.order {
 		p(selector)
 	}
-	if offset := csq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := csq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
@@ -608,41 +608,41 @@ type ChinchiroSessionGroupBy struct {
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (csgb *ChinchiroSessionGroupBy) Aggregate(fns ...AggregateFunc) *ChinchiroSessionGroupBy {
-	csgb.fns = append(csgb.fns, fns...)
-	return csgb
+func (_g *ChinchiroSessionGroupBy) Aggregate(fns ...AggregateFunc) *ChinchiroSessionGroupBy {
+	_g.fns = append(_g.fns, fns...)
+	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (csgb *ChinchiroSessionGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, csgb.build.ctx, ent.OpQueryGroupBy)
-	if err := csgb.build.prepareQuery(ctx); err != nil {
+func (_g *ChinchiroSessionGroupBy) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
+	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*ChinchiroSessionQuery, *ChinchiroSessionGroupBy](ctx, csgb.build, csgb, csgb.build.inters, v)
+	return scanWithInterceptors[*ChinchiroSessionQuery, *ChinchiroSessionGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (csgb *ChinchiroSessionGroupBy) sqlScan(ctx context.Context, root *ChinchiroSessionQuery, v any) error {
+func (_g *ChinchiroSessionGroupBy) sqlScan(ctx context.Context, root *ChinchiroSessionQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
-	aggregation := make([]string, 0, len(csgb.fns))
-	for _, fn := range csgb.fns {
+	aggregation := make([]string, 0, len(_g.fns))
+	for _, fn := range _g.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
 	if len(selector.SelectedColumns()) == 0 {
-		columns := make([]string, 0, len(*csgb.flds)+len(csgb.fns))
-		for _, f := range *csgb.flds {
+		columns := make([]string, 0, len(*_g.flds)+len(_g.fns))
+		for _, f := range *_g.flds {
 			columns = append(columns, selector.C(f))
 		}
 		columns = append(columns, aggregation...)
 		selector.Select(columns...)
 	}
-	selector.GroupBy(selector.Columns(*csgb.flds...)...)
+	selector.GroupBy(selector.Columns(*_g.flds...)...)
 	if err := selector.Err(); err != nil {
 		return err
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := csgb.build.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _g.build.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
@@ -656,27 +656,27 @@ type ChinchiroSessionSelect struct {
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (css *ChinchiroSessionSelect) Aggregate(fns ...AggregateFunc) *ChinchiroSessionSelect {
-	css.fns = append(css.fns, fns...)
-	return css
+func (_s *ChinchiroSessionSelect) Aggregate(fns ...AggregateFunc) *ChinchiroSessionSelect {
+	_s.fns = append(_s.fns, fns...)
+	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (css *ChinchiroSessionSelect) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, css.ctx, ent.OpQuerySelect)
-	if err := css.prepareQuery(ctx); err != nil {
+func (_s *ChinchiroSessionSelect) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
+	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*ChinchiroSessionQuery, *ChinchiroSessionSelect](ctx, css.ChinchiroSessionQuery, css, css.inters, v)
+	return scanWithInterceptors[*ChinchiroSessionQuery, *ChinchiroSessionSelect](ctx, _s.ChinchiroSessionQuery, _s, _s.inters, v)
 }
 
-func (css *ChinchiroSessionSelect) sqlScan(ctx context.Context, root *ChinchiroSessionQuery, v any) error {
+func (_s *ChinchiroSessionSelect) sqlScan(ctx context.Context, root *ChinchiroSessionQuery, v any) error {
 	selector := root.sqlQuery(ctx)
-	aggregation := make([]string, 0, len(css.fns))
-	for _, fn := range css.fns {
+	aggregation := make([]string, 0, len(_s.fns))
+	for _, fn := range _s.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
-	switch n := len(*css.selector.flds); {
+	switch n := len(*_s.selector.flds); {
 	case n == 0 && len(aggregation) > 0:
 		selector.Select(aggregation...)
 	case n != 0 && len(aggregation) > 0:
@@ -684,7 +684,7 @@ func (css *ChinchiroSessionSelect) sqlScan(ctx context.Context, root *ChinchiroS
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := css.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _s.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()

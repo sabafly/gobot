@@ -20,56 +20,56 @@ type Thread1000Delete struct {
 }
 
 // Where appends a list predicates to the Thread1000Delete builder.
-func (t *Thread1000Delete) Where(ps ...predicate.Thread1000) *Thread1000Delete {
-	t.mutation.Where(ps...)
-	return t
+func (_d *Thread1000Delete) Where(ps ...predicate.Thread1000) *Thread1000Delete {
+	_d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (t *Thread1000Delete) Exec(ctx context.Context) (int, error) {
-	return withHooks(ctx, t.sqlExec, t.mutation, t.hooks)
+func (_d *Thread1000Delete) Exec(ctx context.Context) (int, error) {
+	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (t *Thread1000Delete) ExecX(ctx context.Context) int {
-	n, err := t.Exec(ctx)
+func (_d *Thread1000Delete) ExecX(ctx context.Context) int {
+	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
 	}
 	return n
 }
 
-func (t *Thread1000Delete) sqlExec(ctx context.Context) (int, error) {
+func (_d *Thread1000Delete) sqlExec(ctx context.Context) (int, error) {
 	_spec := sqlgraph.NewDeleteSpec(thread1000.Table, sqlgraph.NewFieldSpec(thread1000.FieldID, field.TypeUUID))
-	if ps := t.mutation.predicates; len(ps) > 0 {
+	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	affected, err := sqlgraph.DeleteNodes(ctx, t.driver, _spec)
+	affected, err := sqlgraph.DeleteNodes(ctx, _d.driver, _spec)
 	if err != nil && sqlgraph.IsConstraintError(err) {
 		err = &ConstraintError{msg: err.Error(), wrap: err}
 	}
-	t.mutation.done = true
+	_d.mutation.done = true
 	return affected, err
 }
 
 // Thread1000DeleteOne is the builder for deleting a single Thread1000 entity.
 type Thread1000DeleteOne struct {
-	t *Thread1000Delete
+	_d *Thread1000Delete
 }
 
 // Where appends a list predicates to the Thread1000Delete builder.
-func (to *Thread1000DeleteOne) Where(ps ...predicate.Thread1000) *Thread1000DeleteOne {
-	to.t.mutation.Where(ps...)
-	return to
+func (_d *Thread1000DeleteOne) Where(ps ...predicate.Thread1000) *Thread1000DeleteOne {
+	_d._d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query.
-func (to *Thread1000DeleteOne) Exec(ctx context.Context) error {
-	n, err := to.t.Exec(ctx)
+func (_d *Thread1000DeleteOne) Exec(ctx context.Context) error {
+	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
@@ -81,8 +81,8 @@ func (to *Thread1000DeleteOne) Exec(ctx context.Context) error {
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (to *Thread1000DeleteOne) ExecX(ctx context.Context) {
-	if err := to.Exec(ctx); err != nil {
+func (_d *Thread1000DeleteOne) ExecX(ctx context.Context) {
+	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

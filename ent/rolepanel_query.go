@@ -38,44 +38,44 @@ type RolePanelQuery struct {
 }
 
 // Where adds a new predicate for the RolePanelQuery builder.
-func (rpq *RolePanelQuery) Where(ps ...predicate.RolePanel) *RolePanelQuery {
-	rpq.predicates = append(rpq.predicates, ps...)
-	return rpq
+func (_q *RolePanelQuery) Where(ps ...predicate.RolePanel) *RolePanelQuery {
+	_q.predicates = append(_q.predicates, ps...)
+	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (rpq *RolePanelQuery) Limit(limit int) *RolePanelQuery {
-	rpq.ctx.Limit = &limit
-	return rpq
+func (_q *RolePanelQuery) Limit(limit int) *RolePanelQuery {
+	_q.ctx.Limit = &limit
+	return _q
 }
 
 // Offset to start from.
-func (rpq *RolePanelQuery) Offset(offset int) *RolePanelQuery {
-	rpq.ctx.Offset = &offset
-	return rpq
+func (_q *RolePanelQuery) Offset(offset int) *RolePanelQuery {
+	_q.ctx.Offset = &offset
+	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (rpq *RolePanelQuery) Unique(unique bool) *RolePanelQuery {
-	rpq.ctx.Unique = &unique
-	return rpq
+func (_q *RolePanelQuery) Unique(unique bool) *RolePanelQuery {
+	_q.ctx.Unique = &unique
+	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (rpq *RolePanelQuery) Order(o ...rolepanel.OrderOption) *RolePanelQuery {
-	rpq.order = append(rpq.order, o...)
-	return rpq
+func (_q *RolePanelQuery) Order(o ...rolepanel.OrderOption) *RolePanelQuery {
+	_q.order = append(_q.order, o...)
+	return _q
 }
 
 // QueryGuild chains the current query on the "guild" edge.
-func (rpq *RolePanelQuery) QueryGuild() *GuildQuery {
-	query := (&GuildClient{config: rpq.config}).Query()
+func (_q *RolePanelQuery) QueryGuild() *GuildQuery {
+	query := (&GuildClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := rpq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := rpq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -84,20 +84,20 @@ func (rpq *RolePanelQuery) QueryGuild() *GuildQuery {
 			sqlgraph.To(guild.Table, guild.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, rolepanel.GuildTable, rolepanel.GuildColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(rpq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
 }
 
 // QueryPlacements chains the current query on the "placements" edge.
-func (rpq *RolePanelQuery) QueryPlacements() *RolePanelPlacedQuery {
-	query := (&RolePanelPlacedClient{config: rpq.config}).Query()
+func (_q *RolePanelQuery) QueryPlacements() *RolePanelPlacedQuery {
+	query := (&RolePanelPlacedClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := rpq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := rpq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -106,20 +106,20 @@ func (rpq *RolePanelQuery) QueryPlacements() *RolePanelPlacedQuery {
 			sqlgraph.To(rolepanelplaced.Table, rolepanelplaced.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, rolepanel.PlacementsTable, rolepanel.PlacementsColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(rpq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
 }
 
 // QueryEdit chains the current query on the "edit" edge.
-func (rpq *RolePanelQuery) QueryEdit() *RolePanelEditQuery {
-	query := (&RolePanelEditClient{config: rpq.config}).Query()
+func (_q *RolePanelQuery) QueryEdit() *RolePanelEditQuery {
+	query := (&RolePanelEditClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := rpq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := rpq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -128,7 +128,7 @@ func (rpq *RolePanelQuery) QueryEdit() *RolePanelEditQuery {
 			sqlgraph.To(rolepaneledit.Table, rolepaneledit.FieldID),
 			sqlgraph.Edge(sqlgraph.O2O, false, rolepanel.EditTable, rolepanel.EditColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(rpq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
@@ -136,8 +136,8 @@ func (rpq *RolePanelQuery) QueryEdit() *RolePanelEditQuery {
 
 // First returns the first RolePanel entity from the query.
 // Returns a *NotFoundError when no RolePanel was found.
-func (rpq *RolePanelQuery) First(ctx context.Context) (*RolePanel, error) {
-	nodes, err := rpq.Limit(1).All(setContextOp(ctx, rpq.ctx, ent.OpQueryFirst))
+func (_q *RolePanelQuery) First(ctx context.Context) (*RolePanel, error) {
+	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -148,8 +148,8 @@ func (rpq *RolePanelQuery) First(ctx context.Context) (*RolePanel, error) {
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (rpq *RolePanelQuery) FirstX(ctx context.Context) *RolePanel {
-	node, err := rpq.First(ctx)
+func (_q *RolePanelQuery) FirstX(ctx context.Context) *RolePanel {
+	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -158,9 +158,9 @@ func (rpq *RolePanelQuery) FirstX(ctx context.Context) *RolePanel {
 
 // FirstID returns the first RolePanel ID from the query.
 // Returns a *NotFoundError when no RolePanel ID was found.
-func (rpq *RolePanelQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *RolePanelQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = rpq.Limit(1).IDs(setContextOp(ctx, rpq.ctx, ent.OpQueryFirstID)); err != nil {
+	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -171,8 +171,8 @@ func (rpq *RolePanelQuery) FirstID(ctx context.Context) (id uuid.UUID, err error
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (rpq *RolePanelQuery) FirstIDX(ctx context.Context) uuid.UUID {
-	id, err := rpq.FirstID(ctx)
+func (_q *RolePanelQuery) FirstIDX(ctx context.Context) uuid.UUID {
+	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -182,8 +182,8 @@ func (rpq *RolePanelQuery) FirstIDX(ctx context.Context) uuid.UUID {
 // Only returns a single RolePanel entity found by the query, ensuring it only returns one.
 // Returns a *NotSingularError when more than one RolePanel entity is found.
 // Returns a *NotFoundError when no RolePanel entities are found.
-func (rpq *RolePanelQuery) Only(ctx context.Context) (*RolePanel, error) {
-	nodes, err := rpq.Limit(2).All(setContextOp(ctx, rpq.ctx, ent.OpQueryOnly))
+func (_q *RolePanelQuery) Only(ctx context.Context) (*RolePanel, error) {
+	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -198,8 +198,8 @@ func (rpq *RolePanelQuery) Only(ctx context.Context) (*RolePanel, error) {
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (rpq *RolePanelQuery) OnlyX(ctx context.Context) *RolePanel {
-	node, err := rpq.Only(ctx)
+func (_q *RolePanelQuery) OnlyX(ctx context.Context) *RolePanel {
+	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -209,9 +209,9 @@ func (rpq *RolePanelQuery) OnlyX(ctx context.Context) *RolePanel {
 // OnlyID is like Only, but returns the only RolePanel ID in the query.
 // Returns a *NotSingularError when more than one RolePanel ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (rpq *RolePanelQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *RolePanelQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = rpq.Limit(2).IDs(setContextOp(ctx, rpq.ctx, ent.OpQueryOnlyID)); err != nil {
+	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -226,8 +226,8 @@ func (rpq *RolePanelQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error)
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (rpq *RolePanelQuery) OnlyIDX(ctx context.Context) uuid.UUID {
-	id, err := rpq.OnlyID(ctx)
+func (_q *RolePanelQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -235,18 +235,18 @@ func (rpq *RolePanelQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 }
 
 // All executes the query and returns a list of RolePanels.
-func (rpq *RolePanelQuery) All(ctx context.Context) ([]*RolePanel, error) {
-	ctx = setContextOp(ctx, rpq.ctx, ent.OpQueryAll)
-	if err := rpq.prepareQuery(ctx); err != nil {
+func (_q *RolePanelQuery) All(ctx context.Context) ([]*RolePanel, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
 	qr := querierAll[[]*RolePanel, *RolePanelQuery]()
-	return withInterceptors[[]*RolePanel](ctx, rpq, qr, rpq.inters)
+	return withInterceptors[[]*RolePanel](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (rpq *RolePanelQuery) AllX(ctx context.Context) []*RolePanel {
-	nodes, err := rpq.All(ctx)
+func (_q *RolePanelQuery) AllX(ctx context.Context) []*RolePanel {
+	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -254,20 +254,20 @@ func (rpq *RolePanelQuery) AllX(ctx context.Context) []*RolePanel {
 }
 
 // IDs executes the query and returns a list of RolePanel IDs.
-func (rpq *RolePanelQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
-	if rpq.ctx.Unique == nil && rpq.path != nil {
-		rpq.Unique(true)
+func (_q *RolePanelQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+	if _q.ctx.Unique == nil && _q.path != nil {
+		_q.Unique(true)
 	}
-	ctx = setContextOp(ctx, rpq.ctx, ent.OpQueryIDs)
-	if err = rpq.Select(rolepanel.FieldID).Scan(ctx, &ids); err != nil {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
+	if err = _q.Select(rolepanel.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (rpq *RolePanelQuery) IDsX(ctx context.Context) []uuid.UUID {
-	ids, err := rpq.IDs(ctx)
+func (_q *RolePanelQuery) IDsX(ctx context.Context) []uuid.UUID {
+	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -275,17 +275,17 @@ func (rpq *RolePanelQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (rpq *RolePanelQuery) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, rpq.ctx, ent.OpQueryCount)
-	if err := rpq.prepareQuery(ctx); err != nil {
+func (_q *RolePanelQuery) Count(ctx context.Context) (int, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, rpq, querierCount[*RolePanelQuery](), rpq.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*RolePanelQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (rpq *RolePanelQuery) CountX(ctx context.Context) int {
-	count, err := rpq.Count(ctx)
+func (_q *RolePanelQuery) CountX(ctx context.Context) int {
+	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -293,9 +293,9 @@ func (rpq *RolePanelQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (rpq *RolePanelQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, rpq.ctx, ent.OpQueryExist)
-	switch _, err := rpq.FirstID(ctx); {
+func (_q *RolePanelQuery) Exist(ctx context.Context) (bool, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
+	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
 	case err != nil:
@@ -306,8 +306,8 @@ func (rpq *RolePanelQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (rpq *RolePanelQuery) ExistX(ctx context.Context) bool {
-	exist, err := rpq.Exist(ctx)
+func (_q *RolePanelQuery) ExistX(ctx context.Context) bool {
+	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -316,56 +316,56 @@ func (rpq *RolePanelQuery) ExistX(ctx context.Context) bool {
 
 // Clone returns a duplicate of the RolePanelQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (rpq *RolePanelQuery) Clone() *RolePanelQuery {
-	if rpq == nil {
+func (_q *RolePanelQuery) Clone() *RolePanelQuery {
+	if _q == nil {
 		return nil
 	}
 	return &RolePanelQuery{
-		config:         rpq.config,
-		ctx:            rpq.ctx.Clone(),
-		order:          append([]rolepanel.OrderOption{}, rpq.order...),
-		inters:         append([]Interceptor{}, rpq.inters...),
-		predicates:     append([]predicate.RolePanel{}, rpq.predicates...),
-		withGuild:      rpq.withGuild.Clone(),
-		withPlacements: rpq.withPlacements.Clone(),
-		withEdit:       rpq.withEdit.Clone(),
+		config:         _q.config,
+		ctx:            _q.ctx.Clone(),
+		order:          append([]rolepanel.OrderOption{}, _q.order...),
+		inters:         append([]Interceptor{}, _q.inters...),
+		predicates:     append([]predicate.RolePanel{}, _q.predicates...),
+		withGuild:      _q.withGuild.Clone(),
+		withPlacements: _q.withPlacements.Clone(),
+		withEdit:       _q.withEdit.Clone(),
 		// clone intermediate query.
-		sql:  rpq.sql.Clone(),
-		path: rpq.path,
+		sql:  _q.sql.Clone(),
+		path: _q.path,
 	}
 }
 
 // WithGuild tells the query-builder to eager-load the nodes that are connected to
 // the "guild" edge. The optional arguments are used to configure the query builder of the edge.
-func (rpq *RolePanelQuery) WithGuild(opts ...func(*GuildQuery)) *RolePanelQuery {
-	query := (&GuildClient{config: rpq.config}).Query()
+func (_q *RolePanelQuery) WithGuild(opts ...func(*GuildQuery)) *RolePanelQuery {
+	query := (&GuildClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	rpq.withGuild = query
-	return rpq
+	_q.withGuild = query
+	return _q
 }
 
 // WithPlacements tells the query-builder to eager-load the nodes that are connected to
 // the "placements" edge. The optional arguments are used to configure the query builder of the edge.
-func (rpq *RolePanelQuery) WithPlacements(opts ...func(*RolePanelPlacedQuery)) *RolePanelQuery {
-	query := (&RolePanelPlacedClient{config: rpq.config}).Query()
+func (_q *RolePanelQuery) WithPlacements(opts ...func(*RolePanelPlacedQuery)) *RolePanelQuery {
+	query := (&RolePanelPlacedClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	rpq.withPlacements = query
-	return rpq
+	_q.withPlacements = query
+	return _q
 }
 
 // WithEdit tells the query-builder to eager-load the nodes that are connected to
 // the "edit" edge. The optional arguments are used to configure the query builder of the edge.
-func (rpq *RolePanelQuery) WithEdit(opts ...func(*RolePanelEditQuery)) *RolePanelQuery {
-	query := (&RolePanelEditClient{config: rpq.config}).Query()
+func (_q *RolePanelQuery) WithEdit(opts ...func(*RolePanelEditQuery)) *RolePanelQuery {
+	query := (&RolePanelEditClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	rpq.withEdit = query
-	return rpq
+	_q.withEdit = query
+	return _q
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -382,10 +382,10 @@ func (rpq *RolePanelQuery) WithEdit(opts ...func(*RolePanelEditQuery)) *RolePane
 //		GroupBy(rolepanel.FieldName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (rpq *RolePanelQuery) GroupBy(field string, fields ...string) *RolePanelGroupBy {
-	rpq.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &RolePanelGroupBy{build: rpq}
-	grbuild.flds = &rpq.ctx.Fields
+func (_q *RolePanelQuery) GroupBy(field string, fields ...string) *RolePanelGroupBy {
+	_q.ctx.Fields = append([]string{field}, fields...)
+	grbuild := &RolePanelGroupBy{build: _q}
+	grbuild.flds = &_q.ctx.Fields
 	grbuild.label = rolepanel.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
@@ -403,57 +403,57 @@ func (rpq *RolePanelQuery) GroupBy(field string, fields ...string) *RolePanelGro
 //	client.RolePanel.Query().
 //		Select(rolepanel.FieldName).
 //		Scan(ctx, &v)
-func (rpq *RolePanelQuery) Select(fields ...string) *RolePanelSelect {
-	rpq.ctx.Fields = append(rpq.ctx.Fields, fields...)
-	sbuild := &RolePanelSelect{RolePanelQuery: rpq}
+func (_q *RolePanelQuery) Select(fields ...string) *RolePanelSelect {
+	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
+	sbuild := &RolePanelSelect{RolePanelQuery: _q}
 	sbuild.label = rolepanel.Label
-	sbuild.flds, sbuild.scan = &rpq.ctx.Fields, sbuild.Scan
+	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
 // Aggregate returns a RolePanelSelect configured with the given aggregations.
-func (rpq *RolePanelQuery) Aggregate(fns ...AggregateFunc) *RolePanelSelect {
-	return rpq.Select().Aggregate(fns...)
+func (_q *RolePanelQuery) Aggregate(fns ...AggregateFunc) *RolePanelSelect {
+	return _q.Select().Aggregate(fns...)
 }
 
-func (rpq *RolePanelQuery) prepareQuery(ctx context.Context) error {
-	for _, inter := range rpq.inters {
+func (_q *RolePanelQuery) prepareQuery(ctx context.Context) error {
+	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
 		}
 		if trv, ok := inter.(Traverser); ok {
-			if err := trv.Traverse(ctx, rpq); err != nil {
+			if err := trv.Traverse(ctx, _q); err != nil {
 				return err
 			}
 		}
 	}
-	for _, f := range rpq.ctx.Fields {
+	for _, f := range _q.ctx.Fields {
 		if !rolepanel.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
-	if rpq.path != nil {
-		prev, err := rpq.path(ctx)
+	if _q.path != nil {
+		prev, err := _q.path(ctx)
 		if err != nil {
 			return err
 		}
-		rpq.sql = prev
+		_q.sql = prev
 	}
 	return nil
 }
 
-func (rpq *RolePanelQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*RolePanel, error) {
+func (_q *RolePanelQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*RolePanel, error) {
 	var (
 		nodes       = []*RolePanel{}
-		withFKs     = rpq.withFKs
-		_spec       = rpq.querySpec()
+		withFKs     = _q.withFKs
+		_spec       = _q.querySpec()
 		loadedTypes = [3]bool{
-			rpq.withGuild != nil,
-			rpq.withPlacements != nil,
-			rpq.withEdit != nil,
+			_q.withGuild != nil,
+			_q.withPlacements != nil,
+			_q.withEdit != nil,
 		}
 	)
-	if rpq.withGuild != nil {
+	if _q.withGuild != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -463,7 +463,7 @@ func (rpq *RolePanelQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*R
 		return (*RolePanel).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &RolePanel{config: rpq.config}
+		node := &RolePanel{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -471,27 +471,27 @@ func (rpq *RolePanelQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*R
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
-	if err := sqlgraph.QueryNodes(ctx, rpq.driver, _spec); err != nil {
+	if err := sqlgraph.QueryNodes(ctx, _q.driver, _spec); err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := rpq.withGuild; query != nil {
-		if err := rpq.loadGuild(ctx, query, nodes, nil,
+	if query := _q.withGuild; query != nil {
+		if err := _q.loadGuild(ctx, query, nodes, nil,
 			func(n *RolePanel, e *Guild) { n.Edges.Guild = e }); err != nil {
 			return nil, err
 		}
 	}
-	if query := rpq.withPlacements; query != nil {
-		if err := rpq.loadPlacements(ctx, query, nodes,
+	if query := _q.withPlacements; query != nil {
+		if err := _q.loadPlacements(ctx, query, nodes,
 			func(n *RolePanel) { n.Edges.Placements = []*RolePanelPlaced{} },
 			func(n *RolePanel, e *RolePanelPlaced) { n.Edges.Placements = append(n.Edges.Placements, e) }); err != nil {
 			return nil, err
 		}
 	}
-	if query := rpq.withEdit; query != nil {
-		if err := rpq.loadEdit(ctx, query, nodes, nil,
+	if query := _q.withEdit; query != nil {
+		if err := _q.loadEdit(ctx, query, nodes, nil,
 			func(n *RolePanel, e *RolePanelEdit) { n.Edges.Edit = e }); err != nil {
 			return nil, err
 		}
@@ -499,7 +499,7 @@ func (rpq *RolePanelQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*R
 	return nodes, nil
 }
 
-func (rpq *RolePanelQuery) loadGuild(ctx context.Context, query *GuildQuery, nodes []*RolePanel, init func(*RolePanel), assign func(*RolePanel, *Guild)) error {
+func (_q *RolePanelQuery) loadGuild(ctx context.Context, query *GuildQuery, nodes []*RolePanel, init func(*RolePanel), assign func(*RolePanel, *Guild)) error {
 	ids := make([]snowflake.ID, 0, len(nodes))
 	nodeids := make(map[snowflake.ID][]*RolePanel)
 	for i := range nodes {
@@ -531,7 +531,7 @@ func (rpq *RolePanelQuery) loadGuild(ctx context.Context, query *GuildQuery, nod
 	}
 	return nil
 }
-func (rpq *RolePanelQuery) loadPlacements(ctx context.Context, query *RolePanelPlacedQuery, nodes []*RolePanel, init func(*RolePanel), assign func(*RolePanel, *RolePanelPlaced)) error {
+func (_q *RolePanelQuery) loadPlacements(ctx context.Context, query *RolePanelPlacedQuery, nodes []*RolePanel, init func(*RolePanel), assign func(*RolePanel, *RolePanelPlaced)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*RolePanel)
 	for i := range nodes {
@@ -562,7 +562,7 @@ func (rpq *RolePanelQuery) loadPlacements(ctx context.Context, query *RolePanelP
 	}
 	return nil
 }
-func (rpq *RolePanelQuery) loadEdit(ctx context.Context, query *RolePanelEditQuery, nodes []*RolePanel, init func(*RolePanel), assign func(*RolePanel, *RolePanelEdit)) error {
+func (_q *RolePanelQuery) loadEdit(ctx context.Context, query *RolePanelEditQuery, nodes []*RolePanel, init func(*RolePanel), assign func(*RolePanel, *RolePanelEdit)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*RolePanel)
 	for i := range nodes {
@@ -591,24 +591,24 @@ func (rpq *RolePanelQuery) loadEdit(ctx context.Context, query *RolePanelEditQue
 	return nil
 }
 
-func (rpq *RolePanelQuery) sqlCount(ctx context.Context) (int, error) {
-	_spec := rpq.querySpec()
-	_spec.Node.Columns = rpq.ctx.Fields
-	if len(rpq.ctx.Fields) > 0 {
-		_spec.Unique = rpq.ctx.Unique != nil && *rpq.ctx.Unique
+func (_q *RolePanelQuery) sqlCount(ctx context.Context) (int, error) {
+	_spec := _q.querySpec()
+	_spec.Node.Columns = _q.ctx.Fields
+	if len(_q.ctx.Fields) > 0 {
+		_spec.Unique = _q.ctx.Unique != nil && *_q.ctx.Unique
 	}
-	return sqlgraph.CountNodes(ctx, rpq.driver, _spec)
+	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (rpq *RolePanelQuery) querySpec() *sqlgraph.QuerySpec {
+func (_q *RolePanelQuery) querySpec() *sqlgraph.QuerySpec {
 	_spec := sqlgraph.NewQuerySpec(rolepanel.Table, rolepanel.Columns, sqlgraph.NewFieldSpec(rolepanel.FieldID, field.TypeUUID))
-	_spec.From = rpq.sql
-	if unique := rpq.ctx.Unique; unique != nil {
+	_spec.From = _q.sql
+	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
-	} else if rpq.path != nil {
+	} else if _q.path != nil {
 		_spec.Unique = true
 	}
-	if fields := rpq.ctx.Fields; len(fields) > 0 {
+	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, rolepanel.FieldID)
 		for i := range fields {
@@ -617,20 +617,20 @@ func (rpq *RolePanelQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if ps := rpq.predicates; len(ps) > 0 {
+	if ps := _q.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if limit := rpq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := rpq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
-	if ps := rpq.order; len(ps) > 0 {
+	if ps := _q.order; len(ps) > 0 {
 		_spec.Order = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
@@ -640,33 +640,33 @@ func (rpq *RolePanelQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (rpq *RolePanelQuery) sqlQuery(ctx context.Context) *sql.Selector {
-	builder := sql.Dialect(rpq.driver.Dialect())
+func (_q *RolePanelQuery) sqlQuery(ctx context.Context) *sql.Selector {
+	builder := sql.Dialect(_q.driver.Dialect())
 	t1 := builder.Table(rolepanel.Table)
-	columns := rpq.ctx.Fields
+	columns := _q.ctx.Fields
 	if len(columns) == 0 {
 		columns = rolepanel.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
-	if rpq.sql != nil {
-		selector = rpq.sql
+	if _q.sql != nil {
+		selector = _q.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if rpq.ctx.Unique != nil && *rpq.ctx.Unique {
+	if _q.ctx.Unique != nil && *_q.ctx.Unique {
 		selector.Distinct()
 	}
-	for _, p := range rpq.predicates {
+	for _, p := range _q.predicates {
 		p(selector)
 	}
-	for _, p := range rpq.order {
+	for _, p := range _q.order {
 		p(selector)
 	}
-	if offset := rpq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := rpq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
@@ -679,41 +679,41 @@ type RolePanelGroupBy struct {
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (rpgb *RolePanelGroupBy) Aggregate(fns ...AggregateFunc) *RolePanelGroupBy {
-	rpgb.fns = append(rpgb.fns, fns...)
-	return rpgb
+func (_g *RolePanelGroupBy) Aggregate(fns ...AggregateFunc) *RolePanelGroupBy {
+	_g.fns = append(_g.fns, fns...)
+	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (rpgb *RolePanelGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, rpgb.build.ctx, ent.OpQueryGroupBy)
-	if err := rpgb.build.prepareQuery(ctx); err != nil {
+func (_g *RolePanelGroupBy) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
+	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*RolePanelQuery, *RolePanelGroupBy](ctx, rpgb.build, rpgb, rpgb.build.inters, v)
+	return scanWithInterceptors[*RolePanelQuery, *RolePanelGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (rpgb *RolePanelGroupBy) sqlScan(ctx context.Context, root *RolePanelQuery, v any) error {
+func (_g *RolePanelGroupBy) sqlScan(ctx context.Context, root *RolePanelQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
-	aggregation := make([]string, 0, len(rpgb.fns))
-	for _, fn := range rpgb.fns {
+	aggregation := make([]string, 0, len(_g.fns))
+	for _, fn := range _g.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
 	if len(selector.SelectedColumns()) == 0 {
-		columns := make([]string, 0, len(*rpgb.flds)+len(rpgb.fns))
-		for _, f := range *rpgb.flds {
+		columns := make([]string, 0, len(*_g.flds)+len(_g.fns))
+		for _, f := range *_g.flds {
 			columns = append(columns, selector.C(f))
 		}
 		columns = append(columns, aggregation...)
 		selector.Select(columns...)
 	}
-	selector.GroupBy(selector.Columns(*rpgb.flds...)...)
+	selector.GroupBy(selector.Columns(*_g.flds...)...)
 	if err := selector.Err(); err != nil {
 		return err
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := rpgb.build.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _g.build.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
@@ -727,27 +727,27 @@ type RolePanelSelect struct {
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (rps *RolePanelSelect) Aggregate(fns ...AggregateFunc) *RolePanelSelect {
-	rps.fns = append(rps.fns, fns...)
-	return rps
+func (_s *RolePanelSelect) Aggregate(fns ...AggregateFunc) *RolePanelSelect {
+	_s.fns = append(_s.fns, fns...)
+	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (rps *RolePanelSelect) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, rps.ctx, ent.OpQuerySelect)
-	if err := rps.prepareQuery(ctx); err != nil {
+func (_s *RolePanelSelect) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
+	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*RolePanelQuery, *RolePanelSelect](ctx, rps.RolePanelQuery, rps, rps.inters, v)
+	return scanWithInterceptors[*RolePanelQuery, *RolePanelSelect](ctx, _s.RolePanelQuery, _s, _s.inters, v)
 }
 
-func (rps *RolePanelSelect) sqlScan(ctx context.Context, root *RolePanelQuery, v any) error {
+func (_s *RolePanelSelect) sqlScan(ctx context.Context, root *RolePanelQuery, v any) error {
 	selector := root.sqlQuery(ctx)
-	aggregation := make([]string, 0, len(rps.fns))
-	for _, fn := range rps.fns {
+	aggregation := make([]string, 0, len(_s.fns))
+	for _, fn := range _s.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
-	switch n := len(*rps.selector.flds); {
+	switch n := len(*_s.selector.flds); {
 	case n == 0 && len(aggregation) > 0:
 		selector.Select(aggregation...)
 	case n != 0 && len(aggregation) > 0:
@@ -755,7 +755,7 @@ func (rps *RolePanelSelect) sqlScan(ctx context.Context, root *RolePanelQuery, v
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := rps.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _s.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()

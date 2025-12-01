@@ -25,97 +25,97 @@ type WordSuffixCreate struct {
 }
 
 // SetSuffix sets the "suffix" field.
-func (wsc *WordSuffixCreate) SetSuffix(s string) *WordSuffixCreate {
-	wsc.mutation.SetSuffix(s)
-	return wsc
+func (_c *WordSuffixCreate) SetSuffix(v string) *WordSuffixCreate {
+	_c.mutation.SetSuffix(v)
+	return _c
 }
 
 // SetExpired sets the "expired" field.
-func (wsc *WordSuffixCreate) SetExpired(t time.Time) *WordSuffixCreate {
-	wsc.mutation.SetExpired(t)
-	return wsc
+func (_c *WordSuffixCreate) SetExpired(v time.Time) *WordSuffixCreate {
+	_c.mutation.SetExpired(v)
+	return _c
 }
 
 // SetNillableExpired sets the "expired" field if the given value is not nil.
-func (wsc *WordSuffixCreate) SetNillableExpired(t *time.Time) *WordSuffixCreate {
-	if t != nil {
-		wsc.SetExpired(*t)
+func (_c *WordSuffixCreate) SetNillableExpired(v *time.Time) *WordSuffixCreate {
+	if v != nil {
+		_c.SetExpired(*v)
 	}
-	return wsc
+	return _c
 }
 
 // SetGuildID sets the "guild_id" field.
-func (wsc *WordSuffixCreate) SetGuildID(s snowflake.ID) *WordSuffixCreate {
-	wsc.mutation.SetGuildID(s)
-	return wsc
+func (_c *WordSuffixCreate) SetGuildID(v snowflake.ID) *WordSuffixCreate {
+	_c.mutation.SetGuildID(v)
+	return _c
 }
 
 // SetNillableGuildID sets the "guild_id" field if the given value is not nil.
-func (wsc *WordSuffixCreate) SetNillableGuildID(s *snowflake.ID) *WordSuffixCreate {
-	if s != nil {
-		wsc.SetGuildID(*s)
+func (_c *WordSuffixCreate) SetNillableGuildID(v *snowflake.ID) *WordSuffixCreate {
+	if v != nil {
+		_c.SetGuildID(*v)
 	}
-	return wsc
+	return _c
 }
 
 // SetRule sets the "rule" field.
-func (wsc *WordSuffixCreate) SetRule(w wordsuffix.Rule) *WordSuffixCreate {
-	wsc.mutation.SetRule(w)
-	return wsc
+func (_c *WordSuffixCreate) SetRule(v wordsuffix.Rule) *WordSuffixCreate {
+	_c.mutation.SetRule(v)
+	return _c
 }
 
 // SetNillableRule sets the "rule" field if the given value is not nil.
-func (wsc *WordSuffixCreate) SetNillableRule(w *wordsuffix.Rule) *WordSuffixCreate {
-	if w != nil {
-		wsc.SetRule(*w)
+func (_c *WordSuffixCreate) SetNillableRule(v *wordsuffix.Rule) *WordSuffixCreate {
+	if v != nil {
+		_c.SetRule(*v)
 	}
-	return wsc
+	return _c
 }
 
 // SetID sets the "id" field.
-func (wsc *WordSuffixCreate) SetID(u uuid.UUID) *WordSuffixCreate {
-	wsc.mutation.SetID(u)
-	return wsc
+func (_c *WordSuffixCreate) SetID(v uuid.UUID) *WordSuffixCreate {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (wsc *WordSuffixCreate) SetNillableID(u *uuid.UUID) *WordSuffixCreate {
-	if u != nil {
-		wsc.SetID(*u)
+func (_c *WordSuffixCreate) SetNillableID(v *uuid.UUID) *WordSuffixCreate {
+	if v != nil {
+		_c.SetID(*v)
 	}
-	return wsc
+	return _c
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (wsc *WordSuffixCreate) SetGuild(g *Guild) *WordSuffixCreate {
-	return wsc.SetGuildID(g.ID)
+func (_c *WordSuffixCreate) SetGuild(v *Guild) *WordSuffixCreate {
+	return _c.SetGuildID(v.ID)
 }
 
 // SetOwnerID sets the "owner" edge to the User entity by ID.
-func (wsc *WordSuffixCreate) SetOwnerID(id snowflake.ID) *WordSuffixCreate {
-	wsc.mutation.SetOwnerID(id)
-	return wsc
+func (_c *WordSuffixCreate) SetOwnerID(id snowflake.ID) *WordSuffixCreate {
+	_c.mutation.SetOwnerID(id)
+	return _c
 }
 
 // SetOwner sets the "owner" edge to the User entity.
-func (wsc *WordSuffixCreate) SetOwner(u *User) *WordSuffixCreate {
-	return wsc.SetOwnerID(u.ID)
+func (_c *WordSuffixCreate) SetOwner(v *User) *WordSuffixCreate {
+	return _c.SetOwnerID(v.ID)
 }
 
 // Mutation returns the WordSuffixMutation object of the builder.
-func (wsc *WordSuffixCreate) Mutation() *WordSuffixMutation {
-	return wsc.mutation
+func (_c *WordSuffixCreate) Mutation() *WordSuffixMutation {
+	return _c.mutation
 }
 
 // Save creates the WordSuffix in the database.
-func (wsc *WordSuffixCreate) Save(ctx context.Context) (*WordSuffix, error) {
-	wsc.defaults()
-	return withHooks(ctx, wsc.sqlSave, wsc.mutation, wsc.hooks)
+func (_c *WordSuffixCreate) Save(ctx context.Context) (*WordSuffix, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (wsc *WordSuffixCreate) SaveX(ctx context.Context) *WordSuffix {
-	v, err := wsc.Save(ctx)
+func (_c *WordSuffixCreate) SaveX(ctx context.Context) *WordSuffix {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -123,60 +123,60 @@ func (wsc *WordSuffixCreate) SaveX(ctx context.Context) *WordSuffix {
 }
 
 // Exec executes the query.
-func (wsc *WordSuffixCreate) Exec(ctx context.Context) error {
-	_, err := wsc.Save(ctx)
+func (_c *WordSuffixCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (wsc *WordSuffixCreate) ExecX(ctx context.Context) {
-	if err := wsc.Exec(ctx); err != nil {
+func (_c *WordSuffixCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (wsc *WordSuffixCreate) defaults() {
-	if _, ok := wsc.mutation.Rule(); !ok {
+func (_c *WordSuffixCreate) defaults() {
+	if _, ok := _c.mutation.Rule(); !ok {
 		v := wordsuffix.DefaultRule
-		wsc.mutation.SetRule(v)
+		_c.mutation.SetRule(v)
 	}
-	if _, ok := wsc.mutation.ID(); !ok {
+	if _, ok := _c.mutation.ID(); !ok {
 		v := wordsuffix.DefaultID()
-		wsc.mutation.SetID(v)
+		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (wsc *WordSuffixCreate) check() error {
-	if _, ok := wsc.mutation.Suffix(); !ok {
+func (_c *WordSuffixCreate) check() error {
+	if _, ok := _c.mutation.Suffix(); !ok {
 		return &ValidationError{Name: "suffix", err: errors.New(`ent: missing required field "WordSuffix.suffix"`)}
 	}
-	if v, ok := wsc.mutation.Suffix(); ok {
+	if v, ok := _c.mutation.Suffix(); ok {
 		if err := wordsuffix.SuffixValidator(v); err != nil {
 			return &ValidationError{Name: "suffix", err: fmt.Errorf(`ent: validator failed for field "WordSuffix.suffix": %w`, err)}
 		}
 	}
-	if _, ok := wsc.mutation.Rule(); !ok {
+	if _, ok := _c.mutation.Rule(); !ok {
 		return &ValidationError{Name: "rule", err: errors.New(`ent: missing required field "WordSuffix.rule"`)}
 	}
-	if v, ok := wsc.mutation.Rule(); ok {
+	if v, ok := _c.mutation.Rule(); ok {
 		if err := wordsuffix.RuleValidator(v); err != nil {
 			return &ValidationError{Name: "rule", err: fmt.Errorf(`ent: validator failed for field "WordSuffix.rule": %w`, err)}
 		}
 	}
-	if len(wsc.mutation.OwnerIDs()) == 0 {
+	if len(_c.mutation.OwnerIDs()) == 0 {
 		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "WordSuffix.owner"`)}
 	}
 	return nil
 }
 
-func (wsc *WordSuffixCreate) sqlSave(ctx context.Context) (*WordSuffix, error) {
-	if err := wsc.check(); err != nil {
+func (_c *WordSuffixCreate) sqlSave(ctx context.Context) (*WordSuffix, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := wsc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, wsc.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -189,33 +189,33 @@ func (wsc *WordSuffixCreate) sqlSave(ctx context.Context) (*WordSuffix, error) {
 			return nil, err
 		}
 	}
-	wsc.mutation.id = &_node.ID
-	wsc.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (wsc *WordSuffixCreate) createSpec() (*WordSuffix, *sqlgraph.CreateSpec) {
+func (_c *WordSuffixCreate) createSpec() (*WordSuffix, *sqlgraph.CreateSpec) {
 	var (
-		_node = &WordSuffix{config: wsc.config}
+		_node = &WordSuffix{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(wordsuffix.Table, sqlgraph.NewFieldSpec(wordsuffix.FieldID, field.TypeUUID))
 	)
-	if id, ok := wsc.mutation.ID(); ok {
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := wsc.mutation.Suffix(); ok {
+	if value, ok := _c.mutation.Suffix(); ok {
 		_spec.SetField(wordsuffix.FieldSuffix, field.TypeString, value)
 		_node.Suffix = value
 	}
-	if value, ok := wsc.mutation.Expired(); ok {
+	if value, ok := _c.mutation.Expired(); ok {
 		_spec.SetField(wordsuffix.FieldExpired, field.TypeTime, value)
 		_node.Expired = &value
 	}
-	if value, ok := wsc.mutation.Rule(); ok {
+	if value, ok := _c.mutation.Rule(); ok {
 		_spec.SetField(wordsuffix.FieldRule, field.TypeEnum, value)
 		_node.Rule = value
 	}
-	if nodes := wsc.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -232,7 +232,7 @@ func (wsc *WordSuffixCreate) createSpec() (*WordSuffix, *sqlgraph.CreateSpec) {
 		_node.GuildID = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := wsc.mutation.OwnerIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -260,16 +260,16 @@ type WordSuffixCreateBulk struct {
 }
 
 // Save creates the WordSuffix entities in the database.
-func (wscb *WordSuffixCreateBulk) Save(ctx context.Context) ([]*WordSuffix, error) {
-	if wscb.err != nil {
-		return nil, wscb.err
+func (_c *WordSuffixCreateBulk) Save(ctx context.Context) ([]*WordSuffix, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(wscb.builders))
-	nodes := make([]*WordSuffix, len(wscb.builders))
-	mutators := make([]Mutator, len(wscb.builders))
-	for i := range wscb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*WordSuffix, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := wscb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*WordSuffixMutation)
@@ -283,11 +283,11 @@ func (wscb *WordSuffixCreateBulk) Save(ctx context.Context) ([]*WordSuffix, erro
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, wscb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, wscb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -307,7 +307,7 @@ func (wscb *WordSuffixCreateBulk) Save(ctx context.Context) ([]*WordSuffix, erro
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, wscb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -315,8 +315,8 @@ func (wscb *WordSuffixCreateBulk) Save(ctx context.Context) ([]*WordSuffix, erro
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (wscb *WordSuffixCreateBulk) SaveX(ctx context.Context) []*WordSuffix {
-	v, err := wscb.Save(ctx)
+func (_c *WordSuffixCreateBulk) SaveX(ctx context.Context) []*WordSuffix {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -324,14 +324,14 @@ func (wscb *WordSuffixCreateBulk) SaveX(ctx context.Context) []*WordSuffix {
 }
 
 // Exec executes the query.
-func (wscb *WordSuffixCreateBulk) Exec(ctx context.Context) error {
-	_, err := wscb.Save(ctx)
+func (_c *WordSuffixCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (wscb *WordSuffixCreateBulk) ExecX(ctx context.Context) {
-	if err := wscb.Exec(ctx); err != nil {
+func (_c *WordSuffixCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

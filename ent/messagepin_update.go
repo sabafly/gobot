@@ -27,141 +27,141 @@ type MessagePinUpdate struct {
 }
 
 // Where appends a list predicates to the MessagePinUpdate builder.
-func (mpu *MessagePinUpdate) Where(ps ...predicate.MessagePin) *MessagePinUpdate {
-	mpu.mutation.Where(ps...)
-	return mpu
+func (_u *MessagePinUpdate) Where(ps ...predicate.MessagePin) *MessagePinUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetChannelID sets the "channel_id" field.
-func (mpu *MessagePinUpdate) SetChannelID(s snowflake.ID) *MessagePinUpdate {
-	mpu.mutation.ResetChannelID()
-	mpu.mutation.SetChannelID(s)
-	return mpu
+func (_u *MessagePinUpdate) SetChannelID(v snowflake.ID) *MessagePinUpdate {
+	_u.mutation.ResetChannelID()
+	_u.mutation.SetChannelID(v)
+	return _u
 }
 
 // SetNillableChannelID sets the "channel_id" field if the given value is not nil.
-func (mpu *MessagePinUpdate) SetNillableChannelID(s *snowflake.ID) *MessagePinUpdate {
-	if s != nil {
-		mpu.SetChannelID(*s)
+func (_u *MessagePinUpdate) SetNillableChannelID(v *snowflake.ID) *MessagePinUpdate {
+	if v != nil {
+		_u.SetChannelID(*v)
 	}
-	return mpu
+	return _u
 }
 
-// AddChannelID adds s to the "channel_id" field.
-func (mpu *MessagePinUpdate) AddChannelID(s snowflake.ID) *MessagePinUpdate {
-	mpu.mutation.AddChannelID(s)
-	return mpu
+// AddChannelID adds value to the "channel_id" field.
+func (_u *MessagePinUpdate) AddChannelID(v snowflake.ID) *MessagePinUpdate {
+	_u.mutation.AddChannelID(v)
+	return _u
 }
 
 // SetContent sets the "content" field.
-func (mpu *MessagePinUpdate) SetContent(s string) *MessagePinUpdate {
-	mpu.mutation.SetContent(s)
-	return mpu
+func (_u *MessagePinUpdate) SetContent(v string) *MessagePinUpdate {
+	_u.mutation.SetContent(v)
+	return _u
 }
 
 // SetNillableContent sets the "content" field if the given value is not nil.
-func (mpu *MessagePinUpdate) SetNillableContent(s *string) *MessagePinUpdate {
-	if s != nil {
-		mpu.SetContent(*s)
+func (_u *MessagePinUpdate) SetNillableContent(v *string) *MessagePinUpdate {
+	if v != nil {
+		_u.SetContent(*v)
 	}
-	return mpu
+	return _u
 }
 
 // ClearContent clears the value of the "content" field.
-func (mpu *MessagePinUpdate) ClearContent() *MessagePinUpdate {
-	mpu.mutation.ClearContent()
-	return mpu
+func (_u *MessagePinUpdate) ClearContent() *MessagePinUpdate {
+	_u.mutation.ClearContent()
+	return _u
 }
 
 // SetEmbeds sets the "embeds" field.
-func (mpu *MessagePinUpdate) SetEmbeds(d []discord.Embed) *MessagePinUpdate {
-	mpu.mutation.SetEmbeds(d)
-	return mpu
+func (_u *MessagePinUpdate) SetEmbeds(v []discord.Embed) *MessagePinUpdate {
+	_u.mutation.SetEmbeds(v)
+	return _u
 }
 
-// AppendEmbeds appends d to the "embeds" field.
-func (mpu *MessagePinUpdate) AppendEmbeds(d []discord.Embed) *MessagePinUpdate {
-	mpu.mutation.AppendEmbeds(d)
-	return mpu
+// AppendEmbeds appends value to the "embeds" field.
+func (_u *MessagePinUpdate) AppendEmbeds(v []discord.Embed) *MessagePinUpdate {
+	_u.mutation.AppendEmbeds(v)
+	return _u
 }
 
 // ClearEmbeds clears the value of the "embeds" field.
-func (mpu *MessagePinUpdate) ClearEmbeds() *MessagePinUpdate {
-	mpu.mutation.ClearEmbeds()
-	return mpu
+func (_u *MessagePinUpdate) ClearEmbeds() *MessagePinUpdate {
+	_u.mutation.ClearEmbeds()
+	return _u
 }
 
 // SetBeforeID sets the "before_id" field.
-func (mpu *MessagePinUpdate) SetBeforeID(s snowflake.ID) *MessagePinUpdate {
-	mpu.mutation.ResetBeforeID()
-	mpu.mutation.SetBeforeID(s)
-	return mpu
+func (_u *MessagePinUpdate) SetBeforeID(v snowflake.ID) *MessagePinUpdate {
+	_u.mutation.ResetBeforeID()
+	_u.mutation.SetBeforeID(v)
+	return _u
 }
 
 // SetNillableBeforeID sets the "before_id" field if the given value is not nil.
-func (mpu *MessagePinUpdate) SetNillableBeforeID(s *snowflake.ID) *MessagePinUpdate {
-	if s != nil {
-		mpu.SetBeforeID(*s)
+func (_u *MessagePinUpdate) SetNillableBeforeID(v *snowflake.ID) *MessagePinUpdate {
+	if v != nil {
+		_u.SetBeforeID(*v)
 	}
-	return mpu
+	return _u
 }
 
-// AddBeforeID adds s to the "before_id" field.
-func (mpu *MessagePinUpdate) AddBeforeID(s snowflake.ID) *MessagePinUpdate {
-	mpu.mutation.AddBeforeID(s)
-	return mpu
+// AddBeforeID adds value to the "before_id" field.
+func (_u *MessagePinUpdate) AddBeforeID(v snowflake.ID) *MessagePinUpdate {
+	_u.mutation.AddBeforeID(v)
+	return _u
 }
 
 // ClearBeforeID clears the value of the "before_id" field.
-func (mpu *MessagePinUpdate) ClearBeforeID() *MessagePinUpdate {
-	mpu.mutation.ClearBeforeID()
-	return mpu
+func (_u *MessagePinUpdate) ClearBeforeID() *MessagePinUpdate {
+	_u.mutation.ClearBeforeID()
+	return _u
 }
 
 // SetRateLimit sets the "rate_limit" field.
-func (mpu *MessagePinUpdate) SetRateLimit(sl schema.RateLimit) *MessagePinUpdate {
-	mpu.mutation.SetRateLimit(sl)
-	return mpu
+func (_u *MessagePinUpdate) SetRateLimit(v schema.RateLimit) *MessagePinUpdate {
+	_u.mutation.SetRateLimit(v)
+	return _u
 }
 
 // SetNillableRateLimit sets the "rate_limit" field if the given value is not nil.
-func (mpu *MessagePinUpdate) SetNillableRateLimit(sl *schema.RateLimit) *MessagePinUpdate {
-	if sl != nil {
-		mpu.SetRateLimit(*sl)
+func (_u *MessagePinUpdate) SetNillableRateLimit(v *schema.RateLimit) *MessagePinUpdate {
+	if v != nil {
+		_u.SetRateLimit(*v)
 	}
-	return mpu
+	return _u
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (mpu *MessagePinUpdate) SetGuildID(id snowflake.ID) *MessagePinUpdate {
-	mpu.mutation.SetGuildID(id)
-	return mpu
+func (_u *MessagePinUpdate) SetGuildID(id snowflake.ID) *MessagePinUpdate {
+	_u.mutation.SetGuildID(id)
+	return _u
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (mpu *MessagePinUpdate) SetGuild(g *Guild) *MessagePinUpdate {
-	return mpu.SetGuildID(g.ID)
+func (_u *MessagePinUpdate) SetGuild(v *Guild) *MessagePinUpdate {
+	return _u.SetGuildID(v.ID)
 }
 
 // Mutation returns the MessagePinMutation object of the builder.
-func (mpu *MessagePinUpdate) Mutation() *MessagePinMutation {
-	return mpu.mutation
+func (_u *MessagePinUpdate) Mutation() *MessagePinMutation {
+	return _u.mutation
 }
 
 // ClearGuild clears the "guild" edge to the Guild entity.
-func (mpu *MessagePinUpdate) ClearGuild() *MessagePinUpdate {
-	mpu.mutation.ClearGuild()
-	return mpu
+func (_u *MessagePinUpdate) ClearGuild() *MessagePinUpdate {
+	_u.mutation.ClearGuild()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (mpu *MessagePinUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, mpu.sqlSave, mpu.mutation, mpu.hooks)
+func (_u *MessagePinUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (mpu *MessagePinUpdate) SaveX(ctx context.Context) int {
-	affected, err := mpu.Save(ctx)
+func (_u *MessagePinUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -169,74 +169,74 @@ func (mpu *MessagePinUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (mpu *MessagePinUpdate) Exec(ctx context.Context) error {
-	_, err := mpu.Save(ctx)
+func (_u *MessagePinUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (mpu *MessagePinUpdate) ExecX(ctx context.Context) {
-	if err := mpu.Exec(ctx); err != nil {
+func (_u *MessagePinUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (mpu *MessagePinUpdate) check() error {
-	if mpu.mutation.GuildCleared() && len(mpu.mutation.GuildIDs()) > 0 {
+func (_u *MessagePinUpdate) check() error {
+	if _u.mutation.GuildCleared() && len(_u.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "MessagePin.guild"`)
 	}
 	return nil
 }
 
-func (mpu *MessagePinUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := mpu.check(); err != nil {
-		return n, err
+func (_u *MessagePinUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(messagepin.Table, messagepin.Columns, sqlgraph.NewFieldSpec(messagepin.FieldID, field.TypeUUID))
-	if ps := mpu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := mpu.mutation.ChannelID(); ok {
+	if value, ok := _u.mutation.ChannelID(); ok {
 		_spec.SetField(messagepin.FieldChannelID, field.TypeUint64, value)
 	}
-	if value, ok := mpu.mutation.AddedChannelID(); ok {
+	if value, ok := _u.mutation.AddedChannelID(); ok {
 		_spec.AddField(messagepin.FieldChannelID, field.TypeUint64, value)
 	}
-	if value, ok := mpu.mutation.Content(); ok {
+	if value, ok := _u.mutation.Content(); ok {
 		_spec.SetField(messagepin.FieldContent, field.TypeString, value)
 	}
-	if mpu.mutation.ContentCleared() {
+	if _u.mutation.ContentCleared() {
 		_spec.ClearField(messagepin.FieldContent, field.TypeString)
 	}
-	if value, ok := mpu.mutation.Embeds(); ok {
+	if value, ok := _u.mutation.Embeds(); ok {
 		_spec.SetField(messagepin.FieldEmbeds, field.TypeJSON, value)
 	}
-	if value, ok := mpu.mutation.AppendedEmbeds(); ok {
+	if value, ok := _u.mutation.AppendedEmbeds(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, messagepin.FieldEmbeds, value)
 		})
 	}
-	if mpu.mutation.EmbedsCleared() {
+	if _u.mutation.EmbedsCleared() {
 		_spec.ClearField(messagepin.FieldEmbeds, field.TypeJSON)
 	}
-	if value, ok := mpu.mutation.BeforeID(); ok {
+	if value, ok := _u.mutation.BeforeID(); ok {
 		_spec.SetField(messagepin.FieldBeforeID, field.TypeUint64, value)
 	}
-	if value, ok := mpu.mutation.AddedBeforeID(); ok {
+	if value, ok := _u.mutation.AddedBeforeID(); ok {
 		_spec.AddField(messagepin.FieldBeforeID, field.TypeUint64, value)
 	}
-	if mpu.mutation.BeforeIDCleared() {
+	if _u.mutation.BeforeIDCleared() {
 		_spec.ClearField(messagepin.FieldBeforeID, field.TypeUint64)
 	}
-	if value, ok := mpu.mutation.RateLimit(); ok {
+	if value, ok := _u.mutation.RateLimit(); ok {
 		_spec.SetField(messagepin.FieldRateLimit, field.TypeJSON, value)
 	}
-	if mpu.mutation.GuildCleared() {
+	if _u.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -249,7 +249,7 @@ func (mpu *MessagePinUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := mpu.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -265,7 +265,7 @@ func (mpu *MessagePinUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, mpu.driver, _spec); err != nil {
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{messagepin.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -273,8 +273,8 @@ func (mpu *MessagePinUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
-	mpu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // MessagePinUpdateOne is the builder for updating a single MessagePin entity.
@@ -286,148 +286,148 @@ type MessagePinUpdateOne struct {
 }
 
 // SetChannelID sets the "channel_id" field.
-func (mpuo *MessagePinUpdateOne) SetChannelID(s snowflake.ID) *MessagePinUpdateOne {
-	mpuo.mutation.ResetChannelID()
-	mpuo.mutation.SetChannelID(s)
-	return mpuo
+func (_u *MessagePinUpdateOne) SetChannelID(v snowflake.ID) *MessagePinUpdateOne {
+	_u.mutation.ResetChannelID()
+	_u.mutation.SetChannelID(v)
+	return _u
 }
 
 // SetNillableChannelID sets the "channel_id" field if the given value is not nil.
-func (mpuo *MessagePinUpdateOne) SetNillableChannelID(s *snowflake.ID) *MessagePinUpdateOne {
-	if s != nil {
-		mpuo.SetChannelID(*s)
+func (_u *MessagePinUpdateOne) SetNillableChannelID(v *snowflake.ID) *MessagePinUpdateOne {
+	if v != nil {
+		_u.SetChannelID(*v)
 	}
-	return mpuo
+	return _u
 }
 
-// AddChannelID adds s to the "channel_id" field.
-func (mpuo *MessagePinUpdateOne) AddChannelID(s snowflake.ID) *MessagePinUpdateOne {
-	mpuo.mutation.AddChannelID(s)
-	return mpuo
+// AddChannelID adds value to the "channel_id" field.
+func (_u *MessagePinUpdateOne) AddChannelID(v snowflake.ID) *MessagePinUpdateOne {
+	_u.mutation.AddChannelID(v)
+	return _u
 }
 
 // SetContent sets the "content" field.
-func (mpuo *MessagePinUpdateOne) SetContent(s string) *MessagePinUpdateOne {
-	mpuo.mutation.SetContent(s)
-	return mpuo
+func (_u *MessagePinUpdateOne) SetContent(v string) *MessagePinUpdateOne {
+	_u.mutation.SetContent(v)
+	return _u
 }
 
 // SetNillableContent sets the "content" field if the given value is not nil.
-func (mpuo *MessagePinUpdateOne) SetNillableContent(s *string) *MessagePinUpdateOne {
-	if s != nil {
-		mpuo.SetContent(*s)
+func (_u *MessagePinUpdateOne) SetNillableContent(v *string) *MessagePinUpdateOne {
+	if v != nil {
+		_u.SetContent(*v)
 	}
-	return mpuo
+	return _u
 }
 
 // ClearContent clears the value of the "content" field.
-func (mpuo *MessagePinUpdateOne) ClearContent() *MessagePinUpdateOne {
-	mpuo.mutation.ClearContent()
-	return mpuo
+func (_u *MessagePinUpdateOne) ClearContent() *MessagePinUpdateOne {
+	_u.mutation.ClearContent()
+	return _u
 }
 
 // SetEmbeds sets the "embeds" field.
-func (mpuo *MessagePinUpdateOne) SetEmbeds(d []discord.Embed) *MessagePinUpdateOne {
-	mpuo.mutation.SetEmbeds(d)
-	return mpuo
+func (_u *MessagePinUpdateOne) SetEmbeds(v []discord.Embed) *MessagePinUpdateOne {
+	_u.mutation.SetEmbeds(v)
+	return _u
 }
 
-// AppendEmbeds appends d to the "embeds" field.
-func (mpuo *MessagePinUpdateOne) AppendEmbeds(d []discord.Embed) *MessagePinUpdateOne {
-	mpuo.mutation.AppendEmbeds(d)
-	return mpuo
+// AppendEmbeds appends value to the "embeds" field.
+func (_u *MessagePinUpdateOne) AppendEmbeds(v []discord.Embed) *MessagePinUpdateOne {
+	_u.mutation.AppendEmbeds(v)
+	return _u
 }
 
 // ClearEmbeds clears the value of the "embeds" field.
-func (mpuo *MessagePinUpdateOne) ClearEmbeds() *MessagePinUpdateOne {
-	mpuo.mutation.ClearEmbeds()
-	return mpuo
+func (_u *MessagePinUpdateOne) ClearEmbeds() *MessagePinUpdateOne {
+	_u.mutation.ClearEmbeds()
+	return _u
 }
 
 // SetBeforeID sets the "before_id" field.
-func (mpuo *MessagePinUpdateOne) SetBeforeID(s snowflake.ID) *MessagePinUpdateOne {
-	mpuo.mutation.ResetBeforeID()
-	mpuo.mutation.SetBeforeID(s)
-	return mpuo
+func (_u *MessagePinUpdateOne) SetBeforeID(v snowflake.ID) *MessagePinUpdateOne {
+	_u.mutation.ResetBeforeID()
+	_u.mutation.SetBeforeID(v)
+	return _u
 }
 
 // SetNillableBeforeID sets the "before_id" field if the given value is not nil.
-func (mpuo *MessagePinUpdateOne) SetNillableBeforeID(s *snowflake.ID) *MessagePinUpdateOne {
-	if s != nil {
-		mpuo.SetBeforeID(*s)
+func (_u *MessagePinUpdateOne) SetNillableBeforeID(v *snowflake.ID) *MessagePinUpdateOne {
+	if v != nil {
+		_u.SetBeforeID(*v)
 	}
-	return mpuo
+	return _u
 }
 
-// AddBeforeID adds s to the "before_id" field.
-func (mpuo *MessagePinUpdateOne) AddBeforeID(s snowflake.ID) *MessagePinUpdateOne {
-	mpuo.mutation.AddBeforeID(s)
-	return mpuo
+// AddBeforeID adds value to the "before_id" field.
+func (_u *MessagePinUpdateOne) AddBeforeID(v snowflake.ID) *MessagePinUpdateOne {
+	_u.mutation.AddBeforeID(v)
+	return _u
 }
 
 // ClearBeforeID clears the value of the "before_id" field.
-func (mpuo *MessagePinUpdateOne) ClearBeforeID() *MessagePinUpdateOne {
-	mpuo.mutation.ClearBeforeID()
-	return mpuo
+func (_u *MessagePinUpdateOne) ClearBeforeID() *MessagePinUpdateOne {
+	_u.mutation.ClearBeforeID()
+	return _u
 }
 
 // SetRateLimit sets the "rate_limit" field.
-func (mpuo *MessagePinUpdateOne) SetRateLimit(sl schema.RateLimit) *MessagePinUpdateOne {
-	mpuo.mutation.SetRateLimit(sl)
-	return mpuo
+func (_u *MessagePinUpdateOne) SetRateLimit(v schema.RateLimit) *MessagePinUpdateOne {
+	_u.mutation.SetRateLimit(v)
+	return _u
 }
 
 // SetNillableRateLimit sets the "rate_limit" field if the given value is not nil.
-func (mpuo *MessagePinUpdateOne) SetNillableRateLimit(sl *schema.RateLimit) *MessagePinUpdateOne {
-	if sl != nil {
-		mpuo.SetRateLimit(*sl)
+func (_u *MessagePinUpdateOne) SetNillableRateLimit(v *schema.RateLimit) *MessagePinUpdateOne {
+	if v != nil {
+		_u.SetRateLimit(*v)
 	}
-	return mpuo
+	return _u
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (mpuo *MessagePinUpdateOne) SetGuildID(id snowflake.ID) *MessagePinUpdateOne {
-	mpuo.mutation.SetGuildID(id)
-	return mpuo
+func (_u *MessagePinUpdateOne) SetGuildID(id snowflake.ID) *MessagePinUpdateOne {
+	_u.mutation.SetGuildID(id)
+	return _u
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (mpuo *MessagePinUpdateOne) SetGuild(g *Guild) *MessagePinUpdateOne {
-	return mpuo.SetGuildID(g.ID)
+func (_u *MessagePinUpdateOne) SetGuild(v *Guild) *MessagePinUpdateOne {
+	return _u.SetGuildID(v.ID)
 }
 
 // Mutation returns the MessagePinMutation object of the builder.
-func (mpuo *MessagePinUpdateOne) Mutation() *MessagePinMutation {
-	return mpuo.mutation
+func (_u *MessagePinUpdateOne) Mutation() *MessagePinMutation {
+	return _u.mutation
 }
 
 // ClearGuild clears the "guild" edge to the Guild entity.
-func (mpuo *MessagePinUpdateOne) ClearGuild() *MessagePinUpdateOne {
-	mpuo.mutation.ClearGuild()
-	return mpuo
+func (_u *MessagePinUpdateOne) ClearGuild() *MessagePinUpdateOne {
+	_u.mutation.ClearGuild()
+	return _u
 }
 
 // Where appends a list predicates to the MessagePinUpdate builder.
-func (mpuo *MessagePinUpdateOne) Where(ps ...predicate.MessagePin) *MessagePinUpdateOne {
-	mpuo.mutation.Where(ps...)
-	return mpuo
+func (_u *MessagePinUpdateOne) Where(ps ...predicate.MessagePin) *MessagePinUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (mpuo *MessagePinUpdateOne) Select(field string, fields ...string) *MessagePinUpdateOne {
-	mpuo.fields = append([]string{field}, fields...)
-	return mpuo
+func (_u *MessagePinUpdateOne) Select(field string, fields ...string) *MessagePinUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated MessagePin entity.
-func (mpuo *MessagePinUpdateOne) Save(ctx context.Context) (*MessagePin, error) {
-	return withHooks(ctx, mpuo.sqlSave, mpuo.mutation, mpuo.hooks)
+func (_u *MessagePinUpdateOne) Save(ctx context.Context) (*MessagePin, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (mpuo *MessagePinUpdateOne) SaveX(ctx context.Context) *MessagePin {
-	node, err := mpuo.Save(ctx)
+func (_u *MessagePinUpdateOne) SaveX(ctx context.Context) *MessagePin {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -435,37 +435,37 @@ func (mpuo *MessagePinUpdateOne) SaveX(ctx context.Context) *MessagePin {
 }
 
 // Exec executes the query on the entity.
-func (mpuo *MessagePinUpdateOne) Exec(ctx context.Context) error {
-	_, err := mpuo.Save(ctx)
+func (_u *MessagePinUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (mpuo *MessagePinUpdateOne) ExecX(ctx context.Context) {
-	if err := mpuo.Exec(ctx); err != nil {
+func (_u *MessagePinUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (mpuo *MessagePinUpdateOne) check() error {
-	if mpuo.mutation.GuildCleared() && len(mpuo.mutation.GuildIDs()) > 0 {
+func (_u *MessagePinUpdateOne) check() error {
+	if _u.mutation.GuildCleared() && len(_u.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "MessagePin.guild"`)
 	}
 	return nil
 }
 
-func (mpuo *MessagePinUpdateOne) sqlSave(ctx context.Context) (_node *MessagePin, err error) {
-	if err := mpuo.check(); err != nil {
+func (_u *MessagePinUpdateOne) sqlSave(ctx context.Context) (_node *MessagePin, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(messagepin.Table, messagepin.Columns, sqlgraph.NewFieldSpec(messagepin.FieldID, field.TypeUUID))
-	id, ok := mpuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "MessagePin.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := mpuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, messagepin.FieldID)
 		for _, f := range fields {
@@ -477,49 +477,49 @@ func (mpuo *MessagePinUpdateOne) sqlSave(ctx context.Context) (_node *MessagePin
 			}
 		}
 	}
-	if ps := mpuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := mpuo.mutation.ChannelID(); ok {
+	if value, ok := _u.mutation.ChannelID(); ok {
 		_spec.SetField(messagepin.FieldChannelID, field.TypeUint64, value)
 	}
-	if value, ok := mpuo.mutation.AddedChannelID(); ok {
+	if value, ok := _u.mutation.AddedChannelID(); ok {
 		_spec.AddField(messagepin.FieldChannelID, field.TypeUint64, value)
 	}
-	if value, ok := mpuo.mutation.Content(); ok {
+	if value, ok := _u.mutation.Content(); ok {
 		_spec.SetField(messagepin.FieldContent, field.TypeString, value)
 	}
-	if mpuo.mutation.ContentCleared() {
+	if _u.mutation.ContentCleared() {
 		_spec.ClearField(messagepin.FieldContent, field.TypeString)
 	}
-	if value, ok := mpuo.mutation.Embeds(); ok {
+	if value, ok := _u.mutation.Embeds(); ok {
 		_spec.SetField(messagepin.FieldEmbeds, field.TypeJSON, value)
 	}
-	if value, ok := mpuo.mutation.AppendedEmbeds(); ok {
+	if value, ok := _u.mutation.AppendedEmbeds(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, messagepin.FieldEmbeds, value)
 		})
 	}
-	if mpuo.mutation.EmbedsCleared() {
+	if _u.mutation.EmbedsCleared() {
 		_spec.ClearField(messagepin.FieldEmbeds, field.TypeJSON)
 	}
-	if value, ok := mpuo.mutation.BeforeID(); ok {
+	if value, ok := _u.mutation.BeforeID(); ok {
 		_spec.SetField(messagepin.FieldBeforeID, field.TypeUint64, value)
 	}
-	if value, ok := mpuo.mutation.AddedBeforeID(); ok {
+	if value, ok := _u.mutation.AddedBeforeID(); ok {
 		_spec.AddField(messagepin.FieldBeforeID, field.TypeUint64, value)
 	}
-	if mpuo.mutation.BeforeIDCleared() {
+	if _u.mutation.BeforeIDCleared() {
 		_spec.ClearField(messagepin.FieldBeforeID, field.TypeUint64)
 	}
-	if value, ok := mpuo.mutation.RateLimit(); ok {
+	if value, ok := _u.mutation.RateLimit(); ok {
 		_spec.SetField(messagepin.FieldRateLimit, field.TypeJSON, value)
 	}
-	if mpuo.mutation.GuildCleared() {
+	if _u.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -532,7 +532,7 @@ func (mpuo *MessagePinUpdateOne) sqlSave(ctx context.Context) (_node *MessagePin
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := mpuo.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -548,10 +548,10 @@ func (mpuo *MessagePinUpdateOne) sqlSave(ctx context.Context) (_node *MessagePin
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_node = &MessagePin{config: mpuo.config}
+	_node = &MessagePin{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, mpuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{messagepin.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -559,6 +559,6 @@ func (mpuo *MessagePinUpdateOne) sqlSave(ctx context.Context) (_node *MessagePin
 		}
 		return nil, err
 	}
-	mpuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

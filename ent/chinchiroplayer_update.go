@@ -23,104 +23,104 @@ type ChinchiroPlayerUpdate struct {
 }
 
 // Where appends a list predicates to the ChinchiroPlayerUpdate builder.
-func (cpu *ChinchiroPlayerUpdate) Where(ps ...predicate.ChinchiroPlayer) *ChinchiroPlayerUpdate {
-	cpu.mutation.Where(ps...)
-	return cpu
+func (_u *ChinchiroPlayerUpdate) Where(ps ...predicate.ChinchiroPlayer) *ChinchiroPlayerUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetPoint sets the "point" field.
-func (cpu *ChinchiroPlayerUpdate) SetPoint(i int) *ChinchiroPlayerUpdate {
-	cpu.mutation.ResetPoint()
-	cpu.mutation.SetPoint(i)
-	return cpu
+func (_u *ChinchiroPlayerUpdate) SetPoint(v int) *ChinchiroPlayerUpdate {
+	_u.mutation.ResetPoint()
+	_u.mutation.SetPoint(v)
+	return _u
 }
 
 // SetNillablePoint sets the "point" field if the given value is not nil.
-func (cpu *ChinchiroPlayerUpdate) SetNillablePoint(i *int) *ChinchiroPlayerUpdate {
-	if i != nil {
-		cpu.SetPoint(*i)
+func (_u *ChinchiroPlayerUpdate) SetNillablePoint(v *int) *ChinchiroPlayerUpdate {
+	if v != nil {
+		_u.SetPoint(*v)
 	}
-	return cpu
+	return _u
 }
 
-// AddPoint adds i to the "point" field.
-func (cpu *ChinchiroPlayerUpdate) AddPoint(i int) *ChinchiroPlayerUpdate {
-	cpu.mutation.AddPoint(i)
-	return cpu
+// AddPoint adds value to the "point" field.
+func (_u *ChinchiroPlayerUpdate) AddPoint(v int) *ChinchiroPlayerUpdate {
+	_u.mutation.AddPoint(v)
+	return _u
 }
 
 // SetIsOwner sets the "is_owner" field.
-func (cpu *ChinchiroPlayerUpdate) SetIsOwner(b bool) *ChinchiroPlayerUpdate {
-	cpu.mutation.SetIsOwner(b)
-	return cpu
+func (_u *ChinchiroPlayerUpdate) SetIsOwner(v bool) *ChinchiroPlayerUpdate {
+	_u.mutation.SetIsOwner(v)
+	return _u
 }
 
 // SetNillableIsOwner sets the "is_owner" field if the given value is not nil.
-func (cpu *ChinchiroPlayerUpdate) SetNillableIsOwner(b *bool) *ChinchiroPlayerUpdate {
-	if b != nil {
-		cpu.SetIsOwner(*b)
+func (_u *ChinchiroPlayerUpdate) SetNillableIsOwner(v *bool) *ChinchiroPlayerUpdate {
+	if v != nil {
+		_u.SetIsOwner(*v)
 	}
-	return cpu
+	return _u
 }
 
 // SetBet sets the "bet" field.
-func (cpu *ChinchiroPlayerUpdate) SetBet(i int) *ChinchiroPlayerUpdate {
-	cpu.mutation.ResetBet()
-	cpu.mutation.SetBet(i)
-	return cpu
+func (_u *ChinchiroPlayerUpdate) SetBet(v int) *ChinchiroPlayerUpdate {
+	_u.mutation.ResetBet()
+	_u.mutation.SetBet(v)
+	return _u
 }
 
 // SetNillableBet sets the "bet" field if the given value is not nil.
-func (cpu *ChinchiroPlayerUpdate) SetNillableBet(i *int) *ChinchiroPlayerUpdate {
-	if i != nil {
-		cpu.SetBet(*i)
+func (_u *ChinchiroPlayerUpdate) SetNillableBet(v *int) *ChinchiroPlayerUpdate {
+	if v != nil {
+		_u.SetBet(*v)
 	}
-	return cpu
+	return _u
 }
 
-// AddBet adds i to the "bet" field.
-func (cpu *ChinchiroPlayerUpdate) AddBet(i int) *ChinchiroPlayerUpdate {
-	cpu.mutation.AddBet(i)
-	return cpu
+// AddBet adds value to the "bet" field.
+func (_u *ChinchiroPlayerUpdate) AddBet(v int) *ChinchiroPlayerUpdate {
+	_u.mutation.AddBet(v)
+	return _u
 }
 
 // ClearBet clears the value of the "bet" field.
-func (cpu *ChinchiroPlayerUpdate) ClearBet() *ChinchiroPlayerUpdate {
-	cpu.mutation.ClearBet()
-	return cpu
+func (_u *ChinchiroPlayerUpdate) ClearBet() *ChinchiroPlayerUpdate {
+	_u.mutation.ClearBet()
+	return _u
 }
 
 // SetDices sets the "dices" field.
-func (cpu *ChinchiroPlayerUpdate) SetDices(i []int) *ChinchiroPlayerUpdate {
-	cpu.mutation.SetDices(i)
-	return cpu
+func (_u *ChinchiroPlayerUpdate) SetDices(v []int) *ChinchiroPlayerUpdate {
+	_u.mutation.SetDices(v)
+	return _u
 }
 
-// AppendDices appends i to the "dices" field.
-func (cpu *ChinchiroPlayerUpdate) AppendDices(i []int) *ChinchiroPlayerUpdate {
-	cpu.mutation.AppendDices(i)
-	return cpu
+// AppendDices appends value to the "dices" field.
+func (_u *ChinchiroPlayerUpdate) AppendDices(v []int) *ChinchiroPlayerUpdate {
+	_u.mutation.AppendDices(v)
+	return _u
 }
 
 // ClearDices clears the value of the "dices" field.
-func (cpu *ChinchiroPlayerUpdate) ClearDices() *ChinchiroPlayerUpdate {
-	cpu.mutation.ClearDices()
-	return cpu
+func (_u *ChinchiroPlayerUpdate) ClearDices() *ChinchiroPlayerUpdate {
+	_u.mutation.ClearDices()
+	return _u
 }
 
 // Mutation returns the ChinchiroPlayerMutation object of the builder.
-func (cpu *ChinchiroPlayerUpdate) Mutation() *ChinchiroPlayerMutation {
-	return cpu.mutation
+func (_u *ChinchiroPlayerUpdate) Mutation() *ChinchiroPlayerMutation {
+	return _u.mutation
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (cpu *ChinchiroPlayerUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, cpu.sqlSave, cpu.mutation, cpu.hooks)
+func (_u *ChinchiroPlayerUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (cpu *ChinchiroPlayerUpdate) SaveX(ctx context.Context) int {
-	affected, err := cpu.Save(ctx)
+func (_u *ChinchiroPlayerUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -128,71 +128,71 @@ func (cpu *ChinchiroPlayerUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (cpu *ChinchiroPlayerUpdate) Exec(ctx context.Context) error {
-	_, err := cpu.Save(ctx)
+func (_u *ChinchiroPlayerUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (cpu *ChinchiroPlayerUpdate) ExecX(ctx context.Context) {
-	if err := cpu.Exec(ctx); err != nil {
+func (_u *ChinchiroPlayerUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (cpu *ChinchiroPlayerUpdate) check() error {
-	if cpu.mutation.UserCleared() && len(cpu.mutation.UserIDs()) > 0 {
+func (_u *ChinchiroPlayerUpdate) check() error {
+	if _u.mutation.UserCleared() && len(_u.mutation.UserIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ChinchiroPlayer.user"`)
 	}
-	if cpu.mutation.SessionCleared() && len(cpu.mutation.SessionIDs()) > 0 {
+	if _u.mutation.SessionCleared() && len(_u.mutation.SessionIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ChinchiroPlayer.session"`)
 	}
 	return nil
 }
 
-func (cpu *ChinchiroPlayerUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := cpu.check(); err != nil {
-		return n, err
+func (_u *ChinchiroPlayerUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(chinchiroplayer.Table, chinchiroplayer.Columns, sqlgraph.NewFieldSpec(chinchiroplayer.FieldID, field.TypeUUID))
-	if ps := cpu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := cpu.mutation.Point(); ok {
+	if value, ok := _u.mutation.Point(); ok {
 		_spec.SetField(chinchiroplayer.FieldPoint, field.TypeInt, value)
 	}
-	if value, ok := cpu.mutation.AddedPoint(); ok {
+	if value, ok := _u.mutation.AddedPoint(); ok {
 		_spec.AddField(chinchiroplayer.FieldPoint, field.TypeInt, value)
 	}
-	if value, ok := cpu.mutation.IsOwner(); ok {
+	if value, ok := _u.mutation.IsOwner(); ok {
 		_spec.SetField(chinchiroplayer.FieldIsOwner, field.TypeBool, value)
 	}
-	if value, ok := cpu.mutation.Bet(); ok {
+	if value, ok := _u.mutation.Bet(); ok {
 		_spec.SetField(chinchiroplayer.FieldBet, field.TypeInt, value)
 	}
-	if value, ok := cpu.mutation.AddedBet(); ok {
+	if value, ok := _u.mutation.AddedBet(); ok {
 		_spec.AddField(chinchiroplayer.FieldBet, field.TypeInt, value)
 	}
-	if cpu.mutation.BetCleared() {
+	if _u.mutation.BetCleared() {
 		_spec.ClearField(chinchiroplayer.FieldBet, field.TypeInt)
 	}
-	if value, ok := cpu.mutation.Dices(); ok {
+	if value, ok := _u.mutation.Dices(); ok {
 		_spec.SetField(chinchiroplayer.FieldDices, field.TypeJSON, value)
 	}
-	if value, ok := cpu.mutation.AppendedDices(); ok {
+	if value, ok := _u.mutation.AppendedDices(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, chinchiroplayer.FieldDices, value)
 		})
 	}
-	if cpu.mutation.DicesCleared() {
+	if _u.mutation.DicesCleared() {
 		_spec.ClearField(chinchiroplayer.FieldDices, field.TypeJSON)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, cpu.driver, _spec); err != nil {
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{chinchiroplayer.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -200,8 +200,8 @@ func (cpu *ChinchiroPlayerUpdate) sqlSave(ctx context.Context) (n int, err error
 		}
 		return 0, err
 	}
-	cpu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // ChinchiroPlayerUpdateOne is the builder for updating a single ChinchiroPlayer entity.
@@ -213,111 +213,111 @@ type ChinchiroPlayerUpdateOne struct {
 }
 
 // SetPoint sets the "point" field.
-func (cpuo *ChinchiroPlayerUpdateOne) SetPoint(i int) *ChinchiroPlayerUpdateOne {
-	cpuo.mutation.ResetPoint()
-	cpuo.mutation.SetPoint(i)
-	return cpuo
+func (_u *ChinchiroPlayerUpdateOne) SetPoint(v int) *ChinchiroPlayerUpdateOne {
+	_u.mutation.ResetPoint()
+	_u.mutation.SetPoint(v)
+	return _u
 }
 
 // SetNillablePoint sets the "point" field if the given value is not nil.
-func (cpuo *ChinchiroPlayerUpdateOne) SetNillablePoint(i *int) *ChinchiroPlayerUpdateOne {
-	if i != nil {
-		cpuo.SetPoint(*i)
+func (_u *ChinchiroPlayerUpdateOne) SetNillablePoint(v *int) *ChinchiroPlayerUpdateOne {
+	if v != nil {
+		_u.SetPoint(*v)
 	}
-	return cpuo
+	return _u
 }
 
-// AddPoint adds i to the "point" field.
-func (cpuo *ChinchiroPlayerUpdateOne) AddPoint(i int) *ChinchiroPlayerUpdateOne {
-	cpuo.mutation.AddPoint(i)
-	return cpuo
+// AddPoint adds value to the "point" field.
+func (_u *ChinchiroPlayerUpdateOne) AddPoint(v int) *ChinchiroPlayerUpdateOne {
+	_u.mutation.AddPoint(v)
+	return _u
 }
 
 // SetIsOwner sets the "is_owner" field.
-func (cpuo *ChinchiroPlayerUpdateOne) SetIsOwner(b bool) *ChinchiroPlayerUpdateOne {
-	cpuo.mutation.SetIsOwner(b)
-	return cpuo
+func (_u *ChinchiroPlayerUpdateOne) SetIsOwner(v bool) *ChinchiroPlayerUpdateOne {
+	_u.mutation.SetIsOwner(v)
+	return _u
 }
 
 // SetNillableIsOwner sets the "is_owner" field if the given value is not nil.
-func (cpuo *ChinchiroPlayerUpdateOne) SetNillableIsOwner(b *bool) *ChinchiroPlayerUpdateOne {
-	if b != nil {
-		cpuo.SetIsOwner(*b)
+func (_u *ChinchiroPlayerUpdateOne) SetNillableIsOwner(v *bool) *ChinchiroPlayerUpdateOne {
+	if v != nil {
+		_u.SetIsOwner(*v)
 	}
-	return cpuo
+	return _u
 }
 
 // SetBet sets the "bet" field.
-func (cpuo *ChinchiroPlayerUpdateOne) SetBet(i int) *ChinchiroPlayerUpdateOne {
-	cpuo.mutation.ResetBet()
-	cpuo.mutation.SetBet(i)
-	return cpuo
+func (_u *ChinchiroPlayerUpdateOne) SetBet(v int) *ChinchiroPlayerUpdateOne {
+	_u.mutation.ResetBet()
+	_u.mutation.SetBet(v)
+	return _u
 }
 
 // SetNillableBet sets the "bet" field if the given value is not nil.
-func (cpuo *ChinchiroPlayerUpdateOne) SetNillableBet(i *int) *ChinchiroPlayerUpdateOne {
-	if i != nil {
-		cpuo.SetBet(*i)
+func (_u *ChinchiroPlayerUpdateOne) SetNillableBet(v *int) *ChinchiroPlayerUpdateOne {
+	if v != nil {
+		_u.SetBet(*v)
 	}
-	return cpuo
+	return _u
 }
 
-// AddBet adds i to the "bet" field.
-func (cpuo *ChinchiroPlayerUpdateOne) AddBet(i int) *ChinchiroPlayerUpdateOne {
-	cpuo.mutation.AddBet(i)
-	return cpuo
+// AddBet adds value to the "bet" field.
+func (_u *ChinchiroPlayerUpdateOne) AddBet(v int) *ChinchiroPlayerUpdateOne {
+	_u.mutation.AddBet(v)
+	return _u
 }
 
 // ClearBet clears the value of the "bet" field.
-func (cpuo *ChinchiroPlayerUpdateOne) ClearBet() *ChinchiroPlayerUpdateOne {
-	cpuo.mutation.ClearBet()
-	return cpuo
+func (_u *ChinchiroPlayerUpdateOne) ClearBet() *ChinchiroPlayerUpdateOne {
+	_u.mutation.ClearBet()
+	return _u
 }
 
 // SetDices sets the "dices" field.
-func (cpuo *ChinchiroPlayerUpdateOne) SetDices(i []int) *ChinchiroPlayerUpdateOne {
-	cpuo.mutation.SetDices(i)
-	return cpuo
+func (_u *ChinchiroPlayerUpdateOne) SetDices(v []int) *ChinchiroPlayerUpdateOne {
+	_u.mutation.SetDices(v)
+	return _u
 }
 
-// AppendDices appends i to the "dices" field.
-func (cpuo *ChinchiroPlayerUpdateOne) AppendDices(i []int) *ChinchiroPlayerUpdateOne {
-	cpuo.mutation.AppendDices(i)
-	return cpuo
+// AppendDices appends value to the "dices" field.
+func (_u *ChinchiroPlayerUpdateOne) AppendDices(v []int) *ChinchiroPlayerUpdateOne {
+	_u.mutation.AppendDices(v)
+	return _u
 }
 
 // ClearDices clears the value of the "dices" field.
-func (cpuo *ChinchiroPlayerUpdateOne) ClearDices() *ChinchiroPlayerUpdateOne {
-	cpuo.mutation.ClearDices()
-	return cpuo
+func (_u *ChinchiroPlayerUpdateOne) ClearDices() *ChinchiroPlayerUpdateOne {
+	_u.mutation.ClearDices()
+	return _u
 }
 
 // Mutation returns the ChinchiroPlayerMutation object of the builder.
-func (cpuo *ChinchiroPlayerUpdateOne) Mutation() *ChinchiroPlayerMutation {
-	return cpuo.mutation
+func (_u *ChinchiroPlayerUpdateOne) Mutation() *ChinchiroPlayerMutation {
+	return _u.mutation
 }
 
 // Where appends a list predicates to the ChinchiroPlayerUpdate builder.
-func (cpuo *ChinchiroPlayerUpdateOne) Where(ps ...predicate.ChinchiroPlayer) *ChinchiroPlayerUpdateOne {
-	cpuo.mutation.Where(ps...)
-	return cpuo
+func (_u *ChinchiroPlayerUpdateOne) Where(ps ...predicate.ChinchiroPlayer) *ChinchiroPlayerUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (cpuo *ChinchiroPlayerUpdateOne) Select(field string, fields ...string) *ChinchiroPlayerUpdateOne {
-	cpuo.fields = append([]string{field}, fields...)
-	return cpuo
+func (_u *ChinchiroPlayerUpdateOne) Select(field string, fields ...string) *ChinchiroPlayerUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated ChinchiroPlayer entity.
-func (cpuo *ChinchiroPlayerUpdateOne) Save(ctx context.Context) (*ChinchiroPlayer, error) {
-	return withHooks(ctx, cpuo.sqlSave, cpuo.mutation, cpuo.hooks)
+func (_u *ChinchiroPlayerUpdateOne) Save(ctx context.Context) (*ChinchiroPlayer, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (cpuo *ChinchiroPlayerUpdateOne) SaveX(ctx context.Context) *ChinchiroPlayer {
-	node, err := cpuo.Save(ctx)
+func (_u *ChinchiroPlayerUpdateOne) SaveX(ctx context.Context) *ChinchiroPlayer {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -325,40 +325,40 @@ func (cpuo *ChinchiroPlayerUpdateOne) SaveX(ctx context.Context) *ChinchiroPlaye
 }
 
 // Exec executes the query on the entity.
-func (cpuo *ChinchiroPlayerUpdateOne) Exec(ctx context.Context) error {
-	_, err := cpuo.Save(ctx)
+func (_u *ChinchiroPlayerUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (cpuo *ChinchiroPlayerUpdateOne) ExecX(ctx context.Context) {
-	if err := cpuo.Exec(ctx); err != nil {
+func (_u *ChinchiroPlayerUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (cpuo *ChinchiroPlayerUpdateOne) check() error {
-	if cpuo.mutation.UserCleared() && len(cpuo.mutation.UserIDs()) > 0 {
+func (_u *ChinchiroPlayerUpdateOne) check() error {
+	if _u.mutation.UserCleared() && len(_u.mutation.UserIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ChinchiroPlayer.user"`)
 	}
-	if cpuo.mutation.SessionCleared() && len(cpuo.mutation.SessionIDs()) > 0 {
+	if _u.mutation.SessionCleared() && len(_u.mutation.SessionIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ChinchiroPlayer.session"`)
 	}
 	return nil
 }
 
-func (cpuo *ChinchiroPlayerUpdateOne) sqlSave(ctx context.Context) (_node *ChinchiroPlayer, err error) {
-	if err := cpuo.check(); err != nil {
+func (_u *ChinchiroPlayerUpdateOne) sqlSave(ctx context.Context) (_node *ChinchiroPlayer, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(chinchiroplayer.Table, chinchiroplayer.Columns, sqlgraph.NewFieldSpec(chinchiroplayer.FieldID, field.TypeUUID))
-	id, ok := cpuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "ChinchiroPlayer.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := cpuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, chinchiroplayer.FieldID)
 		for _, f := range fields {
@@ -370,46 +370,46 @@ func (cpuo *ChinchiroPlayerUpdateOne) sqlSave(ctx context.Context) (_node *Chinc
 			}
 		}
 	}
-	if ps := cpuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := cpuo.mutation.Point(); ok {
+	if value, ok := _u.mutation.Point(); ok {
 		_spec.SetField(chinchiroplayer.FieldPoint, field.TypeInt, value)
 	}
-	if value, ok := cpuo.mutation.AddedPoint(); ok {
+	if value, ok := _u.mutation.AddedPoint(); ok {
 		_spec.AddField(chinchiroplayer.FieldPoint, field.TypeInt, value)
 	}
-	if value, ok := cpuo.mutation.IsOwner(); ok {
+	if value, ok := _u.mutation.IsOwner(); ok {
 		_spec.SetField(chinchiroplayer.FieldIsOwner, field.TypeBool, value)
 	}
-	if value, ok := cpuo.mutation.Bet(); ok {
+	if value, ok := _u.mutation.Bet(); ok {
 		_spec.SetField(chinchiroplayer.FieldBet, field.TypeInt, value)
 	}
-	if value, ok := cpuo.mutation.AddedBet(); ok {
+	if value, ok := _u.mutation.AddedBet(); ok {
 		_spec.AddField(chinchiroplayer.FieldBet, field.TypeInt, value)
 	}
-	if cpuo.mutation.BetCleared() {
+	if _u.mutation.BetCleared() {
 		_spec.ClearField(chinchiroplayer.FieldBet, field.TypeInt)
 	}
-	if value, ok := cpuo.mutation.Dices(); ok {
+	if value, ok := _u.mutation.Dices(); ok {
 		_spec.SetField(chinchiroplayer.FieldDices, field.TypeJSON, value)
 	}
-	if value, ok := cpuo.mutation.AppendedDices(); ok {
+	if value, ok := _u.mutation.AppendedDices(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, chinchiroplayer.FieldDices, value)
 		})
 	}
-	if cpuo.mutation.DicesCleared() {
+	if _u.mutation.DicesCleared() {
 		_spec.ClearField(chinchiroplayer.FieldDices, field.TypeJSON)
 	}
-	_node = &ChinchiroPlayer{config: cpuo.config}
+	_node = &ChinchiroPlayer{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, cpuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{chinchiroplayer.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -417,6 +417,6 @@ func (cpuo *ChinchiroPlayerUpdateOne) sqlSave(ctx context.Context) (_node *Chinc
 		}
 		return nil, err
 	}
-	cpuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

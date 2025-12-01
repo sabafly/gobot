@@ -26,127 +26,127 @@ type ChinchiroSessionUpdate struct {
 }
 
 // Where appends a list predicates to the ChinchiroSessionUpdate builder.
-func (csu *ChinchiroSessionUpdate) Where(ps ...predicate.ChinchiroSession) *ChinchiroSessionUpdate {
-	csu.mutation.Where(ps...)
-	return csu
+func (_u *ChinchiroSessionUpdate) Where(ps ...predicate.ChinchiroSession) *ChinchiroSessionUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetTurn sets the "turn" field.
-func (csu *ChinchiroSessionUpdate) SetTurn(i int) *ChinchiroSessionUpdate {
-	csu.mutation.ResetTurn()
-	csu.mutation.SetTurn(i)
-	return csu
+func (_u *ChinchiroSessionUpdate) SetTurn(v int) *ChinchiroSessionUpdate {
+	_u.mutation.ResetTurn()
+	_u.mutation.SetTurn(v)
+	return _u
 }
 
 // SetNillableTurn sets the "turn" field if the given value is not nil.
-func (csu *ChinchiroSessionUpdate) SetNillableTurn(i *int) *ChinchiroSessionUpdate {
-	if i != nil {
-		csu.SetTurn(*i)
+func (_u *ChinchiroSessionUpdate) SetNillableTurn(v *int) *ChinchiroSessionUpdate {
+	if v != nil {
+		_u.SetTurn(*v)
 	}
-	return csu
+	return _u
 }
 
-// AddTurn adds i to the "turn" field.
-func (csu *ChinchiroSessionUpdate) AddTurn(i int) *ChinchiroSessionUpdate {
-	csu.mutation.AddTurn(i)
-	return csu
+// AddTurn adds value to the "turn" field.
+func (_u *ChinchiroSessionUpdate) AddTurn(v int) *ChinchiroSessionUpdate {
+	_u.mutation.AddTurn(v)
+	return _u
 }
 
 // SetLoop sets the "loop" field.
-func (csu *ChinchiroSessionUpdate) SetLoop(i int) *ChinchiroSessionUpdate {
-	csu.mutation.ResetLoop()
-	csu.mutation.SetLoop(i)
-	return csu
+func (_u *ChinchiroSessionUpdate) SetLoop(v int) *ChinchiroSessionUpdate {
+	_u.mutation.ResetLoop()
+	_u.mutation.SetLoop(v)
+	return _u
 }
 
 // SetNillableLoop sets the "loop" field if the given value is not nil.
-func (csu *ChinchiroSessionUpdate) SetNillableLoop(i *int) *ChinchiroSessionUpdate {
-	if i != nil {
-		csu.SetLoop(*i)
+func (_u *ChinchiroSessionUpdate) SetNillableLoop(v *int) *ChinchiroSessionUpdate {
+	if v != nil {
+		_u.SetLoop(*v)
 	}
-	return csu
+	return _u
 }
 
-// AddLoop adds i to the "loop" field.
-func (csu *ChinchiroSessionUpdate) AddLoop(i int) *ChinchiroSessionUpdate {
-	csu.mutation.AddLoop(i)
-	return csu
+// AddLoop adds value to the "loop" field.
+func (_u *ChinchiroSessionUpdate) AddLoop(v int) *ChinchiroSessionUpdate {
+	_u.mutation.AddLoop(v)
+	return _u
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (csu *ChinchiroSessionUpdate) SetGuildID(id snowflake.ID) *ChinchiroSessionUpdate {
-	csu.mutation.SetGuildID(id)
-	return csu
+func (_u *ChinchiroSessionUpdate) SetGuildID(id snowflake.ID) *ChinchiroSessionUpdate {
+	_u.mutation.SetGuildID(id)
+	return _u
 }
 
 // SetNillableGuildID sets the "guild" edge to the Guild entity by ID if the given value is not nil.
-func (csu *ChinchiroSessionUpdate) SetNillableGuildID(id *snowflake.ID) *ChinchiroSessionUpdate {
+func (_u *ChinchiroSessionUpdate) SetNillableGuildID(id *snowflake.ID) *ChinchiroSessionUpdate {
 	if id != nil {
-		csu = csu.SetGuildID(*id)
+		_u = _u.SetGuildID(*id)
 	}
-	return csu
+	return _u
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (csu *ChinchiroSessionUpdate) SetGuild(g *Guild) *ChinchiroSessionUpdate {
-	return csu.SetGuildID(g.ID)
+func (_u *ChinchiroSessionUpdate) SetGuild(v *Guild) *ChinchiroSessionUpdate {
+	return _u.SetGuildID(v.ID)
 }
 
 // AddPlayerIDs adds the "players" edge to the ChinchiroPlayer entity by IDs.
-func (csu *ChinchiroSessionUpdate) AddPlayerIDs(ids ...uuid.UUID) *ChinchiroSessionUpdate {
-	csu.mutation.AddPlayerIDs(ids...)
-	return csu
+func (_u *ChinchiroSessionUpdate) AddPlayerIDs(ids ...uuid.UUID) *ChinchiroSessionUpdate {
+	_u.mutation.AddPlayerIDs(ids...)
+	return _u
 }
 
 // AddPlayers adds the "players" edges to the ChinchiroPlayer entity.
-func (csu *ChinchiroSessionUpdate) AddPlayers(c ...*ChinchiroPlayer) *ChinchiroSessionUpdate {
-	ids := make([]uuid.UUID, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
+func (_u *ChinchiroSessionUpdate) AddPlayers(v ...*ChinchiroPlayer) *ChinchiroSessionUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return csu.AddPlayerIDs(ids...)
+	return _u.AddPlayerIDs(ids...)
 }
 
 // Mutation returns the ChinchiroSessionMutation object of the builder.
-func (csu *ChinchiroSessionUpdate) Mutation() *ChinchiroSessionMutation {
-	return csu.mutation
+func (_u *ChinchiroSessionUpdate) Mutation() *ChinchiroSessionMutation {
+	return _u.mutation
 }
 
 // ClearGuild clears the "guild" edge to the Guild entity.
-func (csu *ChinchiroSessionUpdate) ClearGuild() *ChinchiroSessionUpdate {
-	csu.mutation.ClearGuild()
-	return csu
+func (_u *ChinchiroSessionUpdate) ClearGuild() *ChinchiroSessionUpdate {
+	_u.mutation.ClearGuild()
+	return _u
 }
 
 // ClearPlayers clears all "players" edges to the ChinchiroPlayer entity.
-func (csu *ChinchiroSessionUpdate) ClearPlayers() *ChinchiroSessionUpdate {
-	csu.mutation.ClearPlayers()
-	return csu
+func (_u *ChinchiroSessionUpdate) ClearPlayers() *ChinchiroSessionUpdate {
+	_u.mutation.ClearPlayers()
+	return _u
 }
 
 // RemovePlayerIDs removes the "players" edge to ChinchiroPlayer entities by IDs.
-func (csu *ChinchiroSessionUpdate) RemovePlayerIDs(ids ...uuid.UUID) *ChinchiroSessionUpdate {
-	csu.mutation.RemovePlayerIDs(ids...)
-	return csu
+func (_u *ChinchiroSessionUpdate) RemovePlayerIDs(ids ...uuid.UUID) *ChinchiroSessionUpdate {
+	_u.mutation.RemovePlayerIDs(ids...)
+	return _u
 }
 
 // RemovePlayers removes "players" edges to ChinchiroPlayer entities.
-func (csu *ChinchiroSessionUpdate) RemovePlayers(c ...*ChinchiroPlayer) *ChinchiroSessionUpdate {
-	ids := make([]uuid.UUID, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
+func (_u *ChinchiroSessionUpdate) RemovePlayers(v ...*ChinchiroPlayer) *ChinchiroSessionUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return csu.RemovePlayerIDs(ids...)
+	return _u.RemovePlayerIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (csu *ChinchiroSessionUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, csu.sqlSave, csu.mutation, csu.hooks)
+func (_u *ChinchiroSessionUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (csu *ChinchiroSessionUpdate) SaveX(ctx context.Context) int {
-	affected, err := csu.Save(ctx)
+func (_u *ChinchiroSessionUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -154,40 +154,40 @@ func (csu *ChinchiroSessionUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (csu *ChinchiroSessionUpdate) Exec(ctx context.Context) error {
-	_, err := csu.Save(ctx)
+func (_u *ChinchiroSessionUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (csu *ChinchiroSessionUpdate) ExecX(ctx context.Context) {
-	if err := csu.Exec(ctx); err != nil {
+func (_u *ChinchiroSessionUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
-func (csu *ChinchiroSessionUpdate) sqlSave(ctx context.Context) (n int, err error) {
+func (_u *ChinchiroSessionUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	_spec := sqlgraph.NewUpdateSpec(chinchirosession.Table, chinchirosession.Columns, sqlgraph.NewFieldSpec(chinchirosession.FieldID, field.TypeUUID))
-	if ps := csu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := csu.mutation.Turn(); ok {
+	if value, ok := _u.mutation.Turn(); ok {
 		_spec.SetField(chinchirosession.FieldTurn, field.TypeInt, value)
 	}
-	if value, ok := csu.mutation.AddedTurn(); ok {
+	if value, ok := _u.mutation.AddedTurn(); ok {
 		_spec.AddField(chinchirosession.FieldTurn, field.TypeInt, value)
 	}
-	if value, ok := csu.mutation.Loop(); ok {
+	if value, ok := _u.mutation.Loop(); ok {
 		_spec.SetField(chinchirosession.FieldLoop, field.TypeInt, value)
 	}
-	if value, ok := csu.mutation.AddedLoop(); ok {
+	if value, ok := _u.mutation.AddedLoop(); ok {
 		_spec.AddField(chinchirosession.FieldLoop, field.TypeInt, value)
 	}
-	if csu.mutation.GuildCleared() {
+	if _u.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -200,7 +200,7 @@ func (csu *ChinchiroSessionUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := csu.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -216,7 +216,7 @@ func (csu *ChinchiroSessionUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if csu.mutation.PlayersCleared() {
+	if _u.mutation.PlayersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -229,7 +229,7 @@ func (csu *ChinchiroSessionUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := csu.mutation.RemovedPlayersIDs(); len(nodes) > 0 && !csu.mutation.PlayersCleared() {
+	if nodes := _u.mutation.RemovedPlayersIDs(); len(nodes) > 0 && !_u.mutation.PlayersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -245,7 +245,7 @@ func (csu *ChinchiroSessionUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := csu.mutation.PlayersIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.PlayersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -261,7 +261,7 @@ func (csu *ChinchiroSessionUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, csu.driver, _spec); err != nil {
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{chinchirosession.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -269,8 +269,8 @@ func (csu *ChinchiroSessionUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		return 0, err
 	}
-	csu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // ChinchiroSessionUpdateOne is the builder for updating a single ChinchiroSession entity.
@@ -282,134 +282,134 @@ type ChinchiroSessionUpdateOne struct {
 }
 
 // SetTurn sets the "turn" field.
-func (csuo *ChinchiroSessionUpdateOne) SetTurn(i int) *ChinchiroSessionUpdateOne {
-	csuo.mutation.ResetTurn()
-	csuo.mutation.SetTurn(i)
-	return csuo
+func (_u *ChinchiroSessionUpdateOne) SetTurn(v int) *ChinchiroSessionUpdateOne {
+	_u.mutation.ResetTurn()
+	_u.mutation.SetTurn(v)
+	return _u
 }
 
 // SetNillableTurn sets the "turn" field if the given value is not nil.
-func (csuo *ChinchiroSessionUpdateOne) SetNillableTurn(i *int) *ChinchiroSessionUpdateOne {
-	if i != nil {
-		csuo.SetTurn(*i)
+func (_u *ChinchiroSessionUpdateOne) SetNillableTurn(v *int) *ChinchiroSessionUpdateOne {
+	if v != nil {
+		_u.SetTurn(*v)
 	}
-	return csuo
+	return _u
 }
 
-// AddTurn adds i to the "turn" field.
-func (csuo *ChinchiroSessionUpdateOne) AddTurn(i int) *ChinchiroSessionUpdateOne {
-	csuo.mutation.AddTurn(i)
-	return csuo
+// AddTurn adds value to the "turn" field.
+func (_u *ChinchiroSessionUpdateOne) AddTurn(v int) *ChinchiroSessionUpdateOne {
+	_u.mutation.AddTurn(v)
+	return _u
 }
 
 // SetLoop sets the "loop" field.
-func (csuo *ChinchiroSessionUpdateOne) SetLoop(i int) *ChinchiroSessionUpdateOne {
-	csuo.mutation.ResetLoop()
-	csuo.mutation.SetLoop(i)
-	return csuo
+func (_u *ChinchiroSessionUpdateOne) SetLoop(v int) *ChinchiroSessionUpdateOne {
+	_u.mutation.ResetLoop()
+	_u.mutation.SetLoop(v)
+	return _u
 }
 
 // SetNillableLoop sets the "loop" field if the given value is not nil.
-func (csuo *ChinchiroSessionUpdateOne) SetNillableLoop(i *int) *ChinchiroSessionUpdateOne {
-	if i != nil {
-		csuo.SetLoop(*i)
+func (_u *ChinchiroSessionUpdateOne) SetNillableLoop(v *int) *ChinchiroSessionUpdateOne {
+	if v != nil {
+		_u.SetLoop(*v)
 	}
-	return csuo
+	return _u
 }
 
-// AddLoop adds i to the "loop" field.
-func (csuo *ChinchiroSessionUpdateOne) AddLoop(i int) *ChinchiroSessionUpdateOne {
-	csuo.mutation.AddLoop(i)
-	return csuo
+// AddLoop adds value to the "loop" field.
+func (_u *ChinchiroSessionUpdateOne) AddLoop(v int) *ChinchiroSessionUpdateOne {
+	_u.mutation.AddLoop(v)
+	return _u
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (csuo *ChinchiroSessionUpdateOne) SetGuildID(id snowflake.ID) *ChinchiroSessionUpdateOne {
-	csuo.mutation.SetGuildID(id)
-	return csuo
+func (_u *ChinchiroSessionUpdateOne) SetGuildID(id snowflake.ID) *ChinchiroSessionUpdateOne {
+	_u.mutation.SetGuildID(id)
+	return _u
 }
 
 // SetNillableGuildID sets the "guild" edge to the Guild entity by ID if the given value is not nil.
-func (csuo *ChinchiroSessionUpdateOne) SetNillableGuildID(id *snowflake.ID) *ChinchiroSessionUpdateOne {
+func (_u *ChinchiroSessionUpdateOne) SetNillableGuildID(id *snowflake.ID) *ChinchiroSessionUpdateOne {
 	if id != nil {
-		csuo = csuo.SetGuildID(*id)
+		_u = _u.SetGuildID(*id)
 	}
-	return csuo
+	return _u
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (csuo *ChinchiroSessionUpdateOne) SetGuild(g *Guild) *ChinchiroSessionUpdateOne {
-	return csuo.SetGuildID(g.ID)
+func (_u *ChinchiroSessionUpdateOne) SetGuild(v *Guild) *ChinchiroSessionUpdateOne {
+	return _u.SetGuildID(v.ID)
 }
 
 // AddPlayerIDs adds the "players" edge to the ChinchiroPlayer entity by IDs.
-func (csuo *ChinchiroSessionUpdateOne) AddPlayerIDs(ids ...uuid.UUID) *ChinchiroSessionUpdateOne {
-	csuo.mutation.AddPlayerIDs(ids...)
-	return csuo
+func (_u *ChinchiroSessionUpdateOne) AddPlayerIDs(ids ...uuid.UUID) *ChinchiroSessionUpdateOne {
+	_u.mutation.AddPlayerIDs(ids...)
+	return _u
 }
 
 // AddPlayers adds the "players" edges to the ChinchiroPlayer entity.
-func (csuo *ChinchiroSessionUpdateOne) AddPlayers(c ...*ChinchiroPlayer) *ChinchiroSessionUpdateOne {
-	ids := make([]uuid.UUID, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
+func (_u *ChinchiroSessionUpdateOne) AddPlayers(v ...*ChinchiroPlayer) *ChinchiroSessionUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return csuo.AddPlayerIDs(ids...)
+	return _u.AddPlayerIDs(ids...)
 }
 
 // Mutation returns the ChinchiroSessionMutation object of the builder.
-func (csuo *ChinchiroSessionUpdateOne) Mutation() *ChinchiroSessionMutation {
-	return csuo.mutation
+func (_u *ChinchiroSessionUpdateOne) Mutation() *ChinchiroSessionMutation {
+	return _u.mutation
 }
 
 // ClearGuild clears the "guild" edge to the Guild entity.
-func (csuo *ChinchiroSessionUpdateOne) ClearGuild() *ChinchiroSessionUpdateOne {
-	csuo.mutation.ClearGuild()
-	return csuo
+func (_u *ChinchiroSessionUpdateOne) ClearGuild() *ChinchiroSessionUpdateOne {
+	_u.mutation.ClearGuild()
+	return _u
 }
 
 // ClearPlayers clears all "players" edges to the ChinchiroPlayer entity.
-func (csuo *ChinchiroSessionUpdateOne) ClearPlayers() *ChinchiroSessionUpdateOne {
-	csuo.mutation.ClearPlayers()
-	return csuo
+func (_u *ChinchiroSessionUpdateOne) ClearPlayers() *ChinchiroSessionUpdateOne {
+	_u.mutation.ClearPlayers()
+	return _u
 }
 
 // RemovePlayerIDs removes the "players" edge to ChinchiroPlayer entities by IDs.
-func (csuo *ChinchiroSessionUpdateOne) RemovePlayerIDs(ids ...uuid.UUID) *ChinchiroSessionUpdateOne {
-	csuo.mutation.RemovePlayerIDs(ids...)
-	return csuo
+func (_u *ChinchiroSessionUpdateOne) RemovePlayerIDs(ids ...uuid.UUID) *ChinchiroSessionUpdateOne {
+	_u.mutation.RemovePlayerIDs(ids...)
+	return _u
 }
 
 // RemovePlayers removes "players" edges to ChinchiroPlayer entities.
-func (csuo *ChinchiroSessionUpdateOne) RemovePlayers(c ...*ChinchiroPlayer) *ChinchiroSessionUpdateOne {
-	ids := make([]uuid.UUID, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
+func (_u *ChinchiroSessionUpdateOne) RemovePlayers(v ...*ChinchiroPlayer) *ChinchiroSessionUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return csuo.RemovePlayerIDs(ids...)
+	return _u.RemovePlayerIDs(ids...)
 }
 
 // Where appends a list predicates to the ChinchiroSessionUpdate builder.
-func (csuo *ChinchiroSessionUpdateOne) Where(ps ...predicate.ChinchiroSession) *ChinchiroSessionUpdateOne {
-	csuo.mutation.Where(ps...)
-	return csuo
+func (_u *ChinchiroSessionUpdateOne) Where(ps ...predicate.ChinchiroSession) *ChinchiroSessionUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (csuo *ChinchiroSessionUpdateOne) Select(field string, fields ...string) *ChinchiroSessionUpdateOne {
-	csuo.fields = append([]string{field}, fields...)
-	return csuo
+func (_u *ChinchiroSessionUpdateOne) Select(field string, fields ...string) *ChinchiroSessionUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated ChinchiroSession entity.
-func (csuo *ChinchiroSessionUpdateOne) Save(ctx context.Context) (*ChinchiroSession, error) {
-	return withHooks(ctx, csuo.sqlSave, csuo.mutation, csuo.hooks)
+func (_u *ChinchiroSessionUpdateOne) Save(ctx context.Context) (*ChinchiroSession, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (csuo *ChinchiroSessionUpdateOne) SaveX(ctx context.Context) *ChinchiroSession {
-	node, err := csuo.Save(ctx)
+func (_u *ChinchiroSessionUpdateOne) SaveX(ctx context.Context) *ChinchiroSession {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -417,26 +417,26 @@ func (csuo *ChinchiroSessionUpdateOne) SaveX(ctx context.Context) *ChinchiroSess
 }
 
 // Exec executes the query on the entity.
-func (csuo *ChinchiroSessionUpdateOne) Exec(ctx context.Context) error {
-	_, err := csuo.Save(ctx)
+func (_u *ChinchiroSessionUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (csuo *ChinchiroSessionUpdateOne) ExecX(ctx context.Context) {
-	if err := csuo.Exec(ctx); err != nil {
+func (_u *ChinchiroSessionUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
-func (csuo *ChinchiroSessionUpdateOne) sqlSave(ctx context.Context) (_node *ChinchiroSession, err error) {
+func (_u *ChinchiroSessionUpdateOne) sqlSave(ctx context.Context) (_node *ChinchiroSession, err error) {
 	_spec := sqlgraph.NewUpdateSpec(chinchirosession.Table, chinchirosession.Columns, sqlgraph.NewFieldSpec(chinchirosession.FieldID, field.TypeUUID))
-	id, ok := csuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "ChinchiroSession.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := csuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, chinchirosession.FieldID)
 		for _, f := range fields {
@@ -448,26 +448,26 @@ func (csuo *ChinchiroSessionUpdateOne) sqlSave(ctx context.Context) (_node *Chin
 			}
 		}
 	}
-	if ps := csuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := csuo.mutation.Turn(); ok {
+	if value, ok := _u.mutation.Turn(); ok {
 		_spec.SetField(chinchirosession.FieldTurn, field.TypeInt, value)
 	}
-	if value, ok := csuo.mutation.AddedTurn(); ok {
+	if value, ok := _u.mutation.AddedTurn(); ok {
 		_spec.AddField(chinchirosession.FieldTurn, field.TypeInt, value)
 	}
-	if value, ok := csuo.mutation.Loop(); ok {
+	if value, ok := _u.mutation.Loop(); ok {
 		_spec.SetField(chinchirosession.FieldLoop, field.TypeInt, value)
 	}
-	if value, ok := csuo.mutation.AddedLoop(); ok {
+	if value, ok := _u.mutation.AddedLoop(); ok {
 		_spec.AddField(chinchirosession.FieldLoop, field.TypeInt, value)
 	}
-	if csuo.mutation.GuildCleared() {
+	if _u.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -480,7 +480,7 @@ func (csuo *ChinchiroSessionUpdateOne) sqlSave(ctx context.Context) (_node *Chin
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := csuo.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -496,7 +496,7 @@ func (csuo *ChinchiroSessionUpdateOne) sqlSave(ctx context.Context) (_node *Chin
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if csuo.mutation.PlayersCleared() {
+	if _u.mutation.PlayersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -509,7 +509,7 @@ func (csuo *ChinchiroSessionUpdateOne) sqlSave(ctx context.Context) (_node *Chin
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := csuo.mutation.RemovedPlayersIDs(); len(nodes) > 0 && !csuo.mutation.PlayersCleared() {
+	if nodes := _u.mutation.RemovedPlayersIDs(); len(nodes) > 0 && !_u.mutation.PlayersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -525,7 +525,7 @@ func (csuo *ChinchiroSessionUpdateOne) sqlSave(ctx context.Context) (_node *Chin
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := csuo.mutation.PlayersIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.PlayersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -541,10 +541,10 @@ func (csuo *ChinchiroSessionUpdateOne) sqlSave(ctx context.Context) (_node *Chin
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_node = &ChinchiroSession{config: csuo.config}
+	_node = &ChinchiroSession{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, csuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{chinchirosession.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -552,6 +552,6 @@ func (csuo *ChinchiroSessionUpdateOne) sqlSave(ctx context.Context) (_node *Chin
 		}
 		return nil, err
 	}
-	csuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

@@ -20,56 +20,56 @@ type Thread1000ChannelDelete struct {
 }
 
 // Where appends a list predicates to the Thread1000ChannelDelete builder.
-func (td *Thread1000ChannelDelete) Where(ps ...predicate.Thread1000Channel) *Thread1000ChannelDelete {
-	td.mutation.Where(ps...)
-	return td
+func (_d *Thread1000ChannelDelete) Where(ps ...predicate.Thread1000Channel) *Thread1000ChannelDelete {
+	_d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (td *Thread1000ChannelDelete) Exec(ctx context.Context) (int, error) {
-	return withHooks(ctx, td.sqlExec, td.mutation, td.hooks)
+func (_d *Thread1000ChannelDelete) Exec(ctx context.Context) (int, error) {
+	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (td *Thread1000ChannelDelete) ExecX(ctx context.Context) int {
-	n, err := td.Exec(ctx)
+func (_d *Thread1000ChannelDelete) ExecX(ctx context.Context) int {
+	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
 	}
 	return n
 }
 
-func (td *Thread1000ChannelDelete) sqlExec(ctx context.Context) (int, error) {
+func (_d *Thread1000ChannelDelete) sqlExec(ctx context.Context) (int, error) {
 	_spec := sqlgraph.NewDeleteSpec(thread1000channel.Table, sqlgraph.NewFieldSpec(thread1000channel.FieldID, field.TypeUUID))
-	if ps := td.mutation.predicates; len(ps) > 0 {
+	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	affected, err := sqlgraph.DeleteNodes(ctx, td.driver, _spec)
+	affected, err := sqlgraph.DeleteNodes(ctx, _d.driver, _spec)
 	if err != nil && sqlgraph.IsConstraintError(err) {
 		err = &ConstraintError{msg: err.Error(), wrap: err}
 	}
-	td.mutation.done = true
+	_d.mutation.done = true
 	return affected, err
 }
 
 // Thread1000ChannelDeleteOne is the builder for deleting a single Thread1000Channel entity.
 type Thread1000ChannelDeleteOne struct {
-	td *Thread1000ChannelDelete
+	_d *Thread1000ChannelDelete
 }
 
 // Where appends a list predicates to the Thread1000ChannelDelete builder.
-func (tdo *Thread1000ChannelDeleteOne) Where(ps ...predicate.Thread1000Channel) *Thread1000ChannelDeleteOne {
-	tdo.td.mutation.Where(ps...)
-	return tdo
+func (_d *Thread1000ChannelDeleteOne) Where(ps ...predicate.Thread1000Channel) *Thread1000ChannelDeleteOne {
+	_d._d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query.
-func (tdo *Thread1000ChannelDeleteOne) Exec(ctx context.Context) error {
-	n, err := tdo.td.Exec(ctx)
+func (_d *Thread1000ChannelDeleteOne) Exec(ctx context.Context) error {
+	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
@@ -81,8 +81,8 @@ func (tdo *Thread1000ChannelDeleteOne) Exec(ctx context.Context) error {
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tdo *Thread1000ChannelDeleteOne) ExecX(ctx context.Context) {
-	if err := tdo.Exec(ctx); err != nil {
+func (_d *Thread1000ChannelDeleteOne) ExecX(ctx context.Context) {
+	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

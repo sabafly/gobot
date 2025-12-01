@@ -81,7 +81,7 @@ func (*MessageRemind) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the MessageRemind fields.
-func (mr *MessageRemind) assignValues(columns []string, values []any) error {
+func (_m *MessageRemind) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -91,47 +91,47 @@ func (mr *MessageRemind) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				mr.ID = *value
+				_m.ID = *value
 			}
 		case messageremind.FieldChannelID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field channel_id", values[i])
 			} else if value.Valid {
-				mr.ChannelID = snowflake.ID(value.Int64)
+				_m.ChannelID = snowflake.ID(value.Int64)
 			}
 		case messageremind.FieldAuthorID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field author_id", values[i])
 			} else if value.Valid {
-				mr.AuthorID = snowflake.ID(value.Int64)
+				_m.AuthorID = snowflake.ID(value.Int64)
 			}
 		case messageremind.FieldTime:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field time", values[i])
 			} else if value.Valid {
-				mr.Time = value.Time
+				_m.Time = value.Time
 			}
 		case messageremind.FieldContent:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field content", values[i])
 			} else if value.Valid {
-				mr.Content = value.String
+				_m.Content = value.String
 			}
 		case messageremind.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
-				mr.Name = value.String
+				_m.Name = value.String
 			}
 		case messageremind.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field guild_reminds", values[i])
 			} else if value.Valid {
-				mr.guild_reminds = new(snowflake.ID)
-				*mr.guild_reminds = snowflake.ID(value.Int64)
+				_m.guild_reminds = new(snowflake.ID)
+				*_m.guild_reminds = snowflake.ID(value.Int64)
 			}
 		default:
-			mr.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -139,52 +139,52 @@ func (mr *MessageRemind) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the MessageRemind.
 // This includes values selected through modifiers, order, etc.
-func (mr *MessageRemind) Value(name string) (ent.Value, error) {
-	return mr.selectValues.Get(name)
+func (_m *MessageRemind) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // QueryGuild queries the "guild" edge of the MessageRemind entity.
-func (mr *MessageRemind) QueryGuild() *GuildQuery {
-	return NewMessageRemindClient(mr.config).QueryGuild(mr)
+func (_m *MessageRemind) QueryGuild() *GuildQuery {
+	return NewMessageRemindClient(_m.config).QueryGuild(_m)
 }
 
 // Update returns a builder for updating this MessageRemind.
 // Note that you need to call MessageRemind.Unwrap() before calling this method if this MessageRemind
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (mr *MessageRemind) Update() *MessageRemindUpdateOne {
-	return NewMessageRemindClient(mr.config).UpdateOne(mr)
+func (_m *MessageRemind) Update() *MessageRemindUpdateOne {
+	return NewMessageRemindClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the MessageRemind entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (mr *MessageRemind) Unwrap() *MessageRemind {
-	_tx, ok := mr.config.driver.(*txDriver)
+func (_m *MessageRemind) Unwrap() *MessageRemind {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: MessageRemind is not a transactional entity")
 	}
-	mr.config.driver = _tx.drv
-	return mr
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (mr *MessageRemind) String() string {
+func (_m *MessageRemind) String() string {
 	var builder strings.Builder
 	builder.WriteString("MessageRemind(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", mr.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("channel_id=")
-	builder.WriteString(fmt.Sprintf("%v", mr.ChannelID))
+	builder.WriteString(fmt.Sprintf("%v", _m.ChannelID))
 	builder.WriteString(", ")
 	builder.WriteString("author_id=")
-	builder.WriteString(fmt.Sprintf("%v", mr.AuthorID))
+	builder.WriteString(fmt.Sprintf("%v", _m.AuthorID))
 	builder.WriteString(", ")
 	builder.WriteString("time=")
-	builder.WriteString(mr.Time.Format(time.ANSIC))
+	builder.WriteString(_m.Time.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("content=")
-	builder.WriteString(mr.Content)
+	builder.WriteString(_m.Content)
 	builder.WriteString(", ")
 	builder.WriteString("name=")
-	builder.WriteString(mr.Name)
+	builder.WriteString(_m.Name)
 	builder.WriteByte(')')
 	return builder.String()
 }

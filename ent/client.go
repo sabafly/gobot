@@ -362,8 +362,8 @@ func (c *ChinchiroPlayerClient) Update() *ChinchiroPlayerUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *ChinchiroPlayerClient) UpdateOne(cp *ChinchiroPlayer) *ChinchiroPlayerUpdateOne {
-	mutation := newChinchiroPlayerMutation(c.config, OpUpdateOne, withChinchiroPlayer(cp))
+func (c *ChinchiroPlayerClient) UpdateOne(_m *ChinchiroPlayer) *ChinchiroPlayerUpdateOne {
+	mutation := newChinchiroPlayerMutation(c.config, OpUpdateOne, withChinchiroPlayer(_m))
 	return &ChinchiroPlayerUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -380,8 +380,8 @@ func (c *ChinchiroPlayerClient) Delete() *ChinchiroPlayerDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *ChinchiroPlayerClient) DeleteOne(cp *ChinchiroPlayer) *ChinchiroPlayerDeleteOne {
-	return c.DeleteOneID(cp.ID)
+func (c *ChinchiroPlayerClient) DeleteOne(_m *ChinchiroPlayer) *ChinchiroPlayerDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -416,32 +416,32 @@ func (c *ChinchiroPlayerClient) GetX(ctx context.Context, id uuid.UUID) *Chinchi
 }
 
 // QueryUser queries the user edge of a ChinchiroPlayer.
-func (c *ChinchiroPlayerClient) QueryUser(cp *ChinchiroPlayer) *UserQuery {
+func (c *ChinchiroPlayerClient) QueryUser(_m *ChinchiroPlayer) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := cp.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(chinchiroplayer.Table, chinchiroplayer.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, chinchiroplayer.UserTable, chinchiroplayer.UserColumn),
 		)
-		fromV = sqlgraph.Neighbors(cp.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QuerySession queries the session edge of a ChinchiroPlayer.
-func (c *ChinchiroPlayerClient) QuerySession(cp *ChinchiroPlayer) *ChinchiroSessionQuery {
+func (c *ChinchiroPlayerClient) QuerySession(_m *ChinchiroPlayer) *ChinchiroSessionQuery {
 	query := (&ChinchiroSessionClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := cp.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(chinchiroplayer.Table, chinchiroplayer.FieldID, id),
 			sqlgraph.To(chinchirosession.Table, chinchirosession.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, chinchiroplayer.SessionTable, chinchiroplayer.SessionColumn),
 		)
-		fromV = sqlgraph.Neighbors(cp.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -527,8 +527,8 @@ func (c *ChinchiroSessionClient) Update() *ChinchiroSessionUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *ChinchiroSessionClient) UpdateOne(cs *ChinchiroSession) *ChinchiroSessionUpdateOne {
-	mutation := newChinchiroSessionMutation(c.config, OpUpdateOne, withChinchiroSession(cs))
+func (c *ChinchiroSessionClient) UpdateOne(_m *ChinchiroSession) *ChinchiroSessionUpdateOne {
+	mutation := newChinchiroSessionMutation(c.config, OpUpdateOne, withChinchiroSession(_m))
 	return &ChinchiroSessionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -545,8 +545,8 @@ func (c *ChinchiroSessionClient) Delete() *ChinchiroSessionDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *ChinchiroSessionClient) DeleteOne(cs *ChinchiroSession) *ChinchiroSessionDeleteOne {
-	return c.DeleteOneID(cs.ID)
+func (c *ChinchiroSessionClient) DeleteOne(_m *ChinchiroSession) *ChinchiroSessionDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -581,32 +581,32 @@ func (c *ChinchiroSessionClient) GetX(ctx context.Context, id uuid.UUID) *Chinch
 }
 
 // QueryGuild queries the guild edge of a ChinchiroSession.
-func (c *ChinchiroSessionClient) QueryGuild(cs *ChinchiroSession) *GuildQuery {
+func (c *ChinchiroSessionClient) QueryGuild(_m *ChinchiroSession) *GuildQuery {
 	query := (&GuildClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := cs.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(chinchirosession.Table, chinchirosession.FieldID, id),
 			sqlgraph.To(guild.Table, guild.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, chinchirosession.GuildTable, chinchirosession.GuildColumn),
 		)
-		fromV = sqlgraph.Neighbors(cs.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryPlayers queries the players edge of a ChinchiroSession.
-func (c *ChinchiroSessionClient) QueryPlayers(cs *ChinchiroSession) *ChinchiroPlayerQuery {
+func (c *ChinchiroSessionClient) QueryPlayers(_m *ChinchiroSession) *ChinchiroPlayerQuery {
 	query := (&ChinchiroPlayerClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := cs.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(chinchirosession.Table, chinchirosession.FieldID, id),
 			sqlgraph.To(chinchiroplayer.Table, chinchiroplayer.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, chinchirosession.PlayersTable, chinchirosession.PlayersColumn),
 		)
-		fromV = sqlgraph.Neighbors(cs.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -692,8 +692,8 @@ func (c *GuildClient) Update() *GuildUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *GuildClient) UpdateOne(gu *Guild) *GuildUpdateOne {
-	mutation := newGuildMutation(c.config, OpUpdateOne, withGuild(gu))
+func (c *GuildClient) UpdateOne(_m *Guild) *GuildUpdateOne {
+	mutation := newGuildMutation(c.config, OpUpdateOne, withGuild(_m))
 	return &GuildUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -710,8 +710,8 @@ func (c *GuildClient) Delete() *GuildDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *GuildClient) DeleteOne(gu *Guild) *GuildDeleteOne {
-	return c.DeleteOneID(gu.ID)
+func (c *GuildClient) DeleteOne(_m *Guild) *GuildDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -746,160 +746,160 @@ func (c *GuildClient) GetX(ctx context.Context, id snowflake.ID) *Guild {
 }
 
 // QueryOwner queries the owner edge of a Guild.
-func (c *GuildClient) QueryOwner(gu *Guild) *UserQuery {
+func (c *GuildClient) QueryOwner(_m *Guild) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := gu.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(guild.Table, guild.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, guild.OwnerTable, guild.OwnerColumn),
 		)
-		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryMembers queries the members edge of a Guild.
-func (c *GuildClient) QueryMembers(gu *Guild) *MemberQuery {
+func (c *GuildClient) QueryMembers(_m *Guild) *MemberQuery {
 	query := (&MemberClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := gu.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(guild.Table, guild.FieldID, id),
 			sqlgraph.To(member.Table, member.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.MembersTable, guild.MembersColumn),
 		)
-		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryMessagePins queries the message_pins edge of a Guild.
-func (c *GuildClient) QueryMessagePins(gu *Guild) *MessagePinQuery {
+func (c *GuildClient) QueryMessagePins(_m *Guild) *MessagePinQuery {
 	query := (&MessagePinClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := gu.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(guild.Table, guild.FieldID, id),
 			sqlgraph.To(messagepin.Table, messagepin.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.MessagePinsTable, guild.MessagePinsColumn),
 		)
-		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryReminds queries the reminds edge of a Guild.
-func (c *GuildClient) QueryReminds(gu *Guild) *MessageRemindQuery {
+func (c *GuildClient) QueryReminds(_m *Guild) *MessageRemindQuery {
 	query := (&MessageRemindClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := gu.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(guild.Table, guild.FieldID, id),
 			sqlgraph.To(messageremind.Table, messageremind.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.RemindsTable, guild.RemindsColumn),
 		)
-		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryRolePanels queries the role_panels edge of a Guild.
-func (c *GuildClient) QueryRolePanels(gu *Guild) *RolePanelQuery {
+func (c *GuildClient) QueryRolePanels(_m *Guild) *RolePanelQuery {
 	query := (&RolePanelClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := gu.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(guild.Table, guild.FieldID, id),
 			sqlgraph.To(rolepanel.Table, rolepanel.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.RolePanelsTable, guild.RolePanelsColumn),
 		)
-		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryRolePanelPlacements queries the role_panel_placements edge of a Guild.
-func (c *GuildClient) QueryRolePanelPlacements(gu *Guild) *RolePanelPlacedQuery {
+func (c *GuildClient) QueryRolePanelPlacements(_m *Guild) *RolePanelPlacedQuery {
 	query := (&RolePanelPlacedClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := gu.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(guild.Table, guild.FieldID, id),
 			sqlgraph.To(rolepanelplaced.Table, rolepanelplaced.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.RolePanelPlacementsTable, guild.RolePanelPlacementsColumn),
 		)
-		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryRolePanelEdits queries the role_panel_edits edge of a Guild.
-func (c *GuildClient) QueryRolePanelEdits(gu *Guild) *RolePanelEditQuery {
+func (c *GuildClient) QueryRolePanelEdits(_m *Guild) *RolePanelEditQuery {
 	query := (&RolePanelEditClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := gu.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(guild.Table, guild.FieldID, id),
 			sqlgraph.To(rolepaneledit.Table, rolepaneledit.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.RolePanelEditsTable, guild.RolePanelEditsColumn),
 		)
-		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryChinchiroSessions queries the chinchiro_sessions edge of a Guild.
-func (c *GuildClient) QueryChinchiroSessions(gu *Guild) *ChinchiroSessionQuery {
+func (c *GuildClient) QueryChinchiroSessions(_m *Guild) *ChinchiroSessionQuery {
 	query := (&ChinchiroSessionClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := gu.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(guild.Table, guild.FieldID, id),
 			sqlgraph.To(chinchirosession.Table, chinchirosession.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.ChinchiroSessionsTable, guild.ChinchiroSessionsColumn),
 		)
-		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryThreads1000 queries the threads1000 edge of a Guild.
-func (c *GuildClient) QueryThreads1000(gu *Guild) *Thread1000Query {
+func (c *GuildClient) QueryThreads1000(_m *Guild) *Thread1000Query {
 	query := (&Thread1000Client{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := gu.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(guild.Table, guild.FieldID, id),
 			sqlgraph.To(thread1000.Table, thread1000.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.Threads1000Table, guild.Threads1000Column),
 		)
-		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryThread1000Channels queries the thread1000_channels edge of a Guild.
-func (c *GuildClient) QueryThread1000Channels(gu *Guild) *Thread1000ChannelQuery {
+func (c *GuildClient) QueryThread1000Channels(_m *Guild) *Thread1000ChannelQuery {
 	query := (&Thread1000ChannelClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := gu.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(guild.Table, guild.FieldID, id),
 			sqlgraph.To(thread1000channel.Table, thread1000channel.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.Thread1000ChannelsTable, guild.Thread1000ChannelsColumn),
 		)
-		fromV = sqlgraph.Neighbors(gu.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -985,8 +985,8 @@ func (c *MemberClient) Update() *MemberUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *MemberClient) UpdateOne(m *Member) *MemberUpdateOne {
-	mutation := newMemberMutation(c.config, OpUpdateOne, withMember(m))
+func (c *MemberClient) UpdateOne(_m *Member) *MemberUpdateOne {
+	mutation := newMemberMutation(c.config, OpUpdateOne, withMember(_m))
 	return &MemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -1003,8 +1003,8 @@ func (c *MemberClient) Delete() *MemberDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *MemberClient) DeleteOne(m *Member) *MemberDeleteOne {
-	return c.DeleteOneID(m.ID)
+func (c *MemberClient) DeleteOne(_m *Member) *MemberDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -1039,32 +1039,32 @@ func (c *MemberClient) GetX(ctx context.Context, id int) *Member {
 }
 
 // QueryGuild queries the guild edge of a Member.
-func (c *MemberClient) QueryGuild(m *Member) *GuildQuery {
+func (c *MemberClient) QueryGuild(_m *Member) *GuildQuery {
 	query := (&GuildClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := m.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(member.Table, member.FieldID, id),
 			sqlgraph.To(guild.Table, guild.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, member.GuildTable, member.GuildColumn),
 		)
-		fromV = sqlgraph.Neighbors(m.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryUser queries the user edge of a Member.
-func (c *MemberClient) QueryUser(m *Member) *UserQuery {
+func (c *MemberClient) QueryUser(_m *Member) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := m.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(member.Table, member.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, member.UserTable, member.UserColumn),
 		)
-		fromV = sqlgraph.Neighbors(m.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -1150,8 +1150,8 @@ func (c *MessagePinClient) Update() *MessagePinUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *MessagePinClient) UpdateOne(mp *MessagePin) *MessagePinUpdateOne {
-	mutation := newMessagePinMutation(c.config, OpUpdateOne, withMessagePin(mp))
+func (c *MessagePinClient) UpdateOne(_m *MessagePin) *MessagePinUpdateOne {
+	mutation := newMessagePinMutation(c.config, OpUpdateOne, withMessagePin(_m))
 	return &MessagePinUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -1168,8 +1168,8 @@ func (c *MessagePinClient) Delete() *MessagePinDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *MessagePinClient) DeleteOne(mp *MessagePin) *MessagePinDeleteOne {
-	return c.DeleteOneID(mp.ID)
+func (c *MessagePinClient) DeleteOne(_m *MessagePin) *MessagePinDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -1204,16 +1204,16 @@ func (c *MessagePinClient) GetX(ctx context.Context, id uuid.UUID) *MessagePin {
 }
 
 // QueryGuild queries the guild edge of a MessagePin.
-func (c *MessagePinClient) QueryGuild(mp *MessagePin) *GuildQuery {
+func (c *MessagePinClient) QueryGuild(_m *MessagePin) *GuildQuery {
 	query := (&GuildClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := mp.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(messagepin.Table, messagepin.FieldID, id),
 			sqlgraph.To(guild.Table, guild.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, messagepin.GuildTable, messagepin.GuildColumn),
 		)
-		fromV = sqlgraph.Neighbors(mp.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -1299,8 +1299,8 @@ func (c *MessageRemindClient) Update() *MessageRemindUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *MessageRemindClient) UpdateOne(mr *MessageRemind) *MessageRemindUpdateOne {
-	mutation := newMessageRemindMutation(c.config, OpUpdateOne, withMessageRemind(mr))
+func (c *MessageRemindClient) UpdateOne(_m *MessageRemind) *MessageRemindUpdateOne {
+	mutation := newMessageRemindMutation(c.config, OpUpdateOne, withMessageRemind(_m))
 	return &MessageRemindUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -1317,8 +1317,8 @@ func (c *MessageRemindClient) Delete() *MessageRemindDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *MessageRemindClient) DeleteOne(mr *MessageRemind) *MessageRemindDeleteOne {
-	return c.DeleteOneID(mr.ID)
+func (c *MessageRemindClient) DeleteOne(_m *MessageRemind) *MessageRemindDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -1353,16 +1353,16 @@ func (c *MessageRemindClient) GetX(ctx context.Context, id uuid.UUID) *MessageRe
 }
 
 // QueryGuild queries the guild edge of a MessageRemind.
-func (c *MessageRemindClient) QueryGuild(mr *MessageRemind) *GuildQuery {
+func (c *MessageRemindClient) QueryGuild(_m *MessageRemind) *GuildQuery {
 	query := (&GuildClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := mr.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(messageremind.Table, messageremind.FieldID, id),
 			sqlgraph.To(guild.Table, guild.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, messageremind.GuildTable, messageremind.GuildColumn),
 		)
-		fromV = sqlgraph.Neighbors(mr.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -1448,8 +1448,8 @@ func (c *RolePanelClient) Update() *RolePanelUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *RolePanelClient) UpdateOne(rp *RolePanel) *RolePanelUpdateOne {
-	mutation := newRolePanelMutation(c.config, OpUpdateOne, withRolePanel(rp))
+func (c *RolePanelClient) UpdateOne(_m *RolePanel) *RolePanelUpdateOne {
+	mutation := newRolePanelMutation(c.config, OpUpdateOne, withRolePanel(_m))
 	return &RolePanelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -1466,8 +1466,8 @@ func (c *RolePanelClient) Delete() *RolePanelDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *RolePanelClient) DeleteOne(rp *RolePanel) *RolePanelDeleteOne {
-	return c.DeleteOneID(rp.ID)
+func (c *RolePanelClient) DeleteOne(_m *RolePanel) *RolePanelDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -1502,48 +1502,48 @@ func (c *RolePanelClient) GetX(ctx context.Context, id uuid.UUID) *RolePanel {
 }
 
 // QueryGuild queries the guild edge of a RolePanel.
-func (c *RolePanelClient) QueryGuild(rp *RolePanel) *GuildQuery {
+func (c *RolePanelClient) QueryGuild(_m *RolePanel) *GuildQuery {
 	query := (&GuildClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := rp.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(rolepanel.Table, rolepanel.FieldID, id),
 			sqlgraph.To(guild.Table, guild.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, rolepanel.GuildTable, rolepanel.GuildColumn),
 		)
-		fromV = sqlgraph.Neighbors(rp.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryPlacements queries the placements edge of a RolePanel.
-func (c *RolePanelClient) QueryPlacements(rp *RolePanel) *RolePanelPlacedQuery {
+func (c *RolePanelClient) QueryPlacements(_m *RolePanel) *RolePanelPlacedQuery {
 	query := (&RolePanelPlacedClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := rp.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(rolepanel.Table, rolepanel.FieldID, id),
 			sqlgraph.To(rolepanelplaced.Table, rolepanelplaced.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, rolepanel.PlacementsTable, rolepanel.PlacementsColumn),
 		)
-		fromV = sqlgraph.Neighbors(rp.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryEdit queries the edit edge of a RolePanel.
-func (c *RolePanelClient) QueryEdit(rp *RolePanel) *RolePanelEditQuery {
+func (c *RolePanelClient) QueryEdit(_m *RolePanel) *RolePanelEditQuery {
 	query := (&RolePanelEditClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := rp.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(rolepanel.Table, rolepanel.FieldID, id),
 			sqlgraph.To(rolepaneledit.Table, rolepaneledit.FieldID),
 			sqlgraph.Edge(sqlgraph.O2O, false, rolepanel.EditTable, rolepanel.EditColumn),
 		)
-		fromV = sqlgraph.Neighbors(rp.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -1629,8 +1629,8 @@ func (c *RolePanelEditClient) Update() *RolePanelEditUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *RolePanelEditClient) UpdateOne(rpe *RolePanelEdit) *RolePanelEditUpdateOne {
-	mutation := newRolePanelEditMutation(c.config, OpUpdateOne, withRolePanelEdit(rpe))
+func (c *RolePanelEditClient) UpdateOne(_m *RolePanelEdit) *RolePanelEditUpdateOne {
+	mutation := newRolePanelEditMutation(c.config, OpUpdateOne, withRolePanelEdit(_m))
 	return &RolePanelEditUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -1647,8 +1647,8 @@ func (c *RolePanelEditClient) Delete() *RolePanelEditDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *RolePanelEditClient) DeleteOne(rpe *RolePanelEdit) *RolePanelEditDeleteOne {
-	return c.DeleteOneID(rpe.ID)
+func (c *RolePanelEditClient) DeleteOne(_m *RolePanelEdit) *RolePanelEditDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -1683,32 +1683,32 @@ func (c *RolePanelEditClient) GetX(ctx context.Context, id uuid.UUID) *RolePanel
 }
 
 // QueryGuild queries the guild edge of a RolePanelEdit.
-func (c *RolePanelEditClient) QueryGuild(rpe *RolePanelEdit) *GuildQuery {
+func (c *RolePanelEditClient) QueryGuild(_m *RolePanelEdit) *GuildQuery {
 	query := (&GuildClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := rpe.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(rolepaneledit.Table, rolepaneledit.FieldID, id),
 			sqlgraph.To(guild.Table, guild.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, rolepaneledit.GuildTable, rolepaneledit.GuildColumn),
 		)
-		fromV = sqlgraph.Neighbors(rpe.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryParent queries the parent edge of a RolePanelEdit.
-func (c *RolePanelEditClient) QueryParent(rpe *RolePanelEdit) *RolePanelQuery {
+func (c *RolePanelEditClient) QueryParent(_m *RolePanelEdit) *RolePanelQuery {
 	query := (&RolePanelClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := rpe.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(rolepaneledit.Table, rolepaneledit.FieldID, id),
 			sqlgraph.To(rolepanel.Table, rolepanel.FieldID),
 			sqlgraph.Edge(sqlgraph.O2O, true, rolepaneledit.ParentTable, rolepaneledit.ParentColumn),
 		)
-		fromV = sqlgraph.Neighbors(rpe.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -1794,8 +1794,8 @@ func (c *RolePanelPlacedClient) Update() *RolePanelPlacedUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *RolePanelPlacedClient) UpdateOne(rpp *RolePanelPlaced) *RolePanelPlacedUpdateOne {
-	mutation := newRolePanelPlacedMutation(c.config, OpUpdateOne, withRolePanelPlaced(rpp))
+func (c *RolePanelPlacedClient) UpdateOne(_m *RolePanelPlaced) *RolePanelPlacedUpdateOne {
+	mutation := newRolePanelPlacedMutation(c.config, OpUpdateOne, withRolePanelPlaced(_m))
 	return &RolePanelPlacedUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -1812,8 +1812,8 @@ func (c *RolePanelPlacedClient) Delete() *RolePanelPlacedDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *RolePanelPlacedClient) DeleteOne(rpp *RolePanelPlaced) *RolePanelPlacedDeleteOne {
-	return c.DeleteOneID(rpp.ID)
+func (c *RolePanelPlacedClient) DeleteOne(_m *RolePanelPlaced) *RolePanelPlacedDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -1848,32 +1848,32 @@ func (c *RolePanelPlacedClient) GetX(ctx context.Context, id uuid.UUID) *RolePan
 }
 
 // QueryGuild queries the guild edge of a RolePanelPlaced.
-func (c *RolePanelPlacedClient) QueryGuild(rpp *RolePanelPlaced) *GuildQuery {
+func (c *RolePanelPlacedClient) QueryGuild(_m *RolePanelPlaced) *GuildQuery {
 	query := (&GuildClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := rpp.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(rolepanelplaced.Table, rolepanelplaced.FieldID, id),
 			sqlgraph.To(guild.Table, guild.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, rolepanelplaced.GuildTable, rolepanelplaced.GuildColumn),
 		)
-		fromV = sqlgraph.Neighbors(rpp.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryRolePanel queries the role_panel edge of a RolePanelPlaced.
-func (c *RolePanelPlacedClient) QueryRolePanel(rpp *RolePanelPlaced) *RolePanelQuery {
+func (c *RolePanelPlacedClient) QueryRolePanel(_m *RolePanelPlaced) *RolePanelQuery {
 	query := (&RolePanelClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := rpp.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(rolepanelplaced.Table, rolepanelplaced.FieldID, id),
 			sqlgraph.To(rolepanel.Table, rolepanel.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, rolepanelplaced.RolePanelTable, rolepanelplaced.RolePanelColumn),
 		)
-		fromV = sqlgraph.Neighbors(rpp.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -1959,8 +1959,8 @@ func (c *Thread1000Client) Update() *Thread1000Update {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *Thread1000Client) UpdateOne(t *Thread1000) *Thread1000UpdateOne {
-	mutation := newThread1000Mutation(c.config, OpUpdateOne, withThread1000(t))
+func (c *Thread1000Client) UpdateOne(_m *Thread1000) *Thread1000UpdateOne {
+	mutation := newThread1000Mutation(c.config, OpUpdateOne, withThread1000(_m))
 	return &Thread1000UpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -1977,8 +1977,8 @@ func (c *Thread1000Client) Delete() *Thread1000Delete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *Thread1000Client) DeleteOne(t *Thread1000) *Thread1000DeleteOne {
-	return c.DeleteOneID(t.ID)
+func (c *Thread1000Client) DeleteOne(_m *Thread1000) *Thread1000DeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -2013,32 +2013,32 @@ func (c *Thread1000Client) GetX(ctx context.Context, id uuid.UUID) *Thread1000 {
 }
 
 // QueryGuild queries the guild edge of a Thread1000.
-func (c *Thread1000Client) QueryGuild(t *Thread1000) *GuildQuery {
+func (c *Thread1000Client) QueryGuild(_m *Thread1000) *GuildQuery {
 	query := (&GuildClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := t.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(thread1000.Table, thread1000.FieldID, id),
 			sqlgraph.To(guild.Table, guild.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, thread1000.GuildTable, thread1000.GuildColumn),
 		)
-		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryChannel queries the channel edge of a Thread1000.
-func (c *Thread1000Client) QueryChannel(t *Thread1000) *Thread1000ChannelQuery {
+func (c *Thread1000Client) QueryChannel(_m *Thread1000) *Thread1000ChannelQuery {
 	query := (&Thread1000ChannelClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := t.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(thread1000.Table, thread1000.FieldID, id),
 			sqlgraph.To(thread1000channel.Table, thread1000channel.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, thread1000.ChannelTable, thread1000.ChannelColumn),
 		)
-		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -2124,8 +2124,8 @@ func (c *Thread1000ChannelClient) Update() *Thread1000ChannelUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *Thread1000ChannelClient) UpdateOne(t *Thread1000Channel) *Thread1000ChannelUpdateOne {
-	mutation := newThread1000ChannelMutation(c.config, OpUpdateOne, withThread1000Channel(t))
+func (c *Thread1000ChannelClient) UpdateOne(_m *Thread1000Channel) *Thread1000ChannelUpdateOne {
+	mutation := newThread1000ChannelMutation(c.config, OpUpdateOne, withThread1000Channel(_m))
 	return &Thread1000ChannelUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -2142,8 +2142,8 @@ func (c *Thread1000ChannelClient) Delete() *Thread1000ChannelDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *Thread1000ChannelClient) DeleteOne(t *Thread1000Channel) *Thread1000ChannelDeleteOne {
-	return c.DeleteOneID(t.ID)
+func (c *Thread1000ChannelClient) DeleteOne(_m *Thread1000Channel) *Thread1000ChannelDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -2178,32 +2178,32 @@ func (c *Thread1000ChannelClient) GetX(ctx context.Context, id uuid.UUID) *Threa
 }
 
 // QueryGuild queries the guild edge of a Thread1000Channel.
-func (c *Thread1000ChannelClient) QueryGuild(t *Thread1000Channel) *GuildQuery {
+func (c *Thread1000ChannelClient) QueryGuild(_m *Thread1000Channel) *GuildQuery {
 	query := (&GuildClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := t.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(thread1000channel.Table, thread1000channel.FieldID, id),
 			sqlgraph.To(guild.Table, guild.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, thread1000channel.GuildTable, thread1000channel.GuildColumn),
 		)
-		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryThreads queries the threads edge of a Thread1000Channel.
-func (c *Thread1000ChannelClient) QueryThreads(t *Thread1000Channel) *Thread1000Query {
+func (c *Thread1000ChannelClient) QueryThreads(_m *Thread1000Channel) *Thread1000Query {
 	query := (&Thread1000Client{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := t.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(thread1000channel.Table, thread1000channel.FieldID, id),
 			sqlgraph.To(thread1000.Table, thread1000.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, thread1000channel.ThreadsTable, thread1000channel.ThreadsColumn),
 		)
-		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -2289,8 +2289,8 @@ func (c *UserClient) Update() *UserUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *UserClient) UpdateOne(u *User) *UserUpdateOne {
-	mutation := newUserMutation(c.config, OpUpdateOne, withUser(u))
+func (c *UserClient) UpdateOne(_m *User) *UserUpdateOne {
+	mutation := newUserMutation(c.config, OpUpdateOne, withUser(_m))
 	return &UserUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -2307,8 +2307,8 @@ func (c *UserClient) Delete() *UserDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *UserClient) DeleteOne(u *User) *UserDeleteOne {
-	return c.DeleteOneID(u.ID)
+func (c *UserClient) DeleteOne(_m *User) *UserDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -2343,80 +2343,80 @@ func (c *UserClient) GetX(ctx context.Context, id snowflake.ID) *User {
 }
 
 // QueryOwnGuilds queries the own_guilds edge of a User.
-func (c *UserClient) QueryOwnGuilds(u *User) *GuildQuery {
+func (c *UserClient) QueryOwnGuilds(_m *User) *GuildQuery {
 	query := (&GuildClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := u.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(guild.Table, guild.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.OwnGuildsTable, user.OwnGuildsColumn),
 		)
-		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryGuilds queries the guilds edge of a User.
-func (c *UserClient) QueryGuilds(u *User) *MemberQuery {
+func (c *UserClient) QueryGuilds(_m *User) *MemberQuery {
 	query := (&MemberClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := u.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(member.Table, member.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.GuildsTable, user.GuildsColumn),
 		)
-		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryWordSuffix queries the word_suffix edge of a User.
-func (c *UserClient) QueryWordSuffix(u *User) *WordSuffixQuery {
+func (c *UserClient) QueryWordSuffix(_m *User) *WordSuffixQuery {
 	query := (&WordSuffixClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := u.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(wordsuffix.Table, wordsuffix.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.WordSuffixTable, user.WordSuffixColumn),
 		)
-		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryChinchiroSessions queries the chinchiro_sessions edge of a User.
-func (c *UserClient) QueryChinchiroSessions(u *User) *ChinchiroSessionQuery {
+func (c *UserClient) QueryChinchiroSessions(_m *User) *ChinchiroSessionQuery {
 	query := (&ChinchiroSessionClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := u.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(chinchirosession.Table, chinchirosession.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.ChinchiroSessionsTable, user.ChinchiroSessionsColumn),
 		)
-		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryChinchiroPlayers queries the chinchiro_players edge of a User.
-func (c *UserClient) QueryChinchiroPlayers(u *User) *ChinchiroPlayerQuery {
+func (c *UserClient) QueryChinchiroPlayers(_m *User) *ChinchiroPlayerQuery {
 	query := (&ChinchiroPlayerClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := u.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(chinchiroplayer.Table, chinchiroplayer.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.ChinchiroPlayersTable, user.ChinchiroPlayersColumn),
 		)
-		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
@@ -2502,8 +2502,8 @@ func (c *WordSuffixClient) Update() *WordSuffixUpdate {
 }
 
 // UpdateOne returns an update builder for the given entity.
-func (c *WordSuffixClient) UpdateOne(ws *WordSuffix) *WordSuffixUpdateOne {
-	mutation := newWordSuffixMutation(c.config, OpUpdateOne, withWordSuffix(ws))
+func (c *WordSuffixClient) UpdateOne(_m *WordSuffix) *WordSuffixUpdateOne {
+	mutation := newWordSuffixMutation(c.config, OpUpdateOne, withWordSuffix(_m))
 	return &WordSuffixUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
 }
 
@@ -2520,8 +2520,8 @@ func (c *WordSuffixClient) Delete() *WordSuffixDelete {
 }
 
 // DeleteOne returns a builder for deleting the given entity.
-func (c *WordSuffixClient) DeleteOne(ws *WordSuffix) *WordSuffixDeleteOne {
-	return c.DeleteOneID(ws.ID)
+func (c *WordSuffixClient) DeleteOne(_m *WordSuffix) *WordSuffixDeleteOne {
+	return c.DeleteOneID(_m.ID)
 }
 
 // DeleteOneID returns a builder for deleting the given entity by its id.
@@ -2556,32 +2556,32 @@ func (c *WordSuffixClient) GetX(ctx context.Context, id uuid.UUID) *WordSuffix {
 }
 
 // QueryGuild queries the guild edge of a WordSuffix.
-func (c *WordSuffixClient) QueryGuild(ws *WordSuffix) *GuildQuery {
+func (c *WordSuffixClient) QueryGuild(_m *WordSuffix) *GuildQuery {
 	query := (&GuildClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := ws.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(wordsuffix.Table, wordsuffix.FieldID, id),
 			sqlgraph.To(guild.Table, guild.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, wordsuffix.GuildTable, wordsuffix.GuildColumn),
 		)
-		fromV = sqlgraph.Neighbors(ws.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query
 }
 
 // QueryOwner queries the owner edge of a WordSuffix.
-func (c *WordSuffixClient) QueryOwner(ws *WordSuffix) *UserQuery {
+func (c *WordSuffixClient) QueryOwner(_m *WordSuffix) *UserQuery {
 	query := (&UserClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := ws.ID
+		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(wordsuffix.Table, wordsuffix.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, wordsuffix.OwnerTable, wordsuffix.OwnerColumn),
 		)
-		fromV = sqlgraph.Neighbors(ws.driver.Dialect(), step)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
 	}
 	return query

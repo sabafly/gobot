@@ -64,7 +64,7 @@ type DataLocation struct {
 }
 
 func (u *DataLocation) MarshalJSON() ([]byte, error) {
-	return json.Marshal(u.Location.String())
+	return json.Marshal(u.String())
 }
 
 func (u *DataLocation) UnmarshalJSON(b []byte) error {

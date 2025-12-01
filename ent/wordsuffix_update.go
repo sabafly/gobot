@@ -26,120 +26,120 @@ type WordSuffixUpdate struct {
 }
 
 // Where appends a list predicates to the WordSuffixUpdate builder.
-func (wsu *WordSuffixUpdate) Where(ps ...predicate.WordSuffix) *WordSuffixUpdate {
-	wsu.mutation.Where(ps...)
-	return wsu
+func (_u *WordSuffixUpdate) Where(ps ...predicate.WordSuffix) *WordSuffixUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetSuffix sets the "suffix" field.
-func (wsu *WordSuffixUpdate) SetSuffix(s string) *WordSuffixUpdate {
-	wsu.mutation.SetSuffix(s)
-	return wsu
+func (_u *WordSuffixUpdate) SetSuffix(v string) *WordSuffixUpdate {
+	_u.mutation.SetSuffix(v)
+	return _u
 }
 
 // SetNillableSuffix sets the "suffix" field if the given value is not nil.
-func (wsu *WordSuffixUpdate) SetNillableSuffix(s *string) *WordSuffixUpdate {
-	if s != nil {
-		wsu.SetSuffix(*s)
+func (_u *WordSuffixUpdate) SetNillableSuffix(v *string) *WordSuffixUpdate {
+	if v != nil {
+		_u.SetSuffix(*v)
 	}
-	return wsu
+	return _u
 }
 
 // SetExpired sets the "expired" field.
-func (wsu *WordSuffixUpdate) SetExpired(t time.Time) *WordSuffixUpdate {
-	wsu.mutation.SetExpired(t)
-	return wsu
+func (_u *WordSuffixUpdate) SetExpired(v time.Time) *WordSuffixUpdate {
+	_u.mutation.SetExpired(v)
+	return _u
 }
 
 // SetNillableExpired sets the "expired" field if the given value is not nil.
-func (wsu *WordSuffixUpdate) SetNillableExpired(t *time.Time) *WordSuffixUpdate {
-	if t != nil {
-		wsu.SetExpired(*t)
+func (_u *WordSuffixUpdate) SetNillableExpired(v *time.Time) *WordSuffixUpdate {
+	if v != nil {
+		_u.SetExpired(*v)
 	}
-	return wsu
+	return _u
 }
 
 // ClearExpired clears the value of the "expired" field.
-func (wsu *WordSuffixUpdate) ClearExpired() *WordSuffixUpdate {
-	wsu.mutation.ClearExpired()
-	return wsu
+func (_u *WordSuffixUpdate) ClearExpired() *WordSuffixUpdate {
+	_u.mutation.ClearExpired()
+	return _u
 }
 
 // SetGuildID sets the "guild_id" field.
-func (wsu *WordSuffixUpdate) SetGuildID(s snowflake.ID) *WordSuffixUpdate {
-	wsu.mutation.SetGuildID(s)
-	return wsu
+func (_u *WordSuffixUpdate) SetGuildID(v snowflake.ID) *WordSuffixUpdate {
+	_u.mutation.SetGuildID(v)
+	return _u
 }
 
 // SetNillableGuildID sets the "guild_id" field if the given value is not nil.
-func (wsu *WordSuffixUpdate) SetNillableGuildID(s *snowflake.ID) *WordSuffixUpdate {
-	if s != nil {
-		wsu.SetGuildID(*s)
+func (_u *WordSuffixUpdate) SetNillableGuildID(v *snowflake.ID) *WordSuffixUpdate {
+	if v != nil {
+		_u.SetGuildID(*v)
 	}
-	return wsu
+	return _u
 }
 
 // ClearGuildID clears the value of the "guild_id" field.
-func (wsu *WordSuffixUpdate) ClearGuildID() *WordSuffixUpdate {
-	wsu.mutation.ClearGuildID()
-	return wsu
+func (_u *WordSuffixUpdate) ClearGuildID() *WordSuffixUpdate {
+	_u.mutation.ClearGuildID()
+	return _u
 }
 
 // SetRule sets the "rule" field.
-func (wsu *WordSuffixUpdate) SetRule(w wordsuffix.Rule) *WordSuffixUpdate {
-	wsu.mutation.SetRule(w)
-	return wsu
+func (_u *WordSuffixUpdate) SetRule(v wordsuffix.Rule) *WordSuffixUpdate {
+	_u.mutation.SetRule(v)
+	return _u
 }
 
 // SetNillableRule sets the "rule" field if the given value is not nil.
-func (wsu *WordSuffixUpdate) SetNillableRule(w *wordsuffix.Rule) *WordSuffixUpdate {
-	if w != nil {
-		wsu.SetRule(*w)
+func (_u *WordSuffixUpdate) SetNillableRule(v *wordsuffix.Rule) *WordSuffixUpdate {
+	if v != nil {
+		_u.SetRule(*v)
 	}
-	return wsu
+	return _u
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (wsu *WordSuffixUpdate) SetGuild(g *Guild) *WordSuffixUpdate {
-	return wsu.SetGuildID(g.ID)
+func (_u *WordSuffixUpdate) SetGuild(v *Guild) *WordSuffixUpdate {
+	return _u.SetGuildID(v.ID)
 }
 
 // SetOwnerID sets the "owner" edge to the User entity by ID.
-func (wsu *WordSuffixUpdate) SetOwnerID(id snowflake.ID) *WordSuffixUpdate {
-	wsu.mutation.SetOwnerID(id)
-	return wsu
+func (_u *WordSuffixUpdate) SetOwnerID(id snowflake.ID) *WordSuffixUpdate {
+	_u.mutation.SetOwnerID(id)
+	return _u
 }
 
 // SetOwner sets the "owner" edge to the User entity.
-func (wsu *WordSuffixUpdate) SetOwner(u *User) *WordSuffixUpdate {
-	return wsu.SetOwnerID(u.ID)
+func (_u *WordSuffixUpdate) SetOwner(v *User) *WordSuffixUpdate {
+	return _u.SetOwnerID(v.ID)
 }
 
 // Mutation returns the WordSuffixMutation object of the builder.
-func (wsu *WordSuffixUpdate) Mutation() *WordSuffixMutation {
-	return wsu.mutation
+func (_u *WordSuffixUpdate) Mutation() *WordSuffixMutation {
+	return _u.mutation
 }
 
 // ClearGuild clears the "guild" edge to the Guild entity.
-func (wsu *WordSuffixUpdate) ClearGuild() *WordSuffixUpdate {
-	wsu.mutation.ClearGuild()
-	return wsu
+func (_u *WordSuffixUpdate) ClearGuild() *WordSuffixUpdate {
+	_u.mutation.ClearGuild()
+	return _u
 }
 
 // ClearOwner clears the "owner" edge to the User entity.
-func (wsu *WordSuffixUpdate) ClearOwner() *WordSuffixUpdate {
-	wsu.mutation.ClearOwner()
-	return wsu
+func (_u *WordSuffixUpdate) ClearOwner() *WordSuffixUpdate {
+	_u.mutation.ClearOwner()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (wsu *WordSuffixUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, wsu.sqlSave, wsu.mutation, wsu.hooks)
+func (_u *WordSuffixUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (wsu *WordSuffixUpdate) SaveX(ctx context.Context) int {
-	affected, err := wsu.Save(ctx)
+func (_u *WordSuffixUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -147,61 +147,61 @@ func (wsu *WordSuffixUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (wsu *WordSuffixUpdate) Exec(ctx context.Context) error {
-	_, err := wsu.Save(ctx)
+func (_u *WordSuffixUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (wsu *WordSuffixUpdate) ExecX(ctx context.Context) {
-	if err := wsu.Exec(ctx); err != nil {
+func (_u *WordSuffixUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (wsu *WordSuffixUpdate) check() error {
-	if v, ok := wsu.mutation.Suffix(); ok {
+func (_u *WordSuffixUpdate) check() error {
+	if v, ok := _u.mutation.Suffix(); ok {
 		if err := wordsuffix.SuffixValidator(v); err != nil {
 			return &ValidationError{Name: "suffix", err: fmt.Errorf(`ent: validator failed for field "WordSuffix.suffix": %w`, err)}
 		}
 	}
-	if v, ok := wsu.mutation.Rule(); ok {
+	if v, ok := _u.mutation.Rule(); ok {
 		if err := wordsuffix.RuleValidator(v); err != nil {
 			return &ValidationError{Name: "rule", err: fmt.Errorf(`ent: validator failed for field "WordSuffix.rule": %w`, err)}
 		}
 	}
-	if wsu.mutation.OwnerCleared() && len(wsu.mutation.OwnerIDs()) > 0 {
+	if _u.mutation.OwnerCleared() && len(_u.mutation.OwnerIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "WordSuffix.owner"`)
 	}
 	return nil
 }
 
-func (wsu *WordSuffixUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := wsu.check(); err != nil {
-		return n, err
+func (_u *WordSuffixUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(wordsuffix.Table, wordsuffix.Columns, sqlgraph.NewFieldSpec(wordsuffix.FieldID, field.TypeUUID))
-	if ps := wsu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := wsu.mutation.Suffix(); ok {
+	if value, ok := _u.mutation.Suffix(); ok {
 		_spec.SetField(wordsuffix.FieldSuffix, field.TypeString, value)
 	}
-	if value, ok := wsu.mutation.Expired(); ok {
+	if value, ok := _u.mutation.Expired(); ok {
 		_spec.SetField(wordsuffix.FieldExpired, field.TypeTime, value)
 	}
-	if wsu.mutation.ExpiredCleared() {
+	if _u.mutation.ExpiredCleared() {
 		_spec.ClearField(wordsuffix.FieldExpired, field.TypeTime)
 	}
-	if value, ok := wsu.mutation.Rule(); ok {
+	if value, ok := _u.mutation.Rule(); ok {
 		_spec.SetField(wordsuffix.FieldRule, field.TypeEnum, value)
 	}
-	if wsu.mutation.GuildCleared() {
+	if _u.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -214,7 +214,7 @@ func (wsu *WordSuffixUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := wsu.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -230,7 +230,7 @@ func (wsu *WordSuffixUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if wsu.mutation.OwnerCleared() {
+	if _u.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -243,7 +243,7 @@ func (wsu *WordSuffixUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := wsu.mutation.OwnerIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -259,7 +259,7 @@ func (wsu *WordSuffixUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, wsu.driver, _spec); err != nil {
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{wordsuffix.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -267,8 +267,8 @@ func (wsu *WordSuffixUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
-	wsu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // WordSuffixUpdateOne is the builder for updating a single WordSuffix entity.
@@ -280,127 +280,127 @@ type WordSuffixUpdateOne struct {
 }
 
 // SetSuffix sets the "suffix" field.
-func (wsuo *WordSuffixUpdateOne) SetSuffix(s string) *WordSuffixUpdateOne {
-	wsuo.mutation.SetSuffix(s)
-	return wsuo
+func (_u *WordSuffixUpdateOne) SetSuffix(v string) *WordSuffixUpdateOne {
+	_u.mutation.SetSuffix(v)
+	return _u
 }
 
 // SetNillableSuffix sets the "suffix" field if the given value is not nil.
-func (wsuo *WordSuffixUpdateOne) SetNillableSuffix(s *string) *WordSuffixUpdateOne {
-	if s != nil {
-		wsuo.SetSuffix(*s)
+func (_u *WordSuffixUpdateOne) SetNillableSuffix(v *string) *WordSuffixUpdateOne {
+	if v != nil {
+		_u.SetSuffix(*v)
 	}
-	return wsuo
+	return _u
 }
 
 // SetExpired sets the "expired" field.
-func (wsuo *WordSuffixUpdateOne) SetExpired(t time.Time) *WordSuffixUpdateOne {
-	wsuo.mutation.SetExpired(t)
-	return wsuo
+func (_u *WordSuffixUpdateOne) SetExpired(v time.Time) *WordSuffixUpdateOne {
+	_u.mutation.SetExpired(v)
+	return _u
 }
 
 // SetNillableExpired sets the "expired" field if the given value is not nil.
-func (wsuo *WordSuffixUpdateOne) SetNillableExpired(t *time.Time) *WordSuffixUpdateOne {
-	if t != nil {
-		wsuo.SetExpired(*t)
+func (_u *WordSuffixUpdateOne) SetNillableExpired(v *time.Time) *WordSuffixUpdateOne {
+	if v != nil {
+		_u.SetExpired(*v)
 	}
-	return wsuo
+	return _u
 }
 
 // ClearExpired clears the value of the "expired" field.
-func (wsuo *WordSuffixUpdateOne) ClearExpired() *WordSuffixUpdateOne {
-	wsuo.mutation.ClearExpired()
-	return wsuo
+func (_u *WordSuffixUpdateOne) ClearExpired() *WordSuffixUpdateOne {
+	_u.mutation.ClearExpired()
+	return _u
 }
 
 // SetGuildID sets the "guild_id" field.
-func (wsuo *WordSuffixUpdateOne) SetGuildID(s snowflake.ID) *WordSuffixUpdateOne {
-	wsuo.mutation.SetGuildID(s)
-	return wsuo
+func (_u *WordSuffixUpdateOne) SetGuildID(v snowflake.ID) *WordSuffixUpdateOne {
+	_u.mutation.SetGuildID(v)
+	return _u
 }
 
 // SetNillableGuildID sets the "guild_id" field if the given value is not nil.
-func (wsuo *WordSuffixUpdateOne) SetNillableGuildID(s *snowflake.ID) *WordSuffixUpdateOne {
-	if s != nil {
-		wsuo.SetGuildID(*s)
+func (_u *WordSuffixUpdateOne) SetNillableGuildID(v *snowflake.ID) *WordSuffixUpdateOne {
+	if v != nil {
+		_u.SetGuildID(*v)
 	}
-	return wsuo
+	return _u
 }
 
 // ClearGuildID clears the value of the "guild_id" field.
-func (wsuo *WordSuffixUpdateOne) ClearGuildID() *WordSuffixUpdateOne {
-	wsuo.mutation.ClearGuildID()
-	return wsuo
+func (_u *WordSuffixUpdateOne) ClearGuildID() *WordSuffixUpdateOne {
+	_u.mutation.ClearGuildID()
+	return _u
 }
 
 // SetRule sets the "rule" field.
-func (wsuo *WordSuffixUpdateOne) SetRule(w wordsuffix.Rule) *WordSuffixUpdateOne {
-	wsuo.mutation.SetRule(w)
-	return wsuo
+func (_u *WordSuffixUpdateOne) SetRule(v wordsuffix.Rule) *WordSuffixUpdateOne {
+	_u.mutation.SetRule(v)
+	return _u
 }
 
 // SetNillableRule sets the "rule" field if the given value is not nil.
-func (wsuo *WordSuffixUpdateOne) SetNillableRule(w *wordsuffix.Rule) *WordSuffixUpdateOne {
-	if w != nil {
-		wsuo.SetRule(*w)
+func (_u *WordSuffixUpdateOne) SetNillableRule(v *wordsuffix.Rule) *WordSuffixUpdateOne {
+	if v != nil {
+		_u.SetRule(*v)
 	}
-	return wsuo
+	return _u
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (wsuo *WordSuffixUpdateOne) SetGuild(g *Guild) *WordSuffixUpdateOne {
-	return wsuo.SetGuildID(g.ID)
+func (_u *WordSuffixUpdateOne) SetGuild(v *Guild) *WordSuffixUpdateOne {
+	return _u.SetGuildID(v.ID)
 }
 
 // SetOwnerID sets the "owner" edge to the User entity by ID.
-func (wsuo *WordSuffixUpdateOne) SetOwnerID(id snowflake.ID) *WordSuffixUpdateOne {
-	wsuo.mutation.SetOwnerID(id)
-	return wsuo
+func (_u *WordSuffixUpdateOne) SetOwnerID(id snowflake.ID) *WordSuffixUpdateOne {
+	_u.mutation.SetOwnerID(id)
+	return _u
 }
 
 // SetOwner sets the "owner" edge to the User entity.
-func (wsuo *WordSuffixUpdateOne) SetOwner(u *User) *WordSuffixUpdateOne {
-	return wsuo.SetOwnerID(u.ID)
+func (_u *WordSuffixUpdateOne) SetOwner(v *User) *WordSuffixUpdateOne {
+	return _u.SetOwnerID(v.ID)
 }
 
 // Mutation returns the WordSuffixMutation object of the builder.
-func (wsuo *WordSuffixUpdateOne) Mutation() *WordSuffixMutation {
-	return wsuo.mutation
+func (_u *WordSuffixUpdateOne) Mutation() *WordSuffixMutation {
+	return _u.mutation
 }
 
 // ClearGuild clears the "guild" edge to the Guild entity.
-func (wsuo *WordSuffixUpdateOne) ClearGuild() *WordSuffixUpdateOne {
-	wsuo.mutation.ClearGuild()
-	return wsuo
+func (_u *WordSuffixUpdateOne) ClearGuild() *WordSuffixUpdateOne {
+	_u.mutation.ClearGuild()
+	return _u
 }
 
 // ClearOwner clears the "owner" edge to the User entity.
-func (wsuo *WordSuffixUpdateOne) ClearOwner() *WordSuffixUpdateOne {
-	wsuo.mutation.ClearOwner()
-	return wsuo
+func (_u *WordSuffixUpdateOne) ClearOwner() *WordSuffixUpdateOne {
+	_u.mutation.ClearOwner()
+	return _u
 }
 
 // Where appends a list predicates to the WordSuffixUpdate builder.
-func (wsuo *WordSuffixUpdateOne) Where(ps ...predicate.WordSuffix) *WordSuffixUpdateOne {
-	wsuo.mutation.Where(ps...)
-	return wsuo
+func (_u *WordSuffixUpdateOne) Where(ps ...predicate.WordSuffix) *WordSuffixUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (wsuo *WordSuffixUpdateOne) Select(field string, fields ...string) *WordSuffixUpdateOne {
-	wsuo.fields = append([]string{field}, fields...)
-	return wsuo
+func (_u *WordSuffixUpdateOne) Select(field string, fields ...string) *WordSuffixUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated WordSuffix entity.
-func (wsuo *WordSuffixUpdateOne) Save(ctx context.Context) (*WordSuffix, error) {
-	return withHooks(ctx, wsuo.sqlSave, wsuo.mutation, wsuo.hooks)
+func (_u *WordSuffixUpdateOne) Save(ctx context.Context) (*WordSuffix, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (wsuo *WordSuffixUpdateOne) SaveX(ctx context.Context) *WordSuffix {
-	node, err := wsuo.Save(ctx)
+func (_u *WordSuffixUpdateOne) SaveX(ctx context.Context) *WordSuffix {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -408,47 +408,47 @@ func (wsuo *WordSuffixUpdateOne) SaveX(ctx context.Context) *WordSuffix {
 }
 
 // Exec executes the query on the entity.
-func (wsuo *WordSuffixUpdateOne) Exec(ctx context.Context) error {
-	_, err := wsuo.Save(ctx)
+func (_u *WordSuffixUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (wsuo *WordSuffixUpdateOne) ExecX(ctx context.Context) {
-	if err := wsuo.Exec(ctx); err != nil {
+func (_u *WordSuffixUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (wsuo *WordSuffixUpdateOne) check() error {
-	if v, ok := wsuo.mutation.Suffix(); ok {
+func (_u *WordSuffixUpdateOne) check() error {
+	if v, ok := _u.mutation.Suffix(); ok {
 		if err := wordsuffix.SuffixValidator(v); err != nil {
 			return &ValidationError{Name: "suffix", err: fmt.Errorf(`ent: validator failed for field "WordSuffix.suffix": %w`, err)}
 		}
 	}
-	if v, ok := wsuo.mutation.Rule(); ok {
+	if v, ok := _u.mutation.Rule(); ok {
 		if err := wordsuffix.RuleValidator(v); err != nil {
 			return &ValidationError{Name: "rule", err: fmt.Errorf(`ent: validator failed for field "WordSuffix.rule": %w`, err)}
 		}
 	}
-	if wsuo.mutation.OwnerCleared() && len(wsuo.mutation.OwnerIDs()) > 0 {
+	if _u.mutation.OwnerCleared() && len(_u.mutation.OwnerIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "WordSuffix.owner"`)
 	}
 	return nil
 }
 
-func (wsuo *WordSuffixUpdateOne) sqlSave(ctx context.Context) (_node *WordSuffix, err error) {
-	if err := wsuo.check(); err != nil {
+func (_u *WordSuffixUpdateOne) sqlSave(ctx context.Context) (_node *WordSuffix, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(wordsuffix.Table, wordsuffix.Columns, sqlgraph.NewFieldSpec(wordsuffix.FieldID, field.TypeUUID))
-	id, ok := wsuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "WordSuffix.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := wsuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, wordsuffix.FieldID)
 		for _, f := range fields {
@@ -460,26 +460,26 @@ func (wsuo *WordSuffixUpdateOne) sqlSave(ctx context.Context) (_node *WordSuffix
 			}
 		}
 	}
-	if ps := wsuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := wsuo.mutation.Suffix(); ok {
+	if value, ok := _u.mutation.Suffix(); ok {
 		_spec.SetField(wordsuffix.FieldSuffix, field.TypeString, value)
 	}
-	if value, ok := wsuo.mutation.Expired(); ok {
+	if value, ok := _u.mutation.Expired(); ok {
 		_spec.SetField(wordsuffix.FieldExpired, field.TypeTime, value)
 	}
-	if wsuo.mutation.ExpiredCleared() {
+	if _u.mutation.ExpiredCleared() {
 		_spec.ClearField(wordsuffix.FieldExpired, field.TypeTime)
 	}
-	if value, ok := wsuo.mutation.Rule(); ok {
+	if value, ok := _u.mutation.Rule(); ok {
 		_spec.SetField(wordsuffix.FieldRule, field.TypeEnum, value)
 	}
-	if wsuo.mutation.GuildCleared() {
+	if _u.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -492,7 +492,7 @@ func (wsuo *WordSuffixUpdateOne) sqlSave(ctx context.Context) (_node *WordSuffix
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := wsuo.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -508,7 +508,7 @@ func (wsuo *WordSuffixUpdateOne) sqlSave(ctx context.Context) (_node *WordSuffix
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if wsuo.mutation.OwnerCleared() {
+	if _u.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -521,7 +521,7 @@ func (wsuo *WordSuffixUpdateOne) sqlSave(ctx context.Context) (_node *WordSuffix
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := wsuo.mutation.OwnerIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -537,10 +537,10 @@ func (wsuo *WordSuffixUpdateOne) sqlSave(ctx context.Context) (_node *WordSuffix
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_node = &WordSuffix{config: wsuo.config}
+	_node = &WordSuffix{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, wsuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{wordsuffix.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -548,6 +548,6 @@ func (wsuo *WordSuffixUpdateOne) sqlSave(ctx context.Context) (_node *WordSuffix
 		}
 		return nil, err
 	}
-	wsuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

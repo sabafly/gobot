@@ -26,117 +26,117 @@ type MemberCreate struct {
 }
 
 // SetPermission sets the "permission" field.
-func (mc *MemberCreate) SetPermission(pe permissions.Permission) *MemberCreate {
-	mc.mutation.SetPermission(pe)
-	return mc
+func (_c *MemberCreate) SetPermission(v permissions.Permission) *MemberCreate {
+	_c.mutation.SetPermission(v)
+	return _c
 }
 
 // SetNillablePermission sets the "permission" field if the given value is not nil.
-func (mc *MemberCreate) SetNillablePermission(pe *permissions.Permission) *MemberCreate {
-	if pe != nil {
-		mc.SetPermission(*pe)
+func (_c *MemberCreate) SetNillablePermission(v *permissions.Permission) *MemberCreate {
+	if v != nil {
+		_c.SetPermission(*v)
 	}
-	return mc
+	return _c
 }
 
 // SetXp sets the "xp" field.
-func (mc *MemberCreate) SetXp(x xppoint.XP) *MemberCreate {
-	mc.mutation.SetXp(x)
-	return mc
+func (_c *MemberCreate) SetXp(v xppoint.XP) *MemberCreate {
+	_c.mutation.SetXp(v)
+	return _c
 }
 
 // SetNillableXp sets the "xp" field if the given value is not nil.
-func (mc *MemberCreate) SetNillableXp(x *xppoint.XP) *MemberCreate {
-	if x != nil {
-		mc.SetXp(*x)
+func (_c *MemberCreate) SetNillableXp(v *xppoint.XP) *MemberCreate {
+	if v != nil {
+		_c.SetXp(*v)
 	}
-	return mc
+	return _c
 }
 
 // SetUserID sets the "user_id" field.
-func (mc *MemberCreate) SetUserID(s snowflake.ID) *MemberCreate {
-	mc.mutation.SetUserID(s)
-	return mc
+func (_c *MemberCreate) SetUserID(v snowflake.ID) *MemberCreate {
+	_c.mutation.SetUserID(v)
+	return _c
 }
 
 // SetLastXp sets the "last_xp" field.
-func (mc *MemberCreate) SetLastXp(t time.Time) *MemberCreate {
-	mc.mutation.SetLastXp(t)
-	return mc
+func (_c *MemberCreate) SetLastXp(v time.Time) *MemberCreate {
+	_c.mutation.SetLastXp(v)
+	return _c
 }
 
 // SetNillableLastXp sets the "last_xp" field if the given value is not nil.
-func (mc *MemberCreate) SetNillableLastXp(t *time.Time) *MemberCreate {
-	if t != nil {
-		mc.SetLastXp(*t)
+func (_c *MemberCreate) SetNillableLastXp(v *time.Time) *MemberCreate {
+	if v != nil {
+		_c.SetLastXp(*v)
 	}
-	return mc
+	return _c
 }
 
 // SetMessageCount sets the "message_count" field.
-func (mc *MemberCreate) SetMessageCount(u uint64) *MemberCreate {
-	mc.mutation.SetMessageCount(u)
-	return mc
+func (_c *MemberCreate) SetMessageCount(v uint64) *MemberCreate {
+	_c.mutation.SetMessageCount(v)
+	return _c
 }
 
 // SetNillableMessageCount sets the "message_count" field if the given value is not nil.
-func (mc *MemberCreate) SetNillableMessageCount(u *uint64) *MemberCreate {
-	if u != nil {
-		mc.SetMessageCount(*u)
+func (_c *MemberCreate) SetNillableMessageCount(v *uint64) *MemberCreate {
+	if v != nil {
+		_c.SetMessageCount(*v)
 	}
-	return mc
+	return _c
 }
 
 // SetLastNotifiedLevel sets the "last_notified_level" field.
-func (mc *MemberCreate) SetLastNotifiedLevel(u uint64) *MemberCreate {
-	mc.mutation.SetLastNotifiedLevel(u)
-	return mc
+func (_c *MemberCreate) SetLastNotifiedLevel(v uint64) *MemberCreate {
+	_c.mutation.SetLastNotifiedLevel(v)
+	return _c
 }
 
 // SetNillableLastNotifiedLevel sets the "last_notified_level" field if the given value is not nil.
-func (mc *MemberCreate) SetNillableLastNotifiedLevel(u *uint64) *MemberCreate {
-	if u != nil {
-		mc.SetLastNotifiedLevel(*u)
+func (_c *MemberCreate) SetNillableLastNotifiedLevel(v *uint64) *MemberCreate {
+	if v != nil {
+		_c.SetLastNotifiedLevel(*v)
 	}
-	return mc
+	return _c
 }
 
 // SetLastMessageHashes sets the "last_message_hashes" field.
-func (mc *MemberCreate) SetLastMessageHashes(s []string) *MemberCreate {
-	mc.mutation.SetLastMessageHashes(s)
-	return mc
+func (_c *MemberCreate) SetLastMessageHashes(v []string) *MemberCreate {
+	_c.mutation.SetLastMessageHashes(v)
+	return _c
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (mc *MemberCreate) SetGuildID(id snowflake.ID) *MemberCreate {
-	mc.mutation.SetGuildID(id)
-	return mc
+func (_c *MemberCreate) SetGuildID(id snowflake.ID) *MemberCreate {
+	_c.mutation.SetGuildID(id)
+	return _c
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (mc *MemberCreate) SetGuild(g *Guild) *MemberCreate {
-	return mc.SetGuildID(g.ID)
+func (_c *MemberCreate) SetGuild(v *Guild) *MemberCreate {
+	return _c.SetGuildID(v.ID)
 }
 
 // SetUser sets the "user" edge to the User entity.
-func (mc *MemberCreate) SetUser(u *User) *MemberCreate {
-	return mc.SetUserID(u.ID)
+func (_c *MemberCreate) SetUser(v *User) *MemberCreate {
+	return _c.SetUserID(v.ID)
 }
 
 // Mutation returns the MemberMutation object of the builder.
-func (mc *MemberCreate) Mutation() *MemberMutation {
-	return mc.mutation
+func (_c *MemberCreate) Mutation() *MemberMutation {
+	return _c.mutation
 }
 
 // Save creates the Member in the database.
-func (mc *MemberCreate) Save(ctx context.Context) (*Member, error) {
-	mc.defaults()
-	return withHooks(ctx, mc.sqlSave, mc.mutation, mc.hooks)
+func (_c *MemberCreate) Save(ctx context.Context) (*Member, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (mc *MemberCreate) SaveX(ctx context.Context) *Member {
-	v, err := mc.Save(ctx)
+func (_c *MemberCreate) SaveX(ctx context.Context) *Member {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -144,60 +144,60 @@ func (mc *MemberCreate) SaveX(ctx context.Context) *Member {
 }
 
 // Exec executes the query.
-func (mc *MemberCreate) Exec(ctx context.Context) error {
-	_, err := mc.Save(ctx)
+func (_c *MemberCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (mc *MemberCreate) ExecX(ctx context.Context) {
-	if err := mc.Exec(ctx); err != nil {
+func (_c *MemberCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (mc *MemberCreate) defaults() {
-	if _, ok := mc.mutation.Permission(); !ok {
+func (_c *MemberCreate) defaults() {
+	if _, ok := _c.mutation.Permission(); !ok {
 		v := member.DefaultPermission
-		mc.mutation.SetPermission(v)
+		_c.mutation.SetPermission(v)
 	}
-	if _, ok := mc.mutation.Xp(); !ok {
+	if _, ok := _c.mutation.Xp(); !ok {
 		v := member.DefaultXp
-		mc.mutation.SetXp(v)
+		_c.mutation.SetXp(v)
 	}
-	if _, ok := mc.mutation.MessageCount(); !ok {
+	if _, ok := _c.mutation.MessageCount(); !ok {
 		v := member.DefaultMessageCount
-		mc.mutation.SetMessageCount(v)
+		_c.mutation.SetMessageCount(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (mc *MemberCreate) check() error {
-	if _, ok := mc.mutation.Xp(); !ok {
+func (_c *MemberCreate) check() error {
+	if _, ok := _c.mutation.Xp(); !ok {
 		return &ValidationError{Name: "xp", err: errors.New(`ent: missing required field "Member.xp"`)}
 	}
-	if _, ok := mc.mutation.UserID(); !ok {
+	if _, ok := _c.mutation.UserID(); !ok {
 		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "Member.user_id"`)}
 	}
-	if _, ok := mc.mutation.MessageCount(); !ok {
+	if _, ok := _c.mutation.MessageCount(); !ok {
 		return &ValidationError{Name: "message_count", err: errors.New(`ent: missing required field "Member.message_count"`)}
 	}
-	if len(mc.mutation.GuildIDs()) == 0 {
+	if len(_c.mutation.GuildIDs()) == 0 {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "Member.guild"`)}
 	}
-	if len(mc.mutation.UserIDs()) == 0 {
+	if len(_c.mutation.UserIDs()) == 0 {
 		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "Member.user"`)}
 	}
 	return nil
 }
 
-func (mc *MemberCreate) sqlSave(ctx context.Context) (*Member, error) {
-	if err := mc.check(); err != nil {
+func (_c *MemberCreate) sqlSave(ctx context.Context) (*Member, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := mc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, mc.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -205,41 +205,41 @@ func (mc *MemberCreate) sqlSave(ctx context.Context) (*Member, error) {
 	}
 	id := _spec.ID.Value.(int64)
 	_node.ID = int(id)
-	mc.mutation.id = &_node.ID
-	mc.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (mc *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
+func (_c *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 	var (
-		_node = &Member{config: mc.config}
+		_node = &Member{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(member.Table, sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt))
 	)
-	if value, ok := mc.mutation.Permission(); ok {
+	if value, ok := _c.mutation.Permission(); ok {
 		_spec.SetField(member.FieldPermission, field.TypeJSON, value)
 		_node.Permission = value
 	}
-	if value, ok := mc.mutation.Xp(); ok {
+	if value, ok := _c.mutation.Xp(); ok {
 		_spec.SetField(member.FieldXp, field.TypeUint64, value)
 		_node.Xp = value
 	}
-	if value, ok := mc.mutation.LastXp(); ok {
+	if value, ok := _c.mutation.LastXp(); ok {
 		_spec.SetField(member.FieldLastXp, field.TypeTime, value)
 		_node.LastXp = value
 	}
-	if value, ok := mc.mutation.MessageCount(); ok {
+	if value, ok := _c.mutation.MessageCount(); ok {
 		_spec.SetField(member.FieldMessageCount, field.TypeUint64, value)
 		_node.MessageCount = value
 	}
-	if value, ok := mc.mutation.LastNotifiedLevel(); ok {
+	if value, ok := _c.mutation.LastNotifiedLevel(); ok {
 		_spec.SetField(member.FieldLastNotifiedLevel, field.TypeUint64, value)
 		_node.LastNotifiedLevel = &value
 	}
-	if value, ok := mc.mutation.LastMessageHashes(); ok {
+	if value, ok := _c.mutation.LastMessageHashes(); ok {
 		_spec.SetField(member.FieldLastMessageHashes, field.TypeJSON, value)
 		_node.LastMessageHashes = value
 	}
-	if nodes := mc.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -256,7 +256,7 @@ func (mc *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 		_node.guild_members = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := mc.mutation.UserIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -284,16 +284,16 @@ type MemberCreateBulk struct {
 }
 
 // Save creates the Member entities in the database.
-func (mcb *MemberCreateBulk) Save(ctx context.Context) ([]*Member, error) {
-	if mcb.err != nil {
-		return nil, mcb.err
+func (_c *MemberCreateBulk) Save(ctx context.Context) ([]*Member, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(mcb.builders))
-	nodes := make([]*Member, len(mcb.builders))
-	mutators := make([]Mutator, len(mcb.builders))
-	for i := range mcb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*Member, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := mcb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*MemberMutation)
@@ -307,11 +307,11 @@ func (mcb *MemberCreateBulk) Save(ctx context.Context) ([]*Member, error) {
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, mcb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, mcb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -335,7 +335,7 @@ func (mcb *MemberCreateBulk) Save(ctx context.Context) ([]*Member, error) {
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, mcb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -343,8 +343,8 @@ func (mcb *MemberCreateBulk) Save(ctx context.Context) ([]*Member, error) {
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (mcb *MemberCreateBulk) SaveX(ctx context.Context) []*Member {
-	v, err := mcb.Save(ctx)
+func (_c *MemberCreateBulk) SaveX(ctx context.Context) []*Member {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -352,14 +352,14 @@ func (mcb *MemberCreateBulk) SaveX(ctx context.Context) []*Member {
 }
 
 // Exec executes the query.
-func (mcb *MemberCreateBulk) Exec(ctx context.Context) error {
-	_, err := mcb.Save(ctx)
+func (_c *MemberCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (mcb *MemberCreateBulk) ExecX(ctx context.Context) {
-	if err := mcb.Exec(ctx); err != nil {
+func (_c *MemberCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

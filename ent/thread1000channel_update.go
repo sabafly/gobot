@@ -26,138 +26,138 @@ type Thread1000ChannelUpdate struct {
 }
 
 // Where appends a list predicates to the Thread1000ChannelUpdate builder.
-func (tu *Thread1000ChannelUpdate) Where(ps ...predicate.Thread1000Channel) *Thread1000ChannelUpdate {
-	tu.mutation.Where(ps...)
-	return tu
+func (_u *Thread1000ChannelUpdate) Where(ps ...predicate.Thread1000Channel) *Thread1000ChannelUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetName sets the "name" field.
-func (tu *Thread1000ChannelUpdate) SetName(s string) *Thread1000ChannelUpdate {
-	tu.mutation.SetName(s)
-	return tu
+func (_u *Thread1000ChannelUpdate) SetName(v string) *Thread1000ChannelUpdate {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (tu *Thread1000ChannelUpdate) SetNillableName(s *string) *Thread1000ChannelUpdate {
-	if s != nil {
-		tu.SetName(*s)
+func (_u *Thread1000ChannelUpdate) SetNillableName(v *string) *Thread1000ChannelUpdate {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return tu
+	return _u
 }
 
 // ClearName clears the value of the "name" field.
-func (tu *Thread1000ChannelUpdate) ClearName() *Thread1000ChannelUpdate {
-	tu.mutation.ClearName()
-	return tu
+func (_u *Thread1000ChannelUpdate) ClearName() *Thread1000ChannelUpdate {
+	_u.mutation.ClearName()
+	return _u
 }
 
 // SetAnonymousName sets the "anonymous_name" field.
-func (tu *Thread1000ChannelUpdate) SetAnonymousName(s string) *Thread1000ChannelUpdate {
-	tu.mutation.SetAnonymousName(s)
-	return tu
+func (_u *Thread1000ChannelUpdate) SetAnonymousName(v string) *Thread1000ChannelUpdate {
+	_u.mutation.SetAnonymousName(v)
+	return _u
 }
 
 // SetNillableAnonymousName sets the "anonymous_name" field if the given value is not nil.
-func (tu *Thread1000ChannelUpdate) SetNillableAnonymousName(s *string) *Thread1000ChannelUpdate {
-	if s != nil {
-		tu.SetAnonymousName(*s)
+func (_u *Thread1000ChannelUpdate) SetNillableAnonymousName(v *string) *Thread1000ChannelUpdate {
+	if v != nil {
+		_u.SetAnonymousName(*v)
 	}
-	return tu
+	return _u
 }
 
 // ClearAnonymousName clears the value of the "anonymous_name" field.
-func (tu *Thread1000ChannelUpdate) ClearAnonymousName() *Thread1000ChannelUpdate {
-	tu.mutation.ClearAnonymousName()
-	return tu
+func (_u *Thread1000ChannelUpdate) ClearAnonymousName() *Thread1000ChannelUpdate {
+	_u.mutation.ClearAnonymousName()
+	return _u
 }
 
 // SetChannelID sets the "channel_id" field.
-func (tu *Thread1000ChannelUpdate) SetChannelID(s snowflake.ID) *Thread1000ChannelUpdate {
-	tu.mutation.ResetChannelID()
-	tu.mutation.SetChannelID(s)
-	return tu
+func (_u *Thread1000ChannelUpdate) SetChannelID(v snowflake.ID) *Thread1000ChannelUpdate {
+	_u.mutation.ResetChannelID()
+	_u.mutation.SetChannelID(v)
+	return _u
 }
 
 // SetNillableChannelID sets the "channel_id" field if the given value is not nil.
-func (tu *Thread1000ChannelUpdate) SetNillableChannelID(s *snowflake.ID) *Thread1000ChannelUpdate {
-	if s != nil {
-		tu.SetChannelID(*s)
+func (_u *Thread1000ChannelUpdate) SetNillableChannelID(v *snowflake.ID) *Thread1000ChannelUpdate {
+	if v != nil {
+		_u.SetChannelID(*v)
 	}
-	return tu
+	return _u
 }
 
-// AddChannelID adds s to the "channel_id" field.
-func (tu *Thread1000ChannelUpdate) AddChannelID(s snowflake.ID) *Thread1000ChannelUpdate {
-	tu.mutation.AddChannelID(s)
-	return tu
+// AddChannelID adds value to the "channel_id" field.
+func (_u *Thread1000ChannelUpdate) AddChannelID(v snowflake.ID) *Thread1000ChannelUpdate {
+	_u.mutation.AddChannelID(v)
+	return _u
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (tu *Thread1000ChannelUpdate) SetGuildID(id snowflake.ID) *Thread1000ChannelUpdate {
-	tu.mutation.SetGuildID(id)
-	return tu
+func (_u *Thread1000ChannelUpdate) SetGuildID(id snowflake.ID) *Thread1000ChannelUpdate {
+	_u.mutation.SetGuildID(id)
+	return _u
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (tu *Thread1000ChannelUpdate) SetGuild(g *Guild) *Thread1000ChannelUpdate {
-	return tu.SetGuildID(g.ID)
+func (_u *Thread1000ChannelUpdate) SetGuild(v *Guild) *Thread1000ChannelUpdate {
+	return _u.SetGuildID(v.ID)
 }
 
 // AddThreadIDs adds the "threads" edge to the Thread1000 entity by IDs.
-func (tu *Thread1000ChannelUpdate) AddThreadIDs(ids ...uuid.UUID) *Thread1000ChannelUpdate {
-	tu.mutation.AddThreadIDs(ids...)
-	return tu
+func (_u *Thread1000ChannelUpdate) AddThreadIDs(ids ...uuid.UUID) *Thread1000ChannelUpdate {
+	_u.mutation.AddThreadIDs(ids...)
+	return _u
 }
 
 // AddThreads adds the "threads" edges to the Thread1000 entity.
-func (tu *Thread1000ChannelUpdate) AddThreads(t ...*Thread1000) *Thread1000ChannelUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *Thread1000ChannelUpdate) AddThreads(v ...*Thread1000) *Thread1000ChannelUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tu.AddThreadIDs(ids...)
+	return _u.AddThreadIDs(ids...)
 }
 
 // Mutation returns the Thread1000ChannelMutation object of the builder.
-func (tu *Thread1000ChannelUpdate) Mutation() *Thread1000ChannelMutation {
-	return tu.mutation
+func (_u *Thread1000ChannelUpdate) Mutation() *Thread1000ChannelMutation {
+	return _u.mutation
 }
 
 // ClearGuild clears the "guild" edge to the Guild entity.
-func (tu *Thread1000ChannelUpdate) ClearGuild() *Thread1000ChannelUpdate {
-	tu.mutation.ClearGuild()
-	return tu
+func (_u *Thread1000ChannelUpdate) ClearGuild() *Thread1000ChannelUpdate {
+	_u.mutation.ClearGuild()
+	return _u
 }
 
 // ClearThreads clears all "threads" edges to the Thread1000 entity.
-func (tu *Thread1000ChannelUpdate) ClearThreads() *Thread1000ChannelUpdate {
-	tu.mutation.ClearThreads()
-	return tu
+func (_u *Thread1000ChannelUpdate) ClearThreads() *Thread1000ChannelUpdate {
+	_u.mutation.ClearThreads()
+	return _u
 }
 
 // RemoveThreadIDs removes the "threads" edge to Thread1000 entities by IDs.
-func (tu *Thread1000ChannelUpdate) RemoveThreadIDs(ids ...uuid.UUID) *Thread1000ChannelUpdate {
-	tu.mutation.RemoveThreadIDs(ids...)
-	return tu
+func (_u *Thread1000ChannelUpdate) RemoveThreadIDs(ids ...uuid.UUID) *Thread1000ChannelUpdate {
+	_u.mutation.RemoveThreadIDs(ids...)
+	return _u
 }
 
 // RemoveThreads removes "threads" edges to Thread1000 entities.
-func (tu *Thread1000ChannelUpdate) RemoveThreads(t ...*Thread1000) *Thread1000ChannelUpdate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *Thread1000ChannelUpdate) RemoveThreads(v ...*Thread1000) *Thread1000ChannelUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tu.RemoveThreadIDs(ids...)
+	return _u.RemoveThreadIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (tu *Thread1000ChannelUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, tu.sqlSave, tu.mutation, tu.hooks)
+func (_u *Thread1000ChannelUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (tu *Thread1000ChannelUpdate) SaveX(ctx context.Context) int {
-	affected, err := tu.Save(ctx)
+func (_u *Thread1000ChannelUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -165,57 +165,57 @@ func (tu *Thread1000ChannelUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (tu *Thread1000ChannelUpdate) Exec(ctx context.Context) error {
-	_, err := tu.Save(ctx)
+func (_u *Thread1000ChannelUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tu *Thread1000ChannelUpdate) ExecX(ctx context.Context) {
-	if err := tu.Exec(ctx); err != nil {
+func (_u *Thread1000ChannelUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (tu *Thread1000ChannelUpdate) check() error {
-	if tu.mutation.GuildCleared() && len(tu.mutation.GuildIDs()) > 0 {
+func (_u *Thread1000ChannelUpdate) check() error {
+	if _u.mutation.GuildCleared() && len(_u.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Thread1000Channel.guild"`)
 	}
 	return nil
 }
 
-func (tu *Thread1000ChannelUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := tu.check(); err != nil {
-		return n, err
+func (_u *Thread1000ChannelUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(thread1000channel.Table, thread1000channel.Columns, sqlgraph.NewFieldSpec(thread1000channel.FieldID, field.TypeUUID))
-	if ps := tu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := tu.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(thread1000channel.FieldName, field.TypeString, value)
 	}
-	if tu.mutation.NameCleared() {
+	if _u.mutation.NameCleared() {
 		_spec.ClearField(thread1000channel.FieldName, field.TypeString)
 	}
-	if value, ok := tu.mutation.AnonymousName(); ok {
+	if value, ok := _u.mutation.AnonymousName(); ok {
 		_spec.SetField(thread1000channel.FieldAnonymousName, field.TypeString, value)
 	}
-	if tu.mutation.AnonymousNameCleared() {
+	if _u.mutation.AnonymousNameCleared() {
 		_spec.ClearField(thread1000channel.FieldAnonymousName, field.TypeString)
 	}
-	if value, ok := tu.mutation.ChannelID(); ok {
+	if value, ok := _u.mutation.ChannelID(); ok {
 		_spec.SetField(thread1000channel.FieldChannelID, field.TypeUint64, value)
 	}
-	if value, ok := tu.mutation.AddedChannelID(); ok {
+	if value, ok := _u.mutation.AddedChannelID(); ok {
 		_spec.AddField(thread1000channel.FieldChannelID, field.TypeUint64, value)
 	}
-	if tu.mutation.GuildCleared() {
+	if _u.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -228,7 +228,7 @@ func (tu *Thread1000ChannelUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -244,7 +244,7 @@ func (tu *Thread1000ChannelUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tu.mutation.ThreadsCleared() {
+	if _u.mutation.ThreadsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -257,7 +257,7 @@ func (tu *Thread1000ChannelUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.RemovedThreadsIDs(); len(nodes) > 0 && !tu.mutation.ThreadsCleared() {
+	if nodes := _u.mutation.RemovedThreadsIDs(); len(nodes) > 0 && !_u.mutation.ThreadsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -273,7 +273,7 @@ func (tu *Thread1000ChannelUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.mutation.ThreadsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.ThreadsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -289,7 +289,7 @@ func (tu *Thread1000ChannelUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{thread1000channel.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -297,8 +297,8 @@ func (tu *Thread1000ChannelUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		return 0, err
 	}
-	tu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // Thread1000ChannelUpdateOne is the builder for updating a single Thread1000Channel entity.
@@ -310,145 +310,145 @@ type Thread1000ChannelUpdateOne struct {
 }
 
 // SetName sets the "name" field.
-func (tuo *Thread1000ChannelUpdateOne) SetName(s string) *Thread1000ChannelUpdateOne {
-	tuo.mutation.SetName(s)
-	return tuo
+func (_u *Thread1000ChannelUpdateOne) SetName(v string) *Thread1000ChannelUpdateOne {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (tuo *Thread1000ChannelUpdateOne) SetNillableName(s *string) *Thread1000ChannelUpdateOne {
-	if s != nil {
-		tuo.SetName(*s)
+func (_u *Thread1000ChannelUpdateOne) SetNillableName(v *string) *Thread1000ChannelUpdateOne {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return tuo
+	return _u
 }
 
 // ClearName clears the value of the "name" field.
-func (tuo *Thread1000ChannelUpdateOne) ClearName() *Thread1000ChannelUpdateOne {
-	tuo.mutation.ClearName()
-	return tuo
+func (_u *Thread1000ChannelUpdateOne) ClearName() *Thread1000ChannelUpdateOne {
+	_u.mutation.ClearName()
+	return _u
 }
 
 // SetAnonymousName sets the "anonymous_name" field.
-func (tuo *Thread1000ChannelUpdateOne) SetAnonymousName(s string) *Thread1000ChannelUpdateOne {
-	tuo.mutation.SetAnonymousName(s)
-	return tuo
+func (_u *Thread1000ChannelUpdateOne) SetAnonymousName(v string) *Thread1000ChannelUpdateOne {
+	_u.mutation.SetAnonymousName(v)
+	return _u
 }
 
 // SetNillableAnonymousName sets the "anonymous_name" field if the given value is not nil.
-func (tuo *Thread1000ChannelUpdateOne) SetNillableAnonymousName(s *string) *Thread1000ChannelUpdateOne {
-	if s != nil {
-		tuo.SetAnonymousName(*s)
+func (_u *Thread1000ChannelUpdateOne) SetNillableAnonymousName(v *string) *Thread1000ChannelUpdateOne {
+	if v != nil {
+		_u.SetAnonymousName(*v)
 	}
-	return tuo
+	return _u
 }
 
 // ClearAnonymousName clears the value of the "anonymous_name" field.
-func (tuo *Thread1000ChannelUpdateOne) ClearAnonymousName() *Thread1000ChannelUpdateOne {
-	tuo.mutation.ClearAnonymousName()
-	return tuo
+func (_u *Thread1000ChannelUpdateOne) ClearAnonymousName() *Thread1000ChannelUpdateOne {
+	_u.mutation.ClearAnonymousName()
+	return _u
 }
 
 // SetChannelID sets the "channel_id" field.
-func (tuo *Thread1000ChannelUpdateOne) SetChannelID(s snowflake.ID) *Thread1000ChannelUpdateOne {
-	tuo.mutation.ResetChannelID()
-	tuo.mutation.SetChannelID(s)
-	return tuo
+func (_u *Thread1000ChannelUpdateOne) SetChannelID(v snowflake.ID) *Thread1000ChannelUpdateOne {
+	_u.mutation.ResetChannelID()
+	_u.mutation.SetChannelID(v)
+	return _u
 }
 
 // SetNillableChannelID sets the "channel_id" field if the given value is not nil.
-func (tuo *Thread1000ChannelUpdateOne) SetNillableChannelID(s *snowflake.ID) *Thread1000ChannelUpdateOne {
-	if s != nil {
-		tuo.SetChannelID(*s)
+func (_u *Thread1000ChannelUpdateOne) SetNillableChannelID(v *snowflake.ID) *Thread1000ChannelUpdateOne {
+	if v != nil {
+		_u.SetChannelID(*v)
 	}
-	return tuo
+	return _u
 }
 
-// AddChannelID adds s to the "channel_id" field.
-func (tuo *Thread1000ChannelUpdateOne) AddChannelID(s snowflake.ID) *Thread1000ChannelUpdateOne {
-	tuo.mutation.AddChannelID(s)
-	return tuo
+// AddChannelID adds value to the "channel_id" field.
+func (_u *Thread1000ChannelUpdateOne) AddChannelID(v snowflake.ID) *Thread1000ChannelUpdateOne {
+	_u.mutation.AddChannelID(v)
+	return _u
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (tuo *Thread1000ChannelUpdateOne) SetGuildID(id snowflake.ID) *Thread1000ChannelUpdateOne {
-	tuo.mutation.SetGuildID(id)
-	return tuo
+func (_u *Thread1000ChannelUpdateOne) SetGuildID(id snowflake.ID) *Thread1000ChannelUpdateOne {
+	_u.mutation.SetGuildID(id)
+	return _u
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (tuo *Thread1000ChannelUpdateOne) SetGuild(g *Guild) *Thread1000ChannelUpdateOne {
-	return tuo.SetGuildID(g.ID)
+func (_u *Thread1000ChannelUpdateOne) SetGuild(v *Guild) *Thread1000ChannelUpdateOne {
+	return _u.SetGuildID(v.ID)
 }
 
 // AddThreadIDs adds the "threads" edge to the Thread1000 entity by IDs.
-func (tuo *Thread1000ChannelUpdateOne) AddThreadIDs(ids ...uuid.UUID) *Thread1000ChannelUpdateOne {
-	tuo.mutation.AddThreadIDs(ids...)
-	return tuo
+func (_u *Thread1000ChannelUpdateOne) AddThreadIDs(ids ...uuid.UUID) *Thread1000ChannelUpdateOne {
+	_u.mutation.AddThreadIDs(ids...)
+	return _u
 }
 
 // AddThreads adds the "threads" edges to the Thread1000 entity.
-func (tuo *Thread1000ChannelUpdateOne) AddThreads(t ...*Thread1000) *Thread1000ChannelUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *Thread1000ChannelUpdateOne) AddThreads(v ...*Thread1000) *Thread1000ChannelUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tuo.AddThreadIDs(ids...)
+	return _u.AddThreadIDs(ids...)
 }
 
 // Mutation returns the Thread1000ChannelMutation object of the builder.
-func (tuo *Thread1000ChannelUpdateOne) Mutation() *Thread1000ChannelMutation {
-	return tuo.mutation
+func (_u *Thread1000ChannelUpdateOne) Mutation() *Thread1000ChannelMutation {
+	return _u.mutation
 }
 
 // ClearGuild clears the "guild" edge to the Guild entity.
-func (tuo *Thread1000ChannelUpdateOne) ClearGuild() *Thread1000ChannelUpdateOne {
-	tuo.mutation.ClearGuild()
-	return tuo
+func (_u *Thread1000ChannelUpdateOne) ClearGuild() *Thread1000ChannelUpdateOne {
+	_u.mutation.ClearGuild()
+	return _u
 }
 
 // ClearThreads clears all "threads" edges to the Thread1000 entity.
-func (tuo *Thread1000ChannelUpdateOne) ClearThreads() *Thread1000ChannelUpdateOne {
-	tuo.mutation.ClearThreads()
-	return tuo
+func (_u *Thread1000ChannelUpdateOne) ClearThreads() *Thread1000ChannelUpdateOne {
+	_u.mutation.ClearThreads()
+	return _u
 }
 
 // RemoveThreadIDs removes the "threads" edge to Thread1000 entities by IDs.
-func (tuo *Thread1000ChannelUpdateOne) RemoveThreadIDs(ids ...uuid.UUID) *Thread1000ChannelUpdateOne {
-	tuo.mutation.RemoveThreadIDs(ids...)
-	return tuo
+func (_u *Thread1000ChannelUpdateOne) RemoveThreadIDs(ids ...uuid.UUID) *Thread1000ChannelUpdateOne {
+	_u.mutation.RemoveThreadIDs(ids...)
+	return _u
 }
 
 // RemoveThreads removes "threads" edges to Thread1000 entities.
-func (tuo *Thread1000ChannelUpdateOne) RemoveThreads(t ...*Thread1000) *Thread1000ChannelUpdateOne {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_u *Thread1000ChannelUpdateOne) RemoveThreads(v ...*Thread1000) *Thread1000ChannelUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return tuo.RemoveThreadIDs(ids...)
+	return _u.RemoveThreadIDs(ids...)
 }
 
 // Where appends a list predicates to the Thread1000ChannelUpdate builder.
-func (tuo *Thread1000ChannelUpdateOne) Where(ps ...predicate.Thread1000Channel) *Thread1000ChannelUpdateOne {
-	tuo.mutation.Where(ps...)
-	return tuo
+func (_u *Thread1000ChannelUpdateOne) Where(ps ...predicate.Thread1000Channel) *Thread1000ChannelUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (tuo *Thread1000ChannelUpdateOne) Select(field string, fields ...string) *Thread1000ChannelUpdateOne {
-	tuo.fields = append([]string{field}, fields...)
-	return tuo
+func (_u *Thread1000ChannelUpdateOne) Select(field string, fields ...string) *Thread1000ChannelUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated Thread1000Channel entity.
-func (tuo *Thread1000ChannelUpdateOne) Save(ctx context.Context) (*Thread1000Channel, error) {
-	return withHooks(ctx, tuo.sqlSave, tuo.mutation, tuo.hooks)
+func (_u *Thread1000ChannelUpdateOne) Save(ctx context.Context) (*Thread1000Channel, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (tuo *Thread1000ChannelUpdateOne) SaveX(ctx context.Context) *Thread1000Channel {
-	node, err := tuo.Save(ctx)
+func (_u *Thread1000ChannelUpdateOne) SaveX(ctx context.Context) *Thread1000Channel {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -456,37 +456,37 @@ func (tuo *Thread1000ChannelUpdateOne) SaveX(ctx context.Context) *Thread1000Cha
 }
 
 // Exec executes the query on the entity.
-func (tuo *Thread1000ChannelUpdateOne) Exec(ctx context.Context) error {
-	_, err := tuo.Save(ctx)
+func (_u *Thread1000ChannelUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tuo *Thread1000ChannelUpdateOne) ExecX(ctx context.Context) {
-	if err := tuo.Exec(ctx); err != nil {
+func (_u *Thread1000ChannelUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (tuo *Thread1000ChannelUpdateOne) check() error {
-	if tuo.mutation.GuildCleared() && len(tuo.mutation.GuildIDs()) > 0 {
+func (_u *Thread1000ChannelUpdateOne) check() error {
+	if _u.mutation.GuildCleared() && len(_u.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Thread1000Channel.guild"`)
 	}
 	return nil
 }
 
-func (tuo *Thread1000ChannelUpdateOne) sqlSave(ctx context.Context) (_node *Thread1000Channel, err error) {
-	if err := tuo.check(); err != nil {
+func (_u *Thread1000ChannelUpdateOne) sqlSave(ctx context.Context) (_node *Thread1000Channel, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(thread1000channel.Table, thread1000channel.Columns, sqlgraph.NewFieldSpec(thread1000channel.FieldID, field.TypeUUID))
-	id, ok := tuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Thread1000Channel.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := tuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, thread1000channel.FieldID)
 		for _, f := range fields {
@@ -498,32 +498,32 @@ func (tuo *Thread1000ChannelUpdateOne) sqlSave(ctx context.Context) (_node *Thre
 			}
 		}
 	}
-	if ps := tuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := tuo.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(thread1000channel.FieldName, field.TypeString, value)
 	}
-	if tuo.mutation.NameCleared() {
+	if _u.mutation.NameCleared() {
 		_spec.ClearField(thread1000channel.FieldName, field.TypeString)
 	}
-	if value, ok := tuo.mutation.AnonymousName(); ok {
+	if value, ok := _u.mutation.AnonymousName(); ok {
 		_spec.SetField(thread1000channel.FieldAnonymousName, field.TypeString, value)
 	}
-	if tuo.mutation.AnonymousNameCleared() {
+	if _u.mutation.AnonymousNameCleared() {
 		_spec.ClearField(thread1000channel.FieldAnonymousName, field.TypeString)
 	}
-	if value, ok := tuo.mutation.ChannelID(); ok {
+	if value, ok := _u.mutation.ChannelID(); ok {
 		_spec.SetField(thread1000channel.FieldChannelID, field.TypeUint64, value)
 	}
-	if value, ok := tuo.mutation.AddedChannelID(); ok {
+	if value, ok := _u.mutation.AddedChannelID(); ok {
 		_spec.AddField(thread1000channel.FieldChannelID, field.TypeUint64, value)
 	}
-	if tuo.mutation.GuildCleared() {
+	if _u.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -536,7 +536,7 @@ func (tuo *Thread1000ChannelUpdateOne) sqlSave(ctx context.Context) (_node *Thre
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -552,7 +552,7 @@ func (tuo *Thread1000ChannelUpdateOne) sqlSave(ctx context.Context) (_node *Thre
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tuo.mutation.ThreadsCleared() {
+	if _u.mutation.ThreadsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -565,7 +565,7 @@ func (tuo *Thread1000ChannelUpdateOne) sqlSave(ctx context.Context) (_node *Thre
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.RemovedThreadsIDs(); len(nodes) > 0 && !tuo.mutation.ThreadsCleared() {
+	if nodes := _u.mutation.RemovedThreadsIDs(); len(nodes) > 0 && !_u.mutation.ThreadsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -581,7 +581,7 @@ func (tuo *Thread1000ChannelUpdateOne) sqlSave(ctx context.Context) (_node *Thre
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.mutation.ThreadsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.ThreadsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -597,10 +597,10 @@ func (tuo *Thread1000ChannelUpdateOne) sqlSave(ctx context.Context) (_node *Thre
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_node = &Thread1000Channel{config: tuo.config}
+	_node = &Thread1000Channel{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, tuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{thread1000channel.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -608,6 +608,6 @@ func (tuo *Thread1000ChannelUpdateOne) sqlSave(ctx context.Context) (_node *Thre
 		}
 		return nil, err
 	}
-	tuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

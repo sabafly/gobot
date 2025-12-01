@@ -108,7 +108,7 @@ func (*RolePanel) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the RolePanel fields.
-func (rp *RolePanel) assignValues(columns []string, values []any) error {
+func (_m *RolePanel) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -118,25 +118,25 @@ func (rp *RolePanel) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				rp.ID = *value
+				_m.ID = *value
 			}
 		case rolepanel.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
-				rp.Name = value.String
+				_m.Name = value.String
 			}
 		case rolepanel.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				rp.Description = value.String
+				_m.Description = value.String
 			}
 		case rolepanel.FieldRoles:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field roles", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &rp.Roles); err != nil {
+				if err := json.Unmarshal(*value, &_m.Roles); err != nil {
 					return fmt.Errorf("unmarshal field roles: %w", err)
 				}
 			}
@@ -144,23 +144,23 @@ func (rp *RolePanel) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
-				rp.UpdatedAt = value.Time
+				_m.UpdatedAt = value.Time
 			}
 		case rolepanel.FieldAppliedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field applied_at", values[i])
 			} else if value.Valid {
-				rp.AppliedAt = value.Time
+				_m.AppliedAt = value.Time
 			}
 		case rolepanel.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field guild_role_panels", values[i])
 			} else if value.Valid {
-				rp.guild_role_panels = new(snowflake.ID)
-				*rp.guild_role_panels = snowflake.ID(value.Int64)
+				_m.guild_role_panels = new(snowflake.ID)
+				*_m.guild_role_panels = snowflake.ID(value.Int64)
 			}
 		default:
-			rp.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -168,62 +168,62 @@ func (rp *RolePanel) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the RolePanel.
 // This includes values selected through modifiers, order, etc.
-func (rp *RolePanel) Value(name string) (ent.Value, error) {
-	return rp.selectValues.Get(name)
+func (_m *RolePanel) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // QueryGuild queries the "guild" edge of the RolePanel entity.
-func (rp *RolePanel) QueryGuild() *GuildQuery {
-	return NewRolePanelClient(rp.config).QueryGuild(rp)
+func (_m *RolePanel) QueryGuild() *GuildQuery {
+	return NewRolePanelClient(_m.config).QueryGuild(_m)
 }
 
 // QueryPlacements queries the "placements" edge of the RolePanel entity.
-func (rp *RolePanel) QueryPlacements() *RolePanelPlacedQuery {
-	return NewRolePanelClient(rp.config).QueryPlacements(rp)
+func (_m *RolePanel) QueryPlacements() *RolePanelPlacedQuery {
+	return NewRolePanelClient(_m.config).QueryPlacements(_m)
 }
 
 // QueryEdit queries the "edit" edge of the RolePanel entity.
-func (rp *RolePanel) QueryEdit() *RolePanelEditQuery {
-	return NewRolePanelClient(rp.config).QueryEdit(rp)
+func (_m *RolePanel) QueryEdit() *RolePanelEditQuery {
+	return NewRolePanelClient(_m.config).QueryEdit(_m)
 }
 
 // Update returns a builder for updating this RolePanel.
 // Note that you need to call RolePanel.Unwrap() before calling this method if this RolePanel
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (rp *RolePanel) Update() *RolePanelUpdateOne {
-	return NewRolePanelClient(rp.config).UpdateOne(rp)
+func (_m *RolePanel) Update() *RolePanelUpdateOne {
+	return NewRolePanelClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the RolePanel entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (rp *RolePanel) Unwrap() *RolePanel {
-	_tx, ok := rp.config.driver.(*txDriver)
+func (_m *RolePanel) Unwrap() *RolePanel {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: RolePanel is not a transactional entity")
 	}
-	rp.config.driver = _tx.drv
-	return rp
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (rp *RolePanel) String() string {
+func (_m *RolePanel) String() string {
 	var builder strings.Builder
 	builder.WriteString("RolePanel(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", rp.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("name=")
-	builder.WriteString(rp.Name)
+	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
 	builder.WriteString("description=")
-	builder.WriteString(rp.Description)
+	builder.WriteString(_m.Description)
 	builder.WriteString(", ")
 	builder.WriteString("roles=")
-	builder.WriteString(fmt.Sprintf("%v", rp.Roles))
+	builder.WriteString(fmt.Sprintf("%v", _m.Roles))
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
-	builder.WriteString(rp.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("applied_at=")
-	builder.WriteString(rp.AppliedAt.Format(time.ANSIC))
+	builder.WriteString(_m.AppliedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

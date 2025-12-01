@@ -25,191 +25,191 @@ type RolePanelEditUpdate struct {
 }
 
 // Where appends a list predicates to the RolePanelEditUpdate builder.
-func (rpeu *RolePanelEditUpdate) Where(ps ...predicate.RolePanelEdit) *RolePanelEditUpdate {
-	rpeu.mutation.Where(ps...)
-	return rpeu
+func (_u *RolePanelEditUpdate) Where(ps ...predicate.RolePanelEdit) *RolePanelEditUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetChannelID sets the "channel_id" field.
-func (rpeu *RolePanelEditUpdate) SetChannelID(s snowflake.ID) *RolePanelEditUpdate {
-	rpeu.mutation.ResetChannelID()
-	rpeu.mutation.SetChannelID(s)
-	return rpeu
+func (_u *RolePanelEditUpdate) SetChannelID(v snowflake.ID) *RolePanelEditUpdate {
+	_u.mutation.ResetChannelID()
+	_u.mutation.SetChannelID(v)
+	return _u
 }
 
 // SetNillableChannelID sets the "channel_id" field if the given value is not nil.
-func (rpeu *RolePanelEditUpdate) SetNillableChannelID(s *snowflake.ID) *RolePanelEditUpdate {
-	if s != nil {
-		rpeu.SetChannelID(*s)
+func (_u *RolePanelEditUpdate) SetNillableChannelID(v *snowflake.ID) *RolePanelEditUpdate {
+	if v != nil {
+		_u.SetChannelID(*v)
 	}
-	return rpeu
+	return _u
 }
 
-// AddChannelID adds s to the "channel_id" field.
-func (rpeu *RolePanelEditUpdate) AddChannelID(s snowflake.ID) *RolePanelEditUpdate {
-	rpeu.mutation.AddChannelID(s)
-	return rpeu
+// AddChannelID adds value to the "channel_id" field.
+func (_u *RolePanelEditUpdate) AddChannelID(v snowflake.ID) *RolePanelEditUpdate {
+	_u.mutation.AddChannelID(v)
+	return _u
 }
 
 // SetEmojiAuthor sets the "emoji_author" field.
-func (rpeu *RolePanelEditUpdate) SetEmojiAuthor(s snowflake.ID) *RolePanelEditUpdate {
-	rpeu.mutation.ResetEmojiAuthor()
-	rpeu.mutation.SetEmojiAuthor(s)
-	return rpeu
+func (_u *RolePanelEditUpdate) SetEmojiAuthor(v snowflake.ID) *RolePanelEditUpdate {
+	_u.mutation.ResetEmojiAuthor()
+	_u.mutation.SetEmojiAuthor(v)
+	return _u
 }
 
 // SetNillableEmojiAuthor sets the "emoji_author" field if the given value is not nil.
-func (rpeu *RolePanelEditUpdate) SetNillableEmojiAuthor(s *snowflake.ID) *RolePanelEditUpdate {
-	if s != nil {
-		rpeu.SetEmojiAuthor(*s)
+func (_u *RolePanelEditUpdate) SetNillableEmojiAuthor(v *snowflake.ID) *RolePanelEditUpdate {
+	if v != nil {
+		_u.SetEmojiAuthor(*v)
 	}
-	return rpeu
+	return _u
 }
 
-// AddEmojiAuthor adds s to the "emoji_author" field.
-func (rpeu *RolePanelEditUpdate) AddEmojiAuthor(s snowflake.ID) *RolePanelEditUpdate {
-	rpeu.mutation.AddEmojiAuthor(s)
-	return rpeu
+// AddEmojiAuthor adds value to the "emoji_author" field.
+func (_u *RolePanelEditUpdate) AddEmojiAuthor(v snowflake.ID) *RolePanelEditUpdate {
+	_u.mutation.AddEmojiAuthor(v)
+	return _u
 }
 
 // ClearEmojiAuthor clears the value of the "emoji_author" field.
-func (rpeu *RolePanelEditUpdate) ClearEmojiAuthor() *RolePanelEditUpdate {
-	rpeu.mutation.ClearEmojiAuthor()
-	return rpeu
+func (_u *RolePanelEditUpdate) ClearEmojiAuthor() *RolePanelEditUpdate {
+	_u.mutation.ClearEmojiAuthor()
+	return _u
 }
 
 // SetToken sets the "token" field.
-func (rpeu *RolePanelEditUpdate) SetToken(s string) *RolePanelEditUpdate {
-	rpeu.mutation.SetToken(s)
-	return rpeu
+func (_u *RolePanelEditUpdate) SetToken(v string) *RolePanelEditUpdate {
+	_u.mutation.SetToken(v)
+	return _u
 }
 
 // SetNillableToken sets the "token" field if the given value is not nil.
-func (rpeu *RolePanelEditUpdate) SetNillableToken(s *string) *RolePanelEditUpdate {
-	if s != nil {
-		rpeu.SetToken(*s)
+func (_u *RolePanelEditUpdate) SetNillableToken(v *string) *RolePanelEditUpdate {
+	if v != nil {
+		_u.SetToken(*v)
 	}
-	return rpeu
+	return _u
 }
 
 // ClearToken clears the value of the "token" field.
-func (rpeu *RolePanelEditUpdate) ClearToken() *RolePanelEditUpdate {
-	rpeu.mutation.ClearToken()
-	return rpeu
+func (_u *RolePanelEditUpdate) ClearToken() *RolePanelEditUpdate {
+	_u.mutation.ClearToken()
+	return _u
 }
 
 // SetSelectedRole sets the "selected_role" field.
-func (rpeu *RolePanelEditUpdate) SetSelectedRole(s snowflake.ID) *RolePanelEditUpdate {
-	rpeu.mutation.ResetSelectedRole()
-	rpeu.mutation.SetSelectedRole(s)
-	return rpeu
+func (_u *RolePanelEditUpdate) SetSelectedRole(v snowflake.ID) *RolePanelEditUpdate {
+	_u.mutation.ResetSelectedRole()
+	_u.mutation.SetSelectedRole(v)
+	return _u
 }
 
 // SetNillableSelectedRole sets the "selected_role" field if the given value is not nil.
-func (rpeu *RolePanelEditUpdate) SetNillableSelectedRole(s *snowflake.ID) *RolePanelEditUpdate {
-	if s != nil {
-		rpeu.SetSelectedRole(*s)
+func (_u *RolePanelEditUpdate) SetNillableSelectedRole(v *snowflake.ID) *RolePanelEditUpdate {
+	if v != nil {
+		_u.SetSelectedRole(*v)
 	}
-	return rpeu
+	return _u
 }
 
-// AddSelectedRole adds s to the "selected_role" field.
-func (rpeu *RolePanelEditUpdate) AddSelectedRole(s snowflake.ID) *RolePanelEditUpdate {
-	rpeu.mutation.AddSelectedRole(s)
-	return rpeu
+// AddSelectedRole adds value to the "selected_role" field.
+func (_u *RolePanelEditUpdate) AddSelectedRole(v snowflake.ID) *RolePanelEditUpdate {
+	_u.mutation.AddSelectedRole(v)
+	return _u
 }
 
 // ClearSelectedRole clears the value of the "selected_role" field.
-func (rpeu *RolePanelEditUpdate) ClearSelectedRole() *RolePanelEditUpdate {
-	rpeu.mutation.ClearSelectedRole()
-	return rpeu
+func (_u *RolePanelEditUpdate) ClearSelectedRole() *RolePanelEditUpdate {
+	_u.mutation.ClearSelectedRole()
+	return _u
 }
 
 // SetModified sets the "modified" field.
-func (rpeu *RolePanelEditUpdate) SetModified(b bool) *RolePanelEditUpdate {
-	rpeu.mutation.SetModified(b)
-	return rpeu
+func (_u *RolePanelEditUpdate) SetModified(v bool) *RolePanelEditUpdate {
+	_u.mutation.SetModified(v)
+	return _u
 }
 
 // SetNillableModified sets the "modified" field if the given value is not nil.
-func (rpeu *RolePanelEditUpdate) SetNillableModified(b *bool) *RolePanelEditUpdate {
-	if b != nil {
-		rpeu.SetModified(*b)
+func (_u *RolePanelEditUpdate) SetNillableModified(v *bool) *RolePanelEditUpdate {
+	if v != nil {
+		_u.SetModified(*v)
 	}
-	return rpeu
+	return _u
 }
 
 // SetName sets the "name" field.
-func (rpeu *RolePanelEditUpdate) SetName(s string) *RolePanelEditUpdate {
-	rpeu.mutation.SetName(s)
-	return rpeu
+func (_u *RolePanelEditUpdate) SetName(v string) *RolePanelEditUpdate {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (rpeu *RolePanelEditUpdate) SetNillableName(s *string) *RolePanelEditUpdate {
-	if s != nil {
-		rpeu.SetName(*s)
+func (_u *RolePanelEditUpdate) SetNillableName(v *string) *RolePanelEditUpdate {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return rpeu
+	return _u
 }
 
 // ClearName clears the value of the "name" field.
-func (rpeu *RolePanelEditUpdate) ClearName() *RolePanelEditUpdate {
-	rpeu.mutation.ClearName()
-	return rpeu
+func (_u *RolePanelEditUpdate) ClearName() *RolePanelEditUpdate {
+	_u.mutation.ClearName()
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (rpeu *RolePanelEditUpdate) SetDescription(s string) *RolePanelEditUpdate {
-	rpeu.mutation.SetDescription(s)
-	return rpeu
+func (_u *RolePanelEditUpdate) SetDescription(v string) *RolePanelEditUpdate {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (rpeu *RolePanelEditUpdate) SetNillableDescription(s *string) *RolePanelEditUpdate {
-	if s != nil {
-		rpeu.SetDescription(*s)
+func (_u *RolePanelEditUpdate) SetNillableDescription(v *string) *RolePanelEditUpdate {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return rpeu
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (rpeu *RolePanelEditUpdate) ClearDescription() *RolePanelEditUpdate {
-	rpeu.mutation.ClearDescription()
-	return rpeu
+func (_u *RolePanelEditUpdate) ClearDescription() *RolePanelEditUpdate {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // SetRoles sets the "roles" field.
-func (rpeu *RolePanelEditUpdate) SetRoles(s []schema.Role) *RolePanelEditUpdate {
-	rpeu.mutation.SetRoles(s)
-	return rpeu
+func (_u *RolePanelEditUpdate) SetRoles(v []schema.Role) *RolePanelEditUpdate {
+	_u.mutation.SetRoles(v)
+	return _u
 }
 
-// AppendRoles appends s to the "roles" field.
-func (rpeu *RolePanelEditUpdate) AppendRoles(s []schema.Role) *RolePanelEditUpdate {
-	rpeu.mutation.AppendRoles(s)
-	return rpeu
+// AppendRoles appends value to the "roles" field.
+func (_u *RolePanelEditUpdate) AppendRoles(v []schema.Role) *RolePanelEditUpdate {
+	_u.mutation.AppendRoles(v)
+	return _u
 }
 
 // ClearRoles clears the value of the "roles" field.
-func (rpeu *RolePanelEditUpdate) ClearRoles() *RolePanelEditUpdate {
-	rpeu.mutation.ClearRoles()
-	return rpeu
+func (_u *RolePanelEditUpdate) ClearRoles() *RolePanelEditUpdate {
+	_u.mutation.ClearRoles()
+	return _u
 }
 
 // Mutation returns the RolePanelEditMutation object of the builder.
-func (rpeu *RolePanelEditUpdate) Mutation() *RolePanelEditMutation {
-	return rpeu.mutation
+func (_u *RolePanelEditUpdate) Mutation() *RolePanelEditMutation {
+	return _u.mutation
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (rpeu *RolePanelEditUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, rpeu.sqlSave, rpeu.mutation, rpeu.hooks)
+func (_u *RolePanelEditUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (rpeu *RolePanelEditUpdate) SaveX(ctx context.Context) int {
-	affected, err := rpeu.Save(ctx)
+func (_u *RolePanelEditUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -217,103 +217,103 @@ func (rpeu *RolePanelEditUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (rpeu *RolePanelEditUpdate) Exec(ctx context.Context) error {
-	_, err := rpeu.Save(ctx)
+func (_u *RolePanelEditUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (rpeu *RolePanelEditUpdate) ExecX(ctx context.Context) {
-	if err := rpeu.Exec(ctx); err != nil {
+func (_u *RolePanelEditUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (rpeu *RolePanelEditUpdate) check() error {
-	if v, ok := rpeu.mutation.Name(); ok {
+func (_u *RolePanelEditUpdate) check() error {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := rolepaneledit.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanelEdit.name": %w`, err)}
 		}
 	}
-	if rpeu.mutation.GuildCleared() && len(rpeu.mutation.GuildIDs()) > 0 {
+	if _u.mutation.GuildCleared() && len(_u.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "RolePanelEdit.guild"`)
 	}
-	if rpeu.mutation.ParentCleared() && len(rpeu.mutation.ParentIDs()) > 0 {
+	if _u.mutation.ParentCleared() && len(_u.mutation.ParentIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "RolePanelEdit.parent"`)
 	}
 	return nil
 }
 
-func (rpeu *RolePanelEditUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := rpeu.check(); err != nil {
-		return n, err
+func (_u *RolePanelEditUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(rolepaneledit.Table, rolepaneledit.Columns, sqlgraph.NewFieldSpec(rolepaneledit.FieldID, field.TypeUUID))
-	if ps := rpeu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := rpeu.mutation.ChannelID(); ok {
+	if value, ok := _u.mutation.ChannelID(); ok {
 		_spec.SetField(rolepaneledit.FieldChannelID, field.TypeUint64, value)
 	}
-	if value, ok := rpeu.mutation.AddedChannelID(); ok {
+	if value, ok := _u.mutation.AddedChannelID(); ok {
 		_spec.AddField(rolepaneledit.FieldChannelID, field.TypeUint64, value)
 	}
-	if value, ok := rpeu.mutation.EmojiAuthor(); ok {
+	if value, ok := _u.mutation.EmojiAuthor(); ok {
 		_spec.SetField(rolepaneledit.FieldEmojiAuthor, field.TypeUint64, value)
 	}
-	if value, ok := rpeu.mutation.AddedEmojiAuthor(); ok {
+	if value, ok := _u.mutation.AddedEmojiAuthor(); ok {
 		_spec.AddField(rolepaneledit.FieldEmojiAuthor, field.TypeUint64, value)
 	}
-	if rpeu.mutation.EmojiAuthorCleared() {
+	if _u.mutation.EmojiAuthorCleared() {
 		_spec.ClearField(rolepaneledit.FieldEmojiAuthor, field.TypeUint64)
 	}
-	if value, ok := rpeu.mutation.Token(); ok {
+	if value, ok := _u.mutation.Token(); ok {
 		_spec.SetField(rolepaneledit.FieldToken, field.TypeString, value)
 	}
-	if rpeu.mutation.TokenCleared() {
+	if _u.mutation.TokenCleared() {
 		_spec.ClearField(rolepaneledit.FieldToken, field.TypeString)
 	}
-	if value, ok := rpeu.mutation.SelectedRole(); ok {
+	if value, ok := _u.mutation.SelectedRole(); ok {
 		_spec.SetField(rolepaneledit.FieldSelectedRole, field.TypeUint64, value)
 	}
-	if value, ok := rpeu.mutation.AddedSelectedRole(); ok {
+	if value, ok := _u.mutation.AddedSelectedRole(); ok {
 		_spec.AddField(rolepaneledit.FieldSelectedRole, field.TypeUint64, value)
 	}
-	if rpeu.mutation.SelectedRoleCleared() {
+	if _u.mutation.SelectedRoleCleared() {
 		_spec.ClearField(rolepaneledit.FieldSelectedRole, field.TypeUint64)
 	}
-	if value, ok := rpeu.mutation.Modified(); ok {
+	if value, ok := _u.mutation.Modified(); ok {
 		_spec.SetField(rolepaneledit.FieldModified, field.TypeBool, value)
 	}
-	if value, ok := rpeu.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(rolepaneledit.FieldName, field.TypeString, value)
 	}
-	if rpeu.mutation.NameCleared() {
+	if _u.mutation.NameCleared() {
 		_spec.ClearField(rolepaneledit.FieldName, field.TypeString)
 	}
-	if value, ok := rpeu.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(rolepaneledit.FieldDescription, field.TypeString, value)
 	}
-	if rpeu.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(rolepaneledit.FieldDescription, field.TypeString)
 	}
-	if value, ok := rpeu.mutation.Roles(); ok {
+	if value, ok := _u.mutation.Roles(); ok {
 		_spec.SetField(rolepaneledit.FieldRoles, field.TypeJSON, value)
 	}
-	if value, ok := rpeu.mutation.AppendedRoles(); ok {
+	if value, ok := _u.mutation.AppendedRoles(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, rolepaneledit.FieldRoles, value)
 		})
 	}
-	if rpeu.mutation.RolesCleared() {
+	if _u.mutation.RolesCleared() {
 		_spec.ClearField(rolepaneledit.FieldRoles, field.TypeJSON)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, rpeu.driver, _spec); err != nil {
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{rolepaneledit.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -321,8 +321,8 @@ func (rpeu *RolePanelEditUpdate) sqlSave(ctx context.Context) (n int, err error)
 		}
 		return 0, err
 	}
-	rpeu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // RolePanelEditUpdateOne is the builder for updating a single RolePanelEdit entity.
@@ -334,198 +334,198 @@ type RolePanelEditUpdateOne struct {
 }
 
 // SetChannelID sets the "channel_id" field.
-func (rpeuo *RolePanelEditUpdateOne) SetChannelID(s snowflake.ID) *RolePanelEditUpdateOne {
-	rpeuo.mutation.ResetChannelID()
-	rpeuo.mutation.SetChannelID(s)
-	return rpeuo
+func (_u *RolePanelEditUpdateOne) SetChannelID(v snowflake.ID) *RolePanelEditUpdateOne {
+	_u.mutation.ResetChannelID()
+	_u.mutation.SetChannelID(v)
+	return _u
 }
 
 // SetNillableChannelID sets the "channel_id" field if the given value is not nil.
-func (rpeuo *RolePanelEditUpdateOne) SetNillableChannelID(s *snowflake.ID) *RolePanelEditUpdateOne {
-	if s != nil {
-		rpeuo.SetChannelID(*s)
+func (_u *RolePanelEditUpdateOne) SetNillableChannelID(v *snowflake.ID) *RolePanelEditUpdateOne {
+	if v != nil {
+		_u.SetChannelID(*v)
 	}
-	return rpeuo
+	return _u
 }
 
-// AddChannelID adds s to the "channel_id" field.
-func (rpeuo *RolePanelEditUpdateOne) AddChannelID(s snowflake.ID) *RolePanelEditUpdateOne {
-	rpeuo.mutation.AddChannelID(s)
-	return rpeuo
+// AddChannelID adds value to the "channel_id" field.
+func (_u *RolePanelEditUpdateOne) AddChannelID(v snowflake.ID) *RolePanelEditUpdateOne {
+	_u.mutation.AddChannelID(v)
+	return _u
 }
 
 // SetEmojiAuthor sets the "emoji_author" field.
-func (rpeuo *RolePanelEditUpdateOne) SetEmojiAuthor(s snowflake.ID) *RolePanelEditUpdateOne {
-	rpeuo.mutation.ResetEmojiAuthor()
-	rpeuo.mutation.SetEmojiAuthor(s)
-	return rpeuo
+func (_u *RolePanelEditUpdateOne) SetEmojiAuthor(v snowflake.ID) *RolePanelEditUpdateOne {
+	_u.mutation.ResetEmojiAuthor()
+	_u.mutation.SetEmojiAuthor(v)
+	return _u
 }
 
 // SetNillableEmojiAuthor sets the "emoji_author" field if the given value is not nil.
-func (rpeuo *RolePanelEditUpdateOne) SetNillableEmojiAuthor(s *snowflake.ID) *RolePanelEditUpdateOne {
-	if s != nil {
-		rpeuo.SetEmojiAuthor(*s)
+func (_u *RolePanelEditUpdateOne) SetNillableEmojiAuthor(v *snowflake.ID) *RolePanelEditUpdateOne {
+	if v != nil {
+		_u.SetEmojiAuthor(*v)
 	}
-	return rpeuo
+	return _u
 }
 
-// AddEmojiAuthor adds s to the "emoji_author" field.
-func (rpeuo *RolePanelEditUpdateOne) AddEmojiAuthor(s snowflake.ID) *RolePanelEditUpdateOne {
-	rpeuo.mutation.AddEmojiAuthor(s)
-	return rpeuo
+// AddEmojiAuthor adds value to the "emoji_author" field.
+func (_u *RolePanelEditUpdateOne) AddEmojiAuthor(v snowflake.ID) *RolePanelEditUpdateOne {
+	_u.mutation.AddEmojiAuthor(v)
+	return _u
 }
 
 // ClearEmojiAuthor clears the value of the "emoji_author" field.
-func (rpeuo *RolePanelEditUpdateOne) ClearEmojiAuthor() *RolePanelEditUpdateOne {
-	rpeuo.mutation.ClearEmojiAuthor()
-	return rpeuo
+func (_u *RolePanelEditUpdateOne) ClearEmojiAuthor() *RolePanelEditUpdateOne {
+	_u.mutation.ClearEmojiAuthor()
+	return _u
 }
 
 // SetToken sets the "token" field.
-func (rpeuo *RolePanelEditUpdateOne) SetToken(s string) *RolePanelEditUpdateOne {
-	rpeuo.mutation.SetToken(s)
-	return rpeuo
+func (_u *RolePanelEditUpdateOne) SetToken(v string) *RolePanelEditUpdateOne {
+	_u.mutation.SetToken(v)
+	return _u
 }
 
 // SetNillableToken sets the "token" field if the given value is not nil.
-func (rpeuo *RolePanelEditUpdateOne) SetNillableToken(s *string) *RolePanelEditUpdateOne {
-	if s != nil {
-		rpeuo.SetToken(*s)
+func (_u *RolePanelEditUpdateOne) SetNillableToken(v *string) *RolePanelEditUpdateOne {
+	if v != nil {
+		_u.SetToken(*v)
 	}
-	return rpeuo
+	return _u
 }
 
 // ClearToken clears the value of the "token" field.
-func (rpeuo *RolePanelEditUpdateOne) ClearToken() *RolePanelEditUpdateOne {
-	rpeuo.mutation.ClearToken()
-	return rpeuo
+func (_u *RolePanelEditUpdateOne) ClearToken() *RolePanelEditUpdateOne {
+	_u.mutation.ClearToken()
+	return _u
 }
 
 // SetSelectedRole sets the "selected_role" field.
-func (rpeuo *RolePanelEditUpdateOne) SetSelectedRole(s snowflake.ID) *RolePanelEditUpdateOne {
-	rpeuo.mutation.ResetSelectedRole()
-	rpeuo.mutation.SetSelectedRole(s)
-	return rpeuo
+func (_u *RolePanelEditUpdateOne) SetSelectedRole(v snowflake.ID) *RolePanelEditUpdateOne {
+	_u.mutation.ResetSelectedRole()
+	_u.mutation.SetSelectedRole(v)
+	return _u
 }
 
 // SetNillableSelectedRole sets the "selected_role" field if the given value is not nil.
-func (rpeuo *RolePanelEditUpdateOne) SetNillableSelectedRole(s *snowflake.ID) *RolePanelEditUpdateOne {
-	if s != nil {
-		rpeuo.SetSelectedRole(*s)
+func (_u *RolePanelEditUpdateOne) SetNillableSelectedRole(v *snowflake.ID) *RolePanelEditUpdateOne {
+	if v != nil {
+		_u.SetSelectedRole(*v)
 	}
-	return rpeuo
+	return _u
 }
 
-// AddSelectedRole adds s to the "selected_role" field.
-func (rpeuo *RolePanelEditUpdateOne) AddSelectedRole(s snowflake.ID) *RolePanelEditUpdateOne {
-	rpeuo.mutation.AddSelectedRole(s)
-	return rpeuo
+// AddSelectedRole adds value to the "selected_role" field.
+func (_u *RolePanelEditUpdateOne) AddSelectedRole(v snowflake.ID) *RolePanelEditUpdateOne {
+	_u.mutation.AddSelectedRole(v)
+	return _u
 }
 
 // ClearSelectedRole clears the value of the "selected_role" field.
-func (rpeuo *RolePanelEditUpdateOne) ClearSelectedRole() *RolePanelEditUpdateOne {
-	rpeuo.mutation.ClearSelectedRole()
-	return rpeuo
+func (_u *RolePanelEditUpdateOne) ClearSelectedRole() *RolePanelEditUpdateOne {
+	_u.mutation.ClearSelectedRole()
+	return _u
 }
 
 // SetModified sets the "modified" field.
-func (rpeuo *RolePanelEditUpdateOne) SetModified(b bool) *RolePanelEditUpdateOne {
-	rpeuo.mutation.SetModified(b)
-	return rpeuo
+func (_u *RolePanelEditUpdateOne) SetModified(v bool) *RolePanelEditUpdateOne {
+	_u.mutation.SetModified(v)
+	return _u
 }
 
 // SetNillableModified sets the "modified" field if the given value is not nil.
-func (rpeuo *RolePanelEditUpdateOne) SetNillableModified(b *bool) *RolePanelEditUpdateOne {
-	if b != nil {
-		rpeuo.SetModified(*b)
+func (_u *RolePanelEditUpdateOne) SetNillableModified(v *bool) *RolePanelEditUpdateOne {
+	if v != nil {
+		_u.SetModified(*v)
 	}
-	return rpeuo
+	return _u
 }
 
 // SetName sets the "name" field.
-func (rpeuo *RolePanelEditUpdateOne) SetName(s string) *RolePanelEditUpdateOne {
-	rpeuo.mutation.SetName(s)
-	return rpeuo
+func (_u *RolePanelEditUpdateOne) SetName(v string) *RolePanelEditUpdateOne {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (rpeuo *RolePanelEditUpdateOne) SetNillableName(s *string) *RolePanelEditUpdateOne {
-	if s != nil {
-		rpeuo.SetName(*s)
+func (_u *RolePanelEditUpdateOne) SetNillableName(v *string) *RolePanelEditUpdateOne {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return rpeuo
+	return _u
 }
 
 // ClearName clears the value of the "name" field.
-func (rpeuo *RolePanelEditUpdateOne) ClearName() *RolePanelEditUpdateOne {
-	rpeuo.mutation.ClearName()
-	return rpeuo
+func (_u *RolePanelEditUpdateOne) ClearName() *RolePanelEditUpdateOne {
+	_u.mutation.ClearName()
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (rpeuo *RolePanelEditUpdateOne) SetDescription(s string) *RolePanelEditUpdateOne {
-	rpeuo.mutation.SetDescription(s)
-	return rpeuo
+func (_u *RolePanelEditUpdateOne) SetDescription(v string) *RolePanelEditUpdateOne {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (rpeuo *RolePanelEditUpdateOne) SetNillableDescription(s *string) *RolePanelEditUpdateOne {
-	if s != nil {
-		rpeuo.SetDescription(*s)
+func (_u *RolePanelEditUpdateOne) SetNillableDescription(v *string) *RolePanelEditUpdateOne {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return rpeuo
+	return _u
 }
 
 // ClearDescription clears the value of the "description" field.
-func (rpeuo *RolePanelEditUpdateOne) ClearDescription() *RolePanelEditUpdateOne {
-	rpeuo.mutation.ClearDescription()
-	return rpeuo
+func (_u *RolePanelEditUpdateOne) ClearDescription() *RolePanelEditUpdateOne {
+	_u.mutation.ClearDescription()
+	return _u
 }
 
 // SetRoles sets the "roles" field.
-func (rpeuo *RolePanelEditUpdateOne) SetRoles(s []schema.Role) *RolePanelEditUpdateOne {
-	rpeuo.mutation.SetRoles(s)
-	return rpeuo
+func (_u *RolePanelEditUpdateOne) SetRoles(v []schema.Role) *RolePanelEditUpdateOne {
+	_u.mutation.SetRoles(v)
+	return _u
 }
 
-// AppendRoles appends s to the "roles" field.
-func (rpeuo *RolePanelEditUpdateOne) AppendRoles(s []schema.Role) *RolePanelEditUpdateOne {
-	rpeuo.mutation.AppendRoles(s)
-	return rpeuo
+// AppendRoles appends value to the "roles" field.
+func (_u *RolePanelEditUpdateOne) AppendRoles(v []schema.Role) *RolePanelEditUpdateOne {
+	_u.mutation.AppendRoles(v)
+	return _u
 }
 
 // ClearRoles clears the value of the "roles" field.
-func (rpeuo *RolePanelEditUpdateOne) ClearRoles() *RolePanelEditUpdateOne {
-	rpeuo.mutation.ClearRoles()
-	return rpeuo
+func (_u *RolePanelEditUpdateOne) ClearRoles() *RolePanelEditUpdateOne {
+	_u.mutation.ClearRoles()
+	return _u
 }
 
 // Mutation returns the RolePanelEditMutation object of the builder.
-func (rpeuo *RolePanelEditUpdateOne) Mutation() *RolePanelEditMutation {
-	return rpeuo.mutation
+func (_u *RolePanelEditUpdateOne) Mutation() *RolePanelEditMutation {
+	return _u.mutation
 }
 
 // Where appends a list predicates to the RolePanelEditUpdate builder.
-func (rpeuo *RolePanelEditUpdateOne) Where(ps ...predicate.RolePanelEdit) *RolePanelEditUpdateOne {
-	rpeuo.mutation.Where(ps...)
-	return rpeuo
+func (_u *RolePanelEditUpdateOne) Where(ps ...predicate.RolePanelEdit) *RolePanelEditUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (rpeuo *RolePanelEditUpdateOne) Select(field string, fields ...string) *RolePanelEditUpdateOne {
-	rpeuo.fields = append([]string{field}, fields...)
-	return rpeuo
+func (_u *RolePanelEditUpdateOne) Select(field string, fields ...string) *RolePanelEditUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated RolePanelEdit entity.
-func (rpeuo *RolePanelEditUpdateOne) Save(ctx context.Context) (*RolePanelEdit, error) {
-	return withHooks(ctx, rpeuo.sqlSave, rpeuo.mutation, rpeuo.hooks)
+func (_u *RolePanelEditUpdateOne) Save(ctx context.Context) (*RolePanelEdit, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (rpeuo *RolePanelEditUpdateOne) SaveX(ctx context.Context) *RolePanelEdit {
-	node, err := rpeuo.Save(ctx)
+func (_u *RolePanelEditUpdateOne) SaveX(ctx context.Context) *RolePanelEdit {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -533,45 +533,45 @@ func (rpeuo *RolePanelEditUpdateOne) SaveX(ctx context.Context) *RolePanelEdit {
 }
 
 // Exec executes the query on the entity.
-func (rpeuo *RolePanelEditUpdateOne) Exec(ctx context.Context) error {
-	_, err := rpeuo.Save(ctx)
+func (_u *RolePanelEditUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (rpeuo *RolePanelEditUpdateOne) ExecX(ctx context.Context) {
-	if err := rpeuo.Exec(ctx); err != nil {
+func (_u *RolePanelEditUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (rpeuo *RolePanelEditUpdateOne) check() error {
-	if v, ok := rpeuo.mutation.Name(); ok {
+func (_u *RolePanelEditUpdateOne) check() error {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := rolepaneledit.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanelEdit.name": %w`, err)}
 		}
 	}
-	if rpeuo.mutation.GuildCleared() && len(rpeuo.mutation.GuildIDs()) > 0 {
+	if _u.mutation.GuildCleared() && len(_u.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "RolePanelEdit.guild"`)
 	}
-	if rpeuo.mutation.ParentCleared() && len(rpeuo.mutation.ParentIDs()) > 0 {
+	if _u.mutation.ParentCleared() && len(_u.mutation.ParentIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "RolePanelEdit.parent"`)
 	}
 	return nil
 }
 
-func (rpeuo *RolePanelEditUpdateOne) sqlSave(ctx context.Context) (_node *RolePanelEdit, err error) {
-	if err := rpeuo.check(); err != nil {
+func (_u *RolePanelEditUpdateOne) sqlSave(ctx context.Context) (_node *RolePanelEdit, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(rolepaneledit.Table, rolepaneledit.Columns, sqlgraph.NewFieldSpec(rolepaneledit.FieldID, field.TypeUUID))
-	id, ok := rpeuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "RolePanelEdit.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := rpeuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, rolepaneledit.FieldID)
 		for _, f := range fields {
@@ -583,73 +583,73 @@ func (rpeuo *RolePanelEditUpdateOne) sqlSave(ctx context.Context) (_node *RolePa
 			}
 		}
 	}
-	if ps := rpeuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := rpeuo.mutation.ChannelID(); ok {
+	if value, ok := _u.mutation.ChannelID(); ok {
 		_spec.SetField(rolepaneledit.FieldChannelID, field.TypeUint64, value)
 	}
-	if value, ok := rpeuo.mutation.AddedChannelID(); ok {
+	if value, ok := _u.mutation.AddedChannelID(); ok {
 		_spec.AddField(rolepaneledit.FieldChannelID, field.TypeUint64, value)
 	}
-	if value, ok := rpeuo.mutation.EmojiAuthor(); ok {
+	if value, ok := _u.mutation.EmojiAuthor(); ok {
 		_spec.SetField(rolepaneledit.FieldEmojiAuthor, field.TypeUint64, value)
 	}
-	if value, ok := rpeuo.mutation.AddedEmojiAuthor(); ok {
+	if value, ok := _u.mutation.AddedEmojiAuthor(); ok {
 		_spec.AddField(rolepaneledit.FieldEmojiAuthor, field.TypeUint64, value)
 	}
-	if rpeuo.mutation.EmojiAuthorCleared() {
+	if _u.mutation.EmojiAuthorCleared() {
 		_spec.ClearField(rolepaneledit.FieldEmojiAuthor, field.TypeUint64)
 	}
-	if value, ok := rpeuo.mutation.Token(); ok {
+	if value, ok := _u.mutation.Token(); ok {
 		_spec.SetField(rolepaneledit.FieldToken, field.TypeString, value)
 	}
-	if rpeuo.mutation.TokenCleared() {
+	if _u.mutation.TokenCleared() {
 		_spec.ClearField(rolepaneledit.FieldToken, field.TypeString)
 	}
-	if value, ok := rpeuo.mutation.SelectedRole(); ok {
+	if value, ok := _u.mutation.SelectedRole(); ok {
 		_spec.SetField(rolepaneledit.FieldSelectedRole, field.TypeUint64, value)
 	}
-	if value, ok := rpeuo.mutation.AddedSelectedRole(); ok {
+	if value, ok := _u.mutation.AddedSelectedRole(); ok {
 		_spec.AddField(rolepaneledit.FieldSelectedRole, field.TypeUint64, value)
 	}
-	if rpeuo.mutation.SelectedRoleCleared() {
+	if _u.mutation.SelectedRoleCleared() {
 		_spec.ClearField(rolepaneledit.FieldSelectedRole, field.TypeUint64)
 	}
-	if value, ok := rpeuo.mutation.Modified(); ok {
+	if value, ok := _u.mutation.Modified(); ok {
 		_spec.SetField(rolepaneledit.FieldModified, field.TypeBool, value)
 	}
-	if value, ok := rpeuo.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(rolepaneledit.FieldName, field.TypeString, value)
 	}
-	if rpeuo.mutation.NameCleared() {
+	if _u.mutation.NameCleared() {
 		_spec.ClearField(rolepaneledit.FieldName, field.TypeString)
 	}
-	if value, ok := rpeuo.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(rolepaneledit.FieldDescription, field.TypeString, value)
 	}
-	if rpeuo.mutation.DescriptionCleared() {
+	if _u.mutation.DescriptionCleared() {
 		_spec.ClearField(rolepaneledit.FieldDescription, field.TypeString)
 	}
-	if value, ok := rpeuo.mutation.Roles(); ok {
+	if value, ok := _u.mutation.Roles(); ok {
 		_spec.SetField(rolepaneledit.FieldRoles, field.TypeJSON, value)
 	}
-	if value, ok := rpeuo.mutation.AppendedRoles(); ok {
+	if value, ok := _u.mutation.AppendedRoles(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, rolepaneledit.FieldRoles, value)
 		})
 	}
-	if rpeuo.mutation.RolesCleared() {
+	if _u.mutation.RolesCleared() {
 		_spec.ClearField(rolepaneledit.FieldRoles, field.TypeJSON)
 	}
-	_node = &RolePanelEdit{config: rpeuo.config}
+	_node = &RolePanelEdit{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, rpeuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{rolepaneledit.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -657,6 +657,6 @@ func (rpeuo *RolePanelEditUpdateOne) sqlSave(ctx context.Context) (_node *RolePa
 		}
 		return nil, err
 	}
-	rpeuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

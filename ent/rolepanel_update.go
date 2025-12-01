@@ -30,188 +30,188 @@ type RolePanelUpdate struct {
 }
 
 // Where appends a list predicates to the RolePanelUpdate builder.
-func (rpu *RolePanelUpdate) Where(ps ...predicate.RolePanel) *RolePanelUpdate {
-	rpu.mutation.Where(ps...)
-	return rpu
+func (_u *RolePanelUpdate) Where(ps ...predicate.RolePanel) *RolePanelUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetName sets the "name" field.
-func (rpu *RolePanelUpdate) SetName(s string) *RolePanelUpdate {
-	rpu.mutation.SetName(s)
-	return rpu
+func (_u *RolePanelUpdate) SetName(v string) *RolePanelUpdate {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (rpu *RolePanelUpdate) SetNillableName(s *string) *RolePanelUpdate {
-	if s != nil {
-		rpu.SetName(*s)
+func (_u *RolePanelUpdate) SetNillableName(v *string) *RolePanelUpdate {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return rpu
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (rpu *RolePanelUpdate) SetDescription(s string) *RolePanelUpdate {
-	rpu.mutation.SetDescription(s)
-	return rpu
+func (_u *RolePanelUpdate) SetDescription(v string) *RolePanelUpdate {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (rpu *RolePanelUpdate) SetNillableDescription(s *string) *RolePanelUpdate {
-	if s != nil {
-		rpu.SetDescription(*s)
+func (_u *RolePanelUpdate) SetNillableDescription(v *string) *RolePanelUpdate {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return rpu
+	return _u
 }
 
 // SetRoles sets the "roles" field.
-func (rpu *RolePanelUpdate) SetRoles(s []schema.Role) *RolePanelUpdate {
-	rpu.mutation.SetRoles(s)
-	return rpu
+func (_u *RolePanelUpdate) SetRoles(v []schema.Role) *RolePanelUpdate {
+	_u.mutation.SetRoles(v)
+	return _u
 }
 
-// AppendRoles appends s to the "roles" field.
-func (rpu *RolePanelUpdate) AppendRoles(s []schema.Role) *RolePanelUpdate {
-	rpu.mutation.AppendRoles(s)
-	return rpu
+// AppendRoles appends value to the "roles" field.
+func (_u *RolePanelUpdate) AppendRoles(v []schema.Role) *RolePanelUpdate {
+	_u.mutation.AppendRoles(v)
+	return _u
 }
 
 // ClearRoles clears the value of the "roles" field.
-func (rpu *RolePanelUpdate) ClearRoles() *RolePanelUpdate {
-	rpu.mutation.ClearRoles()
-	return rpu
+func (_u *RolePanelUpdate) ClearRoles() *RolePanelUpdate {
+	_u.mutation.ClearRoles()
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (rpu *RolePanelUpdate) SetUpdatedAt(t time.Time) *RolePanelUpdate {
-	rpu.mutation.SetUpdatedAt(t)
-	return rpu
+func (_u *RolePanelUpdate) SetUpdatedAt(v time.Time) *RolePanelUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (rpu *RolePanelUpdate) SetNillableUpdatedAt(t *time.Time) *RolePanelUpdate {
-	if t != nil {
-		rpu.SetUpdatedAt(*t)
+func (_u *RolePanelUpdate) SetNillableUpdatedAt(v *time.Time) *RolePanelUpdate {
+	if v != nil {
+		_u.SetUpdatedAt(*v)
 	}
-	return rpu
+	return _u
 }
 
 // ClearUpdatedAt clears the value of the "updated_at" field.
-func (rpu *RolePanelUpdate) ClearUpdatedAt() *RolePanelUpdate {
-	rpu.mutation.ClearUpdatedAt()
-	return rpu
+func (_u *RolePanelUpdate) ClearUpdatedAt() *RolePanelUpdate {
+	_u.mutation.ClearUpdatedAt()
+	return _u
 }
 
 // SetAppliedAt sets the "applied_at" field.
-func (rpu *RolePanelUpdate) SetAppliedAt(t time.Time) *RolePanelUpdate {
-	rpu.mutation.SetAppliedAt(t)
-	return rpu
+func (_u *RolePanelUpdate) SetAppliedAt(v time.Time) *RolePanelUpdate {
+	_u.mutation.SetAppliedAt(v)
+	return _u
 }
 
 // SetNillableAppliedAt sets the "applied_at" field if the given value is not nil.
-func (rpu *RolePanelUpdate) SetNillableAppliedAt(t *time.Time) *RolePanelUpdate {
-	if t != nil {
-		rpu.SetAppliedAt(*t)
+func (_u *RolePanelUpdate) SetNillableAppliedAt(v *time.Time) *RolePanelUpdate {
+	if v != nil {
+		_u.SetAppliedAt(*v)
 	}
-	return rpu
+	return _u
 }
 
 // ClearAppliedAt clears the value of the "applied_at" field.
-func (rpu *RolePanelUpdate) ClearAppliedAt() *RolePanelUpdate {
-	rpu.mutation.ClearAppliedAt()
-	return rpu
+func (_u *RolePanelUpdate) ClearAppliedAt() *RolePanelUpdate {
+	_u.mutation.ClearAppliedAt()
+	return _u
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (rpu *RolePanelUpdate) SetGuildID(id snowflake.ID) *RolePanelUpdate {
-	rpu.mutation.SetGuildID(id)
-	return rpu
+func (_u *RolePanelUpdate) SetGuildID(id snowflake.ID) *RolePanelUpdate {
+	_u.mutation.SetGuildID(id)
+	return _u
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (rpu *RolePanelUpdate) SetGuild(g *Guild) *RolePanelUpdate {
-	return rpu.SetGuildID(g.ID)
+func (_u *RolePanelUpdate) SetGuild(v *Guild) *RolePanelUpdate {
+	return _u.SetGuildID(v.ID)
 }
 
 // AddPlacementIDs adds the "placements" edge to the RolePanelPlaced entity by IDs.
-func (rpu *RolePanelUpdate) AddPlacementIDs(ids ...uuid.UUID) *RolePanelUpdate {
-	rpu.mutation.AddPlacementIDs(ids...)
-	return rpu
+func (_u *RolePanelUpdate) AddPlacementIDs(ids ...uuid.UUID) *RolePanelUpdate {
+	_u.mutation.AddPlacementIDs(ids...)
+	return _u
 }
 
 // AddPlacements adds the "placements" edges to the RolePanelPlaced entity.
-func (rpu *RolePanelUpdate) AddPlacements(r ...*RolePanelPlaced) *RolePanelUpdate {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_u *RolePanelUpdate) AddPlacements(v ...*RolePanelPlaced) *RolePanelUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return rpu.AddPlacementIDs(ids...)
+	return _u.AddPlacementIDs(ids...)
 }
 
 // SetEditID sets the "edit" edge to the RolePanelEdit entity by ID.
-func (rpu *RolePanelUpdate) SetEditID(id uuid.UUID) *RolePanelUpdate {
-	rpu.mutation.SetEditID(id)
-	return rpu
+func (_u *RolePanelUpdate) SetEditID(id uuid.UUID) *RolePanelUpdate {
+	_u.mutation.SetEditID(id)
+	return _u
 }
 
 // SetNillableEditID sets the "edit" edge to the RolePanelEdit entity by ID if the given value is not nil.
-func (rpu *RolePanelUpdate) SetNillableEditID(id *uuid.UUID) *RolePanelUpdate {
+func (_u *RolePanelUpdate) SetNillableEditID(id *uuid.UUID) *RolePanelUpdate {
 	if id != nil {
-		rpu = rpu.SetEditID(*id)
+		_u = _u.SetEditID(*id)
 	}
-	return rpu
+	return _u
 }
 
 // SetEdit sets the "edit" edge to the RolePanelEdit entity.
-func (rpu *RolePanelUpdate) SetEdit(r *RolePanelEdit) *RolePanelUpdate {
-	return rpu.SetEditID(r.ID)
+func (_u *RolePanelUpdate) SetEdit(v *RolePanelEdit) *RolePanelUpdate {
+	return _u.SetEditID(v.ID)
 }
 
 // Mutation returns the RolePanelMutation object of the builder.
-func (rpu *RolePanelUpdate) Mutation() *RolePanelMutation {
-	return rpu.mutation
+func (_u *RolePanelUpdate) Mutation() *RolePanelMutation {
+	return _u.mutation
 }
 
 // ClearGuild clears the "guild" edge to the Guild entity.
-func (rpu *RolePanelUpdate) ClearGuild() *RolePanelUpdate {
-	rpu.mutation.ClearGuild()
-	return rpu
+func (_u *RolePanelUpdate) ClearGuild() *RolePanelUpdate {
+	_u.mutation.ClearGuild()
+	return _u
 }
 
 // ClearPlacements clears all "placements" edges to the RolePanelPlaced entity.
-func (rpu *RolePanelUpdate) ClearPlacements() *RolePanelUpdate {
-	rpu.mutation.ClearPlacements()
-	return rpu
+func (_u *RolePanelUpdate) ClearPlacements() *RolePanelUpdate {
+	_u.mutation.ClearPlacements()
+	return _u
 }
 
 // RemovePlacementIDs removes the "placements" edge to RolePanelPlaced entities by IDs.
-func (rpu *RolePanelUpdate) RemovePlacementIDs(ids ...uuid.UUID) *RolePanelUpdate {
-	rpu.mutation.RemovePlacementIDs(ids...)
-	return rpu
+func (_u *RolePanelUpdate) RemovePlacementIDs(ids ...uuid.UUID) *RolePanelUpdate {
+	_u.mutation.RemovePlacementIDs(ids...)
+	return _u
 }
 
 // RemovePlacements removes "placements" edges to RolePanelPlaced entities.
-func (rpu *RolePanelUpdate) RemovePlacements(r ...*RolePanelPlaced) *RolePanelUpdate {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_u *RolePanelUpdate) RemovePlacements(v ...*RolePanelPlaced) *RolePanelUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return rpu.RemovePlacementIDs(ids...)
+	return _u.RemovePlacementIDs(ids...)
 }
 
 // ClearEdit clears the "edit" edge to the RolePanelEdit entity.
-func (rpu *RolePanelUpdate) ClearEdit() *RolePanelUpdate {
-	rpu.mutation.ClearEdit()
-	return rpu
+func (_u *RolePanelUpdate) ClearEdit() *RolePanelUpdate {
+	_u.mutation.ClearEdit()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (rpu *RolePanelUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, rpu.sqlSave, rpu.mutation, rpu.hooks)
+func (_u *RolePanelUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (rpu *RolePanelUpdate) SaveX(ctx context.Context) int {
-	affected, err := rpu.Save(ctx)
+func (_u *RolePanelUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -219,73 +219,73 @@ func (rpu *RolePanelUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (rpu *RolePanelUpdate) Exec(ctx context.Context) error {
-	_, err := rpu.Save(ctx)
+func (_u *RolePanelUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (rpu *RolePanelUpdate) ExecX(ctx context.Context) {
-	if err := rpu.Exec(ctx); err != nil {
+func (_u *RolePanelUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (rpu *RolePanelUpdate) check() error {
-	if v, ok := rpu.mutation.Name(); ok {
+func (_u *RolePanelUpdate) check() error {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := rolepanel.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanel.name": %w`, err)}
 		}
 	}
-	if rpu.mutation.GuildCleared() && len(rpu.mutation.GuildIDs()) > 0 {
+	if _u.mutation.GuildCleared() && len(_u.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "RolePanel.guild"`)
 	}
 	return nil
 }
 
-func (rpu *RolePanelUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := rpu.check(); err != nil {
-		return n, err
+func (_u *RolePanelUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(rolepanel.Table, rolepanel.Columns, sqlgraph.NewFieldSpec(rolepanel.FieldID, field.TypeUUID))
-	if ps := rpu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := rpu.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(rolepanel.FieldName, field.TypeString, value)
 	}
-	if value, ok := rpu.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(rolepanel.FieldDescription, field.TypeString, value)
 	}
-	if value, ok := rpu.mutation.Roles(); ok {
+	if value, ok := _u.mutation.Roles(); ok {
 		_spec.SetField(rolepanel.FieldRoles, field.TypeJSON, value)
 	}
-	if value, ok := rpu.mutation.AppendedRoles(); ok {
+	if value, ok := _u.mutation.AppendedRoles(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, rolepanel.FieldRoles, value)
 		})
 	}
-	if rpu.mutation.RolesCleared() {
+	if _u.mutation.RolesCleared() {
 		_spec.ClearField(rolepanel.FieldRoles, field.TypeJSON)
 	}
-	if value, ok := rpu.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(rolepanel.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if rpu.mutation.UpdatedAtCleared() {
+	if _u.mutation.UpdatedAtCleared() {
 		_spec.ClearField(rolepanel.FieldUpdatedAt, field.TypeTime)
 	}
-	if value, ok := rpu.mutation.AppliedAt(); ok {
+	if value, ok := _u.mutation.AppliedAt(); ok {
 		_spec.SetField(rolepanel.FieldAppliedAt, field.TypeTime, value)
 	}
-	if rpu.mutation.AppliedAtCleared() {
+	if _u.mutation.AppliedAtCleared() {
 		_spec.ClearField(rolepanel.FieldAppliedAt, field.TypeTime)
 	}
-	if rpu.mutation.GuildCleared() {
+	if _u.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -298,7 +298,7 @@ func (rpu *RolePanelUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := rpu.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -314,7 +314,7 @@ func (rpu *RolePanelUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if rpu.mutation.PlacementsCleared() {
+	if _u.mutation.PlacementsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -327,7 +327,7 @@ func (rpu *RolePanelUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := rpu.mutation.RemovedPlacementsIDs(); len(nodes) > 0 && !rpu.mutation.PlacementsCleared() {
+	if nodes := _u.mutation.RemovedPlacementsIDs(); len(nodes) > 0 && !_u.mutation.PlacementsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -343,7 +343,7 @@ func (rpu *RolePanelUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := rpu.mutation.PlacementsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.PlacementsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -359,7 +359,7 @@ func (rpu *RolePanelUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if rpu.mutation.EditCleared() {
+	if _u.mutation.EditCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
@@ -372,7 +372,7 @@ func (rpu *RolePanelUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := rpu.mutation.EditIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.EditIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
@@ -388,7 +388,7 @@ func (rpu *RolePanelUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, rpu.driver, _spec); err != nil {
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{rolepanel.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -396,8 +396,8 @@ func (rpu *RolePanelUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
-	rpu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // RolePanelUpdateOne is the builder for updating a single RolePanel entity.
@@ -409,195 +409,195 @@ type RolePanelUpdateOne struct {
 }
 
 // SetName sets the "name" field.
-func (rpuo *RolePanelUpdateOne) SetName(s string) *RolePanelUpdateOne {
-	rpuo.mutation.SetName(s)
-	return rpuo
+func (_u *RolePanelUpdateOne) SetName(v string) *RolePanelUpdateOne {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (rpuo *RolePanelUpdateOne) SetNillableName(s *string) *RolePanelUpdateOne {
-	if s != nil {
-		rpuo.SetName(*s)
+func (_u *RolePanelUpdateOne) SetNillableName(v *string) *RolePanelUpdateOne {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return rpuo
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (rpuo *RolePanelUpdateOne) SetDescription(s string) *RolePanelUpdateOne {
-	rpuo.mutation.SetDescription(s)
-	return rpuo
+func (_u *RolePanelUpdateOne) SetDescription(v string) *RolePanelUpdateOne {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (rpuo *RolePanelUpdateOne) SetNillableDescription(s *string) *RolePanelUpdateOne {
-	if s != nil {
-		rpuo.SetDescription(*s)
+func (_u *RolePanelUpdateOne) SetNillableDescription(v *string) *RolePanelUpdateOne {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return rpuo
+	return _u
 }
 
 // SetRoles sets the "roles" field.
-func (rpuo *RolePanelUpdateOne) SetRoles(s []schema.Role) *RolePanelUpdateOne {
-	rpuo.mutation.SetRoles(s)
-	return rpuo
+func (_u *RolePanelUpdateOne) SetRoles(v []schema.Role) *RolePanelUpdateOne {
+	_u.mutation.SetRoles(v)
+	return _u
 }
 
-// AppendRoles appends s to the "roles" field.
-func (rpuo *RolePanelUpdateOne) AppendRoles(s []schema.Role) *RolePanelUpdateOne {
-	rpuo.mutation.AppendRoles(s)
-	return rpuo
+// AppendRoles appends value to the "roles" field.
+func (_u *RolePanelUpdateOne) AppendRoles(v []schema.Role) *RolePanelUpdateOne {
+	_u.mutation.AppendRoles(v)
+	return _u
 }
 
 // ClearRoles clears the value of the "roles" field.
-func (rpuo *RolePanelUpdateOne) ClearRoles() *RolePanelUpdateOne {
-	rpuo.mutation.ClearRoles()
-	return rpuo
+func (_u *RolePanelUpdateOne) ClearRoles() *RolePanelUpdateOne {
+	_u.mutation.ClearRoles()
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (rpuo *RolePanelUpdateOne) SetUpdatedAt(t time.Time) *RolePanelUpdateOne {
-	rpuo.mutation.SetUpdatedAt(t)
-	return rpuo
+func (_u *RolePanelUpdateOne) SetUpdatedAt(v time.Time) *RolePanelUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (rpuo *RolePanelUpdateOne) SetNillableUpdatedAt(t *time.Time) *RolePanelUpdateOne {
-	if t != nil {
-		rpuo.SetUpdatedAt(*t)
+func (_u *RolePanelUpdateOne) SetNillableUpdatedAt(v *time.Time) *RolePanelUpdateOne {
+	if v != nil {
+		_u.SetUpdatedAt(*v)
 	}
-	return rpuo
+	return _u
 }
 
 // ClearUpdatedAt clears the value of the "updated_at" field.
-func (rpuo *RolePanelUpdateOne) ClearUpdatedAt() *RolePanelUpdateOne {
-	rpuo.mutation.ClearUpdatedAt()
-	return rpuo
+func (_u *RolePanelUpdateOne) ClearUpdatedAt() *RolePanelUpdateOne {
+	_u.mutation.ClearUpdatedAt()
+	return _u
 }
 
 // SetAppliedAt sets the "applied_at" field.
-func (rpuo *RolePanelUpdateOne) SetAppliedAt(t time.Time) *RolePanelUpdateOne {
-	rpuo.mutation.SetAppliedAt(t)
-	return rpuo
+func (_u *RolePanelUpdateOne) SetAppliedAt(v time.Time) *RolePanelUpdateOne {
+	_u.mutation.SetAppliedAt(v)
+	return _u
 }
 
 // SetNillableAppliedAt sets the "applied_at" field if the given value is not nil.
-func (rpuo *RolePanelUpdateOne) SetNillableAppliedAt(t *time.Time) *RolePanelUpdateOne {
-	if t != nil {
-		rpuo.SetAppliedAt(*t)
+func (_u *RolePanelUpdateOne) SetNillableAppliedAt(v *time.Time) *RolePanelUpdateOne {
+	if v != nil {
+		_u.SetAppliedAt(*v)
 	}
-	return rpuo
+	return _u
 }
 
 // ClearAppliedAt clears the value of the "applied_at" field.
-func (rpuo *RolePanelUpdateOne) ClearAppliedAt() *RolePanelUpdateOne {
-	rpuo.mutation.ClearAppliedAt()
-	return rpuo
+func (_u *RolePanelUpdateOne) ClearAppliedAt() *RolePanelUpdateOne {
+	_u.mutation.ClearAppliedAt()
+	return _u
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (rpuo *RolePanelUpdateOne) SetGuildID(id snowflake.ID) *RolePanelUpdateOne {
-	rpuo.mutation.SetGuildID(id)
-	return rpuo
+func (_u *RolePanelUpdateOne) SetGuildID(id snowflake.ID) *RolePanelUpdateOne {
+	_u.mutation.SetGuildID(id)
+	return _u
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (rpuo *RolePanelUpdateOne) SetGuild(g *Guild) *RolePanelUpdateOne {
-	return rpuo.SetGuildID(g.ID)
+func (_u *RolePanelUpdateOne) SetGuild(v *Guild) *RolePanelUpdateOne {
+	return _u.SetGuildID(v.ID)
 }
 
 // AddPlacementIDs adds the "placements" edge to the RolePanelPlaced entity by IDs.
-func (rpuo *RolePanelUpdateOne) AddPlacementIDs(ids ...uuid.UUID) *RolePanelUpdateOne {
-	rpuo.mutation.AddPlacementIDs(ids...)
-	return rpuo
+func (_u *RolePanelUpdateOne) AddPlacementIDs(ids ...uuid.UUID) *RolePanelUpdateOne {
+	_u.mutation.AddPlacementIDs(ids...)
+	return _u
 }
 
 // AddPlacements adds the "placements" edges to the RolePanelPlaced entity.
-func (rpuo *RolePanelUpdateOne) AddPlacements(r ...*RolePanelPlaced) *RolePanelUpdateOne {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_u *RolePanelUpdateOne) AddPlacements(v ...*RolePanelPlaced) *RolePanelUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return rpuo.AddPlacementIDs(ids...)
+	return _u.AddPlacementIDs(ids...)
 }
 
 // SetEditID sets the "edit" edge to the RolePanelEdit entity by ID.
-func (rpuo *RolePanelUpdateOne) SetEditID(id uuid.UUID) *RolePanelUpdateOne {
-	rpuo.mutation.SetEditID(id)
-	return rpuo
+func (_u *RolePanelUpdateOne) SetEditID(id uuid.UUID) *RolePanelUpdateOne {
+	_u.mutation.SetEditID(id)
+	return _u
 }
 
 // SetNillableEditID sets the "edit" edge to the RolePanelEdit entity by ID if the given value is not nil.
-func (rpuo *RolePanelUpdateOne) SetNillableEditID(id *uuid.UUID) *RolePanelUpdateOne {
+func (_u *RolePanelUpdateOne) SetNillableEditID(id *uuid.UUID) *RolePanelUpdateOne {
 	if id != nil {
-		rpuo = rpuo.SetEditID(*id)
+		_u = _u.SetEditID(*id)
 	}
-	return rpuo
+	return _u
 }
 
 // SetEdit sets the "edit" edge to the RolePanelEdit entity.
-func (rpuo *RolePanelUpdateOne) SetEdit(r *RolePanelEdit) *RolePanelUpdateOne {
-	return rpuo.SetEditID(r.ID)
+func (_u *RolePanelUpdateOne) SetEdit(v *RolePanelEdit) *RolePanelUpdateOne {
+	return _u.SetEditID(v.ID)
 }
 
 // Mutation returns the RolePanelMutation object of the builder.
-func (rpuo *RolePanelUpdateOne) Mutation() *RolePanelMutation {
-	return rpuo.mutation
+func (_u *RolePanelUpdateOne) Mutation() *RolePanelMutation {
+	return _u.mutation
 }
 
 // ClearGuild clears the "guild" edge to the Guild entity.
-func (rpuo *RolePanelUpdateOne) ClearGuild() *RolePanelUpdateOne {
-	rpuo.mutation.ClearGuild()
-	return rpuo
+func (_u *RolePanelUpdateOne) ClearGuild() *RolePanelUpdateOne {
+	_u.mutation.ClearGuild()
+	return _u
 }
 
 // ClearPlacements clears all "placements" edges to the RolePanelPlaced entity.
-func (rpuo *RolePanelUpdateOne) ClearPlacements() *RolePanelUpdateOne {
-	rpuo.mutation.ClearPlacements()
-	return rpuo
+func (_u *RolePanelUpdateOne) ClearPlacements() *RolePanelUpdateOne {
+	_u.mutation.ClearPlacements()
+	return _u
 }
 
 // RemovePlacementIDs removes the "placements" edge to RolePanelPlaced entities by IDs.
-func (rpuo *RolePanelUpdateOne) RemovePlacementIDs(ids ...uuid.UUID) *RolePanelUpdateOne {
-	rpuo.mutation.RemovePlacementIDs(ids...)
-	return rpuo
+func (_u *RolePanelUpdateOne) RemovePlacementIDs(ids ...uuid.UUID) *RolePanelUpdateOne {
+	_u.mutation.RemovePlacementIDs(ids...)
+	return _u
 }
 
 // RemovePlacements removes "placements" edges to RolePanelPlaced entities.
-func (rpuo *RolePanelUpdateOne) RemovePlacements(r ...*RolePanelPlaced) *RolePanelUpdateOne {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_u *RolePanelUpdateOne) RemovePlacements(v ...*RolePanelPlaced) *RolePanelUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return rpuo.RemovePlacementIDs(ids...)
+	return _u.RemovePlacementIDs(ids...)
 }
 
 // ClearEdit clears the "edit" edge to the RolePanelEdit entity.
-func (rpuo *RolePanelUpdateOne) ClearEdit() *RolePanelUpdateOne {
-	rpuo.mutation.ClearEdit()
-	return rpuo
+func (_u *RolePanelUpdateOne) ClearEdit() *RolePanelUpdateOne {
+	_u.mutation.ClearEdit()
+	return _u
 }
 
 // Where appends a list predicates to the RolePanelUpdate builder.
-func (rpuo *RolePanelUpdateOne) Where(ps ...predicate.RolePanel) *RolePanelUpdateOne {
-	rpuo.mutation.Where(ps...)
-	return rpuo
+func (_u *RolePanelUpdateOne) Where(ps ...predicate.RolePanel) *RolePanelUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (rpuo *RolePanelUpdateOne) Select(field string, fields ...string) *RolePanelUpdateOne {
-	rpuo.fields = append([]string{field}, fields...)
-	return rpuo
+func (_u *RolePanelUpdateOne) Select(field string, fields ...string) *RolePanelUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated RolePanel entity.
-func (rpuo *RolePanelUpdateOne) Save(ctx context.Context) (*RolePanel, error) {
-	return withHooks(ctx, rpuo.sqlSave, rpuo.mutation, rpuo.hooks)
+func (_u *RolePanelUpdateOne) Save(ctx context.Context) (*RolePanel, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (rpuo *RolePanelUpdateOne) SaveX(ctx context.Context) *RolePanel {
-	node, err := rpuo.Save(ctx)
+func (_u *RolePanelUpdateOne) SaveX(ctx context.Context) *RolePanel {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -605,42 +605,42 @@ func (rpuo *RolePanelUpdateOne) SaveX(ctx context.Context) *RolePanel {
 }
 
 // Exec executes the query on the entity.
-func (rpuo *RolePanelUpdateOne) Exec(ctx context.Context) error {
-	_, err := rpuo.Save(ctx)
+func (_u *RolePanelUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (rpuo *RolePanelUpdateOne) ExecX(ctx context.Context) {
-	if err := rpuo.Exec(ctx); err != nil {
+func (_u *RolePanelUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (rpuo *RolePanelUpdateOne) check() error {
-	if v, ok := rpuo.mutation.Name(); ok {
+func (_u *RolePanelUpdateOne) check() error {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := rolepanel.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanel.name": %w`, err)}
 		}
 	}
-	if rpuo.mutation.GuildCleared() && len(rpuo.mutation.GuildIDs()) > 0 {
+	if _u.mutation.GuildCleared() && len(_u.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "RolePanel.guild"`)
 	}
 	return nil
 }
 
-func (rpuo *RolePanelUpdateOne) sqlSave(ctx context.Context) (_node *RolePanel, err error) {
-	if err := rpuo.check(); err != nil {
+func (_u *RolePanelUpdateOne) sqlSave(ctx context.Context) (_node *RolePanel, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(rolepanel.Table, rolepanel.Columns, sqlgraph.NewFieldSpec(rolepanel.FieldID, field.TypeUUID))
-	id, ok := rpuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "RolePanel.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := rpuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, rolepanel.FieldID)
 		for _, f := range fields {
@@ -652,43 +652,43 @@ func (rpuo *RolePanelUpdateOne) sqlSave(ctx context.Context) (_node *RolePanel, 
 			}
 		}
 	}
-	if ps := rpuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := rpuo.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(rolepanel.FieldName, field.TypeString, value)
 	}
-	if value, ok := rpuo.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(rolepanel.FieldDescription, field.TypeString, value)
 	}
-	if value, ok := rpuo.mutation.Roles(); ok {
+	if value, ok := _u.mutation.Roles(); ok {
 		_spec.SetField(rolepanel.FieldRoles, field.TypeJSON, value)
 	}
-	if value, ok := rpuo.mutation.AppendedRoles(); ok {
+	if value, ok := _u.mutation.AppendedRoles(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, rolepanel.FieldRoles, value)
 		})
 	}
-	if rpuo.mutation.RolesCleared() {
+	if _u.mutation.RolesCleared() {
 		_spec.ClearField(rolepanel.FieldRoles, field.TypeJSON)
 	}
-	if value, ok := rpuo.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(rolepanel.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if rpuo.mutation.UpdatedAtCleared() {
+	if _u.mutation.UpdatedAtCleared() {
 		_spec.ClearField(rolepanel.FieldUpdatedAt, field.TypeTime)
 	}
-	if value, ok := rpuo.mutation.AppliedAt(); ok {
+	if value, ok := _u.mutation.AppliedAt(); ok {
 		_spec.SetField(rolepanel.FieldAppliedAt, field.TypeTime, value)
 	}
-	if rpuo.mutation.AppliedAtCleared() {
+	if _u.mutation.AppliedAtCleared() {
 		_spec.ClearField(rolepanel.FieldAppliedAt, field.TypeTime)
 	}
-	if rpuo.mutation.GuildCleared() {
+	if _u.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -701,7 +701,7 @@ func (rpuo *RolePanelUpdateOne) sqlSave(ctx context.Context) (_node *RolePanel, 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := rpuo.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -717,7 +717,7 @@ func (rpuo *RolePanelUpdateOne) sqlSave(ctx context.Context) (_node *RolePanel, 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if rpuo.mutation.PlacementsCleared() {
+	if _u.mutation.PlacementsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -730,7 +730,7 @@ func (rpuo *RolePanelUpdateOne) sqlSave(ctx context.Context) (_node *RolePanel, 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := rpuo.mutation.RemovedPlacementsIDs(); len(nodes) > 0 && !rpuo.mutation.PlacementsCleared() {
+	if nodes := _u.mutation.RemovedPlacementsIDs(); len(nodes) > 0 && !_u.mutation.PlacementsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -746,7 +746,7 @@ func (rpuo *RolePanelUpdateOne) sqlSave(ctx context.Context) (_node *RolePanel, 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := rpuo.mutation.PlacementsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.PlacementsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -762,7 +762,7 @@ func (rpuo *RolePanelUpdateOne) sqlSave(ctx context.Context) (_node *RolePanel, 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if rpuo.mutation.EditCleared() {
+	if _u.mutation.EditCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
@@ -775,7 +775,7 @@ func (rpuo *RolePanelUpdateOne) sqlSave(ctx context.Context) (_node *RolePanel, 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := rpuo.mutation.EditIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.EditIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
@@ -791,10 +791,10 @@ func (rpuo *RolePanelUpdateOne) sqlSave(ctx context.Context) (_node *RolePanel, 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_node = &RolePanel{config: rpuo.config}
+	_node = &RolePanel{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, rpuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{rolepanel.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -802,6 +802,6 @@ func (rpuo *RolePanelUpdateOne) sqlSave(ctx context.Context) (_node *RolePanel, 
 		}
 		return nil, err
 	}
-	rpuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

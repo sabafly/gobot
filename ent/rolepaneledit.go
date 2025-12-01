@@ -107,7 +107,7 @@ func (*RolePanelEdit) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the RolePanelEdit fields.
-func (rpe *RolePanelEdit) assignValues(columns []string, values []any) error {
+func (_m *RolePanelEdit) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -117,60 +117,60 @@ func (rpe *RolePanelEdit) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				rpe.ID = *value
+				_m.ID = *value
 			}
 		case rolepaneledit.FieldChannelID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field channel_id", values[i])
 			} else if value.Valid {
-				rpe.ChannelID = snowflake.ID(value.Int64)
+				_m.ChannelID = snowflake.ID(value.Int64)
 			}
 		case rolepaneledit.FieldEmojiAuthor:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field emoji_author", values[i])
 			} else if value.Valid {
-				rpe.EmojiAuthor = new(snowflake.ID)
-				*rpe.EmojiAuthor = snowflake.ID(value.Int64)
+				_m.EmojiAuthor = new(snowflake.ID)
+				*_m.EmojiAuthor = snowflake.ID(value.Int64)
 			}
 		case rolepaneledit.FieldToken:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field token", values[i])
 			} else if value.Valid {
-				rpe.Token = new(string)
-				*rpe.Token = value.String
+				_m.Token = new(string)
+				*_m.Token = value.String
 			}
 		case rolepaneledit.FieldSelectedRole:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field selected_role", values[i])
 			} else if value.Valid {
-				rpe.SelectedRole = new(snowflake.ID)
-				*rpe.SelectedRole = snowflake.ID(value.Int64)
+				_m.SelectedRole = new(snowflake.ID)
+				*_m.SelectedRole = snowflake.ID(value.Int64)
 			}
 		case rolepaneledit.FieldModified:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field modified", values[i])
 			} else if value.Valid {
-				rpe.Modified = value.Bool
+				_m.Modified = value.Bool
 			}
 		case rolepaneledit.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
-				rpe.Name = new(string)
-				*rpe.Name = value.String
+				_m.Name = new(string)
+				*_m.Name = value.String
 			}
 		case rolepaneledit.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				rpe.Description = new(string)
-				*rpe.Description = value.String
+				_m.Description = new(string)
+				*_m.Description = value.String
 			}
 		case rolepaneledit.FieldRoles:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field roles", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &rpe.Roles); err != nil {
+				if err := json.Unmarshal(*value, &_m.Roles); err != nil {
 					return fmt.Errorf("unmarshal field roles: %w", err)
 				}
 			}
@@ -178,18 +178,18 @@ func (rpe *RolePanelEdit) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field guild_role_panel_edits", values[i])
 			} else if value.Valid {
-				rpe.guild_role_panel_edits = new(snowflake.ID)
-				*rpe.guild_role_panel_edits = snowflake.ID(value.Int64)
+				_m.guild_role_panel_edits = new(snowflake.ID)
+				*_m.guild_role_panel_edits = snowflake.ID(value.Int64)
 			}
 		case rolepaneledit.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field role_panel_edit", values[i])
 			} else if value.Valid {
-				rpe.role_panel_edit = new(uuid.UUID)
-				*rpe.role_panel_edit = *value.S.(*uuid.UUID)
+				_m.role_panel_edit = new(uuid.UUID)
+				*_m.role_panel_edit = *value.S.(*uuid.UUID)
 			}
 		default:
-			rpe.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -197,76 +197,76 @@ func (rpe *RolePanelEdit) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the RolePanelEdit.
 // This includes values selected through modifiers, order, etc.
-func (rpe *RolePanelEdit) Value(name string) (ent.Value, error) {
-	return rpe.selectValues.Get(name)
+func (_m *RolePanelEdit) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // QueryGuild queries the "guild" edge of the RolePanelEdit entity.
-func (rpe *RolePanelEdit) QueryGuild() *GuildQuery {
-	return NewRolePanelEditClient(rpe.config).QueryGuild(rpe)
+func (_m *RolePanelEdit) QueryGuild() *GuildQuery {
+	return NewRolePanelEditClient(_m.config).QueryGuild(_m)
 }
 
 // QueryParent queries the "parent" edge of the RolePanelEdit entity.
-func (rpe *RolePanelEdit) QueryParent() *RolePanelQuery {
-	return NewRolePanelEditClient(rpe.config).QueryParent(rpe)
+func (_m *RolePanelEdit) QueryParent() *RolePanelQuery {
+	return NewRolePanelEditClient(_m.config).QueryParent(_m)
 }
 
 // Update returns a builder for updating this RolePanelEdit.
 // Note that you need to call RolePanelEdit.Unwrap() before calling this method if this RolePanelEdit
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (rpe *RolePanelEdit) Update() *RolePanelEditUpdateOne {
-	return NewRolePanelEditClient(rpe.config).UpdateOne(rpe)
+func (_m *RolePanelEdit) Update() *RolePanelEditUpdateOne {
+	return NewRolePanelEditClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the RolePanelEdit entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (rpe *RolePanelEdit) Unwrap() *RolePanelEdit {
-	_tx, ok := rpe.config.driver.(*txDriver)
+func (_m *RolePanelEdit) Unwrap() *RolePanelEdit {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: RolePanelEdit is not a transactional entity")
 	}
-	rpe.config.driver = _tx.drv
-	return rpe
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (rpe *RolePanelEdit) String() string {
+func (_m *RolePanelEdit) String() string {
 	var builder strings.Builder
 	builder.WriteString("RolePanelEdit(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", rpe.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("channel_id=")
-	builder.WriteString(fmt.Sprintf("%v", rpe.ChannelID))
+	builder.WriteString(fmt.Sprintf("%v", _m.ChannelID))
 	builder.WriteString(", ")
-	if v := rpe.EmojiAuthor; v != nil {
+	if v := _m.EmojiAuthor; v != nil {
 		builder.WriteString("emoji_author=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
-	if v := rpe.Token; v != nil {
+	if v := _m.Token; v != nil {
 		builder.WriteString("token=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
-	if v := rpe.SelectedRole; v != nil {
+	if v := _m.SelectedRole; v != nil {
 		builder.WriteString("selected_role=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("modified=")
-	builder.WriteString(fmt.Sprintf("%v", rpe.Modified))
+	builder.WriteString(fmt.Sprintf("%v", _m.Modified))
 	builder.WriteString(", ")
-	if v := rpe.Name; v != nil {
+	if v := _m.Name; v != nil {
 		builder.WriteString("name=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
-	if v := rpe.Description; v != nil {
+	if v := _m.Description; v != nil {
 		builder.WriteString("description=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
 	builder.WriteString("roles=")
-	builder.WriteString(fmt.Sprintf("%v", rpe.Roles))
+	builder.WriteString(fmt.Sprintf("%v", _m.Roles))
 	builder.WriteByte(')')
 	return builder.String()
 }

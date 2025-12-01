@@ -20,56 +20,56 @@ type MessagePinDelete struct {
 }
 
 // Where appends a list predicates to the MessagePinDelete builder.
-func (mpd *MessagePinDelete) Where(ps ...predicate.MessagePin) *MessagePinDelete {
-	mpd.mutation.Where(ps...)
-	return mpd
+func (_d *MessagePinDelete) Where(ps ...predicate.MessagePin) *MessagePinDelete {
+	_d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (mpd *MessagePinDelete) Exec(ctx context.Context) (int, error) {
-	return withHooks(ctx, mpd.sqlExec, mpd.mutation, mpd.hooks)
+func (_d *MessagePinDelete) Exec(ctx context.Context) (int, error) {
+	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (mpd *MessagePinDelete) ExecX(ctx context.Context) int {
-	n, err := mpd.Exec(ctx)
+func (_d *MessagePinDelete) ExecX(ctx context.Context) int {
+	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
 	}
 	return n
 }
 
-func (mpd *MessagePinDelete) sqlExec(ctx context.Context) (int, error) {
+func (_d *MessagePinDelete) sqlExec(ctx context.Context) (int, error) {
 	_spec := sqlgraph.NewDeleteSpec(messagepin.Table, sqlgraph.NewFieldSpec(messagepin.FieldID, field.TypeUUID))
-	if ps := mpd.mutation.predicates; len(ps) > 0 {
+	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	affected, err := sqlgraph.DeleteNodes(ctx, mpd.driver, _spec)
+	affected, err := sqlgraph.DeleteNodes(ctx, _d.driver, _spec)
 	if err != nil && sqlgraph.IsConstraintError(err) {
 		err = &ConstraintError{msg: err.Error(), wrap: err}
 	}
-	mpd.mutation.done = true
+	_d.mutation.done = true
 	return affected, err
 }
 
 // MessagePinDeleteOne is the builder for deleting a single MessagePin entity.
 type MessagePinDeleteOne struct {
-	mpd *MessagePinDelete
+	_d *MessagePinDelete
 }
 
 // Where appends a list predicates to the MessagePinDelete builder.
-func (mpdo *MessagePinDeleteOne) Where(ps ...predicate.MessagePin) *MessagePinDeleteOne {
-	mpdo.mpd.mutation.Where(ps...)
-	return mpdo
+func (_d *MessagePinDeleteOne) Where(ps ...predicate.MessagePin) *MessagePinDeleteOne {
+	_d._d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query.
-func (mpdo *MessagePinDeleteOne) Exec(ctx context.Context) error {
-	n, err := mpdo.mpd.Exec(ctx)
+func (_d *MessagePinDeleteOne) Exec(ctx context.Context) error {
+	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
@@ -81,8 +81,8 @@ func (mpdo *MessagePinDeleteOne) Exec(ctx context.Context) error {
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (mpdo *MessagePinDeleteOne) ExecX(ctx context.Context) {
-	if err := mpdo.Exec(ctx); err != nil {
+func (_d *MessagePinDeleteOne) ExecX(ctx context.Context) {
+	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

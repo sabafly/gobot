@@ -24,74 +24,74 @@ type MessageRemindCreate struct {
 }
 
 // SetChannelID sets the "channel_id" field.
-func (mrc *MessageRemindCreate) SetChannelID(s snowflake.ID) *MessageRemindCreate {
-	mrc.mutation.SetChannelID(s)
-	return mrc
+func (_c *MessageRemindCreate) SetChannelID(v snowflake.ID) *MessageRemindCreate {
+	_c.mutation.SetChannelID(v)
+	return _c
 }
 
 // SetAuthorID sets the "author_id" field.
-func (mrc *MessageRemindCreate) SetAuthorID(s snowflake.ID) *MessageRemindCreate {
-	mrc.mutation.SetAuthorID(s)
-	return mrc
+func (_c *MessageRemindCreate) SetAuthorID(v snowflake.ID) *MessageRemindCreate {
+	_c.mutation.SetAuthorID(v)
+	return _c
 }
 
 // SetTime sets the "time" field.
-func (mrc *MessageRemindCreate) SetTime(t time.Time) *MessageRemindCreate {
-	mrc.mutation.SetTime(t)
-	return mrc
+func (_c *MessageRemindCreate) SetTime(v time.Time) *MessageRemindCreate {
+	_c.mutation.SetTime(v)
+	return _c
 }
 
 // SetContent sets the "content" field.
-func (mrc *MessageRemindCreate) SetContent(s string) *MessageRemindCreate {
-	mrc.mutation.SetContent(s)
-	return mrc
+func (_c *MessageRemindCreate) SetContent(v string) *MessageRemindCreate {
+	_c.mutation.SetContent(v)
+	return _c
 }
 
 // SetName sets the "name" field.
-func (mrc *MessageRemindCreate) SetName(s string) *MessageRemindCreate {
-	mrc.mutation.SetName(s)
-	return mrc
+func (_c *MessageRemindCreate) SetName(v string) *MessageRemindCreate {
+	_c.mutation.SetName(v)
+	return _c
 }
 
 // SetID sets the "id" field.
-func (mrc *MessageRemindCreate) SetID(u uuid.UUID) *MessageRemindCreate {
-	mrc.mutation.SetID(u)
-	return mrc
+func (_c *MessageRemindCreate) SetID(v uuid.UUID) *MessageRemindCreate {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (mrc *MessageRemindCreate) SetNillableID(u *uuid.UUID) *MessageRemindCreate {
-	if u != nil {
-		mrc.SetID(*u)
+func (_c *MessageRemindCreate) SetNillableID(v *uuid.UUID) *MessageRemindCreate {
+	if v != nil {
+		_c.SetID(*v)
 	}
-	return mrc
+	return _c
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (mrc *MessageRemindCreate) SetGuildID(id snowflake.ID) *MessageRemindCreate {
-	mrc.mutation.SetGuildID(id)
-	return mrc
+func (_c *MessageRemindCreate) SetGuildID(id snowflake.ID) *MessageRemindCreate {
+	_c.mutation.SetGuildID(id)
+	return _c
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (mrc *MessageRemindCreate) SetGuild(g *Guild) *MessageRemindCreate {
-	return mrc.SetGuildID(g.ID)
+func (_c *MessageRemindCreate) SetGuild(v *Guild) *MessageRemindCreate {
+	return _c.SetGuildID(v.ID)
 }
 
 // Mutation returns the MessageRemindMutation object of the builder.
-func (mrc *MessageRemindCreate) Mutation() *MessageRemindMutation {
-	return mrc.mutation
+func (_c *MessageRemindCreate) Mutation() *MessageRemindMutation {
+	return _c.mutation
 }
 
 // Save creates the MessageRemind in the database.
-func (mrc *MessageRemindCreate) Save(ctx context.Context) (*MessageRemind, error) {
-	mrc.defaults()
-	return withHooks(ctx, mrc.sqlSave, mrc.mutation, mrc.hooks)
+func (_c *MessageRemindCreate) Save(ctx context.Context) (*MessageRemind, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (mrc *MessageRemindCreate) SaveX(ctx context.Context) *MessageRemind {
-	v, err := mrc.Save(ctx)
+func (_c *MessageRemindCreate) SaveX(ctx context.Context) *MessageRemind {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -99,65 +99,65 @@ func (mrc *MessageRemindCreate) SaveX(ctx context.Context) *MessageRemind {
 }
 
 // Exec executes the query.
-func (mrc *MessageRemindCreate) Exec(ctx context.Context) error {
-	_, err := mrc.Save(ctx)
+func (_c *MessageRemindCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (mrc *MessageRemindCreate) ExecX(ctx context.Context) {
-	if err := mrc.Exec(ctx); err != nil {
+func (_c *MessageRemindCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (mrc *MessageRemindCreate) defaults() {
-	if _, ok := mrc.mutation.ID(); !ok {
+func (_c *MessageRemindCreate) defaults() {
+	if _, ok := _c.mutation.ID(); !ok {
 		v := messageremind.DefaultID()
-		mrc.mutation.SetID(v)
+		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (mrc *MessageRemindCreate) check() error {
-	if _, ok := mrc.mutation.ChannelID(); !ok {
+func (_c *MessageRemindCreate) check() error {
+	if _, ok := _c.mutation.ChannelID(); !ok {
 		return &ValidationError{Name: "channel_id", err: errors.New(`ent: missing required field "MessageRemind.channel_id"`)}
 	}
-	if _, ok := mrc.mutation.AuthorID(); !ok {
+	if _, ok := _c.mutation.AuthorID(); !ok {
 		return &ValidationError{Name: "author_id", err: errors.New(`ent: missing required field "MessageRemind.author_id"`)}
 	}
-	if _, ok := mrc.mutation.Time(); !ok {
+	if _, ok := _c.mutation.Time(); !ok {
 		return &ValidationError{Name: "time", err: errors.New(`ent: missing required field "MessageRemind.time"`)}
 	}
-	if _, ok := mrc.mutation.Content(); !ok {
+	if _, ok := _c.mutation.Content(); !ok {
 		return &ValidationError{Name: "content", err: errors.New(`ent: missing required field "MessageRemind.content"`)}
 	}
-	if v, ok := mrc.mutation.Content(); ok {
+	if v, ok := _c.mutation.Content(); ok {
 		if err := messageremind.ContentValidator(v); err != nil {
 			return &ValidationError{Name: "content", err: fmt.Errorf(`ent: validator failed for field "MessageRemind.content": %w`, err)}
 		}
 	}
-	if _, ok := mrc.mutation.Name(); !ok {
+	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "MessageRemind.name"`)}
 	}
-	if v, ok := mrc.mutation.Name(); ok {
+	if v, ok := _c.mutation.Name(); ok {
 		if err := messageremind.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "MessageRemind.name": %w`, err)}
 		}
 	}
-	if len(mrc.mutation.GuildIDs()) == 0 {
+	if len(_c.mutation.GuildIDs()) == 0 {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "MessageRemind.guild"`)}
 	}
 	return nil
 }
 
-func (mrc *MessageRemindCreate) sqlSave(ctx context.Context) (*MessageRemind, error) {
-	if err := mrc.check(); err != nil {
+func (_c *MessageRemindCreate) sqlSave(ctx context.Context) (*MessageRemind, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := mrc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, mrc.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -170,41 +170,41 @@ func (mrc *MessageRemindCreate) sqlSave(ctx context.Context) (*MessageRemind, er
 			return nil, err
 		}
 	}
-	mrc.mutation.id = &_node.ID
-	mrc.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (mrc *MessageRemindCreate) createSpec() (*MessageRemind, *sqlgraph.CreateSpec) {
+func (_c *MessageRemindCreate) createSpec() (*MessageRemind, *sqlgraph.CreateSpec) {
 	var (
-		_node = &MessageRemind{config: mrc.config}
+		_node = &MessageRemind{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(messageremind.Table, sqlgraph.NewFieldSpec(messageremind.FieldID, field.TypeUUID))
 	)
-	if id, ok := mrc.mutation.ID(); ok {
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := mrc.mutation.ChannelID(); ok {
+	if value, ok := _c.mutation.ChannelID(); ok {
 		_spec.SetField(messageremind.FieldChannelID, field.TypeUint64, value)
 		_node.ChannelID = value
 	}
-	if value, ok := mrc.mutation.AuthorID(); ok {
+	if value, ok := _c.mutation.AuthorID(); ok {
 		_spec.SetField(messageremind.FieldAuthorID, field.TypeUint64, value)
 		_node.AuthorID = value
 	}
-	if value, ok := mrc.mutation.Time(); ok {
+	if value, ok := _c.mutation.Time(); ok {
 		_spec.SetField(messageremind.FieldTime, field.TypeTime, value)
 		_node.Time = value
 	}
-	if value, ok := mrc.mutation.Content(); ok {
+	if value, ok := _c.mutation.Content(); ok {
 		_spec.SetField(messageremind.FieldContent, field.TypeString, value)
 		_node.Content = value
 	}
-	if value, ok := mrc.mutation.Name(); ok {
+	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(messageremind.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
-	if nodes := mrc.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -232,16 +232,16 @@ type MessageRemindCreateBulk struct {
 }
 
 // Save creates the MessageRemind entities in the database.
-func (mrcb *MessageRemindCreateBulk) Save(ctx context.Context) ([]*MessageRemind, error) {
-	if mrcb.err != nil {
-		return nil, mrcb.err
+func (_c *MessageRemindCreateBulk) Save(ctx context.Context) ([]*MessageRemind, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(mrcb.builders))
-	nodes := make([]*MessageRemind, len(mrcb.builders))
-	mutators := make([]Mutator, len(mrcb.builders))
-	for i := range mrcb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*MessageRemind, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := mrcb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*MessageRemindMutation)
@@ -255,11 +255,11 @@ func (mrcb *MessageRemindCreateBulk) Save(ctx context.Context) ([]*MessageRemind
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, mrcb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, mrcb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -279,7 +279,7 @@ func (mrcb *MessageRemindCreateBulk) Save(ctx context.Context) ([]*MessageRemind
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, mrcb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -287,8 +287,8 @@ func (mrcb *MessageRemindCreateBulk) Save(ctx context.Context) ([]*MessageRemind
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (mrcb *MessageRemindCreateBulk) SaveX(ctx context.Context) []*MessageRemind {
-	v, err := mrcb.Save(ctx)
+func (_c *MessageRemindCreateBulk) SaveX(ctx context.Context) []*MessageRemind {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -296,14 +296,14 @@ func (mrcb *MessageRemindCreateBulk) SaveX(ctx context.Context) []*MessageRemind
 }
 
 // Exec executes the query.
-func (mrcb *MessageRemindCreateBulk) Exec(ctx context.Context) error {
-	_, err := mrcb.Save(ctx)
+func (_c *MessageRemindCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (mrcb *MessageRemindCreateBulk) ExecX(ctx context.Context) {
-	if err := mrcb.Exec(ctx); err != nil {
+func (_c *MessageRemindCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

@@ -99,7 +99,7 @@ func (*Member) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Member fields.
-func (m *Member) assignValues(columns []string, values []any) error {
+func (_m *Member) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -110,12 +110,12 @@ func (m *Member) assignValues(columns []string, values []any) error {
 			if !ok {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
-			m.ID = int(value.Int64)
+			_m.ID = int(value.Int64)
 		case member.FieldPermission:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field permission", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &m.Permission); err != nil {
+				if err := json.Unmarshal(*value, &_m.Permission); err != nil {
 					return fmt.Errorf("unmarshal field permission: %w", err)
 				}
 			}
@@ -123,38 +123,38 @@ func (m *Member) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field xp", values[i])
 			} else if value.Valid {
-				m.Xp = xppoint.XP(value.Int64)
+				_m.Xp = xppoint.XP(value.Int64)
 			}
 		case member.FieldUserID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field user_id", values[i])
 			} else if value.Valid {
-				m.UserID = snowflake.ID(value.Int64)
+				_m.UserID = snowflake.ID(value.Int64)
 			}
 		case member.FieldLastXp:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field last_xp", values[i])
 			} else if value.Valid {
-				m.LastXp = value.Time
+				_m.LastXp = value.Time
 			}
 		case member.FieldMessageCount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field message_count", values[i])
 			} else if value.Valid {
-				m.MessageCount = uint64(value.Int64)
+				_m.MessageCount = uint64(value.Int64)
 			}
 		case member.FieldLastNotifiedLevel:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field last_notified_level", values[i])
 			} else if value.Valid {
-				m.LastNotifiedLevel = new(uint64)
-				*m.LastNotifiedLevel = uint64(value.Int64)
+				_m.LastNotifiedLevel = new(uint64)
+				*_m.LastNotifiedLevel = uint64(value.Int64)
 			}
 		case member.FieldLastMessageHashes:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field last_message_hashes", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &m.LastMessageHashes); err != nil {
+				if err := json.Unmarshal(*value, &_m.LastMessageHashes); err != nil {
 					return fmt.Errorf("unmarshal field last_message_hashes: %w", err)
 				}
 			}
@@ -162,11 +162,11 @@ func (m *Member) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field guild_members", values[i])
 			} else if value.Valid {
-				m.guild_members = new(snowflake.ID)
-				*m.guild_members = snowflake.ID(value.Int64)
+				_m.guild_members = new(snowflake.ID)
+				*_m.guild_members = snowflake.ID(value.Int64)
 			}
 		default:
-			m.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -174,65 +174,65 @@ func (m *Member) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the Member.
 // This includes values selected through modifiers, order, etc.
-func (m *Member) Value(name string) (ent.Value, error) {
-	return m.selectValues.Get(name)
+func (_m *Member) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // QueryGuild queries the "guild" edge of the Member entity.
-func (m *Member) QueryGuild() *GuildQuery {
-	return NewMemberClient(m.config).QueryGuild(m)
+func (_m *Member) QueryGuild() *GuildQuery {
+	return NewMemberClient(_m.config).QueryGuild(_m)
 }
 
 // QueryUser queries the "user" edge of the Member entity.
-func (m *Member) QueryUser() *UserQuery {
-	return NewMemberClient(m.config).QueryUser(m)
+func (_m *Member) QueryUser() *UserQuery {
+	return NewMemberClient(_m.config).QueryUser(_m)
 }
 
 // Update returns a builder for updating this Member.
 // Note that you need to call Member.Unwrap() before calling this method if this Member
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (m *Member) Update() *MemberUpdateOne {
-	return NewMemberClient(m.config).UpdateOne(m)
+func (_m *Member) Update() *MemberUpdateOne {
+	return NewMemberClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the Member entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (m *Member) Unwrap() *Member {
-	_tx, ok := m.config.driver.(*txDriver)
+func (_m *Member) Unwrap() *Member {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: Member is not a transactional entity")
 	}
-	m.config.driver = _tx.drv
-	return m
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (m *Member) String() string {
+func (_m *Member) String() string {
 	var builder strings.Builder
 	builder.WriteString("Member(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", m.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("permission=")
-	builder.WriteString(fmt.Sprintf("%v", m.Permission))
+	builder.WriteString(fmt.Sprintf("%v", _m.Permission))
 	builder.WriteString(", ")
 	builder.WriteString("xp=")
-	builder.WriteString(fmt.Sprintf("%v", m.Xp))
+	builder.WriteString(fmt.Sprintf("%v", _m.Xp))
 	builder.WriteString(", ")
 	builder.WriteString("user_id=")
-	builder.WriteString(fmt.Sprintf("%v", m.UserID))
+	builder.WriteString(fmt.Sprintf("%v", _m.UserID))
 	builder.WriteString(", ")
 	builder.WriteString("last_xp=")
-	builder.WriteString(m.LastXp.Format(time.ANSIC))
+	builder.WriteString(_m.LastXp.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("message_count=")
-	builder.WriteString(fmt.Sprintf("%v", m.MessageCount))
+	builder.WriteString(fmt.Sprintf("%v", _m.MessageCount))
 	builder.WriteString(", ")
-	if v := m.LastNotifiedLevel; v != nil {
+	if v := _m.LastNotifiedLevel; v != nil {
 		builder.WriteString("last_notified_level=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("last_message_hashes=")
-	builder.WriteString(fmt.Sprintf("%v", m.LastMessageHashes))
+	builder.WriteString(fmt.Sprintf("%v", _m.LastMessageHashes))
 	builder.WriteByte(')')
 	return builder.String()
 }

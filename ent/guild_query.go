@@ -51,44 +51,44 @@ type GuildQuery struct {
 }
 
 // Where adds a new predicate for the GuildQuery builder.
-func (gq *GuildQuery) Where(ps ...predicate.Guild) *GuildQuery {
-	gq.predicates = append(gq.predicates, ps...)
-	return gq
+func (_q *GuildQuery) Where(ps ...predicate.Guild) *GuildQuery {
+	_q.predicates = append(_q.predicates, ps...)
+	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (gq *GuildQuery) Limit(limit int) *GuildQuery {
-	gq.ctx.Limit = &limit
-	return gq
+func (_q *GuildQuery) Limit(limit int) *GuildQuery {
+	_q.ctx.Limit = &limit
+	return _q
 }
 
 // Offset to start from.
-func (gq *GuildQuery) Offset(offset int) *GuildQuery {
-	gq.ctx.Offset = &offset
-	return gq
+func (_q *GuildQuery) Offset(offset int) *GuildQuery {
+	_q.ctx.Offset = &offset
+	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (gq *GuildQuery) Unique(unique bool) *GuildQuery {
-	gq.ctx.Unique = &unique
-	return gq
+func (_q *GuildQuery) Unique(unique bool) *GuildQuery {
+	_q.ctx.Unique = &unique
+	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (gq *GuildQuery) Order(o ...guild.OrderOption) *GuildQuery {
-	gq.order = append(gq.order, o...)
-	return gq
+func (_q *GuildQuery) Order(o ...guild.OrderOption) *GuildQuery {
+	_q.order = append(_q.order, o...)
+	return _q
 }
 
 // QueryOwner chains the current query on the "owner" edge.
-func (gq *GuildQuery) QueryOwner() *UserQuery {
-	query := (&UserClient{config: gq.config}).Query()
+func (_q *GuildQuery) QueryOwner() *UserQuery {
+	query := (&UserClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := gq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := gq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -97,20 +97,20 @@ func (gq *GuildQuery) QueryOwner() *UserQuery {
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, guild.OwnerTable, guild.OwnerColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
 }
 
 // QueryMembers chains the current query on the "members" edge.
-func (gq *GuildQuery) QueryMembers() *MemberQuery {
-	query := (&MemberClient{config: gq.config}).Query()
+func (_q *GuildQuery) QueryMembers() *MemberQuery {
+	query := (&MemberClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := gq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := gq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -119,20 +119,20 @@ func (gq *GuildQuery) QueryMembers() *MemberQuery {
 			sqlgraph.To(member.Table, member.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.MembersTable, guild.MembersColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
 }
 
 // QueryMessagePins chains the current query on the "message_pins" edge.
-func (gq *GuildQuery) QueryMessagePins() *MessagePinQuery {
-	query := (&MessagePinClient{config: gq.config}).Query()
+func (_q *GuildQuery) QueryMessagePins() *MessagePinQuery {
+	query := (&MessagePinClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := gq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := gq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -141,20 +141,20 @@ func (gq *GuildQuery) QueryMessagePins() *MessagePinQuery {
 			sqlgraph.To(messagepin.Table, messagepin.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.MessagePinsTable, guild.MessagePinsColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
 }
 
 // QueryReminds chains the current query on the "reminds" edge.
-func (gq *GuildQuery) QueryReminds() *MessageRemindQuery {
-	query := (&MessageRemindClient{config: gq.config}).Query()
+func (_q *GuildQuery) QueryReminds() *MessageRemindQuery {
+	query := (&MessageRemindClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := gq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := gq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -163,20 +163,20 @@ func (gq *GuildQuery) QueryReminds() *MessageRemindQuery {
 			sqlgraph.To(messageremind.Table, messageremind.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.RemindsTable, guild.RemindsColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
 }
 
 // QueryRolePanels chains the current query on the "role_panels" edge.
-func (gq *GuildQuery) QueryRolePanels() *RolePanelQuery {
-	query := (&RolePanelClient{config: gq.config}).Query()
+func (_q *GuildQuery) QueryRolePanels() *RolePanelQuery {
+	query := (&RolePanelClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := gq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := gq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -185,20 +185,20 @@ func (gq *GuildQuery) QueryRolePanels() *RolePanelQuery {
 			sqlgraph.To(rolepanel.Table, rolepanel.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.RolePanelsTable, guild.RolePanelsColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
 }
 
 // QueryRolePanelPlacements chains the current query on the "role_panel_placements" edge.
-func (gq *GuildQuery) QueryRolePanelPlacements() *RolePanelPlacedQuery {
-	query := (&RolePanelPlacedClient{config: gq.config}).Query()
+func (_q *GuildQuery) QueryRolePanelPlacements() *RolePanelPlacedQuery {
+	query := (&RolePanelPlacedClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := gq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := gq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -207,20 +207,20 @@ func (gq *GuildQuery) QueryRolePanelPlacements() *RolePanelPlacedQuery {
 			sqlgraph.To(rolepanelplaced.Table, rolepanelplaced.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.RolePanelPlacementsTable, guild.RolePanelPlacementsColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
 }
 
 // QueryRolePanelEdits chains the current query on the "role_panel_edits" edge.
-func (gq *GuildQuery) QueryRolePanelEdits() *RolePanelEditQuery {
-	query := (&RolePanelEditClient{config: gq.config}).Query()
+func (_q *GuildQuery) QueryRolePanelEdits() *RolePanelEditQuery {
+	query := (&RolePanelEditClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := gq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := gq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -229,20 +229,20 @@ func (gq *GuildQuery) QueryRolePanelEdits() *RolePanelEditQuery {
 			sqlgraph.To(rolepaneledit.Table, rolepaneledit.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.RolePanelEditsTable, guild.RolePanelEditsColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
 }
 
 // QueryChinchiroSessions chains the current query on the "chinchiro_sessions" edge.
-func (gq *GuildQuery) QueryChinchiroSessions() *ChinchiroSessionQuery {
-	query := (&ChinchiroSessionClient{config: gq.config}).Query()
+func (_q *GuildQuery) QueryChinchiroSessions() *ChinchiroSessionQuery {
+	query := (&ChinchiroSessionClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := gq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := gq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -251,20 +251,20 @@ func (gq *GuildQuery) QueryChinchiroSessions() *ChinchiroSessionQuery {
 			sqlgraph.To(chinchirosession.Table, chinchirosession.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.ChinchiroSessionsTable, guild.ChinchiroSessionsColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
 }
 
 // QueryThreads1000 chains the current query on the "threads1000" edge.
-func (gq *GuildQuery) QueryThreads1000() *Thread1000Query {
-	query := (&Thread1000Client{config: gq.config}).Query()
+func (_q *GuildQuery) QueryThreads1000() *Thread1000Query {
+	query := (&Thread1000Client{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := gq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := gq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -273,20 +273,20 @@ func (gq *GuildQuery) QueryThreads1000() *Thread1000Query {
 			sqlgraph.To(thread1000.Table, thread1000.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.Threads1000Table, guild.Threads1000Column),
 		)
-		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
 }
 
 // QueryThread1000Channels chains the current query on the "thread1000_channels" edge.
-func (gq *GuildQuery) QueryThread1000Channels() *Thread1000ChannelQuery {
-	query := (&Thread1000ChannelClient{config: gq.config}).Query()
+func (_q *GuildQuery) QueryThread1000Channels() *Thread1000ChannelQuery {
+	query := (&Thread1000ChannelClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := gq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := gq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -295,7 +295,7 @@ func (gq *GuildQuery) QueryThread1000Channels() *Thread1000ChannelQuery {
 			sqlgraph.To(thread1000channel.Table, thread1000channel.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, guild.Thread1000ChannelsTable, guild.Thread1000ChannelsColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(gq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
@@ -303,8 +303,8 @@ func (gq *GuildQuery) QueryThread1000Channels() *Thread1000ChannelQuery {
 
 // First returns the first Guild entity from the query.
 // Returns a *NotFoundError when no Guild was found.
-func (gq *GuildQuery) First(ctx context.Context) (*Guild, error) {
-	nodes, err := gq.Limit(1).All(setContextOp(ctx, gq.ctx, ent.OpQueryFirst))
+func (_q *GuildQuery) First(ctx context.Context) (*Guild, error) {
+	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -315,8 +315,8 @@ func (gq *GuildQuery) First(ctx context.Context) (*Guild, error) {
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (gq *GuildQuery) FirstX(ctx context.Context) *Guild {
-	node, err := gq.First(ctx)
+func (_q *GuildQuery) FirstX(ctx context.Context) *Guild {
+	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -325,9 +325,9 @@ func (gq *GuildQuery) FirstX(ctx context.Context) *Guild {
 
 // FirstID returns the first Guild ID from the query.
 // Returns a *NotFoundError when no Guild ID was found.
-func (gq *GuildQuery) FirstID(ctx context.Context) (id snowflake.ID, err error) {
+func (_q *GuildQuery) FirstID(ctx context.Context) (id snowflake.ID, err error) {
 	var ids []snowflake.ID
-	if ids, err = gq.Limit(1).IDs(setContextOp(ctx, gq.ctx, ent.OpQueryFirstID)); err != nil {
+	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -338,8 +338,8 @@ func (gq *GuildQuery) FirstID(ctx context.Context) (id snowflake.ID, err error) 
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (gq *GuildQuery) FirstIDX(ctx context.Context) snowflake.ID {
-	id, err := gq.FirstID(ctx)
+func (_q *GuildQuery) FirstIDX(ctx context.Context) snowflake.ID {
+	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -349,8 +349,8 @@ func (gq *GuildQuery) FirstIDX(ctx context.Context) snowflake.ID {
 // Only returns a single Guild entity found by the query, ensuring it only returns one.
 // Returns a *NotSingularError when more than one Guild entity is found.
 // Returns a *NotFoundError when no Guild entities are found.
-func (gq *GuildQuery) Only(ctx context.Context) (*Guild, error) {
-	nodes, err := gq.Limit(2).All(setContextOp(ctx, gq.ctx, ent.OpQueryOnly))
+func (_q *GuildQuery) Only(ctx context.Context) (*Guild, error) {
+	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -365,8 +365,8 @@ func (gq *GuildQuery) Only(ctx context.Context) (*Guild, error) {
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (gq *GuildQuery) OnlyX(ctx context.Context) *Guild {
-	node, err := gq.Only(ctx)
+func (_q *GuildQuery) OnlyX(ctx context.Context) *Guild {
+	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -376,9 +376,9 @@ func (gq *GuildQuery) OnlyX(ctx context.Context) *Guild {
 // OnlyID is like Only, but returns the only Guild ID in the query.
 // Returns a *NotSingularError when more than one Guild ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (gq *GuildQuery) OnlyID(ctx context.Context) (id snowflake.ID, err error) {
+func (_q *GuildQuery) OnlyID(ctx context.Context) (id snowflake.ID, err error) {
 	var ids []snowflake.ID
-	if ids, err = gq.Limit(2).IDs(setContextOp(ctx, gq.ctx, ent.OpQueryOnlyID)); err != nil {
+	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -393,8 +393,8 @@ func (gq *GuildQuery) OnlyID(ctx context.Context) (id snowflake.ID, err error) {
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (gq *GuildQuery) OnlyIDX(ctx context.Context) snowflake.ID {
-	id, err := gq.OnlyID(ctx)
+func (_q *GuildQuery) OnlyIDX(ctx context.Context) snowflake.ID {
+	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -402,18 +402,18 @@ func (gq *GuildQuery) OnlyIDX(ctx context.Context) snowflake.ID {
 }
 
 // All executes the query and returns a list of Guilds.
-func (gq *GuildQuery) All(ctx context.Context) ([]*Guild, error) {
-	ctx = setContextOp(ctx, gq.ctx, ent.OpQueryAll)
-	if err := gq.prepareQuery(ctx); err != nil {
+func (_q *GuildQuery) All(ctx context.Context) ([]*Guild, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
 	qr := querierAll[[]*Guild, *GuildQuery]()
-	return withInterceptors[[]*Guild](ctx, gq, qr, gq.inters)
+	return withInterceptors[[]*Guild](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (gq *GuildQuery) AllX(ctx context.Context) []*Guild {
-	nodes, err := gq.All(ctx)
+func (_q *GuildQuery) AllX(ctx context.Context) []*Guild {
+	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -421,20 +421,20 @@ func (gq *GuildQuery) AllX(ctx context.Context) []*Guild {
 }
 
 // IDs executes the query and returns a list of Guild IDs.
-func (gq *GuildQuery) IDs(ctx context.Context) (ids []snowflake.ID, err error) {
-	if gq.ctx.Unique == nil && gq.path != nil {
-		gq.Unique(true)
+func (_q *GuildQuery) IDs(ctx context.Context) (ids []snowflake.ID, err error) {
+	if _q.ctx.Unique == nil && _q.path != nil {
+		_q.Unique(true)
 	}
-	ctx = setContextOp(ctx, gq.ctx, ent.OpQueryIDs)
-	if err = gq.Select(guild.FieldID).Scan(ctx, &ids); err != nil {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
+	if err = _q.Select(guild.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (gq *GuildQuery) IDsX(ctx context.Context) []snowflake.ID {
-	ids, err := gq.IDs(ctx)
+func (_q *GuildQuery) IDsX(ctx context.Context) []snowflake.ID {
+	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -442,17 +442,17 @@ func (gq *GuildQuery) IDsX(ctx context.Context) []snowflake.ID {
 }
 
 // Count returns the count of the given query.
-func (gq *GuildQuery) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, gq.ctx, ent.OpQueryCount)
-	if err := gq.prepareQuery(ctx); err != nil {
+func (_q *GuildQuery) Count(ctx context.Context) (int, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, gq, querierCount[*GuildQuery](), gq.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*GuildQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (gq *GuildQuery) CountX(ctx context.Context) int {
-	count, err := gq.Count(ctx)
+func (_q *GuildQuery) CountX(ctx context.Context) int {
+	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -460,9 +460,9 @@ func (gq *GuildQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (gq *GuildQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, gq.ctx, ent.OpQueryExist)
-	switch _, err := gq.FirstID(ctx); {
+func (_q *GuildQuery) Exist(ctx context.Context) (bool, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
+	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
 	case err != nil:
@@ -473,8 +473,8 @@ func (gq *GuildQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (gq *GuildQuery) ExistX(ctx context.Context) bool {
-	exist, err := gq.Exist(ctx)
+func (_q *GuildQuery) ExistX(ctx context.Context) bool {
+	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -483,140 +483,140 @@ func (gq *GuildQuery) ExistX(ctx context.Context) bool {
 
 // Clone returns a duplicate of the GuildQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (gq *GuildQuery) Clone() *GuildQuery {
-	if gq == nil {
+func (_q *GuildQuery) Clone() *GuildQuery {
+	if _q == nil {
 		return nil
 	}
 	return &GuildQuery{
-		config:                  gq.config,
-		ctx:                     gq.ctx.Clone(),
-		order:                   append([]guild.OrderOption{}, gq.order...),
-		inters:                  append([]Interceptor{}, gq.inters...),
-		predicates:              append([]predicate.Guild{}, gq.predicates...),
-		withOwner:               gq.withOwner.Clone(),
-		withMembers:             gq.withMembers.Clone(),
-		withMessagePins:         gq.withMessagePins.Clone(),
-		withReminds:             gq.withReminds.Clone(),
-		withRolePanels:          gq.withRolePanels.Clone(),
-		withRolePanelPlacements: gq.withRolePanelPlacements.Clone(),
-		withRolePanelEdits:      gq.withRolePanelEdits.Clone(),
-		withChinchiroSessions:   gq.withChinchiroSessions.Clone(),
-		withThreads1000:         gq.withThreads1000.Clone(),
-		withThread1000Channels:  gq.withThread1000Channels.Clone(),
+		config:                  _q.config,
+		ctx:                     _q.ctx.Clone(),
+		order:                   append([]guild.OrderOption{}, _q.order...),
+		inters:                  append([]Interceptor{}, _q.inters...),
+		predicates:              append([]predicate.Guild{}, _q.predicates...),
+		withOwner:               _q.withOwner.Clone(),
+		withMembers:             _q.withMembers.Clone(),
+		withMessagePins:         _q.withMessagePins.Clone(),
+		withReminds:             _q.withReminds.Clone(),
+		withRolePanels:          _q.withRolePanels.Clone(),
+		withRolePanelPlacements: _q.withRolePanelPlacements.Clone(),
+		withRolePanelEdits:      _q.withRolePanelEdits.Clone(),
+		withChinchiroSessions:   _q.withChinchiroSessions.Clone(),
+		withThreads1000:         _q.withThreads1000.Clone(),
+		withThread1000Channels:  _q.withThread1000Channels.Clone(),
 		// clone intermediate query.
-		sql:  gq.sql.Clone(),
-		path: gq.path,
+		sql:  _q.sql.Clone(),
+		path: _q.path,
 	}
 }
 
 // WithOwner tells the query-builder to eager-load the nodes that are connected to
 // the "owner" edge. The optional arguments are used to configure the query builder of the edge.
-func (gq *GuildQuery) WithOwner(opts ...func(*UserQuery)) *GuildQuery {
-	query := (&UserClient{config: gq.config}).Query()
+func (_q *GuildQuery) WithOwner(opts ...func(*UserQuery)) *GuildQuery {
+	query := (&UserClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	gq.withOwner = query
-	return gq
+	_q.withOwner = query
+	return _q
 }
 
 // WithMembers tells the query-builder to eager-load the nodes that are connected to
 // the "members" edge. The optional arguments are used to configure the query builder of the edge.
-func (gq *GuildQuery) WithMembers(opts ...func(*MemberQuery)) *GuildQuery {
-	query := (&MemberClient{config: gq.config}).Query()
+func (_q *GuildQuery) WithMembers(opts ...func(*MemberQuery)) *GuildQuery {
+	query := (&MemberClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	gq.withMembers = query
-	return gq
+	_q.withMembers = query
+	return _q
 }
 
 // WithMessagePins tells the query-builder to eager-load the nodes that are connected to
 // the "message_pins" edge. The optional arguments are used to configure the query builder of the edge.
-func (gq *GuildQuery) WithMessagePins(opts ...func(*MessagePinQuery)) *GuildQuery {
-	query := (&MessagePinClient{config: gq.config}).Query()
+func (_q *GuildQuery) WithMessagePins(opts ...func(*MessagePinQuery)) *GuildQuery {
+	query := (&MessagePinClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	gq.withMessagePins = query
-	return gq
+	_q.withMessagePins = query
+	return _q
 }
 
 // WithReminds tells the query-builder to eager-load the nodes that are connected to
 // the "reminds" edge. The optional arguments are used to configure the query builder of the edge.
-func (gq *GuildQuery) WithReminds(opts ...func(*MessageRemindQuery)) *GuildQuery {
-	query := (&MessageRemindClient{config: gq.config}).Query()
+func (_q *GuildQuery) WithReminds(opts ...func(*MessageRemindQuery)) *GuildQuery {
+	query := (&MessageRemindClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	gq.withReminds = query
-	return gq
+	_q.withReminds = query
+	return _q
 }
 
 // WithRolePanels tells the query-builder to eager-load the nodes that are connected to
 // the "role_panels" edge. The optional arguments are used to configure the query builder of the edge.
-func (gq *GuildQuery) WithRolePanels(opts ...func(*RolePanelQuery)) *GuildQuery {
-	query := (&RolePanelClient{config: gq.config}).Query()
+func (_q *GuildQuery) WithRolePanels(opts ...func(*RolePanelQuery)) *GuildQuery {
+	query := (&RolePanelClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	gq.withRolePanels = query
-	return gq
+	_q.withRolePanels = query
+	return _q
 }
 
 // WithRolePanelPlacements tells the query-builder to eager-load the nodes that are connected to
 // the "role_panel_placements" edge. The optional arguments are used to configure the query builder of the edge.
-func (gq *GuildQuery) WithRolePanelPlacements(opts ...func(*RolePanelPlacedQuery)) *GuildQuery {
-	query := (&RolePanelPlacedClient{config: gq.config}).Query()
+func (_q *GuildQuery) WithRolePanelPlacements(opts ...func(*RolePanelPlacedQuery)) *GuildQuery {
+	query := (&RolePanelPlacedClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	gq.withRolePanelPlacements = query
-	return gq
+	_q.withRolePanelPlacements = query
+	return _q
 }
 
 // WithRolePanelEdits tells the query-builder to eager-load the nodes that are connected to
 // the "role_panel_edits" edge. The optional arguments are used to configure the query builder of the edge.
-func (gq *GuildQuery) WithRolePanelEdits(opts ...func(*RolePanelEditQuery)) *GuildQuery {
-	query := (&RolePanelEditClient{config: gq.config}).Query()
+func (_q *GuildQuery) WithRolePanelEdits(opts ...func(*RolePanelEditQuery)) *GuildQuery {
+	query := (&RolePanelEditClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	gq.withRolePanelEdits = query
-	return gq
+	_q.withRolePanelEdits = query
+	return _q
 }
 
 // WithChinchiroSessions tells the query-builder to eager-load the nodes that are connected to
 // the "chinchiro_sessions" edge. The optional arguments are used to configure the query builder of the edge.
-func (gq *GuildQuery) WithChinchiroSessions(opts ...func(*ChinchiroSessionQuery)) *GuildQuery {
-	query := (&ChinchiroSessionClient{config: gq.config}).Query()
+func (_q *GuildQuery) WithChinchiroSessions(opts ...func(*ChinchiroSessionQuery)) *GuildQuery {
+	query := (&ChinchiroSessionClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	gq.withChinchiroSessions = query
-	return gq
+	_q.withChinchiroSessions = query
+	return _q
 }
 
 // WithThreads1000 tells the query-builder to eager-load the nodes that are connected to
 // the "threads1000" edge. The optional arguments are used to configure the query builder of the edge.
-func (gq *GuildQuery) WithThreads1000(opts ...func(*Thread1000Query)) *GuildQuery {
-	query := (&Thread1000Client{config: gq.config}).Query()
+func (_q *GuildQuery) WithThreads1000(opts ...func(*Thread1000Query)) *GuildQuery {
+	query := (&Thread1000Client{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	gq.withThreads1000 = query
-	return gq
+	_q.withThreads1000 = query
+	return _q
 }
 
 // WithThread1000Channels tells the query-builder to eager-load the nodes that are connected to
 // the "thread1000_channels" edge. The optional arguments are used to configure the query builder of the edge.
-func (gq *GuildQuery) WithThread1000Channels(opts ...func(*Thread1000ChannelQuery)) *GuildQuery {
-	query := (&Thread1000ChannelClient{config: gq.config}).Query()
+func (_q *GuildQuery) WithThread1000Channels(opts ...func(*Thread1000ChannelQuery)) *GuildQuery {
+	query := (&Thread1000ChannelClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	gq.withThread1000Channels = query
-	return gq
+	_q.withThread1000Channels = query
+	return _q
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -633,10 +633,10 @@ func (gq *GuildQuery) WithThread1000Channels(opts ...func(*Thread1000ChannelQuer
 //		GroupBy(guild.FieldName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (gq *GuildQuery) GroupBy(field string, fields ...string) *GuildGroupBy {
-	gq.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &GuildGroupBy{build: gq}
-	grbuild.flds = &gq.ctx.Fields
+func (_q *GuildQuery) GroupBy(field string, fields ...string) *GuildGroupBy {
+	_q.ctx.Fields = append([]string{field}, fields...)
+	grbuild := &GuildGroupBy{build: _q}
+	grbuild.flds = &_q.ctx.Fields
 	grbuild.label = guild.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
@@ -654,64 +654,64 @@ func (gq *GuildQuery) GroupBy(field string, fields ...string) *GuildGroupBy {
 //	client.Guild.Query().
 //		Select(guild.FieldName).
 //		Scan(ctx, &v)
-func (gq *GuildQuery) Select(fields ...string) *GuildSelect {
-	gq.ctx.Fields = append(gq.ctx.Fields, fields...)
-	sbuild := &GuildSelect{GuildQuery: gq}
+func (_q *GuildQuery) Select(fields ...string) *GuildSelect {
+	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
+	sbuild := &GuildSelect{GuildQuery: _q}
 	sbuild.label = guild.Label
-	sbuild.flds, sbuild.scan = &gq.ctx.Fields, sbuild.Scan
+	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
 // Aggregate returns a GuildSelect configured with the given aggregations.
-func (gq *GuildQuery) Aggregate(fns ...AggregateFunc) *GuildSelect {
-	return gq.Select().Aggregate(fns...)
+func (_q *GuildQuery) Aggregate(fns ...AggregateFunc) *GuildSelect {
+	return _q.Select().Aggregate(fns...)
 }
 
-func (gq *GuildQuery) prepareQuery(ctx context.Context) error {
-	for _, inter := range gq.inters {
+func (_q *GuildQuery) prepareQuery(ctx context.Context) error {
+	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
 		}
 		if trv, ok := inter.(Traverser); ok {
-			if err := trv.Traverse(ctx, gq); err != nil {
+			if err := trv.Traverse(ctx, _q); err != nil {
 				return err
 			}
 		}
 	}
-	for _, f := range gq.ctx.Fields {
+	for _, f := range _q.ctx.Fields {
 		if !guild.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
-	if gq.path != nil {
-		prev, err := gq.path(ctx)
+	if _q.path != nil {
+		prev, err := _q.path(ctx)
 		if err != nil {
 			return err
 		}
-		gq.sql = prev
+		_q.sql = prev
 	}
 	return nil
 }
 
-func (gq *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild, error) {
+func (_q *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild, error) {
 	var (
 		nodes       = []*Guild{}
-		withFKs     = gq.withFKs
-		_spec       = gq.querySpec()
+		withFKs     = _q.withFKs
+		_spec       = _q.querySpec()
 		loadedTypes = [10]bool{
-			gq.withOwner != nil,
-			gq.withMembers != nil,
-			gq.withMessagePins != nil,
-			gq.withReminds != nil,
-			gq.withRolePanels != nil,
-			gq.withRolePanelPlacements != nil,
-			gq.withRolePanelEdits != nil,
-			gq.withChinchiroSessions != nil,
-			gq.withThreads1000 != nil,
-			gq.withThread1000Channels != nil,
+			_q.withOwner != nil,
+			_q.withMembers != nil,
+			_q.withMessagePins != nil,
+			_q.withReminds != nil,
+			_q.withRolePanels != nil,
+			_q.withRolePanelPlacements != nil,
+			_q.withRolePanelEdits != nil,
+			_q.withChinchiroSessions != nil,
+			_q.withThreads1000 != nil,
+			_q.withThread1000Channels != nil,
 		}
 	)
-	if gq.withOwner != nil {
+	if _q.withOwner != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -721,7 +721,7 @@ func (gq *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild,
 		return (*Guild).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &Guild{config: gq.config}
+		node := &Guild{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -729,48 +729,48 @@ func (gq *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild,
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
-	if err := sqlgraph.QueryNodes(ctx, gq.driver, _spec); err != nil {
+	if err := sqlgraph.QueryNodes(ctx, _q.driver, _spec); err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := gq.withOwner; query != nil {
-		if err := gq.loadOwner(ctx, query, nodes, nil,
+	if query := _q.withOwner; query != nil {
+		if err := _q.loadOwner(ctx, query, nodes, nil,
 			func(n *Guild, e *User) { n.Edges.Owner = e }); err != nil {
 			return nil, err
 		}
 	}
-	if query := gq.withMembers; query != nil {
-		if err := gq.loadMembers(ctx, query, nodes,
+	if query := _q.withMembers; query != nil {
+		if err := _q.loadMembers(ctx, query, nodes,
 			func(n *Guild) { n.Edges.Members = []*Member{} },
 			func(n *Guild, e *Member) { n.Edges.Members = append(n.Edges.Members, e) }); err != nil {
 			return nil, err
 		}
 	}
-	if query := gq.withMessagePins; query != nil {
-		if err := gq.loadMessagePins(ctx, query, nodes,
+	if query := _q.withMessagePins; query != nil {
+		if err := _q.loadMessagePins(ctx, query, nodes,
 			func(n *Guild) { n.Edges.MessagePins = []*MessagePin{} },
 			func(n *Guild, e *MessagePin) { n.Edges.MessagePins = append(n.Edges.MessagePins, e) }); err != nil {
 			return nil, err
 		}
 	}
-	if query := gq.withReminds; query != nil {
-		if err := gq.loadReminds(ctx, query, nodes,
+	if query := _q.withReminds; query != nil {
+		if err := _q.loadReminds(ctx, query, nodes,
 			func(n *Guild) { n.Edges.Reminds = []*MessageRemind{} },
 			func(n *Guild, e *MessageRemind) { n.Edges.Reminds = append(n.Edges.Reminds, e) }); err != nil {
 			return nil, err
 		}
 	}
-	if query := gq.withRolePanels; query != nil {
-		if err := gq.loadRolePanels(ctx, query, nodes,
+	if query := _q.withRolePanels; query != nil {
+		if err := _q.loadRolePanels(ctx, query, nodes,
 			func(n *Guild) { n.Edges.RolePanels = []*RolePanel{} },
 			func(n *Guild, e *RolePanel) { n.Edges.RolePanels = append(n.Edges.RolePanels, e) }); err != nil {
 			return nil, err
 		}
 	}
-	if query := gq.withRolePanelPlacements; query != nil {
-		if err := gq.loadRolePanelPlacements(ctx, query, nodes,
+	if query := _q.withRolePanelPlacements; query != nil {
+		if err := _q.loadRolePanelPlacements(ctx, query, nodes,
 			func(n *Guild) { n.Edges.RolePanelPlacements = []*RolePanelPlaced{} },
 			func(n *Guild, e *RolePanelPlaced) {
 				n.Edges.RolePanelPlacements = append(n.Edges.RolePanelPlacements, e)
@@ -778,29 +778,29 @@ func (gq *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild,
 			return nil, err
 		}
 	}
-	if query := gq.withRolePanelEdits; query != nil {
-		if err := gq.loadRolePanelEdits(ctx, query, nodes,
+	if query := _q.withRolePanelEdits; query != nil {
+		if err := _q.loadRolePanelEdits(ctx, query, nodes,
 			func(n *Guild) { n.Edges.RolePanelEdits = []*RolePanelEdit{} },
 			func(n *Guild, e *RolePanelEdit) { n.Edges.RolePanelEdits = append(n.Edges.RolePanelEdits, e) }); err != nil {
 			return nil, err
 		}
 	}
-	if query := gq.withChinchiroSessions; query != nil {
-		if err := gq.loadChinchiroSessions(ctx, query, nodes,
+	if query := _q.withChinchiroSessions; query != nil {
+		if err := _q.loadChinchiroSessions(ctx, query, nodes,
 			func(n *Guild) { n.Edges.ChinchiroSessions = []*ChinchiroSession{} },
 			func(n *Guild, e *ChinchiroSession) { n.Edges.ChinchiroSessions = append(n.Edges.ChinchiroSessions, e) }); err != nil {
 			return nil, err
 		}
 	}
-	if query := gq.withThreads1000; query != nil {
-		if err := gq.loadThreads1000(ctx, query, nodes,
+	if query := _q.withThreads1000; query != nil {
+		if err := _q.loadThreads1000(ctx, query, nodes,
 			func(n *Guild) { n.Edges.Threads1000 = []*Thread1000{} },
 			func(n *Guild, e *Thread1000) { n.Edges.Threads1000 = append(n.Edges.Threads1000, e) }); err != nil {
 			return nil, err
 		}
 	}
-	if query := gq.withThread1000Channels; query != nil {
-		if err := gq.loadThread1000Channels(ctx, query, nodes,
+	if query := _q.withThread1000Channels; query != nil {
+		if err := _q.loadThread1000Channels(ctx, query, nodes,
 			func(n *Guild) { n.Edges.Thread1000Channels = []*Thread1000Channel{} },
 			func(n *Guild, e *Thread1000Channel) {
 				n.Edges.Thread1000Channels = append(n.Edges.Thread1000Channels, e)
@@ -811,7 +811,7 @@ func (gq *GuildQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Guild,
 	return nodes, nil
 }
 
-func (gq *GuildQuery) loadOwner(ctx context.Context, query *UserQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *User)) error {
+func (_q *GuildQuery) loadOwner(ctx context.Context, query *UserQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *User)) error {
 	ids := make([]snowflake.ID, 0, len(nodes))
 	nodeids := make(map[snowflake.ID][]*Guild)
 	for i := range nodes {
@@ -843,7 +843,7 @@ func (gq *GuildQuery) loadOwner(ctx context.Context, query *UserQuery, nodes []*
 	}
 	return nil
 }
-func (gq *GuildQuery) loadMembers(ctx context.Context, query *MemberQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *Member)) error {
+func (_q *GuildQuery) loadMembers(ctx context.Context, query *MemberQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *Member)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[snowflake.ID]*Guild)
 	for i := range nodes {
@@ -874,7 +874,7 @@ func (gq *GuildQuery) loadMembers(ctx context.Context, query *MemberQuery, nodes
 	}
 	return nil
 }
-func (gq *GuildQuery) loadMessagePins(ctx context.Context, query *MessagePinQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *MessagePin)) error {
+func (_q *GuildQuery) loadMessagePins(ctx context.Context, query *MessagePinQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *MessagePin)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[snowflake.ID]*Guild)
 	for i := range nodes {
@@ -905,7 +905,7 @@ func (gq *GuildQuery) loadMessagePins(ctx context.Context, query *MessagePinQuer
 	}
 	return nil
 }
-func (gq *GuildQuery) loadReminds(ctx context.Context, query *MessageRemindQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *MessageRemind)) error {
+func (_q *GuildQuery) loadReminds(ctx context.Context, query *MessageRemindQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *MessageRemind)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[snowflake.ID]*Guild)
 	for i := range nodes {
@@ -936,7 +936,7 @@ func (gq *GuildQuery) loadReminds(ctx context.Context, query *MessageRemindQuery
 	}
 	return nil
 }
-func (gq *GuildQuery) loadRolePanels(ctx context.Context, query *RolePanelQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *RolePanel)) error {
+func (_q *GuildQuery) loadRolePanels(ctx context.Context, query *RolePanelQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *RolePanel)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[snowflake.ID]*Guild)
 	for i := range nodes {
@@ -967,7 +967,7 @@ func (gq *GuildQuery) loadRolePanels(ctx context.Context, query *RolePanelQuery,
 	}
 	return nil
 }
-func (gq *GuildQuery) loadRolePanelPlacements(ctx context.Context, query *RolePanelPlacedQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *RolePanelPlaced)) error {
+func (_q *GuildQuery) loadRolePanelPlacements(ctx context.Context, query *RolePanelPlacedQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *RolePanelPlaced)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[snowflake.ID]*Guild)
 	for i := range nodes {
@@ -998,7 +998,7 @@ func (gq *GuildQuery) loadRolePanelPlacements(ctx context.Context, query *RolePa
 	}
 	return nil
 }
-func (gq *GuildQuery) loadRolePanelEdits(ctx context.Context, query *RolePanelEditQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *RolePanelEdit)) error {
+func (_q *GuildQuery) loadRolePanelEdits(ctx context.Context, query *RolePanelEditQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *RolePanelEdit)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[snowflake.ID]*Guild)
 	for i := range nodes {
@@ -1029,7 +1029,7 @@ func (gq *GuildQuery) loadRolePanelEdits(ctx context.Context, query *RolePanelEd
 	}
 	return nil
 }
-func (gq *GuildQuery) loadChinchiroSessions(ctx context.Context, query *ChinchiroSessionQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *ChinchiroSession)) error {
+func (_q *GuildQuery) loadChinchiroSessions(ctx context.Context, query *ChinchiroSessionQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *ChinchiroSession)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[snowflake.ID]*Guild)
 	for i := range nodes {
@@ -1060,7 +1060,7 @@ func (gq *GuildQuery) loadChinchiroSessions(ctx context.Context, query *Chinchir
 	}
 	return nil
 }
-func (gq *GuildQuery) loadThreads1000(ctx context.Context, query *Thread1000Query, nodes []*Guild, init func(*Guild), assign func(*Guild, *Thread1000)) error {
+func (_q *GuildQuery) loadThreads1000(ctx context.Context, query *Thread1000Query, nodes []*Guild, init func(*Guild), assign func(*Guild, *Thread1000)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[snowflake.ID]*Guild)
 	for i := range nodes {
@@ -1091,7 +1091,7 @@ func (gq *GuildQuery) loadThreads1000(ctx context.Context, query *Thread1000Quer
 	}
 	return nil
 }
-func (gq *GuildQuery) loadThread1000Channels(ctx context.Context, query *Thread1000ChannelQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *Thread1000Channel)) error {
+func (_q *GuildQuery) loadThread1000Channels(ctx context.Context, query *Thread1000ChannelQuery, nodes []*Guild, init func(*Guild), assign func(*Guild, *Thread1000Channel)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[snowflake.ID]*Guild)
 	for i := range nodes {
@@ -1123,24 +1123,24 @@ func (gq *GuildQuery) loadThread1000Channels(ctx context.Context, query *Thread1
 	return nil
 }
 
-func (gq *GuildQuery) sqlCount(ctx context.Context) (int, error) {
-	_spec := gq.querySpec()
-	_spec.Node.Columns = gq.ctx.Fields
-	if len(gq.ctx.Fields) > 0 {
-		_spec.Unique = gq.ctx.Unique != nil && *gq.ctx.Unique
+func (_q *GuildQuery) sqlCount(ctx context.Context) (int, error) {
+	_spec := _q.querySpec()
+	_spec.Node.Columns = _q.ctx.Fields
+	if len(_q.ctx.Fields) > 0 {
+		_spec.Unique = _q.ctx.Unique != nil && *_q.ctx.Unique
 	}
-	return sqlgraph.CountNodes(ctx, gq.driver, _spec)
+	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (gq *GuildQuery) querySpec() *sqlgraph.QuerySpec {
+func (_q *GuildQuery) querySpec() *sqlgraph.QuerySpec {
 	_spec := sqlgraph.NewQuerySpec(guild.Table, guild.Columns, sqlgraph.NewFieldSpec(guild.FieldID, field.TypeUint64))
-	_spec.From = gq.sql
-	if unique := gq.ctx.Unique; unique != nil {
+	_spec.From = _q.sql
+	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
-	} else if gq.path != nil {
+	} else if _q.path != nil {
 		_spec.Unique = true
 	}
-	if fields := gq.ctx.Fields; len(fields) > 0 {
+	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, guild.FieldID)
 		for i := range fields {
@@ -1149,20 +1149,20 @@ func (gq *GuildQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if ps := gq.predicates; len(ps) > 0 {
+	if ps := _q.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if limit := gq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := gq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
-	if ps := gq.order; len(ps) > 0 {
+	if ps := _q.order; len(ps) > 0 {
 		_spec.Order = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
@@ -1172,33 +1172,33 @@ func (gq *GuildQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (gq *GuildQuery) sqlQuery(ctx context.Context) *sql.Selector {
-	builder := sql.Dialect(gq.driver.Dialect())
+func (_q *GuildQuery) sqlQuery(ctx context.Context) *sql.Selector {
+	builder := sql.Dialect(_q.driver.Dialect())
 	t1 := builder.Table(guild.Table)
-	columns := gq.ctx.Fields
+	columns := _q.ctx.Fields
 	if len(columns) == 0 {
 		columns = guild.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
-	if gq.sql != nil {
-		selector = gq.sql
+	if _q.sql != nil {
+		selector = _q.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if gq.ctx.Unique != nil && *gq.ctx.Unique {
+	if _q.ctx.Unique != nil && *_q.ctx.Unique {
 		selector.Distinct()
 	}
-	for _, p := range gq.predicates {
+	for _, p := range _q.predicates {
 		p(selector)
 	}
-	for _, p := range gq.order {
+	for _, p := range _q.order {
 		p(selector)
 	}
-	if offset := gq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := gq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
@@ -1211,41 +1211,41 @@ type GuildGroupBy struct {
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (ggb *GuildGroupBy) Aggregate(fns ...AggregateFunc) *GuildGroupBy {
-	ggb.fns = append(ggb.fns, fns...)
-	return ggb
+func (_g *GuildGroupBy) Aggregate(fns ...AggregateFunc) *GuildGroupBy {
+	_g.fns = append(_g.fns, fns...)
+	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (ggb *GuildGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, ggb.build.ctx, ent.OpQueryGroupBy)
-	if err := ggb.build.prepareQuery(ctx); err != nil {
+func (_g *GuildGroupBy) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
+	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*GuildQuery, *GuildGroupBy](ctx, ggb.build, ggb, ggb.build.inters, v)
+	return scanWithInterceptors[*GuildQuery, *GuildGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (ggb *GuildGroupBy) sqlScan(ctx context.Context, root *GuildQuery, v any) error {
+func (_g *GuildGroupBy) sqlScan(ctx context.Context, root *GuildQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
-	aggregation := make([]string, 0, len(ggb.fns))
-	for _, fn := range ggb.fns {
+	aggregation := make([]string, 0, len(_g.fns))
+	for _, fn := range _g.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
 	if len(selector.SelectedColumns()) == 0 {
-		columns := make([]string, 0, len(*ggb.flds)+len(ggb.fns))
-		for _, f := range *ggb.flds {
+		columns := make([]string, 0, len(*_g.flds)+len(_g.fns))
+		for _, f := range *_g.flds {
 			columns = append(columns, selector.C(f))
 		}
 		columns = append(columns, aggregation...)
 		selector.Select(columns...)
 	}
-	selector.GroupBy(selector.Columns(*ggb.flds...)...)
+	selector.GroupBy(selector.Columns(*_g.flds...)...)
 	if err := selector.Err(); err != nil {
 		return err
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := ggb.build.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _g.build.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
@@ -1259,27 +1259,27 @@ type GuildSelect struct {
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (gs *GuildSelect) Aggregate(fns ...AggregateFunc) *GuildSelect {
-	gs.fns = append(gs.fns, fns...)
-	return gs
+func (_s *GuildSelect) Aggregate(fns ...AggregateFunc) *GuildSelect {
+	_s.fns = append(_s.fns, fns...)
+	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (gs *GuildSelect) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, gs.ctx, ent.OpQuerySelect)
-	if err := gs.prepareQuery(ctx); err != nil {
+func (_s *GuildSelect) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
+	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*GuildQuery, *GuildSelect](ctx, gs.GuildQuery, gs, gs.inters, v)
+	return scanWithInterceptors[*GuildQuery, *GuildSelect](ctx, _s.GuildQuery, _s, _s.inters, v)
 }
 
-func (gs *GuildSelect) sqlScan(ctx context.Context, root *GuildQuery, v any) error {
+func (_s *GuildSelect) sqlScan(ctx context.Context, root *GuildQuery, v any) error {
 	selector := root.sqlQuery(ctx)
-	aggregation := make([]string, 0, len(gs.fns))
-	for _, fn := range gs.fns {
+	aggregation := make([]string, 0, len(_s.fns))
+	for _, fn := range _s.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
-	switch n := len(*gs.selector.flds); {
+	switch n := len(*_s.selector.flds); {
 	case n == 0 && len(aggregation) > 0:
 		selector.Select(aggregation...)
 	case n != 0 && len(aggregation) > 0:
@@ -1287,7 +1287,7 @@ func (gs *GuildSelect) sqlScan(ctx context.Context, root *GuildQuery, v any) err
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := gs.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _s.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()

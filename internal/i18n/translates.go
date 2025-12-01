@@ -115,6 +115,7 @@ func LoadLocales(dir string) error {
 		if err != nil {
 			return err
 		}
+		//nolint:errcheck
 		defer f.Close()
 
 		ext := filepath.Ext(file.Name())

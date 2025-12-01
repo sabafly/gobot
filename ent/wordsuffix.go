@@ -93,7 +93,7 @@ func (*WordSuffix) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the WordSuffix fields.
-func (ws *WordSuffix) assignValues(columns []string, values []any) error {
+func (_m *WordSuffix) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -103,43 +103,43 @@ func (ws *WordSuffix) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				ws.ID = *value
+				_m.ID = *value
 			}
 		case wordsuffix.FieldSuffix:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field suffix", values[i])
 			} else if value.Valid {
-				ws.Suffix = value.String
+				_m.Suffix = value.String
 			}
 		case wordsuffix.FieldExpired:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field expired", values[i])
 			} else if value.Valid {
-				ws.Expired = new(time.Time)
-				*ws.Expired = value.Time
+				_m.Expired = new(time.Time)
+				*_m.Expired = value.Time
 			}
 		case wordsuffix.FieldGuildID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field guild_id", values[i])
 			} else if value.Valid {
-				ws.GuildID = new(snowflake.ID)
-				*ws.GuildID = snowflake.ID(value.Int64)
+				_m.GuildID = new(snowflake.ID)
+				*_m.GuildID = snowflake.ID(value.Int64)
 			}
 		case wordsuffix.FieldRule:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field rule", values[i])
 			} else if value.Valid {
-				ws.Rule = wordsuffix.Rule(value.String)
+				_m.Rule = wordsuffix.Rule(value.String)
 			}
 		case wordsuffix.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field user_word_suffix", values[i])
 			} else if value.Valid {
-				ws.user_word_suffix = new(snowflake.ID)
-				*ws.user_word_suffix = snowflake.ID(value.Int64)
+				_m.user_word_suffix = new(snowflake.ID)
+				*_m.user_word_suffix = snowflake.ID(value.Int64)
 			}
 		default:
-			ws.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -147,58 +147,58 @@ func (ws *WordSuffix) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the WordSuffix.
 // This includes values selected through modifiers, order, etc.
-func (ws *WordSuffix) Value(name string) (ent.Value, error) {
-	return ws.selectValues.Get(name)
+func (_m *WordSuffix) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // QueryGuild queries the "guild" edge of the WordSuffix entity.
-func (ws *WordSuffix) QueryGuild() *GuildQuery {
-	return NewWordSuffixClient(ws.config).QueryGuild(ws)
+func (_m *WordSuffix) QueryGuild() *GuildQuery {
+	return NewWordSuffixClient(_m.config).QueryGuild(_m)
 }
 
 // QueryOwner queries the "owner" edge of the WordSuffix entity.
-func (ws *WordSuffix) QueryOwner() *UserQuery {
-	return NewWordSuffixClient(ws.config).QueryOwner(ws)
+func (_m *WordSuffix) QueryOwner() *UserQuery {
+	return NewWordSuffixClient(_m.config).QueryOwner(_m)
 }
 
 // Update returns a builder for updating this WordSuffix.
 // Note that you need to call WordSuffix.Unwrap() before calling this method if this WordSuffix
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (ws *WordSuffix) Update() *WordSuffixUpdateOne {
-	return NewWordSuffixClient(ws.config).UpdateOne(ws)
+func (_m *WordSuffix) Update() *WordSuffixUpdateOne {
+	return NewWordSuffixClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the WordSuffix entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (ws *WordSuffix) Unwrap() *WordSuffix {
-	_tx, ok := ws.config.driver.(*txDriver)
+func (_m *WordSuffix) Unwrap() *WordSuffix {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: WordSuffix is not a transactional entity")
 	}
-	ws.config.driver = _tx.drv
-	return ws
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (ws *WordSuffix) String() string {
+func (_m *WordSuffix) String() string {
 	var builder strings.Builder
 	builder.WriteString("WordSuffix(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", ws.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("suffix=")
-	builder.WriteString(ws.Suffix)
+	builder.WriteString(_m.Suffix)
 	builder.WriteString(", ")
-	if v := ws.Expired; v != nil {
+	if v := _m.Expired; v != nil {
 		builder.WriteString("expired=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")
-	if v := ws.GuildID; v != nil {
+	if v := _m.GuildID; v != nil {
 		builder.WriteString("guild_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("rule=")
-	builder.WriteString(fmt.Sprintf("%v", ws.Rule))
+	builder.WriteString(fmt.Sprintf("%v", _m.Rule))
 	builder.WriteByte(')')
 	return builder.String()
 }

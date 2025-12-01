@@ -27,219 +27,219 @@ type RolePanelPlacedCreate struct {
 }
 
 // SetMessageID sets the "message_id" field.
-func (rppc *RolePanelPlacedCreate) SetMessageID(s snowflake.ID) *RolePanelPlacedCreate {
-	rppc.mutation.SetMessageID(s)
-	return rppc
+func (_c *RolePanelPlacedCreate) SetMessageID(v snowflake.ID) *RolePanelPlacedCreate {
+	_c.mutation.SetMessageID(v)
+	return _c
 }
 
 // SetNillableMessageID sets the "message_id" field if the given value is not nil.
-func (rppc *RolePanelPlacedCreate) SetNillableMessageID(s *snowflake.ID) *RolePanelPlacedCreate {
-	if s != nil {
-		rppc.SetMessageID(*s)
+func (_c *RolePanelPlacedCreate) SetNillableMessageID(v *snowflake.ID) *RolePanelPlacedCreate {
+	if v != nil {
+		_c.SetMessageID(*v)
 	}
-	return rppc
+	return _c
 }
 
 // SetChannelID sets the "channel_id" field.
-func (rppc *RolePanelPlacedCreate) SetChannelID(s snowflake.ID) *RolePanelPlacedCreate {
-	rppc.mutation.SetChannelID(s)
-	return rppc
+func (_c *RolePanelPlacedCreate) SetChannelID(v snowflake.ID) *RolePanelPlacedCreate {
+	_c.mutation.SetChannelID(v)
+	return _c
 }
 
 // SetType sets the "type" field.
-func (rppc *RolePanelPlacedCreate) SetType(r rolepanelplaced.Type) *RolePanelPlacedCreate {
-	rppc.mutation.SetType(r)
-	return rppc
+func (_c *RolePanelPlacedCreate) SetType(v rolepanelplaced.Type) *RolePanelPlacedCreate {
+	_c.mutation.SetType(v)
+	return _c
 }
 
 // SetNillableType sets the "type" field if the given value is not nil.
-func (rppc *RolePanelPlacedCreate) SetNillableType(r *rolepanelplaced.Type) *RolePanelPlacedCreate {
-	if r != nil {
-		rppc.SetType(*r)
+func (_c *RolePanelPlacedCreate) SetNillableType(v *rolepanelplaced.Type) *RolePanelPlacedCreate {
+	if v != nil {
+		_c.SetType(*v)
 	}
-	return rppc
+	return _c
 }
 
 // SetButtonType sets the "button_type" field.
-func (rppc *RolePanelPlacedCreate) SetButtonType(ds discord.ButtonStyle) *RolePanelPlacedCreate {
-	rppc.mutation.SetButtonType(ds)
-	return rppc
+func (_c *RolePanelPlacedCreate) SetButtonType(v discord.ButtonStyle) *RolePanelPlacedCreate {
+	_c.mutation.SetButtonType(v)
+	return _c
 }
 
 // SetNillableButtonType sets the "button_type" field if the given value is not nil.
-func (rppc *RolePanelPlacedCreate) SetNillableButtonType(ds *discord.ButtonStyle) *RolePanelPlacedCreate {
-	if ds != nil {
-		rppc.SetButtonType(*ds)
+func (_c *RolePanelPlacedCreate) SetNillableButtonType(v *discord.ButtonStyle) *RolePanelPlacedCreate {
+	if v != nil {
+		_c.SetButtonType(*v)
 	}
-	return rppc
+	return _c
 }
 
 // SetShowName sets the "show_name" field.
-func (rppc *RolePanelPlacedCreate) SetShowName(b bool) *RolePanelPlacedCreate {
-	rppc.mutation.SetShowName(b)
-	return rppc
+func (_c *RolePanelPlacedCreate) SetShowName(v bool) *RolePanelPlacedCreate {
+	_c.mutation.SetShowName(v)
+	return _c
 }
 
 // SetNillableShowName sets the "show_name" field if the given value is not nil.
-func (rppc *RolePanelPlacedCreate) SetNillableShowName(b *bool) *RolePanelPlacedCreate {
-	if b != nil {
-		rppc.SetShowName(*b)
+func (_c *RolePanelPlacedCreate) SetNillableShowName(v *bool) *RolePanelPlacedCreate {
+	if v != nil {
+		_c.SetShowName(*v)
 	}
-	return rppc
+	return _c
 }
 
 // SetFoldingSelectMenu sets the "folding_select_menu" field.
-func (rppc *RolePanelPlacedCreate) SetFoldingSelectMenu(b bool) *RolePanelPlacedCreate {
-	rppc.mutation.SetFoldingSelectMenu(b)
-	return rppc
+func (_c *RolePanelPlacedCreate) SetFoldingSelectMenu(v bool) *RolePanelPlacedCreate {
+	_c.mutation.SetFoldingSelectMenu(v)
+	return _c
 }
 
 // SetNillableFoldingSelectMenu sets the "folding_select_menu" field if the given value is not nil.
-func (rppc *RolePanelPlacedCreate) SetNillableFoldingSelectMenu(b *bool) *RolePanelPlacedCreate {
-	if b != nil {
-		rppc.SetFoldingSelectMenu(*b)
+func (_c *RolePanelPlacedCreate) SetNillableFoldingSelectMenu(v *bool) *RolePanelPlacedCreate {
+	if v != nil {
+		_c.SetFoldingSelectMenu(*v)
 	}
-	return rppc
+	return _c
 }
 
 // SetHideNotice sets the "hide_notice" field.
-func (rppc *RolePanelPlacedCreate) SetHideNotice(b bool) *RolePanelPlacedCreate {
-	rppc.mutation.SetHideNotice(b)
-	return rppc
+func (_c *RolePanelPlacedCreate) SetHideNotice(v bool) *RolePanelPlacedCreate {
+	_c.mutation.SetHideNotice(v)
+	return _c
 }
 
 // SetNillableHideNotice sets the "hide_notice" field if the given value is not nil.
-func (rppc *RolePanelPlacedCreate) SetNillableHideNotice(b *bool) *RolePanelPlacedCreate {
-	if b != nil {
-		rppc.SetHideNotice(*b)
+func (_c *RolePanelPlacedCreate) SetNillableHideNotice(v *bool) *RolePanelPlacedCreate {
+	if v != nil {
+		_c.SetHideNotice(*v)
 	}
-	return rppc
+	return _c
 }
 
 // SetUseDisplayName sets the "use_display_name" field.
-func (rppc *RolePanelPlacedCreate) SetUseDisplayName(b bool) *RolePanelPlacedCreate {
-	rppc.mutation.SetUseDisplayName(b)
-	return rppc
+func (_c *RolePanelPlacedCreate) SetUseDisplayName(v bool) *RolePanelPlacedCreate {
+	_c.mutation.SetUseDisplayName(v)
+	return _c
 }
 
 // SetNillableUseDisplayName sets the "use_display_name" field if the given value is not nil.
-func (rppc *RolePanelPlacedCreate) SetNillableUseDisplayName(b *bool) *RolePanelPlacedCreate {
-	if b != nil {
-		rppc.SetUseDisplayName(*b)
+func (_c *RolePanelPlacedCreate) SetNillableUseDisplayName(v *bool) *RolePanelPlacedCreate {
+	if v != nil {
+		_c.SetUseDisplayName(*v)
 	}
-	return rppc
+	return _c
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (rppc *RolePanelPlacedCreate) SetCreatedAt(t time.Time) *RolePanelPlacedCreate {
-	rppc.mutation.SetCreatedAt(t)
-	return rppc
+func (_c *RolePanelPlacedCreate) SetCreatedAt(v time.Time) *RolePanelPlacedCreate {
+	_c.mutation.SetCreatedAt(v)
+	return _c
 }
 
 // SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (rppc *RolePanelPlacedCreate) SetNillableCreatedAt(t *time.Time) *RolePanelPlacedCreate {
-	if t != nil {
-		rppc.SetCreatedAt(*t)
+func (_c *RolePanelPlacedCreate) SetNillableCreatedAt(v *time.Time) *RolePanelPlacedCreate {
+	if v != nil {
+		_c.SetCreatedAt(*v)
 	}
-	return rppc
+	return _c
 }
 
 // SetUses sets the "uses" field.
-func (rppc *RolePanelPlacedCreate) SetUses(i int) *RolePanelPlacedCreate {
-	rppc.mutation.SetUses(i)
-	return rppc
+func (_c *RolePanelPlacedCreate) SetUses(v int) *RolePanelPlacedCreate {
+	_c.mutation.SetUses(v)
+	return _c
 }
 
 // SetNillableUses sets the "uses" field if the given value is not nil.
-func (rppc *RolePanelPlacedCreate) SetNillableUses(i *int) *RolePanelPlacedCreate {
-	if i != nil {
-		rppc.SetUses(*i)
+func (_c *RolePanelPlacedCreate) SetNillableUses(v *int) *RolePanelPlacedCreate {
+	if v != nil {
+		_c.SetUses(*v)
 	}
-	return rppc
+	return _c
 }
 
 // SetName sets the "name" field.
-func (rppc *RolePanelPlacedCreate) SetName(s string) *RolePanelPlacedCreate {
-	rppc.mutation.SetName(s)
-	return rppc
+func (_c *RolePanelPlacedCreate) SetName(v string) *RolePanelPlacedCreate {
+	_c.mutation.SetName(v)
+	return _c
 }
 
 // SetDescription sets the "description" field.
-func (rppc *RolePanelPlacedCreate) SetDescription(s string) *RolePanelPlacedCreate {
-	rppc.mutation.SetDescription(s)
-	return rppc
+func (_c *RolePanelPlacedCreate) SetDescription(v string) *RolePanelPlacedCreate {
+	_c.mutation.SetDescription(v)
+	return _c
 }
 
 // SetRoles sets the "roles" field.
-func (rppc *RolePanelPlacedCreate) SetRoles(s []schema.Role) *RolePanelPlacedCreate {
-	rppc.mutation.SetRoles(s)
-	return rppc
+func (_c *RolePanelPlacedCreate) SetRoles(v []schema.Role) *RolePanelPlacedCreate {
+	_c.mutation.SetRoles(v)
+	return _c
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (rppc *RolePanelPlacedCreate) SetUpdatedAt(t time.Time) *RolePanelPlacedCreate {
-	rppc.mutation.SetUpdatedAt(t)
-	return rppc
+func (_c *RolePanelPlacedCreate) SetUpdatedAt(v time.Time) *RolePanelPlacedCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
 }
 
 // SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (rppc *RolePanelPlacedCreate) SetNillableUpdatedAt(t *time.Time) *RolePanelPlacedCreate {
-	if t != nil {
-		rppc.SetUpdatedAt(*t)
+func (_c *RolePanelPlacedCreate) SetNillableUpdatedAt(v *time.Time) *RolePanelPlacedCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
 	}
-	return rppc
+	return _c
 }
 
 // SetID sets the "id" field.
-func (rppc *RolePanelPlacedCreate) SetID(u uuid.UUID) *RolePanelPlacedCreate {
-	rppc.mutation.SetID(u)
-	return rppc
+func (_c *RolePanelPlacedCreate) SetID(v uuid.UUID) *RolePanelPlacedCreate {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (rppc *RolePanelPlacedCreate) SetNillableID(u *uuid.UUID) *RolePanelPlacedCreate {
-	if u != nil {
-		rppc.SetID(*u)
+func (_c *RolePanelPlacedCreate) SetNillableID(v *uuid.UUID) *RolePanelPlacedCreate {
+	if v != nil {
+		_c.SetID(*v)
 	}
-	return rppc
+	return _c
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (rppc *RolePanelPlacedCreate) SetGuildID(id snowflake.ID) *RolePanelPlacedCreate {
-	rppc.mutation.SetGuildID(id)
-	return rppc
+func (_c *RolePanelPlacedCreate) SetGuildID(id snowflake.ID) *RolePanelPlacedCreate {
+	_c.mutation.SetGuildID(id)
+	return _c
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (rppc *RolePanelPlacedCreate) SetGuild(g *Guild) *RolePanelPlacedCreate {
-	return rppc.SetGuildID(g.ID)
+func (_c *RolePanelPlacedCreate) SetGuild(v *Guild) *RolePanelPlacedCreate {
+	return _c.SetGuildID(v.ID)
 }
 
 // SetRolePanelID sets the "role_panel" edge to the RolePanel entity by ID.
-func (rppc *RolePanelPlacedCreate) SetRolePanelID(id uuid.UUID) *RolePanelPlacedCreate {
-	rppc.mutation.SetRolePanelID(id)
-	return rppc
+func (_c *RolePanelPlacedCreate) SetRolePanelID(id uuid.UUID) *RolePanelPlacedCreate {
+	_c.mutation.SetRolePanelID(id)
+	return _c
 }
 
 // SetRolePanel sets the "role_panel" edge to the RolePanel entity.
-func (rppc *RolePanelPlacedCreate) SetRolePanel(r *RolePanel) *RolePanelPlacedCreate {
-	return rppc.SetRolePanelID(r.ID)
+func (_c *RolePanelPlacedCreate) SetRolePanel(v *RolePanel) *RolePanelPlacedCreate {
+	return _c.SetRolePanelID(v.ID)
 }
 
 // Mutation returns the RolePanelPlacedMutation object of the builder.
-func (rppc *RolePanelPlacedCreate) Mutation() *RolePanelPlacedMutation {
-	return rppc.mutation
+func (_c *RolePanelPlacedCreate) Mutation() *RolePanelPlacedMutation {
+	return _c.mutation
 }
 
 // Save creates the RolePanelPlaced in the database.
-func (rppc *RolePanelPlacedCreate) Save(ctx context.Context) (*RolePanelPlaced, error) {
-	rppc.defaults()
-	return withHooks(ctx, rppc.sqlSave, rppc.mutation, rppc.hooks)
+func (_c *RolePanelPlacedCreate) Save(ctx context.Context) (*RolePanelPlaced, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (rppc *RolePanelPlacedCreate) SaveX(ctx context.Context) *RolePanelPlaced {
-	v, err := rppc.Save(ctx)
+func (_c *RolePanelPlacedCreate) SaveX(ctx context.Context) *RolePanelPlaced {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -247,116 +247,116 @@ func (rppc *RolePanelPlacedCreate) SaveX(ctx context.Context) *RolePanelPlaced {
 }
 
 // Exec executes the query.
-func (rppc *RolePanelPlacedCreate) Exec(ctx context.Context) error {
-	_, err := rppc.Save(ctx)
+func (_c *RolePanelPlacedCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (rppc *RolePanelPlacedCreate) ExecX(ctx context.Context) {
-	if err := rppc.Exec(ctx); err != nil {
+func (_c *RolePanelPlacedCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (rppc *RolePanelPlacedCreate) defaults() {
-	if _, ok := rppc.mutation.ButtonType(); !ok {
+func (_c *RolePanelPlacedCreate) defaults() {
+	if _, ok := _c.mutation.ButtonType(); !ok {
 		v := rolepanelplaced.DefaultButtonType
-		rppc.mutation.SetButtonType(v)
+		_c.mutation.SetButtonType(v)
 	}
-	if _, ok := rppc.mutation.ShowName(); !ok {
+	if _, ok := _c.mutation.ShowName(); !ok {
 		v := rolepanelplaced.DefaultShowName
-		rppc.mutation.SetShowName(v)
+		_c.mutation.SetShowName(v)
 	}
-	if _, ok := rppc.mutation.FoldingSelectMenu(); !ok {
+	if _, ok := _c.mutation.FoldingSelectMenu(); !ok {
 		v := rolepanelplaced.DefaultFoldingSelectMenu
-		rppc.mutation.SetFoldingSelectMenu(v)
+		_c.mutation.SetFoldingSelectMenu(v)
 	}
-	if _, ok := rppc.mutation.HideNotice(); !ok {
+	if _, ok := _c.mutation.HideNotice(); !ok {
 		v := rolepanelplaced.DefaultHideNotice
-		rppc.mutation.SetHideNotice(v)
+		_c.mutation.SetHideNotice(v)
 	}
-	if _, ok := rppc.mutation.UseDisplayName(); !ok {
+	if _, ok := _c.mutation.UseDisplayName(); !ok {
 		v := rolepanelplaced.DefaultUseDisplayName
-		rppc.mutation.SetUseDisplayName(v)
+		_c.mutation.SetUseDisplayName(v)
 	}
-	if _, ok := rppc.mutation.CreatedAt(); !ok {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
 		v := rolepanelplaced.DefaultCreatedAt()
-		rppc.mutation.SetCreatedAt(v)
+		_c.mutation.SetCreatedAt(v)
 	}
-	if _, ok := rppc.mutation.Uses(); !ok {
+	if _, ok := _c.mutation.Uses(); !ok {
 		v := rolepanelplaced.DefaultUses
-		rppc.mutation.SetUses(v)
+		_c.mutation.SetUses(v)
 	}
-	if _, ok := rppc.mutation.ID(); !ok {
+	if _, ok := _c.mutation.ID(); !ok {
 		v := rolepanelplaced.DefaultID()
-		rppc.mutation.SetID(v)
+		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (rppc *RolePanelPlacedCreate) check() error {
-	if _, ok := rppc.mutation.ChannelID(); !ok {
+func (_c *RolePanelPlacedCreate) check() error {
+	if _, ok := _c.mutation.ChannelID(); !ok {
 		return &ValidationError{Name: "channel_id", err: errors.New(`ent: missing required field "RolePanelPlaced.channel_id"`)}
 	}
-	if v, ok := rppc.mutation.GetType(); ok {
+	if v, ok := _c.mutation.GetType(); ok {
 		if err := rolepanelplaced.TypeValidator(v); err != nil {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "RolePanelPlaced.type": %w`, err)}
 		}
 	}
-	if _, ok := rppc.mutation.ButtonType(); !ok {
+	if _, ok := _c.mutation.ButtonType(); !ok {
 		return &ValidationError{Name: "button_type", err: errors.New(`ent: missing required field "RolePanelPlaced.button_type"`)}
 	}
-	if v, ok := rppc.mutation.ButtonType(); ok {
+	if v, ok := _c.mutation.ButtonType(); ok {
 		if err := rolepanelplaced.ButtonTypeValidator(int(v)); err != nil {
 			return &ValidationError{Name: "button_type", err: fmt.Errorf(`ent: validator failed for field "RolePanelPlaced.button_type": %w`, err)}
 		}
 	}
-	if _, ok := rppc.mutation.ShowName(); !ok {
+	if _, ok := _c.mutation.ShowName(); !ok {
 		return &ValidationError{Name: "show_name", err: errors.New(`ent: missing required field "RolePanelPlaced.show_name"`)}
 	}
-	if _, ok := rppc.mutation.FoldingSelectMenu(); !ok {
+	if _, ok := _c.mutation.FoldingSelectMenu(); !ok {
 		return &ValidationError{Name: "folding_select_menu", err: errors.New(`ent: missing required field "RolePanelPlaced.folding_select_menu"`)}
 	}
-	if _, ok := rppc.mutation.HideNotice(); !ok {
+	if _, ok := _c.mutation.HideNotice(); !ok {
 		return &ValidationError{Name: "hide_notice", err: errors.New(`ent: missing required field "RolePanelPlaced.hide_notice"`)}
 	}
-	if _, ok := rppc.mutation.UseDisplayName(); !ok {
+	if _, ok := _c.mutation.UseDisplayName(); !ok {
 		return &ValidationError{Name: "use_display_name", err: errors.New(`ent: missing required field "RolePanelPlaced.use_display_name"`)}
 	}
-	if _, ok := rppc.mutation.CreatedAt(); !ok {
+	if _, ok := _c.mutation.CreatedAt(); !ok {
 		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "RolePanelPlaced.created_at"`)}
 	}
-	if _, ok := rppc.mutation.Uses(); !ok {
+	if _, ok := _c.mutation.Uses(); !ok {
 		return &ValidationError{Name: "uses", err: errors.New(`ent: missing required field "RolePanelPlaced.uses"`)}
 	}
-	if _, ok := rppc.mutation.Name(); !ok {
+	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "RolePanelPlaced.name"`)}
 	}
-	if v, ok := rppc.mutation.Name(); ok {
+	if v, ok := _c.mutation.Name(); ok {
 		if err := rolepanelplaced.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanelPlaced.name": %w`, err)}
 		}
 	}
-	if _, ok := rppc.mutation.Description(); !ok {
+	if _, ok := _c.mutation.Description(); !ok {
 		return &ValidationError{Name: "description", err: errors.New(`ent: missing required field "RolePanelPlaced.description"`)}
 	}
-	if len(rppc.mutation.GuildIDs()) == 0 {
+	if len(_c.mutation.GuildIDs()) == 0 {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "RolePanelPlaced.guild"`)}
 	}
-	if len(rppc.mutation.RolePanelIDs()) == 0 {
+	if len(_c.mutation.RolePanelIDs()) == 0 {
 		return &ValidationError{Name: "role_panel", err: errors.New(`ent: missing required edge "RolePanelPlaced.role_panel"`)}
 	}
 	return nil
 }
 
-func (rppc *RolePanelPlacedCreate) sqlSave(ctx context.Context) (*RolePanelPlaced, error) {
-	if err := rppc.check(); err != nil {
+func (_c *RolePanelPlacedCreate) sqlSave(ctx context.Context) (*RolePanelPlaced, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := rppc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, rppc.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -369,77 +369,77 @@ func (rppc *RolePanelPlacedCreate) sqlSave(ctx context.Context) (*RolePanelPlace
 			return nil, err
 		}
 	}
-	rppc.mutation.id = &_node.ID
-	rppc.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (rppc *RolePanelPlacedCreate) createSpec() (*RolePanelPlaced, *sqlgraph.CreateSpec) {
+func (_c *RolePanelPlacedCreate) createSpec() (*RolePanelPlaced, *sqlgraph.CreateSpec) {
 	var (
-		_node = &RolePanelPlaced{config: rppc.config}
+		_node = &RolePanelPlaced{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(rolepanelplaced.Table, sqlgraph.NewFieldSpec(rolepanelplaced.FieldID, field.TypeUUID))
 	)
-	if id, ok := rppc.mutation.ID(); ok {
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := rppc.mutation.MessageID(); ok {
+	if value, ok := _c.mutation.MessageID(); ok {
 		_spec.SetField(rolepanelplaced.FieldMessageID, field.TypeUint64, value)
 		_node.MessageID = &value
 	}
-	if value, ok := rppc.mutation.ChannelID(); ok {
+	if value, ok := _c.mutation.ChannelID(); ok {
 		_spec.SetField(rolepanelplaced.FieldChannelID, field.TypeUint64, value)
 		_node.ChannelID = value
 	}
-	if value, ok := rppc.mutation.GetType(); ok {
+	if value, ok := _c.mutation.GetType(); ok {
 		_spec.SetField(rolepanelplaced.FieldType, field.TypeEnum, value)
 		_node.Type = value
 	}
-	if value, ok := rppc.mutation.ButtonType(); ok {
+	if value, ok := _c.mutation.ButtonType(); ok {
 		_spec.SetField(rolepanelplaced.FieldButtonType, field.TypeInt, value)
 		_node.ButtonType = value
 	}
-	if value, ok := rppc.mutation.ShowName(); ok {
+	if value, ok := _c.mutation.ShowName(); ok {
 		_spec.SetField(rolepanelplaced.FieldShowName, field.TypeBool, value)
 		_node.ShowName = value
 	}
-	if value, ok := rppc.mutation.FoldingSelectMenu(); ok {
+	if value, ok := _c.mutation.FoldingSelectMenu(); ok {
 		_spec.SetField(rolepanelplaced.FieldFoldingSelectMenu, field.TypeBool, value)
 		_node.FoldingSelectMenu = value
 	}
-	if value, ok := rppc.mutation.HideNotice(); ok {
+	if value, ok := _c.mutation.HideNotice(); ok {
 		_spec.SetField(rolepanelplaced.FieldHideNotice, field.TypeBool, value)
 		_node.HideNotice = value
 	}
-	if value, ok := rppc.mutation.UseDisplayName(); ok {
+	if value, ok := _c.mutation.UseDisplayName(); ok {
 		_spec.SetField(rolepanelplaced.FieldUseDisplayName, field.TypeBool, value)
 		_node.UseDisplayName = value
 	}
-	if value, ok := rppc.mutation.CreatedAt(); ok {
+	if value, ok := _c.mutation.CreatedAt(); ok {
 		_spec.SetField(rolepanelplaced.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
-	if value, ok := rppc.mutation.Uses(); ok {
+	if value, ok := _c.mutation.Uses(); ok {
 		_spec.SetField(rolepanelplaced.FieldUses, field.TypeInt, value)
 		_node.Uses = value
 	}
-	if value, ok := rppc.mutation.Name(); ok {
+	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(rolepanelplaced.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
-	if value, ok := rppc.mutation.Description(); ok {
+	if value, ok := _c.mutation.Description(); ok {
 		_spec.SetField(rolepanelplaced.FieldDescription, field.TypeString, value)
 		_node.Description = value
 	}
-	if value, ok := rppc.mutation.Roles(); ok {
+	if value, ok := _c.mutation.Roles(); ok {
 		_spec.SetField(rolepanelplaced.FieldRoles, field.TypeJSON, value)
 		_node.Roles = value
 	}
-	if value, ok := rppc.mutation.UpdatedAt(); ok {
+	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(rolepanelplaced.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
-	if nodes := rppc.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -456,7 +456,7 @@ func (rppc *RolePanelPlacedCreate) createSpec() (*RolePanelPlaced, *sqlgraph.Cre
 		_node.guild_role_panel_placements = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := rppc.mutation.RolePanelIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.RolePanelIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -484,16 +484,16 @@ type RolePanelPlacedCreateBulk struct {
 }
 
 // Save creates the RolePanelPlaced entities in the database.
-func (rppcb *RolePanelPlacedCreateBulk) Save(ctx context.Context) ([]*RolePanelPlaced, error) {
-	if rppcb.err != nil {
-		return nil, rppcb.err
+func (_c *RolePanelPlacedCreateBulk) Save(ctx context.Context) ([]*RolePanelPlaced, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(rppcb.builders))
-	nodes := make([]*RolePanelPlaced, len(rppcb.builders))
-	mutators := make([]Mutator, len(rppcb.builders))
-	for i := range rppcb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*RolePanelPlaced, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := rppcb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*RolePanelPlacedMutation)
@@ -507,11 +507,11 @@ func (rppcb *RolePanelPlacedCreateBulk) Save(ctx context.Context) ([]*RolePanelP
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, rppcb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, rppcb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -531,7 +531,7 @@ func (rppcb *RolePanelPlacedCreateBulk) Save(ctx context.Context) ([]*RolePanelP
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, rppcb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -539,8 +539,8 @@ func (rppcb *RolePanelPlacedCreateBulk) Save(ctx context.Context) ([]*RolePanelP
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (rppcb *RolePanelPlacedCreateBulk) SaveX(ctx context.Context) []*RolePanelPlaced {
-	v, err := rppcb.Save(ctx)
+func (_c *RolePanelPlacedCreateBulk) SaveX(ctx context.Context) []*RolePanelPlaced {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -548,14 +548,14 @@ func (rppcb *RolePanelPlacedCreateBulk) SaveX(ctx context.Context) []*RolePanelP
 }
 
 // Exec executes the query.
-func (rppcb *RolePanelPlacedCreateBulk) Exec(ctx context.Context) error {
-	_, err := rppcb.Save(ctx)
+func (_c *RolePanelPlacedCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (rppcb *RolePanelPlacedCreateBulk) ExecX(ctx context.Context) {
-	if err := rppcb.Exec(ctx); err != nil {
+func (_c *RolePanelPlacedCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

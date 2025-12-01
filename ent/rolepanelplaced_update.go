@@ -30,290 +30,290 @@ type RolePanelPlacedUpdate struct {
 }
 
 // Where appends a list predicates to the RolePanelPlacedUpdate builder.
-func (rppu *RolePanelPlacedUpdate) Where(ps ...predicate.RolePanelPlaced) *RolePanelPlacedUpdate {
-	rppu.mutation.Where(ps...)
-	return rppu
+func (_u *RolePanelPlacedUpdate) Where(ps ...predicate.RolePanelPlaced) *RolePanelPlacedUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetMessageID sets the "message_id" field.
-func (rppu *RolePanelPlacedUpdate) SetMessageID(s snowflake.ID) *RolePanelPlacedUpdate {
-	rppu.mutation.ResetMessageID()
-	rppu.mutation.SetMessageID(s)
-	return rppu
+func (_u *RolePanelPlacedUpdate) SetMessageID(v snowflake.ID) *RolePanelPlacedUpdate {
+	_u.mutation.ResetMessageID()
+	_u.mutation.SetMessageID(v)
+	return _u
 }
 
 // SetNillableMessageID sets the "message_id" field if the given value is not nil.
-func (rppu *RolePanelPlacedUpdate) SetNillableMessageID(s *snowflake.ID) *RolePanelPlacedUpdate {
-	if s != nil {
-		rppu.SetMessageID(*s)
+func (_u *RolePanelPlacedUpdate) SetNillableMessageID(v *snowflake.ID) *RolePanelPlacedUpdate {
+	if v != nil {
+		_u.SetMessageID(*v)
 	}
-	return rppu
+	return _u
 }
 
-// AddMessageID adds s to the "message_id" field.
-func (rppu *RolePanelPlacedUpdate) AddMessageID(s snowflake.ID) *RolePanelPlacedUpdate {
-	rppu.mutation.AddMessageID(s)
-	return rppu
+// AddMessageID adds value to the "message_id" field.
+func (_u *RolePanelPlacedUpdate) AddMessageID(v snowflake.ID) *RolePanelPlacedUpdate {
+	_u.mutation.AddMessageID(v)
+	return _u
 }
 
 // ClearMessageID clears the value of the "message_id" field.
-func (rppu *RolePanelPlacedUpdate) ClearMessageID() *RolePanelPlacedUpdate {
-	rppu.mutation.ClearMessageID()
-	return rppu
+func (_u *RolePanelPlacedUpdate) ClearMessageID() *RolePanelPlacedUpdate {
+	_u.mutation.ClearMessageID()
+	return _u
 }
 
 // SetChannelID sets the "channel_id" field.
-func (rppu *RolePanelPlacedUpdate) SetChannelID(s snowflake.ID) *RolePanelPlacedUpdate {
-	rppu.mutation.ResetChannelID()
-	rppu.mutation.SetChannelID(s)
-	return rppu
+func (_u *RolePanelPlacedUpdate) SetChannelID(v snowflake.ID) *RolePanelPlacedUpdate {
+	_u.mutation.ResetChannelID()
+	_u.mutation.SetChannelID(v)
+	return _u
 }
 
 // SetNillableChannelID sets the "channel_id" field if the given value is not nil.
-func (rppu *RolePanelPlacedUpdate) SetNillableChannelID(s *snowflake.ID) *RolePanelPlacedUpdate {
-	if s != nil {
-		rppu.SetChannelID(*s)
+func (_u *RolePanelPlacedUpdate) SetNillableChannelID(v *snowflake.ID) *RolePanelPlacedUpdate {
+	if v != nil {
+		_u.SetChannelID(*v)
 	}
-	return rppu
+	return _u
 }
 
-// AddChannelID adds s to the "channel_id" field.
-func (rppu *RolePanelPlacedUpdate) AddChannelID(s snowflake.ID) *RolePanelPlacedUpdate {
-	rppu.mutation.AddChannelID(s)
-	return rppu
+// AddChannelID adds value to the "channel_id" field.
+func (_u *RolePanelPlacedUpdate) AddChannelID(v snowflake.ID) *RolePanelPlacedUpdate {
+	_u.mutation.AddChannelID(v)
+	return _u
 }
 
 // SetType sets the "type" field.
-func (rppu *RolePanelPlacedUpdate) SetType(r rolepanelplaced.Type) *RolePanelPlacedUpdate {
-	rppu.mutation.SetType(r)
-	return rppu
+func (_u *RolePanelPlacedUpdate) SetType(v rolepanelplaced.Type) *RolePanelPlacedUpdate {
+	_u.mutation.SetType(v)
+	return _u
 }
 
 // SetNillableType sets the "type" field if the given value is not nil.
-func (rppu *RolePanelPlacedUpdate) SetNillableType(r *rolepanelplaced.Type) *RolePanelPlacedUpdate {
-	if r != nil {
-		rppu.SetType(*r)
+func (_u *RolePanelPlacedUpdate) SetNillableType(v *rolepanelplaced.Type) *RolePanelPlacedUpdate {
+	if v != nil {
+		_u.SetType(*v)
 	}
-	return rppu
+	return _u
 }
 
 // ClearType clears the value of the "type" field.
-func (rppu *RolePanelPlacedUpdate) ClearType() *RolePanelPlacedUpdate {
-	rppu.mutation.ClearType()
-	return rppu
+func (_u *RolePanelPlacedUpdate) ClearType() *RolePanelPlacedUpdate {
+	_u.mutation.ClearType()
+	return _u
 }
 
 // SetButtonType sets the "button_type" field.
-func (rppu *RolePanelPlacedUpdate) SetButtonType(ds discord.ButtonStyle) *RolePanelPlacedUpdate {
-	rppu.mutation.ResetButtonType()
-	rppu.mutation.SetButtonType(ds)
-	return rppu
+func (_u *RolePanelPlacedUpdate) SetButtonType(v discord.ButtonStyle) *RolePanelPlacedUpdate {
+	_u.mutation.ResetButtonType()
+	_u.mutation.SetButtonType(v)
+	return _u
 }
 
 // SetNillableButtonType sets the "button_type" field if the given value is not nil.
-func (rppu *RolePanelPlacedUpdate) SetNillableButtonType(ds *discord.ButtonStyle) *RolePanelPlacedUpdate {
-	if ds != nil {
-		rppu.SetButtonType(*ds)
+func (_u *RolePanelPlacedUpdate) SetNillableButtonType(v *discord.ButtonStyle) *RolePanelPlacedUpdate {
+	if v != nil {
+		_u.SetButtonType(*v)
 	}
-	return rppu
+	return _u
 }
 
-// AddButtonType adds ds to the "button_type" field.
-func (rppu *RolePanelPlacedUpdate) AddButtonType(ds discord.ButtonStyle) *RolePanelPlacedUpdate {
-	rppu.mutation.AddButtonType(ds)
-	return rppu
+// AddButtonType adds value to the "button_type" field.
+func (_u *RolePanelPlacedUpdate) AddButtonType(v discord.ButtonStyle) *RolePanelPlacedUpdate {
+	_u.mutation.AddButtonType(v)
+	return _u
 }
 
 // SetShowName sets the "show_name" field.
-func (rppu *RolePanelPlacedUpdate) SetShowName(b bool) *RolePanelPlacedUpdate {
-	rppu.mutation.SetShowName(b)
-	return rppu
+func (_u *RolePanelPlacedUpdate) SetShowName(v bool) *RolePanelPlacedUpdate {
+	_u.mutation.SetShowName(v)
+	return _u
 }
 
 // SetNillableShowName sets the "show_name" field if the given value is not nil.
-func (rppu *RolePanelPlacedUpdate) SetNillableShowName(b *bool) *RolePanelPlacedUpdate {
-	if b != nil {
-		rppu.SetShowName(*b)
+func (_u *RolePanelPlacedUpdate) SetNillableShowName(v *bool) *RolePanelPlacedUpdate {
+	if v != nil {
+		_u.SetShowName(*v)
 	}
-	return rppu
+	return _u
 }
 
 // SetFoldingSelectMenu sets the "folding_select_menu" field.
-func (rppu *RolePanelPlacedUpdate) SetFoldingSelectMenu(b bool) *RolePanelPlacedUpdate {
-	rppu.mutation.SetFoldingSelectMenu(b)
-	return rppu
+func (_u *RolePanelPlacedUpdate) SetFoldingSelectMenu(v bool) *RolePanelPlacedUpdate {
+	_u.mutation.SetFoldingSelectMenu(v)
+	return _u
 }
 
 // SetNillableFoldingSelectMenu sets the "folding_select_menu" field if the given value is not nil.
-func (rppu *RolePanelPlacedUpdate) SetNillableFoldingSelectMenu(b *bool) *RolePanelPlacedUpdate {
-	if b != nil {
-		rppu.SetFoldingSelectMenu(*b)
+func (_u *RolePanelPlacedUpdate) SetNillableFoldingSelectMenu(v *bool) *RolePanelPlacedUpdate {
+	if v != nil {
+		_u.SetFoldingSelectMenu(*v)
 	}
-	return rppu
+	return _u
 }
 
 // SetHideNotice sets the "hide_notice" field.
-func (rppu *RolePanelPlacedUpdate) SetHideNotice(b bool) *RolePanelPlacedUpdate {
-	rppu.mutation.SetHideNotice(b)
-	return rppu
+func (_u *RolePanelPlacedUpdate) SetHideNotice(v bool) *RolePanelPlacedUpdate {
+	_u.mutation.SetHideNotice(v)
+	return _u
 }
 
 // SetNillableHideNotice sets the "hide_notice" field if the given value is not nil.
-func (rppu *RolePanelPlacedUpdate) SetNillableHideNotice(b *bool) *RolePanelPlacedUpdate {
-	if b != nil {
-		rppu.SetHideNotice(*b)
+func (_u *RolePanelPlacedUpdate) SetNillableHideNotice(v *bool) *RolePanelPlacedUpdate {
+	if v != nil {
+		_u.SetHideNotice(*v)
 	}
-	return rppu
+	return _u
 }
 
 // SetUseDisplayName sets the "use_display_name" field.
-func (rppu *RolePanelPlacedUpdate) SetUseDisplayName(b bool) *RolePanelPlacedUpdate {
-	rppu.mutation.SetUseDisplayName(b)
-	return rppu
+func (_u *RolePanelPlacedUpdate) SetUseDisplayName(v bool) *RolePanelPlacedUpdate {
+	_u.mutation.SetUseDisplayName(v)
+	return _u
 }
 
 // SetNillableUseDisplayName sets the "use_display_name" field if the given value is not nil.
-func (rppu *RolePanelPlacedUpdate) SetNillableUseDisplayName(b *bool) *RolePanelPlacedUpdate {
-	if b != nil {
-		rppu.SetUseDisplayName(*b)
+func (_u *RolePanelPlacedUpdate) SetNillableUseDisplayName(v *bool) *RolePanelPlacedUpdate {
+	if v != nil {
+		_u.SetUseDisplayName(*v)
 	}
-	return rppu
+	return _u
 }
 
 // SetUses sets the "uses" field.
-func (rppu *RolePanelPlacedUpdate) SetUses(i int) *RolePanelPlacedUpdate {
-	rppu.mutation.ResetUses()
-	rppu.mutation.SetUses(i)
-	return rppu
+func (_u *RolePanelPlacedUpdate) SetUses(v int) *RolePanelPlacedUpdate {
+	_u.mutation.ResetUses()
+	_u.mutation.SetUses(v)
+	return _u
 }
 
 // SetNillableUses sets the "uses" field if the given value is not nil.
-func (rppu *RolePanelPlacedUpdate) SetNillableUses(i *int) *RolePanelPlacedUpdate {
-	if i != nil {
-		rppu.SetUses(*i)
+func (_u *RolePanelPlacedUpdate) SetNillableUses(v *int) *RolePanelPlacedUpdate {
+	if v != nil {
+		_u.SetUses(*v)
 	}
-	return rppu
+	return _u
 }
 
-// AddUses adds i to the "uses" field.
-func (rppu *RolePanelPlacedUpdate) AddUses(i int) *RolePanelPlacedUpdate {
-	rppu.mutation.AddUses(i)
-	return rppu
+// AddUses adds value to the "uses" field.
+func (_u *RolePanelPlacedUpdate) AddUses(v int) *RolePanelPlacedUpdate {
+	_u.mutation.AddUses(v)
+	return _u
 }
 
 // SetName sets the "name" field.
-func (rppu *RolePanelPlacedUpdate) SetName(s string) *RolePanelPlacedUpdate {
-	rppu.mutation.SetName(s)
-	return rppu
+func (_u *RolePanelPlacedUpdate) SetName(v string) *RolePanelPlacedUpdate {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (rppu *RolePanelPlacedUpdate) SetNillableName(s *string) *RolePanelPlacedUpdate {
-	if s != nil {
-		rppu.SetName(*s)
+func (_u *RolePanelPlacedUpdate) SetNillableName(v *string) *RolePanelPlacedUpdate {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return rppu
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (rppu *RolePanelPlacedUpdate) SetDescription(s string) *RolePanelPlacedUpdate {
-	rppu.mutation.SetDescription(s)
-	return rppu
+func (_u *RolePanelPlacedUpdate) SetDescription(v string) *RolePanelPlacedUpdate {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (rppu *RolePanelPlacedUpdate) SetNillableDescription(s *string) *RolePanelPlacedUpdate {
-	if s != nil {
-		rppu.SetDescription(*s)
+func (_u *RolePanelPlacedUpdate) SetNillableDescription(v *string) *RolePanelPlacedUpdate {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return rppu
+	return _u
 }
 
 // SetRoles sets the "roles" field.
-func (rppu *RolePanelPlacedUpdate) SetRoles(s []schema.Role) *RolePanelPlacedUpdate {
-	rppu.mutation.SetRoles(s)
-	return rppu
+func (_u *RolePanelPlacedUpdate) SetRoles(v []schema.Role) *RolePanelPlacedUpdate {
+	_u.mutation.SetRoles(v)
+	return _u
 }
 
-// AppendRoles appends s to the "roles" field.
-func (rppu *RolePanelPlacedUpdate) AppendRoles(s []schema.Role) *RolePanelPlacedUpdate {
-	rppu.mutation.AppendRoles(s)
-	return rppu
+// AppendRoles appends value to the "roles" field.
+func (_u *RolePanelPlacedUpdate) AppendRoles(v []schema.Role) *RolePanelPlacedUpdate {
+	_u.mutation.AppendRoles(v)
+	return _u
 }
 
 // ClearRoles clears the value of the "roles" field.
-func (rppu *RolePanelPlacedUpdate) ClearRoles() *RolePanelPlacedUpdate {
-	rppu.mutation.ClearRoles()
-	return rppu
+func (_u *RolePanelPlacedUpdate) ClearRoles() *RolePanelPlacedUpdate {
+	_u.mutation.ClearRoles()
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (rppu *RolePanelPlacedUpdate) SetUpdatedAt(t time.Time) *RolePanelPlacedUpdate {
-	rppu.mutation.SetUpdatedAt(t)
-	return rppu
+func (_u *RolePanelPlacedUpdate) SetUpdatedAt(v time.Time) *RolePanelPlacedUpdate {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (rppu *RolePanelPlacedUpdate) SetNillableUpdatedAt(t *time.Time) *RolePanelPlacedUpdate {
-	if t != nil {
-		rppu.SetUpdatedAt(*t)
+func (_u *RolePanelPlacedUpdate) SetNillableUpdatedAt(v *time.Time) *RolePanelPlacedUpdate {
+	if v != nil {
+		_u.SetUpdatedAt(*v)
 	}
-	return rppu
+	return _u
 }
 
 // ClearUpdatedAt clears the value of the "updated_at" field.
-func (rppu *RolePanelPlacedUpdate) ClearUpdatedAt() *RolePanelPlacedUpdate {
-	rppu.mutation.ClearUpdatedAt()
-	return rppu
+func (_u *RolePanelPlacedUpdate) ClearUpdatedAt() *RolePanelPlacedUpdate {
+	_u.mutation.ClearUpdatedAt()
+	return _u
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (rppu *RolePanelPlacedUpdate) SetGuildID(id snowflake.ID) *RolePanelPlacedUpdate {
-	rppu.mutation.SetGuildID(id)
-	return rppu
+func (_u *RolePanelPlacedUpdate) SetGuildID(id snowflake.ID) *RolePanelPlacedUpdate {
+	_u.mutation.SetGuildID(id)
+	return _u
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (rppu *RolePanelPlacedUpdate) SetGuild(g *Guild) *RolePanelPlacedUpdate {
-	return rppu.SetGuildID(g.ID)
+func (_u *RolePanelPlacedUpdate) SetGuild(v *Guild) *RolePanelPlacedUpdate {
+	return _u.SetGuildID(v.ID)
 }
 
 // SetRolePanelID sets the "role_panel" edge to the RolePanel entity by ID.
-func (rppu *RolePanelPlacedUpdate) SetRolePanelID(id uuid.UUID) *RolePanelPlacedUpdate {
-	rppu.mutation.SetRolePanelID(id)
-	return rppu
+func (_u *RolePanelPlacedUpdate) SetRolePanelID(id uuid.UUID) *RolePanelPlacedUpdate {
+	_u.mutation.SetRolePanelID(id)
+	return _u
 }
 
 // SetRolePanel sets the "role_panel" edge to the RolePanel entity.
-func (rppu *RolePanelPlacedUpdate) SetRolePanel(r *RolePanel) *RolePanelPlacedUpdate {
-	return rppu.SetRolePanelID(r.ID)
+func (_u *RolePanelPlacedUpdate) SetRolePanel(v *RolePanel) *RolePanelPlacedUpdate {
+	return _u.SetRolePanelID(v.ID)
 }
 
 // Mutation returns the RolePanelPlacedMutation object of the builder.
-func (rppu *RolePanelPlacedUpdate) Mutation() *RolePanelPlacedMutation {
-	return rppu.mutation
+func (_u *RolePanelPlacedUpdate) Mutation() *RolePanelPlacedMutation {
+	return _u.mutation
 }
 
 // ClearGuild clears the "guild" edge to the Guild entity.
-func (rppu *RolePanelPlacedUpdate) ClearGuild() *RolePanelPlacedUpdate {
-	rppu.mutation.ClearGuild()
-	return rppu
+func (_u *RolePanelPlacedUpdate) ClearGuild() *RolePanelPlacedUpdate {
+	_u.mutation.ClearGuild()
+	return _u
 }
 
 // ClearRolePanel clears the "role_panel" edge to the RolePanel entity.
-func (rppu *RolePanelPlacedUpdate) ClearRolePanel() *RolePanelPlacedUpdate {
-	rppu.mutation.ClearRolePanel()
-	return rppu
+func (_u *RolePanelPlacedUpdate) ClearRolePanel() *RolePanelPlacedUpdate {
+	_u.mutation.ClearRolePanel()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (rppu *RolePanelPlacedUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, rppu.sqlSave, rppu.mutation, rppu.hooks)
+func (_u *RolePanelPlacedUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (rppu *RolePanelPlacedUpdate) SaveX(ctx context.Context) int {
-	affected, err := rppu.Save(ctx)
+func (_u *RolePanelPlacedUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -321,125 +321,125 @@ func (rppu *RolePanelPlacedUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (rppu *RolePanelPlacedUpdate) Exec(ctx context.Context) error {
-	_, err := rppu.Save(ctx)
+func (_u *RolePanelPlacedUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (rppu *RolePanelPlacedUpdate) ExecX(ctx context.Context) {
-	if err := rppu.Exec(ctx); err != nil {
+func (_u *RolePanelPlacedUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (rppu *RolePanelPlacedUpdate) check() error {
-	if v, ok := rppu.mutation.GetType(); ok {
+func (_u *RolePanelPlacedUpdate) check() error {
+	if v, ok := _u.mutation.GetType(); ok {
 		if err := rolepanelplaced.TypeValidator(v); err != nil {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "RolePanelPlaced.type": %w`, err)}
 		}
 	}
-	if v, ok := rppu.mutation.ButtonType(); ok {
+	if v, ok := _u.mutation.ButtonType(); ok {
 		if err := rolepanelplaced.ButtonTypeValidator(int(v)); err != nil {
 			return &ValidationError{Name: "button_type", err: fmt.Errorf(`ent: validator failed for field "RolePanelPlaced.button_type": %w`, err)}
 		}
 	}
-	if v, ok := rppu.mutation.Name(); ok {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := rolepanelplaced.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanelPlaced.name": %w`, err)}
 		}
 	}
-	if rppu.mutation.GuildCleared() && len(rppu.mutation.GuildIDs()) > 0 {
+	if _u.mutation.GuildCleared() && len(_u.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "RolePanelPlaced.guild"`)
 	}
-	if rppu.mutation.RolePanelCleared() && len(rppu.mutation.RolePanelIDs()) > 0 {
+	if _u.mutation.RolePanelCleared() && len(_u.mutation.RolePanelIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "RolePanelPlaced.role_panel"`)
 	}
 	return nil
 }
 
-func (rppu *RolePanelPlacedUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := rppu.check(); err != nil {
-		return n, err
+func (_u *RolePanelPlacedUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(rolepanelplaced.Table, rolepanelplaced.Columns, sqlgraph.NewFieldSpec(rolepanelplaced.FieldID, field.TypeUUID))
-	if ps := rppu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := rppu.mutation.MessageID(); ok {
+	if value, ok := _u.mutation.MessageID(); ok {
 		_spec.SetField(rolepanelplaced.FieldMessageID, field.TypeUint64, value)
 	}
-	if value, ok := rppu.mutation.AddedMessageID(); ok {
+	if value, ok := _u.mutation.AddedMessageID(); ok {
 		_spec.AddField(rolepanelplaced.FieldMessageID, field.TypeUint64, value)
 	}
-	if rppu.mutation.MessageIDCleared() {
+	if _u.mutation.MessageIDCleared() {
 		_spec.ClearField(rolepanelplaced.FieldMessageID, field.TypeUint64)
 	}
-	if value, ok := rppu.mutation.ChannelID(); ok {
+	if value, ok := _u.mutation.ChannelID(); ok {
 		_spec.SetField(rolepanelplaced.FieldChannelID, field.TypeUint64, value)
 	}
-	if value, ok := rppu.mutation.AddedChannelID(); ok {
+	if value, ok := _u.mutation.AddedChannelID(); ok {
 		_spec.AddField(rolepanelplaced.FieldChannelID, field.TypeUint64, value)
 	}
-	if value, ok := rppu.mutation.GetType(); ok {
+	if value, ok := _u.mutation.GetType(); ok {
 		_spec.SetField(rolepanelplaced.FieldType, field.TypeEnum, value)
 	}
-	if rppu.mutation.TypeCleared() {
+	if _u.mutation.TypeCleared() {
 		_spec.ClearField(rolepanelplaced.FieldType, field.TypeEnum)
 	}
-	if value, ok := rppu.mutation.ButtonType(); ok {
+	if value, ok := _u.mutation.ButtonType(); ok {
 		_spec.SetField(rolepanelplaced.FieldButtonType, field.TypeInt, value)
 	}
-	if value, ok := rppu.mutation.AddedButtonType(); ok {
+	if value, ok := _u.mutation.AddedButtonType(); ok {
 		_spec.AddField(rolepanelplaced.FieldButtonType, field.TypeInt, value)
 	}
-	if value, ok := rppu.mutation.ShowName(); ok {
+	if value, ok := _u.mutation.ShowName(); ok {
 		_spec.SetField(rolepanelplaced.FieldShowName, field.TypeBool, value)
 	}
-	if value, ok := rppu.mutation.FoldingSelectMenu(); ok {
+	if value, ok := _u.mutation.FoldingSelectMenu(); ok {
 		_spec.SetField(rolepanelplaced.FieldFoldingSelectMenu, field.TypeBool, value)
 	}
-	if value, ok := rppu.mutation.HideNotice(); ok {
+	if value, ok := _u.mutation.HideNotice(); ok {
 		_spec.SetField(rolepanelplaced.FieldHideNotice, field.TypeBool, value)
 	}
-	if value, ok := rppu.mutation.UseDisplayName(); ok {
+	if value, ok := _u.mutation.UseDisplayName(); ok {
 		_spec.SetField(rolepanelplaced.FieldUseDisplayName, field.TypeBool, value)
 	}
-	if value, ok := rppu.mutation.Uses(); ok {
+	if value, ok := _u.mutation.Uses(); ok {
 		_spec.SetField(rolepanelplaced.FieldUses, field.TypeInt, value)
 	}
-	if value, ok := rppu.mutation.AddedUses(); ok {
+	if value, ok := _u.mutation.AddedUses(); ok {
 		_spec.AddField(rolepanelplaced.FieldUses, field.TypeInt, value)
 	}
-	if value, ok := rppu.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(rolepanelplaced.FieldName, field.TypeString, value)
 	}
-	if value, ok := rppu.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(rolepanelplaced.FieldDescription, field.TypeString, value)
 	}
-	if value, ok := rppu.mutation.Roles(); ok {
+	if value, ok := _u.mutation.Roles(); ok {
 		_spec.SetField(rolepanelplaced.FieldRoles, field.TypeJSON, value)
 	}
-	if value, ok := rppu.mutation.AppendedRoles(); ok {
+	if value, ok := _u.mutation.AppendedRoles(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, rolepanelplaced.FieldRoles, value)
 		})
 	}
-	if rppu.mutation.RolesCleared() {
+	if _u.mutation.RolesCleared() {
 		_spec.ClearField(rolepanelplaced.FieldRoles, field.TypeJSON)
 	}
-	if value, ok := rppu.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(rolepanelplaced.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if rppu.mutation.UpdatedAtCleared() {
+	if _u.mutation.UpdatedAtCleared() {
 		_spec.ClearField(rolepanelplaced.FieldUpdatedAt, field.TypeTime)
 	}
-	if rppu.mutation.GuildCleared() {
+	if _u.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -452,7 +452,7 @@ func (rppu *RolePanelPlacedUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := rppu.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -468,7 +468,7 @@ func (rppu *RolePanelPlacedUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if rppu.mutation.RolePanelCleared() {
+	if _u.mutation.RolePanelCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -481,7 +481,7 @@ func (rppu *RolePanelPlacedUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := rppu.mutation.RolePanelIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RolePanelIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -497,7 +497,7 @@ func (rppu *RolePanelPlacedUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, rppu.driver, _spec); err != nil {
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{rolepanelplaced.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -505,8 +505,8 @@ func (rppu *RolePanelPlacedUpdate) sqlSave(ctx context.Context) (n int, err erro
 		}
 		return 0, err
 	}
-	rppu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // RolePanelPlacedUpdateOne is the builder for updating a single RolePanelPlaced entity.
@@ -518,297 +518,297 @@ type RolePanelPlacedUpdateOne struct {
 }
 
 // SetMessageID sets the "message_id" field.
-func (rppuo *RolePanelPlacedUpdateOne) SetMessageID(s snowflake.ID) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.ResetMessageID()
-	rppuo.mutation.SetMessageID(s)
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) SetMessageID(v snowflake.ID) *RolePanelPlacedUpdateOne {
+	_u.mutation.ResetMessageID()
+	_u.mutation.SetMessageID(v)
+	return _u
 }
 
 // SetNillableMessageID sets the "message_id" field if the given value is not nil.
-func (rppuo *RolePanelPlacedUpdateOne) SetNillableMessageID(s *snowflake.ID) *RolePanelPlacedUpdateOne {
-	if s != nil {
-		rppuo.SetMessageID(*s)
+func (_u *RolePanelPlacedUpdateOne) SetNillableMessageID(v *snowflake.ID) *RolePanelPlacedUpdateOne {
+	if v != nil {
+		_u.SetMessageID(*v)
 	}
-	return rppuo
+	return _u
 }
 
-// AddMessageID adds s to the "message_id" field.
-func (rppuo *RolePanelPlacedUpdateOne) AddMessageID(s snowflake.ID) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.AddMessageID(s)
-	return rppuo
+// AddMessageID adds value to the "message_id" field.
+func (_u *RolePanelPlacedUpdateOne) AddMessageID(v snowflake.ID) *RolePanelPlacedUpdateOne {
+	_u.mutation.AddMessageID(v)
+	return _u
 }
 
 // ClearMessageID clears the value of the "message_id" field.
-func (rppuo *RolePanelPlacedUpdateOne) ClearMessageID() *RolePanelPlacedUpdateOne {
-	rppuo.mutation.ClearMessageID()
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) ClearMessageID() *RolePanelPlacedUpdateOne {
+	_u.mutation.ClearMessageID()
+	return _u
 }
 
 // SetChannelID sets the "channel_id" field.
-func (rppuo *RolePanelPlacedUpdateOne) SetChannelID(s snowflake.ID) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.ResetChannelID()
-	rppuo.mutation.SetChannelID(s)
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) SetChannelID(v snowflake.ID) *RolePanelPlacedUpdateOne {
+	_u.mutation.ResetChannelID()
+	_u.mutation.SetChannelID(v)
+	return _u
 }
 
 // SetNillableChannelID sets the "channel_id" field if the given value is not nil.
-func (rppuo *RolePanelPlacedUpdateOne) SetNillableChannelID(s *snowflake.ID) *RolePanelPlacedUpdateOne {
-	if s != nil {
-		rppuo.SetChannelID(*s)
+func (_u *RolePanelPlacedUpdateOne) SetNillableChannelID(v *snowflake.ID) *RolePanelPlacedUpdateOne {
+	if v != nil {
+		_u.SetChannelID(*v)
 	}
-	return rppuo
+	return _u
 }
 
-// AddChannelID adds s to the "channel_id" field.
-func (rppuo *RolePanelPlacedUpdateOne) AddChannelID(s snowflake.ID) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.AddChannelID(s)
-	return rppuo
+// AddChannelID adds value to the "channel_id" field.
+func (_u *RolePanelPlacedUpdateOne) AddChannelID(v snowflake.ID) *RolePanelPlacedUpdateOne {
+	_u.mutation.AddChannelID(v)
+	return _u
 }
 
 // SetType sets the "type" field.
-func (rppuo *RolePanelPlacedUpdateOne) SetType(r rolepanelplaced.Type) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.SetType(r)
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) SetType(v rolepanelplaced.Type) *RolePanelPlacedUpdateOne {
+	_u.mutation.SetType(v)
+	return _u
 }
 
 // SetNillableType sets the "type" field if the given value is not nil.
-func (rppuo *RolePanelPlacedUpdateOne) SetNillableType(r *rolepanelplaced.Type) *RolePanelPlacedUpdateOne {
-	if r != nil {
-		rppuo.SetType(*r)
+func (_u *RolePanelPlacedUpdateOne) SetNillableType(v *rolepanelplaced.Type) *RolePanelPlacedUpdateOne {
+	if v != nil {
+		_u.SetType(*v)
 	}
-	return rppuo
+	return _u
 }
 
 // ClearType clears the value of the "type" field.
-func (rppuo *RolePanelPlacedUpdateOne) ClearType() *RolePanelPlacedUpdateOne {
-	rppuo.mutation.ClearType()
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) ClearType() *RolePanelPlacedUpdateOne {
+	_u.mutation.ClearType()
+	return _u
 }
 
 // SetButtonType sets the "button_type" field.
-func (rppuo *RolePanelPlacedUpdateOne) SetButtonType(ds discord.ButtonStyle) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.ResetButtonType()
-	rppuo.mutation.SetButtonType(ds)
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) SetButtonType(v discord.ButtonStyle) *RolePanelPlacedUpdateOne {
+	_u.mutation.ResetButtonType()
+	_u.mutation.SetButtonType(v)
+	return _u
 }
 
 // SetNillableButtonType sets the "button_type" field if the given value is not nil.
-func (rppuo *RolePanelPlacedUpdateOne) SetNillableButtonType(ds *discord.ButtonStyle) *RolePanelPlacedUpdateOne {
-	if ds != nil {
-		rppuo.SetButtonType(*ds)
+func (_u *RolePanelPlacedUpdateOne) SetNillableButtonType(v *discord.ButtonStyle) *RolePanelPlacedUpdateOne {
+	if v != nil {
+		_u.SetButtonType(*v)
 	}
-	return rppuo
+	return _u
 }
 
-// AddButtonType adds ds to the "button_type" field.
-func (rppuo *RolePanelPlacedUpdateOne) AddButtonType(ds discord.ButtonStyle) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.AddButtonType(ds)
-	return rppuo
+// AddButtonType adds value to the "button_type" field.
+func (_u *RolePanelPlacedUpdateOne) AddButtonType(v discord.ButtonStyle) *RolePanelPlacedUpdateOne {
+	_u.mutation.AddButtonType(v)
+	return _u
 }
 
 // SetShowName sets the "show_name" field.
-func (rppuo *RolePanelPlacedUpdateOne) SetShowName(b bool) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.SetShowName(b)
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) SetShowName(v bool) *RolePanelPlacedUpdateOne {
+	_u.mutation.SetShowName(v)
+	return _u
 }
 
 // SetNillableShowName sets the "show_name" field if the given value is not nil.
-func (rppuo *RolePanelPlacedUpdateOne) SetNillableShowName(b *bool) *RolePanelPlacedUpdateOne {
-	if b != nil {
-		rppuo.SetShowName(*b)
+func (_u *RolePanelPlacedUpdateOne) SetNillableShowName(v *bool) *RolePanelPlacedUpdateOne {
+	if v != nil {
+		_u.SetShowName(*v)
 	}
-	return rppuo
+	return _u
 }
 
 // SetFoldingSelectMenu sets the "folding_select_menu" field.
-func (rppuo *RolePanelPlacedUpdateOne) SetFoldingSelectMenu(b bool) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.SetFoldingSelectMenu(b)
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) SetFoldingSelectMenu(v bool) *RolePanelPlacedUpdateOne {
+	_u.mutation.SetFoldingSelectMenu(v)
+	return _u
 }
 
 // SetNillableFoldingSelectMenu sets the "folding_select_menu" field if the given value is not nil.
-func (rppuo *RolePanelPlacedUpdateOne) SetNillableFoldingSelectMenu(b *bool) *RolePanelPlacedUpdateOne {
-	if b != nil {
-		rppuo.SetFoldingSelectMenu(*b)
+func (_u *RolePanelPlacedUpdateOne) SetNillableFoldingSelectMenu(v *bool) *RolePanelPlacedUpdateOne {
+	if v != nil {
+		_u.SetFoldingSelectMenu(*v)
 	}
-	return rppuo
+	return _u
 }
 
 // SetHideNotice sets the "hide_notice" field.
-func (rppuo *RolePanelPlacedUpdateOne) SetHideNotice(b bool) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.SetHideNotice(b)
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) SetHideNotice(v bool) *RolePanelPlacedUpdateOne {
+	_u.mutation.SetHideNotice(v)
+	return _u
 }
 
 // SetNillableHideNotice sets the "hide_notice" field if the given value is not nil.
-func (rppuo *RolePanelPlacedUpdateOne) SetNillableHideNotice(b *bool) *RolePanelPlacedUpdateOne {
-	if b != nil {
-		rppuo.SetHideNotice(*b)
+func (_u *RolePanelPlacedUpdateOne) SetNillableHideNotice(v *bool) *RolePanelPlacedUpdateOne {
+	if v != nil {
+		_u.SetHideNotice(*v)
 	}
-	return rppuo
+	return _u
 }
 
 // SetUseDisplayName sets the "use_display_name" field.
-func (rppuo *RolePanelPlacedUpdateOne) SetUseDisplayName(b bool) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.SetUseDisplayName(b)
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) SetUseDisplayName(v bool) *RolePanelPlacedUpdateOne {
+	_u.mutation.SetUseDisplayName(v)
+	return _u
 }
 
 // SetNillableUseDisplayName sets the "use_display_name" field if the given value is not nil.
-func (rppuo *RolePanelPlacedUpdateOne) SetNillableUseDisplayName(b *bool) *RolePanelPlacedUpdateOne {
-	if b != nil {
-		rppuo.SetUseDisplayName(*b)
+func (_u *RolePanelPlacedUpdateOne) SetNillableUseDisplayName(v *bool) *RolePanelPlacedUpdateOne {
+	if v != nil {
+		_u.SetUseDisplayName(*v)
 	}
-	return rppuo
+	return _u
 }
 
 // SetUses sets the "uses" field.
-func (rppuo *RolePanelPlacedUpdateOne) SetUses(i int) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.ResetUses()
-	rppuo.mutation.SetUses(i)
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) SetUses(v int) *RolePanelPlacedUpdateOne {
+	_u.mutation.ResetUses()
+	_u.mutation.SetUses(v)
+	return _u
 }
 
 // SetNillableUses sets the "uses" field if the given value is not nil.
-func (rppuo *RolePanelPlacedUpdateOne) SetNillableUses(i *int) *RolePanelPlacedUpdateOne {
-	if i != nil {
-		rppuo.SetUses(*i)
+func (_u *RolePanelPlacedUpdateOne) SetNillableUses(v *int) *RolePanelPlacedUpdateOne {
+	if v != nil {
+		_u.SetUses(*v)
 	}
-	return rppuo
+	return _u
 }
 
-// AddUses adds i to the "uses" field.
-func (rppuo *RolePanelPlacedUpdateOne) AddUses(i int) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.AddUses(i)
-	return rppuo
+// AddUses adds value to the "uses" field.
+func (_u *RolePanelPlacedUpdateOne) AddUses(v int) *RolePanelPlacedUpdateOne {
+	_u.mutation.AddUses(v)
+	return _u
 }
 
 // SetName sets the "name" field.
-func (rppuo *RolePanelPlacedUpdateOne) SetName(s string) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.SetName(s)
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) SetName(v string) *RolePanelPlacedUpdateOne {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (rppuo *RolePanelPlacedUpdateOne) SetNillableName(s *string) *RolePanelPlacedUpdateOne {
-	if s != nil {
-		rppuo.SetName(*s)
+func (_u *RolePanelPlacedUpdateOne) SetNillableName(v *string) *RolePanelPlacedUpdateOne {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return rppuo
+	return _u
 }
 
 // SetDescription sets the "description" field.
-func (rppuo *RolePanelPlacedUpdateOne) SetDescription(s string) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.SetDescription(s)
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) SetDescription(v string) *RolePanelPlacedUpdateOne {
+	_u.mutation.SetDescription(v)
+	return _u
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (rppuo *RolePanelPlacedUpdateOne) SetNillableDescription(s *string) *RolePanelPlacedUpdateOne {
-	if s != nil {
-		rppuo.SetDescription(*s)
+func (_u *RolePanelPlacedUpdateOne) SetNillableDescription(v *string) *RolePanelPlacedUpdateOne {
+	if v != nil {
+		_u.SetDescription(*v)
 	}
-	return rppuo
+	return _u
 }
 
 // SetRoles sets the "roles" field.
-func (rppuo *RolePanelPlacedUpdateOne) SetRoles(s []schema.Role) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.SetRoles(s)
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) SetRoles(v []schema.Role) *RolePanelPlacedUpdateOne {
+	_u.mutation.SetRoles(v)
+	return _u
 }
 
-// AppendRoles appends s to the "roles" field.
-func (rppuo *RolePanelPlacedUpdateOne) AppendRoles(s []schema.Role) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.AppendRoles(s)
-	return rppuo
+// AppendRoles appends value to the "roles" field.
+func (_u *RolePanelPlacedUpdateOne) AppendRoles(v []schema.Role) *RolePanelPlacedUpdateOne {
+	_u.mutation.AppendRoles(v)
+	return _u
 }
 
 // ClearRoles clears the value of the "roles" field.
-func (rppuo *RolePanelPlacedUpdateOne) ClearRoles() *RolePanelPlacedUpdateOne {
-	rppuo.mutation.ClearRoles()
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) ClearRoles() *RolePanelPlacedUpdateOne {
+	_u.mutation.ClearRoles()
+	return _u
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (rppuo *RolePanelPlacedUpdateOne) SetUpdatedAt(t time.Time) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.SetUpdatedAt(t)
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) SetUpdatedAt(v time.Time) *RolePanelPlacedUpdateOne {
+	_u.mutation.SetUpdatedAt(v)
+	return _u
 }
 
 // SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (rppuo *RolePanelPlacedUpdateOne) SetNillableUpdatedAt(t *time.Time) *RolePanelPlacedUpdateOne {
-	if t != nil {
-		rppuo.SetUpdatedAt(*t)
+func (_u *RolePanelPlacedUpdateOne) SetNillableUpdatedAt(v *time.Time) *RolePanelPlacedUpdateOne {
+	if v != nil {
+		_u.SetUpdatedAt(*v)
 	}
-	return rppuo
+	return _u
 }
 
 // ClearUpdatedAt clears the value of the "updated_at" field.
-func (rppuo *RolePanelPlacedUpdateOne) ClearUpdatedAt() *RolePanelPlacedUpdateOne {
-	rppuo.mutation.ClearUpdatedAt()
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) ClearUpdatedAt() *RolePanelPlacedUpdateOne {
+	_u.mutation.ClearUpdatedAt()
+	return _u
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (rppuo *RolePanelPlacedUpdateOne) SetGuildID(id snowflake.ID) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.SetGuildID(id)
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) SetGuildID(id snowflake.ID) *RolePanelPlacedUpdateOne {
+	_u.mutation.SetGuildID(id)
+	return _u
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (rppuo *RolePanelPlacedUpdateOne) SetGuild(g *Guild) *RolePanelPlacedUpdateOne {
-	return rppuo.SetGuildID(g.ID)
+func (_u *RolePanelPlacedUpdateOne) SetGuild(v *Guild) *RolePanelPlacedUpdateOne {
+	return _u.SetGuildID(v.ID)
 }
 
 // SetRolePanelID sets the "role_panel" edge to the RolePanel entity by ID.
-func (rppuo *RolePanelPlacedUpdateOne) SetRolePanelID(id uuid.UUID) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.SetRolePanelID(id)
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) SetRolePanelID(id uuid.UUID) *RolePanelPlacedUpdateOne {
+	_u.mutation.SetRolePanelID(id)
+	return _u
 }
 
 // SetRolePanel sets the "role_panel" edge to the RolePanel entity.
-func (rppuo *RolePanelPlacedUpdateOne) SetRolePanel(r *RolePanel) *RolePanelPlacedUpdateOne {
-	return rppuo.SetRolePanelID(r.ID)
+func (_u *RolePanelPlacedUpdateOne) SetRolePanel(v *RolePanel) *RolePanelPlacedUpdateOne {
+	return _u.SetRolePanelID(v.ID)
 }
 
 // Mutation returns the RolePanelPlacedMutation object of the builder.
-func (rppuo *RolePanelPlacedUpdateOne) Mutation() *RolePanelPlacedMutation {
-	return rppuo.mutation
+func (_u *RolePanelPlacedUpdateOne) Mutation() *RolePanelPlacedMutation {
+	return _u.mutation
 }
 
 // ClearGuild clears the "guild" edge to the Guild entity.
-func (rppuo *RolePanelPlacedUpdateOne) ClearGuild() *RolePanelPlacedUpdateOne {
-	rppuo.mutation.ClearGuild()
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) ClearGuild() *RolePanelPlacedUpdateOne {
+	_u.mutation.ClearGuild()
+	return _u
 }
 
 // ClearRolePanel clears the "role_panel" edge to the RolePanel entity.
-func (rppuo *RolePanelPlacedUpdateOne) ClearRolePanel() *RolePanelPlacedUpdateOne {
-	rppuo.mutation.ClearRolePanel()
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) ClearRolePanel() *RolePanelPlacedUpdateOne {
+	_u.mutation.ClearRolePanel()
+	return _u
 }
 
 // Where appends a list predicates to the RolePanelPlacedUpdate builder.
-func (rppuo *RolePanelPlacedUpdateOne) Where(ps ...predicate.RolePanelPlaced) *RolePanelPlacedUpdateOne {
-	rppuo.mutation.Where(ps...)
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) Where(ps ...predicate.RolePanelPlaced) *RolePanelPlacedUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (rppuo *RolePanelPlacedUpdateOne) Select(field string, fields ...string) *RolePanelPlacedUpdateOne {
-	rppuo.fields = append([]string{field}, fields...)
-	return rppuo
+func (_u *RolePanelPlacedUpdateOne) Select(field string, fields ...string) *RolePanelPlacedUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated RolePanelPlaced entity.
-func (rppuo *RolePanelPlacedUpdateOne) Save(ctx context.Context) (*RolePanelPlaced, error) {
-	return withHooks(ctx, rppuo.sqlSave, rppuo.mutation, rppuo.hooks)
+func (_u *RolePanelPlacedUpdateOne) Save(ctx context.Context) (*RolePanelPlaced, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (rppuo *RolePanelPlacedUpdateOne) SaveX(ctx context.Context) *RolePanelPlaced {
-	node, err := rppuo.Save(ctx)
+func (_u *RolePanelPlacedUpdateOne) SaveX(ctx context.Context) *RolePanelPlaced {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -816,55 +816,55 @@ func (rppuo *RolePanelPlacedUpdateOne) SaveX(ctx context.Context) *RolePanelPlac
 }
 
 // Exec executes the query on the entity.
-func (rppuo *RolePanelPlacedUpdateOne) Exec(ctx context.Context) error {
-	_, err := rppuo.Save(ctx)
+func (_u *RolePanelPlacedUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (rppuo *RolePanelPlacedUpdateOne) ExecX(ctx context.Context) {
-	if err := rppuo.Exec(ctx); err != nil {
+func (_u *RolePanelPlacedUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (rppuo *RolePanelPlacedUpdateOne) check() error {
-	if v, ok := rppuo.mutation.GetType(); ok {
+func (_u *RolePanelPlacedUpdateOne) check() error {
+	if v, ok := _u.mutation.GetType(); ok {
 		if err := rolepanelplaced.TypeValidator(v); err != nil {
 			return &ValidationError{Name: "type", err: fmt.Errorf(`ent: validator failed for field "RolePanelPlaced.type": %w`, err)}
 		}
 	}
-	if v, ok := rppuo.mutation.ButtonType(); ok {
+	if v, ok := _u.mutation.ButtonType(); ok {
 		if err := rolepanelplaced.ButtonTypeValidator(int(v)); err != nil {
 			return &ValidationError{Name: "button_type", err: fmt.Errorf(`ent: validator failed for field "RolePanelPlaced.button_type": %w`, err)}
 		}
 	}
-	if v, ok := rppuo.mutation.Name(); ok {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := rolepanelplaced.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanelPlaced.name": %w`, err)}
 		}
 	}
-	if rppuo.mutation.GuildCleared() && len(rppuo.mutation.GuildIDs()) > 0 {
+	if _u.mutation.GuildCleared() && len(_u.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "RolePanelPlaced.guild"`)
 	}
-	if rppuo.mutation.RolePanelCleared() && len(rppuo.mutation.RolePanelIDs()) > 0 {
+	if _u.mutation.RolePanelCleared() && len(_u.mutation.RolePanelIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "RolePanelPlaced.role_panel"`)
 	}
 	return nil
 }
 
-func (rppuo *RolePanelPlacedUpdateOne) sqlSave(ctx context.Context) (_node *RolePanelPlaced, err error) {
-	if err := rppuo.check(); err != nil {
+func (_u *RolePanelPlacedUpdateOne) sqlSave(ctx context.Context) (_node *RolePanelPlaced, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(rolepanelplaced.Table, rolepanelplaced.Columns, sqlgraph.NewFieldSpec(rolepanelplaced.FieldID, field.TypeUUID))
-	id, ok := rppuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "RolePanelPlaced.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := rppuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, rolepanelplaced.FieldID)
 		for _, f := range fields {
@@ -876,82 +876,82 @@ func (rppuo *RolePanelPlacedUpdateOne) sqlSave(ctx context.Context) (_node *Role
 			}
 		}
 	}
-	if ps := rppuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := rppuo.mutation.MessageID(); ok {
+	if value, ok := _u.mutation.MessageID(); ok {
 		_spec.SetField(rolepanelplaced.FieldMessageID, field.TypeUint64, value)
 	}
-	if value, ok := rppuo.mutation.AddedMessageID(); ok {
+	if value, ok := _u.mutation.AddedMessageID(); ok {
 		_spec.AddField(rolepanelplaced.FieldMessageID, field.TypeUint64, value)
 	}
-	if rppuo.mutation.MessageIDCleared() {
+	if _u.mutation.MessageIDCleared() {
 		_spec.ClearField(rolepanelplaced.FieldMessageID, field.TypeUint64)
 	}
-	if value, ok := rppuo.mutation.ChannelID(); ok {
+	if value, ok := _u.mutation.ChannelID(); ok {
 		_spec.SetField(rolepanelplaced.FieldChannelID, field.TypeUint64, value)
 	}
-	if value, ok := rppuo.mutation.AddedChannelID(); ok {
+	if value, ok := _u.mutation.AddedChannelID(); ok {
 		_spec.AddField(rolepanelplaced.FieldChannelID, field.TypeUint64, value)
 	}
-	if value, ok := rppuo.mutation.GetType(); ok {
+	if value, ok := _u.mutation.GetType(); ok {
 		_spec.SetField(rolepanelplaced.FieldType, field.TypeEnum, value)
 	}
-	if rppuo.mutation.TypeCleared() {
+	if _u.mutation.TypeCleared() {
 		_spec.ClearField(rolepanelplaced.FieldType, field.TypeEnum)
 	}
-	if value, ok := rppuo.mutation.ButtonType(); ok {
+	if value, ok := _u.mutation.ButtonType(); ok {
 		_spec.SetField(rolepanelplaced.FieldButtonType, field.TypeInt, value)
 	}
-	if value, ok := rppuo.mutation.AddedButtonType(); ok {
+	if value, ok := _u.mutation.AddedButtonType(); ok {
 		_spec.AddField(rolepanelplaced.FieldButtonType, field.TypeInt, value)
 	}
-	if value, ok := rppuo.mutation.ShowName(); ok {
+	if value, ok := _u.mutation.ShowName(); ok {
 		_spec.SetField(rolepanelplaced.FieldShowName, field.TypeBool, value)
 	}
-	if value, ok := rppuo.mutation.FoldingSelectMenu(); ok {
+	if value, ok := _u.mutation.FoldingSelectMenu(); ok {
 		_spec.SetField(rolepanelplaced.FieldFoldingSelectMenu, field.TypeBool, value)
 	}
-	if value, ok := rppuo.mutation.HideNotice(); ok {
+	if value, ok := _u.mutation.HideNotice(); ok {
 		_spec.SetField(rolepanelplaced.FieldHideNotice, field.TypeBool, value)
 	}
-	if value, ok := rppuo.mutation.UseDisplayName(); ok {
+	if value, ok := _u.mutation.UseDisplayName(); ok {
 		_spec.SetField(rolepanelplaced.FieldUseDisplayName, field.TypeBool, value)
 	}
-	if value, ok := rppuo.mutation.Uses(); ok {
+	if value, ok := _u.mutation.Uses(); ok {
 		_spec.SetField(rolepanelplaced.FieldUses, field.TypeInt, value)
 	}
-	if value, ok := rppuo.mutation.AddedUses(); ok {
+	if value, ok := _u.mutation.AddedUses(); ok {
 		_spec.AddField(rolepanelplaced.FieldUses, field.TypeInt, value)
 	}
-	if value, ok := rppuo.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(rolepanelplaced.FieldName, field.TypeString, value)
 	}
-	if value, ok := rppuo.mutation.Description(); ok {
+	if value, ok := _u.mutation.Description(); ok {
 		_spec.SetField(rolepanelplaced.FieldDescription, field.TypeString, value)
 	}
-	if value, ok := rppuo.mutation.Roles(); ok {
+	if value, ok := _u.mutation.Roles(); ok {
 		_spec.SetField(rolepanelplaced.FieldRoles, field.TypeJSON, value)
 	}
-	if value, ok := rppuo.mutation.AppendedRoles(); ok {
+	if value, ok := _u.mutation.AppendedRoles(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, rolepanelplaced.FieldRoles, value)
 		})
 	}
-	if rppuo.mutation.RolesCleared() {
+	if _u.mutation.RolesCleared() {
 		_spec.ClearField(rolepanelplaced.FieldRoles, field.TypeJSON)
 	}
-	if value, ok := rppuo.mutation.UpdatedAt(); ok {
+	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(rolepanelplaced.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if rppuo.mutation.UpdatedAtCleared() {
+	if _u.mutation.UpdatedAtCleared() {
 		_spec.ClearField(rolepanelplaced.FieldUpdatedAt, field.TypeTime)
 	}
-	if rppuo.mutation.GuildCleared() {
+	if _u.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -964,7 +964,7 @@ func (rppuo *RolePanelPlacedUpdateOne) sqlSave(ctx context.Context) (_node *Role
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := rppuo.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -980,7 +980,7 @@ func (rppuo *RolePanelPlacedUpdateOne) sqlSave(ctx context.Context) (_node *Role
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if rppuo.mutation.RolePanelCleared() {
+	if _u.mutation.RolePanelCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -993,7 +993,7 @@ func (rppuo *RolePanelPlacedUpdateOne) sqlSave(ctx context.Context) (_node *Role
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := rppuo.mutation.RolePanelIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RolePanelIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -1009,10 +1009,10 @@ func (rppuo *RolePanelPlacedUpdateOne) sqlSave(ctx context.Context) (_node *Role
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_node = &RolePanelPlaced{config: rppuo.config}
+	_node = &RolePanelPlaced{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, rppuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{rolepanelplaced.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -1020,6 +1020,6 @@ func (rppuo *RolePanelPlacedUpdateOne) sqlSave(ctx context.Context) (_node *Role
 		}
 		return nil, err
 	}
-	rppuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

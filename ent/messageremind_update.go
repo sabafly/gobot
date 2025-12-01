@@ -25,125 +25,125 @@ type MessageRemindUpdate struct {
 }
 
 // Where appends a list predicates to the MessageRemindUpdate builder.
-func (mru *MessageRemindUpdate) Where(ps ...predicate.MessageRemind) *MessageRemindUpdate {
-	mru.mutation.Where(ps...)
-	return mru
+func (_u *MessageRemindUpdate) Where(ps ...predicate.MessageRemind) *MessageRemindUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetChannelID sets the "channel_id" field.
-func (mru *MessageRemindUpdate) SetChannelID(s snowflake.ID) *MessageRemindUpdate {
-	mru.mutation.ResetChannelID()
-	mru.mutation.SetChannelID(s)
-	return mru
+func (_u *MessageRemindUpdate) SetChannelID(v snowflake.ID) *MessageRemindUpdate {
+	_u.mutation.ResetChannelID()
+	_u.mutation.SetChannelID(v)
+	return _u
 }
 
 // SetNillableChannelID sets the "channel_id" field if the given value is not nil.
-func (mru *MessageRemindUpdate) SetNillableChannelID(s *snowflake.ID) *MessageRemindUpdate {
-	if s != nil {
-		mru.SetChannelID(*s)
+func (_u *MessageRemindUpdate) SetNillableChannelID(v *snowflake.ID) *MessageRemindUpdate {
+	if v != nil {
+		_u.SetChannelID(*v)
 	}
-	return mru
+	return _u
 }
 
-// AddChannelID adds s to the "channel_id" field.
-func (mru *MessageRemindUpdate) AddChannelID(s snowflake.ID) *MessageRemindUpdate {
-	mru.mutation.AddChannelID(s)
-	return mru
+// AddChannelID adds value to the "channel_id" field.
+func (_u *MessageRemindUpdate) AddChannelID(v snowflake.ID) *MessageRemindUpdate {
+	_u.mutation.AddChannelID(v)
+	return _u
 }
 
 // SetAuthorID sets the "author_id" field.
-func (mru *MessageRemindUpdate) SetAuthorID(s snowflake.ID) *MessageRemindUpdate {
-	mru.mutation.ResetAuthorID()
-	mru.mutation.SetAuthorID(s)
-	return mru
+func (_u *MessageRemindUpdate) SetAuthorID(v snowflake.ID) *MessageRemindUpdate {
+	_u.mutation.ResetAuthorID()
+	_u.mutation.SetAuthorID(v)
+	return _u
 }
 
 // SetNillableAuthorID sets the "author_id" field if the given value is not nil.
-func (mru *MessageRemindUpdate) SetNillableAuthorID(s *snowflake.ID) *MessageRemindUpdate {
-	if s != nil {
-		mru.SetAuthorID(*s)
+func (_u *MessageRemindUpdate) SetNillableAuthorID(v *snowflake.ID) *MessageRemindUpdate {
+	if v != nil {
+		_u.SetAuthorID(*v)
 	}
-	return mru
+	return _u
 }
 
-// AddAuthorID adds s to the "author_id" field.
-func (mru *MessageRemindUpdate) AddAuthorID(s snowflake.ID) *MessageRemindUpdate {
-	mru.mutation.AddAuthorID(s)
-	return mru
+// AddAuthorID adds value to the "author_id" field.
+func (_u *MessageRemindUpdate) AddAuthorID(v snowflake.ID) *MessageRemindUpdate {
+	_u.mutation.AddAuthorID(v)
+	return _u
 }
 
 // SetTime sets the "time" field.
-func (mru *MessageRemindUpdate) SetTime(t time.Time) *MessageRemindUpdate {
-	mru.mutation.SetTime(t)
-	return mru
+func (_u *MessageRemindUpdate) SetTime(v time.Time) *MessageRemindUpdate {
+	_u.mutation.SetTime(v)
+	return _u
 }
 
 // SetNillableTime sets the "time" field if the given value is not nil.
-func (mru *MessageRemindUpdate) SetNillableTime(t *time.Time) *MessageRemindUpdate {
-	if t != nil {
-		mru.SetTime(*t)
+func (_u *MessageRemindUpdate) SetNillableTime(v *time.Time) *MessageRemindUpdate {
+	if v != nil {
+		_u.SetTime(*v)
 	}
-	return mru
+	return _u
 }
 
 // SetContent sets the "content" field.
-func (mru *MessageRemindUpdate) SetContent(s string) *MessageRemindUpdate {
-	mru.mutation.SetContent(s)
-	return mru
+func (_u *MessageRemindUpdate) SetContent(v string) *MessageRemindUpdate {
+	_u.mutation.SetContent(v)
+	return _u
 }
 
 // SetNillableContent sets the "content" field if the given value is not nil.
-func (mru *MessageRemindUpdate) SetNillableContent(s *string) *MessageRemindUpdate {
-	if s != nil {
-		mru.SetContent(*s)
+func (_u *MessageRemindUpdate) SetNillableContent(v *string) *MessageRemindUpdate {
+	if v != nil {
+		_u.SetContent(*v)
 	}
-	return mru
+	return _u
 }
 
 // SetName sets the "name" field.
-func (mru *MessageRemindUpdate) SetName(s string) *MessageRemindUpdate {
-	mru.mutation.SetName(s)
-	return mru
+func (_u *MessageRemindUpdate) SetName(v string) *MessageRemindUpdate {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (mru *MessageRemindUpdate) SetNillableName(s *string) *MessageRemindUpdate {
-	if s != nil {
-		mru.SetName(*s)
+func (_u *MessageRemindUpdate) SetNillableName(v *string) *MessageRemindUpdate {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return mru
+	return _u
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (mru *MessageRemindUpdate) SetGuildID(id snowflake.ID) *MessageRemindUpdate {
-	mru.mutation.SetGuildID(id)
-	return mru
+func (_u *MessageRemindUpdate) SetGuildID(id snowflake.ID) *MessageRemindUpdate {
+	_u.mutation.SetGuildID(id)
+	return _u
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (mru *MessageRemindUpdate) SetGuild(g *Guild) *MessageRemindUpdate {
-	return mru.SetGuildID(g.ID)
+func (_u *MessageRemindUpdate) SetGuild(v *Guild) *MessageRemindUpdate {
+	return _u.SetGuildID(v.ID)
 }
 
 // Mutation returns the MessageRemindMutation object of the builder.
-func (mru *MessageRemindUpdate) Mutation() *MessageRemindMutation {
-	return mru.mutation
+func (_u *MessageRemindUpdate) Mutation() *MessageRemindMutation {
+	return _u.mutation
 }
 
 // ClearGuild clears the "guild" edge to the Guild entity.
-func (mru *MessageRemindUpdate) ClearGuild() *MessageRemindUpdate {
-	mru.mutation.ClearGuild()
-	return mru
+func (_u *MessageRemindUpdate) ClearGuild() *MessageRemindUpdate {
+	_u.mutation.ClearGuild()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (mru *MessageRemindUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, mru.sqlSave, mru.mutation, mru.hooks)
+func (_u *MessageRemindUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (mru *MessageRemindUpdate) SaveX(ctx context.Context) int {
-	affected, err := mru.Save(ctx)
+func (_u *MessageRemindUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -151,70 +151,70 @@ func (mru *MessageRemindUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (mru *MessageRemindUpdate) Exec(ctx context.Context) error {
-	_, err := mru.Save(ctx)
+func (_u *MessageRemindUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (mru *MessageRemindUpdate) ExecX(ctx context.Context) {
-	if err := mru.Exec(ctx); err != nil {
+func (_u *MessageRemindUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (mru *MessageRemindUpdate) check() error {
-	if v, ok := mru.mutation.Content(); ok {
+func (_u *MessageRemindUpdate) check() error {
+	if v, ok := _u.mutation.Content(); ok {
 		if err := messageremind.ContentValidator(v); err != nil {
 			return &ValidationError{Name: "content", err: fmt.Errorf(`ent: validator failed for field "MessageRemind.content": %w`, err)}
 		}
 	}
-	if v, ok := mru.mutation.Name(); ok {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := messageremind.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "MessageRemind.name": %w`, err)}
 		}
 	}
-	if mru.mutation.GuildCleared() && len(mru.mutation.GuildIDs()) > 0 {
+	if _u.mutation.GuildCleared() && len(_u.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "MessageRemind.guild"`)
 	}
 	return nil
 }
 
-func (mru *MessageRemindUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := mru.check(); err != nil {
-		return n, err
+func (_u *MessageRemindUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(messageremind.Table, messageremind.Columns, sqlgraph.NewFieldSpec(messageremind.FieldID, field.TypeUUID))
-	if ps := mru.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := mru.mutation.ChannelID(); ok {
+	if value, ok := _u.mutation.ChannelID(); ok {
 		_spec.SetField(messageremind.FieldChannelID, field.TypeUint64, value)
 	}
-	if value, ok := mru.mutation.AddedChannelID(); ok {
+	if value, ok := _u.mutation.AddedChannelID(); ok {
 		_spec.AddField(messageremind.FieldChannelID, field.TypeUint64, value)
 	}
-	if value, ok := mru.mutation.AuthorID(); ok {
+	if value, ok := _u.mutation.AuthorID(); ok {
 		_spec.SetField(messageremind.FieldAuthorID, field.TypeUint64, value)
 	}
-	if value, ok := mru.mutation.AddedAuthorID(); ok {
+	if value, ok := _u.mutation.AddedAuthorID(); ok {
 		_spec.AddField(messageremind.FieldAuthorID, field.TypeUint64, value)
 	}
-	if value, ok := mru.mutation.Time(); ok {
+	if value, ok := _u.mutation.Time(); ok {
 		_spec.SetField(messageremind.FieldTime, field.TypeTime, value)
 	}
-	if value, ok := mru.mutation.Content(); ok {
+	if value, ok := _u.mutation.Content(); ok {
 		_spec.SetField(messageremind.FieldContent, field.TypeString, value)
 	}
-	if value, ok := mru.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(messageremind.FieldName, field.TypeString, value)
 	}
-	if mru.mutation.GuildCleared() {
+	if _u.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -227,7 +227,7 @@ func (mru *MessageRemindUpdate) sqlSave(ctx context.Context) (n int, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := mru.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -243,7 +243,7 @@ func (mru *MessageRemindUpdate) sqlSave(ctx context.Context) (n int, err error) 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, mru.driver, _spec); err != nil {
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{messageremind.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -251,8 +251,8 @@ func (mru *MessageRemindUpdate) sqlSave(ctx context.Context) (n int, err error) 
 		}
 		return 0, err
 	}
-	mru.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // MessageRemindUpdateOne is the builder for updating a single MessageRemind entity.
@@ -264,132 +264,132 @@ type MessageRemindUpdateOne struct {
 }
 
 // SetChannelID sets the "channel_id" field.
-func (mruo *MessageRemindUpdateOne) SetChannelID(s snowflake.ID) *MessageRemindUpdateOne {
-	mruo.mutation.ResetChannelID()
-	mruo.mutation.SetChannelID(s)
-	return mruo
+func (_u *MessageRemindUpdateOne) SetChannelID(v snowflake.ID) *MessageRemindUpdateOne {
+	_u.mutation.ResetChannelID()
+	_u.mutation.SetChannelID(v)
+	return _u
 }
 
 // SetNillableChannelID sets the "channel_id" field if the given value is not nil.
-func (mruo *MessageRemindUpdateOne) SetNillableChannelID(s *snowflake.ID) *MessageRemindUpdateOne {
-	if s != nil {
-		mruo.SetChannelID(*s)
+func (_u *MessageRemindUpdateOne) SetNillableChannelID(v *snowflake.ID) *MessageRemindUpdateOne {
+	if v != nil {
+		_u.SetChannelID(*v)
 	}
-	return mruo
+	return _u
 }
 
-// AddChannelID adds s to the "channel_id" field.
-func (mruo *MessageRemindUpdateOne) AddChannelID(s snowflake.ID) *MessageRemindUpdateOne {
-	mruo.mutation.AddChannelID(s)
-	return mruo
+// AddChannelID adds value to the "channel_id" field.
+func (_u *MessageRemindUpdateOne) AddChannelID(v snowflake.ID) *MessageRemindUpdateOne {
+	_u.mutation.AddChannelID(v)
+	return _u
 }
 
 // SetAuthorID sets the "author_id" field.
-func (mruo *MessageRemindUpdateOne) SetAuthorID(s snowflake.ID) *MessageRemindUpdateOne {
-	mruo.mutation.ResetAuthorID()
-	mruo.mutation.SetAuthorID(s)
-	return mruo
+func (_u *MessageRemindUpdateOne) SetAuthorID(v snowflake.ID) *MessageRemindUpdateOne {
+	_u.mutation.ResetAuthorID()
+	_u.mutation.SetAuthorID(v)
+	return _u
 }
 
 // SetNillableAuthorID sets the "author_id" field if the given value is not nil.
-func (mruo *MessageRemindUpdateOne) SetNillableAuthorID(s *snowflake.ID) *MessageRemindUpdateOne {
-	if s != nil {
-		mruo.SetAuthorID(*s)
+func (_u *MessageRemindUpdateOne) SetNillableAuthorID(v *snowflake.ID) *MessageRemindUpdateOne {
+	if v != nil {
+		_u.SetAuthorID(*v)
 	}
-	return mruo
+	return _u
 }
 
-// AddAuthorID adds s to the "author_id" field.
-func (mruo *MessageRemindUpdateOne) AddAuthorID(s snowflake.ID) *MessageRemindUpdateOne {
-	mruo.mutation.AddAuthorID(s)
-	return mruo
+// AddAuthorID adds value to the "author_id" field.
+func (_u *MessageRemindUpdateOne) AddAuthorID(v snowflake.ID) *MessageRemindUpdateOne {
+	_u.mutation.AddAuthorID(v)
+	return _u
 }
 
 // SetTime sets the "time" field.
-func (mruo *MessageRemindUpdateOne) SetTime(t time.Time) *MessageRemindUpdateOne {
-	mruo.mutation.SetTime(t)
-	return mruo
+func (_u *MessageRemindUpdateOne) SetTime(v time.Time) *MessageRemindUpdateOne {
+	_u.mutation.SetTime(v)
+	return _u
 }
 
 // SetNillableTime sets the "time" field if the given value is not nil.
-func (mruo *MessageRemindUpdateOne) SetNillableTime(t *time.Time) *MessageRemindUpdateOne {
-	if t != nil {
-		mruo.SetTime(*t)
+func (_u *MessageRemindUpdateOne) SetNillableTime(v *time.Time) *MessageRemindUpdateOne {
+	if v != nil {
+		_u.SetTime(*v)
 	}
-	return mruo
+	return _u
 }
 
 // SetContent sets the "content" field.
-func (mruo *MessageRemindUpdateOne) SetContent(s string) *MessageRemindUpdateOne {
-	mruo.mutation.SetContent(s)
-	return mruo
+func (_u *MessageRemindUpdateOne) SetContent(v string) *MessageRemindUpdateOne {
+	_u.mutation.SetContent(v)
+	return _u
 }
 
 // SetNillableContent sets the "content" field if the given value is not nil.
-func (mruo *MessageRemindUpdateOne) SetNillableContent(s *string) *MessageRemindUpdateOne {
-	if s != nil {
-		mruo.SetContent(*s)
+func (_u *MessageRemindUpdateOne) SetNillableContent(v *string) *MessageRemindUpdateOne {
+	if v != nil {
+		_u.SetContent(*v)
 	}
-	return mruo
+	return _u
 }
 
 // SetName sets the "name" field.
-func (mruo *MessageRemindUpdateOne) SetName(s string) *MessageRemindUpdateOne {
-	mruo.mutation.SetName(s)
-	return mruo
+func (_u *MessageRemindUpdateOne) SetName(v string) *MessageRemindUpdateOne {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (mruo *MessageRemindUpdateOne) SetNillableName(s *string) *MessageRemindUpdateOne {
-	if s != nil {
-		mruo.SetName(*s)
+func (_u *MessageRemindUpdateOne) SetNillableName(v *string) *MessageRemindUpdateOne {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return mruo
+	return _u
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (mruo *MessageRemindUpdateOne) SetGuildID(id snowflake.ID) *MessageRemindUpdateOne {
-	mruo.mutation.SetGuildID(id)
-	return mruo
+func (_u *MessageRemindUpdateOne) SetGuildID(id snowflake.ID) *MessageRemindUpdateOne {
+	_u.mutation.SetGuildID(id)
+	return _u
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (mruo *MessageRemindUpdateOne) SetGuild(g *Guild) *MessageRemindUpdateOne {
-	return mruo.SetGuildID(g.ID)
+func (_u *MessageRemindUpdateOne) SetGuild(v *Guild) *MessageRemindUpdateOne {
+	return _u.SetGuildID(v.ID)
 }
 
 // Mutation returns the MessageRemindMutation object of the builder.
-func (mruo *MessageRemindUpdateOne) Mutation() *MessageRemindMutation {
-	return mruo.mutation
+func (_u *MessageRemindUpdateOne) Mutation() *MessageRemindMutation {
+	return _u.mutation
 }
 
 // ClearGuild clears the "guild" edge to the Guild entity.
-func (mruo *MessageRemindUpdateOne) ClearGuild() *MessageRemindUpdateOne {
-	mruo.mutation.ClearGuild()
-	return mruo
+func (_u *MessageRemindUpdateOne) ClearGuild() *MessageRemindUpdateOne {
+	_u.mutation.ClearGuild()
+	return _u
 }
 
 // Where appends a list predicates to the MessageRemindUpdate builder.
-func (mruo *MessageRemindUpdateOne) Where(ps ...predicate.MessageRemind) *MessageRemindUpdateOne {
-	mruo.mutation.Where(ps...)
-	return mruo
+func (_u *MessageRemindUpdateOne) Where(ps ...predicate.MessageRemind) *MessageRemindUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (mruo *MessageRemindUpdateOne) Select(field string, fields ...string) *MessageRemindUpdateOne {
-	mruo.fields = append([]string{field}, fields...)
-	return mruo
+func (_u *MessageRemindUpdateOne) Select(field string, fields ...string) *MessageRemindUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated MessageRemind entity.
-func (mruo *MessageRemindUpdateOne) Save(ctx context.Context) (*MessageRemind, error) {
-	return withHooks(ctx, mruo.sqlSave, mruo.mutation, mruo.hooks)
+func (_u *MessageRemindUpdateOne) Save(ctx context.Context) (*MessageRemind, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (mruo *MessageRemindUpdateOne) SaveX(ctx context.Context) *MessageRemind {
-	node, err := mruo.Save(ctx)
+func (_u *MessageRemindUpdateOne) SaveX(ctx context.Context) *MessageRemind {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -397,47 +397,47 @@ func (mruo *MessageRemindUpdateOne) SaveX(ctx context.Context) *MessageRemind {
 }
 
 // Exec executes the query on the entity.
-func (mruo *MessageRemindUpdateOne) Exec(ctx context.Context) error {
-	_, err := mruo.Save(ctx)
+func (_u *MessageRemindUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (mruo *MessageRemindUpdateOne) ExecX(ctx context.Context) {
-	if err := mruo.Exec(ctx); err != nil {
+func (_u *MessageRemindUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (mruo *MessageRemindUpdateOne) check() error {
-	if v, ok := mruo.mutation.Content(); ok {
+func (_u *MessageRemindUpdateOne) check() error {
+	if v, ok := _u.mutation.Content(); ok {
 		if err := messageremind.ContentValidator(v); err != nil {
 			return &ValidationError{Name: "content", err: fmt.Errorf(`ent: validator failed for field "MessageRemind.content": %w`, err)}
 		}
 	}
-	if v, ok := mruo.mutation.Name(); ok {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := messageremind.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "MessageRemind.name": %w`, err)}
 		}
 	}
-	if mruo.mutation.GuildCleared() && len(mruo.mutation.GuildIDs()) > 0 {
+	if _u.mutation.GuildCleared() && len(_u.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "MessageRemind.guild"`)
 	}
 	return nil
 }
 
-func (mruo *MessageRemindUpdateOne) sqlSave(ctx context.Context) (_node *MessageRemind, err error) {
-	if err := mruo.check(); err != nil {
+func (_u *MessageRemindUpdateOne) sqlSave(ctx context.Context) (_node *MessageRemind, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(messageremind.Table, messageremind.Columns, sqlgraph.NewFieldSpec(messageremind.FieldID, field.TypeUUID))
-	id, ok := mruo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "MessageRemind.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := mruo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, messageremind.FieldID)
 		for _, f := range fields {
@@ -449,35 +449,35 @@ func (mruo *MessageRemindUpdateOne) sqlSave(ctx context.Context) (_node *Message
 			}
 		}
 	}
-	if ps := mruo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := mruo.mutation.ChannelID(); ok {
+	if value, ok := _u.mutation.ChannelID(); ok {
 		_spec.SetField(messageremind.FieldChannelID, field.TypeUint64, value)
 	}
-	if value, ok := mruo.mutation.AddedChannelID(); ok {
+	if value, ok := _u.mutation.AddedChannelID(); ok {
 		_spec.AddField(messageremind.FieldChannelID, field.TypeUint64, value)
 	}
-	if value, ok := mruo.mutation.AuthorID(); ok {
+	if value, ok := _u.mutation.AuthorID(); ok {
 		_spec.SetField(messageremind.FieldAuthorID, field.TypeUint64, value)
 	}
-	if value, ok := mruo.mutation.AddedAuthorID(); ok {
+	if value, ok := _u.mutation.AddedAuthorID(); ok {
 		_spec.AddField(messageremind.FieldAuthorID, field.TypeUint64, value)
 	}
-	if value, ok := mruo.mutation.Time(); ok {
+	if value, ok := _u.mutation.Time(); ok {
 		_spec.SetField(messageremind.FieldTime, field.TypeTime, value)
 	}
-	if value, ok := mruo.mutation.Content(); ok {
+	if value, ok := _u.mutation.Content(); ok {
 		_spec.SetField(messageremind.FieldContent, field.TypeString, value)
 	}
-	if value, ok := mruo.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(messageremind.FieldName, field.TypeString, value)
 	}
-	if mruo.mutation.GuildCleared() {
+	if _u.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -490,7 +490,7 @@ func (mruo *MessageRemindUpdateOne) sqlSave(ctx context.Context) (_node *Message
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := mruo.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -506,10 +506,10 @@ func (mruo *MessageRemindUpdateOne) sqlSave(ctx context.Context) (_node *Message
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_node = &MessageRemind{config: mruo.config}
+	_node = &MessageRemind{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, mruo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{messageremind.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -517,6 +517,6 @@ func (mruo *MessageRemindUpdateOne) sqlSave(ctx context.Context) (_node *Message
 		}
 		return nil, err
 	}
-	mruo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

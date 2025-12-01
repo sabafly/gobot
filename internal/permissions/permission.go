@@ -18,7 +18,6 @@
  *
  */
 
-// Deprecated: This file is deprecated and will be removed in a future version.
 package permissions
 
 import (

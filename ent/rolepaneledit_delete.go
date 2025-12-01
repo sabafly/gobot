@@ -20,56 +20,56 @@ type RolePanelEditDelete struct {
 }
 
 // Where appends a list predicates to the RolePanelEditDelete builder.
-func (rped *RolePanelEditDelete) Where(ps ...predicate.RolePanelEdit) *RolePanelEditDelete {
-	rped.mutation.Where(ps...)
-	return rped
+func (_d *RolePanelEditDelete) Where(ps ...predicate.RolePanelEdit) *RolePanelEditDelete {
+	_d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (rped *RolePanelEditDelete) Exec(ctx context.Context) (int, error) {
-	return withHooks(ctx, rped.sqlExec, rped.mutation, rped.hooks)
+func (_d *RolePanelEditDelete) Exec(ctx context.Context) (int, error) {
+	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (rped *RolePanelEditDelete) ExecX(ctx context.Context) int {
-	n, err := rped.Exec(ctx)
+func (_d *RolePanelEditDelete) ExecX(ctx context.Context) int {
+	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
 	}
 	return n
 }
 
-func (rped *RolePanelEditDelete) sqlExec(ctx context.Context) (int, error) {
+func (_d *RolePanelEditDelete) sqlExec(ctx context.Context) (int, error) {
 	_spec := sqlgraph.NewDeleteSpec(rolepaneledit.Table, sqlgraph.NewFieldSpec(rolepaneledit.FieldID, field.TypeUUID))
-	if ps := rped.mutation.predicates; len(ps) > 0 {
+	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	affected, err := sqlgraph.DeleteNodes(ctx, rped.driver, _spec)
+	affected, err := sqlgraph.DeleteNodes(ctx, _d.driver, _spec)
 	if err != nil && sqlgraph.IsConstraintError(err) {
 		err = &ConstraintError{msg: err.Error(), wrap: err}
 	}
-	rped.mutation.done = true
+	_d.mutation.done = true
 	return affected, err
 }
 
 // RolePanelEditDeleteOne is the builder for deleting a single RolePanelEdit entity.
 type RolePanelEditDeleteOne struct {
-	rped *RolePanelEditDelete
+	_d *RolePanelEditDelete
 }
 
 // Where appends a list predicates to the RolePanelEditDelete builder.
-func (rpedo *RolePanelEditDeleteOne) Where(ps ...predicate.RolePanelEdit) *RolePanelEditDeleteOne {
-	rpedo.rped.mutation.Where(ps...)
-	return rpedo
+func (_d *RolePanelEditDeleteOne) Where(ps ...predicate.RolePanelEdit) *RolePanelEditDeleteOne {
+	_d._d.mutation.Where(ps...)
+	return _d
 }
 
 // Exec executes the deletion query.
-func (rpedo *RolePanelEditDeleteOne) Exec(ctx context.Context) error {
-	n, err := rpedo.rped.Exec(ctx)
+func (_d *RolePanelEditDeleteOne) Exec(ctx context.Context) error {
+	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
@@ -81,8 +81,8 @@ func (rpedo *RolePanelEditDeleteOne) Exec(ctx context.Context) error {
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (rpedo *RolePanelEditDeleteOne) ExecX(ctx context.Context) {
-	if err := rpedo.Exec(ctx); err != nil {
+func (_d *RolePanelEditDeleteOne) ExecX(ctx context.Context) {
+	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
