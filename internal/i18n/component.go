@@ -1112,7 +1112,7 @@ func (l *Label) UnmarshalYAML(value *yaml.Node) error {
 	var ok bool
 	l.Component, ok = v.Component.Component.(LabelSubComponent)
 	if !ok {
-		return fmt.Errorf("component is type %s not LabelSubComponent", v.Component.Component.Type())
+		return fmt.Errorf("component is type %s not LabelSubComponent", v.Component.Type())
 	}
 	return nil
 }
