@@ -36,44 +36,44 @@ type Thread1000ChannelQuery struct {
 }
 
 // Where adds a new predicate for the Thread1000ChannelQuery builder.
-func (tq *Thread1000ChannelQuery) Where(ps ...predicate.Thread1000Channel) *Thread1000ChannelQuery {
-	tq.predicates = append(tq.predicates, ps...)
-	return tq
+func (_q *Thread1000ChannelQuery) Where(ps ...predicate.Thread1000Channel) *Thread1000ChannelQuery {
+	_q.predicates = append(_q.predicates, ps...)
+	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (tq *Thread1000ChannelQuery) Limit(limit int) *Thread1000ChannelQuery {
-	tq.ctx.Limit = &limit
-	return tq
+func (_q *Thread1000ChannelQuery) Limit(limit int) *Thread1000ChannelQuery {
+	_q.ctx.Limit = &limit
+	return _q
 }
 
 // Offset to start from.
-func (tq *Thread1000ChannelQuery) Offset(offset int) *Thread1000ChannelQuery {
-	tq.ctx.Offset = &offset
-	return tq
+func (_q *Thread1000ChannelQuery) Offset(offset int) *Thread1000ChannelQuery {
+	_q.ctx.Offset = &offset
+	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (tq *Thread1000ChannelQuery) Unique(unique bool) *Thread1000ChannelQuery {
-	tq.ctx.Unique = &unique
-	return tq
+func (_q *Thread1000ChannelQuery) Unique(unique bool) *Thread1000ChannelQuery {
+	_q.ctx.Unique = &unique
+	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (tq *Thread1000ChannelQuery) Order(o ...thread1000channel.OrderOption) *Thread1000ChannelQuery {
-	tq.order = append(tq.order, o...)
-	return tq
+func (_q *Thread1000ChannelQuery) Order(o ...thread1000channel.OrderOption) *Thread1000ChannelQuery {
+	_q.order = append(_q.order, o...)
+	return _q
 }
 
 // QueryGuild chains the current query on the "guild" edge.
-func (tq *Thread1000ChannelQuery) QueryGuild() *GuildQuery {
-	query := (&GuildClient{config: tq.config}).Query()
+func (_q *Thread1000ChannelQuery) QueryGuild() *GuildQuery {
+	query := (&GuildClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := tq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := tq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -82,20 +82,20 @@ func (tq *Thread1000ChannelQuery) QueryGuild() *GuildQuery {
 			sqlgraph.To(guild.Table, guild.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, thread1000channel.GuildTable, thread1000channel.GuildColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
 }
 
 // QueryThreads chains the current query on the "threads" edge.
-func (tq *Thread1000ChannelQuery) QueryThreads() *Thread1000Query {
-	query := (&Thread1000Client{config: tq.config}).Query()
+func (_q *Thread1000ChannelQuery) QueryThreads() *Thread1000Query {
+	query := (&Thread1000Client{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := tq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := tq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -104,7 +104,7 @@ func (tq *Thread1000ChannelQuery) QueryThreads() *Thread1000Query {
 			sqlgraph.To(thread1000.Table, thread1000.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, thread1000channel.ThreadsTable, thread1000channel.ThreadsColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
@@ -112,8 +112,8 @@ func (tq *Thread1000ChannelQuery) QueryThreads() *Thread1000Query {
 
 // First returns the first Thread1000Channel entity from the query.
 // Returns a *NotFoundError when no Thread1000Channel was found.
-func (tq *Thread1000ChannelQuery) First(ctx context.Context) (*Thread1000Channel, error) {
-	nodes, err := tq.Limit(1).All(setContextOp(ctx, tq.ctx, ent.OpQueryFirst))
+func (_q *Thread1000ChannelQuery) First(ctx context.Context) (*Thread1000Channel, error) {
+	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -124,8 +124,8 @@ func (tq *Thread1000ChannelQuery) First(ctx context.Context) (*Thread1000Channel
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (tq *Thread1000ChannelQuery) FirstX(ctx context.Context) *Thread1000Channel {
-	node, err := tq.First(ctx)
+func (_q *Thread1000ChannelQuery) FirstX(ctx context.Context) *Thread1000Channel {
+	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -134,9 +134,9 @@ func (tq *Thread1000ChannelQuery) FirstX(ctx context.Context) *Thread1000Channel
 
 // FirstID returns the first Thread1000Channel ID from the query.
 // Returns a *NotFoundError when no Thread1000Channel ID was found.
-func (tq *Thread1000ChannelQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *Thread1000ChannelQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = tq.Limit(1).IDs(setContextOp(ctx, tq.ctx, ent.OpQueryFirstID)); err != nil {
+	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -147,8 +147,8 @@ func (tq *Thread1000ChannelQuery) FirstID(ctx context.Context) (id uuid.UUID, er
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (tq *Thread1000ChannelQuery) FirstIDX(ctx context.Context) uuid.UUID {
-	id, err := tq.FirstID(ctx)
+func (_q *Thread1000ChannelQuery) FirstIDX(ctx context.Context) uuid.UUID {
+	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -158,8 +158,8 @@ func (tq *Thread1000ChannelQuery) FirstIDX(ctx context.Context) uuid.UUID {
 // Only returns a single Thread1000Channel entity found by the query, ensuring it only returns one.
 // Returns a *NotSingularError when more than one Thread1000Channel entity is found.
 // Returns a *NotFoundError when no Thread1000Channel entities are found.
-func (tq *Thread1000ChannelQuery) Only(ctx context.Context) (*Thread1000Channel, error) {
-	nodes, err := tq.Limit(2).All(setContextOp(ctx, tq.ctx, ent.OpQueryOnly))
+func (_q *Thread1000ChannelQuery) Only(ctx context.Context) (*Thread1000Channel, error) {
+	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -174,8 +174,8 @@ func (tq *Thread1000ChannelQuery) Only(ctx context.Context) (*Thread1000Channel,
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (tq *Thread1000ChannelQuery) OnlyX(ctx context.Context) *Thread1000Channel {
-	node, err := tq.Only(ctx)
+func (_q *Thread1000ChannelQuery) OnlyX(ctx context.Context) *Thread1000Channel {
+	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -185,9 +185,9 @@ func (tq *Thread1000ChannelQuery) OnlyX(ctx context.Context) *Thread1000Channel 
 // OnlyID is like Only, but returns the only Thread1000Channel ID in the query.
 // Returns a *NotSingularError when more than one Thread1000Channel ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (tq *Thread1000ChannelQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *Thread1000ChannelQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = tq.Limit(2).IDs(setContextOp(ctx, tq.ctx, ent.OpQueryOnlyID)); err != nil {
+	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -202,8 +202,8 @@ func (tq *Thread1000ChannelQuery) OnlyID(ctx context.Context) (id uuid.UUID, err
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (tq *Thread1000ChannelQuery) OnlyIDX(ctx context.Context) uuid.UUID {
-	id, err := tq.OnlyID(ctx)
+func (_q *Thread1000ChannelQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -211,18 +211,18 @@ func (tq *Thread1000ChannelQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 }
 
 // All executes the query and returns a list of Thread1000Channels.
-func (tq *Thread1000ChannelQuery) All(ctx context.Context) ([]*Thread1000Channel, error) {
-	ctx = setContextOp(ctx, tq.ctx, ent.OpQueryAll)
-	if err := tq.prepareQuery(ctx); err != nil {
+func (_q *Thread1000ChannelQuery) All(ctx context.Context) ([]*Thread1000Channel, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
 	qr := querierAll[[]*Thread1000Channel, *Thread1000ChannelQuery]()
-	return withInterceptors[[]*Thread1000Channel](ctx, tq, qr, tq.inters)
+	return withInterceptors[[]*Thread1000Channel](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (tq *Thread1000ChannelQuery) AllX(ctx context.Context) []*Thread1000Channel {
-	nodes, err := tq.All(ctx)
+func (_q *Thread1000ChannelQuery) AllX(ctx context.Context) []*Thread1000Channel {
+	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -230,20 +230,20 @@ func (tq *Thread1000ChannelQuery) AllX(ctx context.Context) []*Thread1000Channel
 }
 
 // IDs executes the query and returns a list of Thread1000Channel IDs.
-func (tq *Thread1000ChannelQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
-	if tq.ctx.Unique == nil && tq.path != nil {
-		tq.Unique(true)
+func (_q *Thread1000ChannelQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+	if _q.ctx.Unique == nil && _q.path != nil {
+		_q.Unique(true)
 	}
-	ctx = setContextOp(ctx, tq.ctx, ent.OpQueryIDs)
-	if err = tq.Select(thread1000channel.FieldID).Scan(ctx, &ids); err != nil {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
+	if err = _q.Select(thread1000channel.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (tq *Thread1000ChannelQuery) IDsX(ctx context.Context) []uuid.UUID {
-	ids, err := tq.IDs(ctx)
+func (_q *Thread1000ChannelQuery) IDsX(ctx context.Context) []uuid.UUID {
+	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -251,17 +251,17 @@ func (tq *Thread1000ChannelQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (tq *Thread1000ChannelQuery) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, tq.ctx, ent.OpQueryCount)
-	if err := tq.prepareQuery(ctx); err != nil {
+func (_q *Thread1000ChannelQuery) Count(ctx context.Context) (int, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, tq, querierCount[*Thread1000ChannelQuery](), tq.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*Thread1000ChannelQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (tq *Thread1000ChannelQuery) CountX(ctx context.Context) int {
-	count, err := tq.Count(ctx)
+func (_q *Thread1000ChannelQuery) CountX(ctx context.Context) int {
+	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -269,9 +269,9 @@ func (tq *Thread1000ChannelQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (tq *Thread1000ChannelQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, tq.ctx, ent.OpQueryExist)
-	switch _, err := tq.FirstID(ctx); {
+func (_q *Thread1000ChannelQuery) Exist(ctx context.Context) (bool, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
+	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
 	case err != nil:
@@ -282,8 +282,8 @@ func (tq *Thread1000ChannelQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (tq *Thread1000ChannelQuery) ExistX(ctx context.Context) bool {
-	exist, err := tq.Exist(ctx)
+func (_q *Thread1000ChannelQuery) ExistX(ctx context.Context) bool {
+	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -292,44 +292,44 @@ func (tq *Thread1000ChannelQuery) ExistX(ctx context.Context) bool {
 
 // Clone returns a duplicate of the Thread1000ChannelQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (tq *Thread1000ChannelQuery) Clone() *Thread1000ChannelQuery {
-	if tq == nil {
+func (_q *Thread1000ChannelQuery) Clone() *Thread1000ChannelQuery {
+	if _q == nil {
 		return nil
 	}
 	return &Thread1000ChannelQuery{
-		config:      tq.config,
-		ctx:         tq.ctx.Clone(),
-		order:       append([]thread1000channel.OrderOption{}, tq.order...),
-		inters:      append([]Interceptor{}, tq.inters...),
-		predicates:  append([]predicate.Thread1000Channel{}, tq.predicates...),
-		withGuild:   tq.withGuild.Clone(),
-		withThreads: tq.withThreads.Clone(),
+		config:      _q.config,
+		ctx:         _q.ctx.Clone(),
+		order:       append([]thread1000channel.OrderOption{}, _q.order...),
+		inters:      append([]Interceptor{}, _q.inters...),
+		predicates:  append([]predicate.Thread1000Channel{}, _q.predicates...),
+		withGuild:   _q.withGuild.Clone(),
+		withThreads: _q.withThreads.Clone(),
 		// clone intermediate query.
-		sql:  tq.sql.Clone(),
-		path: tq.path,
+		sql:  _q.sql.Clone(),
+		path: _q.path,
 	}
 }
 
 // WithGuild tells the query-builder to eager-load the nodes that are connected to
 // the "guild" edge. The optional arguments are used to configure the query builder of the edge.
-func (tq *Thread1000ChannelQuery) WithGuild(opts ...func(*GuildQuery)) *Thread1000ChannelQuery {
-	query := (&GuildClient{config: tq.config}).Query()
+func (_q *Thread1000ChannelQuery) WithGuild(opts ...func(*GuildQuery)) *Thread1000ChannelQuery {
+	query := (&GuildClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	tq.withGuild = query
-	return tq
+	_q.withGuild = query
+	return _q
 }
 
 // WithThreads tells the query-builder to eager-load the nodes that are connected to
 // the "threads" edge. The optional arguments are used to configure the query builder of the edge.
-func (tq *Thread1000ChannelQuery) WithThreads(opts ...func(*Thread1000Query)) *Thread1000ChannelQuery {
-	query := (&Thread1000Client{config: tq.config}).Query()
+func (_q *Thread1000ChannelQuery) WithThreads(opts ...func(*Thread1000Query)) *Thread1000ChannelQuery {
+	query := (&Thread1000Client{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	tq.withThreads = query
-	return tq
+	_q.withThreads = query
+	return _q
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -346,10 +346,10 @@ func (tq *Thread1000ChannelQuery) WithThreads(opts ...func(*Thread1000Query)) *T
 //		GroupBy(thread1000channel.FieldName).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (tq *Thread1000ChannelQuery) GroupBy(field string, fields ...string) *Thread1000ChannelGroupBy {
-	tq.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &Thread1000ChannelGroupBy{build: tq}
-	grbuild.flds = &tq.ctx.Fields
+func (_q *Thread1000ChannelQuery) GroupBy(field string, fields ...string) *Thread1000ChannelGroupBy {
+	_q.ctx.Fields = append([]string{field}, fields...)
+	grbuild := &Thread1000ChannelGroupBy{build: _q}
+	grbuild.flds = &_q.ctx.Fields
 	grbuild.label = thread1000channel.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
@@ -367,56 +367,56 @@ func (tq *Thread1000ChannelQuery) GroupBy(field string, fields ...string) *Threa
 //	client.Thread1000Channel.Query().
 //		Select(thread1000channel.FieldName).
 //		Scan(ctx, &v)
-func (tq *Thread1000ChannelQuery) Select(fields ...string) *Thread1000ChannelSelect {
-	tq.ctx.Fields = append(tq.ctx.Fields, fields...)
-	sbuild := &Thread1000ChannelSelect{Thread1000ChannelQuery: tq}
+func (_q *Thread1000ChannelQuery) Select(fields ...string) *Thread1000ChannelSelect {
+	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
+	sbuild := &Thread1000ChannelSelect{Thread1000ChannelQuery: _q}
 	sbuild.label = thread1000channel.Label
-	sbuild.flds, sbuild.scan = &tq.ctx.Fields, sbuild.Scan
+	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
 // Aggregate returns a Thread1000ChannelSelect configured with the given aggregations.
-func (tq *Thread1000ChannelQuery) Aggregate(fns ...AggregateFunc) *Thread1000ChannelSelect {
-	return tq.Select().Aggregate(fns...)
+func (_q *Thread1000ChannelQuery) Aggregate(fns ...AggregateFunc) *Thread1000ChannelSelect {
+	return _q.Select().Aggregate(fns...)
 }
 
-func (tq *Thread1000ChannelQuery) prepareQuery(ctx context.Context) error {
-	for _, inter := range tq.inters {
+func (_q *Thread1000ChannelQuery) prepareQuery(ctx context.Context) error {
+	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
 		}
 		if trv, ok := inter.(Traverser); ok {
-			if err := trv.Traverse(ctx, tq); err != nil {
+			if err := trv.Traverse(ctx, _q); err != nil {
 				return err
 			}
 		}
 	}
-	for _, f := range tq.ctx.Fields {
+	for _, f := range _q.ctx.Fields {
 		if !thread1000channel.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
-	if tq.path != nil {
-		prev, err := tq.path(ctx)
+	if _q.path != nil {
+		prev, err := _q.path(ctx)
 		if err != nil {
 			return err
 		}
-		tq.sql = prev
+		_q.sql = prev
 	}
 	return nil
 }
 
-func (tq *Thread1000ChannelQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Thread1000Channel, error) {
+func (_q *Thread1000ChannelQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Thread1000Channel, error) {
 	var (
 		nodes       = []*Thread1000Channel{}
-		withFKs     = tq.withFKs
-		_spec       = tq.querySpec()
+		withFKs     = _q.withFKs
+		_spec       = _q.querySpec()
 		loadedTypes = [2]bool{
-			tq.withGuild != nil,
-			tq.withThreads != nil,
+			_q.withGuild != nil,
+			_q.withThreads != nil,
 		}
 	)
-	if tq.withGuild != nil {
+	if _q.withGuild != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -426,7 +426,7 @@ func (tq *Thread1000ChannelQuery) sqlAll(ctx context.Context, hooks ...queryHook
 		return (*Thread1000Channel).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &Thread1000Channel{config: tq.config}
+		node := &Thread1000Channel{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -434,20 +434,20 @@ func (tq *Thread1000ChannelQuery) sqlAll(ctx context.Context, hooks ...queryHook
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
-	if err := sqlgraph.QueryNodes(ctx, tq.driver, _spec); err != nil {
+	if err := sqlgraph.QueryNodes(ctx, _q.driver, _spec); err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := tq.withGuild; query != nil {
-		if err := tq.loadGuild(ctx, query, nodes, nil,
+	if query := _q.withGuild; query != nil {
+		if err := _q.loadGuild(ctx, query, nodes, nil,
 			func(n *Thread1000Channel, e *Guild) { n.Edges.Guild = e }); err != nil {
 			return nil, err
 		}
 	}
-	if query := tq.withThreads; query != nil {
-		if err := tq.loadThreads(ctx, query, nodes,
+	if query := _q.withThreads; query != nil {
+		if err := _q.loadThreads(ctx, query, nodes,
 			func(n *Thread1000Channel) { n.Edges.Threads = []*Thread1000{} },
 			func(n *Thread1000Channel, e *Thread1000) { n.Edges.Threads = append(n.Edges.Threads, e) }); err != nil {
 			return nil, err
@@ -456,7 +456,7 @@ func (tq *Thread1000ChannelQuery) sqlAll(ctx context.Context, hooks ...queryHook
 	return nodes, nil
 }
 
-func (tq *Thread1000ChannelQuery) loadGuild(ctx context.Context, query *GuildQuery, nodes []*Thread1000Channel, init func(*Thread1000Channel), assign func(*Thread1000Channel, *Guild)) error {
+func (_q *Thread1000ChannelQuery) loadGuild(ctx context.Context, query *GuildQuery, nodes []*Thread1000Channel, init func(*Thread1000Channel), assign func(*Thread1000Channel, *Guild)) error {
 	ids := make([]snowflake.ID, 0, len(nodes))
 	nodeids := make(map[snowflake.ID][]*Thread1000Channel)
 	for i := range nodes {
@@ -488,7 +488,7 @@ func (tq *Thread1000ChannelQuery) loadGuild(ctx context.Context, query *GuildQue
 	}
 	return nil
 }
-func (tq *Thread1000ChannelQuery) loadThreads(ctx context.Context, query *Thread1000Query, nodes []*Thread1000Channel, init func(*Thread1000Channel), assign func(*Thread1000Channel, *Thread1000)) error {
+func (_q *Thread1000ChannelQuery) loadThreads(ctx context.Context, query *Thread1000Query, nodes []*Thread1000Channel, init func(*Thread1000Channel), assign func(*Thread1000Channel, *Thread1000)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[uuid.UUID]*Thread1000Channel)
 	for i := range nodes {
@@ -520,24 +520,24 @@ func (tq *Thread1000ChannelQuery) loadThreads(ctx context.Context, query *Thread
 	return nil
 }
 
-func (tq *Thread1000ChannelQuery) sqlCount(ctx context.Context) (int, error) {
-	_spec := tq.querySpec()
-	_spec.Node.Columns = tq.ctx.Fields
-	if len(tq.ctx.Fields) > 0 {
-		_spec.Unique = tq.ctx.Unique != nil && *tq.ctx.Unique
+func (_q *Thread1000ChannelQuery) sqlCount(ctx context.Context) (int, error) {
+	_spec := _q.querySpec()
+	_spec.Node.Columns = _q.ctx.Fields
+	if len(_q.ctx.Fields) > 0 {
+		_spec.Unique = _q.ctx.Unique != nil && *_q.ctx.Unique
 	}
-	return sqlgraph.CountNodes(ctx, tq.driver, _spec)
+	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (tq *Thread1000ChannelQuery) querySpec() *sqlgraph.QuerySpec {
+func (_q *Thread1000ChannelQuery) querySpec() *sqlgraph.QuerySpec {
 	_spec := sqlgraph.NewQuerySpec(thread1000channel.Table, thread1000channel.Columns, sqlgraph.NewFieldSpec(thread1000channel.FieldID, field.TypeUUID))
-	_spec.From = tq.sql
-	if unique := tq.ctx.Unique; unique != nil {
+	_spec.From = _q.sql
+	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
-	} else if tq.path != nil {
+	} else if _q.path != nil {
 		_spec.Unique = true
 	}
-	if fields := tq.ctx.Fields; len(fields) > 0 {
+	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, thread1000channel.FieldID)
 		for i := range fields {
@@ -546,20 +546,20 @@ func (tq *Thread1000ChannelQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if ps := tq.predicates; len(ps) > 0 {
+	if ps := _q.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if limit := tq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := tq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
-	if ps := tq.order; len(ps) > 0 {
+	if ps := _q.order; len(ps) > 0 {
 		_spec.Order = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
@@ -569,33 +569,33 @@ func (tq *Thread1000ChannelQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (tq *Thread1000ChannelQuery) sqlQuery(ctx context.Context) *sql.Selector {
-	builder := sql.Dialect(tq.driver.Dialect())
+func (_q *Thread1000ChannelQuery) sqlQuery(ctx context.Context) *sql.Selector {
+	builder := sql.Dialect(_q.driver.Dialect())
 	t1 := builder.Table(thread1000channel.Table)
-	columns := tq.ctx.Fields
+	columns := _q.ctx.Fields
 	if len(columns) == 0 {
 		columns = thread1000channel.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
-	if tq.sql != nil {
-		selector = tq.sql
+	if _q.sql != nil {
+		selector = _q.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if tq.ctx.Unique != nil && *tq.ctx.Unique {
+	if _q.ctx.Unique != nil && *_q.ctx.Unique {
 		selector.Distinct()
 	}
-	for _, p := range tq.predicates {
+	for _, p := range _q.predicates {
 		p(selector)
 	}
-	for _, p := range tq.order {
+	for _, p := range _q.order {
 		p(selector)
 	}
-	if offset := tq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := tq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
@@ -608,41 +608,41 @@ type Thread1000ChannelGroupBy struct {
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (tgb *Thread1000ChannelGroupBy) Aggregate(fns ...AggregateFunc) *Thread1000ChannelGroupBy {
-	tgb.fns = append(tgb.fns, fns...)
-	return tgb
+func (_g *Thread1000ChannelGroupBy) Aggregate(fns ...AggregateFunc) *Thread1000ChannelGroupBy {
+	_g.fns = append(_g.fns, fns...)
+	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (tgb *Thread1000ChannelGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, tgb.build.ctx, ent.OpQueryGroupBy)
-	if err := tgb.build.prepareQuery(ctx); err != nil {
+func (_g *Thread1000ChannelGroupBy) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
+	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*Thread1000ChannelQuery, *Thread1000ChannelGroupBy](ctx, tgb.build, tgb, tgb.build.inters, v)
+	return scanWithInterceptors[*Thread1000ChannelQuery, *Thread1000ChannelGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (tgb *Thread1000ChannelGroupBy) sqlScan(ctx context.Context, root *Thread1000ChannelQuery, v any) error {
+func (_g *Thread1000ChannelGroupBy) sqlScan(ctx context.Context, root *Thread1000ChannelQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
-	aggregation := make([]string, 0, len(tgb.fns))
-	for _, fn := range tgb.fns {
+	aggregation := make([]string, 0, len(_g.fns))
+	for _, fn := range _g.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
 	if len(selector.SelectedColumns()) == 0 {
-		columns := make([]string, 0, len(*tgb.flds)+len(tgb.fns))
-		for _, f := range *tgb.flds {
+		columns := make([]string, 0, len(*_g.flds)+len(_g.fns))
+		for _, f := range *_g.flds {
 			columns = append(columns, selector.C(f))
 		}
 		columns = append(columns, aggregation...)
 		selector.Select(columns...)
 	}
-	selector.GroupBy(selector.Columns(*tgb.flds...)...)
+	selector.GroupBy(selector.Columns(*_g.flds...)...)
 	if err := selector.Err(); err != nil {
 		return err
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := tgb.build.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _g.build.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
@@ -656,27 +656,27 @@ type Thread1000ChannelSelect struct {
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (ts *Thread1000ChannelSelect) Aggregate(fns ...AggregateFunc) *Thread1000ChannelSelect {
-	ts.fns = append(ts.fns, fns...)
-	return ts
+func (_s *Thread1000ChannelSelect) Aggregate(fns ...AggregateFunc) *Thread1000ChannelSelect {
+	_s.fns = append(_s.fns, fns...)
+	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (ts *Thread1000ChannelSelect) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, ts.ctx, ent.OpQuerySelect)
-	if err := ts.prepareQuery(ctx); err != nil {
+func (_s *Thread1000ChannelSelect) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
+	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*Thread1000ChannelQuery, *Thread1000ChannelSelect](ctx, ts.Thread1000ChannelQuery, ts, ts.inters, v)
+	return scanWithInterceptors[*Thread1000ChannelQuery, *Thread1000ChannelSelect](ctx, _s.Thread1000ChannelQuery, _s, _s.inters, v)
 }
 
-func (ts *Thread1000ChannelSelect) sqlScan(ctx context.Context, root *Thread1000ChannelQuery, v any) error {
+func (_s *Thread1000ChannelSelect) sqlScan(ctx context.Context, root *Thread1000ChannelQuery, v any) error {
 	selector := root.sqlQuery(ctx)
-	aggregation := make([]string, 0, len(ts.fns))
-	for _, fn := range ts.fns {
+	aggregation := make([]string, 0, len(_s.fns))
+	for _, fn := range _s.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
-	switch n := len(*ts.selector.flds); {
+	switch n := len(*_s.selector.flds); {
 	case n == 0 && len(aggregation) > 0:
 		selector.Select(aggregation...)
 	case n != 0 && len(aggregation) > 0:
@@ -684,7 +684,7 @@ func (ts *Thread1000ChannelSelect) sqlScan(ctx context.Context, root *Thread1000
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := ts.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _s.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()

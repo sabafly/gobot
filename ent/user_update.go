@@ -31,253 +31,253 @@ type UserUpdate struct {
 }
 
 // Where appends a list predicates to the UserUpdate builder.
-func (uu *UserUpdate) Where(ps ...predicate.User) *UserUpdate {
-	uu.mutation.Where(ps...)
-	return uu
+func (_u *UserUpdate) Where(ps ...predicate.User) *UserUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetName sets the "name" field.
-func (uu *UserUpdate) SetName(s string) *UserUpdate {
-	uu.mutation.SetName(s)
-	return uu
+func (_u *UserUpdate) SetName(v string) *UserUpdate {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableName(s *string) *UserUpdate {
-	if s != nil {
-		uu.SetName(*s)
+func (_u *UserUpdate) SetNillableName(v *string) *UserUpdate {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return uu
+	return _u
 }
 
 // SetLocale sets the "locale" field.
-func (uu *UserUpdate) SetLocale(d discord.Locale) *UserUpdate {
-	uu.mutation.SetLocale(d)
-	return uu
+func (_u *UserUpdate) SetLocale(v discord.Locale) *UserUpdate {
+	_u.mutation.SetLocale(v)
+	return _u
 }
 
 // SetNillableLocale sets the "locale" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableLocale(d *discord.Locale) *UserUpdate {
-	if d != nil {
-		uu.SetLocale(*d)
+func (_u *UserUpdate) SetNillableLocale(v *discord.Locale) *UserUpdate {
+	if v != nil {
+		_u.SetLocale(*v)
 	}
-	return uu
+	return _u
 }
 
 // SetXp sets the "xp" field.
-func (uu *UserUpdate) SetXp(x xppoint.XP) *UserUpdate {
-	uu.mutation.ResetXp()
-	uu.mutation.SetXp(x)
-	return uu
+func (_u *UserUpdate) SetXp(v xppoint.XP) *UserUpdate {
+	_u.mutation.ResetXp()
+	_u.mutation.SetXp(v)
+	return _u
 }
 
 // SetNillableXp sets the "xp" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableXp(x *xppoint.XP) *UserUpdate {
-	if x != nil {
-		uu.SetXp(*x)
+func (_u *UserUpdate) SetNillableXp(v *xppoint.XP) *UserUpdate {
+	if v != nil {
+		_u.SetXp(*v)
 	}
-	return uu
+	return _u
 }
 
-// AddXp adds x to the "xp" field.
-func (uu *UserUpdate) AddXp(x xppoint.XP) *UserUpdate {
-	uu.mutation.AddXp(x)
-	return uu
+// AddXp adds value to the "xp" field.
+func (_u *UserUpdate) AddXp(v xppoint.XP) *UserUpdate {
+	_u.mutation.AddXp(v)
+	return _u
 }
 
 // AddOwnGuildIDs adds the "own_guilds" edge to the Guild entity by IDs.
-func (uu *UserUpdate) AddOwnGuildIDs(ids ...snowflake.ID) *UserUpdate {
-	uu.mutation.AddOwnGuildIDs(ids...)
-	return uu
+func (_u *UserUpdate) AddOwnGuildIDs(ids ...snowflake.ID) *UserUpdate {
+	_u.mutation.AddOwnGuildIDs(ids...)
+	return _u
 }
 
 // AddOwnGuilds adds the "own_guilds" edges to the Guild entity.
-func (uu *UserUpdate) AddOwnGuilds(g ...*Guild) *UserUpdate {
-	ids := make([]snowflake.ID, len(g))
-	for i := range g {
-		ids[i] = g[i].ID
+func (_u *UserUpdate) AddOwnGuilds(v ...*Guild) *UserUpdate {
+	ids := make([]snowflake.ID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uu.AddOwnGuildIDs(ids...)
+	return _u.AddOwnGuildIDs(ids...)
 }
 
 // AddGuildIDs adds the "guilds" edge to the Member entity by IDs.
-func (uu *UserUpdate) AddGuildIDs(ids ...int) *UserUpdate {
-	uu.mutation.AddGuildIDs(ids...)
-	return uu
+func (_u *UserUpdate) AddGuildIDs(ids ...int) *UserUpdate {
+	_u.mutation.AddGuildIDs(ids...)
+	return _u
 }
 
 // AddGuilds adds the "guilds" edges to the Member entity.
-func (uu *UserUpdate) AddGuilds(m ...*Member) *UserUpdate {
-	ids := make([]int, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_u *UserUpdate) AddGuilds(v ...*Member) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uu.AddGuildIDs(ids...)
+	return _u.AddGuildIDs(ids...)
 }
 
 // AddWordSuffixIDs adds the "word_suffix" edge to the WordSuffix entity by IDs.
-func (uu *UserUpdate) AddWordSuffixIDs(ids ...uuid.UUID) *UserUpdate {
-	uu.mutation.AddWordSuffixIDs(ids...)
-	return uu
+func (_u *UserUpdate) AddWordSuffixIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.AddWordSuffixIDs(ids...)
+	return _u
 }
 
 // AddWordSuffix adds the "word_suffix" edges to the WordSuffix entity.
-func (uu *UserUpdate) AddWordSuffix(w ...*WordSuffix) *UserUpdate {
-	ids := make([]uuid.UUID, len(w))
-	for i := range w {
-		ids[i] = w[i].ID
+func (_u *UserUpdate) AddWordSuffix(v ...*WordSuffix) *UserUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uu.AddWordSuffixIDs(ids...)
+	return _u.AddWordSuffixIDs(ids...)
 }
 
 // AddChinchiroSessionIDs adds the "chinchiro_sessions" edge to the ChinchiroSession entity by IDs.
-func (uu *UserUpdate) AddChinchiroSessionIDs(ids ...uuid.UUID) *UserUpdate {
-	uu.mutation.AddChinchiroSessionIDs(ids...)
-	return uu
+func (_u *UserUpdate) AddChinchiroSessionIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.AddChinchiroSessionIDs(ids...)
+	return _u
 }
 
 // AddChinchiroSessions adds the "chinchiro_sessions" edges to the ChinchiroSession entity.
-func (uu *UserUpdate) AddChinchiroSessions(c ...*ChinchiroSession) *UserUpdate {
-	ids := make([]uuid.UUID, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
+func (_u *UserUpdate) AddChinchiroSessions(v ...*ChinchiroSession) *UserUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uu.AddChinchiroSessionIDs(ids...)
+	return _u.AddChinchiroSessionIDs(ids...)
 }
 
 // AddChinchiroPlayerIDs adds the "chinchiro_players" edge to the ChinchiroPlayer entity by IDs.
-func (uu *UserUpdate) AddChinchiroPlayerIDs(ids ...uuid.UUID) *UserUpdate {
-	uu.mutation.AddChinchiroPlayerIDs(ids...)
-	return uu
+func (_u *UserUpdate) AddChinchiroPlayerIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.AddChinchiroPlayerIDs(ids...)
+	return _u
 }
 
 // AddChinchiroPlayers adds the "chinchiro_players" edges to the ChinchiroPlayer entity.
-func (uu *UserUpdate) AddChinchiroPlayers(c ...*ChinchiroPlayer) *UserUpdate {
-	ids := make([]uuid.UUID, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
+func (_u *UserUpdate) AddChinchiroPlayers(v ...*ChinchiroPlayer) *UserUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uu.AddChinchiroPlayerIDs(ids...)
+	return _u.AddChinchiroPlayerIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
-func (uu *UserUpdate) Mutation() *UserMutation {
-	return uu.mutation
+func (_u *UserUpdate) Mutation() *UserMutation {
+	return _u.mutation
 }
 
 // ClearOwnGuilds clears all "own_guilds" edges to the Guild entity.
-func (uu *UserUpdate) ClearOwnGuilds() *UserUpdate {
-	uu.mutation.ClearOwnGuilds()
-	return uu
+func (_u *UserUpdate) ClearOwnGuilds() *UserUpdate {
+	_u.mutation.ClearOwnGuilds()
+	return _u
 }
 
 // RemoveOwnGuildIDs removes the "own_guilds" edge to Guild entities by IDs.
-func (uu *UserUpdate) RemoveOwnGuildIDs(ids ...snowflake.ID) *UserUpdate {
-	uu.mutation.RemoveOwnGuildIDs(ids...)
-	return uu
+func (_u *UserUpdate) RemoveOwnGuildIDs(ids ...snowflake.ID) *UserUpdate {
+	_u.mutation.RemoveOwnGuildIDs(ids...)
+	return _u
 }
 
 // RemoveOwnGuilds removes "own_guilds" edges to Guild entities.
-func (uu *UserUpdate) RemoveOwnGuilds(g ...*Guild) *UserUpdate {
-	ids := make([]snowflake.ID, len(g))
-	for i := range g {
-		ids[i] = g[i].ID
+func (_u *UserUpdate) RemoveOwnGuilds(v ...*Guild) *UserUpdate {
+	ids := make([]snowflake.ID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uu.RemoveOwnGuildIDs(ids...)
+	return _u.RemoveOwnGuildIDs(ids...)
 }
 
 // ClearGuilds clears all "guilds" edges to the Member entity.
-func (uu *UserUpdate) ClearGuilds() *UserUpdate {
-	uu.mutation.ClearGuilds()
-	return uu
+func (_u *UserUpdate) ClearGuilds() *UserUpdate {
+	_u.mutation.ClearGuilds()
+	return _u
 }
 
 // RemoveGuildIDs removes the "guilds" edge to Member entities by IDs.
-func (uu *UserUpdate) RemoveGuildIDs(ids ...int) *UserUpdate {
-	uu.mutation.RemoveGuildIDs(ids...)
-	return uu
+func (_u *UserUpdate) RemoveGuildIDs(ids ...int) *UserUpdate {
+	_u.mutation.RemoveGuildIDs(ids...)
+	return _u
 }
 
 // RemoveGuilds removes "guilds" edges to Member entities.
-func (uu *UserUpdate) RemoveGuilds(m ...*Member) *UserUpdate {
-	ids := make([]int, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_u *UserUpdate) RemoveGuilds(v ...*Member) *UserUpdate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uu.RemoveGuildIDs(ids...)
+	return _u.RemoveGuildIDs(ids...)
 }
 
 // ClearWordSuffix clears all "word_suffix" edges to the WordSuffix entity.
-func (uu *UserUpdate) ClearWordSuffix() *UserUpdate {
-	uu.mutation.ClearWordSuffix()
-	return uu
+func (_u *UserUpdate) ClearWordSuffix() *UserUpdate {
+	_u.mutation.ClearWordSuffix()
+	return _u
 }
 
 // RemoveWordSuffixIDs removes the "word_suffix" edge to WordSuffix entities by IDs.
-func (uu *UserUpdate) RemoveWordSuffixIDs(ids ...uuid.UUID) *UserUpdate {
-	uu.mutation.RemoveWordSuffixIDs(ids...)
-	return uu
+func (_u *UserUpdate) RemoveWordSuffixIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.RemoveWordSuffixIDs(ids...)
+	return _u
 }
 
 // RemoveWordSuffix removes "word_suffix" edges to WordSuffix entities.
-func (uu *UserUpdate) RemoveWordSuffix(w ...*WordSuffix) *UserUpdate {
-	ids := make([]uuid.UUID, len(w))
-	for i := range w {
-		ids[i] = w[i].ID
+func (_u *UserUpdate) RemoveWordSuffix(v ...*WordSuffix) *UserUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uu.RemoveWordSuffixIDs(ids...)
+	return _u.RemoveWordSuffixIDs(ids...)
 }
 
 // ClearChinchiroSessions clears all "chinchiro_sessions" edges to the ChinchiroSession entity.
-func (uu *UserUpdate) ClearChinchiroSessions() *UserUpdate {
-	uu.mutation.ClearChinchiroSessions()
-	return uu
+func (_u *UserUpdate) ClearChinchiroSessions() *UserUpdate {
+	_u.mutation.ClearChinchiroSessions()
+	return _u
 }
 
 // RemoveChinchiroSessionIDs removes the "chinchiro_sessions" edge to ChinchiroSession entities by IDs.
-func (uu *UserUpdate) RemoveChinchiroSessionIDs(ids ...uuid.UUID) *UserUpdate {
-	uu.mutation.RemoveChinchiroSessionIDs(ids...)
-	return uu
+func (_u *UserUpdate) RemoveChinchiroSessionIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.RemoveChinchiroSessionIDs(ids...)
+	return _u
 }
 
 // RemoveChinchiroSessions removes "chinchiro_sessions" edges to ChinchiroSession entities.
-func (uu *UserUpdate) RemoveChinchiroSessions(c ...*ChinchiroSession) *UserUpdate {
-	ids := make([]uuid.UUID, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
+func (_u *UserUpdate) RemoveChinchiroSessions(v ...*ChinchiroSession) *UserUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uu.RemoveChinchiroSessionIDs(ids...)
+	return _u.RemoveChinchiroSessionIDs(ids...)
 }
 
 // ClearChinchiroPlayers clears all "chinchiro_players" edges to the ChinchiroPlayer entity.
-func (uu *UserUpdate) ClearChinchiroPlayers() *UserUpdate {
-	uu.mutation.ClearChinchiroPlayers()
-	return uu
+func (_u *UserUpdate) ClearChinchiroPlayers() *UserUpdate {
+	_u.mutation.ClearChinchiroPlayers()
+	return _u
 }
 
 // RemoveChinchiroPlayerIDs removes the "chinchiro_players" edge to ChinchiroPlayer entities by IDs.
-func (uu *UserUpdate) RemoveChinchiroPlayerIDs(ids ...uuid.UUID) *UserUpdate {
-	uu.mutation.RemoveChinchiroPlayerIDs(ids...)
-	return uu
+func (_u *UserUpdate) RemoveChinchiroPlayerIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.RemoveChinchiroPlayerIDs(ids...)
+	return _u
 }
 
 // RemoveChinchiroPlayers removes "chinchiro_players" edges to ChinchiroPlayer entities.
-func (uu *UserUpdate) RemoveChinchiroPlayers(c ...*ChinchiroPlayer) *UserUpdate {
-	ids := make([]uuid.UUID, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
+func (_u *UserUpdate) RemoveChinchiroPlayers(v ...*ChinchiroPlayer) *UserUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uu.RemoveChinchiroPlayerIDs(ids...)
+	return _u.RemoveChinchiroPlayerIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (uu *UserUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, uu.sqlSave, uu.mutation, uu.hooks)
+func (_u *UserUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (uu *UserUpdate) SaveX(ctx context.Context) int {
-	affected, err := uu.Save(ctx)
+func (_u *UserUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -285,26 +285,26 @@ func (uu *UserUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (uu *UserUpdate) Exec(ctx context.Context) error {
-	_, err := uu.Save(ctx)
+func (_u *UserUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (uu *UserUpdate) ExecX(ctx context.Context) {
-	if err := uu.Exec(ctx); err != nil {
+func (_u *UserUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (uu *UserUpdate) check() error {
-	if v, ok := uu.mutation.Name(); ok {
+func (_u *UserUpdate) check() error {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := user.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "User.name": %w`, err)}
 		}
 	}
-	if v, ok := uu.mutation.Locale(); ok {
+	if v, ok := _u.mutation.Locale(); ok {
 		if err := user.LocaleValidator(string(v)); err != nil {
 			return &ValidationError{Name: "locale", err: fmt.Errorf(`ent: validator failed for field "User.locale": %w`, err)}
 		}
@@ -312,31 +312,31 @@ func (uu *UserUpdate) check() error {
 	return nil
 }
 
-func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := uu.check(); err != nil {
-		return n, err
+func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64))
-	if ps := uu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := uu.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(user.FieldName, field.TypeString, value)
 	}
-	if value, ok := uu.mutation.Locale(); ok {
+	if value, ok := _u.mutation.Locale(); ok {
 		_spec.SetField(user.FieldLocale, field.TypeString, value)
 	}
-	if value, ok := uu.mutation.Xp(); ok {
+	if value, ok := _u.mutation.Xp(); ok {
 		_spec.SetField(user.FieldXp, field.TypeUint64, value)
 	}
-	if value, ok := uu.mutation.AddedXp(); ok {
+	if value, ok := _u.mutation.AddedXp(); ok {
 		_spec.AddField(user.FieldXp, field.TypeUint64, value)
 	}
-	if uu.mutation.OwnGuildsCleared() {
+	if _u.mutation.OwnGuildsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -349,23 +349,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.RemovedOwnGuildsIDs(); len(nodes) > 0 && !uu.mutation.OwnGuildsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   user.OwnGuildsTable,
-			Columns: []string{user.OwnGuildsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(guild.FieldID, field.TypeUint64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := uu.mutation.OwnGuildsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RemovedOwnGuildsIDs(); len(nodes) > 0 && !_u.mutation.OwnGuildsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -379,9 +363,25 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.OwnGuildsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OwnGuildsTable,
+			Columns: []string{user.OwnGuildsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(guild.FieldID, field.TypeUint64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uu.mutation.GuildsCleared() {
+	if _u.mutation.GuildsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -394,7 +394,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.RemovedGuildsIDs(); len(nodes) > 0 && !uu.mutation.GuildsCleared() {
+	if nodes := _u.mutation.RemovedGuildsIDs(); len(nodes) > 0 && !_u.mutation.GuildsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -410,7 +410,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.GuildsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.GuildsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -426,7 +426,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uu.mutation.WordSuffixCleared() {
+	if _u.mutation.WordSuffixCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -439,7 +439,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.RemovedWordSuffixIDs(); len(nodes) > 0 && !uu.mutation.WordSuffixCleared() {
+	if nodes := _u.mutation.RemovedWordSuffixIDs(); len(nodes) > 0 && !_u.mutation.WordSuffixCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -455,7 +455,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.WordSuffixIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.WordSuffixIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -471,7 +471,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uu.mutation.ChinchiroSessionsCleared() {
+	if _u.mutation.ChinchiroSessionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -484,7 +484,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.RemovedChinchiroSessionsIDs(); len(nodes) > 0 && !uu.mutation.ChinchiroSessionsCleared() {
+	if nodes := _u.mutation.RemovedChinchiroSessionsIDs(); len(nodes) > 0 && !_u.mutation.ChinchiroSessionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -500,7 +500,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.ChinchiroSessionsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.ChinchiroSessionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -516,7 +516,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uu.mutation.ChinchiroPlayersCleared() {
+	if _u.mutation.ChinchiroPlayersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -529,7 +529,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.RemovedChinchiroPlayersIDs(); len(nodes) > 0 && !uu.mutation.ChinchiroPlayersCleared() {
+	if nodes := _u.mutation.RemovedChinchiroPlayersIDs(); len(nodes) > 0 && !_u.mutation.ChinchiroPlayersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -545,7 +545,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.ChinchiroPlayersIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.ChinchiroPlayersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -561,7 +561,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -569,8 +569,8 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
-	uu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // UserUpdateOne is the builder for updating a single User entity.
@@ -582,260 +582,260 @@ type UserUpdateOne struct {
 }
 
 // SetName sets the "name" field.
-func (uuo *UserUpdateOne) SetName(s string) *UserUpdateOne {
-	uuo.mutation.SetName(s)
-	return uuo
+func (_u *UserUpdateOne) SetName(v string) *UserUpdateOne {
+	_u.mutation.SetName(v)
+	return _u
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableName(s *string) *UserUpdateOne {
-	if s != nil {
-		uuo.SetName(*s)
+func (_u *UserUpdateOne) SetNillableName(v *string) *UserUpdateOne {
+	if v != nil {
+		_u.SetName(*v)
 	}
-	return uuo
+	return _u
 }
 
 // SetLocale sets the "locale" field.
-func (uuo *UserUpdateOne) SetLocale(d discord.Locale) *UserUpdateOne {
-	uuo.mutation.SetLocale(d)
-	return uuo
+func (_u *UserUpdateOne) SetLocale(v discord.Locale) *UserUpdateOne {
+	_u.mutation.SetLocale(v)
+	return _u
 }
 
 // SetNillableLocale sets the "locale" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableLocale(d *discord.Locale) *UserUpdateOne {
-	if d != nil {
-		uuo.SetLocale(*d)
+func (_u *UserUpdateOne) SetNillableLocale(v *discord.Locale) *UserUpdateOne {
+	if v != nil {
+		_u.SetLocale(*v)
 	}
-	return uuo
+	return _u
 }
 
 // SetXp sets the "xp" field.
-func (uuo *UserUpdateOne) SetXp(x xppoint.XP) *UserUpdateOne {
-	uuo.mutation.ResetXp()
-	uuo.mutation.SetXp(x)
-	return uuo
+func (_u *UserUpdateOne) SetXp(v xppoint.XP) *UserUpdateOne {
+	_u.mutation.ResetXp()
+	_u.mutation.SetXp(v)
+	return _u
 }
 
 // SetNillableXp sets the "xp" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableXp(x *xppoint.XP) *UserUpdateOne {
-	if x != nil {
-		uuo.SetXp(*x)
+func (_u *UserUpdateOne) SetNillableXp(v *xppoint.XP) *UserUpdateOne {
+	if v != nil {
+		_u.SetXp(*v)
 	}
-	return uuo
+	return _u
 }
 
-// AddXp adds x to the "xp" field.
-func (uuo *UserUpdateOne) AddXp(x xppoint.XP) *UserUpdateOne {
-	uuo.mutation.AddXp(x)
-	return uuo
+// AddXp adds value to the "xp" field.
+func (_u *UserUpdateOne) AddXp(v xppoint.XP) *UserUpdateOne {
+	_u.mutation.AddXp(v)
+	return _u
 }
 
 // AddOwnGuildIDs adds the "own_guilds" edge to the Guild entity by IDs.
-func (uuo *UserUpdateOne) AddOwnGuildIDs(ids ...snowflake.ID) *UserUpdateOne {
-	uuo.mutation.AddOwnGuildIDs(ids...)
-	return uuo
+func (_u *UserUpdateOne) AddOwnGuildIDs(ids ...snowflake.ID) *UserUpdateOne {
+	_u.mutation.AddOwnGuildIDs(ids...)
+	return _u
 }
 
 // AddOwnGuilds adds the "own_guilds" edges to the Guild entity.
-func (uuo *UserUpdateOne) AddOwnGuilds(g ...*Guild) *UserUpdateOne {
-	ids := make([]snowflake.ID, len(g))
-	for i := range g {
-		ids[i] = g[i].ID
+func (_u *UserUpdateOne) AddOwnGuilds(v ...*Guild) *UserUpdateOne {
+	ids := make([]snowflake.ID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uuo.AddOwnGuildIDs(ids...)
+	return _u.AddOwnGuildIDs(ids...)
 }
 
 // AddGuildIDs adds the "guilds" edge to the Member entity by IDs.
-func (uuo *UserUpdateOne) AddGuildIDs(ids ...int) *UserUpdateOne {
-	uuo.mutation.AddGuildIDs(ids...)
-	return uuo
+func (_u *UserUpdateOne) AddGuildIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.AddGuildIDs(ids...)
+	return _u
 }
 
 // AddGuilds adds the "guilds" edges to the Member entity.
-func (uuo *UserUpdateOne) AddGuilds(m ...*Member) *UserUpdateOne {
-	ids := make([]int, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_u *UserUpdateOne) AddGuilds(v ...*Member) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uuo.AddGuildIDs(ids...)
+	return _u.AddGuildIDs(ids...)
 }
 
 // AddWordSuffixIDs adds the "word_suffix" edge to the WordSuffix entity by IDs.
-func (uuo *UserUpdateOne) AddWordSuffixIDs(ids ...uuid.UUID) *UserUpdateOne {
-	uuo.mutation.AddWordSuffixIDs(ids...)
-	return uuo
+func (_u *UserUpdateOne) AddWordSuffixIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.AddWordSuffixIDs(ids...)
+	return _u
 }
 
 // AddWordSuffix adds the "word_suffix" edges to the WordSuffix entity.
-func (uuo *UserUpdateOne) AddWordSuffix(w ...*WordSuffix) *UserUpdateOne {
-	ids := make([]uuid.UUID, len(w))
-	for i := range w {
-		ids[i] = w[i].ID
+func (_u *UserUpdateOne) AddWordSuffix(v ...*WordSuffix) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uuo.AddWordSuffixIDs(ids...)
+	return _u.AddWordSuffixIDs(ids...)
 }
 
 // AddChinchiroSessionIDs adds the "chinchiro_sessions" edge to the ChinchiroSession entity by IDs.
-func (uuo *UserUpdateOne) AddChinchiroSessionIDs(ids ...uuid.UUID) *UserUpdateOne {
-	uuo.mutation.AddChinchiroSessionIDs(ids...)
-	return uuo
+func (_u *UserUpdateOne) AddChinchiroSessionIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.AddChinchiroSessionIDs(ids...)
+	return _u
 }
 
 // AddChinchiroSessions adds the "chinchiro_sessions" edges to the ChinchiroSession entity.
-func (uuo *UserUpdateOne) AddChinchiroSessions(c ...*ChinchiroSession) *UserUpdateOne {
-	ids := make([]uuid.UUID, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
+func (_u *UserUpdateOne) AddChinchiroSessions(v ...*ChinchiroSession) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uuo.AddChinchiroSessionIDs(ids...)
+	return _u.AddChinchiroSessionIDs(ids...)
 }
 
 // AddChinchiroPlayerIDs adds the "chinchiro_players" edge to the ChinchiroPlayer entity by IDs.
-func (uuo *UserUpdateOne) AddChinchiroPlayerIDs(ids ...uuid.UUID) *UserUpdateOne {
-	uuo.mutation.AddChinchiroPlayerIDs(ids...)
-	return uuo
+func (_u *UserUpdateOne) AddChinchiroPlayerIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.AddChinchiroPlayerIDs(ids...)
+	return _u
 }
 
 // AddChinchiroPlayers adds the "chinchiro_players" edges to the ChinchiroPlayer entity.
-func (uuo *UserUpdateOne) AddChinchiroPlayers(c ...*ChinchiroPlayer) *UserUpdateOne {
-	ids := make([]uuid.UUID, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
+func (_u *UserUpdateOne) AddChinchiroPlayers(v ...*ChinchiroPlayer) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uuo.AddChinchiroPlayerIDs(ids...)
+	return _u.AddChinchiroPlayerIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
-func (uuo *UserUpdateOne) Mutation() *UserMutation {
-	return uuo.mutation
+func (_u *UserUpdateOne) Mutation() *UserMutation {
+	return _u.mutation
 }
 
 // ClearOwnGuilds clears all "own_guilds" edges to the Guild entity.
-func (uuo *UserUpdateOne) ClearOwnGuilds() *UserUpdateOne {
-	uuo.mutation.ClearOwnGuilds()
-	return uuo
+func (_u *UserUpdateOne) ClearOwnGuilds() *UserUpdateOne {
+	_u.mutation.ClearOwnGuilds()
+	return _u
 }
 
 // RemoveOwnGuildIDs removes the "own_guilds" edge to Guild entities by IDs.
-func (uuo *UserUpdateOne) RemoveOwnGuildIDs(ids ...snowflake.ID) *UserUpdateOne {
-	uuo.mutation.RemoveOwnGuildIDs(ids...)
-	return uuo
+func (_u *UserUpdateOne) RemoveOwnGuildIDs(ids ...snowflake.ID) *UserUpdateOne {
+	_u.mutation.RemoveOwnGuildIDs(ids...)
+	return _u
 }
 
 // RemoveOwnGuilds removes "own_guilds" edges to Guild entities.
-func (uuo *UserUpdateOne) RemoveOwnGuilds(g ...*Guild) *UserUpdateOne {
-	ids := make([]snowflake.ID, len(g))
-	for i := range g {
-		ids[i] = g[i].ID
+func (_u *UserUpdateOne) RemoveOwnGuilds(v ...*Guild) *UserUpdateOne {
+	ids := make([]snowflake.ID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uuo.RemoveOwnGuildIDs(ids...)
+	return _u.RemoveOwnGuildIDs(ids...)
 }
 
 // ClearGuilds clears all "guilds" edges to the Member entity.
-func (uuo *UserUpdateOne) ClearGuilds() *UserUpdateOne {
-	uuo.mutation.ClearGuilds()
-	return uuo
+func (_u *UserUpdateOne) ClearGuilds() *UserUpdateOne {
+	_u.mutation.ClearGuilds()
+	return _u
 }
 
 // RemoveGuildIDs removes the "guilds" edge to Member entities by IDs.
-func (uuo *UserUpdateOne) RemoveGuildIDs(ids ...int) *UserUpdateOne {
-	uuo.mutation.RemoveGuildIDs(ids...)
-	return uuo
+func (_u *UserUpdateOne) RemoveGuildIDs(ids ...int) *UserUpdateOne {
+	_u.mutation.RemoveGuildIDs(ids...)
+	return _u
 }
 
 // RemoveGuilds removes "guilds" edges to Member entities.
-func (uuo *UserUpdateOne) RemoveGuilds(m ...*Member) *UserUpdateOne {
-	ids := make([]int, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_u *UserUpdateOne) RemoveGuilds(v ...*Member) *UserUpdateOne {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uuo.RemoveGuildIDs(ids...)
+	return _u.RemoveGuildIDs(ids...)
 }
 
 // ClearWordSuffix clears all "word_suffix" edges to the WordSuffix entity.
-func (uuo *UserUpdateOne) ClearWordSuffix() *UserUpdateOne {
-	uuo.mutation.ClearWordSuffix()
-	return uuo
+func (_u *UserUpdateOne) ClearWordSuffix() *UserUpdateOne {
+	_u.mutation.ClearWordSuffix()
+	return _u
 }
 
 // RemoveWordSuffixIDs removes the "word_suffix" edge to WordSuffix entities by IDs.
-func (uuo *UserUpdateOne) RemoveWordSuffixIDs(ids ...uuid.UUID) *UserUpdateOne {
-	uuo.mutation.RemoveWordSuffixIDs(ids...)
-	return uuo
+func (_u *UserUpdateOne) RemoveWordSuffixIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.RemoveWordSuffixIDs(ids...)
+	return _u
 }
 
 // RemoveWordSuffix removes "word_suffix" edges to WordSuffix entities.
-func (uuo *UserUpdateOne) RemoveWordSuffix(w ...*WordSuffix) *UserUpdateOne {
-	ids := make([]uuid.UUID, len(w))
-	for i := range w {
-		ids[i] = w[i].ID
+func (_u *UserUpdateOne) RemoveWordSuffix(v ...*WordSuffix) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uuo.RemoveWordSuffixIDs(ids...)
+	return _u.RemoveWordSuffixIDs(ids...)
 }
 
 // ClearChinchiroSessions clears all "chinchiro_sessions" edges to the ChinchiroSession entity.
-func (uuo *UserUpdateOne) ClearChinchiroSessions() *UserUpdateOne {
-	uuo.mutation.ClearChinchiroSessions()
-	return uuo
+func (_u *UserUpdateOne) ClearChinchiroSessions() *UserUpdateOne {
+	_u.mutation.ClearChinchiroSessions()
+	return _u
 }
 
 // RemoveChinchiroSessionIDs removes the "chinchiro_sessions" edge to ChinchiroSession entities by IDs.
-func (uuo *UserUpdateOne) RemoveChinchiroSessionIDs(ids ...uuid.UUID) *UserUpdateOne {
-	uuo.mutation.RemoveChinchiroSessionIDs(ids...)
-	return uuo
+func (_u *UserUpdateOne) RemoveChinchiroSessionIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.RemoveChinchiroSessionIDs(ids...)
+	return _u
 }
 
 // RemoveChinchiroSessions removes "chinchiro_sessions" edges to ChinchiroSession entities.
-func (uuo *UserUpdateOne) RemoveChinchiroSessions(c ...*ChinchiroSession) *UserUpdateOne {
-	ids := make([]uuid.UUID, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
+func (_u *UserUpdateOne) RemoveChinchiroSessions(v ...*ChinchiroSession) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uuo.RemoveChinchiroSessionIDs(ids...)
+	return _u.RemoveChinchiroSessionIDs(ids...)
 }
 
 // ClearChinchiroPlayers clears all "chinchiro_players" edges to the ChinchiroPlayer entity.
-func (uuo *UserUpdateOne) ClearChinchiroPlayers() *UserUpdateOne {
-	uuo.mutation.ClearChinchiroPlayers()
-	return uuo
+func (_u *UserUpdateOne) ClearChinchiroPlayers() *UserUpdateOne {
+	_u.mutation.ClearChinchiroPlayers()
+	return _u
 }
 
 // RemoveChinchiroPlayerIDs removes the "chinchiro_players" edge to ChinchiroPlayer entities by IDs.
-func (uuo *UserUpdateOne) RemoveChinchiroPlayerIDs(ids ...uuid.UUID) *UserUpdateOne {
-	uuo.mutation.RemoveChinchiroPlayerIDs(ids...)
-	return uuo
+func (_u *UserUpdateOne) RemoveChinchiroPlayerIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.RemoveChinchiroPlayerIDs(ids...)
+	return _u
 }
 
 // RemoveChinchiroPlayers removes "chinchiro_players" edges to ChinchiroPlayer entities.
-func (uuo *UserUpdateOne) RemoveChinchiroPlayers(c ...*ChinchiroPlayer) *UserUpdateOne {
-	ids := make([]uuid.UUID, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
+func (_u *UserUpdateOne) RemoveChinchiroPlayers(v ...*ChinchiroPlayer) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return uuo.RemoveChinchiroPlayerIDs(ids...)
+	return _u.RemoveChinchiroPlayerIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
-func (uuo *UserUpdateOne) Where(ps ...predicate.User) *UserUpdateOne {
-	uuo.mutation.Where(ps...)
-	return uuo
+func (_u *UserUpdateOne) Where(ps ...predicate.User) *UserUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (uuo *UserUpdateOne) Select(field string, fields ...string) *UserUpdateOne {
-	uuo.fields = append([]string{field}, fields...)
-	return uuo
+func (_u *UserUpdateOne) Select(field string, fields ...string) *UserUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated User entity.
-func (uuo *UserUpdateOne) Save(ctx context.Context) (*User, error) {
-	return withHooks(ctx, uuo.sqlSave, uuo.mutation, uuo.hooks)
+func (_u *UserUpdateOne) Save(ctx context.Context) (*User, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (uuo *UserUpdateOne) SaveX(ctx context.Context) *User {
-	node, err := uuo.Save(ctx)
+func (_u *UserUpdateOne) SaveX(ctx context.Context) *User {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -843,26 +843,26 @@ func (uuo *UserUpdateOne) SaveX(ctx context.Context) *User {
 }
 
 // Exec executes the query on the entity.
-func (uuo *UserUpdateOne) Exec(ctx context.Context) error {
-	_, err := uuo.Save(ctx)
+func (_u *UserUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (uuo *UserUpdateOne) ExecX(ctx context.Context) {
-	if err := uuo.Exec(ctx); err != nil {
+func (_u *UserUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (uuo *UserUpdateOne) check() error {
-	if v, ok := uuo.mutation.Name(); ok {
+func (_u *UserUpdateOne) check() error {
+	if v, ok := _u.mutation.Name(); ok {
 		if err := user.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "User.name": %w`, err)}
 		}
 	}
-	if v, ok := uuo.mutation.Locale(); ok {
+	if v, ok := _u.mutation.Locale(); ok {
 		if err := user.LocaleValidator(string(v)); err != nil {
 			return &ValidationError{Name: "locale", err: fmt.Errorf(`ent: validator failed for field "User.locale": %w`, err)}
 		}
@@ -870,17 +870,17 @@ func (uuo *UserUpdateOne) check() error {
 	return nil
 }
 
-func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
-	if err := uuo.check(); err != nil {
+func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeUint64))
-	id, ok := uuo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "User.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := uuo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, user.FieldID)
 		for _, f := range fields {
@@ -892,26 +892,26 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 			}
 		}
 	}
-	if ps := uuo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := uuo.mutation.Name(); ok {
+	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(user.FieldName, field.TypeString, value)
 	}
-	if value, ok := uuo.mutation.Locale(); ok {
+	if value, ok := _u.mutation.Locale(); ok {
 		_spec.SetField(user.FieldLocale, field.TypeString, value)
 	}
-	if value, ok := uuo.mutation.Xp(); ok {
+	if value, ok := _u.mutation.Xp(); ok {
 		_spec.SetField(user.FieldXp, field.TypeUint64, value)
 	}
-	if value, ok := uuo.mutation.AddedXp(); ok {
+	if value, ok := _u.mutation.AddedXp(); ok {
 		_spec.AddField(user.FieldXp, field.TypeUint64, value)
 	}
-	if uuo.mutation.OwnGuildsCleared() {
+	if _u.mutation.OwnGuildsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -924,23 +924,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.RemovedOwnGuildsIDs(); len(nodes) > 0 && !uuo.mutation.OwnGuildsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   user.OwnGuildsTable,
-			Columns: []string{user.OwnGuildsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(guild.FieldID, field.TypeUint64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := uuo.mutation.OwnGuildsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.RemovedOwnGuildsIDs(); len(nodes) > 0 && !_u.mutation.OwnGuildsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -954,9 +938,25 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.OwnGuildsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.OwnGuildsTable,
+			Columns: []string{user.OwnGuildsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(guild.FieldID, field.TypeUint64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uuo.mutation.GuildsCleared() {
+	if _u.mutation.GuildsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -969,7 +969,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.RemovedGuildsIDs(); len(nodes) > 0 && !uuo.mutation.GuildsCleared() {
+	if nodes := _u.mutation.RemovedGuildsIDs(); len(nodes) > 0 && !_u.mutation.GuildsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -985,7 +985,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.GuildsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.GuildsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1001,7 +1001,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uuo.mutation.WordSuffixCleared() {
+	if _u.mutation.WordSuffixCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1014,7 +1014,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.RemovedWordSuffixIDs(); len(nodes) > 0 && !uuo.mutation.WordSuffixCleared() {
+	if nodes := _u.mutation.RemovedWordSuffixIDs(); len(nodes) > 0 && !_u.mutation.WordSuffixCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1030,7 +1030,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.WordSuffixIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.WordSuffixIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1046,7 +1046,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uuo.mutation.ChinchiroSessionsCleared() {
+	if _u.mutation.ChinchiroSessionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1059,7 +1059,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.RemovedChinchiroSessionsIDs(); len(nodes) > 0 && !uuo.mutation.ChinchiroSessionsCleared() {
+	if nodes := _u.mutation.RemovedChinchiroSessionsIDs(); len(nodes) > 0 && !_u.mutation.ChinchiroSessionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1075,7 +1075,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.ChinchiroSessionsIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.ChinchiroSessionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1091,7 +1091,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uuo.mutation.ChinchiroPlayersCleared() {
+	if _u.mutation.ChinchiroPlayersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1104,7 +1104,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.RemovedChinchiroPlayersIDs(); len(nodes) > 0 && !uuo.mutation.ChinchiroPlayersCleared() {
+	if nodes := _u.mutation.RemovedChinchiroPlayersIDs(); len(nodes) > 0 && !_u.mutation.ChinchiroPlayersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1120,7 +1120,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.ChinchiroPlayersIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.ChinchiroPlayersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1136,10 +1136,10 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_node = &User{config: uuo.config}
+	_node = &User{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, uuo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -1147,6 +1147,6 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		return nil, err
 	}
-	uuo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

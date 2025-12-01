@@ -123,7 +123,7 @@ func (*RolePanelPlaced) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the RolePanelPlaced fields.
-func (rpp *RolePanelPlaced) assignValues(columns []string, values []any) error {
+func (_m *RolePanelPlaced) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -133,86 +133,86 @@ func (rpp *RolePanelPlaced) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				rpp.ID = *value
+				_m.ID = *value
 			}
 		case rolepanelplaced.FieldMessageID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field message_id", values[i])
 			} else if value.Valid {
-				rpp.MessageID = new(snowflake.ID)
-				*rpp.MessageID = snowflake.ID(value.Int64)
+				_m.MessageID = new(snowflake.ID)
+				*_m.MessageID = snowflake.ID(value.Int64)
 			}
 		case rolepanelplaced.FieldChannelID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field channel_id", values[i])
 			} else if value.Valid {
-				rpp.ChannelID = snowflake.ID(value.Int64)
+				_m.ChannelID = snowflake.ID(value.Int64)
 			}
 		case rolepanelplaced.FieldType:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field type", values[i])
 			} else if value.Valid {
-				rpp.Type = rolepanelplaced.Type(value.String)
+				_m.Type = rolepanelplaced.Type(value.String)
 			}
 		case rolepanelplaced.FieldButtonType:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field button_type", values[i])
 			} else if value.Valid {
-				rpp.ButtonType = discord.ButtonStyle(value.Int64)
+				_m.ButtonType = discord.ButtonStyle(value.Int64)
 			}
 		case rolepanelplaced.FieldShowName:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field show_name", values[i])
 			} else if value.Valid {
-				rpp.ShowName = value.Bool
+				_m.ShowName = value.Bool
 			}
 		case rolepanelplaced.FieldFoldingSelectMenu:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field folding_select_menu", values[i])
 			} else if value.Valid {
-				rpp.FoldingSelectMenu = value.Bool
+				_m.FoldingSelectMenu = value.Bool
 			}
 		case rolepanelplaced.FieldHideNotice:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field hide_notice", values[i])
 			} else if value.Valid {
-				rpp.HideNotice = value.Bool
+				_m.HideNotice = value.Bool
 			}
 		case rolepanelplaced.FieldUseDisplayName:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field use_display_name", values[i])
 			} else if value.Valid {
-				rpp.UseDisplayName = value.Bool
+				_m.UseDisplayName = value.Bool
 			}
 		case rolepanelplaced.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
-				rpp.CreatedAt = value.Time
+				_m.CreatedAt = value.Time
 			}
 		case rolepanelplaced.FieldUses:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field uses", values[i])
 			} else if value.Valid {
-				rpp.Uses = int(value.Int64)
+				_m.Uses = int(value.Int64)
 			}
 		case rolepanelplaced.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
-				rpp.Name = value.String
+				_m.Name = value.String
 			}
 		case rolepanelplaced.FieldDescription:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field description", values[i])
 			} else if value.Valid {
-				rpp.Description = value.String
+				_m.Description = value.String
 			}
 		case rolepanelplaced.FieldRoles:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field roles", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &rpp.Roles); err != nil {
+				if err := json.Unmarshal(*value, &_m.Roles); err != nil {
 					return fmt.Errorf("unmarshal field roles: %w", err)
 				}
 			}
@@ -220,24 +220,24 @@ func (rpp *RolePanelPlaced) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
-				rpp.UpdatedAt = value.Time
+				_m.UpdatedAt = value.Time
 			}
 		case rolepanelplaced.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field guild_role_panel_placements", values[i])
 			} else if value.Valid {
-				rpp.guild_role_panel_placements = new(snowflake.ID)
-				*rpp.guild_role_panel_placements = snowflake.ID(value.Int64)
+				_m.guild_role_panel_placements = new(snowflake.ID)
+				*_m.guild_role_panel_placements = snowflake.ID(value.Int64)
 			}
 		case rolepanelplaced.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field role_panel_placements", values[i])
 			} else if value.Valid {
-				rpp.role_panel_placements = new(uuid.UUID)
-				*rpp.role_panel_placements = *value.S.(*uuid.UUID)
+				_m.role_panel_placements = new(uuid.UUID)
+				*_m.role_panel_placements = *value.S.(*uuid.UUID)
 			}
 		default:
-			rpp.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -245,86 +245,86 @@ func (rpp *RolePanelPlaced) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the RolePanelPlaced.
 // This includes values selected through modifiers, order, etc.
-func (rpp *RolePanelPlaced) Value(name string) (ent.Value, error) {
-	return rpp.selectValues.Get(name)
+func (_m *RolePanelPlaced) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // QueryGuild queries the "guild" edge of the RolePanelPlaced entity.
-func (rpp *RolePanelPlaced) QueryGuild() *GuildQuery {
-	return NewRolePanelPlacedClient(rpp.config).QueryGuild(rpp)
+func (_m *RolePanelPlaced) QueryGuild() *GuildQuery {
+	return NewRolePanelPlacedClient(_m.config).QueryGuild(_m)
 }
 
 // QueryRolePanel queries the "role_panel" edge of the RolePanelPlaced entity.
-func (rpp *RolePanelPlaced) QueryRolePanel() *RolePanelQuery {
-	return NewRolePanelPlacedClient(rpp.config).QueryRolePanel(rpp)
+func (_m *RolePanelPlaced) QueryRolePanel() *RolePanelQuery {
+	return NewRolePanelPlacedClient(_m.config).QueryRolePanel(_m)
 }
 
 // Update returns a builder for updating this RolePanelPlaced.
 // Note that you need to call RolePanelPlaced.Unwrap() before calling this method if this RolePanelPlaced
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (rpp *RolePanelPlaced) Update() *RolePanelPlacedUpdateOne {
-	return NewRolePanelPlacedClient(rpp.config).UpdateOne(rpp)
+func (_m *RolePanelPlaced) Update() *RolePanelPlacedUpdateOne {
+	return NewRolePanelPlacedClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the RolePanelPlaced entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (rpp *RolePanelPlaced) Unwrap() *RolePanelPlaced {
-	_tx, ok := rpp.config.driver.(*txDriver)
+func (_m *RolePanelPlaced) Unwrap() *RolePanelPlaced {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: RolePanelPlaced is not a transactional entity")
 	}
-	rpp.config.driver = _tx.drv
-	return rpp
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (rpp *RolePanelPlaced) String() string {
+func (_m *RolePanelPlaced) String() string {
 	var builder strings.Builder
 	builder.WriteString("RolePanelPlaced(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", rpp.ID))
-	if v := rpp.MessageID; v != nil {
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	if v := _m.MessageID; v != nil {
 		builder.WriteString("message_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("channel_id=")
-	builder.WriteString(fmt.Sprintf("%v", rpp.ChannelID))
+	builder.WriteString(fmt.Sprintf("%v", _m.ChannelID))
 	builder.WriteString(", ")
 	builder.WriteString("type=")
-	builder.WriteString(fmt.Sprintf("%v", rpp.Type))
+	builder.WriteString(fmt.Sprintf("%v", _m.Type))
 	builder.WriteString(", ")
 	builder.WriteString("button_type=")
-	builder.WriteString(fmt.Sprintf("%v", rpp.ButtonType))
+	builder.WriteString(fmt.Sprintf("%v", _m.ButtonType))
 	builder.WriteString(", ")
 	builder.WriteString("show_name=")
-	builder.WriteString(fmt.Sprintf("%v", rpp.ShowName))
+	builder.WriteString(fmt.Sprintf("%v", _m.ShowName))
 	builder.WriteString(", ")
 	builder.WriteString("folding_select_menu=")
-	builder.WriteString(fmt.Sprintf("%v", rpp.FoldingSelectMenu))
+	builder.WriteString(fmt.Sprintf("%v", _m.FoldingSelectMenu))
 	builder.WriteString(", ")
 	builder.WriteString("hide_notice=")
-	builder.WriteString(fmt.Sprintf("%v", rpp.HideNotice))
+	builder.WriteString(fmt.Sprintf("%v", _m.HideNotice))
 	builder.WriteString(", ")
 	builder.WriteString("use_display_name=")
-	builder.WriteString(fmt.Sprintf("%v", rpp.UseDisplayName))
+	builder.WriteString(fmt.Sprintf("%v", _m.UseDisplayName))
 	builder.WriteString(", ")
 	builder.WriteString("created_at=")
-	builder.WriteString(rpp.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
 	builder.WriteString("uses=")
-	builder.WriteString(fmt.Sprintf("%v", rpp.Uses))
+	builder.WriteString(fmt.Sprintf("%v", _m.Uses))
 	builder.WriteString(", ")
 	builder.WriteString("name=")
-	builder.WriteString(rpp.Name)
+	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
 	builder.WriteString("description=")
-	builder.WriteString(rpp.Description)
+	builder.WriteString(_m.Description)
 	builder.WriteString(", ")
 	builder.WriteString("roles=")
-	builder.WriteString(fmt.Sprintf("%v", rpp.Roles))
+	builder.WriteString(fmt.Sprintf("%v", _m.Roles))
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
-	builder.WriteString(rpp.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

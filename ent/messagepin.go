@@ -83,7 +83,7 @@ func (*MessagePin) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the MessagePin fields.
-func (mp *MessagePin) assignValues(columns []string, values []any) error {
+func (_m *MessagePin) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -93,25 +93,25 @@ func (mp *MessagePin) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				mp.ID = *value
+				_m.ID = *value
 			}
 		case messagepin.FieldChannelID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field channel_id", values[i])
 			} else if value.Valid {
-				mp.ChannelID = snowflake.ID(value.Int64)
+				_m.ChannelID = snowflake.ID(value.Int64)
 			}
 		case messagepin.FieldContent:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field content", values[i])
 			} else if value.Valid {
-				mp.Content = value.String
+				_m.Content = value.String
 			}
 		case messagepin.FieldEmbeds:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field embeds", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &mp.Embeds); err != nil {
+				if err := json.Unmarshal(*value, &_m.Embeds); err != nil {
 					return fmt.Errorf("unmarshal field embeds: %w", err)
 				}
 			}
@@ -119,14 +119,14 @@ func (mp *MessagePin) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field before_id", values[i])
 			} else if value.Valid {
-				mp.BeforeID = new(snowflake.ID)
-				*mp.BeforeID = snowflake.ID(value.Int64)
+				_m.BeforeID = new(snowflake.ID)
+				*_m.BeforeID = snowflake.ID(value.Int64)
 			}
 		case messagepin.FieldRateLimit:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field rate_limit", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &mp.RateLimit); err != nil {
+				if err := json.Unmarshal(*value, &_m.RateLimit); err != nil {
 					return fmt.Errorf("unmarshal field rate_limit: %w", err)
 				}
 			}
@@ -134,11 +134,11 @@ func (mp *MessagePin) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field guild_message_pins", values[i])
 			} else if value.Valid {
-				mp.guild_message_pins = new(snowflake.ID)
-				*mp.guild_message_pins = snowflake.ID(value.Int64)
+				_m.guild_message_pins = new(snowflake.ID)
+				*_m.guild_message_pins = snowflake.ID(value.Int64)
 			}
 		default:
-			mp.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -146,54 +146,54 @@ func (mp *MessagePin) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the MessagePin.
 // This includes values selected through modifiers, order, etc.
-func (mp *MessagePin) Value(name string) (ent.Value, error) {
-	return mp.selectValues.Get(name)
+func (_m *MessagePin) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // QueryGuild queries the "guild" edge of the MessagePin entity.
-func (mp *MessagePin) QueryGuild() *GuildQuery {
-	return NewMessagePinClient(mp.config).QueryGuild(mp)
+func (_m *MessagePin) QueryGuild() *GuildQuery {
+	return NewMessagePinClient(_m.config).QueryGuild(_m)
 }
 
 // Update returns a builder for updating this MessagePin.
 // Note that you need to call MessagePin.Unwrap() before calling this method if this MessagePin
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (mp *MessagePin) Update() *MessagePinUpdateOne {
-	return NewMessagePinClient(mp.config).UpdateOne(mp)
+func (_m *MessagePin) Update() *MessagePinUpdateOne {
+	return NewMessagePinClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the MessagePin entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (mp *MessagePin) Unwrap() *MessagePin {
-	_tx, ok := mp.config.driver.(*txDriver)
+func (_m *MessagePin) Unwrap() *MessagePin {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: MessagePin is not a transactional entity")
 	}
-	mp.config.driver = _tx.drv
-	return mp
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (mp *MessagePin) String() string {
+func (_m *MessagePin) String() string {
 	var builder strings.Builder
 	builder.WriteString("MessagePin(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", mp.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("channel_id=")
-	builder.WriteString(fmt.Sprintf("%v", mp.ChannelID))
+	builder.WriteString(fmt.Sprintf("%v", _m.ChannelID))
 	builder.WriteString(", ")
 	builder.WriteString("content=")
-	builder.WriteString(mp.Content)
+	builder.WriteString(_m.Content)
 	builder.WriteString(", ")
 	builder.WriteString("embeds=")
-	builder.WriteString(fmt.Sprintf("%v", mp.Embeds))
+	builder.WriteString(fmt.Sprintf("%v", _m.Embeds))
 	builder.WriteString(", ")
-	if v := mp.BeforeID; v != nil {
+	if v := _m.BeforeID; v != nil {
 		builder.WriteString("before_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("rate_limit=")
-	builder.WriteString(fmt.Sprintf("%v", mp.RateLimit))
+	builder.WriteString(fmt.Sprintf("%v", _m.RateLimit))
 	builder.WriteByte(')')
 	return builder.String()
 }

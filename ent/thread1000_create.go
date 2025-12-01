@@ -24,95 +24,95 @@ type Thread1000Create struct {
 }
 
 // SetName sets the "name" field.
-func (t *Thread1000Create) SetName(s string) *Thread1000Create {
-	t.mutation.SetName(s)
-	return t
+func (_c *Thread1000Create) SetName(v string) *Thread1000Create {
+	_c.mutation.SetName(v)
+	return _c
 }
 
 // SetMessageCount sets the "message_count" field.
-func (t *Thread1000Create) SetMessageCount(i int) *Thread1000Create {
-	t.mutation.SetMessageCount(i)
-	return t
+func (_c *Thread1000Create) SetMessageCount(v int) *Thread1000Create {
+	_c.mutation.SetMessageCount(v)
+	return _c
 }
 
 // SetNillableMessageCount sets the "message_count" field if the given value is not nil.
-func (t *Thread1000Create) SetNillableMessageCount(i *int) *Thread1000Create {
-	if i != nil {
-		t.SetMessageCount(*i)
+func (_c *Thread1000Create) SetNillableMessageCount(v *int) *Thread1000Create {
+	if v != nil {
+		_c.SetMessageCount(*v)
 	}
-	return t
+	return _c
 }
 
 // SetIsArchived sets the "is_archived" field.
-func (t *Thread1000Create) SetIsArchived(b bool) *Thread1000Create {
-	t.mutation.SetIsArchived(b)
-	return t
+func (_c *Thread1000Create) SetIsArchived(v bool) *Thread1000Create {
+	_c.mutation.SetIsArchived(v)
+	return _c
 }
 
 // SetNillableIsArchived sets the "is_archived" field if the given value is not nil.
-func (t *Thread1000Create) SetNillableIsArchived(b *bool) *Thread1000Create {
-	if b != nil {
-		t.SetIsArchived(*b)
+func (_c *Thread1000Create) SetNillableIsArchived(v *bool) *Thread1000Create {
+	if v != nil {
+		_c.SetIsArchived(*v)
 	}
-	return t
+	return _c
 }
 
 // SetThreadID sets the "thread_id" field.
-func (t *Thread1000Create) SetThreadID(s snowflake.ID) *Thread1000Create {
-	t.mutation.SetThreadID(s)
-	return t
+func (_c *Thread1000Create) SetThreadID(v snowflake.ID) *Thread1000Create {
+	_c.mutation.SetThreadID(v)
+	return _c
 }
 
 // SetID sets the "id" field.
-func (t *Thread1000Create) SetID(u uuid.UUID) *Thread1000Create {
-	t.mutation.SetID(u)
-	return t
+func (_c *Thread1000Create) SetID(v uuid.UUID) *Thread1000Create {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (t *Thread1000Create) SetNillableID(u *uuid.UUID) *Thread1000Create {
-	if u != nil {
-		t.SetID(*u)
+func (_c *Thread1000Create) SetNillableID(v *uuid.UUID) *Thread1000Create {
+	if v != nil {
+		_c.SetID(*v)
 	}
-	return t
+	return _c
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (t *Thread1000Create) SetGuildID(id snowflake.ID) *Thread1000Create {
-	t.mutation.SetGuildID(id)
-	return t
+func (_c *Thread1000Create) SetGuildID(id snowflake.ID) *Thread1000Create {
+	_c.mutation.SetGuildID(id)
+	return _c
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (t *Thread1000Create) SetGuild(g *Guild) *Thread1000Create {
-	return t.SetGuildID(g.ID)
+func (_c *Thread1000Create) SetGuild(v *Guild) *Thread1000Create {
+	return _c.SetGuildID(v.ID)
 }
 
 // SetChannelID sets the "channel" edge to the Thread1000Channel entity by ID.
-func (t *Thread1000Create) SetChannelID(id uuid.UUID) *Thread1000Create {
-	t.mutation.SetChannelID(id)
-	return t
+func (_c *Thread1000Create) SetChannelID(id uuid.UUID) *Thread1000Create {
+	_c.mutation.SetChannelID(id)
+	return _c
 }
 
 // SetChannel sets the "channel" edge to the Thread1000Channel entity.
-func (t *Thread1000Create) SetChannel(v *Thread1000Channel) *Thread1000Create {
-	return t.SetChannelID(v.ID)
+func (_c *Thread1000Create) SetChannel(v *Thread1000Channel) *Thread1000Create {
+	return _c.SetChannelID(v.ID)
 }
 
 // Mutation returns the Thread1000Mutation object of the builder.
-func (t *Thread1000Create) Mutation() *Thread1000Mutation {
-	return t.mutation
+func (_c *Thread1000Create) Mutation() *Thread1000Mutation {
+	return _c.mutation
 }
 
 // Save creates the Thread1000 in the database.
-func (t *Thread1000Create) Save(ctx context.Context) (*Thread1000, error) {
-	t.defaults()
-	return withHooks(ctx, t.sqlSave, t.mutation, t.hooks)
+func (_c *Thread1000Create) Save(ctx context.Context) (*Thread1000, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (t *Thread1000Create) SaveX(ctx context.Context) *Thread1000 {
-	v, err := t.Save(ctx)
+func (_c *Thread1000Create) SaveX(ctx context.Context) *Thread1000 {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -120,68 +120,68 @@ func (t *Thread1000Create) SaveX(ctx context.Context) *Thread1000 {
 }
 
 // Exec executes the query.
-func (t *Thread1000Create) Exec(ctx context.Context) error {
-	_, err := t.Save(ctx)
+func (_c *Thread1000Create) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (t *Thread1000Create) ExecX(ctx context.Context) {
-	if err := t.Exec(ctx); err != nil {
+func (_c *Thread1000Create) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (t *Thread1000Create) defaults() {
-	if _, ok := t.mutation.MessageCount(); !ok {
+func (_c *Thread1000Create) defaults() {
+	if _, ok := _c.mutation.MessageCount(); !ok {
 		v := thread1000.DefaultMessageCount
-		t.mutation.SetMessageCount(v)
+		_c.mutation.SetMessageCount(v)
 	}
-	if _, ok := t.mutation.IsArchived(); !ok {
+	if _, ok := _c.mutation.IsArchived(); !ok {
 		v := thread1000.DefaultIsArchived
-		t.mutation.SetIsArchived(v)
+		_c.mutation.SetIsArchived(v)
 	}
-	if _, ok := t.mutation.ID(); !ok {
+	if _, ok := _c.mutation.ID(); !ok {
 		v := thread1000.DefaultID()
-		t.mutation.SetID(v)
+		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (t *Thread1000Create) check() error {
-	if _, ok := t.mutation.Name(); !ok {
+func (_c *Thread1000Create) check() error {
+	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Thread1000.name"`)}
 	}
-	if v, ok := t.mutation.Name(); ok {
+	if v, ok := _c.mutation.Name(); ok {
 		if err := thread1000.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Thread1000.name": %w`, err)}
 		}
 	}
-	if _, ok := t.mutation.MessageCount(); !ok {
+	if _, ok := _c.mutation.MessageCount(); !ok {
 		return &ValidationError{Name: "message_count", err: errors.New(`ent: missing required field "Thread1000.message_count"`)}
 	}
-	if _, ok := t.mutation.IsArchived(); !ok {
+	if _, ok := _c.mutation.IsArchived(); !ok {
 		return &ValidationError{Name: "is_archived", err: errors.New(`ent: missing required field "Thread1000.is_archived"`)}
 	}
-	if _, ok := t.mutation.ThreadID(); !ok {
+	if _, ok := _c.mutation.ThreadID(); !ok {
 		return &ValidationError{Name: "thread_id", err: errors.New(`ent: missing required field "Thread1000.thread_id"`)}
 	}
-	if len(t.mutation.GuildIDs()) == 0 {
+	if len(_c.mutation.GuildIDs()) == 0 {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "Thread1000.guild"`)}
 	}
-	if len(t.mutation.ChannelIDs()) == 0 {
+	if len(_c.mutation.ChannelIDs()) == 0 {
 		return &ValidationError{Name: "channel", err: errors.New(`ent: missing required edge "Thread1000.channel"`)}
 	}
 	return nil
 }
 
-func (t *Thread1000Create) sqlSave(ctx context.Context) (*Thread1000, error) {
-	if err := t.check(); err != nil {
+func (_c *Thread1000Create) sqlSave(ctx context.Context) (*Thread1000, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := t.createSpec()
-	if err := sqlgraph.CreateNode(ctx, t.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -194,37 +194,37 @@ func (t *Thread1000Create) sqlSave(ctx context.Context) (*Thread1000, error) {
 			return nil, err
 		}
 	}
-	t.mutation.id = &_node.ID
-	t.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (t *Thread1000Create) createSpec() (*Thread1000, *sqlgraph.CreateSpec) {
+func (_c *Thread1000Create) createSpec() (*Thread1000, *sqlgraph.CreateSpec) {
 	var (
-		_node = &Thread1000{config: t.config}
+		_node = &Thread1000{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(thread1000.Table, sqlgraph.NewFieldSpec(thread1000.FieldID, field.TypeUUID))
 	)
-	if id, ok := t.mutation.ID(); ok {
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := t.mutation.Name(); ok {
+	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(thread1000.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
-	if value, ok := t.mutation.MessageCount(); ok {
+	if value, ok := _c.mutation.MessageCount(); ok {
 		_spec.SetField(thread1000.FieldMessageCount, field.TypeInt, value)
 		_node.MessageCount = value
 	}
-	if value, ok := t.mutation.IsArchived(); ok {
+	if value, ok := _c.mutation.IsArchived(); ok {
 		_spec.SetField(thread1000.FieldIsArchived, field.TypeBool, value)
 		_node.IsArchived = value
 	}
-	if value, ok := t.mutation.ThreadID(); ok {
+	if value, ok := _c.mutation.ThreadID(); ok {
 		_spec.SetField(thread1000.FieldThreadID, field.TypeUint64, value)
 		_node.ThreadID = value
 	}
-	if nodes := t.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -241,7 +241,7 @@ func (t *Thread1000Create) createSpec() (*Thread1000, *sqlgraph.CreateSpec) {
 		_node.guild_threads1000 = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := t.mutation.ChannelIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.ChannelIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -269,16 +269,16 @@ type Thread1000CreateBulk struct {
 }
 
 // Save creates the Thread1000 entities in the database.
-func (tb *Thread1000CreateBulk) Save(ctx context.Context) ([]*Thread1000, error) {
-	if tb.err != nil {
-		return nil, tb.err
+func (_c *Thread1000CreateBulk) Save(ctx context.Context) ([]*Thread1000, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(tb.builders))
-	nodes := make([]*Thread1000, len(tb.builders))
-	mutators := make([]Mutator, len(tb.builders))
-	for i := range tb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*Thread1000, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := tb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*Thread1000Mutation)
@@ -292,11 +292,11 @@ func (tb *Thread1000CreateBulk) Save(ctx context.Context) ([]*Thread1000, error)
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, tb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, tb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -316,7 +316,7 @@ func (tb *Thread1000CreateBulk) Save(ctx context.Context) ([]*Thread1000, error)
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, tb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -324,8 +324,8 @@ func (tb *Thread1000CreateBulk) Save(ctx context.Context) ([]*Thread1000, error)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (tb *Thread1000CreateBulk) SaveX(ctx context.Context) []*Thread1000 {
-	v, err := tb.Save(ctx)
+func (_c *Thread1000CreateBulk) SaveX(ctx context.Context) []*Thread1000 {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -333,14 +333,14 @@ func (tb *Thread1000CreateBulk) SaveX(ctx context.Context) []*Thread1000 {
 }
 
 // Exec executes the query.
-func (tb *Thread1000CreateBulk) Exec(ctx context.Context) error {
-	_, err := tb.Save(ctx)
+func (_c *Thread1000CreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tb *Thread1000CreateBulk) ExecX(ctx context.Context) {
-	if err := tb.Exec(ctx); err != nil {
+func (_c *Thread1000CreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

@@ -35,453 +35,453 @@ type GuildCreate struct {
 }
 
 // SetName sets the "name" field.
-func (gc *GuildCreate) SetName(s string) *GuildCreate {
-	gc.mutation.SetName(s)
-	return gc
+func (_c *GuildCreate) SetName(v string) *GuildCreate {
+	_c.mutation.SetName(v)
+	return _c
 }
 
 // SetLocale sets the "locale" field.
-func (gc *GuildCreate) SetLocale(d discord.Locale) *GuildCreate {
-	gc.mutation.SetLocale(d)
-	return gc
+func (_c *GuildCreate) SetLocale(v discord.Locale) *GuildCreate {
+	_c.mutation.SetLocale(v)
+	return _c
 }
 
 // SetNillableLocale sets the "locale" field if the given value is not nil.
-func (gc *GuildCreate) SetNillableLocale(d *discord.Locale) *GuildCreate {
-	if d != nil {
-		gc.SetLocale(*d)
+func (_c *GuildCreate) SetNillableLocale(v *discord.Locale) *GuildCreate {
+	if v != nil {
+		_c.SetLocale(*v)
 	}
-	return gc
+	return _c
 }
 
 // SetLevelUpMessage sets the "level_up_message" field.
-func (gc *GuildCreate) SetLevelUpMessage(s string) *GuildCreate {
-	gc.mutation.SetLevelUpMessage(s)
-	return gc
+func (_c *GuildCreate) SetLevelUpMessage(v string) *GuildCreate {
+	_c.mutation.SetLevelUpMessage(v)
+	return _c
 }
 
 // SetNillableLevelUpMessage sets the "level_up_message" field if the given value is not nil.
-func (gc *GuildCreate) SetNillableLevelUpMessage(s *string) *GuildCreate {
-	if s != nil {
-		gc.SetLevelUpMessage(*s)
+func (_c *GuildCreate) SetNillableLevelUpMessage(v *string) *GuildCreate {
+	if v != nil {
+		_c.SetLevelUpMessage(*v)
 	}
-	return gc
+	return _c
 }
 
 // SetLevelUpChannel sets the "level_up_channel" field.
-func (gc *GuildCreate) SetLevelUpChannel(s snowflake.ID) *GuildCreate {
-	gc.mutation.SetLevelUpChannel(s)
-	return gc
+func (_c *GuildCreate) SetLevelUpChannel(v snowflake.ID) *GuildCreate {
+	_c.mutation.SetLevelUpChannel(v)
+	return _c
 }
 
 // SetNillableLevelUpChannel sets the "level_up_channel" field if the given value is not nil.
-func (gc *GuildCreate) SetNillableLevelUpChannel(s *snowflake.ID) *GuildCreate {
-	if s != nil {
-		gc.SetLevelUpChannel(*s)
+func (_c *GuildCreate) SetNillableLevelUpChannel(v *snowflake.ID) *GuildCreate {
+	if v != nil {
+		_c.SetLevelUpChannel(*v)
 	}
-	return gc
+	return _c
 }
 
 // SetLevelUpExcludeChannel sets the "level_up_exclude_channel" field.
-func (gc *GuildCreate) SetLevelUpExcludeChannel(s []snowflake.ID) *GuildCreate {
-	gc.mutation.SetLevelUpExcludeChannel(s)
-	return gc
+func (_c *GuildCreate) SetLevelUpExcludeChannel(v []snowflake.ID) *GuildCreate {
+	_c.mutation.SetLevelUpExcludeChannel(v)
+	return _c
 }
 
 // SetLevelMee6Imported sets the "level_mee6_imported" field.
-func (gc *GuildCreate) SetLevelMee6Imported(b bool) *GuildCreate {
-	gc.mutation.SetLevelMee6Imported(b)
-	return gc
+func (_c *GuildCreate) SetLevelMee6Imported(v bool) *GuildCreate {
+	_c.mutation.SetLevelMee6Imported(v)
+	return _c
 }
 
 // SetNillableLevelMee6Imported sets the "level_mee6_imported" field if the given value is not nil.
-func (gc *GuildCreate) SetNillableLevelMee6Imported(b *bool) *GuildCreate {
-	if b != nil {
-		gc.SetLevelMee6Imported(*b)
+func (_c *GuildCreate) SetNillableLevelMee6Imported(v *bool) *GuildCreate {
+	if v != nil {
+		_c.SetLevelMee6Imported(*v)
 	}
-	return gc
+	return _c
 }
 
 // SetLevelRole sets the "level_role" field.
-func (gc *GuildCreate) SetLevelRole(m map[int]snowflake.ID) *GuildCreate {
-	gc.mutation.SetLevelRole(m)
-	return gc
+func (_c *GuildCreate) SetLevelRole(v map[int]snowflake.ID) *GuildCreate {
+	_c.mutation.SetLevelRole(v)
+	return _c
 }
 
 // SetPermissions sets the "permissions" field.
-func (gc *GuildCreate) SetPermissions(m map[snowflake.ID]permissions.Permission) *GuildCreate {
-	gc.mutation.SetPermissions(m)
-	return gc
+func (_c *GuildCreate) SetPermissions(v map[snowflake.ID]permissions.Permission) *GuildCreate {
+	_c.mutation.SetPermissions(v)
+	return _c
 }
 
 // SetRemindCount sets the "remind_count" field.
-func (gc *GuildCreate) SetRemindCount(i int) *GuildCreate {
-	gc.mutation.SetRemindCount(i)
-	return gc
+func (_c *GuildCreate) SetRemindCount(v int) *GuildCreate {
+	_c.mutation.SetRemindCount(v)
+	return _c
 }
 
 // SetNillableRemindCount sets the "remind_count" field if the given value is not nil.
-func (gc *GuildCreate) SetNillableRemindCount(i *int) *GuildCreate {
-	if i != nil {
-		gc.SetRemindCount(*i)
+func (_c *GuildCreate) SetNillableRemindCount(v *int) *GuildCreate {
+	if v != nil {
+		_c.SetRemindCount(*v)
 	}
-	return gc
+	return _c
 }
 
 // SetRolePanelEditTimes sets the "role_panel_edit_times" field.
-func (gc *GuildCreate) SetRolePanelEditTimes(t []time.Time) *GuildCreate {
-	gc.mutation.SetRolePanelEditTimes(t)
-	return gc
+func (_c *GuildCreate) SetRolePanelEditTimes(v []time.Time) *GuildCreate {
+	_c.mutation.SetRolePanelEditTimes(v)
+	return _c
 }
 
 // SetBumpEnabled sets the "bump_enabled" field.
-func (gc *GuildCreate) SetBumpEnabled(b bool) *GuildCreate {
-	gc.mutation.SetBumpEnabled(b)
-	return gc
+func (_c *GuildCreate) SetBumpEnabled(v bool) *GuildCreate {
+	_c.mutation.SetBumpEnabled(v)
+	return _c
 }
 
 // SetNillableBumpEnabled sets the "bump_enabled" field if the given value is not nil.
-func (gc *GuildCreate) SetNillableBumpEnabled(b *bool) *GuildCreate {
-	if b != nil {
-		gc.SetBumpEnabled(*b)
+func (_c *GuildCreate) SetNillableBumpEnabled(v *bool) *GuildCreate {
+	if v != nil {
+		_c.SetBumpEnabled(*v)
 	}
-	return gc
+	return _c
 }
 
 // SetBumpMessageTitle sets the "bump_message_title" field.
-func (gc *GuildCreate) SetBumpMessageTitle(s string) *GuildCreate {
-	gc.mutation.SetBumpMessageTitle(s)
-	return gc
+func (_c *GuildCreate) SetBumpMessageTitle(v string) *GuildCreate {
+	_c.mutation.SetBumpMessageTitle(v)
+	return _c
 }
 
 // SetNillableBumpMessageTitle sets the "bump_message_title" field if the given value is not nil.
-func (gc *GuildCreate) SetNillableBumpMessageTitle(s *string) *GuildCreate {
-	if s != nil {
-		gc.SetBumpMessageTitle(*s)
+func (_c *GuildCreate) SetNillableBumpMessageTitle(v *string) *GuildCreate {
+	if v != nil {
+		_c.SetBumpMessageTitle(*v)
 	}
-	return gc
+	return _c
 }
 
 // SetBumpMessage sets the "bump_message" field.
-func (gc *GuildCreate) SetBumpMessage(s string) *GuildCreate {
-	gc.mutation.SetBumpMessage(s)
-	return gc
+func (_c *GuildCreate) SetBumpMessage(v string) *GuildCreate {
+	_c.mutation.SetBumpMessage(v)
+	return _c
 }
 
 // SetNillableBumpMessage sets the "bump_message" field if the given value is not nil.
-func (gc *GuildCreate) SetNillableBumpMessage(s *string) *GuildCreate {
-	if s != nil {
-		gc.SetBumpMessage(*s)
+func (_c *GuildCreate) SetNillableBumpMessage(v *string) *GuildCreate {
+	if v != nil {
+		_c.SetBumpMessage(*v)
 	}
-	return gc
+	return _c
 }
 
 // SetBumpRemindMessageTitle sets the "bump_remind_message_title" field.
-func (gc *GuildCreate) SetBumpRemindMessageTitle(s string) *GuildCreate {
-	gc.mutation.SetBumpRemindMessageTitle(s)
-	return gc
+func (_c *GuildCreate) SetBumpRemindMessageTitle(v string) *GuildCreate {
+	_c.mutation.SetBumpRemindMessageTitle(v)
+	return _c
 }
 
 // SetNillableBumpRemindMessageTitle sets the "bump_remind_message_title" field if the given value is not nil.
-func (gc *GuildCreate) SetNillableBumpRemindMessageTitle(s *string) *GuildCreate {
-	if s != nil {
-		gc.SetBumpRemindMessageTitle(*s)
+func (_c *GuildCreate) SetNillableBumpRemindMessageTitle(v *string) *GuildCreate {
+	if v != nil {
+		_c.SetBumpRemindMessageTitle(*v)
 	}
-	return gc
+	return _c
 }
 
 // SetBumpRemindMessage sets the "bump_remind_message" field.
-func (gc *GuildCreate) SetBumpRemindMessage(s string) *GuildCreate {
-	gc.mutation.SetBumpRemindMessage(s)
-	return gc
+func (_c *GuildCreate) SetBumpRemindMessage(v string) *GuildCreate {
+	_c.mutation.SetBumpRemindMessage(v)
+	return _c
 }
 
 // SetNillableBumpRemindMessage sets the "bump_remind_message" field if the given value is not nil.
-func (gc *GuildCreate) SetNillableBumpRemindMessage(s *string) *GuildCreate {
-	if s != nil {
-		gc.SetBumpRemindMessage(*s)
+func (_c *GuildCreate) SetNillableBumpRemindMessage(v *string) *GuildCreate {
+	if v != nil {
+		_c.SetBumpRemindMessage(*v)
 	}
-	return gc
+	return _c
 }
 
 // SetUpEnabled sets the "up_enabled" field.
-func (gc *GuildCreate) SetUpEnabled(b bool) *GuildCreate {
-	gc.mutation.SetUpEnabled(b)
-	return gc
+func (_c *GuildCreate) SetUpEnabled(v bool) *GuildCreate {
+	_c.mutation.SetUpEnabled(v)
+	return _c
 }
 
 // SetNillableUpEnabled sets the "up_enabled" field if the given value is not nil.
-func (gc *GuildCreate) SetNillableUpEnabled(b *bool) *GuildCreate {
-	if b != nil {
-		gc.SetUpEnabled(*b)
+func (_c *GuildCreate) SetNillableUpEnabled(v *bool) *GuildCreate {
+	if v != nil {
+		_c.SetUpEnabled(*v)
 	}
-	return gc
+	return _c
 }
 
 // SetUpMessageTitle sets the "up_message_title" field.
-func (gc *GuildCreate) SetUpMessageTitle(s string) *GuildCreate {
-	gc.mutation.SetUpMessageTitle(s)
-	return gc
+func (_c *GuildCreate) SetUpMessageTitle(v string) *GuildCreate {
+	_c.mutation.SetUpMessageTitle(v)
+	return _c
 }
 
 // SetNillableUpMessageTitle sets the "up_message_title" field if the given value is not nil.
-func (gc *GuildCreate) SetNillableUpMessageTitle(s *string) *GuildCreate {
-	if s != nil {
-		gc.SetUpMessageTitle(*s)
+func (_c *GuildCreate) SetNillableUpMessageTitle(v *string) *GuildCreate {
+	if v != nil {
+		_c.SetUpMessageTitle(*v)
 	}
-	return gc
+	return _c
 }
 
 // SetUpMessage sets the "up_message" field.
-func (gc *GuildCreate) SetUpMessage(s string) *GuildCreate {
-	gc.mutation.SetUpMessage(s)
-	return gc
+func (_c *GuildCreate) SetUpMessage(v string) *GuildCreate {
+	_c.mutation.SetUpMessage(v)
+	return _c
 }
 
 // SetNillableUpMessage sets the "up_message" field if the given value is not nil.
-func (gc *GuildCreate) SetNillableUpMessage(s *string) *GuildCreate {
-	if s != nil {
-		gc.SetUpMessage(*s)
+func (_c *GuildCreate) SetNillableUpMessage(v *string) *GuildCreate {
+	if v != nil {
+		_c.SetUpMessage(*v)
 	}
-	return gc
+	return _c
 }
 
 // SetUpRemindMessageTitle sets the "up_remind_message_title" field.
-func (gc *GuildCreate) SetUpRemindMessageTitle(s string) *GuildCreate {
-	gc.mutation.SetUpRemindMessageTitle(s)
-	return gc
+func (_c *GuildCreate) SetUpRemindMessageTitle(v string) *GuildCreate {
+	_c.mutation.SetUpRemindMessageTitle(v)
+	return _c
 }
 
 // SetNillableUpRemindMessageTitle sets the "up_remind_message_title" field if the given value is not nil.
-func (gc *GuildCreate) SetNillableUpRemindMessageTitle(s *string) *GuildCreate {
-	if s != nil {
-		gc.SetUpRemindMessageTitle(*s)
+func (_c *GuildCreate) SetNillableUpRemindMessageTitle(v *string) *GuildCreate {
+	if v != nil {
+		_c.SetUpRemindMessageTitle(*v)
 	}
-	return gc
+	return _c
 }
 
 // SetUpRemindMessage sets the "up_remind_message" field.
-func (gc *GuildCreate) SetUpRemindMessage(s string) *GuildCreate {
-	gc.mutation.SetUpRemindMessage(s)
-	return gc
+func (_c *GuildCreate) SetUpRemindMessage(v string) *GuildCreate {
+	_c.mutation.SetUpRemindMessage(v)
+	return _c
 }
 
 // SetNillableUpRemindMessage sets the "up_remind_message" field if the given value is not nil.
-func (gc *GuildCreate) SetNillableUpRemindMessage(s *string) *GuildCreate {
-	if s != nil {
-		gc.SetUpRemindMessage(*s)
+func (_c *GuildCreate) SetNillableUpRemindMessage(v *string) *GuildCreate {
+	if v != nil {
+		_c.SetUpRemindMessage(*v)
 	}
-	return gc
+	return _c
 }
 
 // SetBumpMention sets the "bump_mention" field.
-func (gc *GuildCreate) SetBumpMention(s snowflake.ID) *GuildCreate {
-	gc.mutation.SetBumpMention(s)
-	return gc
+func (_c *GuildCreate) SetBumpMention(v snowflake.ID) *GuildCreate {
+	_c.mutation.SetBumpMention(v)
+	return _c
 }
 
 // SetNillableBumpMention sets the "bump_mention" field if the given value is not nil.
-func (gc *GuildCreate) SetNillableBumpMention(s *snowflake.ID) *GuildCreate {
-	if s != nil {
-		gc.SetBumpMention(*s)
+func (_c *GuildCreate) SetNillableBumpMention(v *snowflake.ID) *GuildCreate {
+	if v != nil {
+		_c.SetBumpMention(*v)
 	}
-	return gc
+	return _c
 }
 
 // SetUpMention sets the "up_mention" field.
-func (gc *GuildCreate) SetUpMention(s snowflake.ID) *GuildCreate {
-	gc.mutation.SetUpMention(s)
-	return gc
+func (_c *GuildCreate) SetUpMention(v snowflake.ID) *GuildCreate {
+	_c.mutation.SetUpMention(v)
+	return _c
 }
 
 // SetNillableUpMention sets the "up_mention" field if the given value is not nil.
-func (gc *GuildCreate) SetNillableUpMention(s *snowflake.ID) *GuildCreate {
-	if s != nil {
-		gc.SetUpMention(*s)
+func (_c *GuildCreate) SetNillableUpMention(v *snowflake.ID) *GuildCreate {
+	if v != nil {
+		_c.SetUpMention(*v)
 	}
-	return gc
+	return _c
 }
 
 // SetLevelingDisabled sets the "leveling_disabled" field.
-func (gc *GuildCreate) SetLevelingDisabled(b bool) *GuildCreate {
-	gc.mutation.SetLevelingDisabled(b)
-	return gc
+func (_c *GuildCreate) SetLevelingDisabled(v bool) *GuildCreate {
+	_c.mutation.SetLevelingDisabled(v)
+	return _c
 }
 
 // SetNillableLevelingDisabled sets the "leveling_disabled" field if the given value is not nil.
-func (gc *GuildCreate) SetNillableLevelingDisabled(b *bool) *GuildCreate {
-	if b != nil {
-		gc.SetLevelingDisabled(*b)
+func (_c *GuildCreate) SetNillableLevelingDisabled(v *bool) *GuildCreate {
+	if v != nil {
+		_c.SetLevelingDisabled(*v)
 	}
-	return gc
+	return _c
 }
 
 // SetID sets the "id" field.
-func (gc *GuildCreate) SetID(s snowflake.ID) *GuildCreate {
-	gc.mutation.SetID(s)
-	return gc
+func (_c *GuildCreate) SetID(v snowflake.ID) *GuildCreate {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetOwnerID sets the "owner" edge to the User entity by ID.
-func (gc *GuildCreate) SetOwnerID(id snowflake.ID) *GuildCreate {
-	gc.mutation.SetOwnerID(id)
-	return gc
+func (_c *GuildCreate) SetOwnerID(id snowflake.ID) *GuildCreate {
+	_c.mutation.SetOwnerID(id)
+	return _c
 }
 
 // SetOwner sets the "owner" edge to the User entity.
-func (gc *GuildCreate) SetOwner(u *User) *GuildCreate {
-	return gc.SetOwnerID(u.ID)
+func (_c *GuildCreate) SetOwner(v *User) *GuildCreate {
+	return _c.SetOwnerID(v.ID)
 }
 
 // AddMemberIDs adds the "members" edge to the Member entity by IDs.
-func (gc *GuildCreate) AddMemberIDs(ids ...int) *GuildCreate {
-	gc.mutation.AddMemberIDs(ids...)
-	return gc
+func (_c *GuildCreate) AddMemberIDs(ids ...int) *GuildCreate {
+	_c.mutation.AddMemberIDs(ids...)
+	return _c
 }
 
 // AddMembers adds the "members" edges to the Member entity.
-func (gc *GuildCreate) AddMembers(m ...*Member) *GuildCreate {
-	ids := make([]int, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_c *GuildCreate) AddMembers(v ...*Member) *GuildCreate {
+	ids := make([]int, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gc.AddMemberIDs(ids...)
+	return _c.AddMemberIDs(ids...)
 }
 
 // AddMessagePinIDs adds the "message_pins" edge to the MessagePin entity by IDs.
-func (gc *GuildCreate) AddMessagePinIDs(ids ...uuid.UUID) *GuildCreate {
-	gc.mutation.AddMessagePinIDs(ids...)
-	return gc
+func (_c *GuildCreate) AddMessagePinIDs(ids ...uuid.UUID) *GuildCreate {
+	_c.mutation.AddMessagePinIDs(ids...)
+	return _c
 }
 
 // AddMessagePins adds the "message_pins" edges to the MessagePin entity.
-func (gc *GuildCreate) AddMessagePins(m ...*MessagePin) *GuildCreate {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_c *GuildCreate) AddMessagePins(v ...*MessagePin) *GuildCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gc.AddMessagePinIDs(ids...)
+	return _c.AddMessagePinIDs(ids...)
 }
 
 // AddRemindIDs adds the "reminds" edge to the MessageRemind entity by IDs.
-func (gc *GuildCreate) AddRemindIDs(ids ...uuid.UUID) *GuildCreate {
-	gc.mutation.AddRemindIDs(ids...)
-	return gc
+func (_c *GuildCreate) AddRemindIDs(ids ...uuid.UUID) *GuildCreate {
+	_c.mutation.AddRemindIDs(ids...)
+	return _c
 }
 
 // AddReminds adds the "reminds" edges to the MessageRemind entity.
-func (gc *GuildCreate) AddReminds(m ...*MessageRemind) *GuildCreate {
-	ids := make([]uuid.UUID, len(m))
-	for i := range m {
-		ids[i] = m[i].ID
+func (_c *GuildCreate) AddReminds(v ...*MessageRemind) *GuildCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gc.AddRemindIDs(ids...)
+	return _c.AddRemindIDs(ids...)
 }
 
 // AddRolePanelIDs adds the "role_panels" edge to the RolePanel entity by IDs.
-func (gc *GuildCreate) AddRolePanelIDs(ids ...uuid.UUID) *GuildCreate {
-	gc.mutation.AddRolePanelIDs(ids...)
-	return gc
+func (_c *GuildCreate) AddRolePanelIDs(ids ...uuid.UUID) *GuildCreate {
+	_c.mutation.AddRolePanelIDs(ids...)
+	return _c
 }
 
 // AddRolePanels adds the "role_panels" edges to the RolePanel entity.
-func (gc *GuildCreate) AddRolePanels(r ...*RolePanel) *GuildCreate {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_c *GuildCreate) AddRolePanels(v ...*RolePanel) *GuildCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gc.AddRolePanelIDs(ids...)
+	return _c.AddRolePanelIDs(ids...)
 }
 
 // AddRolePanelPlacementIDs adds the "role_panel_placements" edge to the RolePanelPlaced entity by IDs.
-func (gc *GuildCreate) AddRolePanelPlacementIDs(ids ...uuid.UUID) *GuildCreate {
-	gc.mutation.AddRolePanelPlacementIDs(ids...)
-	return gc
+func (_c *GuildCreate) AddRolePanelPlacementIDs(ids ...uuid.UUID) *GuildCreate {
+	_c.mutation.AddRolePanelPlacementIDs(ids...)
+	return _c
 }
 
 // AddRolePanelPlacements adds the "role_panel_placements" edges to the RolePanelPlaced entity.
-func (gc *GuildCreate) AddRolePanelPlacements(r ...*RolePanelPlaced) *GuildCreate {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_c *GuildCreate) AddRolePanelPlacements(v ...*RolePanelPlaced) *GuildCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gc.AddRolePanelPlacementIDs(ids...)
+	return _c.AddRolePanelPlacementIDs(ids...)
 }
 
 // AddRolePanelEditIDs adds the "role_panel_edits" edge to the RolePanelEdit entity by IDs.
-func (gc *GuildCreate) AddRolePanelEditIDs(ids ...uuid.UUID) *GuildCreate {
-	gc.mutation.AddRolePanelEditIDs(ids...)
-	return gc
+func (_c *GuildCreate) AddRolePanelEditIDs(ids ...uuid.UUID) *GuildCreate {
+	_c.mutation.AddRolePanelEditIDs(ids...)
+	return _c
 }
 
 // AddRolePanelEdits adds the "role_panel_edits" edges to the RolePanelEdit entity.
-func (gc *GuildCreate) AddRolePanelEdits(r ...*RolePanelEdit) *GuildCreate {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_c *GuildCreate) AddRolePanelEdits(v ...*RolePanelEdit) *GuildCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gc.AddRolePanelEditIDs(ids...)
+	return _c.AddRolePanelEditIDs(ids...)
 }
 
 // AddChinchiroSessionIDs adds the "chinchiro_sessions" edge to the ChinchiroSession entity by IDs.
-func (gc *GuildCreate) AddChinchiroSessionIDs(ids ...uuid.UUID) *GuildCreate {
-	gc.mutation.AddChinchiroSessionIDs(ids...)
-	return gc
+func (_c *GuildCreate) AddChinchiroSessionIDs(ids ...uuid.UUID) *GuildCreate {
+	_c.mutation.AddChinchiroSessionIDs(ids...)
+	return _c
 }
 
 // AddChinchiroSessions adds the "chinchiro_sessions" edges to the ChinchiroSession entity.
-func (gc *GuildCreate) AddChinchiroSessions(c ...*ChinchiroSession) *GuildCreate {
-	ids := make([]uuid.UUID, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
+func (_c *GuildCreate) AddChinchiroSessions(v ...*ChinchiroSession) *GuildCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gc.AddChinchiroSessionIDs(ids...)
+	return _c.AddChinchiroSessionIDs(ids...)
 }
 
 // AddThreads1000IDs adds the "threads1000" edge to the Thread1000 entity by IDs.
-func (gc *GuildCreate) AddThreads1000IDs(ids ...uuid.UUID) *GuildCreate {
-	gc.mutation.AddThreads1000IDs(ids...)
-	return gc
+func (_c *GuildCreate) AddThreads1000IDs(ids ...uuid.UUID) *GuildCreate {
+	_c.mutation.AddThreads1000IDs(ids...)
+	return _c
 }
 
 // AddThreads1000 adds the "threads1000" edges to the Thread1000 entity.
-func (gc *GuildCreate) AddThreads1000(t ...*Thread1000) *GuildCreate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_c *GuildCreate) AddThreads1000(v ...*Thread1000) *GuildCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gc.AddThreads1000IDs(ids...)
+	return _c.AddThreads1000IDs(ids...)
 }
 
 // AddThread1000ChannelIDs adds the "thread1000_channels" edge to the Thread1000Channel entity by IDs.
-func (gc *GuildCreate) AddThread1000ChannelIDs(ids ...uuid.UUID) *GuildCreate {
-	gc.mutation.AddThread1000ChannelIDs(ids...)
-	return gc
+func (_c *GuildCreate) AddThread1000ChannelIDs(ids ...uuid.UUID) *GuildCreate {
+	_c.mutation.AddThread1000ChannelIDs(ids...)
+	return _c
 }
 
 // AddThread1000Channels adds the "thread1000_channels" edges to the Thread1000Channel entity.
-func (gc *GuildCreate) AddThread1000Channels(t ...*Thread1000Channel) *GuildCreate {
-	ids := make([]uuid.UUID, len(t))
-	for i := range t {
-		ids[i] = t[i].ID
+func (_c *GuildCreate) AddThread1000Channels(v ...*Thread1000Channel) *GuildCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return gc.AddThread1000ChannelIDs(ids...)
+	return _c.AddThread1000ChannelIDs(ids...)
 }
 
 // Mutation returns the GuildMutation object of the builder.
-func (gc *GuildCreate) Mutation() *GuildMutation {
-	return gc.mutation
+func (_c *GuildCreate) Mutation() *GuildMutation {
+	return _c.mutation
 }
 
 // Save creates the Guild in the database.
-func (gc *GuildCreate) Save(ctx context.Context) (*Guild, error) {
-	gc.defaults()
-	return withHooks(ctx, gc.sqlSave, gc.mutation, gc.hooks)
+func (_c *GuildCreate) Save(ctx context.Context) (*Guild, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (gc *GuildCreate) SaveX(ctx context.Context) *Guild {
-	v, err := gc.Save(ctx)
+func (_c *GuildCreate) SaveX(ctx context.Context) *Guild {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -489,217 +489,217 @@ func (gc *GuildCreate) SaveX(ctx context.Context) *Guild {
 }
 
 // Exec executes the query.
-func (gc *GuildCreate) Exec(ctx context.Context) error {
-	_, err := gc.Save(ctx)
+func (_c *GuildCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (gc *GuildCreate) ExecX(ctx context.Context) {
-	if err := gc.Exec(ctx); err != nil {
+func (_c *GuildCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (gc *GuildCreate) defaults() {
-	if _, ok := gc.mutation.Locale(); !ok {
+func (_c *GuildCreate) defaults() {
+	if _, ok := _c.mutation.Locale(); !ok {
 		v := guild.DefaultLocale
-		gc.mutation.SetLocale(v)
+		_c.mutation.SetLocale(v)
 	}
-	if _, ok := gc.mutation.LevelUpMessage(); !ok {
+	if _, ok := _c.mutation.LevelUpMessage(); !ok {
 		v := guild.DefaultLevelUpMessage
-		gc.mutation.SetLevelUpMessage(v)
+		_c.mutation.SetLevelUpMessage(v)
 	}
-	if _, ok := gc.mutation.LevelMee6Imported(); !ok {
+	if _, ok := _c.mutation.LevelMee6Imported(); !ok {
 		v := guild.DefaultLevelMee6Imported
-		gc.mutation.SetLevelMee6Imported(v)
+		_c.mutation.SetLevelMee6Imported(v)
 	}
-	if _, ok := gc.mutation.LevelRole(); !ok {
+	if _, ok := _c.mutation.LevelRole(); !ok {
 		v := guild.DefaultLevelRole
-		gc.mutation.SetLevelRole(v)
+		_c.mutation.SetLevelRole(v)
 	}
-	if _, ok := gc.mutation.Permissions(); !ok {
+	if _, ok := _c.mutation.Permissions(); !ok {
 		v := guild.DefaultPermissions
-		gc.mutation.SetPermissions(v)
+		_c.mutation.SetPermissions(v)
 	}
-	if _, ok := gc.mutation.RemindCount(); !ok {
+	if _, ok := _c.mutation.RemindCount(); !ok {
 		v := guild.DefaultRemindCount
-		gc.mutation.SetRemindCount(v)
+		_c.mutation.SetRemindCount(v)
 	}
-	if _, ok := gc.mutation.RolePanelEditTimes(); !ok {
+	if _, ok := _c.mutation.RolePanelEditTimes(); !ok {
 		v := guild.DefaultRolePanelEditTimes
-		gc.mutation.SetRolePanelEditTimes(v)
+		_c.mutation.SetRolePanelEditTimes(v)
 	}
-	if _, ok := gc.mutation.BumpEnabled(); !ok {
+	if _, ok := _c.mutation.BumpEnabled(); !ok {
 		v := guild.DefaultBumpEnabled
-		gc.mutation.SetBumpEnabled(v)
+		_c.mutation.SetBumpEnabled(v)
 	}
-	if _, ok := gc.mutation.BumpMessageTitle(); !ok {
+	if _, ok := _c.mutation.BumpMessageTitle(); !ok {
 		v := guild.DefaultBumpMessageTitle
-		gc.mutation.SetBumpMessageTitle(v)
+		_c.mutation.SetBumpMessageTitle(v)
 	}
-	if _, ok := gc.mutation.BumpMessage(); !ok {
+	if _, ok := _c.mutation.BumpMessage(); !ok {
 		v := guild.DefaultBumpMessage
-		gc.mutation.SetBumpMessage(v)
+		_c.mutation.SetBumpMessage(v)
 	}
-	if _, ok := gc.mutation.BumpRemindMessageTitle(); !ok {
+	if _, ok := _c.mutation.BumpRemindMessageTitle(); !ok {
 		v := guild.DefaultBumpRemindMessageTitle
-		gc.mutation.SetBumpRemindMessageTitle(v)
+		_c.mutation.SetBumpRemindMessageTitle(v)
 	}
-	if _, ok := gc.mutation.BumpRemindMessage(); !ok {
+	if _, ok := _c.mutation.BumpRemindMessage(); !ok {
 		v := guild.DefaultBumpRemindMessage
-		gc.mutation.SetBumpRemindMessage(v)
+		_c.mutation.SetBumpRemindMessage(v)
 	}
-	if _, ok := gc.mutation.UpEnabled(); !ok {
+	if _, ok := _c.mutation.UpEnabled(); !ok {
 		v := guild.DefaultUpEnabled
-		gc.mutation.SetUpEnabled(v)
+		_c.mutation.SetUpEnabled(v)
 	}
-	if _, ok := gc.mutation.UpMessageTitle(); !ok {
+	if _, ok := _c.mutation.UpMessageTitle(); !ok {
 		v := guild.DefaultUpMessageTitle
-		gc.mutation.SetUpMessageTitle(v)
+		_c.mutation.SetUpMessageTitle(v)
 	}
-	if _, ok := gc.mutation.UpMessage(); !ok {
+	if _, ok := _c.mutation.UpMessage(); !ok {
 		v := guild.DefaultUpMessage
-		gc.mutation.SetUpMessage(v)
+		_c.mutation.SetUpMessage(v)
 	}
-	if _, ok := gc.mutation.UpRemindMessageTitle(); !ok {
+	if _, ok := _c.mutation.UpRemindMessageTitle(); !ok {
 		v := guild.DefaultUpRemindMessageTitle
-		gc.mutation.SetUpRemindMessageTitle(v)
+		_c.mutation.SetUpRemindMessageTitle(v)
 	}
-	if _, ok := gc.mutation.UpRemindMessage(); !ok {
+	if _, ok := _c.mutation.UpRemindMessage(); !ok {
 		v := guild.DefaultUpRemindMessage
-		gc.mutation.SetUpRemindMessage(v)
+		_c.mutation.SetUpRemindMessage(v)
 	}
-	if _, ok := gc.mutation.LevelingDisabled(); !ok {
+	if _, ok := _c.mutation.LevelingDisabled(); !ok {
 		v := guild.DefaultLevelingDisabled
-		gc.mutation.SetLevelingDisabled(v)
+		_c.mutation.SetLevelingDisabled(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (gc *GuildCreate) check() error {
-	if _, ok := gc.mutation.Name(); !ok {
+func (_c *GuildCreate) check() error {
+	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Guild.name"`)}
 	}
-	if v, ok := gc.mutation.Name(); ok {
+	if v, ok := _c.mutation.Name(); ok {
 		if err := guild.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Guild.name": %w`, err)}
 		}
 	}
-	if _, ok := gc.mutation.Locale(); !ok {
+	if _, ok := _c.mutation.Locale(); !ok {
 		return &ValidationError{Name: "locale", err: errors.New(`ent: missing required field "Guild.locale"`)}
 	}
-	if v, ok := gc.mutation.Locale(); ok {
+	if v, ok := _c.mutation.Locale(); ok {
 		if err := guild.LocaleValidator(string(v)); err != nil {
 			return &ValidationError{Name: "locale", err: fmt.Errorf(`ent: validator failed for field "Guild.locale": %w`, err)}
 		}
 	}
-	if _, ok := gc.mutation.LevelUpMessage(); !ok {
+	if _, ok := _c.mutation.LevelUpMessage(); !ok {
 		return &ValidationError{Name: "level_up_message", err: errors.New(`ent: missing required field "Guild.level_up_message"`)}
 	}
-	if v, ok := gc.mutation.LevelUpMessage(); ok {
+	if v, ok := _c.mutation.LevelUpMessage(); ok {
 		if err := guild.LevelUpMessageValidator(v); err != nil {
 			return &ValidationError{Name: "level_up_message", err: fmt.Errorf(`ent: validator failed for field "Guild.level_up_message": %w`, err)}
 		}
 	}
-	if _, ok := gc.mutation.LevelMee6Imported(); !ok {
+	if _, ok := _c.mutation.LevelMee6Imported(); !ok {
 		return &ValidationError{Name: "level_mee6_imported", err: errors.New(`ent: missing required field "Guild.level_mee6_imported"`)}
 	}
-	if _, ok := gc.mutation.Permissions(); !ok {
+	if _, ok := _c.mutation.Permissions(); !ok {
 		return &ValidationError{Name: "permissions", err: errors.New(`ent: missing required field "Guild.permissions"`)}
 	}
-	if _, ok := gc.mutation.RemindCount(); !ok {
+	if _, ok := _c.mutation.RemindCount(); !ok {
 		return &ValidationError{Name: "remind_count", err: errors.New(`ent: missing required field "Guild.remind_count"`)}
 	}
-	if _, ok := gc.mutation.RolePanelEditTimes(); !ok {
+	if _, ok := _c.mutation.RolePanelEditTimes(); !ok {
 		return &ValidationError{Name: "role_panel_edit_times", err: errors.New(`ent: missing required field "Guild.role_panel_edit_times"`)}
 	}
-	if _, ok := gc.mutation.BumpEnabled(); !ok {
+	if _, ok := _c.mutation.BumpEnabled(); !ok {
 		return &ValidationError{Name: "bump_enabled", err: errors.New(`ent: missing required field "Guild.bump_enabled"`)}
 	}
-	if _, ok := gc.mutation.BumpMessageTitle(); !ok {
+	if _, ok := _c.mutation.BumpMessageTitle(); !ok {
 		return &ValidationError{Name: "bump_message_title", err: errors.New(`ent: missing required field "Guild.bump_message_title"`)}
 	}
-	if v, ok := gc.mutation.BumpMessageTitle(); ok {
+	if v, ok := _c.mutation.BumpMessageTitle(); ok {
 		if err := guild.BumpMessageTitleValidator(v); err != nil {
 			return &ValidationError{Name: "bump_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_message_title": %w`, err)}
 		}
 	}
-	if _, ok := gc.mutation.BumpMessage(); !ok {
+	if _, ok := _c.mutation.BumpMessage(); !ok {
 		return &ValidationError{Name: "bump_message", err: errors.New(`ent: missing required field "Guild.bump_message"`)}
 	}
-	if v, ok := gc.mutation.BumpMessage(); ok {
+	if v, ok := _c.mutation.BumpMessage(); ok {
 		if err := guild.BumpMessageValidator(v); err != nil {
 			return &ValidationError{Name: "bump_message", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_message": %w`, err)}
 		}
 	}
-	if _, ok := gc.mutation.BumpRemindMessageTitle(); !ok {
+	if _, ok := _c.mutation.BumpRemindMessageTitle(); !ok {
 		return &ValidationError{Name: "bump_remind_message_title", err: errors.New(`ent: missing required field "Guild.bump_remind_message_title"`)}
 	}
-	if v, ok := gc.mutation.BumpRemindMessageTitle(); ok {
+	if v, ok := _c.mutation.BumpRemindMessageTitle(); ok {
 		if err := guild.BumpRemindMessageTitleValidator(v); err != nil {
 			return &ValidationError{Name: "bump_remind_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_remind_message_title": %w`, err)}
 		}
 	}
-	if _, ok := gc.mutation.BumpRemindMessage(); !ok {
+	if _, ok := _c.mutation.BumpRemindMessage(); !ok {
 		return &ValidationError{Name: "bump_remind_message", err: errors.New(`ent: missing required field "Guild.bump_remind_message"`)}
 	}
-	if v, ok := gc.mutation.BumpRemindMessage(); ok {
+	if v, ok := _c.mutation.BumpRemindMessage(); ok {
 		if err := guild.BumpRemindMessageValidator(v); err != nil {
 			return &ValidationError{Name: "bump_remind_message", err: fmt.Errorf(`ent: validator failed for field "Guild.bump_remind_message": %w`, err)}
 		}
 	}
-	if _, ok := gc.mutation.UpEnabled(); !ok {
+	if _, ok := _c.mutation.UpEnabled(); !ok {
 		return &ValidationError{Name: "up_enabled", err: errors.New(`ent: missing required field "Guild.up_enabled"`)}
 	}
-	if _, ok := gc.mutation.UpMessageTitle(); !ok {
+	if _, ok := _c.mutation.UpMessageTitle(); !ok {
 		return &ValidationError{Name: "up_message_title", err: errors.New(`ent: missing required field "Guild.up_message_title"`)}
 	}
-	if v, ok := gc.mutation.UpMessageTitle(); ok {
+	if v, ok := _c.mutation.UpMessageTitle(); ok {
 		if err := guild.UpMessageTitleValidator(v); err != nil {
 			return &ValidationError{Name: "up_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.up_message_title": %w`, err)}
 		}
 	}
-	if _, ok := gc.mutation.UpMessage(); !ok {
+	if _, ok := _c.mutation.UpMessage(); !ok {
 		return &ValidationError{Name: "up_message", err: errors.New(`ent: missing required field "Guild.up_message"`)}
 	}
-	if v, ok := gc.mutation.UpMessage(); ok {
+	if v, ok := _c.mutation.UpMessage(); ok {
 		if err := guild.UpMessageValidator(v); err != nil {
 			return &ValidationError{Name: "up_message", err: fmt.Errorf(`ent: validator failed for field "Guild.up_message": %w`, err)}
 		}
 	}
-	if _, ok := gc.mutation.UpRemindMessageTitle(); !ok {
+	if _, ok := _c.mutation.UpRemindMessageTitle(); !ok {
 		return &ValidationError{Name: "up_remind_message_title", err: errors.New(`ent: missing required field "Guild.up_remind_message_title"`)}
 	}
-	if v, ok := gc.mutation.UpRemindMessageTitle(); ok {
+	if v, ok := _c.mutation.UpRemindMessageTitle(); ok {
 		if err := guild.UpRemindMessageTitleValidator(v); err != nil {
 			return &ValidationError{Name: "up_remind_message_title", err: fmt.Errorf(`ent: validator failed for field "Guild.up_remind_message_title": %w`, err)}
 		}
 	}
-	if _, ok := gc.mutation.UpRemindMessage(); !ok {
+	if _, ok := _c.mutation.UpRemindMessage(); !ok {
 		return &ValidationError{Name: "up_remind_message", err: errors.New(`ent: missing required field "Guild.up_remind_message"`)}
 	}
-	if v, ok := gc.mutation.UpRemindMessage(); ok {
+	if v, ok := _c.mutation.UpRemindMessage(); ok {
 		if err := guild.UpRemindMessageValidator(v); err != nil {
 			return &ValidationError{Name: "up_remind_message", err: fmt.Errorf(`ent: validator failed for field "Guild.up_remind_message": %w`, err)}
 		}
 	}
-	if _, ok := gc.mutation.LevelingDisabled(); !ok {
+	if _, ok := _c.mutation.LevelingDisabled(); !ok {
 		return &ValidationError{Name: "leveling_disabled", err: errors.New(`ent: missing required field "Guild.leveling_disabled"`)}
 	}
-	if len(gc.mutation.OwnerIDs()) == 0 {
+	if len(_c.mutation.OwnerIDs()) == 0 {
 		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Guild.owner"`)}
 	}
 	return nil
 }
 
-func (gc *GuildCreate) sqlSave(ctx context.Context) (*Guild, error) {
-	if err := gc.check(); err != nil {
+func (_c *GuildCreate) sqlSave(ctx context.Context) (*Guild, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := gc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, gc.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -709,113 +709,113 @@ func (gc *GuildCreate) sqlSave(ctx context.Context) (*Guild, error) {
 		id := _spec.ID.Value.(int64)
 		_node.ID = snowflake.ID(id)
 	}
-	gc.mutation.id = &_node.ID
-	gc.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
+func (_c *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 	var (
-		_node = &Guild{config: gc.config}
+		_node = &Guild{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(guild.Table, sqlgraph.NewFieldSpec(guild.FieldID, field.TypeUint64))
 	)
-	if id, ok := gc.mutation.ID(); ok {
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = id
 	}
-	if value, ok := gc.mutation.Name(); ok {
+	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(guild.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
-	if value, ok := gc.mutation.Locale(); ok {
+	if value, ok := _c.mutation.Locale(); ok {
 		_spec.SetField(guild.FieldLocale, field.TypeString, value)
 		_node.Locale = value
 	}
-	if value, ok := gc.mutation.LevelUpMessage(); ok {
+	if value, ok := _c.mutation.LevelUpMessage(); ok {
 		_spec.SetField(guild.FieldLevelUpMessage, field.TypeString, value)
 		_node.LevelUpMessage = value
 	}
-	if value, ok := gc.mutation.LevelUpChannel(); ok {
+	if value, ok := _c.mutation.LevelUpChannel(); ok {
 		_spec.SetField(guild.FieldLevelUpChannel, field.TypeUint64, value)
 		_node.LevelUpChannel = &value
 	}
-	if value, ok := gc.mutation.LevelUpExcludeChannel(); ok {
+	if value, ok := _c.mutation.LevelUpExcludeChannel(); ok {
 		_spec.SetField(guild.FieldLevelUpExcludeChannel, field.TypeJSON, value)
 		_node.LevelUpExcludeChannel = value
 	}
-	if value, ok := gc.mutation.LevelMee6Imported(); ok {
+	if value, ok := _c.mutation.LevelMee6Imported(); ok {
 		_spec.SetField(guild.FieldLevelMee6Imported, field.TypeBool, value)
 		_node.LevelMee6Imported = value
 	}
-	if value, ok := gc.mutation.LevelRole(); ok {
+	if value, ok := _c.mutation.LevelRole(); ok {
 		_spec.SetField(guild.FieldLevelRole, field.TypeJSON, value)
 		_node.LevelRole = value
 	}
-	if value, ok := gc.mutation.Permissions(); ok {
+	if value, ok := _c.mutation.Permissions(); ok {
 		_spec.SetField(guild.FieldPermissions, field.TypeJSON, value)
 		_node.Permissions = value
 	}
-	if value, ok := gc.mutation.RemindCount(); ok {
+	if value, ok := _c.mutation.RemindCount(); ok {
 		_spec.SetField(guild.FieldRemindCount, field.TypeInt, value)
 		_node.RemindCount = value
 	}
-	if value, ok := gc.mutation.RolePanelEditTimes(); ok {
+	if value, ok := _c.mutation.RolePanelEditTimes(); ok {
 		_spec.SetField(guild.FieldRolePanelEditTimes, field.TypeJSON, value)
 		_node.RolePanelEditTimes = value
 	}
-	if value, ok := gc.mutation.BumpEnabled(); ok {
+	if value, ok := _c.mutation.BumpEnabled(); ok {
 		_spec.SetField(guild.FieldBumpEnabled, field.TypeBool, value)
 		_node.BumpEnabled = value
 	}
-	if value, ok := gc.mutation.BumpMessageTitle(); ok {
+	if value, ok := _c.mutation.BumpMessageTitle(); ok {
 		_spec.SetField(guild.FieldBumpMessageTitle, field.TypeString, value)
 		_node.BumpMessageTitle = value
 	}
-	if value, ok := gc.mutation.BumpMessage(); ok {
+	if value, ok := _c.mutation.BumpMessage(); ok {
 		_spec.SetField(guild.FieldBumpMessage, field.TypeString, value)
 		_node.BumpMessage = value
 	}
-	if value, ok := gc.mutation.BumpRemindMessageTitle(); ok {
+	if value, ok := _c.mutation.BumpRemindMessageTitle(); ok {
 		_spec.SetField(guild.FieldBumpRemindMessageTitle, field.TypeString, value)
 		_node.BumpRemindMessageTitle = value
 	}
-	if value, ok := gc.mutation.BumpRemindMessage(); ok {
+	if value, ok := _c.mutation.BumpRemindMessage(); ok {
 		_spec.SetField(guild.FieldBumpRemindMessage, field.TypeString, value)
 		_node.BumpRemindMessage = value
 	}
-	if value, ok := gc.mutation.UpEnabled(); ok {
+	if value, ok := _c.mutation.UpEnabled(); ok {
 		_spec.SetField(guild.FieldUpEnabled, field.TypeBool, value)
 		_node.UpEnabled = value
 	}
-	if value, ok := gc.mutation.UpMessageTitle(); ok {
+	if value, ok := _c.mutation.UpMessageTitle(); ok {
 		_spec.SetField(guild.FieldUpMessageTitle, field.TypeString, value)
 		_node.UpMessageTitle = value
 	}
-	if value, ok := gc.mutation.UpMessage(); ok {
+	if value, ok := _c.mutation.UpMessage(); ok {
 		_spec.SetField(guild.FieldUpMessage, field.TypeString, value)
 		_node.UpMessage = value
 	}
-	if value, ok := gc.mutation.UpRemindMessageTitle(); ok {
+	if value, ok := _c.mutation.UpRemindMessageTitle(); ok {
 		_spec.SetField(guild.FieldUpRemindMessageTitle, field.TypeString, value)
 		_node.UpRemindMessageTitle = value
 	}
-	if value, ok := gc.mutation.UpRemindMessage(); ok {
+	if value, ok := _c.mutation.UpRemindMessage(); ok {
 		_spec.SetField(guild.FieldUpRemindMessage, field.TypeString, value)
 		_node.UpRemindMessage = value
 	}
-	if value, ok := gc.mutation.BumpMention(); ok {
+	if value, ok := _c.mutation.BumpMention(); ok {
 		_spec.SetField(guild.FieldBumpMention, field.TypeUint64, value)
 		_node.BumpMention = &value
 	}
-	if value, ok := gc.mutation.UpMention(); ok {
+	if value, ok := _c.mutation.UpMention(); ok {
 		_spec.SetField(guild.FieldUpMention, field.TypeUint64, value)
 		_node.UpMention = &value
 	}
-	if value, ok := gc.mutation.LevelingDisabled(); ok {
+	if value, ok := _c.mutation.LevelingDisabled(); ok {
 		_spec.SetField(guild.FieldLevelingDisabled, field.TypeBool, value)
 		_node.LevelingDisabled = value
 	}
-	if nodes := gc.mutation.OwnerIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -832,7 +832,7 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 		_node.user_own_guilds = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := gc.mutation.MembersIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.MembersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -848,7 +848,7 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := gc.mutation.MessagePinsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.MessagePinsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -864,7 +864,7 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := gc.mutation.RemindsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.RemindsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -880,7 +880,7 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := gc.mutation.RolePanelsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.RolePanelsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -896,7 +896,7 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := gc.mutation.RolePanelPlacementsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.RolePanelPlacementsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -912,7 +912,7 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := gc.mutation.RolePanelEditsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.RolePanelEditsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -928,7 +928,7 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := gc.mutation.ChinchiroSessionsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.ChinchiroSessionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -944,7 +944,7 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := gc.mutation.Threads1000IDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.Threads1000IDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -960,7 +960,7 @@ func (gc *GuildCreate) createSpec() (*Guild, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := gc.mutation.Thread1000ChannelsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.Thread1000ChannelsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -987,16 +987,16 @@ type GuildCreateBulk struct {
 }
 
 // Save creates the Guild entities in the database.
-func (gcb *GuildCreateBulk) Save(ctx context.Context) ([]*Guild, error) {
-	if gcb.err != nil {
-		return nil, gcb.err
+func (_c *GuildCreateBulk) Save(ctx context.Context) ([]*Guild, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(gcb.builders))
-	nodes := make([]*Guild, len(gcb.builders))
-	mutators := make([]Mutator, len(gcb.builders))
-	for i := range gcb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*Guild, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := gcb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*GuildMutation)
@@ -1010,11 +1010,11 @@ func (gcb *GuildCreateBulk) Save(ctx context.Context) ([]*Guild, error) {
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, gcb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, gcb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -1038,7 +1038,7 @@ func (gcb *GuildCreateBulk) Save(ctx context.Context) ([]*Guild, error) {
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, gcb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -1046,8 +1046,8 @@ func (gcb *GuildCreateBulk) Save(ctx context.Context) ([]*Guild, error) {
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (gcb *GuildCreateBulk) SaveX(ctx context.Context) []*Guild {
-	v, err := gcb.Save(ctx)
+func (_c *GuildCreateBulk) SaveX(ctx context.Context) []*Guild {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -1055,14 +1055,14 @@ func (gcb *GuildCreateBulk) SaveX(ctx context.Context) []*Guild {
 }
 
 // Exec executes the query.
-func (gcb *GuildCreateBulk) Exec(ctx context.Context) error {
-	_, err := gcb.Save(ctx)
+func (_c *GuildCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (gcb *GuildCreateBulk) ExecX(ctx context.Context) {
-	if err := gcb.Exec(ctx); err != nil {
+func (_c *GuildCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

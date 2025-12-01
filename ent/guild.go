@@ -218,7 +218,7 @@ func (*Guild) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Guild fields.
-func (gu *Guild) assignValues(columns []string, values []any) error {
+func (_m *Guild) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -228,38 +228,38 @@ func (gu *Guild) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value.Valid {
-				gu.ID = snowflake.ID(value.Int64)
+				_m.ID = snowflake.ID(value.Int64)
 			}
 		case guild.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
-				gu.Name = value.String
+				_m.Name = value.String
 			}
 		case guild.FieldLocale:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field locale", values[i])
 			} else if value.Valid {
-				gu.Locale = discord.Locale(value.String)
+				_m.Locale = discord.Locale(value.String)
 			}
 		case guild.FieldLevelUpMessage:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field level_up_message", values[i])
 			} else if value.Valid {
-				gu.LevelUpMessage = value.String
+				_m.LevelUpMessage = value.String
 			}
 		case guild.FieldLevelUpChannel:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field level_up_channel", values[i])
 			} else if value.Valid {
-				gu.LevelUpChannel = new(snowflake.ID)
-				*gu.LevelUpChannel = snowflake.ID(value.Int64)
+				_m.LevelUpChannel = new(snowflake.ID)
+				*_m.LevelUpChannel = snowflake.ID(value.Int64)
 			}
 		case guild.FieldLevelUpExcludeChannel:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field level_up_exclude_channel", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &gu.LevelUpExcludeChannel); err != nil {
+				if err := json.Unmarshal(*value, &_m.LevelUpExcludeChannel); err != nil {
 					return fmt.Errorf("unmarshal field level_up_exclude_channel: %w", err)
 				}
 			}
@@ -267,13 +267,13 @@ func (gu *Guild) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field level_mee6_imported", values[i])
 			} else if value.Valid {
-				gu.LevelMee6Imported = value.Bool
+				_m.LevelMee6Imported = value.Bool
 			}
 		case guild.FieldLevelRole:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field level_role", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &gu.LevelRole); err != nil {
+				if err := json.Unmarshal(*value, &_m.LevelRole); err != nil {
 					return fmt.Errorf("unmarshal field level_role: %w", err)
 				}
 			}
@@ -281,7 +281,7 @@ func (gu *Guild) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field permissions", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &gu.Permissions); err != nil {
+				if err := json.Unmarshal(*value, &_m.Permissions); err != nil {
 					return fmt.Errorf("unmarshal field permissions: %w", err)
 				}
 			}
@@ -289,13 +289,13 @@ func (gu *Guild) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field remind_count", values[i])
 			} else if value.Valid {
-				gu.RemindCount = int(value.Int64)
+				_m.RemindCount = int(value.Int64)
 			}
 		case guild.FieldRolePanelEditTimes:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field role_panel_edit_times", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &gu.RolePanelEditTimes); err != nil {
+				if err := json.Unmarshal(*value, &_m.RolePanelEditTimes); err != nil {
 					return fmt.Errorf("unmarshal field role_panel_edit_times: %w", err)
 				}
 			}
@@ -303,91 +303,91 @@ func (gu *Guild) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field bump_enabled", values[i])
 			} else if value.Valid {
-				gu.BumpEnabled = value.Bool
+				_m.BumpEnabled = value.Bool
 			}
 		case guild.FieldBumpMessageTitle:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field bump_message_title", values[i])
 			} else if value.Valid {
-				gu.BumpMessageTitle = value.String
+				_m.BumpMessageTitle = value.String
 			}
 		case guild.FieldBumpMessage:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field bump_message", values[i])
 			} else if value.Valid {
-				gu.BumpMessage = value.String
+				_m.BumpMessage = value.String
 			}
 		case guild.FieldBumpRemindMessageTitle:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field bump_remind_message_title", values[i])
 			} else if value.Valid {
-				gu.BumpRemindMessageTitle = value.String
+				_m.BumpRemindMessageTitle = value.String
 			}
 		case guild.FieldBumpRemindMessage:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field bump_remind_message", values[i])
 			} else if value.Valid {
-				gu.BumpRemindMessage = value.String
+				_m.BumpRemindMessage = value.String
 			}
 		case guild.FieldUpEnabled:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field up_enabled", values[i])
 			} else if value.Valid {
-				gu.UpEnabled = value.Bool
+				_m.UpEnabled = value.Bool
 			}
 		case guild.FieldUpMessageTitle:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field up_message_title", values[i])
 			} else if value.Valid {
-				gu.UpMessageTitle = value.String
+				_m.UpMessageTitle = value.String
 			}
 		case guild.FieldUpMessage:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field up_message", values[i])
 			} else if value.Valid {
-				gu.UpMessage = value.String
+				_m.UpMessage = value.String
 			}
 		case guild.FieldUpRemindMessageTitle:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field up_remind_message_title", values[i])
 			} else if value.Valid {
-				gu.UpRemindMessageTitle = value.String
+				_m.UpRemindMessageTitle = value.String
 			}
 		case guild.FieldUpRemindMessage:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field up_remind_message", values[i])
 			} else if value.Valid {
-				gu.UpRemindMessage = value.String
+				_m.UpRemindMessage = value.String
 			}
 		case guild.FieldBumpMention:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field bump_mention", values[i])
 			} else if value.Valid {
-				gu.BumpMention = new(snowflake.ID)
-				*gu.BumpMention = snowflake.ID(value.Int64)
+				_m.BumpMention = new(snowflake.ID)
+				*_m.BumpMention = snowflake.ID(value.Int64)
 			}
 		case guild.FieldUpMention:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field up_mention", values[i])
 			} else if value.Valid {
-				gu.UpMention = new(snowflake.ID)
-				*gu.UpMention = snowflake.ID(value.Int64)
+				_m.UpMention = new(snowflake.ID)
+				*_m.UpMention = snowflake.ID(value.Int64)
 			}
 		case guild.FieldLevelingDisabled:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field leveling_disabled", values[i])
 			} else if value.Valid {
-				gu.LevelingDisabled = value.Bool
+				_m.LevelingDisabled = value.Bool
 			}
 		case guild.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field user_own_guilds", values[i])
 			} else if value.Valid {
-				gu.user_own_guilds = new(snowflake.ID)
-				*gu.user_own_guilds = snowflake.ID(value.Int64)
+				_m.user_own_guilds = new(snowflake.ID)
+				*_m.user_own_guilds = snowflake.ID(value.Int64)
 			}
 		default:
-			gu.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -395,157 +395,157 @@ func (gu *Guild) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the Guild.
 // This includes values selected through modifiers, order, etc.
-func (gu *Guild) Value(name string) (ent.Value, error) {
-	return gu.selectValues.Get(name)
+func (_m *Guild) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // QueryOwner queries the "owner" edge of the Guild entity.
-func (gu *Guild) QueryOwner() *UserQuery {
-	return NewGuildClient(gu.config).QueryOwner(gu)
+func (_m *Guild) QueryOwner() *UserQuery {
+	return NewGuildClient(_m.config).QueryOwner(_m)
 }
 
 // QueryMembers queries the "members" edge of the Guild entity.
-func (gu *Guild) QueryMembers() *MemberQuery {
-	return NewGuildClient(gu.config).QueryMembers(gu)
+func (_m *Guild) QueryMembers() *MemberQuery {
+	return NewGuildClient(_m.config).QueryMembers(_m)
 }
 
 // QueryMessagePins queries the "message_pins" edge of the Guild entity.
-func (gu *Guild) QueryMessagePins() *MessagePinQuery {
-	return NewGuildClient(gu.config).QueryMessagePins(gu)
+func (_m *Guild) QueryMessagePins() *MessagePinQuery {
+	return NewGuildClient(_m.config).QueryMessagePins(_m)
 }
 
 // QueryReminds queries the "reminds" edge of the Guild entity.
-func (gu *Guild) QueryReminds() *MessageRemindQuery {
-	return NewGuildClient(gu.config).QueryReminds(gu)
+func (_m *Guild) QueryReminds() *MessageRemindQuery {
+	return NewGuildClient(_m.config).QueryReminds(_m)
 }
 
 // QueryRolePanels queries the "role_panels" edge of the Guild entity.
-func (gu *Guild) QueryRolePanels() *RolePanelQuery {
-	return NewGuildClient(gu.config).QueryRolePanels(gu)
+func (_m *Guild) QueryRolePanels() *RolePanelQuery {
+	return NewGuildClient(_m.config).QueryRolePanels(_m)
 }
 
 // QueryRolePanelPlacements queries the "role_panel_placements" edge of the Guild entity.
-func (gu *Guild) QueryRolePanelPlacements() *RolePanelPlacedQuery {
-	return NewGuildClient(gu.config).QueryRolePanelPlacements(gu)
+func (_m *Guild) QueryRolePanelPlacements() *RolePanelPlacedQuery {
+	return NewGuildClient(_m.config).QueryRolePanelPlacements(_m)
 }
 
 // QueryRolePanelEdits queries the "role_panel_edits" edge of the Guild entity.
-func (gu *Guild) QueryRolePanelEdits() *RolePanelEditQuery {
-	return NewGuildClient(gu.config).QueryRolePanelEdits(gu)
+func (_m *Guild) QueryRolePanelEdits() *RolePanelEditQuery {
+	return NewGuildClient(_m.config).QueryRolePanelEdits(_m)
 }
 
 // QueryChinchiroSessions queries the "chinchiro_sessions" edge of the Guild entity.
-func (gu *Guild) QueryChinchiroSessions() *ChinchiroSessionQuery {
-	return NewGuildClient(gu.config).QueryChinchiroSessions(gu)
+func (_m *Guild) QueryChinchiroSessions() *ChinchiroSessionQuery {
+	return NewGuildClient(_m.config).QueryChinchiroSessions(_m)
 }
 
 // QueryThreads1000 queries the "threads1000" edge of the Guild entity.
-func (gu *Guild) QueryThreads1000() *Thread1000Query {
-	return NewGuildClient(gu.config).QueryThreads1000(gu)
+func (_m *Guild) QueryThreads1000() *Thread1000Query {
+	return NewGuildClient(_m.config).QueryThreads1000(_m)
 }
 
 // QueryThread1000Channels queries the "thread1000_channels" edge of the Guild entity.
-func (gu *Guild) QueryThread1000Channels() *Thread1000ChannelQuery {
-	return NewGuildClient(gu.config).QueryThread1000Channels(gu)
+func (_m *Guild) QueryThread1000Channels() *Thread1000ChannelQuery {
+	return NewGuildClient(_m.config).QueryThread1000Channels(_m)
 }
 
 // Update returns a builder for updating this Guild.
 // Note that you need to call Guild.Unwrap() before calling this method if this Guild
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (gu *Guild) Update() *GuildUpdateOne {
-	return NewGuildClient(gu.config).UpdateOne(gu)
+func (_m *Guild) Update() *GuildUpdateOne {
+	return NewGuildClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the Guild entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (gu *Guild) Unwrap() *Guild {
-	_tx, ok := gu.config.driver.(*txDriver)
+func (_m *Guild) Unwrap() *Guild {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: Guild is not a transactional entity")
 	}
-	gu.config.driver = _tx.drv
-	return gu
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (gu *Guild) String() string {
+func (_m *Guild) String() string {
 	var builder strings.Builder
 	builder.WriteString("Guild(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", gu.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("name=")
-	builder.WriteString(gu.Name)
+	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
 	builder.WriteString("locale=")
-	builder.WriteString(fmt.Sprintf("%v", gu.Locale))
+	builder.WriteString(fmt.Sprintf("%v", _m.Locale))
 	builder.WriteString(", ")
 	builder.WriteString("level_up_message=")
-	builder.WriteString(gu.LevelUpMessage)
+	builder.WriteString(_m.LevelUpMessage)
 	builder.WriteString(", ")
-	if v := gu.LevelUpChannel; v != nil {
+	if v := _m.LevelUpChannel; v != nil {
 		builder.WriteString("level_up_channel=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("level_up_exclude_channel=")
-	builder.WriteString(fmt.Sprintf("%v", gu.LevelUpExcludeChannel))
+	builder.WriteString(fmt.Sprintf("%v", _m.LevelUpExcludeChannel))
 	builder.WriteString(", ")
 	builder.WriteString("level_mee6_imported=")
-	builder.WriteString(fmt.Sprintf("%v", gu.LevelMee6Imported))
+	builder.WriteString(fmt.Sprintf("%v", _m.LevelMee6Imported))
 	builder.WriteString(", ")
 	builder.WriteString("level_role=")
-	builder.WriteString(fmt.Sprintf("%v", gu.LevelRole))
+	builder.WriteString(fmt.Sprintf("%v", _m.LevelRole))
 	builder.WriteString(", ")
 	builder.WriteString("permissions=")
-	builder.WriteString(fmt.Sprintf("%v", gu.Permissions))
+	builder.WriteString(fmt.Sprintf("%v", _m.Permissions))
 	builder.WriteString(", ")
 	builder.WriteString("remind_count=")
-	builder.WriteString(fmt.Sprintf("%v", gu.RemindCount))
+	builder.WriteString(fmt.Sprintf("%v", _m.RemindCount))
 	builder.WriteString(", ")
 	builder.WriteString("role_panel_edit_times=")
-	builder.WriteString(fmt.Sprintf("%v", gu.RolePanelEditTimes))
+	builder.WriteString(fmt.Sprintf("%v", _m.RolePanelEditTimes))
 	builder.WriteString(", ")
 	builder.WriteString("bump_enabled=")
-	builder.WriteString(fmt.Sprintf("%v", gu.BumpEnabled))
+	builder.WriteString(fmt.Sprintf("%v", _m.BumpEnabled))
 	builder.WriteString(", ")
 	builder.WriteString("bump_message_title=")
-	builder.WriteString(gu.BumpMessageTitle)
+	builder.WriteString(_m.BumpMessageTitle)
 	builder.WriteString(", ")
 	builder.WriteString("bump_message=")
-	builder.WriteString(gu.BumpMessage)
+	builder.WriteString(_m.BumpMessage)
 	builder.WriteString(", ")
 	builder.WriteString("bump_remind_message_title=")
-	builder.WriteString(gu.BumpRemindMessageTitle)
+	builder.WriteString(_m.BumpRemindMessageTitle)
 	builder.WriteString(", ")
 	builder.WriteString("bump_remind_message=")
-	builder.WriteString(gu.BumpRemindMessage)
+	builder.WriteString(_m.BumpRemindMessage)
 	builder.WriteString(", ")
 	builder.WriteString("up_enabled=")
-	builder.WriteString(fmt.Sprintf("%v", gu.UpEnabled))
+	builder.WriteString(fmt.Sprintf("%v", _m.UpEnabled))
 	builder.WriteString(", ")
 	builder.WriteString("up_message_title=")
-	builder.WriteString(gu.UpMessageTitle)
+	builder.WriteString(_m.UpMessageTitle)
 	builder.WriteString(", ")
 	builder.WriteString("up_message=")
-	builder.WriteString(gu.UpMessage)
+	builder.WriteString(_m.UpMessage)
 	builder.WriteString(", ")
 	builder.WriteString("up_remind_message_title=")
-	builder.WriteString(gu.UpRemindMessageTitle)
+	builder.WriteString(_m.UpRemindMessageTitle)
 	builder.WriteString(", ")
 	builder.WriteString("up_remind_message=")
-	builder.WriteString(gu.UpRemindMessage)
+	builder.WriteString(_m.UpRemindMessage)
 	builder.WriteString(", ")
-	if v := gu.BumpMention; v != nil {
+	if v := _m.BumpMention; v != nil {
 		builder.WriteString("bump_mention=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
-	if v := gu.UpMention; v != nil {
+	if v := _m.UpMention; v != nil {
 		builder.WriteString("up_mention=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("leveling_disabled=")
-	builder.WriteString(fmt.Sprintf("%v", gu.LevelingDisabled))
+	builder.WriteString(fmt.Sprintf("%v", _m.LevelingDisabled))
 	builder.WriteByte(')')
 	return builder.String()
 }

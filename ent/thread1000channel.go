@@ -85,7 +85,7 @@ func (*Thread1000Channel) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Thread1000Channel fields.
-func (t *Thread1000Channel) assignValues(columns []string, values []any) error {
+func (_m *Thread1000Channel) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -95,37 +95,37 @@ func (t *Thread1000Channel) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				t.ID = *value
+				_m.ID = *value
 			}
 		case thread1000channel.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
-				t.Name = new(string)
-				*t.Name = value.String
+				_m.Name = new(string)
+				*_m.Name = value.String
 			}
 		case thread1000channel.FieldAnonymousName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field anonymous_name", values[i])
 			} else if value.Valid {
-				t.AnonymousName = new(string)
-				*t.AnonymousName = value.String
+				_m.AnonymousName = new(string)
+				*_m.AnonymousName = value.String
 			}
 		case thread1000channel.FieldChannelID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field channel_id", values[i])
 			} else if value.Valid {
-				t.ChannelID = snowflake.ID(value.Int64)
+				_m.ChannelID = snowflake.ID(value.Int64)
 			}
 		case thread1000channel.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field guild_thread1000_channels", values[i])
 			} else if value.Valid {
-				t.guild_thread1000_channels = new(snowflake.ID)
-				*t.guild_thread1000_channels = snowflake.ID(value.Int64)
+				_m.guild_thread1000_channels = new(snowflake.ID)
+				*_m.guild_thread1000_channels = snowflake.ID(value.Int64)
 			}
 		default:
-			t.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -133,55 +133,55 @@ func (t *Thread1000Channel) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the Thread1000Channel.
 // This includes values selected through modifiers, order, etc.
-func (t *Thread1000Channel) Value(name string) (ent.Value, error) {
-	return t.selectValues.Get(name)
+func (_m *Thread1000Channel) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // QueryGuild queries the "guild" edge of the Thread1000Channel entity.
-func (t *Thread1000Channel) QueryGuild() *GuildQuery {
-	return NewThread1000ChannelClient(t.config).QueryGuild(t)
+func (_m *Thread1000Channel) QueryGuild() *GuildQuery {
+	return NewThread1000ChannelClient(_m.config).QueryGuild(_m)
 }
 
 // QueryThreads queries the "threads" edge of the Thread1000Channel entity.
-func (t *Thread1000Channel) QueryThreads() *Thread1000Query {
-	return NewThread1000ChannelClient(t.config).QueryThreads(t)
+func (_m *Thread1000Channel) QueryThreads() *Thread1000Query {
+	return NewThread1000ChannelClient(_m.config).QueryThreads(_m)
 }
 
 // Update returns a builder for updating this Thread1000Channel.
 // Note that you need to call Thread1000Channel.Unwrap() before calling this method if this Thread1000Channel
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (t *Thread1000Channel) Update() *Thread1000ChannelUpdateOne {
-	return NewThread1000ChannelClient(t.config).UpdateOne(t)
+func (_m *Thread1000Channel) Update() *Thread1000ChannelUpdateOne {
+	return NewThread1000ChannelClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the Thread1000Channel entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (t *Thread1000Channel) Unwrap() *Thread1000Channel {
-	_tx, ok := t.config.driver.(*txDriver)
+func (_m *Thread1000Channel) Unwrap() *Thread1000Channel {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: Thread1000Channel is not a transactional entity")
 	}
-	t.config.driver = _tx.drv
-	return t
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (t *Thread1000Channel) String() string {
+func (_m *Thread1000Channel) String() string {
 	var builder strings.Builder
 	builder.WriteString("Thread1000Channel(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", t.ID))
-	if v := t.Name; v != nil {
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
+	if v := _m.Name; v != nil {
 		builder.WriteString("name=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
-	if v := t.AnonymousName; v != nil {
+	if v := _m.AnonymousName; v != nil {
 		builder.WriteString("anonymous_name=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
 	builder.WriteString("channel_id=")
-	builder.WriteString(fmt.Sprintf("%v", t.ChannelID))
+	builder.WriteString(fmt.Sprintf("%v", _m.ChannelID))
 	builder.WriteByte(')')
 	return builder.String()
 }

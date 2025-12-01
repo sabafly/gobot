@@ -25,151 +25,151 @@ type RolePanelEditCreate struct {
 }
 
 // SetChannelID sets the "channel_id" field.
-func (rpec *RolePanelEditCreate) SetChannelID(s snowflake.ID) *RolePanelEditCreate {
-	rpec.mutation.SetChannelID(s)
-	return rpec
+func (_c *RolePanelEditCreate) SetChannelID(v snowflake.ID) *RolePanelEditCreate {
+	_c.mutation.SetChannelID(v)
+	return _c
 }
 
 // SetEmojiAuthor sets the "emoji_author" field.
-func (rpec *RolePanelEditCreate) SetEmojiAuthor(s snowflake.ID) *RolePanelEditCreate {
-	rpec.mutation.SetEmojiAuthor(s)
-	return rpec
+func (_c *RolePanelEditCreate) SetEmojiAuthor(v snowflake.ID) *RolePanelEditCreate {
+	_c.mutation.SetEmojiAuthor(v)
+	return _c
 }
 
 // SetNillableEmojiAuthor sets the "emoji_author" field if the given value is not nil.
-func (rpec *RolePanelEditCreate) SetNillableEmojiAuthor(s *snowflake.ID) *RolePanelEditCreate {
-	if s != nil {
-		rpec.SetEmojiAuthor(*s)
+func (_c *RolePanelEditCreate) SetNillableEmojiAuthor(v *snowflake.ID) *RolePanelEditCreate {
+	if v != nil {
+		_c.SetEmojiAuthor(*v)
 	}
-	return rpec
+	return _c
 }
 
 // SetToken sets the "token" field.
-func (rpec *RolePanelEditCreate) SetToken(s string) *RolePanelEditCreate {
-	rpec.mutation.SetToken(s)
-	return rpec
+func (_c *RolePanelEditCreate) SetToken(v string) *RolePanelEditCreate {
+	_c.mutation.SetToken(v)
+	return _c
 }
 
 // SetNillableToken sets the "token" field if the given value is not nil.
-func (rpec *RolePanelEditCreate) SetNillableToken(s *string) *RolePanelEditCreate {
-	if s != nil {
-		rpec.SetToken(*s)
+func (_c *RolePanelEditCreate) SetNillableToken(v *string) *RolePanelEditCreate {
+	if v != nil {
+		_c.SetToken(*v)
 	}
-	return rpec
+	return _c
 }
 
 // SetSelectedRole sets the "selected_role" field.
-func (rpec *RolePanelEditCreate) SetSelectedRole(s snowflake.ID) *RolePanelEditCreate {
-	rpec.mutation.SetSelectedRole(s)
-	return rpec
+func (_c *RolePanelEditCreate) SetSelectedRole(v snowflake.ID) *RolePanelEditCreate {
+	_c.mutation.SetSelectedRole(v)
+	return _c
 }
 
 // SetNillableSelectedRole sets the "selected_role" field if the given value is not nil.
-func (rpec *RolePanelEditCreate) SetNillableSelectedRole(s *snowflake.ID) *RolePanelEditCreate {
-	if s != nil {
-		rpec.SetSelectedRole(*s)
+func (_c *RolePanelEditCreate) SetNillableSelectedRole(v *snowflake.ID) *RolePanelEditCreate {
+	if v != nil {
+		_c.SetSelectedRole(*v)
 	}
-	return rpec
+	return _c
 }
 
 // SetModified sets the "modified" field.
-func (rpec *RolePanelEditCreate) SetModified(b bool) *RolePanelEditCreate {
-	rpec.mutation.SetModified(b)
-	return rpec
+func (_c *RolePanelEditCreate) SetModified(v bool) *RolePanelEditCreate {
+	_c.mutation.SetModified(v)
+	return _c
 }
 
 // SetNillableModified sets the "modified" field if the given value is not nil.
-func (rpec *RolePanelEditCreate) SetNillableModified(b *bool) *RolePanelEditCreate {
-	if b != nil {
-		rpec.SetModified(*b)
+func (_c *RolePanelEditCreate) SetNillableModified(v *bool) *RolePanelEditCreate {
+	if v != nil {
+		_c.SetModified(*v)
 	}
-	return rpec
+	return _c
 }
 
 // SetName sets the "name" field.
-func (rpec *RolePanelEditCreate) SetName(s string) *RolePanelEditCreate {
-	rpec.mutation.SetName(s)
-	return rpec
+func (_c *RolePanelEditCreate) SetName(v string) *RolePanelEditCreate {
+	_c.mutation.SetName(v)
+	return _c
 }
 
 // SetNillableName sets the "name" field if the given value is not nil.
-func (rpec *RolePanelEditCreate) SetNillableName(s *string) *RolePanelEditCreate {
-	if s != nil {
-		rpec.SetName(*s)
+func (_c *RolePanelEditCreate) SetNillableName(v *string) *RolePanelEditCreate {
+	if v != nil {
+		_c.SetName(*v)
 	}
-	return rpec
+	return _c
 }
 
 // SetDescription sets the "description" field.
-func (rpec *RolePanelEditCreate) SetDescription(s string) *RolePanelEditCreate {
-	rpec.mutation.SetDescription(s)
-	return rpec
+func (_c *RolePanelEditCreate) SetDescription(v string) *RolePanelEditCreate {
+	_c.mutation.SetDescription(v)
+	return _c
 }
 
 // SetNillableDescription sets the "description" field if the given value is not nil.
-func (rpec *RolePanelEditCreate) SetNillableDescription(s *string) *RolePanelEditCreate {
-	if s != nil {
-		rpec.SetDescription(*s)
+func (_c *RolePanelEditCreate) SetNillableDescription(v *string) *RolePanelEditCreate {
+	if v != nil {
+		_c.SetDescription(*v)
 	}
-	return rpec
+	return _c
 }
 
 // SetRoles sets the "roles" field.
-func (rpec *RolePanelEditCreate) SetRoles(s []schema.Role) *RolePanelEditCreate {
-	rpec.mutation.SetRoles(s)
-	return rpec
+func (_c *RolePanelEditCreate) SetRoles(v []schema.Role) *RolePanelEditCreate {
+	_c.mutation.SetRoles(v)
+	return _c
 }
 
 // SetID sets the "id" field.
-func (rpec *RolePanelEditCreate) SetID(u uuid.UUID) *RolePanelEditCreate {
-	rpec.mutation.SetID(u)
-	return rpec
+func (_c *RolePanelEditCreate) SetID(v uuid.UUID) *RolePanelEditCreate {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (rpec *RolePanelEditCreate) SetNillableID(u *uuid.UUID) *RolePanelEditCreate {
-	if u != nil {
-		rpec.SetID(*u)
+func (_c *RolePanelEditCreate) SetNillableID(v *uuid.UUID) *RolePanelEditCreate {
+	if v != nil {
+		_c.SetID(*v)
 	}
-	return rpec
+	return _c
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (rpec *RolePanelEditCreate) SetGuildID(id snowflake.ID) *RolePanelEditCreate {
-	rpec.mutation.SetGuildID(id)
-	return rpec
+func (_c *RolePanelEditCreate) SetGuildID(id snowflake.ID) *RolePanelEditCreate {
+	_c.mutation.SetGuildID(id)
+	return _c
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (rpec *RolePanelEditCreate) SetGuild(g *Guild) *RolePanelEditCreate {
-	return rpec.SetGuildID(g.ID)
+func (_c *RolePanelEditCreate) SetGuild(v *Guild) *RolePanelEditCreate {
+	return _c.SetGuildID(v.ID)
 }
 
 // SetParentID sets the "parent" edge to the RolePanel entity by ID.
-func (rpec *RolePanelEditCreate) SetParentID(id uuid.UUID) *RolePanelEditCreate {
-	rpec.mutation.SetParentID(id)
-	return rpec
+func (_c *RolePanelEditCreate) SetParentID(id uuid.UUID) *RolePanelEditCreate {
+	_c.mutation.SetParentID(id)
+	return _c
 }
 
 // SetParent sets the "parent" edge to the RolePanel entity.
-func (rpec *RolePanelEditCreate) SetParent(r *RolePanel) *RolePanelEditCreate {
-	return rpec.SetParentID(r.ID)
+func (_c *RolePanelEditCreate) SetParent(v *RolePanel) *RolePanelEditCreate {
+	return _c.SetParentID(v.ID)
 }
 
 // Mutation returns the RolePanelEditMutation object of the builder.
-func (rpec *RolePanelEditCreate) Mutation() *RolePanelEditMutation {
-	return rpec.mutation
+func (_c *RolePanelEditCreate) Mutation() *RolePanelEditMutation {
+	return _c.mutation
 }
 
 // Save creates the RolePanelEdit in the database.
-func (rpec *RolePanelEditCreate) Save(ctx context.Context) (*RolePanelEdit, error) {
-	rpec.defaults()
-	return withHooks(ctx, rpec.sqlSave, rpec.mutation, rpec.hooks)
+func (_c *RolePanelEditCreate) Save(ctx context.Context) (*RolePanelEdit, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (rpec *RolePanelEditCreate) SaveX(ctx context.Context) *RolePanelEdit {
-	v, err := rpec.Save(ctx)
+func (_c *RolePanelEditCreate) SaveX(ctx context.Context) *RolePanelEdit {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -177,58 +177,58 @@ func (rpec *RolePanelEditCreate) SaveX(ctx context.Context) *RolePanelEdit {
 }
 
 // Exec executes the query.
-func (rpec *RolePanelEditCreate) Exec(ctx context.Context) error {
-	_, err := rpec.Save(ctx)
+func (_c *RolePanelEditCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (rpec *RolePanelEditCreate) ExecX(ctx context.Context) {
-	if err := rpec.Exec(ctx); err != nil {
+func (_c *RolePanelEditCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (rpec *RolePanelEditCreate) defaults() {
-	if _, ok := rpec.mutation.Modified(); !ok {
+func (_c *RolePanelEditCreate) defaults() {
+	if _, ok := _c.mutation.Modified(); !ok {
 		v := rolepaneledit.DefaultModified
-		rpec.mutation.SetModified(v)
+		_c.mutation.SetModified(v)
 	}
-	if _, ok := rpec.mutation.ID(); !ok {
+	if _, ok := _c.mutation.ID(); !ok {
 		v := rolepaneledit.DefaultID()
-		rpec.mutation.SetID(v)
+		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (rpec *RolePanelEditCreate) check() error {
-	if _, ok := rpec.mutation.ChannelID(); !ok {
+func (_c *RolePanelEditCreate) check() error {
+	if _, ok := _c.mutation.ChannelID(); !ok {
 		return &ValidationError{Name: "channel_id", err: errors.New(`ent: missing required field "RolePanelEdit.channel_id"`)}
 	}
-	if _, ok := rpec.mutation.Modified(); !ok {
+	if _, ok := _c.mutation.Modified(); !ok {
 		return &ValidationError{Name: "modified", err: errors.New(`ent: missing required field "RolePanelEdit.modified"`)}
 	}
-	if v, ok := rpec.mutation.Name(); ok {
+	if v, ok := _c.mutation.Name(); ok {
 		if err := rolepaneledit.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanelEdit.name": %w`, err)}
 		}
 	}
-	if len(rpec.mutation.GuildIDs()) == 0 {
+	if len(_c.mutation.GuildIDs()) == 0 {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "RolePanelEdit.guild"`)}
 	}
-	if len(rpec.mutation.ParentIDs()) == 0 {
+	if len(_c.mutation.ParentIDs()) == 0 {
 		return &ValidationError{Name: "parent", err: errors.New(`ent: missing required edge "RolePanelEdit.parent"`)}
 	}
 	return nil
 }
 
-func (rpec *RolePanelEditCreate) sqlSave(ctx context.Context) (*RolePanelEdit, error) {
-	if err := rpec.check(); err != nil {
+func (_c *RolePanelEditCreate) sqlSave(ctx context.Context) (*RolePanelEdit, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := rpec.createSpec()
-	if err := sqlgraph.CreateNode(ctx, rpec.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -241,53 +241,53 @@ func (rpec *RolePanelEditCreate) sqlSave(ctx context.Context) (*RolePanelEdit, e
 			return nil, err
 		}
 	}
-	rpec.mutation.id = &_node.ID
-	rpec.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (rpec *RolePanelEditCreate) createSpec() (*RolePanelEdit, *sqlgraph.CreateSpec) {
+func (_c *RolePanelEditCreate) createSpec() (*RolePanelEdit, *sqlgraph.CreateSpec) {
 	var (
-		_node = &RolePanelEdit{config: rpec.config}
+		_node = &RolePanelEdit{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(rolepaneledit.Table, sqlgraph.NewFieldSpec(rolepaneledit.FieldID, field.TypeUUID))
 	)
-	if id, ok := rpec.mutation.ID(); ok {
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := rpec.mutation.ChannelID(); ok {
+	if value, ok := _c.mutation.ChannelID(); ok {
 		_spec.SetField(rolepaneledit.FieldChannelID, field.TypeUint64, value)
 		_node.ChannelID = value
 	}
-	if value, ok := rpec.mutation.EmojiAuthor(); ok {
+	if value, ok := _c.mutation.EmojiAuthor(); ok {
 		_spec.SetField(rolepaneledit.FieldEmojiAuthor, field.TypeUint64, value)
 		_node.EmojiAuthor = &value
 	}
-	if value, ok := rpec.mutation.Token(); ok {
+	if value, ok := _c.mutation.Token(); ok {
 		_spec.SetField(rolepaneledit.FieldToken, field.TypeString, value)
 		_node.Token = &value
 	}
-	if value, ok := rpec.mutation.SelectedRole(); ok {
+	if value, ok := _c.mutation.SelectedRole(); ok {
 		_spec.SetField(rolepaneledit.FieldSelectedRole, field.TypeUint64, value)
 		_node.SelectedRole = &value
 	}
-	if value, ok := rpec.mutation.Modified(); ok {
+	if value, ok := _c.mutation.Modified(); ok {
 		_spec.SetField(rolepaneledit.FieldModified, field.TypeBool, value)
 		_node.Modified = value
 	}
-	if value, ok := rpec.mutation.Name(); ok {
+	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(rolepaneledit.FieldName, field.TypeString, value)
 		_node.Name = &value
 	}
-	if value, ok := rpec.mutation.Description(); ok {
+	if value, ok := _c.mutation.Description(); ok {
 		_spec.SetField(rolepaneledit.FieldDescription, field.TypeString, value)
 		_node.Description = &value
 	}
-	if value, ok := rpec.mutation.Roles(); ok {
+	if value, ok := _c.mutation.Roles(); ok {
 		_spec.SetField(rolepaneledit.FieldRoles, field.TypeJSON, value)
 		_node.Roles = value
 	}
-	if nodes := rpec.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -304,7 +304,7 @@ func (rpec *RolePanelEditCreate) createSpec() (*RolePanelEdit, *sqlgraph.CreateS
 		_node.guild_role_panel_edits = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := rpec.mutation.ParentIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.ParentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: true,
@@ -332,16 +332,16 @@ type RolePanelEditCreateBulk struct {
 }
 
 // Save creates the RolePanelEdit entities in the database.
-func (rpecb *RolePanelEditCreateBulk) Save(ctx context.Context) ([]*RolePanelEdit, error) {
-	if rpecb.err != nil {
-		return nil, rpecb.err
+func (_c *RolePanelEditCreateBulk) Save(ctx context.Context) ([]*RolePanelEdit, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(rpecb.builders))
-	nodes := make([]*RolePanelEdit, len(rpecb.builders))
-	mutators := make([]Mutator, len(rpecb.builders))
-	for i := range rpecb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*RolePanelEdit, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := rpecb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*RolePanelEditMutation)
@@ -355,11 +355,11 @@ func (rpecb *RolePanelEditCreateBulk) Save(ctx context.Context) ([]*RolePanelEdi
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, rpecb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, rpecb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -379,7 +379,7 @@ func (rpecb *RolePanelEditCreateBulk) Save(ctx context.Context) ([]*RolePanelEdi
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, rpecb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -387,8 +387,8 @@ func (rpecb *RolePanelEditCreateBulk) Save(ctx context.Context) ([]*RolePanelEdi
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (rpecb *RolePanelEditCreateBulk) SaveX(ctx context.Context) []*RolePanelEdit {
-	v, err := rpecb.Save(ctx)
+func (_c *RolePanelEditCreateBulk) SaveX(ctx context.Context) []*RolePanelEdit {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -396,14 +396,14 @@ func (rpecb *RolePanelEditCreateBulk) SaveX(ctx context.Context) []*RolePanelEdi
 }
 
 // Exec executes the query.
-func (rpecb *RolePanelEditCreateBulk) Exec(ctx context.Context) error {
-	_, err := rpecb.Save(ctx)
+func (_c *RolePanelEditCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (rpecb *RolePanelEditCreateBulk) ExecX(ctx context.Context) {
-	if err := rpecb.Exec(ctx); err != nil {
+func (_c *RolePanelEditCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

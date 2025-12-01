@@ -28,168 +28,168 @@ type MemberUpdate struct {
 }
 
 // Where appends a list predicates to the MemberUpdate builder.
-func (mu *MemberUpdate) Where(ps ...predicate.Member) *MemberUpdate {
-	mu.mutation.Where(ps...)
-	return mu
+func (_u *MemberUpdate) Where(ps ...predicate.Member) *MemberUpdate {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // SetPermission sets the "permission" field.
-func (mu *MemberUpdate) SetPermission(pe permissions.Permission) *MemberUpdate {
-	mu.mutation.SetPermission(pe)
-	return mu
+func (_u *MemberUpdate) SetPermission(v permissions.Permission) *MemberUpdate {
+	_u.mutation.SetPermission(v)
+	return _u
 }
 
 // SetNillablePermission sets the "permission" field if the given value is not nil.
-func (mu *MemberUpdate) SetNillablePermission(pe *permissions.Permission) *MemberUpdate {
-	if pe != nil {
-		mu.SetPermission(*pe)
+func (_u *MemberUpdate) SetNillablePermission(v *permissions.Permission) *MemberUpdate {
+	if v != nil {
+		_u.SetPermission(*v)
 	}
-	return mu
+	return _u
 }
 
 // ClearPermission clears the value of the "permission" field.
-func (mu *MemberUpdate) ClearPermission() *MemberUpdate {
-	mu.mutation.ClearPermission()
-	return mu
+func (_u *MemberUpdate) ClearPermission() *MemberUpdate {
+	_u.mutation.ClearPermission()
+	return _u
 }
 
 // SetXp sets the "xp" field.
-func (mu *MemberUpdate) SetXp(x xppoint.XP) *MemberUpdate {
-	mu.mutation.ResetXp()
-	mu.mutation.SetXp(x)
-	return mu
+func (_u *MemberUpdate) SetXp(v xppoint.XP) *MemberUpdate {
+	_u.mutation.ResetXp()
+	_u.mutation.SetXp(v)
+	return _u
 }
 
 // SetNillableXp sets the "xp" field if the given value is not nil.
-func (mu *MemberUpdate) SetNillableXp(x *xppoint.XP) *MemberUpdate {
-	if x != nil {
-		mu.SetXp(*x)
+func (_u *MemberUpdate) SetNillableXp(v *xppoint.XP) *MemberUpdate {
+	if v != nil {
+		_u.SetXp(*v)
 	}
-	return mu
+	return _u
 }
 
-// AddXp adds x to the "xp" field.
-func (mu *MemberUpdate) AddXp(x xppoint.XP) *MemberUpdate {
-	mu.mutation.AddXp(x)
-	return mu
+// AddXp adds value to the "xp" field.
+func (_u *MemberUpdate) AddXp(v xppoint.XP) *MemberUpdate {
+	_u.mutation.AddXp(v)
+	return _u
 }
 
 // SetLastXp sets the "last_xp" field.
-func (mu *MemberUpdate) SetLastXp(t time.Time) *MemberUpdate {
-	mu.mutation.SetLastXp(t)
-	return mu
+func (_u *MemberUpdate) SetLastXp(v time.Time) *MemberUpdate {
+	_u.mutation.SetLastXp(v)
+	return _u
 }
 
 // SetNillableLastXp sets the "last_xp" field if the given value is not nil.
-func (mu *MemberUpdate) SetNillableLastXp(t *time.Time) *MemberUpdate {
-	if t != nil {
-		mu.SetLastXp(*t)
+func (_u *MemberUpdate) SetNillableLastXp(v *time.Time) *MemberUpdate {
+	if v != nil {
+		_u.SetLastXp(*v)
 	}
-	return mu
+	return _u
 }
 
 // ClearLastXp clears the value of the "last_xp" field.
-func (mu *MemberUpdate) ClearLastXp() *MemberUpdate {
-	mu.mutation.ClearLastXp()
-	return mu
+func (_u *MemberUpdate) ClearLastXp() *MemberUpdate {
+	_u.mutation.ClearLastXp()
+	return _u
 }
 
 // SetMessageCount sets the "message_count" field.
-func (mu *MemberUpdate) SetMessageCount(u uint64) *MemberUpdate {
-	mu.mutation.ResetMessageCount()
-	mu.mutation.SetMessageCount(u)
-	return mu
+func (_u *MemberUpdate) SetMessageCount(v uint64) *MemberUpdate {
+	_u.mutation.ResetMessageCount()
+	_u.mutation.SetMessageCount(v)
+	return _u
 }
 
 // SetNillableMessageCount sets the "message_count" field if the given value is not nil.
-func (mu *MemberUpdate) SetNillableMessageCount(u *uint64) *MemberUpdate {
-	if u != nil {
-		mu.SetMessageCount(*u)
+func (_u *MemberUpdate) SetNillableMessageCount(v *uint64) *MemberUpdate {
+	if v != nil {
+		_u.SetMessageCount(*v)
 	}
-	return mu
+	return _u
 }
 
-// AddMessageCount adds u to the "message_count" field.
-func (mu *MemberUpdate) AddMessageCount(u int64) *MemberUpdate {
-	mu.mutation.AddMessageCount(u)
-	return mu
+// AddMessageCount adds value to the "message_count" field.
+func (_u *MemberUpdate) AddMessageCount(v int64) *MemberUpdate {
+	_u.mutation.AddMessageCount(v)
+	return _u
 }
 
 // SetLastNotifiedLevel sets the "last_notified_level" field.
-func (mu *MemberUpdate) SetLastNotifiedLevel(u uint64) *MemberUpdate {
-	mu.mutation.ResetLastNotifiedLevel()
-	mu.mutation.SetLastNotifiedLevel(u)
-	return mu
+func (_u *MemberUpdate) SetLastNotifiedLevel(v uint64) *MemberUpdate {
+	_u.mutation.ResetLastNotifiedLevel()
+	_u.mutation.SetLastNotifiedLevel(v)
+	return _u
 }
 
 // SetNillableLastNotifiedLevel sets the "last_notified_level" field if the given value is not nil.
-func (mu *MemberUpdate) SetNillableLastNotifiedLevel(u *uint64) *MemberUpdate {
-	if u != nil {
-		mu.SetLastNotifiedLevel(*u)
+func (_u *MemberUpdate) SetNillableLastNotifiedLevel(v *uint64) *MemberUpdate {
+	if v != nil {
+		_u.SetLastNotifiedLevel(*v)
 	}
-	return mu
+	return _u
 }
 
-// AddLastNotifiedLevel adds u to the "last_notified_level" field.
-func (mu *MemberUpdate) AddLastNotifiedLevel(u int64) *MemberUpdate {
-	mu.mutation.AddLastNotifiedLevel(u)
-	return mu
+// AddLastNotifiedLevel adds value to the "last_notified_level" field.
+func (_u *MemberUpdate) AddLastNotifiedLevel(v int64) *MemberUpdate {
+	_u.mutation.AddLastNotifiedLevel(v)
+	return _u
 }
 
 // ClearLastNotifiedLevel clears the value of the "last_notified_level" field.
-func (mu *MemberUpdate) ClearLastNotifiedLevel() *MemberUpdate {
-	mu.mutation.ClearLastNotifiedLevel()
-	return mu
+func (_u *MemberUpdate) ClearLastNotifiedLevel() *MemberUpdate {
+	_u.mutation.ClearLastNotifiedLevel()
+	return _u
 }
 
 // SetLastMessageHashes sets the "last_message_hashes" field.
-func (mu *MemberUpdate) SetLastMessageHashes(s []string) *MemberUpdate {
-	mu.mutation.SetLastMessageHashes(s)
-	return mu
+func (_u *MemberUpdate) SetLastMessageHashes(v []string) *MemberUpdate {
+	_u.mutation.SetLastMessageHashes(v)
+	return _u
 }
 
-// AppendLastMessageHashes appends s to the "last_message_hashes" field.
-func (mu *MemberUpdate) AppendLastMessageHashes(s []string) *MemberUpdate {
-	mu.mutation.AppendLastMessageHashes(s)
-	return mu
+// AppendLastMessageHashes appends value to the "last_message_hashes" field.
+func (_u *MemberUpdate) AppendLastMessageHashes(v []string) *MemberUpdate {
+	_u.mutation.AppendLastMessageHashes(v)
+	return _u
 }
 
 // ClearLastMessageHashes clears the value of the "last_message_hashes" field.
-func (mu *MemberUpdate) ClearLastMessageHashes() *MemberUpdate {
-	mu.mutation.ClearLastMessageHashes()
-	return mu
+func (_u *MemberUpdate) ClearLastMessageHashes() *MemberUpdate {
+	_u.mutation.ClearLastMessageHashes()
+	return _u
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (mu *MemberUpdate) SetGuildID(id snowflake.ID) *MemberUpdate {
-	mu.mutation.SetGuildID(id)
-	return mu
+func (_u *MemberUpdate) SetGuildID(id snowflake.ID) *MemberUpdate {
+	_u.mutation.SetGuildID(id)
+	return _u
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (mu *MemberUpdate) SetGuild(g *Guild) *MemberUpdate {
-	return mu.SetGuildID(g.ID)
+func (_u *MemberUpdate) SetGuild(v *Guild) *MemberUpdate {
+	return _u.SetGuildID(v.ID)
 }
 
 // Mutation returns the MemberMutation object of the builder.
-func (mu *MemberUpdate) Mutation() *MemberMutation {
-	return mu.mutation
+func (_u *MemberUpdate) Mutation() *MemberMutation {
+	return _u.mutation
 }
 
 // ClearGuild clears the "guild" edge to the Guild entity.
-func (mu *MemberUpdate) ClearGuild() *MemberUpdate {
-	mu.mutation.ClearGuild()
-	return mu
+func (_u *MemberUpdate) ClearGuild() *MemberUpdate {
+	_u.mutation.ClearGuild()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
-func (mu *MemberUpdate) Save(ctx context.Context) (int, error) {
-	return withHooks(ctx, mu.sqlSave, mu.mutation, mu.hooks)
+func (_u *MemberUpdate) Save(ctx context.Context) (int, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (mu *MemberUpdate) SaveX(ctx context.Context) int {
-	affected, err := mu.Save(ctx)
+func (_u *MemberUpdate) SaveX(ctx context.Context) int {
+	affected, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -197,86 +197,86 @@ func (mu *MemberUpdate) SaveX(ctx context.Context) int {
 }
 
 // Exec executes the query.
-func (mu *MemberUpdate) Exec(ctx context.Context) error {
-	_, err := mu.Save(ctx)
+func (_u *MemberUpdate) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (mu *MemberUpdate) ExecX(ctx context.Context) {
-	if err := mu.Exec(ctx); err != nil {
+func (_u *MemberUpdate) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (mu *MemberUpdate) check() error {
-	if mu.mutation.GuildCleared() && len(mu.mutation.GuildIDs()) > 0 {
+func (_u *MemberUpdate) check() error {
+	if _u.mutation.GuildCleared() && len(_u.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Member.guild"`)
 	}
-	if mu.mutation.UserCleared() && len(mu.mutation.UserIDs()) > 0 {
+	if _u.mutation.UserCleared() && len(_u.mutation.UserIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Member.user"`)
 	}
 	return nil
 }
 
-func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := mu.check(); err != nil {
-		return n, err
+func (_u *MemberUpdate) sqlSave(ctx context.Context) (_node int, err error) {
+	if err := _u.check(); err != nil {
+		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(member.Table, member.Columns, sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt))
-	if ps := mu.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := mu.mutation.Permission(); ok {
+	if value, ok := _u.mutation.Permission(); ok {
 		_spec.SetField(member.FieldPermission, field.TypeJSON, value)
 	}
-	if mu.mutation.PermissionCleared() {
+	if _u.mutation.PermissionCleared() {
 		_spec.ClearField(member.FieldPermission, field.TypeJSON)
 	}
-	if value, ok := mu.mutation.Xp(); ok {
+	if value, ok := _u.mutation.Xp(); ok {
 		_spec.SetField(member.FieldXp, field.TypeUint64, value)
 	}
-	if value, ok := mu.mutation.AddedXp(); ok {
+	if value, ok := _u.mutation.AddedXp(); ok {
 		_spec.AddField(member.FieldXp, field.TypeUint64, value)
 	}
-	if value, ok := mu.mutation.LastXp(); ok {
+	if value, ok := _u.mutation.LastXp(); ok {
 		_spec.SetField(member.FieldLastXp, field.TypeTime, value)
 	}
-	if mu.mutation.LastXpCleared() {
+	if _u.mutation.LastXpCleared() {
 		_spec.ClearField(member.FieldLastXp, field.TypeTime)
 	}
-	if value, ok := mu.mutation.MessageCount(); ok {
+	if value, ok := _u.mutation.MessageCount(); ok {
 		_spec.SetField(member.FieldMessageCount, field.TypeUint64, value)
 	}
-	if value, ok := mu.mutation.AddedMessageCount(); ok {
+	if value, ok := _u.mutation.AddedMessageCount(); ok {
 		_spec.AddField(member.FieldMessageCount, field.TypeUint64, value)
 	}
-	if value, ok := mu.mutation.LastNotifiedLevel(); ok {
+	if value, ok := _u.mutation.LastNotifiedLevel(); ok {
 		_spec.SetField(member.FieldLastNotifiedLevel, field.TypeUint64, value)
 	}
-	if value, ok := mu.mutation.AddedLastNotifiedLevel(); ok {
+	if value, ok := _u.mutation.AddedLastNotifiedLevel(); ok {
 		_spec.AddField(member.FieldLastNotifiedLevel, field.TypeUint64, value)
 	}
-	if mu.mutation.LastNotifiedLevelCleared() {
+	if _u.mutation.LastNotifiedLevelCleared() {
 		_spec.ClearField(member.FieldLastNotifiedLevel, field.TypeUint64)
 	}
-	if value, ok := mu.mutation.LastMessageHashes(); ok {
+	if value, ok := _u.mutation.LastMessageHashes(); ok {
 		_spec.SetField(member.FieldLastMessageHashes, field.TypeJSON, value)
 	}
-	if value, ok := mu.mutation.AppendedLastMessageHashes(); ok {
+	if value, ok := _u.mutation.AppendedLastMessageHashes(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, member.FieldLastMessageHashes, value)
 		})
 	}
-	if mu.mutation.LastMessageHashesCleared() {
+	if _u.mutation.LastMessageHashesCleared() {
 		_spec.ClearField(member.FieldLastMessageHashes, field.TypeJSON)
 	}
-	if mu.mutation.GuildCleared() {
+	if _u.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -289,7 +289,7 @@ func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := mu.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -305,7 +305,7 @@ func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, mu.driver, _spec); err != nil {
+	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{member.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -313,8 +313,8 @@ func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		return 0, err
 	}
-	mu.mutation.done = true
-	return n, nil
+	_u.mutation.done = true
+	return _node, nil
 }
 
 // MemberUpdateOne is the builder for updating a single Member entity.
@@ -326,175 +326,175 @@ type MemberUpdateOne struct {
 }
 
 // SetPermission sets the "permission" field.
-func (muo *MemberUpdateOne) SetPermission(pe permissions.Permission) *MemberUpdateOne {
-	muo.mutation.SetPermission(pe)
-	return muo
+func (_u *MemberUpdateOne) SetPermission(v permissions.Permission) *MemberUpdateOne {
+	_u.mutation.SetPermission(v)
+	return _u
 }
 
 // SetNillablePermission sets the "permission" field if the given value is not nil.
-func (muo *MemberUpdateOne) SetNillablePermission(pe *permissions.Permission) *MemberUpdateOne {
-	if pe != nil {
-		muo.SetPermission(*pe)
+func (_u *MemberUpdateOne) SetNillablePermission(v *permissions.Permission) *MemberUpdateOne {
+	if v != nil {
+		_u.SetPermission(*v)
 	}
-	return muo
+	return _u
 }
 
 // ClearPermission clears the value of the "permission" field.
-func (muo *MemberUpdateOne) ClearPermission() *MemberUpdateOne {
-	muo.mutation.ClearPermission()
-	return muo
+func (_u *MemberUpdateOne) ClearPermission() *MemberUpdateOne {
+	_u.mutation.ClearPermission()
+	return _u
 }
 
 // SetXp sets the "xp" field.
-func (muo *MemberUpdateOne) SetXp(x xppoint.XP) *MemberUpdateOne {
-	muo.mutation.ResetXp()
-	muo.mutation.SetXp(x)
-	return muo
+func (_u *MemberUpdateOne) SetXp(v xppoint.XP) *MemberUpdateOne {
+	_u.mutation.ResetXp()
+	_u.mutation.SetXp(v)
+	return _u
 }
 
 // SetNillableXp sets the "xp" field if the given value is not nil.
-func (muo *MemberUpdateOne) SetNillableXp(x *xppoint.XP) *MemberUpdateOne {
-	if x != nil {
-		muo.SetXp(*x)
+func (_u *MemberUpdateOne) SetNillableXp(v *xppoint.XP) *MemberUpdateOne {
+	if v != nil {
+		_u.SetXp(*v)
 	}
-	return muo
+	return _u
 }
 
-// AddXp adds x to the "xp" field.
-func (muo *MemberUpdateOne) AddXp(x xppoint.XP) *MemberUpdateOne {
-	muo.mutation.AddXp(x)
-	return muo
+// AddXp adds value to the "xp" field.
+func (_u *MemberUpdateOne) AddXp(v xppoint.XP) *MemberUpdateOne {
+	_u.mutation.AddXp(v)
+	return _u
 }
 
 // SetLastXp sets the "last_xp" field.
-func (muo *MemberUpdateOne) SetLastXp(t time.Time) *MemberUpdateOne {
-	muo.mutation.SetLastXp(t)
-	return muo
+func (_u *MemberUpdateOne) SetLastXp(v time.Time) *MemberUpdateOne {
+	_u.mutation.SetLastXp(v)
+	return _u
 }
 
 // SetNillableLastXp sets the "last_xp" field if the given value is not nil.
-func (muo *MemberUpdateOne) SetNillableLastXp(t *time.Time) *MemberUpdateOne {
-	if t != nil {
-		muo.SetLastXp(*t)
+func (_u *MemberUpdateOne) SetNillableLastXp(v *time.Time) *MemberUpdateOne {
+	if v != nil {
+		_u.SetLastXp(*v)
 	}
-	return muo
+	return _u
 }
 
 // ClearLastXp clears the value of the "last_xp" field.
-func (muo *MemberUpdateOne) ClearLastXp() *MemberUpdateOne {
-	muo.mutation.ClearLastXp()
-	return muo
+func (_u *MemberUpdateOne) ClearLastXp() *MemberUpdateOne {
+	_u.mutation.ClearLastXp()
+	return _u
 }
 
 // SetMessageCount sets the "message_count" field.
-func (muo *MemberUpdateOne) SetMessageCount(u uint64) *MemberUpdateOne {
-	muo.mutation.ResetMessageCount()
-	muo.mutation.SetMessageCount(u)
-	return muo
+func (_u *MemberUpdateOne) SetMessageCount(v uint64) *MemberUpdateOne {
+	_u.mutation.ResetMessageCount()
+	_u.mutation.SetMessageCount(v)
+	return _u
 }
 
 // SetNillableMessageCount sets the "message_count" field if the given value is not nil.
-func (muo *MemberUpdateOne) SetNillableMessageCount(u *uint64) *MemberUpdateOne {
-	if u != nil {
-		muo.SetMessageCount(*u)
+func (_u *MemberUpdateOne) SetNillableMessageCount(v *uint64) *MemberUpdateOne {
+	if v != nil {
+		_u.SetMessageCount(*v)
 	}
-	return muo
+	return _u
 }
 
-// AddMessageCount adds u to the "message_count" field.
-func (muo *MemberUpdateOne) AddMessageCount(u int64) *MemberUpdateOne {
-	muo.mutation.AddMessageCount(u)
-	return muo
+// AddMessageCount adds value to the "message_count" field.
+func (_u *MemberUpdateOne) AddMessageCount(v int64) *MemberUpdateOne {
+	_u.mutation.AddMessageCount(v)
+	return _u
 }
 
 // SetLastNotifiedLevel sets the "last_notified_level" field.
-func (muo *MemberUpdateOne) SetLastNotifiedLevel(u uint64) *MemberUpdateOne {
-	muo.mutation.ResetLastNotifiedLevel()
-	muo.mutation.SetLastNotifiedLevel(u)
-	return muo
+func (_u *MemberUpdateOne) SetLastNotifiedLevel(v uint64) *MemberUpdateOne {
+	_u.mutation.ResetLastNotifiedLevel()
+	_u.mutation.SetLastNotifiedLevel(v)
+	return _u
 }
 
 // SetNillableLastNotifiedLevel sets the "last_notified_level" field if the given value is not nil.
-func (muo *MemberUpdateOne) SetNillableLastNotifiedLevel(u *uint64) *MemberUpdateOne {
-	if u != nil {
-		muo.SetLastNotifiedLevel(*u)
+func (_u *MemberUpdateOne) SetNillableLastNotifiedLevel(v *uint64) *MemberUpdateOne {
+	if v != nil {
+		_u.SetLastNotifiedLevel(*v)
 	}
-	return muo
+	return _u
 }
 
-// AddLastNotifiedLevel adds u to the "last_notified_level" field.
-func (muo *MemberUpdateOne) AddLastNotifiedLevel(u int64) *MemberUpdateOne {
-	muo.mutation.AddLastNotifiedLevel(u)
-	return muo
+// AddLastNotifiedLevel adds value to the "last_notified_level" field.
+func (_u *MemberUpdateOne) AddLastNotifiedLevel(v int64) *MemberUpdateOne {
+	_u.mutation.AddLastNotifiedLevel(v)
+	return _u
 }
 
 // ClearLastNotifiedLevel clears the value of the "last_notified_level" field.
-func (muo *MemberUpdateOne) ClearLastNotifiedLevel() *MemberUpdateOne {
-	muo.mutation.ClearLastNotifiedLevel()
-	return muo
+func (_u *MemberUpdateOne) ClearLastNotifiedLevel() *MemberUpdateOne {
+	_u.mutation.ClearLastNotifiedLevel()
+	return _u
 }
 
 // SetLastMessageHashes sets the "last_message_hashes" field.
-func (muo *MemberUpdateOne) SetLastMessageHashes(s []string) *MemberUpdateOne {
-	muo.mutation.SetLastMessageHashes(s)
-	return muo
+func (_u *MemberUpdateOne) SetLastMessageHashes(v []string) *MemberUpdateOne {
+	_u.mutation.SetLastMessageHashes(v)
+	return _u
 }
 
-// AppendLastMessageHashes appends s to the "last_message_hashes" field.
-func (muo *MemberUpdateOne) AppendLastMessageHashes(s []string) *MemberUpdateOne {
-	muo.mutation.AppendLastMessageHashes(s)
-	return muo
+// AppendLastMessageHashes appends value to the "last_message_hashes" field.
+func (_u *MemberUpdateOne) AppendLastMessageHashes(v []string) *MemberUpdateOne {
+	_u.mutation.AppendLastMessageHashes(v)
+	return _u
 }
 
 // ClearLastMessageHashes clears the value of the "last_message_hashes" field.
-func (muo *MemberUpdateOne) ClearLastMessageHashes() *MemberUpdateOne {
-	muo.mutation.ClearLastMessageHashes()
-	return muo
+func (_u *MemberUpdateOne) ClearLastMessageHashes() *MemberUpdateOne {
+	_u.mutation.ClearLastMessageHashes()
+	return _u
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (muo *MemberUpdateOne) SetGuildID(id snowflake.ID) *MemberUpdateOne {
-	muo.mutation.SetGuildID(id)
-	return muo
+func (_u *MemberUpdateOne) SetGuildID(id snowflake.ID) *MemberUpdateOne {
+	_u.mutation.SetGuildID(id)
+	return _u
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (muo *MemberUpdateOne) SetGuild(g *Guild) *MemberUpdateOne {
-	return muo.SetGuildID(g.ID)
+func (_u *MemberUpdateOne) SetGuild(v *Guild) *MemberUpdateOne {
+	return _u.SetGuildID(v.ID)
 }
 
 // Mutation returns the MemberMutation object of the builder.
-func (muo *MemberUpdateOne) Mutation() *MemberMutation {
-	return muo.mutation
+func (_u *MemberUpdateOne) Mutation() *MemberMutation {
+	return _u.mutation
 }
 
 // ClearGuild clears the "guild" edge to the Guild entity.
-func (muo *MemberUpdateOne) ClearGuild() *MemberUpdateOne {
-	muo.mutation.ClearGuild()
-	return muo
+func (_u *MemberUpdateOne) ClearGuild() *MemberUpdateOne {
+	_u.mutation.ClearGuild()
+	return _u
 }
 
 // Where appends a list predicates to the MemberUpdate builder.
-func (muo *MemberUpdateOne) Where(ps ...predicate.Member) *MemberUpdateOne {
-	muo.mutation.Where(ps...)
-	return muo
+func (_u *MemberUpdateOne) Where(ps ...predicate.Member) *MemberUpdateOne {
+	_u.mutation.Where(ps...)
+	return _u
 }
 
 // Select allows selecting one or more fields (columns) of the returned entity.
 // The default is selecting all fields defined in the entity schema.
-func (muo *MemberUpdateOne) Select(field string, fields ...string) *MemberUpdateOne {
-	muo.fields = append([]string{field}, fields...)
-	return muo
+func (_u *MemberUpdateOne) Select(field string, fields ...string) *MemberUpdateOne {
+	_u.fields = append([]string{field}, fields...)
+	return _u
 }
 
 // Save executes the query and returns the updated Member entity.
-func (muo *MemberUpdateOne) Save(ctx context.Context) (*Member, error) {
-	return withHooks(ctx, muo.sqlSave, muo.mutation, muo.hooks)
+func (_u *MemberUpdateOne) Save(ctx context.Context) (*Member, error) {
+	return withHooks(ctx, _u.sqlSave, _u.mutation, _u.hooks)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (muo *MemberUpdateOne) SaveX(ctx context.Context) *Member {
-	node, err := muo.Save(ctx)
+func (_u *MemberUpdateOne) SaveX(ctx context.Context) *Member {
+	node, err := _u.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -502,40 +502,40 @@ func (muo *MemberUpdateOne) SaveX(ctx context.Context) *Member {
 }
 
 // Exec executes the query on the entity.
-func (muo *MemberUpdateOne) Exec(ctx context.Context) error {
-	_, err := muo.Save(ctx)
+func (_u *MemberUpdateOne) Exec(ctx context.Context) error {
+	_, err := _u.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (muo *MemberUpdateOne) ExecX(ctx context.Context) {
-	if err := muo.Exec(ctx); err != nil {
+func (_u *MemberUpdateOne) ExecX(ctx context.Context) {
+	if err := _u.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (muo *MemberUpdateOne) check() error {
-	if muo.mutation.GuildCleared() && len(muo.mutation.GuildIDs()) > 0 {
+func (_u *MemberUpdateOne) check() error {
+	if _u.mutation.GuildCleared() && len(_u.mutation.GuildIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Member.guild"`)
 	}
-	if muo.mutation.UserCleared() && len(muo.mutation.UserIDs()) > 0 {
+	if _u.mutation.UserCleared() && len(_u.mutation.UserIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Member.user"`)
 	}
 	return nil
 }
 
-func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err error) {
-	if err := muo.check(); err != nil {
+func (_u *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err error) {
+	if err := _u.check(); err != nil {
 		return _node, err
 	}
 	_spec := sqlgraph.NewUpdateSpec(member.Table, member.Columns, sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt))
-	id, ok := muo.mutation.ID()
+	id, ok := _u.mutation.ID()
 	if !ok {
 		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Member.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
-	if fields := muo.fields; len(fields) > 0 {
+	if fields := _u.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, member.FieldID)
 		for _, f := range fields {
@@ -547,58 +547,58 @@ func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err err
 			}
 		}
 	}
-	if ps := muo.mutation.predicates; len(ps) > 0 {
+	if ps := _u.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value, ok := muo.mutation.Permission(); ok {
+	if value, ok := _u.mutation.Permission(); ok {
 		_spec.SetField(member.FieldPermission, field.TypeJSON, value)
 	}
-	if muo.mutation.PermissionCleared() {
+	if _u.mutation.PermissionCleared() {
 		_spec.ClearField(member.FieldPermission, field.TypeJSON)
 	}
-	if value, ok := muo.mutation.Xp(); ok {
+	if value, ok := _u.mutation.Xp(); ok {
 		_spec.SetField(member.FieldXp, field.TypeUint64, value)
 	}
-	if value, ok := muo.mutation.AddedXp(); ok {
+	if value, ok := _u.mutation.AddedXp(); ok {
 		_spec.AddField(member.FieldXp, field.TypeUint64, value)
 	}
-	if value, ok := muo.mutation.LastXp(); ok {
+	if value, ok := _u.mutation.LastXp(); ok {
 		_spec.SetField(member.FieldLastXp, field.TypeTime, value)
 	}
-	if muo.mutation.LastXpCleared() {
+	if _u.mutation.LastXpCleared() {
 		_spec.ClearField(member.FieldLastXp, field.TypeTime)
 	}
-	if value, ok := muo.mutation.MessageCount(); ok {
+	if value, ok := _u.mutation.MessageCount(); ok {
 		_spec.SetField(member.FieldMessageCount, field.TypeUint64, value)
 	}
-	if value, ok := muo.mutation.AddedMessageCount(); ok {
+	if value, ok := _u.mutation.AddedMessageCount(); ok {
 		_spec.AddField(member.FieldMessageCount, field.TypeUint64, value)
 	}
-	if value, ok := muo.mutation.LastNotifiedLevel(); ok {
+	if value, ok := _u.mutation.LastNotifiedLevel(); ok {
 		_spec.SetField(member.FieldLastNotifiedLevel, field.TypeUint64, value)
 	}
-	if value, ok := muo.mutation.AddedLastNotifiedLevel(); ok {
+	if value, ok := _u.mutation.AddedLastNotifiedLevel(); ok {
 		_spec.AddField(member.FieldLastNotifiedLevel, field.TypeUint64, value)
 	}
-	if muo.mutation.LastNotifiedLevelCleared() {
+	if _u.mutation.LastNotifiedLevelCleared() {
 		_spec.ClearField(member.FieldLastNotifiedLevel, field.TypeUint64)
 	}
-	if value, ok := muo.mutation.LastMessageHashes(); ok {
+	if value, ok := _u.mutation.LastMessageHashes(); ok {
 		_spec.SetField(member.FieldLastMessageHashes, field.TypeJSON, value)
 	}
-	if value, ok := muo.mutation.AppendedLastMessageHashes(); ok {
+	if value, ok := _u.mutation.AppendedLastMessageHashes(); ok {
 		_spec.AddModifier(func(u *sql.UpdateBuilder) {
 			sqljson.Append(u, member.FieldLastMessageHashes, value)
 		})
 	}
-	if muo.mutation.LastMessageHashesCleared() {
+	if _u.mutation.LastMessageHashesCleared() {
 		_spec.ClearField(member.FieldLastMessageHashes, field.TypeJSON)
 	}
-	if muo.mutation.GuildCleared() {
+	if _u.mutation.GuildCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -611,7 +611,7 @@ func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := muo.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -627,10 +627,10 @@ func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err err
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	_node = &Member{config: muo.config}
+	_node = &Member{config: _u.config}
 	_spec.Assign = _node.assignValues
 	_spec.ScanValues = _node.scanValues
-	if err = sqlgraph.UpdateNode(ctx, muo.driver, _spec); err != nil {
+	if err = sqlgraph.UpdateNode(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{member.Label}
 		} else if sqlgraph.IsConstraintError(err) {
@@ -638,6 +638,6 @@ func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err err
 		}
 		return nil, err
 	}
-	muo.mutation.done = true
+	_u.mutation.done = true
 	return _node, nil
 }

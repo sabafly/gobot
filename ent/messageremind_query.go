@@ -33,44 +33,44 @@ type MessageRemindQuery struct {
 }
 
 // Where adds a new predicate for the MessageRemindQuery builder.
-func (mrq *MessageRemindQuery) Where(ps ...predicate.MessageRemind) *MessageRemindQuery {
-	mrq.predicates = append(mrq.predicates, ps...)
-	return mrq
+func (_q *MessageRemindQuery) Where(ps ...predicate.MessageRemind) *MessageRemindQuery {
+	_q.predicates = append(_q.predicates, ps...)
+	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (mrq *MessageRemindQuery) Limit(limit int) *MessageRemindQuery {
-	mrq.ctx.Limit = &limit
-	return mrq
+func (_q *MessageRemindQuery) Limit(limit int) *MessageRemindQuery {
+	_q.ctx.Limit = &limit
+	return _q
 }
 
 // Offset to start from.
-func (mrq *MessageRemindQuery) Offset(offset int) *MessageRemindQuery {
-	mrq.ctx.Offset = &offset
-	return mrq
+func (_q *MessageRemindQuery) Offset(offset int) *MessageRemindQuery {
+	_q.ctx.Offset = &offset
+	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (mrq *MessageRemindQuery) Unique(unique bool) *MessageRemindQuery {
-	mrq.ctx.Unique = &unique
-	return mrq
+func (_q *MessageRemindQuery) Unique(unique bool) *MessageRemindQuery {
+	_q.ctx.Unique = &unique
+	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (mrq *MessageRemindQuery) Order(o ...messageremind.OrderOption) *MessageRemindQuery {
-	mrq.order = append(mrq.order, o...)
-	return mrq
+func (_q *MessageRemindQuery) Order(o ...messageremind.OrderOption) *MessageRemindQuery {
+	_q.order = append(_q.order, o...)
+	return _q
 }
 
 // QueryGuild chains the current query on the "guild" edge.
-func (mrq *MessageRemindQuery) QueryGuild() *GuildQuery {
-	query := (&GuildClient{config: mrq.config}).Query()
+func (_q *MessageRemindQuery) QueryGuild() *GuildQuery {
+	query := (&GuildClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := mrq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := mrq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -79,7 +79,7 @@ func (mrq *MessageRemindQuery) QueryGuild() *GuildQuery {
 			sqlgraph.To(guild.Table, guild.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, messageremind.GuildTable, messageremind.GuildColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(mrq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
@@ -87,8 +87,8 @@ func (mrq *MessageRemindQuery) QueryGuild() *GuildQuery {
 
 // First returns the first MessageRemind entity from the query.
 // Returns a *NotFoundError when no MessageRemind was found.
-func (mrq *MessageRemindQuery) First(ctx context.Context) (*MessageRemind, error) {
-	nodes, err := mrq.Limit(1).All(setContextOp(ctx, mrq.ctx, ent.OpQueryFirst))
+func (_q *MessageRemindQuery) First(ctx context.Context) (*MessageRemind, error) {
+	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -99,8 +99,8 @@ func (mrq *MessageRemindQuery) First(ctx context.Context) (*MessageRemind, error
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (mrq *MessageRemindQuery) FirstX(ctx context.Context) *MessageRemind {
-	node, err := mrq.First(ctx)
+func (_q *MessageRemindQuery) FirstX(ctx context.Context) *MessageRemind {
+	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -109,9 +109,9 @@ func (mrq *MessageRemindQuery) FirstX(ctx context.Context) *MessageRemind {
 
 // FirstID returns the first MessageRemind ID from the query.
 // Returns a *NotFoundError when no MessageRemind ID was found.
-func (mrq *MessageRemindQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *MessageRemindQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = mrq.Limit(1).IDs(setContextOp(ctx, mrq.ctx, ent.OpQueryFirstID)); err != nil {
+	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -122,8 +122,8 @@ func (mrq *MessageRemindQuery) FirstID(ctx context.Context) (id uuid.UUID, err e
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (mrq *MessageRemindQuery) FirstIDX(ctx context.Context) uuid.UUID {
-	id, err := mrq.FirstID(ctx)
+func (_q *MessageRemindQuery) FirstIDX(ctx context.Context) uuid.UUID {
+	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -133,8 +133,8 @@ func (mrq *MessageRemindQuery) FirstIDX(ctx context.Context) uuid.UUID {
 // Only returns a single MessageRemind entity found by the query, ensuring it only returns one.
 // Returns a *NotSingularError when more than one MessageRemind entity is found.
 // Returns a *NotFoundError when no MessageRemind entities are found.
-func (mrq *MessageRemindQuery) Only(ctx context.Context) (*MessageRemind, error) {
-	nodes, err := mrq.Limit(2).All(setContextOp(ctx, mrq.ctx, ent.OpQueryOnly))
+func (_q *MessageRemindQuery) Only(ctx context.Context) (*MessageRemind, error) {
+	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -149,8 +149,8 @@ func (mrq *MessageRemindQuery) Only(ctx context.Context) (*MessageRemind, error)
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (mrq *MessageRemindQuery) OnlyX(ctx context.Context) *MessageRemind {
-	node, err := mrq.Only(ctx)
+func (_q *MessageRemindQuery) OnlyX(ctx context.Context) *MessageRemind {
+	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -160,9 +160,9 @@ func (mrq *MessageRemindQuery) OnlyX(ctx context.Context) *MessageRemind {
 // OnlyID is like Only, but returns the only MessageRemind ID in the query.
 // Returns a *NotSingularError when more than one MessageRemind ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (mrq *MessageRemindQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *MessageRemindQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = mrq.Limit(2).IDs(setContextOp(ctx, mrq.ctx, ent.OpQueryOnlyID)); err != nil {
+	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -177,8 +177,8 @@ func (mrq *MessageRemindQuery) OnlyID(ctx context.Context) (id uuid.UUID, err er
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (mrq *MessageRemindQuery) OnlyIDX(ctx context.Context) uuid.UUID {
-	id, err := mrq.OnlyID(ctx)
+func (_q *MessageRemindQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -186,18 +186,18 @@ func (mrq *MessageRemindQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 }
 
 // All executes the query and returns a list of MessageReminds.
-func (mrq *MessageRemindQuery) All(ctx context.Context) ([]*MessageRemind, error) {
-	ctx = setContextOp(ctx, mrq.ctx, ent.OpQueryAll)
-	if err := mrq.prepareQuery(ctx); err != nil {
+func (_q *MessageRemindQuery) All(ctx context.Context) ([]*MessageRemind, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
 	qr := querierAll[[]*MessageRemind, *MessageRemindQuery]()
-	return withInterceptors[[]*MessageRemind](ctx, mrq, qr, mrq.inters)
+	return withInterceptors[[]*MessageRemind](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (mrq *MessageRemindQuery) AllX(ctx context.Context) []*MessageRemind {
-	nodes, err := mrq.All(ctx)
+func (_q *MessageRemindQuery) AllX(ctx context.Context) []*MessageRemind {
+	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -205,20 +205,20 @@ func (mrq *MessageRemindQuery) AllX(ctx context.Context) []*MessageRemind {
 }
 
 // IDs executes the query and returns a list of MessageRemind IDs.
-func (mrq *MessageRemindQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
-	if mrq.ctx.Unique == nil && mrq.path != nil {
-		mrq.Unique(true)
+func (_q *MessageRemindQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+	if _q.ctx.Unique == nil && _q.path != nil {
+		_q.Unique(true)
 	}
-	ctx = setContextOp(ctx, mrq.ctx, ent.OpQueryIDs)
-	if err = mrq.Select(messageremind.FieldID).Scan(ctx, &ids); err != nil {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
+	if err = _q.Select(messageremind.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (mrq *MessageRemindQuery) IDsX(ctx context.Context) []uuid.UUID {
-	ids, err := mrq.IDs(ctx)
+func (_q *MessageRemindQuery) IDsX(ctx context.Context) []uuid.UUID {
+	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -226,17 +226,17 @@ func (mrq *MessageRemindQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (mrq *MessageRemindQuery) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, mrq.ctx, ent.OpQueryCount)
-	if err := mrq.prepareQuery(ctx); err != nil {
+func (_q *MessageRemindQuery) Count(ctx context.Context) (int, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, mrq, querierCount[*MessageRemindQuery](), mrq.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*MessageRemindQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (mrq *MessageRemindQuery) CountX(ctx context.Context) int {
-	count, err := mrq.Count(ctx)
+func (_q *MessageRemindQuery) CountX(ctx context.Context) int {
+	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -244,9 +244,9 @@ func (mrq *MessageRemindQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (mrq *MessageRemindQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, mrq.ctx, ent.OpQueryExist)
-	switch _, err := mrq.FirstID(ctx); {
+func (_q *MessageRemindQuery) Exist(ctx context.Context) (bool, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
+	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
 	case err != nil:
@@ -257,8 +257,8 @@ func (mrq *MessageRemindQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (mrq *MessageRemindQuery) ExistX(ctx context.Context) bool {
-	exist, err := mrq.Exist(ctx)
+func (_q *MessageRemindQuery) ExistX(ctx context.Context) bool {
+	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -267,32 +267,32 @@ func (mrq *MessageRemindQuery) ExistX(ctx context.Context) bool {
 
 // Clone returns a duplicate of the MessageRemindQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (mrq *MessageRemindQuery) Clone() *MessageRemindQuery {
-	if mrq == nil {
+func (_q *MessageRemindQuery) Clone() *MessageRemindQuery {
+	if _q == nil {
 		return nil
 	}
 	return &MessageRemindQuery{
-		config:     mrq.config,
-		ctx:        mrq.ctx.Clone(),
-		order:      append([]messageremind.OrderOption{}, mrq.order...),
-		inters:     append([]Interceptor{}, mrq.inters...),
-		predicates: append([]predicate.MessageRemind{}, mrq.predicates...),
-		withGuild:  mrq.withGuild.Clone(),
+		config:     _q.config,
+		ctx:        _q.ctx.Clone(),
+		order:      append([]messageremind.OrderOption{}, _q.order...),
+		inters:     append([]Interceptor{}, _q.inters...),
+		predicates: append([]predicate.MessageRemind{}, _q.predicates...),
+		withGuild:  _q.withGuild.Clone(),
 		// clone intermediate query.
-		sql:  mrq.sql.Clone(),
-		path: mrq.path,
+		sql:  _q.sql.Clone(),
+		path: _q.path,
 	}
 }
 
 // WithGuild tells the query-builder to eager-load the nodes that are connected to
 // the "guild" edge. The optional arguments are used to configure the query builder of the edge.
-func (mrq *MessageRemindQuery) WithGuild(opts ...func(*GuildQuery)) *MessageRemindQuery {
-	query := (&GuildClient{config: mrq.config}).Query()
+func (_q *MessageRemindQuery) WithGuild(opts ...func(*GuildQuery)) *MessageRemindQuery {
+	query := (&GuildClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	mrq.withGuild = query
-	return mrq
+	_q.withGuild = query
+	return _q
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -309,10 +309,10 @@ func (mrq *MessageRemindQuery) WithGuild(opts ...func(*GuildQuery)) *MessageRemi
 //		GroupBy(messageremind.FieldChannelID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (mrq *MessageRemindQuery) GroupBy(field string, fields ...string) *MessageRemindGroupBy {
-	mrq.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &MessageRemindGroupBy{build: mrq}
-	grbuild.flds = &mrq.ctx.Fields
+func (_q *MessageRemindQuery) GroupBy(field string, fields ...string) *MessageRemindGroupBy {
+	_q.ctx.Fields = append([]string{field}, fields...)
+	grbuild := &MessageRemindGroupBy{build: _q}
+	grbuild.flds = &_q.ctx.Fields
 	grbuild.label = messageremind.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
@@ -330,55 +330,55 @@ func (mrq *MessageRemindQuery) GroupBy(field string, fields ...string) *MessageR
 //	client.MessageRemind.Query().
 //		Select(messageremind.FieldChannelID).
 //		Scan(ctx, &v)
-func (mrq *MessageRemindQuery) Select(fields ...string) *MessageRemindSelect {
-	mrq.ctx.Fields = append(mrq.ctx.Fields, fields...)
-	sbuild := &MessageRemindSelect{MessageRemindQuery: mrq}
+func (_q *MessageRemindQuery) Select(fields ...string) *MessageRemindSelect {
+	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
+	sbuild := &MessageRemindSelect{MessageRemindQuery: _q}
 	sbuild.label = messageremind.Label
-	sbuild.flds, sbuild.scan = &mrq.ctx.Fields, sbuild.Scan
+	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
 // Aggregate returns a MessageRemindSelect configured with the given aggregations.
-func (mrq *MessageRemindQuery) Aggregate(fns ...AggregateFunc) *MessageRemindSelect {
-	return mrq.Select().Aggregate(fns...)
+func (_q *MessageRemindQuery) Aggregate(fns ...AggregateFunc) *MessageRemindSelect {
+	return _q.Select().Aggregate(fns...)
 }
 
-func (mrq *MessageRemindQuery) prepareQuery(ctx context.Context) error {
-	for _, inter := range mrq.inters {
+func (_q *MessageRemindQuery) prepareQuery(ctx context.Context) error {
+	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
 		}
 		if trv, ok := inter.(Traverser); ok {
-			if err := trv.Traverse(ctx, mrq); err != nil {
+			if err := trv.Traverse(ctx, _q); err != nil {
 				return err
 			}
 		}
 	}
-	for _, f := range mrq.ctx.Fields {
+	for _, f := range _q.ctx.Fields {
 		if !messageremind.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
-	if mrq.path != nil {
-		prev, err := mrq.path(ctx)
+	if _q.path != nil {
+		prev, err := _q.path(ctx)
 		if err != nil {
 			return err
 		}
-		mrq.sql = prev
+		_q.sql = prev
 	}
 	return nil
 }
 
-func (mrq *MessageRemindQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*MessageRemind, error) {
+func (_q *MessageRemindQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*MessageRemind, error) {
 	var (
 		nodes       = []*MessageRemind{}
-		withFKs     = mrq.withFKs
-		_spec       = mrq.querySpec()
+		withFKs     = _q.withFKs
+		_spec       = _q.querySpec()
 		loadedTypes = [1]bool{
-			mrq.withGuild != nil,
+			_q.withGuild != nil,
 		}
 	)
-	if mrq.withGuild != nil {
+	if _q.withGuild != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -388,7 +388,7 @@ func (mrq *MessageRemindQuery) sqlAll(ctx context.Context, hooks ...queryHook) (
 		return (*MessageRemind).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &MessageRemind{config: mrq.config}
+		node := &MessageRemind{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -396,14 +396,14 @@ func (mrq *MessageRemindQuery) sqlAll(ctx context.Context, hooks ...queryHook) (
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
-	if err := sqlgraph.QueryNodes(ctx, mrq.driver, _spec); err != nil {
+	if err := sqlgraph.QueryNodes(ctx, _q.driver, _spec); err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := mrq.withGuild; query != nil {
-		if err := mrq.loadGuild(ctx, query, nodes, nil,
+	if query := _q.withGuild; query != nil {
+		if err := _q.loadGuild(ctx, query, nodes, nil,
 			func(n *MessageRemind, e *Guild) { n.Edges.Guild = e }); err != nil {
 			return nil, err
 		}
@@ -411,7 +411,7 @@ func (mrq *MessageRemindQuery) sqlAll(ctx context.Context, hooks ...queryHook) (
 	return nodes, nil
 }
 
-func (mrq *MessageRemindQuery) loadGuild(ctx context.Context, query *GuildQuery, nodes []*MessageRemind, init func(*MessageRemind), assign func(*MessageRemind, *Guild)) error {
+func (_q *MessageRemindQuery) loadGuild(ctx context.Context, query *GuildQuery, nodes []*MessageRemind, init func(*MessageRemind), assign func(*MessageRemind, *Guild)) error {
 	ids := make([]snowflake.ID, 0, len(nodes))
 	nodeids := make(map[snowflake.ID][]*MessageRemind)
 	for i := range nodes {
@@ -444,24 +444,24 @@ func (mrq *MessageRemindQuery) loadGuild(ctx context.Context, query *GuildQuery,
 	return nil
 }
 
-func (mrq *MessageRemindQuery) sqlCount(ctx context.Context) (int, error) {
-	_spec := mrq.querySpec()
-	_spec.Node.Columns = mrq.ctx.Fields
-	if len(mrq.ctx.Fields) > 0 {
-		_spec.Unique = mrq.ctx.Unique != nil && *mrq.ctx.Unique
+func (_q *MessageRemindQuery) sqlCount(ctx context.Context) (int, error) {
+	_spec := _q.querySpec()
+	_spec.Node.Columns = _q.ctx.Fields
+	if len(_q.ctx.Fields) > 0 {
+		_spec.Unique = _q.ctx.Unique != nil && *_q.ctx.Unique
 	}
-	return sqlgraph.CountNodes(ctx, mrq.driver, _spec)
+	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (mrq *MessageRemindQuery) querySpec() *sqlgraph.QuerySpec {
+func (_q *MessageRemindQuery) querySpec() *sqlgraph.QuerySpec {
 	_spec := sqlgraph.NewQuerySpec(messageremind.Table, messageremind.Columns, sqlgraph.NewFieldSpec(messageremind.FieldID, field.TypeUUID))
-	_spec.From = mrq.sql
-	if unique := mrq.ctx.Unique; unique != nil {
+	_spec.From = _q.sql
+	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
-	} else if mrq.path != nil {
+	} else if _q.path != nil {
 		_spec.Unique = true
 	}
-	if fields := mrq.ctx.Fields; len(fields) > 0 {
+	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, messageremind.FieldID)
 		for i := range fields {
@@ -470,20 +470,20 @@ func (mrq *MessageRemindQuery) querySpec() *sqlgraph.QuerySpec {
 			}
 		}
 	}
-	if ps := mrq.predicates; len(ps) > 0 {
+	if ps := _q.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if limit := mrq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := mrq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
-	if ps := mrq.order; len(ps) > 0 {
+	if ps := _q.order; len(ps) > 0 {
 		_spec.Order = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
@@ -493,33 +493,33 @@ func (mrq *MessageRemindQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (mrq *MessageRemindQuery) sqlQuery(ctx context.Context) *sql.Selector {
-	builder := sql.Dialect(mrq.driver.Dialect())
+func (_q *MessageRemindQuery) sqlQuery(ctx context.Context) *sql.Selector {
+	builder := sql.Dialect(_q.driver.Dialect())
 	t1 := builder.Table(messageremind.Table)
-	columns := mrq.ctx.Fields
+	columns := _q.ctx.Fields
 	if len(columns) == 0 {
 		columns = messageremind.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
-	if mrq.sql != nil {
-		selector = mrq.sql
+	if _q.sql != nil {
+		selector = _q.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if mrq.ctx.Unique != nil && *mrq.ctx.Unique {
+	if _q.ctx.Unique != nil && *_q.ctx.Unique {
 		selector.Distinct()
 	}
-	for _, p := range mrq.predicates {
+	for _, p := range _q.predicates {
 		p(selector)
 	}
-	for _, p := range mrq.order {
+	for _, p := range _q.order {
 		p(selector)
 	}
-	if offset := mrq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := mrq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
@@ -532,41 +532,41 @@ type MessageRemindGroupBy struct {
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (mrgb *MessageRemindGroupBy) Aggregate(fns ...AggregateFunc) *MessageRemindGroupBy {
-	mrgb.fns = append(mrgb.fns, fns...)
-	return mrgb
+func (_g *MessageRemindGroupBy) Aggregate(fns ...AggregateFunc) *MessageRemindGroupBy {
+	_g.fns = append(_g.fns, fns...)
+	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (mrgb *MessageRemindGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, mrgb.build.ctx, ent.OpQueryGroupBy)
-	if err := mrgb.build.prepareQuery(ctx); err != nil {
+func (_g *MessageRemindGroupBy) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
+	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*MessageRemindQuery, *MessageRemindGroupBy](ctx, mrgb.build, mrgb, mrgb.build.inters, v)
+	return scanWithInterceptors[*MessageRemindQuery, *MessageRemindGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (mrgb *MessageRemindGroupBy) sqlScan(ctx context.Context, root *MessageRemindQuery, v any) error {
+func (_g *MessageRemindGroupBy) sqlScan(ctx context.Context, root *MessageRemindQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
-	aggregation := make([]string, 0, len(mrgb.fns))
-	for _, fn := range mrgb.fns {
+	aggregation := make([]string, 0, len(_g.fns))
+	for _, fn := range _g.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
 	if len(selector.SelectedColumns()) == 0 {
-		columns := make([]string, 0, len(*mrgb.flds)+len(mrgb.fns))
-		for _, f := range *mrgb.flds {
+		columns := make([]string, 0, len(*_g.flds)+len(_g.fns))
+		for _, f := range *_g.flds {
 			columns = append(columns, selector.C(f))
 		}
 		columns = append(columns, aggregation...)
 		selector.Select(columns...)
 	}
-	selector.GroupBy(selector.Columns(*mrgb.flds...)...)
+	selector.GroupBy(selector.Columns(*_g.flds...)...)
 	if err := selector.Err(); err != nil {
 		return err
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := mrgb.build.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _g.build.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
@@ -580,27 +580,27 @@ type MessageRemindSelect struct {
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (mrs *MessageRemindSelect) Aggregate(fns ...AggregateFunc) *MessageRemindSelect {
-	mrs.fns = append(mrs.fns, fns...)
-	return mrs
+func (_s *MessageRemindSelect) Aggregate(fns ...AggregateFunc) *MessageRemindSelect {
+	_s.fns = append(_s.fns, fns...)
+	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (mrs *MessageRemindSelect) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, mrs.ctx, ent.OpQuerySelect)
-	if err := mrs.prepareQuery(ctx); err != nil {
+func (_s *MessageRemindSelect) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
+	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*MessageRemindQuery, *MessageRemindSelect](ctx, mrs.MessageRemindQuery, mrs, mrs.inters, v)
+	return scanWithInterceptors[*MessageRemindQuery, *MessageRemindSelect](ctx, _s.MessageRemindQuery, _s, _s.inters, v)
 }
 
-func (mrs *MessageRemindSelect) sqlScan(ctx context.Context, root *MessageRemindQuery, v any) error {
+func (_s *MessageRemindSelect) sqlScan(ctx context.Context, root *MessageRemindQuery, v any) error {
 	selector := root.sqlQuery(ctx)
-	aggregation := make([]string, 0, len(mrs.fns))
-	for _, fn := range mrs.fns {
+	aggregation := make([]string, 0, len(_s.fns))
+	for _, fn := range _s.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
-	switch n := len(*mrs.selector.flds); {
+	switch n := len(*_s.selector.flds); {
 	case n == 0 && len(aggregation) > 0:
 		selector.Select(aggregation...)
 	case n != 0 && len(aggregation) > 0:
@@ -608,7 +608,7 @@ func (mrs *MessageRemindSelect) sqlScan(ctx context.Context, root *MessageRemind
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := mrs.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _s.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()

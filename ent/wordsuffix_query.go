@@ -35,44 +35,44 @@ type WordSuffixQuery struct {
 }
 
 // Where adds a new predicate for the WordSuffixQuery builder.
-func (wsq *WordSuffixQuery) Where(ps ...predicate.WordSuffix) *WordSuffixQuery {
-	wsq.predicates = append(wsq.predicates, ps...)
-	return wsq
+func (_q *WordSuffixQuery) Where(ps ...predicate.WordSuffix) *WordSuffixQuery {
+	_q.predicates = append(_q.predicates, ps...)
+	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (wsq *WordSuffixQuery) Limit(limit int) *WordSuffixQuery {
-	wsq.ctx.Limit = &limit
-	return wsq
+func (_q *WordSuffixQuery) Limit(limit int) *WordSuffixQuery {
+	_q.ctx.Limit = &limit
+	return _q
 }
 
 // Offset to start from.
-func (wsq *WordSuffixQuery) Offset(offset int) *WordSuffixQuery {
-	wsq.ctx.Offset = &offset
-	return wsq
+func (_q *WordSuffixQuery) Offset(offset int) *WordSuffixQuery {
+	_q.ctx.Offset = &offset
+	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (wsq *WordSuffixQuery) Unique(unique bool) *WordSuffixQuery {
-	wsq.ctx.Unique = &unique
-	return wsq
+func (_q *WordSuffixQuery) Unique(unique bool) *WordSuffixQuery {
+	_q.ctx.Unique = &unique
+	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (wsq *WordSuffixQuery) Order(o ...wordsuffix.OrderOption) *WordSuffixQuery {
-	wsq.order = append(wsq.order, o...)
-	return wsq
+func (_q *WordSuffixQuery) Order(o ...wordsuffix.OrderOption) *WordSuffixQuery {
+	_q.order = append(_q.order, o...)
+	return _q
 }
 
 // QueryGuild chains the current query on the "guild" edge.
-func (wsq *WordSuffixQuery) QueryGuild() *GuildQuery {
-	query := (&GuildClient{config: wsq.config}).Query()
+func (_q *WordSuffixQuery) QueryGuild() *GuildQuery {
+	query := (&GuildClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := wsq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := wsq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -81,20 +81,20 @@ func (wsq *WordSuffixQuery) QueryGuild() *GuildQuery {
 			sqlgraph.To(guild.Table, guild.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, wordsuffix.GuildTable, wordsuffix.GuildColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(wsq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
 }
 
 // QueryOwner chains the current query on the "owner" edge.
-func (wsq *WordSuffixQuery) QueryOwner() *UserQuery {
-	query := (&UserClient{config: wsq.config}).Query()
+func (_q *WordSuffixQuery) QueryOwner() *UserQuery {
+	query := (&UserClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := wsq.prepareQuery(ctx); err != nil {
+		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
-		selector := wsq.sqlQuery(ctx)
+		selector := _q.sqlQuery(ctx)
 		if err := selector.Err(); err != nil {
 			return nil, err
 		}
@@ -103,7 +103,7 @@ func (wsq *WordSuffixQuery) QueryOwner() *UserQuery {
 			sqlgraph.To(user.Table, user.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, wordsuffix.OwnerTable, wordsuffix.OwnerColumn),
 		)
-		fromU = sqlgraph.SetNeighbors(wsq.driver.Dialect(), step)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
 	}
 	return query
@@ -111,8 +111,8 @@ func (wsq *WordSuffixQuery) QueryOwner() *UserQuery {
 
 // First returns the first WordSuffix entity from the query.
 // Returns a *NotFoundError when no WordSuffix was found.
-func (wsq *WordSuffixQuery) First(ctx context.Context) (*WordSuffix, error) {
-	nodes, err := wsq.Limit(1).All(setContextOp(ctx, wsq.ctx, ent.OpQueryFirst))
+func (_q *WordSuffixQuery) First(ctx context.Context) (*WordSuffix, error) {
+	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
@@ -123,8 +123,8 @@ func (wsq *WordSuffixQuery) First(ctx context.Context) (*WordSuffix, error) {
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (wsq *WordSuffixQuery) FirstX(ctx context.Context) *WordSuffix {
-	node, err := wsq.First(ctx)
+func (_q *WordSuffixQuery) FirstX(ctx context.Context) *WordSuffix {
+	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -133,9 +133,9 @@ func (wsq *WordSuffixQuery) FirstX(ctx context.Context) *WordSuffix {
 
 // FirstID returns the first WordSuffix ID from the query.
 // Returns a *NotFoundError when no WordSuffix ID was found.
-func (wsq *WordSuffixQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *WordSuffixQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = wsq.Limit(1).IDs(setContextOp(ctx, wsq.ctx, ent.OpQueryFirstID)); err != nil {
+	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
@@ -146,8 +146,8 @@ func (wsq *WordSuffixQuery) FirstID(ctx context.Context) (id uuid.UUID, err erro
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (wsq *WordSuffixQuery) FirstIDX(ctx context.Context) uuid.UUID {
-	id, err := wsq.FirstID(ctx)
+func (_q *WordSuffixQuery) FirstIDX(ctx context.Context) uuid.UUID {
+	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
@@ -157,8 +157,8 @@ func (wsq *WordSuffixQuery) FirstIDX(ctx context.Context) uuid.UUID {
 // Only returns a single WordSuffix entity found by the query, ensuring it only returns one.
 // Returns a *NotSingularError when more than one WordSuffix entity is found.
 // Returns a *NotFoundError when no WordSuffix entities are found.
-func (wsq *WordSuffixQuery) Only(ctx context.Context) (*WordSuffix, error) {
-	nodes, err := wsq.Limit(2).All(setContextOp(ctx, wsq.ctx, ent.OpQueryOnly))
+func (_q *WordSuffixQuery) Only(ctx context.Context) (*WordSuffix, error) {
+	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -173,8 +173,8 @@ func (wsq *WordSuffixQuery) Only(ctx context.Context) (*WordSuffix, error) {
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (wsq *WordSuffixQuery) OnlyX(ctx context.Context) *WordSuffix {
-	node, err := wsq.Only(ctx)
+func (_q *WordSuffixQuery) OnlyX(ctx context.Context) *WordSuffix {
+	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -184,9 +184,9 @@ func (wsq *WordSuffixQuery) OnlyX(ctx context.Context) *WordSuffix {
 // OnlyID is like Only, but returns the only WordSuffix ID in the query.
 // Returns a *NotSingularError when more than one WordSuffix ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (wsq *WordSuffixQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *WordSuffixQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
-	if ids, err = wsq.Limit(2).IDs(setContextOp(ctx, wsq.ctx, ent.OpQueryOnlyID)); err != nil {
+	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
 	}
 	switch len(ids) {
@@ -201,8 +201,8 @@ func (wsq *WordSuffixQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (wsq *WordSuffixQuery) OnlyIDX(ctx context.Context) uuid.UUID {
-	id, err := wsq.OnlyID(ctx)
+func (_q *WordSuffixQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -210,18 +210,18 @@ func (wsq *WordSuffixQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 }
 
 // All executes the query and returns a list of WordSuffixes.
-func (wsq *WordSuffixQuery) All(ctx context.Context) ([]*WordSuffix, error) {
-	ctx = setContextOp(ctx, wsq.ctx, ent.OpQueryAll)
-	if err := wsq.prepareQuery(ctx); err != nil {
+func (_q *WordSuffixQuery) All(ctx context.Context) ([]*WordSuffix, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
 	qr := querierAll[[]*WordSuffix, *WordSuffixQuery]()
-	return withInterceptors[[]*WordSuffix](ctx, wsq, qr, wsq.inters)
+	return withInterceptors[[]*WordSuffix](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (wsq *WordSuffixQuery) AllX(ctx context.Context) []*WordSuffix {
-	nodes, err := wsq.All(ctx)
+func (_q *WordSuffixQuery) AllX(ctx context.Context) []*WordSuffix {
+	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -229,20 +229,20 @@ func (wsq *WordSuffixQuery) AllX(ctx context.Context) []*WordSuffix {
 }
 
 // IDs executes the query and returns a list of WordSuffix IDs.
-func (wsq *WordSuffixQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
-	if wsq.ctx.Unique == nil && wsq.path != nil {
-		wsq.Unique(true)
+func (_q *WordSuffixQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+	if _q.ctx.Unique == nil && _q.path != nil {
+		_q.Unique(true)
 	}
-	ctx = setContextOp(ctx, wsq.ctx, ent.OpQueryIDs)
-	if err = wsq.Select(wordsuffix.FieldID).Scan(ctx, &ids); err != nil {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
+	if err = _q.Select(wordsuffix.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (wsq *WordSuffixQuery) IDsX(ctx context.Context) []uuid.UUID {
-	ids, err := wsq.IDs(ctx)
+func (_q *WordSuffixQuery) IDsX(ctx context.Context) []uuid.UUID {
+	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -250,17 +250,17 @@ func (wsq *WordSuffixQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (wsq *WordSuffixQuery) Count(ctx context.Context) (int, error) {
-	ctx = setContextOp(ctx, wsq.ctx, ent.OpQueryCount)
-	if err := wsq.prepareQuery(ctx); err != nil {
+func (_q *WordSuffixQuery) Count(ctx context.Context) (int, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
+	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, wsq, querierCount[*WordSuffixQuery](), wsq.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*WordSuffixQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (wsq *WordSuffixQuery) CountX(ctx context.Context) int {
-	count, err := wsq.Count(ctx)
+func (_q *WordSuffixQuery) CountX(ctx context.Context) int {
+	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -268,9 +268,9 @@ func (wsq *WordSuffixQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (wsq *WordSuffixQuery) Exist(ctx context.Context) (bool, error) {
-	ctx = setContextOp(ctx, wsq.ctx, ent.OpQueryExist)
-	switch _, err := wsq.FirstID(ctx); {
+func (_q *WordSuffixQuery) Exist(ctx context.Context) (bool, error) {
+	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
+	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
 		return false, nil
 	case err != nil:
@@ -281,8 +281,8 @@ func (wsq *WordSuffixQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (wsq *WordSuffixQuery) ExistX(ctx context.Context) bool {
-	exist, err := wsq.Exist(ctx)
+func (_q *WordSuffixQuery) ExistX(ctx context.Context) bool {
+	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -291,44 +291,44 @@ func (wsq *WordSuffixQuery) ExistX(ctx context.Context) bool {
 
 // Clone returns a duplicate of the WordSuffixQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (wsq *WordSuffixQuery) Clone() *WordSuffixQuery {
-	if wsq == nil {
+func (_q *WordSuffixQuery) Clone() *WordSuffixQuery {
+	if _q == nil {
 		return nil
 	}
 	return &WordSuffixQuery{
-		config:     wsq.config,
-		ctx:        wsq.ctx.Clone(),
-		order:      append([]wordsuffix.OrderOption{}, wsq.order...),
-		inters:     append([]Interceptor{}, wsq.inters...),
-		predicates: append([]predicate.WordSuffix{}, wsq.predicates...),
-		withGuild:  wsq.withGuild.Clone(),
-		withOwner:  wsq.withOwner.Clone(),
+		config:     _q.config,
+		ctx:        _q.ctx.Clone(),
+		order:      append([]wordsuffix.OrderOption{}, _q.order...),
+		inters:     append([]Interceptor{}, _q.inters...),
+		predicates: append([]predicate.WordSuffix{}, _q.predicates...),
+		withGuild:  _q.withGuild.Clone(),
+		withOwner:  _q.withOwner.Clone(),
 		// clone intermediate query.
-		sql:  wsq.sql.Clone(),
-		path: wsq.path,
+		sql:  _q.sql.Clone(),
+		path: _q.path,
 	}
 }
 
 // WithGuild tells the query-builder to eager-load the nodes that are connected to
 // the "guild" edge. The optional arguments are used to configure the query builder of the edge.
-func (wsq *WordSuffixQuery) WithGuild(opts ...func(*GuildQuery)) *WordSuffixQuery {
-	query := (&GuildClient{config: wsq.config}).Query()
+func (_q *WordSuffixQuery) WithGuild(opts ...func(*GuildQuery)) *WordSuffixQuery {
+	query := (&GuildClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	wsq.withGuild = query
-	return wsq
+	_q.withGuild = query
+	return _q
 }
 
 // WithOwner tells the query-builder to eager-load the nodes that are connected to
 // the "owner" edge. The optional arguments are used to configure the query builder of the edge.
-func (wsq *WordSuffixQuery) WithOwner(opts ...func(*UserQuery)) *WordSuffixQuery {
-	query := (&UserClient{config: wsq.config}).Query()
+func (_q *WordSuffixQuery) WithOwner(opts ...func(*UserQuery)) *WordSuffixQuery {
+	query := (&UserClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	wsq.withOwner = query
-	return wsq
+	_q.withOwner = query
+	return _q
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -345,10 +345,10 @@ func (wsq *WordSuffixQuery) WithOwner(opts ...func(*UserQuery)) *WordSuffixQuery
 //		GroupBy(wordsuffix.FieldSuffix).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (wsq *WordSuffixQuery) GroupBy(field string, fields ...string) *WordSuffixGroupBy {
-	wsq.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &WordSuffixGroupBy{build: wsq}
-	grbuild.flds = &wsq.ctx.Fields
+func (_q *WordSuffixQuery) GroupBy(field string, fields ...string) *WordSuffixGroupBy {
+	_q.ctx.Fields = append([]string{field}, fields...)
+	grbuild := &WordSuffixGroupBy{build: _q}
+	grbuild.flds = &_q.ctx.Fields
 	grbuild.label = wordsuffix.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
@@ -366,56 +366,56 @@ func (wsq *WordSuffixQuery) GroupBy(field string, fields ...string) *WordSuffixG
 //	client.WordSuffix.Query().
 //		Select(wordsuffix.FieldSuffix).
 //		Scan(ctx, &v)
-func (wsq *WordSuffixQuery) Select(fields ...string) *WordSuffixSelect {
-	wsq.ctx.Fields = append(wsq.ctx.Fields, fields...)
-	sbuild := &WordSuffixSelect{WordSuffixQuery: wsq}
+func (_q *WordSuffixQuery) Select(fields ...string) *WordSuffixSelect {
+	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
+	sbuild := &WordSuffixSelect{WordSuffixQuery: _q}
 	sbuild.label = wordsuffix.Label
-	sbuild.flds, sbuild.scan = &wsq.ctx.Fields, sbuild.Scan
+	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
 // Aggregate returns a WordSuffixSelect configured with the given aggregations.
-func (wsq *WordSuffixQuery) Aggregate(fns ...AggregateFunc) *WordSuffixSelect {
-	return wsq.Select().Aggregate(fns...)
+func (_q *WordSuffixQuery) Aggregate(fns ...AggregateFunc) *WordSuffixSelect {
+	return _q.Select().Aggregate(fns...)
 }
 
-func (wsq *WordSuffixQuery) prepareQuery(ctx context.Context) error {
-	for _, inter := range wsq.inters {
+func (_q *WordSuffixQuery) prepareQuery(ctx context.Context) error {
+	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
 		}
 		if trv, ok := inter.(Traverser); ok {
-			if err := trv.Traverse(ctx, wsq); err != nil {
+			if err := trv.Traverse(ctx, _q); err != nil {
 				return err
 			}
 		}
 	}
-	for _, f := range wsq.ctx.Fields {
+	for _, f := range _q.ctx.Fields {
 		if !wordsuffix.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
-	if wsq.path != nil {
-		prev, err := wsq.path(ctx)
+	if _q.path != nil {
+		prev, err := _q.path(ctx)
 		if err != nil {
 			return err
 		}
-		wsq.sql = prev
+		_q.sql = prev
 	}
 	return nil
 }
 
-func (wsq *WordSuffixQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*WordSuffix, error) {
+func (_q *WordSuffixQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*WordSuffix, error) {
 	var (
 		nodes       = []*WordSuffix{}
-		withFKs     = wsq.withFKs
-		_spec       = wsq.querySpec()
+		withFKs     = _q.withFKs
+		_spec       = _q.querySpec()
 		loadedTypes = [2]bool{
-			wsq.withGuild != nil,
-			wsq.withOwner != nil,
+			_q.withGuild != nil,
+			_q.withOwner != nil,
 		}
 	)
-	if wsq.withOwner != nil {
+	if _q.withOwner != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -425,7 +425,7 @@ func (wsq *WordSuffixQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 		return (*WordSuffix).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &WordSuffix{config: wsq.config}
+		node := &WordSuffix{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -433,20 +433,20 @@ func (wsq *WordSuffixQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
-	if err := sqlgraph.QueryNodes(ctx, wsq.driver, _spec); err != nil {
+	if err := sqlgraph.QueryNodes(ctx, _q.driver, _spec); err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := wsq.withGuild; query != nil {
-		if err := wsq.loadGuild(ctx, query, nodes, nil,
+	if query := _q.withGuild; query != nil {
+		if err := _q.loadGuild(ctx, query, nodes, nil,
 			func(n *WordSuffix, e *Guild) { n.Edges.Guild = e }); err != nil {
 			return nil, err
 		}
 	}
-	if query := wsq.withOwner; query != nil {
-		if err := wsq.loadOwner(ctx, query, nodes, nil,
+	if query := _q.withOwner; query != nil {
+		if err := _q.loadOwner(ctx, query, nodes, nil,
 			func(n *WordSuffix, e *User) { n.Edges.Owner = e }); err != nil {
 			return nil, err
 		}
@@ -454,7 +454,7 @@ func (wsq *WordSuffixQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	return nodes, nil
 }
 
-func (wsq *WordSuffixQuery) loadGuild(ctx context.Context, query *GuildQuery, nodes []*WordSuffix, init func(*WordSuffix), assign func(*WordSuffix, *Guild)) error {
+func (_q *WordSuffixQuery) loadGuild(ctx context.Context, query *GuildQuery, nodes []*WordSuffix, init func(*WordSuffix), assign func(*WordSuffix, *Guild)) error {
 	ids := make([]snowflake.ID, 0, len(nodes))
 	nodeids := make(map[snowflake.ID][]*WordSuffix)
 	for i := range nodes {
@@ -486,7 +486,7 @@ func (wsq *WordSuffixQuery) loadGuild(ctx context.Context, query *GuildQuery, no
 	}
 	return nil
 }
-func (wsq *WordSuffixQuery) loadOwner(ctx context.Context, query *UserQuery, nodes []*WordSuffix, init func(*WordSuffix), assign func(*WordSuffix, *User)) error {
+func (_q *WordSuffixQuery) loadOwner(ctx context.Context, query *UserQuery, nodes []*WordSuffix, init func(*WordSuffix), assign func(*WordSuffix, *User)) error {
 	ids := make([]snowflake.ID, 0, len(nodes))
 	nodeids := make(map[snowflake.ID][]*WordSuffix)
 	for i := range nodes {
@@ -519,24 +519,24 @@ func (wsq *WordSuffixQuery) loadOwner(ctx context.Context, query *UserQuery, nod
 	return nil
 }
 
-func (wsq *WordSuffixQuery) sqlCount(ctx context.Context) (int, error) {
-	_spec := wsq.querySpec()
-	_spec.Node.Columns = wsq.ctx.Fields
-	if len(wsq.ctx.Fields) > 0 {
-		_spec.Unique = wsq.ctx.Unique != nil && *wsq.ctx.Unique
+func (_q *WordSuffixQuery) sqlCount(ctx context.Context) (int, error) {
+	_spec := _q.querySpec()
+	_spec.Node.Columns = _q.ctx.Fields
+	if len(_q.ctx.Fields) > 0 {
+		_spec.Unique = _q.ctx.Unique != nil && *_q.ctx.Unique
 	}
-	return sqlgraph.CountNodes(ctx, wsq.driver, _spec)
+	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (wsq *WordSuffixQuery) querySpec() *sqlgraph.QuerySpec {
+func (_q *WordSuffixQuery) querySpec() *sqlgraph.QuerySpec {
 	_spec := sqlgraph.NewQuerySpec(wordsuffix.Table, wordsuffix.Columns, sqlgraph.NewFieldSpec(wordsuffix.FieldID, field.TypeUUID))
-	_spec.From = wsq.sql
-	if unique := wsq.ctx.Unique; unique != nil {
+	_spec.From = _q.sql
+	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
-	} else if wsq.path != nil {
+	} else if _q.path != nil {
 		_spec.Unique = true
 	}
-	if fields := wsq.ctx.Fields; len(fields) > 0 {
+	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
 		_spec.Node.Columns = append(_spec.Node.Columns, wordsuffix.FieldID)
 		for i := range fields {
@@ -544,24 +544,24 @@ func (wsq *WordSuffixQuery) querySpec() *sqlgraph.QuerySpec {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
-		if wsq.withGuild != nil {
+		if _q.withGuild != nil {
 			_spec.Node.AddColumnOnce(wordsuffix.FieldGuildID)
 		}
 	}
-	if ps := wsq.predicates; len(ps) > 0 {
+	if ps := _q.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if limit := wsq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		_spec.Limit = *limit
 	}
-	if offset := wsq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		_spec.Offset = *offset
 	}
-	if ps := wsq.order; len(ps) > 0 {
+	if ps := _q.order; len(ps) > 0 {
 		_spec.Order = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
@@ -571,33 +571,33 @@ func (wsq *WordSuffixQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (wsq *WordSuffixQuery) sqlQuery(ctx context.Context) *sql.Selector {
-	builder := sql.Dialect(wsq.driver.Dialect())
+func (_q *WordSuffixQuery) sqlQuery(ctx context.Context) *sql.Selector {
+	builder := sql.Dialect(_q.driver.Dialect())
 	t1 := builder.Table(wordsuffix.Table)
-	columns := wsq.ctx.Fields
+	columns := _q.ctx.Fields
 	if len(columns) == 0 {
 		columns = wordsuffix.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
-	if wsq.sql != nil {
-		selector = wsq.sql
+	if _q.sql != nil {
+		selector = _q.sql
 		selector.Select(selector.Columns(columns...)...)
 	}
-	if wsq.ctx.Unique != nil && *wsq.ctx.Unique {
+	if _q.ctx.Unique != nil && *_q.ctx.Unique {
 		selector.Distinct()
 	}
-	for _, p := range wsq.predicates {
+	for _, p := range _q.predicates {
 		p(selector)
 	}
-	for _, p := range wsq.order {
+	for _, p := range _q.order {
 		p(selector)
 	}
-	if offset := wsq.ctx.Offset; offset != nil {
+	if offset := _q.ctx.Offset; offset != nil {
 		// limit is mandatory for offset clause. We start
 		// with default value, and override it below if needed.
 		selector.Offset(*offset).Limit(math.MaxInt32)
 	}
-	if limit := wsq.ctx.Limit; limit != nil {
+	if limit := _q.ctx.Limit; limit != nil {
 		selector.Limit(*limit)
 	}
 	return selector
@@ -610,41 +610,41 @@ type WordSuffixGroupBy struct {
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (wsgb *WordSuffixGroupBy) Aggregate(fns ...AggregateFunc) *WordSuffixGroupBy {
-	wsgb.fns = append(wsgb.fns, fns...)
-	return wsgb
+func (_g *WordSuffixGroupBy) Aggregate(fns ...AggregateFunc) *WordSuffixGroupBy {
+	_g.fns = append(_g.fns, fns...)
+	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (wsgb *WordSuffixGroupBy) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, wsgb.build.ctx, ent.OpQueryGroupBy)
-	if err := wsgb.build.prepareQuery(ctx); err != nil {
+func (_g *WordSuffixGroupBy) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
+	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*WordSuffixQuery, *WordSuffixGroupBy](ctx, wsgb.build, wsgb, wsgb.build.inters, v)
+	return scanWithInterceptors[*WordSuffixQuery, *WordSuffixGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (wsgb *WordSuffixGroupBy) sqlScan(ctx context.Context, root *WordSuffixQuery, v any) error {
+func (_g *WordSuffixGroupBy) sqlScan(ctx context.Context, root *WordSuffixQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
-	aggregation := make([]string, 0, len(wsgb.fns))
-	for _, fn := range wsgb.fns {
+	aggregation := make([]string, 0, len(_g.fns))
+	for _, fn := range _g.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
 	if len(selector.SelectedColumns()) == 0 {
-		columns := make([]string, 0, len(*wsgb.flds)+len(wsgb.fns))
-		for _, f := range *wsgb.flds {
+		columns := make([]string, 0, len(*_g.flds)+len(_g.fns))
+		for _, f := range *_g.flds {
 			columns = append(columns, selector.C(f))
 		}
 		columns = append(columns, aggregation...)
 		selector.Select(columns...)
 	}
-	selector.GroupBy(selector.Columns(*wsgb.flds...)...)
+	selector.GroupBy(selector.Columns(*_g.flds...)...)
 	if err := selector.Err(); err != nil {
 		return err
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := wsgb.build.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _g.build.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
@@ -658,27 +658,27 @@ type WordSuffixSelect struct {
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (wss *WordSuffixSelect) Aggregate(fns ...AggregateFunc) *WordSuffixSelect {
-	wss.fns = append(wss.fns, fns...)
-	return wss
+func (_s *WordSuffixSelect) Aggregate(fns ...AggregateFunc) *WordSuffixSelect {
+	_s.fns = append(_s.fns, fns...)
+	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (wss *WordSuffixSelect) Scan(ctx context.Context, v any) error {
-	ctx = setContextOp(ctx, wss.ctx, ent.OpQuerySelect)
-	if err := wss.prepareQuery(ctx); err != nil {
+func (_s *WordSuffixSelect) Scan(ctx context.Context, v any) error {
+	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
+	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*WordSuffixQuery, *WordSuffixSelect](ctx, wss.WordSuffixQuery, wss, wss.inters, v)
+	return scanWithInterceptors[*WordSuffixQuery, *WordSuffixSelect](ctx, _s.WordSuffixQuery, _s, _s.inters, v)
 }
 
-func (wss *WordSuffixSelect) sqlScan(ctx context.Context, root *WordSuffixQuery, v any) error {
+func (_s *WordSuffixSelect) sqlScan(ctx context.Context, root *WordSuffixQuery, v any) error {
 	selector := root.sqlQuery(ctx)
-	aggregation := make([]string, 0, len(wss.fns))
-	for _, fn := range wss.fns {
+	aggregation := make([]string, 0, len(_s.fns))
+	for _, fn := range _s.fns {
 		aggregation = append(aggregation, fn(selector))
 	}
-	switch n := len(*wss.selector.flds); {
+	switch n := len(*_s.selector.flds); {
 	case n == 0 && len(aggregation) > 0:
 		selector.Select(aggregation...)
 	case n != 0 && len(aggregation) > 0:
@@ -686,7 +686,7 @@ func (wss *WordSuffixSelect) sqlScan(ctx context.Context, root *WordSuffixQuery,
 	}
 	rows := &sql.Rows{}
 	query, args := selector.Query()
-	if err := wss.driver.Query(ctx, query, args, rows); err != nil {
+	if err := _s.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()

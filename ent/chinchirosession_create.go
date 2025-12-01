@@ -24,95 +24,95 @@ type ChinchiroSessionCreate struct {
 }
 
 // SetTurn sets the "turn" field.
-func (csc *ChinchiroSessionCreate) SetTurn(i int) *ChinchiroSessionCreate {
-	csc.mutation.SetTurn(i)
-	return csc
+func (_c *ChinchiroSessionCreate) SetTurn(v int) *ChinchiroSessionCreate {
+	_c.mutation.SetTurn(v)
+	return _c
 }
 
 // SetNillableTurn sets the "turn" field if the given value is not nil.
-func (csc *ChinchiroSessionCreate) SetNillableTurn(i *int) *ChinchiroSessionCreate {
-	if i != nil {
-		csc.SetTurn(*i)
+func (_c *ChinchiroSessionCreate) SetNillableTurn(v *int) *ChinchiroSessionCreate {
+	if v != nil {
+		_c.SetTurn(*v)
 	}
-	return csc
+	return _c
 }
 
 // SetLoop sets the "loop" field.
-func (csc *ChinchiroSessionCreate) SetLoop(i int) *ChinchiroSessionCreate {
-	csc.mutation.SetLoop(i)
-	return csc
+func (_c *ChinchiroSessionCreate) SetLoop(v int) *ChinchiroSessionCreate {
+	_c.mutation.SetLoop(v)
+	return _c
 }
 
 // SetNillableLoop sets the "loop" field if the given value is not nil.
-func (csc *ChinchiroSessionCreate) SetNillableLoop(i *int) *ChinchiroSessionCreate {
-	if i != nil {
-		csc.SetLoop(*i)
+func (_c *ChinchiroSessionCreate) SetNillableLoop(v *int) *ChinchiroSessionCreate {
+	if v != nil {
+		_c.SetLoop(*v)
 	}
-	return csc
+	return _c
 }
 
 // SetID sets the "id" field.
-func (csc *ChinchiroSessionCreate) SetID(u uuid.UUID) *ChinchiroSessionCreate {
-	csc.mutation.SetID(u)
-	return csc
+func (_c *ChinchiroSessionCreate) SetID(v uuid.UUID) *ChinchiroSessionCreate {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (csc *ChinchiroSessionCreate) SetNillableID(u *uuid.UUID) *ChinchiroSessionCreate {
-	if u != nil {
-		csc.SetID(*u)
+func (_c *ChinchiroSessionCreate) SetNillableID(v *uuid.UUID) *ChinchiroSessionCreate {
+	if v != nil {
+		_c.SetID(*v)
 	}
-	return csc
+	return _c
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (csc *ChinchiroSessionCreate) SetGuildID(id snowflake.ID) *ChinchiroSessionCreate {
-	csc.mutation.SetGuildID(id)
-	return csc
+func (_c *ChinchiroSessionCreate) SetGuildID(id snowflake.ID) *ChinchiroSessionCreate {
+	_c.mutation.SetGuildID(id)
+	return _c
 }
 
 // SetNillableGuildID sets the "guild" edge to the Guild entity by ID if the given value is not nil.
-func (csc *ChinchiroSessionCreate) SetNillableGuildID(id *snowflake.ID) *ChinchiroSessionCreate {
+func (_c *ChinchiroSessionCreate) SetNillableGuildID(id *snowflake.ID) *ChinchiroSessionCreate {
 	if id != nil {
-		csc = csc.SetGuildID(*id)
+		_c = _c.SetGuildID(*id)
 	}
-	return csc
+	return _c
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (csc *ChinchiroSessionCreate) SetGuild(g *Guild) *ChinchiroSessionCreate {
-	return csc.SetGuildID(g.ID)
+func (_c *ChinchiroSessionCreate) SetGuild(v *Guild) *ChinchiroSessionCreate {
+	return _c.SetGuildID(v.ID)
 }
 
 // AddPlayerIDs adds the "players" edge to the ChinchiroPlayer entity by IDs.
-func (csc *ChinchiroSessionCreate) AddPlayerIDs(ids ...uuid.UUID) *ChinchiroSessionCreate {
-	csc.mutation.AddPlayerIDs(ids...)
-	return csc
+func (_c *ChinchiroSessionCreate) AddPlayerIDs(ids ...uuid.UUID) *ChinchiroSessionCreate {
+	_c.mutation.AddPlayerIDs(ids...)
+	return _c
 }
 
 // AddPlayers adds the "players" edges to the ChinchiroPlayer entity.
-func (csc *ChinchiroSessionCreate) AddPlayers(c ...*ChinchiroPlayer) *ChinchiroSessionCreate {
-	ids := make([]uuid.UUID, len(c))
-	for i := range c {
-		ids[i] = c[i].ID
+func (_c *ChinchiroSessionCreate) AddPlayers(v ...*ChinchiroPlayer) *ChinchiroSessionCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return csc.AddPlayerIDs(ids...)
+	return _c.AddPlayerIDs(ids...)
 }
 
 // Mutation returns the ChinchiroSessionMutation object of the builder.
-func (csc *ChinchiroSessionCreate) Mutation() *ChinchiroSessionMutation {
-	return csc.mutation
+func (_c *ChinchiroSessionCreate) Mutation() *ChinchiroSessionMutation {
+	return _c.mutation
 }
 
 // Save creates the ChinchiroSession in the database.
-func (csc *ChinchiroSessionCreate) Save(ctx context.Context) (*ChinchiroSession, error) {
-	csc.defaults()
-	return withHooks(ctx, csc.sqlSave, csc.mutation, csc.hooks)
+func (_c *ChinchiroSessionCreate) Save(ctx context.Context) (*ChinchiroSession, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (csc *ChinchiroSessionCreate) SaveX(ctx context.Context) *ChinchiroSession {
-	v, err := csc.Save(ctx)
+func (_c *ChinchiroSessionCreate) SaveX(ctx context.Context) *ChinchiroSession {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -120,51 +120,51 @@ func (csc *ChinchiroSessionCreate) SaveX(ctx context.Context) *ChinchiroSession 
 }
 
 // Exec executes the query.
-func (csc *ChinchiroSessionCreate) Exec(ctx context.Context) error {
-	_, err := csc.Save(ctx)
+func (_c *ChinchiroSessionCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (csc *ChinchiroSessionCreate) ExecX(ctx context.Context) {
-	if err := csc.Exec(ctx); err != nil {
+func (_c *ChinchiroSessionCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (csc *ChinchiroSessionCreate) defaults() {
-	if _, ok := csc.mutation.Turn(); !ok {
+func (_c *ChinchiroSessionCreate) defaults() {
+	if _, ok := _c.mutation.Turn(); !ok {
 		v := chinchirosession.DefaultTurn
-		csc.mutation.SetTurn(v)
+		_c.mutation.SetTurn(v)
 	}
-	if _, ok := csc.mutation.Loop(); !ok {
+	if _, ok := _c.mutation.Loop(); !ok {
 		v := chinchirosession.DefaultLoop
-		csc.mutation.SetLoop(v)
+		_c.mutation.SetLoop(v)
 	}
-	if _, ok := csc.mutation.ID(); !ok {
+	if _, ok := _c.mutation.ID(); !ok {
 		v := chinchirosession.DefaultID()
-		csc.mutation.SetID(v)
+		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (csc *ChinchiroSessionCreate) check() error {
-	if _, ok := csc.mutation.Turn(); !ok {
+func (_c *ChinchiroSessionCreate) check() error {
+	if _, ok := _c.mutation.Turn(); !ok {
 		return &ValidationError{Name: "turn", err: errors.New(`ent: missing required field "ChinchiroSession.turn"`)}
 	}
-	if _, ok := csc.mutation.Loop(); !ok {
+	if _, ok := _c.mutation.Loop(); !ok {
 		return &ValidationError{Name: "loop", err: errors.New(`ent: missing required field "ChinchiroSession.loop"`)}
 	}
 	return nil
 }
 
-func (csc *ChinchiroSessionCreate) sqlSave(ctx context.Context) (*ChinchiroSession, error) {
-	if err := csc.check(); err != nil {
+func (_c *ChinchiroSessionCreate) sqlSave(ctx context.Context) (*ChinchiroSession, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := csc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, csc.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -177,29 +177,29 @@ func (csc *ChinchiroSessionCreate) sqlSave(ctx context.Context) (*ChinchiroSessi
 			return nil, err
 		}
 	}
-	csc.mutation.id = &_node.ID
-	csc.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (csc *ChinchiroSessionCreate) createSpec() (*ChinchiroSession, *sqlgraph.CreateSpec) {
+func (_c *ChinchiroSessionCreate) createSpec() (*ChinchiroSession, *sqlgraph.CreateSpec) {
 	var (
-		_node = &ChinchiroSession{config: csc.config}
+		_node = &ChinchiroSession{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(chinchirosession.Table, sqlgraph.NewFieldSpec(chinchirosession.FieldID, field.TypeUUID))
 	)
-	if id, ok := csc.mutation.ID(); ok {
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := csc.mutation.Turn(); ok {
+	if value, ok := _c.mutation.Turn(); ok {
 		_spec.SetField(chinchirosession.FieldTurn, field.TypeInt, value)
 		_node.Turn = value
 	}
-	if value, ok := csc.mutation.Loop(); ok {
+	if value, ok := _c.mutation.Loop(); ok {
 		_spec.SetField(chinchirosession.FieldLoop, field.TypeInt, value)
 		_node.Loop = value
 	}
-	if nodes := csc.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -216,7 +216,7 @@ func (csc *ChinchiroSessionCreate) createSpec() (*ChinchiroSession, *sqlgraph.Cr
 		_node.guild_chinchiro_sessions = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := csc.mutation.PlayersIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.PlayersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -243,16 +243,16 @@ type ChinchiroSessionCreateBulk struct {
 }
 
 // Save creates the ChinchiroSession entities in the database.
-func (cscb *ChinchiroSessionCreateBulk) Save(ctx context.Context) ([]*ChinchiroSession, error) {
-	if cscb.err != nil {
-		return nil, cscb.err
+func (_c *ChinchiroSessionCreateBulk) Save(ctx context.Context) ([]*ChinchiroSession, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(cscb.builders))
-	nodes := make([]*ChinchiroSession, len(cscb.builders))
-	mutators := make([]Mutator, len(cscb.builders))
-	for i := range cscb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*ChinchiroSession, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := cscb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*ChinchiroSessionMutation)
@@ -266,11 +266,11 @@ func (cscb *ChinchiroSessionCreateBulk) Save(ctx context.Context) ([]*ChinchiroS
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, cscb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, cscb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -290,7 +290,7 @@ func (cscb *ChinchiroSessionCreateBulk) Save(ctx context.Context) ([]*ChinchiroS
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, cscb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -298,8 +298,8 @@ func (cscb *ChinchiroSessionCreateBulk) Save(ctx context.Context) ([]*ChinchiroS
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (cscb *ChinchiroSessionCreateBulk) SaveX(ctx context.Context) []*ChinchiroSession {
-	v, err := cscb.Save(ctx)
+func (_c *ChinchiroSessionCreateBulk) SaveX(ctx context.Context) []*ChinchiroSession {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -307,14 +307,14 @@ func (cscb *ChinchiroSessionCreateBulk) SaveX(ctx context.Context) []*ChinchiroS
 }
 
 // Exec executes the query.
-func (cscb *ChinchiroSessionCreateBulk) Exec(ctx context.Context) error {
-	_, err := cscb.Save(ctx)
+func (_c *ChinchiroSessionCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (cscb *ChinchiroSessionCreateBulk) ExecX(ctx context.Context) {
-	if err := cscb.Exec(ctx); err != nil {
+func (_c *ChinchiroSessionCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

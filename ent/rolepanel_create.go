@@ -27,124 +27,124 @@ type RolePanelCreate struct {
 }
 
 // SetName sets the "name" field.
-func (rpc *RolePanelCreate) SetName(s string) *RolePanelCreate {
-	rpc.mutation.SetName(s)
-	return rpc
+func (_c *RolePanelCreate) SetName(v string) *RolePanelCreate {
+	_c.mutation.SetName(v)
+	return _c
 }
 
 // SetDescription sets the "description" field.
-func (rpc *RolePanelCreate) SetDescription(s string) *RolePanelCreate {
-	rpc.mutation.SetDescription(s)
-	return rpc
+func (_c *RolePanelCreate) SetDescription(v string) *RolePanelCreate {
+	_c.mutation.SetDescription(v)
+	return _c
 }
 
 // SetRoles sets the "roles" field.
-func (rpc *RolePanelCreate) SetRoles(s []schema.Role) *RolePanelCreate {
-	rpc.mutation.SetRoles(s)
-	return rpc
+func (_c *RolePanelCreate) SetRoles(v []schema.Role) *RolePanelCreate {
+	_c.mutation.SetRoles(v)
+	return _c
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (rpc *RolePanelCreate) SetUpdatedAt(t time.Time) *RolePanelCreate {
-	rpc.mutation.SetUpdatedAt(t)
-	return rpc
+func (_c *RolePanelCreate) SetUpdatedAt(v time.Time) *RolePanelCreate {
+	_c.mutation.SetUpdatedAt(v)
+	return _c
 }
 
 // SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (rpc *RolePanelCreate) SetNillableUpdatedAt(t *time.Time) *RolePanelCreate {
-	if t != nil {
-		rpc.SetUpdatedAt(*t)
+func (_c *RolePanelCreate) SetNillableUpdatedAt(v *time.Time) *RolePanelCreate {
+	if v != nil {
+		_c.SetUpdatedAt(*v)
 	}
-	return rpc
+	return _c
 }
 
 // SetAppliedAt sets the "applied_at" field.
-func (rpc *RolePanelCreate) SetAppliedAt(t time.Time) *RolePanelCreate {
-	rpc.mutation.SetAppliedAt(t)
-	return rpc
+func (_c *RolePanelCreate) SetAppliedAt(v time.Time) *RolePanelCreate {
+	_c.mutation.SetAppliedAt(v)
+	return _c
 }
 
 // SetNillableAppliedAt sets the "applied_at" field if the given value is not nil.
-func (rpc *RolePanelCreate) SetNillableAppliedAt(t *time.Time) *RolePanelCreate {
-	if t != nil {
-		rpc.SetAppliedAt(*t)
+func (_c *RolePanelCreate) SetNillableAppliedAt(v *time.Time) *RolePanelCreate {
+	if v != nil {
+		_c.SetAppliedAt(*v)
 	}
-	return rpc
+	return _c
 }
 
 // SetID sets the "id" field.
-func (rpc *RolePanelCreate) SetID(u uuid.UUID) *RolePanelCreate {
-	rpc.mutation.SetID(u)
-	return rpc
+func (_c *RolePanelCreate) SetID(v uuid.UUID) *RolePanelCreate {
+	_c.mutation.SetID(v)
+	return _c
 }
 
 // SetNillableID sets the "id" field if the given value is not nil.
-func (rpc *RolePanelCreate) SetNillableID(u *uuid.UUID) *RolePanelCreate {
-	if u != nil {
-		rpc.SetID(*u)
+func (_c *RolePanelCreate) SetNillableID(v *uuid.UUID) *RolePanelCreate {
+	if v != nil {
+		_c.SetID(*v)
 	}
-	return rpc
+	return _c
 }
 
 // SetGuildID sets the "guild" edge to the Guild entity by ID.
-func (rpc *RolePanelCreate) SetGuildID(id snowflake.ID) *RolePanelCreate {
-	rpc.mutation.SetGuildID(id)
-	return rpc
+func (_c *RolePanelCreate) SetGuildID(id snowflake.ID) *RolePanelCreate {
+	_c.mutation.SetGuildID(id)
+	return _c
 }
 
 // SetGuild sets the "guild" edge to the Guild entity.
-func (rpc *RolePanelCreate) SetGuild(g *Guild) *RolePanelCreate {
-	return rpc.SetGuildID(g.ID)
+func (_c *RolePanelCreate) SetGuild(v *Guild) *RolePanelCreate {
+	return _c.SetGuildID(v.ID)
 }
 
 // AddPlacementIDs adds the "placements" edge to the RolePanelPlaced entity by IDs.
-func (rpc *RolePanelCreate) AddPlacementIDs(ids ...uuid.UUID) *RolePanelCreate {
-	rpc.mutation.AddPlacementIDs(ids...)
-	return rpc
+func (_c *RolePanelCreate) AddPlacementIDs(ids ...uuid.UUID) *RolePanelCreate {
+	_c.mutation.AddPlacementIDs(ids...)
+	return _c
 }
 
 // AddPlacements adds the "placements" edges to the RolePanelPlaced entity.
-func (rpc *RolePanelCreate) AddPlacements(r ...*RolePanelPlaced) *RolePanelCreate {
-	ids := make([]uuid.UUID, len(r))
-	for i := range r {
-		ids[i] = r[i].ID
+func (_c *RolePanelCreate) AddPlacements(v ...*RolePanelPlaced) *RolePanelCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
 	}
-	return rpc.AddPlacementIDs(ids...)
+	return _c.AddPlacementIDs(ids...)
 }
 
 // SetEditID sets the "edit" edge to the RolePanelEdit entity by ID.
-func (rpc *RolePanelCreate) SetEditID(id uuid.UUID) *RolePanelCreate {
-	rpc.mutation.SetEditID(id)
-	return rpc
+func (_c *RolePanelCreate) SetEditID(id uuid.UUID) *RolePanelCreate {
+	_c.mutation.SetEditID(id)
+	return _c
 }
 
 // SetNillableEditID sets the "edit" edge to the RolePanelEdit entity by ID if the given value is not nil.
-func (rpc *RolePanelCreate) SetNillableEditID(id *uuid.UUID) *RolePanelCreate {
+func (_c *RolePanelCreate) SetNillableEditID(id *uuid.UUID) *RolePanelCreate {
 	if id != nil {
-		rpc = rpc.SetEditID(*id)
+		_c = _c.SetEditID(*id)
 	}
-	return rpc
+	return _c
 }
 
 // SetEdit sets the "edit" edge to the RolePanelEdit entity.
-func (rpc *RolePanelCreate) SetEdit(r *RolePanelEdit) *RolePanelCreate {
-	return rpc.SetEditID(r.ID)
+func (_c *RolePanelCreate) SetEdit(v *RolePanelEdit) *RolePanelCreate {
+	return _c.SetEditID(v.ID)
 }
 
 // Mutation returns the RolePanelMutation object of the builder.
-func (rpc *RolePanelCreate) Mutation() *RolePanelMutation {
-	return rpc.mutation
+func (_c *RolePanelCreate) Mutation() *RolePanelMutation {
+	return _c.mutation
 }
 
 // Save creates the RolePanel in the database.
-func (rpc *RolePanelCreate) Save(ctx context.Context) (*RolePanel, error) {
-	rpc.defaults()
-	return withHooks(ctx, rpc.sqlSave, rpc.mutation, rpc.hooks)
+func (_c *RolePanelCreate) Save(ctx context.Context) (*RolePanel, error) {
+	_c.defaults()
+	return withHooks(ctx, _c.sqlSave, _c.mutation, _c.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (rpc *RolePanelCreate) SaveX(ctx context.Context) *RolePanel {
-	v, err := rpc.Save(ctx)
+func (_c *RolePanelCreate) SaveX(ctx context.Context) *RolePanel {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -152,51 +152,51 @@ func (rpc *RolePanelCreate) SaveX(ctx context.Context) *RolePanel {
 }
 
 // Exec executes the query.
-func (rpc *RolePanelCreate) Exec(ctx context.Context) error {
-	_, err := rpc.Save(ctx)
+func (_c *RolePanelCreate) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (rpc *RolePanelCreate) ExecX(ctx context.Context) {
-	if err := rpc.Exec(ctx); err != nil {
+func (_c *RolePanelCreate) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (rpc *RolePanelCreate) defaults() {
-	if _, ok := rpc.mutation.ID(); !ok {
+func (_c *RolePanelCreate) defaults() {
+	if _, ok := _c.mutation.ID(); !ok {
 		v := rolepanel.DefaultID()
-		rpc.mutation.SetID(v)
+		_c.mutation.SetID(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (rpc *RolePanelCreate) check() error {
-	if _, ok := rpc.mutation.Name(); !ok {
+func (_c *RolePanelCreate) check() error {
+	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "RolePanel.name"`)}
 	}
-	if v, ok := rpc.mutation.Name(); ok {
+	if v, ok := _c.mutation.Name(); ok {
 		if err := rolepanel.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "RolePanel.name": %w`, err)}
 		}
 	}
-	if _, ok := rpc.mutation.Description(); !ok {
+	if _, ok := _c.mutation.Description(); !ok {
 		return &ValidationError{Name: "description", err: errors.New(`ent: missing required field "RolePanel.description"`)}
 	}
-	if len(rpc.mutation.GuildIDs()) == 0 {
+	if len(_c.mutation.GuildIDs()) == 0 {
 		return &ValidationError{Name: "guild", err: errors.New(`ent: missing required edge "RolePanel.guild"`)}
 	}
 	return nil
 }
 
-func (rpc *RolePanelCreate) sqlSave(ctx context.Context) (*RolePanel, error) {
-	if err := rpc.check(); err != nil {
+func (_c *RolePanelCreate) sqlSave(ctx context.Context) (*RolePanel, error) {
+	if err := _c.check(); err != nil {
 		return nil, err
 	}
-	_node, _spec := rpc.createSpec()
-	if err := sqlgraph.CreateNode(ctx, rpc.driver, _spec); err != nil {
+	_node, _spec := _c.createSpec()
+	if err := sqlgraph.CreateNode(ctx, _c.driver, _spec); err != nil {
 		if sqlgraph.IsConstraintError(err) {
 			err = &ConstraintError{msg: err.Error(), wrap: err}
 		}
@@ -209,41 +209,41 @@ func (rpc *RolePanelCreate) sqlSave(ctx context.Context) (*RolePanel, error) {
 			return nil, err
 		}
 	}
-	rpc.mutation.id = &_node.ID
-	rpc.mutation.done = true
+	_c.mutation.id = &_node.ID
+	_c.mutation.done = true
 	return _node, nil
 }
 
-func (rpc *RolePanelCreate) createSpec() (*RolePanel, *sqlgraph.CreateSpec) {
+func (_c *RolePanelCreate) createSpec() (*RolePanel, *sqlgraph.CreateSpec) {
 	var (
-		_node = &RolePanel{config: rpc.config}
+		_node = &RolePanel{config: _c.config}
 		_spec = sqlgraph.NewCreateSpec(rolepanel.Table, sqlgraph.NewFieldSpec(rolepanel.FieldID, field.TypeUUID))
 	)
-	if id, ok := rpc.mutation.ID(); ok {
+	if id, ok := _c.mutation.ID(); ok {
 		_node.ID = id
 		_spec.ID.Value = &id
 	}
-	if value, ok := rpc.mutation.Name(); ok {
+	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(rolepanel.FieldName, field.TypeString, value)
 		_node.Name = value
 	}
-	if value, ok := rpc.mutation.Description(); ok {
+	if value, ok := _c.mutation.Description(); ok {
 		_spec.SetField(rolepanel.FieldDescription, field.TypeString, value)
 		_node.Description = value
 	}
-	if value, ok := rpc.mutation.Roles(); ok {
+	if value, ok := _c.mutation.Roles(); ok {
 		_spec.SetField(rolepanel.FieldRoles, field.TypeJSON, value)
 		_node.Roles = value
 	}
-	if value, ok := rpc.mutation.UpdatedAt(); ok {
+	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(rolepanel.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
-	if value, ok := rpc.mutation.AppliedAt(); ok {
+	if value, ok := _c.mutation.AppliedAt(); ok {
 		_spec.SetField(rolepanel.FieldAppliedAt, field.TypeTime, value)
 		_node.AppliedAt = value
 	}
-	if nodes := rpc.mutation.GuildIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.GuildIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -260,7 +260,7 @@ func (rpc *RolePanelCreate) createSpec() (*RolePanel, *sqlgraph.CreateSpec) {
 		_node.guild_role_panels = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := rpc.mutation.PlacementsIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.PlacementsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -276,7 +276,7 @@ func (rpc *RolePanelCreate) createSpec() (*RolePanel, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := rpc.mutation.EditIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.EditIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
@@ -303,16 +303,16 @@ type RolePanelCreateBulk struct {
 }
 
 // Save creates the RolePanel entities in the database.
-func (rpcb *RolePanelCreateBulk) Save(ctx context.Context) ([]*RolePanel, error) {
-	if rpcb.err != nil {
-		return nil, rpcb.err
+func (_c *RolePanelCreateBulk) Save(ctx context.Context) ([]*RolePanel, error) {
+	if _c.err != nil {
+		return nil, _c.err
 	}
-	specs := make([]*sqlgraph.CreateSpec, len(rpcb.builders))
-	nodes := make([]*RolePanel, len(rpcb.builders))
-	mutators := make([]Mutator, len(rpcb.builders))
-	for i := range rpcb.builders {
+	specs := make([]*sqlgraph.CreateSpec, len(_c.builders))
+	nodes := make([]*RolePanel, len(_c.builders))
+	mutators := make([]Mutator, len(_c.builders))
+	for i := range _c.builders {
 		func(i int, root context.Context) {
-			builder := rpcb.builders[i]
+			builder := _c.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*RolePanelMutation)
@@ -326,11 +326,11 @@ func (rpcb *RolePanelCreateBulk) Save(ctx context.Context) ([]*RolePanel, error)
 				var err error
 				nodes[i], specs[i] = builder.createSpec()
 				if i < len(mutators)-1 {
-					_, err = mutators[i+1].Mutate(root, rpcb.builders[i+1].mutation)
+					_, err = mutators[i+1].Mutate(root, _c.builders[i+1].mutation)
 				} else {
 					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, rpcb.driver, spec); err != nil {
+					if err = sqlgraph.BatchCreate(ctx, _c.driver, spec); err != nil {
 						if sqlgraph.IsConstraintError(err) {
 							err = &ConstraintError{msg: err.Error(), wrap: err}
 						}
@@ -350,7 +350,7 @@ func (rpcb *RolePanelCreateBulk) Save(ctx context.Context) ([]*RolePanel, error)
 		}(i, ctx)
 	}
 	if len(mutators) > 0 {
-		if _, err := mutators[0].Mutate(ctx, rpcb.builders[0].mutation); err != nil {
+		if _, err := mutators[0].Mutate(ctx, _c.builders[0].mutation); err != nil {
 			return nil, err
 		}
 	}
@@ -358,8 +358,8 @@ func (rpcb *RolePanelCreateBulk) Save(ctx context.Context) ([]*RolePanel, error)
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (rpcb *RolePanelCreateBulk) SaveX(ctx context.Context) []*RolePanel {
-	v, err := rpcb.Save(ctx)
+func (_c *RolePanelCreateBulk) SaveX(ctx context.Context) []*RolePanel {
+	v, err := _c.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -367,14 +367,14 @@ func (rpcb *RolePanelCreateBulk) SaveX(ctx context.Context) []*RolePanel {
 }
 
 // Exec executes the query.
-func (rpcb *RolePanelCreateBulk) Exec(ctx context.Context) error {
-	_, err := rpcb.Save(ctx)
+func (_c *RolePanelCreateBulk) Exec(ctx context.Context) error {
+	_, err := _c.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (rpcb *RolePanelCreateBulk) ExecX(ctx context.Context) {
-	if err := rpcb.Exec(ctx); err != nil {
+func (_c *RolePanelCreateBulk) ExecX(ctx context.Context) {
+	if err := _c.Exec(ctx); err != nil {
 		panic(err)
 	}
 }

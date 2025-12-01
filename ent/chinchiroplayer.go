@@ -95,7 +95,7 @@ func (*ChinchiroPlayer) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the ChinchiroPlayer fields.
-func (cp *ChinchiroPlayer) assignValues(columns []string, values []any) error {
+func (_m *ChinchiroPlayer) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -105,38 +105,38 @@ func (cp *ChinchiroPlayer) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				cp.ID = *value
+				_m.ID = *value
 			}
 		case chinchiroplayer.FieldPoint:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field point", values[i])
 			} else if value.Valid {
-				cp.Point = int(value.Int64)
+				_m.Point = int(value.Int64)
 			}
 		case chinchiroplayer.FieldIsOwner:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field is_owner", values[i])
 			} else if value.Valid {
-				cp.IsOwner = value.Bool
+				_m.IsOwner = value.Bool
 			}
 		case chinchiroplayer.FieldUserID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field user_id", values[i])
 			} else if value.Valid {
-				cp.UserID = snowflake.ID(value.Int64)
+				_m.UserID = snowflake.ID(value.Int64)
 			}
 		case chinchiroplayer.FieldBet:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field bet", values[i])
 			} else if value.Valid {
-				cp.Bet = new(int)
-				*cp.Bet = int(value.Int64)
+				_m.Bet = new(int)
+				*_m.Bet = int(value.Int64)
 			}
 		case chinchiroplayer.FieldDices:
 			if value, ok := values[i].(*[]byte); !ok {
 				return fmt.Errorf("unexpected type %T for field dices", values[i])
 			} else if value != nil && len(*value) > 0 {
-				if err := json.Unmarshal(*value, &cp.Dices); err != nil {
+				if err := json.Unmarshal(*value, &_m.Dices); err != nil {
 					return fmt.Errorf("unmarshal field dices: %w", err)
 				}
 			}
@@ -144,11 +144,11 @@ func (cp *ChinchiroPlayer) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field chinchiro_session_players", values[i])
 			} else if value.Valid {
-				cp.chinchiro_session_players = new(uuid.UUID)
-				*cp.chinchiro_session_players = *value.S.(*uuid.UUID)
+				_m.chinchiro_session_players = new(uuid.UUID)
+				*_m.chinchiro_session_players = *value.S.(*uuid.UUID)
 			}
 		default:
-			cp.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -156,59 +156,59 @@ func (cp *ChinchiroPlayer) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the ChinchiroPlayer.
 // This includes values selected through modifiers, order, etc.
-func (cp *ChinchiroPlayer) Value(name string) (ent.Value, error) {
-	return cp.selectValues.Get(name)
+func (_m *ChinchiroPlayer) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // QueryUser queries the "user" edge of the ChinchiroPlayer entity.
-func (cp *ChinchiroPlayer) QueryUser() *UserQuery {
-	return NewChinchiroPlayerClient(cp.config).QueryUser(cp)
+func (_m *ChinchiroPlayer) QueryUser() *UserQuery {
+	return NewChinchiroPlayerClient(_m.config).QueryUser(_m)
 }
 
 // QuerySession queries the "session" edge of the ChinchiroPlayer entity.
-func (cp *ChinchiroPlayer) QuerySession() *ChinchiroSessionQuery {
-	return NewChinchiroPlayerClient(cp.config).QuerySession(cp)
+func (_m *ChinchiroPlayer) QuerySession() *ChinchiroSessionQuery {
+	return NewChinchiroPlayerClient(_m.config).QuerySession(_m)
 }
 
 // Update returns a builder for updating this ChinchiroPlayer.
 // Note that you need to call ChinchiroPlayer.Unwrap() before calling this method if this ChinchiroPlayer
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (cp *ChinchiroPlayer) Update() *ChinchiroPlayerUpdateOne {
-	return NewChinchiroPlayerClient(cp.config).UpdateOne(cp)
+func (_m *ChinchiroPlayer) Update() *ChinchiroPlayerUpdateOne {
+	return NewChinchiroPlayerClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the ChinchiroPlayer entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (cp *ChinchiroPlayer) Unwrap() *ChinchiroPlayer {
-	_tx, ok := cp.config.driver.(*txDriver)
+func (_m *ChinchiroPlayer) Unwrap() *ChinchiroPlayer {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: ChinchiroPlayer is not a transactional entity")
 	}
-	cp.config.driver = _tx.drv
-	return cp
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (cp *ChinchiroPlayer) String() string {
+func (_m *ChinchiroPlayer) String() string {
 	var builder strings.Builder
 	builder.WriteString("ChinchiroPlayer(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", cp.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("point=")
-	builder.WriteString(fmt.Sprintf("%v", cp.Point))
+	builder.WriteString(fmt.Sprintf("%v", _m.Point))
 	builder.WriteString(", ")
 	builder.WriteString("is_owner=")
-	builder.WriteString(fmt.Sprintf("%v", cp.IsOwner))
+	builder.WriteString(fmt.Sprintf("%v", _m.IsOwner))
 	builder.WriteString(", ")
 	builder.WriteString("user_id=")
-	builder.WriteString(fmt.Sprintf("%v", cp.UserID))
+	builder.WriteString(fmt.Sprintf("%v", _m.UserID))
 	builder.WriteString(", ")
-	if v := cp.Bet; v != nil {
+	if v := _m.Bet; v != nil {
 		builder.WriteString("bet=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteString(", ")
 	builder.WriteString("dices=")
-	builder.WriteString(fmt.Sprintf("%v", cp.Dices))
+	builder.WriteString(fmt.Sprintf("%v", _m.Dices))
 	builder.WriteByte(')')
 	return builder.String()
 }

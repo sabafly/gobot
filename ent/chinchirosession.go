@@ -84,7 +84,7 @@ func (*ChinchiroSession) scanValues(columns []string) ([]any, error) {
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the ChinchiroSession fields.
-func (cs *ChinchiroSession) assignValues(columns []string, values []any) error {
+func (_m *ChinchiroSession) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
@@ -94,36 +94,36 @@ func (cs *ChinchiroSession) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
-				cs.ID = *value
+				_m.ID = *value
 			}
 		case chinchirosession.FieldTurn:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field turn", values[i])
 			} else if value.Valid {
-				cs.Turn = int(value.Int64)
+				_m.Turn = int(value.Int64)
 			}
 		case chinchirosession.FieldLoop:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field loop", values[i])
 			} else if value.Valid {
-				cs.Loop = int(value.Int64)
+				_m.Loop = int(value.Int64)
 			}
 		case chinchirosession.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field guild_chinchiro_sessions", values[i])
 			} else if value.Valid {
-				cs.guild_chinchiro_sessions = new(snowflake.ID)
-				*cs.guild_chinchiro_sessions = snowflake.ID(value.Int64)
+				_m.guild_chinchiro_sessions = new(snowflake.ID)
+				*_m.guild_chinchiro_sessions = snowflake.ID(value.Int64)
 			}
 		case chinchirosession.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field user_chinchiro_sessions", values[i])
 			} else if value.Valid {
-				cs.user_chinchiro_sessions = new(snowflake.ID)
-				*cs.user_chinchiro_sessions = snowflake.ID(value.Int64)
+				_m.user_chinchiro_sessions = new(snowflake.ID)
+				*_m.user_chinchiro_sessions = snowflake.ID(value.Int64)
 			}
 		default:
-			cs.selectValues.Set(columns[i], values[i])
+			_m.selectValues.Set(columns[i], values[i])
 		}
 	}
 	return nil
@@ -131,48 +131,48 @@ func (cs *ChinchiroSession) assignValues(columns []string, values []any) error {
 
 // Value returns the ent.Value that was dynamically selected and assigned to the ChinchiroSession.
 // This includes values selected through modifiers, order, etc.
-func (cs *ChinchiroSession) Value(name string) (ent.Value, error) {
-	return cs.selectValues.Get(name)
+func (_m *ChinchiroSession) Value(name string) (ent.Value, error) {
+	return _m.selectValues.Get(name)
 }
 
 // QueryGuild queries the "guild" edge of the ChinchiroSession entity.
-func (cs *ChinchiroSession) QueryGuild() *GuildQuery {
-	return NewChinchiroSessionClient(cs.config).QueryGuild(cs)
+func (_m *ChinchiroSession) QueryGuild() *GuildQuery {
+	return NewChinchiroSessionClient(_m.config).QueryGuild(_m)
 }
 
 // QueryPlayers queries the "players" edge of the ChinchiroSession entity.
-func (cs *ChinchiroSession) QueryPlayers() *ChinchiroPlayerQuery {
-	return NewChinchiroSessionClient(cs.config).QueryPlayers(cs)
+func (_m *ChinchiroSession) QueryPlayers() *ChinchiroPlayerQuery {
+	return NewChinchiroSessionClient(_m.config).QueryPlayers(_m)
 }
 
 // Update returns a builder for updating this ChinchiroSession.
 // Note that you need to call ChinchiroSession.Unwrap() before calling this method if this ChinchiroSession
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (cs *ChinchiroSession) Update() *ChinchiroSessionUpdateOne {
-	return NewChinchiroSessionClient(cs.config).UpdateOne(cs)
+func (_m *ChinchiroSession) Update() *ChinchiroSessionUpdateOne {
+	return NewChinchiroSessionClient(_m.config).UpdateOne(_m)
 }
 
 // Unwrap unwraps the ChinchiroSession entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (cs *ChinchiroSession) Unwrap() *ChinchiroSession {
-	_tx, ok := cs.config.driver.(*txDriver)
+func (_m *ChinchiroSession) Unwrap() *ChinchiroSession {
+	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
 		panic("ent: ChinchiroSession is not a transactional entity")
 	}
-	cs.config.driver = _tx.drv
-	return cs
+	_m.config.driver = _tx.drv
+	return _m
 }
 
 // String implements the fmt.Stringer.
-func (cs *ChinchiroSession) String() string {
+func (_m *ChinchiroSession) String() string {
 	var builder strings.Builder
 	builder.WriteString("ChinchiroSession(")
-	builder.WriteString(fmt.Sprintf("id=%v, ", cs.ID))
+	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("turn=")
-	builder.WriteString(fmt.Sprintf("%v", cs.Turn))
+	builder.WriteString(fmt.Sprintf("%v", _m.Turn))
 	builder.WriteString(", ")
 	builder.WriteString("loop=")
-	builder.WriteString(fmt.Sprintf("%v", cs.Loop))
+	builder.WriteString(fmt.Sprintf("%v", _m.Loop))
 	builder.WriteByte(')')
 	return builder.String()
 }
