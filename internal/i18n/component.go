@@ -27,6 +27,8 @@ const (
 	ComponentTypeContainer             ComponentType = "container"
 	ComponentTypeThumbnail             ComponentType = "thumbnail"
 	ComponentTypeTextInput             ComponentType = "text_input"
+	ComponentTypeFileUpload            ComponentType = "file_upload"
+	ComponentTypeLabel                 ComponentType = "label"
 	ComponentTypeUnknown               ComponentType = "unknown"
 )
 
@@ -118,6 +120,19 @@ type ContainerSubComponent interface {
 	containerSubComponent(ctx MapContext) discord.ContainerSubComponent
 }
 
+// LabelSubComponent is an interface that represents a Discord label sub-component.
+// [StringSelectMenuComponent]
+// [TextInputComponent]
+// [UserSelectMenuComponent]
+// [RoleSelectMenuComponent]
+// [MentionableSelectMenuComponent]
+// [ChannelSelectMenuComponent]
+// [FileUploadComponent]
+type LabelSubComponent interface {
+	Component
+	labelSubComponent(ctx MapContext) discord.LabelSubComponent
+}
+
 type UnmarshalComponent struct {
 	Component
 }
@@ -197,10 +212,18 @@ func (u *UnmarshalComponent) UnmarshalYAML(value *yaml.Node) error {
 		var v Container
 		err = value.Decode(&v)
 		component = v
-	// case ComponentTypeTextInput:
-	// 	var v TextInput
-	// 	err = value.Decode(&v)
-	// 	component = v
+	case ComponentTypeTextInput:
+		var v TextInput
+		err = value.Decode(&v)
+		component = v
+	case ComponentTypeFileUpload:
+		var v FileUpload
+		err = value.Decode(&v)
+		component = v
+	case ComponentTypeLabel:
+		var v Label
+		err = value.Decode(&v)
+		component = v
 	default:
 		err = ErrUnknownComponentType.Format(cType.Type)
 	}
@@ -211,6 +234,7 @@ func (u *UnmarshalComponent) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
+// [discord.TextDisplayComponent]
 type TextDisplay string
 
 func (l *TextDisplay) UnmarshalYAML(value *yaml.Node) error {
@@ -249,6 +273,7 @@ func (l TextDisplay) component(ctx MapContext) discord.Component {
 	return l.textDisplay(ctx)
 }
 
+// [discord.ButtonComponent]
 type Button struct {
 	Label string              `yaml:"label"`
 	Style discord.ButtonStyle `yaml:"style"`
@@ -315,6 +340,7 @@ func (l Button) component(ctx MapContext) discord.Component {
 	return l.button(ctx)
 }
 
+// [discord.StringSelectMenuComponent]
 type StringSelectMenu struct {
 	ID          string                            `yaml:"id"`
 	Placeholder string                            `yaml:"placeholder,omitempty"`
@@ -366,6 +392,7 @@ func (l StringSelectMenu) component(ctx MapContext) discord.Component {
 	return l.stringSelectMenu(ctx)
 }
 
+// [discord.StringSelectMenuOption]
 type StringSelectMenuOption struct {
 	Label       string `yaml:"label"`
 	Description string `yaml:"description,omitempty"`
@@ -391,14 +418,18 @@ func (s *StringSelectMenuOption) UnmarshalYAML(value *yaml.Node) error {
 }
 
 func (s StringSelectMenuOption) option(ctx MapContext) discord.StringSelectMenuOption {
-	return discord.StringSelectMenuOption{
+	option := discord.StringSelectMenuOption{
 		Label:       ctx.ReplaceText(s.Label),
 		Description: ctx.ReplaceText(s.Description),
 		Value:       ctx.ReplaceCustomID(s.Value),
-		Emoji:       s.Emoji.Emoji(),
 	}
+	if s.Emoji != nil {
+		option.Emoji = s.Emoji.Emoji()
+	}
+	return option
 }
 
+// [discord.RoleSelectMenuComponent]
 type UserSelectMenu struct {
 	Placeholder string `yaml:"placeholder"`
 	ID          string `yaml:"id"`
@@ -444,6 +475,7 @@ func (l UserSelectMenu) component(ctx MapContext) discord.Component {
 	return l.userSelectMenu(ctx)
 }
 
+// [discord.RoleSelectMenuComponent]
 type RoleSelectMenu struct {
 	Placeholder string `yaml:"placeholder"`
 	ID          string `yaml:"id"`
@@ -489,6 +521,7 @@ func (l RoleSelectMenu) component(ctx MapContext) discord.Component {
 	return l.roleSelectMenu(ctx)
 }
 
+// [discord.MentionableSelectMenuComponent]
 type MentionableSelectMenu struct {
 	Placeholder string `yaml:"placeholder"`
 	ID          string `yaml:"id"`
@@ -533,6 +566,7 @@ func (l MentionableSelectMenu) component(ctx MapContext) discord.Component {
 	return l.mentionableSelectMenu(ctx)
 }
 
+// [discord.ChannelSelectMenuComponent]
 type ChannelSelectMenu struct {
 	Placeholder  string                `yaml:"placeholder"`
 	ID           string                `yaml:"id"`
@@ -581,6 +615,7 @@ func (l ChannelSelectMenu) component(ctx MapContext) discord.Component {
 	return l.channelSelectMenu(ctx)
 }
 
+// [discord.ActionRowComponent]
 type ActionRow struct {
 	Components []InteractiveComponent `yaml:"components"`
 }
@@ -623,6 +658,7 @@ func (l ActionRow) component(ctx MapContext) discord.Component {
 	return l.actionRow(ctx)
 }
 
+// [discord.SectionComponent]
 type Section struct {
 	Components []SectionSubComponent     `yaml:"components"`
 	Accessory  SectionAccessoryComponent `yaml:"accessory"`
@@ -691,6 +727,7 @@ func (l Section) component(ctx MapContext) discord.Component {
 	return l.section(ctx)
 }
 
+// [discord.ThumbnailComponent]
 type Thumbnail struct {
 	URL         string `yaml:"url,omitempty"`
 	Description string `yaml:"description,omitempty"`
@@ -728,6 +765,7 @@ func (t Thumbnail) component(ctx MapContext) discord.Component {
 	return t.sectionAccessoryComponent(ctx)
 }
 
+// [discord.MediaGalleryComponent]
 type MediaGallery struct {
 	Media []MediaItem `yaml:"media"`
 }
@@ -765,6 +803,7 @@ func (l MediaGallery) component(ctx MapContext) discord.Component {
 	return l.mediaGallery(ctx)
 }
 
+// [discord.MediaGalleryItem]
 type MediaItem struct {
 	URL         string `yaml:"url,omitempty"`
 	Description string `yaml:"description,omitempty"`
@@ -796,6 +835,7 @@ func (m MediaItem) mediaItem(ctx MapContext) discord.MediaGalleryItem {
 	}
 }
 
+// [discord.FileComponent]
 type File struct {
 	URL string `yaml:"url,omitempty"`
 }
@@ -836,6 +876,7 @@ func (l File) component(ctx MapContext) discord.Component {
 	return l.file(ctx)
 }
 
+// [discord.SeparatorComponent]
 type Separator struct {
 	Divider *bool                        `yaml:"divider,omitempty"` // If true, the separator will be a divider, otherwise it will be a separator
 	Size    discord.SeparatorSpacingSize `yaml:"height,omitempty"`  // Size of the separator, default is 1
@@ -920,6 +961,177 @@ func deserializeLayoutComponent(ctx MapContext, layout []LayoutComponent) ([]dis
 	}
 
 	return components, nil
+}
+
+// [discord.TextInputComponent]
+type TextInput struct {
+	CustomID    string                 `yaml:"id"`
+	Style       discord.TextInputStyle `yaml:"style"`
+	MinLength   *int                   `yaml:"min_length,omitempty"`
+	MaxLength   int                    `yaml:"max_length,omitempty"`
+	Required    bool                   `yaml:"required"`
+	Placeholder string                 `yaml:"placeholder,omitempty"`
+	Value       string                 `yaml:"value,omitempty"`
+}
+
+var textInputStyles = map[string]discord.TextInputStyle{
+	"short":     discord.TextInputStyleShort,
+	"paragraph": discord.TextInputStyleParagraph,
+}
+
+func (l *TextInput) UnmarshalYAML(value *yaml.Node) error {
+	var v struct {
+		CustomID    string `yaml:"id"`
+		Style       string `yaml:"style"`
+		MinLength   *int   `yaml:"min_length,omitempty"`
+		MaxLength   int    `yaml:"max_length,omitempty"`
+		Required    bool   `yaml:"required"`
+		Placeholder string `yaml:"placeholder,omitempty"`
+		Value       string `yaml:"value,omitempty"`
+	}
+	if err := value.Decode(&v); err != nil {
+		return err
+	}
+	l.CustomID = v.CustomID
+	l.Style = textInputStyles[v.Style]
+	l.MinLength = v.MinLength
+	l.MaxLength = v.MaxLength
+	l.Required = v.Required
+	l.Placeholder = v.Placeholder
+	l.Value = v.Value
+	return nil
+}
+
+func (l TextInput) Type() ComponentType {
+	return ComponentTypeTextInput
+}
+func (l TextInput) textInput(ctx MapContext) discord.TextInputComponent {
+	return discord.TextInputComponent{
+		CustomID:    ctx.ReplaceCustomID(l.CustomID),
+		Style:       l.Style,
+		MinLength:   l.MinLength,
+		MaxLength:   l.MaxLength,
+		Required:    l.Required,
+		Placeholder: ctx.ReplaceText(l.Placeholder),
+		Value:       ctx.ReplaceText(l.Value),
+	}
+}
+func (l TextInput) component(ctx MapContext) discord.Component {
+	return l.textInput(ctx)
+}
+func (l TextInput) interactiveComponent(ctx MapContext) discord.InteractiveComponent {
+	return l.textInput(ctx)
+}
+func (l TextInput) labelSubComponent(ctx MapContext) discord.LabelSubComponent {
+	return l.textInput(ctx)
+}
+
+// [discord.FileUploadComponent]
+type FileUpload struct {
+	CustomID  string `yaml:"id"`
+	MinValues *int   `yaml:"min_values,omitempty"`
+	// MaxValues is the maximum number of files that can be uploaded. (default: 1, min: 1, max: 10)
+	MaxValues int `yaml:"max_values,omitempty"`
+	// Required specifies whether the file upload is required. (default: false)
+	Required bool `yaml:"required"`
+}
+
+func (l *FileUpload) UnmarshalYAML(value *yaml.Node) error {
+	var v struct {
+		CustomID  string `yaml:"id"`
+		Required  bool   `yaml:"required"`
+		MinValues *int   `yaml:"min_values,omitempty"`
+		MaxValues int    `yaml:"max_values,omitempty"`
+	}
+	if err := value.Decode(&v); err != nil {
+		return err
+	}
+	l.CustomID = v.CustomID
+	l.Required = v.Required
+	l.MinValues = v.MinValues
+	l.MaxValues = v.MaxValues
+	return nil
+}
+
+func (l FileUpload) Type() ComponentType {
+	return ComponentTypeFileUpload
+}
+func (l FileUpload) fileUpload(ctx MapContext) discord.FileUploadComponent {
+	// Determine MinValues: context overrides YAML if present
+	minValues := l.MinValues
+	if ctxMin := ctx.GetMinValues(l.CustomID); ctxMin != nil {
+		minValues = ctxMin
+	}
+
+	// Determine MaxValues: context overrides YAML if present (non-default)
+	maxValues := l.MaxValues
+	if ctxMax := ctx.GetMaxValues(l.CustomID); ctxMax != 1 || maxValues == 0 {
+		// Use context value if it's explicitly set (not default 1) or if YAML value is 0
+		if maxValues == 0 {
+			maxValues = ctxMax
+		} else if ctxMax != 1 {
+			maxValues = ctxMax
+		}
+	}
+
+	return discord.FileUploadComponent{
+		CustomID:  ctx.ReplaceCustomID(l.CustomID),
+		MinValues: minValues,
+		MaxValues: maxValues,
+		Required:  l.Required,
+	}
+}
+func (l FileUpload) component(ctx MapContext) discord.Component {
+	return l.fileUpload(ctx)
+}
+func (l FileUpload) interactiveComponent(ctx MapContext) discord.InteractiveComponent {
+	return l.fileUpload(ctx)
+}
+func (l FileUpload) labelSubComponent(ctx MapContext) discord.LabelSubComponent {
+	return l.fileUpload(ctx)
+}
+
+// [discord.LabelComponent]
+type Label struct {
+	Label       string            `yaml:"label"`
+	Description string            `yaml:"description,omitempty"`
+	Component   LabelSubComponent `yaml:"component"`
+}
+
+func (l *Label) UnmarshalYAML(value *yaml.Node) error {
+	var v struct {
+		Label       string             `yaml:"label"`
+		Description string             `yaml:"description,omitempty"`
+		Component   UnmarshalComponent `yaml:"component"`
+	}
+	if err := value.Decode(&v); err != nil {
+		return err
+	}
+	l.Label = v.Label
+	l.Description = v.Description
+	var ok bool
+	l.Component, ok = v.Component.Component.(LabelSubComponent)
+	if !ok {
+		return fmt.Errorf("component is type %s not LabelSubComponent", v.Component.Component.Type())
+	}
+	return nil
+}
+
+func (l Label) Type() ComponentType {
+	return ComponentTypeLabel
+}
+func (l Label) label(ctx MapContext) discord.LabelComponent {
+	return discord.LabelComponent{
+		Label:       ctx.ReplaceText(l.Label),
+		Description: ctx.ReplaceText(l.Description),
+		Component:   l.Component.labelSubComponent(ctx),
+	}
+}
+func (l Label) component(ctx MapContext) discord.Component {
+	return l.label(ctx)
+}
+func (l Label) layoutComponent(ctx MapContext) discord.LayoutComponent {
+	return l.label(ctx)
 }
 
 /*

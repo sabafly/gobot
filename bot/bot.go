@@ -44,6 +44,7 @@ import (
 	"github.com/disgoorg/disgo/sharding"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
+	"github.com/sabafly/gobot/bot/commands/bet"
 	"github.com/sabafly/gobot/bot/commands/debug"
 	"github.com/sabafly/gobot/bot/commands/gopoint"
 	"github.com/sabafly/gobot/bot/commands/level"
@@ -108,6 +109,10 @@ func run() error {
 			}
 		}()
 	}
+
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	defer cancel()
+
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		AddSource: true,
 		Level:     LogLevel{},
@@ -145,7 +150,7 @@ func run() error {
 	// 	return fmt.Errorf("cacheを開けません: %w", err)
 	// }
 
-	if err := db.Schema.Create(context.Background(),
+	if err := db.Schema.Create(ctx,
 		migrate.WithForeignKeys(!config.DisableForeignKeys)); err != nil {
 		return fmt.Errorf("スキーマを定義できません: %w", err)
 	}
@@ -163,7 +168,7 @@ func run() error {
 	}
 	emoji.SetDefaultRegistry(reg)
 
-	component := components.New(db, *config, gormDB)
+	component := components.New(ctx, db, *config, gormDB)
 	component.Version = version
 
 	component.AddCommands(
@@ -177,6 +182,7 @@ func run() error {
 		role.ImportCommand(component),
 		gopoint.Command(component),
 		play.Command(component),
+		bet.Command(component),
 	)
 
 	ready := make(chan *events.Ready)
@@ -192,10 +198,20 @@ func run() error {
 			sharding.WithGatewayConfigOpts(
 				gateway.WithAutoReconnect(true),
 				gateway.WithIntents(gateway.IntentsGuild.Remove(gateway.IntentGuildPresences), gateway.IntentsPrivileged.Remove(gateway.IntentGuildPresences)),
+				gateway.WithLogger(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+					AddSource: true,
+					Level:     slog.LevelInfo,
+				}))),
 			),
 		),
 		bot.WithRestClientConfigOpts(
 			rest.WithUserAgent(fmt.Sprintf("DiscordBot (%s, %s)", disgo.GitHub, disgo.Version)),
+			rest.WithRateLimiterConfigOpts(
+				rest.WithRateLimiterLogger(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+					AddSource: true,
+					Level:     slog.LevelInfo,
+				}))),
+			),
 		),
 		bot.WithEventManagerConfigOpts(
 			bot.WithAsyncEventsEnabled(),
@@ -212,12 +228,13 @@ func run() error {
 		return fmt.Errorf("コンポーネントを初期化できません: %w", err)
 	}
 
-	if err := client.OpenShardManager(context.Background()); err != nil {
+	if err := client.OpenShardManager(ctx); err != nil {
 		return fmt.Errorf("discord ゲートウェイを開けません: %w", err)
 	}
-	defer client.Close(context.Background())
+	defer client.Close(ctx)
 
 	<-ready
+	slog.Info("bots are now ready")
 
 	// set default webhook
 	bot.WebhookDefaultName = "gobot-webhook"
@@ -238,9 +255,9 @@ func run() error {
 		bot.WebhookDefaultAvatar = discord.NewIconRaw(discord.IconTypePNG, buf)
 	}
 
-	s := make(chan os.Signal, 1)
-	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.Signal(0x13), syscall.Signal(0x14))
-	<-s
+	slog.Info("Bot is now running")
+	<-ctx.Done()
+	slog.Info("Bot is shutting down")
 
 	return nil
 }

@@ -21,7 +21,6 @@
 package setting
 
 import (
-	"context"
 	"log/slog"
 	"sync"
 	"time"
@@ -320,44 +319,40 @@ func Command(c *components.Components) components.Command {
 							SetTitle(translate.Message(event.Locale(), "components.setting.bump.message.modal.title")).
 							SetCustomID("setting:bump_message").
 							SetComponents(
-								discord.NewActionRow(
+								discord.NewLabel(translate.Message(event.Locale(), "components.setting.message.modal.message_title"),
 									discord.TextInputComponent{
 										CustomID:  "message_title",
 										Style:     discord.TextInputStyleShort,
-										Label:     translate.Message(event.Locale(), "components.setting.message.modal.message_title"),
 										MinLength: builtin.Ptr(1),
 										MaxLength: 30,
 										Required:  true,
 										Value:     g.BumpMessageTitle,
 									},
 								),
-								discord.NewActionRow(
+								discord.NewLabel(translate.Message(event.Locale(), "components.setting.message.modal.message"),
 									discord.TextInputComponent{
 										CustomID:  "message",
 										Style:     discord.TextInputStyleParagraph,
-										Label:     translate.Message(event.Locale(), "components.setting.message.modal.message"),
 										MinLength: builtin.Ptr(1),
 										MaxLength: 300,
 										Required:  true,
 										Value:     g.BumpMessage,
 									},
 								),
-								discord.NewActionRow(
+								discord.NewLabel(translate.Message(event.Locale(), "components.setting.message.modal.remind.message_title"),
 									discord.TextInputComponent{
 										CustomID:  "remind.message_title",
 										Style:     discord.TextInputStyleShort,
-										Label:     translate.Message(event.Locale(), "components.setting.message.modal.remind.message_title"),
 										MinLength: builtin.Ptr(1),
 										MaxLength: 30,
 										Required:  true,
 										Value:     g.BumpRemindMessageTitle,
 									},
 								),
-								discord.NewActionRow(
+								discord.NewLabel(translate.Message(event.Locale(), "components.setting.message.modal.remind.message"),
 									discord.TextInputComponent{
 										CustomID:  "remind.message",
 										Style:     discord.TextInputStyleParagraph,
-										Label:     translate.Message(event.Locale(), "components.setting.message.modal.remind.message"),
 										MinLength: builtin.Ptr(1),
 										MaxLength: 300,
 										Required:  true,
@@ -387,44 +382,40 @@ func Command(c *components.Components) components.Command {
 							SetTitle(translate.Message(event.Locale(), "components.setting.up.message.modal.title")).
 							SetCustomID("setting:up_message").
 							SetComponents(
-								discord.NewActionRow(
+								discord.NewLabel(translate.Message(event.Locale(), "components.setting.message.modal.message_title"),
 									discord.TextInputComponent{
 										CustomID:  "message_title",
 										Style:     discord.TextInputStyleShort,
-										Label:     translate.Message(event.Locale(), "components.setting.message.modal.message_title"),
 										MinLength: builtin.Ptr(1),
 										MaxLength: 30,
 										Required:  true,
 										Value:     g.UpMessageTitle,
 									},
 								),
-								discord.NewActionRow(
+								discord.NewLabel(translate.Message(event.Locale(), "components.setting.message.modal.message"),
 									discord.TextInputComponent{
 										CustomID:  "message",
 										Style:     discord.TextInputStyleParagraph,
-										Label:     translate.Message(event.Locale(), "components.setting.message.modal.message"),
 										MinLength: builtin.Ptr(1),
 										MaxLength: 300,
 										Required:  true,
 										Value:     g.UpMessage,
 									},
 								),
-								discord.NewActionRow(
+								discord.NewLabel(translate.Message(event.Locale(), "components.setting.message.modal.remind.message_title"),
 									discord.TextInputComponent{
 										CustomID:  "remind.message_title",
 										Style:     discord.TextInputStyleShort,
-										Label:     translate.Message(event.Locale(), "components.setting.message.modal.remind.message_title"),
 										MinLength: builtin.Ptr(1),
 										MaxLength: 30,
 										Required:  true,
 										Value:     g.UpRemindMessageTitle,
 									},
 								),
-								discord.NewActionRow(
+								discord.NewLabel(translate.Message(event.Locale(), "components.setting.message.modal.remind.message"),
 									discord.TextInputComponent{
 										CustomID:  "remind.message",
 										Style:     discord.TextInputStyleParagraph,
-										Label:     translate.Message(event.Locale(), "components.setting.message.modal.remind.message"),
 										MinLength: builtin.Ptr(1),
 										MaxLength: 300,
 										Required:  true,
@@ -546,7 +537,7 @@ func Command(c *components.Components) components.Command {
 					bumpLock.Lock()
 					defer bumpLock.Unlock()
 					for k, n := range bumpNotice {
-						g, err := c.GuildCreateID(context.Background(), n.guildID)
+						g, err := c.GuildCreateID(c.Ctx(), n.guildID)
 						if err != nil {
 							continue
 						}
@@ -565,7 +556,7 @@ func Command(c *components.Components) components.Command {
 					upLock.Lock()
 					defer upLock.Unlock()
 					for k, n := range upNotice {
-						g, err := c.GuildCreateID(context.Background(), n.guildID)
+						g, err := c.GuildCreateID(c.Ctx(), n.guildID)
 						if err != nil {
 							continue
 						}

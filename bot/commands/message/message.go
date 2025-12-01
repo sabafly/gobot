@@ -21,7 +21,6 @@
 package message
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -445,11 +444,10 @@ func Command(c *components.Components) *generic.Command {
 							SetTitle(translate.Message(event.Locale(), "components.message.pin.create.modal.title")).
 							SetCustomID("message:pin_create_modal").
 							SetComponents(
-								discord.NewActionRow(
+								discord.NewLabel(translate.Message(event.Locale(), "components.message.pin.create.modal.input.1.label"),
 									discord.TextInputComponent{
 										CustomID:  "content",
 										Style:     discord.TextInputStyleParagraph,
-										Label:     translate.Message(event.Locale(), "components.message.pin.create.modal.input.1.label"),
 										MaxLength: 1000,
 										Required:  true,
 									},
@@ -521,21 +519,19 @@ func Command(c *components.Components) *generic.Command {
 							SetTitle(translate.Message(event.Locale(), "components.message.remind.add.modal.title")).
 							SetCustomID(fmt.Sprintf("message:remind_create_modal:%d", tm.Unix())).
 							SetComponents(
-								discord.NewActionRow(
+								discord.NewLabel(translate.Message(event.Locale(), "components.message.remind.add.modal.input.content.label"),
 									discord.TextInputComponent{
 										CustomID:  "content",
 										Style:     discord.TextInputStyleParagraph,
-										Label:     translate.Message(event.Locale(), "components.message.remind.add.modal.input.content.label"),
 										MinLength: builtin.Ptr(1),
 										MaxLength: 1000,
 										Required:  true,
 									},
 								),
-								discord.NewActionRow(
+								discord.NewLabel(translate.Message(event.Locale(), "components.message.remind.add.modal.input.name.label"),
 									discord.TextInputComponent{
 										CustomID:  "name",
 										Style:     discord.TextInputStyleShort,
-										Label:     translate.Message(event.Locale(), "components.message.remind.add.modal.input.name.label"),
 										MinLength: builtin.Ptr(1),
 										MaxLength: 64,
 										Required:  true,
@@ -705,7 +701,7 @@ func Command(c *components.Components) *generic.Command {
 						Where(
 							messageremind.TimeLT(time.Now()),
 						).
-						AllX(context.Background())
+						AllX(c.Ctx())
 					for _, remind := range reminds {
 						if _, err := client.Rest.CreateMessage(remind.ChannelID,
 							discord.NewMessageBuilder().
@@ -720,7 +716,7 @@ func Command(c *components.Components) *generic.Command {
 						Where(
 							messageremind.TimeLT(time.Now()),
 						).
-						ExecX(context.Background())
+						ExecX(c.Ctx())
 					return nil
 				},
 			},

@@ -2,7 +2,6 @@ package database
 
 import (
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
@@ -26,68 +25,108 @@ func (e *Expires[T]) SetExpiration(duration time.Duration) {
 	e.ExpiresAt = time.Now().Add(duration)
 }
 
+// NewMemoryValues creates a new MemoryValues instance that periodically removes
+// expired items at the specified cleanup interval.
+// The cleanup interval is automatically determined based on the timeout:
+// - For timeout > 1 minute: cleanup every minute
+// - For timeout > 0: cleanup every timeout/2 (minimum 10ms)
+// - For timeout = 0: cleanup every minute (items never expire)
+// The timeout parameter specifies the expiration duration for items.
 func NewMemoryValues[K comparable, T any](timeout time.Duration) *MemoryValues[K, T] {
-	v := &MemoryValues[K, T]{
-		values:  make(map[K]Expires[T]),
-		cond:    sync.NewCond(&sync.Mutex{}),
-		timeout: timeout,
-	}
-	go func() {
-		for {
-			v.checkExpiration()
-			if v.abort.Load() {
-				break
-			}
+	// Default cleanup interval is 1 minute
+	cleanupInterval := time.Minute
+	if timeout > 0 && timeout < cleanupInterval {
+		// Use shorter cleanup interval if timeout is shorter
+		cleanupInterval = timeout / 2
+		if cleanupInterval < 10*time.Millisecond {
+			cleanupInterval = 10 * time.Millisecond
 		}
-	}()
-	return v
+	}
+
+	m := &MemoryValues[K, T]{
+		values:   make(map[K]Expires[T]),
+		timeout:  timeout,
+		stopChan: make(chan struct{}),
+	}
+
+	go m.startCleanupTicker(cleanupInterval)
+
+	return m
 }
 
 type MemoryValues[K comparable, T any] struct {
-	values  map[K]Expires[T]
-	timeout time.Duration
-	cond    *sync.Cond
-	abort   atomic.Bool
+	values   map[K]Expires[T]
+	timeout  time.Duration
+	mu       sync.RWMutex
+	stopChan chan struct{}
+	stopOnce sync.Once
 }
 
 func (m *MemoryValues[K, T]) Get(key K) (T, bool) {
-	m.check()
+	m.mu.RLock()
 	value, ok := m.values[key]
+	if !ok {
+		m.mu.RUnlock()
+		var zero T
+		return zero, false
+	}
+
+	if !value.IsExpired() {
+		m.mu.RUnlock()
+		return value.Value, true
+	}
+	m.mu.RUnlock()
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	value, ok = m.values[key]
 	if !ok {
 		var zero T
 		return zero, false
 	}
-	m.cond.Broadcast()
 	if value.IsExpired() {
 		m.delete(key)
 		var zero T
 		return zero, false
 	}
+
 	return value.Value, true
 }
 
 func (m *MemoryValues[K, T]) Set(key K, value T) {
-	m.check()
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
 	var expires time.Time
 	if m.timeout > 0 {
 		expires = time.Now().Add(m.timeout)
 	}
 	m.values[key] = Expires[T]{Value: value, ExpiresAt: expires}
-	m.cond.Broadcast()
 }
 
 func (m *MemoryValues[K, T]) Delete(key K) {
-	m.check()
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.delete(key)
-	m.cond.Broadcast()
 }
 
 func (m *MemoryValues[K, T]) Close() {
-	m.check()
-	m.abort.Store(true)
-	m.cond.Broadcast()
+	m.stopOnce.Do(func() {
+		close(m.stopChan)
+	})
 }
 
+// Len returns the number of items currently stored (including expired items).
+// This is primarily useful for testing and monitoring.
+func (m *MemoryValues[K, T]) Len() int {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	return len(m.values)
+}
+
+// delete removes a key from the map and calls OnDelete if the value implements DeleteHandler.
+// Must be called with write lock held.
 func (m *MemoryValues[K, T]) delete(key K) {
 	v, ok := m.values[key]
 	if !ok {
@@ -99,19 +138,23 @@ func (m *MemoryValues[K, T]) delete(key K) {
 	}
 }
 
-func (m *MemoryValues[K, T]) check() {
-	if m.cond == nil {
-		panic("nil cond")
-	}
-	if m.abort.Load() {
-		panic("memory values is closed")
+func (m *MemoryValues[K, T]) startCleanupTicker(interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			m.checkExpiration()
+		case <-m.stopChan:
+			return
+		}
 	}
 }
 
 func (m *MemoryValues[K, T]) checkExpiration() {
-	m.cond.L.Lock()
-	defer m.cond.L.Unlock()
-	m.cond.Wait()
+	m.mu.Lock()
+	defer m.mu.Unlock()
 
 	for key, value := range m.values {
 		if value.IsExpired() {
