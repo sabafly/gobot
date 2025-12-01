@@ -17,6 +17,9 @@ services:
       - type: bind
         source: ./.config
         target: /app/.config
+      - type: bind
+        source: ./gobot.yml
+        target: /app/gobot.yml
     ports:
       - "6060:6060" # Pprof port
     depends_on:
