@@ -15,7 +15,7 @@ require (
 	github.com/markusmobius/go-dateparser v1.2.4
 	github.com/nicksnyder/go-i18n/v2 v2.6.0
 	github.com/pelletier/go-toml/v2 v2.2.4
-	github.com/redis/go-redis/v9 v9.16.0
+	github.com/redis/go-redis/v9 v9.17.2
 	github.com/spf13/cobra v1.10.1
 	github.com/tj/go-naturaldate v1.3.0
 	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
