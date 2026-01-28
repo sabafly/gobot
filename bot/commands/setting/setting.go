@@ -178,7 +178,9 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 					g.BumpEnabled = !g.BumpEnabled
-					c.GormDB().Save(g)
+					if err := c.GormDB().Save(g).Error; err != nil {
+						return errors.NewError(err)
+					}
 
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
@@ -201,7 +203,9 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 					g.UpEnabled = !g.UpEnabled
-					c.GormDB().Save(g)
+					if err := c.GormDB().Save(g).Error; err != nil {
+						return errors.NewError(err)
+					}
 
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
@@ -228,7 +232,9 @@ func Command(c *components.Components) components.Command {
 					} else {
 						g.BumpMention = nil
 					}
-					c.GormDB().Save(g)
+					if err := c.GormDB().Save(g).Error; err != nil {
+						return errors.NewError(err)
+					}
 
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
@@ -262,7 +268,9 @@ func Command(c *components.Components) components.Command {
 					} else {
 						g.UpMention = nil
 					}
-					c.GormDB().Save(g)
+					if err := c.GormDB().Save(g).Error; err != nil {
+						return errors.NewError(err)
+					}
 
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
@@ -428,7 +436,9 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 					g.LevelingDisabled = !g.LevelingDisabled
-					c.GormDB().Save(g)
+					if err := c.GormDB().Save(g).Error; err != nil {
+						return errors.NewError(err)
+					}
 
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
