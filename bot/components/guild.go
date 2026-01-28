@@ -175,7 +175,8 @@ func (c *Components) GuildRequest(client *bot.Client, gid snowflake.ID) (*discor
 
 func (c *Components) InitializeGuild(ctx context.Context, guild discord.Guild) error {
 	g := models.Guild{
-		ID: guild.ID,
+		ID:      guild.ID,
+		OwnerID: guild.OwnerID,
 	}
 	if err := c.GormDB().Where(g).FirstOrCreate(&g).Error; err != nil {
 		return err
