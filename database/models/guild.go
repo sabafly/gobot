@@ -34,6 +34,6 @@ type Guild struct {
 	UpMention              *snowflake.ID                           `gorm:"type:bigint(20)"`
 	LevelingDisabled       bool                                    `gorm:"default:false"`
 
-	OwnerID snowflake.ID `gorm:"type:bigint(20) unsigned;column:owner_id;index:idx_guild_owner"`
-	Owner   User         `gorm:"foreignKey:OwnerID;constraint:OnDelete:SET NULL;"`
+	OwnerID *snowflake.ID `gorm:"type:bigint(20) unsigned;column:owner_id;index:idx_guild_owner"`
+	Owner   *User         `gorm:"foreignKey:OwnerID;constraint:OnDelete:SET NULL;"`
 }

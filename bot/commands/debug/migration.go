@@ -75,7 +75,7 @@ func migrateEntToGormHandler(c *components.Components, entClient *ent.Client, ev
 				BumpMention:            g.BumpMention,
 				UpMention:              g.UpMention,
 				LevelingDisabled:       g.LevelingDisabled,
-				OwnerID:                g.Edges.Owner.ID,
+				OwnerID:                &g.Edges.Owner.ID,
 			}
 			if err := tx.Save(&gg).Error; err != nil {
 				return err
