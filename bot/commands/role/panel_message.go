@@ -46,7 +46,7 @@ func initialize(edit *models.RolePanelEdit, panel *models.RolePanel) {
 	}
 }
 
-func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *models.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
+func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *models.RolePanelEdit, locale discord.Locale) (discord.MessageBuilder, error) {
 	initialize(edit, panel)
 	builder := discord.NewMessageBuilder()
 	var roleField string
@@ -84,7 +84,9 @@ func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *
 	builder.SetEmbeds(embeds.SetEmbedsProperties(embedList)...)
 
 	var placeCount int64
-	c.GormDB().Model(&models.RolePanelPlaced{}).Where("role_panel_id = ?", panel.ID).Count(&placeCount)
+	if err := c.GormDB().Model(&models.RolePanelPlaced{}).Where("role_panel_id = ?", panel.ID).Count(&placeCount).Error; err != nil {
+		return builder, err
+	}
 
 	disabled := len(edit.Roles) < 1 || edit.SelectedRole == nil || !slices.ContainsFunc(edit.Roles, func(r models.Role) bool { return r.ID == *edit.SelectedRole })
 	builder.SetComponents(
@@ -191,7 +193,7 @@ func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *
 		),
 	)
 
-	return builder
+	return builder, nil
 }
 
 func rpEditModifyRolesMessage(edit *models.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {

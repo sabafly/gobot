@@ -34,6 +34,8 @@ import (
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
+
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/database/models"
@@ -137,6 +139,13 @@ func Command(c *components.Components) components.Command {
 										Required:  true,
 										Value:     translate.Message(event.Locale(), "components.role.panel.default_name"),
 									}),
+								discord.NewLabel(translate.Message(event.Locale(), "components.role.panel.create.modal.input.2.label"),
+									discord.TextInputComponent{
+										CustomID:  "description",
+										Style:     discord.TextInputStyleParagraph,
+										MaxLength: 140,
+									},
+								),
 							).
 							Build(),
 					); err != nil {
@@ -190,7 +199,10 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 					edit.Parent = rolePanel
-					builder := rpEditBaseMessage(c, &rolePanel, &edit, event.Locale())
+					builder, err := rpEditBaseMessage(c, &rolePanel, &edit, event.Locale())
+					if err != nil {
+						return errors.NewError(err)
+					}
 					builder.SetFlags(discord.MessageFlagEphemeral)
 					if err := event.CreateMessage(builder.BuildCreate()); err != nil {
 						return errors.NewError(err)
@@ -242,16 +254,36 @@ func Command(c *components.Components) components.Command {
 					if err := c.GormDB().Where("id = ? AND guild_id = ?", panelID, g.ID).First(&panel).Error; err != nil {
 						return errors.NewError(errors.ErrorMessage("errors.not_exist", event))
 					}
-					var places []models.RolePanelPlaced
-					c.GormDB().Where("role_panel_id = ?", panel.ID).Find(&places)
-					for _, place := range places {
-						if place.MessageID != nil {
-							_ = event.Client().Rest.DeleteMessage(place.ChannelID, *place.MessageID)
+
+					if err := c.GormDB().Transaction(func(tx *gorm.DB) error {
+						var places []models.RolePanelPlaced
+						if err := tx.Where("role_panel_id = ?", panel.ID).Find(&places).Error; err != nil {
+							return err
 						}
+
+						for _, place := range places {
+							if place.MessageID != nil {
+								if err := event.Client().Rest.DeleteMessage(place.ChannelID, *place.MessageID); err != nil {
+									slog.Error("Failed to delete message", "error", err, "panel_id", panel.ID, "channel_id", place.ChannelID, "message_id", *place.MessageID)
+									return err
+								}
+							}
+						}
+
+						if err := tx.Where("role_panel_id = ?", panel.ID).Delete(&models.RolePanelPlaced{}).Error; err != nil {
+							return err
+						}
+						if err := tx.Where("parent_id = ?", panel.ID).Delete(&models.RolePanelEdit{}).Error; err != nil {
+							return err
+						}
+						if err := tx.Delete(&panel).Error; err != nil {
+							return err
+						}
+						return nil
+					}); err != nil {
+						return errors.NewError(err)
 					}
-					c.GormDB().Where("role_panel_id = ?", panel.ID).Delete(&models.RolePanelPlaced{})
-					c.GormDB().Where("parent_id = ?", panel.ID).Delete(&models.RolePanelEdit{})
-					c.GormDB().Delete(&panel)
+
 					builder := discord.NewMessageBuilder()
 					builder.SetEmbeds(
 						embeds.SetEmbedProperties(
@@ -288,7 +320,10 @@ func Command(c *components.Components) components.Command {
 				}
 				edit.Parent = rolePanel
 				initialize(&edit, &rolePanel)
-				builder := rpEditBaseMessage(c, &rolePanel, &edit, event.Locale())
+				builder, err := rpEditBaseMessage(c, &rolePanel, &edit, event.Locale())
+				if err != nil {
+					return errors.NewError(err)
+				}
 				builder.SetFlags(discord.MessageFlagEphemeral)
 				if err := event.CreateMessage(builder.BuildCreate()); err != nil {
 					return errors.NewError(err)
@@ -298,8 +333,14 @@ func Command(c *components.Components) components.Command {
 			"role:panel_edit_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
 				args := strings.Split(event.Data.CustomID, ":")
 				action := args[2]
-				editID, _ := uuid.Parse(args[3])
-				g, _ := c.GuildCreateID(event, *event.GuildID())
+				editID, err := uuid.Parse(args[3])
+				if err != nil {
+					return errors.NewError(errors.ErrorMessage("errors.timeout", event))
+				}
+				g, err := c.GuildCreateID(event, *event.GuildID())
+				if err != nil {
+					return errors.NewError(err)
+				}
 				var edit models.RolePanelEdit
 				if err := c.GormDB().Where("id = ? AND guild_id = ?", editID, g.ID).First(&edit).Error; err != nil {
 					return errors.NewError(errors.ErrorMessage("errors.timeout", event))
@@ -323,7 +364,10 @@ func Command(c *components.Components) components.Command {
 					}
 				}
 				c.GormDB().Save(&edit)
-				builder := rpEditBaseMessage(c, &panel, &edit, event.Locale())
+				builder, err := rpEditBaseMessage(c, &panel, &edit, event.Locale())
+				if err != nil {
+					return errors.NewError(err)
+				}
 				builder.SetFlags(discord.MessageFlagEphemeral)
 				if err := event.UpdateMessage(builder.BuildUpdate()); err != nil {
 					return errors.NewError(err)
@@ -339,7 +383,11 @@ func Command(c *components.Components) components.Command {
 				DiscordPerm: discord.PermissionManageRoles,
 				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
 					args := strings.Split(event.Data.CustomID(), ":")
-					action, editID := args[2], uuid.MustParse(args[3])
+					action := args[2]
+					editID, err := uuid.Parse(args[3])
+					if err != nil {
+						return errors.NewError(errors.ErrorMessage("errors.invalid_argument", event))
+					}
 					g, _ := c.GuildCreateID(event, *event.GuildID())
 					var edit models.RolePanelEdit
 					if err := c.GormDB().Where("id = ? AND guild_id = ?", editID, g.ID).First(&edit).Error; err != nil {
@@ -368,7 +416,10 @@ func Command(c *components.Components) components.Command {
 							return errors.NewError(err)
 						}
 					case "base_menu":
-						builder := rpEditBaseMessage(c, &panel, &edit, event.Locale())
+						builder, err := rpEditBaseMessage(c, &panel, &edit, event.Locale())
+						if err != nil {
+							return errors.NewError(err)
+						}
 						builder.SetFlags(discord.MessageFlagEphemeral)
 						if err := event.UpdateMessage(builder.BuildUpdate()); err != nil {
 							return errors.NewError(err)
@@ -418,7 +469,10 @@ func Command(c *components.Components) components.Command {
 						edit.Roles = slices.DeleteFunc(edit.Roles, func(r models.Role) bool { _, ok := selectedRoles[r.ID]; return !ok })
 						edit.Modified = true
 						c.GormDB().Save(&edit)
-						builder := rpEditBaseMessage(c, &panel, &edit, event.Locale())
+						builder, err := rpEditBaseMessage(c, &panel, &edit, event.Locale())
+						if err != nil {
+							return errors.NewError(err)
+						}
 						builder.SetFlags(discord.MessageFlagEphemeral)
 						if err := event.UpdateMessage(builder.BuildUpdate()); err != nil {
 							return errors.NewError(err)
@@ -430,7 +484,10 @@ func Command(c *components.Components) components.Command {
 						}
 						edit.SelectedRole = id
 						c.GormDB().Save(&edit)
-						builder := rpEditBaseMessage(c, &panel, &edit, event.Locale())
+						builder, err := rpEditBaseMessage(c, &panel, &edit, event.Locale())
+						if err != nil {
+							return errors.NewError(err)
+						}
 						builder.SetFlags(discord.MessageFlagEphemeral)
 						if err := event.UpdateMessage(builder.BuildUpdate()); err != nil {
 							return errors.NewError(err)
@@ -441,7 +498,10 @@ func Command(c *components.Components) components.Command {
 							edit.Modified = true
 							c.GormDB().Save(&edit)
 						}
-						builder := rpEditBaseMessage(c, &panel, &edit, event.Locale())
+						builder, err := rpEditBaseMessage(c, &panel, &edit, event.Locale())
+						if err != nil {
+							return errors.NewError(err)
+						}
 						builder.SetFlags(discord.MessageFlagEphemeral)
 						if err := event.UpdateMessage(builder.BuildUpdate()); err != nil {
 							return errors.NewError(err)
@@ -455,7 +515,10 @@ func Command(c *components.Components) components.Command {
 								c.GormDB().Save(&edit)
 							}
 						}
-						builder := rpEditBaseMessage(c, &panel, &edit, event.Locale())
+						builder, err := rpEditBaseMessage(c, &panel, &edit, event.Locale())
+						if err != nil {
+							return errors.NewError(err)
+						}
 						builder.SetFlags(discord.MessageFlagEphemeral)
 						if err := event.UpdateMessage(builder.BuildUpdate()); err != nil {
 							return errors.NewError(err)
@@ -490,21 +553,39 @@ func Command(c *components.Components) components.Command {
 								edit.Roles[idx].Emoji, edit.Modified = nil, true
 							}
 						}
-						c.GormDB().Save(&edit)
-						builder := rpEditBaseMessage(c, &panel, &edit, event.Locale())
+						if err := c.GormDB().Save(&edit).Error; err != nil {
+							return errors.NewError(err)
+						}
+						builder, err := rpEditBaseMessage(c, &panel, &edit, event.Locale())
+						if err != nil {
+							return errors.NewError(err)
+						}
 						builder.SetFlags(discord.MessageFlagEphemeral)
 						if err := event.UpdateMessage(builder.BuildUpdate()); err != nil {
 							return errors.NewError(err)
 						}
 					case "save_change":
 						edit.Modified = false
-						c.GormDB().Save(&edit)
-						panel.UpdatedAt, panel.Name, panel.Description = time.Now(), *edit.Name, *edit.Description
+						if err := c.GormDB().Save(&edit).Error; err != nil {
+							return errors.NewError(err)
+						}
+						if edit.Name != nil {
+							panel.Name = *edit.Name
+						}
+						if edit.Description != nil {
+							panel.Description = *edit.Description
+						}
+						panel.UpdatedAt = time.Now()
 						if edit.Roles != nil {
 							panel.Roles = edit.Roles
 						}
-						c.GormDB().Save(&panel)
-						builder := rpEditBaseMessage(c, &panel, &edit, event.Locale())
+						if err := c.GormDB().Save(&panel).Error; err != nil {
+							return errors.NewError(err)
+						}
+						builder, err := rpEditBaseMessage(c, &panel, &edit, event.Locale())
+						if err != nil {
+							return errors.NewError(err)
+						}
 						builder.SetFlags(discord.MessageFlagEphemeral)
 						if err := event.UpdateMessage(builder.BuildUpdate()); err != nil {
 							return errors.NewError(err)
@@ -520,7 +601,10 @@ func Command(c *components.Components) components.Command {
 						c.GormDB().Save(&panel)
 						c.GormDB().Where("(message_id IS NULL OR type = '') AND guild_id = ?", g.ID).Delete(&models.RolePanelPlaced{})
 						go updateRolePanel(context.Background(), &panel, event.Locale(), event.Client(), true, c)
-						builder := rpEditBaseMessage(c, &panel, &edit, event.Locale())
+						builder, err := rpEditBaseMessage(c, &panel, &edit, event.Locale())
+						if err != nil {
+							return errors.NewError(err)
+						}
 						builder.SetFlags(discord.MessageFlagEphemeral)
 						if err := event.UpdateMessage(builder.BuildUpdate()); err != nil {
 							return errors.NewError(err)
@@ -740,7 +824,10 @@ func Command(c *components.Components) components.Command {
 						}
 					}
 					_ = event.Client().Rest.AddReaction(event.ChannelID, event.MessageID, "✅")
-					_, _ = event.Client().Rest.UpdateInteractionResponse(event.Client().ApplicationID, token, rpEditBaseMessage(c, &panel, &edit, u.Locale).SetFlags(discord.MessageFlagEphemeral).BuildUpdate())
+					builder, err := rpEditBaseMessage(c, &panel, &edit, u.Locale)
+					if err == nil {
+						_, _ = event.Client().Rest.UpdateInteractionResponse(event.Client().ApplicationID, token, builder.SetFlags(discord.MessageFlagEphemeral).BuildUpdate())
+					}
 				}
 			case *events.GuildMessageDelete:
 				g, _ := c.GuildCreateID(event, event.GuildID)
