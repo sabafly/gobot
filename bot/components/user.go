@@ -39,12 +39,13 @@ func (c *Components) UserCreate(ctx context.Context, u discord.User) (*models.Us
 		Name: u.EffectiveName(),
 	}
 
-	if user.CreatedAt.IsZero() {
-		slog.Debug("新規ユーザー作成", "uid", u.ID, "uname", u.Username)
+	result := c.GormDB().FirstOrCreate(&user, models.User{ID: u.ID})
+	if result.Error != nil {
+		return nil, result.Error
 	}
 
-	if err := c.GormDB().FirstOrCreate(&user, models.User{ID: u.ID}).Error; err != nil {
-		return nil, err
+	if result.RowsAffected > 0 {
+		slog.Debug("新規ユーザー作成", "uid", u.ID, "uname", u.Username)
 	}
 
 	return &user, nil
