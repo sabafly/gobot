@@ -116,14 +116,30 @@ func (c *Components) OnGuildLeave() func(event *events.GuildLeave) {
 
 		// Use transaction for deletion
 		if err := c.GormDB().Transaction(func(tx *gorm.DB) error {
-			tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.Member{})
-			tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.MessagePin{})
-			tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.MessageRemind{})
-			tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.RolePanelPlaced{})
-			tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.RolePanelEdit{})
-			tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.RolePanel{})
-			tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.WordSuffix{})
-			tx.Delete(&models.Guild{ID: event.Guild.ID})
+			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.Member{}).Error; err != nil {
+				slog.Error("ギルド脱退 メンバー削除に失敗", "err", err)
+			}
+			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.MessagePin{}).Error; err != nil {
+				slog.Error("ギルド脱退 メッセージピン削除に失敗", "err", err)
+			}
+			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.MessageRemind{}).Error; err != nil {
+				slog.Error("ギルド脱退 メッセージリマインド削除に失敗", "err", err)
+			}
+			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.RolePanelPlaced{}).Error; err != nil {
+				slog.Error("ギルド脱退 ロールパネル配置削除に失敗", "err", err)
+			}
+			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.RolePanelEdit{}).Error; err != nil {
+				slog.Error("ギルド脱退 ロールパネル編集削除に失敗", "err", err)
+			}
+			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.RolePanel{}).Error; err != nil {
+				slog.Error("ギルド脱退 ロールパネル削除に失敗", "err", err)
+			}
+			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.WordSuffix{}).Error; err != nil {
+				slog.Error("ギルド脱退 ワードサフィックス削除に失敗", "err", err)
+			}
+			if err := tx.Delete(&models.Guild{ID: event.Guild.ID}).Error; err != nil {
+				slog.Error("ギルド脱退 ギルド削除に失敗", "err", err)
+			}
 			return nil
 		}); err != nil {
 			slog.Error("ギルド脱退 データベースからの削除に失敗", "err", err)
