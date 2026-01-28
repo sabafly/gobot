@@ -34,6 +34,7 @@ import (
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/builtin"
+	"gorm.io/gorm"
 )
 
 func Command(c *components.Components) components.Command {
@@ -340,7 +341,7 @@ func Command(c *components.Components) components.Command {
 	}).SetComponent(c)
 }
 
-func addXp(ctx context.Context, xp uint64, client *bot.Client, m *models.Member, g *models.Guild, channelID snowflake.ID, username string, ignoreCooldown bool, c *components.Components) (*models.Member, error) {
+func addXp(ctx context.Context, xp uint64, client *bot.Client, m *models.Member, g *models.Guild, channelID snowflake.ID, username string, ignoreCooldown bool, db *gorm.DB) (*models.Member, error) {
 	before := builtin.NonNilOrDefault(m.LastNotifiedLevel, m.XP.Level())
 	if ignoreCooldown || time.Now().After(m.LastXP.Add(time.Minute*3)) {
 		m.XP.Add(xp)
@@ -350,7 +351,7 @@ func addXp(ctx context.Context, xp uint64, client *bot.Client, m *models.Member,
 	m.LastNotifiedLevel = &after
 	m.MessageCount++
 
-	if err := c.GormDB().Save(m).Error; err != nil {
+	if err := db.Save(m).Error; err != nil {
 		return m, err
 	}
 

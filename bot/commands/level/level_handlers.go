@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
+	"time"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
@@ -41,6 +42,7 @@ import (
 	"github.com/sabafly/gobot/internal/smap"
 	"github.com/sabafly/gobot/internal/translate"
 	"github.com/sabafly/gobot/internal/xppoint"
+	"gorm.io/gorm"
 )
 
 func requiredPointHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
@@ -197,9 +199,18 @@ func transferHandler(c *components.Components, event *events.ApplicationCommandI
 	movedXp := uint64(fromUser.XP)
 	fromUser.XP = xppoint.XP(0)
 	fromUser.LastNotifiedLevel = nil
-	c.GormDB().Save(fromUser)
 
-	if toUser, err = addXp(event, movedXp, event.Client(), toUser, g, event.Channel().ID(), to.EffectiveName(), true, c); err != nil {
+	if err := c.GormDB().Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(fromUser).Error; err != nil {
+			return err
+		}
+
+		var err error
+		if toUser, err = addXp(event, movedXp, event.Client(), toUser, g, event.Channel().ID(), to.EffectiveName(), true, tx); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
 		return errors.NewError(err)
 	}
 
@@ -408,18 +419,23 @@ func importMee6Handler(c *components.Components, event *events.ApplicationComman
 
 	importedCount := 0
 	url := fmt.Sprintf("https://mee6.xyz/api/plugins/levels/leaderboard/%s", event.GuildID().String())
+	client := &http.Client{Timeout: 10 * time.Second}
 	for page := 0; true; page++ {
-		response, err := http.Get(fmt.Sprintf("%s?page=%d", url, page))
+		response, err := client.Get(fmt.Sprintf("%s?page=%d", url, page))
 		if err != nil || response.StatusCode != http.StatusOK {
 			sc := 0
 			if response != nil {
 				sc = response.StatusCode
+				_ = response.Body.Close()
 			}
 			if sc == http.StatusUnauthorized {
 				return errors.NewError(errors.ErrorMessage("components.level.import-mee6.message.unauthorized", event))
 			}
 			if importedCount > 0 {
 				break
+			}
+			if err != nil {
+				return errors.NewError(err)
 			}
 			return errors.NewError(fmt.Errorf("mee6 API error: %d", sc))
 		}

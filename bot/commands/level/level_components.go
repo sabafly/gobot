@@ -103,7 +103,7 @@ func eventHandler(c *components.Components, event bot.Event) errors.Error {
 			return errors.NewError(err)
 		}
 
-		if _, err = addXp(event, rand.N[uint64](16)+15, event.Client(), m, g, event.ChannelID, event.Message.Author.EffectiveName(), false, c); err != nil {
+		if _, err = addXp(event, rand.N[uint64](16)+15, event.Client(), m, g, event.ChannelID, event.Message.Author.EffectiveName(), false, c.GormDB()); err != nil {
 			return errors.NewError(err)
 		}
 
