@@ -21,14 +21,12 @@
 package role
 
 import (
-	"context"
 	"fmt"
 	"slices"
 
 	"github.com/disgoorg/disgo/discord"
-	"github.com/sabafly/gobot/ent"
-	"github.com/sabafly/gobot/ent/rolepanelplaced"
-	"github.com/sabafly/gobot/ent/schema"
+	"github.com/sabafly/gobot/bot/components"
+	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/builtin"
 	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/embeds"
@@ -36,7 +34,7 @@ import (
 	"github.com/sabafly/gobot/internal/translate"
 )
 
-func initialize(edit *ent.RolePanelEdit, panel *ent.RolePanel) {
+func initialize(edit *models.RolePanelEdit, panel *models.RolePanel) {
 	if edit.Roles == nil {
 		edit.Roles = panel.Roles
 	}
@@ -48,48 +46,47 @@ func initialize(edit *ent.RolePanelEdit, panel *ent.RolePanel) {
 	}
 }
 
-func rpEditBaseMessage(ctx context.Context, panel *ent.RolePanel, edit *ent.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
+func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *models.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
 	initialize(edit, panel)
 	builder := discord.NewMessageBuilder()
 	var roleField string
 	for i, r := range edit.Roles {
-		if r.Emoji == nil {
-			r.Emoji = &discord.ComponentEmoji{
+		emojiVal := r.Emoji
+		if emojiVal == nil {
+			emojiVal = &discord.ComponentEmoji{
 				Name: discordutil.Index2Emoji(i),
 			}
 		}
-		roleField += fmt.Sprintf("%s: %s: %s\n", discordutil.FormatComponentEmoji(*r.Emoji), r.Name, discord.RoleMention(r.ID))
+		roleField += fmt.Sprintf("%s: %s: %s\n", discordutil.FormatComponentEmoji(*emojiVal), r.Name, discord.RoleMention(r.ID))
 	}
-	builder.SetEmbeds(
-		embeds.SetEmbedsProperties(
-			[]discord.Embed{
-				discord.NewEmbedBuilder().
-					SetTitle(translate.Message(locale, "components.role.panel.edit.menu.base.title")).
-					SetFields(
-						discord.EmbedField{
-							Name:   translate.Message(locale, "components.role.panel.edit.menu.base.field.name"),
-							Value:  builtin.NonNil(edit.Name),
-							Inline: builtin.Ptr(true),
-						},
-						discord.EmbedField{
-							Name:   translate.Message(locale, "components.role.panel.edit.menu.base.field.description"),
-							Value:  builtin.Or(builtin.NonNil(edit.Description) != "", builtin.NonNil(edit.Description), fmt.Sprintf("`%s`", translate.Message(locale, "components.role.panel.edit.menu.base.field.value.empty"))),
-							Inline: builtin.Ptr(true),
-						},
-						discord.EmbedField{
-							Name:  translate.Message(locale, "components.role.panel.edit.menu.base.field.roles"),
-							Value: builtin.Or(roleField != "", roleField, fmt.Sprintf("`%s`", translate.Message(locale, "components.role.panel.edit.menu.base.field.value.empty"))),
-						},
-					).
-					SetFooterTextf("id: %s", panel.ID).
-					Build(),
-			},
-		)...,
-	)
 
-	placeCount := panel.QueryPlacements().CountX(ctx)
+	embedList := []discord.Embed{
+		discord.NewEmbedBuilder().
+			SetTitle(translate.Message(locale, "components.role.panel.edit.menu.base.title")).
+			SetFields(
+				discord.EmbedField{
+					Name:   translate.Message(locale, "components.role.panel.edit.menu.base.field.name"),
+					Value:  builtin.NonNil(edit.Name),
+					Inline: builtin.Ptr(true),
+				},
+				discord.EmbedField{
+					Name:   translate.Message(locale, "components.role.panel.edit.menu.base.field.description"),
+					Value:  builtin.Or(builtin.NonNil(edit.Description) != "", builtin.NonNil(edit.Description), fmt.Sprintf("`%s`", translate.Message(locale, "components.role.panel.edit.menu.base.field.value.empty"))),
+					Inline: builtin.Ptr(true),
+				},
+				discord.EmbedField{
+					Name:  translate.Message(locale, "components.role.panel.edit.menu.base.field.roles"),
+					Value: builtin.Or(roleField != "", roleField, fmt.Sprintf("`%s`", translate.Message(locale, "components.role.panel.edit.menu.base.field.value.empty"))),
+				}).
+			SetFooterTextf("id: %s", panel.ID).
+			Build(),
+	}
+	builder.SetEmbeds(embeds.SetEmbedsProperties(embedList)...)
 
-	disabled := len(edit.Roles) < 1 || edit.SelectedRole == nil || !slices.ContainsFunc(edit.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole })
+	var placeCount int64
+	c.GormDB().Model(&models.RolePanelPlaced{}).Where("role_panel_id = ?", panel.ID).Count(&placeCount)
+
+	disabled := len(edit.Roles) < 1 || edit.SelectedRole == nil || !slices.ContainsFunc(edit.Roles, func(r models.Role) bool { return r.ID == *edit.SelectedRole })
 	builder.SetComponents(
 		discord.NewActionRow(
 			discord.ButtonComponent{
@@ -130,34 +127,32 @@ func rpEditBaseMessage(ctx context.Context, panel *ent.RolePanel, edit *ent.Role
 		),
 		discord.NewActionRow(
 			func() discord.StringSelectMenuComponent {
-				menu := discord.StringSelectMenuComponent{
+				options := make([]discord.StringSelectMenuOption, len(edit.Roles))
+				for i, r := range edit.Roles {
+					emojiVal := r.Emoji
+					if emojiVal == nil {
+						emojiVal = &discord.ComponentEmoji{
+							Name: discordutil.Index2Emoji(i),
+						}
+					}
+					options[i] = discord.StringSelectMenuOption{
+						Label:   r.Name,
+						Value:   r.ID.String(),
+						Emoji:   emojiVal,
+						Default: edit.SelectedRole != nil && *edit.SelectedRole == r.ID,
+					}
+				}
+				if len(edit.Roles) < 1 {
+					options = append(options, discord.NewStringSelectMenuOption("nil", "nil"))
+				}
+				return discord.StringSelectMenuComponent{
 					CustomID:    fmt.Sprintf("role:panel_edit_component:select_role:%s", edit.ID),
 					Placeholder: translate.Message(locale, "components.role.panel.edit.menu.base.components.select_role"),
 					MinValues:   builtin.Ptr(0),
 					MaxValues:   1,
 					Disabled:    len(edit.Roles) < 1,
-					Options: func() []discord.StringSelectMenuOption {
-						options := make([]discord.StringSelectMenuOption, len(edit.Roles))
-						for i, r := range edit.Roles {
-							if r.Emoji == nil {
-								r.Emoji = &discord.ComponentEmoji{
-									Name: discordutil.Index2Emoji(i),
-								}
-							}
-							options[i] = discord.StringSelectMenuOption{
-								Label:   r.Name,
-								Value:   r.ID.String(),
-								Emoji:   r.Emoji,
-								Default: edit.SelectedRole != nil && *edit.SelectedRole == r.ID,
-							}
-						}
-						if len(edit.Roles) < 1 {
-							options = append(options, discord.NewStringSelectMenuOption("nil", "nil"))
-						}
-						return options
-					}(),
+					Options:     options,
 				}
-				return menu
 			}(),
 		),
 		discord.NewActionRow(
@@ -165,7 +160,7 @@ func rpEditBaseMessage(ctx context.Context, panel *ent.RolePanel, edit *ent.Role
 				Style:    discord.ButtonStylePrimary,
 				Label:    "↑",
 				CustomID: fmt.Sprintf("role:panel_edit_component:move_up:%s", edit.ID),
-				Disabled: disabled || slices.IndexFunc(edit.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole }) == 0,
+				Disabled: disabled || slices.IndexFunc(edit.Roles, func(r models.Role) bool { return r.ID == *edit.SelectedRole }) == 0,
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyleDanger,
@@ -177,7 +172,7 @@ func rpEditBaseMessage(ctx context.Context, panel *ent.RolePanel, edit *ent.Role
 				Style:    discord.ButtonStylePrimary,
 				Label:    "↓",
 				CustomID: fmt.Sprintf("role:panel_edit_component:move_down:%s", edit.ID),
-				Disabled: disabled || slices.IndexFunc(edit.Roles, func(r schema.Role) bool { return r.ID == *edit.SelectedRole }) == len(edit.Roles)-1,
+				Disabled: disabled || slices.IndexFunc(edit.Roles, func(r models.Role) bool { return r.ID == *edit.SelectedRole }) == len(edit.Roles)-1,
 			},
 		),
 		discord.NewActionRow(
@@ -199,32 +194,30 @@ func rpEditBaseMessage(ctx context.Context, panel *ent.RolePanel, edit *ent.Role
 	return builder
 }
 
-func rpEditModifyRolesMessage(edit *ent.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
+func rpEditModifyRolesMessage(edit *models.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
 	builder := discord.NewMessageBuilder()
 	var roleField string
 	for i, r := range edit.Roles {
-		if r.Emoji == nil {
-			r.Emoji = &discord.ComponentEmoji{
+		emojiVal := r.Emoji
+		if emojiVal == nil {
+			emojiVal = &discord.ComponentEmoji{
 				Name: discordutil.Index2Emoji(i),
 			}
 		}
-		roleField += fmt.Sprintf("%s: %s: %s\n", discordutil.FormatComponentEmoji(*r.Emoji), r.Name, discord.RoleMention(r.ID))
+		roleField += fmt.Sprintf("%s: %s: %s\n", discordutil.FormatComponentEmoji(*emojiVal), r.Name, discord.RoleMention(r.ID))
 	}
-	builder.SetEmbeds(
-		embeds.SetEmbedsProperties(
-			[]discord.Embed{
-				discord.NewEmbedBuilder().
-					SetTitle(translate.Message(locale, "components.role.panel.edit.menu.modify_roles.title")).
-					SetFields(
-						discord.EmbedField{
-							Name:  translate.Message(locale, "components.role.panel.edit.menu.modify_roles.field.roles"),
-							Value: roleField,
-						},
-					).
-					Build(),
-			},
-		)...,
-	)
+	embedList := []discord.Embed{
+		discord.NewEmbedBuilder().
+			SetTitle(translate.Message(locale, "components.role.panel.edit.menu.modify_roles.title")).
+			SetFields(
+				discord.EmbedField{
+					Name:  translate.Message(locale, "components.role.panel.edit.menu.modify_roles.field.roles"),
+					Value: roleField,
+				},
+			).
+			Build(),
+	}
+	builder.SetEmbeds(embeds.SetEmbedsProperties(embedList)...)
 
 	builder.SetComponents(
 		discord.NewActionRow(
@@ -252,16 +245,14 @@ func rpEditModifyRolesMessage(edit *ent.RolePanelEdit, locale discord.Locale) di
 	return builder
 }
 
-func rpEditSetEmojiMessage(edit *ent.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
+func rpEditSetEmojiMessage(edit *models.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
 	builder := discord.NewMessageBuilder()
-	builder.SetEmbeds(
-		embeds.SetEmbedProperties(
-			discord.NewEmbedBuilder().
-				SetTitle(translate.Message(locale, "components.role.panel.edit.menu.set_emoji.title")).
-				SetDescription(translate.Message(locale, "components.role.panel.edit.menu.set_emoji.description")).
-				Build(),
-		),
-	)
+	embed := discord.NewEmbedBuilder().
+		SetTitle(translate.Message(locale, "components.role.panel.edit.menu.set_emoji.title")).
+		SetDescription(translate.Message(locale, "components.role.panel.edit.menu.set_emoji.description")).
+		Build()
+
+	builder.SetEmbeds(embeds.SetEmbedProperties(embed))
 
 	builder.SetComponents(
 		discord.NewActionRow(
@@ -280,36 +271,34 @@ func rpEditSetEmojiMessage(edit *ent.RolePanelEdit, locale discord.Locale) disco
 	return builder
 }
 
-func rpPlaceBaseMenu(place *ent.RolePanelPlaced, locale discord.Locale) discord.MessageBuilder {
+func rpPlaceBaseMenu(place *models.RolePanelPlaced, locale discord.Locale) discord.MessageBuilder {
 	builder := discord.NewMessageBuilder()
 	var roleField string
 	for i, r := range place.Roles {
-		if r.Emoji == nil {
-			r.Emoji = &discord.ComponentEmoji{
+		emojiVal := r.Emoji
+		if emojiVal == nil {
+			emojiVal = &discord.ComponentEmoji{
 				Name: discordutil.Index2Emoji(i),
 			}
 		}
-		roleField += fmt.Sprintf("%s| %s\n", discordutil.FormatComponentEmoji(*r.Emoji), builtin.Or(place.UseDisplayName, r.Name, discord.RoleMention(r.ID)))
+		roleField += fmt.Sprintf("%s| %s\n", discordutil.FormatComponentEmoji(*emojiVal), builtin.Or(place.UseDisplayName, r.Name, discord.RoleMention(r.ID)))
 	}
-	builder.SetEmbeds(
-		embeds.SetEmbedsProperties(
-			[]discord.Embed{
-				discord.NewEmbedBuilder().
-					SetAuthorName(translate.Message(locale, "components.role.panel.place.menu.author.text")).
-					Build(),
-				discord.NewEmbedBuilder().
-					SetTitle(place.Name).
-					SetDescription(place.Description).
-					SetFields(
-						discord.EmbedField{
-							Name:  translate.Message(locale, "components.role.panel.embed.field.role"),
-							Value: roleField,
-						},
-					).
-					Build(),
-			},
-		)...,
-	)
+	embedList := []discord.Embed{
+		discord.NewEmbedBuilder().
+			SetAuthorName(translate.Message(locale, "components.role.panel.place.menu.author.text")).
+			Build(),
+		discord.NewEmbedBuilder().
+			SetTitle(place.Name).
+			SetDescription(place.Description).
+			SetFields(
+				discord.EmbedField{
+					Name:  translate.Message(locale, "components.role.panel.embed.field.role"),
+					Value: roleField,
+				},
+			).
+			Build(),
+	}
+	builder.SetEmbeds(embeds.SetEmbedsProperties(embedList)...)
 
 	builder.AddComponents(
 		discord.NewActionRow(
@@ -321,24 +310,24 @@ func rpPlaceBaseMenu(place *ent.RolePanelPlaced, locale discord.Locale) discord.
 				Options: []discord.StringSelectMenuOption{
 					{
 						Label:       translate.Message(locale, "components.role.panel.type.reaction"),
-						Value:       rolepanelplaced.TypeReaction.String(),
+						Value:       RolePanelPlacedTypeReaction,
 						Description: translate.Message(locale, "components.role.panel.type.reaction.description"),
 						Emoji:       emoji.Reaction,
-						Default:     place.Type == rolepanelplaced.TypeReaction,
+						Default:     place.Type == RolePanelPlacedTypeReaction,
 					},
 					{
 						Label:       translate.Message(locale, "components.role.panel.type.select_menu"),
-						Value:       rolepanelplaced.TypeSelectMenu.String(),
+						Value:       RolePanelPlacedTypeSelectMenu,
 						Description: translate.Message(locale, "components.role.panel.type.select_menu.description"),
 						Emoji:       emoji.SelectMenu,
-						Default:     place.Type == rolepanelplaced.TypeSelectMenu,
+						Default:     place.Type == RolePanelPlacedTypeSelectMenu,
 					},
 					{
 						Label:       translate.Message(locale, "components.role.panel.type.button"),
-						Value:       rolepanelplaced.TypeButton.String(),
+						Value:       RolePanelPlacedTypeButton,
 						Description: translate.Message(locale, "components.role.panel.type.button.description"),
 						Emoji:       emoji.Button,
-						Default:     place.Type == rolepanelplaced.TypeButton,
+						Default:     place.Type == RolePanelPlacedTypeButton,
 					},
 				},
 			},
@@ -346,7 +335,7 @@ func rpPlaceBaseMenu(place *ent.RolePanelPlaced, locale discord.Locale) discord.
 	)
 
 	switch place.Type {
-	case rolepanelplaced.TypeButton:
+	case RolePanelPlacedTypeButton:
 		builder.AddComponents(
 			discord.NewActionRow(
 				discord.StringSelectMenuComponent{
@@ -390,7 +379,7 @@ func rpPlaceBaseMenu(place *ent.RolePanelPlaced, locale discord.Locale) discord.
 				},
 			),
 		)
-	case rolepanelplaced.TypeSelectMenu:
+	case RolePanelPlacedTypeSelectMenu:
 		builder.AddComponents(
 			discord.NewActionRow(
 				discord.ButtonComponent{
@@ -401,7 +390,7 @@ func rpPlaceBaseMenu(place *ent.RolePanelPlaced, locale discord.Locale) discord.
 				},
 			),
 		)
-	case rolepanelplaced.TypeReaction:
+	case RolePanelPlacedTypeReaction:
 		builder.AddComponents(
 			discord.NewActionRow(
 				discord.ButtonComponent{
@@ -437,49 +426,49 @@ func rpPlaceBaseMenu(place *ent.RolePanelPlaced, locale discord.Locale) discord.
 	return builder
 }
 
-func rpPlacedMessage(place *ent.RolePanelPlaced, locale discord.Locale) discord.MessageBuilder {
+func rpPlacedMessage(place *models.RolePanelPlaced, locale discord.Locale) discord.MessageBuilder {
 	builder := discord.NewMessageBuilder()
 	var roleField string
 	for i, r := range place.Roles {
-		if r.Emoji == nil {
-			r.Emoji = &discord.ComponentEmoji{
+		emojiVal := r.Emoji
+		if emojiVal == nil {
+			emojiVal = &discord.ComponentEmoji{
 				Name: discordutil.Index2Emoji(i),
 			}
 		}
-		roleField += fmt.Sprintf("%s| %s\n", discordutil.FormatComponentEmoji(*r.Emoji), builtin.Or(place.UseDisplayName, r.Name, discord.RoleMention(r.ID)))
+		roleField += fmt.Sprintf("%s| %s\n", discordutil.FormatComponentEmoji(*emojiVal), builtin.Or(place.UseDisplayName, r.Name, discord.RoleMention(r.ID)))
 	}
-	builder.SetEmbeds(
-		embeds.SetEmbedsProperties(
-			[]discord.Embed{
-				discord.NewEmbedBuilder().
-					SetTitle(place.Name).
-					SetDescription(place.Description).
-					SetFields(
-						discord.EmbedField{
-							Name:  translate.Message(locale, "components.role.panel.embed.field.role"),
-							Value: roleField,
-						},
-					).
-					Build(),
-			},
-		)...,
-	)
+	embedList := []discord.Embed{
+		discord.NewEmbedBuilder().
+			SetTitle(place.Name).
+			SetDescription(place.Description).
+			SetFields(
+				discord.EmbedField{
+					Name:  translate.Message(locale, "components.role.panel.embed.field.role"),
+					Value: roleField,
+				},
+			).
+			Build(),
+	}
+	builder.SetEmbeds(embeds.SetEmbedsProperties(embedList)...)
+
 	switch place.Type {
-	case rolepanelplaced.TypeButton:
+	case RolePanelPlacedTypeButton:
 		buttons := make([]discord.InteractiveComponent, len(place.Roles))
 		for i, role := range place.Roles {
 			var label string
 			if place.ShowName {
 				label = role.Name
 			}
-			if role.Emoji == nil {
-				role.Emoji = &discord.ComponentEmoji{
+			emojiVal := role.Emoji
+			if emojiVal == nil {
+				emojiVal = &discord.ComponentEmoji{
 					Name: discordutil.Index2Emoji(i),
 				}
 			}
 			buttons[i] = discord.ButtonComponent{
 				Style:    place.ButtonType,
-				Emoji:    role.Emoji,
+				Emoji:    emojiVal,
 				Label:    label,
 				CustomID: fmt.Sprintf("role:panel_use:button:%s:%s", place.ID, role.ID),
 			}
@@ -496,7 +485,7 @@ func rpPlacedMessage(place *ent.RolePanelPlaced, locale discord.Locale) discord.
 		builder.AddComponents(
 			components...,
 		)
-	case rolepanelplaced.TypeSelectMenu:
+	case RolePanelPlacedTypeSelectMenu:
 		if place.FoldingSelectMenu {
 			builder.AddComponents(
 				discord.NewActionRow(
@@ -514,18 +503,19 @@ func rpPlacedMessage(place *ent.RolePanelPlaced, locale discord.Locale) discord.
 	return builder
 }
 
-func rpPlacedSelectMenu(place *ent.RolePanelPlaced, locale discord.Locale) discord.ActionRowComponent {
+func rpPlacedSelectMenu(place *models.RolePanelPlaced, locale discord.Locale) discord.ActionRowComponent {
 	options := make([]discord.StringSelectMenuOption, len(place.Roles))
 	for i, role := range place.Roles {
-		if role.Emoji == nil {
-			role.Emoji = &discord.ComponentEmoji{
+		emojiVal := role.Emoji
+		if emojiVal == nil {
+			emojiVal = &discord.ComponentEmoji{
 				Name: discordutil.Index2Emoji(i),
 			}
 		}
 		options[i] = discord.StringSelectMenuOption{
 			Label: role.Name,
 			Value: role.ID.String(),
-			Emoji: role.Emoji,
+			Emoji: emojiVal,
 		}
 	}
 	actionRow := discord.NewActionRow(

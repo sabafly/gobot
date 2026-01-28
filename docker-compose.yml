@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    # image: ghcr.io/sabafly/gobot:latest
     tty: true
     env_file:
       - ./mysql/.env

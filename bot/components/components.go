@@ -24,16 +24,14 @@ import (
 	"context"
 
 	"github.com/sabafly/gobot/database"
-	"github.com/sabafly/gobot/ent"
 	"github.com/sabafly/gobot/internal/smap"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
-func New(ctx context.Context, db *ent.Client, conf Config, gormDb *database.DB) *Components {
+func New(ctx context.Context, conf Config, gormDb *database.DB) *Components {
 	return &Components{
 		ctx:              ctx,
-		db:               db,
 		commandsRegistry: make(map[string]Command),
 		config:           conf,
 		gormDb:           gormDb,
@@ -42,7 +40,6 @@ func New(ctx context.Context, db *ent.Client, conf Config, gormDb *database.DB) 
 
 type Components struct {
 	ctx    context.Context
-	db     *ent.Client
 	gormDb *database.DB
 
 	config Config
@@ -55,8 +52,6 @@ type Components struct {
 }
 
 func (c *Components) Ctx() context.Context { return c.ctx }
-
-func (c *Components) DB() *ent.Client { return c.db }
 
 // DO NOT REUSE RETURN VALUE, MUST CALL EACH TIME TO GET NEW SESSION
 func (c *Components) GormDB() *gorm.DB {

@@ -28,20 +28,18 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
+	"gorm.io/gorm"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
-	"github.com/sabafly/gobot/ent"
-	"github.com/sabafly/gobot/ent/guild"
-	"github.com/sabafly/gobot/ent/messagepin"
-	"github.com/sabafly/gobot/ent/messageremind"
-	"github.com/sabafly/gobot/ent/wordsuffix"
+	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/builtin"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/parse"
@@ -56,6 +54,12 @@ const (
 	PinArgumentTypeDuration1d
 	PinArgumentTypeDuration3d
 	PinArgumentTypeDuration1w
+)
+
+const (
+	WordSuffixRuleWebhook = "webhook"
+	WordSuffixRuleWarn    = "warn"
+	WordSuffixRuleDelete  = "delete"
 )
 
 func Command(c *components.Components) *generic.Command {
@@ -103,17 +107,17 @@ func Command(c *components.Components) *generic.Command {
 											{
 												Name:              "webhook",
 												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.rule.webhook", false),
-												Value:             wordsuffix.RuleWebhook.String(),
+												Value:             WordSuffixRuleWebhook,
 											},
 											{
 												Name:              "warn",
 												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.rule.warn", false),
-												Value:             wordsuffix.RuleWarn.String(),
+												Value:             WordSuffixRuleWarn,
 											},
 											{
 												Name:              "delete",
 												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.rule.delete", false),
-												Value:             wordsuffix.RuleDelete.String(),
+												Value:             WordSuffixRuleDelete,
 											},
 										},
 									},
@@ -281,25 +285,31 @@ func Command(c *components.Components) *generic.Command {
 						}
 						expired = builtin.Or(d != 0, builtin.Ptr(time.Now().Add(d)), nil)
 					}
-					var w *ent.WordSuffix
-					if u.QueryWordSuffix().Where(wordsuffix.GuildID(g.ID)).ExistX(event) {
-						w = u.QueryWordSuffix().Where(wordsuffix.GuildID(g.ID)).OnlyX(event)
-						w = w.Update().
-							SetSuffix(event.SlashCommandInteractionData().String("suffix")).
-							SetOwner(u).
-							SetRule(wordsuffix.Rule(event.SlashCommandInteractionData().String("rule"))).
-							SetNillableExpired(expired).
-							SaveX(event)
+
+					var w models.WordSuffix
+					err = c.GormDB().Where("guild_id = ? AND owner_id = ?", g.ID, u.ID).First(&w).Error
+					if err == nil {
+						// Update
+						w.Suffix = event.SlashCommandInteractionData().String("suffix")
+						w.Rule = event.SlashCommandInteractionData().String("rule")
+						w.Expired = expired
+						if err := c.GormDB().Save(&w).Error; err != nil {
+							return errors.NewError(err)
+						}
 					} else {
-						w = c.DB().WordSuffix.
-							Create().
-							SetGuild(g).
-							SetSuffix(event.SlashCommandInteractionData().String("suffix")).
-							SetOwner(u).
-							SetRule(wordsuffix.Rule(event.SlashCommandInteractionData().String("rule"))).
-							SetNillableExpired(expired).
-							SaveX(event)
+						// Create
+						w = models.WordSuffix{
+							GuildID: &g.ID,
+							Suffix:  event.SlashCommandInteractionData().String("suffix"),
+							OwnerID: u.ID,
+							Rule:    event.SlashCommandInteractionData().String("rule"),
+							Expired: expired,
+						}
+						if err := c.GormDB().Create(&w).Error; err != nil {
+							return errors.NewError(err)
+						}
 					}
+
 					var durationString string
 					if expired != nil {
 						durationString = discord.FormattedTimestampMention(expired.Unix(), discord.TimestampStyleRelative)
@@ -312,13 +322,11 @@ func Command(c *components.Components) *generic.Command {
 								translate.Message(
 									event.Locale(),
 									"components.message.suffix.set.message",
-									translate.WithTemplate(map[string]any{"User": discord.UserMention(u.ID), "Suffix": w.Suffix}),
-								),
+									translate.WithTemplate(map[string]any{"User": discord.UserMention(u.ID), "Suffix": w.Suffix})),
 								translate.Message(
 									event.Locale(),
 									"components.message.suffix.duration.message",
-									translate.WithTemplate(map[string]any{"Duration": durationString}),
-								),
+									translate.WithTemplate(map[string]any{"Duration": durationString})),
 							).
 							BuildCreate(),
 					); err != nil {
@@ -349,20 +357,28 @@ func Command(c *components.Components) *generic.Command {
 						return errors.NewError(err)
 					}
 
-					if !u.QueryWordSuffix().Where(wordsuffix.GuildID(g.ID)).ExistX(event) {
-						if err := event.CreateMessage(
-							discord.NewMessageBuilder().
-								SetContent(translate.Message(event.Locale(), "components.message.suffix.remove.message.no_suffix", translate.WithTemplate(map[string]any{"User": discord.UserMention(u.ID)}))).
-								SetAllowedMentions(&discord.AllowedMentions{}).
-								SetFlags(discord.MessageFlagEphemeral).
-								BuildCreate(),
-						); err != nil {
-							return errors.NewError(err)
+					var w models.WordSuffix
+					err = c.GormDB().Where("guild_id = ? AND owner_id = ?", g.ID, u.ID).First(&w).Error
+					if err != nil {
+						if err == gorm.ErrRecordNotFound {
+							if err := event.CreateMessage(
+								discord.NewMessageBuilder().
+									SetContent(translate.Message(event.Locale(), "components.message.suffix.remove.message.no_suffix", translate.WithTemplate(map[string]any{"User": discord.UserMention(u.ID)}))).
+									SetAllowedMentions(&discord.AllowedMentions{}).
+									SetFlags(discord.MessageFlagEphemeral).
+									BuildCreate(),
+							); err != nil {
+								return errors.NewError(err)
+							}
+							return nil
 						}
-						return nil
+						return errors.NewError(err)
 					}
 
-					c.DB().WordSuffix.DeleteOneID(u.QueryWordSuffix().Where(wordsuffix.GuildID(g.ID)).FirstIDX(event)).ExecX(event)
+					if err := c.GormDB().Delete(&w).Error; err != nil {
+						return errors.NewError(err)
+					}
+
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
 							SetContent(translate.Message(event.Locale(), "components.message.suffix.remove.message", translate.WithTemplate(map[string]any{"User": discord.UserMention(u.ID)}))).
@@ -402,12 +418,10 @@ func Command(c *components.Components) *generic.Command {
 					messageStr := translate.Message(event.Locale(), "components.message.suffix.check.message.none",
 						translate.WithTemplate(map[string]any{"User": discord.UserMention(u.ID)}),
 					)
-					if u.QueryWordSuffix().Where(
-						wordsuffix.GuildID(g.ID),
-					).ExistX(event) {
-						w := u.QueryWordSuffix().Where(
-							wordsuffix.GuildID(g.ID),
-						).FirstX(event)
+
+					var w models.WordSuffix
+					err = c.GormDB().Where("guild_id = ? AND owner_id = ?", g.ID, u.ID).First(&w).Error
+					if err == nil {
 						messageStr = translate.Message(event.Locale(), "components.message.suffix.check.message",
 							translate.WithTemplate(
 								map[string]any{
@@ -417,11 +431,12 @@ func Command(c *components.Components) *generic.Command {
 									),
 									"User":   discord.UserMention(u.ID),
 									"Suffix": w.Suffix,
-									"Rule":   translate.Message(event.Locale(), "components.message.suffix.set.command.options.rule."+w.Rule.String()),
+									"Rule":   translate.Message(event.Locale(), "components.message.suffix.set.command.options.rule."+w.Rule),
 								},
 							),
 						)
 					}
+
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
 							SetContent(messageStr).
@@ -466,19 +481,27 @@ func Command(c *components.Components) *generic.Command {
 				},
 				DiscordPerm: discord.PermissionManageMessages,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					_, err := c.GuildCreateID(event, *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
 
-					if !g.QueryMessagePins().Where(messagepin.ChannelID(event.Channel().ID())).ExistX(event) {
-						return errors.NewError(errors.ErrorMessage("errors.unavailable.message.pin", event))
-					}
-					if beforeID := g.QueryMessagePins().Where(messagepin.ChannelID(event.Channel().ID())).FirstX(event).BeforeID; beforeID != nil {
-						_ = event.Client().Rest.DeleteMessage(event.Channel().ID(), *beforeID)
+					var m models.MessagePin
+					err = c.GormDB().Where("channel_id = ?", event.Channel().ID()).First(&m).Error
+					if err != nil {
+						if err == gorm.ErrRecordNotFound {
+							return errors.NewError(errors.ErrorMessage("errors.unavailable.message.pin", event))
+						}
+						return errors.NewError(err)
 					}
 
-					c.DB().MessagePin.Delete().Where(messagepin.ChannelID(event.Channel().ID())).ExecX(event)
+					if m.BeforeID != nil {
+						_ = event.Client().Rest.DeleteMessage(event.Channel().ID(), *m.BeforeID)
+					}
+
+					if err := c.GormDB().Delete(&m).Error; err != nil {
+						return errors.NewError(err)
+					}
 
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
@@ -555,15 +578,17 @@ func Command(c *components.Components) *generic.Command {
 				},
 				DiscordPerm: discord.PermissionManageMessages,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					count := c.DB().MessageRemind.Delete().Where(
-						messageremind.HasGuildWith(guild.ID(*event.GuildID())),
-						messageremind.NameContains(event.SlashCommandInteractionData().String("remind")),
-					).ExecX(event)
+					res := c.GormDB().Where("guild_id = ? AND name LIKE ?", *event.GuildID(), "%"+event.SlashCommandInteractionData().String("remind")+"%").Delete(&models.MessageRemind{})
+					if res.Error != nil {
+						return errors.NewError(res.Error)
+					}
+					count := res.RowsAffected
+
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
 							SetContent(translate.Message(event.Locale(), "components.message.remind.cancel.message",
 								translate.WithTemplate(map[string]any{
-									"Count": strconv.Itoa(count),
+									"Count": strconv.FormatInt(count, 10),
 								}),
 							)).
 							BuildCreate(),
@@ -582,12 +607,8 @@ func Command(c *components.Components) *generic.Command {
 				},
 				DiscordPerm: discord.PermissionManageMessages,
 				AutocompleteHandler: func(c *components.Components, event *events.AutocompleteInteractionCreate) errors.Error {
-					reminds := c.DB().MessageRemind.Query().Where(
-						messageremind.HasGuildWith(guild.ID(*event.GuildID())),
-						messageremind.NameContains(event.Data.String("remind")),
-					).
-						Limit(25).
-						AllX(event)
+					var reminds []models.MessageRemind
+					c.GormDB().Where("guild_id = ? AND name LIKE ?", *event.GuildID(), "%"+event.Data.String("remind")+"%").Limit(25).Find(&reminds)
 
 					choices := make([]discord.AutocompleteChoice, len(reminds))
 					for i, mr := range reminds {
@@ -612,19 +633,23 @@ func Command(c *components.Components) *generic.Command {
 				}
 
 				// もし既にあったら抹消する
-				if g.QueryMessagePins().Where(messagepin.ChannelID(event.Channel().ID())).ExistX(event) {
-					if beforeID := g.QueryMessagePins().Where(messagepin.ChannelID(event.Channel().ID())).FirstX(event).BeforeID; beforeID != nil {
-						_ = event.Client().Rest.DeleteMessage(event.Channel().ID(), *beforeID)
+				var oldPin models.MessagePin
+				if err := component.GormDB().Where("channel_id = ?", event.Channel().ID()).First(&oldPin).Error; err == nil {
+					if oldPin.BeforeID != nil {
+						_ = event.Client().Rest.DeleteMessage(event.Channel().ID(), *oldPin.BeforeID)
 					}
-
-					component.DB().MessagePin.Delete().Where(messagepin.ChannelID(event.Channel().ID())).ExecX(event)
+					component.GormDB().Delete(&oldPin)
 				}
 
-				m := component.DB().MessagePin.Create().
-					SetChannelID(event.Channel().ID()).
-					SetContent(event.Data.Text("content")).
-					SetGuild(g).
-					SaveX(event)
+				m := models.MessagePin{
+					ChannelID: event.Channel().ID(),
+					Content:   event.Data.Text("content"),
+					GuildID:   g.ID,
+				}
+				if err := component.GormDB().Create(&m).Error; err != nil {
+					return errors.NewError(err)
+				}
+
 				channel, err := event.Client().Rest.GetChannel(m.ChannelID)
 				if err != nil {
 					return errors.NewError(err)
@@ -646,7 +671,8 @@ func Command(c *components.Components) *generic.Command {
 					return errors.NewError(err)
 				}
 
-				m.Update().SetBeforeID(message.ID).SaveX(event)
+				m.BeforeID = &message.ID
+				component.GormDB().Save(&m)
 
 				if err := event.CreateMessage(
 					discord.NewMessageBuilder().
@@ -668,15 +694,21 @@ func Command(c *components.Components) *generic.Command {
 				if time.Now().After(tm) {
 					return errors.NewError(errors.ErrorMessage("errors.invalid.time.before", event))
 				}
-				c.DB().MessageRemind.Create().
-					SetGuild(g).
-					SetTime(tm).
-					SetContent(event.Data.Text("content")).
-					SetChannelID(event.Channel().ID()).
-					SetAuthorID(event.Member().User.ID).
-					SetName(event.Data.Text("name")).
-					ExecX(event)
-				g.Update().AddRemindCount(1).ExecX(event)
+
+				remind := models.MessageRemind{
+					GuildID:   g.ID,
+					Time:      tm,
+					Content:   event.Data.Text("content"),
+					ChannelID: event.Channel().ID(),
+					AuthorID:  event.Member().User.ID,
+					Name:      event.Data.Text("name"),
+				}
+				if err := c.GormDB().Create(&remind).Error; err != nil {
+					return errors.NewError(err)
+				}
+
+				g.RemindCount++
+				c.GormDB().Save(g)
 
 				if err := event.CreateMessage(
 					discord.NewMessageBuilder().
@@ -697,11 +729,9 @@ func Command(c *components.Components) *generic.Command {
 			{
 				Duration: time.Minute,
 				Worker: func(c *components.Components, client *bot.Client) error {
-					reminds := c.DB().MessageRemind.Query().
-						Where(
-							messageremind.TimeLT(time.Now()),
-						).
-						AllX(c.Ctx())
+					var reminds []models.MessageRemind
+					c.GormDB().Where("time < ?", time.Now()).Find(&reminds)
+
 					for _, remind := range reminds {
 						if _, err := client.Rest.CreateMessage(remind.ChannelID,
 							discord.NewMessageBuilder().
@@ -712,11 +742,7 @@ func Command(c *components.Components) *generic.Command {
 						}
 					}
 
-					c.DB().MessageRemind.Delete().
-						Where(
-							messageremind.TimeLT(time.Now()),
-						).
-						ExecX(c.Ctx())
+					c.GormDB().Where("time < ?", time.Now()).Delete(&models.MessageRemind{})
 					return nil
 				},
 			},
@@ -738,8 +764,8 @@ func Command(c *components.Components) *generic.Command {
 				// 変数が初期化されていないことが潜在的なバグの原因になりかねない
 
 				// 語尾の処理
-				var w *ent.WordSuffix
-				var u *ent.User
+				var w models.WordSuffix
+				var u *models.User
 
 				if e.Message.Type.System() || e.Message.Author.System || e.Message.Author.Bot {
 					goto messagePin
@@ -753,26 +779,29 @@ func Command(c *components.Components) *generic.Command {
 					return errors.NewError(err)
 				}
 
-				if u.QueryWordSuffix().Where(wordsuffix.GuildID(e.GuildID)).ExistX(e) {
-					// Guild
-					w = u.QueryWordSuffix().Where(wordsuffix.GuildID(e.GuildID)).FirstX(e)
+				// Guild
+				if err := c.GormDB().Where("owner_id = ? AND guild_id = ?", u.ID, e.GuildID).First(&w).Error; err == nil {
+					// Found
 				} else {
 					// Global
-					if !u.QueryWordSuffix().Where(wordsuffix.GuildIDIsNil()).ExistX(e) {
+					if err := c.GormDB().Where("owner_id = ? AND guild_id IS NULL", u.ID).First(&w).Error; err != nil {
+						if err != gorm.ErrRecordNotFound {
+							slog.Error("語尾取得エラー", "err", err)
+						}
+						// Not found
 						slog.Debug("語尾が存在しません")
 						goto messagePin
 					}
-					w = u.QueryWordSuffix().Where(wordsuffix.GuildIDIsNil()).FirstX(e)
 				}
 
 				{
 					webhookFlag := false
-					if w.Rule == wordsuffix.RuleWebhook {
+					if w.Rule == WordSuffixRuleWebhook {
 						c.GetLock("message_pin").Mutex(e.ChannelID).Lock()
 						webhookFlag = true
 					}
 
-					err = messageSuffixMessageCreateHandler(w, u, e, c)
+					err = messageSuffixMessageCreateHandler(&w, u, e, c)
 
 					if webhookFlag {
 						c.GetLock("message_pin").Mutex(e.ChannelID).Unlock()
@@ -800,12 +829,20 @@ func Command(c *components.Components) *generic.Command {
 					if err != nil {
 						return errors.NewError(err)
 					}
-					if !g.QueryMessagePins().Where(messagepin.ChannelID(event.ChannelID)).ExistX(event) {
-						return nil
+
+					var m models.MessagePin
+					if err := c.GormDB().Where("guild_id = ? AND channel_id = ?", g.ID, event.ChannelID).First(&m).Error; err != nil {
+						if err == gorm.ErrRecordNotFound {
+							return nil
+						}
+						return errors.NewError(err)
 					}
+
 					c.GetLock("message_pin").Mutex(e.ChannelID).Lock()
 					defer c.GetLock("message_pin").Mutex(e.ChannelID).Unlock()
-					m := g.QueryMessagePins().Where(messagepin.ChannelID(event.ChannelID)).FirstX(event)
+
+					// Re-fetch to be safe under lock? Or is it overkill?
+					// The original code fetched it here.
 
 					webhook, err := event.Client().WebhookManager.GetMessenger(channel)
 					if err != nil {
@@ -852,10 +889,11 @@ func Command(c *components.Components) *generic.Command {
 							return errors.NewError(err)
 						}
 
-						m.Update().SetBeforeID(message.ID).SetRateLimit(m.RateLimit).ExecX(event)
+						m.BeforeID = &message.ID
+						c.GormDB().Save(&m)
 						slog.Info("ピン留め更新", "cid", event.ChannelID, "mid", event.MessageID)
 					} else {
-						m.Update().SetRateLimit(m.RateLimit).ExecX(event)
+						c.GormDB().Save(&m)
 					}
 					return nil
 				}(e, c); err != nil {
@@ -874,14 +912,15 @@ func Command(c *components.Components) *generic.Command {
 				if err != nil {
 					return errors.NewError(err)
 				}
-				if !g.QueryMessagePins().Where(messagepin.ChannelID(e.ChannelID)).ExistX(e) {
+
+				var m models.MessagePin
+				if err := c.GormDB().Where("guild_id = ? AND channel_id = ?", g.ID, e.ChannelID).First(&m).Error; err != nil {
 					return nil
 				}
-				m := g.QueryMessagePins().Where(messagepin.ChannelID(e.ChannelID)).FirstX(e)
 
 				if m.BeforeID != nil && *m.BeforeID == e.MessageID {
 					slog.Info("ピン留め削除", "cid", e.ChannelID, "mid", e.MessageID)
-					c.DB().MessagePin.DeleteOneID(m.ID).ExecX(e)
+					c.GormDB().Delete(&m)
 				}
 			}
 			return nil
@@ -889,18 +928,18 @@ func Command(c *components.Components) *generic.Command {
 	}).SetComponent(c)
 }
 
-func messageSuffixMessageCreateHandler(w *ent.WordSuffix, u *ent.User, e *events.GuildMessageCreate, c *components.Components) errors.Error {
+func messageSuffixMessageCreateHandler(w *models.WordSuffix, u *models.User, e *events.GuildMessageCreate, c *components.Components) errors.Error {
 	slog.Debug("メッセージ作成")
 	if e.Message.Content == "" {
 		return nil
 	}
 
 	if w.Expired != nil && time.Now().Compare(*w.Expired) == 1 {
-		c.DB().WordSuffix.DeleteOneID(w.ID).ExecX(e)
+		c.GormDB().Delete(w)
 		return nil
 	}
 	switch w.Rule {
-	case wordsuffix.RuleDelete:
+	case WordSuffixRuleDelete:
 		if strings.HasSuffix(e.Message.Content, w.Suffix) {
 			return nil
 		}
@@ -908,7 +947,7 @@ func messageSuffixMessageCreateHandler(w *ent.WordSuffix, u *ent.User, e *events
 			slog.Error("メッセージを削除できません", "err", err)
 			return errors.NewError(err)
 		}
-	case wordsuffix.RuleWarn:
+	case WordSuffixRuleWarn:
 		if strings.HasSuffix(e.Message.Content, w.Suffix) {
 			return nil
 		}
@@ -924,11 +963,39 @@ func messageSuffixMessageCreateHandler(w *ent.WordSuffix, u *ent.User, e *events
 			slog.Error("メッセージを作成できません", "err", err)
 			return errors.NewError(err)
 		}
-	case wordsuffix.RuleWebhook:
-		content := e.Message.Content
-		if !strings.HasSuffix(e.Message.Content, w.Suffix) {
-			content += w.Suffix
+	case WordSuffixRuleWebhook:
+		var content string
+		for s := range strings.SplitSeq(e.Message.Content, "\n") {
+			if s == "" {
+				content += "\n"
+				continue
+			}
+			// すでに語尾がある場合はそのまま通す
+			if strings.HasSuffix(s, w.Suffix) {
+				content += s + "\n"
+				continue
+			}
+			// 末尾に文字列以外の文字がある場合(アルファベット、かな漢字以外のすべての文字)それらの前に語尾をなければ追加する
+			// 例: "こんにちは→→"の場合、"こんにちは"の後ろに語尾を追加し、"→→"の後ろには追加しない
+			runes := []rune(s)
+			i := len(runes) - 1
+			for i >= 0 {
+				if (runes[i] < 'A' || runes[i] > 'Z') && (runes[i] < 'a' || runes[i] > 'z') && (runes[i] < '0' || runes[i] > '9') && !unicode.In(runes[i], unicode.Hiragana, unicode.Katakana, unicode.Han) {
+					i--
+				} else {
+					break
+				}
+			}
+			if i < 0 {
+				// すべて文字列以外の文字の場合、そのまま通す
+				content += s + "\n"
+				continue
+			}
+			content += string(runes[:i+1]) + w.Suffix + string(runes[i+1:]) + "\n"
 		}
+		content = content[:len(content)-1] // 最後の改行を削除
+
+		// メッセージを削除
 		if err := e.Client().Rest.DeleteMessage(e.ChannelID, e.MessageID); err != nil {
 			return errors.NewError(err)
 		}

@@ -31,10 +31,7 @@ import (
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/bot/components"
-	"github.com/sabafly/gobot/ent"
-	"github.com/sabafly/gobot/ent/guild"
-	"github.com/sabafly/gobot/ent/member"
-	"github.com/sabafly/gobot/ent/user"
+	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/translate"
 )
 
@@ -62,30 +59,26 @@ func noPermissionMessage(event interface {
 	)
 }
 
-func PermissionCheck(ctx context.Context, c *components.Components, g *ent.Guild, client *bot.Client, m discord.ResolvedMember, guildID snowflake.ID, perms []Permission) bool {
+func PermissionCheck(ctx context.Context, c *components.Components, g *models.Guild, client *bot.Client, m discord.ResolvedMember, guildID snowflake.ID, perms []Permission) bool {
 
 	if len(perms) == 0 {
 		return true
 	}
 
-	if m := c.DB().Guild.Query().
-		Where(guild.ID(guildID)).
-		FirstX(ctx).
-		QueryMembers().
-		Where(member.HasUserWith(user.ID(m.User.ID))).
-		FirstX(ctx); m != nil {
+	var member models.Member
+	if err := c.GormDB().Where("guild_id = ? AND user_id = ?", guildID, m.User.ID).First(&member).Error; err == nil {
 		for _, p := range perms {
 			var r bool
 			if p.Default() {
-				if m.Permission.Disabled(p.PermString()) {
+				if member.Permission.Disabled(p.PermString()) {
 					return false
 				} else {
 					r = true
 				}
 			} else {
-				if m.Permission.Enabled(p.PermString()) {
+				if member.Permission.Enabled(p.PermString()) {
 					r = true
-				} else if m.Permission.Disabled(p.PermString()) {
+				} else if member.Permission.Disabled(p.PermString()) {
 					return false
 				}
 			}
@@ -100,7 +93,7 @@ func PermissionCheck(ctx context.Context, c *components.Components, g *ent.Guild
 	return RolePermissionCheck(g, guildID, client, m.RoleIDs, perms)
 }
 
-func RolePermissionCheck(g *ent.Guild, guildID snowflake.ID, client *bot.Client, roleIds []snowflake.ID, perms []Permission) bool {
+func RolePermissionCheck(g *models.Guild, guildID snowflake.ID, client *bot.Client, roleIds []snowflake.ID, perms []Permission) bool {
 	if len(perms) == 0 {
 		return true
 	}
@@ -152,14 +145,10 @@ func permissionCheck(event interface {
 	}
 
 	if dPerm != 0 && event.Member().Permissions.Has(dPerm) {
-		if m := c.DB().Guild.Query().
-			Where(guild.ID(*event.GuildID())).
-			FirstX(event).
-			QueryMembers().
-			Where(member.HasUserWith(user.ID(event.User().ID))).
-			FirstX(event); m != nil {
+		var member models.Member
+		if err := c.GormDB().Where("guild_id = ? AND user_id = ?", *event.GuildID(), event.User().ID).First(&member).Error; err == nil {
 			for _, p := range perms {
-				if m.Permission.Disabled(p.PermString()) {
+				if member.Permission.Disabled(p.PermString()) {
 					return false
 				}
 			}

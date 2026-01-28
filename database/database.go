@@ -32,6 +32,13 @@ func NewDB(dsn string) (*DB, error) {
 		&models.BetOption{},
 		&models.Bet{},
 		&models.BetEntrant{},
+		&models.Member{},
+		&models.RolePanel{},
+		&models.RolePanelEdit{},
+		&models.RolePanelPlaced{},
+		&models.MessagePin{},
+		&models.MessageRemind{},
+		&models.WordSuffix{},
 	); err != nil {
 		return nil, err
 	}
