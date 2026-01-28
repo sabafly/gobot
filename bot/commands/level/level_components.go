@@ -43,7 +43,9 @@ func upMessageModalHandler(c *components.Components, event *events.ModalSubmitIn
 		return errors.NewError(err)
 	}
 	g.LevelUpMessage = event.Data.Text("message")
-	c.GormDB().Save(g)
+	if err := c.GormDB().Save(g).Error; err != nil {
+		return errors.NewError(err)
+	}
 
 	embed := discord.NewEmbedBuilder().
 		SetTitle(translate.Message(event.Locale(), "components.level.up.message.message")).
@@ -55,7 +57,7 @@ func upMessageModalHandler(c *components.Components, event *events.ModalSubmitIn
 			SetEmbeds(embeds.SetEmbedProperties(embed)).
 			BuildCreate(),
 	); err != nil {
-		return nil
+		return errors.NewError(err)
 	}
 	return nil
 }
@@ -97,7 +99,9 @@ func eventHandler(c *components.Components, event bot.Event) errors.Error {
 			m.LastMessageHashes = slices.Delete(m.LastMessageHashes, 0, 1)
 		}
 		m.LastMessageHashes = append(m.LastMessageHashes, hashStr)
-		c.GormDB().Save(m)
+		if err := c.GormDB().Save(m).Error; err != nil {
+			return errors.NewError(err)
+		}
 
 		if _, err = addXp(event, rand.N[uint64](16)+15, event.Client(), m, g, event.ChannelID, event.Message.Author.EffectiveName(), false, c); err != nil {
 			return errors.NewError(err)
