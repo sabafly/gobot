@@ -118,27 +118,35 @@ func (c *Components) OnGuildLeave() func(event *events.GuildLeave) {
 		if err := c.GormDB().Transaction(func(tx *gorm.DB) error {
 			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.Member{}).Error; err != nil {
 				slog.Error("ギルド脱退 メンバー削除に失敗", "err", err)
+				return err
 			}
 			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.MessagePin{}).Error; err != nil {
 				slog.Error("ギルド脱退 メッセージピン削除に失敗", "err", err)
+				return err
 			}
 			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.MessageRemind{}).Error; err != nil {
 				slog.Error("ギルド脱退 メッセージリマインド削除に失敗", "err", err)
+				return err
 			}
 			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.RolePanelPlaced{}).Error; err != nil {
 				slog.Error("ギルド脱退 ロールパネル配置削除に失敗", "err", err)
+				return err
 			}
 			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.RolePanelEdit{}).Error; err != nil {
 				slog.Error("ギルド脱退 ロールパネル編集削除に失敗", "err", err)
+				return err
 			}
 			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.RolePanel{}).Error; err != nil {
 				slog.Error("ギルド脱退 ロールパネル削除に失敗", "err", err)
+				return err
 			}
 			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.WordSuffix{}).Error; err != nil {
 				slog.Error("ギルド脱退 ワードサフィックス削除に失敗", "err", err)
+				return err
 			}
 			if err := tx.Delete(&models.Guild{ID: event.Guild.ID}).Error; err != nil {
 				slog.Error("ギルド脱退 ギルド削除に失敗", "err", err)
+				return err
 			}
 			return nil
 		}); err != nil {
@@ -162,7 +170,7 @@ func (c *Components) GuildCreate(ctx context.Context, ownerID snowflake.ID, g *d
 	guild = models.Guild{
 		ID:      g.ID,
 		Name:    g.Name,
-		OwnerID: ownerID,
+		OwnerID: &ownerID,
 	}
 	if err := c.GormDB().Create(&guild).Error; err != nil {
 		return nil, err
@@ -192,7 +200,7 @@ func (c *Components) GuildRequest(client *bot.Client, gid snowflake.ID) (*discor
 func (c *Components) InitializeGuild(ctx context.Context, guild discord.Guild) error {
 	g := models.Guild{
 		ID:      guild.ID,
-		OwnerID: guild.OwnerID,
+		OwnerID: &guild.OwnerID,
 	}
 	if err := c.GormDB().Where(g).FirstOrCreate(&g).Error; err != nil {
 		return err
