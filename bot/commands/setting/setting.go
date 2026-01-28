@@ -461,7 +461,9 @@ func Command(c *components.Components) components.Command {
 				g.BumpMessage = event.ModalSubmitInteraction.Data.Text("message")
 				g.BumpRemindMessageTitle = event.ModalSubmitInteraction.Data.Text("remind.message_title")
 				g.BumpRemindMessage = event.ModalSubmitInteraction.Data.Text("remind.message")
-				c.GormDB().Save(g)
+				if err := c.GormDB().Save(g).Error; err != nil {
+					return errors.NewError(err)
+				}
 
 				if err := event.DeferUpdateMessage(); err != nil {
 					return errors.NewError(err)
@@ -477,7 +479,9 @@ func Command(c *components.Components) components.Command {
 				g.UpMessage = event.ModalSubmitInteraction.Data.Text("message")
 				g.UpRemindMessageTitle = event.ModalSubmitInteraction.Data.Text("remind.message_title")
 				g.UpRemindMessage = event.ModalSubmitInteraction.Data.Text("remind.message")
-				c.GormDB().Save(g)
+				if err := c.GormDB().Save(g).Error; err != nil {
+					return errors.NewError(err)
+				}
 
 				if err := event.DeferUpdateMessage(); err != nil {
 					return errors.NewError(err)

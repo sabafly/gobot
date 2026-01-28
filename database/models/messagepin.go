@@ -42,7 +42,7 @@ type MessagePin struct {
 	RateLimit RateLimit       `gorm:"serializer:json"`
 }
 
-func (m *MessagePin) BeforeCreate(tx gorm.DB) error {
+func (m *MessagePin) BeforeCreate(tx *gorm.DB) error {
 	if m.ID == uuid.Nil {
 		m.ID = uuid.New()
 	}
