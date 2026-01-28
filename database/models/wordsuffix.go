@@ -8,7 +8,7 @@ import (
 )
 
 type WordSuffix struct {
-	ID      uuid.UUID `gorm:"type:uuid;primary_key;"`
+	ID      uuid.UUID `gorm:"type:uuid;primary_key;default:uuid_generate_v4()"`
 	Suffix  string    `gorm:"not null"`
 	Expired *time.Time
 

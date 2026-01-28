@@ -44,6 +44,7 @@ import (
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/parse"
 	"github.com/sabafly/gobot/internal/translate"
+	"github.com/sabafly/gobot/internal/uuidv7"
 )
 
 const (
@@ -299,6 +300,7 @@ func Command(c *components.Components) *generic.Command {
 					} else {
 						// Create
 						w = models.WordSuffix{
+							ID:      uuidv7.New(),
 							GuildID: &g.ID,
 							Suffix:  event.SlashCommandInteractionData().String("suffix"),
 							OwnerID: u.ID,
