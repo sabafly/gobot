@@ -97,7 +97,7 @@ func Command(c *components.Components) components.Command {
 								Description: "permission text",
 								Required:    true,
 								MinLength:   builtin.Ptr(1),
-								MaxLength:   builtin.Ptr(1),
+								MaxLength:   builtin.Ptr(100),
 							},
 						},
 					},
