@@ -5,6 +5,7 @@ import (
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type MessageRemind struct {
@@ -16,4 +17,11 @@ type MessageRemind struct {
 	Time      time.Time
 	Content   string `gorm:"type:text;not null"`
 	Name      string `gorm:"not null"`
+}
+
+func (m *MessageRemind) BeforeCreate(tx *gorm.DB) error {
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	return nil
 }

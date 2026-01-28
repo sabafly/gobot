@@ -6,6 +6,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Role struct {
@@ -29,6 +30,13 @@ type RolePanel struct {
 	Edit       *RolePanelEdit    `gorm:"foreignKey:ParentID"`
 }
 
+func (r *RolePanel) BeforeCreate(tx *gorm.DB) error {
+	if r.ID == uuid.Nil {
+		r.ID = uuid.New()
+	}
+	return nil
+}
+
 type RolePanelEdit struct {
 	ID           uuid.UUID     `gorm:"type:uuid;primary_key;"`
 	ChannelID    snowflake.ID  `gorm:"type:bigint(20)"`
@@ -45,6 +53,13 @@ type RolePanelEdit struct {
 
 	ParentID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex"`
 	Parent   RolePanel `gorm:"foreignKey:ParentID"`
+}
+
+func (r *RolePanelEdit) BeforeCreate(tx *gorm.DB) error {
+	if r.ID == uuid.Nil {
+		r.ID = uuid.New()
+	}
+	return nil
 }
 
 type RolePanelPlaced struct {
@@ -69,4 +84,11 @@ type RolePanelPlaced struct {
 
 	RolePanelID uuid.UUID `gorm:"type:uuid;not null;index"`
 	RolePanel   RolePanel `gorm:"foreignKey:RolePanelID;constraint:OnDelete:CASCADE;"`
+}
+
+func (r *RolePanelPlaced) BeforeCreate(tx *gorm.DB) error {
+	if r.ID == uuid.Nil {
+		r.ID = uuid.New()
+	}
+	return nil
 }

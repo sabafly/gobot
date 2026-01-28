@@ -7,6 +7,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type RateLimit struct {
@@ -30,13 +31,6 @@ func (r *RateLimit) CheckLimit() bool {
 	return ok
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 type MessagePin struct {
 	ID        uuid.UUID       `gorm:"type:uuid;primary_key;"`
 	GuildID   snowflake.ID    `gorm:"type:bigint(20);not null;index"`
@@ -46,4 +40,11 @@ type MessagePin struct {
 	Embeds    []discord.Embed `gorm:"serializer:json"`
 	BeforeID  *snowflake.ID   `gorm:"type:bigint(20)"`
 	RateLimit RateLimit       `gorm:"serializer:json"`
+}
+
+func (m *MessagePin) BeforeCreate(tx gorm.DB) error {
+	if m.ID == uuid.Nil {
+		m.ID = uuid.New()
+	}
+	return nil
 }
