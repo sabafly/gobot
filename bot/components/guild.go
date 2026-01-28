@@ -115,7 +115,7 @@ func (c *Components) OnGuildLeave() func(event *events.GuildLeave) {
 		slog.Info("ギルド脱退", "id", event.Guild.ID, "name", event.Guild.Name)
 
 		// Use transaction for deletion
-		c.GormDB().Transaction(func(tx *gorm.DB) error {
+		if err := c.GormDB().Transaction(func(tx *gorm.DB) error {
 			tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.Member{})
 			tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.MessagePin{})
 			tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.MessageRemind{})
@@ -125,7 +125,10 @@ func (c *Components) OnGuildLeave() func(event *events.GuildLeave) {
 			tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.WordSuffix{})
 			tx.Delete(&models.Guild{ID: event.Guild.ID})
 			return nil
-		})
+		}); err != nil {
+			slog.Error("ギルド脱退 データベースからの削除に失敗", "err", err)
+			return
+		}
 	}
 }
 
