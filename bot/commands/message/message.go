@@ -298,6 +298,10 @@ func Command(c *components.Components) *generic.Command {
 							return errors.NewError(err)
 						}
 					} else {
+						if !errors.Is(err, gorm.ErrRecordNotFound) {
+							return errors.NewError(err)
+						}
+
 						// Create
 						w = models.WordSuffix{
 							ID:      uuidv7.New(),
@@ -674,7 +678,9 @@ func Command(c *components.Components) *generic.Command {
 				}
 
 				m.BeforeID = &message.ID
-				component.GormDB().Save(&m)
+				if err := component.GormDB().Save(&m).Error; err != nil {
+					return errors.NewError(err)
+				}
 
 				if err := event.CreateMessage(
 					discord.NewMessageBuilder().
