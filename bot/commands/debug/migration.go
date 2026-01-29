@@ -75,8 +75,11 @@ func migrateEntToGormHandler(c *components.Components, entClient *ent.Client, ev
 				BumpMention:            g.BumpMention,
 				UpMention:              g.UpMention,
 				LevelingDisabled:       g.LevelingDisabled,
-				OwnerID:                &g.Edges.Owner.ID,
 			}
+			if g.Edges.Owner != nil {
+				gg.OwnerID = &g.Edges.Owner.ID
+			}
+
 			if err := tx.Save(&gg).Error; err != nil {
 				return err
 			}
@@ -93,8 +96,10 @@ func migrateEntToGormHandler(c *components.Components, entClient *ent.Client, ev
 				ID:      ws.ID,
 				Suffix:  ws.Suffix,
 				Expired: ws.Expired,
-				OwnerID: ws.Edges.Owner.ID,
 				Rule:    string(ws.Rule),
+			}
+			if ws.Edges.Owner != nil {
+				gws.OwnerID = ws.Edges.Owner.ID
 			}
 			if ws.Edges.Guild != nil {
 				gws.GuildID = &ws.Edges.Guild.ID
@@ -117,8 +122,15 @@ func migrateEntToGormHandler(c *components.Components, entClient *ent.Client, ev
 				Description: rp.Description,
 				UpdatedAt:   rp.UpdatedAt,
 				AppliedAt:   rp.AppliedAt,
-				GuildID:     rp.Edges.Guild.ID,
 			}
+			if rp.Edges.Guild != nil {
+				grp.GuildID = rp.Edges.Guild.ID
+			} else {
+				// RolePanel must belong to a guild, skip if missing
+				slog.Warn("Skipping RolePanel migration due to missing Guild edge", "id", rp.ID)
+				continue
+			}
+
 			grp.Roles = make([]gormModels.Role, len(rp.Roles))
 			for i, r := range rp.Roles {
 				grp.Roles[i] = gormModels.Role{ID: r.ID, Name: r.Name, Emoji: r.Emoji}
@@ -143,9 +155,14 @@ func migrateEntToGormHandler(c *components.Components, entClient *ent.Client, ev
 				Modified:     rpe.Modified,
 				Name:         rpe.Name,
 				Description:  rpe.Description,
-				GuildID:      rpe.Edges.Guild.ID,
-				ParentID:     rpe.Edges.Parent.ID,
 			}
+			if rpe.Edges.Guild != nil {
+				grpe.GuildID = rpe.Edges.Guild.ID
+			}
+			if rpe.Edges.Parent != nil {
+				grpe.ParentID = rpe.Edges.Parent.ID
+			}
+
 			grpe.Roles = make([]gormModels.Role, len(rpe.Roles))
 			for i, r := range rpe.Roles {
 				grpe.Roles[i] = gormModels.Role{ID: r.ID, Name: r.Name, Emoji: r.Emoji}
@@ -176,9 +193,14 @@ func migrateEntToGormHandler(c *components.Components, entClient *ent.Client, ev
 				Name:              rpp.Name,
 				Description:       rpp.Description,
 				UpdatedAt:         rpp.UpdatedAt,
-				GuildID:           rpp.Edges.Guild.ID,
-				RolePanelID:       rpp.Edges.RolePanel.ID,
 			}
+			if rpp.Edges.Guild != nil {
+				grpp.GuildID = rpp.Edges.Guild.ID
+			}
+			if rpp.Edges.RolePanel != nil {
+				grpp.RolePanelID = rpp.Edges.RolePanel.ID
+			}
+
 			grpp.Roles = make([]gormModels.Role, len(rpp.Roles))
 			for i, r := range rpp.Roles {
 				grpp.Roles[i] = gormModels.Role{ID: r.ID, Name: r.Name, Emoji: r.Emoji}
@@ -197,12 +219,15 @@ func migrateEntToGormHandler(c *components.Components, entClient *ent.Client, ev
 		for _, p := range pins {
 			gmp := gormModels.MessagePin{
 				ID:        p.ID,
-				GuildID:   p.Edges.Guild.ID,
 				ChannelID: p.ChannelID,
 				Content:   p.Content,
 				Embeds:    p.Embeds,
 				BeforeID:  p.BeforeID,
 			}
+			if p.Edges.Guild != nil {
+				gmp.GuildID = p.Edges.Guild.ID
+			}
+
 			if rlData, err := json.Marshal(p.RateLimit); err == nil {
 				var gormRL gormModels.RateLimit
 				if err := json.Unmarshal(rlData, &gormRL); err == nil {
@@ -223,12 +248,14 @@ func migrateEntToGormHandler(c *components.Components, entClient *ent.Client, ev
 		for _, r := range reminds {
 			gmr := gormModels.MessageRemind{
 				ID:        r.ID,
-				GuildID:   r.Edges.Guild.ID,
 				ChannelID: r.ChannelID,
 				AuthorID:  r.AuthorID,
 				Time:      r.Time,
 				Content:   r.Content,
 				Name:      r.Name,
+			}
+			if r.Edges.Guild != nil {
+				gmr.GuildID = r.Edges.Guild.ID
 			}
 			if err := tx.Save(&gmr).Error; err != nil {
 				return err
@@ -242,6 +269,10 @@ func migrateEntToGormHandler(c *components.Components, entClient *ent.Client, ev
 			return err
 		}
 		for _, m := range members {
+			if m.Edges.Guild == nil || m.Edges.User == nil {
+				slog.Warn("Skipping Member migration due to missing edges", "member_id_part", m.ID)
+				continue
+			}
 			gm := gormModels.Member{
 				GuildID:           m.Edges.Guild.ID,
 				UserID:            m.Edges.User.ID,
