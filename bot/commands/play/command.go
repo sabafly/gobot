@@ -1,7 +1,10 @@
 package play
 
 import (
+	"fmt"
 	"strconv"
+	"strings"
+	"sync"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
@@ -12,6 +15,28 @@ import (
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
 )
+
+var (
+	slotLocks   = make(map[uuid.UUID]*sync.Mutex)
+	slotLocksMu sync.Mutex
+)
+
+func getSlotLock(id uuid.UUID) *sync.Mutex {
+	slotLocksMu.Lock()
+	defer slotLocksMu.Unlock()
+	lock, ok := slotLocks[id]
+	if !ok {
+		lock = &sync.Mutex{}
+		slotLocks[id] = lock
+	}
+	return lock
+}
+
+func deleteSlotLock(id uuid.UUID) {
+	slotLocksMu.Lock()
+	defer slotLocksMu.Unlock()
+	delete(slotLocks, id)
+}
 
 func ptr[T any](v T) *T {
 	return &v
@@ -249,6 +274,18 @@ func Command(c *components.Components) components.Command {
 					generic.PermissionDefaultString("play.slot"),
 				},
 				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					args := strings.Split(event.Data.CustomID(), ":")
+					if len(args) < 3 {
+						return errors.NewError(fmt.Errorf("invalid custom ID"))
+					}
+					id, errParse := uuid.Parse(args[2])
+					if errParse != nil {
+						return errors.NewError(errParse)
+					}
+					mu := getSlotLock(id)
+					mu.Lock()
+					defer mu.Unlock()
+
 					data, err := SlotPrecondition(event)
 					if err != nil {
 						return err
@@ -293,6 +330,18 @@ func Command(c *components.Components) components.Command {
 					generic.PermissionDefaultString("play.slot"),
 				},
 				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					args := strings.Split(event.Data.CustomID(), ":")
+					if len(args) < 3 {
+						return errors.NewError(fmt.Errorf("invalid custom ID"))
+					}
+					id, errParse := uuid.Parse(args[2])
+					if errParse != nil {
+						return errors.NewError(errParse)
+					}
+					mu := getSlotLock(id)
+					mu.Lock()
+					defer mu.Unlock()
+
 					data, err := SlotPrecondition(event)
 					if err != nil {
 						return err
@@ -300,6 +349,7 @@ func Command(c *components.Components) components.Command {
 					if data == nil {
 						return nil
 					}
+					defer deleteSlotLock(id)
 					return SlotFinish(c, data, event)
 				},
 			},

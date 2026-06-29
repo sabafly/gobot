@@ -346,7 +346,9 @@ func Command(c *components.Components) components.Command {
 					return errors.NewError(errors.ErrorMessage("errors.timeout", event))
 				}
 				var panel models.RolePanel
-				c.GormDB().Where("id = ?", edit.ParentID).First(&panel)
+				if err := c.GormDB().Where("id = ?", edit.ParentID).First(&panel).Error; err != nil {
+					return errors.NewError(err)
+				}
 				initialize(&edit, &panel)
 				switch action {
 				case "change_name":
@@ -388,13 +390,18 @@ func Command(c *components.Components) components.Command {
 					if err != nil {
 						return errors.NewError(errors.ErrorMessage("errors.invalid_argument", event))
 					}
-					g, _ := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(event, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
 					var edit models.RolePanelEdit
 					if err := c.GormDB().Where("id = ? AND guild_id = ?", editID, g.ID).First(&edit).Error; err != nil {
 						return errors.NewError(errors.ErrorMessage("errors.timeout", event))
 					}
 					var panel models.RolePanel
-					c.GormDB().Where("id = ?", edit.ParentID).First(&panel)
+					if err := c.GormDB().Where("id = ?", edit.ParentID).First(&panel).Error; err != nil {
+						return errors.NewError(err)
+					}
 					initialize(&edit, &panel)
 					switch action {
 					case "change_name", "change_description":
@@ -631,13 +638,18 @@ func Command(c *components.Components) components.Command {
 				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
 					args := strings.Split(event.Data.CustomID(), ":")
 					action, placeID := args[2], uuid.MustParse(args[3])
-					g, _ := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(event, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
 					var place models.RolePanelPlaced
 					if err := c.GormDB().Where("id = ? AND guild_id = ?", placeID, g.ID).First(&place).Error; err != nil {
 						return errors.NewError(errors.ErrorMessage("errors.timeout", event))
 					}
 					var panel models.RolePanel
-					c.GormDB().Where("id = ?", place.RolePanelID).First(&panel)
+					if err := c.GormDB().Where("id = ?", place.RolePanelID).First(&panel).Error; err != nil {
+						return errors.NewError(err)
+					}
 					switch action {
 					case "type":
 						place.Type = event.StringSelectMenuInteractionData().Values[0]
@@ -689,7 +701,10 @@ func Command(c *components.Components) components.Command {
 			"role:panel_use": generic.ComponentHandler(func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
 				args := strings.Split(event.Data.CustomID(), ":")
 				action, placeID := args[2], uuid.MustParse(args[3])
-				g, _ := c.GuildCreateID(event, *event.GuildID())
+				g, err := c.GuildCreateID(event, *event.GuildID())
+				if err != nil {
+					return errors.NewError(err)
+				}
 				var place models.RolePanelPlaced
 				if err := c.GormDB().Where("id = ? AND guild_id = ?", placeID, g.ID).First(&place).Error; err != nil {
 					_ = event.Client().Rest.DeleteMessage(event.Channel().ID(), event.Message.ID)
@@ -830,8 +845,13 @@ func Command(c *components.Components) components.Command {
 					}
 				}
 			case *events.GuildMessageDelete:
-				g, _ := c.GuildCreateID(event, event.GuildID)
-				c.GormDB().Where("guild_id = ? AND channel_id = ? AND message_id = ?", g.ID, event.ChannelID, event.MessageID).Delete(&models.RolePanelPlaced{})
+				g, err := c.GuildCreateID(event, event.GuildID)
+				if err != nil {
+					return errors.NewError(err)
+				}
+				if err := c.GormDB().Where("guild_id = ? AND channel_id = ? AND message_id = ?", g.ID, event.ChannelID, event.MessageID).Delete(&models.RolePanelPlaced{}).Error; err != nil {
+					return errors.NewError(err)
+				}
 			case *events.GuildMessageReactionAdd:
 				if event.Member.User.Bot || event.Member.User.System {
 					return nil

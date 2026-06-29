@@ -366,7 +366,7 @@ func Command(c *components.Components) *generic.Command {
 					var w models.WordSuffix
 					err = c.GormDB().Where("guild_id = ? AND owner_id = ?", g.ID, u.ID).First(&w).Error
 					if err != nil {
-						if err == gorm.ErrRecordNotFound {
+						if errors.Is(err, gorm.ErrRecordNotFound) {
 							if err := event.CreateMessage(
 								discord.NewMessageBuilder().
 									SetContent(translate.Message(event.Locale(), "components.message.suffix.remove.message.no_suffix", translate.WithTemplate(map[string]any{"User": discord.UserMention(u.ID)}))).
@@ -614,7 +614,9 @@ func Command(c *components.Components) *generic.Command {
 				DiscordPerm: discord.PermissionManageMessages,
 				AutocompleteHandler: func(c *components.Components, event *events.AutocompleteInteractionCreate) errors.Error {
 					var reminds []models.MessageRemind
-					c.GormDB().Where("guild_id = ? AND name LIKE ?", *event.GuildID(), "%"+event.Data.String("remind")+"%").Limit(25).Find(&reminds)
+					if err := c.GormDB().Where("guild_id = ? AND name LIKE ?", *event.GuildID(), "%"+event.Data.String("remind")+"%").Limit(25).Find(&reminds).Error; err != nil {
+						return errors.NewError(err)
+					}
 
 					choices := make([]discord.AutocompleteChoice, len(reminds))
 					for i, mr := range reminds {
@@ -642,9 +644,13 @@ func Command(c *components.Components) *generic.Command {
 				var oldPin models.MessagePin
 				if err := component.GormDB().Where("channel_id = ?", event.Channel().ID()).First(&oldPin).Error; err == nil {
 					if oldPin.BeforeID != nil {
-						_ = event.Client().Rest.DeleteMessage(event.Channel().ID(), *oldPin.BeforeID)
+						if err := event.Client().Rest.DeleteMessage(event.Channel().ID(), *oldPin.BeforeID); err != nil {
+							return errors.NewError(err)
+						}
 					}
-					component.GormDB().Delete(&oldPin)
+					if err := component.GormDB().Delete(&oldPin).Error; err != nil {
+						return errors.NewError(err)
+					}
 				}
 
 				m := models.MessagePin{
@@ -716,7 +722,9 @@ func Command(c *components.Components) *generic.Command {
 				}
 
 				g.RemindCount++
-				c.GormDB().Save(g)
+				if err := c.GormDB().Save(g).Error; err != nil {
+					return errors.NewError(err)
+				}
 
 				if err := event.CreateMessage(
 					discord.NewMessageBuilder().
@@ -790,16 +798,19 @@ func Command(c *components.Components) *generic.Command {
 				// Guild
 				if err := c.GormDB().Where("owner_id = ? AND guild_id = ?", u.ID, e.GuildID).First(&w).Error; err == nil {
 					// Found
-				} else {
+				} else if errors.Is(err, gorm.ErrRecordNotFound) {
 					// Global
 					if err := c.GormDB().Where("owner_id = ? AND guild_id IS NULL", u.ID).First(&w).Error; err != nil {
-						if err != gorm.ErrRecordNotFound {
+						if !errors.Is(err, gorm.ErrRecordNotFound) {
 							slog.Error("語尾取得エラー", "err", err)
 						}
 						// Not found
 						slog.Debug("語尾が存在しません")
 						goto messagePin
 					}
+				} else {
+					slog.Error("ギルド語尾取得エラー", "err", err)
+					goto messagePin
 				}
 
 				{
@@ -928,7 +939,10 @@ func Command(c *components.Components) *generic.Command {
 
 				if m.BeforeID != nil && *m.BeforeID == e.MessageID {
 					slog.Info("ピン留め削除", "cid", e.ChannelID, "mid", e.MessageID)
-					c.GormDB().Delete(&m)
+					if err := c.GormDB().Delete(&m).Error; err != nil {
+						slog.Error("ピン留め削除失敗", "err", err, "channel_id", e.ChannelID, "message_id", e.MessageID)
+						return errors.NewError(err)
+					}
 				}
 			}
 			return nil
@@ -943,7 +957,10 @@ func messageSuffixMessageCreateHandler(w *models.WordSuffix, u *models.User, e *
 	}
 
 	if w.Expired != nil && time.Now().Compare(*w.Expired) == 1 {
-		c.GormDB().Delete(w)
+		if err := c.GormDB().Delete(w).Error; err != nil {
+			slog.Error("期限切れ語尾削除失敗", "err", err, "id", w.ID)
+			return errors.NewError(err)
+		}
 		return nil
 	}
 	switch w.Rule {

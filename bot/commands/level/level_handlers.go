@@ -125,14 +125,18 @@ func leaderboardHandler(c *components.Components, event *events.ApplicationComma
 	page := max(event.SlashCommandInteractionData().Int("page"), 1)
 
 	var count int64
-	c.GormDB().Model(&models.Member{}).Where("guild_id = ?", g.ID).Count(&count)
+	if err := c.GormDB().Model(&models.Member{}).Where("guild_id = ?", g.ID).Count(&count).Error; err != nil {
+		return errors.NewError(err)
+	}
 
 	if int64(page) > (count+pageCount-1)/pageCount {
 		return errors.NewError(errors.ErrorMessage("errors.invalid.page", event))
 	}
 
 	var members []models.Member
-	c.GormDB().Where("guild_id = ?", g.ID).Order("xp desc").Offset((page - 1) * pageCount).Limit(pageCount).Find(&members)
+	if err := c.GormDB().Where("guild_id = ?", g.ID).Order("xp desc").Offset((page - 1) * pageCount).Limit(pageCount).Find(&members).Error; err != nil {
+		return errors.NewError(err)
+	}
 
 	var leaderboard strings.Builder
 	for i, m := range members {
@@ -269,7 +273,9 @@ func upMessageChannelHandler(c *components.Components, event *events.Application
 	} else {
 		g.LevelUpChannel = nil
 	}
-	c.GormDB().Save(g)
+	if err := c.GormDB().Save(g).Error; err != nil {
+		return errors.NewError(err)
+	}
 
 	var channelText string
 	if g.LevelUpChannel != nil {
@@ -304,7 +310,9 @@ func excludeChannelAddHandler(c *components.Components, event *events.Applicatio
 		return errors.NewError(errors.ErrorMessage("errors.already_exist", event))
 	}
 	g.LevelUpExcludeChannel = append(g.LevelUpExcludeChannel, channel.ID)
-	c.GormDB().Save(g)
+	if err := c.GormDB().Save(g).Error; err != nil {
+		return errors.NewError(err)
+	}
 
 	content := translate.Message(event.Locale(), "components.level.exclude-channel.add.message",
 		translate.WithTemplate(map[string]any{"Channel": discord.ChannelMention(channel.ID)}),
@@ -331,7 +339,9 @@ func excludeChannelRemoveHandler(c *components.Components, event *events.Applica
 		return errors.NewError(errors.ErrorMessage("errors.not_exist", event))
 	}
 	g.LevelUpExcludeChannel = slices.Delete(g.LevelUpExcludeChannel, index, index+1)
-	c.GormDB().Save(g)
+	if err := c.GormDB().Save(g).Error; err != nil {
+		return errors.NewError(err)
+	}
 
 	content := translate.Message(event.Locale(), "components.level.exclude-channel.remove.message",
 		translate.WithTemplate(map[string]any{"Channel": discord.ChannelMention(channel.ID)}),
@@ -353,7 +363,9 @@ func excludeChannelClearHandler(c *components.Components, event *events.Applicat
 		return errors.NewError(err)
 	}
 	g.LevelUpExcludeChannel = []snowflake.ID{}
-	c.GormDB().Save(g)
+	if err := c.GormDB().Save(g).Error; err != nil {
+		return errors.NewError(err)
+	}
 
 	content := translate.Message(event.Locale(), "components.level.exclude-channel.clear.message")
 
@@ -451,19 +463,29 @@ func importMee6Handler(c *components.Components, event *events.ApplicationComman
 			break
 		}
 		for _, player := range leaderboard.Players {
-			pID, _ := snowflake.Parse(player.ID)
+			pID, err := snowflake.Parse(player.ID)
+			if err != nil {
+				return errors.NewError(err)
+			}
 			idx := slices.IndexFunc(discordMembers, func(m discord.Member) bool { return m.User.ID == pID })
 			if idx != -1 {
-				m, _ := c.MemberCreate(event, discordMembers[idx].User, *event.GuildID())
+				m, err := c.MemberCreate(event, discordMembers[idx].User, *event.GuildID())
+				if err != nil {
+					return errors.NewError(err)
+				}
 				m.XP = xppoint.XP(player.Xp)
-				c.GormDB().Save(m)
+				if err := c.GormDB().Save(m).Error; err != nil {
+					return errors.NewError(err)
+				}
 				importedCount++
 			}
 		}
 	}
 
 	g.LevelMee6Imported = true
-	c.GormDB().Save(g)
+	if err := c.GormDB().Save(g).Error; err != nil {
+		return errors.NewError(err)
+	}
 
 	if err := event.RespondMessage(discord.NewMessageBuilder().SetContent(fmt.Sprintf("# SUCCEED\n```| IMPORTED MEMBER COUNT | %d```", importedCount))); err != nil {
 		return errors.NewError(err)
@@ -478,7 +500,9 @@ func resetHandler(c *components.Components, event *events.ApplicationCommandInte
 		return errors.NewError(err)
 	}
 	m.XP = xppoint.XP(0)
-	c.GormDB().Save(m)
+	if err := c.GormDB().Save(m).Error; err != nil {
+		return errors.NewError(err)
+	}
 
 	content := translate.Message(event.Locale(), "components.level.reset.message",
 		translate.WithTemplate(map[string]any{"User": discord.UserMention(target.User.ID)}),
@@ -521,7 +545,9 @@ func roleSetHandler(c *components.Components, event *events.ApplicationCommandIn
 		return errors.NewError(errors.ErrorMessage("errors.invalid.role", event))
 	}
 
-	c.GormDB().Save(g)
+	if err := c.GormDB().Save(g).Error; err != nil {
+		return errors.NewError(err)
+	}
 
 	embed := discord.NewEmbedBuilder().
 		SetTitle(translate.Message(event.Locale(), "components.level.role.set.message.embed.title")).
@@ -554,7 +580,9 @@ func roleRemoveHandler(c *components.Components, event *events.ApplicationComman
 	}
 	delete(g.LevelRole, levelNum)
 
-	c.GormDB().Save(g)
+	if err := c.GormDB().Save(g).Error; err != nil {
+		return errors.NewError(err)
+	}
 
 	embed := discord.NewEmbedBuilder().
 		SetTitle(translate.Message(event.Locale(), "components.level.role.remove.message.embed.title")).

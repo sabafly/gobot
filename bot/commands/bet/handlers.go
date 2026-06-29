@@ -1043,7 +1043,7 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 	var voteDeadline *time.Time
 	if ok && strings.TrimSpace(voteDeadlineStr) != "" {
 		mins, err := strconv.Atoi(voteDeadlineStr)
-		if err != nil {
+		if err != nil || mins <= 0 {
 			if err := event.RespondMessage(discord.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_vote_deadline")).
 				SetFlags(discord.MessageFlagEphemeral)); err != nil {
@@ -1051,7 +1051,16 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 			}
 			return nil
 		}
-		voteDeadline = ptr(time.Now().Add(time.Duration(mins) * time.Minute))
+		vd := time.Now().Add(time.Duration(mins) * time.Minute)
+		if entryDeadline != nil && !vd.After(*entryDeadline) {
+			if err := event.RespondMessage(discord.NewMessageBuilder().
+				SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_vote_deadline")).
+				SetFlags(discord.MessageFlagEphemeral)); err != nil {
+				return errors.NewError(err)
+			}
+			return nil
+		}
+		voteDeadline = &vd
 	}
 
 	if event.GuildID() == nil {

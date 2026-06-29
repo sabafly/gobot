@@ -225,118 +225,118 @@ func SlotPlay(c *components.Components, data *SlotData) (string, errors.Error) {
 		return "insufficient_points", nil
 	}
 
-	// 2. Deduct cost
-	if err := gopoint.AddPoint(c, data.UserID, data.GuildID, -cost); err != nil {
-		return "", errors.NewError(err)
-	}
+	// Clone the state by value copying the struct
+	nextData := *data
 
-	data.TotalSpins++
-	data.TotalSpent += cost
+	nextData.TotalSpins++
+	nextData.TotalSpent += cost
 
 	// 3. Process according to status
-	switch data.Status {
+	switch nextData.Status {
 	case SlotStatusNormal:
 		r := rand.N(10000)
 		if r < 38 { // BB (Big Bonus) - ~1/263
 			prelit := rand.N(4) == 0 // 25% 先ペカ
 			if prelit {
-				data.GogoLit = true
+				nextData.GogoLit = true
 				stops := findMatchingReelStops("BB")
-				data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
-				data.Status = SlotStatusBB
-				data.BonusSpinsLeft = 24
-				data.TotalBonusWin = 15
-				data.LastSpinWin = 15
+				nextData.LastReels = getGridForStops(stops[0], stops[1], stops[2])
+				nextData.Status = SlotStatusBB
+				nextData.BonusSpinsLeft = 24
+				nextData.TotalBonusWin = 15
+				nextData.LastSpinWin = 15
 			} else {
-				data.GogoLit = true
+				nextData.GogoLit = true
 				stops := findMatchingReelStops("lose")
-				data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
-				data.Status = SlotStatusGogo
-				data.BonusType = "BB"
-				data.LastSpinWin = 0
+				nextData.LastReels = getGridForStops(stops[0], stops[1], stops[2])
+				nextData.Status = SlotStatusGogo
+				nextData.BonusType = "BB"
+				nextData.LastSpinWin = 0
 			}
 		} else if r < 38+28 { // RB (Regular Bonus) - ~1/357
 			prelit := rand.N(4) == 0 // 25% 先ペカ
 			if prelit {
-				data.GogoLit = true
+				nextData.GogoLit = true
 				stops := findMatchingReelStops("RB")
-				data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
-				data.Status = SlotStatusRB
-				data.BonusSpinsLeft = 8
-				data.TotalBonusWin = 15
-				data.LastSpinWin = 15
+				nextData.LastReels = getGridForStops(stops[0], stops[1], stops[2])
+				nextData.Status = SlotStatusRB
+				nextData.BonusSpinsLeft = 8
+				nextData.TotalBonusWin = 15
+				nextData.LastSpinWin = 15
 			} else {
-				data.GogoLit = true
+				nextData.GogoLit = true
 				stops := findMatchingReelStops("lose")
-				data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
-				data.Status = SlotStatusGogo
-				data.BonusType = "RB"
-				data.LastSpinWin = 0
+				nextData.LastReels = getGridForStops(stops[0], stops[1], stops[2])
+				nextData.Status = SlotStatusGogo
+				nextData.BonusType = "RB"
+				nextData.LastSpinWin = 0
 			}
 		} else if r < 38+28+1370 { // Replay - ~1/7.3
 			stops := findMatchingReelStops("🔄")
-			data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
-			data.LastSpinWin = 3
+			nextData.LastReels = getGridForStops(stops[0], stops[1], stops[2])
+			nextData.LastSpinWin = 3
 		} else if r < 38+28+1370+1613 { // Grape - ~1/6.2
 			stops := findMatchingReelStops("🍇")
-			data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
-			data.LastSpinWin = 7
+			nextData.LastReels = getGridForStops(stops[0], stops[1], stops[2])
+			nextData.LastSpinWin = 7
 		} else if r < 38+28+1370+1613+303 { // Cherry - ~1/33
 			stops := findMatchingReelStops("🍒")
-			data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
-			data.LastSpinWin = 2
+			nextData.LastReels = getGridForStops(stops[0], stops[1], stops[2])
+			nextData.LastSpinWin = 2
 		} else if r < 38+28+1370+1613+303+10 { // Clown - ~1/1000
 			stops := findMatchingReelStops("🤡")
-			data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
-			data.LastSpinWin = 10
+			nextData.LastReels = getGridForStops(stops[0], stops[1], stops[2])
+			nextData.LastSpinWin = 10
 		} else if r < 38+28+1370+1613+303+10+10 { // Bell - ~1/1000
 			stops := findMatchingReelStops("🔔")
-			data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
-			data.LastSpinWin = 15
+			nextData.LastReels = getGridForStops(stops[0], stops[1], stops[2])
+			nextData.LastSpinWin = 15
 		} else { // Lose
 			stops := findMatchingReelStops("lose")
-			data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
-			data.LastSpinWin = 0
+			nextData.LastReels = getGridForStops(stops[0], stops[1], stops[2])
+			nextData.LastSpinWin = 0
 		}
 	case SlotStatusGogo:
 		// Aligns 7s and starts bonus
-		if data.BonusType == "BB" {
+		if nextData.BonusType == "BB" {
 			stops := findMatchingReelStops("BB")
-			data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
-			data.Status = SlotStatusBB
-			data.BonusSpinsLeft = 24
-			data.TotalBonusWin = 15
-			data.LastSpinWin = 15
+			nextData.LastReels = getGridForStops(stops[0], stops[1], stops[2])
+			nextData.Status = SlotStatusBB
+			nextData.BonusSpinsLeft = 24
+			nextData.TotalBonusWin = 15
+			nextData.LastSpinWin = 15
 		} else {
 			stops := findMatchingReelStops("RB")
-			data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
-			data.Status = SlotStatusRB
-			data.BonusSpinsLeft = 8
-			data.TotalBonusWin = 15
-			data.LastSpinWin = 15
+			nextData.LastReels = getGridForStops(stops[0], stops[1], stops[2])
+			nextData.Status = SlotStatusRB
+			nextData.BonusSpinsLeft = 8
+			nextData.TotalBonusWin = 15
+			nextData.LastSpinWin = 15
 		}
 	case SlotStatusBB, SlotStatusRB:
 		// Bonus Game Spin
 		stops := findMatchingReelStops("🍇")
-		data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
-		data.LastSpinWin = 15
-		data.BonusSpinsLeft--
-		data.TotalBonusWin += 15
+		nextData.LastReels = getGridForStops(stops[0], stops[1], stops[2])
+		nextData.LastSpinWin = 15
+		nextData.BonusSpinsLeft--
+		nextData.TotalBonusWin += 15
 
-		if data.BonusSpinsLeft == 0 {
-			data.Status = SlotStatusNormal
-			data.GogoLit = false
+		if nextData.BonusSpinsLeft == 0 {
+			nextData.Status = SlotStatusNormal
+			nextData.GogoLit = false
 		}
 	}
 
-	// 4. Add winning points
-	if data.LastSpinWin > 0 {
-		if err := gopoint.AddPoint(c, data.UserID, data.GuildID, data.LastSpinWin); err != nil {
+	// 4. Update points and state atomically
+	nextData.TotalWon += nextData.LastSpinWin
+	netChange := nextData.LastSpinWin - cost
+	if netChange != 0 {
+		if err := gopoint.AddPoint(c, data.UserID, data.GuildID, netChange); err != nil {
 			return "", errors.NewError(err)
 		}
-		data.TotalWon += data.LastSpinWin
 	}
 
+	*data = nextData
 	return "", nil
 }
 
