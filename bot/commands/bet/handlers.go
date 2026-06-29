@@ -1043,6 +1043,22 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 		entryDeadline = ptr(time.Now().Add(time.Duration(mins) * time.Minute))
 	}
 
+	// Parse vote deadline (optional)
+	voteDeadlineStr, ok := event.Data.OptText("vote_deadline")
+	var voteDeadline *time.Time
+	if ok && strings.TrimSpace(voteDeadlineStr) != "" {
+		mins, err := strconv.Atoi(voteDeadlineStr)
+		if err != nil {
+			if err := event.RespondMessage(discord.NewMessageBuilder().
+				SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_vote_deadline")).
+				SetFlags(discord.MessageFlagEphemeral)); err != nil {
+				return errors.NewError(err)
+			}
+			return nil
+		}
+		voteDeadline = ptr(time.Now().Add(time.Duration(mins) * time.Minute))
+	}
+
 	if event.GuildID() == nil {
 		return errors.NewError(fmt.Errorf("this command can only be used in a guild"))
 	}
@@ -1089,7 +1105,7 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 		EntryFee:            entryFee,
 		PrizePool:           prizePool,
 		EntryDeadline:       entryDeadline,
-		VoteDeadline:        nil, // Vote deadline can be set manually via start_vote button
+		VoteDeadline:        voteDeadline,
 		Locale:              string(locale),
 	}
 

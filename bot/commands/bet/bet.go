@@ -230,6 +230,15 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 						MinLength:   ptr(1),
 						MaxLength:   10,
 					}),
+				discord.NewLabel(i18n.TranslateText(locale, "command.bet.modal.create_race.input.vote_deadline.label"),
+					discord.TextInputComponent{
+						CustomID:    "vote_deadline",
+						Style:       discord.TextInputStyleShort,
+						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_race.input.vote_deadline.placeholder"),
+						Required:    false,
+						MinLength:   ptr(1),
+						MaxLength:   10,
+					}),
 			).
 			Build()); err != nil {
 			return errors.NewError(err)
