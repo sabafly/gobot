@@ -1,9 +1,7 @@
 package play
 
 import (
-	"math/rand/v2"
 	"strconv"
-	"strings"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
@@ -107,98 +105,47 @@ func Command(c *components.Components) components.Command {
 					generic.PermissionDefaultString("play.slot"),
 				},
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					const cost = 8
-
 					if err := event.DeferCreateMessage(false); err != nil {
 						return errors.NewError(err)
 					}
-					userPoint, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
-					if err != nil {
-						return errors.NewError(err)
+
+					data := &SlotData{
+						ID:             uuid.New(),
+						UserID:         event.User().ID,
+						GuildID:        *event.GuildID(),
+						Status:         SlotStatusNormal,
+						LastReels:      [3][3]string{
+							{"🍇", "🔔", "🍒"},
+							{"🔄", "7️⃣", "🍇"},
+							{"🤡", "⬛", "🔄"},
+						},
+						GogoLit:        false,
+						LastSpinWin:    0,
+						TotalSpins:     0,
+						TotalSpent:     0,
+						TotalWon:       0,
 					}
-					if userPoint < cost {
+
+					reason, err := SlotPlay(c, data)
+					if err != nil {
+						return err
+					}
+					if reason == "insufficient_points" {
+						const cost = 3
 						if err := errors.ErrorMessage("error.play.slot.insufficient_points", event,
 							errors.WithMapContext(i18n.BuildContext().WithText("point", strconv.FormatInt(cost, 10)))); err != nil {
 							return errors.NewError(err)
 						}
 						return nil
 					}
-					if err = gopoint.AddPoint(c, event.User().ID, *event.GuildID(), -cost); err != nil {
-						return errors.NewError(err)
-					}
 
-					role := []string{"NONE", "GRAPES", "WATERMELON", "CHERRIES", "LEMON", "ORANGE", "PLUM", "BELL", "BAR", "SEVEN"}
-					roleWeights := []int{1200, 120, 100, 30, 15, 10, 8, 5, 1, 1}
-					rolePoints := []int64{0, 8, 10, 12, 15, 20, 25, 100, 500, 1000}
-					totalWeight := 0
-					for _, w := range roleWeights {
-						totalWeight += w
-					}
-
-					getRole := func() (string, int64) {
-						r := rand.N(totalWeight)
-						accumulatedWeight := 0
-						for i, w := range roleWeights {
-							accumulatedWeight += w
-							if r < accumulatedWeight {
-								return role[i], rolePoints[i]
-							}
-						}
-						return role[len(role)-1], rolePoints[len(role)-1]
-					}
-					genSlot := func(role string) string {
-						switch role {
-						case "GRAPES":
-							return "🍇"
-						case "WATERMELON":
-							return "🍉"
-						case "CHERRIES":
-							return "🍒"
-						case "LEMON":
-							return "🍋"
-						case "ORANGE":
-							return "🍊"
-						case "PLUM":
-							return "🍑"
-						case "BELL":
-							return "🔔"
-						case "BAR":
-							return "💵"
-						case "SEVEN":
-							return "7️⃣"
-						default:
-							return ""
-						}
-					}
-
-					selectedRole, point := getRole()
-					result := genSlot(selectedRole)
-					if result == "" {
-						// ja: 全ての絵柄
-						// en: All symbols
-						symbols := []string{"🍇", "🍉", "🍒", "🍋", "🍊", "🍑", "🔔", "💵", "7️⃣"}
-						symbols = append(symbols[:0], symbols...)
-						rand.Shuffle(len(symbols), func(i, j int) {
-							symbols[i], symbols[j] = symbols[j], symbols[i]
-						})
-						slotResults := []string{symbols[0], symbols[1], symbols[2]}
-						result = strings.Join(slotResults, " | ")
-					} else {
-						result += " | " + result + " | " + result
-					}
-
-					if point > 0 {
-						if err = gopoint.AddPoint(c, event.User().ID, *event.GuildID(), point); err != nil {
-							return errors.NewError(err)
-						}
-					}
+					slot_values.Set(data.ID, data)
 
 					if err := event.RespondMessage(discord.NewMessageBuilder().
-						SetContentf("Slots: %s\nResult Point: %d", result, point),
-					); err != nil {
+						SetIsComponentsV2(true).
+						SetComponents(SlotMessage(c, data, event.Locale())...)); err != nil {
 						return errors.NewError(err)
 					}
-
 					return nil
 				},
 			},
@@ -269,6 +216,65 @@ func Command(c *components.Components) components.Command {
 						return nil
 					}
 					return HALFinish(c, *data, event.User().ID, *event.GuildID(), event)
+				},
+			},
+			"play:slot_spin": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.slot"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					data, err := SlotPrecondition(event)
+					if err != nil {
+						return err
+					}
+					if data == nil {
+						return nil
+					}
+
+					reason, err := SlotPlay(c, data)
+					if err != nil {
+						return err
+					}
+					if reason == "insufficient_points" {
+						var cost int64 = 3
+						if data.Status == SlotStatusBB || data.Status == SlotStatusRB {
+							cost = 1
+						}
+						if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+							SetContent(i18n.BuildContext().
+								WithText("point", strconv.FormatInt(cost, 10)).
+								ReplaceText(i18n.TranslateText(event.Locale(), "error.play.slot.insufficient_points.description"))).
+							SetFlags(discord.MessageFlagEphemeral).
+							Build()); err != nil {
+							return errors.NewError(err)
+						}
+						return nil
+					}
+
+					slot_values.Set(data.ID, data)
+
+					if err := event.UpdateMessage(discord.NewMessageBuilder().
+						SetIsComponentsV2(true).
+						SetComponents(SlotMessage(c, data, event.Locale())...).
+						BuildUpdate()); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
+			"play:slot_quit": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.slot"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					data, err := SlotPrecondition(event)
+					if err != nil {
+						return err
+					}
+					if data == nil {
+						return nil
+					}
+					return SlotFinish(c, data, event)
 				},
 			},
 		},

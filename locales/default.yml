@@ -178,6 +178,10 @@ strings:
   error.play.high-and-low.insufficient_points.description: "このハイアンドローゲームに参加するには、{point}ポイントが必要です。"
   error.play.slot.insufficient_points: "ポイントが不足しています"
   error.play.slot.insufficient_points.description: "このスロットマシンをプレイするには、{point}ポイントが必要です。"
+  error.play.slot.expired: "スロットゲームが期限切れです"
+  error.play.slot.expired.description: "このスロットゲームは期限切れです。新しいゲームを開始してください。"
+  error.play.slot.not_your_game: "このゲームはあなたのものではありません"
+  error.play.slot.not_your_game.description: "他のユーザーのスロットゲームを操作することはできません。"
 components:
   command.settings.view:
     - type: container
