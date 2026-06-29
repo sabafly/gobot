@@ -49,6 +49,22 @@ func (s *SlotData) OnDelete() error {
 	return nil
 }
 
+// 21-symbol Juggler-like reel strips
+var reelLeft = [21]string{
+	"7️⃣", "🍇", "🔄", "🍒", "⬛", "🍇", "🤡", "🔄", "🍒", "7️⃣",
+	"🍇", "🔄", "🔔", "⬛", "🍇", "🤡", "🔄", "🍇", "7️⃣", "🍇", "🔄",
+}
+
+var reelMiddle = [21]string{
+	"7️⃣", "🍇", "🔄", "🤡", "⬛", "🍇", "🔔", "🔄", "7️⃣", "🍇",
+	"🔄", "🤡", "⬛", "🍇", "🔄", "🍇", "7️⃣", "🍇", "🔄", "🤡", "⬛",
+}
+
+var reelRight = [21]string{
+	"7️⃣", "🍇", "🔄", "🤡", "⬛", "🍇", "🔔", "🔄", "7️⃣", "🍇",
+	"🔄", "🤡", "⬛", "🍇", "🔄", "🍇", "7️⃣", "🍇", "🔄", "🤡", "⬛",
+}
+
 // 5 paylines: Middle, Top, Bottom, Diagonal Down, Diagonal Up
 var paylines = [5][3][2]int{
 	{{1, 0}, {1, 1}, {1, 2}}, // Middle
@@ -56,14 +72,6 @@ var paylines = [5][3][2]int{
 	{{2, 0}, {2, 1}, {2, 2}}, // Bottom
 	{{0, 0}, {1, 1}, {2, 2}}, // Diagonal down
 	{{2, 0}, {1, 1}, {0, 2}}, // Diagonal up
-}
-
-func getRandomSymbol(excludeCherry bool) string {
-	symbols := []string{"🍇", "🔔", "🤡", "🔄", "7️⃣", "⬛"}
-	if !excludeCherry {
-		symbols = append(symbols, "🍒")
-	}
-	return symbols[rand.N(len(symbols))]
 }
 
 func checkWinOnLine(grid [3][3]string, lineIdx int) string {
@@ -95,77 +103,86 @@ func hasCherryWin(grid [3][3]string) bool {
 	return grid[0][0] == "🍒" || grid[1][0] == "🍒" || grid[2][0] == "🍒"
 }
 
-func generateLosingGrid() [3][3]string {
-	var grid [3][3]string
-	for {
-		for r := 0; r < 3; r++ {
-			for c := 0; c < 3; c++ {
-				grid[r][c] = getRandomSymbol(c == 0)
-			}
-		}
-		if !hasAnyLineWin(grid) && !hasCherryWin(grid) {
-			return grid
-		}
+func getGridForStops(i, j, k int) [3][3]string {
+	return [3][3]string{
+		{reelLeft[i], reelMiddle[j], reelRight[k]},
+		{reelLeft[(i+1)%21], reelMiddle[(j+1)%21], reelRight[(k+1)%21]},
+		{reelLeft[(i+2)%21], reelMiddle[(j+2)%21], reelRight[(k+2)%21]},
 	}
 }
 
-func generateLineWinGrid(symbol string) [3][3]string {
-	var grid [3][3]string
-	for {
-		grid = generateLosingGrid()
-		lineIdx := rand.N(5)
-		coords := paylines[lineIdx]
-		grid[coords[0][0]][coords[0][1]] = symbol
-		grid[coords[1][0]][coords[1][1]] = symbol
-		grid[coords[2][0]][coords[2][1]] = symbol
-
-		winCount := 0
-		for i := 0; i < 5; i++ {
-			if checkWinOnLine(grid, i) != "" {
-				winCount++
-			}
-		}
-		if winCount == 1 && !hasCherryWin(grid) {
-			return grid
-		}
-	}
+type StopCombination struct {
+	i, j, k int
 }
 
-func generateRBGrid() [3][3]string {
-	var grid [3][3]string
-	for {
-		grid = generateLosingGrid()
-		lineIdx := rand.N(5)
-		coords := paylines[lineIdx]
-		grid[coords[0][0]][coords[0][1]] = "7️⃣"
-		grid[coords[1][0]][coords[1][1]] = "7️⃣"
-		grid[coords[2][0]][coords[2][1]] = "⬛"
+func findMatchingReelStops(outcome string) [3]int {
+	var matches []StopCombination
 
-		winCount := 0
-		for i := 0; i < 5; i++ {
-			if checkWinOnLine(grid, i) == "RB" {
-				winCount++
-			} else if checkWinOnLine(grid, i) != "" {
-				winCount += 2 // Invalidate
+	for i := 0; i < 21; i++ {
+		for j := 0; j < 21; j++ {
+			for k := 0; k < 21; k++ {
+				grid := getGridForStops(i, j, k)
+
+				// Evaluate wins
+				lineWins := make([]string, 0)
+				for p := 0; p < 5; p++ {
+					winSymbol := checkWinOnLine(grid, p)
+					if winSymbol != "" {
+						lineWins = append(lineWins, winSymbol)
+					}
+				}
+
+				hasCherry := hasCherryWin(grid)
+
+				matched := false
+				switch outcome {
+				case "BB":
+					if len(lineWins) == 1 && lineWins[0] == "7️⃣" && !hasCherry {
+						matched = true
+					}
+				case "RB":
+					if len(lineWins) == 1 && lineWins[0] == "RB" && !hasCherry {
+						matched = true
+					}
+				case "🔄":
+					if len(lineWins) == 1 && lineWins[0] == "🔄" && !hasCherry {
+						matched = true
+					}
+				case "🍇":
+					if len(lineWins) == 1 && lineWins[0] == "🍇" && !hasCherry {
+						matched = true
+					}
+				case "🍒":
+					if len(lineWins) == 0 && hasCherry {
+						matched = true
+					}
+				case "🤡":
+					if len(lineWins) == 1 && lineWins[0] == "🤡" && !hasCherry {
+						matched = true
+					}
+				case "🔔":
+					if len(lineWins) == 1 && lineWins[0] == "🔔" && !hasCherry {
+						matched = true
+					}
+				case "lose":
+					if len(lineWins) == 0 && !hasCherry {
+						matched = true
+					}
+				}
+
+				if matched {
+					matches = append(matches, StopCombination{i, j, k})
+				}
 			}
 		}
-		if winCount == 1 && !hasCherryWin(grid) {
-			return grid
-		}
 	}
-}
 
-func generateCherryWinGrid() [3][3]string {
-	var grid [3][3]string
-	for {
-		grid = generateLosingGrid()
-		row := rand.N(3)
-		grid[row][0] = "🍒"
-
-		if !hasAnyLineWin(grid) && hasCherryWin(grid) {
-			return grid
-		}
+	if len(matches) == 0 {
+		return [3]int{rand.N(21), rand.N(21), rand.N(21)}
 	}
+
+	picked := matches[rand.N(len(matches))]
+	return [3]int{picked.i, picked.j, picked.k}
 }
 
 func SlotPrecondition(event *events.ComponentInteractionCreate) (*SlotData, errors.Error) {
@@ -223,14 +240,16 @@ func SlotPlay(c *components.Components, data *SlotData) (string, errors.Error) {
 			prelit := rand.N(4) == 0 // 25% 先ペカ
 			if prelit {
 				data.GogoLit = true
-				data.LastReels = generateLineWinGrid("7️⃣")
+				stops := findMatchingReelStops("BB")
+				data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
 				data.Status = SlotStatusBB
 				data.BonusSpinsLeft = 24
 				data.TotalBonusWin = 15
 				data.LastSpinWin = 15
 			} else {
 				data.GogoLit = true
-				data.LastReels = generateLosingGrid()
+				stops := findMatchingReelStops("lose")
+				data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
 				data.Status = SlotStatusGogo
 				data.BonusType = "BB"
 				data.LastSpinWin = 0
@@ -239,47 +258,57 @@ func SlotPlay(c *components.Components, data *SlotData) (string, errors.Error) {
 			prelit := rand.N(4) == 0 // 25% 先ペカ
 			if prelit {
 				data.GogoLit = true
-				data.LastReels = generateRBGrid()
+				stops := findMatchingReelStops("RB")
+				data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
 				data.Status = SlotStatusRB
 				data.BonusSpinsLeft = 8
 				data.TotalBonusWin = 15
 				data.LastSpinWin = 15
 			} else {
 				data.GogoLit = true
-				data.LastReels = generateLosingGrid()
+				stops := findMatchingReelStops("lose")
+				data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
 				data.Status = SlotStatusGogo
 				data.BonusType = "RB"
 				data.LastSpinWin = 0
 			}
 		} else if r < 38+28+1370 { // Replay - ~1/7.3
-			data.LastReels = generateLineWinGrid("🔄")
+			stops := findMatchingReelStops("🔄")
+			data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
 			data.LastSpinWin = 3
 		} else if r < 38+28+1370+1613 { // Grape - ~1/6.2
-			data.LastReels = generateLineWinGrid("🍇")
+			stops := findMatchingReelStops("🍇")
+			data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
 			data.LastSpinWin = 7
 		} else if r < 38+28+1370+1613+303 { // Cherry - ~1/33
-			data.LastReels = generateCherryWinGrid()
+			stops := findMatchingReelStops("🍒")
+			data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
 			data.LastSpinWin = 2
 		} else if r < 38+28+1370+1613+303+10 { // Clown - ~1/1000
-			data.LastReels = generateLineWinGrid("🤡")
+			stops := findMatchingReelStops("🤡")
+			data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
 			data.LastSpinWin = 10
 		} else if r < 38+28+1370+1613+303+10+10 { // Bell - ~1/1000
-			data.LastReels = generateLineWinGrid("🔔")
+			stops := findMatchingReelStops("🔔")
+			data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
 			data.LastSpinWin = 15
 		} else { // Lose
-			data.LastReels = generateLosingGrid()
+			stops := findMatchingReelStops("lose")
+			data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
 			data.LastSpinWin = 0
 		}
 	} else if data.Status == SlotStatusGogo {
 		// Aligns 7s and starts bonus
 		if data.BonusType == "BB" {
-			data.LastReels = generateLineWinGrid("7️⃣")
+			stops := findMatchingReelStops("BB")
+			data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
 			data.Status = SlotStatusBB
 			data.BonusSpinsLeft = 24
 			data.TotalBonusWin = 15
 			data.LastSpinWin = 15
 		} else {
-			data.LastReels = generateRBGrid()
+			stops := findMatchingReelStops("RB")
+			data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
 			data.Status = SlotStatusRB
 			data.BonusSpinsLeft = 8
 			data.TotalBonusWin = 15
@@ -287,7 +316,8 @@ func SlotPlay(c *components.Components, data *SlotData) (string, errors.Error) {
 		}
 	} else if data.Status == SlotStatusBB || data.Status == SlotStatusRB {
 		// Bonus Game Spin
-		data.LastReels = generateLineWinGrid("🍇")
+		stops := findMatchingReelStops("🍇")
+		data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
 		data.LastSpinWin = 15
 		data.BonusSpinsLeft--
 		data.TotalBonusWin += 15
@@ -405,16 +435,15 @@ func SlotMessage(c *components.Components, data *SlotData, locale discord.Locale
 
 	// Action Row with Buttons
 	actionRow := discord.NewActionRow()
-	switch data.Status {
-	case SlotStatusBB, SlotStatusRB:
+	if data.Status == SlotStatusBB || data.Status == SlotStatusRB {
 		actionRow = actionRow.AddComponents(
 			discord.NewSuccessButton("ボーナススピン (1pt)", fmt.Sprintf("play:slot_spin:%s", data.ID)),
 		)
-	case SlotStatusGogo:
+	} else if data.Status == SlotStatusGogo {
 		actionRow = actionRow.AddComponents(
 			discord.NewSuccessButton("狙う！ (3pt)", fmt.Sprintf("play:slot_spin:%s", data.ID)),
 		)
-	default:
+	} else {
 		actionRow = actionRow.AddComponents(
 			discord.NewPrimaryButton("スピン (3pt)", fmt.Sprintf("play:slot_spin:%s", data.ID)),
 		)
