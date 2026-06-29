@@ -109,9 +109,9 @@ func HALPlay(data *HALData, choice HALChoice) (success, equal bool) {
 		if choice != HALChoiceSame {
 			return false, true
 		}
-		data.multiplier += data.multiplier * (float64(data.currentCard.Number()))
+		data.multiplier += float64(data.currentCard.Number())
 		if data.previousCard.Suit() == data.currentCard.Suit() {
-			data.currentPoint += data.currentPoint * (float64(data.currentCard.Number()) * 1.5)
+			data.currentPoint *= float64(data.currentCard.Number()) * 1.5
 		}
 		return true, true
 	}
@@ -125,10 +125,10 @@ func HALPlay(data *HALData, choice HALChoice) (success, equal bool) {
 }
 
 func HALFinish(c *components.Components, data HALData, userID, guildID snowflake.ID, event *events.ComponentInteractionCreate) errors.Error {
-	hal_values.Delete(data.id)
 	if err := gopoint.AddPoint(c, userID, guildID, int64(math.Floor(data.currentPoint))); err != nil {
 		return errors.NewError(err)
 	}
+	hal_values.Delete(data.id)
 
 	if err := event.UpdateMessage(discord.NewMessageBuilder().
 		SetIsComponentsV2(true).

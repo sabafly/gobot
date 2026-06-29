@@ -74,11 +74,14 @@ const (
 )
 
 const (
-	CardJokerBlack Card = CardSuitJoker | iota
+	CardJokerBlack Card = CardSuitJoker | iota + 1
 	CardJokerRed
 )
 
 func (c Card) String() string {
+	if c == CardNone {
+		return "N/A"
+	}
 	suit := c.Suit()
 	var suitStr string
 	switch suit {
@@ -146,7 +149,10 @@ func (c Card) IsJoker() bool {
 }
 
 func (c Card) IsValid() bool {
-	return c.IsValidNumber() && c != CardNone && (c.Suit() != CardSuitJoker || c == CardJokerBlack || c == CardJokerRed)
+	if c.IsJoker() {
+		return c == CardJokerBlack || c == CardJokerRed
+	}
+	return c.IsValidNumber()
 }
 
 func (c Card) IsValidNumber() bool {
