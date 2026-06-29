@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/disgoorg/disgo/discord"
@@ -121,10 +122,7 @@ func leaderboardHandler(c *components.Components, event *events.ApplicationComma
 	if err != nil {
 		return errors.NewError(err)
 	}
-	page := event.SlashCommandInteractionData().Int("page")
-	if page < 1 {
-		page = 1
-	}
+	page := max(event.SlashCommandInteractionData().Int("page"), 1)
 
 	var count int64
 	c.GormDB().Model(&models.Member{}).Where("guild_id = ?", g.ID).Count(&count)
@@ -136,13 +134,13 @@ func leaderboardHandler(c *components.Components, event *events.ApplicationComma
 	var members []models.Member
 	c.GormDB().Where("guild_id = ?", g.ID).Order("xp desc").Offset((page - 1) * pageCount).Limit(pageCount).Find(&members)
 
-	var leaderboard string
+	var leaderboard strings.Builder
 	for i, m := range members {
-		leaderboard += fmt.Sprintf("**#%d | %s XP: `%d` Level: `%d`**\n",
+		leaderboard.WriteString(fmt.Sprintf("**#%d | %s XP: `%d` Level: `%d`**\n",
 			i+1+((page-1)*pageCount),
 			discord.UserMention(m.UserID),
 			m.XP, m.XP.Level(),
-		)
+		))
 	}
 
 	embed := discord.NewEmbedBuilder().
@@ -157,7 +155,7 @@ func leaderboardHandler(c *components.Components, event *events.ApplicationComma
 			page,
 			(count+pageCount-1)/pageCount,
 		).
-		SetDescription(leaderboard).
+		SetDescription(leaderboard.String()).
 		Build()
 
 	if err := event.CreateMessage(discord.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed)).BuildCreate()); err != nil {
@@ -375,14 +373,14 @@ func excludeChannelListHandler(c *components.Components, event *events.Applicati
 	if err != nil {
 		return errors.NewError(err)
 	}
-	var listStr string
+	var listStr strings.Builder
 	for i, id := range g.LevelUpExcludeChannel {
-		listStr += fmt.Sprintf("%d. %s\n", i+1, discord.ChannelMention(id))
+		listStr.WriteString(fmt.Sprintf("%d. %s\n", i+1, discord.ChannelMention(id)))
 	}
 
 	embed := discord.NewEmbedBuilder().
 		SetTitle(translate.Message(event.Locale(), "components.level.exclude-channel.list.message")).
-		SetDescription(builtin.Or(listStr != "", listStr, "- "+translate.Message(event.Locale(), "components.level.exclude-channel.list.message.none"))).
+		SetDescription(builtin.Or(listStr.String() != "", listStr.String(), "- "+translate.Message(event.Locale(), "components.level.exclude-channel.list.message.none"))).
 		Build()
 
 	if err := event.CreateMessage(discord.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed)).BuildCreate()); err != nil {
@@ -583,14 +581,14 @@ func roleListHandler(c *components.Components, event *events.ApplicationCommandI
 		return errors.NewError(err)
 	}
 	g.LevelRole = builtin.NonNilMap(g.LevelRole)
-	var listStr string
+	var listStr strings.Builder
 	for k, v := range smap.MakeSortMap(g.LevelRole).Iter(cmp.Compare[int]) {
-		listStr += "- " + translate.Message(event.Locale(), "components.level.role.list.message", translate.WithTemplate(map[string]any{"Level": strconv.Itoa(k), "Role": discord.RoleMention(v)})) + "\n"
+		listStr.WriteString("- " + translate.Message(event.Locale(), "components.level.role.list.message", translate.WithTemplate(map[string]any{"Level": strconv.Itoa(k), "Role": discord.RoleMention(v)})) + "\n")
 	}
 
 	embed := discord.NewEmbedBuilder().
 		SetTitle(translate.Message(event.Locale(), "components.level.role.list.message.embed.title")).
-		SetDescription(builtin.Or(listStr != "", listStr, translate.Message(event.Locale(), "components.level.role.list.message.none"))).
+		SetDescription(builtin.Or(listStr.String() != "", listStr.String(), translate.Message(event.Locale(), "components.level.role.list.message.none"))).
 		Build()
 
 	if err := event.RespondMessage(discord.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed))); err != nil {

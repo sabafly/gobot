@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"math/rand/v2"
 	"strconv"
+	"strings"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
@@ -289,7 +290,7 @@ func inGuildRanking(c *components.Components, locale discord.Locale, client *bot
 	} else if len(rankQuery) == 0 {
 		return i18n.TranslateText(locale, "command.gopoint.ranking.no_result"), nil
 	}
-	var result string
+	var result strings.Builder
 	for _, point := range rankQuery {
 		user, err := client.Rest.GetMember(guildID, point.UserID)
 		if err != nil {
@@ -308,9 +309,9 @@ func inGuildRanking(c *components.Components, locale discord.Locale, client *bot
 		if userID != nil && point.UserID == *userID {
 			text += " " + i18n.TranslateText(locale, "command.gopoint.ranking.entry.you")
 		}
-		result += text + "\n"
+		result.WriteString(text + "\n")
 	}
-	return result, nil
+	return result.String(), nil
 }
 
 func AddPoint(c *components.Components, userID snowflake.ID, guildID snowflake.ID, point int64) error {

@@ -2,6 +2,7 @@ package bet
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/sabafly/gobot/database/models"
@@ -157,11 +158,8 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 
 				optionMarker := fmt.Sprintf("%d.", i+1)
 				winners := host.GetWinners()
-				for _, winnerID := range winners {
-					if winnerID == opt.ID {
-						optionMarker = "🏆"
-						break
-					}
+				if slices.Contains(winners, opt.ID) {
+					optionMarker = "🏆"
 				}
 
 				text := discord.NewTextDisplay(fmt.Sprintf("%s <@%d>", optionMarker, entrant.UserID))
@@ -214,11 +212,8 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 
 				optionMarker := fmt.Sprintf("%d.", i+1)
 				winners := host.GetWinners()
-				for _, winnerID := range winners {
-					if winnerID == opt.ID {
-						optionMarker = "🏆"
-						break
-					}
+				if slices.Contains(winners, opt.ID) {
+					optionMarker = "🏆"
 				}
 
 				// For race mode, show user mention instead of option text

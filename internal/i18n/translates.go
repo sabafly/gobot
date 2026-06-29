@@ -2,6 +2,7 @@ package i18n
 
 import (
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -174,9 +175,7 @@ func loadLocale(file *os.File) (*LocalizedValues, error) {
 		result.Components[key] = values
 	}
 
-	for key, value := range locale.Strings {
-		result.Strings[key] = value
-	}
+	maps.Copy(result.Strings, locale.Strings)
 
 	return result, nil
 }

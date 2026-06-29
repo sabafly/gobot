@@ -37,10 +37,7 @@ func NewMemoryValues[K comparable, T any](timeout time.Duration) *MemoryValues[K
 	cleanupInterval := time.Minute
 	if timeout > 0 && timeout < cleanupInterval {
 		// Use shorter cleanup interval if timeout is shorter
-		cleanupInterval = timeout / 2
-		if cleanupInterval < 10*time.Millisecond {
-			cleanupInterval = 10 * time.Millisecond
-		}
+		cleanupInterval = max(timeout/2, 10*time.Millisecond)
 	}
 
 	m := &MemoryValues[K, T]{

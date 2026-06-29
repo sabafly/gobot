@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
+	"strings"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
@@ -39,9 +40,9 @@ func noPermissionMessage(event interface {
 	CreateMessage(messageCreate discord.MessageCreate, opts ...rest.RequestOpt) error
 	Locale() discord.Locale
 }, perms []Permission) error {
-	var permStr string
+	var permStr strings.Builder
 	for _, p := range perms {
-		permStr += fmt.Sprintf("`%s` ", p.PermString())
+		permStr.WriteString(fmt.Sprintf("`%s` ", p.PermString()))
 	}
 	return event.CreateMessage(
 		discord.NewMessageBuilder().
@@ -49,7 +50,7 @@ func noPermissionMessage(event interface {
 				discord.NewEmbedBuilder().
 					SetTitlef("⚠️ %s", translate.Message(event.Locale(), "errors.invalid.permission")).
 					SetDescription(translate.Message(event.Locale(), "errors.invalid.permission.description",
-						translate.WithTemplate(map[string]any{"Permission": permStr}),
+						translate.WithTemplate(map[string]any{"Permission": permStr.String()}),
 					)).
 					SetColor(0xEEE731).
 					Build(),

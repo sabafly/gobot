@@ -63,9 +63,9 @@ func Command(c *components.Components) components.Command {
 					if extra > 0 && int(extra+1) < len(costTable) {
 						cost += costTable[extra+1]
 					}
-					extraMultiplier := int64(0)
+					extraMultiplier := float64(0)
 					if extra > 3 {
-						extraMultiplier = extra - 3
+						extraMultiplier = float64(extra - 3)
 					}
 
 					point, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
@@ -85,7 +85,7 @@ func Command(c *components.Components) components.Command {
 					data := &HALData{
 						id:           uuid.New(),
 						userID:       event.User().ID,
-						currentPoint: 3 + extra,
+						currentPoint: float64(3 + extra),
 						multiplier:   2 + extraMultiplier,
 					}
 					data.Roll()
@@ -110,20 +110,20 @@ func Command(c *components.Components) components.Command {
 					}
 
 					data := &SlotData{
-						ID:             uuid.New(),
-						UserID:         event.User().ID,
-						GuildID:        *event.GuildID(),
-						Status:         SlotStatusNormal,
-						LastReels:      [3][3]string{
+						ID:      uuid.New(),
+						UserID:  event.User().ID,
+						GuildID: *event.GuildID(),
+						Status:  SlotStatusNormal,
+						LastReels: [3][3]string{
 							{"🍇", "🔔", "🍒"},
 							{"🔄", "7️⃣", "🍇"},
 							{"🤡", "⬛", "🔄"},
 						},
-						GogoLit:        false,
-						LastSpinWin:    0,
-						TotalSpins:     0,
-						TotalSpent:     0,
-						TotalWon:       0,
+						GogoLit:     false,
+						LastSpinWin: 0,
+						TotalSpins:  0,
+						TotalSpent:  0,
+						TotalWon:    0,
 					}
 
 					reason, err := SlotPlay(c, data)
@@ -190,6 +190,32 @@ func Command(c *components.Components) components.Command {
 						return nil
 					}
 					success, equal := HALPlay(data, HALChoiceLow)
+					if !success && !equal {
+						return HALFinish(c, *data, event.User().ID, *event.GuildID(), event)
+					}
+					hal_values.Set(data.id, data)
+					if err := event.UpdateMessage(discord.NewMessageBuilder().
+						SetIsComponentsV2(true).
+						SetComponents(HALMessage(*data, event.Locale(), equal)...).
+						BuildUpdate()); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
+			"play:hal_same": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.high-and-low"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					data, err := HALPrecondition(event)
+					if err != nil {
+						return err
+					}
+					if data == nil {
+						return nil
+					}
+					success, equal := HALPlay(data, HALChoiceSame)
 					if !success && !equal {
 						return HALFinish(c, *data, event.User().ID, *event.GuildID(), event)
 					}

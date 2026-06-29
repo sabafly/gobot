@@ -24,7 +24,7 @@ strings:
   command.gopoint.give.target.description: "譲渡先のユーザー"
   command.play.slotmachine.description: "スロットマシンをプレイします。"
   command.play.high-and-low.guess-next: 次のカードを予想してください
-  command.play.high-and-low.equal-retry: 結果が同じでした。もう一度予想してください
+  command.play.high-and-low.equal-retry: SAMEチャンス‼SAMEを予想して的中すると倍率に出た目の数が加算されます。さらに、前回のカードと同じスートの場合は、現在のポイントに出た目の数×1.5が掛けられます。SAMEを予想して外すとゲームオーバーです。
   command.play.high-and-low.description: "ハイアンドローゲームをプレイします。"
   command.play.high-and-low.option.extra_bet.name: "追加ベット"
   command.play.high-and-low.option.extra_bet.description: "追加ベットを行い、初期ポイントを増やします 4ポイント以上増やした場合1ポイントごとに倍率が(増やしたポイント-3)増える (10^(追加初期ポイント+1) )ポイント支払う"
@@ -258,14 +258,13 @@ components:
   command.play.high-and-low.game:
     - type: container
       components:
-        - "## ハイアンドロー"
+        - "## ハイアンドロー : {turn}ターン目"
         - |-
-          - **ターン**：{turn}
-          - **現在のカード**
+          ### **現在のカード**
           # {current_card}
           - **前回のカード**: {last_card}
           - **現在のポイント**：`{point} ポイント` (x{multiplier}倍)
-          - **前回の選択**：**{last_choice}**
+          - **前回の選択**：**{last_choice}** 前回の結果：**{last_result}**
         - "### {message}"
         - type: action_row
           components:
@@ -274,9 +273,15 @@ components:
               label: "HIGH"
               id: "play:hal_high:{uuid}"
             - type: button
+              style: secondary
+              label: "SAME"
+              id: "play:hal_same:{uuid}"
+            - type: button
               style: danger
               label: "LOW"
               id: "play:hal_low:{uuid}"
+        - type: action_row
+          components:
             - type: button
               style: secondary
               label: "終了"
@@ -284,11 +289,10 @@ components:
   command.play.high-and-low.result:
     - type: container
       components:
-        - "## ハイアンドロー"
+        - "## ハイアンドロー : {turn}ターン"
         - |-
-          - **ターン**：{turn}
-          - **最後のカード**
+          ### **最後のカード**
           # {current_card}
           - **前回のカード**: {last_card}
           - **結果**：`{point} ポイント` (x{multiplier}倍)
-          - **最後の選択**：**{last_choice}**
+          - **最後の選択**：**{last_choice}** 前回の結果：**{last_result}**

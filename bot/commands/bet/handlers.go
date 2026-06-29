@@ -4,6 +4,7 @@ import (
 	stderrors "errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -770,11 +771,8 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 			// Get winners' bets
 			winnersBets := make([]models.Bet, 0)
 			for _, bet := range allBets {
-				for _, winnerID := range winnerIDs {
-					if bet.OptionID == winnerID {
-						winnersBets = append(winnersBets, bet)
-						break
-					}
+				if slices.Contains(winnerIDs, bet.OptionID) {
+					winnersBets = append(winnersBets, bet)
 				}
 			}
 
@@ -830,11 +828,8 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 				// Find winning entrants
 				winningEntrants := make([]models.BetEntrant, 0)
 				for _, entrant := range allEntrants {
-					for _, winnerID := range winnerIDs {
-						if entrant.OptionID == winnerID {
-							winningEntrants = append(winningEntrants, entrant)
-							break
-						}
+					if slices.Contains(winnerIDs, entrant.OptionID) {
+						winningEntrants = append(winningEntrants, entrant)
 					}
 				}
 

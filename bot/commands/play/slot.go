@@ -90,7 +90,7 @@ func checkWinOnLine(grid [3][3]string, lineIdx int) string {
 }
 
 func hasAnyLineWin(grid [3][3]string) bool {
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		if checkWinOnLine(grid, i) != "" {
 			return true
 		}
@@ -118,14 +118,14 @@ type StopCombination struct {
 func findMatchingReelStops(outcome string) [3]int {
 	var matches []StopCombination
 
-	for i := 0; i < 21; i++ {
-		for j := 0; j < 21; j++ {
-			for k := 0; k < 21; k++ {
+	for i := range 21 {
+		for j := range 21 {
+			for k := range 21 {
 				grid := getGridForStops(i, j, k)
 
 				// Evaluate wins
 				lineWins := make([]string, 0)
-				for p := 0; p < 5; p++ {
+				for p := range 5 {
 					winSymbol := checkWinOnLine(grid, p)
 					if winSymbol != "" {
 						lineWins = append(lineWins, winSymbol)

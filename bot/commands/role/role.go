@@ -453,11 +453,11 @@ func Command(c *components.Components) components.Command {
 							edit.Roles = append(edit.Roles, models.Role{ID: r.ID, Name: r.Name})
 						}
 						if len(deletedRole) > 0 {
-							var s string
+							var s strings.Builder
 							for _, id := range deletedRole {
-								s += fmt.Sprintf("- %s\r", discord.RoleMention(id))
+								s.WriteString(fmt.Sprintf("- %s\r", discord.RoleMention(id)))
 							}
-							embed := discord.NewEmbedBuilder().SetTitle(translate.Message(event.Locale(), "components.role.panel.edit.add_role.deleted_role.embed.title")).SetDescriptionf("%s\n"+s, translate.Message(event.Locale(), "components.role.panel.edit.add_role.deleted_role.embed.description")).Build()
+							embed := discord.NewEmbedBuilder().SetTitle(translate.Message(event.Locale(), "components.role.panel.edit.add_role.deleted_role.embed.title")).SetDescriptionf("%s\n"+s.String(), translate.Message(event.Locale(), "components.role.panel.edit.add_role.deleted_role.embed.description")).Build()
 							if err := event.CreateMessage(discord.NewMessageBuilder().
 								SetEmbeds(embeds.SetEmbedProperties(embed)).
 								SetFlags(discord.MessageFlagEphemeral).
@@ -763,25 +763,25 @@ func Command(c *components.Components) components.Command {
 					}
 					embed := discord.NewEmbedBuilder().SetTitle(translate.Message(event.Locale(), "components.role.panel.use.changed"))
 					if len(addRoles) > 0 {
-						var s string
+						var s strings.Builder
 						for _, id := range addRoles {
-							s += fmt.Sprintf("%s\n", discord.RoleMention(id))
+							s.WriteString(fmt.Sprintf("%s\n", discord.RoleMention(id)))
 						}
-						embed.AddFields(discord.EmbedField{Name: translate.Message(event.Locale(), "components.role.panel.use.changed.add"), Value: s})
+						embed.AddFields(discord.EmbedField{Name: translate.Message(event.Locale(), "components.role.panel.use.changed.add"), Value: s.String()})
 					}
 					if len(unchangedRole) > 0 {
-						var s string
+						var s strings.Builder
 						for _, id := range unchangedRole {
-							s += fmt.Sprintf("%s\n", discord.RoleMention(id))
+							s.WriteString(fmt.Sprintf("%s\n", discord.RoleMention(id)))
 						}
-						embed.AddFields(discord.EmbedField{Name: translate.Message(event.Locale(), "components.role.panel.use.changed.unchanged"), Value: s})
+						embed.AddFields(discord.EmbedField{Name: translate.Message(event.Locale(), "components.role.panel.use.changed.unchanged"), Value: s.String()})
 					}
 					if len(removedRoles) > 0 {
-						var s string
+						var s strings.Builder
 						for _, id := range removedRoles {
-							s += fmt.Sprintf("%s\n", discord.RoleMention(id))
+							s.WriteString(fmt.Sprintf("%s\n", discord.RoleMention(id)))
 						}
-						embed.AddFields(discord.EmbedField{Name: translate.Message(event.Locale(), "components.role.panel.use.changed.remove"), Value: s})
+						embed.AddFields(discord.EmbedField{Name: translate.Message(event.Locale(), "components.role.panel.use.changed.remove"), Value: s.String()})
 					}
 					if err := event.RespondMessage(discord.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed.Build())).SetFlags(discord.MessageFlagEphemeral)); err != nil {
 						return errors.NewError(err)
