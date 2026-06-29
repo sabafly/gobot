@@ -234,7 +234,8 @@ func SlotPlay(c *components.Components, data *SlotData) (string, errors.Error) {
 	data.TotalSpent += cost
 
 	// 3. Process according to status
-	if data.Status == SlotStatusNormal {
+	switch data.Status {
+	case SlotStatusNormal:
 		r := rand.N(10000)
 		if r < 38 { // BB (Big Bonus) - ~1/263
 			prelit := rand.N(4) == 0 // 25% 先ペカ
@@ -297,7 +298,7 @@ func SlotPlay(c *components.Components, data *SlotData) (string, errors.Error) {
 			data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
 			data.LastSpinWin = 0
 		}
-	} else if data.Status == SlotStatusGogo {
+	case SlotStatusGogo:
 		// Aligns 7s and starts bonus
 		if data.BonusType == "BB" {
 			stops := findMatchingReelStops("BB")
@@ -314,7 +315,7 @@ func SlotPlay(c *components.Components, data *SlotData) (string, errors.Error) {
 			data.TotalBonusWin = 15
 			data.LastSpinWin = 15
 		}
-	} else if data.Status == SlotStatusBB || data.Status == SlotStatusRB {
+	case SlotStatusBB, SlotStatusRB:
 		// Bonus Game Spin
 		stops := findMatchingReelStops("🍇")
 		data.LastReels = getGridForStops(stops[0], stops[1], stops[2])
@@ -435,15 +436,16 @@ func SlotMessage(c *components.Components, data *SlotData, locale discord.Locale
 
 	// Action Row with Buttons
 	actionRow := discord.NewActionRow()
-	if data.Status == SlotStatusBB || data.Status == SlotStatusRB {
+	switch data.Status {
+	case SlotStatusBB, SlotStatusRB:
 		actionRow = actionRow.AddComponents(
 			discord.NewSuccessButton("ボーナススピン (1pt)", fmt.Sprintf("play:slot_spin:%s", data.ID)),
 		)
-	} else if data.Status == SlotStatusGogo {
+	case SlotStatusGogo:
 		actionRow = actionRow.AddComponents(
 			discord.NewSuccessButton("狙う！ (3pt)", fmt.Sprintf("play:slot_spin:%s", data.ID)),
 		)
-	} else {
+	default:
 		actionRow = actionRow.AddComponents(
 			discord.NewPrimaryButton("スピン (3pt)", fmt.Sprintf("play:slot_spin:%s", data.ID)),
 		)

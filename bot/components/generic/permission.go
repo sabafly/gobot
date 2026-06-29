@@ -42,7 +42,7 @@ func noPermissionMessage(event interface {
 }, perms []Permission) error {
 	var permStr strings.Builder
 	for _, p := range perms {
-		permStr.WriteString(fmt.Sprintf("`%s` ", p.PermString()))
+		fmt.Fprintf(&permStr, "`%s` ", p.PermString())
 	}
 	return event.CreateMessage(
 		discord.NewMessageBuilder().

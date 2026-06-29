@@ -39,7 +39,7 @@ type Permission struct{ m map[string]bool }
 func (p Permission) String() string {
 	b := strings.Builder{}
 	for k, v := range p.m {
-		b.WriteString(fmt.Sprintf("%s: %t\n", k, v))
+		fmt.Fprintf(&b, "%s: %t\n", k, v)
 	}
 	return b.String()
 }

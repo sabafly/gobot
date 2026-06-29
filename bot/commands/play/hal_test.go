@@ -9,7 +9,7 @@ func TestHALPlay_Same(t *testing.T) {
 	gotSameSuit := false
 	gotDiffSuit := false
 
-	for i := 0; i < 20000 && !(gotSameSuit && gotDiffSuit); i++ {
+	for i := 0; i < 20000 && (!gotSameSuit || !gotDiffSuit); i++ {
 		data := &HALData{
 			currentPoint: 10.0,
 			multiplier:   2.0,

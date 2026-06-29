@@ -136,11 +136,10 @@ func leaderboardHandler(c *components.Components, event *events.ApplicationComma
 
 	var leaderboard strings.Builder
 	for i, m := range members {
-		leaderboard.WriteString(fmt.Sprintf("**#%d | %s XP: `%d` Level: `%d`**\n",
+		fmt.Fprintf(&leaderboard, "**#%d | %s XP: `%d` Level: `%d`**\n",
 			i+1+((page-1)*pageCount),
 			discord.UserMention(m.UserID),
-			m.XP, m.XP.Level(),
-		))
+			m.XP, m.XP.Level())
 	}
 
 	embed := discord.NewEmbedBuilder().
@@ -375,7 +374,7 @@ func excludeChannelListHandler(c *components.Components, event *events.Applicati
 	}
 	var listStr strings.Builder
 	for i, id := range g.LevelUpExcludeChannel {
-		listStr.WriteString(fmt.Sprintf("%d. %s\n", i+1, discord.ChannelMention(id)))
+		fmt.Fprintf(&listStr, "%d. %s\n", i+1, discord.ChannelMention(id))
 	}
 
 	embed := discord.NewEmbedBuilder().

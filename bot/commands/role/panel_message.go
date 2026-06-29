@@ -58,7 +58,7 @@ func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *
 				Name: discordutil.Index2Emoji(i),
 			}
 		}
-		roleField.WriteString(fmt.Sprintf("%s: %s: %s\n", discordutil.FormatComponentEmoji(*emojiVal), r.Name, discord.RoleMention(r.ID)))
+		fmt.Fprintf(&roleField, "%s: %s: %s\n", discordutil.FormatComponentEmoji(*emojiVal), r.Name, discord.RoleMention(r.ID))
 	}
 
 	embedList := []discord.Embed{
@@ -207,7 +207,7 @@ func rpEditModifyRolesMessage(edit *models.RolePanelEdit, locale discord.Locale)
 				Name: discordutil.Index2Emoji(i),
 			}
 		}
-		roleField.WriteString(fmt.Sprintf("%s: %s: %s\n", discordutil.FormatComponentEmoji(*emojiVal), r.Name, discord.RoleMention(r.ID)))
+		fmt.Fprintf(&roleField, "%s: %s: %s\n", discordutil.FormatComponentEmoji(*emojiVal), r.Name, discord.RoleMention(r.ID))
 	}
 	embedList := []discord.Embed{
 		discord.NewEmbedBuilder().
@@ -284,7 +284,7 @@ func rpPlaceBaseMenu(place *models.RolePanelPlaced, locale discord.Locale) disco
 				Name: discordutil.Index2Emoji(i),
 			}
 		}
-		roleField.WriteString(fmt.Sprintf("%s| %s\n", discordutil.FormatComponentEmoji(*emojiVal), builtin.Or(place.UseDisplayName, r.Name, discord.RoleMention(r.ID))))
+		fmt.Fprintf(&roleField, "%s| %s\n", discordutil.FormatComponentEmoji(*emojiVal), builtin.Or(place.UseDisplayName, r.Name, discord.RoleMention(r.ID)))
 	}
 	embedList := []discord.Embed{
 		discord.NewEmbedBuilder().
@@ -439,7 +439,7 @@ func rpPlacedMessage(place *models.RolePanelPlaced, locale discord.Locale) disco
 				Name: discordutil.Index2Emoji(i),
 			}
 		}
-		roleField.WriteString(fmt.Sprintf("%s| %s\n", discordutil.FormatComponentEmoji(*emojiVal), builtin.Or(place.UseDisplayName, r.Name, discord.RoleMention(r.ID))))
+		fmt.Fprintf(&roleField, "%s| %s\n", discordutil.FormatComponentEmoji(*emojiVal), builtin.Or(place.UseDisplayName, r.Name, discord.RoleMention(r.ID)))
 	}
 	embedList := []discord.Embed{
 		discord.NewEmbedBuilder().
