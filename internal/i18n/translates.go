@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/disgoorg/disgo/discord"
 	"gopkg.in/yaml.v3"
@@ -16,25 +17,60 @@ var (
 	globalLocales = make(map[discord.Locale]*LocalizedValues, 0)
 )
 
-func TranslateText(locale discord.Locale, key string) string {
+func TranslateText(locale discord.Locale, key string, args ...any) string {
 	if locale == discord.LocaleUnknown {
 		locale = defaultLocale
 	}
 
+	var parseString string
 	if localeValues, exists := globalLocales[locale]; exists {
 		if value, exists := localeValues.Strings[key]; exists {
-			return value
+			parseString = value
 		}
-	}
-
-	if defaultValues, exists := globalLocales[defaultLocale]; exists {
+	} else if defaultValues, exists := globalLocales[defaultLocale]; exists {
 		if value, exists := defaultValues.Strings[key]; exists {
-			return value
+			parseString = value
 		}
+	} else {
+		parseString = key // Fallback to the key itself if no translation is found
+		slog.Warn("TranslateText: no translation found", "key", key, "locale", locale)
 	}
 
-	slog.Warn("TranslateText: no translation found", "key", key, "locale", locale)
-	return key // Fallback to the key itself if no translation is found
+	tmpl := template.New("translate").
+		Option("missingkey=error").
+		Funcs(template.FuncMap{
+			"div": func(n float64, d float64) float64 {
+				return n / d
+			},
+			"mul": func(n float64, d float64) float64 {
+				return n * d
+			},
+			"add": func(n float64, d float64) float64 {
+				return n + d
+			},
+			"sub": func(n float64, d float64) float64 {
+				return n - d
+			},
+		})
+
+	if _, err := tmpl.Parse(parseString); err != nil {
+		slog.Error("TranslateText: failed to parse template", "key", key, "locale", locale, "error", err)
+		return key // Fallback to the key itself if template parsing fails
+	}
+
+	var sb strings.Builder
+	var data any
+	if len(args) == 1 {
+		data = args[0]
+	} else if len(args) > 1 {
+		data = args
+	}
+	if err := tmpl.Execute(&sb, data); err != nil {
+		slog.Error("TranslateText: failed to execute template", "key", key, "locale", locale, "error", err)
+		return key // Fallback to the key itself if template execution fails
+	}
+
+	return sb.String()
 }
 
 func TranslateTextMap(key string) map[discord.Locale]string {

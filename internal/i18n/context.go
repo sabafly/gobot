@@ -23,6 +23,7 @@ type MapContext struct {
 	texts          map[string]string
 	defaultValues  map[string][]discord.SelectMenuDefaultValue
 	defaultOptions map[string][]string
+	stringOptions  map[string][]discord.StringSelectMenuOption
 	maxValues      map[string]int
 	minValues      map[string]int
 	disabled       map[string]bool
@@ -59,6 +60,18 @@ func (m *MapContext) WithDefaultOptions(customID string, options []string) *MapC
 		return m
 	}
 	m.defaultOptions[customID] = options
+	return m
+}
+
+func (m *MapContext) WithStringOptions(customID string, options []discord.StringSelectMenuOption) *MapContext {
+	if m.stringOptions == nil {
+		m.stringOptions = make(map[string][]discord.StringSelectMenuOption)
+	}
+	if len(options) == 0 {
+		delete(m.stringOptions, customID)
+		return m
+	}
+	m.stringOptions[customID] = options
 	return m
 }
 
@@ -186,6 +199,17 @@ func (m MapContext) GetDefaultOptions(customID string, options []discord.StringS
 			option.Default = false
 		}
 		options[i] = option
+	}
+	return options
+}
+
+func (m MapContext) GetStringOptions(customID string) []discord.StringSelectMenuOption {
+	if len(m.stringOptions) == 0 {
+		return nil
+	}
+	options, ok := m.stringOptions[customID]
+	if !ok {
+		return nil
 	}
 	return options
 }

@@ -17,13 +17,13 @@ func TestHALPlay_Same(t *testing.T) {
 		}
 
 		// HALPlay will roll a new card.
-		// We guess HALChoiceSame.
-		success, _ := HALPlay(data, HALChoiceSame)
-		if !success {
+		// We guess HALResultSame.
+		finishState := HALPlay(data, HALResultSame)
+		if finishState != HALFinishStateNone {
 			continue
 		}
 
-		// If success is true, it must be that result == HALChoiceSame.
+		// If success is true, it must be that result == HALResultSame.
 		// Let's assert:
 		expectedMultiplier := 2.0 + float64(data.currentCard.Number())
 		if data.multiplier != expectedMultiplier {

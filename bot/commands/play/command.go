@@ -54,17 +54,6 @@ func Command(c *components.Components) components.Command {
 						Name:                     "high-and-low",
 						Description:              "Play a high and low card game",
 						DescriptionLocalizations: i18n.TranslateTextMap("command.play.high-and-low.description"),
-						Options: []discord.ApplicationCommandOption{
-							discord.ApplicationCommandOptionInt{
-								Name:                     "extra_bet",
-								NameLocalizations:        i18n.TranslateCommandOptionMap("command.play.high-and-low.option.extra_bet.name"),
-								Description:              "Place an extra bet to increase your winnings",
-								DescriptionLocalizations: i18n.TranslateTextMap("command.play.high-and-low.option.extra_bet.description"),
-								MinValue:                 ptr(1),
-								MaxValue:                 ptr(10),
-								Required:                 false,
-							},
-						},
 					},
 					discord.ApplicationCommandOptionSubCommand{
 						Name:                     "slot",
@@ -80,46 +69,18 @@ func Command(c *components.Components) components.Command {
 					generic.PermissionDefaultString("play.high-and-low"),
 				},
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					cost := int64(15)
-
-					// Lookup table for power of 10 costs (more efficient than math.Pow10 for integer calculations)
-					costTable := []int64{0, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 10000000000, 100000000000, 1000000000000}
-					extra := int64(event.SlashCommandInteractionData().Int("extra_bet"))
-					if extra > 0 && int(extra+1) < len(costTable) {
-						cost += costTable[extra+1]
-					}
-					extraMultiplier := float64(0)
-					if extra > 3 {
-						extraMultiplier = float64(extra - 3)
-					}
-
 					point, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
-					if point < cost {
-						if err := errors.ErrorMessage("error.play.high-and-low.insufficient_points", event,
-							errors.WithMapContext(i18n.BuildContext().WithText("point", strconv.FormatInt(cost, 10)))); err != nil {
-							return errors.NewError(err)
-						}
-						return nil
-					}
-					if err = gopoint.AddPoint(c, event.User().ID, *event.GuildID(), -cost); err != nil {
-						return errors.NewError(err)
-					}
-					data := &HALData{
-						id:           uuid.New(),
-						userID:       event.User().ID,
-						currentPoint: float64(3 + extra),
-						multiplier:   2 + extraMultiplier,
-					}
-					data.Roll()
+
+					data := NewHALData(event.User().ID)
 
 					hal_values.Set(data.id, data)
 
 					if err := event.RespondMessage(discord.NewMessageBuilder().
 						SetIsComponentsV2(true).
-						SetComponents(HALMessage(*data, event.Locale(), false)...)); err != nil {
+						SetComponents(HALStartMessage(*data, event.Locale(), point, data.startOptionIndex)...)); err != nil {
 						return errors.NewError(err)
 					}
 					return nil
@@ -176,6 +137,91 @@ func Command(c *components.Components) components.Command {
 			},
 		},
 		ComponentHandlers: map[string]generic.PermissionComponentHandler{
+			"play:hal_select_opt": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.high-and-low"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					data, err1 := HALPrecondition(event)
+					if err1 != nil {
+						return err1
+					}
+					if data == nil {
+						return nil
+					}
+					gopoint, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+
+					selectedOption := 0
+					if data := event.StringSelectMenuInteractionData(); len(data.Values) > 0 {
+						selected, err := strconv.Atoi(data.Values[0])
+						if err != nil {
+							return errors.NewError(err)
+						}
+						if selected < 0 || selected >= len(HALStartOptions) {
+							return errors.NewError(fmt.Errorf("invalid selected option"))
+						}
+						selectedOption = selected
+					}
+
+					data.SetStartOption(selectedOption, HALStartOptions[selectedOption])
+
+					hal_values.Set(data.id, data)
+
+					if err := event.UpdateMessage(discord.NewMessageBuilder().
+						SetIsComponentsV2(true).
+						SetComponents(HALStartMessage(*data, event.Locale(), gopoint, selectedOption)...).
+						BuildUpdate()); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
+			"play:hal_start": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.high-and-low"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					data, err1 := HALPrecondition(event)
+					if err1 != nil {
+						return err1
+					}
+					if data == nil {
+						return nil
+					}
+
+					point, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+
+					if point < data.cost {
+						if err := errors.ErrorMessage("error.play.high-and-low.insufficient_points", event,
+							errors.WithMapContext(i18n.BuildContext().WithText("point", strconv.FormatInt(data.cost, 10)))); err != nil {
+							return errors.NewError(err)
+						}
+						return nil
+					}
+
+					if err := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), -int64(data.cost)); err != nil {
+						return errors.NewError(err)
+					}
+
+					data.Start()
+
+					hal_values.Set(data.id, data)
+
+					if err := event.UpdateMessage(discord.NewMessageBuilder().
+						SetIsComponentsV2(true).
+						SetComponents(HALMessage(*data, event.Locale())...).
+						BuildUpdate()); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
 			"play:hal_high": generic.PComponentHandler{
 				Permission: []generic.Permission{
 					generic.PermissionDefaultString("play.high-and-low"),
@@ -188,14 +234,14 @@ func Command(c *components.Components) components.Command {
 					if data == nil {
 						return nil
 					}
-					success, equal := HALPlay(data, HALChoiceHigh)
-					if !success && !equal {
-						return HALFinish(c, *data, event.User().ID, *event.GuildID(), event)
+					finish := HALPlay(data, HALResultHigh)
+					if finish != HALFinishStateNone {
+						return HALFinish(c, *data, finish, event.User().ID, *event.GuildID(), event)
 					}
 					hal_values.Set(data.id, data)
 					if err := event.UpdateMessage(discord.NewMessageBuilder().
 						SetIsComponentsV2(true).
-						SetComponents(HALMessage(*data, event.Locale(), equal)...).
+						SetComponents(HALMessage(*data, event.Locale())...).
 						BuildUpdate()); err != nil {
 						return errors.NewError(err)
 					}
@@ -214,14 +260,14 @@ func Command(c *components.Components) components.Command {
 					if data == nil {
 						return nil
 					}
-					success, equal := HALPlay(data, HALChoiceLow)
-					if !success && !equal {
-						return HALFinish(c, *data, event.User().ID, *event.GuildID(), event)
+					finish := HALPlay(data, HALResultLow)
+					if finish != HALFinishStateNone {
+						return HALFinish(c, *data, finish, event.User().ID, *event.GuildID(), event)
 					}
 					hal_values.Set(data.id, data)
 					if err := event.UpdateMessage(discord.NewMessageBuilder().
 						SetIsComponentsV2(true).
-						SetComponents(HALMessage(*data, event.Locale(), equal)...).
+						SetComponents(HALMessage(*data, event.Locale())...).
 						BuildUpdate()); err != nil {
 						return errors.NewError(err)
 					}
@@ -240,15 +286,50 @@ func Command(c *components.Components) components.Command {
 					if data == nil {
 						return nil
 					}
-					success, equal := HALPlay(data, HALChoiceSame)
-					if !success && !equal {
-						return HALFinish(c, *data, event.User().ID, *event.GuildID(), event)
+					finish := HALPlay(data, HALResultSame)
+					if finish != HALFinishStateNone {
+						return HALFinish(c, *data, finish, event.User().ID, *event.GuildID(), event)
 					}
 					hal_values.Set(data.id, data)
 					if err := event.UpdateMessage(discord.NewMessageBuilder().
 						SetIsComponentsV2(true).
-						SetComponents(HALMessage(*data, event.Locale(), equal)...).
+						SetComponents(HALMessage(*data, event.Locale())...).
 						BuildUpdate()); err != nil {
+						return errors.NewError(err)
+					}
+					return nil
+				},
+			},
+			"play:hal_retry": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.high-and-low"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					args := strings.Split(event.Data.CustomID(), ":")
+					if len(args) < 3 {
+						return errors.NewError(fmt.Errorf("invalid custom ID"))
+					}
+					optionIndex, err := strconv.Atoi(args[2])
+					if err != nil {
+						return errors.NewError(err)
+					}
+					if optionIndex < 0 || optionIndex >= len(HALStartOptions) {
+						optionIndex = 0 // default to first option if invalid
+					}
+
+					point, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+					if err != nil {
+						return errors.NewError(err)
+					}
+
+					data := NewHALData(event.User().ID)
+					data.SetStartOption(optionIndex, HALStartOptions[optionIndex])
+
+					hal_values.Set(data.id, data)
+
+					if err := event.RespondMessage(discord.NewMessageBuilder().
+						SetIsComponentsV2(true).
+						SetComponents(HALStartMessage(*data, event.Locale(), point, data.startOptionIndex)...)); err != nil {
 						return errors.NewError(err)
 					}
 					return nil
@@ -266,7 +347,7 @@ func Command(c *components.Components) components.Command {
 					if data == nil {
 						return nil
 					}
-					return HALFinish(c, *data, event.User().ID, *event.GuildID(), event)
+					return HALFinish(c, *data, HALFinishStatePayout, event.User().ID, *event.GuildID(), event)
 				},
 			},
 			"play:slot_spin": generic.PComponentHandler{

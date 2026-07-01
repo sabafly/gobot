@@ -24,10 +24,17 @@ strings:
   command.gopoint.give.target.description: "譲渡先のユーザー"
   command.play.slotmachine.description: "スロットマシンをプレイします。"
   command.play.high-and-low.guess-next: 次のカードを予想してください
-  command.play.high-and-low.equal-retry: SAMEチャンス‼SAMEを予想して的中すると倍率に出た目の数が加算されます。さらに、前回のカードと同じスートの場合は、現在のポイントに出た目の数×1.5が掛けられます。SAMEを予想して外すとゲームオーバーです。
+  command.play.high-and-low.equal-retry: SAMEチャンス‼
   command.play.high-and-low.description: "ハイアンドローゲームをプレイします。"
+  command.play.high-and-low.start_option_entry.label: "コスト {{.Cost}} ポイント"
+  command.play.high-and-low.start_option_entry.description: "開始ポイント: {{.StartPoint}}ポイント ボーナス割合: {{mul .Multiplier 100}}%"
+  command.play.high-and-low.start_option_entry.selected: "コスト: `{{.Cost}}ポイント` 開始ポイント: `{{.StartPoint}}ポイント` ボーナス割合: `{{mul .Multiplier 100}}%`"
   command.play.high-and-low.option.extra_bet.name: "追加ベット"
   command.play.high-and-low.option.extra_bet.description: "追加ベットを行い、初期ポイントを増やします 4ポイント以上増やした場合1ポイントごとに倍率が(増やしたポイント-3)増える (10^(追加初期ポイント+1) )ポイント支払う"
+  command.play.high-and-low.finish.win: "ゲームクリア"
+  command.play.high-and-low.finish.lose: "ゲームオーバー"
+  command.play.high-and-low.finish.payout: "ポイント獲得"
+  command.play.high-and-low.finish.joker: "ジョーカーがあらわれた！"
   command.play.slot.description: "スロットマシンをプレイします。"
   command.bet.description: "Goポイントを賭けます。"
   command.bet.create.title: "ベットを作成"
@@ -94,7 +101,7 @@ strings:
   command.bet.error.already_voted_no_change: "あなたは既に {option} に {amount}pt 投票しています。\n投票先を変更することはできません。"
   command.bet.error.already_voted_status: "あなたは既に {option} に {amount}pt 投票しています。\n"
   command.bet.error.invalid_amount: "有効なポイント数を入力してください。"
-  command.bet.error.insufficient_points: "Goポイントが不足しています。現在: {points}pt"
+  command.bet.error.insufficient_points: "Goポイントが不足しています。現在の所持ポイント: {points}pt"
   command.bet.error.cannot_decrease: "投票額を減らすことはできません。"
   command.bet.error.cannot_change_dest: "投票先を変更することはできません。"
   command.bet.error.only_organizer_decide: "結果の決定は主催者のみが行えます。"
@@ -255,6 +262,41 @@ components:
   command.gopoint.give.success:
     - "Goポイントの譲渡が完了しました。"
     - "`{point} ポイント`を`{target_user_name}`に譲渡しました。"
+  command.play.high-and-low.start:
+    - type: container
+      components:
+        - "# ハイアンドロー"
+        - |-
+          ## ルール
+          - ハイアンドローは、現在のカードよりも次のカードが高いか低いかを予想するゲームです。
+          - 次のカードの数字が現在のカードよりも高いと予想する場合はHIGH、低いと予想する場合はLOWを選択してください。
+          - 正解すると現在のポイントに応じたボーナス割合を加えたポイントが加算されます。
+          - 外すとゲームオーバーです。
+          ### SAMEチャンス
+          - 前回のカードと同じ数字が出た場合は、SAMEを予想することができます。
+          - SAMEを予想して的中すると倍率に出た目の数が加算されます。
+          - さらに、前回のカードと同じスートの場合は、現在のポイントに出た目の数×1.5が掛けられます。
+          - SAMEを予想して外すとゲームオーバーです。
+          ### 追加ポイント
+          - 追加のポイントを支払うとポイントと倍率の初期値を増やすことができます。
+        - type: separator
+          height: 2
+        - |-
+          選択中の開始オプション: {selected_option}
+          現在の残高: `{gopoint} ポイント`
+          開始オプションを選択して「開始」ボタンを押すとゲームが開始します。
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:hal_select_opt:{uuid}"
+              placeholder: "開始オプションを選択してください"
+              options: "hal_start_options"
+        - type: action_row
+          components:
+            - type: button
+              style: primary
+              label: "開始"
+              id: "play:hal_start:{uuid}"
   command.play.high-and-low.game:
     - type: container
       components:
@@ -263,7 +305,7 @@ components:
           ### **現在のカード**
           # {current_card}
           - **前回のカード**: {last_card}
-          - **現在のポイント**：`{point} ポイント` (x{multiplier}倍)
+          - **現在のポイント**：`{point} ポイント` (ボーナス{multiplier}%)
           - **前回の選択**：**{last_choice}** 前回の結果：**{last_result}**
         - "### {message}"
         - type: action_row
@@ -289,10 +331,16 @@ components:
   command.play.high-and-low.result:
     - type: container
       components:
-        - "## ハイアンドロー : {turn}ターン"
+        - "## ハイアンドロー {final_state} : {turn}ターン"
         - |-
           ### **最後のカード**
           # {current_card}
           - **前回のカード**: {last_card}
-          - **結果**：`{point} ポイント` (x{multiplier}倍)
+          - **結果**：`{point} ポイント` (ボーナス{multiplier}%)
           - **最後の選択**：**{last_choice}** 前回の結果：**{last_result}**
+        - type: separator
+          height: 2
+        - type: button
+          style: secondary
+          label: 再挑戦
+          id: "play:hal_retry:{option_index}"
