@@ -19,7 +19,7 @@ func TestHALPlay_Same(t *testing.T) {
 		// HALPlay will roll a new card.
 		// We guess HALResultSame.
 		finishState := HALPlay(data, HALResultSame)
-		if finishState != HALFinishStateNone {
+		if finishState != HALFinishStateNone && data.lastResult != HALResultSame {
 			continue
 		}
 
