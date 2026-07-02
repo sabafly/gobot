@@ -6,7 +6,13 @@ import (
 )
 
 var (
-	randomCardFunc             = func() Card { return CardFromIndex(rand.N(54)) }
+	randomCardFunc = func() Card {
+		if rand.Float64() < 0.6 {
+			return randomCardWithoutJokerFunc()
+		} else {
+			return CardFromIndex(rand.N(54))
+		}
+	}
 	randomCardWithoutJokerFunc = func() Card { return CardFromIndex(rand.N(52)) }
 )
 
