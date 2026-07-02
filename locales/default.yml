@@ -303,11 +303,14 @@ components:
     - "{mention}"
     - type: container
       components:
-        - "## ハイアンドロー : {turn}ターン目"
+        - "## ハイアンドロー"
+        - "### {turn}ターン目"
+        - type: separator
+          height: 2
         - |-
           ### **現在のカード**
           # {current_card}
-          - **前回のカード**: {last_card}
+          - **前回のカード**： {last_card}
           - **現在のポイント**：`{point} ポイント` (ボーナス{multiplier}%)
           - **前回の選択**：**{last_choice}** 前回の結果：**{last_result}**
         - "### {message}"
@@ -335,7 +338,13 @@ components:
     - "{mention}"
     - type: container
       components:
-        - "## ハイアンドロー {final_state} : {turn}ターン"
+        - "## ハイアンドロー"
+        - "### {turn}ターン"
+        - type: separator
+          height: 2
+        - "## {final_state}"
+        - type: separator
+          height: 1
         - |-
           ### **最後のカード**
           # {current_card}
