@@ -27,7 +27,7 @@ func NewHALData(userID snowflake.ID) *HALData {
 		userID:           userID,
 		started:          false,
 		startOptionIndex: 0,
-		maxTurns:         HALStartOptions[0].MaxTurns,
+		startOption:      HALStartOptions[0],
 		currentPoint:     float64(HALStartOptions[0].StartPoint),
 		multiplier:       HALStartOptions[0].Multiplier,
 	}
@@ -38,8 +38,7 @@ type HALData struct {
 	userID snowflake.ID
 
 	startOptionIndex int
-	cost             int64
-	maxTurns         int
+	startOption      HALStartOption
 	started          bool
 
 	currentPoint float64
@@ -56,10 +55,9 @@ func (h *HALData) SetStartOption(index int, option HALStartOption) {
 		return
 	}
 	h.startOptionIndex = index
-	h.maxTurns = option.MaxTurns
+	h.startOption = option
 	h.currentPoint = option.StartPoint
 	h.multiplier = option.Multiplier
-	h.cost = option.Cost
 }
 
 func (h *HALData) Start() {
@@ -157,7 +155,7 @@ func HALPlay(data *HALData, choice HALResult) (finishState HALFinishState) {
 		return
 	}
 	defer func() {
-		if data.turn >= data.maxTurns && finishState == HALFinishStateNone {
+		if data.turn >= data.startOption.MaxTurns && finishState == HALFinishStateNone {
 			finishState = HALFinishStateWin
 		}
 	}()
@@ -166,11 +164,11 @@ func HALPlay(data *HALData, choice HALResult) (finishState HALFinishState) {
 			finishState = HALFinishStateNone
 			return
 		}
-		data.multiplier += float64(data.currentCard.Number())
+		data.multiplier += float64(data.currentCard.Number()) * data.startOption.Multiplier
 		if data.previousCard.Suit() == data.currentCard.Suit() {
 			data.currentPoint *= float64(data.currentCard.Number()) * 1.5
 		}
-		data.maxTurns = min(data.turn+5, data.maxTurns)
+		data.startOption.MaxTurns = min(data.turn+5, data.startOption.MaxTurns)
 		finishState = HALFinishStateNone
 		return
 	}
@@ -208,6 +206,7 @@ func HALFinish(c *components.Components, data HALData, finishState HALFinishStat
 	if err := event.UpdateMessage(discord.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(i18n.BuildContext().
+			WithText("mention", discord.UserMention(data.userID)).
 			WithText("point", strconv.FormatInt(int64(math.Floor(data.currentPoint)), 10)).
 			WithText("current_card", data.currentCard.String()).
 			WithText("last_card", data.previousCard.String()).
@@ -255,6 +254,7 @@ func HALStartMessage(data HALData, locale discord.Locale, gopoint int64, selecte
 	}
 
 	return i18n.BuildContext().
+		WithText("mention", discord.UserMention(data.userID)).
 		WithText("gopoint", strconv.FormatInt(gopoint, 10)).
 		WithText("selected_option", i18n.TranslateText(locale, "command.play.high-and-low.start_option_entry.selected", HALStartOptions[selectedOptionIndex])).
 		WithStringOptions("hal_start_options", startOptions).
@@ -274,6 +274,7 @@ func HALMessage(data HALData, locale discord.Locale) []discord.LayoutComponent {
 		previousCardText = data.previousCard.String()
 	}
 	return ctx.
+		WithText("mention", discord.UserMention(data.userID)).
 		WithText("point", strconv.FormatInt(int64(math.Floor(data.currentPoint)), 10)).
 		WithText("current_card", data.currentCard.String()).
 		WithText("last_card", previousCardText).

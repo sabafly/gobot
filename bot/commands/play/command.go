@@ -197,15 +197,15 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 
-					if point < data.cost {
+					if point < data.startOption.Cost {
 						if err := errors.ErrorMessage("error.play.high-and-low.insufficient_points", event,
-							errors.WithMapContext(i18n.BuildContext().WithText("point", strconv.FormatInt(data.cost, 10)))); err != nil {
+							errors.WithMapContext(i18n.BuildContext().WithText("point", strconv.FormatInt(data.startOption.Cost, 10)))); err != nil {
 							return errors.NewError(err)
 						}
 						return nil
 					}
 
-					if err := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), -int64(data.cost)); err != nil {
+					if err := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), -int64(data.startOption.Cost)); err != nil {
 						return errors.NewError(err)
 					}
 

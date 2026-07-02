@@ -263,6 +263,7 @@ components:
     - "Goポイントの譲渡が完了しました。"
     - "`{point} ポイント`を`{target_user_name}`に譲渡しました。"
   command.play.high-and-low.start:
+    - "{mention}"
     - type: container
       components:
         - "# ハイアンドロー"
@@ -270,11 +271,11 @@ components:
           ## ルール
           - ハイアンドローは、現在のカードよりも次のカードが高いか低いかを予想するゲームです。
           - 次のカードの数字が現在のカードよりも高いと予想する場合はHIGH、低いと予想する場合はLOWを選択してください。
-          - 正解すると現在のポイントに応じたボーナス割合を加えたポイントが加算されます。
+          - 正解すると現在のポイントに、現在のポイント×ボーナス割合が加算されます。
           - 外すとゲームオーバーです。
           ### SAMEチャンス
           - 前回のカードと同じ数字が出た場合は、SAMEを予想することができます。
-          - SAMEを予想して的中するとボーナス割合に出た目×100%が加算されます。
+          - SAMEを予想して的中するとボーナス割合に、出た目の数×初期ボーナス割合が加算されます。
           - さらに、前回のカードと同じスートの場合は、現在のポイントに出た目の数×1.5が掛けられます。
           - SAMEを予想して外すとゲームオーバーです。
           ### 追加ポイント
@@ -298,6 +299,7 @@ components:
               label: "開始"
               id: "play:hal_start:{uuid}"
   command.play.high-and-low.game:
+    - "{mention}"
     - type: container
       components:
         - "## ハイアンドロー : {turn}ターン目"
@@ -329,6 +331,7 @@ components:
               label: "終了"
               id: "play:hal_cancel:{uuid}"
   command.play.high-and-low.result:
+    - "{mention}"
     - type: container
       components:
         - "## ハイアンドロー {final_state} : {turn}ターン"
