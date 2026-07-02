@@ -125,7 +125,7 @@ func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *
 				Style:    discord.ButtonStylePrimary,
 				Label:    translate.Message(locale, "components.role.panel.edit.menu.base.components.place"),
 				CustomID: fmt.Sprintf("role:panel_edit_component:place:%s", edit.ID),
-				Disabled: (panel.AppliedAt.Before(panel.UpdatedAt) || len(panel.Roles) < 1) && placeCount > 0,
+				Disabled: len(panel.Roles) < 1 || (panel.AppliedAt.Before(panel.UpdatedAt) && placeCount > 0),
 			},
 		),
 		discord.NewActionRow(
