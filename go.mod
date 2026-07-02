@@ -3,7 +3,7 @@ module github.com/sabafly/gobot
 go 1.25.3
 
 require (
-	entgo.io/ent v0.14.5
+	entgo.io/ent v0.14.6
 	github.com/disgoorg/disgo v0.18.16
 	github.com/disgoorg/json/v2 v2.0.0
 	github.com/disgoorg/omit v1.0.0
