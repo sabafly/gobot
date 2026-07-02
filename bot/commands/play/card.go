@@ -5,12 +5,17 @@ import (
 	"math/rand/v2"
 )
 
+var (
+	randomCardFunc             = func() Card { return CardFromIndex(rand.N(54)) }
+	randomCardWithoutJokerFunc = func() Card { return CardFromIndex(rand.N(52)) }
+)
+
 func RandomCard() Card {
-	return CardFromIndex(rand.N(54))
+	return randomCardFunc()
 }
 
 func RandomCardWithoutJoker() Card {
-	return CardFromIndex(rand.N(52))
+	return randomCardWithoutJokerFunc()
 }
 
 func CardFromIndex(index int) Card {
