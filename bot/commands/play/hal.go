@@ -265,7 +265,11 @@ func HALStartMessage(data HALData, locale discord.Locale, gopoint int64, selecte
 func HALMessage(data HALData, locale discord.Locale) []discord.LayoutComponent {
 	ctx := i18n.BuildContext()
 	if data.lastResult == HALResultSame {
-		ctx.WithText("message", i18n.TranslateText(locale, "command.play.high-and-low.equal-retry"))
+		if data.lastChoice == HALResultSame {
+			ctx.WithText("message", i18n.TranslateText(locale, "command.play.high-and-low.equal-success"))
+		} else {
+			ctx.WithText("message", i18n.TranslateText(locale, "command.play.high-and-low.equal-chance"))
+		}
 	} else {
 		ctx.WithText("message", i18n.TranslateText(locale, "command.play.high-and-low.guess-next"))
 	}

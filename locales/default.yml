@@ -24,7 +24,8 @@ strings:
   command.gopoint.give.target.description: "譲渡先のユーザー"
   command.play.slotmachine.description: "スロットマシンをプレイします。"
   command.play.high-and-low.guess-next: 次のカードを予想してください
-  command.play.high-and-low.equal-retry: SAMEチャンス‼
+  command.play.high-and-low.equal-success: "# 🚀SAME的中‼🚀"
+  command.play.high-and-low.equal-chance: SAMEチャンス‼
   command.play.high-and-low.description: "ハイアンドローゲームをプレイします。"
   command.play.high-and-low.start_option_entry.label: "コスト {{.Cost}} ポイント"
   command.play.high-and-low.start_option_entry.description: "開始ポイント: {{.StartPoint}}ポイント ボーナス割合: {{mul .Multiplier 100}}%"
