@@ -172,7 +172,7 @@ func Command(c *components.Components) components.Command {
 					if err := c.GormDB().Where("id = ? AND guild_id = ?", panelID, g.ID).First(&rolePanel).Error; err != nil {
 						return errors.NewError(errors.ErrorMessage("errors.not_exist", event))
 					}
-					if err := c.GormDB().Where("parent_id = ?", rolePanel.ID).Delete(&models.RolePanelEdit{}).Error; err != nil {
+					if err := c.GormDB().Exec("DELETE FROM role_panel_edits WHERE parent_id = ?", rolePanel.ID).Error; err != nil {
 						return errors.NewError(err)
 					}
 					var removeRoles []snowflake.ID
