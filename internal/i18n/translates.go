@@ -23,15 +23,22 @@ func TranslateText(locale discord.Locale, key string, args ...any) string {
 	}
 
 	var parseString string
+	found := false
 	if localeValues, exists := globalLocales[locale]; exists {
 		if value, exists := localeValues.Strings[key]; exists {
 			parseString = value
+			found = true
 		}
-	} else if defaultValues, exists := globalLocales[defaultLocale]; exists {
-		if value, exists := defaultValues.Strings[key]; exists {
-			parseString = value
+	}
+	if !found {
+		if defaultValues, exists := globalLocales[defaultLocale]; exists {
+			if value, exists := defaultValues.Strings[key]; exists {
+				parseString = value
+				found = true
+			}
 		}
-	} else {
+	}
+	if !found {
 		parseString = key // Fallback to the key itself if no translation is found
 		slog.Warn("TranslateText: no translation found", "key", key, "locale", locale)
 	}
