@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"math"
+
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"github.com/sabafly/gobot/bot/components"
@@ -28,28 +30,28 @@ func TestFX_GetLiquidationPrice(t *testing.T) {
 			direction: models.FXPositionDirectionBuy,
 			entry:     150.0,
 			leverage:  10,
-			want:      135.0, // 150 * (1 - 0.1)
+			want:      138.0, // 150 * (1 - 0.8 / 10)
 		},
 		{
 			name:      "Buy 25x",
 			direction: models.FXPositionDirectionBuy,
 			entry:     100.0,
 			leverage:  25,
-			want:      96.0, // 100 * (1 - 0.04)
+			want:      96.8, // 100 * (1 - 0.8 / 25)
 		},
 		{
 			name:      "Sell 10x",
 			direction: models.FXPositionDirectionSell,
 			entry:     150.0,
 			leverage:  10,
-			want:      165.0, // 150 * (1 + 0.1)
+			want:      162.0, // 150 * (1 + 0.8 / 10)
 		},
 		{
 			name:      "Sell 25x",
 			direction: models.FXPositionDirectionSell,
 			entry:     100.0,
 			leverage:  25,
-			want:      104.0, // 100 * (1 + 0.04)
+			want:      103.2, // 100 * (1 + 0.8 / 25)
 		},
 	}
 
@@ -208,15 +210,15 @@ func TestFX_MarginCallAndAddedMargin(t *testing.T) {
 
 	// 1. Initial liquidation price (no added margin)
 	liqPrice1 := getLiquidationPrice(pos)
-	if liqPrice1 != 135.0 {
-		t.Errorf("expected liqPrice1 to be 135.0, got %f", liqPrice1)
+	if math.Abs(liqPrice1 - 138.0) > 1e-9 {
+		t.Errorf("expected liqPrice1 to be 138.0, got %f", liqPrice1)
 	}
 
 	// 2. Add margin (so Margin becomes 200)
 	pos.Margin = 200
 	liqPrice2 := getLiquidationPrice(pos)
-	if liqPrice2 != 120.0 {
-		t.Errorf("expected liqPrice2 to be 120.0, got %f", liqPrice2)
+	if math.Abs(liqPrice2 - 123.0) > 1e-9 {
+		t.Errorf("expected liqPrice2 to be 123.0, got %f", liqPrice2)
 	}
 
 	// 3. Maintenance ratio calculation:

@@ -48,16 +48,27 @@ var (
 		"BTC_JPY", "ETH_JPY", "BCH_JPY", "LTC_JPY", "XRP_JPY",
 	}
 	fxLeverages = []LeverageOption{
-		{Leverage: 25, MinRatio: 0.05},
-		{Leverage: 50, MinRatio: 0.1},
-		{Leverage: 150, MinRatio: 0.15},
-		{Leverage: 1000, MinRatio: 0.96},
+		{Leverage: 25, MinRatio: 0.05, MarginCallRatio: 50.0, LiquidationRatio: 20.0},
+		{Leverage: 50, MinRatio: 0.1, MarginCallRatio: 50.0, LiquidationRatio: 20.0},
+		{Leverage: 150, MinRatio: 0.15, MarginCallRatio: 50.0, LiquidationRatio: 30.0},
+		{Leverage: 1000, MinRatio: 0.96, MarginCallRatio: 80.0, LiquidationRatio: 50.0},
 	}
 )
 
 type LeverageOption struct {
-	Leverage int     // レバレッジ倍率
-	MinRatio float64 // 総所持ポイントに対する証拠金の比率の最小値
+	Leverage         int     // レバレッジ倍率
+	MinRatio         float64 // 総所持ポイントに対する証拠金の比率の最小値
+	MarginCallRatio  float64 // 追証ライン (%)
+	LiquidationRatio float64 // ロスカットライン (%)
+}
+
+func getLeverageOption(leverage int) LeverageOption {
+	for _, opt := range fxLeverages {
+		if opt.Leverage == leverage {
+			return opt
+		}
+	}
+	return LeverageOption{Leverage: leverage, MarginCallRatio: 50.0, LiquidationRatio: 20.0}
 }
 
 type TickerResponse struct {
@@ -165,10 +176,14 @@ func getPnL(pos *models.FXPosition, currentPrice float64) float64 {
 
 func getLiquidationPrice(pos *models.FXPosition) float64 {
 	initMargin := pos.GetInitialMargin()
+	opt := getLeverageOption(pos.Leverage)
+	targetValuation := float64(initMargin) * (opt.LiquidationRatio / 100.0)
+	diff := targetValuation - float64(pos.Margin)
+
 	if pos.Direction == models.FXPositionDirectionBuy {
-		return pos.EntryPrice * (1.0 - float64(pos.Margin)/(float64(initMargin)*float64(pos.Leverage)))
+		return pos.EntryPrice * (1.0 + diff/(float64(initMargin)*float64(pos.Leverage)))
 	} else {
-		return pos.EntryPrice * (1.0 + float64(pos.Margin)/(float64(initMargin)*float64(pos.Leverage)))
+		return pos.EntryPrice * (1.0 - diff/(float64(initMargin)*float64(pos.Leverage)))
 	}
 }
 
@@ -195,7 +210,10 @@ func checkLiquidation(c *components.Components, pos *models.FXPosition, ticker *
 	}
 	pnl := getPnL(pos, currentPrice)
 
-	if pnl <= -float64(pos.Margin) {
+	opt := getLeverageOption(pos.Leverage)
+	initMargin := pos.GetInitialMargin()
+	ratio := (float64(pos.Margin) + pnl) / float64(initMargin) * 100.0
+	if ratio <= opt.LiquidationRatio {
 		return true, currentPrice, pnl, nil
 	}
 
@@ -248,7 +266,8 @@ func hasMarginCall(c *components.Components, userID snowflake.ID, guildID snowfl
 		pnl := getPnL(&pos, currentPrice)
 		initMargin := pos.GetInitialMargin()
 		ratio := (float64(pos.Margin) + pnl) / float64(initMargin) * 100.0
-		if ratio < 50.0 {
+		opt := getLeverageOption(pos.Leverage)
+		if ratio < opt.MarginCallRatio {
 			return true, nil
 		}
 	}
@@ -458,7 +477,8 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 		}
 		pPnl := getPnL(&p, pPrice)
 		pRatio := (float64(p.Margin) + pPnl) / float64(p.GetInitialMargin()) * 100.0
-		if pRatio < 50.0 {
+		pOpt := getLeverageOption(p.Leverage)
+		if pRatio < pOpt.MarginCallRatio {
 			hasMc = true
 		}
 
@@ -559,6 +579,7 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 		ratio := (float64(activePos.Margin) + pPnl) / float64(initMargin) * 100.0
 		ratioText := fmt.Sprintf("%.1f%%", ratio)
 		liqPrice := getLiquidationPrice(activePos)
+		activeOpt := getLeverageOption(activePos.Leverage)
 
 		posDesc := i18n.TranslateText(locale, "components.play.fx.active_position_desc", map[string]any{
 			"symbol":    strings.Replace(activePos.Symbol, "_", "/", 1),
@@ -572,6 +593,8 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 			"liq":       fmt.Sprintf("%.3f", liqPrice),
 			"pnl":       pnlStr,
 			"ratio":     ratioText,
+			"mc_line":   fmt.Sprintf("%.1f%%", activeOpt.MarginCallRatio),
+			"liq_line":  fmt.Sprintf("%.1f%%", activeOpt.LiquidationRatio),
 		})
 
 		var posInfoBuilder strings.Builder
@@ -590,8 +613,10 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 		}))
 		posInfoBuilder.WriteString("\n" + posDesc)
 
-		if ratio < 50.0 {
-			posInfoBuilder.WriteString("\n\n" + i18n.TranslateText(locale, "components.play.fx.margin_call_warning"))
+		if ratio < activeOpt.MarginCallRatio {
+			posInfoBuilder.WriteString("\n\n" + i18n.TranslateText(locale, "components.play.fx.margin_call_warning", map[string]any{
+				"mc_line": fmt.Sprintf("%.1f%%", activeOpt.MarginCallRatio),
+			}))
 		}
 		ctx.WithText("position_info", posInfoBuilder.String())
 
