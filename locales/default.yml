@@ -37,6 +37,7 @@ strings:
   command.play.high-and-low.finish.payout: "ポイント獲得"
   command.play.high-and-low.finish.joker: "ジョーカーがあらわれた！"
   command.play.slot.description: "スロットマシンをプレイします。"
+  command.play.fx.description: "FXポイントゲームをプレイします。"
   command.bet.description: "Goポイントを賭けます。"
   command.bet.create.title: "ベットを作成"
   command.bet.create.input.title.placeholder: "ベット内容を入力してください"

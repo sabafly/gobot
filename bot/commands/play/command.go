@@ -60,6 +60,11 @@ func Command(c *components.Components) components.Command {
 						Description:              "Play a slot machine game",
 						DescriptionLocalizations: i18n.TranslateTextMap("command.play.slot.description"),
 					},
+					discord.ApplicationCommandOptionSubCommand{
+						Name:                     "fx",
+						Description:              "Play an FX trading game with GoPoints",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.play.fx.description"),
+					},
 				},
 			},
 		},
@@ -133,6 +138,14 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 					return nil
+				},
+			},
+			"/play/fx": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.fx"),
+				},
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					return FXPlayCommand(c, event)
 				},
 			},
 		},
@@ -432,6 +445,70 @@ func Command(c *components.Components) components.Command {
 					}
 					defer deleteSlotLock(id)
 					return SlotFinish(c, data, event)
+				},
+			},
+			"play:fx_symbol": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.fx"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return FXSymbolHandler(c, event)
+				},
+			},
+			"play:fx_margin": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.fx"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return FXMarginHandler(c, event)
+				},
+			},
+			"play:fx_leverage": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.fx"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return FXLeverageHandler(c, event)
+				},
+			},
+			"play:fx_buy": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.fx"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return FXBuyHandler(c, event)
+				},
+			},
+			"play:fx_sell": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.fx"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return FXSellHandler(c, event)
+				},
+			},
+			"play:fx_refresh": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.fx"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return FXRefreshHandler(c, event)
+				},
+			},
+			"play:fx_close": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.fx"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return FXCloseHandler(c, event)
+				},
+			},
+			"play:fx_quit": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.fx"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return FXQuitHandler(c, event)
 				},
 			},
 		},

@@ -225,11 +225,11 @@ func HALFinish(c *components.Components, data HALData, finishState HALFinishStat
 
 var HALStartOptions = []HALStartOption{
 	{Cost: 15, StartPoint: 1, Multiplier: 0.5, MaxTurns: 99},
-	{Cost: 30, StartPoint: 2, Multiplier: 0.8, MaxTurns: 27},
-	{Cost: 50, StartPoint: 3, Multiplier: 0.8, MaxTurns: 27},
-	{Cost: 80, StartPoint: 3, Multiplier: 1.0, MaxTurns: 28},
-	{Cost: 150, StartPoint: 5, Multiplier: 1.0, MaxTurns: 28},
-	{Cost: 10000, StartPoint: 3, Multiplier: 2.0, MaxTurns: 30},
+	{Cost: 30, StartPoint: 2, Multiplier: 0.8, MaxTurns: 20},
+	{Cost: 50, StartPoint: 3, Multiplier: 0.8, MaxTurns: 20},
+	{Cost: 80, StartPoint: 3, Multiplier: 1.0, MaxTurns: 20},
+	{Cost: 150, StartPoint: 5, Multiplier: 1.0, MaxTurns: 20},
+	{Cost: 10000, StartPoint: 3, Multiplier: 2.0, MaxTurns: 23},
 	{Cost: 1000000, StartPoint: 4, Multiplier: 3.0, MaxTurns: 30},
 	{Cost: 1000000000, StartPoint: 5, Multiplier: 4.0, MaxTurns: 30},
 	{Cost: 1000000000000, StartPoint: 6, Multiplier: 5.0, MaxTurns: 30},
