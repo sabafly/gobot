@@ -18,6 +18,7 @@ import (
 	"github.com/sabafly/gobot/internal/builtin"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
+	"gorm.io/gorm"
 )
 
 func Command(c *components.Components) components.Command {
@@ -314,8 +315,8 @@ func inGuildRanking(c *components.Components, locale discord.Locale, client *bot
 	return result.String(), nil
 }
 
-func AddPoint(c *components.Components, userID snowflake.ID, guildID snowflake.ID, point int64) error {
-	user, err := database.GetOrCreateUser(c.GormDB(), userID)
+func AddPointTx(tx *gorm.DB, userID snowflake.ID, guildID snowflake.ID, point int64) error {
+	user, err := database.GetOrCreateUser(tx, userID)
 	if err != nil {
 		slog.Error("failed to find or create user", "error", err, "user_id", userID)
 		return errors.NewError(err)
@@ -325,16 +326,20 @@ func AddPoint(c *components.Components, userID snowflake.ID, guildID snowflake.I
 		GuildID: guildID,
 		Points:  0,
 	}
-	if err := c.GormDB().Where(userPoint).Find(&userPoint).Error; err != nil {
+	if err := tx.Where(userPoint).Find(&userPoint).Error; err != nil {
 		slog.Error("failed to find or create user point", "error", err, "user_id", userID, "guild_id", guildID)
 		return errors.NewError(err)
 	}
 	userPoint.Points += point // Increment points for each message
-	if err := c.GormDB().Save(&userPoint).Error; err != nil {
+	if err := tx.Save(&userPoint).Error; err != nil {
 		slog.Error("failed to update user point", "error", err, "user_id", userID, "guild_id", guildID)
 		return errors.NewError(err)
 	}
 	return nil
+}
+
+func AddPoint(c *components.Components, userID snowflake.ID, guildID snowflake.ID, point int64) error {
+	return AddPointTx(c.GormDB(), userID, guildID, point)
 }
 
 func GivePoint(c *components.Components, userID snowflake.ID, targetUserID snowflake.ID, guildID snowflake.ID, point int64) error {

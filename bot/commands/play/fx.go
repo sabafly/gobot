@@ -85,13 +85,13 @@ var (
 
 func fetchTickerData() (*TickerResponse, error) {
 	tickerCacheMu.Lock()
-	defer tickerCacheMu.Unlock()
-
-	// Rate limit: GMO Coin FX API has a rate limit of 1 request per second.
-	// Reuse cached response if last fetch was less than 1.1 seconds ago.
+	// Rate limit: Reuse cached response if last fetch was less than 1.1 seconds ago.
 	if tickerCache != nil && time.Since(lastFetchTime) < 1100*time.Millisecond {
-		return tickerCache, nil
+		res := tickerCache
+		tickerCacheMu.Unlock()
+		return res, nil
 	}
+	tickerCacheMu.Unlock()
 
 	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Get("https://forex-api.coin.z.com/public/v1/ticker")
@@ -109,8 +109,10 @@ func fetchTickerData() (*TickerResponse, error) {
 		return nil, err
 	}
 
+	tickerCacheMu.Lock()
 	tickerCache = &tickerResp
 	lastFetchTime = time.Now()
+	tickerCacheMu.Unlock()
 
 	return &tickerResp, nil
 }
@@ -124,9 +126,18 @@ func getFXPosition(c *components.Components, userID snowflake.ID, guildID snowfl
 	return &pos, nil
 }
 
+func getPnL(pos *models.FXPosition, currentPrice float64) float64 {
+	initMargin := pos.GetInitialMargin()
+	if pos.Direction == models.FXPositionDirectionBuy {
+		return float64(initMargin) * float64(pos.Leverage) * ((currentPrice / pos.EntryPrice) - 1.0)
+	} else {
+		return float64(initMargin) * float64(pos.Leverage) * (1.0 - (currentPrice / pos.EntryPrice))
+	}
+}
+
 func getLiquidationPrice(pos *models.FXPosition) float64 {
 	initMargin := pos.GetInitialMargin()
-	if pos.Direction == "BUY" {
+	if pos.Direction == models.FXPositionDirectionBuy {
 		return pos.EntryPrice * (1.0 - float64(pos.Margin)/(float64(initMargin)*float64(pos.Leverage)))
 	} else {
 		return pos.EntryPrice * (1.0 + float64(pos.Margin)/(float64(initMargin)*float64(pos.Leverage)))
@@ -148,16 +159,13 @@ func checkLiquidation(c *components.Components, pos *models.FXPosition, ticker *
 		return false, 0, 0, err
 	}
 
-	initMargin := pos.GetInitialMargin()
 	var currentPrice float64
-	var pnl float64
-	if pos.Direction == "BUY" {
+	if pos.Direction == models.FXPositionDirectionBuy {
 		currentPrice = bid
-		pnl = float64(initMargin) * float64(pos.Leverage) * ((currentPrice / pos.EntryPrice) - 1.0)
 	} else {
 		currentPrice = ask
-		pnl = float64(initMargin) * float64(pos.Leverage) * (1.0 - (currentPrice / pos.EntryPrice))
 	}
+	pnl := getPnL(pos, currentPrice)
 
 	if pnl <= -float64(pos.Margin) {
 		if err := c.GormDB().Delete(pos).Error; err != nil {
@@ -204,14 +212,12 @@ func FXMessage(c *components.Components, session *FXSession, position *models.FX
 
 		initMargin := position.GetInitialMargin()
 		var currentPrice float64
-		var pnl float64
-		if position.Direction == "BUY" {
+		if position.Direction == models.FXPositionDirectionBuy {
 			currentPrice = bid
-			pnl = float64(initMargin) * float64(position.Leverage) * ((currentPrice / position.EntryPrice) - 1.0)
 		} else {
 			currentPrice = ask
-			pnl = float64(initMargin) * float64(position.Leverage) * (1.0 - (currentPrice / position.EntryPrice))
 		}
+		pnl := getPnL(position, currentPrice)
 
 		pnlInt := int64(pnl)
 		pnlStr := fmt.Sprintf("%+d", pnlInt)
@@ -220,7 +226,7 @@ func FXMessage(c *components.Components, session *FXSession, position *models.FX
 		}
 
 		dirEmoji := "🟢 買い (Long)"
-		if position.Direction == "SELL" {
+		if position.Direction == models.FXPositionDirectionSell {
 			dirEmoji = "🔴 売り (Short)"
 		}
 
@@ -445,7 +451,18 @@ func FXSymbolHandler(c *components.Components, event *events.ComponentInteractio
 	}
 
 	if data := event.StringSelectMenuInteractionData(); len(data.Values) > 0 {
-		session.SelectedSymbol = data.Values[0]
+		val := data.Values[0]
+		isValid := false
+		for _, s := range fxSymbols {
+			if s == val {
+				isValid = true
+				break
+			}
+		}
+		if !isValid {
+			return errors.NewError(fmt.Errorf("invalid symbol selected"))
+		}
+		session.SelectedSymbol = val
 	}
 
 	fx_sessions.Set(session.ID, session)
@@ -896,7 +913,7 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 		UserID:        event.User().ID,
 		GuildID:       *event.GuildID(),
 		Symbol:        session.SelectedSymbol,
-		Direction:     "BUY",
+		Direction:     models.FXPositionDirectionBuy,
 		EntryPrice:    ask,
 		Margin:        session.SelectedMargin,
 		InitialMargin: session.SelectedMargin,
@@ -904,7 +921,9 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 	}
 
 	if err := c.GormDB().Create(pos).Error; err != nil {
-		_ = gopoint.AddPoint(c, event.User().ID, *event.GuildID(), session.SelectedMargin)
+		if refundErr := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), session.SelectedMargin); refundErr != nil {
+			slog.Error("CRITICAL: failed to refund points to user after position creation failed", "user_id", event.User().ID, "guild_id", *event.GuildID(), "session_id", session.ID, "refund", session.SelectedMargin, "error", refundErr)
+		}
 		return errors.NewError(err)
 	}
 
@@ -1009,7 +1028,7 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 		UserID:        event.User().ID,
 		GuildID:       *event.GuildID(),
 		Symbol:        session.SelectedSymbol,
-		Direction:     "SELL",
+		Direction:     models.FXPositionDirectionSell,
 		EntryPrice:    bid,
 		Margin:        session.SelectedMargin,
 		InitialMargin: session.SelectedMargin,
@@ -1017,7 +1036,9 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 	}
 
 	if err := c.GormDB().Create(pos).Error; err != nil {
-		_ = gopoint.AddPoint(c, event.User().ID, *event.GuildID(), session.SelectedMargin)
+		if refundErr := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), session.SelectedMargin); refundErr != nil {
+			slog.Error("CRITICAL: failed to refund points to user after position creation failed", "user_id", event.User().ID, "guild_id", *event.GuildID(), "session_id", session.ID, "refund", session.SelectedMargin, "error", refundErr)
+		}
 		return errors.NewError(err)
 	}
 
@@ -1137,19 +1158,22 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 		return errors.NewError(fmt.Errorf("symbol data not found"))
 	}
 
-	ask, _ := strconv.ParseFloat(symbolData.Ask, 64)
-	bid, _ := strconv.ParseFloat(symbolData.Bid, 64)
+	ask, err := strconv.ParseFloat(symbolData.Ask, 64)
+	if err != nil {
+		return errors.NewError(err)
+	}
+	bid, err := strconv.ParseFloat(symbolData.Bid, 64)
+	if err != nil {
+		return errors.NewError(err)
+	}
 
-	initMargin := pos.GetInitialMargin()
 	var exitPrice float64
-	var pnl float64
-	if pos.Direction == "BUY" {
+	if pos.Direction == models.FXPositionDirectionBuy {
 		exitPrice = bid
-		pnl = float64(initMargin) * float64(pos.Leverage) * ((exitPrice / pos.EntryPrice) - 1.0)
 	} else {
 		exitPrice = ask
-		pnl = float64(initMargin) * float64(pos.Leverage) * (1.0 - (exitPrice / pos.EntryPrice))
 	}
+	pnl := getPnL(pos, exitPrice)
 
 	pnlInt := int64(pnl)
 	refund := pos.Margin + pnlInt
@@ -1157,15 +1181,19 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 		refund = 0
 	}
 
-	if err := c.GormDB().Delete(pos).Error; err != nil {
-		return errors.NewError(err)
-	}
-
-	if refund > 0 {
-		if err := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), refund); err != nil {
-			slog.Error("CRITICAL: failed to refund points to user after closing position", "user_id", event.User().ID, "refund", refund, "error", err)
-			return errors.NewError(err)
+	txErr := c.GormDB().Transaction(func(tx *gorm.DB) error {
+		if err := tx.Delete(pos).Error; err != nil {
+			return err
 		}
+		if refund > 0 {
+			if err := gopoint.AddPointTx(tx, event.User().ID, *event.GuildID(), refund); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if txErr != nil {
+		return errors.NewError(txErr)
 	}
 
 	points, _, _ := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
@@ -1240,7 +1268,7 @@ func FXQuitHandler(c *components.Components, event *events.ComponentInteractionC
 
 	if pos != nil {
 		dirText := "🟢 買い"
-		if pos.Direction == "SELL" {
+		if pos.Direction == models.FXPositionDirectionSell {
 			dirText = "🔴 売り"
 		}
 		container = container.AddComponents(
