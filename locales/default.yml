@@ -204,13 +204,13 @@ strings:
     - **現在価格**: `{{.current}}`
     - **強制ロスカット価格**: `{{.liq}}`
     - **評価損益 (PnL)**: **`{{.pnl}} pt`**
-    - **証拠金維持率**: **`{{.ratio}}`** (追証ライン: `50.0%` / ロスカット: `0.0%`)
+    - **証拠金維持率**: **`{{.ratio}}`** (追証ライン: `{{.mc_line}}` / ロスカット: `{{.liq_line}}`)
   components.play.fx.margin_call_warning: |-
     ⚠️ **[警告] 追証 (マージンコール) 発生中！**
-    証拠金維持率が50.0%を下回っています。追証を入金して強制決済を回避してください。
+    証拠金維持率が{{.mc_line}}を下回っています。追証を入金して強制決済を回避してください。
   components.play.fx.trade_restricted_warning: |-
     ⚠️ **[警告] 追証警告中（取引制限）**
-    現在、維持率が50.0%を下回っているポジションがあるため、すべての取引操作（新規注文・決済）が制限されています。制限を解除するには、対象ポジションに追証を入金してください。
+    現在、維持率が追証ラインを下回っているポジションがあるため、すべての取引操作（新規注文・決済）が制限されています。制限を解除するには、対象ポジションに追証を入金してください。
   components.play.fx.placeholder_switch_pos: "ポジションを選択して管理"
   components.play.fx.option_new_order: "🆕 新規注文画面へ"
   components.play.fx.option_pos_item: "{{.symbol}} {{.direction}} {{.leverage}}x (証拠金: {{.margin}} pt | 損益: {{.pnl}} pt)"
@@ -428,14 +428,17 @@ components:
       components:
         - "📈 **FX TRADING SIMULATOR** 📉"
         - type: separator
-        - "### 💱 現在の為替レート"
-        - "{rates_text}"
+          height: 2
+        - |-
+          ### 💱 現在の為替レート
+          {rates_text}
         - type: separator
         - "🪙 **保有 GoPoints**: `{points} pt`"
         - type: separator
-        - "### 🆕 新規注文フォーム"
-        - "{form_info}"
-        - "{restriction_warning}"
+        - |-
+          ### 🆕 新規注文フォーム
+          {form_info}"
+          {restriction_warning}
         - type: action_row
           components:
             - type: string_select_menu
@@ -484,13 +487,15 @@ components:
       components:
         - "📈 **FX TRADING SIMULATOR** 📉"
         - type: separator
-        - "### 💱 現在の為替レート"
-        - "{rates_text}"
+        - |-
+          ### 💱 現在の為替レート
+          {rates_text}
         - type: separator
         - "🪙 **保有 GoPoints**: `{points} pt`"
         - type: separator
-        - "{position_info}"
-        - "{restriction_warning}"
+        - |-
+          {position_info}
+          {restriction_warning}
         - type: action_row
           components:
             - type: button

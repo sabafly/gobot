@@ -43,11 +43,12 @@ func (s *FXSession) OnDelete() error {
 }
 
 var (
-	fxSymbols   = []string{
+	fxSymbols = []string{
 		"USD_JPY", "EUR_JPY", "GBP_JPY", "AUD_JPY", "NZD_JPY", "CAD_JPY", "CHF_JPY",
 		"BTC_JPY", "ETH_JPY", "BCH_JPY", "LTC_JPY", "XRP_JPY",
 	}
 	fxLeverages = []LeverageOption{
+		{Leverage: 1, MinRatio: 0, MarginCallRatio: 50.0, LiquidationRatio: 20.0},
 		{Leverage: 25, MinRatio: 0.05, MarginCallRatio: 50.0, LiquidationRatio: 20.0},
 		{Leverage: 50, MinRatio: 0.1, MarginCallRatio: 50.0, LiquidationRatio: 20.0},
 		{Leverage: 150, MinRatio: 0.15, MarginCallRatio: 50.0, LiquidationRatio: 30.0},

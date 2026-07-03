@@ -147,7 +147,7 @@ func TestFX_MinRatioMarginRequirement(t *testing.T) {
 	}{
 		{
 			name:       "25x Leverage, Ratio 0.05, Margin 50 on 1000 points (Valid)",
-			levIdx:     0, // 25x, ratio 0.05
+			levIdx:     1, // 25x, ratio 0.05
 			points:     1000,
 			margin:     50,
 			wantValid:  true,
@@ -155,7 +155,7 @@ func TestFX_MinRatioMarginRequirement(t *testing.T) {
 		},
 		{
 			name:       "25x Leverage, Ratio 0.05, Margin 49 on 1000 points (Invalid)",
-			levIdx:     0, // 25x, ratio 0.05
+			levIdx:     1, // 25x, ratio 0.05
 			points:     1000,
 			margin:     49,
 			wantValid:  false,
@@ -163,7 +163,7 @@ func TestFX_MinRatioMarginRequirement(t *testing.T) {
 		},
 		{
 			name:       "50x Leverage, Ratio 0.10, Margin 100 on 1000 points (Valid)",
-			levIdx:     1, // 50x, ratio 0.10
+			levIdx:     2, // 50x, ratio 0.10
 			points:     1000,
 			margin:     100,
 			wantValid:  true,
@@ -171,7 +171,7 @@ func TestFX_MinRatioMarginRequirement(t *testing.T) {
 		},
 		{
 			name:       "50x Leverage, Ratio 0.10, Margin 99 on 1000 points (Invalid)",
-			levIdx:     1, // 50x, ratio 0.10
+			levIdx:     2, // 50x, ratio 0.10
 			points:     1000,
 			margin:     99,
 			wantValid:  false,
