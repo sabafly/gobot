@@ -20,6 +20,7 @@ import (
 	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/errors"
+	"github.com/sabafly/gobot/internal/i18n"
 	"gorm.io/gorm"
 )
 
@@ -34,6 +35,7 @@ type FXSession struct {
 	SelectedSymbol   string
 	SelectedMargin   int64
 	SelectedLeverage int // index of fxLeverages
+	ActivePositionID *uuid.UUID
 }
 
 func (s *FXSession) OnDelete() error {
@@ -41,11 +43,15 @@ func (s *FXSession) OnDelete() error {
 }
 
 var (
-	fxSymbols   = []string{"USD_JPY", "EUR_JPY", "GBP_JPY", "AUD_JPY", "NZD_JPY", "CAD_JPY", "CHF_JPY"}
+	fxSymbols   = []string{
+		"USD_JPY", "EUR_JPY", "GBP_JPY", "AUD_JPY", "NZD_JPY", "CAD_JPY", "CHF_JPY",
+		"BTC_JPY", "ETH_JPY", "BCH_JPY", "LTC_JPY", "XRP_JPY",
+	}
 	fxLeverages = []LeverageOption{
 		{Leverage: 25, MinRatio: 0.05},
 		{Leverage: 50, MinRatio: 0.1},
 		{Leverage: 150, MinRatio: 0.15},
+		{Leverage: 1000, MinRatio: 0.96},
 	}
 )
 
@@ -85,8 +91,8 @@ var (
 
 func fetchTickerData() (*TickerResponse, error) {
 	tickerCacheMu.Lock()
-	// Rate limit: Reuse cached response if last fetch was less than 1.1 seconds ago.
-	if tickerCache != nil && time.Since(lastFetchTime) < 1100*time.Millisecond {
+	// Rate limit: Reuse cached response if last fetch was less than 300 milliseconds ago.
+	if tickerCache != nil && time.Since(lastFetchTime) < 300*time.Millisecond {
 		res := tickerCache
 		tickerCacheMu.Unlock()
 		return res, nil
@@ -94,27 +100,49 @@ func fetchTickerData() (*TickerResponse, error) {
 	tickerCacheMu.Unlock()
 
 	client := &http.Client{Timeout: 5 * time.Second}
-	resp, err := client.Get("https://forex-api.coin.z.com/public/v1/ticker")
+
+	// 1. Fetch Forex ticker
+	resp1, err := client.Get("https://forex-api.coin.z.com/public/v1/ticker")
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	defer resp1.Body.Close()
+	if resp1.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code for forex: %d", resp1.StatusCode)
 	}
-
-	var tickerResp TickerResponse
-	if err := json.NewDecoder(resp.Body).Decode(&tickerResp); err != nil {
+	var tickerResp1 TickerResponse
+	if err := json.NewDecoder(resp1.Body).Decode(&tickerResp1); err != nil {
 		return nil, err
 	}
 
+	// 2. Fetch Crypto ticker
+	resp2, err := client.Get("https://api.coin.z.com/public/v1/ticker")
+	if err != nil {
+		return nil, err
+	}
+	defer resp2.Body.Close()
+	if resp2.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code for crypto: %d", resp2.StatusCode)
+	}
+	var tickerResp2 TickerResponse
+	if err := json.NewDecoder(resp2.Body).Decode(&tickerResp2); err != nil {
+		return nil, err
+	}
+
+	// Combine data
+	combinedData := append(tickerResp1.Data, tickerResp2.Data...)
+	combinedResp := &TickerResponse{
+		Status:       tickerResp1.Status,
+		ResponseTime: tickerResp1.ResponseTime,
+		Data:         combinedData,
+	}
+
 	tickerCacheMu.Lock()
-	tickerCache = &tickerResp
+	tickerCache = combinedResp
 	lastFetchTime = time.Now()
 	tickerCacheMu.Unlock()
 
-	return &tickerResp, nil
+	return combinedResp, nil
 }
 
 func getFXPosition(c *components.Components, userID snowflake.ID, guildID snowflake.ID) (*models.FXPosition, error) {
@@ -168,167 +196,399 @@ func checkLiquidation(c *components.Components, pos *models.FXPosition, ticker *
 	pnl := getPnL(pos, currentPrice)
 
 	if pnl <= -float64(pos.Margin) {
-		if err := c.GormDB().Delete(pos).Error; err != nil {
-			return true, currentPrice, pnl, err
-		}
 		return true, currentPrice, pnl, nil
 	}
 
 	return false, currentPrice, pnl, nil
 }
 
-func FXMessage(c *components.Components, session *FXSession, position *models.FXPosition, ticker *TickerResponse, points int64) []discord.LayoutComponent {
-	var layoutComponents []discord.LayoutComponent
+func getFXPositions(c *components.Components, userID snowflake.ID, guildID snowflake.ID) ([]models.FXPosition, error) {
+	var positions []models.FXPosition
+	err := c.GormDB().Where("user_id = ? AND guild_id = ?", userID, guildID).Find(&positions).Error
+	if err != nil {
+		return nil, err
+	}
+	return positions, nil
+}
 
-	container := discord.NewContainer().WithAccentColor(0x3498DB) // Sleek blue
+func getFXPositionByID(c *components.Components, id uuid.UUID) (*models.FXPosition, error) {
+	var pos models.FXPosition
+	err := c.GormDB().Where("id = ?", id).First(&pos).Error
+	if err != nil {
+		return nil, err
+	}
+	return &pos, nil
+}
 
-	container = container.AddComponents(
-		discord.NewTextDisplay("📈 **FX TRADING SIMULATOR** 📉"),
-		discord.NewLargeSeparator(),
-	)
+func hasMarginCall(c *components.Components, userID snowflake.ID, guildID snowflake.ID) (bool, error) {
+	positions, err := getFXPositions(c, userID, guildID)
+	if err != nil {
+		return false, err
+	}
+	if len(positions) == 0 {
+		return false, nil
+	}
+	ticker, err := fetchTickerData()
+	if err != nil {
+		return false, err
+	}
+	for _, pos := range positions {
+		symbolData, ok := ticker.GetSymbolData(pos.Symbol)
+		if !ok {
+			continue
+		}
+		ask, _ := strconv.ParseFloat(symbolData.Ask, 64)
+		bid, _ := strconv.ParseFloat(symbolData.Bid, 64)
+		var currentPrice float64
+		if pos.Direction == models.FXPositionDirectionBuy {
+			currentPrice = bid
+		} else {
+			currentPrice = ask
+		}
+		pnl := getPnL(&pos, currentPrice)
+		initMargin := pos.GetInitialMargin()
+		ratio := (float64(pos.Margin) + pnl) / float64(initMargin) * 100.0
+		if ratio < 50.0 {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func liquidatePosition(c *components.Components, client *bot.Client, pos *models.FXPosition, ticker *TickerResponse, currentPrice float64, pnl float64) error {
+	pnlInt := int64(pnl)
+	refund := pos.Margin + pnlInt
+	var deficit int64
+	if refund < 0 {
+		deficit = -refund
+		refund = 0
+	}
+
+	type closedInfo struct {
+		symbol    string
+		direction string
+		exitPrice float64
+		pnl       int64
+		margin    int64
+		valuation int64
+	}
+	var closedPositions []closedInfo
+
+	err := c.GormDB().Transaction(func(tx *gorm.DB) error {
+		if err := tx.Delete(pos).Error; err != nil {
+			return err
+		}
+
+		if deficit > 0 {
+			var otherPositions []models.FXPosition
+			if err := tx.Where("user_id = ? AND guild_id = ? AND id != ?", pos.UserID, pos.GuildID, pos.ID).Find(&otherPositions).Error; err != nil {
+				return err
+			}
+
+			for _, other := range otherPositions {
+				if deficit <= 0 {
+					break
+				}
+
+				otherSymData, ok := ticker.GetSymbolData(other.Symbol)
+				if !ok {
+					continue
+				}
+				otherAsk, _ := strconv.ParseFloat(otherSymData.Ask, 64)
+				otherBid, _ := strconv.ParseFloat(otherSymData.Bid, 64)
+				var otherPrice float64
+				if other.Direction == models.FXPositionDirectionBuy {
+					otherPrice = otherBid
+				} else {
+					otherPrice = otherAsk
+				}
+				otherPnl := getPnL(&other, otherPrice)
+				otherVal := other.Margin + int64(otherPnl)
+
+				if err := tx.Delete(&other).Error; err != nil {
+					return err
+				}
+
+				closedPositions = append(closedPositions, closedInfo{
+					symbol:    other.Symbol,
+					direction: string(other.Direction),
+					exitPrice: otherPrice,
+					pnl:       int64(otherPnl),
+					margin:    other.Margin,
+					valuation: otherVal,
+				})
+
+				if otherVal > 0 {
+					if otherVal >= deficit {
+						remaining := otherVal - deficit
+						if err := gopoint.AddPointTx(tx, pos.UserID, pos.GuildID, remaining); err != nil {
+							return err
+						}
+						deficit = 0
+					} else {
+						deficit -= otherVal
+					}
+				}
+			}
+		}
+
+		if deficit > 0 {
+			userPoint := models.GoPoint{
+				UserID:  pos.UserID,
+				GuildID: pos.GuildID,
+			}
+			if err := tx.Where(userPoint).First(&userPoint).Error; err == nil {
+				points := userPoint.Points
+				deduct := points
+				if points > deficit {
+					deduct = deficit
+				}
+				userPoint.Points -= deduct
+				if err := tx.Save(&userPoint).Error; err != nil {
+					return err
+				}
+				deficit -= deduct
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	if client != nil && client.Rest != nil {
+		ch, err := client.Rest.CreateDMChannel(pos.UserID)
+		if err == nil {
+			locale := discord.LocaleJapanese
+			var detailStr strings.Builder
+
+			if len(closedPositions) > 0 {
+				detailStr.WriteString("\n\n**損失補填のために強制決済された他のポジション:**")
+				for _, cp := range closedPositions {
+					detailStr.WriteString(fmt.Sprintf("\n• `%s` (%s) | 証拠金: `%d pt` | 決済価格: `%.3f` | 損益: `%+d pt` (回収額: `%d pt`)",
+						strings.Replace(cp.symbol, "_", "/", 1), cp.direction, cp.margin, cp.exitPrice, cp.pnl, cp.valuation))
+				}
+			}
+
+			if deficit > 0 {
+				detailStr.WriteString(fmt.Sprintf("\n\n⚠️ **未回収の不足金**: `-%d pt`（ポイント残高が不足しているため回収できませんでした）", deficit))
+			}
+
+			descKey := "components.play.fx.liquidation_desc"
+			templateMap := map[string]any{
+				"symbol":  strings.Replace(pos.Symbol, "_", "/", 1),
+				"exit":    fmt.Sprintf("%.3f", currentPrice),
+				"pnl":     strconv.FormatInt(-pnlInt, 10),
+				"margin":  strconv.FormatInt(pos.Margin, 10),
+				"deficit": strconv.FormatInt(pos.Margin+pnlInt, 10),
+			}
+			if len(closedPositions) > 0 {
+				descKey = "components.play.fx.liquidation_deficit_desc"
+				templateMap["deficit"] = strconv.FormatInt(pos.Margin+pnlInt, 10)
+			}
+
+			descText := i18n.TranslateText(locale, descKey, templateMap) + detailStr.String()
+
+			builder := discord.NewMessageBuilder().
+				SetIsComponentsV2(true).
+				SetComponents(
+					discord.NewContainer(
+						discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.liquidation_title")),
+						discord.NewTextDisplay(descText),
+					).WithAccentColor(0xE74C3C),
+				)
+			_, _ = client.Rest.CreateMessage(ch.ID(), builder.BuildCreate())
+		}
+	}
+
+	return nil
+}
+
+func FXMessage(c *components.Components, session *FXSession, positions []models.FXPosition, ticker *TickerResponse, points int64, locale discord.Locale) []discord.LayoutComponent {
+	ctx := i18n.BuildContext()
 
 	var ratesText []string
 	for _, sym := range fxSymbols {
 		if data, ok := ticker.GetSymbolData(sym); ok {
 			ask, _ := strconv.ParseFloat(data.Ask, 64)
 			bid, _ := strconv.ParseFloat(data.Bid, 64)
-			spread := (ask - bid) * 100.0 // spread in pips (0.01 JPY = 1 pip)
-			ratesText = append(ratesText, fmt.Sprintf("• **%s**: Bid `%.3f` | Ask `%.3f` (スプレッド: `%.1f` pips)", strings.Replace(sym, "_", "/", 1), bid, ask, spread))
+			spread := (ask - bid) * 100.0
+			ratesText = append(ratesText, i18n.TranslateText(locale, "components.play.fx.rates_entry", map[string]any{
+				"symbol": strings.Replace(sym, "_", "/", 1),
+				"bid":    fmt.Sprintf("%.3f", bid),
+				"ask":    fmt.Sprintf("%.3f", ask),
+				"spread": fmt.Sprintf("%.1f", spread),
+			}))
+		}
+	}
+	ctx.WithText("rates_text", strings.Join(ratesText, "\n"))
+	ctx.WithText("points", strconv.FormatInt(points, 10))
+	ctx.WithCustomID("uuid", session.ID.String())
+
+	var positionOpts []discord.StringSelectMenuOption
+	positionOpts = append(positionOpts, discord.StringSelectMenuOption{
+		Label:   i18n.TranslateText(locale, "components.play.fx.option_new_order"),
+		Value:   "new_order",
+		Default: session.ActivePositionID == nil,
+	})
+
+	hasMc := false
+	var activePos *models.FXPosition
+
+	for _, p := range positions {
+		pSymData, ok := ticker.GetSymbolData(p.Symbol)
+		var pPrice float64
+		if ok {
+			pAsk, _ := strconv.ParseFloat(pSymData.Ask, 64)
+			pBid, _ := strconv.ParseFloat(pSymData.Bid, 64)
+			if p.Direction == models.FXPositionDirectionBuy {
+				pPrice = pBid
+			} else {
+				pPrice = pAsk
+			}
+		}
+		pPnl := getPnL(&p, pPrice)
+		pRatio := (float64(p.Margin) + pPnl) / float64(p.GetInitialMargin()) * 100.0
+		if pRatio < 50.0 {
+			hasMc = true
+		}
+
+		pnlSign := ""
+		if int64(pPnl) > 0 {
+			pnlSign = "+"
+		}
+		dirStr := "L"
+		if p.Direction == models.FXPositionDirectionSell {
+			dirStr = "S"
+		}
+		label := i18n.TranslateText(locale, "components.play.fx.option_pos_item", map[string]any{
+			"symbol":    strings.Replace(p.Symbol, "_", "/", 1),
+			"direction": dirStr,
+			"leverage":  p.Leverage,
+			"margin":    strconv.FormatInt(p.Margin, 10),
+			"pnl":       fmt.Sprintf("%s%d", pnlSign, int64(pPnl)),
+		})
+		positionOpts = append(positionOpts, discord.StringSelectMenuOption{
+			Label:   label,
+			Value:   p.ID.String(),
+			Default: session.ActivePositionID != nil && *session.ActivePositionID == p.ID,
+		})
+
+		if session.ActivePositionID != nil && *session.ActivePositionID == p.ID {
+			pCopy := p
+			activePos = &pCopy
 		}
 	}
 
-	container = container.AddComponents(
-		discord.NewTextDisplay("### 💱 現在の為替レート"),
-		discord.NewTextDisplay(strings.Join(ratesText, "\n")),
-		discord.NewLargeSeparator(),
-		discord.NewTextDisplay(fmt.Sprintf("🪙 **保有 GoPoints**: `%d pt`", points)),
-		discord.NewLargeSeparator(),
-	)
+	ctx.WithStringOptions("position_options", positionOpts)
 
-	if position != nil {
-		symbolData, _ := ticker.GetSymbolData(position.Symbol)
-		ask, _ := strconv.ParseFloat(symbolData.Ask, 64)
-		bid, _ := strconv.ParseFloat(symbolData.Bid, 64)
+	var symbolOpts []discord.StringSelectMenuOption
+	for _, sym := range fxSymbols {
+		symbolOpts = append(symbolOpts, discord.StringSelectMenuOption{
+			Label:   strings.Replace(sym, "_", "/", 1),
+			Value:   sym,
+			Default: sym == session.SelectedSymbol,
+		})
+	}
+	ctx.WithStringOptions("symbol_options", symbolOpts)
 
-		initMargin := position.GetInitialMargin()
+	var leverageOpts []discord.StringSelectMenuOption
+	for i, l := range fxLeverages {
+		leverageOpts = append(leverageOpts, discord.StringSelectMenuOption{
+			Label:   fmt.Sprintf("%dx レバレッジ", l.Leverage),
+			Value:   strconv.Itoa(i),
+			Default: i == session.SelectedLeverage,
+		})
+	}
+	ctx.WithStringOptions("leverage_options", leverageOpts)
+
+	restrictionWarning := ""
+	if hasMc {
+		restrictionWarning = "\n" + i18n.TranslateText(locale, "components.play.fx.trade_restricted_warning")
+		ctx.WithDisabled("play:fx_buy:"+session.ID.String(), true)
+		ctx.WithDisabled("play:fx_sell:"+session.ID.String(), true)
+		ctx.WithDisabled("play:fx_close:"+session.ID.String(), true)
+	}
+	ctx.WithText("restriction_warning", restrictionWarning)
+
+	if activePos == nil {
+		opt := fxLeverages[session.SelectedLeverage]
+		formInfo := i18n.TranslateText(locale, "components.play.fx.form_selected", map[string]any{
+			"symbol":   strings.Replace(session.SelectedSymbol, "_", "/", 1),
+			"margin":   strconv.FormatInt(session.SelectedMargin, 10),
+			"leverage": opt.Leverage,
+		})
+		ctx.WithText("form_info", formInfo)
+		ctx.WithText("btn_input_margin", i18n.TranslateText(locale, "components.play.fx.btn_input_margin", map[string]any{
+			"margin": strconv.FormatInt(session.SelectedMargin, 10),
+		}))
+
+		return ctx.Translate(i18n.TranslateLayout(locale, "command.play.fx.order_screen"))
+	} else {
+		pSymData, _ := ticker.GetSymbolData(activePos.Symbol)
+		pAsk, _ := strconv.ParseFloat(pSymData.Ask, 64)
+		pBid, _ := strconv.ParseFloat(pSymData.Bid, 64)
 		var currentPrice float64
-		if position.Direction == models.FXPositionDirectionBuy {
-			currentPrice = bid
+		if activePos.Direction == models.FXPositionDirectionBuy {
+			currentPrice = pBid
 		} else {
-			currentPrice = ask
+			currentPrice = pAsk
 		}
-		pnl := getPnL(position, currentPrice)
-
-		pnlInt := int64(pnl)
+		pPnl := getPnL(activePos, currentPrice)
+		pnlInt := int64(pPnl)
 		pnlStr := fmt.Sprintf("%+d", pnlInt)
 		if pnlInt == 0 {
 			pnlStr = "0"
 		}
 
-		dirEmoji := "🟢 買い (Long)"
-		if position.Direction == models.FXPositionDirectionSell {
-			dirEmoji = "🔴 売り (Short)"
+		dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
+		if activePos.Direction == models.FXPositionDirectionSell {
+			dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
 		}
 
-		ratio := (float64(position.Margin) + pnl) / float64(initMargin) * 100.0
+		initMargin := activePos.GetInitialMargin()
+		ratio := (float64(activePos.Margin) + pPnl) / float64(initMargin) * 100.0
 		ratioText := fmt.Sprintf("%.1f%%", ratio)
+		liqPrice := getLiquidationPrice(activePos)
 
-		liqPrice := getLiquidationPrice(position)
-		positionInfo := []string{
-			fmt.Sprintf("- **通貨ペア**: `%s`", strings.Replace(position.Symbol, "_", "/", 1)),
-			fmt.Sprintf("- **ポジション**: %s", dirEmoji),
-			fmt.Sprintf("- **レバレッジ**: `%dx`", position.Leverage),
-			fmt.Sprintf("- **証拠金 (Margin)**: `%d pt` (当初: `%d pt` / 取引数量相当: `%d pt`)", position.Margin, initMargin, initMargin*int64(position.Leverage)),
-			fmt.Sprintf("- **エントリー価格**: `%.3f`", position.EntryPrice),
-			fmt.Sprintf("- **現在価格**: `%.3f`", currentPrice),
-			fmt.Sprintf("- **強制ロスカット価格**: `%.3f`", liqPrice),
-			fmt.Sprintf("- **評価損益 (PnL)**: **`%s pt`**", pnlStr),
-			fmt.Sprintf("- **証拠金維持率**: **`%s`** (追証ライン: `50.0%%` / ロスカット: `0.0%%`)", ratioText),
+		posDesc := i18n.TranslateText(locale, "components.play.fx.active_position_desc", map[string]any{
+			"symbol":    strings.Replace(activePos.Symbol, "_", "/", 1),
+			"direction": dirEmoji,
+			"leverage":  activePos.Leverage,
+			"margin":    strconv.FormatInt(activePos.Margin, 10),
+			"init":      strconv.FormatInt(initMargin, 10),
+			"size":      strconv.FormatInt(initMargin*int64(activePos.Leverage), 10),
+			"entry":     fmt.Sprintf("%.3f", activePos.EntryPrice),
+			"current":   fmt.Sprintf("%.3f", currentPrice),
+			"liq":       fmt.Sprintf("%.3f", liqPrice),
+			"pnl":       pnlStr,
+			"ratio":     ratioText,
+		})
+
+		var posInfoBuilder strings.Builder
+		totalPos := len(positions)
+		currentIndex := 1
+		for idx, p := range positions {
+			if p.ID == activePos.ID {
+				currentIndex = idx + 1
+				break
+			}
 		}
 
-		container = container.AddComponents(
-			discord.NewTextDisplay("### 💼 保有ポジション情報"),
-			discord.NewTextDisplay(strings.Join(positionInfo, "\n")),
-		)
+		posInfoBuilder.WriteString(i18n.TranslateText(locale, "components.play.fx.active_position_title", map[string]any{
+			"current": currentIndex,
+			"total":   totalPos,
+		}))
+		posInfoBuilder.WriteString("\n" + posDesc)
 
 		if ratio < 50.0 {
-			container = container.AddComponents(
-				discord.NewLargeSeparator(),
-				discord.NewTextDisplay("⚠️ **[警告] 追証 (マージンコール) 発生中！**\n証拠金維持率が50.0%を下回っています。追証を入金して強制決済を回避してください。"),
-			)
-			container = container.WithAccentColor(0xE67E22) // Orange alert color
+			posInfoBuilder.WriteString("\n\n" + i18n.TranslateText(locale, "components.play.fx.margin_call_warning"))
 		}
+		ctx.WithText("position_info", posInfoBuilder.String())
 
-		layoutComponents = append(layoutComponents, container)
-
-		actionRow := discord.NewActionRow().AddComponents(
-			discord.NewSuccessButton("ポジション決済 (利確/損切)", fmt.Sprintf("play:fx_close:%s", session.ID)),
-			discord.NewPrimaryButton("追証を入金", fmt.Sprintf("play:fx_add_margin_btn:%s", session.ID)),
-			discord.NewPrimaryButton("レート更新 / 損益確認", fmt.Sprintf("play:fx_refresh:%s", session.ID)),
-			discord.NewSecondaryButton("画面を閉じる", fmt.Sprintf("play:fx_quit:%s", session.ID)),
-		)
-		layoutComponents = append(layoutComponents, actionRow)
-
-	} else {
-		formInfo := []string{
-			"現在保有しているポジションはありません。注文内容を選択してください。",
-			fmt.Sprintf("- **現在の選択**: `%s` | 証拠金: `%d pt` | レバレッジ: `%dx`", strings.Replace(session.SelectedSymbol, "_", "/", 1), session.SelectedMargin, fxLeverages[session.SelectedLeverage].Leverage),
-		}
-
-		container = container.AddComponents(
-			discord.NewTextDisplay("### 🆕 新規注文フォーム"),
-			discord.NewTextDisplay(strings.Join(formInfo, "\n")),
-		)
-
-		layoutComponents = append(layoutComponents, container)
-
-		var symOptions []discord.StringSelectMenuOption
-		for _, sym := range fxSymbols {
-			symOptions = append(symOptions, discord.StringSelectMenuOption{
-				Label:   strings.Replace(sym, "_", "/", 1),
-				Value:   sym,
-				Default: sym == session.SelectedSymbol,
-			})
-		}
-		row1 := discord.NewActionRow().AddComponents(
-			discord.StringSelectMenuComponent{
-				CustomID:    "play:fx_symbol:" + session.ID.String(),
-				Placeholder: "1. 通貨ペアを選択",
-				Options:     symOptions,
-			},
-		)
-
-		row2 := discord.NewActionRow().AddComponents(
-			discord.NewPrimaryButton(fmt.Sprintf("2. 証拠金を入力 (現在: %d pt)", session.SelectedMargin), "play:fx_margin_btn:"+session.ID.String()),
-		)
-
-		var levOptions []discord.StringSelectMenuOption
-		for i, l := range fxLeverages {
-			levOptions = append(levOptions, discord.StringSelectMenuOption{
-				Label:   fmt.Sprintf("%dx レバレッジ", l.Leverage),
-				Value:   strconv.Itoa(i),
-				Default: i == session.SelectedLeverage,
-			})
-		}
-		row3 := discord.NewActionRow().AddComponents(
-			discord.StringSelectMenuComponent{
-				CustomID:    "play:fx_leverage:" + session.ID.String(),
-				Placeholder: "3. レバレッジを選択",
-				Options:     levOptions,
-			},
-		)
-
-		row4 := discord.NewActionRow().AddComponents(
-			discord.NewSuccessButton("🟢 買い (Long) 注文", fmt.Sprintf("play:fx_buy:%s", session.ID)),
-			discord.NewDangerButton("🔴 売り (Short) 注文", fmt.Sprintf("play:fx_sell:%s", session.ID)),
-			discord.NewPrimaryButton("レート更新", fmt.Sprintf("play:fx_refresh:%s", session.ID)),
-			discord.NewSecondaryButton("画面を閉じる", fmt.Sprintf("play:fx_quit:%s", session.ID)),
-		)
-
-		layoutComponents = append(layoutComponents, row1, row2, row3, row4)
+		return ctx.Translate(i18n.TranslateLayout(locale, "command.play.fx.position_screen"))
 	}
-
-	return layoutComponents
 }
 
 func FXPrecondition(event *events.ComponentInteractionCreate) (*FXSession, errors.Error) {
@@ -346,8 +606,7 @@ func FXPrecondition(event *events.ComponentInteractionCreate) (*FXSession, error
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("⚠️ **セッションが期限切れです**"),
-					discord.NewTextDisplay("この取引画面のセッションは終了しました。もう一度 `/play fx` を実行してください。"),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_session_expired")),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -359,8 +618,7 @@ func FXPrecondition(event *events.ComponentInteractionCreate) (*FXSession, error
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("⚠️ **他人のセッションです**"),
-					discord.NewTextDisplay("この取引画面は他のユーザーのものです。自分で `/play fx` を実行してください。"),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_not_your_session")),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -386,10 +644,27 @@ func FXPlayCommand(c *components.Components, event *events.ApplicationCommandInt
 		return errors.NewError(err)
 	}
 
-	pos, err := getFXPosition(c, event.User().ID, *event.GuildID())
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	positions, err := getFXPositions(c, event.User().ID, *event.GuildID())
+	if err != nil {
 		return errors.NewError(err)
 	}
+
+	var remainingPositions []models.FXPosition
+	for _, p := range positions {
+		posCopy := p
+		liquidated, currentPrice, pnl, err := checkLiquidation(c, &posCopy, ticker)
+		if err != nil {
+			return errors.NewError(err)
+		}
+		if liquidated {
+			if err := liquidatePosition(c, event.Client(), &p, ticker, currentPrice, pnl); err != nil {
+				return errors.NewError(err)
+			}
+		} else {
+			remainingPositions = append(remainingPositions, p)
+		}
+	}
+	positions = remainingPositions
 
 	session := &FXSession{
 		ID:               uuid.New(),
@@ -399,42 +674,14 @@ func FXPlayCommand(c *components.Components, event *events.ApplicationCommandInt
 		SelectedMargin:   100,
 		SelectedLeverage: 0,
 	}
-	fx_sessions.Set(session.ID, session)
-
-	if pos != nil {
-		liquidated, currentPrice, pnl, err := checkLiquidation(c, pos, ticker)
-		if err != nil {
-			return errors.NewError(err)
-		}
-		if liquidated {
-			points, _, _ = gopoint.GetPoint(c, event.User().ID, *event.GuildID())
-			msgComponents := FXMessage(c, session, nil, ticker, points)
-			if len(msgComponents) > 0 {
-				if mc, ok := msgComponents[0].(discord.ContainerComponent); ok {
-					newComponents := append([]discord.ContainerSubComponent{
-						discord.NewTextDisplay("🚨 **ロスカット (強制決済) 発生** 🚨"),
-						discord.NewTextDisplay(fmt.Sprintf("保有していたポジションは、損失が証拠金を上回ったため強制決済されました。\n・決済価格: `%.3f` \n・損益: `-%d pt` (証拠金全額没収)", currentPrice, int64(-pnl))),
-						discord.NewLargeSeparator(),
-					}, mc.Components...)
-					mc.Components = newComponents
-					mc.AccentColor = 0xE74C3C
-					msgComponents[0] = mc
-				}
-			}
-
-			if err := event.RespondMessage(discord.NewMessageBuilder().
-				SetIsComponentsV2(true).
-				SetComponents(msgComponents...),
-			); err != nil {
-				return errors.NewError(err)
-			}
-			return nil
-		}
+	if len(positions) > 0 {
+		session.ActivePositionID = &positions[0].ID
 	}
+	fx_sessions.Set(session.ID, session)
 
 	if err := event.RespondMessage(discord.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(FXMessage(c, session, pos, ticker, points)...),
+		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...),
 	); err != nil {
 		return errors.NewError(err)
 	}
@@ -477,14 +724,14 @@ func FXSymbolHandler(c *components.Components, event *events.ComponentInteractio
 		return errors.NewError(err)
 	}
 
-	pos, err := getFXPosition(c, event.User().ID, *event.GuildID())
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	positions, err := getFXPositions(c, event.User().ID, *event.GuildID())
+	if err != nil {
 		return errors.NewError(err)
 	}
 
 	if err := event.UpdateMessage(discord.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(FXMessage(c, session, pos, ticker, points)...).
+		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
 	); err != nil {
 		return errors.NewError(err)
@@ -502,10 +749,10 @@ func FXMarginButtonHandler(c *components.Components, event *events.ComponentInte
 	}
 
 	modal := discord.NewModalCreateBuilder().
-		SetTitle("FX証拠金設定").
+		SetTitle(i18n.TranslateText(event.Locale(), "components.play.fx.modal_input_margin_title")).
 		SetCustomID("play:fx_margin_modal:" + session.ID.String()).
 		SetComponents(
-			discord.NewLabel("取引するGoポイント数 (証拠金)",
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.play.fx.modal_input_margin_label"),
 				discord.TextInputComponent{
 					CustomID:    "margin",
 					Style:       discord.TextInputStyleShort,
@@ -540,8 +787,7 @@ func FXMarginModalHandler(c *components.Components, event *events.ModalSubmitInt
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("⚠️ **セッションが期限切れです**"),
-					discord.NewTextDisplay("この取引画面のセッションは終了しました。もう一度 `/play fx` を実行してください。"),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_session_expired")),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -553,8 +799,7 @@ func FXMarginModalHandler(c *components.Components, event *events.ModalSubmitInt
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("⚠️ **他人のセッションです**"),
-					discord.NewTextDisplay("この取引画面は他のユーザーのものです。自分で `/play fx` を実行してください。"),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_not_your_session")),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -569,8 +814,7 @@ func FXMarginModalHandler(c *components.Components, event *events.ModalSubmitInt
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("⚠️ **無効な入力**"),
-					discord.NewTextDisplay("証拠金は1以上の整数で入力してください。"),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_invalid_input")),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -594,8 +838,12 @@ func FXMarginModalHandler(c *components.Components, event *events.ModalSubmitInt
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("⚠️ **証拠金比率不足**"),
-					discord.NewTextDisplay(fmt.Sprintf("選択されたレバレッジ（%dx）では、総所持ポイント（%d pt）の %.0f%% 以上の証拠金（最低 %d pt）が必要です。", opt.Leverage, points, opt.MinRatio*100.0, minMargin)),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_min_ratio_margin", map[string]any{
+						"leverage": opt.Leverage,
+						"points":   points,
+						"ratio":    opt.MinRatio * 100.0,
+						"min":      minMargin,
+					})),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -611,14 +859,14 @@ func FXMarginModalHandler(c *components.Components, event *events.ModalSubmitInt
 		return errors.NewError(err)
 	}
 
-	pos, err := getFXPosition(c, event.User().ID, *event.GuildID())
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	positions, err := getFXPositions(c, event.User().ID, *event.GuildID())
+	if err != nil {
 		return errors.NewError(err)
 	}
 
 	if err := event.UpdateMessage(discord.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(FXMessage(c, session, pos, ticker, points)...).
+		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
 	); err != nil {
 		return errors.NewError(err)
@@ -636,10 +884,10 @@ func FXAddMarginButtonHandler(c *components.Components, event *events.ComponentI
 	}
 
 	modal := discord.NewModalCreateBuilder().
-		SetTitle("追証の入金").
+		SetTitle(i18n.TranslateText(event.Locale(), "components.play.fx.modal_add_margin_title")).
 		SetCustomID("play:fx_add_margin_modal:" + session.ID.String()).
 		SetComponents(
-			discord.NewLabel("入金するGoポイント数",
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.play.fx.modal_add_margin_label"),
 				discord.TextInputComponent{
 					CustomID:    "amount",
 					Style:       discord.TextInputStyleShort,
@@ -673,8 +921,7 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("⚠️ **セッションが期限切れです**"),
-					discord.NewTextDisplay("この取引画面のセッションは終了しました。もう一度 `/play fx` を実行してください。"),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_session_expired")),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -686,8 +933,7 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("⚠️ **他人のセッションです**"),
-					discord.NewTextDisplay("この取引画面は他のユーザーのものです。自分で `/play fx` を実行してください。"),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_not_your_session")),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -702,8 +948,7 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("⚠️ **無効な入力**"),
-					discord.NewTextDisplay("入金額は1以上の整数で入力してください。"),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_invalid_input")),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -721,8 +966,10 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("⚠️ **ポイント不足**"),
-					discord.NewTextDisplay(fmt.Sprintf("入金に必要な `%d pt` が不足しています（現在の残高: `%d pt`）。", amount, points)),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_insufficient_points", map[string]any{
+						"margin": amount,
+						"points": points,
+					})),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -730,15 +977,27 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 		return nil
 	}
 
-	pos, err := getFXPosition(c, event.User().ID, *event.GuildID())
+	if session.ActivePositionID == nil {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_pos_not_found")),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
+	pos, err := getFXPositionByID(c, *session.ActivePositionID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			builder := discord.NewMessageBuilder().
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
-						discord.NewTextDisplay("⚠️ **ポジションが見つかりません**"),
-						discord.NewTextDisplay("追証を入金するポジションが見つかりません。すでにロスカットされた可能性があります。"),
+						discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_pos_not_found")),
 					).WithAccentColor(0xE74C3C),
 				).
 				AddFlags(discord.MessageFlagEphemeral)
@@ -748,15 +1007,15 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 		return errors.NewError(err)
 	}
 
-	// Deduct points
 	if err := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), -amount); err != nil {
 		return errors.NewError(err)
 	}
 
-	// Update margin
 	pos.Margin += amount
 	if err := c.GormDB().Save(pos).Error; err != nil {
-		_ = gopoint.AddPoint(c, event.User().ID, *event.GuildID(), amount)
+		if refundErr := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), amount); refundErr != nil {
+			slog.Error("CRITICAL: failed to refund points to user after margin addition failed", "user_id", event.User().ID, "guild_id", *event.GuildID(), "session_id", session.ID, "refund", amount, "error", refundErr)
+		}
 		return errors.NewError(err)
 	}
 
@@ -766,10 +1025,14 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 	}
 
 	points, _, _ = gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	positions, err := getFXPositions(c, event.User().ID, *event.GuildID())
+	if err != nil {
+		return errors.NewError(err)
+	}
 
 	if err := event.UpdateMessage(discord.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(FXMessage(c, session, pos, ticker, points)...).
+		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
 	); err != nil {
 		return errors.NewError(err)
@@ -809,14 +1072,14 @@ func FXLeverageHandler(c *components.Components, event *events.ComponentInteract
 		return errors.NewError(err)
 	}
 
-	pos, err := getFXPosition(c, event.User().ID, *event.GuildID())
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	positions, err := getFXPositions(c, event.User().ID, *event.GuildID())
+	if err != nil {
 		return errors.NewError(err)
 	}
 
 	if err := event.UpdateMessage(discord.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(FXMessage(c, session, pos, ticker, points)...).
+		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
 	); err != nil {
 		return errors.NewError(err)
@@ -833,17 +1096,34 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 		return nil
 	}
 
-	pos, err := getFXPosition(c, event.User().ID, *event.GuildID())
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	mcRestricted, err := hasMarginCall(c, event.User().ID, *event.GuildID())
+	if err != nil {
 		return errors.NewError(err)
 	}
-	if pos != nil {
+	if mcRestricted {
 		builder := discord.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("⚠️ **既にポジションを保有しています**"),
-					discord.NewTextDisplay("同時に複数のポジションを持つことはできません。現在のポジションを決済してから注文してください。"),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_restricted")),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
+	positions, err := getFXPositions(c, event.User().ID, *event.GuildID())
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	if len(positions) >= 10 {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay("⚠️ **ポジション上限数到達**\n保有できるポジションは最大10個までです。いずれかのポジションを決済してから再度注文してください。"),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -867,8 +1147,12 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("⚠️ **証拠金比率不足**"),
-					discord.NewTextDisplay(fmt.Sprintf("選択されたレバレッジ（%dx）では、総所持ポイント（%d pt）の %.0f%% 以上の証拠金（最低 %d pt）が必要です。証拠金を再設定してください。", opt.Leverage, points, opt.MinRatio*100.0, minMargin)),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_min_ratio_margin", map[string]any{
+						"leverage": opt.Leverage,
+						"points":   points,
+						"ratio":    opt.MinRatio * 100.0,
+						"min":      minMargin,
+					})),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -881,8 +1165,10 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("⚠️ **ポイント不足**"),
-					discord.NewTextDisplay(fmt.Sprintf("証拠金に必要な `%d pt` が不足しています（現在の残高: `%d pt`）。", session.SelectedMargin, points)),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_insufficient_points", map[string]any{
+						"margin": session.SelectedMargin,
+						"points": points,
+					})),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -909,7 +1195,7 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 		return errors.NewError(err)
 	}
 
-	pos = &models.FXPosition{
+	pos := &models.FXPosition{
 		UserID:        event.User().ID,
 		GuildID:       *event.GuildID(),
 		Symbol:        session.SelectedSymbol,
@@ -927,11 +1213,15 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 		return errors.NewError(err)
 	}
 
+	session.ActivePositionID = &pos.ID
+	fx_sessions.Set(session.ID, session)
+
 	points, _, _ = gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	positions, _ = getFXPositions(c, event.User().ID, *event.GuildID())
 
 	if err := event.UpdateMessage(discord.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(FXMessage(c, session, pos, ticker, points)...).
+		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
 	); err != nil {
 		return errors.NewError(err)
@@ -948,17 +1238,34 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 		return nil
 	}
 
-	pos, err := getFXPosition(c, event.User().ID, *event.GuildID())
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	mcRestricted, err := hasMarginCall(c, event.User().ID, *event.GuildID())
+	if err != nil {
 		return errors.NewError(err)
 	}
-	if pos != nil {
+	if mcRestricted {
 		builder := discord.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("⚠️ **既にポジションを保有しています**"),
-					discord.NewTextDisplay("同時に複数のポジションを持つことはできません。現在のポジションを決済してから注文してください。"),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_restricted")),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
+	positions, err := getFXPositions(c, event.User().ID, *event.GuildID())
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	if len(positions) >= 10 {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay("⚠️ **ポジション上限数到達**\n保有できるポジションは最大10個までです。いずれかのポジションを決済してから再度注文してください。"),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -982,8 +1289,12 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("⚠️ **証拠金比率不足**"),
-					discord.NewTextDisplay(fmt.Sprintf("選択されたレバレッジ（%dx）では、総所持ポイント（%d pt）の %.0f%% 以上の証拠金（最低 %d pt）が必要です。証拠金を再設定してください。", opt.Leverage, points, opt.MinRatio*100.0, minMargin)),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_min_ratio_margin", map[string]any{
+						"leverage": opt.Leverage,
+						"points":   points,
+						"ratio":    opt.MinRatio * 100.0,
+						"min":      minMargin,
+					})),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -996,8 +1307,10 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("⚠️ **ポイント不足**"),
-					discord.NewTextDisplay(fmt.Sprintf("証拠金に必要な `%d pt` が不足しています（現在の残高: `%d pt`）。", session.SelectedMargin, points)),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_insufficient_points", map[string]any{
+						"margin": session.SelectedMargin,
+						"points": points,
+					})),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -1024,7 +1337,7 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 		return errors.NewError(err)
 	}
 
-	pos = &models.FXPosition{
+	pos := &models.FXPosition{
 		UserID:        event.User().ID,
 		GuildID:       *event.GuildID(),
 		Symbol:        session.SelectedSymbol,
@@ -1042,11 +1355,15 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 		return errors.NewError(err)
 	}
 
+	session.ActivePositionID = &pos.ID
+	fx_sessions.Set(session.ID, session)
+
 	points, _, _ = gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	positions, _ = getFXPositions(c, event.User().ID, *event.GuildID())
 
 	if err := event.UpdateMessage(discord.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(FXMessage(c, session, pos, ticker, points)...).
+		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
 	); err != nil {
 		return errors.NewError(err)
@@ -1068,42 +1385,39 @@ func FXRefreshHandler(c *components.Components, event *events.ComponentInteracti
 		return errors.NewError(err)
 	}
 
-	pos, err := getFXPosition(c, event.User().ID, *event.GuildID())
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	positions, err := getFXPositions(c, event.User().ID, *event.GuildID())
+	if err != nil {
 		return errors.NewError(err)
 	}
 
-	if pos != nil {
-		liquidated, currentPrice, pnl, err := checkLiquidation(c, pos, ticker)
+	var remainingPositions []models.FXPosition
+	activeLiquidated := false
+	for _, p := range positions {
+		posCopy := p
+		liquidated, currentPrice, pnl, err := checkLiquidation(c, &posCopy, ticker)
 		if err != nil {
 			return errors.NewError(err)
 		}
 		if liquidated {
-			points, _, _ := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
-
-			msgComponents := FXMessage(c, session, nil, ticker, points)
-			if len(msgComponents) > 0 {
-				if mc, ok := msgComponents[0].(discord.ContainerComponent); ok {
-					newComponents := append([]discord.ContainerSubComponent{
-						discord.NewTextDisplay("🚨 **ロスカット (強制決済) 発生** 🚨"),
-						discord.NewTextDisplay(fmt.Sprintf("保有していたポジションは、損失が証拠金を上回ったため強制決済されました。\n・決済価格: `%.3f` \n・損益: `-%d pt`", currentPrice, int64(-pnl))),
-						discord.NewLargeSeparator(),
-					}, mc.Components...)
-					mc.Components = newComponents
-					mc.AccentColor = 0xE74C3C
-					msgComponents[0] = mc
-				}
-			}
-
-			if err := event.UpdateMessage(discord.NewMessageBuilder().
-				SetIsComponentsV2(true).
-				SetComponents(msgComponents...).
-				BuildUpdate(),
-			); err != nil {
+			if err := liquidatePosition(c, event.Client(), &p, ticker, currentPrice, pnl); err != nil {
 				return errors.NewError(err)
 			}
-			return nil
+			if session.ActivePositionID != nil && *session.ActivePositionID == p.ID {
+				activeLiquidated = true
+			}
+		} else {
+			remainingPositions = append(remainingPositions, p)
 		}
+	}
+	positions = remainingPositions
+
+	if activeLiquidated {
+		if len(positions) > 0 {
+			session.ActivePositionID = &positions[0].ID
+		} else {
+			session.ActivePositionID = nil
+		}
+		fx_sessions.Set(session.ID, session)
 	}
 
 	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
@@ -1113,7 +1427,7 @@ func FXRefreshHandler(c *components.Components, event *events.ComponentInteracti
 
 	if err := event.UpdateMessage(discord.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(FXMessage(c, session, pos, ticker, points)...).
+		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
 	); err != nil {
 		return errors.NewError(err)
@@ -1130,15 +1444,44 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 		return nil
 	}
 
-	pos, err := getFXPosition(c, event.User().ID, *event.GuildID())
+	mcRestricted, err := hasMarginCall(c, event.User().ID, *event.GuildID())
+	if err != nil {
+		return errors.NewError(err)
+	}
+	if mcRestricted {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_restricted")),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
+	if session.ActivePositionID == nil {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_pos_not_found")),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
+	pos, err := getFXPositionByID(c, *session.ActivePositionID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			builder := discord.NewMessageBuilder().
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
-						discord.NewTextDisplay("⚠️ **ポジションが見つかりません**"),
-						discord.NewTextDisplay("決済対象のポジションが見つかりません。すでにロスカットまたは他の画面で決済された可能性があります。"),
+						discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_pos_not_found")),
 					).WithAccentColor(0xE74C3C),
 				).
 				AddFlags(discord.MessageFlagEphemeral)
@@ -1177,7 +1520,9 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 
 	pnlInt := int64(pnl)
 	refund := pos.Margin + pnlInt
+	var deficit int64
 	if refund < 0 {
+		deficit = -refund
 		refund = 0
 	}
 
@@ -1190,6 +1535,69 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 				return err
 			}
 		}
+
+		if deficit > 0 {
+			var otherPositions []models.FXPosition
+			if err := tx.Where("user_id = ? AND guild_id = ? AND id != ?", pos.UserID, pos.GuildID, pos.ID).Find(&otherPositions).Error; err != nil {
+				return err
+			}
+
+			for _, other := range otherPositions {
+				if deficit <= 0 {
+					break
+				}
+
+				otherSymData, ok := ticker.GetSymbolData(other.Symbol)
+				if !ok {
+					continue
+				}
+				otherAsk, _ := strconv.ParseFloat(otherSymData.Ask, 64)
+				otherBid, _ := strconv.ParseFloat(otherSymData.Bid, 64)
+				var otherPrice float64
+				if other.Direction == models.FXPositionDirectionBuy {
+					otherPrice = otherBid
+				} else {
+					otherPrice = otherAsk
+				}
+				otherPnl := getPnL(&other, otherPrice)
+				otherVal := other.Margin + int64(otherPnl)
+
+				if err := tx.Delete(&other).Error; err != nil {
+					return err
+				}
+
+				if otherVal > 0 {
+					if otherVal >= deficit {
+						remaining := otherVal - deficit
+						if err := gopoint.AddPointTx(tx, pos.UserID, pos.GuildID, remaining); err != nil {
+							return err
+						}
+						deficit = 0
+					} else {
+						deficit -= otherVal
+					}
+				}
+			}
+		}
+
+		if deficit > 0 {
+			userPoint := models.GoPoint{
+				UserID:  pos.UserID,
+				GuildID: pos.GuildID,
+			}
+			if err := tx.Where(userPoint).First(&userPoint).Error; err == nil {
+				points := userPoint.Points
+				deduct := points
+				if points > deficit {
+					deduct = deficit
+				}
+				userPoint.Points -= deduct
+				if err := tx.Save(&userPoint).Error; err != nil {
+					return err
+				}
+				deficit -= deduct
+			}
+		}
 		return nil
 	})
 	if txErr != nil {
@@ -1197,6 +1605,13 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 	}
 
 	points, _, _ := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	positions, _ := getFXPositions(c, event.User().ID, *event.GuildID())
+	if len(positions) > 0 {
+		session.ActivePositionID = &positions[0].ID
+	} else {
+		session.ActivePositionID = nil
+	}
+	fx_sessions.Set(session.ID, session)
 
 	netWinSign := ""
 	if pnlInt > 0 {
@@ -1207,24 +1622,28 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 		pnlStr = "0"
 	}
 
-	dirText := "🟢 買い (Long)"
-	if pos.Direction == "SELL" {
-		dirText = "🔴 売り (Short)"
+	dirText := i18n.TranslateText(event.Locale(), "components.play.fx.direction.buy")
+	if pos.Direction == models.FXPositionDirectionSell {
+		dirText = i18n.TranslateText(event.Locale(), "components.play.fx.direction.sell")
 	}
+
+	descText := i18n.TranslateText(event.Locale(), "components.play.fx.close_success_desc", map[string]any{
+		"symbol":    strings.Replace(pos.Symbol, "_", "/", 1),
+		"direction": dirText,
+		"leverage":  pos.Leverage,
+		"margin":    pos.Margin,
+		"entry":     fmt.Sprintf("%.3f", pos.EntryPrice),
+		"exit":      fmt.Sprintf("%.3f", exitPrice),
+		"pnl":       pnlStr,
+		"refund":    refund,
+		"points":    points,
+	})
 
 	container := discord.NewContainer().WithAccentColor(0x2ECC71)
 	container = container.AddComponents(
-		discord.NewTextDisplay("🏁 **FXポジション決済完了** 🏁"),
+		discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.close_success_title")),
 		discord.NewLargeSeparator(),
-		discord.NewTextDisplay("ポジションの決済が正常に完了しました。"),
-		discord.NewTextDisplayf("- **通貨ペア**: `%s` (%s)", strings.Replace(pos.Symbol, "_", "/", 1), dirText),
-		discord.NewTextDisplayf("- **レバレッジ**: `%dx` | **証拠金**: `%d pt`", pos.Leverage, pos.Margin),
-		discord.NewTextDisplayf("- **エントリー価格**: `%.3f`", pos.EntryPrice),
-		discord.NewTextDisplayf("- **決済価格**: `%.3f`", exitPrice),
-		discord.NewTextDisplayf("- **獲得/損失 (PnL)**: **`%s pt`**", pnlStr),
-		discord.NewTextDisplayf("- **返却証拠金**: `%d pt`", refund),
-		discord.NewLargeSeparator(),
-		discord.NewTextDisplayf("🪙 **現在の GoPoints**: `%d pt`", points),
+		discord.NewTextDisplay(descText),
 	)
 
 	actionRow := discord.NewActionRow().AddComponents(
@@ -1254,26 +1673,31 @@ func FXQuitHandler(c *components.Components, event *events.ComponentInteractionC
 
 	fx_sessions.Delete(session.ID)
 
-	pos, err := getFXPosition(c, event.User().ID, *event.GuildID())
+	positions, err := getFXPositions(c, event.User().ID, *event.GuildID())
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return errors.NewError(err)
 	}
 
 	container := discord.NewContainer().WithAccentColor(0x95A5A6)
 	container = container.AddComponents(
-		discord.NewTextDisplay("📈 **FX TRADING CLOSED** 📉"),
+		discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.close_quit_title")),
 		discord.NewLargeSeparator(),
-		discord.NewTextDisplay("FX取引画面を閉じました。"),
+		discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.close_quit_desc")),
 	)
 
-	if pos != nil {
-		dirText := "🟢 買い"
-		if pos.Direction == models.FXPositionDirectionSell {
-			dirText = "🔴 売り"
+	if len(positions) > 0 {
+		for _, p := range positions {
+			dirText := i18n.TranslateText(event.Locale(), "components.play.fx.direction.buy")
+			if p.Direction == models.FXPositionDirectionSell {
+				dirText = i18n.TranslateText(event.Locale(), "components.play.fx.direction.sell")
+			}
+			noticeText := i18n.TranslateText(event.Locale(), "components.play.fx.close_quit_active_notice", map[string]any{
+				"symbol":    strings.Replace(p.Symbol, "_", "/", 1),
+				"direction": dirText,
+				"margin":    p.Margin,
+			})
+			container = container.AddComponents(discord.NewTextDisplay(noticeText))
 		}
-		container = container.AddComponents(
-			discord.NewTextDisplayf("⚠️ **注意**: `%s` の %s ポジション (証拠金: `%d pt`) は決済されず、**現在も保有中**です。再度 `/play fx` を実行することで、損益確認や決済を行うことができます。", strings.Replace(pos.Symbol, "_", "/", 1), dirText, pos.Margin),
-		)
 	}
 
 	if err := event.UpdateMessage(discord.NewMessageBuilder().
@@ -1284,6 +1708,55 @@ func FXQuitHandler(c *components.Components, event *events.ComponentInteractionC
 		return errors.NewError(err)
 	}
 
+	return nil
+}
+
+func FXSwitchPositionHandler(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+	session, err1 := FXPrecondition(event)
+	if err1 != nil {
+		return err1
+	}
+	if session == nil {
+		return nil
+	}
+
+	if data := event.StringSelectMenuInteractionData(); len(data.Values) > 0 {
+		val := data.Values[0]
+		if val == "new_order" {
+			session.ActivePositionID = nil
+		} else {
+			id, err := uuid.Parse(val)
+			if err != nil {
+				return errors.NewError(err)
+			}
+			session.ActivePositionID = &id
+		}
+	}
+
+	fx_sessions.Set(session.ID, session)
+
+	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	ticker, err := fetchTickerData()
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	positions, err := getFXPositions(c, event.User().ID, *event.GuildID())
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	if err := event.UpdateMessage(discord.NewMessageBuilder().
+		SetIsComponentsV2(true).
+		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
+		BuildUpdate(),
+	); err != nil {
+		return errors.NewError(err)
+	}
 	return nil
 }
 
@@ -1310,17 +1783,8 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 		}
 		if liquidated {
 			slog.Info("position background liquidated", "user_id", pos.UserID, "symbol", pos.Symbol)
-			ch, err := client.Rest.CreateDMChannel(pos.UserID)
-			if err == nil {
-				builder := discord.NewMessageBuilder().
-					SetIsComponentsV2(true).
-					SetComponents(
-						discord.NewContainer(
-							discord.NewTextDisplay("🚨 **FX強制ロスカットのお知らせ** 🚨"),
-							discord.NewTextDisplay(fmt.Sprintf("保有していた `%s` のポジションが、為替価格の変動により強制決済（ロスカット）されました。\n\n・決済価格: `%.3f`\n・損益: `-%d pt` (証拠金 `%d pt` 没収)", strings.Replace(pos.Symbol, "_", "/", 1), currentPrice, int64(-pnl), pos.Margin)),
-						).WithAccentColor(0xE74C3C),
-					)
-				_, _ = client.Rest.CreateMessage(ch.ID(), builder.BuildCreate())
+			if err := liquidatePosition(c, client, &posCopy, ticker, currentPrice, pnl); err != nil {
+				slog.Error("failed to liquidate position background", "user_id", pos.UserID, "error", err)
 			}
 		}
 	}

@@ -521,6 +521,14 @@ func Command(c *components.Components) components.Command {
 					return FXQuitHandler(c, event)
 				},
 			},
+			"play:fx_switch_pos": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.fx"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return FXSwitchPositionHandler(c, event)
+				},
+			},
 		},
 		ModalHandlers: map[string]generic.ModalHandler{
 			"play:fx_margin_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
