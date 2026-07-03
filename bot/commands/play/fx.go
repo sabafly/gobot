@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
@@ -32,7 +33,7 @@ type FXSession struct {
 	GuildID          snowflake.ID
 	SelectedSymbol   string
 	SelectedMargin   int64
-	SelectedLeverage int
+	SelectedLeverage int // index of fxLeverages
 }
 
 func (s *FXSession) OnDelete() error {
@@ -41,9 +42,17 @@ func (s *FXSession) OnDelete() error {
 
 var (
 	fxSymbols   = []string{"USD_JPY", "EUR_JPY", "GBP_JPY", "AUD_JPY", "NZD_JPY", "CAD_JPY", "CHF_JPY"}
-	fxMargins   = []int64{10, 50, 100, 500, 1000, 5000, 10000}
-	fxLeverages = []int{1, 5, 10, 25}
+	fxLeverages = []LeverageOption{
+		{Leverage: 25, MinRatio: 0.05},
+		{Leverage: 50, MinRatio: 0.1},
+		{Leverage: 150, MinRatio: 0.15},
+	}
 )
+
+type LeverageOption struct {
+	Leverage int     // レバレッジ倍率
+	MinRatio float64 // 総所持ポイントに対する証拠金の比率の最小値
+}
 
 type TickerResponse struct {
 	Status       int          `json:"status"`
@@ -241,7 +250,7 @@ func FXMessage(c *components.Components, session *FXSession, position *models.FX
 	} else {
 		formInfo := []string{
 			"現在保有しているポジションはありません。注文内容を選択してください。",
-			fmt.Sprintf("- **現在の選択**: `%s` | 証拠金: `%d pt` | レバレッジ: `%dx`", strings.Replace(session.SelectedSymbol, "_", "/", 1), session.SelectedMargin, session.SelectedLeverage),
+			fmt.Sprintf("- **現在の選択**: `%s` | 証拠金: `%d pt` | レバレッジ: `%dx`", strings.Replace(session.SelectedSymbol, "_", "/", 1), session.SelectedMargin, fxLeverages[session.SelectedLeverage].Leverage),
 		}
 
 		container = container.AddComponents(
@@ -272,11 +281,11 @@ func FXMessage(c *components.Components, session *FXSession, position *models.FX
 		)
 
 		var levOptions []discord.StringSelectMenuOption
-		for _, l := range fxLeverages {
+		for i, l := range fxLeverages {
 			levOptions = append(levOptions, discord.StringSelectMenuOption{
-				Label:   fmt.Sprintf("%dx レバレッジ", l),
-				Value:   strconv.Itoa(l),
-				Default: l == session.SelectedLeverage,
+				Label:   fmt.Sprintf("%dx レバレッジ", l.Leverage),
+				Value:   strconv.Itoa(i),
+				Default: i == session.SelectedLeverage,
 			})
 		}
 		row3 := discord.NewActionRow().AddComponents(
@@ -366,7 +375,7 @@ func FXPlayCommand(c *components.Components, event *events.ApplicationCommandInt
 		GuildID:          *event.GuildID(),
 		SelectedSymbol:   "USD_JPY",
 		SelectedMargin:   100,
-		SelectedLeverage: 10,
+		SelectedLeverage: 0,
 	}
 	fx_sessions.Set(session.ID, session)
 
@@ -536,13 +545,33 @@ func FXMarginModalHandler(c *components.Components, event *events.ModalSubmitInt
 		return nil
 	}
 
-	session.SelectedMargin = margin
-	fx_sessions.Set(session.ID, session)
-
 	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
+
+	opt := fxLeverages[session.SelectedLeverage]
+	minMargin := int64(float64(points) * opt.MinRatio)
+	if minMargin < 1 {
+		minMargin = 1
+	}
+
+	if margin < minMargin {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay("⚠️ **証拠金比率不足**"),
+					discord.NewTextDisplay(fmt.Sprintf("選択されたレバレッジ（%dx）では、総所持ポイント（%d pt）の %.0f%% 以上の証拠金（最低 %d pt）が必要です。", opt.Leverage, points, opt.MinRatio*100.0, minMargin)),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
+	session.SelectedMargin = margin
+	fx_sessions.Set(session.ID, session)
 
 	ticker, err := fetchTickerData()
 	if err != nil {
@@ -577,6 +606,9 @@ func FXLeverageHandler(c *components.Components, event *events.ComponentInteract
 		l, err := strconv.Atoi(data.Values[0])
 		if err != nil {
 			return errors.NewError(err)
+		}
+		if l < 0 || l >= len(fxLeverages) {
+			return errors.NewError(fmt.Errorf("invalid leverage option selected"))
 		}
 		session.SelectedLeverage = l
 	}
@@ -640,6 +672,26 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 		return errors.NewError(err)
 	}
 
+	opt := fxLeverages[session.SelectedLeverage]
+	minMargin := int64(float64(points) * opt.MinRatio)
+	if minMargin < 1 {
+		minMargin = 1
+	}
+
+	if session.SelectedMargin < minMargin {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay("⚠️ **証拠金比率不足**"),
+					discord.NewTextDisplay(fmt.Sprintf("選択されたレバレッジ（%dx）では、総所持ポイント（%d pt）の %.0f%% 以上の証拠金（最低 %d pt）が必要です。証拠金を再設定してください。", opt.Leverage, points, opt.MinRatio*100.0, minMargin)),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
 	if points < session.SelectedMargin {
 		builder := discord.NewMessageBuilder().
 			SetIsComponentsV2(true).
@@ -680,7 +732,7 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 		Direction:  "BUY",
 		EntryPrice: ask,
 		Margin:     session.SelectedMargin,
-		Leverage:   session.SelectedLeverage,
+		Leverage:   opt.Leverage,
 	}
 
 	if err := c.GormDB().Create(pos).Error; err != nil {
@@ -732,6 +784,26 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 		return errors.NewError(err)
 	}
 
+	opt := fxLeverages[session.SelectedLeverage]
+	minMargin := int64(float64(points) * opt.MinRatio)
+	if minMargin < 1 {
+		minMargin = 1
+	}
+
+	if session.SelectedMargin < minMargin {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay("⚠️ **証拠金比率不足**"),
+					discord.NewTextDisplay(fmt.Sprintf("選択されたレバレッジ（%dx）では、総所持ポイント（%d pt）の %.0f%% 以上の証拠金（最低 %d pt）が必要です。証拠金を再設定してください。", opt.Leverage, points, opt.MinRatio*100.0, minMargin)),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
 	if points < session.SelectedMargin {
 		builder := discord.NewMessageBuilder().
 			SetIsComponentsV2(true).
@@ -772,7 +844,7 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 		Direction:  "SELL",
 		EntryPrice: bid,
 		Margin:     session.SelectedMargin,
-		Leverage:   session.SelectedLeverage,
+		Leverage:   opt.Leverage,
 	}
 
 	if err := c.GormDB().Create(pos).Error; err != nil {
@@ -1014,5 +1086,45 @@ func FXQuitHandler(c *components.Components, event *events.ComponentInteractionC
 		return errors.NewError(err)
 	}
 
+	return nil
+}
+
+func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) error {
+	var positions []models.FXPosition
+	if err := c.GormDB().Find(&positions).Error; err != nil {
+		return err
+	}
+	if len(positions) == 0 {
+		return nil
+	}
+
+	ticker, err := fetchTickerData()
+	if err != nil {
+		return err
+	}
+
+	for _, pos := range positions {
+		posCopy := pos
+		liquidated, currentPrice, pnl, err := checkLiquidation(c, &posCopy, ticker)
+		if err != nil {
+			slog.Error("failed to check background liquidation", "user_id", pos.UserID, "error", err)
+			continue
+		}
+		if liquidated {
+			slog.Info("position background liquidated", "user_id", pos.UserID, "symbol", pos.Symbol)
+			ch, err := client.Rest.CreateDMChannel(pos.UserID)
+			if err == nil {
+				builder := discord.NewMessageBuilder().
+					SetIsComponentsV2(true).
+					SetComponents(
+						discord.NewContainer(
+							discord.NewTextDisplay("🚨 **FX強制ロスカットのお知らせ** 🚨"),
+							discord.NewTextDisplay(fmt.Sprintf("保有していた `%s` のポジションが、為替価格の変動により強制決済（ロスカット）されました。\n\n・決済価格: `%.3f`\n・損益: `-%d pt` (証拠金 `%d pt` 没収)", strings.Replace(pos.Symbol, "_", "/", 1), currentPrice, int64(-pnl), pos.Margin)),
+						).WithAccentColor(0xE74C3C),
+					)
+				_, _ = client.Rest.CreateMessage(ch.ID(), builder.BuildCreate())
+			}
+		}
+	}
 	return nil
 }

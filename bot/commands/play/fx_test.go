@@ -118,3 +118,66 @@ func TestFX_PnLCalculation(t *testing.T) {
 		}
 	})
 }
+
+func TestFX_MinRatioMarginRequirement(t *testing.T) {
+	tests := []struct {
+		name       string
+		levIdx     int // index in fxLeverages
+		points     int64
+		margin     int64
+		wantValid  bool
+		wantMinVal int64
+	}{
+		{
+			name:       "25x Leverage, Ratio 0.05, Margin 50 on 1000 points (Valid)",
+			levIdx:     0, // 25x, ratio 0.05
+			points:     1000,
+			margin:     50,
+			wantValid:  true,
+			wantMinVal: 50,
+		},
+		{
+			name:       "25x Leverage, Ratio 0.05, Margin 49 on 1000 points (Invalid)",
+			levIdx:     0, // 25x, ratio 0.05
+			points:     1000,
+			margin:     49,
+			wantValid:  false,
+			wantMinVal: 50,
+		},
+		{
+			name:       "50x Leverage, Ratio 0.10, Margin 100 on 1000 points (Valid)",
+			levIdx:     1, // 50x, ratio 0.10
+			points:     1000,
+			margin:     100,
+			wantValid:  true,
+			wantMinVal: 100,
+		},
+		{
+			name:       "50x Leverage, Ratio 0.10, Margin 99 on 1000 points (Invalid)",
+			levIdx:     1, // 50x, ratio 0.10
+			points:     1000,
+			margin:     99,
+			wantValid:  false,
+			wantMinVal: 100,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opt := fxLeverages[tt.levIdx]
+			minMargin := int64(float64(tt.points) * opt.MinRatio)
+			if minMargin < 1 {
+				minMargin = 1
+			}
+
+			if minMargin != tt.wantMinVal {
+				t.Errorf("expected minMargin to be %d, got %d", tt.wantMinVal, minMargin)
+			}
+
+			isValid := tt.margin >= minMargin
+			if isValid != tt.wantValid {
+				t.Errorf("expected validity to be %v, got %v (margin: %d, minMargin: %d)", tt.wantValid, isValid, tt.margin, minMargin)
+			}
+		})
+	}
+}

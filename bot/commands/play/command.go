@@ -5,7 +5,9 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/google/uuid"
@@ -515,6 +517,14 @@ func Command(c *components.Components) components.Command {
 		ModalHandlers: map[string]generic.ModalHandler{
 			"play:fx_margin_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
 				return FXMarginModalHandler(c, event)
+			},
+		},
+		Schedulers: []components.Scheduler{
+			{
+				Duration: 30 * time.Second,
+				Worker: func(c *components.Components, client *bot.Client) error {
+					return CheckAllPositionsLiquidation(c, client)
+				},
 			},
 		},
 	}).SetComponent(c)
