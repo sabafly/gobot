@@ -194,17 +194,17 @@ strings:
   components.play.fx.symbol.jpy: "円 (JPY)"
   components.play.fx.direction.buy: "🟢 買い (Long)"
   components.play.fx.direction.sell: "🔴 売り (Short)"
-  components.play.fx.active_position_title: "### 💼 保有ポジション情報 ({current}/{total})"
+  components.play.fx.active_position_title: "### 💼 保有ポジション情報 ({{.current}}/{{.total}})"
   components.play.fx.active_position_desc: |-
-    - **通貨ペア**: {symbol}
-    - **ポジション**: {direction}
-    - **レバレッジ**: {leverage}x
-    - **証拠金 (Margin)**: `{margin} pt` (当初: `{init} pt` / 取引数量相当: `{size} pt`)
-    - **エントリー価格**: `{entry}`
-    - **現在価格**: `{current}`
-    - **強制ロスカット価格**: `{liq}`
-    - **評価損益 (PnL)**: **`{pnl} pt`**
-    - **証拠金維持率**: **`{ratio}`** (追証ライン: `50.0%` / ロスカット: `0.0%`)
+    - **通貨ペア**: {{.symbol}}
+    - **ポジション**: {{.direction}}
+    - **レバレッジ**: {{.leverage}}x
+    - **証拠金 (Margin)**: `{{.margin}} pt` (当初: `{{.init}} pt` / 取引数量相当: `{{.size}} pt`)
+    - **エントリー価格**: `{{.entry}}`
+    - **現在価格**: `{{.current}}`
+    - **強制ロスカット価格**: `{{.liq}}`
+    - **評価損益 (PnL)**: **`{{.pnl}} pt`**
+    - **証拠金維持率**: **`{{.ratio}}`** (追証ライン: `50.0%` / ロスカット: `0.0%`)
   components.play.fx.margin_call_warning: |-
     ⚠️ **[警告] 追証 (マージンコール) 発生中！**
     証拠金維持率が50.0%を下回っています。追証を入金して強制決済を回避してください。
@@ -213,44 +213,44 @@ strings:
     現在、維持率が50.0%を下回っているポジションがあるため、すべての取引操作（新規注文・決済）が制限されています。制限を解除するには、対象ポジションに追証を入金してください。
   components.play.fx.placeholder_switch_pos: "ポジションを選択して管理"
   components.play.fx.option_new_order: "🆕 新規注文画面へ"
-  components.play.fx.option_pos_item: "{symbol} {direction} {leverage}x (証拠金: {margin} pt | 損益: {pnl} pt)"
-  components.play.fx.btn_input_margin: "2. 証拠金を入力 (現在: {margin} pt)"
+  components.play.fx.option_pos_item: "{{.symbol}} {{.direction}} {{.leverage}}x (証拠金: {{.margin}} pt | 損益: {{.pnl}} pt)"
+  components.play.fx.btn_input_margin: "2. 証拠金を入力 (現在: {{.margin}} pt)"
   components.play.fx.close_success_title: "🏁 **FXポジション決済完了** 🏁"
   components.play.fx.close_success_desc: |-
     ポジションの決済が正常に完了しました。
-    - **通貨ペア**: `{symbol}` ({direction})
-    - **レバレッジ**: `{leverage}x` | **証拠金**: `{margin} pt`
-    - **エントリー価格**: `{entry}`
-    - **決済価格**: `{exit}`
-    - **獲得/損失 (PnL)**: **`{pnl} pt`**
-    - **返却証拠金**: `{refund} pt`
-    - **現在の GoPoints**: `{points} pt`
+    - **通貨ペア**: `{{.symbol}}` ({{.direction}})
+    - **レバレッジ**: `{{.leverage}}x` | **証拠金**: `{{.margin}} pt`
+    - **エントリー価格**: `{{.entry}}`
+    - **決済価格**: `{{.exit}}`
+    - **獲得/損失 (PnL)**: **`{{.pnl}} pt`**
+    - **返却証拠金**: `{{.refund}} pt`
+    - **現在の GoPoints**: `{{.points}} pt`
   components.play.fx.close_quit_title: "📈 **FX TRADING CLOSED** 📉"
   components.play.fx.close_quit_desc: "FX取引画面を閉じました。"
-  components.play.fx.close_quit_active_notice: "⚠️ **注意**: {symbol} の {direction} ポジション (証拠金: `{margin} pt`) は決済されず、**現在も保有中**です。再度 `/play fx` を実行することで、損益確認や決済を行うことができます。"
+  components.play.fx.close_quit_active_notice: "⚠️ **注意**: {{.symbol}} の {{.direction}} ポジション (証拠金: `{{.margin}} pt`) は決済されず、**現在も保有中**です。再度 `/play fx` を実行することで、損益確認や決済を行うことができます。"
   components.play.fx.liquidation_title: "🚨 **FX強制ロスカットのお知らせ** 🚨"
   components.play.fx.liquidation_desc: |-
-    保有していた {symbol} のポジションが、為替価格の変動により強制決済（ロスカット）されました。
+    保有していた {{.symbol}} のポジションが、為替価格の変動により強制決済（ロスカット）されました。
 
-    ・決済価格: `{exit}`
-    ・損益: `-{pnl} pt` (証拠金 `{margin} pt` 没収)
+    ・決済価格: `{{.exit}}`
+    ・損益: `-{{.pnl}} pt` (証拠金 `{{.margin}} pt` 没収)
   components.play.fx.liquidation_deficit_desc: |-
-    保有していた {symbol} のポジションが強制決済されましたが、急激な相場変動により証拠金を上回る損失（不足金 `-{deficit} pt`）が発生しました。不足金を補うため、他のポジションが強制決済されました。
+    保有していた {{.symbol}} のポジションが強制決済されましたが、急激な相場変動により証拠金を上回る損失（不足金 `-{{.deficit}} pt`）が発生しました。不足金を補うため、他のポジションが強制決済されました。
 
-    ・決済価格: `{exit}`
-    ・損益: `-{pnl} pt` (証拠金 `{margin} pt` 没収)
+    ・決済価格: `{{.exit}}`
+    ・損益: `-{{.pnl}} pt` (証拠金 `{{.margin}} pt` 没収)
   components.play.fx.err_invalid_input: "⚠️ **無効な入力**: 1以上の整数で入力してください。"
-  components.play.fx.err_insufficient_points: "⚠️ **ポイント不足**: 必要な `{margin} pt` が不足しています（現在の残高: `{points} pt`）。"
-  components.play.fx.err_min_ratio_margin: "⚠️ **証拠金比率不足**: 選択されたレバレッジ（{leverage}x）では、総所持ポイント（{points} pt）の {ratio}% 以上の証拠金（最低 {min} pt）が必要です。"
+  components.play.fx.err_insufficient_points: "⚠️ **ポイント不足**: 必要な `{{.margin}} pt` が不足しています（現在の残高: `{{.points}} pt`）。"
+  components.play.fx.err_min_ratio_margin: "⚠️ **証拠金比率不足**: 選択されたレバレッジ（{{.leverage}}x）では、総所持ポイント（{{.points}} pt）の {{.ratio}}% 以上の証拠金（最低 {{.min}} pt）が必要です。"
   components.play.fx.err_pos_not_found: "⚠️ **ポジションが見つかりません**: 対象のポジションが見つかりません。すでにロスカットされた可能性があります。"
   components.play.fx.err_session_expired: "⚠️ **セッションが期限切れです**: この取引画面のセッションは終了しました。もう一度 `/play fx` を実行してください。"
   components.play.fx.err_not_your_session: "⚠️ **他人のセッションです**: この取引画面は他のユーザーのものです。自分で `/play fx` を実行してください。"
   components.play.fx.err_restricted: "⚠️ **取引制限中**: 証拠金維持率が50%を下回っているポジションがあります。追加注文や決済を行う前に、追証を入金して警告状態を解消してください。"
-  components.play.fx.rates_entry: "・**{symbol}**: Bid `{bid}` | Ask `{ask}` (スプレッド: `{spread}`)"
+  components.play.fx.rates_entry: "・**{{.symbol}}**: Bid `{{.bid}}` | Ask `{{.ask}}` (スプレッド: `{{.spread}}`)"
   components.play.fx.err_max_positions: "⚠️ **ポジション上限数到達**: 保有できるポジションは最大10個までです。いずれかのポジションを決済してから再度注文してください。"
   components.play.fx.liquidation_detail_header: "\n\n**損失補填のために強制決済された他のポジション:**"
-  components.play.fx.liquidation_detail_item: "\n• `{symbol}` ({direction}) | 証拠金: `{margin} pt` | 決済価格: `{exit}` | 損益: `{pnl} pt` (回収額: `{val} pt`)"
-  components.play.fx.liquidation_detail_deficit: "\n\n⚠️ **未回収の不足金**: `-{deficit} pt`（ポイント残高が不足しているため回収できませんでした）"
+  components.play.fx.liquidation_detail_item: "\n• `{{.symbol}}` ({{.direction}}) | 証拠金: `{{.margin}} pt` | 決済価格: `{{.exit}}` | 損益: `{{.pnl}} pt` (回収額: `{{.val}} pt`)"
+  components.play.fx.liquidation_detail_deficit: "\n\n⚠️ **未回収の不足金**: `-{{.deficit}} pt`（ポイント残高が不足しているため回収できませんでした）"
 components:
   command.settings.view:
     - type: container
