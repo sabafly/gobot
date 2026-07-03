@@ -455,12 +455,12 @@ func Command(c *components.Components) components.Command {
 					return FXSymbolHandler(c, event)
 				},
 			},
-			"play:fx_margin": generic.PComponentHandler{
+			"play:fx_margin_btn": generic.PComponentHandler{
 				Permission: []generic.Permission{
 					generic.PermissionDefaultString("play.fx"),
 				},
 				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
-					return FXMarginHandler(c, event)
+					return FXMarginButtonHandler(c, event)
 				},
 			},
 			"play:fx_leverage": generic.PComponentHandler{
@@ -510,6 +510,11 @@ func Command(c *components.Components) components.Command {
 				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
 					return FXQuitHandler(c, event)
 				},
+			},
+		},
+		ModalHandlers: map[string]generic.ModalHandler{
+			"play:fx_margin_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+				return FXMarginModalHandler(c, event)
 			},
 		},
 	}).SetComponent(c)

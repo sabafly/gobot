@@ -267,20 +267,8 @@ func FXMessage(c *components.Components, session *FXSession, position *models.FX
 			},
 		)
 
-		var marginOptions []discord.StringSelectMenuOption
-		for _, m := range fxMargins {
-			marginOptions = append(marginOptions, discord.StringSelectMenuOption{
-				Label:   fmt.Sprintf("%d GoPoints", m),
-				Value:   strconv.FormatInt(m, 10),
-				Default: m == session.SelectedMargin,
-			})
-		}
 		row2 := discord.NewActionRow().AddComponents(
-			discord.StringSelectMenuComponent{
-				CustomID:    "play:fx_margin:" + session.ID.String(),
-				Placeholder: "2. 証拠金を選択",
-				Options:     marginOptions,
-			},
+			discord.NewPrimaryButton(fmt.Sprintf("2. 証拠金を入力 (現在: %d pt)", session.SelectedMargin), "play:fx_margin_btn:"+session.ID.String()),
 		)
 
 		var levOptions []discord.StringSelectMenuOption
@@ -462,7 +450,7 @@ func FXSymbolHandler(c *components.Components, event *events.ComponentInteractio
 	return nil
 }
 
-func FXMarginHandler(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+func FXMarginButtonHandler(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
 	session, err1 := FXPrecondition(event)
 	if err1 != nil {
 		return err1
@@ -471,14 +459,84 @@ func FXMarginHandler(c *components.Components, event *events.ComponentInteractio
 		return nil
 	}
 
-	if data := event.StringSelectMenuInteractionData(); len(data.Values) > 0 {
-		m, err := strconv.ParseInt(data.Values[0], 10, 64)
-		if err != nil {
-			return errors.NewError(err)
-		}
-		session.SelectedMargin = m
+	modal := discord.NewModalCreateBuilder().
+		SetTitle("FX証拠金設定").
+		SetCustomID("play:fx_margin_modal:" + session.ID.String()).
+		SetComponents(
+			discord.NewLabel("取引するGoポイント数 (証拠金)",
+				discord.TextInputComponent{
+					CustomID:    "margin",
+					Style:       discord.TextInputStyleShort,
+					MinLength:   ptr(1),
+					MaxLength:   10,
+					Required:    true,
+					Value:       strconv.FormatInt(session.SelectedMargin, 10),
+					Placeholder: "例: 100",
+				},
+			),
+		).
+		Build()
+
+	if err := event.Modal(modal); err != nil {
+		return errors.NewError(err)
+	}
+	return nil
+}
+
+func FXMarginModalHandler(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+	args := strings.Split(event.Data.CustomID, ":")
+	if len(args) < 3 {
+		return errors.NewError(fmt.Errorf("invalid custom ID"))
+	}
+	id, err := uuid.Parse(args[2])
+	if err != nil {
+		return errors.NewError(err)
+	}
+	session, ok := fx_sessions.Get(id)
+	if !ok {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay("⚠️ **セッションが期限切れです**"),
+					discord.NewTextDisplay("この取引画面のセッションは終了しました。もう一度 `/play fx` を実行してください。"),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+	if session.UserID != event.User().ID {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay("⚠️ **他人のセッションです**"),
+					discord.NewTextDisplay("この取引画面は他のユーザーのものです。自分で `/play fx` を実行してください。"),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
 	}
 
+	marginStr := event.ModalSubmitInteraction.Data.Text("margin")
+	margin, err := strconv.ParseInt(strings.TrimSpace(marginStr), 10, 64)
+	if err != nil || margin <= 0 {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay("⚠️ **無効な入力**"),
+					discord.NewTextDisplay("証拠金は1以上の整数で入力してください。"),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
+	session.SelectedMargin = margin
 	fx_sessions.Set(session.ID, session)
 
 	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
