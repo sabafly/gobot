@@ -114,19 +114,35 @@ func RolePermissionCheck(g *models.Guild, guildID snowflake.ID, client *bot.Clie
 		memberRoles = append(memberRoles, role)
 	}
 
-	ok := false
 	for _, p := range perms {
-		for _, r := range memberRoles {
-			l := g.Permissions[r.ID]
+		var r bool
+		hasExplicit := false
+		for i := len(memberRoles) - 1; i >= 0; i-- {
+			role := memberRoles[i]
+			l := g.Permissions[role.ID]
 			if l.Enabled(p.PermString()) {
-				ok = true
+				r = true
+				hasExplicit = true
+				break
 			} else if l.Disabled(p.PermString()) {
-				ok = false
+				r = false
+				hasExplicit = true
+				break
 			}
+		}
+
+		if !hasExplicit {
+			if p.Default() {
+				r = true
+			}
+		}
+
+		if r {
+			return true
 		}
 	}
 
-	return ok
+	return false
 }
 
 func permissionCheck(event interface {

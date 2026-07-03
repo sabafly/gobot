@@ -27,6 +27,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/database/models"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func (c *Components) MemberCreate(ctx context.Context, u discord.User, gid snowflake.ID) (*models.Member, error) {
@@ -48,8 +49,14 @@ func (c *Components) MemberCreate(ctx context.Context, u discord.User, gid snowf
 		GuildID: gid,
 		UserID:  u.ID,
 	}
-	if err := c.GormDB().Create(&member).Error; err != nil {
-		return nil, err
+	result := c.GormDB().Clauses(clause.OnConflict{DoNothing: true}).Create(&member)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		if err := c.GormDB().Where("guild_id = ? AND user_id = ?", gid, u.ID).First(&member).Error; err != nil {
+			return nil, err
+		}
 	}
 
 	return &member, nil

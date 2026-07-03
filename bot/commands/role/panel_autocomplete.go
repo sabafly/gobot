@@ -23,6 +23,7 @@ package role
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
@@ -39,7 +40,7 @@ func panelAutocomplete(c *components.Components, event *events.AutocompleteInter
 	}
 
 	var panels []models.RolePanel
-	if err := c.GormDB().Where("guild_id = ? AND name LIKE ?", g.ID, "%"+event.Data.String("panel")+"%").Find(&panels).Error; err != nil {
+	if err := c.GormDB().Where("guild_id = ? AND name LIKE ?", g.ID, "%"+escapeLike(event.Data.String("panel"))+"%").Find(&panels).Error; err != nil {
 		return errors.NewError(err)
 	}
 
@@ -54,4 +55,11 @@ func panelAutocomplete(c *components.Components, event *events.AutocompleteInter
 		return errors.NewError(err)
 	}
 	return nil
+}
+
+func escapeLike(s string) string {
+	s = strings.ReplaceAll(s, "\\", "\\\\")
+	s = strings.ReplaceAll(s, "%", "\\%")
+	s = strings.ReplaceAll(s, "_", "\\_")
+	return s
 }

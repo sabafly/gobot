@@ -933,10 +933,16 @@ func UpdateRolePanel(ctx context.Context, place *models.RolePanelPlaced, locale 
 
 func updateRolePanel(ctx context.Context, panel *models.RolePanel, locale discord.Locale, client *bot.Client, react bool, c *components.Components) {
 	var places []models.RolePanelPlaced
-	c.GormDB().Where("role_panel_id = ?", panel.ID).Find(&places)
+	if err := c.GormDB().Where("role_panel_id = ?", panel.ID).Find(&places).Error; err != nil {
+		slog.Error("プレースの取得に失敗", "panel_id", panel.ID, "err", err)
+		return
+	}
 	for _, place := range places {
 		place.Name, place.Description, place.Roles, place.UpdatedAt = panel.Name, panel.Description, panel.Roles, time.Now()
-		c.GormDB().Save(&place)
+		if err := c.GormDB().Save(&place).Error; err != nil {
+			slog.Error("プレースの更新に失敗", "place_id", place.ID, "err", err)
+			continue
+		}
 		if err := rolePanelPlace(ctx, &place, locale, client, react, c); err != nil {
 			slog.Error("アップデートに失敗", "err", err)
 		}

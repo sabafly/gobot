@@ -427,6 +427,9 @@ func Command(c *components.Components) *generic.Command {
 
 					var w models.WordSuffix
 					err = c.GormDB().Where("guild_id = ? AND owner_id = ?", g.ID, u.ID).First(&w).Error
+					if err != nil && err != gorm.ErrRecordNotFound {
+						return errors.NewError(err)
+					}
 					if err == nil {
 						messageStr = translate.Message(event.Locale(), "components.message.suffix.check.message",
 							translate.WithTemplate(
@@ -584,7 +587,7 @@ func Command(c *components.Components) *generic.Command {
 				},
 				DiscordPerm: discord.PermissionManageMessages,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					res := c.GormDB().Where("guild_id = ? AND name LIKE ?", *event.GuildID(), "%"+event.SlashCommandInteractionData().String("remind")+"%").Delete(&models.MessageRemind{})
+					res := c.GormDB().Where("guild_id = ? AND name LIKE ?", *event.GuildID(), "%"+escapeLike(event.SlashCommandInteractionData().String("remind"))+"%").Delete(&models.MessageRemind{})
 					if res.Error != nil {
 						return errors.NewError(res.Error)
 					}
@@ -614,7 +617,7 @@ func Command(c *components.Components) *generic.Command {
 				DiscordPerm: discord.PermissionManageMessages,
 				AutocompleteHandler: func(c *components.Components, event *events.AutocompleteInteractionCreate) errors.Error {
 					var reminds []models.MessageRemind
-					if err := c.GormDB().Where("guild_id = ? AND name LIKE ?", *event.GuildID(), "%"+event.Data.String("remind")+"%").Limit(25).Find(&reminds).Error; err != nil {
+					if err := c.GormDB().Where("guild_id = ? AND name LIKE ?", *event.GuildID(), "%"+escapeLike(event.Data.String("remind"))+"%").Limit(25).Find(&reminds).Error; err != nil {
 						return errors.NewError(err)
 					}
 
@@ -1072,4 +1075,11 @@ func messageSuffixMessageCreateHandler(w *models.WordSuffix, u *models.User, e *
 		}
 	}
 	return nil
+}
+
+func escapeLike(s string) string {
+	s = strings.ReplaceAll(s, "\\", "\\\\")
+	s = strings.ReplaceAll(s, "%", "\\%")
+	s = strings.ReplaceAll(s, "_", "\\_")
+	return s
 }
