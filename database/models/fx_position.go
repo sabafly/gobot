@@ -26,8 +26,9 @@ type FXPosition struct {
 	EntryPrice    float64             `gorm:"column:entry_price;type:double;not null"`
 	Margin        int64               `gorm:"column:margin;type:bigint(20) unsigned;not null"`
 	InitialMargin int64               `gorm:"column:initial_margin;type:bigint(20) unsigned;not null;default:0"`
-	Leverage      int                 `gorm:"column:leverage;type:int;not null"`
-	CreatedAt     time.Time           `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP"`
+	Leverage           int                 `gorm:"column:leverage;type:int;not null"`
+	MarginCallNotified bool                `gorm:"column:margin_call_notified;not null;default:false"`
+	CreatedAt          time.Time           `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP"`
 }
 
 func (pos *FXPosition) BeforeCreate(tx *gorm.DB) error {

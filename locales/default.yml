@@ -256,6 +256,8 @@ strings:
   components.play.fx.modal_input_margin_label: "注文に使用する証拠金（GoPoints）"
   components.play.fx.modal_add_margin_title: "証拠金の追加 (追証入金)"
   components.play.fx.modal_add_margin_label: "追加する証拠金量（GoPoints）"
+  components.play.fx.dm_margin_call_title: "🚨 **FX追証（マージンコール）発生のお知らせ** 🚨"
+  components.play.fx.dm_margin_call_desc: "保有している {{.symbol}} のポジションの証拠金維持率が {{.ratio}} に低下し、追証ライン（{{.mc_line}}）を下回りました。\n強制ロスカットを避けるため、早急に証拠金を追加してください。"
 components:
   command.settings.view:
     - type: container

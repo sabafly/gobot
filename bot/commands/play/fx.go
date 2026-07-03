@@ -52,7 +52,7 @@ var (
 		{Leverage: 25, MinRatio: 0.05, MarginCallRatio: 50.0, LiquidationRatio: 20.0},
 		{Leverage: 50, MinRatio: 0.1, MarginCallRatio: 50.0, LiquidationRatio: 20.0},
 		{Leverage: 150, MinRatio: 0.15, MarginCallRatio: 50.0, LiquidationRatio: 30.0},
-		{Leverage: 1000, MinRatio: 0.96, MarginCallRatio: 80.0, LiquidationRatio: 50.0},
+		{Leverage: 1000, MinRatio: 0.85, MarginCallRatio: 80.0, LiquidationRatio: 50.0},
 	}
 )
 
@@ -155,15 +155,6 @@ func fetchTickerData() (*TickerResponse, error) {
 	tickerCacheMu.Unlock()
 
 	return combinedResp, nil
-}
-
-func getFXPosition(c *components.Components, userID snowflake.ID, guildID snowflake.ID) (*models.FXPosition, error) {
-	var pos models.FXPosition
-	err := c.GormDB().Where("user_id = ? AND guild_id = ?", userID, guildID).First(&pos).Error
-	if err != nil {
-		return nil, err
-	}
-	return &pos, nil
 }
 
 func getPnL(pos *models.FXPosition, currentPrice float64) float64 {
@@ -277,11 +268,9 @@ func hasMarginCall(c *components.Components, userID snowflake.ID, guildID snowfl
 
 func liquidatePosition(c *components.Components, client *bot.Client, pos *models.FXPosition, ticker *TickerResponse, currentPrice float64, pnl float64) error {
 	pnlInt := int64(pnl)
-	refund := pos.Margin + pnlInt
 	var deficit int64
-	if refund < 0 {
-		deficit = -refund
-		refund = 0
+	if pos.Margin+pnlInt < 0 {
+		deficit = -(pos.Margin + pnlInt)
 	}
 
 	type closedInfo struct {
@@ -1046,6 +1035,7 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 	}
 
 	pos.Margin += amount
+	pos.MarginCallNotified = false
 	if err := c.GormDB().Save(pos).Error; err != nil {
 		if refundErr := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), amount); refundErr != nil {
 			slog.Error("CRITICAL: failed to refund points to user after margin addition failed", "user_id", event.User().ID, "guild_id", *event.GuildID(), "session_id", session.ID, "refund", amount, "error", refundErr)
@@ -1819,6 +1809,36 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 			slog.Info("position background liquidated", "user_id", pos.UserID, "symbol", pos.Symbol)
 			if err := liquidatePosition(c, client, &posCopy, ticker, currentPrice, pnl); err != nil {
 				slog.Error("failed to liquidate position background", "user_id", pos.UserID, "error", err)
+			}
+		} else {
+			opt := getLeverageOption(posCopy.Leverage)
+			initMargin := posCopy.GetInitialMargin()
+			ratio := (float64(posCopy.Margin) + pnl) / float64(initMargin) * 100.0
+			if ratio < opt.MarginCallRatio && !posCopy.MarginCallNotified {
+				if client != nil && client.Rest != nil {
+					ch, err := client.Rest.CreateDMChannel(posCopy.UserID)
+					if err == nil {
+						locale := discord.LocaleJapanese
+						descText := i18n.TranslateText(locale, "components.play.fx.dm_margin_call_desc", map[string]any{
+							"symbol":  strings.Replace(posCopy.Symbol, "_", "/", 1),
+							"ratio":   fmt.Sprintf("%.1f%%", ratio),
+							"mc_line": fmt.Sprintf("%.1f%%", opt.MarginCallRatio),
+						})
+						builder := discord.NewMessageBuilder().
+							SetIsComponentsV2(true).
+							SetComponents(
+								discord.NewContainer(
+									discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.dm_margin_call_title")),
+									discord.NewTextDisplay(descText),
+								).WithAccentColor(0xF1C40F),
+							)
+						_, _ = client.Rest.CreateMessage(ch.ID(), builder.BuildCreate())
+					}
+				}
+				posCopy.MarginCallNotified = true
+				if err := c.GormDB().Save(&posCopy).Error; err != nil {
+					slog.Error("failed to save margin call notified state", "pos_id", posCopy.ID, "error", err)
+				}
 			}
 		}
 	}
