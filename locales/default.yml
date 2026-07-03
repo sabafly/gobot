@@ -251,6 +251,11 @@ strings:
   components.play.fx.liquidation_detail_header: "\n\n**損失補填のために強制決済された他のポジション:**"
   components.play.fx.liquidation_detail_item: "\n• `{{.symbol}}` ({{.direction}}) | 証拠金: `{{.margin}} pt` | 決済価格: `{{.exit}}` | 損益: `{{.pnl}} pt` (回収額: `{{.val}} pt`)"
   components.play.fx.liquidation_detail_deficit: "\n\n⚠️ **未回収の不足金**: `-{{.deficit}} pt`（ポイント残高が不足しているため回収できませんでした）"
+  components.play.fx.form_selected: "・**通貨ペア**: {{.symbol}}\n・**レバレッジ**: {{.leverage}}x\n・**注文証拠金**: {{.margin}} pt"
+  components.play.fx.modal_input_margin_title: "証拠金設定"
+  components.play.fx.modal_input_margin_label: "注文に使用する証拠金（GoPoints）"
+  components.play.fx.modal_add_margin_title: "証拠金の追加 (追証入金)"
+  components.play.fx.modal_add_margin_label: "追加する証拠金量（GoPoints）"
 components:
   command.settings.view:
     - type: container

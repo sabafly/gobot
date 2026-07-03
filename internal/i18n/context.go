@@ -156,9 +156,6 @@ func (m MapContext) ReplaceText(text string) string {
 		return text
 	}
 	for key, value := range m.texts {
-		if value == "" {
-			continue
-		}
 		text = strings.ReplaceAll(text, "{"+key+"}", value)
 	}
 	return text
