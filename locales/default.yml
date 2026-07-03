@@ -203,6 +203,7 @@ strings:
     - **エントリー価格**: `{{.entry}}`
     - **現在価格**: `{{.current}}`
     - **強制ロスカット価格**: `{{.liq}}`
+    - **利確設定 (TP)**: `{{.tp}}` / **損切設定 (SL)**: `{{.sl}}`
     - **評価損益 (PnL)**: **`{{.pnl}} pt`**
     - **証拠金維持率**: **`{{.ratio}}`** (追証ライン: `{{.mc_line}}` / ロスカット: `{{.liq_line}}`)
   components.play.fx.margin_call_warning: |-
@@ -278,6 +279,18 @@ strings:
   components.play.fx.err_invalid_order_inputs: "⚠️ **注文入力が無効です**:\n- 価格は正の数で指定してください。\n- 方向は BUY または SELL を選択してください。\n- 注文種別は LIMIT または STOP を選択してください。"
   components.play.fx.dm_order_filled_title: "🔔 **FX注文約定のお知らせ** 🔔"
   components.play.fx.dm_order_filled_desc: "注文していた {{.symbol}} の{{.type}}（{{.order_type}}） {{.direction}} が約定価格 {{.price}} で約定しました。"
+  components.play.fx.modal_tpsl_title: "利確・損切価格設定"
+  components.play.fx.modal_tpsl_tp_label: "利確（指値）価格 (空欄で設定解除)"
+  components.play.fx.modal_tpsl_tp_placeholder: "例: 152.50"
+  components.play.fx.modal_tpsl_sl_label: "損切（逆指値）価格 (空欄で設定解除)"
+  components.play.fx.modal_tpsl_sl_placeholder: "例: 147.50"
+  components.play.fx.err_invalid_tpsl_inputs: "⚠️ **入力値が無効です**: 利確価格・損切価格は正の数値で入力してください。"
+  components.play.fx.err_tp_must_be_greater: "⚠️ **設定エラー**: 買いポジションの利確価格はエントリー価格より高く設定する必要があります。"
+  components.play.fx.err_sl_must_be_less: "⚠️ **設定エラー**: 買いポジションの損切価格はエントリー価格より低く設定する必要があります。"
+  components.play.fx.err_tp_must_be_less: "⚠️ **設定エラー**: 売りポジションの利確価格はエントリー価格より低く設定する必要があります。"
+  components.play.fx.err_sl_must_be_greater: "⚠️ **設定エラー**: 売りポジションの損切価格はエントリー価格より高く設定する必要があります。"
+  components.play.fx.dm_order_closed_title: "🔔 **FXポジション自動決済のお知らせ** 🔔"
+  components.play.fx.dm_order_closed_desc: "保有していた {{.symbol}} の{{.direction}}ポジション（証拠金: {{.margin}} pt）が、自動決済条件（{{.type}}: {{.trigger_price}}）に達したため、成行決済されました。\n\n・決済価格: `{{.exit}}`\n・評価損益: **`{{.pnl}} pt`**\n・獲得/回収ポイント: **`{{.received}} pt`**"
 components:
   command.settings.view:
     - type: container
@@ -534,6 +547,10 @@ components:
               style: primary
               label: "追証を入金"
               id: "play:fx_add_margin_btn:{uuid}"
+            - type: button
+              style: primary
+              label: "利確・損切設定"
+              id: "play:fx_set_tpsl_btn:{uuid}"
             - type: button
               style: primary
               label: "レート更新 / 損益確認"

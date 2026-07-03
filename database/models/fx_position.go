@@ -28,6 +28,8 @@ type FXPosition struct {
 	InitialMargin int64               `gorm:"column:initial_margin;type:bigint(20) unsigned;not null;default:0"`
 	Leverage           int                 `gorm:"column:leverage;type:int;not null"`
 	MarginCallNotified bool                `gorm:"column:margin_call_notified;not null;default:false"`
+	TakeProfitPrice    *float64            `gorm:"column:take_profit_price;type:double;default:null"`
+	StopLossPrice      *float64            `gorm:"column:stop_loss_price;type:double;default:null"`
 	CreatedAt          time.Time           `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP"`
 }
 

@@ -545,6 +545,14 @@ func Command(c *components.Components) components.Command {
 					return FXCancelOrderHandler(c, event)
 				},
 			},
+			"play:fx_set_tpsl_btn": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.fx"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return FXSetTPSLButtonHandler(c, event)
+				},
+			},
 		},
 		ModalHandlers: map[string]generic.ModalHandler{
 			"play:fx_margin_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
@@ -555,6 +563,9 @@ func Command(c *components.Components) components.Command {
 			},
 			"play:fx_order_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
 				return FXOrderModalHandler(c, event)
+			},
+			"play:fx_tpsl_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+				return FXTPSLModalHandler(c, event)
 			},
 		},
 		Schedulers: []components.Scheduler{

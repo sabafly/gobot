@@ -610,14 +610,14 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 			currentPrice = pBid
 		}
 		orderDesc := i18n.TranslateText(locale, "components.play.fx.active_order_desc", map[string]any{
-			"symbol":    strings.Replace(activeOrder.Symbol, "_", "/", 1),
-			"type":      ordTypeStr,
+			"symbol":     strings.Replace(activeOrder.Symbol, "_", "/", 1),
+			"type":       ordTypeStr,
 			"order_type": activeOrder.OrderType,
-			"direction": dirEmoji,
-			"target":    fmt.Sprintf("%.3f", activeOrder.TargetPrice),
-			"current":   fmt.Sprintf("%.3f", currentPrice),
-			"leverage":  activeOrder.Leverage,
-			"margin":    strconv.FormatInt(activeOrder.Margin, 10),
+			"direction":  dirEmoji,
+			"target":     fmt.Sprintf("%.3f", activeOrder.TargetPrice),
+			"current":    fmt.Sprintf("%.3f", currentPrice),
+			"leverage":   activeOrder.Leverage,
+			"margin":     strconv.FormatInt(activeOrder.Margin, 10),
 		})
 		var ordInfoBuilder strings.Builder
 		ordInfoBuilder.WriteString(i18n.TranslateText(locale, "components.play.fx.active_order_title"))
@@ -653,6 +653,15 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 		liqPrice := getLiquidationPrice(activePos)
 		activeOpt := getLeverageOption(activePos.Leverage)
 
+		tpText := "N/A"
+		if activePos.TakeProfitPrice != nil {
+			tpText = fmt.Sprintf("%.3f", *activePos.TakeProfitPrice)
+		}
+		slText := "N/A"
+		if activePos.StopLossPrice != nil {
+			slText = fmt.Sprintf("%.3f", *activePos.StopLossPrice)
+		}
+
 		posDesc := i18n.TranslateText(locale, "components.play.fx.active_position_desc", map[string]any{
 			"symbol":    strings.Replace(activePos.Symbol, "_", "/", 1),
 			"direction": dirEmoji,
@@ -667,6 +676,8 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 			"ratio":     ratioText,
 			"mc_line":   fmt.Sprintf("%.1f%%", activeOpt.MarginCallRatio),
 			"liq_line":  fmt.Sprintf("%.1f%%", activeOpt.LiquidationRatio),
+			"tp":        tpText,
+			"sl":        slText,
 		})
 
 		var posInfoBuilder strings.Builder
@@ -1527,7 +1538,7 @@ func FXPendingOrderButtonHandler(c *components.Components, event *events.Compone
 
 	modal := discord.NewModalCreateBuilder().
 		SetTitle(i18n.TranslateText(event.Locale(), "components.play.fx.modal_pending_order_title")).
-		SetCustomID("play:fx_order_modal:" + session.ID.String()).
+		SetCustomID("play:fx_order_modal:"+session.ID.String()).
 		SetComponents(
 			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.play.fx.modal_pending_order_price_label"),
 				discord.TextInputComponent{
@@ -1772,6 +1783,266 @@ func FXCancelOrderHandler(c *components.Components, event *events.ComponentInter
 		return errors.NewError(err)
 	}
 	positions, _ := getFXPositions(c, event.User().ID, *event.GuildID())
+	ticker, err := fetchTickerData()
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	if err := event.UpdateMessage(discord.NewMessageBuilder().
+		SetIsComponentsV2(true).
+		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
+		BuildUpdate(),
+	); err != nil {
+		return errors.NewError(err)
+	}
+	return nil
+}
+
+func FXSetTPSLButtonHandler(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+	session, err1 := FXPrecondition(event)
+	if err1 != nil {
+		return err1
+	}
+	if session == nil {
+		return nil
+	}
+
+	mcRestricted, err := hasMarginCall(c, event.User().ID, *event.GuildID())
+	if err != nil {
+		return errors.NewError(err)
+	}
+	if mcRestricted {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_restricted")),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
+	if session.ActivePositionID == nil {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_pos_not_found")),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
+	pos, err := getFXPositionByID(c, *session.ActivePositionID)
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	tpVal := ""
+	if pos.TakeProfitPrice != nil {
+		tpVal = fmt.Sprintf("%.3f", *pos.TakeProfitPrice)
+	}
+	slVal := ""
+	if pos.StopLossPrice != nil {
+		slVal = fmt.Sprintf("%.3f", *pos.StopLossPrice)
+	}
+
+	modal := discord.NewModalCreateBuilder().
+		SetTitle(i18n.TranslateText(event.Locale(), "components.play.fx.modal_tpsl_title")).
+		SetCustomID("play:fx_tpsl_modal:"+session.ID.String()).
+		SetComponents(
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.play.fx.modal_tpsl_tp_label"),
+				discord.TextInputComponent{
+					CustomID:    "take_profit",
+					Style:       discord.TextInputStyleShort,
+					MaxLength:   10,
+					Required:    false,
+					Placeholder: i18n.TranslateText(event.Locale(), "components.play.fx.modal_tpsl_tp_placeholder"),
+					Value:       tpVal,
+				},
+			),
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.play.fx.modal_tpsl_sl_label"),
+				discord.TextInputComponent{
+					CustomID:    "stop_loss",
+					Style:       discord.TextInputStyleShort,
+					MaxLength:   10,
+					Required:    false,
+					Placeholder: i18n.TranslateText(event.Locale(), "components.play.fx.modal_tpsl_sl_placeholder"),
+					Value:       slVal,
+				},
+			),
+		).
+		Build()
+
+	if err := event.Modal(modal); err != nil {
+		return errors.NewError(err)
+	}
+	return nil
+}
+
+func FXTPSLModalHandler(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+	args := strings.Split(event.Data.CustomID, ":")
+	if len(args) < 3 {
+		return errors.NewError(fmt.Errorf("invalid custom ID"))
+	}
+	id, err := uuid.Parse(args[2])
+	if err != nil {
+		return errors.NewError(err)
+	}
+	session, ok := fx_sessions.Get(id)
+	if !ok {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_session_expired")),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+	if session.UserID != event.User().ID {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_not_your_session")),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
+	if session.ActivePositionID == nil {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_pos_not_found")),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
+	pos, err := getFXPositionByID(c, *session.ActivePositionID)
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	tpStr := strings.TrimSpace(event.Data.Text("take_profit"))
+	slStr := strings.TrimSpace(event.Data.Text("stop_loss"))
+
+	var tp *float64
+	if tpStr != "" {
+		val, err := strconv.ParseFloat(tpStr, 64)
+		if err != nil || val <= 0 {
+			builder := discord.NewMessageBuilder().
+				SetIsComponentsV2(true).
+				SetComponents(
+					discord.NewContainer(
+						discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_invalid_tpsl_inputs")),
+					).WithAccentColor(0xE74C3C),
+				).
+				AddFlags(discord.MessageFlagEphemeral)
+			_ = event.RespondMessage(builder)
+			return nil
+		}
+		tp = &val
+	}
+
+	var sl *float64
+	if slStr != "" {
+		val, err := strconv.ParseFloat(slStr, 64)
+		if err != nil || val <= 0 {
+			builder := discord.NewMessageBuilder().
+				SetIsComponentsV2(true).
+				SetComponents(
+					discord.NewContainer(
+						discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_invalid_tpsl_inputs")),
+					).WithAccentColor(0xE74C3C),
+				).
+				AddFlags(discord.MessageFlagEphemeral)
+			_ = event.RespondMessage(builder)
+			return nil
+		}
+		sl = &val
+	}
+
+	if pos.Direction == models.FXPositionDirectionBuy {
+		if tp != nil && *tp <= pos.EntryPrice {
+			builder := discord.NewMessageBuilder().
+				SetIsComponentsV2(true).
+				SetComponents(
+					discord.NewContainer(
+						discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_tp_must_be_greater")),
+					).WithAccentColor(0xE74C3C),
+				).
+				AddFlags(discord.MessageFlagEphemeral)
+			_ = event.RespondMessage(builder)
+			return nil
+		}
+		if sl != nil && *sl >= pos.EntryPrice {
+			builder := discord.NewMessageBuilder().
+				SetIsComponentsV2(true).
+				SetComponents(
+					discord.NewContainer(
+						discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_sl_must_be_less")),
+					).WithAccentColor(0xE74C3C),
+				).
+				AddFlags(discord.MessageFlagEphemeral)
+			_ = event.RespondMessage(builder)
+			return nil
+		}
+	} else {
+		if tp != nil && *tp >= pos.EntryPrice {
+			builder := discord.NewMessageBuilder().
+				SetIsComponentsV2(true).
+				SetComponents(
+					discord.NewContainer(
+						discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_tp_must_be_less")),
+					).WithAccentColor(0xE74C3C),
+				).
+				AddFlags(discord.MessageFlagEphemeral)
+			_ = event.RespondMessage(builder)
+			return nil
+		}
+		if sl != nil && *sl <= pos.EntryPrice {
+			builder := discord.NewMessageBuilder().
+				SetIsComponentsV2(true).
+				SetComponents(
+					discord.NewContainer(
+						discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_sl_must_be_greater")),
+					).WithAccentColor(0xE74C3C),
+				).
+				AddFlags(discord.MessageFlagEphemeral)
+			_ = event.RespondMessage(builder)
+			return nil
+		}
+	}
+
+	pos.TakeProfitPrice = tp
+	pos.StopLossPrice = sl
+
+	if err := c.GormDB().Save(pos).Error; err != nil {
+		return errors.NewError(err)
+	}
+
+	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	if err != nil {
+		return errors.NewError(err)
+	}
+	positions, err := getFXPositions(c, event.User().ID, *event.GuildID())
+	if err != nil {
+		return errors.NewError(err)
+	}
 	ticker, err := fetchTickerData()
 	if err != nil {
 		return errors.NewError(err)
@@ -2200,33 +2471,129 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 				slog.Error("failed to liquidate position background", "user_id", pos.UserID, "error", err)
 			}
 		} else {
-			opt := getLeverageOption(posCopy.Leverage)
-			initMargin := posCopy.GetInitialMargin()
-			ratio := (float64(posCopy.Margin) + pnl) / float64(initMargin) * 100.0
-			if ratio < opt.MarginCallRatio && !posCopy.MarginCallNotified {
-				if client != nil && client.Rest != nil {
-					ch, err := client.Rest.CreateDMChannel(posCopy.UserID)
-					if err == nil {
-						locale := discord.LocaleJapanese
-						descText := i18n.TranslateText(locale, "components.play.fx.dm_margin_call_desc", map[string]any{
-							"symbol":  strings.Replace(posCopy.Symbol, "_", "/", 1),
-							"ratio":   fmt.Sprintf("%.1f%%", ratio),
-							"mc_line": fmt.Sprintf("%.1f%%", opt.MarginCallRatio),
-						})
-						builder := discord.NewMessageBuilder().
-							SetIsComponentsV2(true).
-							SetComponents(
-								discord.NewContainer(
-									discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.dm_margin_call_title")),
-									discord.NewTextDisplay(descText),
-								).WithAccentColor(0xF1C40F),
-							)
-						_, _ = client.Rest.CreateMessage(ch.ID(), builder.BuildCreate())
-					}
+			tpTriggered := false
+			slTriggered := false
+			var triggerPrice float64
+
+			symbolData, _ := ticker.GetSymbolData(posCopy.Symbol)
+			ask, _ := strconv.ParseFloat(symbolData.Ask, 64)
+			bid, _ := strconv.ParseFloat(symbolData.Bid, 64)
+
+			if posCopy.Direction == models.FXPositionDirectionBuy {
+				if posCopy.TakeProfitPrice != nil && bid >= *posCopy.TakeProfitPrice {
+					tpTriggered = true
+					triggerPrice = *posCopy.TakeProfitPrice
+				} else if posCopy.StopLossPrice != nil && bid <= *posCopy.StopLossPrice {
+					slTriggered = true
+					triggerPrice = *posCopy.StopLossPrice
 				}
-				posCopy.MarginCallNotified = true
-				if err := c.GormDB().Save(&posCopy).Error; err != nil {
-					slog.Error("failed to save margin call notified state", "pos_id", posCopy.ID, "error", err)
+			} else {
+				if posCopy.TakeProfitPrice != nil && ask <= *posCopy.TakeProfitPrice {
+					tpTriggered = true
+					triggerPrice = *posCopy.TakeProfitPrice
+				} else if posCopy.StopLossPrice != nil && ask >= *posCopy.StopLossPrice {
+					slTriggered = true
+					triggerPrice = *posCopy.StopLossPrice
+				}
+			}
+
+			if tpTriggered || slTriggered {
+				typeStr := "利確（Take Profit）"
+				triggerType := "TP"
+				if slTriggered {
+					typeStr = "損切（Stop Loss）"
+					triggerType = "SL"
+				}
+
+				pnlTrigger := getPnL(&posCopy, triggerPrice)
+				val := posCopy.Margin + int64(pnlTrigger)
+
+				err := c.GormDB().Transaction(func(tx *gorm.DB) error {
+					var dbPos models.FXPosition
+					if err := tx.Where("id = ?", posCopy.ID).First(&dbPos).Error; err != nil {
+						return err
+					}
+					if err := tx.Delete(&dbPos).Error; err != nil {
+						return err
+					}
+					if val > 0 {
+						if err := gopoint.AddPointTx(tx, posCopy.UserID, posCopy.GuildID, val); err != nil {
+							return err
+						}
+					}
+					return nil
+				})
+
+				if err == nil {
+					slog.Info("position closed by pending order background", "pos_id", posCopy.ID, "user_id", posCopy.UserID, "type", triggerType)
+					if client != nil && client.Rest != nil {
+						ch, err := client.Rest.CreateDMChannel(posCopy.UserID)
+						if err == nil {
+							locale := discord.LocaleJapanese
+							dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
+							if posCopy.Direction == models.FXPositionDirectionSell {
+								dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
+							}
+
+							pnlSign := ""
+							if pnlTrigger > 0 {
+								pnlSign = "+"
+							}
+
+							descText := i18n.TranslateText(locale, "components.play.fx.dm_order_closed_desc", map[string]any{
+								"symbol":        strings.Replace(posCopy.Symbol, "_", "/", 1),
+								"direction":     dirEmoji,
+								"margin":        posCopy.Margin,
+								"type":          typeStr,
+								"trigger_price": fmt.Sprintf("%.3f", triggerPrice),
+								"exit":          fmt.Sprintf("%.3f", triggerPrice),
+								"pnl":           fmt.Sprintf("%s%d", pnlSign, int64(pnlTrigger)),
+								"received":      val,
+							})
+
+							builder := discord.NewMessageBuilder().
+								SetIsComponentsV2(true).
+								SetComponents(
+									discord.NewContainer(
+										discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.dm_order_closed_title")),
+										discord.NewTextDisplay(descText),
+									).WithAccentColor(0x3498DB),
+								)
+							_, _ = client.Rest.CreateMessage(ch.ID(), builder.BuildCreate())
+						}
+					}
+				} else {
+					slog.Error("failed to close position by pending order background", "pos_id", posCopy.ID, "error", err)
+				}
+			} else {
+				opt := getLeverageOption(posCopy.Leverage)
+				initMargin := posCopy.GetInitialMargin()
+				ratio := (float64(posCopy.Margin) + pnl) / float64(initMargin) * 100.0
+				if ratio < opt.MarginCallRatio && !posCopy.MarginCallNotified {
+					if client != nil && client.Rest != nil {
+						ch, err := client.Rest.CreateDMChannel(posCopy.UserID)
+						if err == nil {
+							locale := discord.LocaleJapanese
+							descText := i18n.TranslateText(locale, "components.play.fx.dm_margin_call_desc", map[string]any{
+								"symbol":  strings.Replace(posCopy.Symbol, "_", "/", 1),
+								"ratio":   fmt.Sprintf("%.1f%%", ratio),
+								"mc_line": fmt.Sprintf("%.1f%%", opt.MarginCallRatio),
+							})
+							builder := discord.NewMessageBuilder().
+								SetIsComponentsV2(true).
+								SetComponents(
+									discord.NewContainer(
+										discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.dm_margin_call_title")),
+										discord.NewTextDisplay(descText),
+									).WithAccentColor(0xF1C40F),
+								)
+							_, _ = client.Rest.CreateMessage(ch.ID(), builder.BuildCreate())
+						}
+					}
+					posCopy.MarginCallNotified = true
+					if err := c.GormDB().Save(&posCopy).Error; err != nil {
+						slog.Error("failed to save margin call notified state", "pos_id", posCopy.ID, "error", err)
+					}
 				}
 			}
 		}

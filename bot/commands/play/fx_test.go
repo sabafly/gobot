@@ -487,3 +487,102 @@ func TestFX_PendingOrders(t *testing.T) {
 		t.Errorf("expected entry price to be 145.0, got %f", pos.EntryPrice)
 	}
 }
+
+func TestFX_ActivePositionTPSL(t *testing.T) {
+	gdb, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to open sqlite DB: %v", err)
+	}
+
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}} {
+		if err := createSQLiteTable(gdb, model); err != nil {
+			t.Fatalf("failed to create table for %T: %v", model, err)
+		}
+	}
+
+	dbWrapper := &database.DB{DB: gdb}
+	ctx := context.Background()
+	c := components.New(ctx, components.Config{}, dbWrapper)
+
+	userID := snowflake.ID(77777)
+	guildID := snowflake.ID(66666)
+
+	// Seed User, Guild, and GoPoint
+	_ = gdb.Create(&models.User{ID: userID})
+	_ = gdb.Create(&models.Guild{ID: guildID})
+	_ = gdb.Create(&models.GoPoint{UserID: userID, GuildID: guildID, Points: 1000})
+
+	// 1. Create a position with BUY entry at 150.0, Margin 100, Leverage 25.
+	// We set TakeProfitPrice to 155.0.
+	tpPrice := 155.0
+	pos := &models.FXPosition{
+		ID:              uuid.New(),
+		UserID:          userID,
+		GuildID:         guildID,
+		Symbol:          "USD_JPY",
+		Direction:       models.FXPositionDirectionBuy,
+		EntryPrice:      150.0,
+		Margin:          100,
+		InitialMargin:   100,
+		Leverage:        25,
+		TakeProfitPrice: &tpPrice,
+	}
+	err = gdb.Create(pos).Error
+	if err != nil {
+		t.Fatalf("failed to create position: %v", err)
+	}
+
+	// 2. Run CheckAllPositionsLiquidation with price = 152.0. It should NOT trigger.
+	ticker := &TickerResponse{
+		Data: []TickerData{
+			{Symbol: "USD_JPY", Ask: "152.0", Bid: "152.0"},
+		},
+	}
+	tickerCacheMu.Lock()
+	tickerCache = ticker
+	lastFetchTime = time.Now().Add(time.Hour)
+	tickerCacheMu.Unlock()
+
+	err = CheckAllPositionsLiquidation(c, nil)
+	if err != nil {
+		t.Fatalf("CheckAllPositionsLiquidation failed: %v", err)
+	}
+
+	var count int64
+	gdb.Model(&models.FXPosition{}).Count(&count)
+	if count != 1 {
+		t.Errorf("expected position to remain, count was %d", count)
+	}
+
+	// 3. Run CheckAllPositionsLiquidation with price = 156.0. It SHOULD trigger TP.
+	ticker.Data[0].Ask = "156.0"
+	ticker.Data[0].Bid = "156.0"
+	tickerCacheMu.Lock()
+	tickerCache = ticker
+	lastFetchTime = time.Now().Add(time.Hour)
+	tickerCacheMu.Unlock()
+
+	err = CheckAllPositionsLiquidation(c, nil)
+	if err != nil {
+		t.Fatalf("CheckAllPositionsLiquidation failed: %v", err)
+	}
+
+	// Verify position is deleted
+	gdb.Model(&models.FXPosition{}).Count(&count)
+	if count != 0 {
+		t.Errorf("expected position to be deleted by TP, count was %d", count)
+	}
+
+	// Verify points balance
+	// PnL at TP (155.0): (155.0 - 150.0) / 150.0 * 100 * 25 = 83.333 pt.
+	// Valuation: 100 + 83 = 183 pt.
+	// Total points: 1000 + 183 = 1183 pt.
+	var gp models.GoPoint
+	err = gdb.Where("user_id = ? AND guild_id = ?", userID, guildID).First(&gp).Error
+	if err != nil {
+		t.Fatalf("failed to query points: %v", err)
+	}
+	if gp.Points != 1183 {
+		t.Errorf("expected points balance to be 1183, got %d", gp.Points)
+	}
+}
