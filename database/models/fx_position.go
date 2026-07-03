@@ -17,7 +17,15 @@ type FXPosition struct {
 	Symbol     string       `gorm:"column:symbol;type:varchar(20);not null"`
 	Direction  string       `gorm:"column:direction;type:varchar(10);not null"` // "BUY" or "SELL"
 	EntryPrice float64      `gorm:"column:entry_price;type:double;not null"`
-	Margin     int64        `gorm:"column:margin;type:bigint(20) unsigned;not null"`
-	Leverage   int          `gorm:"column:leverage;type:int;not null"`
-	CreatedAt  time.Time    `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP"`
+	Margin        int64        `gorm:"column:margin;type:bigint(20) unsigned;not null"`
+	InitialMargin int64        `gorm:"column:initial_margin;type:bigint(20) unsigned;not null;default:0"`
+	Leverage      int          `gorm:"column:leverage;type:int;not null"`
+	CreatedAt     time.Time    `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP"`
+}
+
+func (pos *FXPosition) GetInitialMargin() int64 {
+	if pos.InitialMargin == 0 {
+		return pos.Margin
+	}
+	return pos.InitialMargin
 }

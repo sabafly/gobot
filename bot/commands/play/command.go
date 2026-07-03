@@ -505,6 +505,14 @@ func Command(c *components.Components) components.Command {
 					return FXCloseHandler(c, event)
 				},
 			},
+			"play:fx_add_margin_btn": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.fx"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return FXAddMarginButtonHandler(c, event)
+				},
+			},
 			"play:fx_quit": generic.PComponentHandler{
 				Permission: []generic.Permission{
 					generic.PermissionDefaultString("play.fx"),
@@ -517,6 +525,9 @@ func Command(c *components.Components) components.Command {
 		ModalHandlers: map[string]generic.ModalHandler{
 			"play:fx_margin_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
 				return FXMarginModalHandler(c, event)
+			},
+			"play:fx_add_margin_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+				return FXAddMarginModalHandler(c, event)
 			},
 		},
 		Schedulers: []components.Scheduler{

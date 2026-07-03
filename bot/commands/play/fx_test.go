@@ -47,9 +47,11 @@ func TestFX_GetLiquidationPrice(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			pos := &models.FXPosition{
-				Direction:  tt.direction,
-				EntryPrice: tt.entry,
-				Leverage:   tt.leverage,
+				Direction:     tt.direction,
+				EntryPrice:    tt.entry,
+				Margin:        100,
+				InitialMargin: 100,
+				Leverage:      tt.leverage,
 			}
 			got := getLiquidationPrice(pos)
 			if got != tt.want {
@@ -179,5 +181,54 @@ func TestFX_MinRatioMarginRequirement(t *testing.T) {
 				t.Errorf("expected validity to be %v, got %v (margin: %d, minMargin: %d)", tt.wantValid, isValid, tt.margin, minMargin)
 			}
 		})
+	}
+}
+
+func TestFX_MarginCallAndAddedMargin(t *testing.T) {
+	pos := &models.FXPosition{
+		Direction:     "BUY",
+		EntryPrice:    150.0,
+		Margin:        100,
+		InitialMargin: 100,
+		Leverage:      10,
+	}
+
+	// 1. Initial liquidation price (no added margin)
+	liqPrice1 := getLiquidationPrice(pos)
+	if liqPrice1 != 135.0 {
+		t.Errorf("expected liqPrice1 to be 135.0, got %f", liqPrice1)
+	}
+
+	// 2. Add margin (so Margin becomes 200)
+	pos.Margin = 200
+	liqPrice2 := getLiquidationPrice(pos)
+	if liqPrice2 != 120.0 {
+		t.Errorf("expected liqPrice2 to be 120.0, got %f", liqPrice2)
+	}
+
+	// 3. Maintenance ratio calculation:
+	// Entry = 150. Current = 142.5. PnL = 100 * 10 * (142.5/150 - 1) = 1000 * (-0.05) = -50
+	// Valuation = Margin (200) + PnL (-50) = 150
+	// Maintenance ratio = Valuation / InitialMargin (100) * 100 = 150%
+	currentPrice := 142.5
+	pnl := float64(pos.GetInitialMargin()) * float64(pos.Leverage) * ((currentPrice / pos.EntryPrice) - 1.0)
+	if int64(pnl) != -50 {
+		t.Errorf("expected PnL to be -50, got %d (raw float: %f)", int64(pnl), pnl)
+	}
+
+	ratio := float64(pos.Margin+int64(pnl)) / float64(pos.GetInitialMargin()) * 100.0
+	if int64(ratio) != 150 {
+		t.Errorf("expected maintenance ratio to be 150%%, got %d%% (raw float: %f)", int64(ratio), ratio)
+	}
+
+	// 4. Test margin call trigger threshold (< 50%)
+	// With Margin = 100, InitialMargin = 100:
+	// Valuation < 50 => Margin + PnL < 50 => PnL < -50
+	pos.Margin = 100
+	pnlMC := -51.0
+	ratioMC := (float64(pos.Margin) + pnlMC) / float64(pos.GetInitialMargin()) * 100.0
+	isMarginCall := ratioMC < 50.0
+	if !isMarginCall {
+		t.Errorf("expected margin call to trigger below 50%% ratio, got ratio: %f%%", ratioMC)
 	}
 }
