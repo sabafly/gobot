@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"math"
+	"time"
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
@@ -385,5 +386,104 @@ func TestFX_LiquidationWithDeficitCoverage(t *testing.T) {
 
 	if gp.Points != 1250 {
 		t.Errorf("expected points balance to be 1250, got %d", gp.Points)
+	}
+}
+
+func TestFX_PendingOrders(t *testing.T) {
+	gdb, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to open sqlite DB: %v", err)
+	}
+
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.FXOrder{}} {
+		if err := createSQLiteTable(gdb, model); err != nil {
+			t.Fatalf("failed to create table for %T: %v", model, err)
+		}
+	}
+
+	dbWrapper := &database.DB{DB: gdb}
+	ctx := context.Background()
+	c := components.New(ctx, components.Config{}, dbWrapper)
+
+	userID := snowflake.ID(99999)
+	guildID := snowflake.ID(88888)
+
+	// Seed User, Guild, and GoPoint
+	_ = gdb.Create(&models.User{ID: userID})
+	_ = gdb.Create(&models.Guild{ID: guildID})
+	_ = gdb.Create(&models.GoPoint{UserID: userID, GuildID: guildID, Points: 1000})
+
+	// 1. Create a pending LIMIT BUY order (Target: 145.000, current price is higher, e.g. 150.000)
+	orderID := uuid.New()
+	order := &models.FXOrder{
+		ID:          orderID,
+		UserID:      userID,
+		GuildID:     guildID,
+		Symbol:      "USD_JPY",
+		Direction:   models.FXPositionDirectionBuy,
+		OrderType:   "LIMIT",
+		TargetPrice: 145.0,
+		Margin:      100,
+		Leverage:    25,
+	}
+	err = gdb.Create(order).Error
+	if err != nil {
+		t.Fatalf("failed to create order: %v", err)
+	}
+
+	// 2. Run CheckAllPositionsLiquidation with price = 146.000. It should NOT trigger.
+	ticker := &TickerResponse{
+		Data: []TickerData{
+			{Symbol: "USD_JPY", Ask: "146.0", Bid: "146.0"},
+		},
+	}
+	tickerCacheMu.Lock()
+	tickerCache = ticker
+	lastFetchTime = time.Now().Add(time.Hour)
+	tickerCacheMu.Unlock()
+
+	err = CheckAllPositionsLiquidation(c, nil)
+	if err != nil {
+		t.Fatalf("CheckAllPositionsLiquidation failed: %v", err)
+	}
+
+	// Verify order still exists
+	var count int64
+	gdb.Model(&models.FXOrder{}).Count(&count)
+	if count != 1 {
+		t.Errorf("expected order to remain, count was %d", count)
+	}
+
+	// 3. Run CheckAllPositionsLiquidation with price = 144.500. It SHOULD trigger LIMIT BUY.
+	ticker.Data[0].Ask = "144.5"
+	ticker.Data[0].Bid = "144.5"
+	tickerCacheMu.Lock()
+	tickerCache = ticker
+	lastFetchTime = time.Now().Add(time.Hour)
+	tickerCacheMu.Unlock()
+
+	err = CheckAllPositionsLiquidation(c, nil)
+	if err != nil {
+		t.Fatalf("CheckAllPositionsLiquidation failed: %v", err)
+	}
+
+	// Verify order is deleted
+	gdb.Model(&models.FXOrder{}).Count(&count)
+	if count != 0 {
+		t.Errorf("expected order to be deleted, count was %d", count)
+	}
+
+	// Verify position is created with correct fields
+	var pos models.FXPosition
+	err = gdb.First(&pos).Error
+	if err != nil {
+		t.Fatalf("expected position to be created: %v", err)
+	}
+
+	if pos.ID != orderID {
+		t.Errorf("expected position ID to match order ID, got %s vs %s", pos.ID, orderID)
+	}
+	if pos.EntryPrice != 145.0 {
+		t.Errorf("expected entry price to be 145.0, got %f", pos.EntryPrice)
 	}
 }

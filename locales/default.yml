@@ -258,6 +258,26 @@ strings:
   components.play.fx.modal_add_margin_label: "追加する証拠金量（GoPoints）"
   components.play.fx.dm_margin_call_title: "🚨 **FX追証（マージンコール）発生のお知らせ** 🚨"
   components.play.fx.dm_margin_call_desc: "保有している {{.symbol}} のポジションの証拠金維持率が {{.ratio}} に低下し、追証ライン（{{.mc_line}}）を下回りました。\n強制ロスカットを避けるため、早急に証拠金を追加してください。"
+  components.play.fx.active_order_title: "### ⏳ 未約定の注文情報"
+  components.play.fx.active_order_desc: |-
+    - **通貨ペア**: {{.symbol}}
+    - **注文種別**: {{.type}} ({{.order_type}}) {{.direction}}
+    - **目標価格**: `{{.target}}` (現在価格: `{{.current}}`)
+    - **レバレッジ**: {{.leverage}}x
+    - **注文証拠金**: `{{.margin}} pt`
+  components.play.fx.option_order_item: "⏳ [{{.type}}] {{.symbol}} {{.direction}} @ {{.target}} (証拠金: {{.margin}} pt)"
+  components.play.fx.order_type.limit: "指値"
+  components.play.fx.order_type.stop: "逆指値"
+  components.play.fx.modal_pending_order_title: "指値・逆指値注文フォーム"
+  components.play.fx.modal_pending_order_price_label: "指定価格 (目標とするレート)"
+  components.play.fx.modal_pending_order_price_placeholder: "例: 149.50"
+  components.play.fx.modal_pending_order_dir_label: "売買方向"
+  components.play.fx.modal_pending_order_dir_placeholder: "売買方向を選択してください"
+  components.play.fx.modal_pending_order_type_label: "注文種別"
+  components.play.fx.modal_pending_order_type_placeholder: "注文種別を選択してください"
+  components.play.fx.err_invalid_order_inputs: "⚠️ **注文入力が無効です**:\n- 価格は正の数で指定してください。\n- 方向は BUY または SELL を選択してください。\n- 注文種別は LIMIT または STOP を選択してください。"
+  components.play.fx.dm_order_filled_title: "🔔 **FX注文約定のお知らせ** 🔔"
+  components.play.fx.dm_order_filled_desc: "注文していた {{.symbol}} の{{.type}}（{{.order_type}}） {{.direction}} が約定価格 {{.price}} で約定しました。"
 components:
   command.settings.view:
     - type: container
@@ -471,6 +491,12 @@ components:
               id: "play:fx_sell:{uuid}"
             - type: button
               style: primary
+              label: "指値・逆指値注文"
+              id: "play:fx_pending_order_btn:{uuid}"
+        - type: action_row
+          components:
+            - type: button
+              style: primary
               label: "レート更新"
               id: "play:fx_refresh:{uuid}"
             - type: button
@@ -511,6 +537,40 @@ components:
             - type: button
               style: primary
               label: "レート更新 / 損益確認"
+              id: "play:fx_refresh:{uuid}"
+            - type: button
+              style: secondary
+              label: "画面を閉じる"
+              id: "play:fx_quit:{uuid}"
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:fx_switch_pos:{uuid}"
+              placeholder: "ポジションを選択して管理"
+              options: "position_options"
+
+  command.play.fx.order_detail_screen:
+    - type: container
+      components:
+        - "📈 **FX TRADING SIMULATOR** 📉"
+        - type: separator
+        - |-
+          ### 💱 現在の為替レート
+          {rates_text}
+        - type: separator
+        - "🪙 **保有 GoPoints**: `{points} pt`"
+        - type: separator
+        - |-
+          {order_info}
+        - type: action_row
+          components:
+            - type: button
+              style: danger
+              label: "🔴 注文を取り消す (Cancel Order)"
+              id: "play:fx_cancel_order:{uuid}"
+            - type: button
+              style: primary
+              label: "レート更新 / 約定確認"
               id: "play:fx_refresh:{uuid}"
             - type: button
               style: secondary

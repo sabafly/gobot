@@ -529,6 +529,22 @@ func Command(c *components.Components) components.Command {
 					return FXSwitchPositionHandler(c, event)
 				},
 			},
+			"play:fx_pending_order_btn": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.fx"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return FXPendingOrderButtonHandler(c, event)
+				},
+			},
+			"play:fx_cancel_order": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.fx"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return FXCancelOrderHandler(c, event)
+				},
+			},
 		},
 		ModalHandlers: map[string]generic.ModalHandler{
 			"play:fx_margin_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
@@ -537,10 +553,13 @@ func Command(c *components.Components) components.Command {
 			"play:fx_add_margin_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
 				return FXAddMarginModalHandler(c, event)
 			},
+			"play:fx_order_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+				return FXOrderModalHandler(c, event)
+			},
 		},
 		Schedulers: []components.Scheduler{
 			{
-				Duration: 30 * time.Second,
+				Duration: 1 * time.Second,
 				Worker: func(c *components.Components, client *bot.Client) error {
 					return CheckAllPositionsLiquidation(c, client)
 				},

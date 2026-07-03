@@ -45,6 +45,7 @@ func NewDB(dsn string) (*DB, error) {
 		&models.MessageRemind{},
 		&models.WordSuffix{},
 		&models.FXPosition{},
+		&models.FXOrder{},
 	); err != nil {
 		return nil, err
 	}

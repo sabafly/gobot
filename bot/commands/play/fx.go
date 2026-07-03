@@ -230,6 +230,24 @@ func getFXPositionByID(c *components.Components, id uuid.UUID) (*models.FXPositi
 	return &pos, nil
 }
 
+func getFXOrders(c *components.Components, userID snowflake.ID, guildID snowflake.ID) ([]models.FXOrder, error) {
+	var orders []models.FXOrder
+	err := c.GormDB().Where("user_id = ? AND guild_id = ?", userID, guildID).Find(&orders).Error
+	if err != nil {
+		return nil, err
+	}
+	return orders, nil
+}
+
+func getFXOrderByID(c *components.Components, id uuid.UUID) (*models.FXOrder, error) {
+	var order models.FXOrder
+	err := c.GormDB().Where("id = ?", id).First(&order).Error
+	if err != nil {
+		return nil, err
+	}
+	return &order, nil
+}
+
 func hasMarginCall(c *components.Components, userID snowflake.ID, guildID snowflake.ID) (bool, error) {
 	positions, err := getFXPositions(c, userID, guildID)
 	if err != nil {
@@ -499,6 +517,36 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 		}
 	}
 
+	orders, _ := getFXOrders(c, session.UserID, session.GuildID)
+	var activeOrder *models.FXOrder
+	for _, o := range orders {
+		ordTypeStr := i18n.TranslateText(locale, "components.play.fx.order_type.limit")
+		if o.OrderType == "STOP" {
+			ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.stop")
+		}
+		dirStr := "L"
+		if o.Direction == models.FXPositionDirectionSell {
+			dirStr = "S"
+		}
+		ordLabel := i18n.TranslateText(locale, "components.play.fx.option_order_item", map[string]any{
+			"type":      ordTypeStr,
+			"symbol":    strings.Replace(o.Symbol, "_", "/", 1),
+			"direction": dirStr,
+			"target":    fmt.Sprintf("%.3f", o.TargetPrice),
+			"margin":    o.Margin,
+		})
+		positionOpts = append(positionOpts, discord.StringSelectMenuOption{
+			Label:   ordLabel,
+			Value:   o.ID.String(),
+			Default: session.ActivePositionID != nil && *session.ActivePositionID == o.ID,
+		})
+
+		if session.ActivePositionID != nil && *session.ActivePositionID == o.ID {
+			oCopy := o
+			activeOrder = &oCopy
+		}
+	}
+
 	ctx.WithStringOptions("position_options", positionOpts)
 
 	var symbolOpts []discord.StringSelectMenuOption
@@ -530,7 +578,7 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 	}
 	ctx.WithText("restriction_warning", restrictionWarning)
 
-	if activePos == nil {
+	if activePos == nil && activeOrder == nil {
 		opt := fxLeverages[session.SelectedLeverage]
 		formInfo := i18n.TranslateText(locale, "components.play.fx.form_selected", map[string]any{
 			"symbol":   strings.Replace(session.SelectedSymbol, "_", "/", 1),
@@ -543,6 +591,40 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 		}))
 
 		return ctx.Translate(i18n.TranslateLayout(locale, "command.play.fx.order_screen"))
+	} else if activeOrder != nil {
+		ordTypeStr := i18n.TranslateText(locale, "components.play.fx.order_type.limit")
+		if activeOrder.OrderType == "STOP" {
+			ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.stop")
+		}
+		dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
+		if activeOrder.Direction == models.FXPositionDirectionSell {
+			dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
+		}
+		pSymData, _ := ticker.GetSymbolData(activeOrder.Symbol)
+		pAsk, _ := strconv.ParseFloat(pSymData.Ask, 64)
+		pBid, _ := strconv.ParseFloat(pSymData.Bid, 64)
+		var currentPrice float64
+		if activeOrder.Direction == models.FXPositionDirectionBuy {
+			currentPrice = pAsk
+		} else {
+			currentPrice = pBid
+		}
+		orderDesc := i18n.TranslateText(locale, "components.play.fx.active_order_desc", map[string]any{
+			"symbol":    strings.Replace(activeOrder.Symbol, "_", "/", 1),
+			"type":      ordTypeStr,
+			"order_type": activeOrder.OrderType,
+			"direction": dirEmoji,
+			"target":    fmt.Sprintf("%.3f", activeOrder.TargetPrice),
+			"current":   fmt.Sprintf("%.3f", currentPrice),
+			"leverage":  activeOrder.Leverage,
+			"margin":    strconv.FormatInt(activeOrder.Margin, 10),
+		})
+		var ordInfoBuilder strings.Builder
+		ordInfoBuilder.WriteString(i18n.TranslateText(locale, "components.play.fx.active_order_title"))
+		ordInfoBuilder.WriteString("\n" + orderDesc)
+		ctx.WithText("order_info", ordInfoBuilder.String())
+
+		return ctx.Translate(i18n.TranslateLayout(locale, "command.play.fx.order_detail_screen"))
 	} else {
 		pSymData, _ := ticker.GetSymbolData(activePos.Symbol)
 		pAsk, _ := strconv.ParseFloat(pSymData.Ask, 64)
@@ -1395,6 +1477,316 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 	return nil
 }
 
+func FXPendingOrderButtonHandler(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+	session, err1 := FXPrecondition(event)
+	if err1 != nil {
+		return err1
+	}
+	if session == nil {
+		return nil
+	}
+
+	mcRestricted, err := hasMarginCall(c, event.User().ID, *event.GuildID())
+	if err != nil {
+		return errors.NewError(err)
+	}
+	if mcRestricted {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_restricted")),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
+	// We allow up to 10 active positions + pending orders total
+	positions, err := getFXPositions(c, event.User().ID, *event.GuildID())
+	if err != nil {
+		return errors.NewError(err)
+	}
+	orders, err := getFXOrders(c, event.User().ID, *event.GuildID())
+	if err != nil {
+		return errors.NewError(err)
+	}
+	if len(positions)+len(orders) >= 10 {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_max_positions")),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
+	modal := discord.NewModalCreateBuilder().
+		SetTitle(i18n.TranslateText(event.Locale(), "components.play.fx.modal_pending_order_title")).
+		SetCustomID("play:fx_order_modal:" + session.ID.String()).
+		SetComponents(
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.play.fx.modal_pending_order_price_label"),
+				discord.TextInputComponent{
+					CustomID:    "target_price",
+					Style:       discord.TextInputStyleShort,
+					MinLength:   ptr(1),
+					MaxLength:   10,
+					Required:    true,
+					Placeholder: i18n.TranslateText(event.Locale(), "components.play.fx.modal_pending_order_price_placeholder"),
+				},
+			),
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.play.fx.modal_pending_order_dir_label"),
+				discord.NewStringSelectMenu("direction", i18n.TranslateText(event.Locale(), "components.play.fx.modal_pending_order_dir_placeholder")).
+					SetOptions(
+						discord.StringSelectMenuOption{
+							Label: i18n.TranslateText(event.Locale(), "components.play.fx.direction.buy"),
+							Value: "BUY",
+						},
+						discord.StringSelectMenuOption{
+							Label: i18n.TranslateText(event.Locale(), "components.play.fx.direction.sell"),
+							Value: "SELL",
+						},
+					),
+			),
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.play.fx.modal_pending_order_type_label"),
+				discord.NewStringSelectMenu("order_type", i18n.TranslateText(event.Locale(), "components.play.fx.modal_pending_order_type_placeholder")).
+					SetOptions(
+						discord.StringSelectMenuOption{
+							Label: i18n.TranslateText(event.Locale(), "components.play.fx.order_type.limit"),
+							Value: "LIMIT",
+						},
+						discord.StringSelectMenuOption{
+							Label: i18n.TranslateText(event.Locale(), "components.play.fx.order_type.stop"),
+							Value: "STOP",
+						},
+					),
+			),
+		).
+		Build()
+
+	if err := event.Modal(modal); err != nil {
+		return errors.NewError(err)
+	}
+	return nil
+}
+
+func FXOrderModalHandler(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+	args := strings.Split(event.Data.CustomID, ":")
+	if len(args) < 3 {
+		return errors.NewError(fmt.Errorf("invalid custom ID"))
+	}
+	id, err := uuid.Parse(args[2])
+	if err != nil {
+		return errors.NewError(err)
+	}
+	session, ok := fx_sessions.Get(id)
+	if !ok {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_session_expired")),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+	if session.UserID != event.User().ID {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_not_your_session")),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
+	priceStr := event.Data.Text("target_price")
+	dirValues := event.Data.StringValues("direction")
+	var dirStr string
+	if len(dirValues) > 0 {
+		dirStr = strings.ToUpper(strings.TrimSpace(dirValues[0]))
+	}
+	typeValues := event.Data.StringValues("order_type")
+	var typeStr string
+	if len(typeValues) > 0 {
+		typeStr = strings.ToUpper(strings.TrimSpace(typeValues[0]))
+	}
+
+	targetPrice, err := strconv.ParseFloat(strings.TrimSpace(priceStr), 64)
+	if err != nil || targetPrice <= 0 || (dirStr != "BUY" && dirStr != "SELL") || (typeStr != "LIMIT" && typeStr != "STOP") {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_invalid_order_inputs")),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
+	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	opt := fxLeverages[session.SelectedLeverage]
+	minMargin := int64(float64(points) * opt.MinRatio)
+	if minMargin < 1 {
+		minMargin = 1
+	}
+
+	if session.SelectedMargin < minMargin {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_min_ratio_margin", map[string]any{
+						"leverage": opt.Leverage,
+						"points":   points,
+						"ratio":    opt.MinRatio * 100.0,
+						"min":      minMargin,
+					})),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
+	if points < session.SelectedMargin {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_insufficient_points", map[string]any{
+						"margin": session.SelectedMargin,
+						"points": points,
+					})),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
+	if err := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), -session.SelectedMargin); err != nil {
+		return errors.NewError(err)
+	}
+
+	order := &models.FXOrder{
+		UserID:      event.User().ID,
+		GuildID:     *event.GuildID(),
+		Symbol:      session.SelectedSymbol,
+		Direction:   models.FXPositionDirection(dirStr),
+		OrderType:   typeStr,
+		TargetPrice: targetPrice,
+		Margin:      session.SelectedMargin,
+		Leverage:    opt.Leverage,
+	}
+
+	if err := c.GormDB().Create(order).Error; err != nil {
+		if refundErr := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), session.SelectedMargin); refundErr != nil {
+			slog.Error("CRITICAL: failed to refund points after order creation failed", "user_id", event.User().ID, "error", refundErr)
+		}
+		return errors.NewError(err)
+	}
+
+	session.ActivePositionID = &order.ID
+	fx_sessions.Set(session.ID, session)
+
+	points, _, _ = gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	positions, _ := getFXPositions(c, event.User().ID, *event.GuildID())
+	ticker, err := fetchTickerData()
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	if err := event.UpdateMessage(discord.NewMessageBuilder().
+		SetIsComponentsV2(true).
+		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
+		BuildUpdate(),
+	); err != nil {
+		return errors.NewError(err)
+	}
+	return nil
+}
+
+func FXCancelOrderHandler(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+	session, err1 := FXPrecondition(event)
+	if err1 != nil {
+		return err1
+	}
+	if session == nil {
+		return nil
+	}
+
+	if session.ActivePositionID == nil {
+		return errors.NewError(fmt.Errorf("no active order selected"))
+	}
+
+	var order models.FXOrder
+	err := c.GormDB().Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("id = ?", *session.ActivePositionID).First(&order).Error; err != nil {
+			return err
+		}
+		if err := tx.Delete(&order).Error; err != nil {
+			return err
+		}
+		if err := gopoint.AddPointTx(tx, order.UserID, order.GuildID, order.Margin); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			builder := discord.NewMessageBuilder().
+				SetIsComponentsV2(true).
+				SetComponents(
+					discord.NewContainer(
+						discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_pos_not_found")),
+					).WithAccentColor(0xE74C3C),
+				).
+				AddFlags(discord.MessageFlagEphemeral)
+			_ = event.RespondMessage(builder)
+			return nil
+		}
+		return errors.NewError(err)
+	}
+
+	session.ActivePositionID = nil
+	fx_sessions.Set(session.ID, session)
+
+	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	if err != nil {
+		return errors.NewError(err)
+	}
+	positions, _ := getFXPositions(c, event.User().ID, *event.GuildID())
+	ticker, err := fetchTickerData()
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	if err := event.UpdateMessage(discord.NewMessageBuilder().
+		SetIsComponentsV2(true).
+		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
+		BuildUpdate(),
+	); err != nil {
+		return errors.NewError(err)
+	}
+	return nil
+}
+
 func FXRefreshHandler(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
 	session, err1 := FXPrecondition(event)
 	if err1 != nil {
@@ -1789,9 +2181,6 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 	if err := c.GormDB().Find(&positions).Error; err != nil {
 		return err
 	}
-	if len(positions) == 0 {
-		return nil
-	}
 
 	ticker, err := fetchTickerData()
 	if err != nil {
@@ -1838,6 +2227,109 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 				posCopy.MarginCallNotified = true
 				if err := c.GormDB().Save(&posCopy).Error; err != nil {
 					slog.Error("failed to save margin call notified state", "pos_id", posCopy.ID, "error", err)
+				}
+			}
+		}
+	}
+
+	var orders []models.FXOrder
+	if err := c.GormDB().Find(&orders).Error; err != nil {
+		slog.Error("failed to find background orders", "error", err)
+	} else {
+		for _, ord := range orders {
+			ordCopy := ord
+			tickerData, ok := ticker.GetSymbolData(ordCopy.Symbol)
+			if !ok {
+				continue
+			}
+			ask, _ := strconv.ParseFloat(tickerData.Ask, 64)
+			bid, _ := strconv.ParseFloat(tickerData.Bid, 64)
+
+			var currentPrice float64
+			if ordCopy.Direction == models.FXPositionDirectionBuy {
+				currentPrice = ask
+			} else {
+				currentPrice = bid
+			}
+
+			triggered := false
+			if ordCopy.OrderType == "LIMIT" {
+				if ordCopy.Direction == models.FXPositionDirectionBuy {
+					triggered = currentPrice <= ordCopy.TargetPrice
+				} else {
+					triggered = currentPrice >= ordCopy.TargetPrice
+				}
+			} else if ordCopy.OrderType == "STOP" {
+				if ordCopy.Direction == models.FXPositionDirectionBuy {
+					triggered = currentPrice >= ordCopy.TargetPrice
+				} else {
+					triggered = currentPrice <= ordCopy.TargetPrice
+				}
+			}
+
+			if triggered {
+				err := c.GormDB().Transaction(func(tx *gorm.DB) error {
+					var dbOrd models.FXOrder
+					if err := tx.Where("id = ?", ordCopy.ID).First(&dbOrd).Error; err != nil {
+						return err
+					}
+					if err := tx.Delete(&dbOrd).Error; err != nil {
+						return err
+					}
+
+					pos := &models.FXPosition{
+						ID:            ordCopy.ID,
+						UserID:        ordCopy.UserID,
+						GuildID:       ordCopy.GuildID,
+						Symbol:        ordCopy.Symbol,
+						Direction:     ordCopy.Direction,
+						EntryPrice:    ordCopy.TargetPrice,
+						Margin:        ordCopy.Margin,
+						InitialMargin: ordCopy.Margin,
+						Leverage:      ordCopy.Leverage,
+					}
+					if err := tx.Create(pos).Error; err != nil {
+						return err
+					}
+					return nil
+				})
+
+				if err == nil {
+					slog.Info("order executed background", "order_id", ordCopy.ID, "user_id", ordCopy.UserID, "symbol", ordCopy.Symbol)
+					if client != nil && client.Rest != nil {
+						ch, err := client.Rest.CreateDMChannel(ordCopy.UserID)
+						if err == nil {
+							locale := discord.LocaleJapanese
+							ordTypeStr := i18n.TranslateText(locale, "components.play.fx.order_type.limit")
+							if ordCopy.OrderType == "STOP" {
+								ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.stop")
+							}
+							dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
+							if ordCopy.Direction == models.FXPositionDirectionSell {
+								dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
+							}
+
+							descText := i18n.TranslateText(locale, "components.play.fx.dm_order_filled_desc", map[string]any{
+								"symbol":     strings.Replace(ordCopy.Symbol, "_", "/", 1),
+								"type":       ordTypeStr,
+								"order_type": ordCopy.OrderType,
+								"direction":  dirEmoji,
+								"price":      fmt.Sprintf("%.3f", ordCopy.TargetPrice),
+							})
+
+							builder := discord.NewMessageBuilder().
+								SetIsComponentsV2(true).
+								SetComponents(
+									discord.NewContainer(
+										discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.dm_order_filled_title")),
+										discord.NewTextDisplay(descText),
+									).WithAccentColor(0x2ECC71),
+								)
+							_, _ = client.Rest.CreateMessage(ch.ID(), builder.BuildCreate())
+						}
+					}
+				} else {
+					slog.Error("failed to execute order background", "order_id", ordCopy.ID, "error", err)
 				}
 			}
 		}
