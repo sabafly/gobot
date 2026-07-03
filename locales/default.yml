@@ -246,6 +246,11 @@ strings:
   components.play.fx.err_session_expired: "⚠️ **セッションが期限切れです**: この取引画面のセッションは終了しました。もう一度 `/play fx` を実行してください。"
   components.play.fx.err_not_your_session: "⚠️ **他人のセッションです**: この取引画面は他のユーザーのものです。自分で `/play fx` を実行してください。"
   components.play.fx.err_restricted: "⚠️ **取引制限中**: 証拠金維持率が50%を下回っているポジションがあります。追加注文や決済を行う前に、追証を入金して警告状態を解消してください。"
+  components.play.fx.rates_entry: "・**{symbol}**: Bid `{bid}` | Ask `{ask}` (スプレッド: `{spread}`)"
+  components.play.fx.err_max_positions: "⚠️ **ポジション上限数到達**: 保有できるポジションは最大10個までです。いずれかのポジションを決済してから再度注文してください。"
+  components.play.fx.liquidation_detail_header: "\n\n**損失補填のために強制決済された他のポジション:**"
+  components.play.fx.liquidation_detail_item: "\n• `{symbol}` ({direction}) | 証拠金: `{margin} pt` | 決済価格: `{exit}` | 損益: `{pnl} pt` (回収額: `{val} pt`)"
+  components.play.fx.liquidation_detail_deficit: "\n\n⚠️ **未回収の不足金**: `-{deficit} pt`（ポイント残高が不足しているため回収できませんでした）"
 components:
   command.settings.view:
     - type: container

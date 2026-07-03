@@ -364,15 +364,23 @@ func liquidatePosition(c *components.Components, client *bot.Client, pos *models
 			var detailStr strings.Builder
 
 			if len(closedPositions) > 0 {
-				detailStr.WriteString("\n\n**損失補填のために強制決済された他のポジション:**")
+				detailStr.WriteString(i18n.TranslateText(locale, "components.play.fx.liquidation_detail_header"))
 				for _, cp := range closedPositions {
-					detailStr.WriteString(fmt.Sprintf("\n• `%s` (%s) | 証拠金: `%d pt` | 決済価格: `%.3f` | 損益: `%+d pt` (回収額: `%d pt`)",
-						strings.Replace(cp.symbol, "_", "/", 1), cp.direction, cp.margin, cp.exitPrice, cp.pnl, cp.valuation))
+					detailStr.WriteString(i18n.TranslateText(locale, "components.play.fx.liquidation_detail_item", map[string]any{
+						"symbol":    strings.Replace(cp.symbol, "_", "/", 1),
+						"direction": cp.direction,
+						"margin":    cp.margin,
+						"exit":      fmt.Sprintf("%.3f", cp.exitPrice),
+						"pnl":       fmt.Sprintf("%+d", cp.pnl),
+						"val":       cp.valuation,
+					}))
 				}
 			}
 
 			if deficit > 0 {
-				detailStr.WriteString(fmt.Sprintf("\n\n⚠️ **未回収の不足金**: `-%d pt`（ポイント残高が不足しているため回収できませんでした）", deficit))
+				detailStr.WriteString(i18n.TranslateText(locale, "components.play.fx.liquidation_detail_deficit", map[string]any{
+					"deficit": deficit,
+				}))
 			}
 
 			descKey := "components.play.fx.liquidation_desc"
@@ -1123,7 +1131,7 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("⚠️ **ポジション上限数到達**\n保有できるポジションは最大10個までです。いずれかのポジションを決済してから再度注文してください。"),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_max_positions")),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -1265,7 +1273,7 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("⚠️ **ポジション上限数到達**\n保有できるポジションは最大10個までです。いずれかのポジションを決済してから再度注文してください。"),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_max_positions")),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)

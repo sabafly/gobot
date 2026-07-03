@@ -23,6 +23,11 @@ func NewDB(dsn string) (*DB, error) {
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetMaxOpenConns(100)
 
+	// Migrator safety check: drop legacy fx_positions table if it does not contain 'id' column
+	if db.Migrator().HasTable("fx_positions") && !db.Migrator().HasColumn("fx_positions", "id") {
+		_ = db.Migrator().DropTable("fx_positions")
+	}
+
 	// auto migrate models
 	if err := db.AutoMigrate(
 		&models.User{},
