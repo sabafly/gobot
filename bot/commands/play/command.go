@@ -67,6 +67,19 @@ func Command(c *components.Components) components.Command {
 						Description:              "Play an FX trading game with GoPoints",
 						DescriptionLocalizations: i18n.TranslateTextMap("command.play.fx.description"),
 					},
+					discord.ApplicationCommandOptionSubCommand{
+						Name:                     "portfolio",
+						Description:              "Display a user's FX portfolio",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.play.portfolio.description"),
+						Options: []discord.ApplicationCommandOption{
+							discord.ApplicationCommandOptionUser{
+								Name:                     "user",
+								Description:              "The user to display the portfolio for",
+								DescriptionLocalizations: i18n.TranslateTextMap("command.play.portfolio.option.user.description"),
+								Required:                 false,
+							},
+						},
+					},
 				},
 			},
 		},
@@ -148,6 +161,14 @@ func Command(c *components.Components) components.Command {
 				},
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					return FXPlayCommand(c, event)
+				},
+			},
+			"/play/portfolio": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.fx"),
+				},
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					return FXPortfolioCommandHandler(c, event)
 				},
 			},
 		},

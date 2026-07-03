@@ -2703,3 +2703,158 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 	}
 	return nil
 }
+
+func FXPortfolioCommandHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+	if err := event.DeferCreateMessage(false); err != nil {
+		return errors.NewError(err)
+	}
+
+	targetUser := event.User()
+	if userOpt, ok := event.SlashCommandInteractionData().OptUser("user"); ok {
+		targetUser = userOpt
+	}
+
+	positions, err := getFXPositions(c, targetUser.ID, *event.GuildID())
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	orders, err := getFXOrders(c, targetUser.ID, *event.GuildID())
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	ticker, err := fetchTickerData()
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	points, _, err := gopoint.GetPoint(c, targetUser.ID, *event.GuildID())
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	locale := event.Locale()
+
+	var posSB strings.Builder
+	if len(positions) == 0 {
+		posSB.WriteString(i18n.TranslateText(locale, "components.play.fx.portfolio_no_positions"))
+	} else {
+		for _, pos := range positions {
+			pSymData, _ := ticker.GetSymbolData(pos.Symbol)
+			pAsk, _ := strconv.ParseFloat(pSymData.Ask, 64)
+			pBid, _ := strconv.ParseFloat(pSymData.Bid, 64)
+			var currentPrice float64
+			if pos.Direction == models.FXPositionDirectionBuy {
+				currentPrice = pBid
+			} else {
+				currentPrice = pAsk
+			}
+			pPnl := getPnL(&pos, currentPrice)
+			pnlInt := int64(pPnl)
+			pnlStr := fmt.Sprintf("%+d", pnlInt)
+			if pnlInt == 0 {
+				pnlStr = "0"
+			}
+
+			dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
+			if pos.Direction == models.FXPositionDirectionSell {
+				dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
+			}
+
+			initMargin := pos.GetInitialMargin()
+			ratio := (float64(pos.Margin) + pPnl) / float64(initMargin) * 100.0
+			ratioText := fmt.Sprintf("%.1f%%", ratio)
+
+			tpText := "なし"
+			if pos.TakeProfitPrice != nil {
+				tpText = fmt.Sprintf("%.3f", *pos.TakeProfitPrice)
+			}
+			slText := "なし"
+			if pos.StopLossPrice != nil {
+				slText = fmt.Sprintf("%.3f", *pos.StopLossPrice)
+			}
+
+			posDesc := i18n.TranslateText(locale, "components.play.fx.portfolio_position_item", map[string]any{
+				"symbol":    strings.Replace(pos.Symbol, "_", "/", 1),
+				"direction": dirEmoji,
+				"leverage":  pos.Leverage,
+				"margin":    pos.Margin,
+				"init":      initMargin,
+				"entry":     fmt.Sprintf("%.3f", pos.EntryPrice),
+				"current":     fmt.Sprintf("%.3f", currentPrice),
+				"ratio":     ratioText,
+				"pnl":       pnlStr,
+				"tp":        tpText,
+				"sl":        slText,
+			})
+			posSB.WriteString(posDesc + "\n")
+		}
+	}
+
+	var ordSB strings.Builder
+	if len(orders) == 0 {
+		ordSB.WriteString(i18n.TranslateText(locale, "components.play.fx.portfolio_no_orders"))
+	} else {
+		for _, ord := range orders {
+			pSymData, _ := ticker.GetSymbolData(ord.Symbol)
+			pAsk, _ := strconv.ParseFloat(pSymData.Ask, 64)
+			pBid, _ := strconv.ParseFloat(pSymData.Bid, 64)
+			var currentPrice float64
+			if ord.Direction == models.FXPositionDirectionBuy {
+				currentPrice = pAsk
+			} else {
+				currentPrice = pBid
+			}
+
+			dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
+			if ord.Direction == models.FXPositionDirectionSell {
+				dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
+			}
+
+			ordTypeStr := i18n.TranslateText(locale, "components.play.fx.order_type.limit")
+			if ord.OrderType == "STOP" {
+				ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.stop")
+			}
+
+			ordDesc := i18n.TranslateText(locale, "components.play.fx.portfolio_order_item", map[string]any{
+				"symbol":    strings.Replace(ord.Symbol, "_", "/", 1),
+				"type":      ordTypeStr,
+				"direction": dirEmoji,
+				"leverage":  ord.Leverage,
+				"target":    fmt.Sprintf("%.3f", ord.TargetPrice),
+				"current":   fmt.Sprintf("%.3f", currentPrice),
+				"margin":    ord.Margin,
+			})
+			ordSB.WriteString(ordDesc + "\n")
+		}
+	}
+
+	member, err := event.Client().Rest.GetMember(*event.GuildID(), targetUser.ID)
+	var userName string
+	if err == nil && member != nil {
+		userName = member.EffectiveName()
+	} else {
+		userName = targetUser.Username
+	}
+
+	layoutCtx := i18n.BuildContext().
+		WithText("user_name", userName).
+		WithText("points", strconv.FormatInt(points, 10)).
+		WithText("pos_count", strconv.Itoa(len(positions))).
+		WithText("positions_list", strings.TrimSpace(posSB.String())).
+		WithText("order_count", strconv.Itoa(len(orders))).
+		WithText("orders_list", strings.TrimSpace(ordSB.String()))
+
+	componentsList := layoutCtx.Translate(i18n.TranslateLayout(locale, "command.play.portfolio"))
+
+	builder := discord.NewMessageBuilder().
+		SetIsComponentsV2(true).
+		SetComponents(componentsList...)
+
+	err = event.RespondMessage(builder)
+	if err != nil {
+		return errors.NewError(err)
+	}
+	return nil
+}

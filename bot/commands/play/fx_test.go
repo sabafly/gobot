@@ -586,3 +586,99 @@ func TestFX_ActivePositionTPSL(t *testing.T) {
 		t.Errorf("expected points balance to be 1183, got %d", gp.Points)
 	}
 }
+
+func TestFX_PortfolioLogic(t *testing.T) {
+	gdb, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to open sqlite DB: %v", err)
+	}
+
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.FXOrder{}} {
+		if err := createSQLiteTable(gdb, model); err != nil {
+			t.Fatalf("failed to create table for %T: %v", model, err)
+		}
+	}
+
+	dbWrapper := &database.DB{DB: gdb}
+	ctx := context.Background()
+	c := components.New(ctx, components.Config{}, dbWrapper)
+
+	userID := snowflake.ID(77777)
+	guildID := snowflake.ID(66666)
+
+	// Seed User, Guild, GoPoint
+	_ = gdb.Create(&models.User{ID: userID})
+	_ = gdb.Create(&models.Guild{ID: guildID})
+	_ = gdb.Create(&models.GoPoint{UserID: userID, GuildID: guildID, Points: 1000})
+
+	// 1. Check getFXPositions and getFXOrders when empty
+	positions, err := getFXPositions(c, userID, guildID)
+	if err != nil {
+		t.Fatalf("failed to get positions: %v", err)
+	}
+	if len(positions) != 0 {
+		t.Errorf("expected 0 positions, got %d", len(positions))
+	}
+
+	orders, err := getFXOrders(c, userID, guildID)
+	if err != nil {
+		t.Fatalf("failed to get orders: %v", err)
+	}
+	if len(orders) != 0 {
+		t.Errorf("expected 0 orders, got %d", len(orders))
+	}
+
+	// 2. Add a position and an order
+	pos := &models.FXPosition{
+		ID:            uuid.New(),
+		UserID:        userID,
+		GuildID:       guildID,
+		Symbol:        "USD_JPY",
+		Direction:     models.FXPositionDirectionBuy,
+		EntryPrice:    150.0,
+		Margin:        100,
+		InitialMargin: 100,
+		Leverage:      25,
+	}
+	if err := gdb.Create(pos).Error; err != nil {
+		t.Fatalf("failed to create position: %v", err)
+	}
+
+	order := &models.FXOrder{
+		ID:          uuid.New(),
+		UserID:      userID,
+		GuildID:     guildID,
+		Symbol:      "EUR_USD",
+		Direction:   models.FXPositionDirectionSell,
+		OrderType:   "LIMIT",
+		TargetPrice: 1.10,
+		Margin:      50,
+		Leverage:    10,
+	}
+	if err := gdb.Create(order).Error; err != nil {
+		t.Fatalf("failed to create order: %v", err)
+	}
+
+	// 3. Retrieve and verify
+	positions, err = getFXPositions(c, userID, guildID)
+	if err != nil {
+		t.Fatalf("failed to get positions: %v", err)
+	}
+	if len(positions) != 1 {
+		t.Errorf("expected 1 position, got %d", len(positions))
+	}
+	if positions[0].Symbol != "USD_JPY" {
+		t.Errorf("expected symbol USD_JPY, got %s", positions[0].Symbol)
+	}
+
+	orders, err = getFXOrders(c, userID, guildID)
+	if err != nil {
+		t.Fatalf("failed to get orders: %v", err)
+	}
+	if len(orders) != 1 {
+		t.Errorf("expected 1 order, got %d", len(orders))
+	}
+	if orders[0].Symbol != "EUR_USD" {
+		t.Errorf("expected symbol EUR_USD, got %s", orders[0].Symbol)
+	}
+}

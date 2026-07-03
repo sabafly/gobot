@@ -38,6 +38,8 @@ strings:
   command.play.high-and-low.finish.joker: "ジョーカーがあらわれた！"
   command.play.slot.description: "スロットマシンをプレイします。"
   command.play.fx.description: "FXポイントゲームをプレイします。"
+  command.play.portfolio.description: "指定したユーザーのFXポジション一覧（ポートフォリオ）を表示します。"
+  command.play.portfolio.option.user.description: "ポートフォリオを表示するユーザーを指定します。"
   command.bet.description: "Goポイントを賭けます。"
   command.bet.create.title: "ベットを作成"
   command.bet.create.input.title.placeholder: "ベット内容を入力してください"
@@ -291,6 +293,10 @@ strings:
   components.play.fx.err_sl_must_be_greater: "⚠️ **設定エラー**: 売りポジションの損切価格はエントリー価格より高く設定する必要があります。"
   components.play.fx.dm_order_closed_title: "🔔 **FXポジション自動決済のお知らせ** 🔔"
   components.play.fx.dm_order_closed_desc: "保有していた {{.symbol}} の{{.direction}}ポジション（証拠金: {{.margin}} pt）が、自動決済条件（{{.type}}: {{.trigger_price}}）に達したため、成行決済されました。\n\n・決済価格: `{{.exit}}`\n・評価損益: **`{{.pnl}} pt`**\n・獲得/回収ポイント: **`{{.received}} pt`**"
+  components.play.fx.portfolio_no_positions: "* 保有しているポジションはありません"
+  components.play.fx.portfolio_no_orders: "* 未約定の注文はありません"
+  components.play.fx.portfolio_position_item: "- **{{.symbol}}** ({{.direction}} {{.leverage}}x)\n  - 証拠金: `{{.margin}} pt` (当初: `{{.init}} pt`)\n  - エントリー: `{{.entry}}` → 現在: `{{.current}}` (維持率: `{{.ratio}}`)\n  - 評価損益: **`{{.pnl}} pt`**\n  - 利確(TP): `{{.tp}}` / 損切(SL): `{{.sl}}`"
+  components.play.fx.portfolio_order_item: "- **{{.symbol}}** ({{.type}} {{.direction}} {{.leverage}}x)\n  - 注文価格: `{{.target}}` (現在: `{{.current}}`)\n  - 注文証拠金: `{{.margin}} pt`"
 components:
   command.settings.view:
     - type: container
@@ -599,3 +605,19 @@ components:
               id: "play:fx_switch_pos:{uuid}"
               placeholder: "ポジションを選択して管理"
               options: "position_options"
+
+  command.play.portfolio:
+    - type: container
+      components:
+        - "### 📊 **{user_name}** の FXポートフォリオ 📊"
+        - type: separator
+          height: 2
+        - "🪙 **所持 GoPoints**: `{points} pt`"
+        - type: separator
+        - |-
+          ### 💼 保有ポジション ({pos_count}件)
+          {positions_list}
+        - type: separator
+        - |-
+          ### ⏳ 未約定の指値・逆指値注文 ({order_count}件)
+          {orders_list}
