@@ -149,6 +149,7 @@ func Command(c *components.Components) components.Command {
 						}
 						p := g.Permissions[role.ID]
 						p.Set(perm, value)
+						g.Permissions[role.ID] = p
 						if err := c.GormDB().Save(g).Error; err != nil {
 							return errors.NewError(err)
 						}
@@ -189,6 +190,7 @@ func Command(c *components.Components) components.Command {
 						if err != nil {
 							return errors.NewError(err)
 						}
+						t.Permission.UnSet(perm)
 						if err := c.GormDB().Save(t).Error; err != nil {
 							return errors.NewError(err)
 						}
@@ -201,6 +203,7 @@ func Command(c *components.Components) components.Command {
 						}
 						p := g.Permissions[role.ID]
 						p.UnSet(perm)
+						g.Permissions[role.ID] = p
 						if err := c.GormDB().Save(g).Error; err != nil {
 							return errors.NewError(err)
 						}

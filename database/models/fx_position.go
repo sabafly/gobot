@@ -16,7 +16,7 @@ const (
 )
 
 type FXPosition struct {
-	ID            uuid.UUID           `gorm:"type:uuid;primary_key;"`
+	ID            uuid.UUID           `gorm:"type:char(36);primary_key;"`
 	UserID        snowflake.ID        `gorm:"column:user_id;type:bigint(20) unsigned;not null;index"`
 	User          User                `gorm:"foreignKey:UserID;onDelete:CASCADE"`
 	GuildID       snowflake.ID        `gorm:"column:guild_id;type:bigint(20) unsigned;not null;index"`

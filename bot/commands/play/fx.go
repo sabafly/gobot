@@ -1057,7 +1057,7 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 		return nil
 	}
 
-	amountStr := event.ModalSubmitInteraction.Data.Text("amount")
+	amountStr := event.Data.Text("amount")
 	amount, err := strconv.ParseInt(strings.TrimSpace(amountStr), 10, 64)
 	if err != nil || amount <= 0 {
 		builder := discord.NewMessageBuilder().
@@ -2620,13 +2620,14 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 			}
 
 			triggered := false
-			if ordCopy.OrderType == "LIMIT" {
+			switch ordCopy.OrderType {
+			case "LIMIT":
 				if ordCopy.Direction == models.FXPositionDirectionBuy {
 					triggered = currentPrice <= ordCopy.TargetPrice
 				} else {
 					triggered = currentPrice >= ordCopy.TargetPrice
 				}
-			} else if ordCopy.OrderType == "STOP" {
+			case "STOP":
 				if ordCopy.Direction == models.FXPositionDirectionBuy {
 					triggered = currentPrice >= ordCopy.TargetPrice
 				} else {
@@ -2782,7 +2783,7 @@ func FXPortfolioCommandHandler(c *components.Components, event *events.Applicati
 				"margin":    pos.Margin,
 				"init":      initMargin,
 				"entry":     fmt.Sprintf("%.3f", pos.EntryPrice),
-				"current":     fmt.Sprintf("%.3f", currentPrice),
+				"current":   fmt.Sprintf("%.3f", currentPrice),
 				"ratio":     ratioText,
 				"pnl":       pnlStr,
 				"tp":        tpText,

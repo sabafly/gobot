@@ -1,6 +1,8 @@
 package database
 
 import (
+	"fmt"
+
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/database/models"
 	"gorm.io/driver/mysql"
@@ -25,7 +27,9 @@ func NewDB(dsn string) (*DB, error) {
 
 	// Migrator safety check: drop legacy fx_positions table if it does not contain 'id' column
 	if db.Migrator().HasTable("fx_positions") && !db.Migrator().HasColumn("fx_positions", "id") {
-		_ = db.Migrator().DropTable("fx_positions")
+		if err := db.Migrator().DropTable("fx_positions"); err != nil {
+			return nil, fmt.Errorf("failed to drop legacy fx_positions table: %w", err)
+		}
 	}
 
 	// auto migrate models

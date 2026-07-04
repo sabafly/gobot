@@ -478,7 +478,7 @@ components:
         - type: separator
         - |-
           ### 🆕 新規注文フォーム
-          {form_info}"
+          {form_info}
           {restriction_warning}
         - type: action_row
           components:

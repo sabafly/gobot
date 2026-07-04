@@ -321,19 +321,27 @@ func AddPointTx(tx *gorm.DB, userID snowflake.ID, guildID snowflake.ID, point in
 		slog.Error("failed to find or create user", "error", err, "user_id", userID)
 		return errors.NewError(err)
 	}
-	userPoint := models.GoPoint{
-		UserID:  user.ID,
-		GuildID: guildID,
-		Points:  0,
+
+	// Attempt atomic update first
+	result := tx.Model(&models.GoPoint{}).
+		Where("user_id = ? AND guild_id = ?", user.ID, guildID).
+		Update("points", gorm.Expr("points + ?", point))
+	if result.Error != nil {
+		slog.Error("failed to update user point", "error", result.Error, "user_id", userID, "guild_id", guildID)
+		return errors.NewError(result.Error)
 	}
-	if err := tx.Where(userPoint).Find(&userPoint).Error; err != nil {
-		slog.Error("failed to find or create user point", "error", err, "user_id", userID, "guild_id", guildID)
-		return errors.NewError(err)
-	}
-	userPoint.Points += point // Increment points for each message
-	if err := tx.Save(&userPoint).Error; err != nil {
-		slog.Error("failed to update user point", "error", err, "user_id", userID, "guild_id", guildID)
-		return errors.NewError(err)
+
+	// If no row existed, create one with the initial point value
+	if result.RowsAffected == 0 {
+		userPoint := models.GoPoint{
+			UserID:  user.ID,
+			GuildID: guildID,
+			Points:  point,
+		}
+		if err := tx.Create(&userPoint).Error; err != nil {
+			slog.Error("failed to create user point", "error", err, "user_id", userID, "guild_id", guildID)
+			return errors.NewError(err)
+		}
 	}
 	return nil
 }
