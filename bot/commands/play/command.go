@@ -80,6 +80,20 @@ func Command(c *components.Components) components.Command {
 							},
 						},
 					},
+					discord.ApplicationCommandOptionSubCommand{
+						Name:                     "chinchiro",
+						Description:              "チンチロリンをマルチプレイで開始します",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.play.chinchiro.description"),
+						Options: []discord.ApplicationCommandOption{
+							discord.ApplicationCommandOptionInt{
+								Name:                     "bet",
+								Description:              "掛け金を指定します (デフォルト: 10)",
+								DescriptionLocalizations: i18n.TranslateTextMap("command.play.chinchiro.option.bet.description"),
+								Required:                 false,
+								MinValue:                 ptr(1),
+							},
+						},
+					},
 				},
 			},
 		},
@@ -169,6 +183,14 @@ func Command(c *components.Components) components.Command {
 				},
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					return FXPortfolioCommandHandler(c, event)
+				},
+			},
+			"/play/chinchiro": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.chinchiro"),
+				},
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					return ChinchiroPlayCommand(c, event)
 				},
 			},
 		},
@@ -572,6 +594,38 @@ func Command(c *components.Components) components.Command {
 				},
 				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
 					return FXSetTPSLButtonHandler(c, event)
+				},
+			},
+			"play:chinchiro_join": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.chinchiro"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return ChinchiroJoinHandler(c, event)
+				},
+			},
+			"play:chinchiro_start": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.chinchiro"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return ChinchiroStartHandler(c, event)
+				},
+			},
+			"play:chinchiro_cancel": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.chinchiro"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return ChinchiroCancelHandler(c, event)
+				},
+			},
+			"play:chinchiro_roll": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.chinchiro"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return ChinchiroRollHandler(c, event)
 				},
 			},
 		},

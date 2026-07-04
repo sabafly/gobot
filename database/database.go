@@ -32,6 +32,18 @@ func NewDB(dsn string) (*DB, error) {
 		}
 	}
 
+	// Drop legacy Ent chinchiro tables to allow clean GORM migration
+	if db.Migrator().HasTable("chinchiro_players") {
+		if err := db.Migrator().DropTable("chinchiro_players"); err != nil {
+			return nil, fmt.Errorf("failed to drop legacy chinchiro_players table: %w", err)
+		}
+	}
+	if db.Migrator().HasTable("chinchiro_sessions") {
+		if err := db.Migrator().DropTable("chinchiro_sessions"); err != nil {
+			return nil, fmt.Errorf("failed to drop legacy chinchiro_sessions table: %w", err)
+		}
+	}
+
 	// auto migrate models
 	if err := db.AutoMigrate(
 		&models.User{},
@@ -50,6 +62,8 @@ func NewDB(dsn string) (*DB, error) {
 		&models.WordSuffix{},
 		&models.FXPosition{},
 		&models.FXOrder{},
+		&models.ChinchiroSession{},
+		&models.ChinchiroPlayer{},
 	); err != nil {
 		return nil, err
 	}

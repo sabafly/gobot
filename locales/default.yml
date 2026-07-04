@@ -40,6 +40,8 @@ strings:
   command.play.fx.description: "FXポイントゲームをプレイします。"
   command.play.portfolio.description: "指定したユーザーのFXポジション一覧（ポートフォリオ）を表示します。"
   command.play.portfolio.option.user.description: "ポートフォリオを表示するユーザーを指定します。"
+  command.play.chinchiro.description: "チンチロリンをマルチプレイで開始します。"
+  command.play.chinchiro.option.bet.description: "掛け金を指定します（デフォルト: 10）。"
   command.bet.description: "Goポイントを賭けます。"
   command.bet.create.title: "ベットを作成"
   command.bet.create.input.title.placeholder: "ベット内容を入力してください"
@@ -621,3 +623,62 @@ components:
         - |-
           ### ⏳ 未約定の指値・逆指値注文 ({order_count}件)
           {orders_list}
+
+  command.play.chinchiro.lobby:
+    - type: container
+      components:
+        - "🎲 **チンチロリン (Chinchiro) ロビー** 🎲"
+        - type: separator
+        - "🪙 **参加費 (ベット)**: `{bet} pt`"
+        - type: separator
+        - |-
+          ### 👥 参加者一覧 ({player_count}名)
+          {players_list}
+        - type: separator
+        - "親（主催者）: {host_mention}"
+        - type: action_row
+          components:
+            - type: button
+              style: primary
+              label: "参加する (Join)"
+              id: "play:chinchiro_join:{uuid}"
+            - type: button
+              style: success
+              label: "ゲームを開始する"
+              id: "play:chinchiro_start:{uuid}"
+            - type: button
+              style: danger
+              label: "キャンセル"
+              id: "play:chinchiro_cancel:{uuid}"
+
+  command.play.chinchiro.game:
+    - type: container
+      components:
+        - "🎲 **チンチロリン (Chinchiro) プレイ中** 🎲"
+        - type: separator
+        - |-
+          ### 🎴 ゲーム状況
+          {game_status}
+        - type: separator
+        - |-
+          ### 👥 プレイヤー結果・状態
+          {players_status}
+        - type: action_row
+          components:
+            - type: button
+              style: success
+              label: "サイコロを振る (Roll)"
+              id: "play:chinchiro_roll:{uuid}"
+
+  command.play.chinchiro.finished:
+    - type: container
+      components:
+        - "🎲 **チンチロリン (Chinchiro) ゲーム終了** 🎲"
+        - type: separator
+        - |-
+          ### 🏁 結果発表
+          {game_status}
+        - type: separator
+        - |-
+          ### 👥 プレイヤー結果・状態
+          {players_status}
