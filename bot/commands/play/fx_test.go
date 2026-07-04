@@ -262,6 +262,9 @@ func createSQLiteTable(db *gorm.DB, model any) error {
 			continue
 		}
 		colType := "TEXT"
+		if field.DataType == "time" {
+			colType = "DATETIME"
+		}
 		if field.PrimaryKey {
 			pks = append(pks, fmt.Sprintf("`%s`", field.DBName))
 		}

@@ -29,6 +29,7 @@ type ChinchiroSession struct {
 	HostRollCount      int            `gorm:"column:host_roll_count;type:int;not null;default:0"`
 	HostPoint          int            `gorm:"column:host_point;type:int;not null;default:0"`
 	CurrentPlayerIndex int            `gorm:"column:current_player_index;type:int;not null;default:0"`
+	CurrentHostIndex   int            `gorm:"column:current_host_index;type:int;not null;default:0"`
 	CreatedAt          time.Time      `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP"`
 
 	Players []ChinchiroPlayer `gorm:"foreignKey:SessionID;constraint:OnDelete:CASCADE"`

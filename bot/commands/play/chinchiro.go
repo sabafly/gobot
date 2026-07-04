@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
@@ -179,6 +180,11 @@ func ChinchiroPlayCommand(c *components.Components, event *events.ApplicationCom
 
 func ChinchiroMessage(c *components.Components, session *models.ChinchiroSession, locale discord.Locale) []discord.LayoutComponent {
 	uuidStr := session.ID.String()
+
+	// Sort players by CreatedAt to maintain stable display order as roles rotate
+	sort.Slice(session.Players, func(i, j int) bool {
+		return session.Players[i].CreatedAt.Before(session.Players[j].CreatedAt)
+	})
 
 	if session.State == models.ChinchiroStateLobby {
 		var playersSB strings.Builder
@@ -654,12 +660,22 @@ func ChinchiroRollHandler(c *components.Components, event *events.ComponentInter
 				// Resolve game immediately
 				txErr := c.GormDB().Transaction(func(tx *gorm.DB) error {
 					resolveChinchiroInstantResult(tx, &session, mult)
+					// Reload session and players from tx to get updated data
+					if err := tx.Preload("Players").Where("id = ?", session.ID).First(&session).Error; err != nil {
+						return err
+					}
+					// Sort players by CreatedAt to maintain stable rotation order
+					sort.Slice(session.Players, func(i, j int) bool {
+						return session.Players[i].CreatedAt.Before(session.Players[j].CreatedAt)
+					})
+					if err := advanceToNextRoundOrFinish(tx, &session, event.Client()); err != nil {
+						return err
+					}
 					return tx.Save(&session).Error
 				})
 				if txErr != nil {
 					return errors.NewError(txErr)
 				}
-				chinchiro_sessions.Delete(session.ID)
 			} else {
 				// Normal point or Menashi (after 3 rolls)
 				// Transition to Kids rolling
@@ -719,10 +735,14 @@ func ChinchiroRollHandler(c *components.Components, event *events.ComponentInter
 					if err := tx.Preload("Players").Where("id = ?", session.ID).First(&session).Error; err != nil {
 						return err
 					}
-					// Set state and resolve game
-					session.State = models.ChinchiroStateFinished
+					// Sort players by CreatedAt to maintain stable rotation order
+					sort.Slice(session.Players, func(i, j int) bool {
+						return session.Players[i].CreatedAt.Before(session.Players[j].CreatedAt)
+					})
 					resolveChinchiroNormalResults(tx, &session)
-					chinchiro_sessions.Delete(session.ID)
+					if err := advanceToNextRoundOrFinish(tx, &session, event.Client()); err != nil {
+						return err
+					}
 				} else {
 					session.CurrentPlayerIndex++
 				}
@@ -844,4 +864,147 @@ func respondSessionNotFound(event *events.ComponentInteractionCreate) errors.Err
 		AddFlags(discord.MessageFlagEphemeral)
 	_ = event.RespondMessage(builder)
 	return nil
+}
+
+func getPointTx(tx *gorm.DB, userID snowflake.ID, guildID snowflake.ID) (int64, error) {
+	var userPoint models.GoPoint
+	err := tx.Where("user_id = ? AND guild_id = ?", userID, guildID).FirstOrInit(&userPoint).Error
+	if err != nil {
+		return 0, err
+	}
+	return userPoint.Points, nil
+}
+
+func buildRoundSummaryText(session *models.ChinchiroSession) string {
+	var sb strings.Builder
+	roundNum := session.CurrentHostIndex + 1
+	sb.WriteString(fmt.Sprintf("📢 **第 %d 回戦の結果発表** 📢\n🪙 ベット額: `%d pt`\n\n", roundNum, session.Bet))
+
+	hostDices := parseDices(session.HostDices)
+	hHand, _, hostMult := evaluateHand(hostDices)
+	hostNet := int64(0)
+	kidsNetSummary := make(map[snowflake.ID]int64)
+
+	for _, p := range session.Players {
+		if p.IsHost {
+			continue
+		}
+		var kidNet int64
+		if hostMult > 1 {
+			kidNet = -session.Bet
+		} else if hostMult < 0 {
+			kidNet = session.Bet * 2
+		} else {
+			if p.Point > session.HostPoint {
+				mult := 1
+				if p.Point == 30 {
+					mult = 5
+				} else if p.Point > 20 {
+					mult = 3
+				} else if p.Point == 10 {
+					mult = 2
+				}
+				kidNet = session.Bet * int64(mult)
+			} else if p.Point < session.HostPoint {
+				kidNet = -session.Bet
+			} else {
+				kidNet = 0
+			}
+		}
+		kidsNetSummary[p.UserID] = kidNet
+		hostNet -= kidNet
+	}
+
+	sign := "+"
+	if hostNet < 0 {
+		sign = ""
+	}
+	sb.WriteString(fmt.Sprintf("👑 **親**: <@%s> -> %s [%s] (収支: **%s%d pt**)\n",
+		session.HostUserID.String(), getDiceStr(hostDices), hHand, sign, hostNet))
+
+	for _, p := range session.Players {
+		if p.IsHost {
+			continue
+		}
+		kDices := parseDices(p.Dices)
+		kHand, _, _ := evaluateHand(kDices)
+		net := kidsNetSummary[p.UserID]
+		sign = "+"
+		if net < 0 {
+			sign = ""
+		}
+		sb.WriteString(fmt.Sprintf("子: <@%s> -> %s [%s] (収支: **%s%d pt**)\n",
+			p.UserID.String(), getDiceStr(kDices), kHand, sign, net))
+	}
+
+	return sb.String()
+}
+
+func advanceToNextRoundOrFinish(tx *gorm.DB, session *models.ChinchiroSession, client *bot.Client) error {
+	// Post summary of the completed round to the channel
+	if client != nil {
+		roundSummaryText := buildRoundSummaryText(session)
+		_, _ = client.Rest.CreateMessage(session.ChannelID, discord.NewMessageBuilder().
+			SetContent(roundSummaryText).
+			BuildCreate())
+	}
+
+	numPlayers := len(session.Players)
+	for {
+		session.CurrentHostIndex++
+		if session.CurrentHostIndex >= numPlayers {
+			// All players have been Host once! The game is completely finished.
+			session.State = models.ChinchiroStateFinished
+			chinchiro_sessions.Delete(session.ID)
+			return nil
+		}
+
+		nextHost := &session.Players[session.CurrentHostIndex]
+		numKids := int64(len(session.Players) - 1)
+		maxLiability := session.Bet * 5 * numKids
+
+		// Check if this new Host has enough points
+		points, err := getPointTx(tx, nextHost.UserID, session.GuildID)
+		if err != nil {
+			continue
+		}
+
+		if points < maxLiability {
+			// Skip this host due to insufficient points, and post a message
+			if client != nil {
+				skipMsg := fmt.Sprintf("⚠️ <@%s> はポイント不足のため、親の番をスキップします。（必要: %d pt, 現在: %d pt）", nextHost.UserID.String(), maxLiability, points)
+				_, _ = client.Rest.CreateMessage(session.ChannelID, discord.NewMessageBuilder().
+					SetContent(skipMsg).
+					BuildCreate())
+			}
+			continue
+		}
+
+		// Deduct/lock max liability from the new Host
+		if err := gopoint.AddPointTx(tx, nextHost.UserID, session.GuildID, -maxLiability); err != nil {
+			return err
+		}
+
+		// Found a valid Host! Start the new round
+		session.HostUserID = nextHost.UserID
+		session.HostDices = ""
+		session.HostRollCount = 0
+		session.HostPoint = 0
+		session.CurrentPlayerIndex = 0
+		session.State = models.ChinchiroStateHostRolling
+
+		// Reset all players' roll state in database
+		for i := range session.Players {
+			p := &session.Players[i]
+			p.Dices = ""
+			p.RollCount = 0
+			p.Point = 0
+			p.IsHost = (p.UserID == nextHost.UserID)
+			if err := tx.Save(p).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
 }

@@ -232,3 +232,84 @@ func TestChinchiro_ZoroResolution(t *testing.T) {
 		t.Errorf("Kid1 points = %d, want 130", kid1GP.Points)
 	}
 }
+
+func TestChinchiro_HostRotation(t *testing.T) {
+	gdb, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to open sqlite DB: %v", err)
+	}
+
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.ChinchiroSession{}, &models.ChinchiroPlayer{}} {
+		if err := createSQLiteTable(gdb, model); err != nil {
+			t.Fatalf("failed to create table for %T: %v", model, err)
+		}
+	}
+
+	hostID := snowflake.ID(1111)
+	kid1ID := snowflake.ID(2222)
+	guildID := snowflake.ID(9999)
+
+	_ = gdb.Create(&models.User{ID: hostID})
+	_ = gdb.Create(&models.User{ID: kid1ID})
+	_ = gdb.Create(&models.Guild{ID: guildID})
+
+	// Initial balances (enough for both to be host once)
+	_ = gdb.Create(&models.GoPoint{UserID: hostID, GuildID: guildID, Points: 1000})
+	_ = gdb.Create(&models.GoPoint{UserID: kid1ID, GuildID: guildID, Points: 1000})
+
+	bet := int64(10)
+	session := &models.ChinchiroSession{
+		ID:               uuid.New(),
+		GuildID:          guildID,
+		HostUserID:       hostID,
+		Bet:              bet,
+		State:            models.ChinchiroStateHostRolling,
+		CurrentHostIndex: 0,
+	}
+
+	_ = gdb.Create(session)
+	p1 := &models.ChinchiroPlayer{SessionID: session.ID, UserID: hostID, IsHost: true}
+	p2 := &models.ChinchiroPlayer{SessionID: session.ID, UserID: kid1ID, IsHost: false}
+	_ = gdb.Create(p1)
+	_ = gdb.Create(p2)
+
+	// Test rotation
+	err = gdb.Transaction(func(tx *gorm.DB) error {
+		var dbSession models.ChinchiroSession
+		if err := tx.Preload("Players").Where("id = ?", session.ID).First(&dbSession).Error; err != nil {
+			return err
+		}
+		if err := advanceToNextRoundOrFinish(tx, &dbSession, nil); err != nil {
+			return err
+		}
+		return tx.Save(&dbSession).Error
+	})
+	if err != nil {
+		t.Fatalf("failed to advance host: %v", err)
+	}
+
+	var dbSession models.ChinchiroSession
+	_ = gdb.Preload("Players").Where("id = ?", session.ID).First(&dbSession)
+
+	if dbSession.CurrentHostIndex != 1 {
+		t.Errorf("expected CurrentHostIndex to be 1, got %d", dbSession.CurrentHostIndex)
+	}
+	if dbSession.HostUserID != kid1ID {
+		t.Errorf("expected new HostUserID to be %d, got %d", kid1ID, dbSession.HostUserID)
+	}
+	if dbSession.State != models.ChinchiroStateHostRolling {
+		t.Errorf("expected state to be HostRolling, got %s", dbSession.State)
+	}
+
+	// Verify player flags were updated
+	var players []models.ChinchiroPlayer
+	_ = gdb.Where("session_id = ?", session.ID).Find(&players)
+	for _, p := range players {
+		if p.UserID == kid1ID && !p.IsHost {
+			t.Errorf("expected kid1ID to be Host, got isHost: %t", p.IsHost)
+		}
+		if p.UserID == hostID && p.IsHost {
+			t.Errorf("expected hostID to be child, got isHost: %t", p.IsHost)
+		}
+	}
+}
