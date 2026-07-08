@@ -42,6 +42,9 @@ strings:
   command.play.portfolio.option.user.description: "ポートフォリオを表示するユーザーを指定します。"
   command.play.chinchiro.description: "チンチロリンをマルチプレイで開始します。"
   command.play.chinchiro.option.bet.description: "掛け金を指定します（デフォルト: 10）。"
+  command.play.polymarket.description: "Polymarketの予測市場でGoPointを賭けます。"
+  command.play.polymarket.option.query.description: "市場を検索するためのクエリ。"
+  command.play.polymarket.option.closed.description: "終了した予測市場も含めるかどうか（デフォルト: false）"
   command.bet.description: "Goポイントを賭けます。"
   command.bet.create.title: "ベットを作成"
   command.bet.create.input.title.placeholder: "ベット内容を入力してください"
@@ -299,6 +302,36 @@ strings:
   components.play.fx.portfolio_no_orders: "* 未約定の注文はありません"
   components.play.fx.portfolio_position_item: "- **{{.symbol}}** ({{.direction}} {{.leverage}}x)\n  - 証拠金: `{{.margin}} pt` (当初: `{{.init}} pt`)\n  - エントリー: `{{.entry}}` → 現在: `{{.current}}` (維持率: `{{.ratio}}`)\n  - 評価損益: **`{{.pnl}} pt`**\n  - 利確(TP): `{{.tp}}` / 損切(SL): `{{.sl}}`"
   components.play.fx.portfolio_order_item: "- **{{.symbol}}** ({{.type}} {{.direction}} {{.leverage}}x)\n  - 注文価格: `{{.target}}` (現在: `{{.current}}`)\n  - 注文証拠金: `{{.margin}} pt`"
+  components.play.polymarket.err_session_expired: "⚠️ **セッションが期限切れです**: セッションの有効期限が切れました。もう一度 `/play polymarket` を実行してください。"
+  components.play.polymarket.err_not_your_session: "⚠️ **他人のセッションです**: これはあなたのゲームセッションではありません。`/play polymarket` で新しく開始してください。"
+  components.play.polymarket.err_session_expired_modal: "⚠️ **セッションが期限切れです**: セッションの有効期限が切れました。もう一度やり直してください。"
+  components.play.polymarket.err_invalid_amount: "⚠️ **無効な入力**: 1以上の正の整数を入力してください。"
+  components.play.polymarket.err_insufficient_points: "❌ **ポイント不足**: GoPointsが不足しています。賭け金 `{{.amount}} pt` に対し、現在の保有ポイントは `{{.points}} pt` です。"
+  components.play.polymarket.err_api_failed: "❌ **通信エラー**: Polymarket APIとの通信に失敗しました。\nエラー: `{{.error}}`"
+  components.play.polymarket.err_no_markets: "❌ **市場が見つかりません**: 条件に合う予測市場が見つかりませんでした。別のキーワードで検索するか、終了した市場を含めてください。"
+  components.play.polymarket.market_not_found_option: "市場が見つかりませんでした"
+  components.play.polymarket.default_query_info: "直近のアクティブな予測市場 (出来高順)"
+  components.play.polymarket.search_query_info: "検索ワード: *\"{{.query}}\"* の結果"
+  components.play.polymarket.market_option_desc: "出来高: ${{.volume}} | 終了予定: {{.end_date}}"
+  components.play.polymarket.outcome_option_desc: "価格: {{.price}} pt | 的中時の倍率: {{.multiplier}}倍"
+  components.play.polymarket.odds_item: "- **{{.outcome}}**: `{{.percentage}}%` (価格: `{{.price}} pt`)"
+  components.play.polymarket.no_outcomes_option: "選択肢がありません"
+  components.play.polymarket.odds_label: "現在の価格 (オッズ/勝率 %):"
+  components.play.polymarket.bet_history_item: "- **{{.market}}**\n  予測: **{{.outcome}}** (購入価格: `{{.price}} pt`) | 金額: `{{.amount}} pt` | 状況: {{.status}} | *{{.time}}*"
+  components.play.polymarket.status_pending: "⏳ 進行中 (未確定)"
+  components.play.polymarket.status_won: "✅ 的中 (+{{.payout}} pt 獲得)"
+  components.play.polymarket.status_lost: "❌ はずれ"
+  components.play.polymarket.no_bet_history: "*ベットした履歴はありません。*"
+  components.play.polymarket.bet_success: "✅ **ベットが正常に完了しました！**\n- 予測市場: *{{.market}}*\n- 予測内容: **{{.outcome}}** (購入単価: `{{.price}} pt`)\n- 賭け金: `{{.amount}} pt`\n- 予測的中時の想定配当: `{{.est_payout}} pt` ({{.multiplier}}倍)"
+  components.play.polymarket.no_new_resolutions: "✅ ベットをすべて検証しましたが、新しく確定した市場はありませんでした。"
+  components.play.polymarket.resolution_header: "🔔 **ベットの確定結果**:\n{{.details}}\n"
+  components.play.polymarket.resolution_won: "✅ **的中**: `{{.amount}} pt` 賭けていた *{{.market}}* の結果が **{{.outcome}}** に確定しました。(配当: `{{.payout}} pt` を獲得しました)"
+  components.play.polymarket.resolution_lost: "❌ **はずれ**: `{{.amount}} pt` 賭けていた *{{.market}}* の結果が **{{.outcome}}** 以外で確定しました。"
+  components.play.polymarket.quit_title: "🔮 **Polymarket Prediction Betting**"
+  components.play.polymarket.quit_desc: "Polymarket 予測ベットセッションを終了しました。"
+  components.play.polymarket.modal_bet_title: "ベット額の入力"
+  components.play.polymarket.modal_bet_label: "GoPoints 金額"
+  components.play.polymarket.modal_bet_placeholder: "賭けたい GoPoints の金額を入力してください (例: 150)"
 components:
   command.settings.view:
     - type: container
@@ -682,3 +715,135 @@ components:
         - |-
           ### 👥 プレイヤー結果・状態
           {players_status}
+
+  command.play.polymarket.search_screen:
+    - type: container
+      components:
+        - "🔮 **Polymarket Prediction Betting** 🔮"
+        - type: separator
+        - |-
+          ### 🔎 市場一覧
+          {query_info}
+
+          下のセレクトメニューから予測市場を選択して、詳細の確認やベットを行えます。
+          {status}
+        - type: separator
+        - "🪙 **保有 GoPoints**: `{points} pt`"
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:pm_select_market:{uuid}"
+              placeholder: "市場を選択してください..."
+              options: "market_options"
+        - type: action_row
+          components:
+            - type: button
+              style: success
+              label: "自分のベット一覧"
+              id: "play:pm_view_my_bets:{uuid}"
+            - type: button
+              style: secondary
+              label: "画面を閉じる"
+              id: "play:pm_quit:{uuid}"
+
+  command.play.polymarket.market_detail_screen:
+    - type: container
+      components:
+        - "🔮 **Polymarket 予測市場詳細** 🔮"
+        - type: separator
+        - |-
+          ### {market_question}
+
+          📅 **終了予定日**: {end_date}
+          📊 **出来高**: ${volume} | **流動性**: {liquidity}
+
+          **現在の価格 (オッズ/勝率 %):**
+          {odds_text}
+        - type: separator
+        - "🪙 **保有 GoPoints**: `{points} pt`"
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:pm_select_outcome:{uuid}"
+              placeholder: "賭ける結果を選択してください..."
+              options: "outcome_options"
+        - type: action_row
+          components:
+            - type: button
+              style: secondary
+              label: "市場一覧に戻る"
+              id: "play:pm_back_to_list:{uuid}"
+            - type: button
+              style: secondary
+              label: "画面を閉じる"
+              id: "play:pm_quit:{uuid}"
+
+  command.play.polymarket.bet_placement_screen:
+    - type: container
+      components:
+        - "🔮 **Polymarket ベット額の決定** 🔮"
+        - type: separator
+        - |-
+          ### {market_question}
+
+          👉 **選択した結果**: `{selected_outcome}` (現在価格: `{outcome_price} pt` / 1シェア)
+
+          *※予測が的中した場合、1シェアあたり `1 pt` (GoPoints) の配当が得られます。的中時の倍率は `1 / {outcome_price} = {multiplier}倍` です。*
+        - type: separator
+        - "🪙 **保有 GoPoints**: `{points} pt`"
+        - type: action_row
+          components:
+            - type: button
+              style: primary
+              label: "10 pt 賭ける"
+              id: "play:pm_bet_amount:10:{uuid}"
+            - type: button
+              style: primary
+              label: "50 pt 賭ける"
+              id: "play:pm_bet_amount:50:{uuid}"
+            - type: button
+              style: primary
+              label: "100 pt 賭ける"
+              id: "play:pm_bet_amount:100:{uuid}"
+            - type: button
+              style: primary
+              label: "500 pt 賭ける"
+              id: "play:pm_bet_amount:500:{uuid}"
+            - type: button
+              style: success
+              label: "カスタム金額を入力"
+              id: "play:pm_bet_amount:custom_btn:{uuid}"
+        - type: action_row
+          components:
+            - type: button
+              style: secondary
+              label: "詳細に戻る"
+              id: "play:pm_back_to_detail:{uuid}"
+            - type: button
+              style: secondary
+              label: "画面を閉じる"
+              id: "play:pm_quit:{uuid}"
+
+  command.play.polymarket.my_bets_screen:
+    - type: container
+      components:
+        - "🔮 **あなたの Polymarket ベット履歴・状況** 🔮"
+        - type: separator
+        - |-
+          {status_header}
+          {bets_list}
+        - type: separator
+        - type: action_row
+          components:
+            - type: button
+              style: success
+              label: "結果を確認 & 払い戻し"
+              id: "play:pm_refresh_bets:{uuid}"
+            - type: button
+              style: secondary
+              label: "市場一覧に戻る"
+              id: "play:pm_back_to_list:{uuid}"
+            - type: button
+              style: secondary
+              label: "画面を閉じる"
+              id: "play:pm_quit:{uuid}"

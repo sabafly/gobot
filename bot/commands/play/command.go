@@ -94,6 +94,25 @@ func Command(c *components.Components) components.Command {
 							},
 						},
 					},
+					discord.ApplicationCommandOptionSubCommand{
+						Name:                     "polymarket",
+						Description:              "Bet GoPoints on Polymarket predictions",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.play.polymarket.description"),
+						Options: []discord.ApplicationCommandOption{
+							discord.ApplicationCommandOptionString{
+								Name:                     "query",
+								Description:              "Search query to find active markets",
+								DescriptionLocalizations: i18n.TranslateTextMap("command.play.polymarket.option.query.description"),
+								Required:                 false,
+							},
+							discord.ApplicationCommandOptionBool{
+								Name:                     "closed",
+								Description:              "Include closed/finished predictions",
+								DescriptionLocalizations: i18n.TranslateTextMap("command.play.polymarket.option.closed.description"),
+								Required:                 false,
+							},
+						},
+					},
 				},
 			},
 		},
@@ -191,6 +210,14 @@ func Command(c *components.Components) components.Command {
 				},
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					return ChinchiroPlayCommand(c, event)
+				},
+			},
+			"/play/polymarket": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.polymarket"),
+				},
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					return PolymarketPlayCommand(c, event)
 				},
 			},
 		},
@@ -628,6 +655,70 @@ func Command(c *components.Components) components.Command {
 					return ChinchiroRollHandler(c, event)
 				},
 			},
+			"play:pm_select_market": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.polymarket"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return PolymarketSelectMarketHandler(c, event)
+				},
+			},
+			"play:pm_select_outcome": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.polymarket"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return PolymarketSelectOutcomeHandler(c, event)
+				},
+			},
+			"play:pm_view_my_bets": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.polymarket"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return PolymarketViewMyBetsHandler(c, event)
+				},
+			},
+			"play:pm_back_to_list": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.polymarket"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return PolymarketBackToListHandler(c, event)
+				},
+			},
+			"play:pm_back_to_detail": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.polymarket"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return PolymarketBackToDetailHandler(c, event)
+				},
+			},
+			"play:pm_quit": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.polymarket"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return PolymarketQuitHandler(c, event)
+				},
+			},
+			"play:pm_bet_amount": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.polymarket"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return PolymarketBetAmountHandler(c, event)
+				},
+			},
+			"play:pm_refresh_bets": generic.PComponentHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("play.polymarket"),
+				},
+				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
+					return PolymarketRefreshBetsHandler(c, event)
+				},
+			},
 		},
 		ModalHandlers: map[string]generic.ModalHandler{
 			"play:fx_margin_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
@@ -641,6 +732,9 @@ func Command(c *components.Components) components.Command {
 			},
 			"play:fx_tpsl_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
 				return FXTPSLModalHandler(c, event)
+			},
+			"play:pm_custom_bet_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+				return PolymarketCustomBetModalHandler(c, event)
 			},
 		},
 		Schedulers: []components.Scheduler{

@@ -64,6 +64,7 @@ func NewDB(dsn string) (*DB, error) {
 		&models.FXOrder{},
 		&models.ChinchiroSession{},
 		&models.ChinchiroPlayer{},
+		&models.PolymarketBet{},
 	); err != nil {
 		return nil, err
 	}
