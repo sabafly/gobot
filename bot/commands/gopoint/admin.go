@@ -10,11 +10,13 @@ import (
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
+	"github.com/sabafly/gobot/internal/xppoint"
 	"gorm.io/gorm"
 )
 
@@ -456,6 +458,11 @@ func TaxForceHandler(c *components.Components, event *events.ApplicationCommandI
 	guildID := *event.GuildID()
 	now := time.Now()
 
+	overwrite := false
+	if opt, ok := event.SlashCommandInteractionData().OptBool("overwrite"); ok {
+		overwrite = opt
+	}
+
 	var cfg models.GoPointTaxConfig
 	var calcCount int
 	if err := c.GormDB().Where("guild_id = ?", guildID).First(&cfg).Error; err == nil && cfg.Enabled {
@@ -468,7 +475,13 @@ func TaxForceHandler(c *components.Components, event *events.ApplicationCommandI
 					if errCount := tx.Model(&models.GoPointPendingTax{}).
 						Where("guild_id = ? AND user_id = ? AND collected = ? AND exempted = ?", guildID, p.UserID, false, false).
 						Count(&count).Error; errCount == nil && count > 0 {
-						continue // Already has a pending tax, skip to avoid double tax
+						if overwrite {
+							if errDel := tx.Where("guild_id = ? AND user_id = ? AND collected = ? AND exempted = ?", guildID, p.UserID, false, false).Delete(&models.GoPointPendingTax{}).Error; errDel != nil {
+								return errDel
+							}
+						} else {
+							continue // Already has a pending tax, skip to avoid double tax
+						}
 					}
 
 					taxAmount := calculateUserTaxAmount(p.Points, &cfg)
@@ -564,15 +577,71 @@ func ResetPointsHandler(c *components.Components, event *events.ApplicationComma
 		targetPoints = int64(points)
 	}
 
-	guildID := *event.GuildID()
-
-	if err := c.GormDB().Model(&models.GoPoint{}).Where("guild_id = ?", guildID).Update("points", targetPoints).Error; err != nil {
-		return errors.NewError(err)
+	byLevel := false
+	if opt, ok := data.OptBool("by_level"); ok {
+		byLevel = opt
 	}
 
-	msg := i18n.TranslateText(event.Locale(), "components.gopoint.admin.reset_success", map[string]any{
-		"points": targetPoints,
-	})
+	guildID := *event.GuildID()
+
+	var msg string
+	if byLevel {
+		err := c.GormDB().Transaction(func(tx *gorm.DB) error {
+			var members []models.Member
+			if err := tx.Where("guild_id = ?", guildID).Find(&members).Error; err != nil {
+				return err
+			}
+
+			updatedUserIDs := make(map[snowflake.ID]bool)
+
+			for _, m := range members {
+				level := m.XP.Level()
+				pts := int64(xppoint.TotalPoint(level))
+
+				res := tx.Model(&models.GoPoint{}).
+					Where("user_id = ? AND guild_id = ?", m.UserID, guildID).
+					Update("points", pts)
+				if res.Error != nil {
+					return res.Error
+				}
+				if res.RowsAffected == 0 {
+					gp := models.GoPoint{
+						UserID:  m.UserID,
+						GuildID: guildID,
+						Points:  pts,
+					}
+					if errCreate := tx.Create(&gp).Error; errCreate != nil {
+						return errCreate
+					}
+				}
+				updatedUserIDs[m.UserID] = true
+			}
+
+			var otherGoPoints []models.GoPoint
+			if err := tx.Where("guild_id = ?", guildID).Find(&otherGoPoints).Error; err == nil {
+				for _, gp := range otherGoPoints {
+					if !updatedUserIDs[gp.UserID] {
+						gp.Points = 0
+						if errSave := tx.Save(&gp).Error; errSave != nil {
+							return errSave
+						}
+					}
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return errors.NewError(err)
+		}
+		msg = "ギルド内の全員のGoPointsを、それぞれのレベルの累積必要XPに応じたポイントにリセットしました。"
+	} else {
+		if err := c.GormDB().Model(&models.GoPoint{}).Where("guild_id = ?", guildID).Update("points", targetPoints).Error; err != nil {
+			return errors.NewError(err)
+		}
+		msg = i18n.TranslateText(event.Locale(), "components.gopoint.admin.reset_success", map[string]any{
+			"points": targetPoints,
+		})
+	}
 
 	if err := event.RespondMessage(discord.NewMessageBuilder().
 		SetEphemeral(false).
@@ -657,14 +726,14 @@ func SeasonStartHandler(c *components.Components, event *events.ApplicationComma
 			"name":     season.Name,
 			"duration": durationDays,
 			"criteria": criteriaDisplayName(criteria),
-			"end_time": season.EndTime.Format("2006/01/02 15:04"),
+			"end_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, season.EndTime).String(),
 		})
 	} else {
 		msg = i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_start_scheduled", map[string]any{
 			"name":       season.Name,
 			"criteria":   criteriaDisplayName(criteria),
-			"start_time": season.StartTime.Format("2006/01/02 15:04"),
-			"end_time":   season.EndTime.Format("2006/01/02 15:04"),
+			"start_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, season.StartTime).String(),
+			"end_time":   discord.NewTimestamp(discord.TimestampStyleLongDateTime, season.EndTime).String(),
 		})
 	}
 
@@ -801,9 +870,9 @@ func SeasonStatusHandler(c *components.Components, event *events.ApplicationComm
 		"name":       active.Name,
 		"status":     statusStr,
 		"criteria":   criteriaDisplayName(active.Criteria),
-		"start_time": active.StartTime.Format("2006/01/02 15:04"),
-		"end_time":   active.EndTime.Format("2006/01/02 15:04"),
-		"remaining":  remaining.String(),
+		"start_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, active.StartTime).String(),
+		"end_time":   discord.NewTimestamp(discord.TimestampStyleLongDateTime, active.EndTime).String(),
+		"remaining":  discord.NewTimestamp(discord.TimestampStyleRelative, time.Now().Add(remaining)).String(),
 		"ranking":    strings.Join(rankingLines, "\n"),
 	})
 
@@ -1134,4 +1203,36 @@ func announceSeasonResults(c *components.Components, client *bot.Client, seasonI
 			SetContent(sb.String()).
 			Build())
 	}
+}
+
+func seasonAutocomplete(c *components.Components, event *events.AutocompleteInteractionCreate) errors.Error {
+	query := event.Data.String("season_id")
+
+	var seasons []models.GoPointSeason
+	err := c.GormDB().
+		Where("guild_id = ? AND (name LIKE ? OR id LIKE ?)", *event.GuildID(), "%"+escapeLike(query)+"%", "%"+escapeLike(query)+"%").
+		Limit(25).
+		Find(&seasons).Error
+	if err != nil {
+		return errors.NewError(err)
+	}
+
+	choices := make([]discord.AutocompleteChoice, len(seasons))
+	for i, s := range seasons {
+		choices[i] = discord.AutocompleteChoiceString{
+			Name:  fmt.Sprintf("%s (%s)", s.Name, s.ID.String()),
+			Value: s.ID.String(),
+		}
+	}
+	if err := event.AutocompleteResult(choices); err != nil {
+		return errors.NewError(err)
+	}
+	return nil
+}
+
+func escapeLike(s string) string {
+	s = strings.ReplaceAll(s, "\\", "\\\\")
+	s = strings.ReplaceAll(s, "%", "\\%")
+	s = strings.ReplaceAll(s, "_", "\\_")
+	return s
 }
