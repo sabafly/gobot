@@ -392,6 +392,76 @@ func TestFX_LiquidationWithDeficitCoverage(t *testing.T) {
 	}
 }
 
+func TestFX_LiquidationWithRefund(t *testing.T) {
+	gdb, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to open sqlite DB: %v", err)
+	}
+
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}} {
+		if err := createSQLiteTable(gdb, model); err != nil {
+			t.Fatalf("failed to create table for %T: %v", model, err)
+		}
+	}
+
+	dbWrapper := &database.DB{DB: gdb}
+	ctx := context.Background()
+	c := components.New(ctx, components.Config{}, dbWrapper)
+
+	userID := snowflake.ID(12345)
+	guildID := snowflake.ID(67890)
+
+	_ = gdb.Create(&models.User{ID: userID})
+	_ = gdb.Create(&models.Guild{ID: guildID})
+	_ = gdb.Create(&models.GoPoint{UserID: userID, GuildID: guildID, Points: 1000})
+
+	// Seed position with 100 margin, 10 leverage, entry 150.0
+	pos := &models.FXPosition{
+		ID:            uuid.New(),
+		UserID:        userID,
+		GuildID:       guildID,
+		Symbol:        "USD_JPY",
+		Direction:     models.FXPositionDirectionBuy,
+		EntryPrice:    150.0,
+		Margin:        100,
+		InitialMargin: 100,
+		Leverage:      10,
+	}
+	_ = gdb.Create(pos)
+
+	// Liquidate at 142.5 -> PnL = -50 -> Valuation = 50.
+	// Remaining 50 should be refunded to user points.
+	// Total points should be: 1000 + 50 = 1050.
+	ticker := &TickerResponse{
+		Data: []TickerData{
+			{Symbol: "USD_JPY", Ask: "142.5", Bid: "142.5"},
+		},
+	}
+
+	err = liquidatePosition(c, nil, pos, ticker, 142.5, -50.0)
+	if err != nil {
+		t.Fatalf("liquidatePosition failed: %v", err)
+	}
+
+	// Verify position is deleted
+	var count int64
+	gdb.Model(&models.FXPosition{}).Count(&count)
+	if count != 0 {
+		t.Errorf("expected position to be deleted, got count %d", count)
+	}
+
+	// Verify points balance is refunded
+	var gp models.GoPoint
+	err = gdb.Where("user_id = ? AND guild_id = ?", userID, guildID).First(&gp).Error
+	if err != nil {
+		t.Fatalf("failed to query gopoints: %v", err)
+	}
+
+	if gp.Points != 1050 {
+		t.Errorf("expected points balance to be 1050, got %d", gp.Points)
+	}
+}
+
 func TestFX_PendingOrders(t *testing.T) {
 	gdb, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	if err != nil {

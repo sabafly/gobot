@@ -360,7 +360,14 @@ func liquidatePosition(c *components.Components, client *bot.Client, pos *models
 			return err
 		}
 
-		if deficit > 0 {
+		if deficit == 0 {
+			remaining := pos.Margin + pnlInt
+			if remaining > 0 {
+				if err := gopoint.AddPointTx(tx, pos.UserID, pos.GuildID, remaining); err != nil {
+					return err
+				}
+			}
+		} else {
 			var otherPositions []models.FXPosition
 			if err := tx.Where("user_id = ? AND guild_id = ? AND id != ?", pos.UserID, pos.GuildID, pos.ID).Find(&otherPositions).Error; err != nil {
 				return err
@@ -411,21 +418,21 @@ func liquidatePosition(c *components.Components, client *bot.Client, pos *models
 					}
 				}
 			}
-		}
 
-		if deficit > 0 {
-			var userPoint models.GoPoint
-			if err := tx.Where("user_id = ? AND guild_id = ?", pos.UserID, pos.GuildID).First(&userPoint).Error; err == nil {
-				points := userPoint.Points
-				deduct := points
-				if points > deficit {
-					deduct = deficit
-				}
-				if deduct > 0 {
-					if err := gopoint.AddPointTx(tx, pos.UserID, pos.GuildID, -deduct); err != nil {
-						return err
+			if deficit > 0 {
+				var userPoint models.GoPoint
+				if err := tx.Where("user_id = ? AND guild_id = ?", pos.UserID, pos.GuildID).First(&userPoint).Error; err == nil {
+					points := userPoint.Points
+					deduct := points
+					if points > deficit {
+						deduct = deficit
 					}
-					deficit -= deduct
+					if deduct > 0 {
+						if err := gopoint.AddPointTx(tx, pos.UserID, pos.GuildID, -deduct); err != nil {
+							return err
+						}
+						deficit -= deduct
+					}
 				}
 			}
 		}
@@ -462,6 +469,10 @@ func liquidatePosition(c *components.Components, client *bot.Client, pos *models
 				}))
 			}
 
+			var refund int64
+			if deficit == 0 {
+				refund = pos.Margin + pnlInt
+			}
 			descKey := "components.play.fx.liquidation_desc"
 			templateMap := map[string]any{
 				"symbol":  strings.Replace(pos.Symbol, "_", "/", 1),
@@ -469,6 +480,7 @@ func liquidatePosition(c *components.Components, client *bot.Client, pos *models
 				"pnl":     strconv.FormatInt(-pnlInt, 10),
 				"margin":  strconv.FormatInt(pos.Margin, 10),
 				"deficit": strconv.FormatInt(pos.Margin+pnlInt, 10),
+				"refund":  strconv.FormatInt(refund, 10),
 			}
 			if len(closedPositions) > 0 {
 				descKey = "components.play.fx.liquidation_deficit_desc"
