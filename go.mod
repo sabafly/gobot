@@ -1,6 +1,6 @@
 module github.com/sabafly/gobot
 
-go 1.25.3
+go 1.26.5
 
 require (
 	entgo.io/ent v0.14.5
