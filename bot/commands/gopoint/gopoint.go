@@ -6,6 +6,7 @@ import (
 	"math/rand/v2"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
@@ -24,6 +25,14 @@ import (
 func Command(c *components.Components) components.Command {
 	return (&generic.Command{
 		Namespace: "gopoint",
+		Schedulers: []components.Scheduler{
+			{
+				Duration: time.Minute,
+				Worker: func(c *components.Components, client *bot.Client) error {
+					return ProcessBackgroundTasks(c, client)
+				},
+			},
+		},
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
 				Name:        "gopoint",
@@ -80,6 +89,96 @@ func Command(c *components.Components) components.Command {
 								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.give.point.description"),
 								Required:                 true,
 								MinValue:                 builtin.Ptr(1),
+							},
+						},
+					},
+					discord.ApplicationCommandOptionSubCommand{
+						Name:                     "tax-setup",
+						Description:              "定期徴収の割合や間隔を設定します。(管理者のみ)",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.tax-setup.description"),
+					},
+					discord.ApplicationCommandOptionSubCommand{
+						Name:                     "tax-status",
+						Description:              "現在の定期徴収の設定状況と徴収予定を表示します。(管理者のみ)",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.tax-status.description"),
+					},
+					discord.ApplicationCommandOptionSubCommand{
+						Name:                     "tax-force",
+						Description:              "今すぐポイントの徴収（または徴収の予約計算）を強制実行します。(管理者のみ)",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.tax-force.description"),
+					},
+					discord.ApplicationCommandOptionSubCommand{
+						Name:                     "reset",
+						Description:              "ギルド内の全員のGoPointsを一括リセットします。(管理者のみ)",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.reset.description"),
+						Options: []discord.ApplicationCommandOption{
+							discord.ApplicationCommandOptionInt{
+								Name:        "points",
+								Description: "リセット後のポイント数を指定します (デフォルト: 0)。",
+								Required:    false,
+								MinValue:    builtin.Ptr(0),
+							},
+						},
+					},
+					discord.ApplicationCommandOptionSubCommand{
+						Name:                     "season-start",
+						Description:              "新しいシーズンを開始、またはスケジュールします。(管理者のみ)",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-start.description"),
+						Options: []discord.ApplicationCommandOption{
+							discord.ApplicationCommandOptionString{
+								Name:        "name",
+								Description: "シーズンの名前を指定します。",
+								Required:    true,
+							},
+							discord.ApplicationCommandOptionInt{
+								Name:        "duration_days",
+								Description: "シーズンの期間(日)を指定します (1-365)。",
+								Required:    true,
+								MinValue:    builtin.Ptr(1),
+								MaxValue:    builtin.Ptr(365),
+							},
+							discord.ApplicationCommandOptionInt{
+								Name:        "start_delay_hours",
+								Description: "何時間後にシーズンを開始するか（スケジュール予約）を指定します。",
+								Required:    false,
+								MinValue:    builtin.Ptr(0),
+							},
+							discord.ApplicationCommandOptionString{
+								Name:        "criteria",
+								Description: "ランキングの基準を指定します (earned: 獲得ポイント, final: 最終ポイント)。",
+								Required:    false,
+								Choices: []discord.ApplicationCommandOptionChoiceString{
+									{
+										Name:  "獲得ポイント数",
+										Value: "earned",
+									},
+									{
+										Name:  "最終所持ポイント数",
+										Value: "final",
+									},
+								},
+							},
+						},
+					},
+					discord.ApplicationCommandOptionSubCommand{
+						Name:                     "season-end",
+						Description:              "アクティブなシーズンを途中で終了し、表彰を行います。(管理者のみ)",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-end.description"),
+					},
+					discord.ApplicationCommandOptionSubCommand{
+						Name:                     "season-status",
+						Description:              "現在のアクティブなシーズンの進捗と現在のランキングを表示します。",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-status.description"),
+					},
+					discord.ApplicationCommandOptionSubCommand{
+						Name:                     "season-ranking",
+						Description:              "アクティブなシーズン、または過去のシーズンのランキングを表示します。",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-ranking.description"),
+						Options: []discord.ApplicationCommandOption{
+							discord.ApplicationCommandOptionString{
+								Name:        "season_id",
+								Description: "表示したい過去のシーズンのIDを指定します (省略時は現在のアクティブなシーズン)。",
+								Required:    false,
 							},
 						},
 					},
@@ -245,6 +344,81 @@ func Command(c *components.Components) components.Command {
 					return nil
 				},
 			},
+			"/gopoint/tax-setup": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionString("gopoint.admin"),
+				},
+				DiscordPerm: discord.PermissionAdministrator,
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					return TaxSetupHandler(c, event)
+				},
+			},
+			"/gopoint/tax-status": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionString("gopoint.admin"),
+				},
+				DiscordPerm: discord.PermissionAdministrator,
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					return TaxStatusHandler(c, event)
+				},
+			},
+			"/gopoint/tax-force": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionString("gopoint.admin"),
+				},
+				DiscordPerm: discord.PermissionAdministrator,
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					return TaxForceHandler(c, event)
+				},
+			},
+			"/gopoint/reset": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionString("gopoint.admin"),
+				},
+				DiscordPerm: discord.PermissionAdministrator,
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					return ResetPointsHandler(c, event)
+				},
+			},
+			"/gopoint/season-start": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionString("gopoint.admin"),
+				},
+				DiscordPerm: discord.PermissionAdministrator,
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					return SeasonStartHandler(c, event)
+				},
+			},
+			"/gopoint/season-end": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionString("gopoint.admin"),
+				},
+				DiscordPerm: discord.PermissionAdministrator,
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					return SeasonEndHandler(c, event)
+				},
+			},
+			"/gopoint/season-status": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("gopoint.view"),
+				},
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					return SeasonStatusHandler(c, event)
+				},
+			},
+			"/gopoint/season-ranking": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionDefaultString("gopoint.view"),
+				},
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					return SeasonRankingHandler(c, event)
+				},
+			},
+		},
+		ModalHandlers: map[string]generic.ModalHandler{
+			"gopoint:tax_setup_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+				return TaxSetupModalSubmitHandler(c, event)
+			},
 		},
 		EventHandler: func(c *components.Components, event bot.Event) errors.Error {
 			switch e := event.(type) {
@@ -332,7 +506,7 @@ func AddPointTx(tx *gorm.DB, userID snowflake.ID, guildID snowflake.ID, point in
 	}
 
 	// If no row existed, create one with the initial point value
-	if result.RowsAffected == 0 {
+	if point != 0 && result.RowsAffected == 0 {
 		userPoint := models.GoPoint{
 			UserID:  user.ID,
 			GuildID: guildID,
@@ -343,11 +517,40 @@ func AddPointTx(tx *gorm.DB, userID snowflake.ID, guildID snowflake.ID, point in
 			return errors.NewError(err)
 		}
 	}
+
+	// Update active season points if this was a point gain (positive) or a point payment (negative)
+	if point != 0 {
+		var activeSeason models.GoPointSeason
+		if err := tx.Where("guild_id = ? AND is_active = ?", guildID, true).First(&activeSeason).Error; err == nil {
+			result := tx.Model(&models.GoPointSeasonUser{}).
+				Where("season_id = ? AND user_id = ?", activeSeason.ID, user.ID).
+				Update("points_earned", gorm.Expr("points_earned + ?", point))
+			if result.Error != nil {
+				slog.Error("failed to update season user points", "error", result.Error)
+				return errors.NewError(result.Error)
+			}
+			if result.RowsAffected == 0 {
+				seasonUser := models.GoPointSeasonUser{
+					SeasonID:     activeSeason.ID,
+					UserID:       user.ID,
+					GuildID:      guildID,
+					PointsEarned: point,
+				}
+				if err := tx.Create(&seasonUser).Error; err != nil {
+					slog.Error("failed to create season user points", "error", err)
+					return errors.NewError(err)
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
 func AddPoint(c *components.Components, userID snowflake.ID, guildID snowflake.ID, point int64) error {
-	return AddPointTx(c.GormDB(), userID, guildID, point)
+	return c.GormDB().Transaction(func(tx *gorm.DB) error {
+		return AddPointTx(tx, userID, guildID, point)
+	})
 }
 
 func GivePoint(c *components.Components, userID snowflake.ID, targetUserID snowflake.ID, guildID snowflake.ID, point int64) error {

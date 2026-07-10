@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -284,6 +285,59 @@ func hasMarginCall(c *components.Components, userID snowflake.ID, guildID snowfl
 	return false, nil
 }
 
+// redirectRefundToMarginCalls distributes the refund of a closed healthy position to other warned positions of the user.
+// Returns the remaining refund that should be returned to the user's wallet.
+func redirectRefundToMarginCalls(tx *gorm.DB, userID snowflake.ID, guildID snowflake.ID, closedPosID uuid.UUID, refund int64, ticker *TickerResponse) (int64, error) {
+	if refund <= 0 {
+		return refund, nil
+	}
+
+	var otherPositions []models.FXPosition
+	if err := tx.Where("user_id = ? AND guild_id = ? AND id != ?", userID, guildID, closedPosID).Find(&otherPositions).Error; err != nil {
+		return refund, err
+	}
+
+	actualRefund := refund
+	for i := range otherPositions {
+		other := &otherPositions[i]
+		otherSymData, ok := ticker.GetSymbolData(other.Symbol)
+		if !ok {
+			continue
+		}
+		otherAsk, _ := strconv.ParseFloat(otherSymData.Ask, 64)
+		otherBid, _ := strconv.ParseFloat(otherSymData.Bid, 64)
+		var otherPrice float64
+		if other.Direction == models.FXPositionDirectionBuy {
+			otherPrice = otherBid
+		} else {
+			otherPrice = otherAsk
+		}
+		otherPnl := getPnL(other, otherPrice)
+		otherInitMargin := other.GetInitialMargin()
+		otherRatio := (float64(other.Margin) + otherPnl) / float64(otherInitMargin) * 100.0
+		otherOpt := getLeverageOption(other.Leverage)
+
+		if otherRatio < otherOpt.MarginCallRatio {
+			// This is a warned position. Calculate how much is needed to clear the margin call.
+			needed := int64(math.Ceil(float64(otherInitMargin)*otherOpt.MarginCallRatio/100.0)) - other.Margin - int64(otherPnl)
+			if needed > 0 && actualRefund > 0 {
+				addAmount := needed
+				if actualRefund < needed {
+					addAmount = actualRefund
+				}
+				other.Margin += addAmount
+				other.MarginCallNotified = false
+				if err := tx.Save(other).Error; err != nil {
+					return actualRefund, err
+				}
+				actualRefund -= addAmount
+			}
+		}
+	}
+
+	return actualRefund, nil
+}
+
 func liquidatePosition(c *components.Components, client *bot.Client, pos *models.FXPosition, ticker *TickerResponse, currentPrice float64, pnl float64) error {
 	pnlInt := int64(pnl)
 	var deficit int64
@@ -360,21 +414,19 @@ func liquidatePosition(c *components.Components, client *bot.Client, pos *models
 		}
 
 		if deficit > 0 {
-			userPoint := models.GoPoint{
-				UserID:  pos.UserID,
-				GuildID: pos.GuildID,
-			}
-			if err := tx.Where(userPoint).First(&userPoint).Error; err == nil {
+			var userPoint models.GoPoint
+			if err := tx.Where("user_id = ? AND guild_id = ?", pos.UserID, pos.GuildID).First(&userPoint).Error; err == nil {
 				points := userPoint.Points
 				deduct := points
 				if points > deficit {
 					deduct = deficit
 				}
-				userPoint.Points -= deduct
-				if err := tx.Save(&userPoint).Error; err != nil {
-					return err
+				if deduct > 0 {
+					if err := gopoint.AddPointTx(tx, pos.UserID, pos.GuildID, -deduct); err != nil {
+						return err
+					}
+					deficit -= deduct
 				}
-				deficit -= deduct
 			}
 		}
 
@@ -2131,23 +2183,6 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 		return nil
 	}
 
-	mcRestricted, err := hasMarginCall(c, event.User().ID, *event.GuildID())
-	if err != nil {
-		return errors.NewError(err)
-	}
-	if mcRestricted {
-		builder := discord.NewMessageBuilder().
-			SetIsComponentsV2(true).
-			SetComponents(
-				discord.NewContainer(
-					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_restricted")),
-				).WithAccentColor(0xE74C3C),
-			).
-			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
-		return nil
-	}
-
 	if session.ActivePositionID == nil {
 		builder := discord.NewMessageBuilder().
 			SetIsComponentsV2(true).
@@ -2213,12 +2248,27 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 		refund = 0
 	}
 
+	initMargin := pos.GetInitialMargin()
+	ratio := (float64(pos.Margin) + pnl) / float64(initMargin) * 100.0
+	opt := getLeverageOption(pos.Leverage)
+	posIsWarned := ratio < opt.MarginCallRatio
+
 	txErr := c.GormDB().Transaction(func(tx *gorm.DB) error {
 		if err := tx.Delete(pos).Error; err != nil {
 			return err
 		}
-		if refund > 0 {
-			if err := gopoint.AddPointTx(tx, event.User().ID, *event.GuildID(), refund); err != nil {
+
+		actualRefund := refund
+		if actualRefund > 0 && !posIsWarned {
+			var errRedirect error
+			actualRefund, errRedirect = redirectRefundToMarginCalls(tx, pos.UserID, pos.GuildID, pos.ID, actualRefund, ticker)
+			if errRedirect != nil {
+				return errRedirect
+			}
+		}
+
+		if actualRefund > 0 {
+			if err := gopoint.AddPointTx(tx, pos.UserID, pos.GuildID, actualRefund); err != nil {
 				return err
 			}
 		}
@@ -2268,21 +2318,19 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 		}
 
 		if deficit > 0 {
-			userPoint := models.GoPoint{
-				UserID:  pos.UserID,
-				GuildID: pos.GuildID,
-			}
-			if err := tx.Where(userPoint).First(&userPoint).Error; err == nil {
+			var userPoint models.GoPoint
+			if err := tx.Where("user_id = ? AND guild_id = ?", pos.UserID, pos.GuildID).First(&userPoint).Error; err == nil {
 				points := userPoint.Points
 				deduct := points
 				if points > deficit {
 					deduct = deficit
 				}
-				userPoint.Points -= deduct
-				if err := tx.Save(&userPoint).Error; err != nil {
-					return err
+				if deduct > 0 {
+					if err := gopoint.AddPointTx(tx, pos.UserID, pos.GuildID, -deduct); err != nil {
+						return err
+					}
+					deficit -= deduct
 				}
-				deficit -= deduct
 			}
 		}
 		return nil
@@ -2508,6 +2556,12 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 				pnlTrigger := getPnL(&posCopy, triggerPrice)
 				val := posCopy.Margin + int64(pnlTrigger)
 
+				posInitMargin := posCopy.GetInitialMargin()
+				posRatio := (float64(posCopy.Margin) + pnlTrigger) / float64(posInitMargin) * 100.0
+				posOpt := getLeverageOption(posCopy.Leverage)
+				posIsWarned := posRatio < posOpt.MarginCallRatio
+
+				actualRefund := val
 				err := c.GormDB().Transaction(func(tx *gorm.DB) error {
 					var dbPos models.FXPosition
 					if err := tx.Where("id = ?", posCopy.ID).First(&dbPos).Error; err != nil {
@@ -2516,8 +2570,15 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 					if err := tx.Delete(&dbPos).Error; err != nil {
 						return err
 					}
-					if val > 0 {
-						if err := gopoint.AddPointTx(tx, posCopy.UserID, posCopy.GuildID, val); err != nil {
+					if actualRefund > 0 && !posIsWarned {
+						var errRedirect error
+						actualRefund, errRedirect = redirectRefundToMarginCalls(tx, posCopy.UserID, posCopy.GuildID, posCopy.ID, actualRefund, ticker)
+						if errRedirect != nil {
+							return errRedirect
+						}
+					}
+					if actualRefund > 0 {
+						if err := gopoint.AddPointTx(tx, posCopy.UserID, posCopy.GuildID, actualRefund); err != nil {
 							return err
 						}
 					}
@@ -2548,7 +2609,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 								"trigger_price": fmt.Sprintf("%.3f", triggerPrice),
 								"exit":          fmt.Sprintf("%.3f", triggerPrice),
 								"pnl":           fmt.Sprintf("%s%d", pnlSign, int64(pnlTrigger)),
-								"received":      val,
+								"received":      actualRefund,
 							})
 
 							builder := discord.NewMessageBuilder().

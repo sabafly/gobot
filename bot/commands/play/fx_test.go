@@ -685,3 +685,112 @@ func TestFX_PortfolioLogic(t *testing.T) {
 		t.Errorf("expected symbol EUR_USD, got %s", orders[0].Symbol)
 	}
 }
+
+func TestFX_MarginCallRedirection(t *testing.T) {
+	gdb, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to open sqlite DB: %v", err)
+	}
+
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.FXOrder{}} {
+		if err := createSQLiteTable(gdb, model); err != nil {
+			t.Fatalf("failed to create table for %T: %v", model, err)
+		}
+	}
+
+	userID := snowflake.ID(77777)
+	guildID := snowflake.ID(66666)
+
+	_ = gdb.Create(&models.User{ID: userID})
+	_ = gdb.Create(&models.Guild{ID: guildID})
+	_ = gdb.Create(&models.GoPoint{UserID: userID, GuildID: guildID, Points: 1000})
+
+	// 1. Create a warned position (under margin call)
+	// Leverage = 25 -> MarginCallRatio = 50.0%
+	// Entry = 150.0. Bid = 145.5.
+	// PnL = 100 * 25 * (145.5 / 150.0 - 1.0) = 2500 * (-0.03) = -75
+	// Valuation = Margin (100) + PnL (-75) = 25
+	// Ratio = 25 / 100 * 100 = 25% (under 50%)
+	// Needed to reach 50% ratio:
+	// initMargin = 100, opt.MarginCallRatio = 50% -> target valuation = 50.
+	// Current valuation = 25.
+	// needed = 50 - 25 = 25.
+	warnedPos := &models.FXPosition{
+		ID:            uuid.New(),
+		UserID:        userID,
+		GuildID:       guildID,
+		Symbol:        "USD_JPY",
+		Direction:     models.FXPositionDirectionBuy,
+		EntryPrice:    150.0,
+		Margin:        100,
+		InitialMargin: 100,
+		Leverage:      25,
+	}
+	if err := gdb.Create(warnedPos).Error; err != nil {
+		t.Fatalf("failed to create warned position: %v", err)
+	}
+
+	// 2. Create a healthy position
+	// Entry = 100.0, Bid = 110.0, Leverage = 1.
+	// PnL = 100 * 1 * (110 / 100 - 1) = 10.
+	// refund = 100 + 10 = 110.
+	healthyPos := &models.FXPosition{
+		ID:            uuid.New(),
+		UserID:        userID,
+		GuildID:       guildID,
+		Symbol:        "EUR_USD",
+		Direction:     models.FXPositionDirectionBuy,
+		EntryPrice:    100.0,
+		Margin:        100,
+		InitialMargin: 100,
+		Leverage:      1,
+	}
+	if err := gdb.Create(healthyPos).Error; err != nil {
+		t.Fatalf("failed to create healthy position: %v", err)
+	}
+
+	// Construct mock TickerResponse
+	ticker := &TickerResponse{
+		Data: []TickerData{
+			{
+				Symbol: "USD_JPY",
+				Ask:    "145.500",
+				Bid:    "145.500",
+			},
+			{
+				Symbol: "EUR_USD",
+				Ask:    "110.000",
+				Bid:    "110.000",
+			},
+		},
+	}
+
+	// 3. Test redirectRefundToMarginCalls
+	// We close healthyPos. Its refund is 100 + 10 = 110.
+	// Since warnedPos is warned and needs 25 pt to clear the margin call:
+	// redirectRefundToMarginCalls should:
+	// - add 25 to warnedPos.Margin (so it becomes 125)
+	// - return the remaining 85 (110 - 25)
+	err = gdb.Transaction(func(tx *gorm.DB) error {
+		remainingRefund, errRedirect := redirectRefundToMarginCalls(tx, userID, guildID, healthyPos.ID, 110, ticker)
+		if errRedirect != nil {
+			return errRedirect
+		}
+		if remainingRefund != 85 {
+			t.Errorf("expected remaining refund to be 85, got %d", remainingRefund)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("transaction failed: %v", err)
+	}
+
+	// Verify warned position margin is updated to 125
+	var updatedWarned models.FXPosition
+	if err := gdb.Where("id = ?", warnedPos.ID).First(&updatedWarned).Error; err != nil {
+		t.Fatalf("failed to get updated warned position: %v", err)
+	}
+	if updatedWarned.Margin != 125 {
+		t.Errorf("expected warned position margin to be 125, got %d", updatedWarned.Margin)
+	}
+}

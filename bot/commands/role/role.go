@@ -172,7 +172,8 @@ func Command(c *components.Components) components.Command {
 					if err := c.GormDB().Where("id = ? AND guild_id = ?", panelID, g.ID).First(&rolePanel).Error; err != nil {
 						return errors.NewError(errors.ErrorMessage("errors.not_exist", event))
 					}
-					if err := c.GormDB().Exec("DELETE FROM role_panel_edits WHERE parent_id = ?", rolePanel.ID).Error; err != nil {
+					// if err := c.GormDB().Exec("DELETE FROM role_panel_edits WHERE parent_id = ?", rolePanel.ID).Error; err != nil {
+					if err := c.GormDB().Where("parent_id = ?", rolePanel.ID).Delete(&models.RolePanelEdit{}).Error; err != nil {
 						return errors.NewError(err)
 					}
 					var removeRoles []snowflake.ID
@@ -192,7 +193,9 @@ func Command(c *components.Components) components.Command {
 						rolePanel.Roles = slices.DeleteFunc(rolePanel.Roles, func(r models.Role) bool { return r.ID == id })
 					}
 					rolePanel.UpdatedAt = time.Now()
-					c.GormDB().Save(&rolePanel)
+					if err := c.GormDB().Save(&rolePanel).Error; err != nil {
+						return errors.NewError(err)
+					}
 					edit := models.RolePanelEdit{ID: uuid.New(), GuildID: g.ID, ParentID: rolePanel.ID, ChannelID: event.Channel().ID()}
 					if err := c.GormDB().Create(&edit).Error; err != nil {
 						return errors.NewError(err)

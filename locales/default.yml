@@ -22,6 +22,15 @@ strings:
   command.gopoint.give.description: "Goポイントを他のユーザーに譲渡します。"
   command.gopoint.give.point.description: "譲渡するGoポイントの数"
   command.gopoint.give.target.description: "譲渡先のユーザー"
+  command.gopoint.give.target_user.description: "譲渡先のユーザー"
+  command.gopoint.tax-setup.description: "定期徴収の割合や間隔を設定します。(管理者のみ)"
+  command.gopoint.tax-status.description: "現在の定期徴収の設定状況と徴収予定を表示します。(管理者のみ)"
+  command.gopoint.tax-force.description: "今すぐポイントの徴収（または徴収の予約計算）を強制実行します。(管理者のみ)"
+  command.gopoint.reset.description: "ギルド内の全員のGoPointsを一括リセットします。(管理者のみ)"
+  command.gopoint.season-start.description: "新しいシーズンを開始、またはスケジュールします。(管理者のみ)"
+  command.gopoint.season-end.description: "アクティブなシーズンを途中で終了し、表彰を行います。(管理者のみ)"
+  command.gopoint.season-status.description: "現在のアクティブなシーズンの進捗と現在のランキングを表示します。"
+  command.gopoint.season-ranking.description: "アクティブなシーズン、または過去のシーズンのランキングを表示します。"
   command.play.slotmachine.description: "スロットマシンをプレイします。"
   command.play.high-and-low.guess-next: 次のカードを予想してください
   command.play.high-and-low.equal-success: "# 🚀SAME的中‼🚀"
@@ -332,6 +341,26 @@ strings:
   components.play.polymarket.modal_bet_title: "ベット額の入力"
   components.play.polymarket.modal_bet_label: "GoPoints 金額"
   components.play.polymarket.modal_bet_placeholder: "賭けたい GoPoints の金額を入力してください (例: 150)"
+  components.gopoint.admin.tax_setup_success: "✅ **定期徴収設定を更新しました**:\n- デフォルト徴収割合: `{{.rate}}%`\n- 最低徴収対象ポイント: `{{.min_points}} pt`\n- 徴収間隔: `{{.interval}}日`\n- 状態: `{{.status}}`\n- 次回予定: `{{.next_time}}`"
+  components.gopoint.admin.tax_status_enabled: "有効"
+  components.gopoint.admin.tax_status_disabled: "無効"
+  components.gopoint.admin.tax_status_info: "### 🪙 定期徴収ステータス\n- **徴収有効化**: `{{.enabled}}`\n- **デフォルト割合**: `{{.rate}}%`\n- **最低徴収対象ポイント**: `{{.min_points}} pt`\n- **徴収間隔**: `{{.interval}}日`\n- **次回徴収予定日時**: `{{.next_time}}`\n- **段階的徴収割合設定**:\n{{.brackets}}"
+  components.gopoint.admin.tax_status_pending_title: "\n\n**⏳ 徴収待機中（1週間後の徴収予定）:**\n"
+  components.gopoint.admin.tax_status_pending_item: "- <@{{.user_id}}>: `{{.tax_amount}} pt` (徴収予定: {{.collect_time}})\n"
+  components.gopoint.admin.tax_status_no_pending: "\n現在徴収待機中のユーザーはいません。"
+  components.gopoint.admin.tax_force_determination: "⚡ **徴収予約（計算）を強制実行しました**:\n- 対象ユーザー: `{{.count}}名`の徴収予定（1週間後）を生成しました。"
+  components.gopoint.admin.tax_force_collection: "⚡ **徴収実行（1週間経過分）を強制実行しました**:\n- 徴収完了: `{{.collected}}名`\n- 免除: `{{.exempted}}名`"
+  components.gopoint.admin.reset_success: "⚠️ **ギルドメンバー全員 of GoPointsを一括リセットしました**:\n- 全員のポイントを `{{.points}} pt` に設定しました。"
+  components.gopoint.admin.season_start_success: "🚀 **新しいシーズンを開始しました**:\n- シーズン名: **{{.name}}**\n- 期間: `{{.duration}}日間`\n- 表彰基準: `{{.criteria}}`\n- 終了予定: `{{.end_time}}`"
+  components.gopoint.admin.season_start_scheduled: "📅 **シーズン開始をスケジュール予約しました**:\n- シーズン名: **{{.name}}**\n- 表彰基準: `{{.criteria}}`\n- 開始予定: `{{.start_time}}`\n- 終了予定: `{{.end_time}}`"
+  components.gopoint.admin.season_err_active_exists: "❌ **開始エラー**: すでにアクティブなシーズン `{{.name}}` が存在します。終了してから新しいシーズンを開始してください。"
+  components.gopoint.admin.season_end_early: "🛑 **シーズンを強制終了しました**:\n- 終了したシーズン: **{{.name}}**\n- 表彰結果をチャンネルに送信しました。"
+  components.gopoint.admin.season_err_no_active: "❌ **エラー**: 現在アクティブなシーズンはありません。"
+  components.gopoint.admin.season_status_info: "### 🏆 シーズン情報: **{{.name}}**\n- **状態**: `{{.status}}`\n- **表彰基準**: `{{.criteria}}`\n- **開始**: `{{.start_time}}`\n- **終了**: `{{.end_time}}` (残り: `{{.remaining}}`)\n\n**📊 現在のランキング:**\n{{.ranking}}"
+  components.gopoint.admin.season_ranking_title: "### 📊 シーズン **{{.name}}** ランキング (基準: {{.criteria}})\n"
+  components.gopoint.admin.season_ranking_entry: "{{.medal}}<@{{.user_id}}> - スコア: `{{.points}} pt`"
+  components.gopoint.admin.season_ranking_no_data: "このシーズンの獲得データはありません。"
+  components.gopoint.admin.season_not_found: "❌ 指定されたシーズンIDが見つかりません。"
 components:
   command.settings.view:
     - type: container
@@ -847,3 +876,4 @@ components:
               style: secondary
               label: "画面を閉じる"
               id: "play:pm_quit:{uuid}"
+
