@@ -849,7 +849,7 @@ func SeasonStatusHandler(c *components.Components, event *events.ApplicationComm
 			case 2:
 				medal = "🥉 "
 			default:
-				medal = fmt.Sprintf("`#%d` ", i+1)
+				medal = fmt.Sprintf("#%d ", i+1)
 			}
 			rankingLines = append(rankingLines, i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_ranking_entry", map[string]any{
 				"medal":   medal,
