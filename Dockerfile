@@ -1,7 +1,7 @@
 # ============================================
 # Build Stage
 # ============================================
-FROM golang:1.25.4 AS builder
+FROM golang:1.26.4 AS builder
 
 WORKDIR /app
 
