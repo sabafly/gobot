@@ -347,7 +347,7 @@ func TaxSetupModalSubmitHandler(c *components.Components, event *events.ModalSub
 		"min_points": cfg.MinPoints,
 		"interval":   cfg.IntervalDays,
 		"status":     statusStr,
-		"next_time":  cfg.NextTaxTime.Format("2006/01/02 15:04"),
+		"next_time":  discord.NewTimestamp(discord.TimestampStyleLongDateTime, cfg.NextTaxTime).String(),
 	})
 
 	if errResp := event.RespondMessage(discord.NewMessageBuilder().
@@ -405,7 +405,7 @@ func TaxStatusHandler(c *components.Components, event *events.ApplicationCommand
 
 	nextTimeStr := "-"
 	if !cfg.NextTaxTime.IsZero() {
-		nextTimeStr = cfg.NextTaxTime.Format("2006/01/02 15:04")
+		nextTimeStr = discord.NewTimestamp(discord.TimestampStyleLongDateTime, cfg.NextTaxTime).String()
 	}
 
 	bracketsText := cfg.Brackets
@@ -433,7 +433,7 @@ func TaxStatusHandler(c *components.Components, event *events.ApplicationCommand
 			sb.WriteString(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_status_pending_item", map[string]any{
 				"user_id":      p.UserID.String(),
 				"tax_amount":   p.TaxAmount,
-				"collect_time": p.CollectTime.Format("2006/01/02 15:04"),
+				"collect_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, p.CollectTime).String(),
 			}))
 		}
 	} else {
@@ -1133,7 +1133,7 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 				if s.ChannelID != 0 {
 					_, _ = client.Rest.CreateMessage(s.ChannelID, discord.NewMessageCreateBuilder().
 						SetAllowedMentions(&discord.AllowedMentions{}).
-						SetContent(fmt.Sprintf("🚀 **GoPoint シーズン開始のお知らせ** 🚀\n新しいシーズン **%s** が開始されました！(表彰基準: %s) 終了予定: %s\nポイントを競い合いましょう！", s.Name, criteriaDisplayName(s.Criteria), s.EndTime.Format("2006/01/02 15:04"))).
+						SetContent(fmt.Sprintf("🚀 **GoPoint シーズン開始のお知らせ** 🚀\n新しいシーズン **%s** が開始されました！(表彰基準: %s) 終了予定: %s\nポイントを競い合いましょう！", s.Name, criteriaDisplayName(s.Criteria), discord.NewTimestamp(discord.TimestampStyleLongDateTime, s.EndTime).String())).
 						Build())
 				}
 			} else {

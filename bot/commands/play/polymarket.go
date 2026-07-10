@@ -92,7 +92,7 @@ func formatDecimal(d decimal.Decimal) string {
 	return fmt.Sprintf("%.2f", val)
 }
 
-func formatTimeStr(utcStr string) string {
+func formatTimeMention(utcStr string) string {
 	t, err := time.Parse(time.RFC3339, utcStr)
 	if err != nil {
 		t, err = time.Parse("2006-01-02T15:04:05Z", utcStr)
@@ -100,7 +100,7 @@ func formatTimeStr(utcStr string) string {
 			return utcStr
 		}
 	}
-	return t.Local().Format("2006/01/02 15:04")
+	return discord.NewTimestamp(discord.TimestampStyleLongDateTime, t).String()
 }
 
 func PolymarketSearchMessage(c *components.Components, session *PolymarketSession, points int64, locale discord.Locale) []discord.LayoutComponent {
@@ -114,7 +114,7 @@ func PolymarketSearchMessage(c *components.Components, session *PolymarketSessio
 		}
 		desc := i18n.TranslateText(locale, "components.play.polymarket.market_option_desc", map[string]any{
 			"volume":   formatDecimal(m.Volume),
-			"end_date": formatTimeStr(m.EndDate),
+			"end_date": formatTimeMention(m.EndDate),
 		})
 		if len(desc) > 100 {
 			desc = desc[:97] + "..."
@@ -201,7 +201,7 @@ func PolymarketDetailMessage(c *components.Components, session *PolymarketSessio
 
 	questionLink := fmt.Sprintf("[%s](https://polymarket.com/event/%s)", m.Question, m.Slug)
 	ctx.WithText("market_question", questionLink)
-	ctx.WithText("end_date", formatTimeStr(m.EndDate))
+	ctx.WithText("end_date", formatTimeMention(m.EndDate))
 	ctx.WithText("volume", formatDecimal(m.Volume))
 	ctx.WithText("liquidity", formatDecimal(m.Liquidity))
 	ctx.WithText("odds_text", i18n.TranslateText(locale, "components.play.polymarket.odds_label")+"\n"+strings.Join(oddsText, "\n"))
@@ -249,7 +249,7 @@ func PolymarketMyBetsMessage(c *components.Components, session *PolymarketSessio
 					status = i18n.TranslateText(locale, "components.play.polymarket.status_lost")
 				}
 			}
-			timeStr := b.CreatedAt.Format("2006/01/02 15:04")
+			timeStr := discord.NewTimestamp(discord.TimestampStyleLongDateTime, b.CreatedAt).String()
 			lines = append(lines, i18n.TranslateText(locale, "components.play.polymarket.bet_history_item", map[string]any{
 				"market":  b.MarketTitle,
 				"outcome": b.Outcome,
