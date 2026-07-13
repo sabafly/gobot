@@ -183,10 +183,7 @@ func TestFX_MinRatioMarginRequirement(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			opt := fxLeverages[tt.levIdx]
-			minMargin := int64(float64(tt.points) * opt.MinRatio)
-			if minMargin < 1 {
-				minMargin = 1
-			}
+			minMargin := max(int64(float64(tt.points)*opt.MinRatio), 1)
 
 			if minMargin != tt.wantMinVal {
 				t.Errorf("expected minMargin to be %d, got %d", tt.wantMinVal, minMargin)
@@ -211,14 +208,14 @@ func TestFX_MarginCallAndAddedMargin(t *testing.T) {
 
 	// 1. Initial liquidation price (no added margin)
 	liqPrice1 := getLiquidationPrice(pos)
-	if math.Abs(liqPrice1 - 138.0) > 1e-9 {
+	if math.Abs(liqPrice1-138.0) > 1e-9 {
 		t.Errorf("expected liqPrice1 to be 138.0, got %f", liqPrice1)
 	}
 
 	// 2. Add margin (so Margin becomes 200)
 	pos.Margin = 200
 	liqPrice2 := getLiquidationPrice(pos)
-	if math.Abs(liqPrice2 - 123.0) > 1e-9 {
+	if math.Abs(liqPrice2-123.0) > 1e-9 {
 		t.Errorf("expected liqPrice2 to be 123.0, got %f", liqPrice2)
 	}
 

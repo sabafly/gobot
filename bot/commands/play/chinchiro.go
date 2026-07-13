@@ -129,13 +129,13 @@ func ChinchiroPlayCommand(c *components.Components, event *events.ApplicationCom
 	}
 
 	session := &models.ChinchiroSession{
-		ID:        uuid.New(),
-		GuildID:   *event.GuildID(),
-		ChannelID: event.Channel().ID(),
-		MessageID: 0,
+		ID:         uuid.New(),
+		GuildID:    *event.GuildID(),
+		ChannelID:  event.Channel().ID(),
+		MessageID:  0,
 		HostUserID: event.User().ID,
-		Bet:       bet,
-		State:     models.ChinchiroStateLobby,
+		Bet:        bet,
+		State:      models.ChinchiroStateLobby,
 	}
 
 	err = c.GormDB().Transaction(func(tx *gorm.DB) error {
@@ -193,7 +193,7 @@ func ChinchiroMessage(c *components.Components, session *models.ChinchiroSession
 			if p.IsHost {
 				roleStr = " (主催者/親)"
 			}
-			playersSB.WriteString(fmt.Sprintf("%d. <@%s>%s\n", idx+1, p.UserID.String(), roleStr))
+			fmt.Fprintf(&playersSB, "%d. <@%s>%s\n", idx+1, p.UserID.String(), roleStr)
 		}
 
 		layoutCtx := i18n.BuildContext().
@@ -211,10 +211,11 @@ func ChinchiroMessage(c *components.Components, session *models.ChinchiroSession
 	var statusSB strings.Builder
 	var playersSB strings.Builder
 
-	if session.State == models.ChinchiroStateHostRolling {
+	switch session.State {
+	case models.ChinchiroStateHostRolling:
 		rollsLeft := 3 - session.HostRollCount
-		statusSB.WriteString(fmt.Sprintf("👑 **親 (<@%s>) のロール順です**\n残りロール回数: **%d / 3**", session.HostUserID.String(), rollsLeft))
-	} else if session.State == models.ChinchiroStateKidsRolling {
+		fmt.Fprintf(&statusSB, "👑 **親 (<@%s>) のロール順です**\n残りロール回数: **%d / 3**", session.HostUserID.String(), rollsLeft)
+	case models.ChinchiroStateKidsRolling:
 		kids := make([]models.ChinchiroPlayer, 0)
 		for _, p := range session.Players {
 			if !p.IsHost {
@@ -224,9 +225,9 @@ func ChinchiroMessage(c *components.Components, session *models.ChinchiroSession
 		if session.CurrentPlayerIndex < len(kids) {
 			currentKid := kids[session.CurrentPlayerIndex]
 			rollsLeft := 3 - currentKid.RollCount
-			statusSB.WriteString(fmt.Sprintf("子 (<@%s>) のロール順です\n残りロール回数: **%d / 3**", currentKid.UserID.String(), rollsLeft))
+			fmt.Fprintf(&statusSB, "子 (<@%s>) のロール順です\n残りロール回数: **%d / 3**", currentKid.UserID.String(), rollsLeft)
 		}
-	} else if session.State == models.ChinchiroStateFinished {
+	case models.ChinchiroStateFinished:
 		statusSB.WriteString("🏁 **ゲーム終了！結果発表** 🏁")
 	}
 
@@ -292,7 +293,7 @@ func ChinchiroMessage(c *components.Components, session *models.ChinchiroSession
 		}
 		hostNetStr = fmt.Sprintf(" (収支: **%s%d pt**)", sign, net)
 	}
-	playersSB.WriteString(fmt.Sprintf("👑 **親**: <@%s> -> **%s**%s\n", session.HostUserID.String(), hostDiceStr, hostNetStr))
+	fmt.Fprintf(&playersSB, "👑 **親**: <@%s> -> **%s**%s\n", session.HostUserID.String(), hostDiceStr, hostNetStr)
 
 	// Kids status
 	for _, p := range session.Players {
@@ -325,7 +326,7 @@ func ChinchiroMessage(c *components.Components, session *models.ChinchiroSession
 			}
 			kidNetStr = fmt.Sprintf(" (収支: **%s%d pt**)", sign, net)
 		}
-		playersSB.WriteString(fmt.Sprintf("子: <@%s> -> **%s**%s\n", p.UserID.String(), kidDiceStr, kidNetStr))
+		fmt.Fprintf(&playersSB, "子: <@%s> -> **%s**%s\n", p.UserID.String(), kidDiceStr, kidNetStr)
 	}
 
 	layoutCtx := i18n.BuildContext().
@@ -633,7 +634,8 @@ func ChinchiroRollHandler(c *components.Components, event *events.ComponentInter
 		return nil
 	}
 
-	if session.State == models.ChinchiroStateHostRolling {
+	switch session.State {
+	case models.ChinchiroStateHostRolling:
 		if event.User().ID != session.HostUserID {
 			builder := discord.NewMessageBuilder().
 				SetIsComponentsV2(true).
@@ -691,7 +693,7 @@ func ChinchiroRollHandler(c *components.Components, event *events.ComponentInter
 				return errors.NewError(err)
 			}
 		}
-	} else if session.State == models.ChinchiroStateKidsRolling {
+	case models.ChinchiroStateKidsRolling:
 		kids := make([]models.ChinchiroPlayer, 0)
 		var activeKid *models.ChinchiroPlayer
 		for i := range session.Players {
@@ -878,7 +880,7 @@ func getPointTx(tx *gorm.DB, userID snowflake.ID, guildID snowflake.ID) (int64, 
 func buildRoundSummaryText(session *models.ChinchiroSession) string {
 	var sb strings.Builder
 	roundNum := session.CurrentHostIndex + 1
-	sb.WriteString(fmt.Sprintf("📢 **第 %d 回戦の結果発表** 📢\n🪙 ベット額: `%d pt`\n\n", roundNum, session.Bet))
+	fmt.Fprintf(&sb, "📢 **第 %d 回戦の結果発表** 📢\n🪙 ベット額: `%d pt`\n\n", roundNum, session.Bet)
 
 	hostDices := parseDices(session.HostDices)
 	hHand, _, hostMult := evaluateHand(hostDices)
@@ -919,8 +921,8 @@ func buildRoundSummaryText(session *models.ChinchiroSession) string {
 	if hostNet < 0 {
 		sign = ""
 	}
-	sb.WriteString(fmt.Sprintf("👑 **親**: <@%s> -> %s [%s] (収支: **%s%d pt**)\n",
-		session.HostUserID.String(), getDiceStr(hostDices), hHand, sign, hostNet))
+	fmt.Fprintf(&sb, "👑 **親**: <@%s> -> %s [%s] (収支: **%s%d pt**)\n",
+		session.HostUserID.String(), getDiceStr(hostDices), hHand, sign, hostNet)
 
 	for _, p := range session.Players {
 		if p.IsHost {
@@ -933,8 +935,8 @@ func buildRoundSummaryText(session *models.ChinchiroSession) string {
 		if net < 0 {
 			sign = ""
 		}
-		sb.WriteString(fmt.Sprintf("子: <@%s> -> %s [%s] (収支: **%s%d pt**)\n",
-			p.UserID.String(), getDiceStr(kDices), kHand, sign, net))
+		fmt.Fprintf(&sb, "子: <@%s> -> %s [%s] (収支: **%s%d pt**)\n",
+			p.UserID.String(), getDiceStr(kDices), kHand, sign, net)
 	}
 
 	return sb.String()

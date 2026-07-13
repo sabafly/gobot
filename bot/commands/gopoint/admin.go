@@ -28,8 +28,8 @@ type TaxBracket struct {
 
 func parseTaxBrackets(locale discord.Locale, text string) ([]TaxBracket, error) {
 	var brackets []TaxBracket
-	lines := strings.Split(text, "\n")
-	for _, line := range lines {
+	lines := strings.SplitSeq(text, "\n")
+	for line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
@@ -48,8 +48,8 @@ func parseTaxBrackets(locale discord.Locale, text string) ([]TaxBracket, error) 
 		}
 
 		var min, max int64
-		if strings.HasSuffix(rangeStr, "+") {
-			minStr := strings.TrimSuffix(rangeStr, "+")
+		if before, ok := strings.CutSuffix(rangeStr, "+"); ok {
+			minStr := before
 			minVal, err := strconv.ParseInt(minStr, 10, 64)
 			if err != nil {
 				return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.gopoint.admin.tax_bracket_err_invalid_range", map[string]any{"range": rangeStr}))

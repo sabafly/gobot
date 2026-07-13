@@ -12,9 +12,9 @@ type ChinchiroState string
 
 const (
 	ChinchiroStateLobby       ChinchiroState = "LOBBY"
-	ChinchiroStateHostRolling  ChinchiroState = "HOST_ROLLING"
-	ChinchiroStateKidsRolling  ChinchiroState = "KIDS_ROLLING"
-	ChinchiroStateFinished     ChinchiroState = "FINISHED"
+	ChinchiroStateHostRolling ChinchiroState = "HOST_ROLLING"
+	ChinchiroStateKidsRolling ChinchiroState = "KIDS_ROLLING"
+	ChinchiroStateFinished    ChinchiroState = "FINISHED"
 )
 
 type ChinchiroSession struct {

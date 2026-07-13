@@ -15,7 +15,7 @@ type FXOrder struct {
 	GuildID     snowflake.ID        `gorm:"column:guild_id;type:bigint(20) unsigned;not null;index"`
 	Guild       Guild               `gorm:"foreignKey:GuildID;onDelete:CASCADE"`
 	Symbol      string              `gorm:"column:symbol;type:varchar(20);not null"`
-	Direction   FXPositionDirection `gorm:"column:direction;type:varchar(10);not null"` // "BUY" or "SELL"
+	Direction   FXPositionDirection `gorm:"column:direction;type:varchar(10);not null"`  // "BUY" or "SELL"
 	OrderType   string              `gorm:"column:order_type;type:varchar(10);not null"` // "LIMIT" or "STOP"
 	TargetPrice float64             `gorm:"column:target_price;type:double;not null"`
 	Margin      int64               `gorm:"column:margin;type:bigint(20) unsigned;not null"`

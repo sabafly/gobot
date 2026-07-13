@@ -54,7 +54,7 @@ func NewDB(dsn string) (*DB, error) {
 		return nil, err
 	}
 
-	if db.Dialector.Name() == "mysql" {
+	if db.Name() == "mysql" {
 		// Ensure go_point_season_users.points_earned is signed (bigint(20)) instead of unsigned
 		if err := db.Exec("ALTER TABLE go_point_season_users MODIFY points_earned bigint(20) NOT NULL DEFAULT 0").Error; err != nil {
 			slog.Error("failed to alter go_point_season_users points_earned to signed", "error", err)

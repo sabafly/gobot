@@ -102,8 +102,8 @@ func TestChinchiro_NormalResolution(t *testing.T) {
 
 		// Deduct upfront
 		_ = gopoint.AddPointTx(tx, hostID, guildID, -maxLiability) // Host locks 100 pt
-		_ = gopoint.AddPointTx(tx, kid1ID, guildID, -bet)         // Kid1 locks 10 pt
-		_ = gopoint.AddPointTx(tx, kid2ID, guildID, -bet)         // Kid2 locks 10 pt
+		_ = gopoint.AddPointTx(tx, kid1ID, guildID, -bet)          // Kid1 locks 10 pt
+		_ = gopoint.AddPointTx(tx, kid2ID, guildID, -bet)          // Kid2 locks 10 pt
 		return nil
 	})
 	if err != nil {
@@ -196,7 +196,7 @@ func TestChinchiro_ZoroResolution(t *testing.T) {
 
 		// Deduct upfront
 		_ = gopoint.AddPointTx(tx, hostID, guildID, -maxLiability) // Host locks 50 pt
-		_ = gopoint.AddPointTx(tx, kid1ID, guildID, -bet)         // Kid1 locks 10 pt
+		_ = gopoint.AddPointTx(tx, kid1ID, guildID, -bet)          // Kid1 locks 10 pt
 		return nil
 	})
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"math"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -321,10 +322,7 @@ func redirectRefundToMarginCalls(tx *gorm.DB, userID snowflake.ID, guildID snowf
 			// This is a warned position. Calculate how much is needed to clear the margin call.
 			needed := int64(math.Ceil(float64(otherInitMargin)*otherOpt.MarginCallRatio/100.0)) - other.Margin - int64(otherPnl)
 			if needed > 0 && actualRefund > 0 {
-				addAmount := needed
-				if actualRefund < needed {
-					addAmount = actualRefund
-				}
+				addAmount := min(actualRefund, needed)
 				other.Margin += addAmount
 				other.MarginCallNotified = false
 				if err := tx.Save(other).Error; err != nil {
@@ -423,10 +421,7 @@ func liquidatePosition(c *components.Components, client *bot.Client, pos *models
 				var userPoint models.GoPoint
 				if err := tx.Where("user_id = ? AND guild_id = ?", pos.UserID, pos.GuildID).First(&userPoint).Error; err == nil {
 					points := userPoint.Points
-					deduct := points
-					if points > deficit {
-						deduct = deficit
-					}
+					deduct := min(points, deficit)
 					if deduct > 0 {
 						if err := gopoint.AddPointTx(tx, pos.UserID, pos.GuildID, -deduct); err != nil {
 							return err
@@ -879,13 +874,7 @@ func FXSymbolHandler(c *components.Components, event *events.ComponentInteractio
 
 	if data := event.StringSelectMenuInteractionData(); len(data.Values) > 0 {
 		val := data.Values[0]
-		isValid := false
-		for _, s := range fxSymbols {
-			if s == val {
-				isValid = true
-				break
-			}
-		}
+		isValid := slices.Contains(fxSymbols, val)
 		if !isValid {
 			return errors.NewError(fmt.Errorf("invalid symbol selected"))
 		}
@@ -1008,10 +997,7 @@ func FXMarginModalHandler(c *components.Components, event *events.ModalSubmitInt
 	}
 
 	opt := fxLeverages[session.SelectedLeverage]
-	minMargin := int64(float64(points) * opt.MinRatio)
-	if minMargin < 1 {
-		minMargin = 1
-	}
+	minMargin := max(int64(float64(points)*opt.MinRatio), 1)
 
 	if margin < minMargin {
 		builder := discord.NewMessageBuilder().
@@ -1318,10 +1304,7 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 	}
 
 	opt := fxLeverages[session.SelectedLeverage]
-	minMargin := int64(float64(points) * opt.MinRatio)
-	if minMargin < 1 {
-		minMargin = 1
-	}
+	minMargin := max(int64(float64(points)*opt.MinRatio), 1)
 
 	if session.SelectedMargin < minMargin {
 		builder := discord.NewMessageBuilder().
@@ -1460,10 +1443,7 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 	}
 
 	opt := fxLeverages[session.SelectedLeverage]
-	minMargin := int64(float64(points) * opt.MinRatio)
-	if minMargin < 1 {
-		minMargin = 1
-	}
+	minMargin := max(int64(float64(points)*opt.MinRatio), 1)
 
 	if session.SelectedMargin < minMargin {
 		builder := discord.NewMessageBuilder().
@@ -1716,10 +1696,7 @@ func FXOrderModalHandler(c *components.Components, event *events.ModalSubmitInte
 	}
 
 	opt := fxLeverages[session.SelectedLeverage]
-	minMargin := int64(float64(points) * opt.MinRatio)
-	if minMargin < 1 {
-		minMargin = 1
-	}
+	minMargin := max(int64(float64(points)*opt.MinRatio), 1)
 
 	if session.SelectedMargin < minMargin {
 		builder := discord.NewMessageBuilder().
@@ -2333,10 +2310,7 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 			var userPoint models.GoPoint
 			if err := tx.Where("user_id = ? AND guild_id = ?", pos.UserID, pos.GuildID).First(&userPoint).Error; err == nil {
 				points := userPoint.Points
-				deduct := points
-				if points > deficit {
-					deduct = deficit
-				}
+				deduct := min(points, deficit)
 				if deduct > 0 {
 					if err := gopoint.AddPointTx(tx, pos.UserID, pos.GuildID, -deduct); err != nil {
 						return err
