@@ -192,12 +192,12 @@ func Command(c *components.Components) components.Command {
 					for _, id := range removeRoles {
 						rolePanel.Roles = slices.DeleteFunc(rolePanel.Roles, func(r models.Role) bool { return r.ID == id })
 					}
-					rolePanel.UpdatedAt = time.Now()
-					if err := c.GormDB().Save(&rolePanel).Error; err != nil {
-						return errors.NewError(err)
-					}
 					edit := models.RolePanelEdit{ID: uuid.New(), GuildID: g.ID, ParentID: rolePanel.ID, ChannelID: event.Channel().ID()}
 					if err := c.GormDB().Create(&edit).Error; err != nil {
+						return errors.NewError(err)
+					}
+					rolePanel.UpdatedAt = time.Now()
+					if err := c.GormDB().Save(&rolePanel).Error; err != nil {
 						return errors.NewError(err)
 					}
 					edit.Parent = rolePanel
