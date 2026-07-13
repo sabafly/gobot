@@ -1,6 +1,8 @@
 package database
 
 import (
+	"log/slog"
+
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/database/models"
 	"gorm.io/driver/mysql"
@@ -32,8 +34,31 @@ func NewDB(dsn string) (*DB, error) {
 		&models.BetOption{},
 		&models.Bet{},
 		&models.BetEntrant{},
+		&models.Member{},
+		&models.RolePanel{},
+		&models.RolePanelEdit{},
+		&models.RolePanelPlaced{},
+		&models.MessagePin{},
+		&models.MessageRemind{},
+		&models.WordSuffix{},
+		&models.FXPosition{},
+		&models.FXOrder{},
+		&models.ChinchiroSession{},
+		&models.ChinchiroPlayer{},
+		&models.PolymarketBet{},
+		&models.GoPointTaxConfig{},
+		&models.GoPointPendingTax{},
+		&models.GoPointSeason{},
+		&models.GoPointSeasonUser{},
 	); err != nil {
 		return nil, err
+	}
+
+	if db.Name() == "mysql" {
+		// Ensure go_point_season_users.points_earned is signed (bigint(20)) instead of unsigned
+		if err := db.Exec("ALTER TABLE go_point_season_users MODIFY points_earned bigint(20) NOT NULL DEFAULT 0").Error; err != nil {
+			slog.Error("failed to alter go_point_season_users points_earned to signed", "error", err)
+		}
 	}
 
 	return &DB{DB: db}, nil

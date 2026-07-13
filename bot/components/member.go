@@ -25,27 +25,39 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/sabafly/gobot/ent"
-	"github.com/sabafly/gobot/ent/guild"
-	"github.com/sabafly/gobot/ent/member"
-	"github.com/sabafly/gobot/ent/user"
+	"github.com/sabafly/gobot/database/models"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
-func (c *Components) MemberCreate(ctx context.Context, u discord.User, gid snowflake.ID) (*ent.Member, error) {
-	eu, err := c.UserCreate(ctx, u)
+func (c *Components) MemberCreate(ctx context.Context, u discord.User, gid snowflake.ID) (*models.Member, error) {
+	_, err := c.UserCreate(ctx, u)
 	if err != nil {
 		return nil, err
 	}
-	ok := c.db.Member.
-		Query().
-		Where(member.HasUserWith(user.ID(u.ID)), member.HasGuildWith(guild.ID(gid))).ExistX(ctx)
-	if ok {
-		return c.db.Member.
-			Query().
-			Where(member.HasUserWith(user.ID(u.ID)), member.HasGuildWith(guild.ID(gid))).Only(ctx)
+
+	var member models.Member
+	err = c.GormDB().Where("guild_id = ? AND user_id = ?", gid, u.ID).First(&member).Error
+	if err == nil {
+		return &member, nil
 	}
-	return c.db.Member.Create().
-		SetUser(eu).
-		SetGuildID(gid).
-		Save(ctx)
+	if err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+
+	member = models.Member{
+		GuildID: gid,
+		UserID:  u.ID,
+	}
+	result := c.GormDB().Clauses(clause.OnConflict{DoNothing: true}).Create(&member)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected == 0 {
+		if err := c.GormDB().Where("guild_id = ? AND user_id = ?", gid, u.ID).First(&member).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	return &member, nil
 }

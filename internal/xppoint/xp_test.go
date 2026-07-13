@@ -28,7 +28,7 @@ import (
 )
 
 func TestXPSum(t *testing.T) {
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		tp := xppoint.TotalPoint(uint64(i))
 		xp := xppoint.XP(tp)
 		if xp.Level() != uint64(i) {

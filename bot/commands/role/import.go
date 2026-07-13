@@ -30,7 +30,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
-	"github.com/sabafly/gobot/ent/schema"
+	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/builtin"
 	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/emoji"
@@ -62,7 +62,7 @@ func ImportCommand(c *components.Components) components.Command {
 					}
 					message := event.MessageCommandInteractionData().TargetMessage()
 					lines := strings.Split(message.Embeds[0].Description, "\n")
-					var roles []schema.Role
+					var roles []models.Role
 					roleCount := 0
 					for _, v := range lines {
 						if !roleRegexp.MatchString(v) {
@@ -91,7 +91,7 @@ func ImportCommand(c *components.Components) components.Command {
 							role = *rolePtr
 						}
 						roleCount++
-						roles = append(roles, schema.Role{
+						roles = append(roles, models.Role{
 							ID:    role.ID,
 							Name:  role.Name,
 							Emoji: &componentEmoji,
@@ -106,25 +106,31 @@ func ImportCommand(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 
-					panel := c.DB().RolePanel.Create().
-						SetName(builtin.Or(message.Embeds[0].Title != "", message.Embeds[0].Title, translate.Message(event.Locale(), "components.role.panel.default_name"))).
-						SetDescription("").
-						SetRoles(roles).
-						SetGuild(g).
-						SaveX(event)
+					panel := models.RolePanel{
+						Name:        builtin.Or(message.Embeds[0].Title != "", message.Embeds[0].Title, translate.Message(event.Locale(), "components.role.panel.default_name")),
+						Description: "",
+						Roles:       roles,
+						GuildID:     g.ID,
+					}
+					if err := c.GormDB().Create(&panel).Error; err != nil {
+						return errors.NewError(err)
+					}
 
-					place := c.DB().RolePanelPlaced.Create().
-						SetGuild(g).
-						SetChannelID(event.Channel().ID()).
-						SetRolePanel(panel).
-						SetName(panel.Name).
-						SetDescription(panel.Description).
-						SetRoles(panel.Roles).
-						SetUpdatedAt(time.Now()).
-						SaveX(event)
+					place := models.RolePanelPlaced{
+						GuildID:     g.ID,
+						ChannelID:   event.Channel().ID(),
+						RolePanelID: panel.ID,
+						Name:        panel.Name,
+						Description: panel.Description,
+						Roles:       panel.Roles,
+						UpdatedAt:   time.Now(),
+					}
+					if err := c.GormDB().Create(&place).Error; err != nil {
+						return errors.NewError(err)
+					}
 
 					if err := event.CreateMessage(
-						rpPlaceBaseMenu(place, event.Locale()).
+						rpPlaceBaseMenu(&place, event.Locale()).
 							SetFlags(discord.MessageFlagEphemeral).
 							BuildCreate(),
 					); err != nil {

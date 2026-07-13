@@ -108,33 +108,33 @@ func TestMemoryValues_ConcurrentAccess(t *testing.T) {
 	iterations := 100
 
 	// Concurrent writes
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+			for j := range iterations {
 				mv.Set(id*iterations+j, "value")
 			}
 		}(i)
 	}
 
 	// Concurrent reads
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+			for j := range iterations {
 				_, _ = mv.Get(id*iterations + j)
 			}
 		}(i)
 	}
 
 	// Concurrent deletes
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
-			for j := 0; j < iterations; j++ {
+			for j := range iterations {
 				mv.Delete(id*iterations + j)
 			}
 		}(i)
@@ -222,12 +222,10 @@ func TestMemoryValues_CloseIdempotent(t *testing.T) {
 
 	// Also test concurrent closes
 	var wg sync.WaitGroup
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 10 {
+		wg.Go(func() {
 			mv.Close()
-		}()
+		})
 	}
 	wg.Wait()
 }
@@ -324,7 +322,7 @@ func TestMemoryValues_GetAfterConcurrentSet(t *testing.T) {
 	results := make(chan string, 100)
 
 	// Start multiple Gets and Sets concurrently
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		wg.Add(2)
 		go func(idx int) {
 			defer wg.Done()
@@ -367,7 +365,7 @@ func BenchmarkMemoryValues_Get(b *testing.B) {
 	defer mv.Close()
 
 	// Pre-populate with some data
-	for i := 0; i < 1000; i++ {
+	for i := range 1000 {
 		mv.Set(i, "value")
 	}
 

@@ -110,7 +110,7 @@ func (u UserDataLevel) Level() *big.Int {
 	if u.Point == nil {
 		u.Point = big.NewInt(0)
 	}
-	for k := 0; k < 999; k++ {
+	for k := range 999 {
 		lv := u.sumRequiredLevelPoint(big.NewInt(int64(k)))
 		if lv.Cmp(u.Point) == 1 {
 			return big.NewInt(int64(k))

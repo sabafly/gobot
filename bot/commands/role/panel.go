@@ -27,24 +27,27 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"github.com/sabafly/gobot/bot/components"
-	"github.com/sabafly/gobot/ent/guild"
-	"github.com/sabafly/gobot/ent/rolepanel"
+	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/errors"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
-	"github.com/sabafly/gobot/ent"
-	"github.com/sabafly/gobot/ent/rolepanelplaced"
 	"github.com/sabafly/gobot/internal/discordutil"
 )
 
-func rolePanelPlace(ctx context.Context, place *ent.RolePanelPlaced, locale discord.Locale, client *bot.Client, react bool) error {
+const (
+	RolePanelPlacedTypeReaction   = "reaction"
+	RolePanelPlacedTypeButton     = "button"
+	RolePanelPlacedTypeSelectMenu = "select_menu"
+)
+
+func rolePanelPlace(ctx context.Context, place *models.RolePanelPlaced, locale discord.Locale, client *bot.Client, react bool, c *components.Components) error {
 	builder := rpPlacedMessage(place, locale)
 	if place.MessageID != nil {
 		if _, err := client.Rest.UpdateMessage(place.ChannelID, *place.MessageID, builder.BuildUpdate()); err != nil {
 			return err
 		}
-		if place.Type == rolepanelplaced.TypeReaction && react {
+		if place.Type == RolePanelPlacedTypeReaction && react {
 			if err := client.Rest.RemoveAllReactions(place.ChannelID, *place.MessageID); err != nil {
 				return err
 			}
@@ -54,10 +57,13 @@ func rolePanelPlace(ctx context.Context, place *ent.RolePanelPlaced, locale disc
 		if err != nil {
 			return err
 		}
-		*place = *place.Update().SetMessageID(m.ID).SaveX(ctx)
+		place.MessageID = &m.ID
+		if err := c.GormDB().Save(place).Error; err != nil {
+			return err
+		}
 	}
 
-	if place.Type == rolepanelplaced.TypeReaction && react {
+	if place.Type == RolePanelPlacedTypeReaction && react {
 		for i, r := range place.Roles {
 			if r.Emoji == nil {
 				r.Emoji = &discord.ComponentEmoji{
@@ -72,23 +78,29 @@ func rolePanelPlace(ctx context.Context, place *ent.RolePanelPlaced, locale disc
 	return nil
 }
 
-func createPanelPlace(ctx context.Context, c *components.Components, panelID uuid.UUID, channelID snowflake.ID, g *ent.Guild) (*ent.RolePanelPlaced, error) {
+func createPanelPlace(ctx context.Context, c *components.Components, panelID uuid.UUID, channelID snowflake.ID, g *models.Guild) (*models.RolePanelPlaced, error) {
 
-	c.DB().RolePanelPlaced.Delete().Where(rolepanelplaced.And(rolepanelplaced.Or(rolepanelplaced.MessageIDIsNil(), rolepanelplaced.TypeIsNil()), rolepanelplaced.HasGuildWith(guild.ID(g.ID)))).ExecX(ctx)
+	// Clean up incomplete placements
+	c.GormDB().Where("(message_id IS NULL OR type = '') AND guild_id = ?", g.ID).Delete(&models.RolePanelPlaced{})
 
-	if !g.QueryRolePanels().Where(rolepanel.ID(panelID)).ExistX(ctx) {
+	var panel models.RolePanel
+	if err := c.GormDB().Where("id = ? AND guild_id = ?", panelID, g.ID).First(&panel).Error; err != nil {
 		return nil, errors.New("rolepanel not found")
 	}
 
-	panel := g.QueryRolePanels().Where(rolepanel.ID(panelID)).FirstX(ctx)
+	placed := models.RolePanelPlaced{
+		GuildID:     g.ID,
+		ChannelID:   channelID,
+		RolePanelID: panel.ID,
+		Name:        panel.Name,
+		Description: panel.Description,
+		Roles:       panel.Roles,
+		UpdatedAt:   time.Now(),
+	}
 
-	return c.DB().RolePanelPlaced.Create().
-		SetGuild(g).
-		SetChannelID(channelID).
-		SetRolePanel(panel).
-		SetName(panel.Name).
-		SetDescription(panel.Description).
-		SetRoles(panel.Roles).
-		SetUpdatedAt(time.Now()).
-		SaveX(ctx), nil
+	if err := c.GormDB().Create(&placed).Error; err != nil {
+		return nil, err
+	}
+
+	return &placed, nil
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type BetHost struct {
@@ -26,6 +27,13 @@ type BetHost struct {
 	EntryDeadline       *time.Time `gorm:"index:idx_entry_deadline;"` // Deadline for race/battle_royale entry
 	VoteDeadline        *time.Time `gorm:"index:idx_vote_deadline;"`
 	Locale              string     `gorm:"type:varchar(10);not null;default:'en';"`
+}
+
+func (b *BetHost) BeforeCreate(tx *gorm.DB) error {
+	if b.ID == uuid.Nil {
+		b.ID = uuid.New()
+	}
+	return nil
 }
 
 type BetVoteType string

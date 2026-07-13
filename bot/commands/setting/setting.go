@@ -31,7 +31,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
-	"github.com/sabafly/gobot/ent"
+	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/builtin"
 	"github.com/sabafly/gobot/internal/embeds"
 	"github.com/sabafly/gobot/internal/errors"
@@ -125,29 +125,6 @@ func Command(c *components.Components) components.Command {
 							},
 						},
 					},
-					// discord.ApplicationCommandOptionSubCommandGroup{
-					// 	Name:        "welcome",
-					// 	Description: "welcome",
-					// 	Options: []discord.ApplicationCommandOptionSubCommand{
-					// 		{
-					// 			Name:                     "set-message",
-					// 			Description:              "set message",
-					// 			DescriptionLocalizations: translate.MessageMap("components.setting.welcome.set-message", false),
-					// 		},
-					// 		{
-					// 			Name:                     "set-channel",
-					// 			Description:              "set channel",
-					// 			DescriptionLocalizations: translate.MessageMap("components.setting.welcome.set-channel", false),
-					// 			Options: []discord.ApplicationCommandOption{
-					// 				discord.ApplicationCommandOptionChannel{
-					// 					Name:                     "channel",
-					// 					Description:              "channel",
-					// 					DescriptionLocalizations: translate.MessageMap("components.setting.welcome.channel", false),
-					// 				},
-					// 			},
-					// 		},
-					// 	},
-					// },
 				},
 			},
 		},
@@ -200,9 +177,11 @@ func Command(c *components.Components) components.Command {
 					if err != nil {
 						return errors.NewError(err)
 					}
-					g = g.Update().
-						SetBumpEnabled(!g.BumpEnabled).
-						SaveX(event)
+					g.BumpEnabled = !g.BumpEnabled
+					if err := c.GormDB().Save(g).Error; err != nil {
+						return errors.NewError(err)
+					}
+
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
 							SetContent(translate.Message(event.Locale(), "components.setting.bump.toggle."+builtin.Or(g.BumpEnabled, "enabled", "disabled"))).
@@ -223,9 +202,11 @@ func Command(c *components.Components) components.Command {
 					if err != nil {
 						return errors.NewError(err)
 					}
-					g = g.Update().
-						SetUpEnabled(!g.UpEnabled).
-						SaveX(event)
+					g.UpEnabled = !g.UpEnabled
+					if err := c.GormDB().Save(g).Error; err != nil {
+						return errors.NewError(err)
+					}
+
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
 							SetContent(translate.Message(event.Locale(), "components.setting.up.toggle."+builtin.Or(g.UpEnabled, "enabled", "disabled"))).
@@ -246,13 +227,15 @@ func Command(c *components.Components) components.Command {
 					if err != nil {
 						return errors.NewError(err)
 					}
-					update := g.Update()
 					if r, ok := event.SlashCommandInteractionData().OptRole("target"); ok {
-						update.SetBumpMention(r.ID)
+						g.BumpMention = &r.ID
 					} else {
-						update.ClearBumpMention()
+						g.BumpMention = nil
 					}
-					g = update.SaveX(event)
+					if err := c.GormDB().Save(g).Error; err != nil {
+						return errors.NewError(err)
+					}
+
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
 							SetContent(translate.Message(event.Locale(), "components.setting.bump.mention.used",
@@ -280,13 +263,15 @@ func Command(c *components.Components) components.Command {
 					if err != nil {
 						return errors.NewError(err)
 					}
-					update := g.Update()
 					if r, ok := event.SlashCommandInteractionData().OptRole("target"); ok {
-						update.SetUpMention(r.ID)
+						g.UpMention = &r.ID
 					} else {
-						update.ClearUpMention()
+						g.UpMention = nil
 					}
-					g = update.SaveX(event)
+					if err := c.GormDB().Save(g).Error; err != nil {
+						return errors.NewError(err)
+					}
+
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
 							SetContent(translate.Message(event.Locale(), "components.setting.up.mention.used",
@@ -450,9 +435,11 @@ func Command(c *components.Components) components.Command {
 					if err != nil {
 						return errors.NewError(err)
 					}
-					g = g.Update().
-						SetLevelingDisabled(!g.LevelingDisabled).
-						SaveX(event)
+					g.LevelingDisabled = !g.LevelingDisabled
+					if err := c.GormDB().Save(g).Error; err != nil {
+						return errors.NewError(err)
+					}
+
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
 							SetContent(translate.Message(event.Locale(), "components.setting.leveling.enable."+builtin.Or(!g.LevelingDisabled, "enabled", "disabled"))).
@@ -470,12 +457,14 @@ func Command(c *components.Components) components.Command {
 				if err != nil {
 					return errors.NewError(err)
 				}
-				g.Update().
-					SetBumpMessageTitle(event.ModalSubmitInteraction.Data.Text("message_title")).
-					SetBumpMessage(event.ModalSubmitInteraction.Data.Text("message")).
-					SetBumpRemindMessageTitle(event.ModalSubmitInteraction.Data.Text("remind.message_title")).
-					SetBumpRemindMessage(event.ModalSubmitInteraction.Data.Text("remind.message")).
-					ExecX(event)
+				g.BumpMessageTitle = event.ModalSubmitInteraction.Data.Text("message_title")
+				g.BumpMessage = event.ModalSubmitInteraction.Data.Text("message")
+				g.BumpRemindMessageTitle = event.ModalSubmitInteraction.Data.Text("remind.message_title")
+				g.BumpRemindMessage = event.ModalSubmitInteraction.Data.Text("remind.message")
+				if err := c.GormDB().Save(g).Error; err != nil {
+					return errors.NewError(err)
+				}
+
 				if err := event.DeferUpdateMessage(); err != nil {
 					return errors.NewError(err)
 				}
@@ -486,12 +475,14 @@ func Command(c *components.Components) components.Command {
 				if err != nil {
 					return errors.NewError(err)
 				}
-				g.Update().
-					SetUpMessageTitle(event.ModalSubmitInteraction.Data.Text("message_title")).
-					SetUpMessage(event.ModalSubmitInteraction.Data.Text("message")).
-					SetUpRemindMessageTitle(event.ModalSubmitInteraction.Data.Text("remind.message_title")).
-					SetUpRemindMessage(event.ModalSubmitInteraction.Data.Text("remind.message")).
-					ExecX(event)
+				g.UpMessageTitle = event.ModalSubmitInteraction.Data.Text("message_title")
+				g.UpMessage = event.ModalSubmitInteraction.Data.Text("message")
+				g.UpRemindMessageTitle = event.ModalSubmitInteraction.Data.Text("remind.message_title")
+				g.UpRemindMessage = event.ModalSubmitInteraction.Data.Text("remind.message")
+				if err := c.GormDB().Save(g).Error; err != nil {
+					return errors.NewError(err)
+				}
+
 				if err := event.DeferUpdateMessage(); err != nil {
 					return errors.NewError(err)
 				}
@@ -589,7 +580,7 @@ type notice struct {
 var bumpNotice = map[snowflake.ID]notice{}
 var bumpLock sync.Mutex
 
-func bumpHandler(c *components.Components, g *ent.Guild, event *events.GuildMessageCreate) error {
+func bumpHandler(c *components.Components, g *models.Guild, event *events.GuildMessageCreate) error {
 	bumpLock.Lock()
 	defer bumpLock.Unlock()
 	if event.Message.Interaction == nil || event.Message.Interaction.Name != "bump" {
@@ -615,7 +606,7 @@ func bumpHandler(c *components.Components, g *ent.Guild, event *events.GuildMess
 var upNotice = map[snowflake.ID]notice{}
 var upLock sync.Mutex
 
-func upHandler(c *components.Components, g *ent.Guild, event *events.GuildMessageCreate) error {
+func upHandler(c *components.Components, g *models.Guild, event *events.GuildMessageCreate) error {
 	upLock.Lock()
 	defer upLock.Unlock()
 	if event.Message.Interaction == nil || event.Message.Interaction.Name != "dissoku up" {

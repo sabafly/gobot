@@ -25,25 +25,28 @@ import (
 	"log/slog"
 
 	"github.com/disgoorg/disgo/discord"
-	"github.com/sabafly/gobot/ent"
-	"github.com/sabafly/gobot/ent/user"
+	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/errors"
 )
 
-func (c *Components) UserCreate(ctx context.Context, u discord.User) (*ent.User, error) {
+func (c *Components) UserCreate(ctx context.Context, u discord.User) (*models.User, error) {
 	if u.Bot || u.System {
 		return nil, errors.New("bot cannot use to create user")
 	}
-	if ok := c.db.User.
-		Query().
-		Where(user.ID(u.ID)).ExistX(ctx); ok {
-		return c.db.User.
-			Query().
-			Where(user.ID(u.ID)).Only(ctx)
+
+	user := models.User{
+		ID:   u.ID,
+		Name: u.EffectiveName(),
 	}
-	slog.Debug("新規ユーザー作成", "uid", u.ID, "uname", u.Username)
-	return c.db.User.Create().
-		SetID(u.ID).
-		SetName(u.EffectiveName()).
-		Save(ctx)
+
+	result := c.GormDB().FirstOrCreate(&user, models.User{ID: u.ID})
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	if result.RowsAffected > 0 {
+		slog.Debug("新規ユーザー作成", "uid", u.ID, "uname", u.Username)
+	}
+
+	return &user, nil
 }

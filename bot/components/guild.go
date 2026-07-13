@@ -25,21 +25,12 @@ import (
 	"log/slog"
 
 	"github.com/sabafly/gobot/database/models"
-	"github.com/sabafly/gobot/ent/member"
-	"github.com/sabafly/gobot/ent/messagepin"
-	"github.com/sabafly/gobot/ent/messageremind"
-	"github.com/sabafly/gobot/ent/rolepanel"
-	"github.com/sabafly/gobot/ent/rolepaneledit"
-	"github.com/sabafly/gobot/ent/rolepanelplaced"
-	"github.com/sabafly/gobot/ent/wordsuffix"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/sabafly/gobot/ent"
-	"github.com/sabafly/gobot/ent/guild"
-	"github.com/sabafly/gobot/ent/user"
+	"gorm.io/gorm"
 )
 
 func (c *Components) OnGuildReady() func(event *events.GuildReady) {
@@ -66,8 +57,18 @@ func (c *Components) OnGuildReady() func(event *events.GuildReady) {
 			return
 		}
 
-		u = c.db.User.Query().Where(user.ID(u.ID)).OnlyX(event)
-		slog.Debug("ギルドオーナー情報", "id", u.ID, "name", u.Name, "own_guilds", u.QueryOwnGuilds().AllX(event), "guilds", u.QueryGuilds().AllX(event))
+		var ownedGuilds []models.Guild
+		c.GormDB().Where("owner_id = ?", u.ID).Find(&ownedGuilds)
+
+		// For joined guilds, need a join query via Members
+		var joinedMembers []models.Member
+		c.GormDB().Preload("Guild").Where("user_id = ?", u.ID).Find(&joinedMembers)
+		var joinedGuilds []models.Guild
+		for _, m := range joinedMembers {
+			joinedGuilds = append(joinedGuilds, m.Guild)
+		}
+
+		slog.Debug("ギルドオーナー情報", "id", u.ID, "name", u.Name, "own_guilds", ownedGuilds, "guilds", joinedGuilds)
 	}
 }
 
@@ -95,48 +96,94 @@ func (c *Components) OnGuildJoin() func(event *events.GuildJoin) {
 			return
 		}
 
-		u = c.db.User.Query().Where(user.ID(u.ID)).OnlyX(event)
-		slog.Debug("ギルドオーナー情報", "id", u.ID, "name", u.Name, "own_guilds", u.QueryOwnGuilds().AllX(event), "guilds", u.QueryGuilds().AllX(event))
+		var ownedGuilds []models.Guild
+		c.GormDB().Where("owner_id = ?", u.ID).Find(&ownedGuilds)
+
+		var joinedMembers []models.Member
+		c.GormDB().Preload("Guild").Where("user_id = ?", u.ID).Find(&joinedMembers)
+		var joinedGuilds []models.Guild
+		for _, m := range joinedMembers {
+			joinedGuilds = append(joinedGuilds, m.Guild)
+		}
+
+		slog.Debug("ギルドオーナー情報", "id", u.ID, "name", u.Name, "own_guilds", ownedGuilds, "guilds", joinedGuilds)
 	}
 }
 
 func (c *Components) OnGuildLeave() func(event *events.GuildLeave) {
 	return func(event *events.GuildLeave) {
 		slog.Info("ギルド脱退", "id", event.Guild.ID, "name", event.Guild.Name)
-		c.db.Member.Delete().Where(member.HasGuildWith(guild.ID(event.Guild.ID))).ExecX(event)
-		c.db.MessagePin.Delete().Where(messagepin.HasGuildWith(guild.ID(event.Guild.ID))).ExecX(event)
-		c.db.MessageRemind.Delete().Where(messageremind.HasGuildWith(guild.ID(event.Guild.ID))).ExecX(event)
-		c.db.RolePanelPlaced.Delete().Where(rolepanelplaced.HasGuildWith(guild.ID(event.Guild.ID))).ExecX(event)
-		c.db.RolePanelEdit.Delete().Where(rolepaneledit.HasGuildWith(guild.ID(event.Guild.ID))).ExecX(event)
-		c.db.RolePanel.Delete().Where(rolepanel.HasGuildWith(guild.ID(event.Guild.ID))).ExecX(event)
-		c.db.WordSuffix.Delete().Where(wordsuffix.HasGuildWith(guild.ID(event.Guild.ID))).ExecX(event)
-		c.db.Guild.DeleteOneID(event.Guild.ID).ExecX(event)
+
+		// Use transaction for deletion
+		if err := c.GormDB().Transaction(func(tx *gorm.DB) error {
+			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.Member{}).Error; err != nil {
+				slog.Error("ギルド脱退 メンバー削除に失敗", "err", err)
+				return err
+			}
+			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.MessagePin{}).Error; err != nil {
+				slog.Error("ギルド脱退 メッセージピン削除に失敗", "err", err)
+				return err
+			}
+			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.MessageRemind{}).Error; err != nil {
+				slog.Error("ギルド脱退 メッセージリマインド削除に失敗", "err", err)
+				return err
+			}
+			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.RolePanelPlaced{}).Error; err != nil {
+				slog.Error("ギルド脱退 ロールパネル配置削除に失敗", "err", err)
+				return err
+			}
+			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.RolePanelEdit{}).Error; err != nil {
+				slog.Error("ギルド脱退 ロールパネル編集削除に失敗", "err", err)
+				return err
+			}
+			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.RolePanel{}).Error; err != nil {
+				slog.Error("ギルド脱退 ロールパネル削除に失敗", "err", err)
+				return err
+			}
+			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.WordSuffix{}).Error; err != nil {
+				slog.Error("ギルド脱退 ワードサフィックス削除に失敗", "err", err)
+				return err
+			}
+			if err := tx.Delete(&models.Guild{ID: event.Guild.ID}).Error; err != nil {
+				slog.Error("ギルド脱退 ギルド削除に失敗", "err", err)
+				return err
+			}
+			return nil
+		}); err != nil {
+			slog.Error("ギルド脱退 データベースからの削除に失敗", "err", err)
+			return
+		}
 	}
 }
 
-func (c *Components) GuildCreate(ctx context.Context, ownerID snowflake.ID, g *discord.Guild) (*ent.Guild, error) {
-	ok := c.db.Guild.
-		Query().
-		Where(guild.ID(g.ID)).ExistX(ctx)
-	if ok {
-		return c.db.Guild.
-			Query().
-			Where(guild.ID(g.ID)).
-			Only(ctx)
+func (c *Components) GuildCreate(ctx context.Context, ownerID snowflake.ID, g *discord.Guild) (*models.Guild, error) {
+	var guild models.Guild
+	err := c.GormDB().Where("id = ?", g.ID).First(&guild).Error
+	if err == nil {
+		return &guild, nil
 	}
+	if err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+
 	slog.Debug("新規ギルド作成", "gid", g.ID)
-	return c.db.Guild.Create().
-		SetID(g.ID).
-		SetName(g.Name).
-		SetOwnerID(ownerID).
-		Save(ctx)
+	guild = models.Guild{
+		ID:      g.ID,
+		Name:    g.Name,
+		OwnerID: &ownerID,
+	}
+	if err := c.GormDB().Create(&guild).Error; err != nil {
+		return nil, err
+	}
+	return &guild, nil
 }
 
-func (c *Components) GuildCreateID(ctx context.Context, gid snowflake.ID) (*ent.Guild, error) {
-	return c.db.Guild.
-		Query().
-		Where(guild.ID(gid)).
-		Only(ctx)
+func (c *Components) GuildCreateID(ctx context.Context, gid snowflake.ID) (*models.Guild, error) {
+	var guild models.Guild
+	if err := c.GormDB().Where("id = ?", gid).First(&guild).Error; err != nil {
+		return nil, err
+	}
+	return &guild, nil
 }
 
 func (c *Components) GuildRequest(client *bot.Client, gid snowflake.ID) (*discord.Guild, error) {
@@ -152,7 +199,8 @@ func (c *Components) GuildRequest(client *bot.Client, gid snowflake.ID) (*discor
 
 func (c *Components) InitializeGuild(ctx context.Context, guild discord.Guild) error {
 	g := models.Guild{
-		ID: guild.ID,
+		ID:      guild.ID,
+		OwnerID: &guild.OwnerID,
 	}
 	if err := c.GormDB().Where(g).FirstOrCreate(&g).Error; err != nil {
 		return err

@@ -342,16 +342,16 @@ func (l Button) component(ctx MapContext) discord.Component {
 
 // [discord.StringSelectMenuComponent]
 type StringSelectMenu struct {
-	ID          string                            `yaml:"id"`
-	Placeholder string                            `yaml:"placeholder,omitempty"`
-	Options     map[string]StringSelectMenuOption `yaml:"options"`
+	ID          string                  `yaml:"id"`
+	Placeholder string                  `yaml:"placeholder,omitempty"`
+	Options     StringSelectMenuOptions `yaml:"options"`
 }
 
 func (l *StringSelectMenu) UnmarshalYAML(value *yaml.Node) error {
 	var v struct {
-		ID          string                            `yaml:"id"`
-		Placeholder string                            `yaml:"placeholder,omitempty"`
-		Options     map[string]StringSelectMenuOption `yaml:"options"`
+		ID          string                  `yaml:"id"`
+		Placeholder string                  `yaml:"placeholder,omitempty"`
+		Options     StringSelectMenuOptions `yaml:"options"`
 	}
 	if err := value.Decode(&v); err != nil {
 		return err
@@ -366,14 +366,10 @@ func (l StringSelectMenu) Type() ComponentType {
 	return ComponentTypeStringSelectMenu
 }
 func (l StringSelectMenu) stringSelectMenu(ctx MapContext) discord.StringSelectMenuComponent {
-	options := make([]discord.StringSelectMenuOption, 0, len(l.Options))
-	for _, option := range l.Options {
-		options = append(options, option.option(ctx))
-	}
 	return discord.StringSelectMenuComponent{
 		CustomID:    ctx.ReplaceCustomID(l.ID),
 		Placeholder: ctx.ReplaceText(l.Placeholder),
-		Options:     ctx.GetDefaultOptions(l.ID, options),
+		Options:     l.Options.options(ctx),
 		MinValues:   ctx.GetMinValues(l.ID),
 		MaxValues:   ctx.GetMaxValues(l.ID),
 		Disabled:    ctx.IsDisabled(l.ID),
@@ -390,6 +386,39 @@ func (l StringSelectMenu) containerSubComponent(ctx MapContext) discord.Containe
 }
 func (l StringSelectMenu) component(ctx MapContext) discord.Component {
 	return l.stringSelectMenu(ctx)
+}
+
+type StringSelectMenuOptions struct {
+	opts []StringSelectMenuOption
+	id   string
+}
+
+func (s *StringSelectMenuOptions) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind == yaml.ScalarNode {
+		if value.Tag == "!!str" || value.Tag == "" {
+			s.opts = nil
+			s.id = value.Value
+		}
+		return nil
+	}
+	var v []StringSelectMenuOption
+	if err := value.Decode(&v); err != nil {
+		return err
+	}
+	s.opts = v
+	s.id = ""
+	return nil
+}
+
+func (s *StringSelectMenuOptions) options(ctx MapContext) []discord.StringSelectMenuOption {
+	if s.id != "" {
+		return ctx.GetStringOptions(s.id)
+	}
+	options := make([]discord.StringSelectMenuOption, 0, len(s.opts))
+	for _, option := range s.opts {
+		options = append(options, option.option(ctx))
+	}
+	return options
 }
 
 // [discord.StringSelectMenuOption]

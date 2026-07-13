@@ -22,13 +22,51 @@ strings:
   command.gopoint.give.description: "Goポイントを他のユーザーに譲渡します。"
   command.gopoint.give.point.description: "譲渡するGoポイントの数"
   command.gopoint.give.target.description: "譲渡先のユーザー"
+  command.gopoint.give.target_user.description: "譲渡先のユーザー"
+  command.gopoint.tax-setup.description: "定期徴収の割合や間隔を設定します。(管理者のみ)"
+  command.gopoint.tax-status.description: "現在の定期徴収の設定状況と徴収予定を表示します。(管理者のみ)"
+  command.gopoint.tax-force.description: "今すぐポイントの徴収（または徴収の予約計算）を強制実行します。(管理者のみ)"
+  command.gopoint.reset.description: "ギルド内の全員のGoPointsを一括リセットします。(管理者のみ)"
+  command.gopoint.season-start.description: "新しいシーズンを開始、またはスケジュールします。(管理者のみ)"
+  command.gopoint.season-end.description: "アクティブなシーズンを途中で終了し、表彰を行います。(管理者のみ)"
+  command.gopoint.season-status.description: "現在のアクティブなシーズンの進捗と現在のランキングを表示します。"
+  command.gopoint.season-ranking.description: "アクティブなシーズン、または過去のシーズンのランキングを表示します。"
+  command.gopoint.description: "GoPointの情報を表示します。"
+  command.gopoint.tax.description: "定期徴収の管理を行います。(管理者のみ)"
+  command.gopoint.tax-force.overwrite.description: "既存の徴収予定を上書き（再計算）するか指定します (デフォルト: false)。"
+  command.gopoint.reset.points.description: "リセット後のポイント数を指定します (デフォルト: 0)。by_levelがtrueの場合は無視されます。"
+  command.gopoint.reset.by_level.description: "各ユーザーのレベルの累積必要XPに応じたポイントでリセットするかどうか。"
+  command.gopoint.season.description: "シーズンの管理・表示を行います。"
+  command.gopoint.season-start.name.description: "シーズンの名前を指定します。"
+  command.gopoint.season-start.duration_days.description: "シーズンの期間(日)を指定します (1-365)。"
+  command.gopoint.season-start.start_delay_hours.description: "何時間後にシーズンを開始するか（スケジュール予約）を指定します。"
+  command.gopoint.season-start.criteria.description: "ランキングの基準を指定します (earned: 獲得ポイント, final: 最終ポイント)。"
+  command.gopoint.season-start.criteria.choice.earned: "獲得ポイント数"
+  command.gopoint.season-start.criteria.choice.final: "最終所持ポイント数"
+  command.gopoint.season-ranking.season_id.description: "表示したい過去のシーズンのIDを指定します (省略時は現在のアクティブなシーズン)。"
   command.play.slotmachine.description: "スロットマシンをプレイします。"
   command.play.high-and-low.guess-next: 次のカードを予想してください
-  command.play.high-and-low.equal-retry: 結果が同じでした。もう一度予想してください
+  command.play.high-and-low.equal-success: "# 🚀SAME的中‼🚀"
+  command.play.high-and-low.equal-chance: SAMEチャンス‼
   command.play.high-and-low.description: "ハイアンドローゲームをプレイします。"
+  command.play.high-and-low.start_option_entry.label: "コスト {{.Cost}} ポイント"
+  command.play.high-and-low.start_option_entry.description: "開始ポイント: {{.StartPoint}}ポイント ボーナス割合: {{mul .Multiplier 100}}%"
+  command.play.high-and-low.start_option_entry.selected: "コスト: `{{.Cost}}ポイント` 開始ポイント: `{{.StartPoint}}ポイント` ボーナス割合: `{{mul .Multiplier 100}}%`"
   command.play.high-and-low.option.extra_bet.name: "追加ベット"
   command.play.high-and-low.option.extra_bet.description: "追加ベットを行い、初期ポイントを増やします 4ポイント以上増やした場合1ポイントごとに倍率が(増やしたポイント-3)増える (10^(追加初期ポイント+1) )ポイント支払う"
+  command.play.high-and-low.finish.win: "ゲームクリア"
+  command.play.high-and-low.finish.lose: "ゲームオーバー"
+  command.play.high-and-low.finish.payout: "ポイント獲得"
+  command.play.high-and-low.finish.joker: "ジョーカーがあらわれた！"
   command.play.slot.description: "スロットマシンをプレイします。"
+  command.play.fx.description: "FXポイントゲームをプレイします。"
+  command.play.portfolio.description: "指定したユーザーのFXポジション一覧（ポートフォリオ）を表示します。"
+  command.play.portfolio.option.user.description: "ポートフォリオを表示するユーザーを指定します。"
+  command.play.chinchiro.description: "チンチロリンをマルチプレイで開始します。"
+  command.play.chinchiro.option.bet.description: "掛け金を指定します（デフォルト: 10）。"
+  command.play.polymarket.description: "Polymarketの予測市場でGoPointを賭けます。"
+  command.play.polymarket.option.query.description: "市場を検索するためのクエリ。"
+  command.play.polymarket.option.closed.description: "終了した予測市場も含めるかどうか（デフォルト: false）"
   command.bet.description: "Goポイントを賭けます。"
   command.bet.create.title: "ベットを作成"
   command.bet.create.input.title.placeholder: "ベット内容を入力してください"
@@ -94,7 +132,7 @@ strings:
   command.bet.error.already_voted_no_change: "あなたは既に {option} に {amount}pt 投票しています。\n投票先を変更することはできません。"
   command.bet.error.already_voted_status: "あなたは既に {option} に {amount}pt 投票しています。\n"
   command.bet.error.invalid_amount: "有効なポイント数を入力してください。"
-  command.bet.error.insufficient_points: "Goポイントが不足しています。現在: {points}pt"
+  command.bet.error.insufficient_points: "Goポイントが不足しています。現在の所持ポイント: {points}pt"
   command.bet.error.cannot_decrease: "投票額を減らすことはできません。"
   command.bet.error.cannot_change_dest: "投票先を変更することはできません。"
   command.bet.error.only_organizer_decide: "結果の決定は主催者のみが行えます。"
@@ -178,6 +216,203 @@ strings:
   error.play.high-and-low.insufficient_points.description: "このハイアンドローゲームに参加するには、{point}ポイントが必要です。"
   error.play.slot.insufficient_points: "ポイントが不足しています"
   error.play.slot.insufficient_points.description: "このスロットマシンをプレイするには、{point}ポイントが必要です。"
+  error.play.slot.expired: "スロットゲームが期限切れです"
+  error.play.slot.expired.description: "このスロットゲームは期限切れです。新しいゲームを開始してください。"
+  error.play.slot.not_your_game: "このゲームはあなたのものではありません"
+  error.play.slot.not_your_game.description: "他のユーザーのスロットゲームを操作することはできません。"
+  components.play.fx.symbol.jpy: "円 (JPY)"
+  components.play.fx.direction.buy: "🟢 買い (Long)"
+  components.play.fx.direction.sell: "🔴 売り (Short)"
+  components.play.fx.active_position_title: "### 💼 保有ポジション情報 ({{.current}}/{{.total}})"
+  components.play.fx.active_position_desc: |-
+    - **通貨ペア**: {{.symbol}}
+    - **ポジション**: {{.direction}}
+    - **レバレッジ**: {{.leverage}}x
+    - **証拠金 (Margin)**: `{{.margin}} pt` (当初: `{{.init}} pt` / 取引数量相当: `{{.size}} pt`)
+    - **エントリー価格**: `{{.entry}}`
+    - **現在価格**: `{{.current}}`
+    - **強制ロスカット価格**: `{{.liq}}`
+    - **利確設定 (TP)**: `{{.tp}}` / **損切設定 (SL)**: `{{.sl}}`
+    - **評価損益 (PnL)**: **`{{.pnl}} pt`**
+    - **証拠金維持率**: **`{{.ratio}}`** (追証ライン: `{{.mc_line}}` / ロスカット: `{{.liq_line}}`)
+  components.play.fx.margin_call_warning: |-
+    ⚠️ **[警告] 追証 (マージンコール) 発生中！**
+    証拠金維持率が{{.mc_line}}を下回っています。追証を入金して強制決済を回避してください。
+  components.play.fx.trade_restricted_warning: |-
+    ⚠️ **[警告] 追証警告中（取引制限）**
+    現在、維持率が追証ラインを下回っているポジションがあるため、すべての取引操作（新規注文・決済）が制限されています。制限を解除するには、対象ポジションに追証を入金してください。
+  components.play.fx.placeholder_switch_pos: "ポジションを選択して管理"
+  components.play.fx.option_new_order: "🆕 新規注文画面へ"
+  components.play.fx.option_pos_item: "{{.symbol}} {{.direction}} {{.leverage}}x (証拠金: {{.margin}} pt | 損益: {{.pnl}} pt)"
+  components.play.fx.btn_input_margin: "2. 証拠金を入力 (現在: {{.margin}} pt)"
+  components.play.fx.close_success_title: "🏁 **FXポジション決済完了** 🏁"
+  components.play.fx.close_success_desc: |-
+    ポジションの決済が正常に完了しました。
+    - **通貨ペア**: `{{.symbol}}` ({{.direction}})
+    - **レバレッジ**: `{{.leverage}}x` | **証拠金**: `{{.margin}} pt`
+    - **エントリー価格**: `{{.entry}}`
+    - **決済価格**: `{{.exit}}`
+    - **獲得/損失 (PnL)**: **`{{.pnl}} pt`**
+    - **返却証拠金**: `{{.refund}} pt`
+    - **現在の GoPoints**: `{{.points}} pt`
+  components.play.fx.close_quit_title: "📈 **FX TRADING CLOSED** 📉"
+  components.play.fx.close_quit_desc: "FX取引画面を閉じました。"
+  components.play.fx.close_quit_active_notice: "⚠️ **注意**: {{.symbol}} の {{.direction}} ポジション (証拠金: `{{.margin}} pt`) は決済されず、**現在も保有中**です。再度 `/play fx` を実行することで、損益確認や決済を行うことができます。"
+  components.play.fx.liquidation_title: "🚨 **FX強制ロスカットのお知らせ** 🚨"
+  components.play.fx.liquidation_desc: |-
+    保有していた {{.symbol}} のポジションが、為替価格の変動により強制決済（ロスカット）されました。
+
+    ・決済価格: `{{.exit}}`
+    ・損益: `-{{.pnl}} pt`
+    ・返却証拠金: `{{.refund}} pt` (注文証拠金 `{{.margin}} pt`)
+  components.play.fx.liquidation_deficit_desc: |-
+    保有していた {{.symbol}} のポジションが強制決済されましたが、急激な相場変動により証拠金を上回る損失（不足金 `-{{.deficit}} pt`）が発生しました。不足金を補うため、他のポジションが強制決済されました。
+
+    ・決済価格: `{{.exit}}`
+    ・損益: `-{{.pnl}} pt` (証拠金 `{{.margin}} pt` 没収)
+  components.play.fx.err_invalid_input: "⚠️ **無効な入力**: 1以上の整数で入力してください。"
+  components.play.fx.err_insufficient_points: "⚠️ **ポイント不足**: 必要な `{{.margin}} pt` が不足しています（現在の残高: `{{.points}} pt`）。"
+  components.play.fx.err_min_ratio_margin: "⚠️ **証拠金比率不足**: 選択されたレバレッジ（{{.leverage}}x）では、総所持ポイント（{{.points}} pt）の {{.ratio}}% 以上の証拠金（最低 {{.min}} pt）が必要です。"
+  components.play.fx.err_pos_not_found: "⚠️ **ポジションが見つかりません**: 対象のポジションが見つかりません。すでにロスカットされた可能性があります。"
+  components.play.fx.err_session_expired: "⚠️ **セッションが期限切れです**: この取引画面のセッションは終了しました。もう一度 `/play fx` を実行してください。"
+  components.play.fx.err_not_your_session: "⚠️ **他人のセッションです**: この取引画面は他のユーザーのものです。自分で `/play fx` を実行してください。"
+  components.play.fx.err_restricted: "⚠️ **取引制限中**: 証拠金維持率が追証ラインを下回っているポジションがあります。追加注文や決済を行う前に、追証を入金して警告状態を解消してください。"
+  components.play.fx.rates_entry: "・**{{.symbol}}**: Bid `{{.bid}}` | Ask `{{.ask}}` (スプレッド: `{{.spread}}`)"
+  components.play.fx.err_max_positions: "⚠️ **ポジション上限数到達**: 保有できるポジションは最大10個までです。いずれかのポジションを決済してから再度注文してください。"
+  components.play.fx.liquidation_detail_header: "\n\n**損失補填のために強制決済された他のポジション:**"
+  components.play.fx.liquidation_detail_item: "\n• `{{.symbol}}` ({{.direction}}) | 証拠金: `{{.margin}} pt` | 決済価格: `{{.exit}}` | 損益: `{{.pnl}} pt` (回収額: `{{.val}} pt`)"
+  components.play.fx.liquidation_detail_deficit: "\n\n⚠️ **未回収の不足金**: `-{{.deficit}} pt`（ポイント残高が不足しているため回収できませんでした）"
+  components.play.fx.form_selected: "・**通貨ペア**: {{.symbol}}\n・**レバレッジ**: {{.leverage}}x\n・**注文証拠金**: {{.margin}} pt"
+  components.play.fx.modal_input_margin_title: "証拠金設定"
+  components.play.fx.modal_input_margin_label: "注文に使用する証拠金（GoPoints）"
+  components.play.fx.modal_add_margin_title: "証拠金の追加 (追証入金)"
+  components.play.fx.modal_add_margin_label: "追加する証拠金量（GoPoints）"
+  components.play.fx.dm_margin_call_title: "🚨 **FX追証（マージンコール）発生のお知らせ** 🚨"
+  components.play.fx.dm_margin_call_desc: "保有している {{.symbol}} のポジションの証拠金維持率が {{.ratio}} に低下し、追証ライン（{{.mc_line}}）を下回りました。\n強制ロスカットを避けるため、早急に証拠金を追加してください。"
+  components.play.fx.active_order_title: "### ⏳ 未約定の注文情報"
+  components.play.fx.active_order_desc: |-
+    - **通貨ペア**: {{.symbol}}
+    - **注文種別**: {{.type}} ({{.order_type}}) {{.direction}}
+    - **目標価格**: `{{.target}}` (現在価格: `{{.current}}`)
+    - **レバレッジ**: {{.leverage}}x
+    - **注文証拠金**: `{{.margin}} pt`
+  components.play.fx.option_order_item: "⏳ [{{.type}}] {{.symbol}} {{.direction}} @ {{.target}} (証拠金: {{.margin}} pt)"
+  components.play.fx.order_type.limit: "指値"
+  components.play.fx.order_type.stop: "逆指値"
+  components.play.fx.modal_pending_order_title: "指値・逆指値注文フォーム"
+  components.play.fx.modal_pending_order_price_label: "指定価格 (目標とするレート)"
+  components.play.fx.modal_pending_order_price_placeholder: "例: 149.50"
+  components.play.fx.modal_pending_order_dir_label: "売買方向"
+  components.play.fx.modal_pending_order_dir_placeholder: "売買方向を選択してください"
+  components.play.fx.modal_pending_order_type_label: "注文種別"
+  components.play.fx.modal_pending_order_type_placeholder: "注文種別を選択してください"
+  components.play.fx.err_invalid_order_inputs: "⚠️ **注文入力が無効です**:\n- 価格は正の数で指定してください。\n- 方向は BUY または SELL を選択してください。\n- 注文種別は LIMIT または STOP を選択してください。"
+  components.play.fx.dm_order_filled_title: "🔔 **FX注文約定のお知らせ** 🔔"
+  components.play.fx.dm_order_filled_desc: "注文していた {{.symbol}} の{{.type}}（{{.order_type}}） {{.direction}} が約定価格 {{.price}} で約定しました。"
+  components.play.fx.modal_tpsl_title: "利確・損切価格設定"
+  components.play.fx.modal_tpsl_tp_label: "利確（指値）価格 (空欄で設定解除)"
+  components.play.fx.modal_tpsl_tp_placeholder: "例: 152.50"
+  components.play.fx.modal_tpsl_sl_label: "損切（逆指値）価格 (空欄で設定解除)"
+  components.play.fx.modal_tpsl_sl_placeholder: "例: 147.50"
+  components.play.fx.err_invalid_tpsl_inputs: "⚠️ **入力値が無効です**: 利確価格・損切価格は正の数値で入力してください。"
+  components.play.fx.err_tp_must_be_greater: "⚠️ **設定エラー**: 買いポジションの利確価格はエントリー価格より高く設定する必要があります。"
+  components.play.fx.err_sl_must_be_less: "⚠️ **設定エラー**: 買いポジションの損切価格はエントリー価格より低く設定する必要があります。"
+  components.play.fx.err_tp_must_be_less: "⚠️ **設定エラー**: 売りポジションの利確価格はエントリー価格より低く設定する必要があります。"
+  components.play.fx.err_sl_must_be_greater: "⚠️ **設定エラー**: 売りポジションの損切価格はエントリー価格より高く設定する必要があります。"
+  components.play.fx.dm_order_closed_title: "🔔 **FXポジション自動決済のお知らせ** 🔔"
+  components.play.fx.dm_order_closed_desc: "保有していた {{.symbol}} の{{.direction}}ポジション（証拠金: {{.margin}} pt）が、自動決済条件（{{.type}}: {{.trigger_price}}）に達したため、成行決済されました。\n\n・決済価格: `{{.exit}}`\n・評価損益: **`{{.pnl}} pt`**\n・獲得/回収ポイント: **`{{.received}} pt`**"
+  components.play.fx.portfolio_no_positions: "* 保有しているポジションはありません"
+  components.play.fx.portfolio_no_orders: "* 未約定の注文はありません"
+  components.play.fx.portfolio_position_item: "- **{{.symbol}}** ({{.direction}} {{.leverage}}x)\n  - 証拠金: `{{.margin}} pt` (当初: `{{.init}} pt`)\n  - エントリー: `{{.entry}}` → 現在: `{{.current}}` (維持率: `{{.ratio}}`)\n  - 評価損益: **`{{.pnl}} pt`**\n  - 利確(TP): `{{.tp}}` / 損切(SL): `{{.sl}}`"
+  components.play.fx.portfolio_order_item: "- **{{.symbol}}** ({{.type}} {{.direction}} {{.leverage}}x)\n  - 注文価格: `{{.target}}` (現在: `{{.current}}`)\n  - 注文証拠金: `{{.margin}} pt`"
+  components.play.polymarket.err_session_expired: "⚠️ **セッションが期限切れです**: セッションの有効期限が切れました。もう一度 `/play polymarket` を実行してください。"
+  components.play.polymarket.err_not_your_session: "⚠️ **他人のセッションです**: これはあなたのゲームセッションではありません。`/play polymarket` で新しく開始してください。"
+  components.play.polymarket.err_session_expired_modal: "⚠️ **セッションが期限切れです**: セッションの有効期限が切れました。もう一度やり直してください。"
+  components.play.polymarket.err_invalid_amount: "⚠️ **無効な入力**: 1以上の正の整数を入力してください。"
+  components.play.polymarket.err_insufficient_points: "❌ **ポイント不足**: GoPointsが不足しています。賭け金 `{{.amount}} pt` に対し、現在の保有ポイントは `{{.points}} pt` です。"
+  components.play.polymarket.err_api_failed: "❌ **通信エラー**: Polymarket APIとの通信に失敗しました。\nエラー: `{{.error}}`"
+  components.play.polymarket.err_no_markets: "❌ **市場が見つかりません**: 条件に合う予測市場が見つかりませんでした。別のキーワードで検索するか、終了した市場を含めてください。"
+  components.play.polymarket.market_not_found_option: "市場が見つかりませんでした"
+  components.play.polymarket.default_query_info: "直近のアクティブな予測市場 (出来高順)"
+  components.play.polymarket.search_query_info: '検索ワード: *"{{.query}}"* の結果'
+  components.play.polymarket.market_option_desc: "出来高: ${{.volume}} | 終了予定: {{.end_date}}"
+  components.play.polymarket.outcome_option_desc: "価格: {{.price}} pt | 的中時の倍率: {{.multiplier}}倍"
+  components.play.polymarket.odds_item: "- **{{.outcome}}**: `{{.percentage}}%` (価格: `{{.price}} pt`)"
+  components.play.polymarket.no_outcomes_option: "選択肢がありません"
+  components.play.polymarket.odds_label: "現在の価格 (オッズ/勝率 %):"
+  components.play.polymarket.bet_history_item: "- **{{.market}}**\n  予測: **{{.outcome}}** (購入価格: `{{.price}} pt`) | 金額: `{{.amount}} pt` | 状況: {{.status}} | *{{.time}}*"
+  components.play.polymarket.status_pending: "⏳ 進行中 (未確定)"
+  components.play.polymarket.status_won: "✅ 的中 (+{{.payout}} pt 獲得)"
+  components.play.polymarket.status_lost: "❌ はずれ"
+  components.play.polymarket.no_bet_history: "*ベットした履歴はありません。*"
+  components.play.polymarket.bet_success: "✅ **ベットが正常に完了しました！**\n- 予測市場: *{{.market}}*\n- 予測内容: **{{.outcome}}** (購入単価: `{{.price}} pt`)\n- 賭け金: `{{.amount}} pt`\n- 予測的中時の想定配当: `{{.est_payout}} pt` ({{.multiplier}}倍)"
+  components.play.polymarket.no_new_resolutions: "✅ ベットをすべて検証しましたが、新しく確定した市場はありませんでした。"
+  components.play.polymarket.resolution_header: "🔔 **ベットの確定結果**:\n{{.details}}\n"
+  components.play.polymarket.resolution_won: "✅ **的中**: `{{.amount}} pt` 賭けていた *{{.market}}* の結果が **{{.outcome}}** に確定しました。(配当: `{{.payout}} pt` を獲得しました)"
+  components.play.polymarket.resolution_lost: "❌ **はずれ**: `{{.amount}} pt` 賭けていた *{{.market}}* の結果が **{{.outcome}}** 以外で確定しました。"
+  components.play.polymarket.quit_title: "🔮 **Polymarket Prediction Betting**"
+  components.play.polymarket.quit_desc: "Polymarket 予測ベットセッションを終了しました。"
+  components.play.polymarket.modal_bet_title: "ベット額の入力"
+  components.play.polymarket.modal_bet_label: "GoPoints 金額"
+  components.play.polymarket.modal_bet_placeholder: "賭けたい GoPoints の金額を入力してください (例: 150)"
+  components.gopoint.admin.tax_setup_success: "✅ **定期徴収設定を更新しました**:\n- デフォルト徴収割合: {{.rate}}%\n- 最低徴収対象ポイント: {{.min_points}} pt\n- 徴収間隔: {{.interval}}日\n- 状態: {{.status}}\n- 次回予定: {{.next_time}}"
+  components.gopoint.admin.tax_status_enabled: "有効"
+  components.gopoint.admin.tax_status_disabled: "無効"
+  components.gopoint.admin.tax_status_info: "### 🪙 定期徴収ステータス\n- **徴収有効化**: {{.enabled}}\n- **デフォルト割合**: {{.rate}}%\n- **最低徴収対象ポイント**: {{.min_points}} pt\n- **徴収間隔**: {{.interval}}日\n- **次回徴収予定日時**: {{.next_time}}\n- **段階的徴収割合設定**:\n{{.brackets}}"
+  components.gopoint.admin.tax_status_pending_title: "\n\n**⏳ 徴収待機中（1週間後の徴収予定）:**\n"
+  components.gopoint.admin.tax_status_pending_item: "- <@{{.user_id}}>: `{{.tax_amount}} pt` (徴収予定: {{.collect_time}})\n"
+  components.gopoint.admin.tax_status_no_pending: "\n現在徴収待機中のユーザーはいません。"
+  components.gopoint.admin.tax_force_determination: "⚡ **徴収予約（計算）を強制実行しました**:\n- 対象ユーザー: `{{.count}}名`の徴収予定（1週間後）を生成しました。"
+  components.gopoint.admin.tax_force_collection: "⚡ **徴収実行（1週間経過分）を強制実行しました**:\n- 徴収完了: `{{.collected}}名`\n- 免除: `{{.exempted}}名`"
+  components.gopoint.admin.reset_success: "⚠️ **ギルドメンバー全員の GoPointsを一括リセットしました**:\n- 全員のポイントを `{{.points}} pt` に設定しました。"
+  components.gopoint.admin.season_start_success: "🚀 **新しいシーズンを開始しました**:\n- シーズン名: **{{.name}}**\n- 期間: {{.duration}}日間\n- 表彰基準: {{.criteria}}\n- 終了予定: {{.end_time}}"
+  components.gopoint.admin.season_start_scheduled: "📅 **シーズン開始をスケジュール予約しました**:\n- シーズン名: **{{.name}}**\n- 表彰基準: {{.criteria}}\n- 開始予定: {{.start_time}}\n- 終了予定: {{.end_time}}"
+  components.gopoint.admin.season_err_active_exists: "❌ **開始エラー**: すでにアクティブなシーズン `{{.name}}` が存在します。終了してから新しいシーズンを開始してください。"
+  components.gopoint.admin.season_end_early: "🛑 **シーズンを強制終了しました**:\n- 終了したシーズン: **{{.name}}**\n- 表彰結果をチャンネルに送信しました。"
+  components.gopoint.admin.season_err_no_active: "❌ **エラー**: 現在アクティブなシーズンはありません。"
+  components.gopoint.admin.season_status_info: "### 🏆 シーズン情報: **{{.name}}**\n- **状態**: {{.status}}\n- **表彰基準**: {{.criteria}}\n- **開始**: {{.start_time}}\n- **終了**: {{.end_time}} (残り: {{.remaining}})\n\n**📊 現在のランキング:**\n{{.ranking}}"
+  components.gopoint.admin.season_ranking_title: "### 📊 シーズン **{{.name}}** ランキング (基準: {{.criteria}})\n"
+  components.gopoint.admin.season_ranking_entry: "{{.medal}}<@{{.user_id}}> - スコア: `{{.points}} pt`"
+  components.gopoint.admin.season_ranking_no_data: "このシーズンの獲得データはありません。"
+  components.gopoint.admin.season_not_found: "❌ 指定されたシーズンIDが見つかりません。"
+  components.gopoint.admin.tax_bracket_err_invalid_format: "段階別割合の形式が不正です (行: {{.line}}, 形式は '下限-上限:割合' または '下限+:割合')"
+  components.gopoint.admin.tax_bracket_err_invalid_rate: "無効な割合です: {{.rate}}"
+  components.gopoint.admin.tax_bracket_err_invalid_range: "無効な範囲です: {{.range}}"
+  components.gopoint.admin.tax_bracket_err_invalid_range_spec: "無効な範囲指定です: {{.range}}"
+  components.gopoint.admin.tax_bracket_err_parse_min: "下限値の解析に失敗しました: {{.min}}"
+  components.gopoint.admin.tax_bracket_err_parse_max: "上限値の解析に失敗しました: {{.max}}"
+  components.gopoint.admin.tax_setup_rate_exempt: "0% (免除)"
+  components.gopoint.admin.tax_setup_interval_1day: "1日"
+  components.gopoint.admin.tax_setup_interval_3days: "3日"
+  components.gopoint.admin.tax_setup_interval_1week: "7日 (1週間)"
+  components.gopoint.admin.tax_setup_interval_2weeks: "14日 (2週間)"
+  components.gopoint.admin.tax_setup_interval_1month: "30日 (約1ヶ月)"
+  components.gopoint.admin.tax_setup_interval_3months: "90日 (約3ヶ月)"
+  components.gopoint.admin.tax_setup_interval_days: "{{.days}}日"
+  components.gopoint.admin.tax_setup_enabled_label: "有効 (Enabled)"
+  components.gopoint.admin.tax_setup_disabled_label: "無効 (Disabled)"
+  components.gopoint.admin.tax_setup_modal_title: "定期徴収設定"
+  components.gopoint.admin.tax_setup_label_rate: "デフォルト徴収割合 (%)"
+  components.gopoint.admin.tax_setup_label_min_points: "最低徴収対象ポイント (所持ポイントの閾値)"
+  components.gopoint.admin.tax_setup_label_interval: "徴収間隔 (日数)"
+  components.gopoint.admin.tax_setup_label_enabled: "定期徴収の有効化"
+  components.gopoint.admin.tax_setup_label_brackets: "段階的割合設定 (範囲:割合, 改行区切り)"
+  components.gopoint.admin.tax_setup_placeholder_brackets: "例:\n100-500:5\n501-1000:10\n1001+:15\n※ 割合0%で免除"
+  components.gopoint.admin.tax_setup_err_rate_range: "デフォルト徴収割合は 0〜100 の数値を指定してください。"
+  components.gopoint.admin.tax_setup_err_min_points: "最低徴収対象ポイントは 0 以上の数値を指定してください。"
+  components.gopoint.admin.tax_setup_err_interval_range: "徴収間隔は 1〜365 の数値を指定してください。"
+  components.gopoint.admin.tax_setup_err_brackets_parse: "段階的割合設定の解析に失敗しました:\n{{.error}}"
+  components.gopoint.admin.tax_setup_error_title: "❌ **設定エラー**:\n"
+  components.gopoint.admin.tax_brackets_none: "なし"
+  components.gopoint.admin.reset_by_level_success: "ギルド内の全員のGoPointsを、それぞれのレベルの累積必要XPに応じたポイントにリセットしました。"
+  components.gopoint.admin.season_criteria_final: "最終所持ポイント数"
+  components.gopoint.admin.season_criteria_earned: "獲得ポイント数"
+  components.gopoint.admin.season_status_active: "アクティブ"
+  components.gopoint.admin.season_status_ended: "終了"
+  components.gopoint.admin.season_start_announcement: "🚀 **GoPoint シーズン開始のお知らせ** 🚀\n新しいシーズン **{{.name}}** が開始されました！(表彰基準: {{.criteria}}) 終了予定: {{.end_time}}\nポイントを競い合いましょう！"
+  components.gopoint.admin.season_end_announcement_title: "🏆 **GoPoint シーズン終了のお知らせ** 🏆\nシーズン **{{.name}}** が終了しました！獲得ランキング表彰を行います (基準: {{.criteria}})。\n\n"
+  components.gopoint.admin.season_end_announcement_no_data: "期間中にポイントを獲得したプレイヤーはいませんでした。"
+  components.gopoint.admin.season_end_announcement_entry: "{{.medal}}{{.name}} - スコア: `{{.points}} pt`\n"
 components:
   command.settings.view:
     - type: container
@@ -251,17 +486,56 @@ components:
   command.gopoint.give.success:
     - "Goポイントの譲渡が完了しました。"
     - "`{point} ポイント`を`{target_user_name}`に譲渡しました。"
+  command.play.high-and-low.start:
+    - "{mention}"
+    - type: container
+      components:
+        - "# ハイアンドロー"
+        - |-
+          ## ルール
+          - ハイアンドローは、現在のカードよりも次のカードが高いか低いかを予想するゲームです。
+          - 次のカードの数字が現在のカードよりも高いと予想する場合はHIGH、低いと予想する場合はLOWを選択してください。
+          - 正解すると現在のポイントに、現在のポイント×ボーナス割合が加算されます。
+          - 外すとゲームオーバーです。
+          ### SAMEチャンス
+          - 前回のカードと同じ数字が出た場合は、SAMEを予想することができます。
+          - SAMEを予想して的中するとボーナス割合に、出た目の数×初期ボーナス割合が加算されます。
+          - さらに、前回のカードと同じスートの場合は、現在のポイントに出た目の数×1.5が掛けられます。
+          - SAMEを予想して外すとゲームオーバーです。
+          ### 追加ポイント
+          - 追加のポイントを支払うとポイントと倍率の初期値を増やすことができます。
+        - type: separator
+          height: 2
+        - |-
+          選択中の開始オプション: {selected_option}
+          現在の残高: `{gopoint} ポイント`
+          開始オプションを選択して「開始」ボタンを押すとゲームが開始します。
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:hal_select_opt:{uuid}"
+              placeholder: "開始オプションを選択してください"
+              options: "hal_start_options"
+        - type: action_row
+          components:
+            - type: button
+              style: primary
+              label: "開始"
+              id: "play:hal_start:{uuid}"
   command.play.high-and-low.game:
+    - "{mention}"
     - type: container
       components:
         - "## ハイアンドロー"
+        - "### {turn}ターン目"
+        - type: separator
+          height: 2
         - |-
-          - **ターン**：{turn}
-          - **現在のカード**
+          ### **現在のカード**
           # {current_card}
-          - **前回のカード**: {last_card}
-          - **現在のポイント**：`{point} ポイント` (x{multiplier}倍)
-          - **前回の選択**：**{last_choice}**
+          - **前回のカード**： {last_card}
+          - **現在のポイント**：`{point} ポイント` (ボーナス{multiplier}%)
+          - **前回の選択**：**{last_choice}** 前回の結果：**{last_result}**
         - "### {message}"
         - type: action_row
           components:
@@ -270,21 +544,387 @@ components:
               label: "HIGH"
               id: "play:hal_high:{uuid}"
             - type: button
+              style: secondary
+              label: "SAME"
+              id: "play:hal_same:{uuid}"
+            - type: button
               style: danger
               label: "LOW"
               id: "play:hal_low:{uuid}"
+        - type: action_row
+          components:
             - type: button
               style: secondary
               label: "終了"
               id: "play:hal_cancel:{uuid}"
   command.play.high-and-low.result:
+    - "{mention}"
     - type: container
       components:
         - "## ハイアンドロー"
+        - "### {turn}ターン"
+        - type: separator
+          height: 2
+        - "## {final_state}"
+        - type: separator
+          height: 1
         - |-
-          - **ターン**：{turn}
-          - **最後のカード**
+          ### **最後のカード**
           # {current_card}
           - **前回のカード**: {last_card}
-          - **結果**：`{point} ポイント` (x{multiplier}倍)
-          - **最後の選択**：**{last_choice}**
+          - **結果**：`{point} ポイント` (ボーナス{multiplier}%)
+          - **最後の選択**：**{last_choice}** 前回の結果：**{last_result}**
+        - type: separator
+          height: 2
+        - type: button
+          style: secondary
+          label: 再挑戦
+          id: "play:hal_retry:{option_index}"
+  command.play.fx.order_screen:
+    - type: container
+      components:
+        - "📈 **FX TRADING SIMULATOR** 📉"
+        - type: separator
+          height: 2
+        - |-
+          ### 💱 現在の為替レート
+          {rates_text}
+        - type: separator
+        - "🪙 **保有 GoPoints**: `{points} pt`"
+        - type: separator
+        - |-
+          ### 🆕 新規注文フォーム
+          {form_info}
+          {restriction_warning}
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:fx_symbol:{uuid}"
+              placeholder: "1. 通貨ペアを選択"
+              options: "symbol_options"
+        - type: action_row
+          components:
+            - type: button
+              style: primary
+              label: "{btn_input_margin}"
+              id: "play:fx_margin_btn:{uuid}"
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:fx_leverage:{uuid}"
+              placeholder: "3. レバレッジを選択"
+              options: "leverage_options"
+        - type: action_row
+          components:
+            - type: button
+              style: success
+              label: "🟢 買い (Buy)"
+              id: "play:fx_buy:{uuid}"
+            - type: button
+              style: danger
+              label: "🔴 売り (Sell)"
+              id: "play:fx_sell:{uuid}"
+            - type: button
+              style: primary
+              label: "指値・逆指値注文"
+              id: "play:fx_pending_order_btn:{uuid}"
+        - type: action_row
+          components:
+            - type: button
+              style: primary
+              label: "レート更新"
+              id: "play:fx_refresh:{uuid}"
+            - type: button
+              style: secondary
+              label: "画面を閉じる"
+              id: "play:fx_quit:{uuid}"
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:fx_switch_pos:{uuid}"
+              placeholder: "ポジションを選択して管理"
+              options: "position_options"
+
+  command.play.fx.position_screen:
+    - type: container
+      components:
+        - "📈 **FX TRADING SIMULATOR** 📉"
+        - type: separator
+        - |-
+          ### 💱 現在の為替レート
+          {rates_text}
+        - type: separator
+        - "🪙 **保有 GoPoints**: `{points} pt`"
+        - type: separator
+        - |-
+          {position_info}
+          {restriction_warning}
+        - type: action_row
+          components:
+            - type: button
+              style: success
+              label: "ポジション決済 (利確/損切)"
+              id: "play:fx_close:{uuid}"
+            - type: button
+              style: primary
+              label: "追証を入金"
+              id: "play:fx_add_margin_btn:{uuid}"
+            - type: button
+              style: primary
+              label: "利確・損切設定"
+              id: "play:fx_set_tpsl_btn:{uuid}"
+            - type: button
+              style: primary
+              label: "レート更新 / 損益確認"
+              id: "play:fx_refresh:{uuid}"
+            - type: button
+              style: secondary
+              label: "画面を閉じる"
+              id: "play:fx_quit:{uuid}"
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:fx_switch_pos:{uuid}"
+              placeholder: "ポジションを選択して管理"
+              options: "position_options"
+
+  command.play.fx.order_detail_screen:
+    - type: container
+      components:
+        - "📈 **FX TRADING SIMULATOR** 📉"
+        - type: separator
+        - |-
+          ### 💱 現在の為替レート
+          {rates_text}
+        - type: separator
+        - "🪙 **保有 GoPoints**: `{points} pt`"
+        - type: separator
+        - |-
+          {order_info}
+        - type: action_row
+          components:
+            - type: button
+              style: danger
+              label: "🔴 注文を取り消す (Cancel Order)"
+              id: "play:fx_cancel_order:{uuid}"
+            - type: button
+              style: primary
+              label: "レート更新 / 約定確認"
+              id: "play:fx_refresh:{uuid}"
+            - type: button
+              style: secondary
+              label: "画面を閉じる"
+              id: "play:fx_quit:{uuid}"
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:fx_switch_pos:{uuid}"
+              placeholder: "ポジションを選択して管理"
+              options: "position_options"
+
+  command.play.portfolio:
+    - type: container
+      components:
+        - "### 📊 **{user_name}** の FXポートフォリオ 📊"
+        - type: separator
+          height: 2
+        - "🪙 **所持 GoPoints**: `{points} pt`"
+        - type: separator
+        - |-
+          ### 💼 保有ポジション ({pos_count}件)
+          {positions_list}
+        - type: separator
+        - |-
+          ### ⏳ 未約定の指値・逆指値注文 ({order_count}件)
+          {orders_list}
+
+  command.play.chinchiro.lobby:
+    - type: container
+      components:
+        - "🎲 **チンチロリン (Chinchiro) ロビー** 🎲"
+        - type: separator
+        - "🪙 **参加費 (ベット)**: `{bet} pt`"
+        - type: separator
+        - |-
+          ### 👥 参加者一覧 ({player_count}名)
+          {players_list}
+        - type: separator
+        - "親（主催者）: {host_mention}"
+        - type: action_row
+          components:
+            - type: button
+              style: primary
+              label: "参加する (Join)"
+              id: "play:chinchiro_join:{uuid}"
+            - type: button
+              style: success
+              label: "ゲームを開始する"
+              id: "play:chinchiro_start:{uuid}"
+            - type: button
+              style: danger
+              label: "キャンセル"
+              id: "play:chinchiro_cancel:{uuid}"
+
+  command.play.chinchiro.game:
+    - type: container
+      components:
+        - "🎲 **チンチロリン (Chinchiro) プレイ中** 🎲"
+        - type: separator
+        - |-
+          ### 🎴 ゲーム状況
+          {game_status}
+        - type: separator
+        - |-
+          ### 👥 プレイヤー結果・状態
+          {players_status}
+        - type: action_row
+          components:
+            - type: button
+              style: success
+              label: "サイコロを振る (Roll)"
+              id: "play:chinchiro_roll:{uuid}"
+
+  command.play.chinchiro.finished:
+    - type: container
+      components:
+        - "🎲 **チンチロリン (Chinchiro) ゲーム終了** 🎲"
+        - type: separator
+        - |-
+          ### 🏁 結果発表
+          {game_status}
+        - type: separator
+        - |-
+          ### 👥 プレイヤー結果・状態
+          {players_status}
+
+  command.play.polymarket.search_screen:
+    - type: container
+      components:
+        - "🔮 **Polymarket Prediction Betting** 🔮"
+        - type: separator
+        - |-
+          ### 🔎 市場一覧
+          {query_info}
+
+          下のセレクトメニューから予測市場を選択して、詳細の確認やベットを行えます。
+          {status}
+        - type: separator
+        - "🪙 **保有 GoPoints**: `{points} pt`"
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:pm_select_market:{uuid}"
+              placeholder: "市場を選択してください..."
+              options: "market_options"
+        - type: action_row
+          components:
+            - type: button
+              style: success
+              label: "自分のベット一覧"
+              id: "play:pm_view_my_bets:{uuid}"
+            - type: button
+              style: secondary
+              label: "画面を閉じる"
+              id: "play:pm_quit:{uuid}"
+
+  command.play.polymarket.market_detail_screen:
+    - type: container
+      components:
+        - "🔮 **Polymarket 予測市場詳細** 🔮"
+        - type: separator
+        - |-
+          ### {market_question}
+
+          📅 **終了予定日**: {end_date}
+          📊 **出来高**: ${volume} | **流動性**: {liquidity}
+
+          **現在の価格 (オッズ/勝率 %):**
+          {odds_text}
+        - type: separator
+        - "🪙 **保有 GoPoints**: `{points} pt`"
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:pm_select_outcome:{uuid}"
+              placeholder: "賭ける結果を選択してください..."
+              options: "outcome_options"
+        - type: action_row
+          components:
+            - type: button
+              style: secondary
+              label: "市場一覧に戻る"
+              id: "play:pm_back_to_list:{uuid}"
+            - type: button
+              style: secondary
+              label: "画面を閉じる"
+              id: "play:pm_quit:{uuid}"
+
+  command.play.polymarket.bet_placement_screen:
+    - type: container
+      components:
+        - "🔮 **Polymarket ベット額の決定** 🔮"
+        - type: separator
+        - |-
+          ### {market_question}
+
+          👉 **選択した結果**: `{selected_outcome}` (現在価格: `{outcome_price} pt` / 1シェア)
+
+          *※予測が的中した場合、1シェアあたり `1 pt` (GoPoints) の配当が得られます。的中時の倍率は `1 / {outcome_price} = {multiplier}倍` です。*
+        - type: separator
+        - "🪙 **保有 GoPoints**: `{points} pt`"
+        - type: action_row
+          components:
+            - type: button
+              style: primary
+              label: "10 pt 賭ける"
+              id: "play:pm_bet_amount:10:{uuid}"
+            - type: button
+              style: primary
+              label: "50 pt 賭ける"
+              id: "play:pm_bet_amount:50:{uuid}"
+            - type: button
+              style: primary
+              label: "100 pt 賭ける"
+              id: "play:pm_bet_amount:100:{uuid}"
+            - type: button
+              style: primary
+              label: "500 pt 賭ける"
+              id: "play:pm_bet_amount:500:{uuid}"
+            - type: button
+              style: success
+              label: "カスタム金額を入力"
+              id: "play:pm_bet_amount:custom_btn:{uuid}"
+        - type: action_row
+          components:
+            - type: button
+              style: secondary
+              label: "詳細に戻る"
+              id: "play:pm_back_to_detail:{uuid}"
+            - type: button
+              style: secondary
+              label: "画面を閉じる"
+              id: "play:pm_quit:{uuid}"
+
+  command.play.polymarket.my_bets_screen:
+    - type: container
+      components:
+        - "🔮 **あなたの Polymarket ベット履歴・状況** 🔮"
+        - type: separator
+        - |-
+          {status_header}
+          {bets_list}
+        - type: separator
+        - type: action_row
+          components:
+            - type: button
+              style: success
+              label: "結果を確認 & 払い戻し"
+              id: "play:pm_refresh_bets:{uuid}"
+            - type: button
+              style: secondary
+              label: "市場一覧に戻る"
+              id: "play:pm_back_to_list:{uuid}"
+            - type: button
+              style: secondary
+              label: "画面を閉じる"
+              id: "play:pm_quit:{uuid}"

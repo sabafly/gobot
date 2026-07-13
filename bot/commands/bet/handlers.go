@@ -4,6 +4,7 @@ import (
 	stderrors "errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -770,11 +771,8 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 			// Get winners' bets
 			winnersBets := make([]models.Bet, 0)
 			for _, bet := range allBets {
-				for _, winnerID := range winnerIDs {
-					if bet.OptionID == winnerID {
-						winnersBets = append(winnersBets, bet)
-						break
-					}
+				if slices.Contains(winnerIDs, bet.OptionID) {
+					winnersBets = append(winnersBets, bet)
 				}
 			}
 
@@ -830,11 +828,8 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 				// Find winning entrants
 				winningEntrants := make([]models.BetEntrant, 0)
 				for _, entrant := range allEntrants {
-					for _, winnerID := range winnerIDs {
-						if entrant.OptionID == winnerID {
-							winningEntrants = append(winningEntrants, entrant)
-							break
-						}
+					if slices.Contains(winnerIDs, entrant.OptionID) {
+						winningEntrants = append(winningEntrants, entrant)
 					}
 				}
 
@@ -1043,6 +1038,31 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 		entryDeadline = ptr(time.Now().Add(time.Duration(mins) * time.Minute))
 	}
 
+	// Parse vote deadline (optional)
+	voteDeadlineStr, ok := event.Data.OptText("vote_deadline")
+	var voteDeadline *time.Time
+	if ok && strings.TrimSpace(voteDeadlineStr) != "" {
+		mins, err := strconv.Atoi(voteDeadlineStr)
+		if err != nil || mins <= 0 {
+			if err := event.RespondMessage(discord.NewMessageBuilder().
+				SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_vote_deadline")).
+				SetFlags(discord.MessageFlagEphemeral)); err != nil {
+				return errors.NewError(err)
+			}
+			return nil
+		}
+		vd := time.Now().Add(time.Duration(mins) * time.Minute)
+		if entryDeadline != nil && !vd.After(*entryDeadline) {
+			if err := event.RespondMessage(discord.NewMessageBuilder().
+				SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_vote_deadline")).
+				SetFlags(discord.MessageFlagEphemeral)); err != nil {
+				return errors.NewError(err)
+			}
+			return nil
+		}
+		voteDeadline = &vd
+	}
+
 	if event.GuildID() == nil {
 		return errors.NewError(fmt.Errorf("this command can only be used in a guild"))
 	}
@@ -1089,7 +1109,7 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 		EntryFee:            entryFee,
 		PrizePool:           prizePool,
 		EntryDeadline:       entryDeadline,
-		VoteDeadline:        nil, // Vote deadline can be set manually via start_vote button
+		VoteDeadline:        voteDeadline,
 		Locale:              string(locale),
 	}
 

@@ -24,16 +24,16 @@ import (
 	"fmt"
 
 	"github.com/disgoorg/disgo/discord"
-	"github.com/sabafly/gobot/ent"
+	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/builtin"
 	"github.com/sabafly/gobot/internal/translate"
 	"github.com/sabafly/gobot/internal/xppoint"
 )
 
 func levelMessage(
-	g *ent.Guild,
+	g *models.Guild,
 	gl *discord.Guild,
-	m *ent.Member,
+	m *models.Member,
 	index int,
 	member discord.Member,
 	event interface {
@@ -60,8 +60,8 @@ func levelMessage(
 		).
 		SetDescription("## "+translate.Message(event.Locale(), "components.level.rank.embed.description",
 			translate.WithTemplate(map[string]any{
-				"Level": m.Xp.Level(),
-				"Xp":    m.Xp,
+				"Level": m.XP.Level(),
+				"Xp":    m.XP,
 			}),
 		)).
 		SetFields(
@@ -72,11 +72,11 @@ func levelMessage(
 			},
 			discord.EmbedField{
 				Name: translate.Message(event.Locale(), "components.level.rank.embed.fields.next_level",
-					translate.WithTemplate(map[string]any{"NextLevel": m.Xp.Level() + 1}),
+					translate.WithTemplate(map[string]any{"NextLevel": m.XP.Level() + 1}),
 				),
 				Value: fmt.Sprintf("`%d`xp / `%d`xp",
-					xppoint.RequiredPoint(m.Xp.Level())-(xppoint.TotalPoint(m.Xp.Level()+1)-uint64(m.Xp)),
-					xppoint.RequiredPoint(m.Xp.Level()),
+					xppoint.RequiredPoint(m.XP.Level())-(xppoint.TotalPoint(m.XP.Level()+1)-uint64(m.XP)),
+					xppoint.RequiredPoint(m.XP.Level()),
 				),
 				Inline: builtin.Ptr(true),
 			},

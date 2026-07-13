@@ -27,7 +27,7 @@ import (
 
 func GetHighestRole(roles []discord.Role) *discord.Role {
 	slices.SortStableFunc(roles, func(a, b discord.Role) int {
-		return a.Compare(b)
+		return b.Compare(a)
 	})
 	if len(roles) < 1 {
 		return nil

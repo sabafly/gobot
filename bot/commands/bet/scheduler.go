@@ -33,10 +33,11 @@ func betSchedulerWorker(c *components.Components, client *bot.Client) error {
 
 	err := c.GormDB().Transaction(func(tx *gorm.DB) error {
 		slog.Debug("Running bet scheduler worker")
+		now := time.Now()
 
 		// Handle vote deadline
 		var voteBets []models.BetHost
-		if err := tx.Model(&models.BetHost{}).Where("vote_deadline IS NOT NULL AND vote_deadline <= NOW() AND status = ?", models.BetStatusVoting).Find(&voteBets).Error; err != nil {
+		if err := tx.Model(&models.BetHost{}).Where("vote_deadline IS NOT NULL AND vote_deadline <= ? AND status = ?", now, models.BetStatusVoting).Find(&voteBets).Error; err != nil {
 			return err
 		}
 		slog.Debug("Found scheduled vote bets", "count", len(voteBets))
@@ -70,7 +71,7 @@ func betSchedulerWorker(c *components.Components, client *bot.Client) error {
 
 		// Handle entry deadline (for race mode)
 		var entryBets []models.BetHost
-		if err := tx.Model(&models.BetHost{}).Where("entry_deadline IS NOT NULL AND entry_deadline <= NOW() AND status = ? AND mode = ?", models.BetStatusEntry, models.BetVoteTypeRace).Find(&entryBets).Error; err != nil {
+		if err := tx.Model(&models.BetHost{}).Where("entry_deadline IS NOT NULL AND entry_deadline <= ? AND status = ? AND mode = ?", now, models.BetStatusEntry, models.BetVoteTypeRace).Find(&entryBets).Error; err != nil {
 			return err
 		}
 		slog.Debug("Found scheduled entry bets (race)", "count", len(entryBets))
@@ -118,7 +119,7 @@ func betSchedulerWorker(c *components.Components, client *bot.Client) error {
 
 		// Handle entry deadline (for battle royale mode)
 		var brEntryBets []models.BetHost
-		if err := tx.Model(&models.BetHost{}).Where("entry_deadline IS NOT NULL AND entry_deadline <= NOW() AND status = ? AND mode = ?", models.BetStatusEntry, models.BetVoteTypeBattleRoyale).Find(&brEntryBets).Error; err != nil {
+		if err := tx.Model(&models.BetHost{}).Where("entry_deadline IS NOT NULL AND entry_deadline <= ? AND status = ? AND mode = ?", now, models.BetStatusEntry, models.BetVoteTypeBattleRoyale).Find(&brEntryBets).Error; err != nil {
 			return err
 		}
 		slog.Debug("Found scheduled entry bets (battle royale)", "count", len(brEntryBets))

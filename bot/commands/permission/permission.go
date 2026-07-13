@@ -137,9 +137,9 @@ func Command(c *components.Components) components.Command {
 							return errors.NewError(err)
 						}
 						t.Permission.Set(perm, value)
-						t = t.Update().
-							SetPermission(t.Permission).
-							SaveX(event)
+						if err := c.GormDB().Save(t).Error; err != nil {
+							return errors.NewError(err)
+						}
 						mention = discord.UserMention(t.UserID)
 					} else {
 						role := event.SlashCommandInteractionData().Role("target")
@@ -150,7 +150,9 @@ func Command(c *components.Components) components.Command {
 						p := g.Permissions[role.ID]
 						p.Set(perm, value)
 						g.Permissions[role.ID] = p
-						g.Update().SetPermissions(g.Permissions).ExecX(event)
+						if err := c.GormDB().Save(g).Error; err != nil {
+							return errors.NewError(err)
+						}
 						mention = discord.RoleMention(role.ID)
 					}
 					if err := event.CreateMessage(
@@ -189,9 +191,9 @@ func Command(c *components.Components) components.Command {
 							return errors.NewError(err)
 						}
 						t.Permission.UnSet(perm)
-						t = t.Update().
-							SetPermission(t.Permission).
-							SaveX(event)
+						if err := c.GormDB().Save(t).Error; err != nil {
+							return errors.NewError(err)
+						}
 						mention = discord.UserMention(t.UserID)
 					} else {
 						role := event.SlashCommandInteractionData().Role("target")
@@ -202,7 +204,9 @@ func Command(c *components.Components) components.Command {
 						p := g.Permissions[role.ID]
 						p.UnSet(perm)
 						g.Permissions[role.ID] = p
-						g.Update().SetPermissions(g.Permissions).ExecX(event)
+						if err := c.GormDB().Save(g).Error; err != nil {
+							return errors.NewError(err)
+						}
 						mention = discord.RoleMention(role.ID)
 					}
 					if err := event.CreateMessage(

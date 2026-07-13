@@ -53,18 +53,19 @@ func doTextCommand(ctx context.Context, event *events.GuildMessageCreate) (err e
 		if err != nil || diceSize < 1 || diceSize > 10000 {
 			return nil, true
 		}
-		content := "Dice Roll: "
+		var content strings.Builder
+		content.WriteString("Dice Roll: ")
 		sum := 0
-		for i := 0; i < diceCount; i++ {
+		for range diceCount {
 			roll := diceRoll(diceSize)
 			sum += roll
-			content += strconv.Itoa(roll) + " "
+			content.WriteString(strconv.Itoa(roll) + " ")
 		}
 
-		content += "\nSum: " + strconv.Itoa(sum)
+		content.WriteString("\nSum: " + strconv.Itoa(sum))
 
 		_, err = event.Client().Rest.CreateMessage(event.ChannelID, discord.NewMessageBuilder().
-			SetContent(content).
+			SetContent(content.String()).
 			SetMessageReferenceByID(event.Message.ID).
 			BuildCreate(),
 		)

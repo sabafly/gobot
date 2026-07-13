@@ -34,7 +34,6 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/sabafly/gobot/database"
-	"github.com/sabafly/gobot/ent/migrate"
 
 	"github.com/disgoorg/disgo"
 	"github.com/disgoorg/disgo/bot"
@@ -150,10 +149,7 @@ func run() error {
 	// 	return fmt.Errorf("cacheを開けません: %w", err)
 	// }
 
-	if err := db.Schema.Create(ctx,
-		migrate.WithForeignKeys(!config.DisableForeignKeys)); err != nil {
-		return fmt.Errorf("スキーマを定義できません: %w", err)
-	}
+	// ent schema migration is removed as we use GORM migration in database.NewDB
 
 	if _, err := translate.LoadDir(config.TranslateDir); err != nil {
 		return fmt.Errorf("翻訳ファイルが読み込めません path=%s: %w", config.TranslateDir, err)
@@ -168,11 +164,11 @@ func run() error {
 	}
 	emoji.SetDefaultRegistry(reg)
 
-	component := components.New(ctx, db, *config, gormDB)
+	component := components.New(ctx, *config, gormDB)
 	component.Version = version
 
 	component.AddCommands(
-		debug.Command(component),
+		debug.Command(component, db),
 		ping.Command(component),
 		message.Command(component),
 		role.Command(component),
