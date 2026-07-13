@@ -755,8 +755,8 @@ func SeasonStartHandler(c *components.Components, event *events.ApplicationComma
 	})
 
 	if errTx != nil {
-		if strings.HasPrefix(errTx.Error(), "overlap:") {
-			overlapName := strings.TrimPrefix(errTx.Error(), "overlap:")
+		if after, ok := strings.CutPrefix(errTx.Error(), "overlap:"); ok {
+			overlapName := after
 			if errResp := event.RespondMessage(discord.NewMessageBuilder().
 				SetEphemeral(true).
 				SetIsComponentsV2(true).
