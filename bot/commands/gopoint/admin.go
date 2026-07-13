@@ -324,12 +324,13 @@ func TaxSetupModalSubmitHandler(c *components.Components, event *events.ModalSub
 			return errors.NewError(errLoad)
 		}
 	} else {
+		prevInterval := cfg.IntervalDays
 		cfg.Rate = rate
 		cfg.MinPoints = minPoints
 		cfg.IntervalDays = intervalDays
 		cfg.Enabled = enabled
 		cfg.Brackets = bracketsText
-		if cfg.NextTaxTime.Before(time.Now()) || cfg.NextTaxTime.IsZero() {
+		if cfg.NextTaxTime.Before(time.Now()) || cfg.NextTaxTime.IsZero() || prevInterval != intervalDays {
 			cfg.NextTaxTime = time.Now().Add(time.Duration(intervalDays) * 24 * time.Hour)
 		}
 		if errSave := c.GormDB().Save(&cfg).Error; errSave != nil {
@@ -426,8 +427,12 @@ func TaxStatusHandler(c *components.Components, event *events.ApplicationCommand
 	}))
 
 	var pending []models.GoPointPendingTax
-	if errFind := c.GormDB().Where("guild_id = ? AND collected = ? AND exempted = ?", guildID, false, false).
-		Order("collect_time asc").Limit(10).Find(&pending).Error; errFind == nil && len(pending) > 0 {
+	errFind := c.GormDB().Where("guild_id = ? AND collected = ? AND exempted = ?", guildID, false, false).
+		Order("collect_time asc").Limit(10).Find(&pending).Error
+	if errFind != nil {
+		return errors.NewError(errFind)
+	}
+	if len(pending) > 0 {
 		sb.WriteString(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_status_pending_title"))
 		for _, p := range pending {
 			sb.WriteString(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_status_pending_item", map[string]any{
@@ -465,83 +470,100 @@ func TaxForceHandler(c *components.Components, event *events.ApplicationCommandI
 
 	var cfg models.GoPointTaxConfig
 	var calcCount int
-	if err := c.GormDB().Where("guild_id = ?", guildID).First(&cfg).Error; err == nil && cfg.Enabled {
+	err := c.GormDB().Where("guild_id = ?", guildID).First(&cfg).Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return errors.NewError(err)
+	}
+	if err == nil && cfg.Enabled {
 		var points []models.GoPoint
-		if errPoints := c.GormDB().Where("guild_id = ? AND points > 0", guildID).Find(&points).Error; errPoints == nil {
-			errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
-				for _, p := range points {
-					// Check if there is already a pending tax for this user in this guild
-					var count int64
-					if errCount := tx.Model(&models.GoPointPendingTax{}).
-						Where("guild_id = ? AND user_id = ? AND collected = ? AND exempted = ?", guildID, p.UserID, false, false).
-						Count(&count).Error; errCount == nil && count > 0 {
-						if overwrite {
-							if errDel := tx.Where("guild_id = ? AND user_id = ? AND collected = ? AND exempted = ?", guildID, p.UserID, false, false).Delete(&models.GoPointPendingTax{}).Error; errDel != nil {
-								return errDel
-							}
-						} else {
-							continue // Already has a pending tax, skip to avoid double tax
-						}
-					}
-
-					taxAmount := calculateUserTaxAmount(p.Points, &cfg)
-					exempted := (taxAmount == 0)
-
-					pending := models.GoPointPendingTax{
-						ID:            uuid.New(),
-						GuildID:       guildID,
-						UserID:        p.UserID,
-						BasePoints:    p.Points,
-						TaxAmount:     taxAmount,
-						CalculateTime: now,
-						CollectTime:   now.Add(7 * 24 * time.Hour), // 1 week later
-						Collected:     false,
-						Exempted:      exempted,
-					}
-					if errCreate := tx.Create(&pending).Error; errCreate != nil {
-						return errCreate
-					}
-					calcCount++
+		errPoints := c.GormDB().Where("guild_id = ? AND points > 0", guildID).Find(&points).Error
+		if errPoints != nil {
+			return errors.NewError(errPoints)
+		}
+		errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
+			for _, p := range points {
+				// Check if there is already a pending tax for this user in this guild
+				var count int64
+				errCount := tx.Model(&models.GoPointPendingTax{}).
+					Where("guild_id = ? AND user_id = ? AND collected = ? AND exempted = ?", guildID, p.UserID, false, false).
+					Count(&count).Error
+				if errCount != nil {
+					return errCount
 				}
-				cfg.NextTaxTime = now.Add(time.Duration(cfg.IntervalDays) * 24 * time.Hour)
-				return tx.Save(&cfg).Error
-			})
-			if errTx != nil {
-				slog.Error("failed force tax determination transaction", "guild_id", guildID, "error", errTx)
+				if count > 0 {
+					if overwrite {
+						if errDel := tx.Where("guild_id = ? AND user_id = ? AND collected = ? AND exempted = ?", guildID, p.UserID, false, false).Delete(&models.GoPointPendingTax{}).Error; errDel != nil {
+							return errDel
+						}
+					} else {
+						continue // Already has a pending tax, skip to avoid double tax
+					}
+				}
+
+				taxAmount := calculateUserTaxAmount(p.Points, &cfg)
+				exempted := (taxAmount == 0)
+
+				pending := models.GoPointPendingTax{
+					ID:            uuid.New(),
+					GuildID:       guildID,
+					UserID:        p.UserID,
+					BasePoints:    p.Points,
+					TaxAmount:     taxAmount,
+					CalculateTime: now,
+					CollectTime:   now.Add(7 * 24 * time.Hour), // 1 week later
+					Collected:     false,
+					Exempted:      exempted,
+				}
+				if errCreate := tx.Create(&pending).Error; errCreate != nil {
+					return errCreate
+				}
+				calcCount++
 			}
+			cfg.NextTaxTime = now.Add(time.Duration(cfg.IntervalDays) * 24 * time.Hour)
+			return tx.Save(&cfg).Error
+		})
+		if errTx != nil {
+			slog.Error("failed force tax determination transaction", "guild_id", guildID, "error", errTx)
+			return errors.NewError(errTx)
 		}
 	}
 
 	var pending []models.GoPointPendingTax
 	var collectedCount, exemptedCount int
-	if errFind := c.GormDB().Where("guild_id = ? AND collected = ? AND exempted = ? AND collect_time <= ?", guildID, false, false, now).Find(&pending).Error; errFind == nil {
-		for _, tax := range pending {
-			errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
-				var p models.GoPoint
-				if err := tx.Where("user_id = ? AND guild_id = ?", tax.UserID, tax.GuildID).First(&p).Error; err != nil {
+	errFind := c.GormDB().Where("guild_id = ? AND collected = ? AND exempted = ? AND collect_time <= ?", guildID, false, false, now).Find(&pending).Error
+	if errFind != nil {
+		return errors.NewError(errFind)
+	}
+	for _, tax := range pending {
+		errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
+			var p models.GoPoint
+			if err := tx.Where("user_id = ? AND guild_id = ?", tax.UserID, tax.GuildID).First(&p).Error; err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
 					tax.Exempted = true
 					return tx.Save(&tax).Error
 				}
-
-				if p.Points < tax.BasePoints {
-					tax.Exempted = true
-					exemptedCount++
-				} else {
-					p.Points -= tax.TaxAmount
-					if p.Points < 0 {
-						p.Points = 0
-					}
-					if err := tx.Save(&p).Error; err != nil {
-						return err
-					}
-					tax.Collected = true
-					collectedCount++
-				}
-				return tx.Save(&tax).Error
-			})
-			if errTx != nil {
-				slog.Error("failed force tax collection transaction", "tax_id", tax.ID, "error", errTx)
+				return err
 			}
+
+			if p.Points < tax.BasePoints {
+				tax.Exempted = true
+				exemptedCount++
+			} else {
+				p.Points -= tax.TaxAmount
+				if p.Points < 0 {
+					p.Points = 0
+				}
+				if err := tx.Save(&p).Error; err != nil {
+					return err
+				}
+				tax.Collected = true
+				collectedCount++
+			}
+			return tx.Save(&tax).Error
+		})
+		if errTx != nil {
+			slog.Error("failed force tax collection transaction", "tax_id", tax.ID, "error", errTx)
+			return errors.NewError(errTx)
 		}
 	}
 
@@ -618,13 +640,14 @@ func ResetPointsHandler(c *components.Components, event *events.ApplicationComma
 			}
 
 			var otherGoPoints []models.GoPoint
-			if err := tx.Where("guild_id = ?", guildID).Find(&otherGoPoints).Error; err == nil {
-				for _, gp := range otherGoPoints {
-					if !updatedUserIDs[gp.UserID] {
-						gp.Points = 0
-						if errSave := tx.Save(&gp).Error; errSave != nil {
-							return errSave
-						}
+			if err := tx.Where("guild_id = ?", guildID).Find(&otherGoPoints).Error; err != nil {
+				return err
+			}
+			for _, gp := range otherGoPoints {
+				if !updatedUserIDs[gp.UserID] {
+					gp.Points = 0
+					if errSave := tx.Save(&gp).Error; errSave != nil {
+						return errSave
 					}
 				}
 			}
@@ -715,9 +738,42 @@ func SeasonStartHandler(c *components.Components, event *events.ApplicationComma
 		Criteria:   criteria,
 	}
 
-	if tx := c.GormDB().Create(&season); tx.Error != nil {
-		slog.Error("failed to create new season", "guild_id", guildID, "error", tx.Error, "statement", tx.Statement.SQL.String())
-		return errors.NewError(tx.Error)
+	errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
+		var overlap models.GoPointSeason
+		errOverlap := tx.Where("guild_id = ? AND has_awarded = ? AND start_time < ? AND end_time > ?", guildID, false, endTime, startTime).First(&overlap).Error
+		if errOverlap == nil {
+			return fmt.Errorf("overlap:%s", overlap.Name)
+		}
+		if !errors.Is(errOverlap, gorm.ErrRecordNotFound) {
+			return errOverlap
+		}
+
+		if errCreate := tx.Create(&season).Error; errCreate != nil {
+			return errCreate
+		}
+		return nil
+	})
+
+	if errTx != nil {
+		if strings.HasPrefix(errTx.Error(), "overlap:") {
+			overlapName := strings.TrimPrefix(errTx.Error(), "overlap:")
+			if errResp := event.RespondMessage(discord.NewMessageBuilder().
+				SetEphemeral(true).
+				SetIsComponentsV2(true).
+				SetComponents(
+					discord.NewContainer(
+						discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_err_active_exists", map[string]any{
+							"name": overlapName,
+						})),
+					).WithAccentColor(0xE74C3C),
+				),
+			); errResp != nil {
+				return errors.NewError(errResp)
+			}
+			return nil
+		}
+		slog.Error("failed to create new season", "guild_id", guildID, "error", errTx)
+		return errors.NewError(errTx)
 	}
 
 	var msg string
@@ -773,7 +829,27 @@ func SeasonEndHandler(c *components.Components, event *events.ApplicationCommand
 	errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
 		active.IsActive = false
 		active.HasAwarded = true
-		return tx.Save(&active).Error
+		if err := tx.Save(&active).Error; err != nil {
+			return err
+		}
+		if active.Criteria == "final" {
+			var gp []models.GoPoint
+			if err := tx.Where("guild_id = ?", active.GuildID).Find(&gp).Error; err != nil {
+				return err
+			}
+			for _, p := range gp {
+				su := models.GoPointSeasonUser{
+					SeasonID:     active.ID,
+					UserID:       p.UserID,
+					GuildID:      active.GuildID,
+					PointsEarned: p.Points,
+				}
+				if err := tx.Create(&su).Error; err != nil {
+					return err
+				}
+			}
+		}
+		return nil
 	})
 	if errTx != nil {
 		return errors.NewError(errTx)
@@ -821,13 +897,15 @@ func SeasonStatusHandler(c *components.Components, event *events.ApplicationComm
 	var records []models.GoPointSeasonUser
 	if active.Criteria == "final" {
 		var gp []models.GoPoint
-		if err := c.GormDB().Where("guild_id = ?", guildID).Order("points desc").Limit(10).Find(&gp).Error; err == nil {
-			for _, p := range gp {
-				records = append(records, models.GoPointSeasonUser{
-					UserID:       p.UserID,
-					PointsEarned: p.Points,
-				})
-			}
+		errFind := c.GormDB().Where("guild_id = ?", guildID).Order("points desc").Limit(10).Find(&gp).Error
+		if errFind != nil {
+			return errors.NewError(errFind)
+		}
+		for _, p := range gp {
+			records = append(records, models.GoPointSeasonUser{
+				UserID:       p.UserID,
+				PointsEarned: p.Points,
+			})
 		}
 	} else {
 		if err := c.GormDB().Where("season_id = ?", active.ID).Order("points_earned desc").Limit(10).Find(&records).Error; err != nil {
@@ -950,13 +1028,15 @@ func SeasonRankingHandler(c *components.Components, event *events.ApplicationCom
 	var records []models.GoPointSeasonUser
 	if season.Criteria == "final" {
 		var gp []models.GoPoint
-		if err := c.GormDB().Where("guild_id = ?", guildID).Order("points desc").Limit(20).Find(&gp).Error; err == nil {
-			for _, p := range gp {
-				records = append(records, models.GoPointSeasonUser{
-					UserID:       p.UserID,
-					PointsEarned: p.Points,
-				})
-			}
+		errFind := c.GormDB().Where("guild_id = ?", guildID).Order("points desc").Limit(20).Find(&gp).Error
+		if errFind != nil {
+			return errors.NewError(errFind)
+		}
+		for _, p := range gp {
+			records = append(records, models.GoPointSeasonUser{
+				UserID:       p.UserID,
+				PointsEarned: p.Points,
+			})
 		}
 	} else {
 		if err := c.GormDB().Where("season_id = ?", season.ID).Order("points_earned desc").Limit(20).Find(&records).Error; err != nil {
@@ -1015,134 +1095,169 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 
 	// 1. Tax calculations (Determination Phase)
 	var activeConfigs []models.GoPointTaxConfig
-	if err := c.GormDB().Where("enabled = ? AND next_tax_time <= ?", true, now).Find(&activeConfigs).Error; err == nil {
-		for _, cfg := range activeConfigs {
-			var points []models.GoPoint
-			if errPoints := c.GormDB().Where("guild_id = ? AND points > 0", cfg.GuildID).Find(&points).Error; errPoints == nil {
-				errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
-					for _, p := range points {
-						// Check if there is already a pending tax for this user in this guild
-						var count int64
-						if errCount := tx.Model(&models.GoPointPendingTax{}).
-							Where("guild_id = ? AND user_id = ? AND collected = ? AND exempted = ?", cfg.GuildID, p.UserID, false, false).
-							Count(&count).Error; errCount == nil && count > 0 {
-							continue // Already has a pending tax, skip to avoid double tax
-						}
+	if err := c.GormDB().Where("enabled = ? AND next_tax_time <= ?", true, now).Find(&activeConfigs).Error; err != nil {
+		return err
+	}
+	for _, cfg := range activeConfigs {
+		var points []models.GoPoint
+		errPoints := c.GormDB().Where("guild_id = ? AND points > 0", cfg.GuildID).Find(&points).Error
+		if errPoints != nil {
+			slog.Error("failed to find points for tax", "guild_id", cfg.GuildID, "error", errPoints)
+			return errPoints
+		}
+		errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
+			for _, p := range points {
+				// Check if there is already a pending tax for this user in this guild
+				var count int64
+				errCount := tx.Model(&models.GoPointPendingTax{}).
+					Where("guild_id = ? AND user_id = ? AND collected = ? AND exempted = ?", cfg.GuildID, p.UserID, false, false).
+					Count(&count).Error
+				if errCount != nil {
+					return errCount
+				}
+				if count > 0 {
+					continue // Already has a pending tax, skip to avoid double tax
+				}
 
-						taxAmount := calculateUserTaxAmount(p.Points, &cfg)
-						exempted := (taxAmount == 0)
+				taxAmount := calculateUserTaxAmount(p.Points, &cfg)
+				exempted := (taxAmount == 0)
 
-						pending := models.GoPointPendingTax{
-							ID:            uuid.New(),
-							GuildID:       cfg.GuildID,
-							UserID:        p.UserID,
-							BasePoints:    p.Points,
-							TaxAmount:     taxAmount,
-							CalculateTime: now,
-							CollectTime:   now.Add(7 * 24 * time.Hour), // 1 week later
-							Collected:     false,
-							Exempted:      exempted,
-						}
-						if errPending := tx.Create(&pending).Error; errPending != nil {
-							return errPending
-						}
-					}
-					next := cfg.NextTaxTime.Add(time.Duration(cfg.IntervalDays) * 24 * time.Hour)
-					if next.Before(now) {
-						next = now.Add(time.Duration(cfg.IntervalDays) * 24 * time.Hour)
-					}
-					cfg.NextTaxTime = next
-					return tx.Save(&cfg).Error
-				})
-				if errTx != nil {
-					slog.Error("failed to process tax determination transaction", "guild_id", cfg.GuildID, "error", errTx)
+				pending := models.GoPointPendingTax{
+					ID:            uuid.New(),
+					GuildID:       cfg.GuildID,
+					UserID:        p.UserID,
+					BasePoints:    p.Points,
+					TaxAmount:     taxAmount,
+					CalculateTime: now,
+					CollectTime:   now.Add(7 * 24 * time.Hour), // 1 week later
+					Collected:     false,
+					Exempted:      exempted,
+				}
+				if errPending := tx.Create(&pending).Error; errPending != nil {
+					return errPending
 				}
 			}
+			next := cfg.NextTaxTime.Add(time.Duration(cfg.IntervalDays) * 24 * time.Hour)
+			if next.Before(now) {
+				next = now.Add(time.Duration(cfg.IntervalDays) * 24 * time.Hour)
+			}
+			cfg.NextTaxTime = next
+			return tx.Save(&cfg).Error
+		})
+		if errTx != nil {
+			slog.Error("failed to process tax determination transaction", "guild_id", cfg.GuildID, "error", errTx)
+			return errTx
 		}
 	}
 
 	// 2. Tax executions (Collection Phase)
 	var pendingTaxes []models.GoPointPendingTax
-	if err := c.GormDB().Where("collected = ? AND exempted = ? AND collect_time <= ?", false, false, now).Find(&pendingTaxes).Error; err == nil {
-		for _, tax := range pendingTaxes {
-			errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
-				var p models.GoPoint
-				if err := tx.Where("user_id = ? AND guild_id = ?", tax.UserID, tax.GuildID).First(&p).Error; err != nil {
+	if err := c.GormDB().Where("collected = ? AND exempted = ? AND collect_time <= ?", false, false, now).Find(&pendingTaxes).Error; err != nil {
+		return err
+	}
+	for _, tax := range pendingTaxes {
+		errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
+			var p models.GoPoint
+			if err := tx.Where("user_id = ? AND guild_id = ?", tax.UserID, tax.GuildID).First(&p).Error; err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
 					tax.Exempted = true
 					return tx.Save(&tax).Error
 				}
-
-				if p.Points < tax.BasePoints {
-					tax.Exempted = true
-				} else {
-					p.Points -= tax.TaxAmount
-					if p.Points < 0 {
-						p.Points = 0
-					}
-					if err := tx.Save(&p).Error; err != nil {
-						return err
-					}
-					tax.Collected = true
-				}
-				return tx.Save(&tax).Error
-			})
-			if errTx != nil {
-				slog.Error("failed to execute tax collection transaction", "tax_id", tax.ID, "error", errTx)
+				return err
 			}
+
+			if p.Points < tax.BasePoints {
+				tax.Exempted = true
+			} else {
+				p.Points -= tax.TaxAmount
+				if p.Points < 0 {
+					p.Points = 0
+				}
+				if err := tx.Save(&p).Error; err != nil {
+					return err
+				}
+				tax.Collected = true
+			}
+			return tx.Save(&tax).Error
+		})
+		if errTx != nil {
+			slog.Error("failed to execute tax collection transaction", "tax_id", tax.ID, "error", errTx)
+			return errTx
 		}
 	}
 
 	// 3. Active seasons ending
 	var activeSeasons []models.GoPointSeason
-	if err := c.GormDB().Where("is_active = ? AND end_time <= ?", true, now).Find(&activeSeasons).Error; err == nil {
-		for _, s := range activeSeasons {
-			errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
-				s.IsActive = false
-				s.HasAwarded = true
-				if err := tx.Save(&s).Error; err != nil {
+	if err := c.GormDB().Where("is_active = ? AND end_time <= ?", true, now).Find(&activeSeasons).Error; err != nil {
+		return err
+	}
+	for _, s := range activeSeasons {
+		errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
+			s.IsActive = false
+			s.HasAwarded = true
+			if err := tx.Save(&s).Error; err != nil {
+				return err
+			}
+			if s.Criteria == "final" {
+				var gp []models.GoPoint
+				if err := tx.Where("guild_id = ?", s.GuildID).Find(&gp).Error; err != nil {
 					return err
 				}
-				return nil
-			})
-			if errTx == nil {
-				if s.ChannelID != 0 {
-					go announceSeasonResults(c, client, s.ID)
+				for _, p := range gp {
+					su := models.GoPointSeasonUser{
+						SeasonID:     s.ID,
+						UserID:       p.UserID,
+						GuildID:      s.GuildID,
+						PointsEarned: p.Points,
+					}
+					if err := tx.Create(&su).Error; err != nil {
+						return err
+					}
 				}
-			} else {
-				slog.Error("failed to close season transaction", "season_id", s.ID, "error", errTx)
 			}
+			return nil
+		})
+		if errTx == nil {
+			if s.ChannelID != 0 {
+				go announceSeasonResults(c, client, s.ID)
+			}
+		} else {
+			slog.Error("failed to close season transaction", "season_id", s.ID, "error", errTx)
+			return errTx
 		}
 	}
 
 	// 4. Starting scheduled seasons
 	var scheduledSeasons []models.GoPointSeason
-	if err := c.GormDB().Where("is_active = ? AND has_awarded = ? AND start_time <= ? AND end_time > ?", false, false, now, now).Find(&scheduledSeasons).Error; err == nil {
-		for _, s := range scheduledSeasons {
-			errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
-				if err := tx.Model(&models.GoPointSeason{}).
-					Where("guild_id = ? AND is_active = ?", s.GuildID, true).
-					Update("is_active", false).Error; err != nil {
-					if !errors.Is(err, gorm.ErrRecordNotFound) {
-						return err
-					}
+	if err := c.GormDB().Where("is_active = ? AND has_awarded = ? AND start_time <= ? AND end_time > ?", false, false, now, now).Find(&scheduledSeasons).Error; err != nil {
+		return err
+	}
+	for _, s := range scheduledSeasons {
+		errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
+			if err := tx.Model(&models.GoPointSeason{}).
+				Where("guild_id = ? AND is_active = ?", s.GuildID, true).
+				Update("is_active", false).Error; err != nil {
+				if !errors.Is(err, gorm.ErrRecordNotFound) {
+					return err
 				}
-				s.IsActive = true
-				return tx.Save(&s).Error
-			})
-			if errTx == nil {
-				if s.ChannelID != 0 {
-					_, _ = client.Rest.CreateMessage(s.ChannelID, discord.NewMessageCreateBuilder().
-						SetAllowedMentions(&discord.AllowedMentions{}).
-						SetContent(i18n.TranslateText(discord.LocaleUnknown, "components.gopoint.admin.season_start_announcement", map[string]any{
-							"name":     s.Name,
-							"criteria": criteriaDisplayName(discord.LocaleUnknown, s.Criteria),
-							"end_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, s.EndTime).String(),
-						})).
-						Build())
-				}
-			} else {
-				slog.Error("failed to start scheduled season transaction", "season_id", s.ID, "error", errTx)
 			}
+			s.IsActive = true
+			return tx.Save(&s).Error
+		})
+		if errTx == nil {
+			if s.ChannelID != 0 {
+				_, _ = client.Rest.CreateMessage(s.ChannelID, discord.NewMessageCreateBuilder().
+					SetAllowedMentions(&discord.AllowedMentions{}).
+					SetContent(i18n.TranslateText(discord.LocaleUnknown, "components.gopoint.admin.season_start_announcement", map[string]any{
+						"name":     s.Name,
+						"criteria": criteriaDisplayName(discord.LocaleUnknown, s.Criteria),
+						"end_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, s.EndTime).String(),
+					})).
+					Build())
+			}
+		} else {
+			slog.Error("failed to start scheduled season transaction", "season_id", s.ID, "error", errTx)
+			return errTx
 		}
 	}
 
@@ -1156,20 +1271,8 @@ func announceSeasonResults(c *components.Components, client *bot.Client, seasonI
 	}
 
 	var records []models.GoPointSeasonUser
-	if season.Criteria == "final" {
-		var gp []models.GoPoint
-		if err := c.GormDB().Where("guild_id = ?", season.GuildID).Order("points desc").Limit(10).Find(&gp).Error; err == nil {
-			for _, p := range gp {
-				records = append(records, models.GoPointSeasonUser{
-					UserID:       p.UserID,
-					PointsEarned: p.Points,
-				})
-			}
-		}
-	} else {
-		if err := c.GormDB().Where("season_id = ?", seasonID).Order("points_earned desc").Limit(10).Find(&records).Error; err != nil {
-			return
-		}
+	if err := c.GormDB().Where("season_id = ?", seasonID).Order("points_earned desc").Limit(10).Find(&records).Error; err != nil {
+		return
 	}
 
 	var sb strings.Builder

@@ -621,6 +621,11 @@ func ChinchiroRollHandler(c *components.Components, event *events.ComponentInter
 		return errors.NewError(err)
 	}
 
+	// Sort players by CreatedAt to maintain stable display order
+	sort.Slice(session.Players, func(i, j int) bool {
+		return session.Players[i].CreatedAt.Before(session.Players[j].CreatedAt)
+	})
+
 	if session.State == models.ChinchiroStateFinished || session.State == models.ChinchiroStateLobby {
 		builder := discord.NewMessageBuilder().
 			SetIsComponentsV2(true).
@@ -661,7 +666,9 @@ func ChinchiroRollHandler(c *components.Components, event *events.ComponentInter
 				// Instant win or instant loss for host
 				// Resolve game immediately
 				txErr := c.GormDB().Transaction(func(tx *gorm.DB) error {
-					resolveChinchiroInstantResult(tx, &session, mult)
+					if err := resolveChinchiroInstantResult(tx, &session, mult); err != nil {
+						return err
+					}
 					// Reload session and players from tx to get updated data
 					if err := tx.Preload("Players").Where("id = ?", session.ID).First(&session).Error; err != nil {
 						return err
@@ -741,7 +748,9 @@ func ChinchiroRollHandler(c *components.Components, event *events.ComponentInter
 					sort.Slice(session.Players, func(i, j int) bool {
 						return session.Players[i].CreatedAt.Before(session.Players[j].CreatedAt)
 					})
-					resolveChinchiroNormalResults(tx, &session)
+					if err := resolveChinchiroNormalResults(tx, &session); err != nil {
+						return err
+					}
 					if err := advanceToNextRoundOrFinish(tx, &session, event.Client()); err != nil {
 						return err
 					}
@@ -776,7 +785,7 @@ func ChinchiroRollHandler(c *components.Components, event *events.ComponentInter
 	return nil
 }
 
-func resolveChinchiroInstantResult(tx *gorm.DB, session *models.ChinchiroSession, mult int) {
+func resolveChinchiroInstantResult(tx *gorm.DB, session *models.ChinchiroSession, mult int) error {
 	numKids := int64(len(session.Players) - 1)
 	maxLiability := session.Bet * 5 * numKids
 
@@ -786,25 +795,32 @@ func resolveChinchiroInstantResult(tx *gorm.DB, session *models.ChinchiroSession
 		// Host won instantly (Pinzoro, Zoro, Shigoro)
 		// Host gets kids' bets
 		hostRefund := maxLiability + (session.Bet * numKids)
-		_ = gopoint.AddPointTx(tx, session.HostUserID, session.GuildID, hostRefund)
+		if err := gopoint.AddPointTx(tx, session.HostUserID, session.GuildID, hostRefund); err != nil {
+			return err
+		}
 		// Kids get nothing
 	} else if mult < 0 {
 		// Host lost instantly (Hifumi)
 		// Host pays 2x to each kid
 		hostRefund := maxLiability - (session.Bet * 2 * numKids)
 		if hostRefund > 0 {
-			_ = gopoint.AddPointTx(tx, session.HostUserID, session.GuildID, hostRefund)
+			if err := gopoint.AddPointTx(tx, session.HostUserID, session.GuildID, hostRefund); err != nil {
+				return err
+			}
 		}
 		// Each kid gets: their bet back + 2x bet = 3x bet total
 		for _, p := range session.Players {
 			if !p.IsHost {
-				_ = gopoint.AddPointTx(tx, p.UserID, session.GuildID, session.Bet*3)
+				if err := gopoint.AddPointTx(tx, p.UserID, session.GuildID, session.Bet*3); err != nil {
+					return err
+				}
 			}
 		}
 	}
+	return nil
 }
 
-func resolveChinchiroNormalResults(tx *gorm.DB, session *models.ChinchiroSession) {
+func resolveChinchiroNormalResults(tx *gorm.DB, session *models.ChinchiroSession) error {
 	numKids := int64(len(session.Players) - 1)
 	maxLiability := session.Bet * 5 * numKids
 
@@ -835,7 +851,9 @@ func resolveChinchiroNormalResults(tx *gorm.DB, session *models.ChinchiroSession
 			}
 
 			// Kid receives their bet back + (bet * mult) from host = bet * (mult + 1)
-			_ = gopoint.AddPointTx(tx, p.UserID, session.GuildID, session.Bet*int64(mult+1))
+			if err := gopoint.AddPointTx(tx, p.UserID, session.GuildID, session.Bet*int64(mult+1)); err != nil {
+				return err
+			}
 			hostNetChange -= session.Bet * int64(mult)
 		} else if p.Point < session.HostPoint {
 			// Kid loses
@@ -845,14 +863,19 @@ func resolveChinchiroNormalResults(tx *gorm.DB, session *models.ChinchiroSession
 		} else {
 			// Draw
 			// Kid gets their bet back
-			_ = gopoint.AddPointTx(tx, p.UserID, session.GuildID, session.Bet)
+			if err := gopoint.AddPointTx(tx, p.UserID, session.GuildID, session.Bet); err != nil {
+				return err
+			}
 		}
 	}
 
 	hostRefund := maxLiability + hostNetChange
 	if hostRefund > 0 {
-		_ = gopoint.AddPointTx(tx, session.HostUserID, session.GuildID, hostRefund)
+		if err := gopoint.AddPointTx(tx, session.HostUserID, session.GuildID, hostRefund); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func respondSessionNotFound(event *events.ComponentInteractionCreate) errors.Error {
@@ -985,6 +1008,16 @@ func advanceToNextRoundOrFinish(tx *gorm.DB, session *models.ChinchiroSession, c
 		// Deduct/lock max liability from the new Host
 		if err := gopoint.AddPointTx(tx, nextHost.UserID, session.GuildID, -maxLiability); err != nil {
 			return err
+		}
+
+		// Escrow session.Bet from each kid player based on the new host's UserID
+		for i := range session.Players {
+			p := &session.Players[i]
+			if p.UserID != nextHost.UserID {
+				if err := gopoint.AddPointTx(tx, p.UserID, session.GuildID, -session.Bet); err != nil {
+					return err
+				}
+			}
 		}
 
 		// Found a valid Host! Start the new round

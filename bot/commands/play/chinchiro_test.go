@@ -46,7 +46,7 @@ func TestChinchiro_NormalResolution(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.ChinchiroSession{}, &models.ChinchiroPlayer{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.ChinchiroSession{}, &models.ChinchiroPlayer{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -122,7 +122,9 @@ func TestChinchiro_NormalResolution(t *testing.T) {
 		if err := tx.Preload("Players").Where("id = ?", session.ID).First(&dbSession).Error; err != nil {
 			return err
 		}
-		resolveChinchiroNormalResults(tx, &dbSession)
+		if err := resolveChinchiroNormalResults(tx, &dbSession); err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != nil {
@@ -157,7 +159,7 @@ func TestChinchiro_ZoroResolution(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.ChinchiroSession{}, &models.ChinchiroPlayer{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.ChinchiroSession{}, &models.ChinchiroPlayer{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -219,7 +221,9 @@ func TestChinchiro_ZoroResolution(t *testing.T) {
 		if err := tx.Preload("Players").Where("id = ?", session.ID).First(&dbSession).Error; err != nil {
 			return err
 		}
-		resolveChinchiroNormalResults(tx, &dbSession)
+		if err := resolveChinchiroNormalResults(tx, &dbSession); err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != nil {
@@ -249,7 +253,7 @@ func TestChinchiro_HostRotation(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.ChinchiroSession{}, &models.ChinchiroPlayer{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.ChinchiroSession{}, &models.ChinchiroPlayer{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}

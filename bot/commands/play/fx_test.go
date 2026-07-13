@@ -282,7 +282,7 @@ func TestFX_LiquidationWithDeficitCoverage(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -395,7 +395,7 @@ func TestFX_LiquidationWithRefund(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -465,7 +465,7 @@ func TestFX_PendingOrders(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.FXOrder{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.FXOrder{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -564,7 +564,7 @@ func TestFX_ActivePositionTPSL(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -663,7 +663,7 @@ func TestFX_PortfolioLogic(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.FXOrder{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.FXOrder{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -759,7 +759,7 @@ func TestFX_MarginCallRedirection(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.FXOrder{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.FXOrder{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}

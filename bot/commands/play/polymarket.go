@@ -110,15 +110,17 @@ func PolymarketSearchMessage(c *components.Components, session *PolymarketSessio
 	var marketOpts []discord.StringSelectMenuOption
 	for _, m := range session.Markets {
 		label := m.Question
-		if len(label) > 100 {
-			label = label[:97] + "..."
+		labelRunes := []rune(label)
+		if len(labelRunes) > 100 {
+			label = string(labelRunes[:97]) + "..."
 		}
 		desc := i18n.TranslateText(locale, "components.play.polymarket.market_option_desc", map[string]any{
 			"volume":   formatDecimal(m.Volume),
 			"end_date": formatTimeStrLocal(m.EndDate, locale),
 		})
-		if len(desc) > 100 {
-			desc = desc[:97] + "..."
+		descRunes := []rune(desc)
+		if len(descRunes) > 100 {
+			desc = string(descRunes[:97]) + "..."
 		}
 		marketOpts = append(marketOpts, discord.StringSelectMenuOption{
 			Label:       label,
@@ -975,29 +977,33 @@ func PolymarketRefreshBetsHandler(c *components.Components, event *events.Compon
 			payout := int64(0)
 
 			errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
-				var dbBet models.PolymarketBet
-				if err := tx.Where("id = ?", b.ID).First(&dbBet).Error; err != nil {
-					return err
+				// Condition the update on Resolved = false to make it atomic
+				result := tx.Model(&models.PolymarketBet{}).
+					Where("id = ? AND resolved = ?", b.ID, false).
+					Update("resolved", true)
+				if result.Error != nil {
+					return result.Error
 				}
-				if dbBet.Resolved {
-					return nil
+				if result.RowsAffected == 0 {
+					return fmt.Errorf("already resolved")
 				}
 
-				dbBet.Resolved = true
 				if won {
 					payout = int64(float64(b.BetAmount) / b.EntryPrice)
-					dbBet.Winner = true
-					dbBet.Payout = payout
-
 					if err := gopoint.AddPointTx(tx, b.UserID, b.GuildID, payout); err != nil {
 						return err
 					}
-				} else {
-					dbBet.Winner = false
-					dbBet.Payout = 0
 				}
 
-				return tx.Save(&dbBet).Error
+				// Update remaining fields for the bet
+				if err := tx.Model(&models.PolymarketBet{}).Where("id = ?", b.ID).Updates(map[string]any{
+					"winner": won,
+					"payout": payout,
+				}).Error; err != nil {
+					return err
+				}
+
+				return nil
 			})
 
 			if errTx == nil {
