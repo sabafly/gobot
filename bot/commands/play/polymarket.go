@@ -93,17 +93,6 @@ func formatDecimal(d decimal.Decimal) string {
 	return fmt.Sprintf("%.2f", val)
 }
 
-func formatTimeMention(utcStr string) string {
-	t, err := time.Parse(time.RFC3339, utcStr)
-	if err != nil {
-		t, err = time.Parse("2006-01-02T15:04:05Z", utcStr)
-		if err != nil {
-			return utcStr
-		}
-	}
-	return discord.NewTimestamp(discord.TimestampStyleLongDateTime, t).String()
-}
-
 func formatTimeStrLocal(utcStr string, locale discord.Locale) string {
 	t, err := time.Parse(time.RFC3339, utcStr)
 	if err != nil {
@@ -126,7 +115,7 @@ func PolymarketSearchMessage(c *components.Components, session *PolymarketSessio
 		}
 		desc := i18n.TranslateText(locale, "components.play.polymarket.market_option_desc", map[string]any{
 			"volume":   formatDecimal(m.Volume),
-			"end_date": formatTimeMention(m.EndDate),
+			"end_date": formatTimeStrLocal(m.EndDate, locale),
 		})
 		if len(desc) > 100 {
 			desc = desc[:97] + "..."

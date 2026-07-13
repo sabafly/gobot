@@ -35,8 +35,9 @@ func Command(c *components.Components) components.Command {
 		},
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
-				Name:        "gopoint",
-				Description: "GoPointの情報を表示します。",
+				Name:                     "gopoint",
+				Description:              "GoPointの情報を表示します。",
+				DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.description"),
 				Contexts: []discord.InteractionContextType{
 					discord.InteractionContextTypeGuild,
 				},
@@ -93,8 +94,9 @@ func Command(c *components.Components) components.Command {
 						},
 					},
 					discord.ApplicationCommandOptionSubCommandGroup{
-						Name:        "tax",
-						Description: "定期徴収の管理を行います。(管理者のみ)",
+						Name:                     "tax",
+						Description:              "定期徴収の管理を行います。(管理者のみ)",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.tax.description"),
 						Options: []discord.ApplicationCommandOptionSubCommand{
 							{
 								Name:                     "setup",
@@ -112,9 +114,10 @@ func Command(c *components.Components) components.Command {
 								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.tax-force.description"),
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionBool{
-										Name:        "overwrite",
-										Description: "既存の徴収予定を上書き（再計算）するか指定します (デフォルト: false)。",
-										Required:    false,
+										Name:                     "overwrite",
+										Description:              "既存の徴収予定を上書き（再計算）するか指定します (デフォルト: false)。",
+										DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.tax-force.overwrite.description"),
+										Required:                 false,
 									},
 								},
 							},
@@ -126,21 +129,24 @@ func Command(c *components.Components) components.Command {
 						DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.reset.description"),
 						Options: []discord.ApplicationCommandOption{
 							discord.ApplicationCommandOptionInt{
-								Name:        "points",
-								Description: "リセット後のポイント数を指定します (デフォルト: 0)。by_levelがtrueの場合は無視されます。",
-								Required:    false,
-								MinValue:    builtin.Ptr(0),
+								Name:                     "points",
+								Description:              "リセット後のポイント数を指定します (デフォルト: 0)。by_levelがtrueの場合は無視されます。",
+								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.reset.points.description"),
+								Required:                 false,
+								MinValue:                 builtin.Ptr(0),
 							},
 							discord.ApplicationCommandOptionBool{
-								Name:        "by_level",
-								Description: "各ユーザーのレベルの累積必要XPに応じたポイントでリセットするかどうか。",
-								Required:    false,
+								Name:                     "by_level",
+								Description:              "各ユーザーのレベルの累積必要XPに応じたポイントでリセットするかどうか。",
+								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.reset.by_level.description"),
+								Required:                 false,
 							},
 						},
 					},
 					discord.ApplicationCommandOptionSubCommandGroup{
-						Name:        "season",
-						Description: "シーズンの管理・表示を行います。",
+						Name:                     "season",
+						Description:              "シーズンの管理・表示を行います。",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season.description"),
 						Options: []discord.ApplicationCommandOptionSubCommand{
 							{
 								Name:                     "start",
@@ -148,35 +154,41 @@ func Command(c *components.Components) components.Command {
 								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-start.description"),
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionString{
-										Name:        "name",
-										Description: "シーズンの名前を指定します。",
-										Required:    true,
+										Name:                     "name",
+										Description:              "シーズンの名前を指定します。",
+										DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-start.name.description"),
+										Required:                 true,
 									},
 									discord.ApplicationCommandOptionInt{
-										Name:        "duration_days",
-										Description: "シーズンの期間(日)を指定します (1-365)。",
-										Required:    true,
-										MinValue:    builtin.Ptr(1),
-										MaxValue:    builtin.Ptr(365),
+										Name:                     "duration_days",
+										Description:              "シーズンの期間(日)を指定します (1-365)。",
+										DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-start.duration_days.description"),
+										Required:                 true,
+										MinValue:                 builtin.Ptr(1),
+										MaxValue:                 builtin.Ptr(365),
 									},
 									discord.ApplicationCommandOptionInt{
-										Name:        "start_delay_hours",
-										Description: "何時間後にシーズンを開始するか（スケジュール予約）を指定します。",
-										Required:    false,
-										MinValue:    builtin.Ptr(0),
+										Name:                     "start_delay_hours",
+										Description:              "何時間後にシーズンを開始するか（スケジュール予約）を指定します。",
+										DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-start.start_delay_hours.description"),
+										Required:                 false,
+										MinValue:                 builtin.Ptr(0),
 									},
 									discord.ApplicationCommandOptionString{
-										Name:        "criteria",
-										Description: "ランキングの基準を指定します (earned: 獲得ポイント, final: 最終ポイント)。",
-										Required:    false,
+										Name:                     "criteria",
+										Description:              "ランキングの基準を指定します (earned: 獲得ポイント, final: 最終ポイント)。",
+										DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-start.criteria.description"),
+										Required:                 false,
 										Choices: []discord.ApplicationCommandOptionChoiceString{
 											{
-												Name:  "獲得ポイント数",
-												Value: "earned",
+												Name:              i18n.TranslateText(discord.LocaleJapanese, "command.gopoint.season-start.criteria.choice.earned"),
+												NameLocalizations: i18n.TranslateTextMap("command.gopoint.season-start.criteria.choice.earned"),
+												Value:             "earned",
 											},
 											{
-												Name:  "最終所持ポイント数",
-												Value: "final",
+												Name:              i18n.TranslateText(discord.LocaleJapanese, "command.gopoint.season-start.criteria.choice.final"),
+												NameLocalizations: i18n.TranslateTextMap("command.gopoint.season-start.criteria.choice.final"),
+												Value:             "final",
 											},
 										},
 									},
@@ -198,10 +210,11 @@ func Command(c *components.Components) components.Command {
 								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-ranking.description"),
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionString{
-										Name:         "season_id",
-										Description:  "表示したい過去のシーズンのIDを指定します (省略時は現在のアクティブなシーズン)。",
-										Required:     false,
-										Autocomplete: true,
+										Name:                     "season_id",
+										Description:              "表示したい過去のシーズンのIDを指定します (省略時は現在のアクティブなシーズン)。",
+										DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-ranking.season_id.description"),
+										Required:                 false,
+										Autocomplete:             true,
 									},
 								},
 							},

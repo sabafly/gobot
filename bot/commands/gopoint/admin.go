@@ -26,7 +26,7 @@ type TaxBracket struct {
 	Rate int   // percentage, e.g. 5
 }
 
-func parseTaxBrackets(text string) ([]TaxBracket, error) {
+func parseTaxBrackets(locale discord.Locale, text string) ([]TaxBracket, error) {
 	var brackets []TaxBracket
 	lines := strings.Split(text, "\n")
 	for _, line := range lines {
@@ -37,14 +37,14 @@ func parseTaxBrackets(text string) ([]TaxBracket, error) {
 		// Format: range:rate
 		parts := strings.Split(line, ":")
 		if len(parts) != 2 {
-			return nil, fmt.Errorf("段階別割合の形式が不正です (行: %s, 形式は '下限-上限:割合' または '下限+:割合')", line)
+			return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.gopoint.admin.tax_bracket_err_invalid_format", map[string]any{"line": line}))
 		}
 		rangeStr := strings.TrimSpace(parts[0])
 		rateStr := strings.TrimSpace(parts[1])
 
 		rate, err := strconv.Atoi(strings.TrimSuffix(rateStr, "%"))
 		if err != nil || rate < 0 || rate > 100 {
-			return nil, fmt.Errorf("無効な割合です: %s", rateStr)
+			return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.gopoint.admin.tax_bracket_err_invalid_rate", map[string]any{"rate": rateStr}))
 		}
 
 		var min, max int64
@@ -52,22 +52,22 @@ func parseTaxBrackets(text string) ([]TaxBracket, error) {
 			minStr := strings.TrimSuffix(rangeStr, "+")
 			minVal, err := strconv.ParseInt(minStr, 10, 64)
 			if err != nil {
-				return nil, fmt.Errorf("無効な範囲です: %s", rangeStr)
+				return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.gopoint.admin.tax_bracket_err_invalid_range", map[string]any{"range": rangeStr}))
 			}
 			min = minVal
 			max = -1
 		} else {
 			rangeParts := strings.Split(rangeStr, "-")
 			if len(rangeParts) != 2 {
-				return nil, fmt.Errorf("無効な範囲指定です: %s", rangeStr)
+				return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.gopoint.admin.tax_bracket_err_invalid_range_spec", map[string]any{"range": rangeStr}))
 			}
 			minVal, err := strconv.ParseInt(strings.TrimSpace(rangeParts[0]), 10, 64)
 			if err != nil {
-				return nil, fmt.Errorf("下限値の解析に失敗しました: %s", rangeParts[0])
+				return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.gopoint.admin.tax_bracket_err_parse_min", map[string]any{"min": rangeParts[0]}))
 			}
 			maxVal, err := strconv.ParseInt(strings.TrimSpace(rangeParts[1]), 10, 64)
 			if err != nil {
-				return nil, fmt.Errorf("上限値の解析に失敗しました: %s", rangeParts[1])
+				return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.gopoint.admin.tax_bracket_err_parse_max", map[string]any{"max": rangeParts[1]}))
 			}
 			min = minVal
 			max = maxVal
@@ -89,7 +89,7 @@ func calculateUserTaxAmount(p int64, cfg *models.GoPointTaxConfig) int64 {
 
 	rate := cfg.Rate
 	if cfg.Brackets != "" {
-		brackets, err := parseTaxBrackets(cfg.Brackets)
+		brackets, err := parseTaxBrackets(discord.LocaleUnknown, cfg.Brackets)
 		if err == nil {
 			for _, b := range brackets {
 				if b.Max == -1 {
@@ -146,7 +146,7 @@ func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandI
 	}
 
 	rateOptions := []discord.StringSelectMenuOption{
-		{Label: "0% (免除)", Value: "0"},
+		{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_rate_exempt"), Value: "0"},
 		{Label: "5%", Value: "5"},
 		{Label: "10%", Value: "10"},
 		{Label: "15%", Value: "15"},
@@ -175,12 +175,12 @@ func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandI
 	}
 
 	intervalOptions := []discord.StringSelectMenuOption{
-		{Label: "1日", Value: "1"},
-		{Label: "3日", Value: "3"},
-		{Label: "7日 (1週間)", Value: "7"},
-		{Label: "14日 (2週間)", Value: "14"},
-		{Label: "30日 (約1ヶ月)", Value: "30"},
-		{Label: "90日 (約3ヶ月)", Value: "90"},
+		{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_interval_1day"), Value: "1"},
+		{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_interval_3days"), Value: "3"},
+		{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_interval_1week"), Value: "7"},
+		{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_interval_2weeks"), Value: "14"},
+		{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_interval_1month"), Value: "30"},
+		{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_interval_3months"), Value: "90"},
 	}
 	intervalFound := false
 	for _, opt := range intervalOptions {
@@ -191,7 +191,7 @@ func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandI
 	}
 	if !intervalFound && cfg.IntervalDays > 0 {
 		intervalOptions = append([]discord.StringSelectMenuOption{
-			{Label: fmt.Sprintf("%d日", cfg.IntervalDays), Value: strconv.Itoa(cfg.IntervalDays)},
+			{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_interval_days", map[string]any{"days": cfg.IntervalDays}), Value: strconv.Itoa(cfg.IntervalDays)},
 		}, intervalOptions...)
 	}
 	for i, opt := range intervalOptions {
@@ -201,8 +201,8 @@ func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandI
 	}
 
 	enabledOptions := []discord.StringSelectMenuOption{
-		{Label: "有効 (Enabled)", Value: "true"},
-		{Label: "無効 (Disabled)", Value: "false"},
+		{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_enabled_label"), Value: "true"},
+		{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_disabled_label"), Value: "false"},
 	}
 	for i, opt := range enabledOptions {
 		if opt.Value == strconv.FormatBool(cfg.Enabled) {
@@ -211,43 +211,43 @@ func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandI
 	}
 
 	modal := discord.NewModalCreateBuilder().
-		SetTitle("定期徴収設定").
+		SetTitle(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_modal_title")).
 		SetCustomID("gopoint:tax_setup_modal").
 		SetComponents(
-			discord.NewLabel("デフォルト徴収割合 (%)",
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_label_rate"),
 				discord.StringSelectMenuComponent{
 					CustomID:  "rate",
 					MinValues: ptr(1),
 					MaxValues: 1,
 					Options:   rateOptions,
 				}),
-			discord.NewLabel("最低徴収対象ポイント (所持ポイントの閾値)",
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_label_min_points"),
 				discord.TextInputComponent{
 					CustomID: "min_points",
 					Style:    discord.TextInputStyleShort,
 					Value:    strconv.FormatInt(cfg.MinPoints, 10),
 					Required: true,
 				}),
-			discord.NewLabel("徴収間隔 (日数)",
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_label_interval"),
 				discord.StringSelectMenuComponent{
 					CustomID:  "interval_days",
 					MinValues: ptr(1),
 					MaxValues: 1,
 					Options:   intervalOptions,
 				}),
-			discord.NewLabel("定期徴収の有効化",
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_label_enabled"),
 				discord.StringSelectMenuComponent{
 					CustomID:  "enabled",
 					MinValues: ptr(1),
 					MaxValues: 1,
 					Options:   enabledOptions,
 				}),
-			discord.NewLabel("段階的割合設定 (範囲:割合, 改行区切り)",
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_label_brackets"),
 				discord.TextInputComponent{
 					CustomID:    "brackets",
 					Style:       discord.TextInputStyleParagraph,
 					Value:       cfg.Brackets,
-					Placeholder: "例:\n100-500:5\n501-1000:10\n1001+:15\n※ 割合0%で免除",
+					Placeholder: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_placeholder_brackets"),
 					Required:    false,
 				}),
 		).
@@ -279,17 +279,17 @@ func TaxSetupModalSubmitHandler(c *components.Components, event *events.ModalSub
 
 	rate, err := strconv.Atoi(rateStr)
 	if err != nil || rate < 0 || rate > 100 {
-		return respondModalError(event, "デフォルト徴収割合は 0〜100 の数値を指定してください。")
+		return respondModalError(event, i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_err_rate_range"))
 	}
 
 	minPoints, err := strconv.ParseInt(minPointsStr, 10, 64)
 	if err != nil || minPoints < 0 {
-		return respondModalError(event, "最低徴収対象ポイントは 0 以上の数値を指定してください。")
+		return respondModalError(event, i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_err_min_points"))
 	}
 
 	intervalDays, err := strconv.Atoi(intervalDaysStr)
 	if err != nil || intervalDays < 1 || intervalDays > 365 {
-		return respondModalError(event, "徴収間隔は 1〜365 の数値を指定してください。")
+		return respondModalError(event, i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_err_interval_range"))
 	}
 
 	enabled := false
@@ -299,9 +299,9 @@ func TaxSetupModalSubmitHandler(c *components.Components, event *events.ModalSub
 	}
 
 	bracketsText := strings.ReplaceAll(bracketsStr, "\r\n", "\n")
-	_, errParse := parseTaxBrackets(bracketsText)
+	_, errParse := parseTaxBrackets(event.Locale(), bracketsText)
 	if errParse != nil {
-		return respondModalError(event, fmt.Sprintf("段階的割合設定の解析に失敗しました:\n%v", errParse))
+		return respondModalError(event, i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_err_brackets_parse", map[string]any{"error": errParse.Error()}))
 	}
 
 	var cfg models.GoPointTaxConfig
@@ -371,7 +371,7 @@ func respondModalError(event *events.ModalSubmitInteractionCreate, text string) 
 		SetIsComponentsV2(true).
 		SetComponents(
 			discord.NewContainer(
-				discord.NewTextDisplay("❌ **設定エラー**:\n" + text),
+				discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_error_title") + text),
 			).WithAccentColor(0xE74C3C),
 		),
 	)
@@ -410,7 +410,7 @@ func TaxStatusHandler(c *components.Components, event *events.ApplicationCommand
 
 	bracketsText := cfg.Brackets
 	if bracketsText == "" {
-		bracketsText = "なし"
+		bracketsText = i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_brackets_none")
 	} else {
 		bracketsText = "```\n" + bracketsText + "\n```"
 	}
@@ -633,7 +633,7 @@ func ResetPointsHandler(c *components.Components, event *events.ApplicationComma
 		if err != nil {
 			return errors.NewError(err)
 		}
-		msg = "ギルド内の全員のGoPointsを、それぞれのレベルの累積必要XPに応じたポイントにリセットしました。"
+		msg = i18n.TranslateText(event.Locale(), "components.gopoint.admin.reset_by_level_success")
 	} else {
 		if err := c.GormDB().Model(&models.GoPoint{}).Where("guild_id = ?", guildID).Update("points", targetPoints).Error; err != nil {
 			return errors.NewError(err)
@@ -657,11 +657,11 @@ func ResetPointsHandler(c *components.Components, event *events.ApplicationComma
 	return nil
 }
 
-func criteriaDisplayName(c string) string {
+func criteriaDisplayName(locale discord.Locale, c string) string {
 	if c == "final" {
-		return "最終所持ポイント数"
+		return i18n.TranslateText(locale, "components.gopoint.admin.season_criteria_final")
 	}
-	return "獲得ポイント数"
+	return i18n.TranslateText(locale, "components.gopoint.admin.season_criteria_earned")
 }
 
 func SeasonStartHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
@@ -725,13 +725,13 @@ func SeasonStartHandler(c *components.Components, event *events.ApplicationComma
 		msg = i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_start_success", map[string]any{
 			"name":     season.Name,
 			"duration": durationDays,
-			"criteria": criteriaDisplayName(criteria),
+			"criteria": criteriaDisplayName(event.Locale(), criteria),
 			"end_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, season.EndTime).String(),
 		})
 	} else {
 		msg = i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_start_scheduled", map[string]any{
 			"name":       season.Name,
-			"criteria":   criteriaDisplayName(criteria),
+			"criteria":   criteriaDisplayName(event.Locale(), criteria),
 			"start_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, season.StartTime).String(),
 			"end_time":   discord.NewTimestamp(discord.TimestampStyleLongDateTime, season.EndTime).String(),
 		})
@@ -860,16 +860,16 @@ func SeasonStatusHandler(c *components.Components, event *events.ApplicationComm
 	}
 
 	remaining := time.Until(active.EndTime).Round(time.Minute)
-	statusStr := "アクティブ"
+	statusStr := i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_status_active")
 	if remaining < 0 {
 		remaining = 0
-		statusStr = "終了"
+		statusStr = i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_status_ended")
 	}
 
 	msg := i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_status_info", map[string]any{
 		"name":       active.Name,
 		"status":     statusStr,
-		"criteria":   criteriaDisplayName(active.Criteria),
+		"criteria":   criteriaDisplayName(event.Locale(), active.Criteria),
 		"start_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, active.StartTime).String(),
 		"end_time":   discord.NewTimestamp(discord.TimestampStyleLongDateTime, active.EndTime).String(),
 		"remaining":  discord.NewTimestamp(discord.TimestampStyleRelative, time.Now().Add(remaining)).String(),
@@ -990,7 +990,7 @@ func SeasonRankingHandler(c *components.Components, event *events.ApplicationCom
 
 	title := i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_ranking_title", map[string]any{
 		"name":     season.Name,
-		"criteria": criteriaDisplayName(season.Criteria),
+		"criteria": criteriaDisplayName(event.Locale(), season.Criteria),
 	})
 
 	msg := title + strings.Join(rankingLines, "\n")
@@ -1133,7 +1133,11 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 				if s.ChannelID != 0 {
 					_, _ = client.Rest.CreateMessage(s.ChannelID, discord.NewMessageCreateBuilder().
 						SetAllowedMentions(&discord.AllowedMentions{}).
-						SetContent(fmt.Sprintf("🚀 **GoPoint シーズン開始のお知らせ** 🚀\n新しいシーズン **%s** が開始されました！(表彰基準: %s) 終了予定: %s\nポイントを競い合いましょう！", s.Name, criteriaDisplayName(s.Criteria), discord.NewTimestamp(discord.TimestampStyleLongDateTime, s.EndTime).String())).
+						SetContent(i18n.TranslateText(discord.LocaleUnknown, "components.gopoint.admin.season_start_announcement", map[string]any{
+							"name":     s.Name,
+							"criteria": criteriaDisplayName(discord.LocaleUnknown, s.Criteria),
+							"end_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, s.EndTime).String(),
+						})).
 						Build())
 				}
 			} else {
@@ -1169,10 +1173,13 @@ func announceSeasonResults(c *components.Components, client *bot.Client, seasonI
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("🏆 **GoPoint シーズン終了のお知らせ** 🏆\nシーズン **%s** が終了しました！獲得ランキング表彰を行います (基準: %s)。\n\n", season.Name, criteriaDisplayName(season.Criteria)))
+	sb.WriteString(i18n.TranslateText(discord.LocaleUnknown, "components.gopoint.admin.season_end_announcement_title", map[string]any{
+		"name":     season.Name,
+		"criteria": criteriaDisplayName(discord.LocaleUnknown, season.Criteria),
+	}))
 
 	if len(records) == 0 {
-		sb.WriteString("期間中にポイントを獲得したプレイヤーはいませんでした。")
+		sb.WriteString(i18n.TranslateText(discord.LocaleUnknown, "components.gopoint.admin.season_end_announcement_no_data"))
 	} else {
 		for i, r := range records {
 			medal := ""
@@ -1192,7 +1199,11 @@ func announceSeasonResults(c *components.Components, client *bot.Client, seasonI
 			if err == nil && user != nil {
 				name = fmt.Sprintf("**%s**", user.EffectiveName())
 			}
-			sb.WriteString(fmt.Sprintf("%s%s - スコア: `%d pt`\n", medal, name, r.PointsEarned))
+			sb.WriteString(i18n.TranslateText(discord.LocaleUnknown, "components.gopoint.admin.season_end_announcement_entry", map[string]any{
+				"medal":  medal,
+				"name":   name,
+				"points": r.PointsEarned,
+			}))
 		}
 	}
 
