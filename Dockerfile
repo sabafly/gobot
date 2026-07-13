@@ -7,7 +7,8 @@ WORKDIR /app
 
 # 依存関係のキャッシュを最適化
 COPY go.mod go.sum ./
-RUN go mod download
+RUN --mount=type=cache,target=/go/pkg/mod \
+    go mod download
 
 # ソースコードをコピー
 COPY . .
@@ -18,7 +19,9 @@ COPY . .
 # バイナリをビルド
 # CGO_ENABLED=0: 静的リンクでビルド（distrolessイメージで実行可能）
 # -ldflags="-s -w": デバッグ情報を削除してバイナリサイズを削減
-RUN CGO_ENABLED=0 GOOS=linux go build \
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    CGO_ENABLED=0 GOOS=linux go build \
     -trimpath \
     -ldflags="-s -w" \
     -o gobot \
