@@ -21,6 +21,7 @@ import (
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/database/models"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
 	"github.com/shopspring/decimal"
@@ -101,6 +102,17 @@ func formatTimeMention(utcStr string) string {
 		}
 	}
 	return discord.NewTimestamp(discord.TimestampStyleLongDateTime, t).String()
+}
+
+func formatTimeStrLocal(utcStr string, locale discord.Locale) string {
+	t, err := time.Parse(time.RFC3339, utcStr)
+	if err != nil {
+		t, err = time.Parse("2006-01-02T15:04:05Z", utcStr)
+		if err != nil {
+			return utcStr
+		}
+	}
+	return t.In(discordutil.LocaleToLocation(locale)).Format("2006-01-02 15:04 MST")
 }
 
 func PolymarketSearchMessage(c *components.Components, session *PolymarketSession, points int64, locale discord.Locale) []discord.LayoutComponent {
@@ -201,7 +213,7 @@ func PolymarketDetailMessage(c *components.Components, session *PolymarketSessio
 
 	questionLink := fmt.Sprintf("[%s](https://polymarket.com/event/%s)", m.Question, m.Slug)
 	ctx.WithText("market_question", questionLink)
-	ctx.WithText("end_date", formatTimeMention(m.EndDate))
+	ctx.WithText("end_date", formatTimeStrLocal(m.EndDate, locale))
 	ctx.WithText("volume", formatDecimal(m.Volume))
 	ctx.WithText("liquidity", formatDecimal(m.Liquidity))
 	ctx.WithText("odds_text", i18n.TranslateText(locale, "components.play.polymarket.odds_label")+"\n"+strings.Join(oddsText, "\n"))
