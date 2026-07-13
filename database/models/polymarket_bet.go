@@ -11,9 +11,9 @@ import (
 type PolymarketBet struct {
 	ID          uuid.UUID    `gorm:"type:char(36);primary_key;"`
 	UserID      snowflake.ID `gorm:"column:user_id;type:bigint(20) unsigned;not null;index"`
-	User        User         `gorm:"foreignKey:UserID;onDelete:CASCADE"`
+	User        User         `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
 	GuildID     snowflake.ID `gorm:"column:guild_id;type:bigint(20) unsigned;not null;index"`
-	Guild       Guild        `gorm:"foreignKey:GuildID;onDelete:CASCADE"`
+	Guild       Guild        `gorm:"foreignKey:GuildID;constraint:OnDelete:CASCADE;"`
 	MarketID    string       `gorm:"column:market_id;type:varchar(255);not null;index"`
 	MarketTitle string       `gorm:"column:market_title;type:text;not null"`
 	TokenID     string       `gorm:"column:token_id;type:varchar(255);not null"`

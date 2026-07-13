@@ -364,7 +364,7 @@ strings:
   components.gopoint.admin.tax_status_no_pending: "\n現在徴収待機中のユーザーはいません。"
   components.gopoint.admin.tax_force_determination: "⚡ **徴収予約（計算）を強制実行しました**:\n- 対象ユーザー: `{{.count}}名`の徴収予定（1週間後）を生成しました。"
   components.gopoint.admin.tax_force_collection: "⚡ **徴収実行（1週間経過分）を強制実行しました**:\n- 徴収完了: `{{.collected}}名`\n- 免除: `{{.exempted}}名`"
-  components.gopoint.admin.reset_success: "⚠️ **ギルドメンバー全員 of GoPointsを一括リセットしました**:\n- 全員のポイントを `{{.points}} pt` に設定しました。"
+  components.gopoint.admin.reset_success: "⚠️ **ギルドメンバー全員の GoPointsを一括リセットしました**:\n- 全員のポイントを `{{.points}} pt` に設定しました。"
   components.gopoint.admin.season_start_success: "🚀 **新しいシーズンを開始しました**:\n- シーズン名: **{{.name}}**\n- 期間: {{.duration}}日間\n- 表彰基準: {{.criteria}}\n- 終了予定: {{.end_time}}"
   components.gopoint.admin.season_start_scheduled: "📅 **シーズン開始をスケジュール予約しました**:\n- シーズン名: **{{.name}}**\n- 表彰基準: {{.criteria}}\n- 開始予定: {{.start_time}}\n- 終了予定: {{.end_time}}"
   components.gopoint.admin.season_err_active_exists: "❌ **開始エラー**: すでにアクティブなシーズン `{{.name}}` が存在します。終了してから新しいシーズンを開始してください。"

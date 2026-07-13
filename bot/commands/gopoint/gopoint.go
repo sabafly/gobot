@@ -567,7 +567,12 @@ func AddPointTx(tx *gorm.DB, userID snowflake.ID, guildID snowflake.ID, point in
 	// Update active season points if this was a point gain (positive) or a point payment (negative)
 	if point != 0 {
 		var activeSeason models.GoPointSeason
-		if err := tx.Where("guild_id = ? AND is_active = ?", guildID, true).First(&activeSeason).Error; err == nil {
+		err := tx.Where("guild_id = ? AND is_active = ?", guildID, true).First(&activeSeason).Error
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			slog.Error("failed to find active season", "error", err, "guild_id", guildID)
+			return errors.NewError(err)
+		}
+		if err == nil {
 			result := tx.Model(&models.GoPointSeasonUser{}).
 				Where("season_id = ? AND user_id = ?", activeSeason.ID, user.ID).
 				Update("points_earned", gorm.Expr("points_earned + ?", point))

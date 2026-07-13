@@ -9,7 +9,7 @@ import (
 
 type GoPointTaxConfig struct {
 	GuildID      snowflake.ID `gorm:"primary_key;column:guild_id;type:bigint(20) unsigned;not null"`
-	Guild        Guild        `gorm:"foreignKey:GuildID;onDelete:CASCADE"`
+	Guild        Guild        `gorm:"foreignKey:GuildID;constraint:OnDelete:CASCADE;"`
 	Rate         int          `gorm:"column:rate;type:int;not null;default:0"`          // percentage, e.g. 5 for 5%
 	IntervalDays int          `gorm:"column:interval_days;type:int;not null;default:0"` // interval in days, e.g. 7
 	NextTaxTime  time.Time    `gorm:"column:next_tax_time;type:datetime"`               // next scheduled calculation time
@@ -21,9 +21,9 @@ type GoPointTaxConfig struct {
 type GoPointPendingTax struct {
 	ID            uuid.UUID    `gorm:"primary_key;column:id;type:varchar(36);not null"`
 	GuildID       snowflake.ID `gorm:"column:guild_id;type:bigint(20) unsigned;not null;index"`
-	Guild         Guild        `gorm:"foreignKey:GuildID;onDelete:CASCADE"`
+	Guild         Guild        `gorm:"foreignKey:GuildID;constraint:OnDelete:CASCADE;"`
 	UserID        snowflake.ID `gorm:"column:user_id;type:bigint(20) unsigned;not null;index"`
-	User          User         `gorm:"foreignKey:UserID;onDelete:CASCADE"`
+	User          User         `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
 	BasePoints    int64        `gorm:"column:base_points;type:bigint(20) unsigned;not null"` // point amount when calculated
 	TaxAmount     int64        `gorm:"column:tax_amount;type:bigint(20) unsigned;not null"`  // calculated tax amount
 	CalculateTime time.Time    `gorm:"column:calculate_time;type:datetime;not null"`         // when calculation occurred
@@ -35,7 +35,7 @@ type GoPointPendingTax struct {
 type GoPointSeason struct {
 	ID         uuid.UUID    `gorm:"primary_key;column:id;type:varchar(36);not null"`
 	GuildID    snowflake.ID `gorm:"column:guild_id;type:bigint(20) unsigned;not null;index"`
-	Guild      Guild        `gorm:"foreignKey:GuildID;onDelete:CASCADE"`
+	Guild      Guild        `gorm:"foreignKey:GuildID;constraint:OnDelete:CASCADE;"`
 	Name       string       `gorm:"column:name;type:varchar(255);not null"`
 	StartTime  time.Time    `gorm:"column:start_time;type:datetime;not null"`
 	EndTime    time.Time    `gorm:"column:end_time;type:datetime;not null"`
@@ -47,10 +47,10 @@ type GoPointSeason struct {
 
 type GoPointSeasonUser struct {
 	SeasonID     uuid.UUID     `gorm:"primary_key;column:season_id;type:varchar(36);not null"`
-	Season       GoPointSeason `gorm:"foreignKey:SeasonID;onDelete:CASCADE"`
+	Season       GoPointSeason `gorm:"foreignKey:SeasonID;constraint:OnDelete:CASCADE;"`
 	UserID       snowflake.ID  `gorm:"primary_key;column:user_id;type:bigint(20) unsigned;not null"`
-	User         User          `gorm:"foreignKey:UserID;onDelete:CASCADE"`
+	User         User          `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
 	GuildID      snowflake.ID  `gorm:"column:guild_id;type:bigint(20) unsigned;not null;index"`
-	Guild        Guild         `gorm:"foreignKey:GuildID;onDelete:CASCADE"`
+	Guild        Guild         `gorm:"foreignKey:GuildID;constraint:OnDelete:CASCADE;"`
 	PointsEarned int64         `gorm:"column:points_earned;type:bigint(20);not null;default:0"`
 }
