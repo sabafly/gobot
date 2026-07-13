@@ -11,6 +11,7 @@ import (
 	"github.com/sabafly/gobot/ent"
 	"github.com/sabafly/gobot/internal/errors"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func migrateEntToGormHandler(c *components.Components, entClient *ent.Client, event *events.ApplicationCommandInteractionCreate) errors.Error {
@@ -283,7 +284,9 @@ func migrateEntToGormHandler(c *components.Components, entClient *ent.Client, ev
 				LastNotifiedLevel: m.LastNotifiedLevel,
 				LastMessageHashes: m.LastMessageHashes,
 			}
-			if err := tx.Save(&gm).Error; err != nil {
+			if err := tx.Clauses(clause.OnConflict{
+				UpdateAll: true,
+			}).Create(&gm).Error; err != nil {
 				return err
 			}
 		}
