@@ -1,7 +1,6 @@
 package database
 
 import (
-	"fmt"
 	"log/slog"
 
 	"github.com/disgoorg/snowflake/v2"
@@ -25,25 +24,6 @@ func NewDB(dsn string) (*DB, error) {
 	// Set connection pool settings
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetMaxOpenConns(100)
-
-	// Migrator safety check: drop legacy fx_positions table if it does not contain 'id' column
-	if db.Migrator().HasTable("fx_positions") && !db.Migrator().HasColumn("fx_positions", "id") {
-		if err := db.Migrator().DropTable("fx_positions"); err != nil {
-			return nil, fmt.Errorf("failed to drop legacy fx_positions table: %w", err)
-		}
-	}
-
-	// Drop legacy Ent chinchiro tables to allow clean GORM migration
-	if db.Migrator().HasTable("chinchiro_players") {
-		if err := db.Migrator().DropTable("chinchiro_players"); err != nil {
-			return nil, fmt.Errorf("failed to drop legacy chinchiro_players table: %w", err)
-		}
-	}
-	if db.Migrator().HasTable("chinchiro_sessions") {
-		if err := db.Migrator().DropTable("chinchiro_sessions"); err != nil {
-			return nil, fmt.Errorf("failed to drop legacy chinchiro_sessions table: %w", err)
-		}
-	}
 
 	// auto migrate models
 	if err := db.AutoMigrate(
