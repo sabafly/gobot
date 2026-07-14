@@ -26,12 +26,14 @@ import (
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/errors"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
+
 	"github.com/sabafly/gobot/internal/discordutil"
 )
 

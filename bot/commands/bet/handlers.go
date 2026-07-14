@@ -14,12 +14,13 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 // handlePollConfig handles poll mode configuration

@@ -5,6 +5,7 @@ import (
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+
 	"github.com/sabafly/gobot/database/models"
 )
 

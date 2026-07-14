@@ -33,6 +33,7 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
+
 	"github.com/sabafly/gobot/database"
 
 	"github.com/disgoorg/disgo"
@@ -43,6 +44,8 @@ import (
 	"github.com/disgoorg/disgo/sharding"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
+	"github.com/spf13/cobra"
+
 	"github.com/sabafly/gobot/bot/commands/bet"
 	"github.com/sabafly/gobot/bot/commands/debug"
 	"github.com/sabafly/gobot/bot/commands/gopoint"
@@ -55,11 +58,9 @@ import (
 	"github.com/sabafly/gobot/bot/commands/setting"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
-	"github.com/sabafly/gobot/ent"
 	"github.com/sabafly/gobot/internal/emoji"
 	"github.com/sabafly/gobot/internal/i18n"
 	"github.com/sabafly/gobot/internal/translate"
-	"github.com/spf13/cobra"
 
 	_ "net/http/pprof"
 )
@@ -128,17 +129,6 @@ func run() error {
 		generic.PrintDebugInfo = true
 	}
 
-	db, err := ent.Open("mysql", config.MySQL)
-	if err != nil {
-		return fmt.Errorf("mysqlとの接続を開けません: %w", err)
-	}
-	defer func(db *ent.Client) {
-		err := db.Close()
-		if err != nil {
-			slog.Error("mysqlとの接続を閉じれません", slog.Any("error", err))
-		}
-	}(db)
-
 	gormDB, err := database.NewDB(config.GormDSN)
 	if err != nil {
 		return fmt.Errorf("gormとの接続を開けません: %w", err)
@@ -168,7 +158,7 @@ func run() error {
 	component.Version = version
 
 	component.AddCommands(
-		debug.Command(component, db),
+		debug.Command(component),
 		ping.Command(component),
 		message.Command(component),
 		role.Command(component),

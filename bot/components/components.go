@@ -23,10 +23,11 @@ package components
 import (
 	"context"
 
-	"github.com/sabafly/gobot/database"
-	"github.com/sabafly/gobot/internal/smap"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/sabafly/gobot/database"
+	"github.com/sabafly/gobot/internal/smap"
 )
 
 func New(ctx context.Context, conf Config, gormDb *database.DB) *Components {

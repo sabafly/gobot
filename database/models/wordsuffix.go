@@ -5,8 +5,9 @@ import (
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
-	"github.com/sabafly/gobot/internal/uuidv7"
 	"gorm.io/gorm"
+
+	"github.com/sabafly/gobot/internal/uuidv7"
 )
 
 type WordSuffix struct {

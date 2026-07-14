@@ -17,13 +17,14 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
+
 	"github.com/sabafly/gobot/bot/commands/gopoint"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
-	"gorm.io/gorm"
 )
 
 var (
@@ -239,15 +240,6 @@ func getFXOrders(c *components.Components, userID snowflake.ID, guildID snowflak
 		return nil, err
 	}
 	return orders, nil
-}
-
-func getFXOrderByID(c *components.Components, id uuid.UUID) (*models.FXOrder, error) {
-	var order models.FXOrder
-	err := c.GormDB().Where("id = ?", id).First(&order).Error
-	if err != nil {
-		return nil, err
-	}
-	return &order, nil
 }
 
 func hasMarginCall(c *components.Components, userID snowflake.ID, guildID snowflake.ID) (bool, error) {

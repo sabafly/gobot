@@ -24,8 +24,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/sabafly/gobot/bot"
 	"github.com/spf13/cobra"
+
+	"github.com/sabafly/gobot/bot"
 )
 
 var root = &cobra.Command{

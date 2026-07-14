@@ -25,9 +25,10 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/sabafly/gobot/database/models"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/sabafly/gobot/database/models"
 )
 
 func (c *Components) MemberCreate(ctx context.Context, u discord.User, gid snowflake.ID) (*models.Member, error) {

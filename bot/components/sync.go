@@ -24,6 +24,7 @@ import (
 	"sync"
 
 	"github.com/disgoorg/snowflake/v2"
+
 	"github.com/sabafly/gobot/internal/smap"
 )
 

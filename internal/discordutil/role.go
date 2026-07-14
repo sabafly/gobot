@@ -21,8 +21,9 @@
 package discordutil
 
 import (
-	"github.com/disgoorg/disgo/discord"
 	"slices"
+
+	"github.com/disgoorg/disgo/discord"
 )
 
 func GetHighestRole(roles []discord.Role) *discord.Role {

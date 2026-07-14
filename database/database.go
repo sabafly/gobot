@@ -4,9 +4,10 @@ import (
 	"log/slog"
 
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/sabafly/gobot/database/models"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+
+	"github.com/sabafly/gobot/database/models"
 )
 
 func NewDB(dsn string) (*DB, error) {

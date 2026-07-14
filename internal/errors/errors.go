@@ -25,6 +25,7 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
+
 	"github.com/sabafly/gobot/internal/i18n"
 	"github.com/sabafly/gobot/internal/translate"
 )

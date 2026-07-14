@@ -10,6 +10,7 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+
 	"github.com/sabafly/gobot/bot/commands/gopoint"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database"
@@ -87,15 +88,6 @@ func checkWinOnLine(grid [3][3]string, lineIdx int) string {
 		return "RB"
 	}
 	return ""
-}
-
-func hasAnyLineWin(grid [3][3]string) bool {
-	for i := range 5 {
-		if checkWinOnLine(grid, i) != "" {
-			return true
-		}
-	}
-	return false
 }
 
 func hasCherryWin(grid [3][3]string) bool {

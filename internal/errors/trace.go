@@ -28,6 +28,7 @@ import (
 	"runtime/debug"
 
 	"github.com/google/uuid"
+
 	"github.com/sabafly/gobot/internal/uuidv7"
 
 	"github.com/disgoorg/disgo/rest"

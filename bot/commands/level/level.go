@@ -30,11 +30,12 @@ import (
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
+	"gorm.io/gorm"
+
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/builtin"
-	"gorm.io/gorm"
 )
 
 func Command(c *components.Components) components.Command {

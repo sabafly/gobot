@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/disgoorg/snowflake/v2"
+
 	"github.com/sabafly/gobot/internal/permissions"
 	"github.com/sabafly/gobot/internal/xppoint"
 )

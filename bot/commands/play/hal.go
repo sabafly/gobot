@@ -10,6 +10,7 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+
 	"github.com/sabafly/gobot/bot/commands/gopoint"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database"

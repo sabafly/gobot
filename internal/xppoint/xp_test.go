@@ -23,8 +23,9 @@ package xppoint_test
 import (
 	"testing"
 
-	"github.com/sabafly/gobot/internal/xppoint"
 	"golang.org/x/exp/slog"
+
+	"github.com/sabafly/gobot/internal/xppoint"
 )
 
 func TestXPSum(t *testing.T) {

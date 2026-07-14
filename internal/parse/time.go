@@ -4,8 +4,9 @@ import (
 	"time"
 
 	"github.com/markusmobius/go-dateparser"
-	"github.com/sabafly/gobot/internal/errors"
 	"github.com/tj/go-naturaldate"
+
+	"github.com/sabafly/gobot/internal/errors"
 )
 
 // TimeFuture は文字列を解析して未来の時刻を表すtime.Timeを返します。

@@ -12,6 +12,8 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
+	"gorm.io/gorm"
+
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/database"
@@ -19,7 +21,6 @@ import (
 	"github.com/sabafly/gobot/internal/builtin"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
-	"gorm.io/gorm"
 )
 
 func Command(c *components.Components) components.Command {

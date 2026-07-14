@@ -29,15 +29,15 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/omit"
 	"github.com/disgoorg/snowflake/v2"
+
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
-	"github.com/sabafly/gobot/ent"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
 	"github.com/sabafly/gobot/internal/translate"
 )
 
-func Command(c *components.Components, entClient *ent.Client) *generic.Command {
+func Command(c *components.Components) *generic.Command {
 	return (&generic.Command{
 		Namespace: "debug",
 		Private:   true,
@@ -94,16 +94,6 @@ func Command(c *components.Components, entClient *ent.Client) *generic.Command {
 							{
 								Name:        "load_members",
 								Description: "load members",
-							},
-						},
-					},
-					discord.ApplicationCommandOptionSubCommandGroup{
-						Name:        "migration",
-						Description: "database migration",
-						Options: []discord.ApplicationCommandOptionSubCommand{
-							{
-								Name:        "ent_to_gorm",
-								Description: "migrate from ent to gorm",
 							},
 						},
 					},
@@ -199,9 +189,6 @@ func Command(c *components.Components, entClient *ent.Client) *generic.Command {
 					return errors.NewError(err)
 				}
 				return nil
-			}),
-			"/debug/migration/ent_to_gorm": generic.CommandHandler(func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-				return migrateEntToGormHandler(c, entClient, event)
 			}),
 		},
 	}).SetComponent(c)

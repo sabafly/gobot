@@ -27,6 +27,7 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
+
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/builtin"

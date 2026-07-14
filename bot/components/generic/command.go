@@ -30,6 +30,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/rest"
+
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/translate"

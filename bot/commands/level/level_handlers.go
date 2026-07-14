@@ -34,6 +34,8 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
+	"gorm.io/gorm"
+
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/builtin"
@@ -43,7 +45,6 @@ import (
 	"github.com/sabafly/gobot/internal/smap"
 	"github.com/sabafly/gobot/internal/translate"
 	"github.com/sabafly/gobot/internal/xppoint"
-	"gorm.io/gorm"
 )
 
 func requiredPointHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {

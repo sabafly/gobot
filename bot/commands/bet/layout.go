@@ -5,9 +5,10 @@ import (
 	"slices"
 
 	"github.com/disgoorg/disgo/discord"
+	"gorm.io/gorm"
+
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/i18n"
-	"gorm.io/gorm"
 )
 
 var (

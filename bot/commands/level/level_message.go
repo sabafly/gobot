@@ -24,6 +24,7 @@ import (
 	"fmt"
 
 	"github.com/disgoorg/disgo/discord"
+
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/builtin"
 	"github.com/sabafly/gobot/internal/translate"
