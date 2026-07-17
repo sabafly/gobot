@@ -479,7 +479,8 @@ func liquidatePosition(c *components.Components, client *bot.Client, pos *models
 			if dbGuild, err := database.GetGuild(c.GormDB(), pos.GuildID); err == nil {
 				guildName = dbGuild.Name
 			}
-			descText := "対象サーバー: **" + guildName + "**\n\n" + i18n.TranslateText(locale, descKey, templateMap) + detailStr.String()
+			templateMap["guild"] = guildName
+			descText := i18n.TranslateText(locale, descKey, templateMap) + detailStr.String()
 
 			builder := discord.NewMessageBuilder().
 				SetIsComponentsV2(true).
@@ -2600,11 +2601,11 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 								pnlSign = "+"
 							}
 
-							guildName := "不明なサーバー"
+							guildName := "UNKNOWN GUILD"
 							if dbGuild, err := database.GetGuild(c.GormDB(), posCopy.GuildID); err == nil {
 								guildName = dbGuild.Name
 							}
-							descText := "対象サーバー: **" + guildName + "**\n\n" + i18n.TranslateText(locale, "components.play.fx.dm_order_closed_desc", map[string]any{
+							descText := i18n.TranslateText(locale, "components.play.fx.dm_order_closed_desc", map[string]any{
 								"symbol":        strings.Replace(posCopy.Symbol, "_", "/", 1),
 								"direction":     dirEmoji,
 								"margin":        posCopy.Margin,
@@ -2613,6 +2614,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 								"exit":          fmt.Sprintf("%.3f", triggerPrice),
 								"pnl":           fmt.Sprintf("%s%d", pnlSign, int64(pnlTrigger)),
 								"received":      actualRefund,
+								"guild":         guildName,
 							})
 
 							builder := discord.NewMessageBuilder().
@@ -2638,14 +2640,15 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 						ch, err := client.Rest.CreateDMChannel(posCopy.UserID)
 						if err == nil {
 							locale := discord.LocaleJapanese
-							guildName := "不明なサーバー"
+							guildName := "UNKNOWN GUILD"
 							if dbGuild, err := database.GetGuild(c.GormDB(), posCopy.GuildID); err == nil {
 								guildName = dbGuild.Name
 							}
-							descText := "対象サーバー: **" + guildName + "**\n\n" + i18n.TranslateText(locale, "components.play.fx.dm_margin_call_desc", map[string]any{
+							descText := i18n.TranslateText(locale, "components.play.fx.dm_margin_call_desc", map[string]any{
 								"symbol":  strings.Replace(posCopy.Symbol, "_", "/", 1),
 								"ratio":   fmt.Sprintf("%.1f%%", ratio),
 								"mc_line": fmt.Sprintf("%.1f%%", opt.MarginCallRatio),
+								"guild":   guildName,
 							})
 							builder := discord.NewMessageBuilder().
 								SetIsComponentsV2(true).
@@ -2756,13 +2759,14 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 								if dbGuild, err := database.GetGuild(c.GormDB(), ordCopy.GuildID); err == nil {
 									guildName = dbGuild.Name
 								}
-								descText := "対象サーバー: **" + guildName + "**\n\n" + i18n.TranslateText(locale, "components.play.fx.dm_market_order_slippage_desc", map[string]any{
+								descText := i18n.TranslateText(locale, "components.play.fx.dm_market_order_slippage_desc", map[string]any{
 									"symbol":    strings.Replace(ordCopy.Symbol, "_", "/", 1),
 									"direction": dirEmoji,
 									"expected":  fmt.Sprintf("%.3f", ordCopy.ExpectedPrice),
 									"actual":    fmt.Sprintf("%.3f", executionPrice),
 									"margin":    ordCopy.Margin,
 									"tolerance": fmt.Sprintf("%.2f%%", ordCopy.SlippageTolerance*100.0),
+									"guild":     guildName,
 								})
 
 								builder := discord.NewMessageBuilder().
@@ -2831,12 +2835,13 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 								if dbGuild, err := database.GetGuild(c.GormDB(), ordCopy.GuildID); err == nil {
 									guildName = dbGuild.Name
 								}
-								descText := "対象サーバー: **" + guildName + "**\n\n" + i18n.TranslateText(locale, "components.play.fx.dm_order_filled_desc", map[string]any{
+								descText := i18n.TranslateText(locale, "components.play.fx.dm_order_filled_desc", map[string]any{
 									"symbol":     strings.Replace(ordCopy.Symbol, "_", "/", 1),
 									"type":       ordTypeStr,
 									"order_type": ordCopy.OrderType,
 									"direction":  dirEmoji,
 									"price":      fmt.Sprintf("%.3f", executionPrice),
+									"guild":      guildName,
 								})
 
 								builder := discord.NewMessageBuilder().

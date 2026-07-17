@@ -260,12 +260,16 @@ strings:
   components.play.fx.close_quit_active_notice: "⚠️ **注意**: {{.symbol}} の {{.direction}} ポジション (証拠金: `{{.margin}} pt`) は決済されず、**現在も保有中**です。再度 `/play fx` を実行することで、損益確認や決済を行うことができます。"
   components.play.fx.liquidation_title: "🚨 **FX強制ロスカットのお知らせ** 🚨"
   components.play.fx.liquidation_desc: |-
+    対象サーバー: **{{.guild}}**
+
     保有していた {{.symbol}} のポジションが、為替価格の変動により強制決済（ロスカット）されました。
 
     ・決済価格: `{{.exit}}`
     ・損益: `-{{.pnl}} pt`
     ・返却証拠金: `{{.refund}} pt` (注文証拠金 `{{.margin}} pt`)
   components.play.fx.liquidation_deficit_desc: |-
+    対象サーバー: **{{.guild}}**
+
     保有していた {{.symbol}} のポジションが強制決済されましたが、急激な相場変動により証拠金を上回る損失（不足金 `-{{.deficit}} pt`）が発生しました。不足金を補うため、他のポジションが強制決済されました。
 
     ・決済価格: `{{.exit}}`
@@ -288,7 +292,7 @@ strings:
   components.play.fx.modal_add_margin_title: "証拠金の追加 (追証入金)"
   components.play.fx.modal_add_margin_label: "追加する証拠金量（GoPoints）"
   components.play.fx.dm_margin_call_title: "🚨 **FX追証（マージンコール）発生のお知らせ** 🚨"
-  components.play.fx.dm_margin_call_desc: "保有している {{.symbol}} のポジションの証拠金維持率が {{.ratio}} に低下し、追証ライン（{{.mc_line}}）を下回りました。\n強制ロスカットを避けるため、早急に証拠金を追加してください。"
+  components.play.fx.dm_margin_call_desc: "対象サーバー: **{{.guild}}**\n\n保有している {{.symbol}} のポジションの証拠金維持率が {{.ratio}} に低下し、追証ライン（{{.mc_line}}）を下回りました。\n強制ロスカットを避けるため、早急に証拠金を追加してください。"
   components.play.fx.active_order_title: "### ⏳ 未約定の注文情報"
   components.play.fx.active_order_desc: |-
     - **通貨ペア**: {{.symbol}}
@@ -301,7 +305,7 @@ strings:
   components.play.fx.order_type.stop: "逆指値"
   components.play.fx.order_type.market: "成行"
   components.play.fx.dm_market_order_slippage_title: "❌ **FX成行注文失効のお知らせ** ❌"
-  components.play.fx.dm_market_order_slippage_desc: "{{.symbol}} の成行 {{.direction}} 注文（証拠金: {{.margin}} pt）は、急激な価格変動によりスリッページが許容値（{{.tolerance}}）を超えたため失効しました。\n・提示価格: `{{.expected}}`\n・推定約定価格: `{{.actual}}`\n証拠金は全額ウォレットに返還されました。"
+  components.play.fx.dm_market_order_slippage_desc: "対象サーバー: **{{.guild}}**\n\n{{.symbol}} の成行 {{.direction}} 注文（証拠金: {{.margin}} pt）は、急激な価格変動によりスリッページが許容値（{{.tolerance}}）を超えたため失効しました。\n・提示価格: `{{.expected}}`\n・推定約定価格: `{{.actual}}`\n証拠金は全額ウォレットに返還されました。"
   components.play.fx.modal_pending_order_title: "指値・逆指値注文フォーム"
   components.play.fx.modal_pending_order_price_label: "指定価格 (目標とするレート)"
   components.play.fx.modal_pending_order_price_placeholder: "例: 149.50"
@@ -311,7 +315,7 @@ strings:
   components.play.fx.modal_pending_order_type_placeholder: "注文種別を選択してください"
   components.play.fx.err_invalid_order_inputs: "⚠️ **注文入力が無効です**:\n- 価格は正の数で指定してください。\n- 方向は BUY または SELL を選択してください。\n- 注文種別は LIMIT または STOP を選択してください。"
   components.play.fx.dm_order_filled_title: "🔔 **FX注文約定のお知らせ** 🔔"
-  components.play.fx.dm_order_filled_desc: "注文していた {{.symbol}} の{{.type}}（{{.order_type}}） {{.direction}} が約定価格 {{.price}} で約定しました。"
+  components.play.fx.dm_order_filled_desc: "対象サーバー: **{{.guild}}**\n\n注文していた {{.symbol}} の{{.type}}（{{.order_type}}） {{.direction}} が約定価格 {{.price}} で約定しました。"
   components.play.fx.modal_tpsl_title: "利確・損切価格設定"
   components.play.fx.modal_tpsl_tp_label: "利確（指値）価格 (空欄で設定解除)"
   components.play.fx.modal_tpsl_tp_placeholder: "例: 152.50"
@@ -323,7 +327,7 @@ strings:
   components.play.fx.err_tp_must_be_less: "⚠️ **設定エラー**: 売りポジションの利確価格はエントリー価格より低く設定する必要があります。"
   components.play.fx.err_sl_must_be_greater: "⚠️ **設定エラー**: 売りポジションの損切価格はエントリー価格より高く設定する必要があります。"
   components.play.fx.dm_order_closed_title: "🔔 **FXポジション自動決済のお知らせ** 🔔"
-  components.play.fx.dm_order_closed_desc: "保有していた {{.symbol}} の{{.direction}}ポジション（証拠金: {{.margin}} pt）が、自動決済条件（{{.type}}: {{.trigger_price}}）に達したため、成行決済されました。\n\n・決済価格: `{{.exit}}`\n・評価損益: **`{{.pnl}} pt`**\n・獲得/回収ポイント: **`{{.received}} pt`**"
+  components.play.fx.dm_order_closed_desc: "対象サーバー: **{{.guild}}**\n\n保有していた {{.symbol}} の{{.direction}}ポジション（証拠金: {{.margin}} pt）が、自動決済条件（{{.type}}: {{.trigger_price}}）に達したため、成行決済されました。\n\n・決済価格: `{{.exit}}`\n・評価損益: **`{{.pnl}} pt`**\n・獲得/回収ポイント: **`{{.received}} pt`**"
   components.play.fx.portfolio_no_positions: "* 保有しているポジションはありません"
   components.play.fx.portfolio_no_orders: "* 未約定の注文はありません"
   components.play.fx.portfolio_position_item: "- **{{.symbol}}** ({{.direction}} {{.leverage}}x)\n  - 証拠金: `{{.margin}} pt` (当初: `{{.init}} pt`)\n  - エントリー: `{{.entry}}` → 現在: `{{.current}}` (維持率: `{{.ratio}}`)\n  - 評価損益: **`{{.pnl}} pt`**\n  - 利確(TP): `{{.tp}}` / 損切(SL): `{{.sl}}`"
