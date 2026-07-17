@@ -229,3 +229,12 @@ func (c *Components) InitializeUser(ctx context.Context, member discord.Member) 
 	}
 	return nil
 }
+
+func (c *Components) OnGuildUpdate() func(event *events.GuildUpdate) {
+	return func(event *events.GuildUpdate) {
+		slog.Info("ギルド更新", "id", event.Guild.ID, "name", event.Guild.Name)
+		if err := c.GormDB().Model(&models.Guild{}).Where("id = ?", event.Guild.ID).Update("name", event.Guild.Name).Error; err != nil {
+			slog.Error("ギルドの名称更新に失敗", "err", err, "guild_id", event.Guild.ID)
+		}
+	}
+}

@@ -25,6 +25,7 @@ import (
 	"log/slog"
 
 	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
 
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/errors"
@@ -50,4 +51,16 @@ func (c *Components) UserCreate(ctx context.Context, u discord.User) (*models.Us
 	}
 
 	return &user, nil
+}
+
+func (c *Components) OnUserUpdate() func(event *events.UserUpdate) {
+	return func(event *events.UserUpdate) {
+		slog.Info("ユーザー更新", "id", event.User.ID, "name", event.User.EffectiveName())
+		if event.User.Bot || event.User.System {
+			return
+		}
+		if err := c.GormDB().Model(&models.User{}).Where("id = ?", event.User.ID).Update("name", event.User.EffectiveName()).Error; err != nil {
+			slog.Error("ユーザーの名称更新に失敗", "err", err, "user_id", event.User.ID)
+		}
+	}
 }

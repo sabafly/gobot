@@ -83,9 +83,11 @@ func (c *Components) Initialize(client *bot.Client) error {
 	client.EventManager.AddEventListeners(
 		bot.NewListenerFunc(c.OnEvent()),
 		&events.ListenerAdapter{
-			OnGuildReady: c.OnGuildReady(),
-			OnGuildJoin:  c.OnGuildJoin(),
-			OnGuildLeave: c.OnGuildLeave(),
+			OnGuildReady:  c.OnGuildReady(),
+			OnGuildJoin:   c.OnGuildJoin(),
+			OnGuildLeave:  c.OnGuildLeave(),
+			OnGuildUpdate: c.OnGuildUpdate(),
+			OnUserUpdate:  c.OnUserUpdate(),
 		},
 	)
 	return nil

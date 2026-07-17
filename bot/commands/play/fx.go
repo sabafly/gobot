@@ -475,7 +475,11 @@ func liquidatePosition(c *components.Components, client *bot.Client, pos *models
 				templateMap["deficit"] = strconv.FormatInt(pos.Margin+pnlInt, 10)
 			}
 
-			descText := i18n.TranslateText(locale, descKey, templateMap) + detailStr.String()
+			guildName := "不明なサーバー"
+			if dbGuild, err := database.GetGuild(c.GormDB(), pos.GuildID); err == nil {
+				guildName = dbGuild.Name
+			}
+			descText := "対象サーバー: **" + guildName + "**\n\n" + i18n.TranslateText(locale, descKey, templateMap) + detailStr.String()
 
 			builder := discord.NewMessageBuilder().
 				SetIsComponentsV2(true).
@@ -2596,7 +2600,11 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 								pnlSign = "+"
 							}
 
-							descText := i18n.TranslateText(locale, "components.play.fx.dm_order_closed_desc", map[string]any{
+							guildName := "不明なサーバー"
+							if dbGuild, err := database.GetGuild(c.GormDB(), posCopy.GuildID); err == nil {
+								guildName = dbGuild.Name
+							}
+							descText := "対象サーバー: **" + guildName + "**\n\n" + i18n.TranslateText(locale, "components.play.fx.dm_order_closed_desc", map[string]any{
 								"symbol":        strings.Replace(posCopy.Symbol, "_", "/", 1),
 								"direction":     dirEmoji,
 								"margin":        posCopy.Margin,
@@ -2630,7 +2638,11 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 						ch, err := client.Rest.CreateDMChannel(posCopy.UserID)
 						if err == nil {
 							locale := discord.LocaleJapanese
-							descText := i18n.TranslateText(locale, "components.play.fx.dm_margin_call_desc", map[string]any{
+							guildName := "不明なサーバー"
+							if dbGuild, err := database.GetGuild(c.GormDB(), posCopy.GuildID); err == nil {
+								guildName = dbGuild.Name
+							}
+							descText := "対象サーバー: **" + guildName + "**\n\n" + i18n.TranslateText(locale, "components.play.fx.dm_margin_call_desc", map[string]any{
 								"symbol":  strings.Replace(posCopy.Symbol, "_", "/", 1),
 								"ratio":   fmt.Sprintf("%.1f%%", ratio),
 								"mc_line": fmt.Sprintf("%.1f%%", opt.MarginCallRatio),
@@ -2740,7 +2752,11 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 									dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
 								}
 
-								descText := i18n.TranslateText(locale, "components.play.fx.dm_market_order_slippage_desc", map[string]any{
+								guildName := "不明なサーバー"
+								if dbGuild, err := database.GetGuild(c.GormDB(), ordCopy.GuildID); err == nil {
+									guildName = dbGuild.Name
+								}
+								descText := "対象サーバー: **" + guildName + "**\n\n" + i18n.TranslateText(locale, "components.play.fx.dm_market_order_slippage_desc", map[string]any{
 									"symbol":    strings.Replace(ordCopy.Symbol, "_", "/", 1),
 									"direction": dirEmoji,
 									"expected":  fmt.Sprintf("%.3f", ordCopy.ExpectedPrice),
@@ -2811,7 +2827,11 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 									dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
 								}
 
-								descText := i18n.TranslateText(locale, "components.play.fx.dm_order_filled_desc", map[string]any{
+								guildName := "不明なサーバー"
+								if dbGuild, err := database.GetGuild(c.GormDB(), ordCopy.GuildID); err == nil {
+									guildName = dbGuild.Name
+								}
+								descText := "対象サーバー: **" + guildName + "**\n\n" + i18n.TranslateText(locale, "components.play.fx.dm_order_filled_desc", map[string]any{
 									"symbol":     strings.Replace(ordCopy.Symbol, "_", "/", 1),
 									"type":       ordTypeStr,
 									"order_type": ordCopy.OrderType,
