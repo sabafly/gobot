@@ -862,3 +862,129 @@ func TestFX_MarginCallRedirection(t *testing.T) {
 		t.Errorf("expected warned position margin to be 125, got %d", updatedWarned.Margin)
 	}
 }
+
+func TestFX_MarketOrders(t *testing.T) {
+	gdb, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to open sqlite DB: %v", err)
+	}
+
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.FXOrder{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
+		if err := createSQLiteTable(gdb, model); err != nil {
+			t.Fatalf("failed to create table for %T: %v", model, err)
+		}
+	}
+
+	dbWrapper := &database.DB{DB: gdb}
+	ctx := context.Background()
+	c := components.New(ctx, components.Config{}, dbWrapper)
+
+	userID := snowflake.ID(99999)
+	guildID := snowflake.ID(88888)
+
+	// Seed User, Guild, and GoPoint
+	_ = gdb.Create(&models.User{ID: userID})
+	_ = gdb.Create(&models.Guild{ID: guildID})
+	_ = gdb.Create(&models.GoPoint{UserID: userID, GuildID: guildID, Points: 1000})
+
+	// 1. Create a pending MARKET BUY order that should execute successfully
+	orderID := uuid.New()
+	order := &models.FXOrder{
+		ID:                orderID,
+		UserID:            userID,
+		GuildID:           guildID,
+		Symbol:            "USD_JPY",
+		Direction:         models.FXPositionDirectionBuy,
+		OrderType:         "MARKET",
+		TargetPrice:       150.0,
+		ExpectedPrice:     150.0,
+		SlippageTolerance: 0.002, // 0.2%
+		Margin:            100,
+		Leverage:          25,
+	}
+	err = gdb.Create(order).Error
+	if err != nil {
+		t.Fatalf("failed to create order: %v", err)
+	}
+
+	// Ticker price matches ExpectedPrice (150.0)
+	ticker := &TickerResponse{
+		Data: []TickerData{
+			{Symbol: "USD_JPY", Ask: "150.0", Bid: "150.0"},
+		},
+	}
+	tickerCacheMu.Lock()
+	tickerCache = ticker
+	lastFetchTime = time.Now().Add(time.Hour)
+	tickerCacheMu.Unlock()
+
+	err = CheckAllPositionsLiquidation(c, nil)
+	if err != nil {
+		t.Fatalf("CheckAllPositionsLiquidation failed: %v", err)
+	}
+
+	// Verify order is deleted (since it was processed)
+	var count int64
+	gdb.Model(&models.FXOrder{}).Count(&count)
+	if count != 0 {
+		t.Errorf("expected market order to be processed and deleted, count was %d", count)
+	}
+
+	// Verify position is created
+	var pos models.FXPosition
+	err = gdb.First(&pos).Error
+	if err != nil {
+		t.Fatalf("expected position to be created, error: %v", err)
+	}
+	if pos.EntryPrice < 150.0*0.999 || pos.EntryPrice > 150.0*1.002 {
+		t.Errorf("unexpected entry price: %f", pos.EntryPrice)
+	}
+
+	// Clean up position
+	gdb.Session(&gorm.Session{AllowGlobalUpdate: true}).Delete(&models.FXPosition{})
+
+	// 2. Create another MARKET BUY order that should be canceled due to high slippage
+	orderID2 := uuid.New()
+	order2 := &models.FXOrder{
+		ID:                orderID2,
+		UserID:            userID,
+		GuildID:           guildID,
+		Symbol:            "USD_JPY",
+		Direction:         models.FXPositionDirectionBuy,
+		OrderType:         "MARKET",
+		TargetPrice:       150.0,
+		ExpectedPrice:     150.0,
+		SlippageTolerance: 0.002, // 0.2%
+		Margin:            100,
+		Leverage:          25,
+	}
+	err = gdb.Create(order2).Error
+	if err != nil {
+		t.Fatalf("failed to create order: %v", err)
+	}
+
+	// Ticker price jumps to 151.0 (above 150.0 * 1.002 tolerance price)
+	ticker.Data[0].Ask = "151.0"
+	ticker.Data[0].Bid = "151.0"
+	tickerCacheMu.Lock()
+	tickerCache = ticker
+	lastFetchTime = time.Now().Add(time.Hour)
+	tickerCacheMu.Unlock()
+
+	err = CheckAllPositionsLiquidation(c, nil)
+	if err != nil {
+		t.Fatalf("CheckAllPositionsLiquidation failed: %v", err)
+	}
+
+	// Verify order is deleted
+	gdb.Model(&models.FXOrder{}).Count(&count)
+	if count != 0 {
+		t.Errorf("expected market order to be deleted, count was %d", count)
+	}
+
+	// Verify position was NOT created
+	gdb.Model(&models.FXPosition{}).Count(&count)
+	if count != 0 {
+		t.Errorf("expected no position to be created, count was %d", count)
+	}
+}

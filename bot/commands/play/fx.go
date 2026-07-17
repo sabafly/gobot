@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"math/rand"
 	"net/http"
 	"slices"
 	"strconv"
@@ -572,8 +573,14 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 	var activeOrder *models.FXOrder
 	for _, o := range orders {
 		ordTypeStr := i18n.TranslateText(locale, "components.play.fx.order_type.limit")
-		if o.OrderType == "STOP" {
+		switch o.OrderType {
+		case "STOP":
 			ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.stop")
+		case "MARKET":
+			ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.market")
+			if ordTypeStr == "" || strings.HasPrefix(ordTypeStr, "components.play.fx.order_type.market") {
+				ordTypeStr = "成行"
+			}
 		}
 		dirStr := "L"
 		if o.Direction == models.FXPositionDirectionSell {
@@ -644,8 +651,14 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 		return ctx.Translate(i18n.TranslateLayout(locale, "command.play.fx.order_screen"))
 	} else if activeOrder != nil {
 		ordTypeStr := i18n.TranslateText(locale, "components.play.fx.order_type.limit")
-		if activeOrder.OrderType == "STOP" {
+		switch activeOrder.OrderType {
+		case "STOP":
 			ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.stop")
+		case "MARKET":
+			ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.market")
+			if ordTypeStr == "" || strings.HasPrefix(ordTypeStr, "components.play.fx.order_type.market") {
+				ordTypeStr = "成行"
+			}
 		}
 		dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
 		if activeOrder.Direction == models.FXPositionDirectionSell {
@@ -1351,25 +1364,27 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 		return errors.NewError(err)
 	}
 
-	pos := &models.FXPosition{
-		UserID:        event.User().ID,
-		GuildID:       *event.GuildID(),
-		Symbol:        session.SelectedSymbol,
-		Direction:     models.FXPositionDirectionBuy,
-		EntryPrice:    ask,
-		Margin:        session.SelectedMargin,
-		InitialMargin: session.SelectedMargin,
-		Leverage:      opt.Leverage,
+	order := &models.FXOrder{
+		UserID:            event.User().ID,
+		GuildID:           *event.GuildID(),
+		Symbol:            session.SelectedSymbol,
+		Direction:         models.FXPositionDirectionBuy,
+		OrderType:         "MARKET",
+		TargetPrice:       ask,
+		ExpectedPrice:     ask,
+		SlippageTolerance: 0.002, // 0.2%
+		Margin:            session.SelectedMargin,
+		Leverage:          opt.Leverage,
 	}
 
-	if err := c.GormDB().Create(pos).Error; err != nil {
+	if err := c.GormDB().Create(order).Error; err != nil {
 		if refundErr := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), session.SelectedMargin); refundErr != nil {
-			slog.Error("CRITICAL: failed to refund points to user after position creation failed", "user_id", event.User().ID, "guild_id", *event.GuildID(), "session_id", session.ID, "refund", session.SelectedMargin, "error", refundErr)
+			slog.Error("CRITICAL: failed to refund points to user after order creation failed", "user_id", event.User().ID, "guild_id", *event.GuildID(), "session_id", session.ID, "refund", session.SelectedMargin, "error", refundErr)
 		}
 		return errors.NewError(err)
 	}
 
-	session.ActivePositionID = &pos.ID
+	session.ActivePositionID = &order.ID
 	fx_sessions.Set(session.ID, session)
 
 	points, _, _ = gopoint.GetPoint(c, event.User().ID, *event.GuildID())
@@ -1490,25 +1505,27 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 		return errors.NewError(err)
 	}
 
-	pos := &models.FXPosition{
-		UserID:        event.User().ID,
-		GuildID:       *event.GuildID(),
-		Symbol:        session.SelectedSymbol,
-		Direction:     models.FXPositionDirectionSell,
-		EntryPrice:    bid,
-		Margin:        session.SelectedMargin,
-		InitialMargin: session.SelectedMargin,
-		Leverage:      opt.Leverage,
+	order := &models.FXOrder{
+		UserID:            event.User().ID,
+		GuildID:           *event.GuildID(),
+		Symbol:            session.SelectedSymbol,
+		Direction:         models.FXPositionDirectionSell,
+		OrderType:         "MARKET",
+		TargetPrice:       bid,
+		ExpectedPrice:     bid,
+		SlippageTolerance: 0.002, // 0.2%
+		Margin:            session.SelectedMargin,
+		Leverage:          opt.Leverage,
 	}
 
-	if err := c.GormDB().Create(pos).Error; err != nil {
+	if err := c.GormDB().Create(order).Error; err != nil {
 		if refundErr := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), session.SelectedMargin); refundErr != nil {
-			slog.Error("CRITICAL: failed to refund points to user after position creation failed", "user_id", event.User().ID, "guild_id", *event.GuildID(), "session_id", session.ID, "refund", session.SelectedMargin, "error", refundErr)
+			slog.Error("CRITICAL: failed to refund points to user after order creation failed", "user_id", event.User().ID, "guild_id", *event.GuildID(), "session_id", session.ID, "refund", session.SelectedMargin, "error", refundErr)
 		}
 		return errors.NewError(err)
 	}
 
-	session.ActivePositionID = &pos.ID
+	session.ActivePositionID = &order.ID
 	fx_sessions.Set(session.ID, session)
 
 	points, _, _ = gopoint.GetPoint(c, event.User().ID, *event.GuildID())
@@ -2659,6 +2676,9 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 			}
 
 			triggered := false
+			var executionPrice float64
+			var slippageLimitExceeded bool
+
 			switch ordCopy.OrderType {
 			case "LIMIT":
 				if ordCopy.Direction == models.FXPositionDirectionBuy {
@@ -2666,77 +2686,153 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 				} else {
 					triggered = currentPrice >= ordCopy.TargetPrice
 				}
+				executionPrice = ordCopy.TargetPrice
 			case "STOP":
 				if ordCopy.Direction == models.FXPositionDirectionBuy {
 					triggered = currentPrice >= ordCopy.TargetPrice
 				} else {
 					triggered = currentPrice <= ordCopy.TargetPrice
 				}
+				executionPrice = ordCopy.TargetPrice
+			case "MARKET":
+				triggered = true
+				// Generate random slippage: between -0.05% and +0.15% (unfavorable)
+				randVal := rand.Float64()*0.002 - 0.0005
+				if ordCopy.Direction == models.FXPositionDirectionBuy {
+					executionPrice = currentPrice * (1.0 + randVal)
+					tolerancePrice := ordCopy.ExpectedPrice * (1.0 + ordCopy.SlippageTolerance)
+					if executionPrice > tolerancePrice {
+						slippageLimitExceeded = true
+					}
+				} else {
+					executionPrice = currentPrice * (1.0 - randVal)
+					tolerancePrice := ordCopy.ExpectedPrice * (1.0 - ordCopy.SlippageTolerance)
+					if executionPrice < tolerancePrice {
+						slippageLimitExceeded = true
+					}
+				}
 			}
 
 			if triggered {
-				err := c.GormDB().Transaction(func(tx *gorm.DB) error {
-					var dbOrd models.FXOrder
-					if err := tx.Where("id = ?", ordCopy.ID).First(&dbOrd).Error; err != nil {
-						return err
-					}
-					if err := tx.Delete(&dbOrd).Error; err != nil {
-						return err
-					}
-
-					pos := &models.FXPosition{
-						ID:            ordCopy.ID,
-						UserID:        ordCopy.UserID,
-						GuildID:       ordCopy.GuildID,
-						Symbol:        ordCopy.Symbol,
-						Direction:     ordCopy.Direction,
-						EntryPrice:    ordCopy.TargetPrice,
-						Margin:        ordCopy.Margin,
-						InitialMargin: ordCopy.Margin,
-						Leverage:      ordCopy.Leverage,
-					}
-					if err := tx.Create(pos).Error; err != nil {
-						return err
-					}
-					return nil
-				})
-
-				if err == nil {
-					slog.Info("order executed background", "order_id", ordCopy.ID, "user_id", ordCopy.UserID, "symbol", ordCopy.Symbol)
-					if client != nil && client.Rest != nil {
-						ch, err := client.Rest.CreateDMChannel(ordCopy.UserID)
-						if err == nil {
-							locale := discord.LocaleJapanese
-							ordTypeStr := i18n.TranslateText(locale, "components.play.fx.order_type.limit")
-							if ordCopy.OrderType == "STOP" {
-								ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.stop")
-							}
-							dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
-							if ordCopy.Direction == models.FXPositionDirectionSell {
-								dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
-							}
-
-							descText := i18n.TranslateText(locale, "components.play.fx.dm_order_filled_desc", map[string]any{
-								"symbol":     strings.Replace(ordCopy.Symbol, "_", "/", 1),
-								"type":       ordTypeStr,
-								"order_type": ordCopy.OrderType,
-								"direction":  dirEmoji,
-								"price":      fmt.Sprintf("%.3f", ordCopy.TargetPrice),
-							})
-
-							builder := discord.NewMessageBuilder().
-								SetIsComponentsV2(true).
-								SetComponents(
-									discord.NewContainer(
-										discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.dm_order_filled_title")),
-										discord.NewTextDisplay(descText),
-									).WithAccentColor(0x2ECC71),
-								)
-							_, _ = client.Rest.CreateMessage(ch.ID(), builder.BuildCreate())
+				if slippageLimitExceeded {
+					err := c.GormDB().Transaction(func(tx *gorm.DB) error {
+						var dbOrd models.FXOrder
+						if err := tx.Where("id = ?", ordCopy.ID).First(&dbOrd).Error; err != nil {
+							return err
 						}
+						if err := tx.Delete(&dbOrd).Error; err != nil {
+							return err
+						}
+						if err := gopoint.AddPointTx(tx, ordCopy.UserID, ordCopy.GuildID, ordCopy.Margin); err != nil {
+							return err
+						}
+						return nil
+					})
+
+					if err == nil {
+						slog.Info("market order canceled due to slippage limit exceeded", "order_id", ordCopy.ID, "user_id", ordCopy.UserID)
+						if client != nil && client.Rest != nil {
+							ch, err := client.Rest.CreateDMChannel(ordCopy.UserID)
+							if err == nil {
+								locale := discord.LocaleJapanese
+								dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
+								if ordCopy.Direction == models.FXPositionDirectionSell {
+									dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
+								}
+
+								descText := i18n.TranslateText(locale, "components.play.fx.dm_market_order_slippage_desc", map[string]any{
+									"symbol":    strings.Replace(ordCopy.Symbol, "_", "/", 1),
+									"direction": dirEmoji,
+									"expected":  fmt.Sprintf("%.3f", ordCopy.ExpectedPrice),
+									"actual":    fmt.Sprintf("%.3f", executionPrice),
+									"margin":    ordCopy.Margin,
+									"tolerance": fmt.Sprintf("%.2f%%", ordCopy.SlippageTolerance*100.0),
+								})
+
+								builder := discord.NewMessageBuilder().
+									SetIsComponentsV2(true).
+									SetComponents(
+										discord.NewContainer(
+											discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.dm_market_order_slippage_title")),
+											discord.NewTextDisplay(descText),
+										).WithAccentColor(0xE74C3C),
+									)
+								_, _ = client.Rest.CreateMessage(ch.ID(), builder.BuildCreate())
+							}
+						}
+					} else {
+						slog.Error("failed to cancel order due to slippage", "order_id", ordCopy.ID, "error", err)
 					}
 				} else {
-					slog.Error("failed to execute order background", "order_id", ordCopy.ID, "error", err)
+					err := c.GormDB().Transaction(func(tx *gorm.DB) error {
+						var dbOrd models.FXOrder
+						if err := tx.Where("id = ?", ordCopy.ID).First(&dbOrd).Error; err != nil {
+							return err
+						}
+						if err := tx.Delete(&dbOrd).Error; err != nil {
+							return err
+						}
+
+						pos := &models.FXPosition{
+							ID:            ordCopy.ID,
+							UserID:        ordCopy.UserID,
+							GuildID:       ordCopy.GuildID,
+							Symbol:        ordCopy.Symbol,
+							Direction:     ordCopy.Direction,
+							EntryPrice:    executionPrice,
+							Margin:        ordCopy.Margin,
+							InitialMargin: ordCopy.Margin,
+							Leverage:      ordCopy.Leverage,
+						}
+						if err := tx.Create(pos).Error; err != nil {
+							return err
+						}
+						return nil
+					})
+
+					if err == nil {
+						slog.Info("order executed background", "order_id", ordCopy.ID, "user_id", ordCopy.UserID, "symbol", ordCopy.Symbol)
+						if client != nil && client.Rest != nil {
+							ch, err := client.Rest.CreateDMChannel(ordCopy.UserID)
+							if err == nil {
+								locale := discord.LocaleJapanese
+								ordTypeStr := i18n.TranslateText(locale, "components.play.fx.order_type.limit")
+								switch ordCopy.OrderType {
+								case "STOP":
+									ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.stop")
+								case "MARKET":
+									ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.market")
+									if ordTypeStr == "" || strings.HasPrefix(ordTypeStr, "components.play.fx.order_type.market") {
+										ordTypeStr = "成行"
+									}
+								}
+								dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
+								if ordCopy.Direction == models.FXPositionDirectionSell {
+									dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
+								}
+
+								descText := i18n.TranslateText(locale, "components.play.fx.dm_order_filled_desc", map[string]any{
+									"symbol":     strings.Replace(ordCopy.Symbol, "_", "/", 1),
+									"type":       ordTypeStr,
+									"order_type": ordCopy.OrderType,
+									"direction":  dirEmoji,
+									"price":      fmt.Sprintf("%.3f", executionPrice),
+								})
+
+								builder := discord.NewMessageBuilder().
+									SetIsComponentsV2(true).
+									SetComponents(
+										discord.NewContainer(
+											discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.dm_order_filled_title")),
+											discord.NewTextDisplay(descText),
+										).WithAccentColor(0x2ECC71),
+									)
+								_, _ = client.Rest.CreateMessage(ch.ID(), builder.BuildCreate())
+							}
+						}
+					} else {
+						slog.Error("failed to execute order background", "order_id", ordCopy.ID, "error", err)
+					}
 				}
 			}
 		}
