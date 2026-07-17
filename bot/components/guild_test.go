@@ -9,11 +9,12 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/database/models"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
 )
 
 func createSQLiteTable(db *gorm.DB, model any) error {
