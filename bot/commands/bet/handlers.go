@@ -13,6 +13,7 @@ import (
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -675,6 +676,12 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 		}
 	}
 
+	var dmInfos map[snowflake.ID]*userDMInfo
+	var hostTitle string
+	var isRaceMode bool
+	var winnerNames []string
+	var savedLocale discord.Locale
+
 	if err := c.GormDB().Transaction(func(tx *gorm.DB) error {
 		var betHost models.BetHost
 		if err := tx.First(&betHost, "id = ?", hostID).Error; err != nil {
@@ -694,6 +701,26 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 			return errors.NewError(err)
 		}
 
+		hostTitle = betHost.Title
+		isRaceMode = betHost.Mode == string(models.BetVoteTypeRace)
+		savedLocale = discord.Locale(betHost.Locale)
+		if savedLocale == "" {
+			savedLocale = locale
+		}
+
+		// Get all options to map option ID to text
+		var options []models.BetOption
+		if err := tx.Order(
+			clause.OrderByColumn{Column: clause.Column{Name: "index"}, Desc: false},
+		).Where("host_id = ?", hostID).Find(&options).Error; err != nil {
+			return err
+		}
+
+		optionMap := make(map[uuid.UUID]string)
+		for _, opt := range options {
+			optionMap[opt.ID] = opt.OptionText
+		}
+
 		// Get all bets
 		var allBets []models.Bet
 		tx.Where("host_id = ?", hostID).Find(&allBets)
@@ -710,6 +737,16 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 
 		var resultMessage string
 
+		userInfos := make(map[snowflake.ID]*userDMInfo)
+		getUserInfo := func(userID snowflake.ID) *userDMInfo {
+			if info, ok := userInfos[userID]; ok {
+				return info
+			}
+			info := &userDMInfo{UserID: userID}
+			userInfos[userID] = info
+			return info
+		}
+
 		if isCancelled {
 			// Cancellation: refund all bets
 			totalRefunded := int64(0)
@@ -723,6 +760,12 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 				gopoint.Points += bet.Amount
 				tx.Save(&gopoint)
 				totalRefunded += bet.Amount
+
+				// DM Info
+				info := getUserInfo(bet.UserID)
+				info.BetAmount = bet.Amount
+				info.BetOptionText = optionMap[bet.OptionID]
+				info.Winnings = bet.Amount
 			}
 
 			// Refund entry fees to all entrants
@@ -737,6 +780,11 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 					gopoint.Points += *betHost.EntryFee
 					tx.Save(&gopoint)
 					totalRefunded += *betHost.EntryFee
+
+					// DM Info
+					info := getUserInfo(entrant.UserID)
+					info.IsEntrant = true
+					info.EntryWinnings = *betHost.EntryFee
 				}
 			}
 
@@ -751,6 +799,10 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 				gopoint.Points += *betHost.PrizePool
 				tx.Save(&gopoint)
 				totalRefunded += *betHost.PrizePool
+
+				// DM Info
+				info := getUserInfo(betHost.OwnerID)
+				info.RefundedPrizePool = *betHost.PrizePool
 			}
 
 			// Update bet host status
@@ -767,6 +819,11 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 			totalPool := int64(0)
 			for _, bet := range allBets {
 				totalPool += bet.Amount
+
+				// DM Info: Initialize for all bettors (even losers)
+				info := getUserInfo(bet.UserID)
+				info.BetAmount = bet.Amount
+				info.BetOptionText = optionMap[bet.OptionID]
 			}
 
 			// Get winners' bets
@@ -802,6 +859,11 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 
 					gopoint.Points += share
 					tx.Save(&gopoint)
+
+					// DM Info
+					info := getUserInfo(bet.UserID)
+					info.Winnings = share
+					info.IsWinner = true
 				}
 			} else if betHost.PrizePool != nil && *betHost.PrizePool > 0 && len(winnerIDs) > 0 {
 				// No bets but prize pool exists - distribute prize pool equally to winners
@@ -818,10 +880,21 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 
 							gopoint.Points += sharePerWinner
 							tx.Save(&gopoint)
+
+							// DM Info
+							info := getUserInfo(entrant.UserID)
+							info.IsEntrant = true
+							info.EntryWinnings += sharePerWinner
 							break
 						}
 					}
 				}
+			}
+
+			// Initialize entrant info for DM
+			for _, entrant := range allEntrants {
+				info := getUserInfo(entrant.UserID)
+				info.IsEntrant = true
 			}
 
 			// Distribute entry fee pool to winning entrants (for race mode)
@@ -846,6 +919,11 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 
 						gopoint.Points += sharePerWinner
 						tx.Save(&gopoint)
+
+						// DM Info
+						info := getUserInfo(entrant.UserID)
+						info.EntryWinnings += sharePerWinner
+						info.IsEntryWinner = true
 					}
 				}
 			}
@@ -858,7 +936,7 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 			// Get winner option names
 			var winnerOptions []models.BetOption
 			tx.Where("id IN ?", winnerIDs).Find(&winnerOptions)
-			winnerNames := make([]string, len(winnerOptions))
+			winnerNames = make([]string, len(winnerOptions))
 			for i, opt := range winnerOptions {
 				winnerNames[i] = opt.OptionText
 			}
@@ -884,14 +962,6 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 			}
 		}
 
-		// Update message
-		var options []models.BetOption
-		if err := tx.Order(
-			clause.OrderByColumn{Column: clause.Column{Name: "index"}, Desc: false},
-		).Where("host_id = ?", hostID).Find(&options).Error; err != nil {
-			return err
-		}
-
 		layoutComponents, err := createBetLayout(&betHost, options, tx, locale)
 		if err != nil {
 			return err
@@ -909,10 +979,16 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 			SetContent(resultMessage)); err != nil {
 			return err
 		}
+		dmInfos = userInfos
 		return nil
 	}); err != nil {
 		return errors.NewError(err)
 	}
+
+	if dmInfos != nil {
+		go sendDMNotifications(event.Client(), hostTitle, isCancelled, winnerNames, dmInfos, savedLocale, isRaceMode)
+	}
+
 	return nil
 }
 
@@ -1854,4 +1930,117 @@ func handleCancelEntryButton(c *components.Components, event *events.ComponentIn
 		return errors.NewError(err)
 	}
 	return nil
+}
+
+type userDMInfo struct {
+	UserID            snowflake.ID
+	BetOptionText     string
+	BetAmount         int64
+	Winnings          int64
+	IsWinner          bool
+	IsEntrant         bool
+	EntryWinnings     int64
+	IsEntryWinner     bool
+	RefundedPrizePool int64
+}
+
+func sendDMNotifications(
+	client *bot.Client,
+	title string,
+	isCancelled bool,
+	winnerNames []string,
+	dmInfos map[snowflake.ID]*userDMInfo,
+	locale discord.Locale,
+	isRaceMode bool,
+) {
+	if client == nil || client.Rest == nil {
+		return
+	}
+
+	var resultText string
+	if isCancelled {
+		resultText = i18n.TranslateText(locale, "command.bet.status.cancelled")
+	} else {
+		resultText = strings.Join(winnerNames, ", ")
+	}
+
+	for _, info := range dmInfos {
+		ch, err := client.Rest.CreateDMChannel(info.UserID)
+		if err != nil {
+			slog.Error("failed to create DM channel", "userID", info.UserID, "error", err)
+			continue
+		}
+
+		var detailsBuilder strings.Builder
+
+		// ベット情報の構築
+		if info.BetAmount > 0 {
+			if isCancelled {
+				detailsBuilder.WriteString(i18n.TranslateText(locale, "command.bet.dm.body.cancel", map[string]any{
+					"option": info.BetOptionText,
+					"amount": info.BetAmount,
+				}))
+			} else if info.IsWinner {
+				detailsBuilder.WriteString(i18n.TranslateText(locale, "command.bet.dm.body.win", map[string]any{
+					"option":   info.BetOptionText,
+					"amount":   info.BetAmount,
+					"winnings": info.Winnings,
+				}))
+			} else {
+				detailsBuilder.WriteString(i18n.TranslateText(locale, "command.bet.dm.body.lose", map[string]any{
+					"option": info.BetOptionText,
+					"amount": info.BetAmount,
+				}))
+			}
+		}
+
+		// レースモードのエントラント情報の構築
+		if isRaceMode && info.IsEntrant {
+			if detailsBuilder.Len() > 0 {
+				detailsBuilder.WriteString("\n")
+			}
+			if isCancelled {
+				detailsBuilder.WriteString(i18n.TranslateText(locale, "command.bet.dm.body.entrant.cancel", map[string]any{
+					"amount": info.EntryWinnings,
+				}))
+			} else if info.IsEntryWinner || info.EntryWinnings > 0 {
+				detailsBuilder.WriteString(i18n.TranslateText(locale, "command.bet.dm.body.entrant.win", map[string]any{
+					"winnings": info.EntryWinnings,
+				}))
+			} else {
+				detailsBuilder.WriteString(i18n.TranslateText(locale, "command.bet.dm.body.entrant.lose"))
+			}
+		}
+
+		// 主催者賞金プール返金情報の構築
+		if info.RefundedPrizePool > 0 {
+			if detailsBuilder.Len() > 0 {
+				detailsBuilder.WriteString("\n")
+			}
+			detailsBuilder.WriteString(i18n.TranslateText(locale, "command.bet.dm.body.organizer.cancel", map[string]any{
+				"amount": info.RefundedPrizePool,
+			}))
+		}
+
+		// 送信テキストの組み立て
+		bodyText := i18n.TranslateText(locale, "command.bet.dm.body", map[string]any{
+			"title":   title,
+			"result":  resultText,
+			"details": detailsBuilder.String(),
+		})
+
+		// EmbedやContainerでリッチに送る
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.dm.title")),
+					discord.NewTextDisplay(bodyText),
+				).WithAccentColor(0x3498DB),
+			)
+
+		if _, err := client.Rest.CreateMessage(ch.ID(), builder.BuildCreate()); err != nil {
+			slog.Error("failed to send DM message", "userID", info.UserID, "error", err)
+		}
+	}
 }

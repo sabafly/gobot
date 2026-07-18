@@ -420,6 +420,20 @@ strings:
   components.gopoint.admin.season_end_announcement_title: "🏆 **GoPoint シーズン終了のお知らせ** 🏆\nシーズン **{{.name}}** が終了しました！獲得ランキング表彰を行います (基準: {{.criteria}})。\n\n"
   components.gopoint.admin.season_end_announcement_no_data: "期間中にポイントを獲得したプレイヤーはいませんでした。"
   components.gopoint.admin.season_end_announcement_entry: "{{.medal}}{{.name}} - スコア: `{{.points}} pt`\n"
+  command.bet.dm.title: "【Bet結果確定】"
+  command.bet.dm.body: |-
+    イベント: **{{.title}}**
+    結果: **{{.result}}**
+
+    あなたの結果:
+    {{.details}}
+  command.bet.dm.body.win: "- **{{.option}}** に `{{.amount}}`pt ベット ➔ **成功** 🎉\n  獲得配当: `{{.winnings}}`pt"
+  command.bet.dm.body.lose: "- **{{.option}}** に `{{.amount}}`pt ベット ➔ **失敗**\n  獲得配当: `0`pt"
+  command.bet.dm.body.cancel: "- **{{.option}}** に `{{.amount}}`pt ベット ➔ **キャンセル**\n  返還: `{{.amount}}`pt"
+  command.bet.dm.body.entrant.win: "- レース参加 ➔ **勝利** 🏆\n  獲得配当: `{{.winnings}}`pt"
+  command.bet.dm.body.entrant.lose: "- レース参加 ➔ **敗北**\n  獲得配当: `0`pt"
+  command.bet.dm.body.entrant.cancel: "- レース参加 ➔ **キャンセル**\n  参加費返還: `{{.amount}}`pt"
+  command.bet.dm.body.organizer.cancel: "- 主催者賞金プール ➔ **キャンセル**\n  返還: `{{.amount}}`pt"
 components:
   command.settings.view:
     - type: container
