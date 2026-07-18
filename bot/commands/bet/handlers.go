@@ -986,7 +986,7 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 	}
 
 	if dmInfos != nil {
-		go sendDMNotifications(event.Client(), hostTitle, isCancelled, winnerNames, dmInfos, savedLocale, isRaceMode)
+		go sendDMNotifications(c.GormDB(), event.Client(), hostTitle, isCancelled, winnerNames, dmInfos, savedLocale, isRaceMode)
 	}
 
 	return nil
@@ -1945,6 +1945,7 @@ type userDMInfo struct {
 }
 
 func sendDMNotifications(
+	db *gorm.DB,
 	client *bot.Client,
 	title string,
 	isCancelled bool,
@@ -1965,10 +1966,12 @@ func sendDMNotifications(
 	}
 
 	for _, info := range dmInfos {
-		ch, err := client.Rest.CreateDMChannel(info.UserID)
-		if err != nil {
-			slog.Error("failed to create DM channel", "userID", info.UserID, "error", err)
-			continue
+		var user models.User
+		if err := db.First(&user, "id = ?", info.UserID).Error; err != nil {
+			user = models.User{
+				ID:        info.UserID,
+				DMEnabled: true,
+			}
 		}
 
 		var detailsBuilder strings.Builder
@@ -2039,7 +2042,7 @@ func sendDMNotifications(
 				).WithAccentColor(0x3498DB),
 			)
 
-		if _, err := client.Rest.CreateMessage(ch.ID(), builder.BuildCreate()); err != nil {
+		if _, err := user.SendDM(client, builder.BuildCreate()); err != nil {
 			slog.Error("failed to send DM message", "userID", info.UserID, "error", err)
 		}
 	}

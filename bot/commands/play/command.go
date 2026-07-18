@@ -52,6 +52,12 @@ func Command(c *components.Components) components.Command {
 			discord.SlashCommandCreate{
 				Name:        "play",
 				Description: "Play some games with your friends!",
+				IntegrationTypes: []discord.ApplicationIntegrationType{
+					discord.ApplicationIntegrationTypeGuildInstall,
+				},
+				Contexts: []discord.InteractionContextType{
+					discord.InteractionContextTypeGuild,
+				},
 				Options: []discord.ApplicationCommandOption{
 					discord.ApplicationCommandOptionSubCommand{
 						Name:                     "high-and-low",

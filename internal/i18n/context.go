@@ -16,6 +16,7 @@ func BuildContext() *MapContext {
 		minValues:      make(map[string]int),
 		disabled:       make(map[string]bool),
 		urls:           make(map[string]string),
+		buttonStyles:   make(map[string]discord.ButtonStyle),
 	}
 }
 
@@ -29,6 +30,7 @@ type MapContext struct {
 	disabled       map[string]bool
 	urls           map[string]string
 	customId       map[string]string
+	buttonStyles   map[string]discord.ButtonStyle
 }
 
 func (m *MapContext) WithText(key, value string) *MapContext {
@@ -263,4 +265,20 @@ func (m MapContext) ReplaceCustomID(id string) string {
 		id = strings.ReplaceAll(id, "{"+key+"}", value)
 	}
 	return id
+}
+
+func (m *MapContext) WithButtonStyle(customID string, style discord.ButtonStyle) *MapContext {
+	if m.buttonStyles == nil {
+		m.buttonStyles = make(map[string]discord.ButtonStyle)
+	}
+	m.buttonStyles[customID] = style
+	return m
+}
+
+func (m MapContext) GetButtonStyle(customID string) (discord.ButtonStyle, bool) {
+	if len(m.buttonStyles) == 0 {
+		return 0, false
+	}
+	style, ok := m.buttonStyles[customID]
+	return style, ok
 }

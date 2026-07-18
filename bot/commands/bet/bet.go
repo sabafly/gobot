@@ -26,6 +26,12 @@ func Command(c *components.Components) components.Command {
 				Name:                     "bet",
 				Description:              "Bet gopoints on various games",
 				DescriptionLocalizations: i18n.TranslateTextMap("command.bet.description"),
+				IntegrationTypes: []discord.ApplicationIntegrationType{
+					discord.ApplicationIntegrationTypeGuildInstall,
+				},
+				Contexts: []discord.InteractionContextType{
+					discord.InteractionContextTypeGuild,
+				},
 				Options: []discord.ApplicationCommandOption{
 					discord.ApplicationCommandOptionString{
 						Name:                     "title",

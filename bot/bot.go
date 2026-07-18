@@ -56,6 +56,7 @@ import (
 	"github.com/sabafly/gobot/bot/commands/play"
 	"github.com/sabafly/gobot/bot/commands/role"
 	"github.com/sabafly/gobot/bot/commands/setting"
+	"github.com/sabafly/gobot/bot/commands/user"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/internal/emoji"
@@ -169,6 +170,7 @@ func run() error {
 		gopoint.Command(component),
 		play.Command(component),
 		bet.Command(component),
+		user.Command(component),
 	)
 
 	ready := make(chan *events.Ready)

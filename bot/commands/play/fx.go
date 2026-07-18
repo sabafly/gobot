@@ -432,66 +432,71 @@ func liquidatePosition(c *components.Components, client *bot.Client, pos *models
 	}
 
 	if client != nil && client.Rest != nil {
-		ch, err := client.Rest.CreateDMChannel(pos.UserID)
-		if err == nil {
-			locale := discord.LocaleJapanese
-			var detailStr strings.Builder
-
-			if len(closedPositions) > 0 {
-				detailStr.WriteString(i18n.TranslateText(locale, "components.play.fx.liquidation_detail_header"))
-				for _, cp := range closedPositions {
-					detailStr.WriteString(i18n.TranslateText(locale, "components.play.fx.liquidation_detail_item", map[string]any{
-						"symbol":    strings.Replace(cp.symbol, "_", "/", 1),
-						"direction": cp.direction,
-						"margin":    cp.margin,
-						"exit":      fmt.Sprintf("%.3f", cp.exitPrice),
-						"pnl":       fmt.Sprintf("%+d", cp.pnl),
-						"val":       cp.valuation,
-					}))
-				}
+		var dbUser models.User
+		if err := c.GormDB().First(&dbUser, "id = ?", pos.UserID).Error; err != nil {
+			dbUser = models.User{
+				ID:        pos.UserID,
+				DMEnabled: true,
 			}
+		}
 
-			if deficit > 0 {
-				detailStr.WriteString(i18n.TranslateText(locale, "components.play.fx.liquidation_detail_deficit", map[string]any{
-					"deficit": deficit,
+		locale := discord.LocaleJapanese
+		var detailStr strings.Builder
+
+		if len(closedPositions) > 0 {
+			detailStr.WriteString(i18n.TranslateText(locale, "components.play.fx.liquidation_detail_header"))
+			for _, cp := range closedPositions {
+				detailStr.WriteString(i18n.TranslateText(locale, "components.play.fx.liquidation_detail_item", map[string]any{
+					"symbol":    strings.Replace(cp.symbol, "_", "/", 1),
+					"direction": cp.direction,
+					"margin":    cp.margin,
+					"exit":      fmt.Sprintf("%.3f", cp.exitPrice),
+					"pnl":       fmt.Sprintf("%+d", cp.pnl),
+					"val":       cp.valuation,
 				}))
 			}
-
-			var refund int64
-			if deficit == 0 {
-				refund = pos.Margin + pnlInt
-			}
-			descKey := "components.play.fx.liquidation_desc"
-			templateMap := map[string]any{
-				"symbol":  strings.Replace(pos.Symbol, "_", "/", 1),
-				"exit":    fmt.Sprintf("%.3f", currentPrice),
-				"pnl":     strconv.FormatInt(-pnlInt, 10),
-				"margin":  strconv.FormatInt(pos.Margin, 10),
-				"deficit": strconv.FormatInt(pos.Margin+pnlInt, 10),
-				"refund":  strconv.FormatInt(refund, 10),
-			}
-			if len(closedPositions) > 0 {
-				descKey = "components.play.fx.liquidation_deficit_desc"
-				templateMap["deficit"] = strconv.FormatInt(pos.Margin+pnlInt, 10)
-			}
-
-			guildName := "不明なサーバー"
-			if dbGuild, err := database.GetGuild(c.GormDB(), pos.GuildID); err == nil {
-				guildName = dbGuild.Name
-			}
-			templateMap["guild"] = guildName
-			descText := i18n.TranslateText(locale, descKey, templateMap) + detailStr.String()
-
-			builder := discord.NewMessageBuilder().
-				SetIsComponentsV2(true).
-				SetComponents(
-					discord.NewContainer(
-						discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.liquidation_title")),
-						discord.NewTextDisplay(descText),
-					).WithAccentColor(0xE74C3C),
-				)
-			_, _ = client.Rest.CreateMessage(ch.ID(), builder.BuildCreate())
 		}
+
+		if deficit > 0 {
+			detailStr.WriteString(i18n.TranslateText(locale, "components.play.fx.liquidation_detail_deficit", map[string]any{
+				"deficit": deficit,
+			}))
+		}
+
+		var refund int64
+		if deficit == 0 {
+			refund = pos.Margin + pnlInt
+		}
+		descKey := "components.play.fx.liquidation_desc"
+		templateMap := map[string]any{
+			"symbol":  strings.Replace(pos.Symbol, "_", "/", 1),
+			"exit":    fmt.Sprintf("%.3f", currentPrice),
+			"pnl":     strconv.FormatInt(-pnlInt, 10),
+			"margin":  strconv.FormatInt(pos.Margin, 10),
+			"deficit": strconv.FormatInt(pos.Margin+pnlInt, 10),
+			"refund":  strconv.FormatInt(refund, 10),
+		}
+		if len(closedPositions) > 0 {
+			descKey = "components.play.fx.liquidation_deficit_desc"
+			templateMap["deficit"] = strconv.FormatInt(pos.Margin+pnlInt, 10)
+		}
+
+		guildName := "不明なサーバー"
+		if dbGuild, err := database.GetGuild(c.GormDB(), pos.GuildID); err == nil {
+			guildName = dbGuild.Name
+		}
+		templateMap["guild"] = guildName
+		descText := i18n.TranslateText(locale, descKey, templateMap) + detailStr.String()
+
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.liquidation_title")),
+					discord.NewTextDisplay(descText),
+				).WithAccentColor(0xE74C3C),
+			)
+		_, _ = dbUser.SendDM(client, builder.BuildCreate())
 	}
 
 	return nil
@@ -2588,45 +2593,50 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 				if err == nil {
 					slog.Info("position closed by pending order background", "pos_id", posCopy.ID, "user_id", posCopy.UserID, "type", triggerType)
 					if client != nil && client.Rest != nil {
-						ch, err := client.Rest.CreateDMChannel(posCopy.UserID)
-						if err == nil {
-							locale := discord.LocaleJapanese
-							dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
-							if posCopy.Direction == models.FXPositionDirectionSell {
-								dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
+						var dbUser models.User
+						if err := c.GormDB().First(&dbUser, "id = ?", posCopy.UserID).Error; err != nil {
+							dbUser = models.User{
+								ID:        posCopy.UserID,
+								DMEnabled: true,
 							}
-
-							pnlSign := ""
-							if pnlTrigger > 0 {
-								pnlSign = "+"
-							}
-
-							guildName := "UNKNOWN GUILD"
-							if dbGuild, err := database.GetGuild(c.GormDB(), posCopy.GuildID); err == nil {
-								guildName = dbGuild.Name
-							}
-							descText := i18n.TranslateText(locale, "components.play.fx.dm_order_closed_desc", map[string]any{
-								"symbol":        strings.Replace(posCopy.Symbol, "_", "/", 1),
-								"direction":     dirEmoji,
-								"margin":        posCopy.Margin,
-								"type":          typeStr,
-								"trigger_price": fmt.Sprintf("%.3f", triggerPrice),
-								"exit":          fmt.Sprintf("%.3f", triggerPrice),
-								"pnl":           fmt.Sprintf("%s%d", pnlSign, int64(pnlTrigger)),
-								"received":      actualRefund,
-								"guild":         guildName,
-							})
-
-							builder := discord.NewMessageBuilder().
-								SetIsComponentsV2(true).
-								SetComponents(
-									discord.NewContainer(
-										discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.dm_order_closed_title")),
-										discord.NewTextDisplay(descText),
-									).WithAccentColor(0x3498DB),
-								)
-							_, _ = client.Rest.CreateMessage(ch.ID(), builder.BuildCreate())
 						}
+
+						locale := discord.LocaleJapanese
+						dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
+						if posCopy.Direction == models.FXPositionDirectionSell {
+							dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
+						}
+
+						pnlSign := ""
+						if pnlTrigger > 0 {
+							pnlSign = "+"
+						}
+
+						guildName := "UNKNOWN GUILD"
+						if dbGuild, err := database.GetGuild(c.GormDB(), posCopy.GuildID); err == nil {
+							guildName = dbGuild.Name
+						}
+						descText := i18n.TranslateText(locale, "components.play.fx.dm_order_closed_desc", map[string]any{
+							"symbol":        strings.Replace(posCopy.Symbol, "_", "/", 1),
+							"direction":     dirEmoji,
+							"margin":        posCopy.Margin,
+							"type":          typeStr,
+							"trigger_price": fmt.Sprintf("%.3f", triggerPrice),
+							"exit":          fmt.Sprintf("%.3f", triggerPrice),
+							"pnl":           fmt.Sprintf("%s%d", pnlSign, int64(pnlTrigger)),
+							"received":      actualRefund,
+							"guild":         guildName,
+						})
+
+						builder := discord.NewMessageBuilder().
+							SetIsComponentsV2(true).
+							SetComponents(
+								discord.NewContainer(
+									discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.dm_order_closed_title")),
+									discord.NewTextDisplay(descText),
+								).WithAccentColor(0x3498DB),
+							)
+						_, _ = dbUser.SendDM(client, builder.BuildCreate())
 					}
 				} else {
 					slog.Error("failed to close position by pending order background", "pos_id", posCopy.ID, "error", err)
@@ -2637,29 +2647,34 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 				ratio := (float64(posCopy.Margin) + pnl) / float64(initMargin) * 100.0
 				if ratio < opt.MarginCallRatio && !posCopy.MarginCallNotified {
 					if client != nil && client.Rest != nil {
-						ch, err := client.Rest.CreateDMChannel(posCopy.UserID)
-						if err == nil {
-							locale := discord.LocaleJapanese
-							guildName := "UNKNOWN GUILD"
-							if dbGuild, err := database.GetGuild(c.GormDB(), posCopy.GuildID); err == nil {
-								guildName = dbGuild.Name
+						var dbUser models.User
+						if err := c.GormDB().First(&dbUser, "id = ?", posCopy.UserID).Error; err != nil {
+							dbUser = models.User{
+								ID:        posCopy.UserID,
+								DMEnabled: true,
 							}
-							descText := i18n.TranslateText(locale, "components.play.fx.dm_margin_call_desc", map[string]any{
-								"symbol":  strings.Replace(posCopy.Symbol, "_", "/", 1),
-								"ratio":   fmt.Sprintf("%.1f%%", ratio),
-								"mc_line": fmt.Sprintf("%.1f%%", opt.MarginCallRatio),
-								"guild":   guildName,
-							})
-							builder := discord.NewMessageBuilder().
-								SetIsComponentsV2(true).
-								SetComponents(
-									discord.NewContainer(
-										discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.dm_margin_call_title")),
-										discord.NewTextDisplay(descText),
-									).WithAccentColor(0xF1C40F),
-								)
-							_, _ = client.Rest.CreateMessage(ch.ID(), builder.BuildCreate())
 						}
+
+						locale := discord.LocaleJapanese
+						guildName := "UNKNOWN GUILD"
+						if dbGuild, err := database.GetGuild(c.GormDB(), posCopy.GuildID); err == nil {
+							guildName = dbGuild.Name
+						}
+						descText := i18n.TranslateText(locale, "components.play.fx.dm_margin_call_desc", map[string]any{
+							"symbol":  strings.Replace(posCopy.Symbol, "_", "/", 1),
+							"ratio":   fmt.Sprintf("%.1f%%", ratio),
+							"mc_line": fmt.Sprintf("%.1f%%", opt.MarginCallRatio),
+							"guild":   guildName,
+						})
+						builder := discord.NewMessageBuilder().
+							SetIsComponentsV2(true).
+							SetComponents(
+								discord.NewContainer(
+									discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.dm_margin_call_title")),
+									discord.NewTextDisplay(descText),
+								).WithAccentColor(0xF1C40F),
+							)
+						_, _ = dbUser.SendDM(client, builder.BuildCreate())
 					}
 					posCopy.MarginCallNotified = true
 					if err := c.GormDB().Save(&posCopy).Error; err != nil {
@@ -2747,38 +2762,43 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 					if err == nil {
 						slog.Info("market order canceled due to slippage limit exceeded", "order_id", ordCopy.ID, "user_id", ordCopy.UserID)
 						if client != nil && client.Rest != nil {
-							ch, err := client.Rest.CreateDMChannel(ordCopy.UserID)
-							if err == nil {
-								locale := discord.LocaleJapanese
-								dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
-								if ordCopy.Direction == models.FXPositionDirectionSell {
-									dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
+							var dbUser models.User
+							if err := c.GormDB().First(&dbUser, "id = ?", ordCopy.UserID).Error; err != nil {
+								dbUser = models.User{
+									ID:        ordCopy.UserID,
+									DMEnabled: true,
 								}
-
-								guildName := "不明なサーバー"
-								if dbGuild, err := database.GetGuild(c.GormDB(), ordCopy.GuildID); err == nil {
-									guildName = dbGuild.Name
-								}
-								descText := i18n.TranslateText(locale, "components.play.fx.dm_market_order_slippage_desc", map[string]any{
-									"symbol":    strings.Replace(ordCopy.Symbol, "_", "/", 1),
-									"direction": dirEmoji,
-									"expected":  fmt.Sprintf("%.3f", ordCopy.ExpectedPrice),
-									"actual":    fmt.Sprintf("%.3f", executionPrice),
-									"margin":    ordCopy.Margin,
-									"tolerance": fmt.Sprintf("%.2f%%", ordCopy.SlippageTolerance*100.0),
-									"guild":     guildName,
-								})
-
-								builder := discord.NewMessageBuilder().
-									SetIsComponentsV2(true).
-									SetComponents(
-										discord.NewContainer(
-											discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.dm_market_order_slippage_title")),
-											discord.NewTextDisplay(descText),
-										).WithAccentColor(0xE74C3C),
-									)
-								_, _ = client.Rest.CreateMessage(ch.ID(), builder.BuildCreate())
 							}
+
+							locale := discord.LocaleJapanese
+							dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
+							if ordCopy.Direction == models.FXPositionDirectionSell {
+								dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
+							}
+
+							guildName := "不明なサーバー"
+							if dbGuild, err := database.GetGuild(c.GormDB(), ordCopy.GuildID); err == nil {
+								guildName = dbGuild.Name
+							}
+							descText := i18n.TranslateText(locale, "components.play.fx.dm_market_order_slippage_desc", map[string]any{
+								"symbol":    strings.Replace(ordCopy.Symbol, "_", "/", 1),
+								"direction": dirEmoji,
+								"expected":  fmt.Sprintf("%.3f", ordCopy.ExpectedPrice),
+								"actual":    fmt.Sprintf("%.3f", executionPrice),
+								"margin":    ordCopy.Margin,
+								"tolerance": fmt.Sprintf("%.2f%%", ordCopy.SlippageTolerance*100.0),
+								"guild":     guildName,
+							})
+
+							builder := discord.NewMessageBuilder().
+								SetIsComponentsV2(true).
+								SetComponents(
+									discord.NewContainer(
+										discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.dm_market_order_slippage_title")),
+										discord.NewTextDisplay(descText),
+									).WithAccentColor(0xE74C3C),
+								)
+							_, _ = dbUser.SendDM(client, builder.BuildCreate())
 						}
 					} else {
 						slog.Error("failed to cancel order due to slippage", "order_id", ordCopy.ID, "error", err)
@@ -2813,47 +2833,52 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 					if err == nil {
 						slog.Info("order executed background", "order_id", ordCopy.ID, "user_id", ordCopy.UserID, "symbol", ordCopy.Symbol)
 						if client != nil && client.Rest != nil {
-							ch, err := client.Rest.CreateDMChannel(ordCopy.UserID)
-							if err == nil {
-								locale := discord.LocaleJapanese
-								ordTypeStr := i18n.TranslateText(locale, "components.play.fx.order_type.limit")
-								switch ordCopy.OrderType {
-								case "STOP":
-									ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.stop")
-								case "MARKET":
-									ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.market")
-									if ordTypeStr == "" || strings.HasPrefix(ordTypeStr, "components.play.fx.order_type.market") {
-										ordTypeStr = "成行"
-									}
+							var dbUser models.User
+							if err := c.GormDB().First(&dbUser, "id = ?", ordCopy.UserID).Error; err != nil {
+								dbUser = models.User{
+									ID:        ordCopy.UserID,
+									DMEnabled: true,
 								}
-								dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
-								if ordCopy.Direction == models.FXPositionDirectionSell {
-									dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
-								}
-
-								guildName := "不明なサーバー"
-								if dbGuild, err := database.GetGuild(c.GormDB(), ordCopy.GuildID); err == nil {
-									guildName = dbGuild.Name
-								}
-								descText := i18n.TranslateText(locale, "components.play.fx.dm_order_filled_desc", map[string]any{
-									"symbol":     strings.Replace(ordCopy.Symbol, "_", "/", 1),
-									"type":       ordTypeStr,
-									"order_type": ordCopy.OrderType,
-									"direction":  dirEmoji,
-									"price":      fmt.Sprintf("%.3f", executionPrice),
-									"guild":      guildName,
-								})
-
-								builder := discord.NewMessageBuilder().
-									SetIsComponentsV2(true).
-									SetComponents(
-										discord.NewContainer(
-											discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.dm_order_filled_title")),
-											discord.NewTextDisplay(descText),
-										).WithAccentColor(0x2ECC71),
-									)
-								_, _ = client.Rest.CreateMessage(ch.ID(), builder.BuildCreate())
 							}
+
+							locale := discord.LocaleJapanese
+							ordTypeStr := i18n.TranslateText(locale, "components.play.fx.order_type.limit")
+							switch ordCopy.OrderType {
+							case "STOP":
+								ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.stop")
+							case "MARKET":
+								ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.market")
+								if ordTypeStr == "" || strings.HasPrefix(ordTypeStr, "components.play.fx.order_type.market") {
+									ordTypeStr = "成行"
+								}
+							}
+							dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
+							if ordCopy.Direction == models.FXPositionDirectionSell {
+								dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
+							}
+
+							guildName := "不明なサーバー"
+							if dbGuild, err := database.GetGuild(c.GormDB(), ordCopy.GuildID); err == nil {
+								guildName = dbGuild.Name
+							}
+							descText := i18n.TranslateText(locale, "components.play.fx.dm_order_filled_desc", map[string]any{
+								"symbol":     strings.Replace(ordCopy.Symbol, "_", "/", 1),
+								"type":       ordTypeStr,
+								"order_type": ordCopy.OrderType,
+								"direction":  dirEmoji,
+								"price":      fmt.Sprintf("%.3f", executionPrice),
+								"guild":      guildName,
+							})
+
+							builder := discord.NewMessageBuilder().
+								SetIsComponentsV2(true).
+								SetComponents(
+									discord.NewContainer(
+										discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.dm_order_filled_title")),
+										discord.NewTextDisplay(descText),
+									).WithAccentColor(0x2ECC71),
+								)
+							_, _ = dbUser.SendDM(client, builder.BuildCreate())
 						}
 					} else {
 						slog.Error("failed to execute order background", "order_id", ordCopy.ID, "error", err)

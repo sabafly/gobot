@@ -300,16 +300,20 @@ func (l *Button) UnmarshalYAML(value *yaml.Node) error {
 		return err
 	}
 	l.Label = v.Label
-	switch v.Style.(type) {
+	l.ID = v.ID
+	l.Emoji = v.Emoji
+	switch val := v.Style.(type) {
 	case int:
-		l.Style = discord.ButtonStyle(v.Style.(int))
+		l.Style = discord.ButtonStyle(val)
 	case string:
-		l.Style = buttonStyles[strings.ToLower(v.Style.(string))]
+		style, ok := buttonStyles[strings.ToLower(val)]
+		if !ok {
+			return ErrInvalidButtonStyle.Format(val)
+		}
+		l.Style = style
 	default:
 		return ErrInvalidButtonStyle.Format(v.Style)
 	}
-	l.ID = v.ID
-	l.Emoji = v.Emoji
 	return nil
 }
 
@@ -320,7 +324,11 @@ func (l Button) layoutComponent(ctx MapContext) discord.LayoutComponent {
 	return discord.NewActionRow(l.button(ctx))
 }
 func (l Button) button(ctx MapContext) discord.ButtonComponent {
-	button := discord.NewButton(l.Style, ctx.ReplaceText(l.Label), ctx.ReplaceCustomID(l.ID), ctx.GetURL(l.ID), 0)
+	style := l.Style
+	if s, ok := ctx.GetButtonStyle(l.ID); ok {
+		style = s
+	}
+	button := discord.NewButton(style, ctx.ReplaceText(l.Label), ctx.ReplaceCustomID(l.ID), ctx.GetURL(l.ID), 0)
 	if l.Emoji != nil {
 		button.Emoji = l.Emoji.Emoji()
 	}

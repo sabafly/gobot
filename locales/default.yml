@@ -62,7 +62,7 @@ strings:
   command.play.fx.description: "FXポイントゲームをプレイします。"
   command.play.portfolio.description: "指定したユーザーのFXポジション一覧（ポートフォリオ）を表示します。"
   command.play.portfolio.option.user.description: "ポートフォリオを表示するユーザーを指定します。"
-  command.play.chinchiro.description: "チンチロリンをマルチプレイで開始します。"
+  command.play.chinchiro.description: "チンチロをマルチプレイで開始します。"
   command.play.chinchiro.option.bet.description: "掛け金を指定します（デフォルト: 10）。"
   command.play.polymarket.description: "Polymarketの予測市場でGoPointを賭けます。"
   command.play.polymarket.option.query.description: "市場を検索するためのクエリ。"
@@ -434,7 +434,27 @@ strings:
   command.bet.dm.body.entrant.lose: "- レース参加 ➔ **敗北**\n  獲得配当: `0`pt"
   command.bet.dm.body.entrant.cancel: "- レース参加 ➔ **キャンセル**\n  参加費返還: `{{.amount}}`pt"
   command.bet.dm.body.organizer.cancel: "- 主催者賞金プール ➔ **キャンセル**\n  返還: `{{.amount}}`pt"
+  command.user.description: "ユーザー設定の管理を行います。"
+  command.user.settings.description: "ユーザー設定を表示・変更します。"
+  command.user.settings.option.dm.description: "結果確定時のDM通知の有無を設定します。"
+  command.user.settings.button.dm.enable: "DM通知を有効にする"
+  command.user.settings.button.dm.disable: "DM通知を無効にする"
 components:
+  command.user.settings.view:
+    - type: container
+      components:
+        - "# ⚙️ ユーザー設定"
+        - type: separator
+        - "### 🔔 通知設定"
+        - type: section
+          accessory:
+            type: button
+            style: secondary
+            label: "{dm_btn_label}"
+            id: "user:toggle_dm"
+          components:
+            - |-
+              - 結果確定時のDM通知: **{dm_status}**
   command.settings.view:
     - type: container
       components:
@@ -762,7 +782,7 @@ components:
   command.play.chinchiro.lobby:
     - type: container
       components:
-        - "🎲 **チンチロリン (Chinchiro) ロビー** 🎲"
+        - "🎲 **チンチロロビー** 🎲"
         - type: separator
         - "🪙 **参加費 (ベット)**: `{bet} pt`"
         - type: separator
@@ -789,7 +809,7 @@ components:
   command.play.chinchiro.game:
     - type: container
       components:
-        - "🎲 **チンチロリン (Chinchiro) プレイ中** 🎲"
+        - "🎲 **チンチロプレイ中** 🎲"
         - type: separator
         - |-
           ### 🎴 ゲーム状況
@@ -808,7 +828,7 @@ components:
   command.play.chinchiro.finished:
     - type: container
       components:
-        - "🎲 **チンチロリン (Chinchiro) ゲーム終了** 🎲"
+        - "🎲 **チンチロゲーム終了** 🎲"
         - type: separator
         - |-
           ### 🏁 結果発表
