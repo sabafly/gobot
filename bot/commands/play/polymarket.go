@@ -20,7 +20,7 @@ import (
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 
-	"github.com/sabafly/gobot/bot/commands/gopoint"
+	"github.com/sabafly/gobot/bot/commands/currency"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/database/models"
@@ -325,7 +325,7 @@ func PolymarketPlayCommand(c *components.Components, event *events.ApplicationCo
 		return errors.NewError(err)
 	}
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -543,7 +543,7 @@ func PolymarketSelectMarketHandler(c *components.Components, event *events.Compo
 		pm_sessions.Set(session.ID, session)
 	}
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -590,7 +590,7 @@ func PolymarketSelectOutcomeHandler(c *components.Components, event *events.Comp
 		pm_sessions.Set(session.ID, session)
 	}
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -614,7 +614,7 @@ func PolymarketViewMyBetsHandler(c *components.Components, event *events.Compone
 		return nil
 	}
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -646,7 +646,7 @@ func PolymarketBackToListHandler(c *components.Components, event *events.Compone
 	session.StatusMsg = ""
 	pm_sessions.Set(session.ID, session)
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -674,7 +674,7 @@ func PolymarketBackToDetailHandler(c *components.Components, event *events.Compo
 	session.StatusMsg = ""
 	pm_sessions.Set(session.ID, session)
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -765,7 +765,7 @@ func dbPlaceBet(c *components.Components, userID snowflake.ID, guildID snowflake
 		return "", fmt.Errorf("ベット額は正の値である必要があります。")
 	}
 
-	points, _, err := gopoint.GetPoint(c, userID, guildID)
+	points, _, err := currency.GetPoint(c, userID, guildID)
 	if err != nil {
 		return "", err
 	}
@@ -774,7 +774,7 @@ func dbPlaceBet(c *components.Components, userID snowflake.ID, guildID snowflake
 		return "", fmt.Errorf("insufficient_points")
 	}
 
-	if err := gopoint.AddPoint(c, userID, guildID, -amount); err != nil {
+	if err := currency.AddPoint(c, userID, guildID, -amount); err != nil {
 		return "", err
 	}
 
@@ -794,7 +794,7 @@ func dbPlaceBet(c *components.Components, userID snowflake.ID, guildID snowflake
 	}
 
 	if err := c.GormDB().Create(&bet).Error; err != nil {
-		_ = gopoint.AddPoint(c, userID, guildID, amount)
+		_ = currency.AddPoint(c, userID, guildID, amount)
 		return "", err
 	}
 
@@ -814,7 +814,7 @@ func dbPlaceBet(c *components.Components, userID snowflake.ID, guildID snowflake
 }
 
 func processBetPlacement(c *components.Components, event *events.ComponentInteractionCreate, session *PolymarketSession, amount int64) errors.Error {
-	pointsBefore, _, _ := gopoint.GetPoint(c, session.UserID, session.GuildID)
+	pointsBefore, _, _ := currency.GetPoint(c, session.UserID, session.GuildID)
 
 	msg, err := dbPlaceBet(c, session.UserID, session.GuildID, session, amount, event.Locale())
 	if err != nil {
@@ -841,7 +841,7 @@ func processBetPlacement(c *components.Components, event *events.ComponentIntera
 	session.StatusMsg = msg
 	pm_sessions.Set(session.ID, session)
 
-	pointsAfter, _, _ := gopoint.GetPoint(c, session.UserID, session.GuildID)
+	pointsAfter, _, _ := currency.GetPoint(c, session.UserID, session.GuildID)
 
 	if err := event.UpdateMessage(discord.NewMessageBuilder().
 		SetIsComponentsV2(true).
@@ -893,7 +893,7 @@ func PolymarketCustomBetModalHandler(c *components.Components, event *events.Mod
 		return nil
 	}
 
-	pointsBefore, _, _ := gopoint.GetPoint(c, session.UserID, session.GuildID)
+	pointsBefore, _, _ := currency.GetPoint(c, session.UserID, session.GuildID)
 
 	msg, err := dbPlaceBet(c, session.UserID, session.GuildID, session, amount, event.Locale())
 	if err != nil {
@@ -920,7 +920,7 @@ func PolymarketCustomBetModalHandler(c *components.Components, event *events.Mod
 	session.StatusMsg = msg
 	pm_sessions.Set(session.ID, session)
 
-	pointsAfter, _, _ := gopoint.GetPoint(c, session.UserID, session.GuildID)
+	pointsAfter, _, _ := currency.GetPoint(c, session.UserID, session.GuildID)
 
 	if err := event.UpdateMessage(discord.NewMessageBuilder().
 		SetIsComponentsV2(true).
@@ -991,7 +991,7 @@ func PolymarketRefreshBetsHandler(c *components.Components, event *events.Compon
 
 				if won {
 					payout = int64(float64(b.BetAmount) / b.EntryPrice)
-					if err := gopoint.AddPointTx(tx, b.UserID, b.GuildID, payout); err != nil {
+					if err := currency.AddPointTx(tx, b.UserID, b.GuildID, payout); err != nil {
 						return err
 					}
 				}
@@ -1027,7 +1027,7 @@ func PolymarketRefreshBetsHandler(c *components.Components, event *events.Compon
 		}
 	}
 
-	points, _, err := gopoint.GetPoint(c, session.UserID, session.GuildID)
+	points, _, err := currency.GetPoint(c, session.UserID, session.GuildID)
 	if err != nil {
 		return errors.NewError(err)
 	}

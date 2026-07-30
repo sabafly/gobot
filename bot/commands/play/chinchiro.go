@@ -15,7 +15,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/sabafly/gobot/bot/commands/gopoint"
+	"github.com/sabafly/gobot/bot/commands/currency"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/database/models"
@@ -110,7 +110,7 @@ func ChinchiroPlayCommand(c *components.Components, event *events.ApplicationCom
 		bet = int64(betOpt)
 	}
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -391,7 +391,7 @@ func ChinchiroJoinHandler(c *components.Components, event *events.ComponentInter
 	}
 
 	// Check points
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -418,7 +418,7 @@ func ChinchiroJoinHandler(c *components.Components, event *events.ComponentInter
 		if err := tx.Create(player).Error; err != nil {
 			return err
 		}
-		return gopoint.AddPointTx(tx, event.User().ID, *event.GuildID(), -session.Bet)
+		return currency.AddPointTx(tx, event.User().ID, *event.GuildID(), -session.Bet)
 	})
 	if txErr != nil {
 		return errors.NewError(txErr)
@@ -487,7 +487,7 @@ func ChinchiroStartHandler(c *components.Components, event *events.ComponentInte
 	numKids := int64(len(session.Players) - 1)
 	maxLiability := session.Bet * 5 * numKids
 
-	points, _, err := gopoint.GetPoint(c, session.HostUserID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, session.HostUserID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -511,7 +511,7 @@ func ChinchiroStartHandler(c *components.Components, event *events.ComponentInte
 		if err := tx.Save(&session).Error; err != nil {
 			return err
 		}
-		return gopoint.AddPointTx(tx, session.HostUserID, *event.GuildID(), -maxLiability)
+		return currency.AddPointTx(tx, session.HostUserID, *event.GuildID(), -maxLiability)
 	})
 	if txErr != nil {
 		return errors.NewError(txErr)
@@ -580,7 +580,7 @@ func ChinchiroCancelHandler(c *components.Components, event *events.ComponentInt
 	txErr := c.GormDB().Transaction(func(tx *gorm.DB) error {
 		for _, p := range session.Players {
 			if !p.IsHost {
-				if err := gopoint.AddPointTx(tx, p.UserID, *event.GuildID(), session.Bet); err != nil {
+				if err := currency.AddPointTx(tx, p.UserID, *event.GuildID(), session.Bet); err != nil {
 					return err
 				}
 			}
@@ -795,7 +795,7 @@ func resolveChinchiroInstantResult(tx *gorm.DB, session *models.ChinchiroSession
 		// Host won instantly (Pinzoro, Zoro, Shigoro)
 		// Host gets kids' bets
 		hostRefund := maxLiability + (session.Bet * numKids)
-		if err := gopoint.AddPointTx(tx, session.HostUserID, session.GuildID, hostRefund); err != nil {
+		if err := currency.AddPointTx(tx, session.HostUserID, session.GuildID, hostRefund); err != nil {
 			return err
 		}
 		// Kids get nothing
@@ -804,14 +804,14 @@ func resolveChinchiroInstantResult(tx *gorm.DB, session *models.ChinchiroSession
 		// Host pays 2x to each kid
 		hostRefund := maxLiability - (session.Bet * 2 * numKids)
 		if hostRefund > 0 {
-			if err := gopoint.AddPointTx(tx, session.HostUserID, session.GuildID, hostRefund); err != nil {
+			if err := currency.AddPointTx(tx, session.HostUserID, session.GuildID, hostRefund); err != nil {
 				return err
 			}
 		}
 		// Each kid gets: their bet back + 2x bet = 3x bet total
 		for _, p := range session.Players {
 			if !p.IsHost {
-				if err := gopoint.AddPointTx(tx, p.UserID, session.GuildID, session.Bet*3); err != nil {
+				if err := currency.AddPointTx(tx, p.UserID, session.GuildID, session.Bet*3); err != nil {
 					return err
 				}
 			}
@@ -851,7 +851,7 @@ func resolveChinchiroNormalResults(tx *gorm.DB, session *models.ChinchiroSession
 			}
 
 			// Kid receives their bet back + (bet * mult) from host = bet * (mult + 1)
-			if err := gopoint.AddPointTx(tx, p.UserID, session.GuildID, session.Bet*int64(mult+1)); err != nil {
+			if err := currency.AddPointTx(tx, p.UserID, session.GuildID, session.Bet*int64(mult+1)); err != nil {
 				return err
 			}
 			hostNetChange -= session.Bet * int64(mult)
@@ -863,7 +863,7 @@ func resolveChinchiroNormalResults(tx *gorm.DB, session *models.ChinchiroSession
 		} else {
 			// Draw
 			// Kid gets their bet back
-			if err := gopoint.AddPointTx(tx, p.UserID, session.GuildID, session.Bet); err != nil {
+			if err := currency.AddPointTx(tx, p.UserID, session.GuildID, session.Bet); err != nil {
 				return err
 			}
 		}
@@ -871,7 +871,7 @@ func resolveChinchiroNormalResults(tx *gorm.DB, session *models.ChinchiroSession
 
 	hostRefund := maxLiability + hostNetChange
 	if hostRefund > 0 {
-		if err := gopoint.AddPointTx(tx, session.HostUserID, session.GuildID, hostRefund); err != nil {
+		if err := currency.AddPointTx(tx, session.HostUserID, session.GuildID, hostRefund); err != nil {
 			return err
 		}
 	}
@@ -892,7 +892,7 @@ func respondSessionNotFound(event *events.ComponentInteractionCreate) errors.Err
 }
 
 func getPointTx(tx *gorm.DB, userID snowflake.ID, guildID snowflake.ID) (int64, error) {
-	var userPoint models.GoPoint
+	var userPoint models.Currency
 	err := tx.Where("user_id = ? AND guild_id = ?", userID, guildID).FirstOrInit(&userPoint).Error
 	if err != nil {
 		return 0, err
@@ -1006,7 +1006,7 @@ func advanceToNextRoundOrFinish(tx *gorm.DB, session *models.ChinchiroSession, c
 		}
 
 		// Deduct/lock max liability from the new Host
-		if err := gopoint.AddPointTx(tx, nextHost.UserID, session.GuildID, -maxLiability); err != nil {
+		if err := currency.AddPointTx(tx, nextHost.UserID, session.GuildID, -maxLiability); err != nil {
 			return err
 		}
 
@@ -1014,7 +1014,7 @@ func advanceToNextRoundOrFinish(tx *gorm.DB, session *models.ChinchiroSession, c
 		for i := range session.Players {
 			p := &session.Players[i]
 			if p.UserID != nextHost.UserID {
-				if err := gopoint.AddPointTx(tx, p.UserID, session.GuildID, -session.Bet); err != nil {
+				if err := currency.AddPointTx(tx, p.UserID, session.GuildID, -session.Bet); err != nil {
 					return err
 				}
 			}

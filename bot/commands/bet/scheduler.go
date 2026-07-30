@@ -195,32 +195,32 @@ func refundEntryFees(tx *gorm.DB, betHost *models.BetHost) error {
 	}
 
 	for _, entrant := range entrants {
-		var gopoint models.GoPoint
-		if err := tx.FirstOrCreate(&gopoint, models.GoPoint{
+		var currency models.Currency
+		if err := tx.FirstOrCreate(&currency, models.Currency{
 			UserID:  entrant.UserID,
 			GuildID: betHost.GuildID,
 		}).Error; err != nil {
 			return err
 		}
 
-		gopoint.Points += *betHost.EntryFee
-		if err := tx.Save(&gopoint).Error; err != nil {
+		currency.Points += *betHost.EntryFee
+		if err := tx.Save(&currency).Error; err != nil {
 			return err
 		}
 	}
 
 	// Also refund prize pool to organizer
 	if betHost.PrizePool != nil && *betHost.PrizePool > 0 {
-		var gopoint models.GoPoint
-		if err := tx.FirstOrCreate(&gopoint, models.GoPoint{
+		var currency models.Currency
+		if err := tx.FirstOrCreate(&currency, models.Currency{
 			UserID:  betHost.OwnerID,
 			GuildID: betHost.GuildID,
 		}).Error; err != nil {
 			return err
 		}
 
-		gopoint.Points += *betHost.PrizePool
-		if err := tx.Save(&gopoint).Error; err != nil {
+		currency.Points += *betHost.PrizePool
+		if err := tx.Save(&currency).Error; err != nil {
 			return err
 		}
 	}

@@ -11,7 +11,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 
-	"github.com/sabafly/gobot/bot/commands/gopoint"
+	"github.com/sabafly/gobot/bot/commands/currency"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/internal/errors"
@@ -208,7 +208,7 @@ func SlotPlay(c *components.Components, data *SlotData) (string, errors.Error) {
 	}
 
 	// 1. Get current points
-	userPoint, _, err := gopoint.GetPoint(c, data.UserID, data.GuildID)
+	userPoint, _, err := currency.GetPoint(c, data.UserID, data.GuildID)
 	if err != nil {
 		return "", errors.NewError(err)
 	}
@@ -323,7 +323,7 @@ func SlotPlay(c *components.Components, data *SlotData) (string, errors.Error) {
 	nextData.TotalWon += nextData.LastSpinWin
 	netChange := nextData.LastSpinWin - cost
 	if netChange != 0 {
-		if err := gopoint.AddPoint(c, data.UserID, data.GuildID, netChange); err != nil {
+		if err := currency.AddPoint(c, data.UserID, data.GuildID, netChange); err != nil {
 			return "", errors.NewError(err)
 		}
 	}

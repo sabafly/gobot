@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type GoPointTaxConfig struct {
+type CurrencyTaxConfig struct {
 	GuildID      snowflake.ID `gorm:"primary_key;column:guild_id;type:bigint(20) unsigned;not null"`
 	Guild        Guild        `gorm:"foreignKey:GuildID;constraint:OnDelete:CASCADE;"`
 	Rate         int          `gorm:"column:rate;type:int;not null;default:0"`          // percentage, e.g. 5 for 5%
@@ -18,7 +18,7 @@ type GoPointTaxConfig struct {
 	Brackets     string       `gorm:"column:brackets;type:text"`
 }
 
-type GoPointPendingTax struct {
+type CurrencyPendingTax struct {
 	ID            uuid.UUID    `gorm:"primary_key;column:id;type:varchar(36);not null"`
 	GuildID       snowflake.ID `gorm:"column:guild_id;type:bigint(20) unsigned;not null;index"`
 	Guild         Guild        `gorm:"foreignKey:GuildID;constraint:OnDelete:CASCADE;"`
@@ -32,7 +32,7 @@ type GoPointPendingTax struct {
 	Exempted      bool         `gorm:"column:exempted;type:tinyint(1);not null;default:0"`
 }
 
-type GoPointSeason struct {
+type CurrencySeason struct {
 	ID         uuid.UUID    `gorm:"primary_key;column:id;type:varchar(36);not null"`
 	GuildID    snowflake.ID `gorm:"column:guild_id;type:bigint(20) unsigned;not null;index"`
 	Guild      Guild        `gorm:"foreignKey:GuildID;constraint:OnDelete:CASCADE;"`
@@ -45,12 +45,12 @@ type GoPointSeason struct {
 	Criteria   string       `gorm:"column:criteria;type:varchar(50);not null;default:'earned'"`
 }
 
-type GoPointSeasonUser struct {
-	SeasonID     uuid.UUID     `gorm:"primary_key;column:season_id;type:varchar(36);not null"`
-	Season       GoPointSeason `gorm:"foreignKey:SeasonID;constraint:OnDelete:CASCADE;"`
-	UserID       snowflake.ID  `gorm:"primary_key;column:user_id;type:bigint(20) unsigned;not null"`
-	User         User          `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
-	GuildID      snowflake.ID  `gorm:"column:guild_id;type:bigint(20) unsigned;not null;index"`
-	Guild        Guild         `gorm:"foreignKey:GuildID;constraint:OnDelete:CASCADE;"`
-	PointsEarned int64         `gorm:"column:points_earned;type:bigint(20);not null;default:0"`
+type CurrencySeasonUser struct {
+	SeasonID     uuid.UUID      `gorm:"primary_key;column:season_id;type:varchar(36);not null"`
+	Season       CurrencySeason `gorm:"foreignKey:SeasonID;constraint:OnDelete:CASCADE;"`
+	UserID       snowflake.ID   `gorm:"primary_key;column:user_id;type:bigint(20) unsigned;not null"`
+	User         User           `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;"`
+	GuildID      snowflake.ID   `gorm:"column:guild_id;type:bigint(20) unsigned;not null;index"`
+	Guild        Guild          `gorm:"foreignKey:GuildID;constraint:OnDelete:CASCADE;"`
+	PointsEarned int64          `gorm:"column:points_earned;type:bigint(20);not null;default:0"`
 }

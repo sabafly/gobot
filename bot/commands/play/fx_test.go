@@ -283,7 +283,7 @@ func TestFX_LiquidationWithDeficitCoverage(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.Currency{}, &models.FXPosition{}, &models.CurrencySeason{}, &models.CurrencySeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -307,7 +307,7 @@ func TestFX_LiquidationWithDeficitCoverage(t *testing.T) {
 	}
 
 	// Seed initial GoPoints balance
-	err = gdb.Create(&models.GoPoint{
+	err = gdb.Create(&models.Currency{
 		UserID:  userID,
 		GuildID: guildID,
 		Points:  1000,
@@ -379,7 +379,7 @@ func TestFX_LiquidationWithDeficitCoverage(t *testing.T) {
 	}
 
 	// Verify points balance
-	var gp models.GoPoint
+	var gp models.Currency
 	err = gdb.Where("user_id = ? AND guild_id = ?", userID, guildID).First(&gp).Error
 	if err != nil {
 		t.Fatalf("failed to query gopoints: %v", err)
@@ -396,7 +396,7 @@ func TestFX_LiquidationWithRefund(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.Currency{}, &models.FXPosition{}, &models.CurrencySeason{}, &models.CurrencySeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -411,7 +411,7 @@ func TestFX_LiquidationWithRefund(t *testing.T) {
 
 	_ = gdb.Create(&models.User{ID: userID})
 	_ = gdb.Create(&models.Guild{ID: guildID})
-	_ = gdb.Create(&models.GoPoint{UserID: userID, GuildID: guildID, Points: 1000})
+	_ = gdb.Create(&models.Currency{UserID: userID, GuildID: guildID, Points: 1000})
 
 	// Seed position with 100 margin, 10 leverage, entry 150.0
 	pos := &models.FXPosition{
@@ -449,7 +449,7 @@ func TestFX_LiquidationWithRefund(t *testing.T) {
 	}
 
 	// Verify points balance is refunded
-	var gp models.GoPoint
+	var gp models.Currency
 	err = gdb.Where("user_id = ? AND guild_id = ?", userID, guildID).First(&gp).Error
 	if err != nil {
 		t.Fatalf("failed to query gopoints: %v", err)
@@ -466,7 +466,7 @@ func TestFX_PendingOrders(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.FXOrder{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.Currency{}, &models.FXPosition{}, &models.FXOrder{}, &models.CurrencySeason{}, &models.CurrencySeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -482,7 +482,7 @@ func TestFX_PendingOrders(t *testing.T) {
 	// Seed User, Guild, and GoPoint
 	_ = gdb.Create(&models.User{ID: userID})
 	_ = gdb.Create(&models.Guild{ID: guildID})
-	_ = gdb.Create(&models.GoPoint{UserID: userID, GuildID: guildID, Points: 1000})
+	_ = gdb.Create(&models.Currency{UserID: userID, GuildID: guildID, Points: 1000})
 
 	// 1. Create a pending LIMIT BUY order (Target: 145.000, current price is higher, e.g. 150.000)
 	orderID := uuid.New()
@@ -565,7 +565,7 @@ func TestFX_ActivePositionTPSL(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.Currency{}, &models.FXPosition{}, &models.CurrencySeason{}, &models.CurrencySeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -581,7 +581,7 @@ func TestFX_ActivePositionTPSL(t *testing.T) {
 	// Seed User, Guild, and GoPoint
 	_ = gdb.Create(&models.User{ID: userID})
 	_ = gdb.Create(&models.Guild{ID: guildID})
-	_ = gdb.Create(&models.GoPoint{UserID: userID, GuildID: guildID, Points: 1000})
+	_ = gdb.Create(&models.Currency{UserID: userID, GuildID: guildID, Points: 1000})
 
 	// 1. Create a position with BUY entry at 150.0, Margin 100, Leverage 25.
 	// We set TakeProfitPrice to 155.0.
@@ -648,7 +648,7 @@ func TestFX_ActivePositionTPSL(t *testing.T) {
 	// PnL at TP (155.0): (155.0 - 150.0) / 150.0 * 100 * 25 = 83.333 pt.
 	// Valuation: 100 + 83 = 183 pt.
 	// Total points: 1000 + 183 = 1183 pt.
-	var gp models.GoPoint
+	var gp models.Currency
 	err = gdb.Where("user_id = ? AND guild_id = ?", userID, guildID).First(&gp).Error
 	if err != nil {
 		t.Fatalf("failed to query points: %v", err)
@@ -664,7 +664,7 @@ func TestFX_PortfolioLogic(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.FXOrder{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.Currency{}, &models.FXPosition{}, &models.FXOrder{}, &models.CurrencySeason{}, &models.CurrencySeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -680,7 +680,7 @@ func TestFX_PortfolioLogic(t *testing.T) {
 	// Seed User, Guild, GoPoint
 	_ = gdb.Create(&models.User{ID: userID})
 	_ = gdb.Create(&models.Guild{ID: guildID})
-	_ = gdb.Create(&models.GoPoint{UserID: userID, GuildID: guildID, Points: 1000})
+	_ = gdb.Create(&models.Currency{UserID: userID, GuildID: guildID, Points: 1000})
 
 	// 1. Check getFXPositions and getFXOrders when empty
 	positions, err := getFXPositions(c, userID, guildID)
@@ -760,7 +760,7 @@ func TestFX_MarginCallRedirection(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.FXOrder{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.Currency{}, &models.FXPosition{}, &models.FXOrder{}, &models.CurrencySeason{}, &models.CurrencySeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -771,7 +771,7 @@ func TestFX_MarginCallRedirection(t *testing.T) {
 
 	_ = gdb.Create(&models.User{ID: userID})
 	_ = gdb.Create(&models.Guild{ID: guildID})
-	_ = gdb.Create(&models.GoPoint{UserID: userID, GuildID: guildID, Points: 1000})
+	_ = gdb.Create(&models.Currency{UserID: userID, GuildID: guildID, Points: 1000})
 
 	// 1. Create a warned position (under margin call)
 	// Leverage = 25 -> MarginCallRatio = 50.0%
@@ -869,7 +869,7 @@ func TestFX_MarketOrders(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.FXPosition{}, &models.FXOrder{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.Currency{}, &models.FXPosition{}, &models.FXOrder{}, &models.CurrencySeason{}, &models.CurrencySeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -885,7 +885,7 @@ func TestFX_MarketOrders(t *testing.T) {
 	// Seed User, Guild, and GoPoint
 	_ = gdb.Create(&models.User{ID: userID})
 	_ = gdb.Create(&models.Guild{ID: guildID})
-	_ = gdb.Create(&models.GoPoint{UserID: userID, GuildID: guildID, Points: 1000})
+	_ = gdb.Create(&models.Currency{UserID: userID, GuildID: guildID, Points: 1000})
 
 	// 1. Create a pending MARKET BUY order that should execute successfully
 	orderID := uuid.New()

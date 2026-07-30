@@ -142,19 +142,19 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	if err := c.GormDB().Transaction(func(tx *gorm.DB) error {
 		// Check and deduct prize pool from organizer's points
 		if prizePool != nil && *prizePool > 0 {
-			var gopoint models.GoPoint
-			if err := tx.FirstOrCreate(&gopoint, models.GoPoint{
+			var currency models.Currency
+			if err := tx.FirstOrCreate(&currency, models.Currency{
 				UserID:  event.User().ID,
 				GuildID: *event.GuildID(),
 			}).Error; err != nil {
 				return err
 			}
 
-			if gopoint.Points < *prizePool {
+			if currency.Points < *prizePool {
 				if err := event.RespondMessage(discord.NewMessageBuilder().
 					SetContent(i18n.BuildContext().
 						WithText("pool", fmt.Sprintf("%d", *prizePool)).
-						WithText("points", fmt.Sprintf("%d", gopoint.Points)).
+						WithText("points", fmt.Sprintf("%d", currency.Points)).
 						ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool"))).
 					SetFlags(discord.MessageFlagEphemeral)); err != nil {
 					return err
@@ -163,8 +163,8 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 			}
 
 			// Deduct prize pool from organizer
-			gopoint.Points -= *prizePool
-			if err := tx.Save(&gopoint).Error; err != nil {
+			currency.Points -= *prizePool
+			if err := tx.Save(&currency).Error; err != nil {
 				return err
 			}
 		}
@@ -383,9 +383,9 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 
 	if err := c.GormDB().Transaction(func(tx *gorm.DB) error {
 
-		// Check user's gopoint balance
-		var gopoint models.GoPoint
-		if err := tx.FirstOrCreate(&gopoint, models.GoPoint{
+		// Check user's currency balance
+		var currency models.Currency
+		if err := tx.FirstOrCreate(&currency, models.Currency{
 			UserID:  event.User().ID,
 			GuildID: *event.GuildID(),
 		}).Error; err != nil {
@@ -444,10 +444,10 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 
 			// Check if user has sufficient points for the difference
 			pointsDifference := amount - existingBet.Amount
-			if pointsDifference > 0 && gopoint.Points < pointsDifference {
+			if pointsDifference > 0 && currency.Points < pointsDifference {
 				if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 					SetContent(i18n.BuildContext().
-						WithText("points", fmt.Sprintf("%d", gopoint.Points)).
+						WithText("points", fmt.Sprintf("%d", currency.Points)).
 						ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_points"))).
 					SetFlags(discord.MessageFlagEphemeral).
 					Build()); err != nil {
@@ -467,8 +467,8 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 			}
 
 			// Adjust points by the difference
-			gopoint.Points -= pointsDifference
-			if err := tx.Save(&gopoint).Error; err != nil {
+			currency.Points -= pointsDifference
+			if err := tx.Save(&currency).Error; err != nil {
 				return err
 			}
 
@@ -488,10 +488,10 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 		}
 
 		// Check if user has sufficient points for new bet
-		if gopoint.Points < amount {
+		if currency.Points < amount {
 			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 				SetContent(i18n.BuildContext().
-					WithText("points", fmt.Sprintf("%d", gopoint.Points)).
+					WithText("points", fmt.Sprintf("%d", currency.Points)).
 					ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_points"))).
 				SetFlags(discord.MessageFlagEphemeral).
 				Build()); err != nil {
@@ -515,8 +515,8 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 		}
 
 		// Deduct points
-		gopoint.Points -= amount
-		if err := tx.Save(&gopoint).Error; err != nil {
+		currency.Points -= amount
+		if err := tx.Save(&currency).Error; err != nil {
 			return err
 		}
 
@@ -751,14 +751,14 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 			// Cancellation: refund all bets
 			totalRefunded := int64(0)
 			for _, bet := range allBets {
-				var gopoint models.GoPoint
-				tx.FirstOrCreate(&gopoint, models.GoPoint{
+				var currency models.Currency
+				tx.FirstOrCreate(&currency, models.Currency{
 					UserID:  bet.UserID,
 					GuildID: betHost.GuildID,
 				})
 
-				gopoint.Points += bet.Amount
-				tx.Save(&gopoint)
+				currency.Points += bet.Amount
+				tx.Save(&currency)
 				totalRefunded += bet.Amount
 
 				// DM Info
@@ -771,14 +771,14 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 			// Refund entry fees to all entrants
 			if betHost.EntryFee != nil && *betHost.EntryFee > 0 {
 				for _, entrant := range allEntrants {
-					var gopoint models.GoPoint
-					tx.FirstOrCreate(&gopoint, models.GoPoint{
+					var currency models.Currency
+					tx.FirstOrCreate(&currency, models.Currency{
 						UserID:  entrant.UserID,
 						GuildID: betHost.GuildID,
 					})
 
-					gopoint.Points += *betHost.EntryFee
-					tx.Save(&gopoint)
+					currency.Points += *betHost.EntryFee
+					tx.Save(&currency)
 					totalRefunded += *betHost.EntryFee
 
 					// DM Info
@@ -790,14 +790,14 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 
 			// Refund prize pool to organizer
 			if betHost.PrizePool != nil && *betHost.PrizePool > 0 {
-				var gopoint models.GoPoint
-				tx.FirstOrCreate(&gopoint, models.GoPoint{
+				var currency models.Currency
+				tx.FirstOrCreate(&currency, models.Currency{
 					UserID:  betHost.OwnerID,
 					GuildID: betHost.GuildID,
 				})
 
-				gopoint.Points += *betHost.PrizePool
-				tx.Save(&gopoint)
+				currency.Points += *betHost.PrizePool
+				tx.Save(&currency)
 				totalRefunded += *betHost.PrizePool
 
 				// DM Info
@@ -851,14 +851,14 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 					// Calculate proportional share
 					share := (bet.Amount * totalDistributablePool) / winnersTotal
 
-					var gopoint models.GoPoint
-					tx.FirstOrCreate(&gopoint, models.GoPoint{
+					var currency models.Currency
+					tx.FirstOrCreate(&currency, models.Currency{
 						UserID:  bet.UserID,
 						GuildID: betHost.GuildID,
 					})
 
-					gopoint.Points += share
-					tx.Save(&gopoint)
+					currency.Points += share
+					tx.Save(&currency)
 
 					// DM Info
 					info := getUserInfo(bet.UserID)
@@ -872,14 +872,14 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 					// Find the entrant for this winner option
 					for _, entrant := range allEntrants {
 						if entrant.OptionID == winnerID {
-							var gopoint models.GoPoint
-							tx.FirstOrCreate(&gopoint, models.GoPoint{
+							var currency models.Currency
+							tx.FirstOrCreate(&currency, models.Currency{
 								UserID:  entrant.UserID,
 								GuildID: betHost.GuildID,
 							})
 
-							gopoint.Points += sharePerWinner
-							tx.Save(&gopoint)
+							currency.Points += sharePerWinner
+							tx.Save(&currency)
 
 							// DM Info
 							info := getUserInfo(entrant.UserID)
@@ -911,14 +911,14 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 				if len(winningEntrants) > 0 {
 					sharePerWinner := entryFeePool / int64(len(winningEntrants))
 					for _, entrant := range winningEntrants {
-						var gopoint models.GoPoint
-						tx.FirstOrCreate(&gopoint, models.GoPoint{
+						var currency models.Currency
+						tx.FirstOrCreate(&currency, models.Currency{
 							UserID:  entrant.UserID,
 							GuildID: betHost.GuildID,
 						})
 
-						gopoint.Points += sharePerWinner
-						tx.Save(&gopoint)
+						currency.Points += sharePerWinner
+						tx.Save(&currency)
 
 						// DM Info
 						info := getUserInfo(entrant.UserID)
@@ -1146,19 +1146,19 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 
 	// Check and deduct prize pool from organizer's points
 	if prizePool != nil && *prizePool > 0 {
-		var gopoint models.GoPoint
-		if err := c.GormDB().FirstOrCreate(&gopoint, models.GoPoint{
+		var currency models.Currency
+		if err := c.GormDB().FirstOrCreate(&currency, models.Currency{
 			UserID:  event.User().ID,
 			GuildID: *event.GuildID(),
 		}).Error; err != nil {
 			return errors.NewError(err)
 		}
 
-		if gopoint.Points < *prizePool {
+		if currency.Points < *prizePool {
 			if err := event.RespondMessage(discord.NewMessageBuilder().
 				SetContent(i18n.BuildContext().
 					WithText("pool", fmt.Sprintf("%d", *prizePool)).
-					WithText("points", fmt.Sprintf("%d", gopoint.Points)).
+					WithText("points", fmt.Sprintf("%d", currency.Points)).
 					ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool"))).
 				SetFlags(discord.MessageFlagEphemeral)); err != nil {
 				return errors.NewError(err)
@@ -1167,8 +1167,8 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 		}
 
 		// Deduct prize pool from organizer
-		gopoint.Points -= *prizePool
-		if err := c.GormDB().Save(&gopoint).Error; err != nil {
+		currency.Points -= *prizePool
+		if err := c.GormDB().Save(&currency).Error; err != nil {
 			return errors.NewError(err)
 		}
 	}
@@ -1282,19 +1282,19 @@ func handleEntryButton(c *components.Components, event *events.ComponentInteract
 
 		// Check and deduct entry fee if set
 		if betHost.EntryFee != nil && *betHost.EntryFee > 0 {
-			var gopoint models.GoPoint
-			if err := tx.FirstOrCreate(&gopoint, models.GoPoint{
+			var currency models.Currency
+			if err := tx.FirstOrCreate(&currency, models.Currency{
 				UserID:  event.User().ID,
 				GuildID: *event.GuildID(),
 			}).Error; err != nil {
 				return err
 			}
 
-			if gopoint.Points < *betHost.EntryFee {
+			if currency.Points < *betHost.EntryFee {
 				if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 					SetContent(i18n.BuildContext().
 						WithText("fee", fmt.Sprintf("%d", *betHost.EntryFee)).
-						WithText("points", fmt.Sprintf("%d", gopoint.Points)).
+						WithText("points", fmt.Sprintf("%d", currency.Points)).
 						ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_entry_fee"))).
 					SetFlags(discord.MessageFlagEphemeral).
 					Build()); err != nil {
@@ -1304,8 +1304,8 @@ func handleEntryButton(c *components.Components, event *events.ComponentInteract
 			}
 
 			// Deduct entry fee
-			gopoint.Points -= *betHost.EntryFee
-			if err := tx.Save(&gopoint).Error; err != nil {
+			currency.Points -= *betHost.EntryFee
+			if err := tx.Save(&currency).Error; err != nil {
 				return err
 			}
 		}
@@ -1522,19 +1522,19 @@ func handleBattleRoyaleConfig(c *components.Components, event *events.ModalSubmi
 
 	// Check and deduct prize pool from organizer's points
 	if prizePool != nil && *prizePool > 0 {
-		var gopoint models.GoPoint
-		if err := c.GormDB().FirstOrCreate(&gopoint, models.GoPoint{
+		var currency models.Currency
+		if err := c.GormDB().FirstOrCreate(&currency, models.Currency{
 			UserID:  event.User().ID,
 			GuildID: *event.GuildID(),
 		}).Error; err != nil {
 			return errors.NewError(err)
 		}
 
-		if gopoint.Points < *prizePool {
+		if currency.Points < *prizePool {
 			if err := event.RespondMessage(discord.NewMessageBuilder().
 				SetContent(i18n.BuildContext().
 					WithText("pool", fmt.Sprintf("%d", *prizePool)).
-					WithText("points", fmt.Sprintf("%d", gopoint.Points)).
+					WithText("points", fmt.Sprintf("%d", currency.Points)).
 					ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool"))).
 				SetFlags(discord.MessageFlagEphemeral)); err != nil {
 				return errors.NewError(err)
@@ -1543,8 +1543,8 @@ func handleBattleRoyaleConfig(c *components.Components, event *events.ModalSubmi
 		}
 
 		// Deduct prize pool from organizer
-		gopoint.Points -= *prizePool
-		if err := c.GormDB().Save(&gopoint).Error; err != nil {
+		currency.Points -= *prizePool
+		if err := c.GormDB().Save(&currency).Error; err != nil {
 			return errors.NewError(err)
 		}
 	}
@@ -1661,19 +1661,19 @@ func handleBattleRoyaleEntryButton(c *components.Components, event *events.Compo
 			return fmt.Errorf("battle royale must have entry fee")
 		}
 
-		var gopoint models.GoPoint
-		if err := tx.FirstOrCreate(&gopoint, models.GoPoint{
+		var currency models.Currency
+		if err := tx.FirstOrCreate(&currency, models.Currency{
 			UserID:  event.User().ID,
 			GuildID: *event.GuildID(),
 		}).Error; err != nil {
 			return err
 		}
 
-		if gopoint.Points < *betHost.EntryFee {
+		if currency.Points < *betHost.EntryFee {
 			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 				SetContent(i18n.BuildContext().
 					WithText("fee", fmt.Sprintf("%d", *betHost.EntryFee)).
-					WithText("points", fmt.Sprintf("%d", gopoint.Points)).
+					WithText("points", fmt.Sprintf("%d", currency.Points)).
 					ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_entry_fee"))).
 				SetFlags(discord.MessageFlagEphemeral).
 				Build()); err != nil {
@@ -1683,8 +1683,8 @@ func handleBattleRoyaleEntryButton(c *components.Components, event *events.Compo
 		}
 
 		// Deduct entry fee
-		gopoint.Points -= *betHost.EntryFee
-		if err := tx.Save(&gopoint).Error; err != nil {
+		currency.Points -= *betHost.EntryFee
+		if err := tx.Save(&currency).Error; err != nil {
 			return err
 		}
 
@@ -1881,28 +1881,28 @@ func handleCancelEntryButton(c *components.Components, event *events.ComponentIn
 			tx.Where("host_id = ?", hostID).Find(&entrants)
 
 			for _, entrant := range entrants {
-				var gopoint models.GoPoint
-				tx.FirstOrCreate(&gopoint, models.GoPoint{
+				var currency models.Currency
+				tx.FirstOrCreate(&currency, models.Currency{
 					UserID:  entrant.UserID,
 					GuildID: betHost.GuildID,
 				})
 
-				gopoint.Points += *betHost.EntryFee
-				tx.Save(&gopoint)
+				currency.Points += *betHost.EntryFee
+				tx.Save(&currency)
 				totalRefunded += *betHost.EntryFee
 			}
 		}
 
 		// Refund prize pool to organizer
 		if betHost.PrizePool != nil && *betHost.PrizePool > 0 {
-			var gopoint models.GoPoint
-			tx.FirstOrCreate(&gopoint, models.GoPoint{
+			var currency models.Currency
+			tx.FirstOrCreate(&currency, models.Currency{
 				UserID:  betHost.OwnerID,
 				GuildID: betHost.GuildID,
 			})
 
-			gopoint.Points += *betHost.PrizePool
-			tx.Save(&gopoint)
+			currency.Points += *betHost.PrizePool
+			tx.Save(&currency)
 			totalRefunded += *betHost.PrizePool
 		}
 

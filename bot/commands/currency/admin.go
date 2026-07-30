@@ -1,4 +1,4 @@
-package gopoint
+package currency
 
 import (
 	"fmt"
@@ -39,14 +39,14 @@ func parseTaxBrackets(locale discord.Locale, text string) ([]TaxBracket, error) 
 		// Format: range:rate
 		parts := strings.Split(line, ":")
 		if len(parts) != 2 {
-			return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.gopoint.admin.tax_bracket_err_invalid_format", map[string]any{"line": line}))
+			return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.currency.admin.tax_bracket_err_invalid_format", map[string]any{"line": line}))
 		}
 		rangeStr := strings.TrimSpace(parts[0])
 		rateStr := strings.TrimSpace(parts[1])
 
 		rate, err := strconv.Atoi(strings.TrimSuffix(rateStr, "%"))
 		if err != nil || rate < 0 || rate > 100 {
-			return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.gopoint.admin.tax_bracket_err_invalid_rate", map[string]any{"rate": rateStr}))
+			return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.currency.admin.tax_bracket_err_invalid_rate", map[string]any{"rate": rateStr}))
 		}
 
 		var min, max int64
@@ -54,22 +54,22 @@ func parseTaxBrackets(locale discord.Locale, text string) ([]TaxBracket, error) 
 			minStr := before
 			minVal, err := strconv.ParseInt(minStr, 10, 64)
 			if err != nil {
-				return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.gopoint.admin.tax_bracket_err_invalid_range", map[string]any{"range": rangeStr}))
+				return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.currency.admin.tax_bracket_err_invalid_range", map[string]any{"range": rangeStr}))
 			}
 			min = minVal
 			max = -1
 		} else {
 			rangeParts := strings.Split(rangeStr, "-")
 			if len(rangeParts) != 2 {
-				return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.gopoint.admin.tax_bracket_err_invalid_range_spec", map[string]any{"range": rangeStr}))
+				return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.currency.admin.tax_bracket_err_invalid_range_spec", map[string]any{"range": rangeStr}))
 			}
 			minVal, err := strconv.ParseInt(strings.TrimSpace(rangeParts[0]), 10, 64)
 			if err != nil {
-				return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.gopoint.admin.tax_bracket_err_parse_min", map[string]any{"min": rangeParts[0]}))
+				return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.currency.admin.tax_bracket_err_parse_min", map[string]any{"min": rangeParts[0]}))
 			}
 			maxVal, err := strconv.ParseInt(strings.TrimSpace(rangeParts[1]), 10, 64)
 			if err != nil {
-				return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.gopoint.admin.tax_bracket_err_parse_max", map[string]any{"max": rangeParts[1]}))
+				return nil, fmt.Errorf("%s", i18n.TranslateText(locale, "components.currency.admin.tax_bracket_err_parse_max", map[string]any{"max": rangeParts[1]}))
 			}
 			min = minVal
 			max = maxVal
@@ -84,7 +84,7 @@ func parseTaxBrackets(locale discord.Locale, text string) ([]TaxBracket, error) 
 	return brackets, nil
 }
 
-func calculateUserTaxAmount(p int64, cfg *models.GoPointTaxConfig) int64 {
+func calculateUserTaxAmount(p int64, cfg *models.CurrencyTaxConfig) int64 {
 	if p < cfg.MinPoints {
 		return 0
 	}
@@ -130,11 +130,11 @@ func ptr[T any](v T) *T {
 func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 	guildID := *event.GuildID()
 
-	var cfg models.GoPointTaxConfig
+	var cfg models.CurrencyTaxConfig
 	err := c.GormDB().Where("guild_id = ?", guildID).First(&cfg).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			cfg = models.GoPointTaxConfig{
+			cfg = models.CurrencyTaxConfig{
 				GuildID:      guildID,
 				Rate:         10,
 				IntervalDays: 7,
@@ -148,7 +148,7 @@ func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandI
 	}
 
 	rateOptions := []discord.StringSelectMenuOption{
-		{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_rate_exempt"), Value: "0"},
+		{Label: i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_rate_exempt"), Value: "0"},
 		{Label: "5%", Value: "5"},
 		{Label: "10%", Value: "10"},
 		{Label: "15%", Value: "15"},
@@ -177,12 +177,12 @@ func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandI
 	}
 
 	intervalOptions := []discord.StringSelectMenuOption{
-		{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_interval_1day"), Value: "1"},
-		{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_interval_3days"), Value: "3"},
-		{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_interval_1week"), Value: "7"},
-		{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_interval_2weeks"), Value: "14"},
-		{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_interval_1month"), Value: "30"},
-		{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_interval_3months"), Value: "90"},
+		{Label: i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_interval_1day"), Value: "1"},
+		{Label: i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_interval_3days"), Value: "3"},
+		{Label: i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_interval_1week"), Value: "7"},
+		{Label: i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_interval_2weeks"), Value: "14"},
+		{Label: i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_interval_1month"), Value: "30"},
+		{Label: i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_interval_3months"), Value: "90"},
 	}
 	intervalFound := false
 	for _, opt := range intervalOptions {
@@ -193,7 +193,7 @@ func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandI
 	}
 	if !intervalFound && cfg.IntervalDays > 0 {
 		intervalOptions = append([]discord.StringSelectMenuOption{
-			{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_interval_days", map[string]any{"days": cfg.IntervalDays}), Value: strconv.Itoa(cfg.IntervalDays)},
+			{Label: i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_interval_days", map[string]any{"days": cfg.IntervalDays}), Value: strconv.Itoa(cfg.IntervalDays)},
 		}, intervalOptions...)
 	}
 	for i, opt := range intervalOptions {
@@ -203,8 +203,8 @@ func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandI
 	}
 
 	enabledOptions := []discord.StringSelectMenuOption{
-		{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_enabled_label"), Value: "true"},
-		{Label: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_disabled_label"), Value: "false"},
+		{Label: i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_enabled_label"), Value: "true"},
+		{Label: i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_disabled_label"), Value: "false"},
 	}
 	for i, opt := range enabledOptions {
 		if opt.Value == strconv.FormatBool(cfg.Enabled) {
@@ -213,43 +213,43 @@ func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandI
 	}
 
 	modal := discord.NewModalCreateBuilder().
-		SetTitle(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_modal_title")).
-		SetCustomID("gopoint:tax_setup_modal").
+		SetTitle(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_modal_title")).
+		SetCustomID("currency:tax_setup_modal").
 		SetComponents(
-			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_label_rate"),
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_label_rate"),
 				discord.StringSelectMenuComponent{
 					CustomID:  "rate",
 					MinValues: ptr(1),
 					MaxValues: 1,
 					Options:   rateOptions,
 				}),
-			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_label_min_points"),
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_label_min_points"),
 				discord.TextInputComponent{
 					CustomID: "min_points",
 					Style:    discord.TextInputStyleShort,
 					Value:    strconv.FormatInt(cfg.MinPoints, 10),
 					Required: true,
 				}),
-			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_label_interval"),
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_label_interval"),
 				discord.StringSelectMenuComponent{
 					CustomID:  "interval_days",
 					MinValues: ptr(1),
 					MaxValues: 1,
 					Options:   intervalOptions,
 				}),
-			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_label_enabled"),
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_label_enabled"),
 				discord.StringSelectMenuComponent{
 					CustomID:  "enabled",
 					MinValues: ptr(1),
 					MaxValues: 1,
 					Options:   enabledOptions,
 				}),
-			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_label_brackets"),
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_label_brackets"),
 				discord.TextInputComponent{
 					CustomID:    "brackets",
 					Style:       discord.TextInputStyleParagraph,
 					Value:       cfg.Brackets,
-					Placeholder: i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_placeholder_brackets"),
+					Placeholder: i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_placeholder_brackets"),
 					Required:    false,
 				}),
 		).
@@ -281,17 +281,17 @@ func TaxSetupModalSubmitHandler(c *components.Components, event *events.ModalSub
 
 	rate, err := strconv.Atoi(rateStr)
 	if err != nil || rate < 0 || rate > 100 {
-		return respondModalError(event, i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_err_rate_range"))
+		return respondModalError(event, i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_err_rate_range"))
 	}
 
 	minPoints, err := strconv.ParseInt(minPointsStr, 10, 64)
 	if err != nil || minPoints < 0 {
-		return respondModalError(event, i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_err_min_points"))
+		return respondModalError(event, i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_err_min_points"))
 	}
 
 	intervalDays, err := strconv.Atoi(intervalDaysStr)
 	if err != nil || intervalDays < 1 || intervalDays > 365 {
-		return respondModalError(event, i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_err_interval_range"))
+		return respondModalError(event, i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_err_interval_range"))
 	}
 
 	enabled := false
@@ -303,14 +303,14 @@ func TaxSetupModalSubmitHandler(c *components.Components, event *events.ModalSub
 	bracketsText := strings.ReplaceAll(bracketsStr, "\r\n", "\n")
 	_, errParse := parseTaxBrackets(event.Locale(), bracketsText)
 	if errParse != nil {
-		return respondModalError(event, i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_err_brackets_parse", map[string]any{"error": errParse.Error()}))
+		return respondModalError(event, i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_err_brackets_parse", map[string]any{"error": errParse.Error()}))
 	}
 
-	var cfg models.GoPointTaxConfig
+	var cfg models.CurrencyTaxConfig
 	errLoad := c.GormDB().Where("guild_id = ?", guildID).First(&cfg).Error
 	if errLoad != nil {
 		if errors.Is(errLoad, gorm.ErrRecordNotFound) {
-			cfg = models.GoPointTaxConfig{
+			cfg = models.CurrencyTaxConfig{
 				GuildID:      guildID,
 				Rate:         rate,
 				MinPoints:    minPoints,
@@ -340,12 +340,12 @@ func TaxSetupModalSubmitHandler(c *components.Components, event *events.ModalSub
 		}
 	}
 
-	statusStr := i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_status_disabled")
+	statusStr := i18n.TranslateText(event.Locale(), "components.currency.admin.tax_status_disabled")
 	if cfg.Enabled {
-		statusStr = i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_status_enabled")
+		statusStr = i18n.TranslateText(event.Locale(), "components.currency.admin.tax_status_enabled")
 	}
 
-	msg := i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_success", map[string]any{
+	msg := i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_success", map[string]any{
 		"rate":       cfg.Rate,
 		"min_points": cfg.MinPoints,
 		"interval":   cfg.IntervalDays,
@@ -374,7 +374,7 @@ func respondModalError(event *events.ModalSubmitInteractionCreate, text string) 
 		SetIsComponentsV2(true).
 		SetComponents(
 			discord.NewContainer(
-				discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_setup_error_title") + text),
+				discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_error_title") + text),
 			).WithAccentColor(0xE74C3C),
 		),
 	)
@@ -384,11 +384,11 @@ func respondModalError(event *events.ModalSubmitInteractionCreate, text string) 
 func TaxStatusHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 	guildID := *event.GuildID()
 
-	var cfg models.GoPointTaxConfig
+	var cfg models.CurrencyTaxConfig
 	err := c.GormDB().Where("guild_id = ?", guildID).First(&cfg).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			cfg = models.GoPointTaxConfig{
+			cfg = models.CurrencyTaxConfig{
 				GuildID:      guildID,
 				Rate:         0,
 				IntervalDays: 0,
@@ -401,9 +401,9 @@ func TaxStatusHandler(c *components.Components, event *events.ApplicationCommand
 		}
 	}
 
-	statusStr := i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_status_disabled")
+	statusStr := i18n.TranslateText(event.Locale(), "components.currency.admin.tax_status_disabled")
 	if cfg.Enabled {
-		statusStr = i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_status_enabled")
+		statusStr = i18n.TranslateText(event.Locale(), "components.currency.admin.tax_status_enabled")
 	}
 
 	nextTimeStr := "-"
@@ -413,13 +413,13 @@ func TaxStatusHandler(c *components.Components, event *events.ApplicationCommand
 
 	bracketsText := cfg.Brackets
 	if bracketsText == "" {
-		bracketsText = i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_brackets_none")
+		bracketsText = i18n.TranslateText(event.Locale(), "components.currency.admin.tax_brackets_none")
 	} else {
 		bracketsText = "```\n" + bracketsText + "\n```"
 	}
 
 	var sb strings.Builder
-	sb.WriteString(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_status_info", map[string]any{
+	sb.WriteString(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_status_info", map[string]any{
 		"enabled":    statusStr,
 		"rate":       cfg.Rate,
 		"min_points": cfg.MinPoints,
@@ -428,23 +428,23 @@ func TaxStatusHandler(c *components.Components, event *events.ApplicationCommand
 		"brackets":   bracketsText,
 	}))
 
-	var pending []models.GoPointPendingTax
+	var pending []models.CurrencyPendingTax
 	errFind := c.GormDB().Where("guild_id = ? AND collected = ? AND exempted = ?", guildID, false, false).
 		Order("collect_time asc").Limit(10).Find(&pending).Error
 	if errFind != nil {
 		return errors.NewError(errFind)
 	}
 	if len(pending) > 0 {
-		sb.WriteString(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_status_pending_title"))
+		sb.WriteString(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_status_pending_title"))
 		for _, p := range pending {
-			sb.WriteString(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_status_pending_item", map[string]any{
+			sb.WriteString(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_status_pending_item", map[string]any{
 				"user_id":      p.UserID.String(),
 				"tax_amount":   p.TaxAmount,
 				"collect_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, p.CollectTime).String(),
 			}))
 		}
 	} else {
-		sb.WriteString(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_status_no_pending"))
+		sb.WriteString(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_status_no_pending"))
 	}
 
 	if err := event.RespondMessage(discord.NewMessageBuilder().
@@ -470,14 +470,14 @@ func TaxForceHandler(c *components.Components, event *events.ApplicationCommandI
 		overwrite = opt
 	}
 
-	var cfg models.GoPointTaxConfig
+	var cfg models.CurrencyTaxConfig
 	var calcCount int
 	err := c.GormDB().Where("guild_id = ?", guildID).First(&cfg).Error
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return errors.NewError(err)
 	}
 	if err == nil && cfg.Enabled {
-		var points []models.GoPoint
+		var points []models.Currency
 		errPoints := c.GormDB().Where("guild_id = ? AND points > 0", guildID).Find(&points).Error
 		if errPoints != nil {
 			return errors.NewError(errPoints)
@@ -486,7 +486,7 @@ func TaxForceHandler(c *components.Components, event *events.ApplicationCommandI
 			for _, p := range points {
 				// Check if there is already a pending tax for this user in this guild
 				var count int64
-				errCount := tx.Model(&models.GoPointPendingTax{}).
+				errCount := tx.Model(&models.CurrencyPendingTax{}).
 					Where("guild_id = ? AND user_id = ? AND collected = ? AND exempted = ?", guildID, p.UserID, false, false).
 					Count(&count).Error
 				if errCount != nil {
@@ -494,7 +494,7 @@ func TaxForceHandler(c *components.Components, event *events.ApplicationCommandI
 				}
 				if count > 0 {
 					if overwrite {
-						if errDel := tx.Where("guild_id = ? AND user_id = ? AND collected = ? AND exempted = ?", guildID, p.UserID, false, false).Delete(&models.GoPointPendingTax{}).Error; errDel != nil {
+						if errDel := tx.Where("guild_id = ? AND user_id = ? AND collected = ? AND exempted = ?", guildID, p.UserID, false, false).Delete(&models.CurrencyPendingTax{}).Error; errDel != nil {
 							return errDel
 						}
 					} else {
@@ -505,7 +505,7 @@ func TaxForceHandler(c *components.Components, event *events.ApplicationCommandI
 				taxAmount := calculateUserTaxAmount(p.Points, &cfg)
 				exempted := (taxAmount == 0)
 
-				pending := models.GoPointPendingTax{
+				pending := models.CurrencyPendingTax{
 					ID:            uuid.New(),
 					GuildID:       guildID,
 					UserID:        p.UserID,
@@ -530,7 +530,7 @@ func TaxForceHandler(c *components.Components, event *events.ApplicationCommandI
 		}
 	}
 
-	var pending []models.GoPointPendingTax
+	var pending []models.CurrencyPendingTax
 	var collectedCount, exemptedCount int
 	errFind := c.GormDB().Where("guild_id = ? AND collected = ? AND exempted = ? AND collect_time <= ?", guildID, false, false, now).Find(&pending).Error
 	if errFind != nil {
@@ -538,7 +538,7 @@ func TaxForceHandler(c *components.Components, event *events.ApplicationCommandI
 	}
 	for _, tax := range pending {
 		errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
-			var p models.GoPoint
+			var p models.Currency
 			if err := tx.Where("user_id = ? AND guild_id = ?", tax.UserID, tax.GuildID).First(&p).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
 					tax.Exempted = true
@@ -570,11 +570,11 @@ func TaxForceHandler(c *components.Components, event *events.ApplicationCommandI
 	}
 
 	var sb strings.Builder
-	sb.WriteString(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_force_determination", map[string]any{
+	sb.WriteString(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_force_determination", map[string]any{
 		"count": calcCount,
 	}))
 	sb.WriteString("\n")
-	sb.WriteString(i18n.TranslateText(event.Locale(), "components.gopoint.admin.tax_force_collection", map[string]any{
+	sb.WriteString(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_force_collection", map[string]any{
 		"collected": collectedCount,
 		"exempted":  exemptedCount,
 	}))
@@ -622,14 +622,14 @@ func ResetPointsHandler(c *components.Components, event *events.ApplicationComma
 				level := m.XP.Level()
 				pts := int64(xppoint.TotalPoint(level))
 
-				res := tx.Model(&models.GoPoint{}).
+				res := tx.Model(&models.Currency{}).
 					Where("user_id = ? AND guild_id = ?", m.UserID, guildID).
 					Update("points", pts)
 				if res.Error != nil {
 					return res.Error
 				}
 				if res.RowsAffected == 0 {
-					gp := models.GoPoint{
+					gp := models.Currency{
 						UserID:  m.UserID,
 						GuildID: guildID,
 						Points:  pts,
@@ -641,7 +641,7 @@ func ResetPointsHandler(c *components.Components, event *events.ApplicationComma
 				updatedUserIDs[m.UserID] = true
 			}
 
-			var otherGoPoints []models.GoPoint
+			var otherGoPoints []models.Currency
 			if err := tx.Where("guild_id = ?", guildID).Find(&otherGoPoints).Error; err != nil {
 				return err
 			}
@@ -658,12 +658,12 @@ func ResetPointsHandler(c *components.Components, event *events.ApplicationComma
 		if err != nil {
 			return errors.NewError(err)
 		}
-		msg = i18n.TranslateText(event.Locale(), "components.gopoint.admin.reset_by_level_success")
+		msg = i18n.TranslateText(event.Locale(), "components.currency.admin.reset_by_level_success")
 	} else {
-		if err := c.GormDB().Model(&models.GoPoint{}).Where("guild_id = ?", guildID).Update("points", targetPoints).Error; err != nil {
+		if err := c.GormDB().Model(&models.Currency{}).Where("guild_id = ?", guildID).Update("points", targetPoints).Error; err != nil {
 			return errors.NewError(err)
 		}
-		msg = i18n.TranslateText(event.Locale(), "components.gopoint.admin.reset_success", map[string]any{
+		msg = i18n.TranslateText(event.Locale(), "components.currency.admin.reset_success", map[string]any{
 			"points": targetPoints,
 		})
 	}
@@ -684,9 +684,9 @@ func ResetPointsHandler(c *components.Components, event *events.ApplicationComma
 
 func criteriaDisplayName(locale discord.Locale, c string) string {
 	if c == "final" {
-		return i18n.TranslateText(locale, "components.gopoint.admin.season_criteria_final")
+		return i18n.TranslateText(locale, "components.currency.admin.season_criteria_final")
 	}
-	return i18n.TranslateText(locale, "components.gopoint.admin.season_criteria_earned")
+	return i18n.TranslateText(locale, "components.currency.admin.season_criteria_earned")
 }
 
 func SeasonStartHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
@@ -701,7 +701,7 @@ func SeasonStartHandler(c *components.Components, event *events.ApplicationComma
 
 	guildID := *event.GuildID()
 
-	var active models.GoPointSeason
+	var active models.CurrencySeason
 	err := c.GormDB().Where("guild_id = ? AND is_active = ?", guildID, true).First(&active).Error
 	if err == nil {
 		if errResp := event.RespondMessage(discord.NewMessageBuilder().
@@ -709,7 +709,7 @@ func SeasonStartHandler(c *components.Components, event *events.ApplicationComma
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_err_active_exists", map[string]any{
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.currency.admin.season_err_active_exists", map[string]any{
 						"name": active.Name,
 					})),
 				).WithAccentColor(0xE74C3C),
@@ -728,7 +728,7 @@ func SeasonStartHandler(c *components.Components, event *events.ApplicationComma
 	}
 	endTime := startTime.AddDate(0, 0, durationDays)
 
-	season := models.GoPointSeason{
+	season := models.CurrencySeason{
 		ID:         uuid.New(),
 		GuildID:    guildID,
 		Name:       name,
@@ -741,7 +741,7 @@ func SeasonStartHandler(c *components.Components, event *events.ApplicationComma
 	}
 
 	errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
-		var overlap models.GoPointSeason
+		var overlap models.CurrencySeason
 		errOverlap := tx.Where("guild_id = ? AND has_awarded = ? AND start_time < ? AND end_time > ?", guildID, false, endTime, startTime).First(&overlap).Error
 		if errOverlap == nil {
 			return fmt.Errorf("overlap:%s", overlap.Name)
@@ -764,7 +764,7 @@ func SeasonStartHandler(c *components.Components, event *events.ApplicationComma
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
-						discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_err_active_exists", map[string]any{
+						discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.currency.admin.season_err_active_exists", map[string]any{
 							"name": overlapName,
 						})),
 					).WithAccentColor(0xE74C3C),
@@ -780,14 +780,14 @@ func SeasonStartHandler(c *components.Components, event *events.ApplicationComma
 
 	var msg string
 	if season.IsActive {
-		msg = i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_start_success", map[string]any{
+		msg = i18n.TranslateText(event.Locale(), "components.currency.admin.season_start_success", map[string]any{
 			"name":     season.Name,
 			"duration": durationDays,
 			"criteria": criteriaDisplayName(event.Locale(), criteria),
 			"end_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, season.EndTime).String(),
 		})
 	} else {
-		msg = i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_start_scheduled", map[string]any{
+		msg = i18n.TranslateText(event.Locale(), "components.currency.admin.season_start_scheduled", map[string]any{
 			"name":       season.Name,
 			"criteria":   criteriaDisplayName(event.Locale(), criteria),
 			"start_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, season.StartTime).String(),
@@ -809,19 +809,19 @@ func SeasonStartHandler(c *components.Components, event *events.ApplicationComma
 	return nil
 }
 
-func closeSeasonTx(tx *gorm.DB, s *models.GoPointSeason) error {
+func closeSeasonTx(tx *gorm.DB, s *models.CurrencySeason) error {
 	s.IsActive = false
 	s.HasAwarded = true
 	if err := tx.Save(s).Error; err != nil {
 		return err
 	}
 	if s.Criteria == "final" {
-		var gp []models.GoPoint
+		var gp []models.Currency
 		if err := tx.Where("guild_id = ?", s.GuildID).Find(&gp).Error; err != nil {
 			return err
 		}
 		for _, p := range gp {
-			su := models.GoPointSeasonUser{
+			su := models.CurrencySeasonUser{
 				SeasonID:     s.ID,
 				UserID:       p.UserID,
 				GuildID:      s.GuildID,
@@ -838,14 +838,14 @@ func closeSeasonTx(tx *gorm.DB, s *models.GoPointSeason) error {
 func SeasonEndHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 	guildID := *event.GuildID()
 
-	var active models.GoPointSeason
+	var active models.CurrencySeason
 	if err := c.GormDB().Where("guild_id = ? AND is_active = ?", guildID, true).First(&active).Error; err != nil {
 		if errResp := event.RespondMessage(discord.NewMessageBuilder().
 			SetEphemeral(true).
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_err_no_active")),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.currency.admin.season_err_no_active")),
 				).WithAccentColor(0xE74C3C),
 			),
 		); errResp != nil {
@@ -863,7 +863,7 @@ func SeasonEndHandler(c *components.Components, event *events.ApplicationCommand
 
 	announceSeasonResults(c, event.Client(), active.ID)
 
-	msg := i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_end_early", map[string]any{
+	msg := i18n.TranslateText(event.Locale(), "components.currency.admin.season_end_early", map[string]any{
 		"name": active.Name,
 	})
 
@@ -884,14 +884,14 @@ func SeasonEndHandler(c *components.Components, event *events.ApplicationCommand
 func SeasonStatusHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 	guildID := *event.GuildID()
 
-	var active models.GoPointSeason
+	var active models.CurrencySeason
 	if err := c.GormDB().Where("guild_id = ? AND is_active = ?", guildID, true).First(&active).Error; err != nil {
 		if errResp := event.RespondMessage(discord.NewMessageBuilder().
 			SetEphemeral(true).
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_err_no_active")),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.currency.admin.season_err_no_active")),
 				).WithAccentColor(0xE74C3C),
 			),
 		); errResp != nil {
@@ -900,15 +900,15 @@ func SeasonStatusHandler(c *components.Components, event *events.ApplicationComm
 		return nil
 	}
 
-	var records []models.GoPointSeasonUser
+	var records []models.CurrencySeasonUser
 	if active.Criteria == "final" {
-		var gp []models.GoPoint
+		var gp []models.Currency
 		errFind := c.GormDB().Where("guild_id = ?", guildID).Order("points desc").Limit(10).Find(&gp).Error
 		if errFind != nil {
 			return errors.NewError(errFind)
 		}
 		for _, p := range gp {
-			records = append(records, models.GoPointSeasonUser{
+			records = append(records, models.CurrencySeasonUser{
 				UserID:       p.UserID,
 				PointsEarned: p.Points,
 			})
@@ -921,7 +921,7 @@ func SeasonStatusHandler(c *components.Components, event *events.ApplicationComm
 
 	var rankingLines []string
 	if len(records) == 0 {
-		rankingLines = append(rankingLines, i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_ranking_no_data"))
+		rankingLines = append(rankingLines, i18n.TranslateText(event.Locale(), "components.currency.admin.season_ranking_no_data"))
 	} else {
 		for i, r := range records {
 			medal := ""
@@ -935,7 +935,7 @@ func SeasonStatusHandler(c *components.Components, event *events.ApplicationComm
 			default:
 				medal = fmt.Sprintf("#%d ", i+1)
 			}
-			rankingLines = append(rankingLines, i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_ranking_entry", map[string]any{
+			rankingLines = append(rankingLines, i18n.TranslateText(event.Locale(), "components.currency.admin.season_ranking_entry", map[string]any{
 				"medal":   medal,
 				"user_id": r.UserID.String(),
 				"points":  r.PointsEarned,
@@ -944,13 +944,13 @@ func SeasonStatusHandler(c *components.Components, event *events.ApplicationComm
 	}
 
 	remaining := time.Until(active.EndTime).Round(time.Minute)
-	statusStr := i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_status_active")
+	statusStr := i18n.TranslateText(event.Locale(), "components.currency.admin.season_status_active")
 	if remaining < 0 {
 		remaining = 0
-		statusStr = i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_status_ended")
+		statusStr = i18n.TranslateText(event.Locale(), "components.currency.admin.season_status_ended")
 	}
 
-	msg := i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_status_info", map[string]any{
+	msg := i18n.TranslateText(event.Locale(), "components.currency.admin.season_status_info", map[string]any{
 		"name":       active.Name,
 		"status":     statusStr,
 		"criteria":   criteriaDisplayName(event.Locale(), active.Criteria),
@@ -981,7 +981,7 @@ func SeasonRankingHandler(c *components.Components, event *events.ApplicationCom
 
 	guildID := *event.GuildID()
 
-	var season models.GoPointSeason
+	var season models.CurrencySeason
 	if hasID {
 		sUUID, err := uuid.Parse(seasonIDStr)
 		if err != nil {
@@ -990,7 +990,7 @@ func SeasonRankingHandler(c *components.Components, event *events.ApplicationCom
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
-						discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_not_found")),
+						discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.currency.admin.season_not_found")),
 					).WithAccentColor(0xE74C3C),
 				),
 			); errResp != nil {
@@ -1004,7 +1004,7 @@ func SeasonRankingHandler(c *components.Components, event *events.ApplicationCom
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
-						discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_not_found")),
+						discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.currency.admin.season_not_found")),
 					).WithAccentColor(0xE74C3C),
 				),
 			); errResp != nil {
@@ -1020,7 +1020,7 @@ func SeasonRankingHandler(c *components.Components, event *events.ApplicationCom
 					SetIsComponentsV2(true).
 					SetComponents(
 						discord.NewContainer(
-							discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_err_no_active")),
+							discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.currency.admin.season_err_no_active")),
 						).WithAccentColor(0xE74C3C),
 					),
 				); errResp != nil {
@@ -1031,15 +1031,15 @@ func SeasonRankingHandler(c *components.Components, event *events.ApplicationCom
 		}
 	}
 
-	var records []models.GoPointSeasonUser
+	var records []models.CurrencySeasonUser
 	if season.Criteria == "final" {
-		var gp []models.GoPoint
+		var gp []models.Currency
 		errFind := c.GormDB().Where("guild_id = ?", guildID).Order("points desc").Limit(20).Find(&gp).Error
 		if errFind != nil {
 			return errors.NewError(errFind)
 		}
 		for _, p := range gp {
-			records = append(records, models.GoPointSeasonUser{
+			records = append(records, models.CurrencySeasonUser{
 				UserID:       p.UserID,
 				PointsEarned: p.Points,
 			})
@@ -1052,7 +1052,7 @@ func SeasonRankingHandler(c *components.Components, event *events.ApplicationCom
 
 	var rankingLines []string
 	if len(records) == 0 {
-		rankingLines = append(rankingLines, i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_ranking_no_data"))
+		rankingLines = append(rankingLines, i18n.TranslateText(event.Locale(), "components.currency.admin.season_ranking_no_data"))
 	} else {
 		for i, r := range records {
 			medal := ""
@@ -1066,7 +1066,7 @@ func SeasonRankingHandler(c *components.Components, event *events.ApplicationCom
 			default:
 				medal = fmt.Sprintf("`#%d` ", i+1)
 			}
-			rankingLines = append(rankingLines, i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_ranking_entry", map[string]any{
+			rankingLines = append(rankingLines, i18n.TranslateText(event.Locale(), "components.currency.admin.season_ranking_entry", map[string]any{
 				"medal":   medal,
 				"user_id": r.UserID.String(),
 				"points":  r.PointsEarned,
@@ -1074,7 +1074,7 @@ func SeasonRankingHandler(c *components.Components, event *events.ApplicationCom
 		}
 	}
 
-	title := i18n.TranslateText(event.Locale(), "components.gopoint.admin.season_ranking_title", map[string]any{
+	title := i18n.TranslateText(event.Locale(), "components.currency.admin.season_ranking_title", map[string]any{
 		"name":     season.Name,
 		"criteria": criteriaDisplayName(event.Locale(), season.Criteria),
 	})
@@ -1100,12 +1100,12 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 	now := time.Now()
 
 	// 1. Tax calculations (Determination Phase)
-	var activeConfigs []models.GoPointTaxConfig
+	var activeConfigs []models.CurrencyTaxConfig
 	if err := c.GormDB().Where("enabled = ? AND next_tax_time <= ?", true, now).Find(&activeConfigs).Error; err != nil {
 		return err
 	}
 	for _, cfg := range activeConfigs {
-		var points []models.GoPoint
+		var points []models.Currency
 		errPoints := c.GormDB().Where("guild_id = ? AND points > 0", cfg.GuildID).Find(&points).Error
 		if errPoints != nil {
 			slog.Error("failed to find points for tax", "guild_id", cfg.GuildID, "error", errPoints)
@@ -1115,7 +1115,7 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 			for _, p := range points {
 				// Check if there is already a pending tax for this user in this guild
 				var count int64
-				errCount := tx.Model(&models.GoPointPendingTax{}).
+				errCount := tx.Model(&models.CurrencyPendingTax{}).
 					Where("guild_id = ? AND user_id = ? AND collected = ? AND exempted = ?", cfg.GuildID, p.UserID, false, false).
 					Count(&count).Error
 				if errCount != nil {
@@ -1128,7 +1128,7 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 				taxAmount := calculateUserTaxAmount(p.Points, &cfg)
 				exempted := (taxAmount == 0)
 
-				pending := models.GoPointPendingTax{
+				pending := models.CurrencyPendingTax{
 					ID:            uuid.New(),
 					GuildID:       cfg.GuildID,
 					UserID:        p.UserID,
@@ -1157,13 +1157,13 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 	}
 
 	// 2. Tax executions (Collection Phase)
-	var pendingTaxes []models.GoPointPendingTax
+	var pendingTaxes []models.CurrencyPendingTax
 	if err := c.GormDB().Where("collected = ? AND exempted = ? AND collect_time <= ?", false, false, now).Find(&pendingTaxes).Error; err != nil {
 		return err
 	}
 	for _, tax := range pendingTaxes {
 		errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
-			var p models.GoPoint
+			var p models.Currency
 			if err := tx.Where("user_id = ? AND guild_id = ?", tax.UserID, tax.GuildID).First(&p).Error; err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
 					tax.Exempted = true
@@ -1193,7 +1193,7 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 	}
 
 	// 3. Active seasons ending
-	var activeSeasons []models.GoPointSeason
+	var activeSeasons []models.CurrencySeason
 	if err := c.GormDB().Where("is_active = ? AND end_time <= ?", true, now).Find(&activeSeasons).Error; err != nil {
 		return err
 	}
@@ -1212,7 +1212,7 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 	}
 
 	// 4. Scheduled seasons that expired before being activated
-	var expiredScheduledSeasons []models.GoPointSeason
+	var expiredScheduledSeasons []models.CurrencySeason
 	if err := c.GormDB().Where("is_active = ? AND has_awarded = ? AND end_time <= ?", false, false, now).Find(&expiredScheduledSeasons).Error; err != nil {
 		return err
 	}
@@ -1231,12 +1231,12 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 	}
 
 	// 5. Starting scheduled seasons
-	var scheduledSeasons []models.GoPointSeason
+	var scheduledSeasons []models.CurrencySeason
 	if err := c.GormDB().Where("is_active = ? AND has_awarded = ? AND start_time <= ? AND end_time > ?", false, false, now, now).Find(&scheduledSeasons).Error; err != nil {
 		return err
 	}
 	for _, s := range scheduledSeasons {
-		var activeToClose []models.GoPointSeason
+		var activeToClose []models.CurrencySeason
 		errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
 			if err := tx.Where("guild_id = ? AND is_active = ?", s.GuildID, true).Find(&activeToClose).Error; err != nil {
 				return err
@@ -1258,7 +1258,7 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 			if s.ChannelID != 0 {
 				_, _ = client.Rest.CreateMessage(s.ChannelID, discord.NewMessageCreateBuilder().
 					SetAllowedMentions(&discord.AllowedMentions{}).
-					SetContent(i18n.TranslateText(discord.LocaleUnknown, "components.gopoint.admin.season_start_announcement", map[string]any{
+					SetContent(i18n.TranslateText(discord.LocaleUnknown, "components.currency.admin.season_start_announcement", map[string]any{
 						"name":     s.Name,
 						"criteria": criteriaDisplayName(discord.LocaleUnknown, s.Criteria),
 						"end_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, s.EndTime).String(),
@@ -1275,24 +1275,24 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 }
 
 func announceSeasonResults(c *components.Components, client *bot.Client, seasonID uuid.UUID) {
-	var season models.GoPointSeason
+	var season models.CurrencySeason
 	if err := c.GormDB().Where("id = ?", seasonID).First(&season).Error; err != nil {
 		return
 	}
 
-	var records []models.GoPointSeasonUser
+	var records []models.CurrencySeasonUser
 	if err := c.GormDB().Where("season_id = ?", seasonID).Order("points_earned desc").Limit(10).Find(&records).Error; err != nil {
 		return
 	}
 
 	var sb strings.Builder
-	sb.WriteString(i18n.TranslateText(discord.LocaleUnknown, "components.gopoint.admin.season_end_announcement_title", map[string]any{
+	sb.WriteString(i18n.TranslateText(discord.LocaleUnknown, "components.currency.admin.season_end_announcement_title", map[string]any{
 		"name":     season.Name,
 		"criteria": criteriaDisplayName(discord.LocaleUnknown, season.Criteria),
 	}))
 
 	if len(records) == 0 {
-		sb.WriteString(i18n.TranslateText(discord.LocaleUnknown, "components.gopoint.admin.season_end_announcement_no_data"))
+		sb.WriteString(i18n.TranslateText(discord.LocaleUnknown, "components.currency.admin.season_end_announcement_no_data"))
 	} else {
 		for i, r := range records {
 			medal := ""
@@ -1312,7 +1312,7 @@ func announceSeasonResults(c *components.Components, client *bot.Client, seasonI
 			if err == nil && user != nil {
 				name = fmt.Sprintf("**%s**", user.EffectiveName())
 			}
-			sb.WriteString(i18n.TranslateText(discord.LocaleUnknown, "components.gopoint.admin.season_end_announcement_entry", map[string]any{
+			sb.WriteString(i18n.TranslateText(discord.LocaleUnknown, "components.currency.admin.season_end_announcement_entry", map[string]any{
 				"medal":  medal,
 				"name":   name,
 				"points": r.PointsEarned,
@@ -1332,7 +1332,7 @@ func announceSeasonResults(c *components.Components, client *bot.Client, seasonI
 func seasonAutocomplete(c *components.Components, event *events.AutocompleteInteractionCreate) errors.Error {
 	query := event.Data.String("season_id")
 
-	var seasons []models.GoPointSeason
+	var seasons []models.CurrencySeason
 	err := c.GormDB().
 		Where("guild_id = ? AND (name LIKE ? OR id LIKE ?)", *event.GuildID(), "%"+escapeLike(query)+"%", "%"+escapeLike(query)+"%").
 		Limit(25).

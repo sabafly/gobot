@@ -1,4 +1,4 @@
-package gopoint
+package currency
 
 import (
 	"context"
@@ -54,7 +54,7 @@ func TestAddPointTx_SeasonPoints(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.Currency{}, &models.CurrencySeason{}, &models.CurrencySeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -67,7 +67,7 @@ func TestAddPointTx_SeasonPoints(t *testing.T) {
 	_ = gdb.Create(&models.Guild{ID: guildID})
 
 	// Create an active season
-	activeSeason := models.GoPointSeason{
+	activeSeason := models.CurrencySeason{
 		ID:        uuid.New(),
 		GuildID:   guildID,
 		Name:      "Test Season",
@@ -89,7 +89,7 @@ func TestAddPointTx_SeasonPoints(t *testing.T) {
 	}
 
 	// Verify points in GoPoint and GoPointSeasonUser
-	var gp models.GoPoint
+	var gp models.Currency
 	if err := gdb.Where("user_id = ? AND guild_id = ?", userID, guildID).First(&gp).Error; err != nil {
 		t.Fatalf("failed to get GoPoint: %v", err)
 	}
@@ -97,7 +97,7 @@ func TestAddPointTx_SeasonPoints(t *testing.T) {
 		t.Errorf("expected GoPoint points to be 100, got %d", gp.Points)
 	}
 
-	var su models.GoPointSeasonUser
+	var su models.CurrencySeasonUser
 	if err := gdb.Where("season_id = ? AND user_id = ?", activeSeason.ID, userID).First(&su).Error; err != nil {
 		t.Fatalf("failed to get GoPointSeasonUser: %v", err)
 	}
@@ -135,7 +135,7 @@ func TestProcessBackgroundTasks_ExpiredScheduledSeason(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}, &models.GoPointTaxConfig{}, &models.GoPointPendingTax{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.Currency{}, &models.CurrencySeason{}, &models.CurrencySeasonUser{}, &models.CurrencyTaxConfig{}, &models.CurrencyPendingTax{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -149,7 +149,7 @@ func TestProcessBackgroundTasks_ExpiredScheduledSeason(t *testing.T) {
 	_ = gdb.Create(&models.Guild{ID: guildID})
 
 	// Create a scheduled season that expired before activation
-	expiredSeason := models.GoPointSeason{
+	expiredSeason := models.CurrencySeason{
 		ID:         uuid.New(),
 		GuildID:    guildID,
 		Name:       "Expired Scheduled Season",
@@ -167,7 +167,7 @@ func TestProcessBackgroundTasks_ExpiredScheduledSeason(t *testing.T) {
 		t.Fatalf("ProcessBackgroundTasks failed: %v", err)
 	}
 
-	var s models.GoPointSeason
+	var s models.CurrencySeason
 	if err := gdb.Where("id = ?", expiredSeason.ID).First(&s).Error; err != nil {
 		t.Fatalf("failed to fetch season: %v", err)
 	}
@@ -185,7 +185,7 @@ func TestProcessBackgroundTasks_StartScheduledSeason_WithActiveSeason(t *testing
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}, &models.GoPointTaxConfig{}, &models.GoPointPendingTax{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.Currency{}, &models.CurrencySeason{}, &models.CurrencySeasonUser{}, &models.CurrencyTaxConfig{}, &models.CurrencyPendingTax{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -199,7 +199,7 @@ func TestProcessBackgroundTasks_StartScheduledSeason_WithActiveSeason(t *testing
 	_ = gdb.Create(&models.Guild{ID: guildID})
 
 	// Create an existing active season
-	oldSeason := models.GoPointSeason{
+	oldSeason := models.CurrencySeason{
 		ID:         uuid.New(),
 		GuildID:    guildID,
 		Name:       "Old Active Season",
@@ -212,7 +212,7 @@ func TestProcessBackgroundTasks_StartScheduledSeason_WithActiveSeason(t *testing
 	_ = gdb.Create(&oldSeason)
 
 	// Create a new scheduled season ready to start
-	newScheduled := models.GoPointSeason{
+	newScheduled := models.CurrencySeason{
 		ID:         uuid.New(),
 		GuildID:    guildID,
 		Name:       "New Scheduled Season",
@@ -228,7 +228,7 @@ func TestProcessBackgroundTasks_StartScheduledSeason_WithActiveSeason(t *testing
 		t.Fatalf("ProcessBackgroundTasks failed: %v", err)
 	}
 
-	var fetchedOld models.GoPointSeason
+	var fetchedOld models.CurrencySeason
 	if err := gdb.Where("id = ?", oldSeason.ID).First(&fetchedOld).Error; err != nil {
 		t.Fatalf("failed to fetch old season: %v", err)
 	}
@@ -239,7 +239,7 @@ func TestProcessBackgroundTasks_StartScheduledSeason_WithActiveSeason(t *testing
 		t.Errorf("expected old season HasAwarded to be true after being replaced, got false")
 	}
 
-	var fetchedNew models.GoPointSeason
+	var fetchedNew models.CurrencySeason
 	if err := gdb.Where("id = ?", newScheduled.ID).First(&fetchedNew).Error; err != nil {
 		t.Fatalf("failed to fetch new season: %v", err)
 	}
@@ -254,7 +254,7 @@ func TestCloseSeason_DuplicateUserRecord(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.Currency{}, &models.CurrencySeason{}, &models.CurrencySeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -264,9 +264,9 @@ func TestCloseSeason_DuplicateUserRecord(t *testing.T) {
 	guildID := snowflake.ID(5678)
 	_ = gdb.Create(&models.User{ID: userID})
 	_ = gdb.Create(&models.Guild{ID: guildID})
-	_ = gdb.Create(&models.GoPoint{UserID: userID, GuildID: guildID, Points: 500})
+	_ = gdb.Create(&models.Currency{UserID: userID, GuildID: guildID, Points: 500})
 
-	season := models.GoPointSeason{
+	season := models.CurrencySeason{
 		ID:         uuid.New(),
 		GuildID:    guildID,
 		Name:       "Final Criteria Season",
@@ -279,7 +279,7 @@ func TestCloseSeason_DuplicateUserRecord(t *testing.T) {
 	_ = gdb.Create(&season)
 
 	// Pre-create GoPointSeasonUser record (simulating points added during season)
-	existingSU := models.GoPointSeasonUser{
+	existingSU := models.CurrencySeasonUser{
 		SeasonID:     season.ID,
 		UserID:       userID,
 		GuildID:      guildID,
@@ -295,11 +295,50 @@ func TestCloseSeason_DuplicateUserRecord(t *testing.T) {
 		t.Fatalf("closeSeasonTx failed with duplicate user record: %v", err)
 	}
 
-	var fetchedSU models.GoPointSeasonUser
+	var fetchedSU models.CurrencySeasonUser
 	if err := gdb.Where("season_id = ? AND user_id = ?", season.ID, userID).First(&fetchedSU).Error; err != nil {
 		t.Fatalf("failed to fetch GoPointSeasonUser: %v", err)
 	}
 	if fetchedSU.PointsEarned != 500 {
 		t.Errorf("expected PointsEarned to be updated to 500 for final criteria, got %d", fetchedSU.PointsEarned)
+	}
+}
+
+func TestGetCurrencyName(t *testing.T) {
+	gdb, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to open sqlite DB: %v", err)
+	}
+
+	for _, model := range []any{&models.Guild{}, &models.CurrencyConfig{}} {
+		if err := createSQLiteTable(gdb, model); err != nil {
+			t.Fatalf("failed to create table for %T: %v", model, err)
+		}
+	}
+
+	ctx := context.Background()
+	dbWrapper := &database.DB{DB: gdb}
+	c := components.New(ctx, components.Config{}, dbWrapper)
+
+	guildID := snowflake.ID(9999)
+
+	// Default currency name should be GoPoint
+	defaultName := GetCurrencyName(c, guildID)
+	if defaultName != "GoPoint" {
+		t.Errorf("expected default currency name to be GoPoint, got %s", defaultName)
+	}
+
+	// Set custom currency name
+	cfg := models.CurrencyConfig{
+		GuildID: guildID,
+		Name:    "ゴールド",
+	}
+	if err := gdb.Create(&cfg).Error; err != nil {
+		t.Fatalf("failed to create CurrencyConfig: %v", err)
+	}
+
+	customName := GetCurrencyName(c, guildID)
+	if customName != "ゴールド" {
+		t.Errorf("expected custom currency name to be ゴールド, got %s", customName)
 	}
 }

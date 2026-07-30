@@ -31,7 +31,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 
-	"github.com/sabafly/gobot/bot/commands/gopoint"
+	"github.com/sabafly/gobot/bot/commands/currency"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/internal/embeds"
 	"github.com/sabafly/gobot/internal/errors"
@@ -108,7 +108,7 @@ func eventHandler(c *components.Components, event bot.Event) errors.Error {
 			return errors.NewError(err)
 		}
 
-		if err := gopoint.AddPoint(c, m.UserID, g.ID, rand.Int64N(2)*50); err != nil {
+		if err := currency.AddCurrency(c, m.UserID, g.ID, rand.Int64N(2)*50); err != nil {
 			slog.Error("ポイント追加に失敗", slog.Any("err", err), slog.Any("user_id", m.UserID), slog.Any("guild_id", g.ID))
 		}
 

@@ -24,7 +24,7 @@ func Command(c *components.Components) components.Command {
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
 				Name:                     "bet",
-				Description:              "Bet gopoints on various games",
+				Description:              "Bet currency on various games",
 				DescriptionLocalizations: i18n.TranslateTextMap("command.bet.description"),
 				IntegrationTypes: []discord.ApplicationIntegrationType{
 					discord.ApplicationIntegrationTypeGuildInstall,

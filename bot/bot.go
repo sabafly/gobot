@@ -48,7 +48,7 @@ import (
 
 	"github.com/sabafly/gobot/bot/commands/bet"
 	"github.com/sabafly/gobot/bot/commands/debug"
-	"github.com/sabafly/gobot/bot/commands/gopoint"
+	"github.com/sabafly/gobot/bot/commands/currency"
 	"github.com/sabafly/gobot/bot/commands/level"
 	"github.com/sabafly/gobot/bot/commands/message"
 	"github.com/sabafly/gobot/bot/commands/permission"
@@ -167,7 +167,7 @@ func run() error {
 		permission.Command(component),
 		setting.Command(component),
 		role.ImportCommand(component),
-		gopoint.Command(component),
+		currency.Command(component),
 		play.Command(component),
 		bet.Command(component),
 		user.Command(component),

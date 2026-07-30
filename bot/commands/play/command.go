@@ -12,7 +12,7 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/google/uuid"
 
-	"github.com/sabafly/gobot/bot/commands/gopoint"
+	"github.com/sabafly/gobot/bot/commands/currency"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/internal/errors"
@@ -129,7 +129,7 @@ func Command(c *components.Components) components.Command {
 					generic.PermissionDefaultString("play.high-and-low"),
 				},
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					point, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+					point, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
@@ -241,7 +241,7 @@ func Command(c *components.Components) components.Command {
 					if data == nil {
 						return nil
 					}
-					gopoint, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+					gopoint, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
@@ -284,7 +284,7 @@ func Command(c *components.Components) components.Command {
 						return nil
 					}
 
-					point, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+					point, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
@@ -297,7 +297,7 @@ func Command(c *components.Components) components.Command {
 						return nil
 					}
 
-					if err := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), -int64(data.startOption.Cost)); err != nil {
+					if err := currency.AddPoint(c, event.User().ID, *event.GuildID(), -int64(data.startOption.Cost)); err != nil {
 						return errors.NewError(err)
 					}
 
@@ -409,7 +409,7 @@ func Command(c *components.Components) components.Command {
 						optionIndex = 0 // default to first option if invalid
 					}
 
-					point, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+					point, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}

@@ -9,7 +9,7 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	"github.com/sabafly/gobot/bot/commands/gopoint"
+	"github.com/sabafly/gobot/bot/commands/currency"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/database/models"
@@ -46,7 +46,7 @@ func TestChinchiro_NormalResolution(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.ChinchiroSession{}, &models.ChinchiroPlayer{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.Currency{}, &models.ChinchiroSession{}, &models.ChinchiroPlayer{}, &models.CurrencySeason{}, &models.CurrencySeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -67,9 +67,9 @@ func TestChinchiro_NormalResolution(t *testing.T) {
 	_ = gdb.Create(&models.Guild{ID: guildID})
 
 	// Initial balances
-	_ = gdb.Create(&models.GoPoint{UserID: hostID, GuildID: guildID, Points: 1000}) // Host starts with 1000
-	_ = gdb.Create(&models.GoPoint{UserID: kid1ID, GuildID: guildID, Points: 100})  // Kid1 starts with 100
-	_ = gdb.Create(&models.GoPoint{UserID: kid2ID, GuildID: guildID, Points: 100})  // Kid2 starts with 100
+	_ = gdb.Create(&models.Currency{UserID: hostID, GuildID: guildID, Points: 1000}) // Host starts with 1000
+	_ = gdb.Create(&models.Currency{UserID: kid1ID, GuildID: guildID, Points: 100})  // Kid1 starts with 100
+	_ = gdb.Create(&models.Currency{UserID: kid2ID, GuildID: guildID, Points: 100})  // Kid2 starts with 100
 
 	bet := int64(10)
 	maxLiability := bet * 5 * 2 // 2 kids, max liability 100
@@ -101,13 +101,13 @@ func TestChinchiro_NormalResolution(t *testing.T) {
 		}
 
 		// Deduct upfront
-		if err := gopoint.AddPointTx(tx, hostID, guildID, -maxLiability); err != nil {
+		if err := currency.AddPointTx(tx, hostID, guildID, -maxLiability); err != nil {
 			return err
 		}
-		if err := gopoint.AddPointTx(tx, kid1ID, guildID, -bet); err != nil {
+		if err := currency.AddPointTx(tx, kid1ID, guildID, -bet); err != nil {
 			return err
 		}
-		if err := gopoint.AddPointTx(tx, kid2ID, guildID, -bet); err != nil {
+		if err := currency.AddPointTx(tx, kid2ID, guildID, -bet); err != nil {
 			return err
 		}
 		return nil
@@ -137,7 +137,7 @@ func TestChinchiro_NormalResolution(t *testing.T) {
 	// - Host locked 100 pt: Kid1 won (+10 change to Kid1, so -10 to Host), Kid2 lost (+10 change to Host). Net Host change: 0 pt.
 	//   Host gets back maxLiability (100 pt) + netChange (0 pt) = 100 pt. Total: 1000 pt.
 
-	var hostGP, kid1GP, kid2GP models.GoPoint
+	var hostGP, kid1GP, kid2GP models.Currency
 	_ = gdb.Where("user_id = ? AND guild_id = ?", hostID, guildID).First(&hostGP)
 	_ = gdb.Where("user_id = ? AND guild_id = ?", kid1ID, guildID).First(&kid1GP)
 	_ = gdb.Where("user_id = ? AND guild_id = ?", kid2ID, guildID).First(&kid2GP)
@@ -159,7 +159,7 @@ func TestChinchiro_ZoroResolution(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.ChinchiroSession{}, &models.ChinchiroPlayer{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.Currency{}, &models.ChinchiroSession{}, &models.ChinchiroPlayer{}, &models.CurrencySeason{}, &models.CurrencySeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -174,8 +174,8 @@ func TestChinchiro_ZoroResolution(t *testing.T) {
 	_ = gdb.Create(&models.Guild{ID: guildID})
 
 	// Initial balances
-	_ = gdb.Create(&models.GoPoint{UserID: hostID, GuildID: guildID, Points: 1000})
-	_ = gdb.Create(&models.GoPoint{UserID: kid1ID, GuildID: guildID, Points: 100})
+	_ = gdb.Create(&models.Currency{UserID: hostID, GuildID: guildID, Points: 1000})
+	_ = gdb.Create(&models.Currency{UserID: kid1ID, GuildID: guildID, Points: 100})
 
 	bet := int64(10)
 	maxLiability := bet * 5 * 1 // 1 kid, max liability 50
@@ -203,10 +203,10 @@ func TestChinchiro_ZoroResolution(t *testing.T) {
 		}
 
 		// Deduct upfront
-		if err := gopoint.AddPointTx(tx, hostID, guildID, -maxLiability); err != nil {
+		if err := currency.AddPointTx(tx, hostID, guildID, -maxLiability); err != nil {
 			return err
 		}
-		if err := gopoint.AddPointTx(tx, kid1ID, guildID, -bet); err != nil {
+		if err := currency.AddPointTx(tx, kid1ID, guildID, -bet); err != nil {
 			return err
 		}
 		return nil
@@ -235,7 +235,7 @@ func TestChinchiro_ZoroResolution(t *testing.T) {
 	// - Host locked 50 pt: Kid1 won 3x (net -30 to Host).
 	//   Host gets back maxLiability (50 pt) + netChange (-30 pt) = 20 pt. Total: 970 pt.
 
-	var hostGP, kid1GP models.GoPoint
+	var hostGP, kid1GP models.Currency
 	_ = gdb.Where("user_id = ? AND guild_id = ?", hostID, guildID).First(&hostGP)
 	_ = gdb.Where("user_id = ? AND guild_id = ?", kid1ID, guildID).First(&kid1GP)
 
@@ -253,7 +253,7 @@ func TestChinchiro_HostRotation(t *testing.T) {
 		t.Fatalf("failed to open sqlite DB: %v", err)
 	}
 
-	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.ChinchiroSession{}, &models.ChinchiroPlayer{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.Currency{}, &models.ChinchiroSession{}, &models.ChinchiroPlayer{}, &models.CurrencySeason{}, &models.CurrencySeasonUser{}} {
 		if err := createSQLiteTable(gdb, model); err != nil {
 			t.Fatalf("failed to create table for %T: %v", model, err)
 		}
@@ -268,8 +268,8 @@ func TestChinchiro_HostRotation(t *testing.T) {
 	_ = gdb.Create(&models.Guild{ID: guildID})
 
 	// Initial balances (enough for both to be host once)
-	_ = gdb.Create(&models.GoPoint{UserID: hostID, GuildID: guildID, Points: 1000})
-	_ = gdb.Create(&models.GoPoint{UserID: kid1ID, GuildID: guildID, Points: 1000})
+	_ = gdb.Create(&models.Currency{UserID: hostID, GuildID: guildID, Points: 1000})
+	_ = gdb.Create(&models.Currency{UserID: kid1ID, GuildID: guildID, Points: 1000})
 
 	bet := int64(10)
 	session := &models.ChinchiroSession{

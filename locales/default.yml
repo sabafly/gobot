@@ -9,41 +9,44 @@ strings:
   general.value.all_roles: "全てのロール"
   general.value.all_users: "全てのユーザー"
   general.value.all_guilds: "全てのサーバー"
-  command.gopoint.view.description: "Goポイントの管理を行います。"
-  command.gopoint.ranking.entry: |-
+  command.currency.view.description: "通貨の管理を行います。"
+  command.currency.ranking.entry: |-
     **#{rank}**. {name} - `{points} ポイント`
-  command.gopoint.ranking.entry.you: "**<<あなた>>**"
-  command.gopoint.ranking.no_data: あなたのGoポイントはまだ登録されていません。
-  command.gopoint.ranking.no_guild_data: このサーバーのGoポイントはまだ登録されていません。
-  command.gopoint.ranking.no_result: "該当するエントリがありません。"
-  command.gopoint.ranking.description: Goポイントのランキングを表示します。
-  command.gopoint.ranking.limit.description: ランキングの表示件数
-  command.gopoint.ranking.skip.description: ランキングのスキップ件数
-  command.gopoint.give.description: "Goポイントを他のユーザーに譲渡します。"
-  command.gopoint.give.point.description: "譲渡するGoポイントの数"
-  command.gopoint.give.target.description: "譲渡先のユーザー"
-  command.gopoint.give.target_user.description: "譲渡先のユーザー"
-  command.gopoint.tax-setup.description: "定期徴収の割合や間隔を設定します。(管理者のみ)"
-  command.gopoint.tax-status.description: "現在の定期徴収の設定状況と徴収予定を表示します。(管理者のみ)"
-  command.gopoint.tax-force.description: "今すぐポイントの徴収（または徴収の予約計算）を強制実行します。(管理者のみ)"
-  command.gopoint.reset.description: "ギルド内の全員のGoPointsを一括リセットします。(管理者のみ)"
-  command.gopoint.season-start.description: "新しいシーズンを開始、またはスケジュールします。(管理者のみ)"
-  command.gopoint.season-end.description: "アクティブなシーズンを途中で終了し、表彰を行います。(管理者のみ)"
-  command.gopoint.season-status.description: "現在のアクティブなシーズンの進捗と現在のランキングを表示します。"
-  command.gopoint.season-ranking.description: "アクティブなシーズン、または過去のシーズンのランキングを表示します。"
-  command.gopoint.description: "GoPointの情報を表示します。"
-  command.gopoint.tax.description: "定期徴収の管理を行います。(管理者のみ)"
-  command.gopoint.tax-force.overwrite.description: "既存の徴収予定を上書き（再計算）するか指定します (デフォルト: false)。"
-  command.gopoint.reset.points.description: "リセット後のポイント数を指定します (デフォルト: 0)。by_levelがtrueの場合は無視されます。"
-  command.gopoint.reset.by_level.description: "各ユーザーのレベルの累積必要XPに応じたポイントでリセットするかどうか。"
-  command.gopoint.season.description: "シーズンの管理・表示を行います。"
-  command.gopoint.season-start.name.description: "シーズンの名前を指定します。"
-  command.gopoint.season-start.duration_days.description: "シーズンの期間(日)を指定します (1-365)。"
-  command.gopoint.season-start.start_delay_hours.description: "何時間後にシーズンを開始するか（スケジュール予約）を指定します。"
-  command.gopoint.season-start.criteria.description: "ランキングの基準を指定します (earned: 獲得ポイント, final: 最終ポイント)。"
-  command.gopoint.season-start.criteria.choice.earned: "獲得ポイント数"
-  command.gopoint.season-start.criteria.choice.final: "最終所持ポイント数"
-  command.gopoint.season-ranking.season_id.description: "表示したい過去のシーズンのIDを指定します (省略時は現在のアクティブなシーズン)。"
+  command.currency.ranking.entry.you: "**<<あなた>>**"
+  command.currency.ranking.no_data: あなたの通貨はまだ登録されていません。
+  command.currency.ranking.no_guild_data: このサーバーの通貨はまだ登録されていません。
+  command.currency.ranking.no_result: "該当するエントリがありません。"
+  command.currency.ranking.description: 通貨のランキングを表示します。
+  command.currency.ranking.limit.description: ランキングの表示件数
+  command.currency.ranking.skip.description: ランキングのスキップ件数
+  command.currency.give.description: "通貨を他のユーザーに譲渡します。"
+  command.currency.give.point.description: "譲渡する通貨の数"
+  command.currency.give.target.description: "譲渡先のユーザー"
+  command.currency.give.target_user.description: "譲渡先のユーザー"
+  command.currency.tax-setup.description: "定期徴収の割合や間隔を設定します。(管理者のみ)"
+  command.currency.tax-status.description: "現在の定期徴収の設定状況と徴収予定を表示します。(管理者のみ)"
+  command.currency.tax-force.description: "今すぐポイントの徴収（または徴収の予約計算）を強制実行します。(管理者のみ)"
+  command.currency.reset.description: "ギルド内の全員のCurrencyを一括リセットします。(管理者のみ)"
+  command.currency.season-start.description: "新しいシーズンを開始、またはスケジュールします。(管理者のみ)"
+  command.currency.season-end.description: "アクティブなシーズンを途中で終了し、表彰を行います。(管理者のみ)"
+  command.currency.season-status.description: "現在のアクティブなシーズンの進捗と現在のランキングを表示します。"
+  command.currency.season-ranking.description: "アクティブなシーズン、または過去のシーズンのランキングを表示します。"
+  command.currency.description: "Currencyの情報を表示します。"
+  command.currency.tax.description: "定期徴収の管理を行います。(管理者のみ)"
+  command.currency.tax-force.overwrite.description: "既存の徴収予定を上書き（再計算）するか指定します (デフォルト: false)。"
+  command.currency.reset.points.description: "リセット後のポイント数を指定します (デフォルト: 0)。by_levelがtrueの場合は無視されます。"
+  command.currency.reset.by_level.description: "各ユーザーのレベルの累積必要XPに応じたポイントでリセットするかどうか。"
+  command.currency.season.description: "シーズンの管理・表示を行います。"
+  command.currency.season-start.name.description: "シーズンの名前を指定します。"
+  command.currency.season-start.duration_days.description: "シーズンの期間(日)を指定します (1-365)。"
+  command.currency.season-start.start_delay_hours.description: "何時間後にシーズンを開始するか（スケジュール予約）を指定します。"
+  command.currency.season-start.criteria.description: "ランキングの基準を指定します (earned: 獲得ポイント, final: 最終ポイント)。"
+  command.currency.season-start.criteria.choice.earned: "獲得ポイント数"
+  command.currency.season-start.criteria.choice.final: "最終所持ポイント数"
+  command.currency.season-ranking.season_id.description: "表示したい過去のシーズンのIDを指定します (省略時は現在のアクティブなシーズン)。"
+  command.currency.config.description: "通貨システムの設定を行います。(管理者のみ)"
+  command.currency.config-name.description: "ギルドの通貨名（表示名）を設定・表示します。(管理者のみ)"
+  command.currency.config-name.name.description: "新しい通貨名（例: ゴールド, コイン, ptなど）を指定します。"
   command.play.slotmachine.description: "スロットマシンをプレイします。"
   command.play.high-and-low.guess-next: 次のカードを予想してください
   command.play.high-and-low.equal-success: "# 🚀SAME的中‼🚀"
@@ -64,10 +67,10 @@ strings:
   command.play.portfolio.option.user.description: "ポートフォリオを表示するユーザーを指定します。"
   command.play.chinchiro.description: "チンチロをマルチプレイで開始します。"
   command.play.chinchiro.option.bet.description: "掛け金を指定します（デフォルト: 10）。"
-  command.play.polymarket.description: "Polymarketの予測市場でGoPointを賭けます。"
+  command.play.polymarket.description: "Polymarketの予測市場でCurrencyを賭けます。"
   command.play.polymarket.option.query.description: "市場を検索するためのクエリ。"
   command.play.polymarket.option.closed.description: "終了した予測市場も含めるかどうか（デフォルト: false）"
-  command.bet.description: "Goポイントを賭けます。"
+  command.bet.description: "通貨を賭けます。"
   command.bet.create.title: "ベットを作成"
   command.bet.create.input.title.placeholder: "ベット内容を入力してください"
   command.bet.create.input.title.label: "ベットタイトル"
@@ -105,7 +108,7 @@ strings:
   command.bet.modal.create_race.input.vote_deadline.placeholder: "投票の締め切り時間を分単位で入力（例: 60）"
   command.bet.modal.vote.title: "{option} に投票"
   command.bet.modal.vote.input.amount.label: "投票するポイント数"
-  command.bet.modal.vote.input.amount.placeholder: "投票するGoポイント数を入力"
+  command.bet.modal.vote.input.amount.placeholder: "投票する通貨数を入力"
   command.bet.modal.decide.title: "結果を決定"
   command.bet.modal.decide.input.winner.label: "勝利した選択肢（複数選択可）"
   command.bet.modal.decide.input.winner.placeholder: "勝利した選択肢を選択（キャンセル可）"
@@ -132,7 +135,7 @@ strings:
   command.bet.error.already_voted_no_change: "あなたは既に {option} に {amount}pt 投票しています。\n投票先を変更することはできません。"
   command.bet.error.already_voted_status: "あなたは既に {option} に {amount}pt 投票しています。\n"
   command.bet.error.invalid_amount: "有効なポイント数を入力してください。"
-  command.bet.error.insufficient_points: "Goポイントが不足しています。現在の所持ポイント: {points}pt"
+  command.bet.error.insufficient_points: "通貨が不足しています。現在の所持ポイント: {points}pt"
   command.bet.error.cannot_decrease: "投票額を減らすことはできません。"
   command.bet.error.cannot_change_dest: "投票先を変更することはできません。"
   command.bet.error.only_organizer_decide: "結果の決定は主催者のみが行えます。"
@@ -202,12 +205,12 @@ strings:
   command.bet.error.only_organizer_cancel: "キャンセルは主催者のみが行えます。"
   command.bet.error.cannot_cancel_after_entry: "エントリー受付終了後はキャンセルできません。"
   command.bet.button.cancel: "キャンセル"
-  error.gopoint.give.self: "無効な譲渡先"
-  error.gopoint.give.self.description: "自分自身にGoポイントを譲渡することはできません。"
-  error.gopoint.give.invalid_target: "無効な譲渡先"
-  error.gopoint.give.invalid_target.description: "指定されたユーザーは無効なユーザーです。"
-  error.gopoint.give.invalid_point: "無効なポイント数指定"
-  error.gopoint.give.invalid_point.description: "譲渡するGoポイントの数は1以上でなければなりません。"
+  error.currency.give.self: "無効な譲渡先"
+  error.currency.give.self.description: "自分自身に通貨を譲渡することはできません。"
+  error.currency.give.invalid_target: "無効な譲渡先"
+  error.currency.give.invalid_target.description: "指定されたユーザーは無効なユーザーです。"
+  error.currency.give.invalid_point: "無効なポイント数指定"
+  error.currency.give.invalid_point.description: "譲渡する通貨の数は1以上でなければなりません。"
   error.play.high-and-low.expired: "ゲームが期限切れです"
   error.play.high-and-low.expired.description: "このハイアンドローゲームは期限切れです。新しいゲームを開始してください。"
   error.play.high-and-low.not_your_game: "このゲームはあなたのものではありません"
@@ -254,7 +257,7 @@ strings:
     - **決済価格**: `{{.exit}}`
     - **獲得/損失 (PnL)**: **`{{.pnl}} pt`**
     - **返却証拠金**: `{{.refund}} pt`
-    - **現在の GoPoints**: `{{.points}} pt`
+    - **現在の Currency**: `{{.points}} pt`
   components.play.fx.close_quit_title: "📈 **FX TRADING CLOSED** 📉"
   components.play.fx.close_quit_desc: "FX取引画面を閉じました。"
   components.play.fx.close_quit_active_notice: "⚠️ **注意**: {{.symbol}} の {{.direction}} ポジション (証拠金: `{{.margin}} pt`) は決済されず、**現在も保有中**です。再度 `/play fx` を実行することで、損益確認や決済を行うことができます。"
@@ -288,9 +291,9 @@ strings:
   components.play.fx.liquidation_detail_deficit: "\n\n⚠️ **未回収の不足金**: `-{{.deficit}} pt`（ポイント残高が不足しているため回収できませんでした）"
   components.play.fx.form_selected: "・**通貨ペア**: {{.symbol}}\n・**レバレッジ**: {{.leverage}}x\n・**注文証拠金**: {{.margin}} pt"
   components.play.fx.modal_input_margin_title: "証拠金設定"
-  components.play.fx.modal_input_margin_label: "注文に使用する証拠金（GoPoints）"
+  components.play.fx.modal_input_margin_label: "注文に使用する証拠金（Currency）"
   components.play.fx.modal_add_margin_title: "証拠金の追加 (追証入金)"
-  components.play.fx.modal_add_margin_label: "追加する証拠金量（GoPoints）"
+  components.play.fx.modal_add_margin_label: "追加する証拠金量（Currency）"
   components.play.fx.dm_margin_call_title: "🚨 **FX追証（マージンコール）発生のお知らせ** 🚨"
   components.play.fx.dm_margin_call_desc: "対象サーバー: **{{.guild}}**\n\n保有している {{.symbol}} のポジションの証拠金維持率が {{.ratio}} に低下し、追証ライン（{{.mc_line}}）を下回りました。\n強制ロスカットを避けるため、早急に証拠金を追加してください。"
   components.play.fx.active_order_title: "### ⏳ 未約定の注文情報"
@@ -336,7 +339,7 @@ strings:
   components.play.polymarket.err_not_your_session: "⚠️ **他人のセッションです**: これはあなたのゲームセッションではありません。`/play polymarket` で新しく開始してください。"
   components.play.polymarket.err_session_expired_modal: "⚠️ **セッションが期限切れです**: セッションの有効期限が切れました。もう一度やり直してください。"
   components.play.polymarket.err_invalid_amount: "⚠️ **無効な入力**: 1以上の正の整数を入力してください。"
-  components.play.polymarket.err_insufficient_points: "❌ **ポイント不足**: GoPointsが不足しています。賭け金 `{{.amount}} pt` に対し、現在の保有ポイントは `{{.points}} pt` です。"
+  components.play.polymarket.err_insufficient_points: "❌ **ポイント不足**: Currencyが不足しています。賭け金 `{{.amount}} pt` に対し、現在の保有ポイントは `{{.points}} pt` です。"
   components.play.polymarket.err_api_failed: "❌ **通信エラー**: Polymarket APIとの通信に失敗しました。\nエラー: `{{.error}}`"
   components.play.polymarket.err_no_markets: "❌ **市場が見つかりません**: 条件に合う予測市場が見つかりませんでした。別のキーワードで検索するか、終了した市場を含めてください。"
   components.play.polymarket.market_not_found_option: "市場が見つかりませんでした"
@@ -360,66 +363,68 @@ strings:
   components.play.polymarket.quit_title: "🔮 **Polymarket Prediction Betting**"
   components.play.polymarket.quit_desc: "Polymarket 予測ベットセッションを終了しました。"
   components.play.polymarket.modal_bet_title: "ベット額の入力"
-  components.play.polymarket.modal_bet_label: "GoPoints 金額"
-  components.play.polymarket.modal_bet_placeholder: "賭けたい GoPoints の金額を入力してください (例: 150)"
-  components.gopoint.admin.tax_setup_success: "✅ **定期徴収設定を更新しました**:\n- デフォルト徴収割合: {{.rate}}%\n- 最低徴収対象ポイント: {{.min_points}} pt\n- 徴収間隔: {{.interval}}日\n- 状態: {{.status}}\n- 次回予定: {{.next_time}}"
-  components.gopoint.admin.tax_status_enabled: "有効"
-  components.gopoint.admin.tax_status_disabled: "無効"
-  components.gopoint.admin.tax_status_info: "### 🪙 定期徴収ステータス\n- **徴収有効化**: {{.enabled}}\n- **デフォルト割合**: {{.rate}}%\n- **最低徴収対象ポイント**: {{.min_points}} pt\n- **徴収間隔**: {{.interval}}日\n- **次回徴収予定日時**: {{.next_time}}\n- **段階的徴収割合設定**:\n{{.brackets}}"
-  components.gopoint.admin.tax_status_pending_title: "\n\n**⏳ 徴収待機中（1週間後の徴収予定）:**\n"
-  components.gopoint.admin.tax_status_pending_item: "- <@{{.user_id}}>: `{{.tax_amount}} pt` (徴収予定: {{.collect_time}})\n"
-  components.gopoint.admin.tax_status_no_pending: "\n現在徴収待機中のユーザーはいません。"
-  components.gopoint.admin.tax_force_determination: "⚡ **徴収予約（計算）を強制実行しました**:\n- 対象ユーザー: `{{.count}}名`の徴収予定（1週間後）を生成しました。"
-  components.gopoint.admin.tax_force_collection: "⚡ **徴収実行（1週間経過分）を強制実行しました**:\n- 徴収完了: `{{.collected}}名`\n- 免除: `{{.exempted}}名`"
-  components.gopoint.admin.reset_success: "⚠️ **ギルドメンバー全員の GoPointsを一括リセットしました**:\n- 全員のポイントを `{{.points}} pt` に設定しました。"
-  components.gopoint.admin.season_start_success: "🚀 **新しいシーズンを開始しました**:\n- シーズン名: **{{.name}}**\n- 期間: {{.duration}}日間\n- 表彰基準: {{.criteria}}\n- 終了予定: {{.end_time}}"
-  components.gopoint.admin.season_start_scheduled: "📅 **シーズン開始をスケジュール予約しました**:\n- シーズン名: **{{.name}}**\n- 表彰基準: {{.criteria}}\n- 開始予定: {{.start_time}}\n- 終了予定: {{.end_time}}"
-  components.gopoint.admin.season_err_active_exists: "❌ **開始エラー**: すでにアクティブなシーズン `{{.name}}` が存在します。終了してから新しいシーズンを開始してください。"
-  components.gopoint.admin.season_end_early: "🛑 **シーズンを強制終了しました**:\n- 終了したシーズン: **{{.name}}**\n- 表彰結果をチャンネルに送信しました。"
-  components.gopoint.admin.season_err_no_active: "❌ **エラー**: 現在アクティブなシーズンはありません。"
-  components.gopoint.admin.season_status_info: "### 🏆 シーズン情報: **{{.name}}**\n- **状態**: {{.status}}\n- **表彰基準**: {{.criteria}}\n- **開始**: {{.start_time}}\n- **終了**: {{.end_time}} (残り: {{.remaining}})\n\n**📊 現在のランキング:**\n{{.ranking}}"
-  components.gopoint.admin.season_ranking_title: "### 📊 シーズン **{{.name}}** ランキング (基準: {{.criteria}})\n"
-  components.gopoint.admin.season_ranking_entry: "{{.medal}}<@{{.user_id}}> - スコア: `{{.points}} pt`"
-  components.gopoint.admin.season_ranking_no_data: "このシーズンの獲得データはありません。"
-  components.gopoint.admin.season_not_found: "❌ 指定されたシーズンIDが見つかりません。"
-  components.gopoint.admin.tax_bracket_err_invalid_format: "段階別割合の形式が不正です (行: {{.line}}, 形式は '下限-上限:割合' または '下限+:割合')"
-  components.gopoint.admin.tax_bracket_err_invalid_rate: "無効な割合です: {{.rate}}"
-  components.gopoint.admin.tax_bracket_err_invalid_range: "無効な範囲です: {{.range}}"
-  components.gopoint.admin.tax_bracket_err_invalid_range_spec: "無効な範囲指定です: {{.range}}"
-  components.gopoint.admin.tax_bracket_err_parse_min: "下限値の解析に失敗しました: {{.min}}"
-  components.gopoint.admin.tax_bracket_err_parse_max: "上限値の解析に失敗しました: {{.max}}"
-  components.gopoint.admin.tax_setup_rate_exempt: "0% (免除)"
-  components.gopoint.admin.tax_setup_interval_1day: "1日"
-  components.gopoint.admin.tax_setup_interval_3days: "3日"
-  components.gopoint.admin.tax_setup_interval_1week: "7日 (1週間)"
-  components.gopoint.admin.tax_setup_interval_2weeks: "14日 (2週間)"
-  components.gopoint.admin.tax_setup_interval_1month: "30日 (約1ヶ月)"
-  components.gopoint.admin.tax_setup_interval_3months: "90日 (約3ヶ月)"
-  components.gopoint.admin.tax_setup_interval_days: "{{.days}}日"
-  components.gopoint.admin.tax_setup_enabled_label: "有効 (Enabled)"
-  components.gopoint.admin.tax_setup_disabled_label: "無効 (Disabled)"
-  components.gopoint.admin.tax_setup_modal_title: "定期徴収設定"
-  components.gopoint.admin.tax_setup_label_rate: "デフォルト徴収割合 (%)"
-  components.gopoint.admin.tax_setup_label_min_points: "最低徴収対象ポイント (所持ポイントの閾値)"
-  components.gopoint.admin.tax_setup_label_interval: "徴収間隔 (日数)"
-  components.gopoint.admin.tax_setup_label_enabled: "定期徴収の有効化"
-  components.gopoint.admin.tax_setup_label_brackets: "段階的割合設定 (範囲:割合, 改行区切り)"
-  components.gopoint.admin.tax_setup_placeholder_brackets: "例:\n100-500:5\n501-1000:10\n1001+:15\n※ 割合0%で免除"
-  components.gopoint.admin.tax_setup_err_rate_range: "デフォルト徴収割合は 0〜100 の数値を指定してください。"
-  components.gopoint.admin.tax_setup_err_min_points: "最低徴収対象ポイントは 0 以上の数値を指定してください。"
-  components.gopoint.admin.tax_setup_err_interval_range: "徴収間隔は 1〜365 の数値を指定してください。"
-  components.gopoint.admin.tax_setup_err_brackets_parse: "段階的割合設定の解析に失敗しました:\n{{.error}}"
-  components.gopoint.admin.tax_setup_error_title: "❌ **設定エラー**:\n"
-  components.gopoint.admin.tax_brackets_none: "なし"
-  components.gopoint.admin.reset_by_level_success: "ギルド内の全員のGoPointsを、それぞれのレベルの累積必要XPに応じたポイントにリセットしました。"
-  components.gopoint.admin.season_criteria_final: "最終所持ポイント数"
-  components.gopoint.admin.season_criteria_earned: "獲得ポイント数"
-  components.gopoint.admin.season_status_active: "アクティブ"
-  components.gopoint.admin.season_status_ended: "終了"
-  components.gopoint.admin.season_start_announcement: "🚀 **GoPoint シーズン開始のお知らせ** 🚀\n新しいシーズン **{{.name}}** が開始されました！(表彰基準: {{.criteria}}) 終了予定: {{.end_time}}\nポイントを競い合いましょう！"
-  components.gopoint.admin.season_end_announcement_title: "🏆 **GoPoint シーズン終了のお知らせ** 🏆\nシーズン **{{.name}}** が終了しました！獲得ランキング表彰を行います (基準: {{.criteria}})。\n\n"
-  components.gopoint.admin.season_end_announcement_no_data: "期間中にポイントを獲得したプレイヤーはいませんでした。"
-  components.gopoint.admin.season_end_announcement_entry: "{{.medal}}{{.name}} - スコア: `{{.points}} pt`\n"
+  components.play.polymarket.modal_bet_label: "Currency 金額"
+  components.play.polymarket.modal_bet_placeholder: "賭けたい Currency の金額を入力してください (例: 150)"
+  components.currency.admin.tax_setup_success: "✅ **定期徴収設定を更新しました**:\n- デフォルト徴収割合: {{.rate}}%\n- 最低徴収対象ポイント: {{.min_points}} pt\n- 徴収間隔: {{.interval}}日\n- 状態: {{.status}}\n- 次回予定: {{.next_time}}"
+  components.currency.admin.tax_status_enabled: "有効"
+  components.currency.admin.tax_status_disabled: "無効"
+  components.currency.admin.tax_status_info: "### 🪙 定期徴収ステータス\n- **徴収有効化**: {{.enabled}}\n- **デフォルト割合**: {{.rate}}%\n- **最低徴収対象ポイント**: {{.min_points}} pt\n- **徴収間隔**: {{.interval}}日\n- **次回徴収予定日時**: {{.next_time}}\n- **段階的徴収割合設定**:\n{{.brackets}}"
+  components.currency.admin.tax_status_pending_title: "\n\n**⏳ 徴収待機中（1週間後の徴収予定）:**\n"
+  components.currency.admin.tax_status_pending_item: "- <@{{.user_id}}>: `{{.tax_amount}} pt` (徴収予定: {{.collect_time}})\n"
+  components.currency.admin.tax_status_no_pending: "\n現在徴収待機中のユーザーはいません。"
+  components.currency.admin.tax_force_determination: "⚡ **徴収予約（計算）を強制実行しました**:\n- 対象ユーザー: `{{.count}}名`の徴収予定（1週間後）を生成しました。"
+  components.currency.admin.tax_force_collection: "⚡ **徴収実行（1週間経過分）を強制実行しました**:\n- 徴収完了: `{{.collected}}名`\n- 免除: `{{.exempted}}名`"
+  components.currency.admin.reset_success: "⚠️ **ギルドメンバー全員の Currencyを一括リセットしました**:\n- 全員のポイントを `{{.points}} pt` に設定しました。"
+  components.currency.admin.season_start_success: "🚀 **新しいシーズンを開始しました**:\n- シーズン名: **{{.name}}**\n- 期間: {{.duration}}日間\n- 表彰基準: {{.criteria}}\n- 終了予定: {{.end_time}}"
+  components.currency.admin.season_start_scheduled: "📅 **シーズン開始をスケジュール予約しました**:\n- シーズン名: **{{.name}}**\n- 表彰基準: {{.criteria}}\n- 開始予定: {{.start_time}}\n- 終了予定: {{.end_time}}"
+  components.currency.admin.season_err_active_exists: "❌ **開始エラー**: すでにアクティブなシーズン `{{.name}}` が存在します。終了してから新しいシーズンを開始してください。"
+  components.currency.admin.season_end_early: "🛑 **シーズンを強制終了しました**:\n- 終了したシーズン: **{{.name}}**\n- 表彰結果をチャンネルに送信しました。"
+  components.currency.admin.season_err_no_active: "❌ **エラー**: 現在アクティブなシーズンはありません。"
+  components.currency.admin.season_status_info: "### 🏆 シーズン情報: **{{.name}}**\n- **状態**: {{.status}}\n- **表彰基準**: {{.criteria}}\n- **開始**: {{.start_time}}\n- **終了**: {{.end_time}} (残り: {{.remaining}})\n\n**📊 現在のランキング:**\n{{.ranking}}"
+  components.currency.admin.season_ranking_title: "### 📊 シーズン **{{.name}}** ランキング (基準: {{.criteria}})\n"
+  components.currency.admin.season_ranking_entry: "{{.medal}}<@{{.user_id}}> - スコア: `{{.points}} pt`"
+  components.currency.admin.season_ranking_no_data: "このシーズンの獲得データはありません。"
+  components.currency.admin.season_not_found: "❌ 指定されたシーズンIDが見つかりません。"
+  components.currency.admin.tax_bracket_err_invalid_format: "段階別割合の形式が不正です (行: {{.line}}, 形式は '下限-上限:割合' または '下限+:割合')"
+  components.currency.admin.tax_bracket_err_invalid_rate: "無効な割合です: {{.rate}}"
+  components.currency.admin.tax_bracket_err_invalid_range: "無効な範囲です: {{.range}}"
+  components.currency.admin.tax_bracket_err_invalid_range_spec: "無効な範囲指定です: {{.range}}"
+  components.currency.admin.tax_bracket_err_parse_min: "下限値の解析に失敗しました: {{.min}}"
+  components.currency.admin.tax_bracket_err_parse_max: "上限値の解析に失敗しました: {{.max}}"
+  components.currency.admin.tax_setup_rate_exempt: "0% (免除)"
+  components.currency.admin.tax_setup_interval_1day: "1日"
+  components.currency.admin.tax_setup_interval_3days: "3日"
+  components.currency.admin.tax_setup_interval_1week: "7日 (1週間)"
+  components.currency.admin.tax_setup_interval_2weeks: "14日 (2週間)"
+  components.currency.admin.tax_setup_interval_1month: "30日 (約1ヶ月)"
+  components.currency.admin.tax_setup_interval_3months: "90日 (約3ヶ月)"
+  components.currency.admin.tax_setup_interval_days: "{{.days}}日"
+  components.currency.admin.tax_setup_enabled_label: "有効 (Enabled)"
+  components.currency.admin.tax_setup_disabled_label: "無効 (Disabled)"
+  components.currency.admin.tax_setup_modal_title: "定期徴収設定"
+  components.currency.admin.tax_setup_label_rate: "デフォルト徴収割合 (%)"
+  components.currency.admin.tax_setup_label_min_points: "最低徴収対象ポイント (所持ポイントの閾値)"
+  components.currency.admin.tax_setup_label_interval: "徴収間隔 (日数)"
+  components.currency.admin.tax_setup_label_enabled: "定期徴収の有効化"
+  components.currency.admin.tax_setup_label_brackets: "段階的割合設定 (範囲:割合, 改行区切り)"
+  components.currency.admin.tax_setup_placeholder_brackets: "例:\n100-500:5\n501-1000:10\n1001+:15\n※ 割合0%で免除"
+  components.currency.admin.tax_setup_err_rate_range: "デフォルト徴収割合は 0〜100 の数値を指定してください。"
+  components.currency.admin.tax_setup_err_min_points: "最低徴収対象ポイントは 0 以上の数値を指定してください。"
+  components.currency.admin.tax_setup_err_interval_range: "徴収間隔は 1〜365 の数値を指定してください。"
+  components.currency.admin.tax_setup_err_brackets_parse: "段階的割合設定の解析に失敗しました:\n{{.error}}"
+  components.currency.admin.tax_setup_error_title: "❌ **設定エラー**:\n"
+  components.currency.admin.tax_brackets_none: "なし"
+  components.currency.admin.reset_by_level_success: "ギルド内の全員のCurrencyを、それぞれのレベルの累積必要XPに応じたポイントにリセットしました。"
+  components.currency.admin.season_criteria_final: "最終所持ポイント数"
+  components.currency.admin.season_criteria_earned: "獲得ポイント数"
+  components.currency.admin.season_status_active: "アクティブ"
+  components.currency.admin.season_status_ended: "終了"
+  components.currency.admin.season_start_announcement: "🚀 **Currency シーズン開始のお知らせ** 🚀\n新しいシーズン **{{.name}}** が開始されました！(表彰基準: {{.criteria}}) 終了予定: {{.end_time}}\nポイントを競い合いましょう！"
+  components.currency.admin.season_end_announcement_title: "🏆 **Currency シーズン終了のお知らせ** 🏆\nシーズン **{{.name}}** が終了しました！獲得ランキング表彰を行います (基準: {{.criteria}})。\n\n"
+  components.currency.admin.season_end_announcement_no_data: "期間中にポイントを獲得したプレイヤーはいませんでした。"
+  components.currency.admin.season_end_announcement_entry: "{{.medal}}{{.name}} - スコア: `{{.points}} pt`\n"
+  components.currency.config.name_current: "現在の通貨名設定: **{{.name}}**"
+  components.currency.config.name_success: "通貨名を **{{.name}}** に設定しました。"
   command.bet.dm.title: "# Bet結果確定"
   command.bet.dm.body: |-
     イベント: **{{.title}}**
@@ -495,7 +500,7 @@ components:
         - "## レベリング機能設定"
         - |-
           - **レベリング機能**：{leveling_enabled}
-  command.gopoint.view:
+  command.currency.view:
     - type: container
       components:
         - type: section
@@ -503,29 +508,29 @@ components:
             type: thumbnail
             url: "{user_icon}"
           components:
-            - "## {user_name}のGoポイント"
+            - "## {user_name}の通貨"
             - |-
-              ### Goポイントの残高
+              ### 通貨の残高
               - **残高**：`{point} ポイント`
         - type: separator
           height: 2
         - |-
-          ### Goポイントのランキング
+          ### 通貨のランキング
           {ranking}
-  command.gopoint.ranking:
+  command.currency.ranking:
     - type: container
       components:
-        - "## 👑 {guild_name} Goポイントランキング"
+        - "## 👑 {guild_name} 通貨ランキング"
         - |-
           ランキングの表示件数：`{limit} 件`
           -# {skip}件目以降を表示しています。
         - |-
           {ranking}
-  command.gopoint.give.not_enough_point:
-    - "あなたのGoポイントが不足しているため`{point} ポイント`を譲渡できません。"
-    - "あなたの現在のGoポイントは`{current_point} ポイント`です。"
-  command.gopoint.give.success:
-    - "Goポイントの譲渡が完了しました。"
+  command.currency.give.not_enough_point:
+    - "あなたの通貨が不足しているため`{point} ポイント`を譲渡できません。"
+    - "あなたの現在の通貨は`{current_point} ポイント`です。"
+  command.currency.give.success:
+    - "通貨の譲渡が完了しました。"
     - "`{point} ポイント`を`{target_user_name}`に譲渡しました。"
   command.play.high-and-low.start:
     - "{mention}"
@@ -631,7 +636,7 @@ components:
           ### 💱 現在の為替レート
           {rates_text}
         - type: separator
-        - "🪙 **保有 GoPoints**: `{points} pt`"
+        - "🪙 **保有 Currency**: `{points} pt`"
         - type: separator
         - |-
           ### 🆕 新規注文フォーム
@@ -695,7 +700,7 @@ components:
           ### 💱 現在の為替レート
           {rates_text}
         - type: separator
-        - "🪙 **保有 GoPoints**: `{points} pt`"
+        - "🪙 **保有 Currency**: `{points} pt`"
         - type: separator
         - |-
           {position_info}
@@ -738,7 +743,7 @@ components:
           ### 💱 現在の為替レート
           {rates_text}
         - type: separator
-        - "🪙 **保有 GoPoints**: `{points} pt`"
+        - "🪙 **保有 Currency**: `{points} pt`"
         - type: separator
         - |-
           {order_info}
@@ -769,7 +774,7 @@ components:
         - "### 📊 **{user_name}** の FXポートフォリオ 📊"
         - type: separator
           height: 2
-        - "🪙 **所持 GoPoints**: `{points} pt`"
+        - "🪙 **所持 Currency**: `{points} pt`"
         - type: separator
         - |-
           ### 💼 保有ポジション ({pos_count}件)
@@ -850,7 +855,7 @@ components:
           下のセレクトメニューから予測市場を選択して、詳細の確認やベットを行えます。
           {status}
         - type: separator
-        - "🪙 **保有 GoPoints**: `{points} pt`"
+        - "🪙 **保有 Currency**: `{points} pt`"
         - type: action_row
           components:
             - type: string_select_menu
@@ -882,7 +887,7 @@ components:
           **現在の価格 (オッズ/勝率 %):**
           {odds_text}
         - type: separator
-        - "🪙 **保有 GoPoints**: `{points} pt`"
+        - "🪙 **保有 Currency**: `{points} pt`"
         - type: action_row
           components:
             - type: string_select_menu
@@ -910,9 +915,9 @@ components:
 
           👉 **選択した結果**: `{selected_outcome}` (現在価格: `{outcome_price} pt` / 1シェア)
 
-          *※予測が的中した場合、1シェアあたり `1 pt` (GoPoints) の配当が得られます。的中時の倍率は `1 / {outcome_price} = {multiplier}倍` です。*
+          *※予測が的中した場合、1シェアあたり `1 pt` (Currency) の配当が得られます。的中時の倍率は `1 / {outcome_price} = {multiplier}倍` です。*
         - type: separator
-        - "🪙 **保有 GoPoints**: `{points} pt`"
+        - "🪙 **保有 Currency**: `{points} pt`"
         - type: action_row
           components:
             - type: button

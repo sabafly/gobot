@@ -30,7 +30,8 @@ func NewDB(dsn string) (*DB, error) {
 	if err := db.AutoMigrate(
 		&models.User{},
 		&models.Guild{},
-		&models.GoPoint{},
+		&models.Currency{},
+		&models.CurrencyConfig{},
 		&models.BetHost{},
 		&models.BetOption{},
 		&models.Bet{},
@@ -47,17 +48,17 @@ func NewDB(dsn string) (*DB, error) {
 		&models.ChinchiroSession{},
 		&models.ChinchiroPlayer{},
 		&models.PolymarketBet{},
-		&models.GoPointTaxConfig{},
-		&models.GoPointPendingTax{},
-		&models.GoPointSeason{},
-		&models.GoPointSeasonUser{},
+		&models.CurrencyTaxConfig{},
+		&models.CurrencyPendingTax{},
+		&models.CurrencySeason{},
+		&models.CurrencySeasonUser{},
 	); err != nil {
 		return nil, err
 	}
 
 	if db.Name() == "mysql" {
-		// Ensure go_point_season_users.points_earned is signed (bigint(20)) instead of unsigned
-		if err := db.Exec("ALTER TABLE go_point_season_users MODIFY points_earned bigint(20) NOT NULL DEFAULT 0").Error; err != nil {
+		// Ensure currency_season_users.points_earned is signed (bigint(20)) instead of unsigned
+		if err := db.Exec("ALTER TABLE currency_season_users MODIFY points_earned bigint(20) NOT NULL DEFAULT 0").Error; err != nil {
 			slog.Error("failed to alter go_point_season_users points_earned to signed", "error", err)
 		}
 	}

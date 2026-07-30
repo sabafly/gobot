@@ -1,4 +1,4 @@
-package gopoint
+package currency
 
 import (
 	"fmt"
@@ -23,9 +23,88 @@ import (
 	"github.com/sabafly/gobot/internal/i18n"
 )
 
+func GetCurrencyName(c *components.Components, guildID snowflake.ID) string {
+	var cfg models.CurrencyConfig
+	if err := c.GormDB().Where("guild_id = ?", guildID).First(&cfg).Error; err == nil && cfg.Name != "" {
+		return cfg.Name
+	}
+	return "GoPoint"
+}
+
+func CurrencyNameConfigHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+	guildID := *event.GuildID()
+	data := event.SlashCommandInteractionData()
+	newName, hasName := data.OptString("name")
+
+	var cfg models.CurrencyConfig
+	err := c.GormDB().Where("guild_id = ?", guildID).First(&cfg).Error
+
+	if !hasName {
+		currentName := GetCurrencyName(c, guildID)
+		msg := i18n.TranslateText(event.Locale(), "components.currency.config.name_current", map[string]any{
+			"name": currentName,
+		})
+		if msg == "components.currency.config.name_current" {
+			msg = fmt.Sprintf("現在の通貨名設定: **%s**", currentName)
+		}
+		if errResp := event.RespondMessage(discord.NewMessageBuilder().
+			SetEphemeral(true).
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(msg),
+				).WithAccentColor(0x3498DB),
+			),
+		); errResp != nil {
+			return errors.NewError(errResp)
+		}
+		return nil
+	}
+
+	newName = strings.TrimSpace(newName)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			cfg = models.CurrencyConfig{
+				GuildID: guildID,
+				Name:    newName,
+			}
+			if errCreate := c.GormDB().Create(&cfg).Error; errCreate != nil {
+				return errors.NewError(errCreate)
+			}
+		} else {
+			return errors.NewError(err)
+		}
+	} else {
+		cfg.Name = newName
+		if errSave := c.GormDB().Save(&cfg).Error; errSave != nil {
+			return errors.NewError(errSave)
+		}
+	}
+
+	msg := i18n.TranslateText(event.Locale(), "components.currency.config.name_success", map[string]any{
+		"name": GetCurrencyName(c, guildID),
+	})
+	if msg == "components.currency.config.name_success" {
+		msg = fmt.Sprintf("通貨名を **%s** に設定しました。", GetCurrencyName(c, guildID))
+	}
+
+	if errResp := event.RespondMessage(discord.NewMessageBuilder().
+		SetEphemeral(true).
+		SetIsComponentsV2(true).
+		SetComponents(
+			discord.NewContainer(
+				discord.NewTextDisplay(msg),
+			).WithAccentColor(0x2ECC71),
+		),
+	); errResp != nil {
+		return errors.NewError(errResp)
+	}
+	return nil
+}
+
 func Command(c *components.Components) components.Command {
 	return (&generic.Command{
-		Namespace: "gopoint",
+		Namespace: "currency",
 		Schedulers: []components.Scheduler{
 			{
 				Duration: time.Minute,
@@ -36,9 +115,9 @@ func Command(c *components.Components) components.Command {
 		},
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
-				Name:                     "gopoint",
-				Description:              "GoPointの情報を表示します。",
-				DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.description"),
+				Name:                     "currency",
+				Description:              "Currency(通貨)の情報を表示・管理します。",
+				DescriptionLocalizations: i18n.TranslateTextMap("command.currency.description"),
 				Contexts: []discord.InteractionContextType{
 					discord.InteractionContextTypeGuild,
 				},
@@ -48,18 +127,18 @@ func Command(c *components.Components) components.Command {
 				Options: []discord.ApplicationCommandOption{
 					discord.ApplicationCommandOptionSubCommand{
 						Name:                     "view",
-						Description:              "GoPointのランキングを表示します。",
-						DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.view.description"),
+						Description:              "所持通貨とランキングを表示します。",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.currency.view.description"),
 					},
 					discord.ApplicationCommandOptionSubCommand{
 						Name:                     "ranking",
-						Description:              "GoPointのランキングを表示します。",
-						DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.ranking.description"),
+						Description:              "通貨のランキングを表示します。",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.currency.ranking.description"),
 						Options: []discord.ApplicationCommandOption{
 							discord.ApplicationCommandOptionInt{
 								Name:                     "limit",
 								Description:              "ランキングの表示件数を指定します。",
-								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.ranking.limit.description"),
+								DescriptionLocalizations: i18n.TranslateTextMap("command.currency.ranking.limit.description"),
 								Required:                 false,
 								MinValue:                 builtin.Ptr(1),
 								MaxValue:                 builtin.Ptr(100),
@@ -67,7 +146,7 @@ func Command(c *components.Components) components.Command {
 							discord.ApplicationCommandOptionInt{
 								Name:                     "skip",
 								Description:              "ランキングのスキップ件数を指定します。",
-								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.ranking.skip.description"),
+								DescriptionLocalizations: i18n.TranslateTextMap("command.currency.ranking.skip.description"),
 								Required:                 false,
 								MinValue:                 builtin.Ptr(0),
 								MaxValue:                 builtin.Ptr(1000),
@@ -76,48 +155,68 @@ func Command(c *components.Components) components.Command {
 					},
 					discord.ApplicationCommandOptionSubCommand{
 						Name:                     "give",
-						Description:              "他のユーザーにGoPointを渡します。",
-						DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.give.description"),
+						Description:              "他のユーザーに通貨を渡します。",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.currency.give.description"),
 						Options: []discord.ApplicationCommandOption{
 							discord.ApplicationCommandOptionUser{
 								Name:                     "target_user",
-								Description:              "GoPointを渡す対象のユーザーを指定します。",
-								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.give.target_user.description"),
+								Description:              "通貨を渡す対象のユーザーを指定します。",
+								DescriptionLocalizations: i18n.TranslateTextMap("command.currency.give.target_user.description"),
 								Required:                 true,
 							},
 							discord.ApplicationCommandOptionInt{
 								Name:                     "point",
-								Description:              "渡すGoPointの数を指定します。",
-								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.give.point.description"),
+								Description:              "渡す通貨の数を指定します。",
+								DescriptionLocalizations: i18n.TranslateTextMap("command.currency.give.point.description"),
 								Required:                 true,
 								MinValue:                 builtin.Ptr(1),
 							},
 						},
 					},
 					discord.ApplicationCommandOptionSubCommandGroup{
+						Name:                     "config",
+						Description:              "通貨システムの設定を行います。(管理者のみ)",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.currency.config.description"),
+						Options: []discord.ApplicationCommandOptionSubCommand{
+							{
+								Name:                     "name",
+								Description:              "ギルドの通貨名（表示名）を設定・表示します。(管理者のみ)",
+								DescriptionLocalizations: i18n.TranslateTextMap("command.currency.config-name.description"),
+								Options: []discord.ApplicationCommandOption{
+									discord.ApplicationCommandOptionString{
+										Name:                     "name",
+										Description:              "新しい通貨名（例: ゴールド, コイン, ptなど）を指定します。",
+										DescriptionLocalizations: i18n.TranslateTextMap("command.currency.config-name.name.description"),
+										Required:                 false,
+									},
+								},
+							},
+						},
+					},
+					discord.ApplicationCommandOptionSubCommandGroup{
 						Name:                     "tax",
 						Description:              "定期徴収の管理を行います。(管理者のみ)",
-						DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.tax.description"),
+						DescriptionLocalizations: i18n.TranslateTextMap("command.currency.tax.description"),
 						Options: []discord.ApplicationCommandOptionSubCommand{
 							{
 								Name:                     "setup",
 								Description:              "定期徴収の割合や間隔を設定します。(管理者のみ)",
-								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.tax-setup.description"),
+								DescriptionLocalizations: i18n.TranslateTextMap("command.currency.tax-setup.description"),
 							},
 							{
 								Name:                     "status",
 								Description:              "現在の定期徴収の設定状況と徴収予定を表示します。(管理者のみ)",
-								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.tax-status.description"),
+								DescriptionLocalizations: i18n.TranslateTextMap("command.currency.tax-status.description"),
 							},
 							{
 								Name:                     "force",
 								Description:              "今すぐポイントの徴収（または徴収の予約計算）を強制実行します。(管理者のみ)",
-								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.tax-force.description"),
+								DescriptionLocalizations: i18n.TranslateTextMap("command.currency.tax-force.description"),
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionBool{
 										Name:                     "overwrite",
 										Description:              "既存の徴収予定を上書き（再計算）するか指定します (デフォルト: false)。",
-										DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.tax-force.overwrite.description"),
+										DescriptionLocalizations: i18n.TranslateTextMap("command.currency.tax-force.overwrite.description"),
 										Required:                 false,
 									},
 								},
@@ -126,20 +225,20 @@ func Command(c *components.Components) components.Command {
 					},
 					discord.ApplicationCommandOptionSubCommand{
 						Name:                     "reset",
-						Description:              "ギルド内の全員のGoPointsを一括リセットします。(管理者のみ)",
-						DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.reset.description"),
+						Description:              "ギルド内の全員の通貨を一括リセットします。(管理者のみ)",
+						DescriptionLocalizations: i18n.TranslateTextMap("command.currency.reset.description"),
 						Options: []discord.ApplicationCommandOption{
 							discord.ApplicationCommandOptionInt{
 								Name:                     "points",
 								Description:              "リセット後のポイント数を指定します (デフォルト: 0)。by_levelがtrueの場合は無視されます。",
-								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.reset.points.description"),
+								DescriptionLocalizations: i18n.TranslateTextMap("command.currency.reset.points.description"),
 								Required:                 false,
 								MinValue:                 builtin.Ptr(0),
 							},
 							discord.ApplicationCommandOptionBool{
 								Name:                     "by_level",
 								Description:              "各ユーザーのレベルの累積必要XPに応じたポイントでリセットするかどうか。",
-								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.reset.by_level.description"),
+								DescriptionLocalizations: i18n.TranslateTextMap("command.currency.reset.by_level.description"),
 								Required:                 false,
 							},
 						},
@@ -147,23 +246,23 @@ func Command(c *components.Components) components.Command {
 					discord.ApplicationCommandOptionSubCommandGroup{
 						Name:                     "season",
 						Description:              "シーズンの管理・表示を行います。",
-						DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season.description"),
+						DescriptionLocalizations: i18n.TranslateTextMap("command.currency.season.description"),
 						Options: []discord.ApplicationCommandOptionSubCommand{
 							{
 								Name:                     "start",
 								Description:              "新しいシーズンを開始、またはスケジュールします。(管理者のみ)",
-								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-start.description"),
+								DescriptionLocalizations: i18n.TranslateTextMap("command.currency.season-start.description"),
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionString{
 										Name:                     "name",
 										Description:              "シーズンの名前を指定します。",
-										DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-start.name.description"),
+										DescriptionLocalizations: i18n.TranslateTextMap("command.currency.season-start.name.description"),
 										Required:                 true,
 									},
 									discord.ApplicationCommandOptionInt{
 										Name:                     "duration_days",
 										Description:              "シーズンの期間(日)を指定します (1-365)。",
-										DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-start.duration_days.description"),
+										DescriptionLocalizations: i18n.TranslateTextMap("command.currency.season-start.duration_days.description"),
 										Required:                 true,
 										MinValue:                 builtin.Ptr(1),
 										MaxValue:                 builtin.Ptr(365),
@@ -171,24 +270,24 @@ func Command(c *components.Components) components.Command {
 									discord.ApplicationCommandOptionInt{
 										Name:                     "start_delay_hours",
 										Description:              "何時間後にシーズンを開始するか（スケジュール予約）を指定します。",
-										DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-start.start_delay_hours.description"),
+										DescriptionLocalizations: i18n.TranslateTextMap("command.currency.season-start.start_delay_hours.description"),
 										Required:                 false,
 										MinValue:                 builtin.Ptr(0),
 									},
 									discord.ApplicationCommandOptionString{
 										Name:                     "criteria",
 										Description:              "ランキングの基準を指定します (earned: 獲得ポイント, final: 最終ポイント)。",
-										DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-start.criteria.description"),
+										DescriptionLocalizations: i18n.TranslateTextMap("command.currency.season-start.criteria.description"),
 										Required:                 false,
 										Choices: []discord.ApplicationCommandOptionChoiceString{
 											{
-												Name:              i18n.TranslateText(discord.LocaleJapanese, "command.gopoint.season-start.criteria.choice.earned"),
-												NameLocalizations: i18n.TranslateTextMap("command.gopoint.season-start.criteria.choice.earned"),
+												Name:              i18n.TranslateText(discord.LocaleJapanese, "command.currency.season-start.criteria.choice.earned"),
+												NameLocalizations: i18n.TranslateTextMap("command.currency.season-start.criteria.choice.earned"),
 												Value:             "earned",
 											},
 											{
-												Name:              i18n.TranslateText(discord.LocaleJapanese, "command.gopoint.season-start.criteria.choice.final"),
-												NameLocalizations: i18n.TranslateTextMap("command.gopoint.season-start.criteria.choice.final"),
+												Name:              i18n.TranslateText(discord.LocaleJapanese, "command.currency.season-start.criteria.choice.final"),
+												NameLocalizations: i18n.TranslateTextMap("command.currency.season-start.criteria.choice.final"),
 												Value:             "final",
 											},
 										},
@@ -198,22 +297,22 @@ func Command(c *components.Components) components.Command {
 							{
 								Name:                     "end",
 								Description:              "アクティブなシーズンを途中で終了し、表彰を行います。(管理者のみ)",
-								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-end.description"),
+								DescriptionLocalizations: i18n.TranslateTextMap("command.currency.season-end.description"),
 							},
 							{
 								Name:                     "status",
 								Description:              "現在のアクティブなシーズンの進捗と現在のランキングを表示します。",
-								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-status.description"),
+								DescriptionLocalizations: i18n.TranslateTextMap("command.currency.season-status.description"),
 							},
 							{
 								Name:                     "ranking",
 								Description:              "アクティブなシーズン、または過去のシーズンのランキングを表示します。",
-								DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-ranking.description"),
+								DescriptionLocalizations: i18n.TranslateTextMap("command.currency.season-ranking.description"),
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionString{
 										Name:                     "season_id",
 										Description:              "表示したい過去のシーズンのIDを指定します (省略時は現在のアクティブなシーズン)。",
-										DescriptionLocalizations: i18n.TranslateTextMap("command.gopoint.season-ranking.season_id.description"),
+										DescriptionLocalizations: i18n.TranslateTextMap("command.currency.season-ranking.season_id.description"),
 										Required:                 false,
 										Autocomplete:             true,
 									},
@@ -225,20 +324,20 @@ func Command(c *components.Components) components.Command {
 			},
 		},
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
-			"/gopoint/view": generic.PCommandHandler{
+			"/currency/view": generic.PCommandHandler{
 				Permission: []generic.Permission{
-					generic.PermissionDefaultString("gopoint.view"),
+					generic.PermissionDefaultString("currency.view"),
 				},
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					if err := event.DeferCreateMessage(true); err != nil {
 						return errors.NewError(err)
 					}
-					point, rank, err := GetPoint(c, event.User().ID, *event.GuildID())
+					point, rank, err := GetCurrency(c, event.User().ID, *event.GuildID())
 					if err != nil {
-						slog.Error("failed to get GoPoint", "error", err, "user_id", event.User().ID, "guild_id", *event.GuildID())
+						slog.Error("failed to get Currency", "error", err, "user_id", event.User().ID, "guild_id", *event.GuildID())
 						return errors.NewError(err)
 					}
-					slog.Info("GoPoint retrieved", "user_id", event.User().ID, "guild_id", *event.GuildID(), "point", point, "rank", rank)
+					slog.Info("Currency retrieved", "user_id", event.User().ID, "guild_id", *event.GuildID(), "point", point, "rank", rank)
 					userID := event.User().ID
 					const top = 10
 					ranking, err := inGuildRanking(c, event.Locale(), event.Client(), *event.GuildID(), builtin.Or(rank < top, top, 3), 0, &userID)
@@ -254,7 +353,7 @@ func Command(c *components.Components) components.Command {
 						}
 						ranking += "`...`\n" + r
 					} else if rank == 0 {
-						ranking = i18n.TranslateText(event.Locale(), "command.gopoint.ranking.no_data")
+						ranking = i18n.TranslateText(event.Locale(), "command.currency.ranking.no_data")
 					}
 					if err := event.RespondMessage(discord.NewMessageBuilder().
 						SetEphemeral(true).
@@ -266,7 +365,8 @@ func Command(c *components.Components) components.Command {
 								WithURL("user_icon", event.Member().EffectiveAvatarURL()).
 								WithText("point", fmt.Sprintf("%d", point)).
 								WithText("rank", fmt.Sprintf("%d", rank)).
-								Translate(i18n.TranslateLayout(event.Locale(), "command.gopoint.view"))...,
+								WithText("currency_name", GetCurrencyName(c, *event.GuildID())).
+								Translate(i18n.TranslateLayout(event.Locale(), "command.currency.view"))...,
 						),
 					); err != nil {
 						return errors.NewError(err)
@@ -274,9 +374,9 @@ func Command(c *components.Components) components.Command {
 					return nil
 				},
 			},
-			"/gopoint/ranking": generic.PCommandHandler{
+			"/currency/ranking": generic.PCommandHandler{
 				Permission: []generic.Permission{
-					generic.PermissionDefaultString("gopoint.ranking"),
+					generic.PermissionDefaultString("currency.ranking"),
 				},
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					if err := event.DeferCreateMessage(false); err != nil {
@@ -311,7 +411,8 @@ func Command(c *components.Components) components.Command {
 								WithText("limit", strconv.Itoa(limit)).
 								WithText("guild_name", guild.Name).
 								WithText("ranking", ranking).
-								Translate(i18n.TranslateLayout(event.Locale(), "command.gopoint.ranking"))...,
+								WithText("currency_name", GetCurrencyName(c, *event.GuildID())).
+								Translate(i18n.TranslateLayout(event.Locale(), "command.currency.ranking"))...,
 						),
 					); err != nil {
 						return errors.NewError(err)
@@ -319,9 +420,9 @@ func Command(c *components.Components) components.Command {
 					return nil
 				},
 			},
-			"/gopoint/give": generic.PCommandHandler{
+			"/currency/give": generic.PCommandHandler{
 				Permission: []generic.Permission{
-					generic.PermissionDefaultString("gopoint.give"),
+					generic.PermissionDefaultString("currency.give"),
 				},
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					targetUserID, ok := event.SlashCommandInteractionData().OptUser("target_user")
@@ -334,20 +435,21 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 					if targetUser.ID == event.User().ID {
-						return errors.NewError(errors.ErrorMessage("error.gopoint.give.self", event))
+						return errors.NewError(errors.ErrorMessage("error.currency.give.self", event))
 					}
 					if targetUser.Bot || targetUser.System {
-						return errors.NewError(errors.ErrorMessage("error.gopoint.give.invalid_target", event))
+						return errors.NewError(errors.ErrorMessage("error.currency.give.invalid_target", event))
 					}
 					point, ok := event.SlashCommandInteractionData().OptInt("point")
 					if !ok || point <= 0 {
-						return errors.NewError(errors.ErrorMessage("error.gopoint.give.invalid_point", event))
+						return errors.NewError(errors.ErrorMessage("error.currency.give.invalid_point", event))
 					}
-					currentPoint, _, err := GetPoint(c, event.User().ID, *event.GuildID())
+					currentPoint, _, err := GetCurrency(c, event.User().ID, *event.GuildID())
 					if err != nil {
-						slog.Error("failed to get GoPoint", "error", err, "user_id", event.User().ID, "guild_id", *event.GuildID())
+						slog.Error("failed to get Currency", "error", err, "user_id", event.User().ID, "guild_id", *event.GuildID())
 						return errors.NewError(err)
 					}
+					currencyName := GetCurrencyName(c, *event.GuildID())
 					if currentPoint < int64(point) {
 						if err := event.CreateMessage(discord.NewMessageBuilder().
 							SetEphemeral(true).
@@ -357,7 +459,8 @@ func Command(c *components.Components) components.Command {
 									WithText("target_user_name", targetUserID.EffectiveName()).
 									WithText("point", fmt.Sprintf("%d", point)).
 									WithText("current_point", fmt.Sprintf("%d", currentPoint)).
-									Translate(i18n.TranslateLayout(event.Locale(), "command.gopoint.give.not_enough_point"))...,
+									WithText("currency_name", currencyName).
+									Translate(i18n.TranslateLayout(event.Locale(), "command.currency.give.not_enough_point"))...,
 							).BuildCreate(),
 						); err != nil {
 							slog.Error("failed to create message for not enough points", "error", err, "user_id", event.User().ID, "guild_id", *event.GuildID())
@@ -365,8 +468,8 @@ func Command(c *components.Components) components.Command {
 						}
 						return nil
 					}
-					if err := GivePoint(c, event.User().ID, targetUserID.ID, *event.GuildID(), int64(point)); err != nil {
-						slog.Error("failed to give GoPoint", "error", err, "user_id", event.User().ID, "target_user_id", targetUserID.ID, "guild_id", *event.GuildID())
+					if err := GiveCurrency(c, event.User().ID, targetUserID.ID, *event.GuildID(), int64(point)); err != nil {
+						slog.Error("failed to give Currency", "error", err, "user_id", event.User().ID, "target_user_id", targetUserID.ID, "guild_id", *event.GuildID())
 						return errors.NewError(err)
 					}
 					if err := event.CreateMessage(discord.NewMessageBuilder().
@@ -375,7 +478,8 @@ func Command(c *components.Components) components.Command {
 							i18n.BuildContext().
 								WithText("target_user_name", targetUserID.EffectiveName()).
 								WithText("point", fmt.Sprintf("%d", point)).
-								Translate(i18n.TranslateLayout(event.Locale(), "command.gopoint.give.success"))...,
+								WithText("currency_name", currencyName).
+								Translate(i18n.TranslateLayout(event.Locale(), "command.currency.give.success"))...,
 						).BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
@@ -383,71 +487,80 @@ func Command(c *components.Components) components.Command {
 					return nil
 				},
 			},
-			"/gopoint/tax/setup": generic.PCommandHandler{
+			"/currency/config/name": generic.PCommandHandler{
 				Permission: []generic.Permission{
-					generic.PermissionString("gopoint.admin"),
+					generic.PermissionString("currency.admin"),
+				},
+				DiscordPerm: discord.PermissionAdministrator,
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					return CurrencyNameConfigHandler(c, event)
+				},
+			},
+			"/currency/tax/setup": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionString("currency.admin"),
 				},
 				DiscordPerm: discord.PermissionAdministrator,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					return TaxSetupHandler(c, event)
 				},
 			},
-			"/gopoint/tax/status": generic.PCommandHandler{
+			"/currency/tax/status": generic.PCommandHandler{
 				Permission: []generic.Permission{
-					generic.PermissionString("gopoint.admin"),
+					generic.PermissionString("currency.admin"),
 				},
 				DiscordPerm: discord.PermissionAdministrator,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					return TaxStatusHandler(c, event)
 				},
 			},
-			"/gopoint/tax/force": generic.PCommandHandler{
+			"/currency/tax/force": generic.PCommandHandler{
 				Permission: []generic.Permission{
-					generic.PermissionString("gopoint.admin"),
+					generic.PermissionString("currency.admin"),
 				},
 				DiscordPerm: discord.PermissionAdministrator,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					return TaxForceHandler(c, event)
 				},
 			},
-			"/gopoint/reset": generic.PCommandHandler{
+			"/currency/reset": generic.PCommandHandler{
 				Permission: []generic.Permission{
-					generic.PermissionString("gopoint.admin"),
+					generic.PermissionString("currency.admin"),
 				},
 				DiscordPerm: discord.PermissionAdministrator,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					return ResetPointsHandler(c, event)
 				},
 			},
-			"/gopoint/season/start": generic.PCommandHandler{
+			"/currency/season/start": generic.PCommandHandler{
 				Permission: []generic.Permission{
-					generic.PermissionString("gopoint.admin"),
+					generic.PermissionString("currency.admin"),
 				},
 				DiscordPerm: discord.PermissionAdministrator,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					return SeasonStartHandler(c, event)
 				},
 			},
-			"/gopoint/season/end": generic.PCommandHandler{
+			"/currency/season/end": generic.PCommandHandler{
 				Permission: []generic.Permission{
-					generic.PermissionString("gopoint.admin"),
+					generic.PermissionString("currency.admin"),
 				},
 				DiscordPerm: discord.PermissionAdministrator,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					return SeasonEndHandler(c, event)
 				},
 			},
-			"/gopoint/season/status": generic.PCommandHandler{
+			"/currency/season/status": generic.PCommandHandler{
 				Permission: []generic.Permission{
-					generic.PermissionDefaultString("gopoint.view"),
+					generic.PermissionDefaultString("currency.view"),
 				},
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					return SeasonStatusHandler(c, event)
 				},
 			},
-			"/gopoint/season/ranking": generic.PCommandHandler{
+			"/currency/season/ranking": generic.PCommandHandler{
 				Permission: []generic.Permission{
-					generic.PermissionDefaultString("gopoint.view"),
+					generic.PermissionDefaultString("currency.view"),
 				},
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					return SeasonRankingHandler(c, event)
@@ -455,14 +568,14 @@ func Command(c *components.Components) components.Command {
 			},
 		},
 		ModalHandlers: map[string]generic.ModalHandler{
-			"gopoint:tax_setup_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
+			"currency:tax_setup_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
 				return TaxSetupModalSubmitHandler(c, event)
 			},
 		},
 		AutocompleteHandlers: map[string]generic.PermissionAutocompleteHandler{
-			"/gopoint/season/ranking:season_id": generic.PAutocompleteHandler{
+			"/currency/season/ranking:season_id": generic.PAutocompleteHandler{
 				Permission: []generic.Permission{
-					generic.PermissionDefaultString("gopoint.view"),
+					generic.PermissionDefaultString("currency.view"),
 				},
 				AutocompleteHandler: seasonAutocomplete,
 			},
@@ -478,8 +591,8 @@ func Command(c *components.Components) components.Command {
 					return nil // Ignore non-default messages
 				}
 				if rand.Float64() < 0.1 {
-					if err := AddPoint(c, e.Message.Author.ID, e.GuildID, 10); err != nil {
-						slog.Error("failed to add GoPoint", "error", err, "user_id", e.Message.Author.ID, "guild_id", e.GuildID)
+					if err := AddCurrency(c, e.Message.Author.ID, e.GuildID, 10); err != nil {
+						slog.Error("failed to add Currency", "error", err, "user_id", e.Message.Author.ID, "guild_id", e.GuildID)
 						return errors.NewError(err)
 					}
 				}
@@ -493,13 +606,13 @@ func inGuildRanking(c *components.Components, locale discord.Locale, client *bot
 	var guild *models.Guild
 	if err := c.GormDB().Where("id = ?", guildID).First(&guild).Error; err != nil {
 		return "", fmt.Errorf("failed to find guild: %w", err)
-	} // SELECT RANK() OVER (ORDER BY points DESC) AS rank
+	}
 	var rankQuery []struct {
 		UserID snowflake.ID `gorm:"column:user_id"`
 		Rank   int          `gorm:"column:rank"`
 		Points int64        `gorm:"column:points"`
 	}
-	if err := c.GormDB().Model(&models.GoPoint{}).
+	if err := c.GormDB().Model(&models.Currency{}).
 		Select("user_id", "RANK() OVER (ORDER BY points DESC) AS rank", "points").
 		Where("guild_id = ?", guildID).
 		Limit(limit).
@@ -508,9 +621,9 @@ func inGuildRanking(c *components.Components, locale discord.Locale, client *bot
 		return "", fmt.Errorf("failed to find ranking: %w", err)
 	}
 	if len(rankQuery) == 0 && skip == 0 {
-		return i18n.TranslateText(locale, "command.gopoint.ranking.no_guild_data"), nil
+		return i18n.TranslateText(locale, "command.currency.ranking.no_guild_data"), nil
 	} else if len(rankQuery) == 0 {
-		return i18n.TranslateText(locale, "command.gopoint.ranking.no_result"), nil
+		return i18n.TranslateText(locale, "command.currency.ranking.no_result"), nil
 	}
 	var result strings.Builder
 	for _, point := range rankQuery {
@@ -527,24 +640,23 @@ func inGuildRanking(c *components.Components, locale discord.Locale, client *bot
 			WithText("rank", fmt.Sprintf("%d", point.Rank)).
 			WithText("name", name).
 			WithText("points", fmt.Sprintf("%d", point.Points)).
-			ReplaceText(i18n.TranslateText(locale, "command.gopoint.ranking.entry"))
+			ReplaceText(i18n.TranslateText(locale, "command.currency.ranking.entry"))
 		if userID != nil && point.UserID == *userID {
-			text += " " + i18n.TranslateText(locale, "command.gopoint.ranking.entry.you")
+			text += " " + i18n.TranslateText(locale, "command.currency.ranking.entry.you")
 		}
 		result.WriteString(text + "\n")
 	}
 	return result.String(), nil
 }
 
-func AddPointTx(tx *gorm.DB, userID snowflake.ID, guildID snowflake.ID, point int64) error {
+func AddCurrencyTx(tx *gorm.DB, userID snowflake.ID, guildID snowflake.ID, point int64) error {
 	user, err := database.GetOrCreateUser(tx, userID)
 	if err != nil {
 		slog.Error("failed to find or create user", "error", err, "user_id", userID)
 		return errors.NewError(err)
 	}
 
-	// Attempt atomic update first
-	result := tx.Model(&models.GoPoint{}).
+	result := tx.Model(&models.Currency{}).
 		Where("user_id = ? AND guild_id = ?", user.ID, guildID).
 		Update("points", gorm.Expr("points + ?", point))
 	if result.Error != nil {
@@ -552,9 +664,8 @@ func AddPointTx(tx *gorm.DB, userID snowflake.ID, guildID snowflake.ID, point in
 		return errors.NewError(result.Error)
 	}
 
-	// If no row existed, create one with the initial point value
 	if point != 0 && result.RowsAffected == 0 {
-		userPoint := models.GoPoint{
+		userPoint := models.Currency{
 			UserID:  user.ID,
 			GuildID: guildID,
 			Points:  point,
@@ -565,16 +676,15 @@ func AddPointTx(tx *gorm.DB, userID snowflake.ID, guildID snowflake.ID, point in
 		}
 	}
 
-	// Update active season points if this was a point gain (positive) or a point payment (negative)
 	if point != 0 {
-		var activeSeason models.GoPointSeason
+		var activeSeason models.CurrencySeason
 		err := tx.Where("guild_id = ? AND is_active = ?", guildID, true).First(&activeSeason).Error
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			slog.Error("failed to find active season", "error", err, "guild_id", guildID)
 			return errors.NewError(err)
 		}
 		if err == nil {
-			result := tx.Model(&models.GoPointSeasonUser{}).
+			result := tx.Model(&models.CurrencySeasonUser{}).
 				Where("season_id = ? AND user_id = ?", activeSeason.ID, user.ID).
 				Update("points_earned", gorm.Expr("points_earned + ?", point))
 			if result.Error != nil {
@@ -582,7 +692,7 @@ func AddPointTx(tx *gorm.DB, userID snowflake.ID, guildID snowflake.ID, point in
 				return errors.NewError(result.Error)
 			}
 			if result.RowsAffected == 0 {
-				seasonUser := models.GoPointSeasonUser{
+				seasonUser := models.CurrencySeasonUser{
 					SeasonID:     activeSeason.ID,
 					UserID:       user.ID,
 					GuildID:      guildID,
@@ -599,15 +709,25 @@ func AddPointTx(tx *gorm.DB, userID snowflake.ID, guildID snowflake.ID, point in
 	return nil
 }
 
-func AddPoint(c *components.Components, userID snowflake.ID, guildID snowflake.ID, point int64) error {
+// AddPointTx is an alias for AddCurrencyTx for backward compatibility
+func AddPointTx(tx *gorm.DB, userID snowflake.ID, guildID snowflake.ID, point int64) error {
+	return AddCurrencyTx(tx, userID, guildID, point)
+}
+
+func AddCurrency(c *components.Components, userID snowflake.ID, guildID snowflake.ID, point int64) error {
 	return c.GormDB().Transaction(func(tx *gorm.DB) error {
-		return AddPointTx(tx, userID, guildID, point)
+		return AddCurrencyTx(tx, userID, guildID, point)
 	})
 }
 
-func GivePoint(c *components.Components, userID snowflake.ID, targetUserID snowflake.ID, guildID snowflake.ID, point int64) error {
+// AddPoint is an alias for AddCurrency for backward compatibility
+func AddPoint(c *components.Components, userID snowflake.ID, guildID snowflake.ID, point int64) error {
+	return AddCurrency(c, userID, guildID, point)
+}
+
+func GiveCurrency(c *components.Components, userID snowflake.ID, targetUserID snowflake.ID, guildID snowflake.ID, point int64) error {
 	if userID == targetUserID {
-		return errors.NewError(fmt.Errorf("cannot give points to yourself"))
+		return errors.NewError(fmt.Errorf("cannot give currency to yourself"))
 	}
 	user, err := database.GetOrCreateUser(c.GormDB(), userID)
 	if err != nil {
@@ -619,7 +739,7 @@ func GivePoint(c *components.Components, userID snowflake.ID, targetUserID snowf
 		slog.Error("failed to find or create target user", "error", err, "target_user_id", targetUserID)
 		return errors.NewError(err)
 	}
-	userPoint := models.GoPoint{
+	userPoint := models.Currency{
 		UserID:  user.ID,
 		GuildID: guildID,
 	}
@@ -631,12 +751,12 @@ func GivePoint(c *components.Components, userID snowflake.ID, targetUserID snowf
 		slog.Error("not enough points to give", "user_id", userID, "target_user_id", targetUser.ID, "guild_id", guildID, "points", point)
 		return errors.NewError(fmt.Errorf("not enough points to give"))
 	}
-	userPoint.Points -= point // Deduct points from the giver
+	userPoint.Points -= point
 	if err := c.GormDB().Save(&userPoint).Error; err != nil {
 		slog.Error("failed to update user point", "error", err, "user_id", userID, "guild_id", guildID)
 		return errors.NewError(err)
 	}
-	targetUserPoint := models.GoPoint{
+	targetUserPoint := models.Currency{
 		UserID:  targetUserID,
 		GuildID: guildID,
 	}
@@ -644,7 +764,7 @@ func GivePoint(c *components.Components, userID snowflake.ID, targetUserID snowf
 		slog.Error("failed to find target user point", "error", err, "target_user_id", targetUserID, "guild_id", guildID)
 		return errors.NewError(err)
 	}
-	targetUserPoint.Points += point // Add points to the target user
+	targetUserPoint.Points += point
 	if err := c.GormDB().Save(&targetUserPoint).Error; err != nil {
 		slog.Error("failed to update target user point", "error", err, "target_user_id", targetUserID, "guild_id", guildID)
 		return errors.NewError(err)
@@ -653,7 +773,12 @@ func GivePoint(c *components.Components, userID snowflake.ID, targetUserID snowf
 	return nil
 }
 
-func GetPoint(c *components.Components, userID snowflake.ID, guildID snowflake.ID) (point int64, rank int, err error) {
+// GivePoint is an alias for GiveCurrency for backward compatibility
+func GivePoint(c *components.Components, userID snowflake.ID, targetUserID snowflake.ID, guildID snowflake.ID, point int64) error {
+	return GiveCurrency(c, userID, targetUserID, guildID, point)
+}
+
+func GetCurrency(c *components.Components, userID snowflake.ID, guildID snowflake.ID) (point int64, rank int, err error) {
 	user := models.User{
 		ID: userID,
 	}
@@ -661,7 +786,7 @@ func GetPoint(c *components.Components, userID snowflake.ID, guildID snowflake.I
 		slog.Error("failed to find or create user", "error", err, "user_id", userID)
 		return 0, 0, err
 	}
-	userPoint := models.GoPoint{
+	userPoint := models.Currency{
 		UserID:  userID,
 		GuildID: guildID,
 	}
@@ -671,13 +796,12 @@ func GetPoint(c *components.Components, userID snowflake.ID, guildID snowflake.I
 	}
 	point = userPoint.Points
 
-	// SELECT RANK() OVER (ORDER BY points DESC) AS rank
 	var rankQuery struct {
 		UserID snowflake.ID `gorm:"column:user_id"`
 		Rank   int          `gorm:"column:rank"`
 		Points int64        `gorm:"column:points"`
 	}
-	if err := c.GormDB().Table("(?) as u", c.GormDB().Model(&models.GoPoint{}).
+	if err := c.GormDB().Table("(?) as u", c.GormDB().Model(&models.Currency{}).
 		Select("user_id", "RANK() OVER (ORDER BY points DESC) AS rank", "points").
 		Where("guild_id = ?", guildID)).
 		Where("user_id = ?", userID).
@@ -686,4 +810,9 @@ func GetPoint(c *components.Components, userID snowflake.ID, guildID snowflake.I
 		return 0, 0, err
 	}
 	return point, rankQuery.Rank, nil
+}
+
+// GetPoint is an alias for GetCurrency for backward compatibility
+func GetPoint(c *components.Components, userID snowflake.ID, guildID snowflake.ID) (point int64, rank int, err error) {
+	return GetCurrency(c, userID, guildID)
 }

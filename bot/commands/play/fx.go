@@ -20,7 +20,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/sabafly/gobot/bot/commands/gopoint"
+	"github.com/sabafly/gobot/bot/commands/currency"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/database/models"
@@ -354,7 +354,7 @@ func liquidatePosition(c *components.Components, client *bot.Client, pos *models
 		if deficit == 0 {
 			remaining := pos.Margin + pnlInt
 			if remaining > 0 {
-				if err := gopoint.AddPointTx(tx, pos.UserID, pos.GuildID, remaining); err != nil {
+				if err := currency.AddPointTx(tx, pos.UserID, pos.GuildID, remaining); err != nil {
 					return err
 				}
 			}
@@ -400,7 +400,7 @@ func liquidatePosition(c *components.Components, client *bot.Client, pos *models
 				if otherVal > 0 {
 					if otherVal >= deficit {
 						remaining := otherVal - deficit
-						if err := gopoint.AddPointTx(tx, pos.UserID, pos.GuildID, remaining); err != nil {
+						if err := currency.AddPointTx(tx, pos.UserID, pos.GuildID, remaining); err != nil {
 							return err
 						}
 						deficit = 0
@@ -411,12 +411,12 @@ func liquidatePosition(c *components.Components, client *bot.Client, pos *models
 			}
 
 			if deficit > 0 {
-				var userPoint models.GoPoint
+				var userPoint models.Currency
 				if err := tx.Where("user_id = ? AND guild_id = ?", pos.UserID, pos.GuildID).First(&userPoint).Error; err == nil {
 					points := userPoint.Points
 					deduct := min(points, deficit)
 					if deduct > 0 {
-						if err := gopoint.AddPointTx(tx, pos.UserID, pos.GuildID, -deduct); err != nil {
+						if err := currency.AddPointTx(tx, pos.UserID, pos.GuildID, -deduct); err != nil {
 							return err
 						}
 						deficit -= deduct
@@ -823,7 +823,7 @@ func FXPlayCommand(c *components.Components, event *events.ApplicationCommandInt
 		return errors.NewError(err)
 	}
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -898,7 +898,7 @@ func FXSymbolHandler(c *components.Components, event *events.ComponentInteractio
 
 	fx_sessions.Set(session.ID, session)
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -1006,7 +1006,7 @@ func FXMarginModalHandler(c *components.Components, event *events.ModalSubmitInt
 		return nil
 	}
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -1137,7 +1137,7 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 		return nil
 	}
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -1188,14 +1188,14 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 		return errors.NewError(err)
 	}
 
-	if err := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), -amount); err != nil {
+	if err := currency.AddPoint(c, event.User().ID, *event.GuildID(), -amount); err != nil {
 		return errors.NewError(err)
 	}
 
 	pos.Margin += amount
 	pos.MarginCallNotified = false
 	if err := c.GormDB().Save(pos).Error; err != nil {
-		if refundErr := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), amount); refundErr != nil {
+		if refundErr := currency.AddPoint(c, event.User().ID, *event.GuildID(), amount); refundErr != nil {
 			slog.Error("CRITICAL: failed to refund points to user after margin addition failed", "user_id", event.User().ID, "guild_id", *event.GuildID(), "session_id", session.ID, "refund", amount, "error", refundErr)
 		}
 		return errors.NewError(err)
@@ -1206,7 +1206,7 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 		return errors.NewError(err)
 	}
 
-	points, _, _ = gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, _ = currency.GetPoint(c, event.User().ID, *event.GuildID())
 	positions, err := getFXPositions(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
@@ -1244,7 +1244,7 @@ func FXLeverageHandler(c *components.Components, event *events.ComponentInteract
 
 	fx_sessions.Set(session.ID, session)
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -1313,7 +1313,7 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 		return nil
 	}
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -1370,7 +1370,7 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 		return errors.NewError(err)
 	}
 
-	if err := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), -session.SelectedMargin); err != nil {
+	if err := currency.AddPoint(c, event.User().ID, *event.GuildID(), -session.SelectedMargin); err != nil {
 		return errors.NewError(err)
 	}
 
@@ -1388,7 +1388,7 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 	}
 
 	if err := c.GormDB().Create(order).Error; err != nil {
-		if refundErr := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), session.SelectedMargin); refundErr != nil {
+		if refundErr := currency.AddPoint(c, event.User().ID, *event.GuildID(), session.SelectedMargin); refundErr != nil {
 			slog.Error("CRITICAL: failed to refund points to user after order creation failed", "user_id", event.User().ID, "guild_id", *event.GuildID(), "session_id", session.ID, "refund", session.SelectedMargin, "error", refundErr)
 		}
 		return errors.NewError(err)
@@ -1397,7 +1397,7 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 	session.ActivePositionID = &order.ID
 	fx_sessions.Set(session.ID, session)
 
-	points, _, _ = gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, _ = currency.GetPoint(c, event.User().ID, *event.GuildID())
 	positions, _ = getFXPositions(c, event.User().ID, *event.GuildID())
 
 	if err := event.UpdateMessage(discord.NewMessageBuilder().
@@ -1454,7 +1454,7 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 		return nil
 	}
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -1511,7 +1511,7 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 		return errors.NewError(err)
 	}
 
-	if err := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), -session.SelectedMargin); err != nil {
+	if err := currency.AddPoint(c, event.User().ID, *event.GuildID(), -session.SelectedMargin); err != nil {
 		return errors.NewError(err)
 	}
 
@@ -1529,7 +1529,7 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 	}
 
 	if err := c.GormDB().Create(order).Error; err != nil {
-		if refundErr := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), session.SelectedMargin); refundErr != nil {
+		if refundErr := currency.AddPoint(c, event.User().ID, *event.GuildID(), session.SelectedMargin); refundErr != nil {
 			slog.Error("CRITICAL: failed to refund points to user after order creation failed", "user_id", event.User().ID, "guild_id", *event.GuildID(), "session_id", session.ID, "refund", session.SelectedMargin, "error", refundErr)
 		}
 		return errors.NewError(err)
@@ -1538,7 +1538,7 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 	session.ActivePositionID = &order.ID
 	fx_sessions.Set(session.ID, session)
 
-	points, _, _ = gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, _ = currency.GetPoint(c, event.User().ID, *event.GuildID())
 	positions, _ = getFXPositions(c, event.User().ID, *event.GuildID())
 
 	if err := event.UpdateMessage(discord.NewMessageBuilder().
@@ -1709,7 +1709,7 @@ func FXOrderModalHandler(c *components.Components, event *events.ModalSubmitInte
 		return nil
 	}
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -1751,7 +1751,7 @@ func FXOrderModalHandler(c *components.Components, event *events.ModalSubmitInte
 		return nil
 	}
 
-	if err := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), -session.SelectedMargin); err != nil {
+	if err := currency.AddPoint(c, event.User().ID, *event.GuildID(), -session.SelectedMargin); err != nil {
 		return errors.NewError(err)
 	}
 
@@ -1767,7 +1767,7 @@ func FXOrderModalHandler(c *components.Components, event *events.ModalSubmitInte
 	}
 
 	if err := c.GormDB().Create(order).Error; err != nil {
-		if refundErr := gopoint.AddPoint(c, event.User().ID, *event.GuildID(), session.SelectedMargin); refundErr != nil {
+		if refundErr := currency.AddPoint(c, event.User().ID, *event.GuildID(), session.SelectedMargin); refundErr != nil {
 			slog.Error("CRITICAL: failed to refund points after order creation failed", "user_id", event.User().ID, "error", refundErr)
 		}
 		return errors.NewError(err)
@@ -1776,7 +1776,7 @@ func FXOrderModalHandler(c *components.Components, event *events.ModalSubmitInte
 	session.ActivePositionID = &order.ID
 	fx_sessions.Set(session.ID, session)
 
-	points, _, _ = gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, _ = currency.GetPoint(c, event.User().ID, *event.GuildID())
 	positions, _ := getFXPositions(c, event.User().ID, *event.GuildID())
 	ticker, err := fetchTickerData()
 	if err != nil {
@@ -1814,7 +1814,7 @@ func FXCancelOrderHandler(c *components.Components, event *events.ComponentInter
 		if err := tx.Delete(&order).Error; err != nil {
 			return err
 		}
-		if err := gopoint.AddPointTx(tx, order.UserID, order.GuildID, order.Margin); err != nil {
+		if err := currency.AddPointTx(tx, order.UserID, order.GuildID, order.Margin); err != nil {
 			return err
 		}
 		return nil
@@ -1838,7 +1838,7 @@ func FXCancelOrderHandler(c *components.Components, event *events.ComponentInter
 	session.ActivePositionID = nil
 	fx_sessions.Set(session.ID, session)
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -2095,7 +2095,7 @@ func FXTPSLModalHandler(c *components.Components, event *events.ModalSubmitInter
 		return errors.NewError(err)
 	}
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -2167,7 +2167,7 @@ func FXRefreshHandler(c *components.Components, event *events.ComponentInteracti
 		fx_sessions.Set(session.ID, session)
 	}
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -2276,7 +2276,7 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 		}
 
 		if actualRefund > 0 {
-			if err := gopoint.AddPointTx(tx, pos.UserID, pos.GuildID, actualRefund); err != nil {
+			if err := currency.AddPointTx(tx, pos.UserID, pos.GuildID, actualRefund); err != nil {
 				return err
 			}
 		}
@@ -2314,7 +2314,7 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 				if otherVal > 0 {
 					if otherVal >= deficit {
 						remaining := otherVal - deficit
-						if err := gopoint.AddPointTx(tx, pos.UserID, pos.GuildID, remaining); err != nil {
+						if err := currency.AddPointTx(tx, pos.UserID, pos.GuildID, remaining); err != nil {
 							return err
 						}
 						deficit = 0
@@ -2326,12 +2326,12 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 		}
 
 		if deficit > 0 {
-			var userPoint models.GoPoint
+			var userPoint models.Currency
 			if err := tx.Where("user_id = ? AND guild_id = ?", pos.UserID, pos.GuildID).First(&userPoint).Error; err == nil {
 				points := userPoint.Points
 				deduct := min(points, deficit)
 				if deduct > 0 {
-					if err := gopoint.AddPointTx(tx, pos.UserID, pos.GuildID, -deduct); err != nil {
+					if err := currency.AddPointTx(tx, pos.UserID, pos.GuildID, -deduct); err != nil {
 						return err
 					}
 					deficit -= deduct
@@ -2344,7 +2344,7 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 		return errors.NewError(txErr)
 	}
 
-	points, _, _ := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, _ := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	positions, _ := getFXPositions(c, event.User().ID, *event.GuildID())
 	if len(positions) > 0 {
 		session.ActivePositionID = &positions[0].ID
@@ -2475,7 +2475,7 @@ func FXSwitchPositionHandler(c *components.Components, event *events.ComponentIn
 
 	fx_sessions.Set(session.ID, session)
 
-	points, _, err := gopoint.GetPoint(c, event.User().ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -2583,7 +2583,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 						}
 					}
 					if actualRefund > 0 {
-						if err := gopoint.AddPointTx(tx, posCopy.UserID, posCopy.GuildID, actualRefund); err != nil {
+						if err := currency.AddPointTx(tx, posCopy.UserID, posCopy.GuildID, actualRefund); err != nil {
 							return err
 						}
 					}
@@ -2753,7 +2753,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 						if err := tx.Delete(&dbOrd).Error; err != nil {
 							return err
 						}
-						if err := gopoint.AddPointTx(tx, ordCopy.UserID, ordCopy.GuildID, ordCopy.Margin); err != nil {
+						if err := currency.AddPointTx(tx, ordCopy.UserID, ordCopy.GuildID, ordCopy.Margin); err != nil {
 							return err
 						}
 						return nil
@@ -2915,7 +2915,7 @@ func FXPortfolioCommandHandler(c *components.Components, event *events.Applicati
 		return errors.NewError(err)
 	}
 
-	points, _, err := gopoint.GetPoint(c, targetUser.ID, *event.GuildID())
+	points, _, err := currency.GetPoint(c, targetUser.ID, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}

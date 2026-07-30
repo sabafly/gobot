@@ -11,7 +11,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 
-	"github.com/sabafly/gobot/bot/commands/gopoint"
+	"github.com/sabafly/gobot/bot/commands/currency"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/internal/errors"
@@ -185,7 +185,7 @@ func HALPlay(data *HALData, choice HALResult) (finishState HALFinishState) {
 }
 
 func HALFinish(c *components.Components, data HALData, finishState HALFinishState, userID, guildID snowflake.ID, event *events.ComponentInteractionCreate) errors.Error {
-	if err := gopoint.AddPoint(c, userID, guildID, int64(math.Floor(data.currentPoint))); err != nil {
+	if err := currency.AddPoint(c, userID, guildID, int64(math.Floor(data.currentPoint))); err != nil {
 		return errors.NewError(err)
 	}
 	hal_values.Delete(data.id)
