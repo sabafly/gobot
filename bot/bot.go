@@ -47,8 +47,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sabafly/gobot/bot/commands/bet"
-	"github.com/sabafly/gobot/bot/commands/debug"
 	"github.com/sabafly/gobot/bot/commands/currency"
+	"github.com/sabafly/gobot/bot/commands/debug"
 	"github.com/sabafly/gobot/bot/commands/level"
 	"github.com/sabafly/gobot/bot/commands/message"
 	"github.com/sabafly/gobot/bot/commands/permission"

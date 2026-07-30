@@ -2868,7 +2868,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 										if err := currency.AddPointTx(tx, closedPos.UserID, closedPos.GuildID, -deduct); err != nil {
 											return err
 										}
-										deficit -= deduct
+										// deficit -= deduct // ineffective
 									}
 								}
 							}

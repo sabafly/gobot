@@ -1132,4 +1132,3 @@ func TestFX_MarketCloseOrders(t *testing.T) {
 		t.Errorf("expected position to remain open due to slippage cancellation, count was %d", count)
 	}
 }
-
