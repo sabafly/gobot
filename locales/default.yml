@@ -420,7 +420,7 @@ strings:
   components.gopoint.admin.season_end_announcement_title: "🏆 **GoPoint シーズン終了のお知らせ** 🏆\nシーズン **{{.name}}** が終了しました！獲得ランキング表彰を行います (基準: {{.criteria}})。\n\n"
   components.gopoint.admin.season_end_announcement_no_data: "期間中にポイントを獲得したプレイヤーはいませんでした。"
   components.gopoint.admin.season_end_announcement_entry: "{{.medal}}{{.name}} - スコア: `{{.points}} pt`\n"
-  command.bet.dm.title: "【Bet結果確定】"
+  command.bet.dm.title: "# Bet結果確定"
   command.bet.dm.body: |-
     イベント: **{{.title}}**
     結果: **{{.result}}**
