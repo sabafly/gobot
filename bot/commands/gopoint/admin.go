@@ -808,6 +808,32 @@ func SeasonStartHandler(c *components.Components, event *events.ApplicationComma
 	return nil
 }
 
+func closeSeasonTx(tx *gorm.DB, s *models.GoPointSeason) error {
+	s.IsActive = false
+	s.HasAwarded = true
+	if err := tx.Save(s).Error; err != nil {
+		return err
+	}
+	if s.Criteria == "final" {
+		var gp []models.GoPoint
+		if err := tx.Where("guild_id = ?", s.GuildID).Find(&gp).Error; err != nil {
+			return err
+		}
+		for _, p := range gp {
+			su := models.GoPointSeasonUser{
+				SeasonID:     s.ID,
+				UserID:       p.UserID,
+				GuildID:      s.GuildID,
+				PointsEarned: p.Points,
+			}
+			if err := tx.Create(&su).Error; err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func SeasonEndHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 	guildID := *event.GuildID()
 
@@ -828,29 +854,7 @@ func SeasonEndHandler(c *components.Components, event *events.ApplicationCommand
 	}
 
 	errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
-		active.IsActive = false
-		active.HasAwarded = true
-		if err := tx.Save(&active).Error; err != nil {
-			return err
-		}
-		if active.Criteria == "final" {
-			var gp []models.GoPoint
-			if err := tx.Where("guild_id = ?", active.GuildID).Find(&gp).Error; err != nil {
-				return err
-			}
-			for _, p := range gp {
-				su := models.GoPointSeasonUser{
-					SeasonID:     active.ID,
-					UserID:       p.UserID,
-					GuildID:      active.GuildID,
-					PointsEarned: p.Points,
-				}
-				if err := tx.Create(&su).Error; err != nil {
-					return err
-				}
-			}
-		}
-		return nil
+		return closeSeasonTx(tx, &active)
 	})
 	if errTx != nil {
 		return errors.NewError(errTx)
@@ -1194,29 +1198,7 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 	}
 	for _, s := range activeSeasons {
 		errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
-			s.IsActive = false
-			s.HasAwarded = true
-			if err := tx.Save(&s).Error; err != nil {
-				return err
-			}
-			if s.Criteria == "final" {
-				var gp []models.GoPoint
-				if err := tx.Where("guild_id = ?", s.GuildID).Find(&gp).Error; err != nil {
-					return err
-				}
-				for _, p := range gp {
-					su := models.GoPointSeasonUser{
-						SeasonID:     s.ID,
-						UserID:       p.UserID,
-						GuildID:      s.GuildID,
-						PointsEarned: p.Points,
-					}
-					if err := tx.Create(&su).Error; err != nil {
-						return err
-					}
-				}
-			}
-			return nil
+			return closeSeasonTx(tx, &s)
 		})
 		if errTx == nil {
 			if s.ChannelID != 0 {
@@ -1228,17 +1210,38 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 		}
 	}
 
-	// 4. Starting scheduled seasons
+	// 4. Scheduled seasons that expired before being activated
+	var expiredScheduledSeasons []models.GoPointSeason
+	if err := c.GormDB().Where("is_active = ? AND has_awarded = ? AND end_time <= ?", false, false, now).Find(&expiredScheduledSeasons).Error; err != nil {
+		return err
+	}
+	for _, s := range expiredScheduledSeasons {
+		errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
+			return closeSeasonTx(tx, &s)
+		})
+		if errTx == nil {
+			if s.ChannelID != 0 {
+				go announceSeasonResults(c, client, s.ID)
+			}
+		} else {
+			slog.Error("failed to close expired scheduled season transaction", "season_id", s.ID, "error", errTx)
+			return errTx
+		}
+	}
+
+	// 5. Starting scheduled seasons
 	var scheduledSeasons []models.GoPointSeason
 	if err := c.GormDB().Where("is_active = ? AND has_awarded = ? AND start_time <= ? AND end_time > ?", false, false, now, now).Find(&scheduledSeasons).Error; err != nil {
 		return err
 	}
 	for _, s := range scheduledSeasons {
+		var activeToClose []models.GoPointSeason
 		errTx := c.GormDB().Transaction(func(tx *gorm.DB) error {
-			if err := tx.Model(&models.GoPointSeason{}).
-				Where("guild_id = ? AND is_active = ?", s.GuildID, true).
-				Update("is_active", false).Error; err != nil {
-				if !errors.Is(err, gorm.ErrRecordNotFound) {
+			if err := tx.Where("guild_id = ? AND is_active = ?", s.GuildID, true).Find(&activeToClose).Error; err != nil {
+				return err
+			}
+			for i := range activeToClose {
+				if err := closeSeasonTx(tx, &activeToClose[i]); err != nil {
 					return err
 				}
 			}
@@ -1246,6 +1249,11 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 			return tx.Save(&s).Error
 		})
 		if errTx == nil {
+			for _, oldSeason := range activeToClose {
+				if oldSeason.ChannelID != 0 {
+					go announceSeasonResults(c, client, oldSeason.ID)
+				}
+			}
 			if s.ChannelID != 0 {
 				_, _ = client.Rest.CreateMessage(s.ChannelID, discord.NewMessageCreateBuilder().
 					SetAllowedMentions(&discord.AllowedMentions{}).

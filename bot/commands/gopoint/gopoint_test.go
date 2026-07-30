@@ -1,6 +1,7 @@
 package gopoint
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
@@ -11,6 +12,8 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
+	"github.com/sabafly/gobot/bot/components"
+	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/database/models"
 )
 
@@ -123,5 +126,124 @@ func TestAddPointTx_SeasonPoints(t *testing.T) {
 	}
 	if su.PointsEarned != 70 {
 		t.Errorf("expected PointsEarned to be 70, got %d", su.PointsEarned)
+	}
+}
+
+func TestProcessBackgroundTasks_ExpiredScheduledSeason(t *testing.T) {
+	gdb, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to open sqlite DB: %v", err)
+	}
+
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}, &models.GoPointTaxConfig{}, &models.GoPointPendingTax{}} {
+		if err := createSQLiteTable(gdb, model); err != nil {
+			t.Fatalf("failed to create table for %T: %v", model, err)
+		}
+	}
+
+	ctx := context.Background()
+	dbWrapper := &database.DB{DB: gdb}
+	c := components.New(ctx, components.Config{}, dbWrapper)
+
+	guildID := snowflake.ID(5678)
+	_ = gdb.Create(&models.Guild{ID: guildID})
+
+	// Create a scheduled season that expired before activation
+	expiredSeason := models.GoPointSeason{
+		ID:         uuid.New(),
+		GuildID:    guildID,
+		Name:       "Expired Scheduled Season",
+		StartTime:  time.Now().Add(-2 * time.Hour),
+		EndTime:    time.Now().Add(-1 * time.Hour),
+		IsActive:   false,
+		HasAwarded: false,
+		Criteria:   "earned",
+	}
+	if err := gdb.Create(&expiredSeason).Error; err != nil {
+		t.Fatalf("failed to create expired scheduled season: %v", err)
+	}
+
+	if err := ProcessBackgroundTasks(c, nil); err != nil {
+		t.Fatalf("ProcessBackgroundTasks failed: %v", err)
+	}
+
+	var s models.GoPointSeason
+	if err := gdb.Where("id = ?", expiredSeason.ID).First(&s).Error; err != nil {
+		t.Fatalf("failed to fetch season: %v", err)
+	}
+	if s.IsActive {
+		t.Errorf("expected IsActive to be false, got true")
+	}
+	if !s.HasAwarded {
+		t.Errorf("expected HasAwarded to be true for expired scheduled season, got false")
+	}
+}
+
+func TestProcessBackgroundTasks_StartScheduledSeason_WithActiveSeason(t *testing.T) {
+	gdb, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to open sqlite DB: %v", err)
+	}
+
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}, &models.GoPointTaxConfig{}, &models.GoPointPendingTax{}} {
+		if err := createSQLiteTable(gdb, model); err != nil {
+			t.Fatalf("failed to create table for %T: %v", model, err)
+		}
+	}
+
+	ctx := context.Background()
+	dbWrapper := &database.DB{DB: gdb}
+	c := components.New(ctx, components.Config{}, dbWrapper)
+
+	guildID := snowflake.ID(5678)
+	_ = gdb.Create(&models.Guild{ID: guildID})
+
+	// Create an existing active season
+	oldSeason := models.GoPointSeason{
+		ID:         uuid.New(),
+		GuildID:    guildID,
+		Name:       "Old Active Season",
+		StartTime:  time.Now().Add(-2 * time.Hour),
+		EndTime:    time.Now().Add(2 * time.Hour),
+		IsActive:   true,
+		HasAwarded: false,
+		Criteria:   "earned",
+	}
+	_ = gdb.Create(&oldSeason)
+
+	// Create a new scheduled season ready to start
+	newScheduled := models.GoPointSeason{
+		ID:         uuid.New(),
+		GuildID:    guildID,
+		Name:       "New Scheduled Season",
+		StartTime:  time.Now().Add(-10 * time.Minute),
+		EndTime:    time.Now().Add(2 * time.Hour),
+		IsActive:   false,
+		HasAwarded: false,
+		Criteria:   "earned",
+	}
+	_ = gdb.Create(&newScheduled)
+
+	if err := ProcessBackgroundTasks(c, nil); err != nil {
+		t.Fatalf("ProcessBackgroundTasks failed: %v", err)
+	}
+
+	var fetchedOld models.GoPointSeason
+	if err := gdb.Where("id = ?", oldSeason.ID).First(&fetchedOld).Error; err != nil {
+		t.Fatalf("failed to fetch old season: %v", err)
+	}
+	if fetchedOld.IsActive {
+		t.Errorf("expected old season IsActive to be false, got true")
+	}
+	if !fetchedOld.HasAwarded {
+		t.Errorf("expected old season HasAwarded to be true after being replaced, got false")
+	}
+
+	var fetchedNew models.GoPointSeason
+	if err := gdb.Where("id = ?", newScheduled.ID).First(&fetchedNew).Error; err != nil {
+		t.Fatalf("failed to fetch new season: %v", err)
+	}
+	if !fetchedNew.IsActive {
+		t.Errorf("expected new season IsActive to be true, got false")
 	}
 }
