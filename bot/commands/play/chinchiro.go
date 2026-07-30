@@ -115,12 +115,13 @@ func ChinchiroPlayCommand(c *components.Components, event *events.ApplicationCom
 		return errors.NewError(err)
 	}
 
+	cName := currency.GetCurrencyName(c, *event.GuildID())
 	if points < bet*5 {
 		builder := discord.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay(fmt.Sprintf("⚠️ **GoPoints不足**: 親（主催者）として開始するには、最大支払額（ベットの5倍 = %d pt）を支払えるだけのポイントが必要です。（現在: %d pt）", bet*5, points)),
+					discord.NewTextDisplay(fmt.Sprintf("⚠️ **%s不足**: 親（主催者）として開始するには、最大支払額（ベットの5倍 = %d %s）を支払えるだけの%sが必要です。（現在: %d %s）", cName, bet*5, cName, cName, points, cName)),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -196,7 +197,10 @@ func ChinchiroMessage(c *components.Components, session *models.ChinchiroSession
 			fmt.Fprintf(&playersSB, "%d. <@%s>%s\n", idx+1, p.UserID.String(), roleStr)
 		}
 
+		cName := currency.GetCurrencyName(c, session.GuildID)
 		layoutCtx := i18n.BuildContext().
+			WithText("currency_name", cName).
+			WithText("currency", cName).
 			WithText("bet", strconv.FormatInt(session.Bet, 10)).
 			WithText("player_count", strconv.Itoa(len(session.Players))).
 			WithText("players_list", strings.TrimSpace(playersSB.String())).
@@ -284,6 +288,7 @@ func ChinchiroMessage(c *components.Components, session *models.ChinchiroSession
 		hHand, _, _ := evaluateHand(hDices)
 		hostDiceStr = fmt.Sprintf("%s [%s]", getDiceStr(hDices), hHand)
 	}
+	cName := currency.GetCurrencyName(c, session.GuildID)
 	hostNetStr := ""
 	if session.State == models.ChinchiroStateFinished {
 		net := resultsMap[session.HostUserID]
@@ -291,7 +296,7 @@ func ChinchiroMessage(c *components.Components, session *models.ChinchiroSession
 		if net < 0 {
 			sign = ""
 		}
-		hostNetStr = fmt.Sprintf(" (収支: **%s%d pt**)", sign, net)
+		hostNetStr = fmt.Sprintf(" (収支: **%s%d %s**)", sign, net, cName)
 	}
 	fmt.Fprintf(&playersSB, "👑 **親**: <@%s> -> **%s**%s\n", session.HostUserID.String(), hostDiceStr, hostNetStr)
 
@@ -324,7 +329,7 @@ func ChinchiroMessage(c *components.Components, session *models.ChinchiroSession
 			if net < 0 {
 				sign = ""
 			}
-			kidNetStr = fmt.Sprintf(" (収支: **%s%d pt**)", sign, net)
+			kidNetStr = fmt.Sprintf(" (収支: **%s%d %s**)", sign, net, cName)
 		}
 		fmt.Fprintf(&playersSB, "子: <@%s> -> **%s**%s\n", p.UserID.String(), kidDiceStr, kidNetStr)
 	}
@@ -395,12 +400,13 @@ func ChinchiroJoinHandler(c *components.Components, event *events.ComponentInter
 	if err != nil {
 		return errors.NewError(err)
 	}
+	cName := currency.GetCurrencyName(c, *event.GuildID())
 	if points < session.Bet {
 		builder := discord.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay(fmt.Sprintf("⚠️ **GoPoints不足**: 参加するには %d pt 必要です。（現在: %d pt）", session.Bet, points)),
+					discord.NewTextDisplay(fmt.Sprintf("⚠️ **%s不足**: 参加するには %d %s 必要です。（現在: %d %s）", cName, session.Bet, cName, points, cName)),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -492,12 +498,13 @@ func ChinchiroStartHandler(c *components.Components, event *events.ComponentInte
 		return errors.NewError(err)
 	}
 
+	cName := currency.GetCurrencyName(c, *event.GuildID())
 	if points < maxLiability {
 		builder := discord.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay(fmt.Sprintf("⚠️ **主催者ポイント不足**: 最大支払額（%d pt）の保証金が必要です。親のポイント残高を確認してください。（現在: %d pt）", maxLiability, points)),
+					discord.NewTextDisplay(fmt.Sprintf("⚠️ **主催者%s不足**: 最大支払額（%d %s）の保証金が必要です。親の%s残高を確認してください。（現在: %d %s）", cName, maxLiability, cName, cName, points, cName)),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -677,7 +684,7 @@ func ChinchiroRollHandler(c *components.Components, event *events.ComponentInter
 					sort.Slice(session.Players, func(i, j int) bool {
 						return session.Players[i].CreatedAt.Before(session.Players[j].CreatedAt)
 					})
-					if err := advanceToNextRoundOrFinish(tx, &session, event.Client()); err != nil {
+					if err := advanceToNextRoundOrFinish(c, tx, &session, event.Client()); err != nil {
 						return err
 					}
 					return tx.Save(&session).Error
@@ -751,7 +758,7 @@ func ChinchiroRollHandler(c *components.Components, event *events.ComponentInter
 					if err := resolveChinchiroNormalResults(tx, &session); err != nil {
 						return err
 					}
-					if err := advanceToNextRoundOrFinish(tx, &session, event.Client()); err != nil {
+					if err := advanceToNextRoundOrFinish(c, tx, &session, event.Client()); err != nil {
 						return err
 					}
 				} else {
@@ -900,10 +907,11 @@ func getPointTx(tx *gorm.DB, userID snowflake.ID, guildID snowflake.ID) (int64, 
 	return userPoint.Points, nil
 }
 
-func buildRoundSummaryText(session *models.ChinchiroSession) string {
+func buildRoundSummaryText(c *components.Components, session *models.ChinchiroSession) string {
+	cName := currency.GetCurrencyName(c, session.GuildID)
 	var sb strings.Builder
 	roundNum := session.CurrentHostIndex + 1
-	fmt.Fprintf(&sb, "📢 **第 %d 回戦の結果発表** 📢\n🪙 ベット額: `%d pt`\n\n", roundNum, session.Bet)
+	fmt.Fprintf(&sb, "📢 **第 %d 回戦の結果発表** 📢\n🪙 ベット額: `%d %s`\n\n", roundNum, session.Bet, cName)
 
 	hostDices := parseDices(session.HostDices)
 	hHand, _, hostMult := evaluateHand(hostDices)
@@ -944,8 +952,8 @@ func buildRoundSummaryText(session *models.ChinchiroSession) string {
 	if hostNet < 0 {
 		sign = ""
 	}
-	fmt.Fprintf(&sb, "👑 **親**: <@%s> -> %s [%s] (収支: **%s%d pt**)\n",
-		session.HostUserID.String(), getDiceStr(hostDices), hHand, sign, hostNet)
+	fmt.Fprintf(&sb, "👑 **親**: <@%s> -> %s [%s] (収支: **%s%d %s**)\n",
+		session.HostUserID.String(), getDiceStr(hostDices), hHand, sign, hostNet, cName)
 
 	for _, p := range session.Players {
 		if p.IsHost {
@@ -958,17 +966,18 @@ func buildRoundSummaryText(session *models.ChinchiroSession) string {
 		if net < 0 {
 			sign = ""
 		}
-		fmt.Fprintf(&sb, "子: <@%s> -> %s [%s] (収支: **%s%d pt**)\n",
-			p.UserID.String(), getDiceStr(kDices), kHand, sign, net)
+		fmt.Fprintf(&sb, "子: <@%s> -> %s [%s] (収支: **%s%d %s**)\n",
+			p.UserID.String(), getDiceStr(kDices), kHand, sign, net, cName)
 	}
 
 	return sb.String()
 }
 
-func advanceToNextRoundOrFinish(tx *gorm.DB, session *models.ChinchiroSession, client *bot.Client) error {
+func advanceToNextRoundOrFinish(c *components.Components, tx *gorm.DB, session *models.ChinchiroSession, client *bot.Client) error {
+	cName := currency.GetCurrencyName(c, session.GuildID)
 	// Post summary of the completed round to the channel
 	if client != nil {
-		roundSummaryText := buildRoundSummaryText(session)
+		roundSummaryText := buildRoundSummaryText(c, session)
 		_, _ = client.Rest.CreateMessage(session.ChannelID, discord.NewMessageBuilder().
 			SetContent(roundSummaryText).
 			BuildCreate())
@@ -997,7 +1006,7 @@ func advanceToNextRoundOrFinish(tx *gorm.DB, session *models.ChinchiroSession, c
 		if points < maxLiability {
 			// Skip this host due to insufficient points, and post a message
 			if client != nil {
-				skipMsg := fmt.Sprintf("⚠️ <@%s> はポイント不足のため、親の番をスキップします。（必要: %d pt, 現在: %d pt）", nextHost.UserID.String(), maxLiability, points)
+				skipMsg := fmt.Sprintf("⚠️ <@%s> は%s不足のため、親の番をスキップします。（必要: %d %s, 現在: %d %s）", nextHost.UserID.String(), cName, maxLiability, cName, points, cName)
 				_, _ = client.Rest.CreateMessage(session.ChannelID, discord.NewMessageBuilder().
 					SetContent(skipMsg).
 					BuildCreate())

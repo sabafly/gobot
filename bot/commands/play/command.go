@@ -140,7 +140,7 @@ func Command(c *components.Components) components.Command {
 
 					if err := event.RespondMessage(discord.NewMessageBuilder().
 						SetIsComponentsV2(true).
-						SetComponents(HALStartMessage(*data, event.Locale(), point, data.startOptionIndex)...)); err != nil {
+						SetComponents(HALStartMessage(c, *event.GuildID(), *data, event.Locale(), point, data.startOptionIndex)...)); err != nil {
 						return errors.NewError(err)
 					}
 					return nil
@@ -264,7 +264,7 @@ func Command(c *components.Components) components.Command {
 
 					if err := event.UpdateMessage(discord.NewMessageBuilder().
 						SetIsComponentsV2(true).
-						SetComponents(HALStartMessage(*data, event.Locale(), gopoint, selectedOption)...).
+						SetComponents(HALStartMessage(c, *event.GuildID(), *data, event.Locale(), gopoint, selectedOption)...).
 						BuildUpdate()); err != nil {
 						return errors.NewError(err)
 					}
@@ -307,7 +307,7 @@ func Command(c *components.Components) components.Command {
 
 					if err := event.UpdateMessage(discord.NewMessageBuilder().
 						SetIsComponentsV2(true).
-						SetComponents(HALMessage(*data, event.Locale())...).
+						SetComponents(HALMessage(c, *event.GuildID(), *data, event.Locale())...).
 						BuildUpdate()); err != nil {
 						return errors.NewError(err)
 					}
@@ -333,7 +333,7 @@ func Command(c *components.Components) components.Command {
 					hal_values.Set(data.id, data)
 					if err := event.UpdateMessage(discord.NewMessageBuilder().
 						SetIsComponentsV2(true).
-						SetComponents(HALMessage(*data, event.Locale())...).
+						SetComponents(HALMessage(c, *event.GuildID(), *data, event.Locale())...).
 						BuildUpdate()); err != nil {
 						return errors.NewError(err)
 					}
@@ -359,7 +359,7 @@ func Command(c *components.Components) components.Command {
 					hal_values.Set(data.id, data)
 					if err := event.UpdateMessage(discord.NewMessageBuilder().
 						SetIsComponentsV2(true).
-						SetComponents(HALMessage(*data, event.Locale())...).
+						SetComponents(HALMessage(c, *event.GuildID(), *data, event.Locale())...).
 						BuildUpdate()); err != nil {
 						return errors.NewError(err)
 					}
@@ -385,7 +385,7 @@ func Command(c *components.Components) components.Command {
 					hal_values.Set(data.id, data)
 					if err := event.UpdateMessage(discord.NewMessageBuilder().
 						SetIsComponentsV2(true).
-						SetComponents(HALMessage(*data, event.Locale())...).
+						SetComponents(HALMessage(c, *event.GuildID(), *data, event.Locale())...).
 						BuildUpdate()); err != nil {
 						return errors.NewError(err)
 					}
@@ -421,7 +421,7 @@ func Command(c *components.Components) components.Command {
 
 					if err := event.RespondMessage(discord.NewMessageBuilder().
 						SetIsComponentsV2(true).
-						SetComponents(HALStartMessage(*data, event.Locale(), point, data.startOptionIndex)...)); err != nil {
+						SetComponents(HALStartMessage(c, *event.GuildID(), *data, event.Locale(), point, data.startOptionIndex)...)); err != nil {
 						return errors.NewError(err)
 					}
 					return nil

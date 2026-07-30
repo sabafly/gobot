@@ -204,9 +204,12 @@ func HALFinish(c *components.Components, data HALData, finishState HALFinishStat
 		finalStateStr = i18n.TranslateText(event.Locale(), "command.play.high-and-low.finish.unknown")
 	}
 
+	cName := currency.GetCurrencyName(c, guildID)
 	if err := event.UpdateMessage(discord.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(i18n.BuildContext().
+			WithText("currency_name", cName).
+			WithText("currency", cName).
 			WithText("mention", discord.UserMention(data.userID)).
 			WithText("point", strconv.FormatInt(int64(math.Floor(data.currentPoint)), 10)).
 			WithText("current_card", data.currentCard.String()).
@@ -243,28 +246,34 @@ type HALStartOption struct {
 	MaxTurns   int
 }
 
-func HALStartMessage(data HALData, locale discord.Locale, gopoint int64, selectedOptionIndex int) []discord.LayoutComponent {
+func HALStartMessage(c *components.Components, guildID snowflake.ID, data HALData, locale discord.Locale, gopoint int64, selectedOptionIndex int) []discord.LayoutComponent {
+	cName := currency.GetCurrencyName(c, guildID)
 	var startOptions []discord.StringSelectMenuOption
 	for i, option := range HALStartOptions {
 		startOptions = append(startOptions, discord.StringSelectMenuOption{
-			Label:       i18n.TranslateText(locale, "command.play.high-and-low.start_option_entry.label", option),
-			Description: i18n.TranslateText(locale, "command.play.high-and-low.start_option_entry.description", option),
+			Label:       i18n.TranslateText(locale, "command.play.high-and-low.start_option_entry.label", withCurrency(c, guildID, map[string]any{"Cost": option.Cost, "StartPoint": option.StartPoint, "Multiplier": option.Multiplier})),
+			Description: i18n.TranslateText(locale, "command.play.high-and-low.start_option_entry.description", withCurrency(c, guildID, map[string]any{"Cost": option.Cost, "StartPoint": option.StartPoint, "Multiplier": option.Multiplier})),
 			Value:       strconv.Itoa(i),
 			Default:     i == selectedOptionIndex,
 		})
 	}
 
 	return i18n.BuildContext().
+		WithText("currency_name", cName).
+		WithText("currency", cName).
 		WithText("mention", discord.UserMention(data.userID)).
 		WithText("gopoint", strconv.FormatInt(gopoint, 10)).
-		WithText("selected_option", i18n.TranslateText(locale, "command.play.high-and-low.start_option_entry.selected", HALStartOptions[selectedOptionIndex])).
+		WithText("selected_option", i18n.TranslateText(locale, "command.play.high-and-low.start_option_entry.selected", withCurrency(c, guildID, map[string]any{"Cost": HALStartOptions[selectedOptionIndex].Cost, "StartPoint": HALStartOptions[selectedOptionIndex].StartPoint, "Multiplier": HALStartOptions[selectedOptionIndex].Multiplier}))).
 		WithStringOptions("hal_start_options", startOptions).
 		WithCustomID("uuid", data.id.String()).
 		Translate(i18n.TranslateLayout(locale, "command.play.high-and-low.start"))
 }
 
-func HALMessage(data HALData, locale discord.Locale) []discord.LayoutComponent {
+func HALMessage(c *components.Components, guildID snowflake.ID, data HALData, locale discord.Locale) []discord.LayoutComponent {
 	ctx := i18n.BuildContext()
+	cName := currency.GetCurrencyName(c, guildID)
+	ctx.WithText("currency_name", cName)
+	ctx.WithText("currency", cName)
 	if data.lastResult == HALResultSame {
 		if data.lastChoice == HALResultSame {
 			ctx.WithText("message", i18n.TranslateText(locale, "command.play.high-and-low.equal-success"))

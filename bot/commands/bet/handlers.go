@@ -18,6 +18,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	currencyCmd "github.com/sabafly/gobot/bot/commands/currency"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/errors"
@@ -151,8 +152,11 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 			}
 
 			if currency.Points < *prizePool {
+				cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 				if err := event.RespondMessage(discord.NewMessageBuilder().
 					SetContent(i18n.BuildContext().
+						WithText("currency_name", cName).
+						WithText("currency", cName).
 						WithText("pool", fmt.Sprintf("%d", *prizePool)).
 						WithText("points", fmt.Sprintf("%d", currency.Points)).
 						ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool"))).
@@ -202,7 +206,7 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	}
 
 	// Create layout components
-	layoutComponents, err := createBetLayout(betHost, optionModels, c.GormDB(), locale)
+	layoutComponents, err := createBetLayout(c, betHost, optionModels, c.GormDB(), locale)
 	if err != nil {
 		slog.Error("failed to create bet layout", "error", err)
 		return errors.NewError(err)
@@ -284,10 +288,15 @@ func handleVoteButton(c *components.Components, event *events.ComponentInteracti
 				return result.Error
 			}
 			// No existing bet, continue
-		} else {
-			if !betHost.AllowVoteDestChange && existingBet.OptionID != optionID {
+		}
+
+		cName := currencyCmd.GetCurrencyName(c, betHost.GuildID)
+		if existingBet.ID != uuid.Nil {
+			if !betHost.AllowVoteDestChange {
 				if err := event.RespondMessage(discord.NewMessageBuilder().
 					SetContent(i18n.BuildContext().
+						WithText("currency_name", cName).
+						WithText("currency", cName).
 						WithText("option", existingBet.Option.OptionText).
 						WithText("amount", fmt.Sprintf("%d", existingBet.Amount)).
 						ReplaceText(i18n.TranslateText(locale, "command.bet.error.already_voted_no_change"))).
@@ -297,6 +306,8 @@ func handleVoteButton(c *components.Components, event *events.ComponentInteracti
 				return nil
 			}
 			status += i18n.BuildContext().
+				WithText("currency_name", cName).
+				WithText("currency", cName).
 				WithText("option", existingBet.Option.OptionText).
 				WithText("amount", fmt.Sprintf("%d", existingBet.Amount)).
 				ReplaceText(i18n.TranslateText(locale, "command.bet.error.already_voted_status"))
@@ -442,11 +453,13 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 				}
 			}
 
-			// Check if user has sufficient points for the difference
+			cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 			pointsDifference := amount - existingBet.Amount
 			if pointsDifference > 0 && currency.Points < pointsDifference {
 				if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 					SetContent(i18n.BuildContext().
+						WithText("currency_name", cName).
+						WithText("currency", cName).
 						WithText("points", fmt.Sprintf("%d", currency.Points)).
 						ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_points"))).
 					SetFlags(discord.MessageFlagEphemeral).
@@ -478,6 +491,8 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 
 			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 				SetContent(i18n.BuildContext().
+					WithText("currency_name", cName).
+					WithText("currency", cName).
 					WithText("amount", fmt.Sprintf("%d", amount)).
 					ReplaceText(i18n.TranslateText(locale, "command.bet.message.updated"))).
 				SetFlags(discord.MessageFlagEphemeral).
@@ -487,10 +502,13 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 			return nil
 		}
 
+		cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 		// Check if user has sufficient points for new bet
 		if currency.Points < amount {
 			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 				SetContent(i18n.BuildContext().
+					WithText("currency_name", cName).
+					WithText("currency", cName).
 					WithText("points", fmt.Sprintf("%d", currency.Points)).
 					ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_points"))).
 				SetFlags(discord.MessageFlagEphemeral).
@@ -527,6 +545,8 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 			SetContent(i18n.BuildContext().
+				WithText("currency_name", cName).
+				WithText("currency", cName).
 				WithText("amount", fmt.Sprintf("%d", amount)).
 				ReplaceText(i18n.TranslateText(locale, "command.bet.message.voted"))).
 			SetFlags(discord.MessageFlagEphemeral).
@@ -553,7 +573,7 @@ func updateBetMessage(c *components.Components, db *gorm.DB, client *bot.Client,
 		return fmt.Errorf("failed to load options: %w", err)
 	}
 
-	layoutComponents, err := createBetLayout(&betHost, options, db, locale)
+	layoutComponents, err := createBetLayout(c, &betHost, options, db, locale)
 	if err != nil {
 		return err
 	}
@@ -810,7 +830,10 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 			betHost.Winners = ""
 			tx.Save(&betHost)
 
+			cName := currencyCmd.GetCurrencyName(c, betHost.GuildID)
 			resultMessage = i18n.BuildContext().
+				WithText("currency_name", cName).
+				WithText("currency", cName).
 				WithText("amount", fmt.Sprintf("%d", totalRefunded)).
 				ReplaceText(i18n.TranslateText(locale, "command.bet.message.cancelled"))
 		} else {
@@ -947,8 +970,11 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 				prizePoolAmount = *betHost.PrizePool
 			}
 
+			cName := currencyCmd.GetCurrencyName(c, betHost.GuildID)
 			if entryFeePool > 0 || prizePoolAmount > 0 {
 				resultMessage = i18n.BuildContext().
+					WithText("currency_name", cName).
+					WithText("currency", cName).
 					WithText("winners", strings.Join(winnerNames, ", ")).
 					WithText("total_pool", fmt.Sprintf("%d", totalPool)).
 					WithText("entry_pool", fmt.Sprintf("%d", entryFeePool)).
@@ -956,13 +982,15 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 					ReplaceText(i18n.TranslateText(locale, "command.bet.message.result_with_pools"))
 			} else {
 				resultMessage = i18n.BuildContext().
+					WithText("currency_name", cName).
+					WithText("currency", cName).
 					WithText("winners", strings.Join(winnerNames, ", ")).
 					WithText("total_pool", fmt.Sprintf("%d", totalPool)).
 					ReplaceText(i18n.TranslateText(locale, "command.bet.message.result"))
 			}
 		}
 
-		layoutComponents, err := createBetLayout(&betHost, options, tx, locale)
+		layoutComponents, err := createBetLayout(c, &betHost, options, tx, locale)
 		if err != nil {
 			return err
 		}
@@ -1155,8 +1183,11 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 		}
 
 		if currency.Points < *prizePool {
+			cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 			if err := event.RespondMessage(discord.NewMessageBuilder().
 				SetContent(i18n.BuildContext().
+					WithText("currency_name", cName).
+					WithText("currency", cName).
 					WithText("pool", fmt.Sprintf("%d", *prizePool)).
 					WithText("points", fmt.Sprintf("%d", currency.Points)).
 					ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool"))).
@@ -1197,7 +1228,7 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 	}
 
 	// Create layout components (no options yet for race mode)
-	layoutComponents, err := createBetLayout(betHost, []models.BetOption{}, c.GormDB(), locale)
+	layoutComponents, err := createBetLayout(c, betHost, []models.BetOption{}, c.GormDB(), locale)
 	if err != nil {
 		slog.Error("failed to create bet layout", "error", err)
 		return errors.NewError(err)
@@ -1290,9 +1321,12 @@ func handleEntryButton(c *components.Components, event *events.ComponentInteract
 				return err
 			}
 
+			cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 			if currency.Points < *betHost.EntryFee {
 				if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 					SetContent(i18n.BuildContext().
+						WithText("currency_name", cName).
+						WithText("currency", cName).
 						WithText("fee", fmt.Sprintf("%d", *betHost.EntryFee)).
 						WithText("points", fmt.Sprintf("%d", currency.Points)).
 						ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_entry_fee"))).
@@ -1349,9 +1383,12 @@ func handleEntryButton(c *components.Components, event *events.ComponentInteract
 		}
 
 		// Build response message
+		cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 		var responseMsg string
 		if betHost.EntryFee != nil && *betHost.EntryFee > 0 {
 			responseMsg = i18n.BuildContext().
+				WithText("currency_name", cName).
+				WithText("currency", cName).
 				WithText("fee", fmt.Sprintf("%d", *betHost.EntryFee)).
 				ReplaceText(i18n.TranslateText(locale, "command.bet.message.entered_with_fee"))
 		} else {
@@ -1531,8 +1568,11 @@ func handleBattleRoyaleConfig(c *components.Components, event *events.ModalSubmi
 		}
 
 		if currency.Points < *prizePool {
+			cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 			if err := event.RespondMessage(discord.NewMessageBuilder().
 				SetContent(i18n.BuildContext().
+					WithText("currency_name", cName).
+					WithText("currency", cName).
 					WithText("pool", fmt.Sprintf("%d", *prizePool)).
 					WithText("points", fmt.Sprintf("%d", currency.Points)).
 					ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool"))).
@@ -1573,7 +1613,7 @@ func handleBattleRoyaleConfig(c *components.Components, event *events.ModalSubmi
 	}
 
 	// Create layout components (no options yet for battle royale mode)
-	layoutComponents, err := createBetLayout(betHost, []models.BetOption{}, c.GormDB(), locale)
+	layoutComponents, err := createBetLayout(c, betHost, []models.BetOption{}, c.GormDB(), locale)
 	if err != nil {
 		slog.Error("failed to create bet layout", "error", err)
 		return errors.NewError(err)
@@ -1669,66 +1709,71 @@ func handleBattleRoyaleEntryButton(c *components.Components, event *events.Compo
 			return err
 		}
 
-		if currency.Points < *betHost.EntryFee {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
-				SetContent(i18n.BuildContext().
-					WithText("fee", fmt.Sprintf("%d", *betHost.EntryFee)).
-					WithText("points", fmt.Sprintf("%d", currency.Points)).
-					ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_entry_fee"))).
-				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+			cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
+			if currency.Points < *betHost.EntryFee {
+				if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+					SetContent(i18n.BuildContext().
+						WithText("currency_name", cName).
+						WithText("currency", cName).
+						WithText("fee", fmt.Sprintf("%d", *betHost.EntryFee)).
+						WithText("points", fmt.Sprintf("%d", currency.Points)).
+						ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_entry_fee"))).
+					SetFlags(discord.MessageFlagEphemeral).
+					Build()); err != nil {
+					return err
+				}
+				return nil
+			}
+
+			// Deduct entry fee
+			currency.Points -= *betHost.EntryFee
+			if err := tx.Save(&currency).Error; err != nil {
 				return err
 			}
-			return nil
-		}
 
-		// Deduct entry fee
-		currency.Points -= *betHost.EntryFee
-		if err := tx.Save(&currency).Error; err != nil {
-			return err
-		}
+			// Create a new option for this entrant
+			optionText := event.User().EffectiveName()
 
-		// Create a new option for this entrant
-		optionText := event.User().EffectiveName()
+			option := &models.BetOption{
+				ID:         uuid.New(),
+				HostID:     hostID,
+				OptionText: optionText,
+				Index:      0, // Will be updated
+			}
 
-		option := &models.BetOption{
-			ID:         uuid.New(),
-			HostID:     hostID,
-			OptionText: optionText,
-			Index:      0, // Will be updated
-		}
+			// Get current max index
+			var maxIndex int
+			if err := tx.Model(&models.BetOption{}).Where("host_id = ?", hostID).Select("COALESCE(MAX(\"index\"), -1)").Scan(&maxIndex).Error; err != nil {
+				return err
+			}
+			option.Index = maxIndex + 1
 
-		// Get current max index
-		var maxIndex int
-		if err := tx.Model(&models.BetOption{}).Where("host_id = ?", hostID).Select("COALESCE(MAX(\"index\"), -1)").Scan(&maxIndex).Error; err != nil {
-			return err
-		}
-		option.Index = maxIndex + 1
+			if err := tx.Create(option).Error; err != nil {
+				return err
+			}
 
-		if err := tx.Create(option).Error; err != nil {
-			return err
-		}
+			// Create entrant record
+			entrant := &models.BetEntrant{
+				ID:       uuid.New(),
+				HostID:   hostID,
+				UserID:   event.User().ID,
+				OptionID: option.ID,
+			}
 
-		// Create entrant record
-		entrant := &models.BetEntrant{
-			ID:       uuid.New(),
-			HostID:   hostID,
-			UserID:   event.User().ID,
-			OptionID: option.ID,
-		}
+			if err := tx.Create(entrant).Error; err != nil {
+				return err
+			}
 
-		if err := tx.Create(entrant).Error; err != nil {
-			return err
-		}
+			// Update the bet message
+			if err := updateBetMessage(c, tx, event.Client(), hostID, locale); err != nil {
+				return err
+			}
 
-		// Update the bet message
-		if err := updateBetMessage(c, tx, event.Client(), hostID, locale); err != nil {
-			return err
-		}
-
-		responseMsg := i18n.BuildContext().
-			WithText("fee", fmt.Sprintf("%d", *betHost.EntryFee)).
-			ReplaceText(i18n.TranslateText(locale, "command.bet.message.entered_br"))
+			responseMsg := i18n.BuildContext().
+				WithText("currency_name", cName).
+				WithText("currency", cName).
+				WithText("fee", fmt.Sprintf("%d", *betHost.EntryFee)).
+				ReplaceText(i18n.TranslateText(locale, "command.bet.message.entered_br"))
 
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 			SetContent(responseMsg).
@@ -1917,8 +1962,11 @@ func handleCancelEntryButton(c *components.Components, event *events.ComponentIn
 			return err
 		}
 
+		cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 			SetContent(i18n.BuildContext().
+				WithText("currency_name", cName).
+				WithText("currency", cName).
 				WithText("amount", fmt.Sprintf("%d", totalRefunded)).
 				ReplaceText(i18n.TranslateText(locale, "command.bet.message.cancelled"))).
 			SetFlags(discord.MessageFlagEphemeral).

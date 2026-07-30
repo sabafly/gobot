@@ -11,7 +11,7 @@ strings:
   general.value.all_guilds: "全てのサーバー"
   command.currency.view.description: "通貨の管理を行います。"
   command.currency.ranking.entry: |-
-    **#{rank}**. {name} - `{points} ポイント`
+    **#{rank}**. {name} - `{points} {currency_name}`
   command.currency.ranking.entry.you: "**<<あなた>>**"
   command.currency.ranking.no_data: あなたの通貨はまだ登録されていません。
   command.currency.ranking.no_guild_data: このサーバーの通貨はまだ登録されていません。
@@ -25,7 +25,7 @@ strings:
   command.currency.give.target_user.description: "譲渡先のユーザー"
   command.currency.tax-setup.description: "定期徴収の割合や間隔を設定します。(管理者のみ)"
   command.currency.tax-status.description: "現在の定期徴収の設定状況と徴収予定を表示します。(管理者のみ)"
-  command.currency.tax-force.description: "今すぐポイントの徴収（または徴収の予約計算）を強制実行します。(管理者のみ)"
+  command.currency.tax-force.description: "今すぐ{{.currency_name}}の徴収（または徴収の予約計算）を強制実行します。(管理者のみ)"
   command.currency.reset.description: "ギルド内の全員のCurrencyを一括リセットします。(管理者のみ)"
   command.currency.season-start.description: "新しいシーズンを開始、またはスケジュールします。(管理者のみ)"
   command.currency.season-end.description: "アクティブなシーズンを途中で終了し、表彰を行います。(管理者のみ)"
@@ -34,15 +34,15 @@ strings:
   command.currency.description: "Currencyの情報を表示します。"
   command.currency.tax.description: "定期徴収の管理を行います。(管理者のみ)"
   command.currency.tax-force.overwrite.description: "既存の徴収予定を上書き（再計算）するか指定します (デフォルト: false)。"
-  command.currency.reset.points.description: "リセット後のポイント数を指定します (デフォルト: 0)。by_levelがtrueの場合は無視されます。"
-  command.currency.reset.by_level.description: "各ユーザーのレベルの累積必要XPに応じたポイントでリセットするかどうか。"
+  command.currency.reset.points.description: "リセット後の{{.currency_name}}数を指定します (デフォルト: 0)。by_levelがtrueの場合は無視されます。"
+  command.currency.reset.by_level.description: "各ユーザーのレベルの累積必要XPに応じた{{.currency_name}}でリセットするかどうか。"
   command.currency.season.description: "シーズンの管理・表示を行います。"
   command.currency.season-start.name.description: "シーズンの名前を指定します。"
   command.currency.season-start.duration_days.description: "シーズンの期間(日)を指定します (1-365)。"
   command.currency.season-start.start_delay_hours.description: "何時間後にシーズンを開始するか（スケジュール予約）を指定します。"
-  command.currency.season-start.criteria.description: "ランキングの基準を指定します (earned: 獲得ポイント, final: 最終ポイント)。"
-  command.currency.season-start.criteria.choice.earned: "獲得ポイント数"
-  command.currency.season-start.criteria.choice.final: "最終所持ポイント数"
+  command.currency.season-start.criteria.description: "ランキングの基準を指定します (earned: 獲得{{.currency_name}}, final: 最終{{.currency_name}})。"
+  command.currency.season-start.criteria.choice.earned: "獲得{{.currency_name}}数"
+  command.currency.season-start.criteria.choice.final: "最終所持{{.currency_name}}数"
   command.currency.season-ranking.season_id.description: "表示したい過去のシーズンのIDを指定します (省略時は現在のアクティブなシーズン)。"
   command.currency.config.description: "通貨システムの設定を行います。(管理者のみ)"
   command.currency.config-name.description: "ギルドの通貨名（表示名）を設定・表示します。(管理者のみ)"
@@ -56,13 +56,13 @@ strings:
   command.play.high-and-low.start_option_entry.description: "開始{{.currency_name}}: {{.StartPoint}}{{.currency_name}} ボーナス割合: {{mul .Multiplier 100}}%"
   command.play.high-and-low.start_option_entry.selected: "コスト: `{{.Cost}}{{.currency_name}}` 開始{{.currency_name}}: `{{.StartPoint}}{{.currency_name}}` ボーナス割合: `{{mul .Multiplier 100}}%`"
   command.play.high-and-low.option.extra_bet.name: "追加ベット"
-  command.play.high-and-low.option.extra_bet.description: "追加ベットを行い、初期ポイントを増やします 4ポイント以上増やした場合1ポイントごとに倍率が(増やしたポイント-3)増える (10^(追加初期ポイント+1) )ポイント支払う"
+  command.play.high-and-low.option.extra_bet.description: "追加ベットを行い、初期{{.currency_name}}を増やします 4{{.currency_name}}以上増やした場合1{{.currency_name}}ごとに倍率が(増やした{{.currency_name}}-3)増える (10^(追加初期{{.currency_name}}+1) ){{.currency_name}}支払う"
   command.play.high-and-low.finish.win: "ゲームクリア"
   command.play.high-and-low.finish.lose: "ゲームオーバー"
-  command.play.high-and-low.finish.payout: "ポイント獲得"
+  command.play.high-and-low.finish.payout: "{{.currency_name}}獲得"
   command.play.high-and-low.finish.joker: "ジョーカーがあらわれた！"
   command.play.slot.description: "スロットマシンをプレイします。"
-  command.play.fx.description: "FXポイントゲームをプレイします。"
+  command.play.fx.description: "FX {{.currency_name}} ゲームをプレイします。"
   command.play.portfolio.description: "指定したユーザーのFXポジション一覧（ポートフォリオ）を表示します。"
   command.play.portfolio.option.user.description: "ポートフォリオを表示するユーザーを指定します。"
   command.play.chinchiro.description: "チンチロをマルチプレイで開始します。"
@@ -92,22 +92,22 @@ strings:
   command.bet.modal.create_poll.input.options.label: "選択肢"
   command.bet.modal.create_poll.input.options.placeholder: "選択肢を改行で区切って入力してください\n選択肢1\n選択肢2\n選択肢3"
   command.bet.modal.create_poll.input.prize_pool.label: "賞金プール（主催者出資）"
-  command.bet.modal.create_poll.input.prize_pool.placeholder: "主催者が出資する賞金をポイント単位で入力（例: 500）"
+  command.bet.modal.create_poll.input.prize_pool.placeholder: "主催者が出資する賞金を{{.currency_name}}単位で入力（例: 500）"
   command.bet.modal.create_poll.input.deadline.label: "投票期限"
   command.bet.modal.create_poll.input.deadline.placeholder: "投票の締め切り時間を分単位で入力してください（例: 60）"
   command.bet.modal.create_race.title: "レースを作成"
   command.bet.modal.create_race.input.title.label: "タイトル"
   command.bet.modal.create_race.input.title.placeholder: "レースのタイトルを入力してください"
   command.bet.modal.create_race.input.prize_pool.label: "賞金プール（主催者出資）"
-  command.bet.modal.create_race.input.prize_pool.placeholder: "主催者が出資する賞金をポイント単位で入力（例: 500）"
+  command.bet.modal.create_race.input.prize_pool.placeholder: "主催者が出資する賞金を{{.currency_name}}単位で入力（例: 500）"
   command.bet.modal.create_race.input.entry_fee.label: "参加費"
-  command.bet.modal.create_race.input.entry_fee.placeholder: "参加費をポイント単位で入力（例: 100、空欄で無料）"
+  command.bet.modal.create_race.input.entry_fee.placeholder: "参加費を{{.currency_name}}単位で入力（例: 100、空欄で無料）"
   command.bet.modal.create_race.input.entry_deadline.label: "エントリー締め切り"
   command.bet.modal.create_race.input.entry_deadline.placeholder: "エントリー締め切り時間を分単位で入力（例: 30）"
   command.bet.modal.create_race.input.vote_deadline.label: "投票期限"
   command.bet.modal.create_race.input.vote_deadline.placeholder: "投票の締め切り時間を分単位で入力（例: 60）"
   command.bet.modal.vote.title: "{option} に投票"
-  command.bet.modal.vote.input.amount.label: "投票するポイント数"
+  command.bet.modal.vote.input.amount.label: "投票する{currency_name}数"
   command.bet.modal.vote.input.amount.placeholder: "投票する通貨数を入力"
   command.bet.modal.decide.title: "結果を決定"
   command.bet.modal.decide.input.winner.label: "勝利した選択肢（複数選択可）"
@@ -126,16 +126,16 @@ strings:
   command.bet.error.invalid_entry_fee: "有効な参加費を入力してください（0以上の整数）。"
   command.bet.error.invalid_entry_fee_required: "参加費は必須です（1以上の整数）。"
   command.bet.error.invalid_prize_pool: "有効な賞金プールを入力してください（0以上の整数）。"
-  command.bet.error.insufficient_prize_pool: "賞金プールに必要なポイントが不足しています。賞金プール: {pool}pt / 所持: {points}pt"
-  command.bet.error.insufficient_entry_fee: "参加費が不足しています。参加費: {fee}pt / 所持: {points}pt"
+  command.bet.error.insufficient_prize_pool: "賞金プールに必要な{currency_name}が不足しています。賞金プール: {pool}{currency_name} / 所持: {points}{currency_name}"
+  command.bet.error.insufficient_entry_fee: "参加費が不足しています。参加費: {fee}{currency_name} / 所持: {points}{currency_name}"
   command.bet.error.option_too_long: "選択肢 {option} が長すぎます。100文字以内にしてください。"
   command.bet.error.min_options: "少なくとも2つの選択肢が必要です。"
   command.bet.error.max_options: "選択肢は最大25個までです。"
   command.bet.error.voting_closed: "投票は現在受け付けていません。"
-  command.bet.error.already_voted_no_change: "あなたは既に {option} に {amount}pt 投票しています。\n投票先を変更することはできません。"
-  command.bet.error.already_voted_status: "あなたは既に {option} に {amount}pt 投票しています。\n"
-  command.bet.error.invalid_amount: "有効なポイント数を入力してください。"
-  command.bet.error.insufficient_points: "通貨が不足しています。現在の所持ポイント: {points}pt"
+  command.bet.error.already_voted_no_change: "あなたは既に {option} に {amount}{currency_name} 投票しています。\n投票先を変更することはできません。"
+  command.bet.error.already_voted_status: "あなたは既に {option} に {amount}{currency_name} 投票しています。\n"
+  command.bet.error.invalid_amount: "有効な{currency_name}数を入力してください。"
+  command.bet.error.insufficient_points: "通貨が不足しています。現在の所持{currency_name}: {points}{currency_name}"
   command.bet.error.cannot_decrease: "投票額を減らすことはできません。"
   command.bet.error.cannot_change_dest: "投票先を変更することはできません。"
   command.bet.error.only_organizer_decide: "結果の決定は主催者のみが行えます。"
@@ -143,16 +143,16 @@ strings:
   command.bet.message.created: "投票を作成しました"
   command.bet.message.race_created: "レースを作成しました"
   command.bet.message.entered: "レースにエントリーしました"
-  command.bet.message.entered_with_fee: "レースにエントリーしました（参加費: {fee}pt）"
+  command.bet.message.entered_with_fee: "レースにエントリーしました（参加費: {fee}{currency_name}）"
   command.bet.message.vote_started: "投票を開始しました"
-  command.bet.message.voted: "投票しました: {amount}pt"
-  command.bet.message.updated: "投票を更新しました: {amount}pt"
+  command.bet.message.voted: "投票しました: {amount}{currency_name}"
+  command.bet.message.updated: "投票を更新しました: {amount}{currency_name}"
   command.bet.message.no_change: "投票内容に変更はありません。"
   command.bet.message.closed: "投票を締め切りました。"
-  command.bet.message.current_stats: "現在の総投票数: {votes}票, 総投票額: {total_amount}pt\n"
-  command.bet.message.cancelled: "ベットはキャンセルされました。合計{amount}pt が返金されました。"
-  command.bet.message.result: "# 勝利: {winners}\n結果が決定されました。\n総額: {total_pool}pt が分配されました。"
-  command.bet.message.result_with_pools: "# 勝利: {winners}\n結果が決定されました。\n投票総額: {total_pool}pt + 参加費プール: {entry_pool}pt + 賞金プール: {prize_pool}pt が分配されました。"
+  command.bet.message.current_stats: "現在の総投票数: {votes}票, 総投票額: {total_amount}{currency_name}\n"
+  command.bet.message.cancelled: "ベットはキャンセルされました。合計{amount}{currency_name} が返金されました。"
+  command.bet.message.result: "# 勝利: {winners}\n結果が決定されました。\n総額: {total_pool}{currency_name} が分配されました。"
+  command.bet.message.result_with_pools: "# 勝利: {winners}\n結果が決定されました。\n投票総額: {total_pool}{currency_name} + 参加費プール: {entry_pool}{currency_name} + 賞金プール: {prize_pool}{currency_name} が分配されました。"
   command.bet.status.entry: "エントリー受付中"
   command.bet.status.voting: "投票受付中"
   command.bet.status.closed: "受付終了"
@@ -172,8 +172,8 @@ strings:
   command.bet.layout.entry_pool_label: "**参加費プール:**"
   command.bet.layout.no_options: "_選択肢がまだ追加されていません_"
   command.bet.layout.no_entrants: "_まだ参加者がいません_"
-  command.bet.layout.votes_points: "{votes}票 / {points}pt"
-  command.bet.layout.option_votes: "{votes}票 ({points}pt)"
+  command.bet.layout.votes_points: "{votes}票 / {points}{currency_name}"
+  command.bet.layout.option_votes: "{votes}票 ({points}{currency_name})"
   command.bet.button.vote: "{option}に投票"
   command.bet.button.entry: "エントリーする"
   command.bet.button.entry_br: "参加する"
@@ -184,20 +184,20 @@ strings:
   command.bet.button.decide_result: "結果を決定"
   command.bet.button.decide_winner: "勝者を決定"
   command.bet.cancel_option.label: "キャンセル（全額返金）"
-  command.bet.cancel_option.description: "ベットをキャンセルし、全員にポイントを返還します"
+  command.bet.cancel_option.description: "ベットをキャンセルし、全員に{{.currency_name}}を返還します"
   command.bet.modal.create_battle_royale.title: "バトルロイヤルを作成"
   command.bet.modal.create_battle_royale.input.title.label: "タイトル"
   command.bet.modal.create_battle_royale.input.title.placeholder: "バトルロイヤルのタイトルを入力してください"
   command.bet.modal.create_battle_royale.input.prize_pool.label: "賞金プール（主催者出資）"
-  command.bet.modal.create_battle_royale.input.prize_pool.placeholder: "主催者が出資する賞金をポイント単位で入力（例: 500）"
+  command.bet.modal.create_battle_royale.input.prize_pool.placeholder: "主催者が出資する賞金を{{.currency_name}}単位で入力（例: 500）"
   command.bet.modal.create_battle_royale.input.entry_fee.label: "参加費"
-  command.bet.modal.create_battle_royale.input.entry_fee.placeholder: "参加費をポイント単位で入力（例: 100、空欄で無料）"
+  command.bet.modal.create_battle_royale.input.entry_fee.placeholder: "参加費を{{.currency_name}}単位で入力（例: 100、空欄で無料）"
   command.bet.modal.create_battle_royale.input.entry_deadline.label: "エントリー締め切り"
   command.bet.modal.create_battle_royale.input.entry_deadline.placeholder: "エントリー締め切り時間を分単位で入力（例: 30）"
   command.bet.message.battle_royale_created: "バトルロイヤルを作成しました"
   command.bet.message.battle_royale_entered: "バトルロイヤルにエントリーしました"
-  command.bet.message.battle_royale_entered_with_fee: "バトルロイヤルにエントリーしました（参加費: {fee}pt）"
-  command.bet.message.entered_br: "バトルロイヤルに参加しました（参加費: {fee}pt）"
+  command.bet.message.battle_royale_entered_with_fee: "バトルロイヤルにエントリーしました（参加費: {fee}{currency_name}）"
+  command.bet.message.entered_br: "バトルロイヤルに参加しました（参加費: {fee}{currency_name}）"
   command.bet.message.battle_started: "バトルを開始しました"
   command.bet.message.entry_closed_br: "エントリーを締め切りました"
   command.bet.error.only_organizer_start_battle: "バトルの開始は主催者のみが行えます。"
@@ -209,16 +209,16 @@ strings:
   error.currency.give.self.description: "自分自身に通貨を譲渡することはできません。"
   error.currency.give.invalid_target: "無効な譲渡先"
   error.currency.give.invalid_target.description: "指定されたユーザーは無効なユーザーです。"
-  error.currency.give.invalid_point: "無効なポイント数指定"
+  error.currency.give.invalid_point: "無効な{{.currency_name}}数指定"
   error.currency.give.invalid_point.description: "譲渡する通貨の数は1以上でなければなりません。"
   error.play.high-and-low.expired: "ゲームが期限切れです"
   error.play.high-and-low.expired.description: "このハイアンドローゲームは期限切れです。新しいゲームを開始してください。"
   error.play.high-and-low.not_your_game: "このゲームはあなたのものではありません"
   error.play.high-and-low.not_your_game.description: "他のユーザーのハイアンドローゲームに参加することはできません。"
-  error.play.high-and-low.insufficient_points: "ポイントが不足しています"
-  error.play.high-and-low.insufficient_points.description: "このハイアンドローゲームに参加するには、{point}ポイントが必要です。"
-  error.play.slot.insufficient_points: "ポイントが不足しています"
-  error.play.slot.insufficient_points.description: "このスロットマシンをプレイするには、{point}ポイントが必要です。"
+  error.play.high-and-low.insufficient_points: "{{.currency_name}}が不足しています"
+  error.play.high-and-low.insufficient_points.description: "このハイアンドローゲームに参加するには、{point}{currency_name}が必要です。"
+  error.play.slot.insufficient_points: "{{.currency_name}}が不足しています"
+  error.play.slot.insufficient_points.description: "このスロットマシンをプレイするには、{point}{currency_name}が必要です。"
   error.play.slot.expired: "スロットゲームが期限切れです"
   error.play.slot.expired.description: "このスロットゲームは期限切れです。新しいゲームを開始してください。"
   error.play.slot.not_your_game: "このゲームはあなたのものではありません"
@@ -371,16 +371,16 @@ strings:
   components.play.polymarket.modal_bet_title: "ベット額の入力"
   components.play.polymarket.modal_bet_label: "{{.currency_name}} 金額"
   components.play.polymarket.modal_bet_placeholder: "賭けたい {{.currency_name}} の金額を入力してください (例: 150)"
-  components.currency.admin.tax_setup_success: "✅ **定期徴収設定を更新しました**:\n- デフォルト徴収割合: {{.rate}}%\n- 最低徴収対象ポイント: {{.min_points}} {{.currency_name}}\n- 徴収間隔: {{.interval}}日\n- 状態: {{.status}}\n- 次回予定: {{.next_time}}"
+  components.currency.admin.tax_setup_success: "✅ **定期徴収設定を更新しました**:\n- デフォルト徴収割合: {{.rate}}%\n- 最低徴収対象{{.currency_name}}: {{.min_points}} {{.currency_name}}\n- 徴収間隔: {{.interval}}日\n- 状態: {{.status}}\n- 次回予定: {{.next_time}}"
   components.currency.admin.tax_status_enabled: "有効"
   components.currency.admin.tax_status_disabled: "無効"
-  components.currency.admin.tax_status_info: "### 🪙 定期徴収ステータス\n- **徴収有効化**: {{.enabled}}\n- **デフォルト割合**: {{.rate}}%\n- **最低徴収対象ポイント**: {{.min_points}} {{.currency_name}}\n- **徴収間隔**: {{.interval}}日\n- **次回徴収予定日時**: {{.next_time}}\n- **段階的徴収割合設定**:\n{{.brackets}}"
+  components.currency.admin.tax_status_info: "### 🪙 定期徴収ステータス\n- **徴収有効化**: {{.enabled}}\n- **デフォルト割合**: {{.rate}}%\n- **最低徴収対象{{.currency_name}}**: {{.min_points}} {{.currency_name}}\n- **徴収間隔**: {{.interval}}日\n- **次回徴収予定日時**: {{.next_time}}\n- **段階的徴収割合設定**:\n{{.brackets}}"
   components.currency.admin.tax_status_pending_title: "\n\n**⏳ 徴収待機中（1週間後の徴収予定）:**\n"
   components.currency.admin.tax_status_pending_item: "- <@{{.user_id}}>: `{{.tax_amount}} {{.currency_name}}` (徴収予定: {{.collect_time}})\n"
   components.currency.admin.tax_status_no_pending: "\n現在徴収待機中のユーザーはいません。"
   components.currency.admin.tax_force_determination: "⚡ **徴収予約（計算）を強制実行しました**:\n- 対象ユーザー: `{{.count}}名`の徴収予定（1週間後）を生成しました。"
   components.currency.admin.tax_force_collection: "⚡ **徴収実行（1週間経過分）を強制実行しました**:\n- 徴収完了: `{{.collected}}名`\n- 免除: `{{.exempted}}名`"
-  components.currency.admin.reset_success: "⚠️ **ギルドメンバー全員の {{.currency_name}}を一括リセットしました**:\n- 全員のポイントを `{{.points}} {{.currency_name}}` に設定しました。"
+  components.currency.admin.reset_success: "⚠️ **ギルドメンバー全員の {{.currency_name}}を一括リセットしました**:\n- 全員の{{.currency_name}}を `{{.points}} {{.currency_name}}` に設定しました。"
   components.currency.admin.season_start_success: "🚀 **新しいシーズンを開始しました**:\n- シーズン名: **{{.name}}**\n- 期間: {{.duration}}日間\n- 表彰基準: {{.criteria}}\n- 終了予定: {{.end_time}}"
   components.currency.admin.season_start_scheduled: "📅 **シーズン開始をスケジュール予約しました**:\n- シーズン名: **{{.name}}**\n- 表彰基準: {{.criteria}}\n- 開始予定: {{.start_time}}\n- 終了予定: {{.end_time}}"
   components.currency.admin.season_err_active_exists: "❌ **開始エラー**: すでにアクティブなシーズン `{{.name}}` が存在します。終了してから新しいシーズンを開始してください。"
@@ -409,18 +409,18 @@ strings:
   components.currency.admin.tax_setup_disabled_label: "無効 (Disabled)"
   components.currency.admin.tax_setup_modal_title: "定期徴収設定"
   components.currency.admin.tax_setup_label_rate: "デフォルト徴収割合 (%)"
-  components.currency.admin.tax_setup_label_min_points: "最低徴収対象ポイント (所持ポイントの閾値)"
+  components.currency.admin.tax_setup_label_min_points: "最低徴収対象{{.currency_name}} (所持{{.currency_name}}の閾値)"
   components.currency.admin.tax_setup_label_interval: "徴収間隔 (日数)"
   components.currency.admin.tax_setup_label_enabled: "定期徴収の有効化"
   components.currency.admin.tax_setup_label_brackets: "段階的割合設定 (範囲:割合, 改行区切り)"
   components.currency.admin.tax_setup_placeholder_brackets: "例:\n100-500:5\n501-1000:10\n1001+:15\n※ 割合0%で免除"
   components.currency.admin.tax_setup_err_rate_range: "デフォルト徴収割合は 0〜100 の数値を指定してください。"
-  components.currency.admin.tax_setup_err_min_points: "最低徴収対象ポイントは 0 以上の数値を指定してください。"
+  components.currency.admin.tax_setup_err_min_points: "最低徴収対象{{.currency_name}}は 0 以上の数値を指定してください。"
   components.currency.admin.tax_setup_err_interval_range: "徴収間隔は 1〜365 の数値を指定してください。"
   components.currency.admin.tax_setup_err_brackets_parse: "段階的割合設定の解析に失敗しました:\n{{.error}}"
   components.currency.admin.tax_setup_error_title: "❌ **設定エラー**:\n"
   components.currency.admin.tax_brackets_none: "なし"
-  components.currency.admin.reset_by_level_success: "ギルド内の全員の {{.currency_name}}を、それぞれのレベルの累積必要XPに応じたポイントにリセットしました。"
+  components.currency.admin.reset_by_level_success: "ギルド内の全員の {{.currency_name}}を、それぞれのレベルの累積必要XPに応じた{{.currency_name}}にリセットしました。"
   components.currency.admin.season_criteria_final: "最終所持 {{.currency_name}} 数"
   components.currency.admin.season_criteria_earned: "獲得 {{.currency_name}} 数"
   components.currency.admin.season_status_active: "アクティブ"
@@ -517,7 +517,7 @@ components:
             - "## {user_name}の通貨"
             - |-
               ### 通貨の残高
-              - **残高**：`{point} ポイント`
+              - **残高**：`{point} {currency_name}`
         - type: separator
           height: 2
         - |-
@@ -533,11 +533,11 @@ components:
         - |-
           {ranking}
   command.currency.give.not_enough_point:
-    - "あなたの通貨が不足しているため`{point} ポイント`を譲渡できません。"
-    - "あなたの現在の通貨は`{current_point} ポイント`です。"
+    - "あなたの{currency_name}が不足しているため`{point} {currency_name}`を譲渡できません。"
+    - "あなたの現在の{currency_name}は`{current_point} {currency_name}`です。"
   command.currency.give.success:
     - "通貨の譲渡が完了しました。"
-    - "`{point} ポイント`を`{target_user_name}`に譲渡しました。"
+    - "`{point} {currency_name}`を`{target_user_name}`に譲渡しました。"
   command.play.high-and-low.start:
     - "{mention}"
     - type: container
@@ -547,20 +547,20 @@ components:
           ## ルール
           - ハイアンドローは、現在のカードよりも次のカードが高いか低いかを予想するゲームです。
           - 次のカードの数字が現在のカードよりも高いと予想する場合はHIGH、低いと予想する場合はLOWを選択してください。
-          - 正解すると現在のポイントに、現在のポイント×ボーナス割合が加算されます。
+          - 正解すると現在の{currency_name}に、現在の{currency_name}×ボーナス割合が加算されます。
           - 外すとゲームオーバーです。
           ### SAMEチャンス
           - 前回のカードと同じ数字が出た場合は、SAMEを予想することができます。
           - SAMEを予想して的中するとボーナス割合に、出た目の数×初期ボーナス割合が加算されます。
-          - さらに、前回のカードと同じスートの場合は、現在のポイントに出た目の数×1.5が掛けられます。
+          - さらに、前回のカードと同じスートの場合は、現在の{currency_name}に出た目の数×1.5が掛けられます。
           - SAMEを予想して外すとゲームオーバーです。
-          ### 追加ポイント
-          - 追加のポイントを支払うとポイントと倍率の初期値を増やすことができます。
+          ### 追加{currency_name}
+          - 追加の{currency_name}を支払うと{currency_name}と倍率の初期値を増やすことができます。
         - type: separator
           height: 2
         - |-
           選択中の開始オプション: {selected_option}
-          現在の残高: `{gopoint} ポイント`
+          現在の残高: `{gopoint} {currency_name}`
           開始オプションを選択して「開始」ボタンを押すとゲームが開始します。
         - type: action_row
           components:
@@ -586,7 +586,7 @@ components:
           ### **現在のカード**
           # {current_card}
           - **前回のカード**： {last_card}
-          - **現在のポイント**：`{point} ポイント` (ボーナス{multiplier}%)
+          - **現在の{currency_name}**：`{point} {currency_name}` (ボーナス{multiplier}%)
           - **前回の選択**：**{last_choice}** 前回の結果：**{last_result}**
         - "### {message}"
         - type: action_row
@@ -624,7 +624,7 @@ components:
           ### **最後のカード**
           # {current_card}
           - **前回のカード**: {last_card}
-          - **結果**：`{point} ポイント` (ボーナス{multiplier}%)
+          - **結果**：`{point} {currency_name}` (ボーナス{multiplier}%)
           - **最後の選択**：**{last_choice}** 前回の結果：**{last_result}**
         - type: separator
           height: 2
@@ -642,7 +642,7 @@ components:
           ### 💱 現在の為替レート
           {rates_text}
         - type: separator
-        - "🪙 **保有 Currency**: `{points} pt`"
+        - "🪙 **保有 {currency_name}**: `{points} {currency_name}`"
         - type: separator
         - |-
           ### 🆕 新規注文フォーム
@@ -706,7 +706,7 @@ components:
           ### 💱 現在の為替レート
           {rates_text}
         - type: separator
-        - "🪙 **保有 Currency**: `{points} pt`"
+        - "🪙 **保有 {currency_name}**: `{points} {currency_name}`"
         - type: separator
         - |-
           {position_info}
@@ -749,7 +749,7 @@ components:
           ### 💱 現在の為替レート
           {rates_text}
         - type: separator
-        - "🪙 **保有 Currency**: `{points} pt`"
+        - "🪙 **保有 {currency_name}**: `{points} {currency_name}`"
         - type: separator
         - |-
           {order_info}
@@ -780,7 +780,7 @@ components:
         - "### 📊 **{user_name}** の FXポートフォリオ 📊"
         - type: separator
           height: 2
-        - "🪙 **所持 Currency**: `{points} pt`"
+        - "🪙 **所持 {currency_name}**: `{points} {currency_name}`"
         - type: separator
         - |-
           ### 💼 保有ポジション ({pos_count}件)
@@ -795,7 +795,7 @@ components:
       components:
         - "🎲 **チンチロロビー** 🎲"
         - type: separator
-        - "🪙 **参加費 (ベット)**: `{bet} pt`"
+        - "🪙 **参加費 (ベット)**: `{bet} {currency_name}`"
         - type: separator
         - |-
           ### 👥 参加者一覧 ({player_count}名)
@@ -861,7 +861,7 @@ components:
           下のセレクトメニューから予測市場を選択して、詳細の確認やベットを行えます。
           {status}
         - type: separator
-        - "🪙 **保有 Currency**: `{points} pt`"
+        - "🪙 **保有 {currency_name}**: `{points} {currency_name}`"
         - type: action_row
           components:
             - type: string_select_menu
@@ -893,7 +893,7 @@ components:
           **現在の価格 (オッズ/勝率 %):**
           {odds_text}
         - type: separator
-        - "🪙 **保有 Currency**: `{points} pt`"
+        - "🪙 **保有 {currency_name}**: `{points} {currency_name}`"
         - type: action_row
           components:
             - type: string_select_menu
@@ -919,28 +919,28 @@ components:
         - |-
           ### {market_question}
 
-          👉 **選択した結果**: `{selected_outcome}` (現在価格: `{outcome_price} pt` / 1シェア)
+          👉 **選択した結果**: `{selected_outcome}` (現在価格: `{outcome_price} {currency_name}` / 1シェア)
 
-          *※予測が的中した場合、1シェアあたり `1 pt` (Currency) の配当が得られます。的中時の倍率は `1 / {outcome_price} = {multiplier}倍` です。*
+          *※予測が的中した場合、1シェアあたり `1 {currency_name}` の配当が得られます。的中時の倍率は `1 / {outcome_price} = {multiplier}倍` です。*
         - type: separator
-        - "🪙 **保有 Currency**: `{points} pt`"
+        - "🪙 **保有 {currency_name}**: `{points} {currency_name}`"
         - type: action_row
           components:
             - type: button
               style: primary
-              label: "10 pt 賭ける"
+              label: "10 {currency_name} 賭ける"
               id: "play:pm_bet_amount:10:{uuid}"
             - type: button
               style: primary
-              label: "50 pt 賭ける"
+              label: "50 {currency_name} 賭ける"
               id: "play:pm_bet_amount:50:{uuid}"
             - type: button
               style: primary
-              label: "100 pt 賭ける"
+              label: "100 {currency_name} 賭ける"
               id: "play:pm_bet_amount:100:{uuid}"
             - type: button
               style: primary
-              label: "500 pt 賭ける"
+              label: "500 {currency_name} 賭ける"
               id: "play:pm_bet_amount:500:{uuid}"
             - type: button
               style: success

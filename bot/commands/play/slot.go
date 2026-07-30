@@ -343,14 +343,15 @@ func SlotFinish(c *components.Components, data *SlotData, event *events.Componen
 		netWinSign = "+"
 	}
 
+	cName := currency.GetCurrencyName(c, *event.GuildID())
 	container = container.AddComponents(
 		discord.NewTextDisplay("🎰 **SLOT MACHINE CLOSED** 🎰"),
 		discord.NewLargeSeparator(),
 		discord.NewTextDisplay("ゲームを終了しました。"),
 		discord.NewTextDisplayf("- **総回転数**： %d 回転", data.TotalSpins),
-		discord.NewTextDisplayf("- **使用ポイント**： `%d pt`", data.TotalSpent),
-		discord.NewTextDisplayf("- **獲得ポイント**： `%d pt`", data.TotalWon),
-		discord.NewTextDisplayf("- **収支**： `%s%d pt`", netWinSign, netWin),
+		discord.NewTextDisplayf("- **使用%s**： `%d %s`", cName, data.TotalSpent, cName),
+		discord.NewTextDisplayf("- **獲得%s**： `%d %s`", cName, data.TotalWon, cName),
+		discord.NewTextDisplayf("- **収支**： `%s%d %s`", netWinSign, netWin, cName),
 	)
 
 	if err := event.UpdateMessage(discord.NewMessageBuilder().

@@ -293,7 +293,7 @@ func TestChinchiro_HostRotation(t *testing.T) {
 		if err := tx.Preload("Players").Where("id = ?", session.ID).First(&dbSession).Error; err != nil {
 			return err
 		}
-		if err := advanceToNextRoundOrFinish(tx, &dbSession, nil); err != nil {
+		if err := advanceToNextRoundOrFinish(nil, tx, &dbSession, nil); err != nil {
 			return err
 		}
 		return tx.Save(&dbSession).Error

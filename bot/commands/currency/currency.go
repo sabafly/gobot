@@ -24,6 +24,9 @@ import (
 )
 
 func GetCurrencyName(c *components.Components, guildID snowflake.ID) string {
+	if c == nil || c.GormDB() == nil {
+		return "GoPoint"
+	}
 	var cfg models.CurrencyConfig
 	if err := c.GormDB().Where("guild_id = ?", guildID).First(&cfg).Error; err == nil && cfg.Name != "" {
 		return cfg.Name

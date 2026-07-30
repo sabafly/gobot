@@ -7,6 +7,8 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"gorm.io/gorm"
 
+	"github.com/sabafly/gobot/bot/commands/currency"
+	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/i18n"
 )
@@ -39,8 +41,9 @@ func statusText(key models.BetStatus, locale discord.Locale) string {
 	}[key]
 }
 
-func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.DB, locale discord.Locale) ([]discord.LayoutComponent, error) {
+func createBetLayout(c *components.Components, host *models.BetHost, options []models.BetOption, db *gorm.DB, locale discord.Locale) ([]discord.LayoutComponent, error) {
 	var layoutComponents []discord.LayoutComponent
+	cName := currency.GetCurrencyName(c, host.GuildID)
 
 	// Header
 
@@ -67,14 +70,14 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 	// Entry Fee (for race mode with entry fee)
 	if host.EntryFee != nil && *host.EntryFee > 0 {
 		headerComponent = headerComponent.AddComponents(
-			discord.NewTextDisplayf("%s %dpt", i18n.TranslateText(locale, "command.bet.layout.entry_fee_label"), *host.EntryFee),
+			discord.NewTextDisplayf("%s %d %s", i18n.TranslateText(locale, "command.bet.layout.entry_fee_label"), *host.EntryFee, cName),
 		)
 	}
 
 	// Prize Pool (organizer-contributed)
 	if host.PrizePool != nil && *host.PrizePool > 0 {
 		headerComponent = headerComponent.AddComponents(
-			discord.NewTextDisplayf("%s %dpt", i18n.TranslateText(locale, "command.bet.layout.prize_pool_label"), *host.PrizePool),
+			discord.NewTextDisplayf("%s %d %s", i18n.TranslateText(locale, "command.bet.layout.prize_pool_label"), *host.PrizePool, cName),
 		)
 	}
 
@@ -231,6 +234,8 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 
 				text := discord.NewTextDisplay(fmt.Sprintf("%s %s - ", optionMarker, displayText) +
 					i18n.BuildContext().
+						WithText("currency_name", cName).
+						WithText("currency", cName).
 						WithText("votes", fmt.Sprintf("%d", voteCount)).
 						WithText("points", fmt.Sprintf("%d", amount)).
 						ReplaceText(i18n.TranslateText(locale, "command.bet.layout.option_votes")))
@@ -251,6 +256,8 @@ func createBetLayout(host *models.BetHost, options []models.BetOption, db *gorm.
 				discord.NewLargeSeparator(),
 				discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.total_label")+" "+
 					i18n.BuildContext().
+						WithText("currency_name", cName).
+						WithText("currency", cName).
 						WithText("votes", fmt.Sprintf("%d", totalVotes)).
 						WithText("points", fmt.Sprintf("%d", totalAmount)).
 						ReplaceText(i18n.TranslateText(locale, "command.bet.layout.votes_points"))),
