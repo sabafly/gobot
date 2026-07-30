@@ -52,9 +52,9 @@ strings:
   command.play.high-and-low.equal-success: "# 🚀SAME的中‼🚀"
   command.play.high-and-low.equal-chance: SAMEチャンス‼
   command.play.high-and-low.description: "ハイアンドローゲームをプレイします。"
-  command.play.high-and-low.start_option_entry.label: "コスト {{.Cost}} ポイント"
-  command.play.high-and-low.start_option_entry.description: "開始ポイント: {{.StartPoint}}ポイント ボーナス割合: {{mul .Multiplier 100}}%"
-  command.play.high-and-low.start_option_entry.selected: "コスト: `{{.Cost}}ポイント` 開始ポイント: `{{.StartPoint}}ポイント` ボーナス割合: `{{mul .Multiplier 100}}%`"
+  command.play.high-and-low.start_option_entry.label: "コスト {{.Cost}} {{.currency_name}}"
+  command.play.high-and-low.start_option_entry.description: "開始{{.currency_name}}: {{.StartPoint}}{{.currency_name}} ボーナス割合: {{mul .Multiplier 100}}%"
+  command.play.high-and-low.start_option_entry.selected: "コスト: `{{.Cost}}{{.currency_name}}` 開始{{.currency_name}}: `{{.StartPoint}}{{.currency_name}}` ボーナス割合: `{{mul .Multiplier 100}}%`"
   command.play.high-and-low.option.extra_bet.name: "追加ベット"
   command.play.high-and-low.option.extra_bet.description: "追加ベットを行い、初期ポイントを増やします 4ポイント以上増やした場合1ポイントごとに倍率が(増やしたポイント-3)増える (10^(追加初期ポイント+1) )ポイント支払う"
   command.play.high-and-low.finish.win: "ゲームクリア"
@@ -231,12 +231,12 @@ strings:
     - **通貨ペア**: {{.symbol}}
     - **ポジション**: {{.direction}}
     - **レバレッジ**: {{.leverage}}x
-    - **証拠金 (Margin)**: `{{.margin}} pt` (当初: `{{.init}} pt` / 取引数量相当: `{{.size}} pt`)
+    - **証拠金 (Margin)**: `{{.margin}} {{.currency_name}}` (当初: `{{.init}} {{.currency_name}}` / 取引数量相当: `{{.size}} {{.currency_name}}`)
     - **エントリー価格**: `{{.entry}}`
     - **現在価格**: `{{.current}}`
     - **強制ロスカット価格**: `{{.liq}}`
     - **利確設定 (TP)**: `{{.tp}}` / **損切設定 (SL)**: `{{.sl}}`
-    - **評価損益 (PnL)**: **`{{.pnl}} pt`**
+    - **評価損益 (PnL)**: **`{{.pnl}} {{.currency_name}}`**
     - **証拠金維持率**: **`{{.ratio}}`** (追証ライン: `{{.mc_line}}` / ロスカット: `{{.liq_line}}`)
   components.play.fx.margin_call_warning: |-
     ⚠️ **[警告] 追証 (マージンコール) 発生中！**
@@ -246,21 +246,21 @@ strings:
     現在、維持率が追証ラインを下回っているポジションがあるため、すべての取引操作（新規注文・決済）が制限されています。制限を解除するには、対象ポジションに追証を入金してください。
   components.play.fx.placeholder_switch_pos: "ポジションを選択して管理"
   components.play.fx.option_new_order: "🆕 新規注文画面へ"
-  components.play.fx.option_pos_item: "{{.symbol}} {{.direction}} {{.leverage}}x (証拠金: {{.margin}} pt | 損益: {{.pnl}} pt)"
-  components.play.fx.btn_input_margin: "2. 証拠金を入力 (現在: {{.margin}} pt)"
+  components.play.fx.option_pos_item: "{{.symbol}} {{.direction}} {{.leverage}}x (証拠金: {{.margin}} {{.currency_name}} | 損益: {{.pnl}} {{.currency_name}})"
+  components.play.fx.btn_input_margin: "2. 証拠金を入力 (現在: {{.margin}} {{.currency_name}})"
   components.play.fx.close_success_title: "🏁 **FXポジション決済完了** 🏁"
   components.play.fx.close_success_desc: |-
     ポジションの決済が正常に完了しました。
     - **通貨ペア**: `{{.symbol}}` ({{.direction}})
-    - **レバレッジ**: `{{.leverage}}x` | **証拠金**: `{{.margin}} pt`
+    - **レバレッジ**: `{{.leverage}}x` | **証拠金**: `{{.margin}} {{.currency_name}}`
     - **エントリー価格**: `{{.entry}}`
     - **決済価格**: `{{.exit}}`
-    - **獲得/損失 (PnL)**: **`{{.pnl}} pt`**
-    - **返却証拠金**: `{{.refund}} pt`
-    - **現在の Currency**: `{{.points}} pt`
+    - **獲得/損失 (PnL)**: **`{{.pnl}} {{.currency_name}}`**
+    - **返却証拠金**: `{{.refund}} {{.currency_name}}`
+    - **現在の {{.currency_name}}**: `{{.points}} {{.currency_name}}`
   components.play.fx.close_quit_title: "📈 **FX TRADING CLOSED** 📉"
   components.play.fx.close_quit_desc: "FX取引画面を閉じました。"
-  components.play.fx.close_quit_active_notice: "⚠️ **注意**: {{.symbol}} の {{.direction}} ポジション (証拠金: `{{.margin}} pt`) は決済されず、**現在も保有中**です。再度 `/play fx` を実行することで、損益確認や決済を行うことができます。"
+  components.play.fx.close_quit_active_notice: "⚠️ **注意**: {{.symbol}} の {{.direction}} ポジション (証拠金: `{{.margin}} {{.currency_name}}`) は決済されず、**現在も保有中**です。再度 `/play fx` を実行することで、損益確認や決済を行うことができます。"
   components.play.fx.liquidation_title: "🚨 **FX強制ロスカットのお知らせ** 🚨"
   components.play.fx.liquidation_desc: |-
     対象サーバー: **{{.guild}}**
@@ -268,18 +268,18 @@ strings:
     保有していた {{.symbol}} のポジションが、為替価格の変動により強制決済（ロスカット）されました。
 
     ・決済価格: `{{.exit}}`
-    ・損益: `-{{.pnl}} pt`
-    ・返却証拠金: `{{.refund}} pt` (注文証拠金 `{{.margin}} pt`)
+    ・損益: `-{{.pnl}} {{.currency_name}}`
+    ・返却証拠金: `{{.refund}} {{.currency_name}}` (注文証拠金 `{{.margin}} {{.currency_name}}`)
   components.play.fx.liquidation_deficit_desc: |-
     対象サーバー: **{{.guild}}**
 
-    保有していた {{.symbol}} のポジションが強制決済されましたが、急激な相場変動により証拠金を上回る損失（不足金 `-{{.deficit}} pt`）が発生しました。不足金を補うため、他のポジションが強制決済されました。
+    保有していた {{.symbol}} のポジションが強制決済されましたが、急激な相場変動により証拠金を上回る損失（不足金 `-{{.deficit}} {{.currency_name}}`）が発生しました。不足金を補うため、他のポジションが強制決済されました。
 
     ・決済価格: `{{.exit}}`
-    ・損益: `-{{.pnl}} pt` (証拠金 `{{.margin}} pt` 没収)
+    ・損益: `-{{.pnl}} {{.currency_name}}` (証拠金 `{{.margin}} {{.currency_name}}` 没収)
   components.play.fx.err_invalid_input: "⚠️ **無効な入力**: 1以上の整数で入力してください。"
-  components.play.fx.err_insufficient_points: "⚠️ **ポイント不足**: 必要な `{{.margin}} pt` が不足しています（現在の残高: `{{.points}} pt`）。"
-  components.play.fx.err_min_ratio_margin: "⚠️ **証拠金比率不足**: 選択されたレバレッジ（{{.leverage}}x）では、総所持ポイント（{{.points}} pt）の {{.ratio}}% 以上の証拠金（最低 {{.min}} pt）が必要です。"
+  components.play.fx.err_insufficient_points: "⚠️ **{{.currency_name}}不足**: 必要な `{{.margin}} {{.currency_name}}` が不足しています（現在の残高: `{{.points}} {{.currency_name}}`）。"
+  components.play.fx.err_min_ratio_margin: "⚠️ **証拠金比率不足**: 選択されたレバレッジ（{{.leverage}}x）では、総所持{{.currency_name}}（{{.points}} {{.currency_name}}）の {{.ratio}}% 以上の証拠金（最低 {{.min}} {{.currency_name}}）が必要です。"
   components.play.fx.err_pos_not_found: "⚠️ **ポジションが見つかりません**: 対象のポジションが見つかりません。すでにロスカットされた可能性があります。"
   components.play.fx.err_session_expired: "⚠️ **セッションが期限切れです**: この取引画面のセッションは終了しました。もう一度 `/play fx` を実行してください。"
   components.play.fx.err_not_your_session: "⚠️ **他人のセッションです**: この取引画面は他のユーザーのものです。自分で `/play fx` を実行してください。"
@@ -287,13 +287,13 @@ strings:
   components.play.fx.rates_entry: "・**{{.symbol}}**: Bid `{{.bid}}` | Ask `{{.ask}}` (スプレッド: `{{.spread}}`)"
   components.play.fx.err_max_positions: "⚠️ **ポジション上限数到達**: 保有できるポジションは最大10個までです。いずれかのポジションを決済してから再度注文してください。"
   components.play.fx.liquidation_detail_header: "\n\n**損失補填のために強制決済された他のポジション:**"
-  components.play.fx.liquidation_detail_item: "\n• `{{.symbol}}` ({{.direction}}) | 証拠金: `{{.margin}} pt` | 決済価格: `{{.exit}}` | 損益: `{{.pnl}} pt` (回収額: `{{.val}} pt`)"
-  components.play.fx.liquidation_detail_deficit: "\n\n⚠️ **未回収の不足金**: `-{{.deficit}} pt`（ポイント残高が不足しているため回収できませんでした）"
-  components.play.fx.form_selected: "・**通貨ペア**: {{.symbol}}\n・**レバレッジ**: {{.leverage}}x\n・**注文証拠金**: {{.margin}} pt"
+  components.play.fx.liquidation_detail_item: "\n• `{{.symbol}}` ({{.direction}}) | 証拠金: `{{.margin}} {{.currency_name}}` | 決済価格: `{{.exit}}` | 損益: `{{.pnl}} {{.currency_name}}` (回収額: `{{.val}} {{.currency_name}}`)"
+  components.play.fx.liquidation_detail_deficit: "\n\n⚠️ **未回収の不足金**: `-{{.deficit}} {{.currency_name}}`（{{.currency_name}}残高が不足しているため回収できませんでした）"
+  components.play.fx.form_selected: "・**通貨ペア**: {{.symbol}}\n・**レバレッジ**: {{.leverage}}x\n・**注文証拠金**: {{.margin}} {{.currency_name}}"
   components.play.fx.modal_input_margin_title: "証拠金設定"
-  components.play.fx.modal_input_margin_label: "注文に使用する証拠金（Currency）"
+  components.play.fx.modal_input_margin_label: "注文に使用する証拠金（{{.currency_name}}）"
   components.play.fx.modal_add_margin_title: "証拠金の追加 (追証入金)"
-  components.play.fx.modal_add_margin_label: "追加する証拠金量（Currency）"
+  components.play.fx.modal_add_margin_label: "追加する証拠金量（{{.currency_name}}）"
   components.play.fx.dm_margin_call_title: "🚨 **FX追証（マージンコール）発生のお知らせ** 🚨"
   components.play.fx.dm_margin_call_desc: "対象サーバー: **{{.guild}}**\n\n保有している {{.symbol}} のポジションの証拠金維持率が {{.ratio}} に低下し、追証ライン（{{.mc_line}}）を下回りました。\n強制ロスカットを避けるため、早急に証拠金を追加してください。"
   components.play.fx.active_order_title: "### ⏳ 未約定の注文情報"
@@ -302,19 +302,19 @@ strings:
     - **注文種別**: {{.type}} ({{.order_type}}) {{.direction}}
     - **目標価格**: `{{.target}}` (現在価格: `{{.current}}`)
     - **レバレッジ**: {{.leverage}}x
-    - **注文証拠金**: `{{.margin}} pt`
-  components.play.fx.option_order_item: "⏳ [{{.type}}] {{.symbol}} {{.direction}} @ {{.target}} (証拠金: {{.margin}} pt)"
+    - **注文証拠金**: `{{.margin}} {{.currency_name}}`
+  components.play.fx.option_order_item: "⏳ [{{.type}}] {{.symbol}} {{.direction}} @ {{.target}} (証拠金: {{.margin}} {{.currency_name}})"
   components.play.fx.order_type.limit: "指値"
   components.play.fx.order_type.stop: "逆指値"
   components.play.fx.order_type.market: "成行"
   components.play.fx.order_type.market_close: "成行決済"
   components.play.fx.err_close_order_already_exists: "⚠️ **決済処理中**: このポジションの決済注文は既に処理待ちです。"
   components.play.fx.dm_market_order_slippage_title: "❌ **FX成行注文失効のお知らせ** ❌"
-  components.play.fx.dm_market_order_slippage_desc: "対象サーバー: **{{.guild}}**\n\n{{.symbol}} の成行 {{.direction}} 注文（証拠金: {{.margin}} pt）は、急激な価格変動によりスリッページが許容値（{{.tolerance}}）を超えたため失効しました。\n・提示価格: `{{.expected}}`\n・推定約定価格: `{{.actual}}`\n証拠金は全額ウォレットに返還されました。"
+  components.play.fx.dm_market_order_slippage_desc: "対象サーバー: **{{.guild}}**\n\n{{.symbol}} の成行 {{.direction}} 注文（証拠金: {{.margin}} {{.currency_name}}）は、急激な価格変動によりスリッページが許容値（{{.tolerance}}）を超えたため失効しました。\n・提示価格: `{{.expected}}`\n・推定約定価格: `{{.actual}}`\n証拠金は全額ウォレットに返還されました。"
   components.play.fx.dm_market_close_slippage_title: "❌ **FX成行決済失効のお知らせ** ❌"
-  components.play.fx.dm_market_close_slippage_desc: "対象サーバー: **{{.guild}}**\n\n保有していた {{.symbol}} の{{.direction}}ポジション（証拠金: {{.margin}} pt）の成行決済注文は、急激な価格変動によりスリッページが許容値（{{.tolerance}}）を超えたため失効しました。\n・提示価格: `{{.expected}}`\n・推定約定価格: `{{.actual}}`\nポジションは引き続き保有状態です。"
+  components.play.fx.dm_market_close_slippage_desc: "対象サーバー: **{{.guild}}**\n\n保有していた {{.symbol}} の{{.direction}}ポジション（証拠金: {{.margin}} {{.currency_name}}）の成行決済注文は、急激な価格変動によりスリッページが許容値（{{.tolerance}}）を超えたため失効しました。\n・提示価格: `{{.expected}}`\n・推定約定価格: `{{.actual}}`\nポジションは引き続き保有状態です。"
   components.play.fx.dm_market_close_filled_title: "🔔 **FX成行決済完了のお知らせ** 🔔"
-  components.play.fx.dm_market_close_filled_desc: "対象サーバー: **{{.guild}}**\n\n保有していた {{.symbol}} の{{.direction}}ポジション（証拠金: {{.margin}} pt）が成行決済されました。\n\n・決済価格: `{{.exit}}`\n・評価損益: **`{{.pnl}} pt`**\n・獲得/回収ポイント: **`{{.received}} pt`**"
+  components.play.fx.dm_market_close_filled_desc: "対象サーバー: **{{.guild}}**\n\n保有していた {{.symbol}} の{{.direction}}ポジション（証拠金: {{.margin}} {{.currency_name}}）が成行決済されました。\n\n・決済価格: `{{.exit}}`\n・評価損益: **`{{.pnl}} {{.currency_name}}`**\n・獲得/回収{{.currency_name}}: **`{{.received}} {{.currency_name}}`**"
   components.play.fx.modal_pending_order_title: "指値・逆指値注文フォーム"
   components.play.fx.modal_pending_order_price_label: "指定価格 (目標とするレート)"
   components.play.fx.modal_pending_order_price_placeholder: "例: 149.50"
@@ -336,51 +336,51 @@ strings:
   components.play.fx.err_tp_must_be_less: "⚠️ **設定エラー**: 売りポジションの利確価格はエントリー価格より低く設定する必要があります。"
   components.play.fx.err_sl_must_be_greater: "⚠️ **設定エラー**: 売りポジションの損切価格はエントリー価格より高く設定する必要があります。"
   components.play.fx.dm_order_closed_title: "🔔 **FXポジション自動決済のお知らせ** 🔔"
-  components.play.fx.dm_order_closed_desc: "対象サーバー: **{{.guild}}**\n\n保有していた {{.symbol}} の{{.direction}}ポジション（証拠金: {{.margin}} pt）が、自動決済条件（{{.type}}: {{.trigger_price}}）に達したため、成行決済されました。\n\n・決済価格: `{{.exit}}`\n・評価損益: **`{{.pnl}} pt`**\n・獲得/回収ポイント: **`{{.received}} pt`**"
+  components.play.fx.dm_order_closed_desc: "対象サーバー: **{{.guild}}**\n\n保有していた {{.symbol}} の{{.direction}}ポジション（証拠金: {{.margin}} {{.currency_name}}）が、自動決済条件（{{.type}}: {{.trigger_price}}）に達したため、成行決済されました。\n\n・決済価格: `{{.exit}}`\n・評価損益: **`{{.pnl}} {{.currency_name}}`**\n・獲得/回収{{.currency_name}}: **`{{.received}} {{.currency_name}}`**"
   components.play.fx.portfolio_no_positions: "* 保有しているポジションはありません"
   components.play.fx.portfolio_no_orders: "* 未約定の注文はありません"
-  components.play.fx.portfolio_position_item: "- **{{.symbol}}** ({{.direction}} {{.leverage}}x)\n  - 証拠金: `{{.margin}} pt` (当初: `{{.init}} pt`)\n  - エントリー: `{{.entry}}` → 現在: `{{.current}}` (維持率: `{{.ratio}}`)\n  - 評価損益: **`{{.pnl}} pt`**\n  - 利確(TP): `{{.tp}}` / 損切(SL): `{{.sl}}`"
-  components.play.fx.portfolio_order_item: "- **{{.symbol}}** ({{.type}} {{.direction}} {{.leverage}}x)\n  - 注文価格: `{{.target}}` (現在: `{{.current}}`)\n  - 注文証拠金: `{{.margin}} pt`"
+  components.play.fx.portfolio_position_item: "- **{{.symbol}}** ({{.direction}} {{.leverage}}x)\n  - 証拠金: `{{.margin}} {{.currency_name}}` (当初: `{{.init}} {{.currency_name}}`)\n  - エントリー: `{{.entry}}` → 現在: `{{.current}}` (維持率: `{{.ratio}}`)\n  - 評価損益: **`{{.pnl}} {{.currency_name}}`**\n  - 利確(TP): `{{.tp}}` / 損切(SL): `{{.sl}}`"
+  components.play.fx.portfolio_order_item: "- **{{.symbol}}** ({{.type}} {{.direction}} {{.leverage}}x)\n  - 注文価格: `{{.target}}` (現在: `{{.current}}`)\n  - 注文証拠金: `{{.margin}} {{.currency_name}}`"
   components.play.polymarket.err_session_expired: "⚠️ **セッションが期限切れです**: セッションの有効期限が切れました。もう一度 `/play polymarket` を実行してください。"
   components.play.polymarket.err_not_your_session: "⚠️ **他人のセッションです**: これはあなたのゲームセッションではありません。`/play polymarket` で新しく開始してください。"
   components.play.polymarket.err_session_expired_modal: "⚠️ **セッションが期限切れです**: セッションの有効期限が切れました。もう一度やり直してください。"
   components.play.polymarket.err_invalid_amount: "⚠️ **無効な入力**: 1以上の正の整数を入力してください。"
-  components.play.polymarket.err_insufficient_points: "❌ **ポイント不足**: Currencyが不足しています。賭け金 `{{.amount}} pt` に対し、現在の保有ポイントは `{{.points}} pt` です。"
+  components.play.polymarket.err_insufficient_points: "❌ **{{.currency_name}}不足**: {{.currency_name}}が不足しています。賭け金 `{{.amount}} {{.currency_name}}` に対し、現在の保有{{.currency_name}}は `{{.points}} {{.currency_name}}` です。"
   components.play.polymarket.err_api_failed: "❌ **通信エラー**: Polymarket APIとの通信に失敗しました。\nエラー: `{{.error}}`"
   components.play.polymarket.err_no_markets: "❌ **市場が見つかりません**: 条件に合う予測市場が見つかりませんでした。別のキーワードで検索するか、終了した市場を含めてください。"
   components.play.polymarket.market_not_found_option: "市場が見つかりませんでした"
   components.play.polymarket.default_query_info: "直近のアクティブな予測市場 (出来高順)"
   components.play.polymarket.search_query_info: '検索ワード: *"{{.query}}"* の結果'
   components.play.polymarket.market_option_desc: "出来高: ${{.volume}} | 終了予定: {{.end_date}}"
-  components.play.polymarket.outcome_option_desc: "価格: {{.price}} pt | 的中時の倍率: {{.multiplier}}倍"
-  components.play.polymarket.odds_item: "- **{{.outcome}}**: `{{.percentage}}%` (価格: `{{.price}} pt`)"
+  components.play.polymarket.outcome_option_desc: "価格: {{.price}} {{.currency_name}} | 的中時の倍率: {{.multiplier}}倍"
+  components.play.polymarket.odds_item: "- **{{.outcome}}**: `{{.percentage}}%` (価格: `{{.price}} {{.currency_name}}`)"
   components.play.polymarket.no_outcomes_option: "選択肢がありません"
   components.play.polymarket.odds_label: "現在の価格 (オッズ/勝率 %):"
-  components.play.polymarket.bet_history_item: "- **{{.market}}**\n  予測: **{{.outcome}}** (購入価格: `{{.price}} pt`) | 金額: `{{.amount}} pt` | 状況: {{.status}} | *{{.time}}*"
+  components.play.polymarket.bet_history_item: "- **{{.market}}**\n  予測: **{{.outcome}}** (購入価格: `{{.price}} {{.currency_name}}`) | 金額: `{{.amount}} {{.currency_name}}` | 状況: {{.status}} | *{{.time}}*"
   components.play.polymarket.status_pending: "⏳ 進行中 (未確定)"
-  components.play.polymarket.status_won: "✅ 的中 (+{{.payout}} pt 獲得)"
+  components.play.polymarket.status_won: "✅ 的中 (+{{.payout}} {{.currency_name}} 獲得)"
   components.play.polymarket.status_lost: "❌ はずれ"
   components.play.polymarket.no_bet_history: "*ベットした履歴はありません。*"
-  components.play.polymarket.bet_success: "✅ **ベットが正常に完了しました！**\n- 予測市場: *{{.market}}*\n- 予測内容: **{{.outcome}}** (購入単価: `{{.price}} pt`)\n- 賭け金: `{{.amount}} pt`\n- 予測的中時の想定配当: `{{.est_payout}} pt` ({{.multiplier}}倍)"
+  components.play.polymarket.bet_success: "✅ **ベットが正常に完了しました！**\n- 予測市場: *{{.market}}*\n- 予測内容: **{{.outcome}}** (購入単価: `{{.price}} {{.currency_name}}`)\n- 賭け金: `{{.amount}} {{.currency_name}}`\n- 予測的中時の想定配当: `{{.est_payout}} {{.currency_name}}` ({{.multiplier}}倍)"
   components.play.polymarket.no_new_resolutions: "✅ ベットをすべて検証しましたが、新しく確定した市場はありませんでした。"
   components.play.polymarket.resolution_header: "🔔 **ベットの確定結果**:\n{{.details}}\n"
-  components.play.polymarket.resolution_won: "✅ **的中**: `{{.amount}} pt` 賭けていた *{{.market}}* の結果が **{{.outcome}}** に確定しました。(配当: `{{.payout}} pt` を獲得しました)"
-  components.play.polymarket.resolution_lost: "❌ **はずれ**: `{{.amount}} pt` 賭けていた *{{.market}}* の結果が **{{.outcome}}** 以外で確定しました。"
+  components.play.polymarket.resolution_won: "✅ **的中**: `{{.amount}} {{.currency_name}}` 賭けていた *{{.market}}* の結果が **{{.outcome}}** に確定しました。(配当: `{{.payout}} {{.currency_name}}` を獲得しました)"
+  components.play.polymarket.resolution_lost: "❌ **はずれ**: `{{.amount}} {{.currency_name}}` 賭けていた *{{.market}}* の結果が **{{.outcome}}** 以外で確定しました。"
   components.play.polymarket.quit_title: "🔮 **Polymarket Prediction Betting**"
   components.play.polymarket.quit_desc: "Polymarket 予測ベットセッションを終了しました。"
   components.play.polymarket.modal_bet_title: "ベット額の入力"
-  components.play.polymarket.modal_bet_label: "Currency 金額"
-  components.play.polymarket.modal_bet_placeholder: "賭けたい Currency の金額を入力してください (例: 150)"
-  components.currency.admin.tax_setup_success: "✅ **定期徴収設定を更新しました**:\n- デフォルト徴収割合: {{.rate}}%\n- 最低徴収対象ポイント: {{.min_points}} pt\n- 徴収間隔: {{.interval}}日\n- 状態: {{.status}}\n- 次回予定: {{.next_time}}"
+  components.play.polymarket.modal_bet_label: "{{.currency_name}} 金額"
+  components.play.polymarket.modal_bet_placeholder: "賭けたい {{.currency_name}} の金額を入力してください (例: 150)"
+  components.currency.admin.tax_setup_success: "✅ **定期徴収設定を更新しました**:\n- デフォルト徴収割合: {{.rate}}%\n- 最低徴収対象ポイント: {{.min_points}} {{.currency_name}}\n- 徴収間隔: {{.interval}}日\n- 状態: {{.status}}\n- 次回予定: {{.next_time}}"
   components.currency.admin.tax_status_enabled: "有効"
   components.currency.admin.tax_status_disabled: "無効"
-  components.currency.admin.tax_status_info: "### 🪙 定期徴収ステータス\n- **徴収有効化**: {{.enabled}}\n- **デフォルト割合**: {{.rate}}%\n- **最低徴収対象ポイント**: {{.min_points}} pt\n- **徴収間隔**: {{.interval}}日\n- **次回徴収予定日時**: {{.next_time}}\n- **段階的徴収割合設定**:\n{{.brackets}}"
+  components.currency.admin.tax_status_info: "### 🪙 定期徴収ステータス\n- **徴収有効化**: {{.enabled}}\n- **デフォルト割合**: {{.rate}}%\n- **最低徴収対象ポイント**: {{.min_points}} {{.currency_name}}\n- **徴収間隔**: {{.interval}}日\n- **次回徴収予定日時**: {{.next_time}}\n- **段階的徴収割合設定**:\n{{.brackets}}"
   components.currency.admin.tax_status_pending_title: "\n\n**⏳ 徴収待機中（1週間後の徴収予定）:**\n"
-  components.currency.admin.tax_status_pending_item: "- <@{{.user_id}}>: `{{.tax_amount}} pt` (徴収予定: {{.collect_time}})\n"
+  components.currency.admin.tax_status_pending_item: "- <@{{.user_id}}>: `{{.tax_amount}} {{.currency_name}}` (徴収予定: {{.collect_time}})\n"
   components.currency.admin.tax_status_no_pending: "\n現在徴収待機中のユーザーはいません。"
   components.currency.admin.tax_force_determination: "⚡ **徴収予約（計算）を強制実行しました**:\n- 対象ユーザー: `{{.count}}名`の徴収予定（1週間後）を生成しました。"
   components.currency.admin.tax_force_collection: "⚡ **徴収実行（1週間経過分）を強制実行しました**:\n- 徴収完了: `{{.collected}}名`\n- 免除: `{{.exempted}}名`"
-  components.currency.admin.reset_success: "⚠️ **ギルドメンバー全員の Currencyを一括リセットしました**:\n- 全員のポイントを `{{.points}} pt` に設定しました。"
+  components.currency.admin.reset_success: "⚠️ **ギルドメンバー全員の {{.currency_name}}を一括リセットしました**:\n- 全員のポイントを `{{.points}} {{.currency_name}}` に設定しました。"
   components.currency.admin.season_start_success: "🚀 **新しいシーズンを開始しました**:\n- シーズン名: **{{.name}}**\n- 期間: {{.duration}}日間\n- 表彰基準: {{.criteria}}\n- 終了予定: {{.end_time}}"
   components.currency.admin.season_start_scheduled: "📅 **シーズン開始をスケジュール予約しました**:\n- シーズン名: **{{.name}}**\n- 表彰基準: {{.criteria}}\n- 開始予定: {{.start_time}}\n- 終了予定: {{.end_time}}"
   components.currency.admin.season_err_active_exists: "❌ **開始エラー**: すでにアクティブなシーズン `{{.name}}` が存在します。終了してから新しいシーズンを開始してください。"
@@ -388,7 +388,7 @@ strings:
   components.currency.admin.season_err_no_active: "❌ **エラー**: 現在アクティブなシーズンはありません。"
   components.currency.admin.season_status_info: "### 🏆 シーズン情報: **{{.name}}**\n- **状態**: {{.status}}\n- **表彰基準**: {{.criteria}}\n- **開始**: {{.start_time}}\n- **終了**: {{.end_time}} (残り: {{.remaining}})\n\n**📊 現在のランキング:**\n{{.ranking}}"
   components.currency.admin.season_ranking_title: "### 📊 シーズン **{{.name}}** ランキング (基準: {{.criteria}})\n"
-  components.currency.admin.season_ranking_entry: "{{.medal}}<@{{.user_id}}> - スコア: `{{.points}} pt`"
+  components.currency.admin.season_ranking_entry: "{{.medal}}<@{{.user_id}}> - スコア: `{{.points}} {{.currency_name}}`"
   components.currency.admin.season_ranking_no_data: "このシーズンの獲得データはありません。"
   components.currency.admin.season_not_found: "❌ 指定されたシーズンIDが見つかりません。"
   components.currency.admin.tax_bracket_err_invalid_format: "段階別割合の形式が不正です (行: {{.line}}, 形式は '下限-上限:割合' または '下限+:割合')"
@@ -420,15 +420,15 @@ strings:
   components.currency.admin.tax_setup_err_brackets_parse: "段階的割合設定の解析に失敗しました:\n{{.error}}"
   components.currency.admin.tax_setup_error_title: "❌ **設定エラー**:\n"
   components.currency.admin.tax_brackets_none: "なし"
-  components.currency.admin.reset_by_level_success: "ギルド内の全員のCurrencyを、それぞれのレベルの累積必要XPに応じたポイントにリセットしました。"
-  components.currency.admin.season_criteria_final: "最終所持ポイント数"
-  components.currency.admin.season_criteria_earned: "獲得ポイント数"
+  components.currency.admin.reset_by_level_success: "ギルド内の全員の {{.currency_name}}を、それぞれのレベルの累積必要XPに応じたポイントにリセットしました。"
+  components.currency.admin.season_criteria_final: "最終所持 {{.currency_name}} 数"
+  components.currency.admin.season_criteria_earned: "獲得 {{.currency_name}} 数"
   components.currency.admin.season_status_active: "アクティブ"
   components.currency.admin.season_status_ended: "終了"
-  components.currency.admin.season_start_announcement: "🚀 **Currency シーズン開始のお知らせ** 🚀\n新しいシーズン **{{.name}}** が開始されました！(表彰基準: {{.criteria}}) 終了予定: {{.end_time}}\nポイントを競い合いましょう！"
-  components.currency.admin.season_end_announcement_title: "🏆 **Currency シーズン終了のお知らせ** 🏆\nシーズン **{{.name}}** が終了しました！獲得ランキング表彰を行います (基準: {{.criteria}})。\n\n"
-  components.currency.admin.season_end_announcement_no_data: "期間中にポイントを獲得したプレイヤーはいませんでした。"
-  components.currency.admin.season_end_announcement_entry: "{{.medal}}{{.name}} - スコア: `{{.points}} pt`\n"
+  components.currency.admin.season_start_announcement: "🚀 **{{.currency_name}} シーズン開始のお知らせ** 🚀\n新しいシーズン **{{.name}}** が開始されました！(表彰基準: {{.criteria}}) 終了予定: {{.end_time}}\n{{.currency_name}}を競い合いましょう！"
+  components.currency.admin.season_end_announcement_title: "🏆 **{{.currency_name}} シーズン終了のお知らせ** 🏆\nシーズン **{{.name}}** が終了しました！獲得ランキング表彰を行います (基準: {{.criteria}})。\n\n"
+  components.currency.admin.season_end_announcement_no_data: "期間中に{{.currency_name}}を獲得したプレイヤーはいませんでした。"
+  components.currency.admin.season_end_announcement_entry: "{{.medal}}{{.name}} - スコア: `{{.points}} {{.currency_name}}`\n"
   components.currency.config.name_current: "現在の通貨名設定: **{{.name}}**"
   components.currency.config.name_success: "通貨名を **{{.name}}** に設定しました。"
   command.bet.dm.title: "# Bet結果確定"
@@ -438,13 +438,13 @@ strings:
 
     あなたの結果:
     {{.details}}
-  command.bet.dm.body.win: "- **{{.option}}** に `{{.amount}}`pt ベット ➔ **成功** 🎉\n  獲得配当: `{{.winnings}}`pt"
-  command.bet.dm.body.lose: "- **{{.option}}** に `{{.amount}}`pt ベット ➔ **失敗**\n  獲得配当: `0`pt"
-  command.bet.dm.body.cancel: "- **{{.option}}** に `{{.amount}}`pt ベット ➔ **キャンセル**\n  返還: `{{.amount}}`pt"
-  command.bet.dm.body.entrant.win: "- レース参加 ➔ **勝利** 🏆\n  獲得配当: `{{.winnings}}`pt"
-  command.bet.dm.body.entrant.lose: "- レース参加 ➔ **敗北**\n  獲得配当: `0`pt"
-  command.bet.dm.body.entrant.cancel: "- レース参加 ➔ **キャンセル**\n  参加費返還: `{{.amount}}`pt"
-  command.bet.dm.body.organizer.cancel: "- 主催者賞金プール ➔ **キャンセル**\n  返還: `{{.amount}}`pt"
+  command.bet.dm.body.win: "- **{{.option}}** に `{{.amount}}` {{.currency_name}} ベット ➔ **成功** 🎉\n  獲得配当: `{{.winnings}}` {{.currency_name}}"
+  command.bet.dm.body.lose: "- **{{.option}}** に `{{.amount}}` {{.currency_name}} ベット ➔ **失敗**\n  獲得配当: `0` {{.currency_name}}"
+  command.bet.dm.body.cancel: "- **{{.option}}** に `{{.amount}}` {{.currency_name}} ベット ➔ **キャンセル**\n  返還: `{{.amount}}` {{.currency_name}}"
+  command.bet.dm.body.entrant.win: "- レース参加 ➔ **勝利** 🏆\n  獲得配当: `{{.winnings}}` {{.currency_name}}"
+  command.bet.dm.body.entrant.lose: "- レース参加 ➔ **敗北**\n  獲得配当: `0` {{.currency_name}}"
+  command.bet.dm.body.entrant.cancel: "- レース参加 ➔ **キャンセル**\n  参加費返還: `{{.amount}}` {{.currency_name}}"
+  command.bet.dm.body.organizer.cancel: "- 主催者賞金プール ➔ **キャンセル**\n  返還: `{{.amount}}` {{.currency_name}}"
   command.user.description: "ユーザー設定の管理を行います。"
   command.user.settings.description: "ユーザー設定を表示・変更します。"
   command.user.settings.option.dm.description: "結果確定時のDM通知の有無を設定します。"

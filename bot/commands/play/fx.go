@@ -446,21 +446,21 @@ func liquidatePosition(c *components.Components, client *bot.Client, pos *models
 		if len(closedPositions) > 0 {
 			detailStr.WriteString(i18n.TranslateText(locale, "components.play.fx.liquidation_detail_header"))
 			for _, cp := range closedPositions {
-				detailStr.WriteString(i18n.TranslateText(locale, "components.play.fx.liquidation_detail_item", map[string]any{
+				detailStr.WriteString(i18n.TranslateText(locale, "components.play.fx.liquidation_detail_item", withCurrency(c, pos.GuildID, map[string]any{
 					"symbol":    strings.Replace(cp.symbol, "_", "/", 1),
 					"direction": cp.direction,
 					"margin":    cp.margin,
 					"exit":      fmt.Sprintf("%.3f", cp.exitPrice),
 					"pnl":       fmt.Sprintf("%+d", cp.pnl),
 					"val":       cp.valuation,
-				}))
+				})))
 			}
 		}
 
 		if deficit > 0 {
-			detailStr.WriteString(i18n.TranslateText(locale, "components.play.fx.liquidation_detail_deficit", map[string]any{
+			detailStr.WriteString(i18n.TranslateText(locale, "components.play.fx.liquidation_detail_deficit", withCurrency(c, pos.GuildID, map[string]any{
 				"deficit": deficit,
-			}))
+			})))
 		}
 
 		var refund int64
@@ -486,7 +486,7 @@ func liquidatePosition(c *components.Components, client *bot.Client, pos *models
 			guildName = dbGuild.Name
 		}
 		templateMap["guild"] = guildName
-		descText := i18n.TranslateText(locale, descKey, templateMap) + detailStr.String()
+		descText := i18n.TranslateText(locale, descKey, withCurrency(c, pos.GuildID, templateMap)) + detailStr.String()
 
 		builder := discord.NewMessageBuilder().
 			SetIsComponentsV2(true).
@@ -502,8 +502,21 @@ func liquidatePosition(c *components.Components, client *bot.Client, pos *models
 	return nil
 }
 
+func withCurrency(c *components.Components, guildID snowflake.ID, m map[string]any) map[string]any {
+	if m == nil {
+		m = make(map[string]any)
+	}
+	cName := currency.GetCurrencyName(c, guildID)
+	m["currency_name"] = cName
+	m["currency"] = cName
+	return m
+}
+
 func FXMessage(c *components.Components, session *FXSession, positions []models.FXPosition, ticker *TickerResponse, points int64, locale discord.Locale) []discord.LayoutComponent {
 	ctx := i18n.BuildContext()
+	cName := currency.GetCurrencyName(c, session.GuildID)
+	ctx.WithText("currency_name", cName)
+	ctx.WithText("currency", cName)
 
 	var ratesText []string
 	for _, sym := range fxSymbols {
@@ -511,12 +524,12 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 			ask, _ := strconv.ParseFloat(data.Ask, 64)
 			bid, _ := strconv.ParseFloat(data.Bid, 64)
 			spread := (ask - bid) * 100.0
-			ratesText = append(ratesText, i18n.TranslateText(locale, "components.play.fx.rates_entry", map[string]any{
+			ratesText = append(ratesText, i18n.TranslateText(locale, "components.play.fx.rates_entry", withCurrency(c, session.GuildID, map[string]any{
 				"symbol": strings.Replace(sym, "_", "/", 1),
 				"bid":    fmt.Sprintf("%.3f", bid),
 				"ask":    fmt.Sprintf("%.3f", ask),
 				"spread": fmt.Sprintf("%.1f", spread),
-			}))
+			})))
 		}
 	}
 	ctx.WithText("rates_text", strings.Join(ratesText, "\n"))
@@ -560,13 +573,13 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 		if p.Direction == models.FXPositionDirectionSell {
 			dirStr = "S"
 		}
-		label := i18n.TranslateText(locale, "components.play.fx.option_pos_item", map[string]any{
+		label := i18n.TranslateText(locale, "components.play.fx.option_pos_item", withCurrency(c, session.GuildID, map[string]any{
 			"symbol":    strings.Replace(p.Symbol, "_", "/", 1),
 			"direction": dirStr,
 			"leverage":  p.Leverage,
 			"margin":    strconv.FormatInt(p.Margin, 10),
 			"pnl":       fmt.Sprintf("%s%d", pnlSign, int64(pPnl)),
-		})
+		}))
 		positionOpts = append(positionOpts, discord.StringSelectMenuOption{
 			Label:   label,
 			Value:   p.ID.String(),
@@ -601,13 +614,13 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 		if o.Direction == models.FXPositionDirectionSell {
 			dirStr = "S"
 		}
-		ordLabel := i18n.TranslateText(locale, "components.play.fx.option_order_item", map[string]any{
+		ordLabel := i18n.TranslateText(locale, "components.play.fx.option_order_item", withCurrency(c, session.GuildID, map[string]any{
 			"type":      ordTypeStr,
 			"symbol":    strings.Replace(o.Symbol, "_", "/", 1),
 			"direction": dirStr,
 			"target":    fmt.Sprintf("%.3f", o.TargetPrice),
 			"margin":    o.Margin,
-		})
+		}))
 		positionOpts = append(positionOpts, discord.StringSelectMenuOption{
 			Label:   ordLabel,
 			Value:   o.ID.String(),
@@ -653,15 +666,15 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 
 	if activePos == nil && activeOrder == nil {
 		opt := fxLeverages[session.SelectedLeverage]
-		formInfo := i18n.TranslateText(locale, "components.play.fx.form_selected", map[string]any{
+		formInfo := i18n.TranslateText(locale, "components.play.fx.form_selected", withCurrency(c, session.GuildID, map[string]any{
 			"symbol":   strings.Replace(session.SelectedSymbol, "_", "/", 1),
 			"margin":   strconv.FormatInt(session.SelectedMargin, 10),
 			"leverage": opt.Leverage,
-		})
-		ctx.WithText("form_info", formInfo)
-		ctx.WithText("btn_input_margin", i18n.TranslateText(locale, "components.play.fx.btn_input_margin", map[string]any{
-			"margin": strconv.FormatInt(session.SelectedMargin, 10),
 		}))
+		ctx.WithText("form_info", formInfo)
+		ctx.WithText("btn_input_margin", i18n.TranslateText(locale, "components.play.fx.btn_input_margin", withCurrency(c, session.GuildID, map[string]any{
+			"margin": strconv.FormatInt(session.SelectedMargin, 10),
+		})))
 
 		return ctx.Translate(i18n.TranslateLayout(locale, "command.play.fx.order_screen"))
 	} else if activeOrder != nil {
@@ -701,7 +714,7 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 				currentPrice = pBid
 			}
 		}
-		orderDesc := i18n.TranslateText(locale, "components.play.fx.active_order_desc", map[string]any{
+		orderDesc := i18n.TranslateText(locale, "components.play.fx.active_order_desc", withCurrency(c, session.GuildID, map[string]any{
 			"symbol":     strings.Replace(activeOrder.Symbol, "_", "/", 1),
 			"type":       ordTypeStr,
 			"order_type": activeOrder.OrderType,
@@ -710,7 +723,7 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 			"current":    fmt.Sprintf("%.3f", currentPrice),
 			"leverage":   activeOrder.Leverage,
 			"margin":     strconv.FormatInt(activeOrder.Margin, 10),
-		})
+		}))
 		var ordInfoBuilder strings.Builder
 		ordInfoBuilder.WriteString(i18n.TranslateText(locale, "components.play.fx.active_order_title"))
 		ordInfoBuilder.WriteString("\n" + orderDesc)
@@ -754,7 +767,7 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 			slText = fmt.Sprintf("%.3f", *activePos.StopLossPrice)
 		}
 
-		posDesc := i18n.TranslateText(locale, "components.play.fx.active_position_desc", map[string]any{
+		posDesc := i18n.TranslateText(locale, "components.play.fx.active_position_desc", withCurrency(c, session.GuildID, map[string]any{
 			"symbol":    strings.Replace(activePos.Symbol, "_", "/", 1),
 			"direction": dirEmoji,
 			"leverage":  activePos.Leverage,
@@ -770,7 +783,7 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 			"liq_line":  fmt.Sprintf("%.1f%%", activeOpt.LiquidationRatio),
 			"tp":        tpText,
 			"sl":        slText,
-		})
+		}))
 
 		var posInfoBuilder strings.Builder
 		totalPos := len(positions)
@@ -782,16 +795,16 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 			}
 		}
 
-		posInfoBuilder.WriteString(i18n.TranslateText(locale, "components.play.fx.active_position_title", map[string]any{
+		posInfoBuilder.WriteString(i18n.TranslateText(locale, "components.play.fx.active_position_title", withCurrency(c, session.GuildID, map[string]any{
 			"current": currentIndex,
 			"total":   totalPos,
-		}))
+		})))
 		posInfoBuilder.WriteString("\n" + posDesc)
 
 		if ratio < activeOpt.MarginCallRatio {
-			posInfoBuilder.WriteString("\n\n" + i18n.TranslateText(locale, "components.play.fx.margin_call_warning", map[string]any{
+			posInfoBuilder.WriteString("\n\n" + i18n.TranslateText(locale, "components.play.fx.margin_call_warning", withCurrency(c, session.GuildID, map[string]any{
 				"mc_line": fmt.Sprintf("%.1f%%", activeOpt.MarginCallRatio),
-			}))
+			})))
 		}
 		ctx.WithText("position_info", posInfoBuilder.String())
 
@@ -1037,12 +1050,12 @@ func FXMarginModalHandler(c *components.Components, event *events.ModalSubmitInt
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_min_ratio_margin", map[string]any{
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_min_ratio_margin", withCurrency(c, *event.GuildID(), map[string]any{
 						"leverage": opt.Leverage,
 						"points":   points,
 						"ratio":    opt.MinRatio * 100.0,
 						"min":      minMargin,
-					})),
+					}))),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -1086,7 +1099,7 @@ func FXAddMarginButtonHandler(c *components.Components, event *events.ComponentI
 		SetTitle(i18n.TranslateText(event.Locale(), "components.play.fx.modal_add_margin_title")).
 		SetCustomID("play:fx_add_margin_modal:" + session.ID.String()).
 		SetComponents(
-			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.play.fx.modal_add_margin_label"),
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.play.fx.modal_add_margin_label", withCurrency(c, *event.GuildID(), nil)),
 				discord.TextInputComponent{
 					CustomID:    "amount",
 					Style:       discord.TextInputStyleShort,
@@ -1165,10 +1178,10 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_insufficient_points", map[string]any{
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_insufficient_points", withCurrency(c, *event.GuildID(), map[string]any{
 						"margin": amount,
 						"points": points,
-					})),
+					}))),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -1344,12 +1357,12 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_min_ratio_margin", map[string]any{
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_min_ratio_margin", withCurrency(c, *event.GuildID(), map[string]any{
 						"leverage": opt.Leverage,
 						"points":   points,
 						"ratio":    opt.MinRatio * 100.0,
 						"min":      minMargin,
-					})),
+					}))),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -1362,10 +1375,10 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_insufficient_points", map[string]any{
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_insufficient_points", withCurrency(c, *event.GuildID(), map[string]any{
 						"margin": session.SelectedMargin,
 						"points": points,
-					})),
+					}))),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -1485,12 +1498,12 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_min_ratio_margin", map[string]any{
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_min_ratio_margin", withCurrency(c, *event.GuildID(), map[string]any{
 						"leverage": opt.Leverage,
 						"points":   points,
 						"ratio":    opt.MinRatio * 100.0,
 						"min":      minMargin,
-					})),
+					}))),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -1503,10 +1516,10 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_insufficient_points", map[string]any{
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_insufficient_points", withCurrency(c, *event.GuildID(), map[string]any{
 						"margin": session.SelectedMargin,
 						"points": points,
-					})),
+					}))),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -1740,12 +1753,12 @@ func FXOrderModalHandler(c *components.Components, event *events.ModalSubmitInte
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_min_ratio_margin", map[string]any{
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_min_ratio_margin", withCurrency(c, *event.GuildID(), map[string]any{
 						"leverage": opt.Leverage,
 						"points":   points,
 						"ratio":    opt.MinRatio * 100.0,
 						"min":      minMargin,
-					})),
+					}))),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -1758,10 +1771,10 @@ func FXOrderModalHandler(c *components.Components, event *events.ModalSubmitInte
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_insufficient_points", map[string]any{
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_insufficient_points", withCurrency(c, *event.GuildID(), map[string]any{
 						"margin": session.SelectedMargin,
 						"points": points,
-					})),
+					}))),
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
@@ -2736,7 +2749,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 								if dbGuild, err := database.GetGuild(c.GormDB(), ordCopy.GuildID); err == nil {
 									guildName = dbGuild.Name
 								}
-								descText := i18n.TranslateText(locale, "components.play.fx.dm_market_close_slippage_desc", map[string]any{
+								descText := i18n.TranslateText(locale, "components.play.fx.dm_market_close_slippage_desc", withCurrency(c, ordCopy.GuildID, map[string]any{
 									"symbol":    strings.Replace(ordCopy.Symbol, "_", "/", 1),
 									"direction": dirEmoji,
 									"expected":  fmt.Sprintf("%.3f", ordCopy.ExpectedPrice),
@@ -2744,7 +2757,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 									"margin":    ordCopy.Margin,
 									"tolerance": fmt.Sprintf("%.2f%%", ordCopy.SlippageTolerance*100.0),
 									"guild":     guildName,
-								})
+								}))
 
 								builder := discord.NewMessageBuilder().
 									SetIsComponentsV2(true).
@@ -2902,7 +2915,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 								if dbGuild, err := database.GetGuild(c.GormDB(), closedPos.GuildID); err == nil {
 									guildName = dbGuild.Name
 								}
-								descText := i18n.TranslateText(locale, "components.play.fx.dm_market_close_filled_desc", map[string]any{
+								descText := i18n.TranslateText(locale, "components.play.fx.dm_market_close_filled_desc", withCurrency(c, closedPos.GuildID, map[string]any{
 									"symbol":    strings.Replace(closedPos.Symbol, "_", "/", 1),
 									"direction": dirEmoji,
 									"margin":    closedPos.Margin,
@@ -2910,7 +2923,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 									"pnl":       fmt.Sprintf("%s%d", pnlSign, pnlInt),
 									"received":  actualRefund,
 									"guild":     guildName,
-								})
+								}))
 
 								builder := discord.NewMessageBuilder().
 									SetIsComponentsV2(true).
@@ -2962,7 +2975,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 							if dbGuild, err := database.GetGuild(c.GormDB(), ordCopy.GuildID); err == nil {
 								guildName = dbGuild.Name
 							}
-							descText := i18n.TranslateText(locale, "components.play.fx.dm_market_order_slippage_desc", map[string]any{
+							descText := i18n.TranslateText(locale, "components.play.fx.dm_market_order_slippage_desc", withCurrency(c, ordCopy.GuildID, map[string]any{
 								"symbol":    strings.Replace(ordCopy.Symbol, "_", "/", 1),
 								"direction": dirEmoji,
 								"expected":  fmt.Sprintf("%.3f", ordCopy.ExpectedPrice),
@@ -2970,7 +2983,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 								"margin":    ordCopy.Margin,
 								"tolerance": fmt.Sprintf("%.2f%%", ordCopy.SlippageTolerance*100.0),
 								"guild":     guildName,
-							})
+							}))
 
 							builder := discord.NewMessageBuilder().
 								SetIsComponentsV2(true).
@@ -3143,7 +3156,7 @@ func FXPortfolioCommandHandler(c *components.Components, event *events.Applicati
 				slText = fmt.Sprintf("%.3f", *pos.StopLossPrice)
 			}
 
-			posDesc := i18n.TranslateText(locale, "components.play.fx.portfolio_position_item", map[string]any{
+			posDesc := i18n.TranslateText(locale, "components.play.fx.portfolio_position_item", withCurrency(c, *event.GuildID(), map[string]any{
 				"symbol":    strings.Replace(pos.Symbol, "_", "/", 1),
 				"direction": dirEmoji,
 				"leverage":  pos.Leverage,
@@ -3155,7 +3168,7 @@ func FXPortfolioCommandHandler(c *components.Components, event *events.Applicati
 				"pnl":       pnlStr,
 				"tp":        tpText,
 				"sl":        slText,
-			})
+			}))
 			posSB.WriteString(posDesc + "\n")
 		}
 	}
@@ -3204,7 +3217,7 @@ func FXPortfolioCommandHandler(c *components.Components, event *events.Applicati
 				}
 			}
 
-			ordDesc := i18n.TranslateText(locale, "components.play.fx.portfolio_order_item", map[string]any{
+			ordDesc := i18n.TranslateText(locale, "components.play.fx.portfolio_order_item", withCurrency(c, *event.GuildID(), map[string]any{
 				"symbol":    strings.Replace(ord.Symbol, "_", "/", 1),
 				"type":      ordTypeStr,
 				"direction": dirEmoji,
@@ -3212,7 +3225,7 @@ func FXPortfolioCommandHandler(c *components.Components, event *events.Applicati
 				"target":    fmt.Sprintf("%.3f", ord.TargetPrice),
 				"current":   fmt.Sprintf("%.3f", currentPrice),
 				"margin":    ord.Margin,
-			})
+			}))
 			ordSB.WriteString(ordDesc + "\n")
 		}
 	}
@@ -3225,7 +3238,10 @@ func FXPortfolioCommandHandler(c *components.Components, event *events.Applicati
 		userName = targetUser.Username
 	}
 
+	cName := currency.GetCurrencyName(c, *event.GuildID())
 	layoutCtx := i18n.BuildContext().
+		WithText("currency_name", cName).
+		WithText("currency", cName).
 		WithText("user_name", userName).
 		WithText("points", strconv.FormatInt(points, 10)).
 		WithText("pos_count", strconv.Itoa(len(positions))).
