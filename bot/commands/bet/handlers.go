@@ -1709,71 +1709,71 @@ func handleBattleRoyaleEntryButton(c *components.Components, event *events.Compo
 			return err
 		}
 
-			cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
-			if currency.Points < *betHost.EntryFee {
-				if err := event.CreateMessage(discord.NewMessageCreateBuilder().
-					SetContent(i18n.BuildContext().
-						WithText("currency_name", cName).
-						WithText("currency", cName).
-						WithText("fee", fmt.Sprintf("%d", *betHost.EntryFee)).
-						WithText("points", fmt.Sprintf("%d", currency.Points)).
-						ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_entry_fee"))).
-					SetFlags(discord.MessageFlagEphemeral).
-					Build()); err != nil {
-					return err
-				}
-				return nil
-			}
-
-			// Deduct entry fee
-			currency.Points -= *betHost.EntryFee
-			if err := tx.Save(&currency).Error; err != nil {
+		cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
+		if currency.Points < *betHost.EntryFee {
+			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+				SetContent(i18n.BuildContext().
+					WithText("currency_name", cName).
+					WithText("currency", cName).
+					WithText("fee", fmt.Sprintf("%d", *betHost.EntryFee)).
+					WithText("points", fmt.Sprintf("%d", currency.Points)).
+					ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_entry_fee"))).
+				SetFlags(discord.MessageFlagEphemeral).
+				Build()); err != nil {
 				return err
 			}
+			return nil
+		}
 
-			// Create a new option for this entrant
-			optionText := event.User().EffectiveName()
+		// Deduct entry fee
+		currency.Points -= *betHost.EntryFee
+		if err := tx.Save(&currency).Error; err != nil {
+			return err
+		}
 
-			option := &models.BetOption{
-				ID:         uuid.New(),
-				HostID:     hostID,
-				OptionText: optionText,
-				Index:      0, // Will be updated
-			}
+		// Create a new option for this entrant
+		optionText := event.User().EffectiveName()
 
-			// Get current max index
-			var maxIndex int
-			if err := tx.Model(&models.BetOption{}).Where("host_id = ?", hostID).Select("COALESCE(MAX(\"index\"), -1)").Scan(&maxIndex).Error; err != nil {
-				return err
-			}
-			option.Index = maxIndex + 1
+		option := &models.BetOption{
+			ID:         uuid.New(),
+			HostID:     hostID,
+			OptionText: optionText,
+			Index:      0, // Will be updated
+		}
 
-			if err := tx.Create(option).Error; err != nil {
-				return err
-			}
+		// Get current max index
+		var maxIndex int
+		if err := tx.Model(&models.BetOption{}).Where("host_id = ?", hostID).Select("COALESCE(MAX(\"index\"), -1)").Scan(&maxIndex).Error; err != nil {
+			return err
+		}
+		option.Index = maxIndex + 1
 
-			// Create entrant record
-			entrant := &models.BetEntrant{
-				ID:       uuid.New(),
-				HostID:   hostID,
-				UserID:   event.User().ID,
-				OptionID: option.ID,
-			}
+		if err := tx.Create(option).Error; err != nil {
+			return err
+		}
 
-			if err := tx.Create(entrant).Error; err != nil {
-				return err
-			}
+		// Create entrant record
+		entrant := &models.BetEntrant{
+			ID:       uuid.New(),
+			HostID:   hostID,
+			UserID:   event.User().ID,
+			OptionID: option.ID,
+		}
 
-			// Update the bet message
-			if err := updateBetMessage(c, tx, event.Client(), hostID, locale); err != nil {
-				return err
-			}
+		if err := tx.Create(entrant).Error; err != nil {
+			return err
+		}
 
-			responseMsg := i18n.BuildContext().
-				WithText("currency_name", cName).
-				WithText("currency", cName).
-				WithText("fee", fmt.Sprintf("%d", *betHost.EntryFee)).
-				ReplaceText(i18n.TranslateText(locale, "command.bet.message.entered_br"))
+		// Update the bet message
+		if err := updateBetMessage(c, tx, event.Client(), hostID, locale); err != nil {
+			return err
+		}
+
+		responseMsg := i18n.BuildContext().
+			WithText("currency_name", cName).
+			WithText("currency", cName).
+			WithText("fee", fmt.Sprintf("%d", *betHost.EntryFee)).
+			ReplaceText(i18n.TranslateText(locale, "command.bet.message.entered_br"))
 
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 			SetContent(responseMsg).
