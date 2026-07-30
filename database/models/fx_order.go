@@ -16,13 +16,14 @@ type FXOrder struct {
 	Guild             Guild               `gorm:"foreignKey:GuildID;onDelete:CASCADE"`
 	Symbol            string              `gorm:"column:symbol;type:varchar(20);not null"`
 	Direction         FXPositionDirection `gorm:"column:direction;type:varchar(10);not null"`  // "BUY" or "SELL"
-	OrderType         string              `gorm:"column:order_type;type:varchar(10);not null"` // "LIMIT" or "STOP" or "MARKET"
+	OrderType         string              `gorm:"column:order_type;type:varchar(20);not null"` // "LIMIT" or "STOP" or "MARKET" or "MARKET_CLOSE"
 	TargetPrice       float64             `gorm:"column:target_price;type:double;not null"`
 	Margin            int64               `gorm:"column:margin;type:bigint(20) unsigned;not null"`
 	Leverage          int                 `gorm:"column:leverage;type:int;not null"`
 	CreatedAt         time.Time           `gorm:"column:created_at;not null;default:CURRENT_TIMESTAMP"`
 	ExpectedPrice     float64             `gorm:"column:expected_price;type:double;not null;default:0"`
 	SlippageTolerance float64             `gorm:"column:slippage_tolerance;type:double;not null;default:0"`
+	PositionID        *uuid.UUID          `gorm:"column:position_id;type:char(36);default:null"`
 }
 
 func (order *FXOrder) BeforeCreate(tx *gorm.DB) error {

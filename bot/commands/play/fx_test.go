@@ -988,3 +988,148 @@ func TestFX_MarketOrders(t *testing.T) {
 		t.Errorf("expected no position to be created, count was %d", count)
 	}
 }
+
+func TestFX_MarketCloseOrders(t *testing.T) {
+	gdb, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to open sqlite DB: %v", err)
+	}
+
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.Currency{}, &models.FXPosition{}, &models.FXOrder{}, &models.CurrencySeason{}, &models.CurrencySeasonUser{}} {
+		if err := createSQLiteTable(gdb, model); err != nil {
+			t.Fatalf("failed to create table for %T: %v", model, err)
+		}
+	}
+
+	dbWrapper := &database.DB{DB: gdb}
+	ctx := context.Background()
+	c := components.New(ctx, components.Config{}, dbWrapper)
+
+	userID := snowflake.ID(99999)
+	guildID := snowflake.ID(88888)
+
+	_ = gdb.Create(&models.User{ID: userID})
+	_ = gdb.Create(&models.Guild{ID: guildID})
+	_ = gdb.Create(&models.Currency{UserID: userID, GuildID: guildID, Points: 1000})
+
+	// 1. Successful MARKET_CLOSE execution
+	posID := uuid.New()
+	pos := &models.FXPosition{
+		ID:            posID,
+		UserID:        userID,
+		GuildID:       guildID,
+		Symbol:        "USD_JPY",
+		Direction:     models.FXPositionDirectionBuy,
+		EntryPrice:    150.0,
+		Margin:        100,
+		InitialMargin: 100,
+		Leverage:      25,
+	}
+	if err := gdb.Create(pos).Error; err != nil {
+		t.Fatalf("failed to create position: %v", err)
+	}
+
+	closeOrderID := uuid.New()
+	closeOrder := &models.FXOrder{
+		ID:                closeOrderID,
+		UserID:            userID,
+		GuildID:           guildID,
+		Symbol:            "USD_JPY",
+		Direction:         models.FXPositionDirectionBuy,
+		OrderType:         "MARKET_CLOSE",
+		TargetPrice:       150.0,
+		ExpectedPrice:     150.0,
+		SlippageTolerance: 0.002,
+		Margin:            100,
+		Leverage:          25,
+		PositionID:        &posID,
+	}
+	if err := gdb.Create(closeOrder).Error; err != nil {
+		t.Fatalf("failed to create close order: %v", err)
+	}
+
+	ticker := &TickerResponse{
+		Data: []TickerData{
+			{Symbol: "USD_JPY", Ask: "150.0", Bid: "150.0"},
+		},
+	}
+	tickerCacheMu.Lock()
+	tickerCache = ticker
+	lastFetchTime = time.Now().Add(time.Hour)
+	tickerCacheMu.Unlock()
+
+	err = CheckAllPositionsLiquidation(c, nil)
+	if err != nil {
+		t.Fatalf("CheckAllPositionsLiquidation failed: %v", err)
+	}
+
+	var count int64
+	gdb.Model(&models.FXOrder{}).Count(&count)
+	if count != 0 {
+		t.Errorf("expected close order to be processed and deleted, count was %d", count)
+	}
+
+	gdb.Model(&models.FXPosition{}).Count(&count)
+	if count != 0 {
+		t.Errorf("expected position to be closed and deleted, count was %d", count)
+	}
+
+	// 2. MARKET_CLOSE canceled due to high slippage (market crash)
+	posID2 := uuid.New()
+	pos2 := &models.FXPosition{
+		ID:            posID2,
+		UserID:        userID,
+		GuildID:       guildID,
+		Symbol:        "USD_JPY",
+		Direction:     models.FXPositionDirectionBuy,
+		EntryPrice:    150.0,
+		Margin:        100,
+		InitialMargin: 100,
+		Leverage:      25,
+	}
+	if err := gdb.Create(pos2).Error; err != nil {
+		t.Fatalf("failed to create position 2: %v", err)
+	}
+
+	closeOrderID2 := uuid.New()
+	closeOrder2 := &models.FXOrder{
+		ID:                closeOrderID2,
+		UserID:            userID,
+		GuildID:           guildID,
+		Symbol:            "USD_JPY",
+		Direction:         models.FXPositionDirectionBuy,
+		OrderType:         "MARKET_CLOSE",
+		TargetPrice:       150.0,
+		ExpectedPrice:     150.0,
+		SlippageTolerance: 0.002,
+		Margin:            100,
+		Leverage:          25,
+		PositionID:        &posID2,
+	}
+	if err := gdb.Create(closeOrder2).Error; err != nil {
+		t.Fatalf("failed to create close order 2: %v", err)
+	}
+
+	ticker.Data[0].Ask = "148.0"
+	ticker.Data[0].Bid = "148.0"
+	tickerCacheMu.Lock()
+	tickerCache = ticker
+	lastFetchTime = time.Now().Add(time.Hour)
+	tickerCacheMu.Unlock()
+
+	err = CheckAllPositionsLiquidation(c, nil)
+	if err != nil {
+		t.Fatalf("CheckAllPositionsLiquidation failed: %v", err)
+	}
+
+	gdb.Model(&models.FXOrder{}).Count(&count)
+	if count != 0 {
+		t.Errorf("expected close order to be deleted due to slippage, count was %d", count)
+	}
+
+	gdb.Model(&models.FXPosition{}).Count(&count)
+	if count != 1 {
+		t.Errorf("expected position to remain open due to slippage cancellation, count was %d", count)
+	}
+}
+

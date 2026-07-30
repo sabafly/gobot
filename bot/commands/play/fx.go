@@ -591,6 +591,11 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 			if ordTypeStr == "" || strings.HasPrefix(ordTypeStr, "components.play.fx.order_type.market") {
 				ordTypeStr = "成行"
 			}
+		case "MARKET_CLOSE":
+			ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.market_close")
+			if ordTypeStr == "" || strings.HasPrefix(ordTypeStr, "components.play.fx.order_type.market_close") {
+				ordTypeStr = "成行決済"
+			}
 		}
 		dirStr := "L"
 		if o.Direction == models.FXPositionDirectionSell {
@@ -669,6 +674,11 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 			if ordTypeStr == "" || strings.HasPrefix(ordTypeStr, "components.play.fx.order_type.market") {
 				ordTypeStr = "成行"
 			}
+		case "MARKET_CLOSE":
+			ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.market_close")
+			if ordTypeStr == "" || strings.HasPrefix(ordTypeStr, "components.play.fx.order_type.market_close") {
+				ordTypeStr = "成行決済"
+			}
 		}
 		dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
 		if activeOrder.Direction == models.FXPositionDirectionSell {
@@ -678,10 +688,18 @@ func FXMessage(c *components.Components, session *FXSession, positions []models.
 		pAsk, _ := strconv.ParseFloat(pSymData.Ask, 64)
 		pBid, _ := strconv.ParseFloat(pSymData.Bid, 64)
 		var currentPrice float64
-		if activeOrder.Direction == models.FXPositionDirectionBuy {
-			currentPrice = pAsk
+		if activeOrder.OrderType == "MARKET_CLOSE" {
+			if activeOrder.Direction == models.FXPositionDirectionBuy {
+				currentPrice = pBid
+			} else {
+				currentPrice = pAsk
+			}
 		} else {
-			currentPrice = pBid
+			if activeOrder.Direction == models.FXPositionDirectionBuy {
+				currentPrice = pAsk
+			} else {
+				currentPrice = pBid
+			}
 		}
 		orderDesc := i18n.TranslateText(locale, "components.play.fx.active_order_desc", map[string]any{
 			"symbol":     strings.Replace(activeOrder.Symbol, "_", "/", 1),
@@ -1814,8 +1832,10 @@ func FXCancelOrderHandler(c *components.Components, event *events.ComponentInter
 		if err := tx.Delete(&order).Error; err != nil {
 			return err
 		}
-		if err := currency.AddPointTx(tx, order.UserID, order.GuildID, order.Margin); err != nil {
-			return err
+		if order.PositionID == nil && order.OrderType != "MARKET_CLOSE" {
+			if err := currency.AddPointTx(tx, order.UserID, order.GuildID, order.Margin); err != nil {
+				return err
+			}
 		}
 		return nil
 	})
@@ -1835,7 +1855,11 @@ func FXCancelOrderHandler(c *components.Components, event *events.ComponentInter
 		return errors.NewError(err)
 	}
 
-	session.ActivePositionID = nil
+	if order.PositionID != nil {
+		session.ActivePositionID = order.PositionID
+	} else {
+		session.ActivePositionID = nil
+	}
 	fx_sessions.Set(session.ID, session)
 
 	points, _, err := currency.GetPoint(c, event.User().ID, *event.GuildID())
@@ -2191,6 +2215,23 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 		return nil
 	}
 
+	mcRestricted, err := hasMarginCall(c, event.User().ID, *event.GuildID())
+	if err != nil {
+		return errors.NewError(err)
+	}
+	if mcRestricted {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_restricted")),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
 	if session.ActivePositionID == nil {
 		builder := discord.NewMessageBuilder().
 			SetIsComponentsV2(true).
@@ -2221,6 +2262,20 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 		return errors.NewError(err)
 	}
 
+	var existingOrder models.FXOrder
+	if err := c.GormDB().Where("position_id = ?", pos.ID).First(&existingOrder).Error; err == nil {
+		builder := discord.NewMessageBuilder().
+			SetIsComponentsV2(true).
+			SetComponents(
+				discord.NewContainer(
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.err_close_order_already_exists")),
+				).WithAccentColor(0xE74C3C),
+			).
+			AddFlags(discord.MessageFlagEphemeral)
+		_ = event.RespondMessage(builder)
+		return nil
+	}
+
 	ticker, err := fetchTickerData()
 	if err != nil {
 		return errors.NewError(err)
@@ -2240,165 +2295,44 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 		return errors.NewError(err)
 	}
 
-	var exitPrice float64
+	var expectedPrice float64
 	if pos.Direction == models.FXPositionDirectionBuy {
-		exitPrice = bid
+		expectedPrice = bid
 	} else {
-		exitPrice = ask
-	}
-	pnl := getPnL(pos, exitPrice)
-
-	pnlInt := int64(pnl)
-	refund := pos.Margin + pnlInt
-	var deficit int64
-	if refund < 0 {
-		deficit = -refund
-		refund = 0
+		expectedPrice = ask
 	}
 
-	initMargin := pos.GetInitialMargin()
-	ratio := (float64(pos.Margin) + pnl) / float64(initMargin) * 100.0
-	opt := getLeverageOption(pos.Leverage)
-	posIsWarned := ratio < opt.MarginCallRatio
-
-	txErr := c.GormDB().Transaction(func(tx *gorm.DB) error {
-		if err := tx.Delete(pos).Error; err != nil {
-			return err
-		}
-
-		actualRefund := refund
-		if actualRefund > 0 && !posIsWarned {
-			var errRedirect error
-			actualRefund, errRedirect = redirectRefundToMarginCalls(tx, pos.UserID, pos.GuildID, pos.ID, actualRefund, ticker)
-			if errRedirect != nil {
-				return errRedirect
-			}
-		}
-
-		if actualRefund > 0 {
-			if err := currency.AddPointTx(tx, pos.UserID, pos.GuildID, actualRefund); err != nil {
-				return err
-			}
-		}
-
-		if deficit > 0 {
-			var otherPositions []models.FXPosition
-			if err := tx.Where("user_id = ? AND guild_id = ? AND id != ?", pos.UserID, pos.GuildID, pos.ID).Find(&otherPositions).Error; err != nil {
-				return err
-			}
-
-			for _, other := range otherPositions {
-				if deficit <= 0 {
-					break
-				}
-
-				otherSymData, ok := ticker.GetSymbolData(other.Symbol)
-				if !ok {
-					continue
-				}
-				otherAsk, _ := strconv.ParseFloat(otherSymData.Ask, 64)
-				otherBid, _ := strconv.ParseFloat(otherSymData.Bid, 64)
-				var otherPrice float64
-				if other.Direction == models.FXPositionDirectionBuy {
-					otherPrice = otherBid
-				} else {
-					otherPrice = otherAsk
-				}
-				otherPnl := getPnL(&other, otherPrice)
-				otherVal := other.Margin + int64(otherPnl)
-
-				if err := tx.Delete(&other).Error; err != nil {
-					return err
-				}
-
-				if otherVal > 0 {
-					if otherVal >= deficit {
-						remaining := otherVal - deficit
-						if err := currency.AddPointTx(tx, pos.UserID, pos.GuildID, remaining); err != nil {
-							return err
-						}
-						deficit = 0
-					} else {
-						deficit -= otherVal
-					}
-				}
-			}
-		}
-
-		if deficit > 0 {
-			var userPoint models.Currency
-			if err := tx.Where("user_id = ? AND guild_id = ?", pos.UserID, pos.GuildID).First(&userPoint).Error; err == nil {
-				points := userPoint.Points
-				deduct := min(points, deficit)
-				if deduct > 0 {
-					if err := currency.AddPointTx(tx, pos.UserID, pos.GuildID, -deduct); err != nil {
-						return err
-					}
-					deficit -= deduct
-				}
-			}
-		}
-		return nil
-	})
-	if txErr != nil {
-		return errors.NewError(txErr)
+	order := &models.FXOrder{
+		UserID:            event.User().ID,
+		GuildID:           *event.GuildID(),
+		Symbol:            pos.Symbol,
+		Direction:         pos.Direction,
+		OrderType:         "MARKET_CLOSE",
+		TargetPrice:       expectedPrice,
+		ExpectedPrice:     expectedPrice,
+		SlippageTolerance: 0.002, // 0.2%
+		Margin:            pos.Margin,
+		Leverage:          pos.Leverage,
+		PositionID:        &pos.ID,
 	}
+
+	if err := c.GormDB().Create(order).Error; err != nil {
+		return errors.NewError(err)
+	}
+
+	session.ActivePositionID = &order.ID
+	fx_sessions.Set(session.ID, session)
 
 	points, _, _ := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	positions, _ := getFXPositions(c, event.User().ID, *event.GuildID())
-	if len(positions) > 0 {
-		session.ActivePositionID = &positions[0].ID
-	} else {
-		session.ActivePositionID = nil
-	}
-	fx_sessions.Set(session.ID, session)
-
-	netWinSign := ""
-	if pnlInt > 0 {
-		netWinSign = "+"
-	}
-	pnlStr := fmt.Sprintf("%s%d", netWinSign, pnlInt)
-	if pnlInt == 0 {
-		pnlStr = "0"
-	}
-
-	dirText := i18n.TranslateText(event.Locale(), "components.play.fx.direction.buy")
-	if pos.Direction == models.FXPositionDirectionSell {
-		dirText = i18n.TranslateText(event.Locale(), "components.play.fx.direction.sell")
-	}
-
-	descText := i18n.TranslateText(event.Locale(), "components.play.fx.close_success_desc", map[string]any{
-		"symbol":    strings.Replace(pos.Symbol, "_", "/", 1),
-		"direction": dirText,
-		"leverage":  pos.Leverage,
-		"margin":    pos.Margin,
-		"entry":     fmt.Sprintf("%.3f", pos.EntryPrice),
-		"exit":      fmt.Sprintf("%.3f", exitPrice),
-		"pnl":       pnlStr,
-		"refund":    refund,
-		"points":    points,
-	})
-
-	container := discord.NewContainer().WithAccentColor(0x2ECC71)
-	container = container.AddComponents(
-		discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.fx.close_success_title")),
-		discord.NewLargeSeparator(),
-		discord.NewTextDisplay(descText),
-	)
-
-	actionRow := discord.NewActionRow().AddComponents(
-		discord.NewPrimaryButton("もう一度取引する", fmt.Sprintf("play:fx_refresh:%s", session.ID)),
-		discord.NewSecondaryButton("終了", fmt.Sprintf("play:fx_quit:%s", session.ID)),
-	)
 
 	if err := event.UpdateMessage(discord.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(container, actionRow).
+		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
 	); err != nil {
 		return errors.NewError(err)
 	}
-
 	return nil
 }
 
@@ -2699,10 +2633,18 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 			bid, _ := strconv.ParseFloat(tickerData.Bid, 64)
 
 			var currentPrice float64
-			if ordCopy.Direction == models.FXPositionDirectionBuy {
-				currentPrice = ask
+			if ordCopy.OrderType == "MARKET_CLOSE" {
+				if ordCopy.Direction == models.FXPositionDirectionBuy {
+					currentPrice = bid
+				} else {
+					currentPrice = ask
+				}
 			} else {
-				currentPrice = bid
+				if ordCopy.Direction == models.FXPositionDirectionBuy {
+					currentPrice = ask
+				} else {
+					currentPrice = bid
+				}
 			}
 
 			triggered := false
@@ -2741,10 +2683,250 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 						slippageLimitExceeded = true
 					}
 				}
+			case "MARKET_CLOSE":
+				triggered = true
+				// Generate random slippage: between -0.05% and +0.15% (unfavorable)
+				randVal := rand.Float64()*0.002 - 0.0005
+				if ordCopy.Direction == models.FXPositionDirectionBuy {
+					// Position is BUY, exit is selling at bid -> slippage reduces exit price
+					executionPrice = currentPrice * (1.0 - randVal)
+					tolerancePrice := ordCopy.ExpectedPrice * (1.0 - ordCopy.SlippageTolerance)
+					if executionPrice < tolerancePrice {
+						slippageLimitExceeded = true
+					}
+				} else {
+					// Position is SELL, exit is buying at ask -> slippage increases exit price
+					executionPrice = currentPrice * (1.0 + randVal)
+					tolerancePrice := ordCopy.ExpectedPrice * (1.0 + ordCopy.SlippageTolerance)
+					if executionPrice > tolerancePrice {
+						slippageLimitExceeded = true
+					}
+				}
 			}
 
 			if triggered {
-				if slippageLimitExceeded {
+				if ordCopy.OrderType == "MARKET_CLOSE" || ordCopy.PositionID != nil {
+					if slippageLimitExceeded {
+						err := c.GormDB().Transaction(func(tx *gorm.DB) error {
+							var dbOrd models.FXOrder
+							if err := tx.Where("id = ?", ordCopy.ID).First(&dbOrd).Error; err != nil {
+								return err
+							}
+							return tx.Delete(&dbOrd).Error
+						})
+
+						if err == nil {
+							slog.Info("market close order canceled due to slippage limit exceeded", "order_id", ordCopy.ID, "user_id", ordCopy.UserID)
+							if client != nil && client.Rest != nil {
+								var dbUser models.User
+								if err := c.GormDB().First(&dbUser, "id = ?", ordCopy.UserID).Error; err != nil {
+									dbUser = models.User{
+										ID:        ordCopy.UserID,
+										DMEnabled: true,
+									}
+								}
+
+								locale := discord.LocaleJapanese
+								dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
+								if ordCopy.Direction == models.FXPositionDirectionSell {
+									dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
+								}
+
+								guildName := "不明なサーバー"
+								if dbGuild, err := database.GetGuild(c.GormDB(), ordCopy.GuildID); err == nil {
+									guildName = dbGuild.Name
+								}
+								descText := i18n.TranslateText(locale, "components.play.fx.dm_market_close_slippage_desc", map[string]any{
+									"symbol":    strings.Replace(ordCopy.Symbol, "_", "/", 1),
+									"direction": dirEmoji,
+									"expected":  fmt.Sprintf("%.3f", ordCopy.ExpectedPrice),
+									"actual":    fmt.Sprintf("%.3f", executionPrice),
+									"margin":    ordCopy.Margin,
+									"tolerance": fmt.Sprintf("%.2f%%", ordCopy.SlippageTolerance*100.0),
+									"guild":     guildName,
+								})
+
+								builder := discord.NewMessageBuilder().
+									SetIsComponentsV2(true).
+									SetComponents(
+										discord.NewContainer(
+											discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.dm_market_close_slippage_title")),
+											discord.NewTextDisplay(descText),
+										).WithAccentColor(0xE74C3C),
+									)
+								_, _ = dbUser.SendDM(client, builder.BuildCreate())
+							}
+						} else {
+							slog.Error("failed to cancel market close order due to slippage", "order_id", ordCopy.ID, "error", err)
+						}
+					} else {
+						var closedPos models.FXPosition
+						var actualRefund int64
+						var pnlInt int64
+
+						txErr := c.GormDB().Transaction(func(tx *gorm.DB) error {
+							var dbOrd models.FXOrder
+							if err := tx.Where("id = ?", ordCopy.ID).First(&dbOrd).Error; err != nil {
+								return err
+							}
+							if err := tx.Delete(&dbOrd).Error; err != nil {
+								return err
+							}
+
+							if ordCopy.PositionID == nil {
+								return fmt.Errorf("position_id is nil for MARKET_CLOSE order")
+							}
+
+							if err := tx.Where("id = ?", *ordCopy.PositionID).First(&closedPos).Error; err != nil {
+								// Position no longer exists (liquidated or already closed)
+								return nil
+							}
+
+							if err := tx.Delete(&closedPos).Error; err != nil {
+								return err
+							}
+
+							pnl := getPnL(&closedPos, executionPrice)
+							pnlInt = int64(pnl)
+							refund := closedPos.Margin + pnlInt
+							var deficit int64
+							if refund < 0 {
+								deficit = -refund
+								refund = 0
+							}
+
+							initMargin := closedPos.GetInitialMargin()
+							ratio := (float64(closedPos.Margin) + pnl) / float64(initMargin) * 100.0
+							opt := getLeverageOption(closedPos.Leverage)
+							posIsWarned := ratio < opt.MarginCallRatio
+
+							actualRefund = refund
+							if actualRefund > 0 && !posIsWarned {
+								var errRedirect error
+								actualRefund, errRedirect = redirectRefundToMarginCalls(tx, closedPos.UserID, closedPos.GuildID, closedPos.ID, actualRefund, ticker)
+								if errRedirect != nil {
+									return errRedirect
+								}
+							}
+
+							if actualRefund > 0 {
+								if err := currency.AddPointTx(tx, closedPos.UserID, closedPos.GuildID, actualRefund); err != nil {
+									return err
+								}
+							}
+
+							if deficit > 0 {
+								var otherPositions []models.FXPosition
+								if err := tx.Where("user_id = ? AND guild_id = ? AND id != ?", closedPos.UserID, closedPos.GuildID, closedPos.ID).Find(&otherPositions).Error; err != nil {
+									return err
+								}
+
+								for _, other := range otherPositions {
+									if deficit <= 0 {
+										break
+									}
+
+									otherSymData, ok := ticker.GetSymbolData(other.Symbol)
+									if !ok {
+										continue
+									}
+									otherAsk, _ := strconv.ParseFloat(otherSymData.Ask, 64)
+									otherBid, _ := strconv.ParseFloat(otherSymData.Bid, 64)
+									var otherPrice float64
+									if other.Direction == models.FXPositionDirectionBuy {
+										otherPrice = otherBid
+									} else {
+										otherPrice = otherAsk
+									}
+									otherPnl := getPnL(&other, otherPrice)
+									otherVal := other.Margin + int64(otherPnl)
+
+									if err := tx.Delete(&other).Error; err != nil {
+										return err
+									}
+
+									if otherVal > 0 {
+										if otherVal >= deficit {
+											remaining := otherVal - deficit
+											if err := currency.AddPointTx(tx, closedPos.UserID, closedPos.GuildID, remaining); err != nil {
+												return err
+											}
+											deficit = 0
+										} else {
+											deficit -= otherVal
+										}
+									}
+								}
+							}
+
+							if deficit > 0 {
+								var userPoint models.Currency
+								if err := tx.Where("user_id = ? AND guild_id = ?", closedPos.UserID, closedPos.GuildID).First(&userPoint).Error; err == nil {
+									points := userPoint.Points
+									deduct := min(points, deficit)
+									if deduct > 0 {
+										if err := currency.AddPointTx(tx, closedPos.UserID, closedPos.GuildID, -deduct); err != nil {
+											return err
+										}
+										deficit -= deduct
+									}
+								}
+							}
+
+							return nil
+						})
+
+						if txErr == nil && closedPos.ID != uuid.Nil {
+							slog.Info("position closed by market close order background", "order_id", ordCopy.ID, "user_id", ordCopy.UserID, "pos_id", closedPos.ID)
+							if client != nil && client.Rest != nil {
+								var dbUser models.User
+								if err := c.GormDB().First(&dbUser, "id = ?", ordCopy.UserID).Error; err != nil {
+									dbUser = models.User{
+										ID:        ordCopy.UserID,
+										DMEnabled: true,
+									}
+								}
+
+								locale := discord.LocaleJapanese
+								dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
+								if closedPos.Direction == models.FXPositionDirectionSell {
+									dirEmoji = i18n.TranslateText(locale, "components.play.fx.direction.sell")
+								}
+
+								pnlSign := ""
+								if pnlInt > 0 {
+									pnlSign = "+"
+								}
+
+								guildName := "不明なサーバー"
+								if dbGuild, err := database.GetGuild(c.GormDB(), closedPos.GuildID); err == nil {
+									guildName = dbGuild.Name
+								}
+								descText := i18n.TranslateText(locale, "components.play.fx.dm_market_close_filled_desc", map[string]any{
+									"symbol":    strings.Replace(closedPos.Symbol, "_", "/", 1),
+									"direction": dirEmoji,
+									"margin":    closedPos.Margin,
+									"exit":      fmt.Sprintf("%.3f", executionPrice),
+									"pnl":       fmt.Sprintf("%s%d", pnlSign, pnlInt),
+									"received":  actualRefund,
+									"guild":     guildName,
+								})
+
+								builder := discord.NewMessageBuilder().
+									SetIsComponentsV2(true).
+									SetComponents(
+										discord.NewContainer(
+											discord.NewTextDisplay(i18n.TranslateText(locale, "components.play.fx.dm_market_close_filled_title")),
+											discord.NewTextDisplay(descText),
+										).WithAccentColor(0x2ECC71),
+									)
+								_, _ = dbUser.SendDM(client, builder.BuildCreate())
+							}
+						} else if txErr != nil {
+							slog.Error("failed to execute market close order background", "order_id", ordCopy.ID, "error", txErr)
+						}
+					}
+				} else if slippageLimitExceeded {
 					err := c.GormDB().Transaction(func(tx *gorm.DB) error {
 						var dbOrd models.FXOrder
 						if err := tx.Where("id = ?", ordCopy.ID).First(&dbOrd).Error; err != nil {
@@ -2987,10 +3169,18 @@ func FXPortfolioCommandHandler(c *components.Components, event *events.Applicati
 			pAsk, _ := strconv.ParseFloat(pSymData.Ask, 64)
 			pBid, _ := strconv.ParseFloat(pSymData.Bid, 64)
 			var currentPrice float64
-			if ord.Direction == models.FXPositionDirectionBuy {
-				currentPrice = pAsk
+			if ord.OrderType == "MARKET_CLOSE" {
+				if ord.Direction == models.FXPositionDirectionBuy {
+					currentPrice = pBid
+				} else {
+					currentPrice = pAsk
+				}
 			} else {
-				currentPrice = pBid
+				if ord.Direction == models.FXPositionDirectionBuy {
+					currentPrice = pAsk
+				} else {
+					currentPrice = pBid
+				}
 			}
 
 			dirEmoji := i18n.TranslateText(locale, "components.play.fx.direction.buy")
@@ -2999,8 +3189,19 @@ func FXPortfolioCommandHandler(c *components.Components, event *events.Applicati
 			}
 
 			ordTypeStr := i18n.TranslateText(locale, "components.play.fx.order_type.limit")
-			if ord.OrderType == "STOP" {
+			switch ord.OrderType {
+			case "STOP":
 				ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.stop")
+			case "MARKET":
+				ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.market")
+				if ordTypeStr == "" || strings.HasPrefix(ordTypeStr, "components.play.fx.order_type.market") {
+					ordTypeStr = "成行"
+				}
+			case "MARKET_CLOSE":
+				ordTypeStr = i18n.TranslateText(locale, "components.play.fx.order_type.market_close")
+				if ordTypeStr == "" || strings.HasPrefix(ordTypeStr, "components.play.fx.order_type.market_close") {
+					ordTypeStr = "成行決済"
+				}
 			}
 
 			ordDesc := i18n.TranslateText(locale, "components.play.fx.portfolio_order_item", map[string]any{
