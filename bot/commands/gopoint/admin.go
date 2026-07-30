@@ -13,6 +13,7 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database/models"
@@ -826,7 +827,7 @@ func closeSeasonTx(tx *gorm.DB, s *models.GoPointSeason) error {
 				GuildID:      s.GuildID,
 				PointsEarned: p.Points,
 			}
-			if err := tx.Create(&su).Error; err != nil {
+			if err := tx.Clauses(clause.OnConflict{UpdateAll: true}).Create(&su).Error; err != nil {
 				return err
 			}
 		}

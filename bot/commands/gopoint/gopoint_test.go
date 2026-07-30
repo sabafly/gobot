@@ -247,3 +247,59 @@ func TestProcessBackgroundTasks_StartScheduledSeason_WithActiveSeason(t *testing
 		t.Errorf("expected new season IsActive to be true, got false")
 	}
 }
+
+func TestCloseSeason_DuplicateUserRecord(t *testing.T) {
+	gdb, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to open sqlite DB: %v", err)
+	}
+
+	for _, model := range []any{&models.User{}, &models.Guild{}, &models.GoPoint{}, &models.GoPointSeason{}, &models.GoPointSeasonUser{}} {
+		if err := createSQLiteTable(gdb, model); err != nil {
+			t.Fatalf("failed to create table for %T: %v", model, err)
+		}
+	}
+
+	userID := snowflake.ID(1234)
+	guildID := snowflake.ID(5678)
+	_ = gdb.Create(&models.User{ID: userID})
+	_ = gdb.Create(&models.Guild{ID: guildID})
+	_ = gdb.Create(&models.GoPoint{UserID: userID, GuildID: guildID, Points: 500})
+
+	season := models.GoPointSeason{
+		ID:         uuid.New(),
+		GuildID:    guildID,
+		Name:       "Final Criteria Season",
+		StartTime:  time.Now().Add(-2 * time.Hour),
+		EndTime:    time.Now().Add(-1 * time.Hour),
+		IsActive:   true,
+		HasAwarded: false,
+		Criteria:   "final",
+	}
+	_ = gdb.Create(&season)
+
+	// Pre-create GoPointSeasonUser record (simulating points added during season)
+	existingSU := models.GoPointSeasonUser{
+		SeasonID:     season.ID,
+		UserID:       userID,
+		GuildID:      guildID,
+		PointsEarned: 100,
+	}
+	_ = gdb.Create(&existingSU)
+
+	// Closing season should not fail with duplicate entry error
+	err = gdb.Transaction(func(tx *gorm.DB) error {
+		return closeSeasonTx(tx, &season)
+	})
+	if err != nil {
+		t.Fatalf("closeSeasonTx failed with duplicate user record: %v", err)
+	}
+
+	var fetchedSU models.GoPointSeasonUser
+	if err := gdb.Where("season_id = ? AND user_id = ?", season.ID, userID).First(&fetchedSU).Error; err != nil {
+		t.Fatalf("failed to fetch GoPointSeasonUser: %v", err)
+	}
+	if fetchedSU.PointsEarned != 500 {
+		t.Errorf("expected PointsEarned to be updated to 500 for final criteria, got %d", fetchedSU.PointsEarned)
+	}
+}
