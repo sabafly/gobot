@@ -628,6 +628,7 @@ func inGuildRanking(c *components.Components, locale discord.Locale, client *bot
 	} else if len(rankQuery) == 0 {
 		return i18n.TranslateText(locale, "command.currency.ranking.no_result"), nil
 	}
+	cName := GetCurrencyName(c, guildID)
 	var result strings.Builder
 	for _, point := range rankQuery {
 		user, err := client.Rest.GetMember(guildID, point.UserID)
@@ -643,6 +644,7 @@ func inGuildRanking(c *components.Components, locale discord.Locale, client *bot
 			WithText("rank", fmt.Sprintf("%d", point.Rank)).
 			WithText("name", name).
 			WithText("points", fmt.Sprintf("%d", point.Points)).
+			WithText("currency_name", cName).
 			ReplaceText(i18n.TranslateText(locale, "command.currency.ranking.entry"))
 		if userID != nil && point.UserID == *userID {
 			text += " " + i18n.TranslateText(locale, "command.currency.ranking.entry.you")
