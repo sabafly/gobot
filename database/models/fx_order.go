@@ -24,11 +24,15 @@ type FXOrder struct {
 	ExpectedPrice     float64             `gorm:"column:expected_price;type:double;not null;default:0"`
 	SlippageTolerance float64             `gorm:"column:slippage_tolerance;type:double;not null;default:0"`
 	PositionID        *uuid.UUID          `gorm:"column:position_id;type:char(36);default:null"`
+	ExecuteAt         time.Time           `gorm:"column:execute_at;not null;default:CURRENT_TIMESTAMP"`
 }
 
 func (order *FXOrder) BeforeCreate(tx *gorm.DB) error {
 	if order.ID == uuid.Nil {
 		order.ID = uuid.New()
+	}
+	if order.ExecuteAt.IsZero() {
+		order.ExecuteAt = time.Now()
 	}
 	return nil
 }

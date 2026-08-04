@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
-	"math/rand"
+	"math/rand/v2"
 	"net/http"
 	"slices"
 	"strconv"
@@ -1416,6 +1416,7 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 		SlippageTolerance: 0.002, // 0.2%
 		Margin:            session.SelectedMargin,
 		Leverage:          opt.Leverage,
+		ExecuteAt:         time.Now().Add(time.Duration(1+rand.IntN(3)) * time.Second),
 	}
 
 	if err := c.GormDB().Create(order).Error; err != nil {
@@ -1557,6 +1558,7 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 		SlippageTolerance: 0.002, // 0.2%
 		Margin:            session.SelectedMargin,
 		Leverage:          opt.Leverage,
+		ExecuteAt:         time.Now().Add(time.Duration(1+rand.IntN(3)) * time.Second),
 	}
 
 	if err := c.GormDB().Create(order).Error; err != nil {
@@ -2327,6 +2329,7 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 		Margin:            pos.Margin,
 		Leverage:          pos.Leverage,
 		PositionID:        &pos.ID,
+		ExecuteAt:         time.Now().Add(time.Duration(1+rand.IntN(3)) * time.Second),
 	}
 
 	if err := c.GormDB().Create(order).Error; err != nil {
@@ -2680,36 +2683,36 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 				}
 				executionPrice = ordCopy.TargetPrice
 			case "MARKET":
+				if time.Now().Before(ordCopy.ExecuteAt) {
+					continue
+				}
 				triggered = true
-				// Generate random slippage: between -0.05% and +0.15% (unfavorable)
-				randVal := rand.Float64()*0.002 - 0.0005
+				executionPrice = currentPrice
 				if ordCopy.Direction == models.FXPositionDirectionBuy {
-					executionPrice = currentPrice * (1.0 + randVal)
 					tolerancePrice := ordCopy.ExpectedPrice * (1.0 + ordCopy.SlippageTolerance)
 					if executionPrice > tolerancePrice {
 						slippageLimitExceeded = true
 					}
 				} else {
-					executionPrice = currentPrice * (1.0 - randVal)
 					tolerancePrice := ordCopy.ExpectedPrice * (1.0 - ordCopy.SlippageTolerance)
 					if executionPrice < tolerancePrice {
 						slippageLimitExceeded = true
 					}
 				}
 			case "MARKET_CLOSE":
+				if time.Now().Before(ordCopy.ExecuteAt) {
+					continue
+				}
 				triggered = true
-				// Generate random slippage: between -0.05% and +0.15% (unfavorable)
-				randVal := rand.Float64()*0.002 - 0.0005
+				executionPrice = currentPrice
 				if ordCopy.Direction == models.FXPositionDirectionBuy {
-					// Position is BUY, exit is selling at bid -> slippage reduces exit price
-					executionPrice = currentPrice * (1.0 - randVal)
+					// Position is BUY, exit is selling at bid -> price reduction is unfavorable
 					tolerancePrice := ordCopy.ExpectedPrice * (1.0 - ordCopy.SlippageTolerance)
 					if executionPrice < tolerancePrice {
 						slippageLimitExceeded = true
 					}
 				} else {
-					// Position is SELL, exit is buying at ask -> slippage increases exit price
-					executionPrice = currentPrice * (1.0 + randVal)
+					// Position is SELL, exit is buying at ask -> price increase is unfavorable
 					tolerancePrice := ordCopy.ExpectedPrice * (1.0 + ordCopy.SlippageTolerance)
 					if executionPrice > tolerancePrice {
 						slippageLimitExceeded = true
