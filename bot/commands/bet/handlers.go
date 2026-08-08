@@ -325,6 +325,8 @@ func handleVoteButton(c *components.Components, event *events.ComponentInteracti
 		}
 
 		status += i18n.BuildContext().
+			WithText("currency_name", cName).
+			WithText("currency", cName).
 			WithText("votes", fmt.Sprintf("%d", totalBets)).
 			WithText("total_amount", fmt.Sprintf("%d", totalAmount.Total)).
 			ReplaceText(i18n.TranslateText(locale, "command.bet.message.current_stats"))
@@ -379,8 +381,12 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 	amountStr := event.Data.Text("amount")
 	amount, err := strconv.ParseInt(amountStr, 10, 64)
 	if err != nil || amount <= 0 {
+		cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
-			SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_amount")).
+			SetContent(i18n.BuildContext().
+				WithText("currency_name", cName).
+				WithText("currency", cName).
+				ReplaceText(i18n.TranslateText(locale, "command.bet.error.invalid_amount"))).
 			SetFlags(discord.MessageFlagEphemeral).
 			Build()); err != nil {
 			return errors.NewError(err)
@@ -1014,7 +1020,12 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 	}
 
 	if dmInfos != nil {
-		go sendDMNotifications(c.GormDB(), event.Client(), hostTitle, isCancelled, winnerNames, dmInfos, savedLocale, isRaceMode)
+		var guildID snowflake.ID
+		if event.GuildID() != nil {
+			guildID = *event.GuildID()
+		}
+		cName := currencyCmd.GetCurrencyName(c, guildID)
+		go sendDMNotifications(c.GormDB(), event.Client(), hostTitle, isCancelled, winnerNames, dmInfos, savedLocale, isRaceMode, cName)
 	}
 
 	return nil
@@ -2001,6 +2012,7 @@ func sendDMNotifications(
 	dmInfos map[snowflake.ID]*userDMInfo,
 	locale discord.Locale,
 	isRaceMode bool,
+	currencyName string,
 ) {
 	if client == nil || client.Rest == nil {
 		return
@@ -2028,19 +2040,22 @@ func sendDMNotifications(
 		if info.BetAmount > 0 {
 			if isCancelled {
 				detailsBuilder.WriteString(i18n.TranslateText(locale, "command.bet.dm.body.cancel", map[string]any{
-					"option": info.BetOptionText,
-					"amount": info.BetAmount,
+					"option":        info.BetOptionText,
+					"amount":        info.BetAmount,
+					"currency_name": currencyName,
 				}))
 			} else if info.IsWinner {
 				detailsBuilder.WriteString(i18n.TranslateText(locale, "command.bet.dm.body.win", map[string]any{
-					"option":   info.BetOptionText,
-					"amount":   info.BetAmount,
-					"winnings": info.Winnings,
+					"option":        info.BetOptionText,
+					"amount":        info.BetAmount,
+					"winnings":      info.Winnings,
+					"currency_name": currencyName,
 				}))
 			} else {
 				detailsBuilder.WriteString(i18n.TranslateText(locale, "command.bet.dm.body.lose", map[string]any{
-					"option": info.BetOptionText,
-					"amount": info.BetAmount,
+					"option":        info.BetOptionText,
+					"amount":        info.BetAmount,
+					"currency_name": currencyName,
 				}))
 			}
 		}
@@ -2052,14 +2067,18 @@ func sendDMNotifications(
 			}
 			if isCancelled {
 				detailsBuilder.WriteString(i18n.TranslateText(locale, "command.bet.dm.body.entrant.cancel", map[string]any{
-					"amount": info.EntryWinnings,
+					"amount":        info.EntryWinnings,
+					"currency_name": currencyName,
 				}))
 			} else if info.IsEntryWinner || info.EntryWinnings > 0 {
 				detailsBuilder.WriteString(i18n.TranslateText(locale, "command.bet.dm.body.entrant.win", map[string]any{
-					"winnings": info.EntryWinnings,
+					"winnings":      info.EntryWinnings,
+					"currency_name": currencyName,
 				}))
 			} else {
-				detailsBuilder.WriteString(i18n.TranslateText(locale, "command.bet.dm.body.entrant.lose"))
+				detailsBuilder.WriteString(i18n.TranslateText(locale, "command.bet.dm.body.entrant.lose", map[string]any{
+					"currency_name": currencyName,
+				}))
 			}
 		}
 
@@ -2069,7 +2088,8 @@ func sendDMNotifications(
 				detailsBuilder.WriteString("\n")
 			}
 			detailsBuilder.WriteString(i18n.TranslateText(locale, "command.bet.dm.body.organizer.cancel", map[string]any{
-				"amount": info.RefundedPrizePool,
+				"amount":        info.RefundedPrizePool,
+				"currency_name": currencyName,
 			}))
 		}
 
