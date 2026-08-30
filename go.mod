@@ -4,7 +4,7 @@ go 1.25.3
 
 require (
 	github.com/GoPolymarket/polymarket-go-sdk/v2 v2.1.1
-	github.com/disgoorg/disgo v0.18.16
+	github.com/disgoorg/disgo v0.19.6
 	github.com/disgoorg/json/v2 v2.0.0
 	github.com/disgoorg/omit v1.0.0
 	github.com/disgoorg/snowflake/v2 v2.0.3
