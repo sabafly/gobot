@@ -1,6 +1,6 @@
 module github.com/sabafly/gobot
 
-go 1.25.3
+go 1.26.5
 
 require (
 	github.com/GoPolymarket/polymarket-go-sdk/v2 v2.1.1
