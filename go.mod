@@ -53,7 +53,7 @@ require (
 	github.com/jalaali/go-jalaali v0.0.0-20250521085720-bf793ab67800 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/klauspost/compress v1.18.1 // indirect
+	github.com/klauspost/compress v1.18.7 // indirect
 	github.com/mattn/go-sqlite3 v1.14.28 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/prometheus/client_golang v1.20.4 // indirect
