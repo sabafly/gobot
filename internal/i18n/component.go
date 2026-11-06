@@ -258,7 +258,7 @@ func (l TextDisplay) Type() ComponentType {
 	return ComponentTypeText
 }
 func (l TextDisplay) textDisplay(ctx MapContext) discord.TextDisplayComponent {
-	return discord.NewTextDisplay(ctx.ReplaceText(string(l)))
+	return discord.NewTextDisplay(ctx.replaceText(string(l)))
 }
 func (l TextDisplay) layoutComponent(ctx MapContext) discord.LayoutComponent {
 	return l.textDisplay(ctx)
@@ -328,7 +328,7 @@ func (l Button) button(ctx MapContext) discord.ButtonComponent {
 	if s, ok := ctx.GetButtonStyle(l.ID); ok {
 		style = s
 	}
-	button := discord.NewButton(style, ctx.ReplaceText(l.Label), ctx.ReplaceCustomID(l.ID), ctx.GetURL(l.ID), 0)
+	button := discord.NewButton(style, ctx.replaceText(l.Label), ctx.ReplaceCustomID(l.ID), ctx.GetURL(l.ID), 0)
 	if l.Emoji != nil {
 		button.Emoji = l.Emoji.Emoji()
 	}
@@ -376,7 +376,7 @@ func (l StringSelectMenu) Type() ComponentType {
 func (l StringSelectMenu) stringSelectMenu(ctx MapContext) discord.StringSelectMenuComponent {
 	return discord.StringSelectMenuComponent{
 		CustomID:    ctx.ReplaceCustomID(l.ID),
-		Placeholder: ctx.ReplaceText(l.Placeholder),
+		Placeholder: ctx.replaceText(l.Placeholder),
 		Options:     l.Options.options(ctx),
 		MinValues:   ctx.GetMinValues(l.ID),
 		MaxValues:   ctx.GetMaxValues(l.ID),
@@ -456,8 +456,8 @@ func (s *StringSelectMenuOption) UnmarshalYAML(value *yaml.Node) error {
 
 func (s StringSelectMenuOption) option(ctx MapContext) discord.StringSelectMenuOption {
 	option := discord.StringSelectMenuOption{
-		Label:       ctx.ReplaceText(s.Label),
-		Description: ctx.ReplaceText(s.Description),
+		Label:       ctx.replaceText(s.Label),
+		Description: ctx.replaceText(s.Description),
 		Value:       ctx.ReplaceCustomID(s.Value),
 	}
 	if s.Emoji != nil {
@@ -492,7 +492,7 @@ func (l UserSelectMenu) userSelectMenu(ctx MapContext) discord.UserSelectMenuCom
 	// DefaultValues is not used for UserSelectMenu, so we pass an empty string
 	return discord.UserSelectMenuComponent{
 		CustomID:      ctx.ReplaceCustomID(l.ID),
-		Placeholder:   ctx.ReplaceText(l.Placeholder),
+		Placeholder:   ctx.replaceText(l.Placeholder),
 		DefaultValues: ctx.GetDefaultValues(l.ID, discord.SelectMenuDefaultValueTypeUser),
 		MinValues:     ctx.GetMinValues(l.ID),
 		MaxValues:     ctx.GetMaxValues(l.ID),
@@ -538,7 +538,7 @@ func (l RoleSelectMenu) Type() ComponentType {
 func (l RoleSelectMenu) roleSelectMenu(ctx MapContext) discord.RoleSelectMenuComponent {
 	return discord.RoleSelectMenuComponent{
 		CustomID:      ctx.ReplaceCustomID(l.ID),
-		Placeholder:   ctx.ReplaceText(l.Placeholder),
+		Placeholder:   ctx.replaceText(l.Placeholder),
 		DefaultValues: ctx.GetDefaultValues(l.ID, discord.SelectMenuDefaultValueTypeRole),
 		MinValues:     ctx.GetMinValues(l.ID),
 		MaxValues:     ctx.GetMaxValues(l.ID),
@@ -583,7 +583,7 @@ func (l MentionableSelectMenu) Type() ComponentType {
 func (l MentionableSelectMenu) mentionableSelectMenu(ctx MapContext) discord.MentionableSelectMenuComponent {
 	return discord.MentionableSelectMenuComponent{
 		CustomID:      ctx.ReplaceCustomID(l.ID),
-		Placeholder:   ctx.ReplaceText(l.Placeholder),
+		Placeholder:   ctx.replaceText(l.Placeholder),
 		DefaultValues: ctx.GetDefaultValues(l.ID, ""),
 		MinValues:     ctx.GetMinValues(l.ID),
 		MaxValues:     ctx.GetMaxValues(l.ID),
@@ -631,7 +631,7 @@ func (l ChannelSelectMenu) Type() ComponentType {
 func (l ChannelSelectMenu) channelSelectMenu(ctx MapContext) discord.ChannelSelectMenuComponent {
 	return discord.ChannelSelectMenuComponent{
 		CustomID:      ctx.ReplaceCustomID(l.ID),
-		Placeholder:   ctx.ReplaceText(l.Placeholder),
+		Placeholder:   ctx.replaceText(l.Placeholder),
 		DefaultValues: ctx.GetDefaultValues(l.ID, discord.SelectMenuDefaultValueTypeChannel),
 		ChannelTypes:  l.ChannelTypes,
 		MinValues:     ctx.GetMinValues(l.ID),
@@ -795,7 +795,7 @@ func (t Thumbnail) sectionAccessoryComponent(ctx MapContext) discord.SectionAcce
 		Media: discord.UnfurledMediaItem{
 			URL: url,
 		},
-		Description: ctx.ReplaceText(t.Description),
+		Description: ctx.replaceText(t.Description),
 	}
 }
 func (t Thumbnail) component(ctx MapContext) discord.Component {
@@ -868,7 +868,7 @@ func (m MediaItem) mediaItem(ctx MapContext) discord.MediaGalleryItem {
 		Media: discord.UnfurledMediaItem{
 			URL: url,
 		},
-		Description: ctx.ReplaceText(m.Description),
+		Description: ctx.replaceText(m.Description),
 	}
 }
 
@@ -1049,8 +1049,8 @@ func (l TextInput) textInput(ctx MapContext) discord.TextInputComponent {
 		MinLength:   l.MinLength,
 		MaxLength:   l.MaxLength,
 		Required:    l.Required,
-		Placeholder: ctx.ReplaceText(l.Placeholder),
-		Value:       ctx.ReplaceText(l.Value),
+		Placeholder: ctx.replaceText(l.Placeholder),
+		Value:       ctx.replaceText(l.Value),
 	}
 }
 func (l TextInput) component(ctx MapContext) discord.Component {
@@ -1159,8 +1159,8 @@ func (l Label) Type() ComponentType {
 }
 func (l Label) label(ctx MapContext) discord.LabelComponent {
 	return discord.LabelComponent{
-		Label:       ctx.ReplaceText(l.Label),
-		Description: ctx.ReplaceText(l.Description),
+		Label:       ctx.replaceText(l.Label),
+		Description: ctx.replaceText(l.Description),
 		Component:   l.Component.labelSubComponent(ctx),
 	}
 }

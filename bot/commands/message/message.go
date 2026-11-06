@@ -43,8 +43,8 @@ import (
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/builtin"
 	"github.com/sabafly/gobot/internal/errors"
+	"github.com/sabafly/gobot/internal/i18n"
 	"github.com/sabafly/gobot/internal/parse"
-	"github.com/sabafly/gobot/internal/translate"
 	"github.com/sabafly/gobot/internal/uuidv7"
 )
 
@@ -82,87 +82,87 @@ func Command(c *components.Components) *generic.Command {
 							{
 								Name:                     "set",
 								Description:              "set member's suffix",
-								DescriptionLocalizations: translate.MessageMap("components.message.suffix.set.command.description", false),
+								DescriptionLocalizations: i18n.TranslateTextMap("components.message.suffix.set.command.description"),
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionUser{
 										Name:                     "target",
-										NameLocalizations:        translate.MessageMap("components.message.suffix.set.command.options.target.name", false),
+										NameLocalizations:        i18n.TranslateTextMap("components.message.suffix.set.command.options.target.name"),
 										Description:              "target",
-										DescriptionLocalizations: translate.MessageMap("components.message.suffix.set.command.options.target.description", false),
+										DescriptionLocalizations: i18n.TranslateTextMap("components.message.suffix.set.command.options.target.description"),
 										Required:                 true,
 									},
 									discord.ApplicationCommandOptionString{
 										Name:                     "suffix",
-										NameLocalizations:        translate.MessageMap("components.message.suffix.set.command.options.suffix.name", false),
+										NameLocalizations:        i18n.TranslateTextMap("components.message.suffix.set.command.options.suffix.name"),
 										Description:              "suffix",
-										DescriptionLocalizations: translate.MessageMap("components.message.suffix.set.command.options.suffix.description", false),
+										DescriptionLocalizations: i18n.TranslateTextMap("components.message.suffix.set.command.options.suffix.description"),
 										Required:                 true,
 										MaxLength:                builtin.Ptr(512),
 									},
 									discord.ApplicationCommandOptionString{
 										Name:                     "rule",
-										NameLocalizations:        translate.MessageMap("components.message.suffix.set.command.options.rule.name", false),
+										NameLocalizations:        i18n.TranslateTextMap("components.message.suffix.set.command.options.rule.name"),
 										Description:              "rule",
-										DescriptionLocalizations: translate.MessageMap("components.message.suffix.set.command.options.rule.description", false),
+										DescriptionLocalizations: i18n.TranslateTextMap("components.message.suffix.set.command.options.rule.description"),
 										Required:                 true,
 										Choices: []discord.ApplicationCommandOptionChoiceString{
 											{
 												Name:              "webhook",
-												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.rule.webhook", false),
+												NameLocalizations: i18n.TranslateTextMap("components.message.suffix.set.command.options.rule.webhook"),
 												Value:             WordSuffixRuleWebhook,
 											},
 											{
 												Name:              "warn",
-												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.rule.warn", false),
+												NameLocalizations: i18n.TranslateTextMap("components.message.suffix.set.command.options.rule.warn"),
 												Value:             WordSuffixRuleWarn,
 											},
 											{
 												Name:              "delete",
-												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.rule.delete", false),
+												NameLocalizations: i18n.TranslateTextMap("components.message.suffix.set.command.options.rule.delete"),
 												Value:             WordSuffixRuleDelete,
 											},
 										},
 									},
 									discord.ApplicationCommandOptionInt{
 										Name:                     "duration",
-										NameLocalizations:        translate.MessageMap("components.message.suffix.set.command.options.duration.name", false),
+										NameLocalizations:        i18n.TranslateTextMap("components.message.suffix.set.command.options.duration.name"),
 										Description:              "duration",
-										DescriptionLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.description", false),
+										DescriptionLocalizations: i18n.TranslateTextMap("components.message.suffix.set.command.options.duration.description"),
 										Required:                 false,
 										Choices: []discord.ApplicationCommandOptionChoiceInt{
 											{
 												Name:              "1m",
-												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.1m", false),
+												NameLocalizations: i18n.TranslateTextMap("components.message.suffix.set.command.options.duration.1m"),
 												Value:             PinArgumentTypeDuration1m,
 											},
 											{
 												Name:              "1h",
-												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.1h", false),
+												NameLocalizations: i18n.TranslateTextMap("components.message.suffix.set.command.options.duration.1h"),
 												Value:             PinArgumentTypeDuration1h,
 											},
 											{
 												Name:              "3h",
-												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.3h", false),
+												NameLocalizations: i18n.TranslateTextMap("components.message.suffix.set.command.options.duration.3h"),
 												Value:             PinArgumentTypeDuration3h,
 											},
 											{
 												Name:              "6h",
-												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.6h", false),
+												NameLocalizations: i18n.TranslateTextMap("components.message.suffix.set.command.options.duration.6h"),
 												Value:             PinArgumentTypeDuration6h,
 											},
 											{
 												Name:              "1d",
-												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.1d", false),
+												NameLocalizations: i18n.TranslateTextMap("components.message.suffix.set.command.options.duration.1d"),
 												Value:             PinArgumentTypeDuration1d,
 											},
 											{
 												Name:              "3d",
-												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.3d", false),
+												NameLocalizations: i18n.TranslateTextMap("components.message.suffix.set.command.options.duration.3d"),
 												Value:             PinArgumentTypeDuration3d,
 											},
 											{
 												Name:              "1w",
-												NameLocalizations: translate.MessageMap("components.message.suffix.set.command.options.duration.1w", false),
+												NameLocalizations: i18n.TranslateTextMap("components.message.suffix.set.command.options.duration.1w"),
 												Value:             PinArgumentTypeDuration1w,
 											},
 										},
@@ -172,13 +172,13 @@ func Command(c *components.Components) *generic.Command {
 							{
 								Name:                     "remove",
 								Description:              "remove member's suffix",
-								DescriptionLocalizations: translate.MessageMap("components.message.suffix.remove.command.description", false),
+								DescriptionLocalizations: i18n.TranslateTextMap("components.message.suffix.remove.command.description"),
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionUser{
 										Name:                     "target",
-										NameLocalizations:        translate.MessageMap("components.message.suffix.remove.command.options.target.name", false),
+										NameLocalizations:        i18n.TranslateTextMap("components.message.suffix.remove.command.options.target.name"),
 										Description:              "target",
-										DescriptionLocalizations: translate.MessageMap("components.message.suffix.remove.command.options.target.description", false),
+										DescriptionLocalizations: i18n.TranslateTextMap("components.message.suffix.remove.command.options.target.description"),
 										Required:                 true,
 									},
 								},
@@ -321,19 +321,19 @@ func Command(c *components.Components) *generic.Command {
 					if expired != nil {
 						durationString = discord.FormattedTimestampMention(expired.Unix(), discord.TimestampStyleRelative)
 					} else {
-						durationString = translate.Message(event.Locale(), "components.message.suffix.duration.none")
+						durationString = i18n.TranslateText(event.Locale(), "components.message.suffix.duration.none", nil)
 					}
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
 							SetContentf("%s\n%s",
-								translate.Message(
+								i18n.TranslateText(
 									event.Locale(),
 									"components.message.suffix.set.message",
-									translate.WithTemplate(map[string]any{"User": discord.UserMention(u.ID), "Suffix": w.Suffix})),
-								translate.Message(
+									map[string]any{"user": discord.UserMention(u.ID), "suffix": w.Suffix}),
+								i18n.TranslateText(
 									event.Locale(),
 									"components.message.suffix.duration.message",
-									translate.WithTemplate(map[string]any{"Duration": durationString})),
+									map[string]any{"duration": durationString}),
 							).
 							BuildCreate(),
 					); err != nil {
@@ -370,7 +370,7 @@ func Command(c *components.Components) *generic.Command {
 						if errors.Is(err, gorm.ErrRecordNotFound) {
 							if err := event.CreateMessage(
 								discord.NewMessageBuilder().
-									SetContent(translate.Message(event.Locale(), "components.message.suffix.remove.message.no_suffix", translate.WithTemplate(map[string]any{"User": discord.UserMention(u.ID)}))).
+									SetContent(i18n.TranslateText(event.Locale(), "components.message.suffix.remove.message.no_suffix", map[string]any{"user": discord.UserMention(u.ID)})).
 									SetAllowedMentions(&discord.AllowedMentions{}).
 									SetFlags(discord.MessageFlagEphemeral).
 									BuildCreate(),
@@ -388,7 +388,7 @@ func Command(c *components.Components) *generic.Command {
 
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
-							SetContent(translate.Message(event.Locale(), "components.message.suffix.remove.message", translate.WithTemplate(map[string]any{"User": discord.UserMention(u.ID)}))).
+							SetContent(i18n.TranslateText(event.Locale(), "components.message.suffix.remove.message", map[string]any{"user": discord.UserMention(u.ID)})).
 							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
@@ -422,8 +422,8 @@ func Command(c *components.Components) *generic.Command {
 						return errors.NewError(err)
 					}
 
-					messageStr := translate.Message(event.Locale(), "components.message.suffix.check.message.none",
-						translate.WithTemplate(map[string]any{"User": discord.UserMention(u.ID)}),
+					messageStr := i18n.TranslateText(event.Locale(), "components.message.suffix.check.message.none",
+						map[string]any{"user": discord.UserMention(u.ID)},
 					)
 
 					var w models.WordSuffix
@@ -432,18 +432,25 @@ func Command(c *components.Components) *generic.Command {
 						return errors.NewError(err)
 					}
 					if err == nil {
-						messageStr = translate.Message(event.Locale(), "components.message.suffix.check.message",
-							translate.WithTemplate(
-								map[string]any{
-									"Duration": builtin.Or(w.Expired != nil,
-										discord.FormattedTimestampMention(builtin.NonNil(w.Expired).Unix(), discord.TimestampStyleRelative),
-										translate.Message(event.Locale(), "components.message.suffix.duration.none"),
-									),
-									"User":   discord.UserMention(u.ID),
-									"Suffix": w.Suffix,
-									"Rule":   translate.Message(event.Locale(), "components.message.suffix.set.command.options.rule."+w.Rule),
-								},
-							),
+						var ruleKey string
+						switch w.Rule {
+						case WordSuffixRuleWebhook:
+							ruleKey = "components.message.suffix.set.command.options.rule.webhook"
+						case WordSuffixRuleWarn:
+							ruleKey = "components.message.suffix.set.command.options.rule.warn"
+						default:
+							ruleKey = "components.message.suffix.set.command.options.rule.delete"
+						}
+						messageStr = i18n.TranslateText(event.Locale(), "components.message.suffix.check.message",
+							map[string]any{
+								"duration": builtin.Or(w.Expired != nil,
+									discord.FormattedTimestampMention(builtin.NonNil(w.Expired).Unix(), discord.TimestampStyleRelative),
+									i18n.TranslateText(event.Locale(), "components.message.suffix.duration.none", nil),
+								),
+								"user":   discord.UserMention(u.ID),
+								"suffix": w.Suffix,
+								"rule":   i18n.TranslateText(event.Locale(), ruleKey, nil),
+							},
 						)
 					}
 
@@ -466,10 +473,10 @@ func Command(c *components.Components) *generic.Command {
 				CommandHandler: func(_ *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					if err := event.Modal(
 						discord.NewModalCreateBuilder().
-							SetTitle(translate.Message(event.Locale(), "components.message.pin.create.modal.title")).
+							SetTitle(i18n.TranslateText(event.Locale(), "components.message.pin.create.modal.title", nil)).
 							SetCustomID("message:pin_create_modal").
 							SetComponents(
-								discord.NewLabel(translate.Message(event.Locale(), "components.message.pin.create.modal.input.1.label"),
+								discord.NewLabel(i18n.TranslateText(event.Locale(), "components.message.pin.create.modal.input.1.label", nil),
 									discord.TextInputComponent{
 										CustomID:  "content",
 										Style:     discord.TextInputStyleParagraph,
@@ -515,7 +522,7 @@ func Command(c *components.Components) *generic.Command {
 
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
-							SetContent(translate.Message(event.Locale(), "components.message.pin.delete.message")).
+							SetContent(i18n.TranslateText(event.Locale(), "components.message.pin.delete.message", nil)).
 							SetFlags(discord.MessageFlagEphemeral).
 							BuildCreate(),
 					); err != nil {
@@ -549,10 +556,10 @@ func Command(c *components.Components) *generic.Command {
 
 					if err := event.Modal(
 						discord.NewModalCreateBuilder().
-							SetTitle(translate.Message(event.Locale(), "components.message.remind.add.modal.title")).
+							SetTitle(i18n.TranslateText(event.Locale(), "components.message.remind.add.modal.title", nil)).
 							SetCustomID(fmt.Sprintf("message:remind_create_modal:%d", tm.Unix())).
 							SetComponents(
-								discord.NewLabel(translate.Message(event.Locale(), "components.message.remind.add.modal.input.content.label"),
+								discord.NewLabel(i18n.TranslateText(event.Locale(), "components.message.remind.add.modal.input.content.label", nil),
 									discord.TextInputComponent{
 										CustomID:  "content",
 										Style:     discord.TextInputStyleParagraph,
@@ -561,7 +568,7 @@ func Command(c *components.Components) *generic.Command {
 										Required:  true,
 									},
 								),
-								discord.NewLabel(translate.Message(event.Locale(), "components.message.remind.add.modal.input.name.label"),
+								discord.NewLabel(i18n.TranslateText(event.Locale(), "components.message.remind.add.modal.input.name.label", nil),
 									discord.TextInputComponent{
 										CustomID:  "name",
 										Style:     discord.TextInputStyleShort,
@@ -569,7 +576,7 @@ func Command(c *components.Components) *generic.Command {
 										MaxLength: 64,
 										Required:  true,
 										Value: fmt.Sprintf("%s#%d",
-											translate.Message(event.Locale(), "components.message.remind.add.modal.input.name.value"),
+											i18n.TranslateText(event.Locale(), "components.message.remind.add.modal.input.name.value", nil),
 											g.RemindCount+1,
 										),
 									},
@@ -596,10 +603,10 @@ func Command(c *components.Components) *generic.Command {
 
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
-							SetContent(translate.Message(event.Locale(), "components.message.remind.cancel.message",
-								translate.WithTemplate(map[string]any{
-									"Count": strconv.FormatInt(count, 10),
-								}),
+							SetContent(i18n.TranslateText(event.Locale(), "components.message.remind.cancel.message",
+								map[string]any{
+									"count": strconv.FormatInt(count, 10),
+								},
 							)).
 							BuildCreate(),
 					); err != nil {
@@ -679,7 +686,7 @@ func Command(c *components.Components) *generic.Command {
 					discord.NewMessageBuilder().
 						SetContent(m.Content).
 						SetEmbeds(m.Embeds...),
-					translate.Message(g.Locale, "components.message.pin.username"),
+					i18n.TranslateText(g.Locale, "components.message.pin.username", nil),
 					component.Config().Message.PinIconImage,
 					"",
 				)
@@ -694,7 +701,7 @@ func Command(c *components.Components) *generic.Command {
 
 				if err := event.CreateMessage(
 					discord.NewMessageBuilder().
-						SetContent(translate.Message(event.Locale(), "components.message.pin.create.message")).
+						SetContent(i18n.TranslateText(event.Locale(), "components.message.pin.create.message", nil)).
 						SetFlags(discord.MessageFlagEphemeral).
 						BuildCreate(),
 				); err != nil {
@@ -732,10 +739,10 @@ func Command(c *components.Components) *generic.Command {
 
 				if err := event.CreateMessage(
 					discord.NewMessageBuilder().
-						SetContent(translate.Message(event.Locale(), "components.message.remind.add.message",
-							translate.WithTemplate(map[string]any{
-								"Time": discord.FormattedTimestampMention(tm.Unix(), discord.TimestampStyleLongDateTime),
-							}),
+						SetContent(i18n.TranslateText(event.Locale(), "components.message.remind.add.message",
+							map[string]any{
+								"time": discord.FormattedTimestampMention(tm.Unix(), discord.TimestampStyleLongDateTime),
+							},
 						)).
 						BuildCreate(),
 				); err != nil {
@@ -904,7 +911,7 @@ func Command(c *components.Components) *generic.Command {
 							discord.NewMessageBuilder().
 								SetContent(m.Content).
 								SetEmbeds(m.Embeds...),
-							translate.Message(g.Locale, "components.message.pin.username"),
+							i18n.TranslateText(g.Locale, "components.message.pin.username", nil),
 							c.Config().Message.PinIconImage,
 							"",
 						)
@@ -983,8 +990,8 @@ func messageSuffixMessageCreateHandler(w *models.WordSuffix, u *models.User, e *
 		if _, err := e.Client().Rest.CreateMessage(e.ChannelID,
 			discord.NewMessageBuilder().
 				SetContentf("%s\n%s",
-					translate.Message(u.Locale, "components.message.suffix.warn.message.1"),
-					translate.Message(u.Locale, "components.message.suffix.warn.message.2", translate.WithTemplate(map[string]any{"Suffix": w.Suffix})),
+					i18n.TranslateText(u.Locale, "components.message.suffix.warn.message.1", nil),
+					i18n.TranslateText(u.Locale, "components.message.suffix.warn.message.2", map[string]any{"suffix": w.Suffix}),
 				).
 				SetMessageReferenceByID(e.MessageID).
 				BuildCreate(),

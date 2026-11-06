@@ -29,7 +29,6 @@ import (
 
 type Config struct {
 	LocaleDir         string        `yaml:"locale_dir"`
-	TranslateDir      string        `yaml:"translate_dir"`
 	EmojiRegistryFile string        `yaml:"emoji_registry_file"`
 	Debug             ConfigDebug   `yaml:"debug"`
 	Message           ConfigMessage `yaml:"message"`

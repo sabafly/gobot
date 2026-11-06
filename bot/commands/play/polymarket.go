@@ -148,6 +148,8 @@ func PolymarketSearchMessage(c *components.Components, session *PolymarketSessio
 	if session.StatusMsg != "" {
 		status = "\n\n" + session.StatusMsg
 	}
+	cName := currency.GetCurrencyName(c, session.GuildID)
+	ctx.WithText("currency_name", cName)
 	ctx.WithText("status", status)
 	ctx.WithText("query_info", queryInfo)
 	ctx.WithText("points", strconv.FormatInt(points, 10))
@@ -159,6 +161,7 @@ func PolymarketSearchMessage(c *components.Components, session *PolymarketSessio
 
 func PolymarketDetailMessage(c *components.Components, session *PolymarketSession, points int64, locale discord.Locale) []discord.LayoutComponent {
 	ctx := i18n.BuildContext()
+	cName := currency.GetCurrencyName(c, session.GuildID)
 
 	m := session.SelectedMarket
 	tokens := GetMarketTokens(m)
@@ -169,9 +172,10 @@ func PolymarketDetailMessage(c *components.Components, session *PolymarketSessio
 	for _, tok := range tokens {
 		percentage := tok.Price * 100.0
 		oddsText = append(oddsText, i18n.TranslateText(locale, "components.play.polymarket.odds_item", map[string]any{
-			"outcome":    tok.Outcome,
-			"percentage": fmt.Sprintf("%.1f", percentage),
-			"price":      fmt.Sprintf("%.2f", tok.Price),
+			"outcome":       tok.Outcome,
+			"percentage":    fmt.Sprintf("%.1f", percentage),
+			"price":         fmt.Sprintf("%.2f", tok.Price),
+			"currency_name": cName,
 		}))
 
 		var label string
@@ -182,8 +186,9 @@ func PolymarketDetailMessage(c *components.Components, session *PolymarketSessio
 		}
 
 		desc := i18n.TranslateText(locale, "components.play.polymarket.outcome_option_desc", map[string]any{
-			"price":      fmt.Sprintf("%.2f", tok.Price),
-			"multiplier": fmt.Sprintf("%.2f", 1.0/tok.Price),
+			"price":         fmt.Sprintf("%.2f", tok.Price),
+			"multiplier":    fmt.Sprintf("%.2f", 1.0/tok.Price),
+			"currency_name": cName,
 		})
 		if len(desc) > 100 {
 			desc = desc[:97] + "..."
@@ -204,6 +209,7 @@ func PolymarketDetailMessage(c *components.Components, session *PolymarketSessio
 	}
 
 	questionLink := fmt.Sprintf("[%s](https://polymarket.com/event/%s)", m.Question, m.Slug)
+	ctx.WithText("currency_name", cName)
 	ctx.WithText("market_question", questionLink)
 	ctx.WithText("end_date", formatTimeStrLocal(m.EndDate, locale))
 	ctx.WithText("volume", formatDecimal(m.Volume))
@@ -218,11 +224,13 @@ func PolymarketDetailMessage(c *components.Components, session *PolymarketSessio
 
 func PolymarketBetConfirmMessage(c *components.Components, session *PolymarketSession, points int64, locale discord.Locale) []discord.LayoutComponent {
 	ctx := i18n.BuildContext()
+	cName := currency.GetCurrencyName(c, session.GuildID)
 
 	m := session.SelectedMarket
 	tok := session.SelectedToken
 
 	questionLink := fmt.Sprintf("[%s](https://polymarket.com/event/%s)", m.Question, m.Slug)
+	ctx.WithText("currency_name", cName)
 	ctx.WithText("market_question", questionLink)
 	ctx.WithText("selected_outcome", tok.Outcome)
 	ctx.WithText("outcome_price", fmt.Sprintf("%.2f", tok.Price))
@@ -235,6 +243,7 @@ func PolymarketBetConfirmMessage(c *components.Components, session *PolymarketSe
 
 func PolymarketMyBetsMessage(c *components.Components, session *PolymarketSession, points int64, locale discord.Locale) []discord.LayoutComponent {
 	ctx := i18n.BuildContext()
+	cName := currency.GetCurrencyName(c, session.GuildID)
 
 	var bets []models.PolymarketBet
 	err := c.GormDB().Where("user_id = ? AND guild_id = ?", session.UserID, session.GuildID).Order("created_at desc").Limit(10).Find(&bets).Error
@@ -248,19 +257,20 @@ func PolymarketMyBetsMessage(c *components.Components, session *PolymarketSessio
 			status := i18n.TranslateText(locale, "components.play.polymarket.status_pending")
 			if b.Resolved {
 				if b.Winner {
-					status = i18n.TranslateText(locale, "components.play.polymarket.status_won", map[string]any{"payout": b.Payout})
+					status = i18n.TranslateText(locale, "components.play.polymarket.status_won", map[string]any{"payout": b.Payout, "currency_name": cName})
 				} else {
 					status = i18n.TranslateText(locale, "components.play.polymarket.status_lost")
 				}
 			}
 			timeStr := discord.NewTimestamp(discord.TimestampStyleLongDateTime, b.CreatedAt).String()
 			lines = append(lines, i18n.TranslateText(locale, "components.play.polymarket.bet_history_item", map[string]any{
-				"market":  b.MarketTitle,
-				"outcome": b.Outcome,
-				"price":   fmt.Sprintf("%.2f", b.EntryPrice),
-				"amount":  b.BetAmount,
-				"status":  status,
-				"time":    timeStr,
+				"market":        b.MarketTitle,
+				"outcome":       b.Outcome,
+				"price":         fmt.Sprintf("%.2f", b.EntryPrice),
+				"amount":        b.BetAmount,
+				"status":        status,
+				"time":          timeStr,
+				"currency_name": cName,
 			}))
 		}
 		betsList = strings.Join(lines, "\n")
@@ -401,7 +411,7 @@ func PolymarketPlayCommand(c *components.Components, event *events.ApplicationCo
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay(fmt.Sprintf("❌ Polymarket APIとの通信に失敗しました。\nエラー: `%s`", apiErr.Error())),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.polymarket.err_api_failed", map[string]any{"error": apiErr.Error()})),
 				).WithAccentColor(0xE74C3C),
 			)
 		_ = event.RespondMessage(builder)
@@ -478,7 +488,7 @@ func PolymarketPlayCommand(c *components.Components, event *events.ApplicationCo
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
-					discord.NewTextDisplay("❌ 条件に合う予測市場が見つかりませんでした。別のキーワードで検索するか、終了した市場を含めてください。"),
+					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.polymarket.err_no_markets")),
 				).WithAccentColor(0xE74C3C),
 			)
 		_ = event.RespondMessage(builder)
@@ -733,15 +743,16 @@ func PolymarketBetAmountHandler(c *components.Components, event *events.Componen
 	amountStr := customID[2]
 
 	if amountStr == "custom_btn" {
+		cName := currency.GetCurrencyName(c, session.GuildID)
 		if err := event.Modal(discord.NewModalCreateBuilder().
 			SetTitle(i18n.TranslateText(event.Locale(), "components.play.polymarket.modal_bet_title")).
 			SetCustomID(fmt.Sprintf("play:pm_custom_bet_modal:%s", session.ID.String())).
 			SetComponents(
-				discord.NewLabel(i18n.TranslateText(event.Locale(), "components.play.polymarket.modal_bet_label"),
+				discord.NewLabel(i18n.TranslateText(event.Locale(), "components.play.polymarket.modal_bet_label", map[string]any{"currency_name": cName}),
 					discord.TextInputComponent{
 						CustomID:    "amount",
 						Style:       discord.TextInputStyleShort,
-						Placeholder: i18n.TranslateText(event.Locale(), "components.play.polymarket.modal_bet_placeholder"),
+						Placeholder: i18n.TranslateText(event.Locale(), "components.play.polymarket.modal_bet_placeholder", map[string]any{"currency_name": cName}),
 						Required:    true,
 					}),
 			).
@@ -800,14 +811,16 @@ func dbPlaceBet(c *components.Components, userID snowflake.ID, guildID snowflake
 
 	multiplier := 1.0 / bet.EntryPrice
 	estPayout := int64(float64(amount) * multiplier)
+	cName := currency.GetCurrencyName(c, guildID)
 
 	msg := i18n.TranslateText(locale, "components.play.polymarket.bet_success", map[string]any{
-		"market":     bet.MarketTitle,
-		"outcome":    bet.Outcome,
-		"price":      fmt.Sprintf("%.2f", bet.EntryPrice),
-		"amount":     amount,
-		"est_payout": estPayout,
-		"multiplier": fmt.Sprintf("%.2f", multiplier),
+		"market":        bet.MarketTitle,
+		"outcome":       bet.Outcome,
+		"price":         fmt.Sprintf("%.2f", bet.EntryPrice),
+		"amount":        amount,
+		"est_payout":    estPayout,
+		"multiplier":    fmt.Sprintf("%.2f", multiplier),
+		"currency_name": cName,
 	})
 
 	return msg, nil
@@ -819,13 +832,15 @@ func processBetPlacement(c *components.Components, event *events.ComponentIntera
 	msg, err := dbPlaceBet(c, session.UserID, session.GuildID, session, amount, event.Locale())
 	if err != nil {
 		if err.Error() == "insufficient_points" {
+			cName := currency.GetCurrencyName(c, session.GuildID)
 			builder := discord.NewMessageBuilder().
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
 						discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.polymarket.err_insufficient_points", map[string]any{
-							"amount": amount,
-							"points": pointsBefore,
+							"amount":        amount,
+							"points":        pointsBefore,
+							"currency_name": cName,
 						})),
 					).WithAccentColor(0xE74C3C),
 				).
@@ -898,13 +913,15 @@ func PolymarketCustomBetModalHandler(c *components.Components, event *events.Mod
 	msg, err := dbPlaceBet(c, session.UserID, session.GuildID, session, amount, event.Locale())
 	if err != nil {
 		if err.Error() == "insufficient_points" {
+			cName := currency.GetCurrencyName(c, session.GuildID)
 			builder := discord.NewMessageBuilder().
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
 						discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.polymarket.err_insufficient_points", map[string]any{
-							"amount": amount,
-							"points": pointsBefore,
+							"amount":        amount,
+							"points":        pointsBefore,
+							"currency_name": cName,
 						})),
 					).WithAccentColor(0xE74C3C),
 				).
@@ -1008,19 +1025,22 @@ func PolymarketRefreshBetsHandler(c *components.Components, event *events.Compon
 			})
 
 			if errTx == nil {
+				cName := currency.GetCurrencyName(c, session.GuildID)
 				resolvedCount++
 				if won {
 					resolvedMessages = append(resolvedMessages, i18n.TranslateText(event.Locale(), "components.play.polymarket.resolution_won", map[string]any{
-						"amount":  b.BetAmount,
-						"market":  b.MarketTitle,
-						"outcome": b.Outcome,
-						"payout":  payout,
+						"amount":        b.BetAmount,
+						"market":        b.MarketTitle,
+						"outcome":       b.Outcome,
+						"payout":        payout,
+						"currency_name": cName,
 					}))
 				} else {
 					resolvedMessages = append(resolvedMessages, i18n.TranslateText(event.Locale(), "components.play.polymarket.resolution_lost", map[string]any{
-						"amount":  b.BetAmount,
-						"market":  b.MarketTitle,
-						"outcome": b.Outcome,
+						"amount":        b.BetAmount,
+						"market":        b.MarketTitle,
+						"outcome":       b.Outcome,
+						"currency_name": cName,
 					}))
 				}
 			}

@@ -36,7 +36,7 @@ import (
 	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/emoji"
 	"github.com/sabafly/gobot/internal/errors"
-	"github.com/sabafly/gobot/internal/translate"
+	"github.com/sabafly/gobot/internal/i18n"
 )
 
 func ImportCommand(c *components.Components) components.Command {
@@ -45,7 +45,7 @@ func ImportCommand(c *components.Components) components.Command {
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.MessageCommandCreate{
 				Name:              "import-rolepanel",
-				NameLocalizations: translate.MessageMap("components.role.panel.import.name", false),
+				NameLocalizations: i18n.TranslateTextMap("components.role.panel.import.name"),
 				Contexts: []discord.InteractionContextType{
 					discord.InteractionContextTypeGuild,
 				},
@@ -108,7 +108,7 @@ func ImportCommand(c *components.Components) components.Command {
 					}
 
 					panel := models.RolePanel{
-						Name:        builtin.Or(message.Embeds[0].Title != "", message.Embeds[0].Title, translate.Message(event.Locale(), "components.role.panel.default_name")),
+						Name:        builtin.Or(message.Embeds[0].Title != "", message.Embeds[0].Title, i18n.TranslateText(event.Locale(), "components.role.panel.default_name", nil)),
 						Description: "",
 						Roles:       roles,
 						GuildID:     g.ID,

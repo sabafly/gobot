@@ -37,7 +37,6 @@ import (
 	"github.com/sabafly/gobot/internal/embeds"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
-	"github.com/sabafly/gobot/internal/translate"
 )
 
 func Command(c *components.Components) components.Command {
@@ -47,7 +46,7 @@ func Command(c *components.Components) components.Command {
 			discord.SlashCommandCreate{
 				Name:                     "settings",
 				Description:              "view settings",
-				DescriptionLocalizations: translate.MessageMap("components.settings", false),
+				DescriptionLocalizations: i18n.TranslateTextMap("components.settings"),
 				Contexts: []discord.InteractionContextType{
 					discord.InteractionContextTypeGuild,
 				},
@@ -66,22 +65,22 @@ func Command(c *components.Components) components.Command {
 							{
 								Name:                     "toggle",
 								Description:              "toggle",
-								DescriptionLocalizations: translate.MessageMap("components.setting.bump.toggle", false),
+								DescriptionLocalizations: i18n.TranslateTextMap("components.setting.bump.toggle"),
 							},
 							{
 								Name:                     "message",
 								Description:              "set message",
-								DescriptionLocalizations: translate.MessageMap("components.setting.bump.message", false),
+								DescriptionLocalizations: i18n.TranslateTextMap("components.setting.bump.message"),
 							},
 							{
 								Name:                     "mention",
 								Description:              "set mention target",
-								DescriptionLocalizations: translate.MessageMap("components.setting.bump.mention", false),
+								DescriptionLocalizations: i18n.TranslateTextMap("components.setting.bump.mention"),
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionRole{
 										Name:                     "target",
 										Description:              "target role",
-										DescriptionLocalizations: translate.MessageMap("components.setting.mention.target", false),
+										DescriptionLocalizations: i18n.TranslateTextMap("components.setting.mention.target"),
 									},
 								},
 							},
@@ -94,22 +93,22 @@ func Command(c *components.Components) components.Command {
 							{
 								Name:                     "toggle",
 								Description:              "toggle",
-								DescriptionLocalizations: translate.MessageMap("components.setting.up.toggle", false),
+								DescriptionLocalizations: i18n.TranslateTextMap("components.setting.up.toggle"),
 							},
 							{
 								Name:                     "message",
 								Description:              "set message",
-								DescriptionLocalizations: translate.MessageMap("components.setting.up.message", false),
+								DescriptionLocalizations: i18n.TranslateTextMap("components.setting.up.message"),
 							},
 							{
 								Name:                     "mention",
 								Description:              "set mention target",
-								DescriptionLocalizations: translate.MessageMap("components.setting.up.mention", false),
+								DescriptionLocalizations: i18n.TranslateTextMap("components.setting.up.mention"),
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionRole{
 										Name:                     "target",
 										Description:              "target role",
-										DescriptionLocalizations: translate.MessageMap("components.setting.mention.target", false),
+										DescriptionLocalizations: i18n.TranslateTextMap("components.setting.mention.target"),
 									},
 								},
 							},
@@ -122,7 +121,7 @@ func Command(c *components.Components) components.Command {
 							{
 								Name:                     "toggle",
 								Description:              "toggle leveling",
-								DescriptionLocalizations: translate.MessageMap("components.setting.leveling.toggle", false),
+								DescriptionLocalizations: i18n.TranslateTextMap("components.setting.leveling.toggle"),
 							},
 						},
 					},
@@ -185,7 +184,7 @@ func Command(c *components.Components) components.Command {
 
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
-							SetContent(translate.Message(event.Locale(), "components.setting.bump.toggle."+builtin.Or(g.BumpEnabled, "enabled", "disabled"))).
+							SetContent(builtin.Or(g.BumpEnabled, i18n.TranslateText(event.Locale(), "components.setting.bump.toggle.enabled"), i18n.TranslateText(event.Locale(), "components.setting.bump.toggle.disabled"))).
 							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
@@ -210,7 +209,7 @@ func Command(c *components.Components) components.Command {
 
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
-							SetContent(translate.Message(event.Locale(), "components.setting.up.toggle."+builtin.Or(g.UpEnabled, "enabled", "disabled"))).
+							SetContent(builtin.Or(g.UpEnabled, i18n.TranslateText(event.Locale(), "components.setting.up.toggle.enabled"), i18n.TranslateText(event.Locale(), "components.setting.up.toggle.disabled"))).
 							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
@@ -239,14 +238,12 @@ func Command(c *components.Components) components.Command {
 
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
-							SetContent(translate.Message(event.Locale(), "components.setting.bump.mention.used",
-								translate.WithTemplate(map[string]any{
-									"Role": builtin.Or(g.BumpMention != nil,
-										discord.RoleMention(builtin.NonNil(g.BumpMention)),
-										"`"+translate.Message(event.Locale(), "components.setting.mention.none")+"`",
-									),
-								}),
-							)).
+							SetContent(i18n.TranslateText(event.Locale(), "components.setting.bump.mention.used", map[string]any{
+								"role": builtin.Or(g.BumpMention != nil,
+									discord.RoleMention(builtin.NonNil(g.BumpMention)),
+									"`"+i18n.TranslateText(event.Locale(), "components.setting.mention.none")+"`",
+								),
+							})).
 							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
@@ -275,14 +272,12 @@ func Command(c *components.Components) components.Command {
 
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
-							SetContent(translate.Message(event.Locale(), "components.setting.up.mention.used",
-								translate.WithTemplate(map[string]any{
-									"Role": builtin.Or(g.UpMention != nil,
-										discord.RoleMention(builtin.NonNil(g.UpMention)),
-										"`"+translate.Message(event.Locale(), "components.setting.mention.none")+"`",
-									),
-								}),
-							)).
+							SetContent(i18n.TranslateText(event.Locale(), "components.setting.up.mention.used", map[string]any{
+								"role": builtin.Or(g.UpMention != nil,
+									discord.RoleMention(builtin.NonNil(g.UpMention)),
+									"`"+i18n.TranslateText(event.Locale(), "components.setting.mention.none")+"`",
+								),
+							})).
 							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)
@@ -302,10 +297,10 @@ func Command(c *components.Components) components.Command {
 					}
 					if err := event.Modal(
 						discord.NewModalCreateBuilder().
-							SetTitle(translate.Message(event.Locale(), "components.setting.bump.message.modal.title")).
+							SetTitle(i18n.TranslateText(event.Locale(), "components.setting.bump.message.modal.title")).
 							SetCustomID("setting:bump_message").
 							SetComponents(
-								discord.NewLabel(translate.Message(event.Locale(), "components.setting.message.modal.message_title"),
+								discord.NewLabel(i18n.TranslateText(event.Locale(), "components.setting.message.modal.message_title"),
 									discord.TextInputComponent{
 										CustomID:  "message_title",
 										Style:     discord.TextInputStyleShort,
@@ -315,7 +310,7 @@ func Command(c *components.Components) components.Command {
 										Value:     g.BumpMessageTitle,
 									},
 								),
-								discord.NewLabel(translate.Message(event.Locale(), "components.setting.message.modal.message"),
+								discord.NewLabel(i18n.TranslateText(event.Locale(), "components.setting.message.modal.message"),
 									discord.TextInputComponent{
 										CustomID:  "message",
 										Style:     discord.TextInputStyleParagraph,
@@ -325,7 +320,7 @@ func Command(c *components.Components) components.Command {
 										Value:     g.BumpMessage,
 									},
 								),
-								discord.NewLabel(translate.Message(event.Locale(), "components.setting.message.modal.remind.message_title"),
+								discord.NewLabel(i18n.TranslateText(event.Locale(), "components.setting.message.modal.remind.message_title"),
 									discord.TextInputComponent{
 										CustomID:  "remind.message_title",
 										Style:     discord.TextInputStyleShort,
@@ -335,7 +330,7 @@ func Command(c *components.Components) components.Command {
 										Value:     g.BumpRemindMessageTitle,
 									},
 								),
-								discord.NewLabel(translate.Message(event.Locale(), "components.setting.message.modal.remind.message"),
+								discord.NewLabel(i18n.TranslateText(event.Locale(), "components.setting.message.modal.remind.message"),
 									discord.TextInputComponent{
 										CustomID:  "remind.message",
 										Style:     discord.TextInputStyleParagraph,
@@ -365,10 +360,10 @@ func Command(c *components.Components) components.Command {
 					}
 					if err := event.Modal(
 						discord.NewModalCreateBuilder().
-							SetTitle(translate.Message(event.Locale(), "components.setting.up.message.modal.title")).
+							SetTitle(i18n.TranslateText(event.Locale(), "components.setting.up.message.modal.title")).
 							SetCustomID("setting:up_message").
 							SetComponents(
-								discord.NewLabel(translate.Message(event.Locale(), "components.setting.message.modal.message_title"),
+								discord.NewLabel(i18n.TranslateText(event.Locale(), "components.setting.message.modal.message_title"),
 									discord.TextInputComponent{
 										CustomID:  "message_title",
 										Style:     discord.TextInputStyleShort,
@@ -378,7 +373,7 @@ func Command(c *components.Components) components.Command {
 										Value:     g.UpMessageTitle,
 									},
 								),
-								discord.NewLabel(translate.Message(event.Locale(), "components.setting.message.modal.message"),
+								discord.NewLabel(i18n.TranslateText(event.Locale(), "components.setting.message.modal.message"),
 									discord.TextInputComponent{
 										CustomID:  "message",
 										Style:     discord.TextInputStyleParagraph,
@@ -388,7 +383,7 @@ func Command(c *components.Components) components.Command {
 										Value:     g.UpMessage,
 									},
 								),
-								discord.NewLabel(translate.Message(event.Locale(), "components.setting.message.modal.remind.message_title"),
+								discord.NewLabel(i18n.TranslateText(event.Locale(), "components.setting.message.modal.remind.message_title"),
 									discord.TextInputComponent{
 										CustomID:  "remind.message_title",
 										Style:     discord.TextInputStyleShort,
@@ -398,7 +393,7 @@ func Command(c *components.Components) components.Command {
 										Value:     g.UpRemindMessageTitle,
 									},
 								),
-								discord.NewLabel(translate.Message(event.Locale(), "components.setting.message.modal.remind.message"),
+								discord.NewLabel(i18n.TranslateText(event.Locale(), "components.setting.message.modal.remind.message"),
 									discord.TextInputComponent{
 										CustomID:  "remind.message",
 										Style:     discord.TextInputStyleParagraph,
@@ -443,7 +438,7 @@ func Command(c *components.Components) components.Command {
 
 					if err := event.CreateMessage(
 						discord.NewMessageBuilder().
-							SetContent(translate.Message(event.Locale(), "components.setting.leveling.enable."+builtin.Or(!g.LevelingDisabled, "enabled", "disabled"))).
+							SetContent(builtin.Or(!g.LevelingDisabled, i18n.TranslateText(event.Locale(), "components.setting.leveling.enable.enabled"), i18n.TranslateText(event.Locale(), "components.setting.leveling.enable.disabled"))).
 							BuildCreate(),
 					); err != nil {
 						return errors.NewError(err)

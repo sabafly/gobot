@@ -212,6 +212,8 @@ func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandI
 		}
 	}
 
+	cName := GetCurrencyName(c, guildID)
+
 	modal := discord.NewModalCreateBuilder().
 		SetTitle(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_modal_title")).
 		SetCustomID("currency:tax_setup_modal").
@@ -223,7 +225,7 @@ func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandI
 					MaxValues: 1,
 					Options:   rateOptions,
 				}),
-			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_label_min_points"),
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_label_min_points", map[string]any{"currency_name": cName}),
 				discord.TextInputComponent{
 					CustomID: "min_points",
 					Style:    discord.TextInputStyleShort,
@@ -263,6 +265,7 @@ func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandI
 
 func TaxSetupModalSubmitHandler(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
 	guildID := *event.GuildID()
+	cName := GetCurrencyName(c, guildID)
 
 	var rateStr string
 	if rates := event.Data.StringValues("rate"); len(rates) > 0 {
@@ -286,7 +289,7 @@ func TaxSetupModalSubmitHandler(c *components.Components, event *events.ModalSub
 
 	minPoints, err := strconv.ParseInt(minPointsStr, 10, 64)
 	if err != nil || minPoints < 0 {
-		return respondModalError(event, i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_err_min_points"))
+		return respondModalError(event, i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_err_min_points", map[string]any{"currency_name": cName}))
 	}
 
 	intervalDays, err := strconv.Atoi(intervalDaysStr)
@@ -346,11 +349,12 @@ func TaxSetupModalSubmitHandler(c *components.Components, event *events.ModalSub
 	}
 
 	msg := i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_success", map[string]any{
-		"rate":       cfg.Rate,
-		"min_points": cfg.MinPoints,
-		"interval":   cfg.IntervalDays,
-		"status":     statusStr,
-		"next_time":  discord.NewTimestamp(discord.TimestampStyleLongDateTime, cfg.NextTaxTime).String(),
+		"rate":          cfg.Rate,
+		"min_points":    cfg.MinPoints,
+		"interval":      cfg.IntervalDays,
+		"status":        statusStr,
+		"next_time":     discord.NewTimestamp(discord.TimestampStyleLongDateTime, cfg.NextTaxTime).String(),
+		"currency_name": cName,
 	})
 
 	if errResp := event.RespondMessage(discord.NewMessageBuilder().
@@ -418,14 +422,17 @@ func TaxStatusHandler(c *components.Components, event *events.ApplicationCommand
 		bracketsText = "```\n" + bracketsText + "\n```"
 	}
 
+	cName := GetCurrencyName(c, guildID)
+
 	var sb strings.Builder
 	sb.WriteString(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_status_info", map[string]any{
-		"enabled":    statusStr,
-		"rate":       cfg.Rate,
-		"min_points": cfg.MinPoints,
-		"interval":   cfg.IntervalDays,
-		"next_time":  nextTimeStr,
-		"brackets":   bracketsText,
+		"enabled":       statusStr,
+		"rate":          cfg.Rate,
+		"min_points":    cfg.MinPoints,
+		"interval":      cfg.IntervalDays,
+		"next_time":     nextTimeStr,
+		"brackets":      bracketsText,
+		"currency_name": cName,
 	}))
 
 	var pending []models.CurrencyPendingTax
@@ -438,9 +445,10 @@ func TaxStatusHandler(c *components.Components, event *events.ApplicationCommand
 		sb.WriteString(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_status_pending_title"))
 		for _, p := range pending {
 			sb.WriteString(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_status_pending_item", map[string]any{
-				"user_id":      p.UserID.String(),
-				"tax_amount":   p.TaxAmount,
-				"collect_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, p.CollectTime).String(),
+				"user_id":       p.UserID.String(),
+				"tax_amount":    p.TaxAmount,
+				"collect_time":  discord.NewTimestamp(discord.TimestampStyleLongDateTime, p.CollectTime).String(),
+				"currency_name": cName,
 			}))
 		}
 	} else {
@@ -607,6 +615,7 @@ func ResetPointsHandler(c *components.Components, event *events.ApplicationComma
 	}
 
 	guildID := *event.GuildID()
+	cName := GetCurrencyName(c, guildID)
 
 	var msg string
 	if byLevel {
@@ -658,13 +667,16 @@ func ResetPointsHandler(c *components.Components, event *events.ApplicationComma
 		if err != nil {
 			return errors.NewError(err)
 		}
-		msg = i18n.TranslateText(event.Locale(), "components.currency.admin.reset_by_level_success")
+		msg = i18n.TranslateText(event.Locale(), "components.currency.admin.reset_by_level_success", map[string]any{
+			"currency_name": cName,
+		})
 	} else {
 		if err := c.GormDB().Model(&models.Currency{}).Where("guild_id = ?", guildID).Update("points", targetPoints).Error; err != nil {
 			return errors.NewError(err)
 		}
 		msg = i18n.TranslateText(event.Locale(), "components.currency.admin.reset_success", map[string]any{
-			"points": targetPoints,
+			"points":        targetPoints,
+			"currency_name": cName,
 		})
 	}
 
@@ -682,11 +694,11 @@ func ResetPointsHandler(c *components.Components, event *events.ApplicationComma
 	return nil
 }
 
-func criteriaDisplayName(locale discord.Locale, c string) string {
+func criteriaDisplayName(locale discord.Locale, c string, cName string) string {
 	if c == "final" {
-		return i18n.TranslateText(locale, "components.currency.admin.season_criteria_final")
+		return i18n.TranslateText(locale, "components.currency.admin.season_criteria_final", map[string]any{"currency_name": cName})
 	}
-	return i18n.TranslateText(locale, "components.currency.admin.season_criteria_earned")
+	return i18n.TranslateText(locale, "components.currency.admin.season_criteria_earned", map[string]any{"currency_name": cName})
 }
 
 func SeasonStartHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
@@ -778,18 +790,19 @@ func SeasonStartHandler(c *components.Components, event *events.ApplicationComma
 		return errors.NewError(errTx)
 	}
 
+	cName := GetCurrencyName(c, guildID)
 	var msg string
 	if season.IsActive {
 		msg = i18n.TranslateText(event.Locale(), "components.currency.admin.season_start_success", map[string]any{
 			"name":     season.Name,
 			"duration": durationDays,
-			"criteria": criteriaDisplayName(event.Locale(), criteria),
+			"criteria": criteriaDisplayName(event.Locale(), criteria, cName),
 			"end_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, season.EndTime).String(),
 		})
 	} else {
 		msg = i18n.TranslateText(event.Locale(), "components.currency.admin.season_start_scheduled", map[string]any{
 			"name":       season.Name,
-			"criteria":   criteriaDisplayName(event.Locale(), criteria),
+			"criteria":   criteriaDisplayName(event.Locale(), criteria, cName),
 			"start_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, season.StartTime).String(),
 			"end_time":   discord.NewTimestamp(discord.TimestampStyleLongDateTime, season.EndTime).String(),
 		})
@@ -919,6 +932,8 @@ func SeasonStatusHandler(c *components.Components, event *events.ApplicationComm
 		}
 	}
 
+	cName := GetCurrencyName(c, guildID)
+
 	var rankingLines []string
 	if len(records) == 0 {
 		rankingLines = append(rankingLines, i18n.TranslateText(event.Locale(), "components.currency.admin.season_ranking_no_data"))
@@ -936,9 +951,10 @@ func SeasonStatusHandler(c *components.Components, event *events.ApplicationComm
 				medal = fmt.Sprintf("#%d ", i+1)
 			}
 			rankingLines = append(rankingLines, i18n.TranslateText(event.Locale(), "components.currency.admin.season_ranking_entry", map[string]any{
-				"medal":   medal,
-				"user_id": r.UserID.String(),
-				"points":  r.PointsEarned,
+				"medal":         medal,
+				"user_id":       r.UserID.String(),
+				"points":        r.PointsEarned,
+				"currency_name": cName,
 			}))
 		}
 	}
@@ -953,7 +969,7 @@ func SeasonStatusHandler(c *components.Components, event *events.ApplicationComm
 	msg := i18n.TranslateText(event.Locale(), "components.currency.admin.season_status_info", map[string]any{
 		"name":       active.Name,
 		"status":     statusStr,
-		"criteria":   criteriaDisplayName(event.Locale(), active.Criteria),
+		"criteria":   criteriaDisplayName(event.Locale(), active.Criteria, cName),
 		"start_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, active.StartTime).String(),
 		"end_time":   discord.NewTimestamp(discord.TimestampStyleLongDateTime, active.EndTime).String(),
 		"remaining":  discord.NewTimestamp(discord.TimestampStyleRelative, time.Now().Add(remaining)).String(),
@@ -1050,6 +1066,8 @@ func SeasonRankingHandler(c *components.Components, event *events.ApplicationCom
 		}
 	}
 
+	cName := GetCurrencyName(c, guildID)
+
 	var rankingLines []string
 	if len(records) == 0 {
 		rankingLines = append(rankingLines, i18n.TranslateText(event.Locale(), "components.currency.admin.season_ranking_no_data"))
@@ -1067,16 +1085,17 @@ func SeasonRankingHandler(c *components.Components, event *events.ApplicationCom
 				medal = fmt.Sprintf("`#%d` ", i+1)
 			}
 			rankingLines = append(rankingLines, i18n.TranslateText(event.Locale(), "components.currency.admin.season_ranking_entry", map[string]any{
-				"medal":   medal,
-				"user_id": r.UserID.String(),
-				"points":  r.PointsEarned,
+				"medal":         medal,
+				"user_id":       r.UserID.String(),
+				"points":        r.PointsEarned,
+				"currency_name": cName,
 			}))
 		}
 	}
 
 	title := i18n.TranslateText(event.Locale(), "components.currency.admin.season_ranking_title", map[string]any{
 		"name":     season.Name,
-		"criteria": criteriaDisplayName(event.Locale(), season.Criteria),
+		"criteria": criteriaDisplayName(event.Locale(), season.Criteria, cName),
 	})
 
 	msg := title + strings.Join(rankingLines, "\n")
@@ -1256,12 +1275,14 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 				}
 			}
 			if s.ChannelID != 0 {
+				cName := GetCurrencyName(c, s.GuildID)
 				_, _ = client.Rest.CreateMessage(s.ChannelID, discord.NewMessageCreateBuilder().
 					SetAllowedMentions(&discord.AllowedMentions{}).
 					SetContent(i18n.TranslateText(discord.LocaleUnknown, "components.currency.admin.season_start_announcement", map[string]any{
-						"name":     s.Name,
-						"criteria": criteriaDisplayName(discord.LocaleUnknown, s.Criteria),
-						"end_time": discord.NewTimestamp(discord.TimestampStyleLongDateTime, s.EndTime).String(),
+						"name":          s.Name,
+						"criteria":      criteriaDisplayName(discord.LocaleUnknown, s.Criteria, cName),
+						"end_time":      discord.NewTimestamp(discord.TimestampStyleLongDateTime, s.EndTime).String(),
+						"currency_name": cName,
 					})).
 					Build())
 			}
@@ -1285,14 +1306,19 @@ func announceSeasonResults(c *components.Components, client *bot.Client, seasonI
 		return
 	}
 
+	cName := GetCurrencyName(c, season.GuildID)
+
 	var sb strings.Builder
 	sb.WriteString(i18n.TranslateText(discord.LocaleUnknown, "components.currency.admin.season_end_announcement_title", map[string]any{
-		"name":     season.Name,
-		"criteria": criteriaDisplayName(discord.LocaleUnknown, season.Criteria),
+		"name":          season.Name,
+		"criteria":      criteriaDisplayName(discord.LocaleUnknown, season.Criteria, cName),
+		"currency_name": cName,
 	}))
 
 	if len(records) == 0 {
-		sb.WriteString(i18n.TranslateText(discord.LocaleUnknown, "components.currency.admin.season_end_announcement_no_data"))
+		sb.WriteString(i18n.TranslateText(discord.LocaleUnknown, "components.currency.admin.season_end_announcement_no_data", map[string]any{
+			"currency_name": cName,
+		}))
 	} else {
 		for i, r := range records {
 			medal := ""
@@ -1313,9 +1339,10 @@ func announceSeasonResults(c *components.Components, client *bot.Client, seasonI
 				name = fmt.Sprintf("**%s**", user.EffectiveName())
 			}
 			sb.WriteString(i18n.TranslateText(discord.LocaleUnknown, "components.currency.admin.season_end_announcement_entry", map[string]any{
-				"medal":  medal,
-				"name":   name,
-				"points": r.PointsEarned,
+				"medal":         medal,
+				"name":          name,
+				"points":        r.PointsEarned,
+				"currency_name": cName,
 			}))
 		}
 	}

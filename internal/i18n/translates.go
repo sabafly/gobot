@@ -17,33 +17,8 @@ var (
 	globalLocales = make(map[discord.Locale]*LocalizedValues, 0)
 )
 
-func TranslateText(locale discord.Locale, key string, args ...any) string {
-	if locale == discord.LocaleUnknown {
-		locale = defaultLocale
-	}
-
-	var parseString string
-	found := false
-	if localeValues, exists := globalLocales[locale]; exists {
-		if value, exists := localeValues.Strings[key]; exists {
-			parseString = value
-			found = true
-		}
-	}
-	if !found {
-		if defaultValues, exists := globalLocales[defaultLocale]; exists {
-			if value, exists := defaultValues.Strings[key]; exists {
-				parseString = value
-				found = true
-			}
-		}
-	}
-	if !found {
-		parseString = key // Fallback to the key itself if no translation is found
-		slog.Warn("TranslateText: no translation found", "key", key, "locale", locale)
-	}
-
-	tmpl := template.New("translate").
+func newTemplate(name string) *template.Template {
+	return template.New(name).
 		Option("missingkey=error").
 		Funcs(template.FuncMap{
 			"div": func(n float64, d float64) float64 {
@@ -59,7 +34,43 @@ func TranslateText(locale discord.Locale, key string, args ...any) string {
 				return n - d
 			},
 		})
+}
 
+func TranslateText(locale discord.Locale, key string, args ...any) string {
+	if locale == discord.LocaleUnknown {
+		locale = defaultLocale
+	}
+
+	var parseString string
+	found := false
+	if localeValues, exists := globalLocales[locale]; exists {
+		if value, exists := localeValues.Strings[key]; exists {
+			parseString = value
+			found = true
+		}
+	}
+	if !found && locale == discord.LocaleEnglishGB {
+		if localeValues, exists := globalLocales[discord.LocaleEnglishUS]; exists {
+			if value, exists := localeValues.Strings[key]; exists {
+				parseString = value
+				found = true
+			}
+		}
+	}
+	if !found {
+		if defaultValues, exists := globalLocales[defaultLocale]; exists {
+			if value, exists := defaultValues.Strings[key]; exists {
+				parseString = value
+				found = true
+			}
+		}
+	}
+	if !found {
+		parseString = key // Fallback to the key itself if no translation is found
+		slog.Warn("TranslateText: no translation found", "key", key, "locale", locale)
+	}
+
+	tmpl := newTemplate("translate")
 	if _, err := tmpl.Parse(parseString); err != nil {
 		slog.Error("TranslateText: failed to parse template", "key", key, "locale", locale, "error", err)
 		return key // Fallback to the key itself if template parsing fails
@@ -85,6 +96,13 @@ func TranslateTextMap(key string) map[discord.Locale]string {
 	for locale, values := range globalLocales {
 		if value, exists := values.Strings[key]; exists {
 			translations[locale] = value
+		} else if defaultValues, exists := globalLocales[defaultLocale]; exists {
+			if value, exists := defaultValues.Strings[key]; exists {
+				translations[locale] = value
+			} else {
+				slog.Warn("TranslateTextMap: no translation found", "key", key, "locale", locale)
+				translations[locale] = key
+			}
 		} else {
 			slog.Warn("TranslateTextMap: no translation found", "key", key, "locale", locale)
 			translations[locale] = key // Fallback to the key itself if no translation is found
@@ -109,6 +127,14 @@ func TranslateComponent(locale discord.Locale, key string) []Component {
 	if localeValues, exists := globalLocales[locale]; exists {
 		if values, exists := localeValues.Components[key]; exists {
 			return values
+		}
+	}
+
+	if locale == discord.LocaleEnglishGB {
+		if localeValues, exists := globalLocales[discord.LocaleEnglishUS]; exists {
+			if values, exists := localeValues.Components[key]; exists {
+				return values
+			}
 		}
 	}
 
@@ -155,19 +181,18 @@ func LoadLocales(dir string) error {
 			continue
 		}
 
-		f, err := os.Open(filepath.Join(dir, file.Name()))
-		if err != nil {
-			return err
-		}
-		//nolint:errcheck
-		defer f.Close()
-
 		ext := filepath.Ext(file.Name())
 		if ext != ".yaml" && ext != ".yml" {
 			continue
 		}
 
+		f, err := os.Open(filepath.Join(dir, file.Name()))
+		if err != nil {
+			return err
+		}
+
 		locale, err := loadLocale(f)
+		_ = f.Close()
 		if err != nil {
 			return err
 		}

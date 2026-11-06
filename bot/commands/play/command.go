@@ -179,7 +179,7 @@ func Command(c *components.Components) components.Command {
 					if reason == "insufficient_points" {
 						const cost = 3
 						if err := errors.ErrorMessage("error.play.slot.insufficient_points", event,
-							errors.WithMapContext(i18n.BuildContext().WithText("point", strconv.FormatInt(cost, 10)))); err != nil {
+							errors.WithTemplate(map[string]any{"point": strconv.FormatInt(cost, 10)})); err != nil {
 							return errors.NewError(err)
 						}
 						return nil
@@ -291,7 +291,7 @@ func Command(c *components.Components) components.Command {
 
 					if point < data.startOption.Cost {
 						if err := errors.ErrorMessage("error.play.high-and-low.insufficient_points", event,
-							errors.WithMapContext(i18n.BuildContext().WithText("point", strconv.FormatInt(data.startOption.Cost, 10)))); err != nil {
+							errors.WithTemplate(map[string]any{"point": strconv.FormatInt(data.startOption.Cost, 10)})); err != nil {
 							return errors.NewError(err)
 						}
 						return nil
@@ -477,9 +477,9 @@ func Command(c *components.Components) components.Command {
 							cost = 1
 						}
 						if err := event.CreateMessage(discord.NewMessageCreateBuilder().
-							SetContent(i18n.BuildContext().
-								WithText("point", strconv.FormatInt(cost, 10)).
-								ReplaceText(i18n.TranslateText(event.Locale(), "error.play.slot.insufficient_points.description"))).
+							SetContent(i18n.TranslateText(event.Locale(), "error.play.slot.insufficient_points.description", map[string]any{
+								"point": cost,
+							})).
 							SetFlags(discord.MessageFlagEphemeral).
 							Build()); err != nil {
 							return errors.NewError(err)

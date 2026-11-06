@@ -33,7 +33,7 @@ import (
 
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/internal/errors"
-	"github.com/sabafly/gobot/internal/translate"
+	"github.com/sabafly/gobot/internal/i18n"
 )
 
 var PrintDebugInfo = false
@@ -53,7 +53,7 @@ func createErrorMessage(
 		SetIsComponentsV2(true).
 		SetComponents(
 			discord.NewContainer(
-				discord.NewTextDisplayf("🔥 %s", translate.Message(event.Locale(), key)),
+				discord.NewTextDisplayf("🔥 %s", i18n.TranslateText(event.Locale(), key)),
 				discord.NewTextDisplayf("```%s``````%s``````%s```", err.Error(), err.Stack(), err.File()),
 				discord.NewTextDisplayf("-# %s", err.ID().String()),
 			).WithAccentColor(0xff2121),

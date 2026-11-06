@@ -360,12 +360,14 @@ func addXp(ctx context.Context, xp uint64, client *bot.Client, m *models.Member,
 		for i := uint64(0); i < after-before; i++ {
 			_ = levelUp(g, before+i+1, client, g.ID, m)
 		}
-		content := g.LevelUpMessage
-		content = strings.ReplaceAll(content, "{user}", discord.UserMention(m.UserID))
-		content = strings.ReplaceAll(content, "{username}", username)
-		content = strings.ReplaceAll(content, "{before_level}", strconv.FormatUint(before, 10))
-		content = strings.ReplaceAll(content, "{after_level}", strconv.FormatUint(after, 10))
-		content = strings.ReplaceAll(content, "{xp}", strconv.FormatUint(uint64(m.XP), 10))
+		replacer := strings.NewReplacer(
+			"{user}", discord.UserMention(m.UserID),
+			"{username}", username,
+			"{before_level}", strconv.FormatUint(before, 10),
+			"{after_level}", strconv.FormatUint(after, 10),
+			"{xp}", strconv.FormatUint(uint64(m.XP), 10),
+		)
+		content := replacer.Replace(g.LevelUpMessage)
 
 		targetChannel := channelID
 		if g.LevelUpChannel != nil && *g.LevelUpChannel != 0 {

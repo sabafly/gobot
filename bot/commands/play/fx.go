@@ -967,7 +967,7 @@ func FXMarginButtonHandler(c *components.Components, event *events.ComponentInte
 		SetTitle(i18n.TranslateText(event.Locale(), "components.play.fx.modal_input_margin_title")).
 		SetCustomID("play:fx_margin_modal:" + session.ID.String()).
 		SetComponents(
-			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.play.fx.modal_input_margin_label"),
+			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.play.fx.modal_input_margin_label", withCurrency(c, *event.GuildID(), map[string]any{})),
 				discord.TextInputComponent{
 					CustomID:    "margin",
 					Style:       discord.TextInputStyleShort,
@@ -2381,11 +2381,11 @@ func FXQuitHandler(c *components.Components, event *events.ComponentInteractionC
 			if p.Direction == models.FXPositionDirectionSell {
 				dirText = i18n.TranslateText(event.Locale(), "components.play.fx.direction.sell")
 			}
-			noticeText := i18n.TranslateText(event.Locale(), "components.play.fx.close_quit_active_notice", map[string]any{
+			noticeText := i18n.TranslateText(event.Locale(), "components.play.fx.close_quit_active_notice", withCurrency(c, *event.GuildID(), map[string]any{
 				"symbol":    strings.Replace(p.Symbol, "_", "/", 1),
 				"direction": dirText,
 				"margin":    p.Margin,
-			})
+			}))
 			container = container.AddComponents(discord.NewTextDisplay(noticeText))
 		}
 	}
@@ -2566,7 +2566,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 						if dbGuild, err := database.GetGuild(c.GormDB(), posCopy.GuildID); err == nil {
 							guildName = dbGuild.Name
 						}
-						descText := i18n.TranslateText(locale, "components.play.fx.dm_order_closed_desc", map[string]any{
+						descText := i18n.TranslateText(locale, "components.play.fx.dm_order_closed_desc", withCurrency(c, posCopy.GuildID, map[string]any{
 							"symbol":        strings.Replace(posCopy.Symbol, "_", "/", 1),
 							"direction":     dirEmoji,
 							"margin":        posCopy.Margin,
@@ -2576,7 +2576,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 							"pnl":           fmt.Sprintf("%s%d", pnlSign, int64(pnlTrigger)),
 							"received":      actualRefund,
 							"guild":         guildName,
-						})
+						}))
 
 						builder := discord.NewMessageBuilder().
 							SetIsComponentsV2(true).

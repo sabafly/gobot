@@ -640,12 +640,12 @@ func inGuildRanking(c *components.Components, locale discord.Locale, client *bot
 		if user != nil {
 			name = fmt.Sprintf("**%s**", user.EffectiveName())
 		}
-		text := i18n.BuildContext().
-			WithText("rank", fmt.Sprintf("%d", point.Rank)).
-			WithText("name", name).
-			WithText("points", fmt.Sprintf("%d", point.Points)).
-			WithText("currency_name", cName).
-			ReplaceText(i18n.TranslateText(locale, "command.currency.ranking.entry"))
+		text := i18n.TranslateText(locale, "command.currency.ranking.entry", map[string]any{
+			"rank":          point.Rank,
+			"name":          name,
+			"points":        point.Points,
+			"currency_name": cName,
+		})
 		if userID != nil && point.UserID == *userID {
 			text += " " + i18n.TranslateText(locale, "command.currency.ranking.entry.you")
 		}

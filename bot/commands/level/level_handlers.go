@@ -42,8 +42,8 @@ import (
 	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/embeds"
 	"github.com/sabafly/gobot/internal/errors"
+	"github.com/sabafly/gobot/internal/i18n"
 	"github.com/sabafly/gobot/internal/smap"
-	"github.com/sabafly/gobot/internal/translate"
 	"github.com/sabafly/gobot/internal/xppoint"
 )
 
@@ -59,11 +59,11 @@ func requiredPointHandler(c *components.Components, event *events.ApplicationCom
 		levelNum = mem.XP.Level() + 1
 	}
 	embed := discord.NewEmbedBuilder().
-		SetTitle(translate.Message(event.Locale(), "components.level.required-point.embed.title", translate.WithTemplate(map[string]any{"Level": levelNum}))).
+		SetTitle(i18n.TranslateText(event.Locale(), "components.level.required-point.embed.title", map[string]any{"level": levelNum})).
 		SetDescriptionf("# `%d`xp\n%s\n%s",
 			xppoint.TotalPoint(levelNum),
-			translate.Message(event.Locale(), "components.level.required-point.embed.description", translate.WithTemplate(map[string]any{"User": event.Member().EffectiveName(), "Xp": mem.XP})),
-			translate.Message(event.Locale(), "components.level.required-point.embed.description.diff", translate.WithTemplate(map[string]any{"Xp": builtin.Or(xppoint.TotalPoint(levelNum) > uint64(mem.XP), xppoint.TotalPoint(levelNum)-uint64(mem.XP), 0)})),
+			i18n.TranslateText(event.Locale(), "components.level.required-point.embed.description", map[string]any{"user": event.Member().EffectiveName(), "xp": mem.XP}),
+			i18n.TranslateText(event.Locale(), "components.level.required-point.embed.description.diff", map[string]any{"xp": builtin.Or(xppoint.TotalPoint(levelNum) > uint64(mem.XP), xppoint.TotalPoint(levelNum)-uint64(mem.XP), 0)}),
 		).
 		Build()
 
@@ -155,7 +155,7 @@ func leaderboardHandler(c *components.Components, event *events.ApplicationComma
 			},
 		).
 		SetTitlef("🏆%s(%d/%d)",
-			translate.Message(event.Locale(), "components.level.leaderboard.title"),
+			i18n.TranslateText(event.Locale(), "components.level.leaderboard.title", nil),
 			page,
 			(count+pageCount-1)/pageCount,
 		).
@@ -240,21 +240,21 @@ func upMessageHandler(c *components.Components, event *events.ApplicationCommand
 	}
 
 	actionRow := discord.NewLabel(
-		translate.Message(event.Locale(), "components.level.up.message.modal.input.message"),
+		i18n.TranslateText(event.Locale(), "components.level.up.message.modal.input.message", nil),
 		discord.TextInputComponent{
 			CustomID:    "message",
 			Style:       discord.TextInputStyleParagraph,
 			MinLength:   builtin.Ptr(1),
 			MaxLength:   140,
 			Required:    true,
-			Placeholder: translate.Message(event.Locale(), "components.level.up.message.modal.input.message.placeholder"),
+			Placeholder: i18n.TranslateText(event.Locale(), "components.level.up.message.modal.input.message.placeholder", nil),
 			Value:       g.LevelUpMessage,
 		},
 	)
 
 	if err := event.Modal(
 		discord.NewModalCreateBuilder().
-			SetTitle(translate.Message(event.Locale(), "components.level.up.message.modal.title")).
+			SetTitle(i18n.TranslateText(event.Locale(), "components.level.up.message.modal.title", nil)).
 			SetCustomID("level:up_message_modal").
 			SetComponents(actionRow).
 			Build(),
@@ -282,13 +282,13 @@ func upMessageChannelHandler(c *components.Components, event *events.Application
 	if g.LevelUpChannel != nil {
 		channelText = discord.ChannelMention(builtin.NonNil(g.LevelUpChannel))
 	} else {
-		channelText = translate.Message(event.Locale(), "components.level.up.message-channel.default")
+		channelText = i18n.TranslateText(event.Locale(), "components.level.up.message-channel.default", nil)
 	}
 
-	content := translate.Message(event.Locale(), "components.level.up.message-channel.message",
-		translate.WithTemplate(map[string]any{
-			"Channel": channelText,
-		}),
+	content := i18n.TranslateText(event.Locale(), "components.level.up.message-channel.message",
+		map[string]any{
+			"channel": channelText,
+		},
 	)
 
 	if err := event.CreateMessage(
@@ -315,8 +315,8 @@ func excludeChannelAddHandler(c *components.Components, event *events.Applicatio
 		return errors.NewError(err)
 	}
 
-	content := translate.Message(event.Locale(), "components.level.exclude-channel.add.message",
-		translate.WithTemplate(map[string]any{"Channel": discord.ChannelMention(channel.ID)}),
+	content := i18n.TranslateText(event.Locale(), "components.level.exclude-channel.add.message",
+		map[string]any{"channel": discord.ChannelMention(channel.ID)},
 	)
 
 	if err := event.CreateMessage(
@@ -344,8 +344,8 @@ func excludeChannelRemoveHandler(c *components.Components, event *events.Applica
 		return errors.NewError(err)
 	}
 
-	content := translate.Message(event.Locale(), "components.level.exclude-channel.remove.message",
-		translate.WithTemplate(map[string]any{"Channel": discord.ChannelMention(channel.ID)}),
+	content := i18n.TranslateText(event.Locale(), "components.level.exclude-channel.remove.message",
+		map[string]any{"channel": discord.ChannelMention(channel.ID)},
 	)
 
 	if err := event.CreateMessage(
@@ -368,7 +368,7 @@ func excludeChannelClearHandler(c *components.Components, event *events.Applicat
 		return errors.NewError(err)
 	}
 
-	content := translate.Message(event.Locale(), "components.level.exclude-channel.clear.message")
+	content := i18n.TranslateText(event.Locale(), "components.level.exclude-channel.clear.message", nil)
 
 	if err := event.CreateMessage(
 		discord.NewMessageBuilder().
@@ -391,8 +391,8 @@ func excludeChannelListHandler(c *components.Components, event *events.Applicati
 	}
 
 	embed := discord.NewEmbedBuilder().
-		SetTitle(translate.Message(event.Locale(), "components.level.exclude-channel.list.message")).
-		SetDescription(builtin.Or(listStr.String() != "", listStr.String(), "- "+translate.Message(event.Locale(), "components.level.exclude-channel.list.message.none"))).
+		SetTitle(i18n.TranslateText(event.Locale(), "components.level.exclude-channel.list.message", nil)).
+		SetDescription(builtin.Or(listStr.String() != "", listStr.String(), "- "+i18n.TranslateText(event.Locale(), "components.level.exclude-channel.list.message.none", nil))).
 		Build()
 
 	if err := event.CreateMessage(discord.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed)).BuildCreate()); err != nil {
@@ -439,7 +439,7 @@ func importMee6Handler(c *components.Components, event *events.ApplicationComman
 				_ = response.Body.Close()
 			}
 			if sc == http.StatusUnauthorized {
-				return errors.NewError(errors.ErrorMessage("components.level.import-mee6.message.unauthorized", event))
+				return errors.NewError(errors.ErrorMessage("components.level.import-mee6.message.unauthorized", event, errors.WithTemplate(map[string]any{"guild_id": event.GuildID().String()})))
 			}
 			if importedCount > 0 {
 				break
@@ -505,8 +505,8 @@ func resetHandler(c *components.Components, event *events.ApplicationCommandInte
 		return errors.NewError(err)
 	}
 
-	content := translate.Message(event.Locale(), "components.level.reset.message",
-		translate.WithTemplate(map[string]any{"User": discord.UserMention(target.User.ID)}),
+	content := i18n.TranslateText(event.Locale(), "components.level.reset.message",
+		map[string]any{"user": discord.UserMention(target.User.ID)},
 	)
 
 	if err := event.CreateMessage(
@@ -551,13 +551,13 @@ func roleSetHandler(c *components.Components, event *events.ApplicationCommandIn
 	}
 
 	embed := discord.NewEmbedBuilder().
-		SetTitle(translate.Message(event.Locale(), "components.level.role.set.message.embed.title")).
+		SetTitle(i18n.TranslateText(event.Locale(), "components.level.role.set.message.embed.title", nil)).
 		SetDescription(
-			translate.Message(event.Locale(), "components.level.role.set.message.embed.description",
-				translate.WithTemplate(map[string]any{
-					"Level": strconv.Itoa(levelNum),
-					"Role":  discord.RoleMention(role.ID),
-				}),
+			i18n.TranslateText(event.Locale(), "components.level.role.set.message.embed.description",
+				map[string]any{
+					"level": strconv.Itoa(levelNum),
+					"role":  discord.RoleMention(role.ID),
+				},
 			),
 		).
 		Build()
@@ -586,13 +586,13 @@ func roleRemoveHandler(c *components.Components, event *events.ApplicationComman
 	}
 
 	embed := discord.NewEmbedBuilder().
-		SetTitle(translate.Message(event.Locale(), "components.level.role.remove.message.embed.title")).
+		SetTitle(i18n.TranslateText(event.Locale(), "components.level.role.remove.message.embed.title", nil)).
 		SetDescription(
-			translate.Message(event.Locale(), "components.level.role.remove.message.embed.description",
-				translate.WithTemplate(map[string]any{
-					"Level": strconv.Itoa(levelNum),
-					"Role":  discord.RoleMention(rID),
-				}),
+			i18n.TranslateText(event.Locale(), "components.level.role.remove.message.embed.description",
+				map[string]any{
+					"level": strconv.Itoa(levelNum),
+					"role":  discord.RoleMention(rID),
+				},
 			),
 		).
 		Build()
@@ -611,12 +611,12 @@ func roleListHandler(c *components.Components, event *events.ApplicationCommandI
 	g.LevelRole = builtin.NonNilMap(g.LevelRole)
 	var listStr strings.Builder
 	for k, v := range smap.MakeSortMap(g.LevelRole).Iter(cmp.Compare[int]) {
-		listStr.WriteString("- " + translate.Message(event.Locale(), "components.level.role.list.message", translate.WithTemplate(map[string]any{"Level": strconv.Itoa(k), "Role": discord.RoleMention(v)})) + "\n")
+		listStr.WriteString("- " + i18n.TranslateText(event.Locale(), "components.level.role.list.message", map[string]any{"level": strconv.Itoa(k), "role": discord.RoleMention(v)}) + "\n")
 	}
 
 	embed := discord.NewEmbedBuilder().
-		SetTitle(translate.Message(event.Locale(), "components.level.role.list.message.embed.title")).
-		SetDescription(builtin.Or(listStr.String() != "", listStr.String(), translate.Message(event.Locale(), "components.level.role.list.message.none"))).
+		SetTitle(i18n.TranslateText(event.Locale(), "components.level.role.list.message.embed.title", nil)).
+		SetDescription(builtin.Or(listStr.String() != "", listStr.String(), i18n.TranslateText(event.Locale(), "components.level.role.list.message.none", nil))).
 		Build()
 
 	if err := event.RespondMessage(discord.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed))); err != nil {

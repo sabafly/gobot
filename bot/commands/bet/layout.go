@@ -233,18 +233,17 @@ func createBetLayout(c *components.Components, host *models.BetHost, options []m
 				}
 
 				text := discord.NewTextDisplay(fmt.Sprintf("%s %s - ", optionMarker, displayText) +
-					i18n.BuildContext().
-						WithText("currency_name", cName).
-						WithText("currency", cName).
-						WithText("votes", fmt.Sprintf("%d", voteCount)).
-						WithText("points", fmt.Sprintf("%d", amount)).
-						ReplaceText(i18n.TranslateText(locale, "command.bet.layout.option_votes")))
+					i18n.TranslateText(locale, "command.bet.layout.option_votes", map[string]any{
+						"currency_name": cName,
+						"votes":         voteCount,
+						"points":        amount,
+					}))
 				if host.Status == string(models.BetStatusVoting) {
 					optionsComponent = optionsComponent.AddComponents(discord.NewSection(text).
 						WithAccessory(discord.NewSecondaryButton(
-							i18n.BuildContext().
-								WithText("option", opt.OptionText).
-								ReplaceText(i18n.TranslateText(locale, "command.bet.button.vote")),
+							i18n.TranslateText(locale, "command.bet.button.vote", map[string]any{
+								"option": opt.OptionText,
+							}),
 							fmt.Sprintf("bet:vote_btn:%s:%s", host.ID, opt.ID),
 						)),
 					)
@@ -255,12 +254,11 @@ func createBetLayout(c *components.Components, host *models.BetHost, options []m
 			optionsComponent = optionsComponent.AddComponents(
 				discord.NewLargeSeparator(),
 				discord.NewTextDisplay(i18n.TranslateText(locale, "command.bet.layout.total_label")+" "+
-					i18n.BuildContext().
-						WithText("currency_name", cName).
-						WithText("currency", cName).
-						WithText("votes", fmt.Sprintf("%d", totalVotes)).
-						WithText("points", fmt.Sprintf("%d", totalAmount)).
-						ReplaceText(i18n.TranslateText(locale, "command.bet.layout.votes_points"))),
+					i18n.TranslateText(locale, "command.bet.layout.votes_points", map[string]any{
+						"currency_name": cName,
+						"votes":         totalVotes,
+						"points":        totalAmount,
+					})),
 			)
 		} else {
 			optionsComponent = optionsComponent.AddComponents(

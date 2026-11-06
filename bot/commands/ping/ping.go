@@ -30,7 +30,7 @@ import (
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/internal/embeds"
 	"github.com/sabafly/gobot/internal/errors"
-	"github.com/sabafly/gobot/internal/translate"
+	"github.com/sabafly/gobot/internal/i18n"
 )
 
 func Command(c *components.Components) *generic.Command {
@@ -40,7 +40,7 @@ func Command(c *components.Components) *generic.Command {
 			discord.SlashCommandCreate{
 				Name:                     "ping",
 				Description:              "pong!",
-				DescriptionLocalizations: translate.MessageMap("components.ping.command.description", false),
+				DescriptionLocalizations: i18n.TranslateTextMap("components.ping.command.description"),
 				Contexts: []discord.InteractionContextType{
 					discord.InteractionContextTypeGuild,
 				},
@@ -52,7 +52,7 @@ func Command(c *components.Components) *generic.Command {
 					discord.NewMessageBuilder().
 						SetEmbeds(
 							embeds.SetEmbedProperties(discord.NewEmbedBuilder().
-								SetTitlef("🏓 %s", translate.Message(event.Locale(), "components.ping.pong")).
+								SetTitlef("🏓 %s", i18n.TranslateText(event.Locale(), "components.ping.pong")).
 								SetFields(
 									discord.EmbedField{
 										Name:  fmt.Sprintf("**Discord API(#%d)**", event.ShardID()),

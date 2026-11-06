@@ -11,7 +11,7 @@ strings:
   general.value.all_guilds: "全てのサーバー"
   command.currency.view.description: "通貨の管理を行います。"
   command.currency.ranking.entry: |-
-    **#{rank}**. {name} - `{points} {currency_name}`
+    **#{{.rank}}**. {{.name}} - `{{.points}} {{.currency_name}}`
   command.currency.ranking.entry.you: "**<<あなた>>**"
   command.currency.ranking.no_data: あなたの通貨はまだ登録されていません。
   command.currency.ranking.no_guild_data: このサーバーの通貨はまだ登録されていません。
@@ -61,6 +61,7 @@ strings:
   command.play.high-and-low.finish.lose: "ゲームオーバー"
   command.play.high-and-low.finish.payout: "{{.currency_name}}獲得"
   command.play.high-and-low.finish.joker: "ジョーカーがあらわれた！"
+  command.play.high-and-low.finish.unknown: "❓ 不明な結果"
   command.play.slot.description: "スロットマシンをプレイします。"
   command.play.fx.description: "FX 通貨 ゲームをプレイします。"
   command.play.portfolio.description: "指定したユーザーのFXポジション一覧（ポートフォリオ）を表示します。"
@@ -106,7 +107,7 @@ strings:
   command.bet.modal.create_race.input.entry_deadline.placeholder: "エントリー締め切り時間を分単位で入力（例: 30）"
   command.bet.modal.create_race.input.vote_deadline.label: "投票期限"
   command.bet.modal.create_race.input.vote_deadline.placeholder: "投票の締め切り時間を分単位で入力（例: 60）"
-  command.bet.modal.vote.title: "{option} に投票"
+  command.bet.modal.vote.title: "{{.option}} に投票"
   command.bet.modal.vote.input.amount.label: "投票する通貨数"
   command.bet.modal.vote.input.amount.placeholder: "投票する通貨数を入力"
   command.bet.modal.decide.title: "結果を決定"
@@ -126,16 +127,16 @@ strings:
   command.bet.error.invalid_entry_fee: "有効な参加費を入力してください（0以上の整数）。"
   command.bet.error.invalid_entry_fee_required: "参加費は必須です（1以上の整数）。"
   command.bet.error.invalid_prize_pool: "有効な賞金プールを入力してください（0以上の整数）。"
-  command.bet.error.insufficient_prize_pool: "賞金プールに必要な{currency_name}が不足しています。賞金プール: {pool}{currency_name} / 所持: {points}{currency_name}"
-  command.bet.error.insufficient_entry_fee: "参加費が不足しています。参加費: {fee}{currency_name} / 所持: {points}{currency_name}"
-  command.bet.error.option_too_long: "選択肢 {option} が長すぎます。100文字以内にしてください。"
+  command.bet.error.insufficient_prize_pool: "賞金プールに必要な{{.currency_name}}が不足しています。賞金プール: {{.pool}}{{.currency_name}} / 所持: {{.points}}{{.currency_name}}"
+  command.bet.error.insufficient_entry_fee: "参加費が不足しています。参加費: {{.fee}}{{.currency_name}} / 所持: {{.points}}{{.currency_name}}"
+  command.bet.error.option_too_long: "選択肢 {{.option}} が長すぎます。100文字以内にしてください。"
   command.bet.error.min_options: "少なくとも2つの選択肢が必要です。"
   command.bet.error.max_options: "選択肢は最大25個までです。"
   command.bet.error.voting_closed: "投票は現在受け付けていません。"
-  command.bet.error.already_voted_no_change: "あなたは既に {option} に {amount}{currency_name} 投票しています。\n投票先を変更することはできません。"
-  command.bet.error.already_voted_status: "あなたは既に {option} に {amount}{currency_name} 投票しています。\n"
-  command.bet.error.invalid_amount: "有効な{currency_name}数を入力してください。"
-  command.bet.error.insufficient_points: "通貨が不足しています。現在の所持{currency_name}: {points}{currency_name}"
+  command.bet.error.already_voted_no_change: "あなたは既に {{.option}} に {{.amount}}{{.currency_name}} 投票しています。\n投票先を変更することはできません。"
+  command.bet.error.already_voted_status: "あなたは既に {{.option}} に {{.amount}}{{.currency_name}} 投票しています。\n"
+  command.bet.error.invalid_amount: "有効な{{.currency_name}}数を入力してください。"
+  command.bet.error.insufficient_points: "通貨が不足しています。現在の所持{{.currency_name}}: {{.points}}{{.currency_name}}"
   command.bet.error.cannot_decrease: "投票額を減らすことはできません。"
   command.bet.error.cannot_change_dest: "投票先を変更することはできません。"
   command.bet.error.only_organizer_decide: "結果の決定は主催者のみが行えます。"
@@ -143,16 +144,16 @@ strings:
   command.bet.message.created: "投票を作成しました"
   command.bet.message.race_created: "レースを作成しました"
   command.bet.message.entered: "レースにエントリーしました"
-  command.bet.message.entered_with_fee: "レースにエントリーしました（参加費: {fee}{currency_name}）"
+  command.bet.message.entered_with_fee: "レースにエントリーしました（参加費: {{.fee}}{{.currency_name}}）"
   command.bet.message.vote_started: "投票を開始しました"
-  command.bet.message.voted: "投票しました: {amount}{currency_name}"
-  command.bet.message.updated: "投票を更新しました: {amount}{currency_name}"
+  command.bet.message.voted: "投票しました: {{.amount}}{{.currency_name}}"
+  command.bet.message.updated: "投票を更新しました: {{.amount}}{{.currency_name}}"
   command.bet.message.no_change: "投票内容に変更はありません。"
   command.bet.message.closed: "投票を締め切りました。"
-  command.bet.message.current_stats: "現在の総投票数: {votes}票, 総投票額: {total_amount}{currency_name}\n"
-  command.bet.message.cancelled: "ベットはキャンセルされました。合計{amount}{currency_name} が返金されました。"
-  command.bet.message.result: "# 勝利: {winners}\n結果が決定されました。\n総額: {total_pool}{currency_name} が分配されました。"
-  command.bet.message.result_with_pools: "# 勝利: {winners}\n結果が決定されました。\n投票総額: {total_pool}{currency_name} + 参加費プール: {entry_pool}{currency_name} + 賞金プール: {prize_pool}{currency_name} が分配されました。"
+  command.bet.message.current_stats: "現在の総投票数: {{.votes}}票, 総投票額: {{.total_amount}}{{.currency_name}}\n"
+  command.bet.message.cancelled: "ベットはキャンセルされました。合計{{.amount}}{{.currency_name}} が返金されました。"
+  command.bet.message.result: "# 勝利: {{.winners}}\n結果が決定されました。\n総額: {{.total_pool}}{{.currency_name}} が分配されました。"
+  command.bet.message.result_with_pools: "# 勝利: {{.winners}}\n結果が決定されました。\n投票総額: {{.total_pool}}{{.currency_name}} + 参加費プール: {{.entry_pool}}{{.currency_name}} + 賞金プール: {{.prize_pool}}{{.currency_name}} が分配されました。"
   command.bet.status.entry: "エントリー受付中"
   command.bet.status.voting: "投票受付中"
   command.bet.status.closed: "受付終了"
@@ -172,9 +173,9 @@ strings:
   command.bet.layout.entry_pool_label: "**参加費プール:**"
   command.bet.layout.no_options: "_選択肢がまだ追加されていません_"
   command.bet.layout.no_entrants: "_まだ参加者がいません_"
-  command.bet.layout.votes_points: "{votes}票 / {points}{currency_name}"
-  command.bet.layout.option_votes: "{votes}票 ({points}{currency_name})"
-  command.bet.button.vote: "{option}に投票"
+  command.bet.layout.votes_points: "{{.votes}}票 / {{.points}}{{.currency_name}}"
+  command.bet.layout.option_votes: "{{.votes}}票 ({{.points}}{{.currency_name}})"
+  command.bet.button.vote: "{{.option}}に投票"
   command.bet.button.entry: "エントリーする"
   command.bet.button.entry_br: "参加する"
   command.bet.button.start_vote: "投票を開始"
@@ -196,8 +197,8 @@ strings:
   command.bet.modal.create_battle_royale.input.entry_deadline.placeholder: "エントリー締め切り時間を分単位で入力（例: 30）"
   command.bet.message.battle_royale_created: "バトルロイヤルを作成しました"
   command.bet.message.battle_royale_entered: "バトルロイヤルにエントリーしました"
-  command.bet.message.battle_royale_entered_with_fee: "バトルロイヤルにエントリーしました（参加費: {fee}{currency_name}）"
-  command.bet.message.entered_br: "バトルロイヤルに参加しました（参加費: {fee}{currency_name}）"
+  command.bet.message.battle_royale_entered_with_fee: "バトルロイヤルにエントリーしました（参加費: {{.fee}}{{.currency_name}}）"
+  command.bet.message.entered_br: "バトルロイヤルに参加しました（参加費: {{.fee}}{{.currency_name}}）"
   command.bet.message.battle_started: "バトルを開始しました"
   command.bet.message.entry_closed_br: "エントリーを締め切りました"
   command.bet.error.only_organizer_start_battle: "バトルの開始は主催者のみが行えます。"
@@ -216,9 +217,9 @@ strings:
   error.play.high-and-low.not_your_game: "このゲームはあなたのものではありません"
   error.play.high-and-low.not_your_game.description: "他のユーザーのハイアンドローゲームに参加することはできません。"
   error.play.high-and-low.insufficient_points: "通貨が不足しています"
-  error.play.high-and-low.insufficient_points.description: "このハイアンドローゲームに参加するには、{point}通貨が必要です。"
+  error.play.high-and-low.insufficient_points.description: "このハイアンドローゲームに参加するには、{{.point}}通貨が必要です。"
   error.play.slot.insufficient_points: "通貨が不足しています"
-  error.play.slot.insufficient_points.description: "このスロットマシンをプレイするには、{point}通貨が必要です。"
+  error.play.slot.insufficient_points.description: "このスロットマシンをプレイするには、{{.point}}通貨が必要です。"
   error.play.slot.expired: "スロットゲームが期限切れです"
   error.play.slot.expired.description: "このスロットゲームは期限切れです。新しいゲームを開始してください。"
   error.play.slot.not_your_game: "このゲームはあなたのものではありません"
@@ -450,6 +451,249 @@ strings:
   command.user.settings.option.dm.description: "結果確定時のDM通知の有無を設定します。"
   command.user.settings.button.dm.enable: "DM通知を有効にする"
   command.user.settings.button.dm.disable: "DM通知を無効にする"
+  components.message.suffix.warn.message.1: "語尾がついてないよｗ"
+  components.message.suffix.warn.message.2: "「{{.suffix}}」を語尾につけようねｗ"
+  components.message.suffix.set.message: "{{.user}}の語尾を「{{.suffix}}」に強制します"
+  components.message.suffix.set.command.description: "指定したユーザーに語尾を強制させる"
+  components.message.suffix.set.command.options.target.name: "対象"
+  components.message.suffix.set.command.options.target.description: "語尾を強制させるユーザー"
+  components.message.suffix.set.command.options.suffix.name: "語尾"
+  components.message.suffix.set.command.options.suffix.description: "強制させる語尾"
+  components.message.suffix.set.command.options.rule.name: "ルール"
+  components.message.suffix.set.command.options.rule.description: "適用するルール"
+  components.message.suffix.set.command.options.rule.webhook: "webhookで語尾を強制的に追加する"
+  components.message.suffix.set.command.options.rule.warn: "語尾がついていない場合、警告する"
+  components.message.suffix.set.command.options.rule.delete: "語尾がついていない場合、メッセージを削除する"
+  components.message.suffix.set.command.options.duration.name: "期間"
+  components.message.suffix.set.command.options.duration.description: "語尾を強制させる期間"
+  components.message.suffix.set.command.options.duration.1m: "1分"
+  components.message.suffix.set.command.options.duration.1h: "1時間"
+  components.message.suffix.set.command.options.duration.3h: "3時間"
+  components.message.suffix.set.command.options.duration.6h: "6時間"
+  components.message.suffix.set.command.options.duration.1d: "1日"
+  components.message.suffix.set.command.options.duration.3d: "3日"
+  components.message.suffix.set.command.options.duration.1w: "1週間"
+  components.message.suffix.remove.message: "{{.user}}の語尾を解除しました"
+  components.message.suffix.remove.message.no_suffix: "{{.user}}には語尾が設定されていません"
+  components.message.suffix.remove.command.description: "指定したユーザーの語尾を解除する"
+  components.message.suffix.remove.command.options.target.name: "対象"
+  components.message.suffix.remove.command.options.target.description: "語尾を解除するユーザー"
+  components.message.suffix.duration.message: "期限：{{.duration}}"
+  components.message.suffix.duration.none: "無期限"
+  components.message.suffix.check.message.none: "{{.user}}に語尾は設定されていません"
+  components.message.suffix.check.message: |-
+    {{.user}}の語尾は「{{.suffix}}」に強制されています
+    期限：{{.duration}}
+    ルール：{{.rule}}
+  components.message.pin.create.modal.title: "ピン留めメッセージを作成する"
+  components.message.pin.create.modal.input.1.label: "メッセージの内容"
+  components.message.pin.create.message: "ピン留めメッセージを作成しました"
+  components.message.pin.delete.message: "ピン留めメッセージを削除しました"
+  components.message.pin.username: "ピン留め"
+  components.ping.pong: "ポング！"
+  components.ping.command.description: "ポング！"
+  components.role.panel.default_name: "役職パネル"
+  components.role.panel.create.modal.title: "役職パネルを作成"
+  components.role.panel.create.modal.input.1.label: "役職パネルの名前"
+  components.role.panel.create.modal.input.2.label: "役職パネルの説明"
+  components.role.panel.edit.change_name.modal.input.name.label: "役職パネルの名前"
+  components.role.panel.edit.change_description.modal.input.description.label: "役職パネルの説明"
+  components.role.panel.edit.menu.base.title: "役職パネルを編集する"
+  components.role.panel.edit.menu.base.field.name: "名前"
+  components.role.panel.edit.menu.base.field.description: "説明"
+  components.role.panel.edit.menu.base.field.roles: "役職"
+  components.role.panel.edit.menu.base.field.value.empty: "値なし"
+  components.role.panel.edit.menu.base.components.change_name: "名前の変更"
+  components.role.panel.edit.menu.base.components.change_description: "説明の変更"
+  components.role.panel.edit.menu.base.components.modify_roles: "役職リストの編集"
+  components.role.panel.edit.menu.base.components.select_role: "編集する役職を選択"
+  components.role.panel.edit.menu.base.components.delete: "役職を削除"
+  components.role.panel.edit.menu.base.components.set_emoji: "絵文字の設定"
+  components.role.panel.edit.menu.base.components.set_display_name: "名前の設定"
+  components.role.panel.edit.menu.base.components.back_base_menu: "戻る"
+  components.role.panel.edit.menu.base.components.save_change: "変更を保存"
+  components.role.panel.edit.menu.base.components.apply_change: "変更を反映"
+  components.role.panel.edit.menu.base.components.place: "役職パネルを設置"
+  components.role.panel.edit.menu.modify_roles.title: "役職リストの編集"
+  components.role.panel.edit.menu.modify_roles.field.roles: "役職"
+  components.role.panel.edit.action.change_name.title: "名前の変更"
+  components.role.panel.edit.action.change_description.title: "説明の変更"
+  components.role.panel.embed.field.role: "役職"
+  components.role.panel.components.use_button: "使用"
+  components.role.panel.components.select_menu.placeholder: "取得する役職を選択"
+  components.role.panel.edit.add_role.deleted_role.embed.title: "追加できない役職があります"
+  components.role.panel.edit.add_role.deleted_role.embed.description: "役職の順位等を確認してください\n以下の役職を追加できませんでした"
+  components.role.panel.edit.set_display.name.modal.title: "表示名を設定"
+  components.role.panel.edit.set_display.name.modal.input.display_name.label: "表示名"
+  components.role.panel.edit.menu.set_emoji.title: "絵文字の設定"
+  components.role.panel.edit.menu.set_emoji.description: |-
+    役職に設定する絵文字をこのチャンネルに送信してください
+    絵文字をリセットすると、役職の順位に応じてアルファベットの絵文字が割り当てられます
+  components.role.panel.edit.menu.set_emoji.components.cancel: "キャンセル"
+  components.role.panel.edit.menu.set_emoji.components.reset: "リセット"
+  components.role.panel.place.menu.author.text: "設置時のプレビュー"
+  components.role.panel.place.menu.select_type.placeholder: "設置するパネルの種類を選択"
+  components.role.panel.type.reaction: "リアクション"
+  components.role.panel.type.reaction.description: "リアクションを使って役職を得るパネル"
+  components.role.panel.type.select_menu: "セレクトメニュー"
+  components.role.panel.type.select_menu.description: "セレクトメニューから取得したいパネルを選択するパネル"
+  components.role.panel.type.button: "ボタン"
+  components.role.panel.type.button.description: "ボタンを使って役職を得るパネル"
+  components.role.panel.button.color.green: "グリーン"
+  components.role.panel.button.color.blue: "ブルー"
+  components.role.panel.button.color.red: "レッド"
+  components.role.panel.button.color.gray: "グレー"
+  components.role.panel.place.menu.button.show_name: "表示名を表示する"
+  components.role.panel.place.menu.select_menu.folding_select_menu: "折り畳みセレクトメニューを使用する"
+  components.role.panel.place.menu.reaction.hide_notice: "通知を送信しない"
+  components.role.panel.place.menu.generic.use_display_name: "メンションの代わりに役職の表示名を使う"
+  components.role.panel.place.menu.generic.create: "作成"
+  components.role.panel.create.message: "作成しました"
+  components.role.panel.create.description: "役職パネルを作成しました"
+  components.role.panel.use.added: "役職を追加しました"
+  components.role.panel.use.added.description: "{{.role}}の役職を追加しました"
+  components.role.panel.use.removed: "役職を解除しました"
+  components.role.panel.use.removed.description: "{{.role}}の役職を解除しました"
+  components.role.panel.use.changed: "役職を操作しました"
+  components.role.panel.use.changed.add: "追加"
+  components.role.panel.use.changed.remove: "解除"
+  components.role.panel.use.changed.unchanged: "既存"
+  components.role.panel.delete.message.embed.title: "削除しました"
+  components.role.panel.delete.message.embed.description: "{{.role_panel}} を削除しました"
+  components.role.panel.create.command.description: "役職パネルを作成する"
+  components.role.panel.place.command.description: "役職パネルを設置する"
+  components.role.panel.place.command.options.panel.name: "役職パネル"
+  components.role.panel.place.command.options.panel.description: "設置する役職パネル"
+  components.role.panel.edit.command.description: "役職パネルを編集する"
+  components.role.panel.edit.command.options.panel.description: "編集する役職パネル"
+  components.role.panel.edit.command.options.panel.name: "役職パネル"
+  components.role.panel.delete.command.description: "役職パネルを削除する"
+  components.role.panel.delete.command.options.panel.name: "役職パネル"
+  components.role.panel.delete.command.options.panel.description: "削除する役職パネル"
+  components.level.rank.embed.title: "{{.user}}の経験値"
+  components.level.rank.embed.description: "{{.level}} レベル `{{.xp}}`xp"
+  components.level.rank.embed.fields.place: "順位"
+  components.level.rank.embed.fields.next_level: "{{.next_level}} レベルまで"
+  components.level.leaderboard.title: "ギルド経験値リーダーボード"
+  components.level.up.message.modal.title: "レベルアップメッセージを編集"
+  components.level.up.message.modal.input.message: "メッセージ"
+  components.level.up.message.modal.input.message.placeholder: |-
+    {user}: ユーザーのメンション
+    {username}: ユーザーの名前
+    {before_level}: 前のレベル
+    {after_level}: 後のレベル
+  components.level.up.message.message: "レベルアップメッセージを設定しました"
+  components.level.up.message-channel.message: "レベルアップメッセージを{{.channel}}に送信します"
+  components.level.up.message-channel.default: "「レベルアップした時のチャンネル」"
+  components.level.exclude-channel.add.message: "{{.channel}}を除外チャンネルに登録しました"
+  components.level.exclude-channel.clear.message: "除外チャンネルをクリアしました"
+  components.level.exclude-channel.remove.message: "{{.channel}}を除外チャンネルから解除しました"
+  components.level.import-mee6.message.already: "インポートできません"
+  components.level.import-mee6.message.already.description: "二回以上インポートすることはできません"
+  components.level.import-mee6.message.unauthorized: "インポートできません"
+  components.level.import-mee6.message.unauthorized.description: |-
+    mee6リーダーボードがパブリックではありません。
+    [設定](<https://mee6.xyz/en/dashboard/{{.guild_id}}/leaderboard>)からリーダーボードを公開してください。
+  components.level.reset.message: "{{.user}}のレベルをリセットしました"
+  components.level.exclude-channel.list.message: "除外チャンネル一覧"
+  components.level.exclude-channel.list.message.none: "登録されていません"
+  components.level.role.set.message.embed.title: "レベルロールを設定しました"
+  components.level.role.set.message.embed.description: |-
+    {{.level}} レベル：{{.role}}
+  components.level.role.list.message.embed.title: "レベルロール一覧"
+  components.level.role.list.message.none: "登録されていません"
+  components.level.role.list.message: |-
+    {{.level}} レベル：{{.role}}
+  components.level.role.remove.message.embed.title: "レベルロールを削除しました"
+  components.level.role.remove.message.embed.description: |-
+    {{.level}} レベル：{{.role}}
+  components.level.required-point.embed.title: "{{.level}}レベルに必要な経験値"
+  components.level.required-point.embed.description: "{{.user}}の経験値：`{{.xp}}`xp"
+  components.level.required-point.embed.description.diff: "不足している経験値：`{{.xp}}`xp"
+  components.message.remind.add.modal.title: "リマインドを作成"
+  components.message.remind.add.modal.input.content.label: "内容"
+  components.message.remind.add.modal.input.name.label: "名前"
+  components.message.remind.add.modal.input.name.value: "通知"
+  components.message.remind.add.message: "{{.time}}に通知を予約しました"
+  components.message.remind.cancel.message: "{{.count}}件の通知をキャンセルしました"
+  components.permission.set.message.embed.title: "権限を設定しました"
+  components.permission.unset.message.embed.title: "権限を解除しました"
+  components.permission.check.message.embed.title: "権限チェック"
+  components.permission.list.message.embed.title: "権限一覧"
+  components.setting.bump.toggle.enabled: "Bump通知を有効化しました"
+  components.setting.bump.toggle.disabled: "Bump通知を無効化しました"
+  components.setting.up.toggle.enabled: "UP通知を有効化しました"
+  components.setting.up.toggle.disabled: "UP通知を無効化しました"
+  components.setting.bump.mention.used: "Bump通知のメンション先を{{.role}}に設定しました"
+  components.setting.up.mention.used: "UP通知のメンション先を{{.role}}に設定しました"
+  components.setting.mention.none: "なし"
+  components.setting.bump.message.modal.title: "Bump通知メッセージ"
+  components.setting.up.message.modal.title: "UP通知メッセージ"
+  components.setting.message.modal.message_title: "応答メッセージのタイトル"
+  components.setting.message.modal.message: "応答メッセージの内容"
+  components.setting.message.modal.remind.message_title: "催促メッセージのタイトル"
+  components.setting.message.modal.remind.message: "催促メッセージの内容"
+  components.role.panel.import.name: "役職パネルをインポート"
+  components.user.info.name: "ユーザー情報"
+  components.setting.bump.toggle: "Bump通知の有効化/無効化"
+  components.setting.bump.message: "Bump通知メッセージの設定"
+  components.setting.bump.mention: "Bump通知のメンション先の設定"
+  components.setting.mention.target: "メンション先"
+  components.setting.up.toggle: "UP通知の有効化/無効化"
+  components.setting.up.message: "UP通知メッセージの設定"
+  components.setting.up.mention: "UP通知のメンション先の設定"
+  component.game.cinchiro.game.bet.modal.input.label: "張る点数"
+  components.setting.leveling.enable.enabled: "レベル機能を有効化しました"
+  components.setting.leveling.enable.disabled: "レベル機能を無効化しました"
+  components.setting.leveling.toggle: "レベル機能の有効化/無効化"
+  components.settings: "設定を表示する"
+  components.settings.view: "設定を表示（仮テキスト）"
+  errors.generic.message: "エラーが発生しました"
+  errors.panic.message: "致命的なエラー"
+  errors.invalid_argument: "無効な引数"
+  errors.invalid_argument.description: "指定された引数が正しくありません"
+  errors.invalid.bot.target: "ボットは選択できません"
+  errors.invalid.bot.target.description: "ボット以外のユーザーである必要があります"
+  errors.invalid.self.target: "自分自身は選択できません"
+  errors.invalid.self.target.description: "自分以外のユーザーである必要があります"
+  errors.invalid.permission: "権限が不足しています"
+  errors.invalid.permission.description: "`/permission set`コマンドで{{.permission}}の権限を追加することで使用可能になります"
+  errors.unavailable.message.pin: "ピン留めメッセージが存在しません"
+  errors.unavailable.message.pin.description: "指定されたピン留めメッセージが見つかりません"
+  errors.timeout: "期限切れ"
+  errors.timeout.description: "有効期限が切れています"
+  errors.invalid.self: "ボットの情報を解決できません"
+  errors.invalid.self.description: "このエラーが何度も発生する場合は、ボットを導入しなおしてください"
+  errors.fail.role.panel: "役職の操作に失敗"
+  errors.fail.role.panel.description: |-
+    役職の追加または解除に失敗しました
+    役職がボットより下の順位にあることとボットに役職を操作する権限があるかを確認してください
+  errors.invalid.page: "無効なページ"
+  errors.invalid.page.description: "範囲外のページ番号です"
+  errors.invalid.role: "無効なロール"
+  errors.invalid.role.description: |-
+    無効なロールが選択されました
+    役職がボットより下の順位にあることを確認してください
+  errors.create.reach_max: "最大個数に達しています"
+  errors.create.reach_max.description: "それ以上作成することはできません"
+  errors.not_exist: "存在しません"
+  errors.not_exist.description: "指定された項目がありません"
+  errors.already_exist: "すでに存在します"
+  errors.already_exist.description: "同じ項目を登録することはできません"
+  errors.invalid.time.format: "無効な時間指定"
+  errors.invalid.time.format.description: "それは時刻ではありません"
+  errors.invalid.time.before: "無効な時間指定"
+  errors.invalid.time.before.description: "過去を指定しているか短すぎます"
+  errors.ratelimited: "一時的に制限されています"
+  errors.ratelimited.description: "しばらく待ってからやり直してください"
+  errors.unsupported: "対応していません"
+  errors.unsupported.description: "それはこの操作に対応していません"
+  errors.deleted: "削除されました"
+  errors.deleted.description: "この項目はすでに削除されています"
+  errors.not_enough: "不足しています"
+  errors.not_enough.description: "必要な項目が不足しています"
+  errors.not_enough.player: "プレイヤーが不足しています"
+  errors.not_enough.player.description: "ゲームを開始するのに必要なプレイヤー数が不足しています"
 components:
   command.user.settings.view:
     - type: container
@@ -461,51 +705,51 @@ components:
           accessory:
             type: button
             style: secondary
-            label: "{dm_btn_label}"
+            label: "{{.dm_btn_label}}"
             id: "user:toggle_dm"
           components:
             - |-
-              - 結果確定時のDM通知: **{dm_status}**
+              - 結果確定時のDM通知: **{{.dm_status}}**
   command.settings.view:
     - type: container
       components:
-        - "# {guild_name}の設定"
+        - "# {{.guild_name}}の設定"
         - type: separator
         - "## BUMP通知設定"
         - |-
-          - **Bump通知**：{bump_enabled}
+          - **Bump通知**：{{.bump_enabled}}
           - **Bump通知メッセージ**：
           ```
-          {bump_message_title}
+          {{.bump_message_title}}
           ``````
-          {bump_message}
+          {{.bump_message}}
           ```
           - **Bumpリマインド通知**：
           ```
-          {bump_remind_message_title}
+          {{.bump_remind_message_title}}
           ``````
-          {bump_remind_message}
+          {{.bump_remind_message}}
           ```
-          - **Bump通知ロール**：{bump_mention}
+          - **Bump通知ロール**：{{.bump_mention}}
         - "## UP通知設定"
         - |-
-          - **UP通知**：{up_enabled}
+          - **UP通知**：{{.up_enabled}}
           - **UP通知メッセージ**：
           ```
-          {up_message_title}
+          {{.up_message_title}}
           ``````
-          {up_message}
+          {{.up_message}}
           ```
           - **UPリマインド通知**：
           ```
-          {up_remind_message_title}
+          {{.up_remind_message_title}}
           ``````
-          {up_remind_message}
+          {{.up_remind_message}}
           ```
-          - **UP通知ロール**：{up_mention}
+          - **UP通知ロール**：{{.up_mention}}
         - "## レベリング機能設定"
         - |-
-          - **レベリング機能**：{leveling_enabled}
+          - **レベリング機能**：{{.leveling_enabled}}
   command.currency.view:
     - type: container
       components:
@@ -514,32 +758,32 @@ components:
             type: thumbnail
             url: "{user_icon}"
           components:
-            - "## {user_name}の通貨"
+            - "## {{.user_name}}の通貨"
             - |-
               ### 通貨の残高
-              - **残高**：`{point} {currency_name}`
+              - **残高**：`{{.point}} {{.currency_name}}`
         - type: separator
           height: 2
         - |-
           ### 通貨のランキング
-          {ranking}
+          {{.ranking}}
   command.currency.ranking:
     - type: container
       components:
-        - "## 👑 {guild_name} 通貨ランキング"
+        - "## 👑 {{.guild_name}} 通貨ランキング"
         - |-
-          ランキングの表示件数：`{limit} 件`
-          -# {skip}件目以降を表示しています。
+          ランキングの表示件数：`{{.limit}} 件`
+          -# {{.skip}}件目以降を表示しています。
         - |-
-          {ranking}
+          {{.ranking}}
   command.currency.give.not_enough_point:
-    - "あなたの{currency_name}が不足しているため`{point} {currency_name}`を譲渡できません。"
-    - "あなたの現在の{currency_name}は`{current_point} {currency_name}`です。"
+    - "あなたの{{.currency_name}}が不足しているため`{{.point}} {{.currency_name}}`を譲渡できません。"
+    - "あなたの現在の{{.currency_name}}は`{{.current_point}} {{.currency_name}}`です。"
   command.currency.give.success:
     - "通貨の譲渡が完了しました。"
-    - "`{point} {currency_name}`を`{target_user_name}`に譲渡しました。"
+    - "`{{.point}} {{.currency_name}}`を`{{.target_user_name}}`に譲渡しました。"
   command.play.high-and-low.start:
-    - "{mention}"
+    - "{{.mention}}"
     - type: container
       components:
         - "# ハイアンドロー"
@@ -547,20 +791,20 @@ components:
           ## ルール
           - ハイアンドローは、現在のカードよりも次のカードが高いか低いかを予想するゲームです。
           - 次のカードの数字が現在のカードよりも高いと予想する場合はHIGH、低いと予想する場合はLOWを選択してください。
-          - 正解すると現在の{currency_name}に、現在の{currency_name}×ボーナス割合が加算されます。
+          - 正解すると現在の{{.currency_name}}に、現在の{{.currency_name}}×ボーナス割合が加算されます。
           - 外すとゲームオーバーです。
           ### SAMEチャンス
           - 前回のカードと同じ数字が出た場合は、SAMEを予想することができます。
           - SAMEを予想して的中するとボーナス割合に、出た目の数×初期ボーナス割合が加算されます。
-          - さらに、前回のカードと同じスートの場合は、現在の{currency_name}に出た目の数×1.5が掛けられます。
+          - さらに、前回のカードと同じスートの場合は、現在の{{.currency_name}}に出た目の数×1.5が掛けられます。
           - SAMEを予想して外すとゲームオーバーです。
-          ### 追加{currency_name}
-          - 追加の{currency_name}を支払うと{currency_name}と倍率の初期値を増やすことができます。
+          ### 追加{{.currency_name}}
+          - 追加の{{.currency_name}}を支払うと{{.currency_name}}と倍率の初期値を増やすことができます。
         - type: separator
           height: 2
         - |-
-          選択中の開始オプション: {selected_option}
-          現在の残高: `{gopoint} {currency_name}`
+          選択中の開始オプション: {{.selected_option}}
+          現在の残高: `{{.gopoint}} {{.currency_name}}`
           開始オプションを選択して「開始」ボタンを押すとゲームが開始します。
         - type: action_row
           components:
@@ -575,20 +819,20 @@ components:
               label: "開始"
               id: "play:hal_start:{uuid}"
   command.play.high-and-low.game:
-    - "{mention}"
+    - "{{.mention}}"
     - type: container
       components:
         - "## ハイアンドロー"
-        - "### {turn}ターン目"
+        - "### {{.turn}}ターン目"
         - type: separator
           height: 2
         - |-
           ### **現在のカード**
-          # {current_card}
-          - **前回のカード**： {last_card}
-          - **現在の{currency_name}**：`{point} {currency_name}` (ボーナス{multiplier}%)
-          - **前回の選択**：**{last_choice}** 前回の結果：**{last_result}**
-        - "### {message}"
+          # {{.current_card}}
+          - **前回のカード**： {{.last_card}}
+          - **現在の{{.currency_name}}**：`{{.point}} {{.currency_name}}` (ボーナス{{.multiplier}}%)
+          - **前回の選択**：**{{.last_choice}}** 前回の結果：**{{.last_result}}**
+        - "### {{.message}}"
         - type: action_row
           components:
             - type: button
@@ -610,22 +854,22 @@ components:
               label: "終了"
               id: "play:hal_cancel:{uuid}"
   command.play.high-and-low.result:
-    - "{mention}"
+    - "{{.mention}}"
     - type: container
       components:
         - "## ハイアンドロー"
-        - "### {turn}ターン"
+        - "### {{.turn}}ターン"
         - type: separator
           height: 2
-        - "## {final_state}"
+        - "## {{.final_state}}"
         - type: separator
           height: 1
         - |-
           ### **最後のカード**
-          # {current_card}
-          - **前回のカード**: {last_card}
-          - **結果**：`{point} {currency_name}` (ボーナス{multiplier}%)
-          - **最後の選択**：**{last_choice}** 前回の結果：**{last_result}**
+          # {{.current_card}}
+          - **前回のカード**: {{.last_card}}
+          - **結果**：`{{.point}} {{.currency_name}}` (ボーナス{{.multiplier}}%)
+          - **最後の選択**：**{{.last_choice}}** 前回の結果：**{{.last_result}}**
         - type: separator
           height: 2
         - type: button
@@ -640,14 +884,14 @@ components:
           height: 2
         - |-
           ### 💱 現在の為替レート
-          {rates_text}
+          {{.rates_text}}
         - type: separator
-        - "🪙 **保有 {currency_name}**: `{points} {currency_name}`"
+        - "🪙 **保有 {{.currency_name}}**: `{{.points}} {{.currency_name}}`"
         - type: separator
         - |-
           ### 🆕 新規注文フォーム
-          {form_info}
-          {restriction_warning}
+          {{.form_info}}
+          {{.restriction_warning}}
         - type: action_row
           components:
             - type: string_select_menu
@@ -658,7 +902,7 @@ components:
           components:
             - type: button
               style: primary
-              label: "{btn_input_margin}"
+              label: "{{.btn_input_margin}}"
               id: "play:fx_margin_btn:{uuid}"
         - type: action_row
           components:
@@ -704,13 +948,13 @@ components:
         - type: separator
         - |-
           ### 💱 現在の為替レート
-          {rates_text}
+          {{.rates_text}}
         - type: separator
-        - "🪙 **保有 {currency_name}**: `{points} {currency_name}`"
+        - "🪙 **保有 {{.currency_name}}**: `{{.points}} {{.currency_name}}`"
         - type: separator
         - |-
-          {position_info}
-          {restriction_warning}
+          {{.position_info}}
+          {{.restriction_warning}}
         - type: action_row
           components:
             - type: button
@@ -747,12 +991,12 @@ components:
         - type: separator
         - |-
           ### 💱 現在の為替レート
-          {rates_text}
+          {{.rates_text}}
         - type: separator
-        - "🪙 **保有 {currency_name}**: `{points} {currency_name}`"
+        - "🪙 **保有 {{.currency_name}}**: `{{.points}} {{.currency_name}}`"
         - type: separator
         - |-
-          {order_info}
+          {{.order_info}}
         - type: action_row
           components:
             - type: button
@@ -777,31 +1021,31 @@ components:
   command.play.portfolio:
     - type: container
       components:
-        - "### 📊 **{user_name}** の FXポートフォリオ 📊"
+        - "### 📊 **{{.user_name}}** の FXポートフォリオ 📊"
         - type: separator
           height: 2
-        - "🪙 **所持 {currency_name}**: `{points} {currency_name}`"
+        - "🪙 **所持 {{.currency_name}}**: `{{.points}} {{.currency_name}}`"
         - type: separator
         - |-
-          ### 💼 保有ポジション ({pos_count}件)
-          {positions_list}
+          ### 💼 保有ポジション ({{.pos_count}}件)
+          {{.positions_list}}
         - type: separator
         - |-
-          ### ⏳ 未約定の指値・逆指値注文 ({order_count}件)
-          {orders_list}
+          ### ⏳ 未約定の指値・逆指値注文 ({{.order_count}}件)
+          {{.orders_list}}
 
   command.play.chinchiro.lobby:
     - type: container
       components:
         - "🎲 **チンチロロビー** 🎲"
         - type: separator
-        - "🪙 **参加費 (ベット)**: `{bet} {currency_name}`"
+        - "🪙 **参加費 (ベット)**: `{{.bet}} {{.currency_name}}`"
         - type: separator
         - |-
-          ### 👥 参加者一覧 ({player_count}名)
-          {players_list}
+          ### 👥 参加者一覧 ({{.player_count}}名)
+          {{.players_list}}
         - type: separator
-        - "親（主催者）: {host_mention}"
+        - "親（主催者）: {{.host_mention}}"
         - type: action_row
           components:
             - type: button
@@ -824,11 +1068,11 @@ components:
         - type: separator
         - |-
           ### 🎴 ゲーム状況
-          {game_status}
+          {{.game_status}}
         - type: separator
         - |-
           ### 👥 プレイヤー結果・状態
-          {players_status}
+          {{.players_status}}
         - type: action_row
           components:
             - type: button
@@ -843,11 +1087,11 @@ components:
         - type: separator
         - |-
           ### 🏁 結果発表
-          {game_status}
+          {{.game_status}}
         - type: separator
         - |-
           ### 👥 プレイヤー結果・状態
-          {players_status}
+          {{.players_status}}
 
   command.play.polymarket.search_screen:
     - type: container
@@ -856,12 +1100,12 @@ components:
         - type: separator
         - |-
           ### 🔎 市場一覧
-          {query_info}
+          {{.query_info}}
 
           下のセレクトメニューから予測市場を選択して、詳細の確認やベットを行えます。
-          {status}
+          {{.status}}
         - type: separator
-        - "🪙 **保有 {currency_name}**: `{points} {currency_name}`"
+        - "🪙 **保有 {{.currency_name}}**: `{{.points}} {{.currency_name}}`"
         - type: action_row
           components:
             - type: string_select_menu
@@ -885,15 +1129,15 @@ components:
         - "🔮 **Polymarket 予測市場詳細** 🔮"
         - type: separator
         - |-
-          ### {market_question}
+          ### {{.market_question}}
 
-          📅 **終了予定日**: {end_date}
-          📊 **出来高**: ${volume} | **流動性**: {liquidity}
+          📅 **終了予定日**: {{.end_date}}
+          📊 **出来高**: ${{.volume}} | **流動性**: {{.liquidity}}
 
           **現在の価格 (オッズ/勝率 %):**
-          {odds_text}
+          {{.odds_text}}
         - type: separator
-        - "🪙 **保有 {currency_name}**: `{points} {currency_name}`"
+        - "🪙 **保有 {{.currency_name}}**: `{{.points}} {{.currency_name}}`"
         - type: action_row
           components:
             - type: string_select_menu
@@ -917,30 +1161,30 @@ components:
         - "🔮 **Polymarket ベット額の決定** 🔮"
         - type: separator
         - |-
-          ### {market_question}
+          ### {{.market_question}}
 
-          👉 **選択した結果**: `{selected_outcome}` (現在価格: `{outcome_price} {currency_name}` / 1シェア)
+          👉 **選択した結果**: `{{.selected_outcome}}` (現在価格: `{{.outcome_price}} {{.currency_name}}` / 1シェア)
 
-          *※予測が的中した場合、1シェアあたり `1 {currency_name}` の配当が得られます。的中時の倍率は `1 / {outcome_price} = {multiplier}倍` です。*
+          *※予測が的中した場合、1シェアあたり `1 {{.currency_name}}` の配当が得られます。的中時の倍率は `1 / {{.outcome_price}} = {{.multiplier}}倍` です。*
         - type: separator
-        - "🪙 **保有 {currency_name}**: `{points} {currency_name}`"
+        - "🪙 **保有 {{.currency_name}}**: `{{.points}} {{.currency_name}}`"
         - type: action_row
           components:
             - type: button
               style: primary
-              label: "10 {currency_name} 賭ける"
+              label: "10 {{.currency_name}} 賭ける"
               id: "play:pm_bet_amount:10:{uuid}"
             - type: button
               style: primary
-              label: "50 {currency_name} 賭ける"
+              label: "50 {{.currency_name}} 賭ける"
               id: "play:pm_bet_amount:50:{uuid}"
             - type: button
               style: primary
-              label: "100 {currency_name} 賭ける"
+              label: "100 {{.currency_name}} 賭ける"
               id: "play:pm_bet_amount:100:{uuid}"
             - type: button
               style: primary
-              label: "500 {currency_name} 賭ける"
+              label: "500 {{.currency_name}} 賭ける"
               id: "play:pm_bet_amount:500:{uuid}"
             - type: button
               style: success
@@ -963,8 +1207,8 @@ components:
         - "🔮 **あなたの Polymarket ベット履歴・状況** 🔮"
         - type: separator
         - |-
-          {status_header}
-          {bets_list}
+          {{.status_header}}
+          {{.bets_list}}
         - type: separator
         - type: action_row
           components:

@@ -90,9 +90,9 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	for _, opt := range options {
 		if utf8.RuneCountInString(opt) > 100 {
 			if err := event.RespondMessage(discord.NewMessageBuilder().
-				SetContent(i18n.BuildContext().
-					WithText("option", opt).
-					ReplaceText(i18n.TranslateText(locale, "command.bet.error.option_too_long"))).
+				SetContent(i18n.TranslateText(locale, "command.bet.error.option_too_long", map[string]any{
+					"option": opt,
+				})).
 				SetFlags(discord.MessageFlagEphemeral)); err != nil {
 				return errors.NewError(err)
 			}
@@ -154,12 +154,11 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 			if currency.Points < *prizePool {
 				cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 				if err := event.RespondMessage(discord.NewMessageBuilder().
-					SetContent(i18n.BuildContext().
-						WithText("currency_name", cName).
-						WithText("currency", cName).
-						WithText("pool", fmt.Sprintf("%d", *prizePool)).
-						WithText("points", fmt.Sprintf("%d", currency.Points)).
-						ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool"))).
+					SetContent(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool", map[string]any{
+						"currency_name": cName,
+						"pool":          *prizePool,
+						"points":        currency.Points,
+					})).
 					SetFlags(discord.MessageFlagEphemeral)); err != nil {
 					return err
 				}
@@ -294,23 +293,21 @@ func handleVoteButton(c *components.Components, event *events.ComponentInteracti
 		if existingBet.ID != uuid.Nil {
 			if !betHost.AllowVoteDestChange {
 				if err := event.RespondMessage(discord.NewMessageBuilder().
-					SetContent(i18n.BuildContext().
-						WithText("currency_name", cName).
-						WithText("currency", cName).
-						WithText("option", existingBet.Option.OptionText).
-						WithText("amount", fmt.Sprintf("%d", existingBet.Amount)).
-						ReplaceText(i18n.TranslateText(locale, "command.bet.error.already_voted_no_change"))).
+					SetContent(i18n.TranslateText(locale, "command.bet.error.already_voted_no_change", map[string]any{
+						"currency_name": cName,
+						"option":        existingBet.Option.OptionText,
+						"amount":        existingBet.Amount,
+					})).
 					SetFlags(discord.MessageFlagEphemeral)); err != nil {
 					return err
 				}
 				return nil
 			}
-			status += i18n.BuildContext().
-				WithText("currency_name", cName).
-				WithText("currency", cName).
-				WithText("option", existingBet.Option.OptionText).
-				WithText("amount", fmt.Sprintf("%d", existingBet.Amount)).
-				ReplaceText(i18n.TranslateText(locale, "command.bet.error.already_voted_status"))
+			status += i18n.TranslateText(locale, "command.bet.error.already_voted_status", map[string]any{
+				"currency_name": cName,
+				"option":        existingBet.Option.OptionText,
+				"amount":        existingBet.Amount,
+			})
 		}
 
 		var totalBets int64
@@ -324,19 +321,18 @@ func handleVoteButton(c *components.Components, event *events.ComponentInteracti
 			return err
 		}
 
-		status += i18n.BuildContext().
-			WithText("currency_name", cName).
-			WithText("currency", cName).
-			WithText("votes", fmt.Sprintf("%d", totalBets)).
-			WithText("total_amount", fmt.Sprintf("%d", totalAmount.Total)).
-			ReplaceText(i18n.TranslateText(locale, "command.bet.message.current_stats"))
+		status += i18n.TranslateText(locale, "command.bet.message.current_stats", map[string]any{
+			"currency_name": cName,
+			"votes":         totalBets,
+			"total_amount":  totalAmount.Total,
+		})
 
 		// Show modal to enter bet amount
 		if err := event.Modal(discord.NewModalCreateBuilder().
 			SetCustomID(fmt.Sprintf("bet:vote:%s:%s", hostID, optionID)).
-			SetTitle(i18n.BuildContext().
-				WithText("option", option.OptionText).
-				ReplaceText(i18n.TranslateText(locale, "command.bet.modal.vote.title"))).
+			SetTitle(i18n.TranslateText(locale, "command.bet.modal.vote.title", map[string]any{
+				"option": option.OptionText,
+			})).
 			SetComponents(
 				discord.NewTextDisplay(status),
 				discord.NewLabel(i18n.TranslateText(locale, "command.bet.modal.vote.input.amount.label"),
@@ -383,10 +379,9 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 	if err != nil || amount <= 0 {
 		cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
-			SetContent(i18n.BuildContext().
-				WithText("currency_name", cName).
-				WithText("currency", cName).
-				ReplaceText(i18n.TranslateText(locale, "command.bet.error.invalid_amount"))).
+			SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_amount", map[string]any{
+				"currency_name": cName,
+			})).
 			SetFlags(discord.MessageFlagEphemeral).
 			Build()); err != nil {
 			return errors.NewError(err)
@@ -463,11 +458,10 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 			pointsDifference := amount - existingBet.Amount
 			if pointsDifference > 0 && currency.Points < pointsDifference {
 				if err := event.CreateMessage(discord.NewMessageCreateBuilder().
-					SetContent(i18n.BuildContext().
-						WithText("currency_name", cName).
-						WithText("currency", cName).
-						WithText("points", fmt.Sprintf("%d", currency.Points)).
-						ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_points"))).
+					SetContent(i18n.TranslateText(locale, "command.bet.error.insufficient_points", map[string]any{
+						"currency_name": cName,
+						"points":        currency.Points,
+					})).
 					SetFlags(discord.MessageFlagEphemeral).
 					Build()); err != nil {
 					return err
@@ -496,11 +490,10 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 			}
 
 			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
-				SetContent(i18n.BuildContext().
-					WithText("currency_name", cName).
-					WithText("currency", cName).
-					WithText("amount", fmt.Sprintf("%d", amount)).
-					ReplaceText(i18n.TranslateText(locale, "command.bet.message.updated"))).
+				SetContent(i18n.TranslateText(locale, "command.bet.message.updated", map[string]any{
+					"currency_name": cName,
+					"amount":        amount,
+				})).
 				SetFlags(discord.MessageFlagEphemeral).
 				Build()); err != nil {
 				return err
@@ -512,11 +505,10 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 		// Check if user has sufficient points for new bet
 		if currency.Points < amount {
 			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
-				SetContent(i18n.BuildContext().
-					WithText("currency_name", cName).
-					WithText("currency", cName).
-					WithText("points", fmt.Sprintf("%d", currency.Points)).
-					ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_points"))).
+				SetContent(i18n.TranslateText(locale, "command.bet.error.insufficient_points", map[string]any{
+					"currency_name": cName,
+					"points":        currency.Points,
+				})).
 				SetFlags(discord.MessageFlagEphemeral).
 				Build()); err != nil {
 				return err
@@ -550,11 +542,10 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 		}
 
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
-			SetContent(i18n.BuildContext().
-				WithText("currency_name", cName).
-				WithText("currency", cName).
-				WithText("amount", fmt.Sprintf("%d", amount)).
-				ReplaceText(i18n.TranslateText(locale, "command.bet.message.voted"))).
+			SetContent(i18n.TranslateText(locale, "command.bet.message.voted", map[string]any{
+				"currency_name": cName,
+				"amount":        amount,
+			})).
 			SetFlags(discord.MessageFlagEphemeral).
 			Build()); err != nil {
 			return err
@@ -837,11 +828,10 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 			tx.Save(&betHost)
 
 			cName := currencyCmd.GetCurrencyName(c, betHost.GuildID)
-			resultMessage = i18n.BuildContext().
-				WithText("currency_name", cName).
-				WithText("currency", cName).
-				WithText("amount", fmt.Sprintf("%d", totalRefunded)).
-				ReplaceText(i18n.TranslateText(locale, "command.bet.message.cancelled"))
+			resultMessage = i18n.TranslateText(locale, "command.bet.message.cancelled", map[string]any{
+				"currency_name": cName,
+				"amount":        totalRefunded,
+			})
 		} else {
 			// Normal win: distribute to winners
 			// Calculate total pool
@@ -978,21 +968,19 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 
 			cName := currencyCmd.GetCurrencyName(c, betHost.GuildID)
 			if entryFeePool > 0 || prizePoolAmount > 0 {
-				resultMessage = i18n.BuildContext().
-					WithText("currency_name", cName).
-					WithText("currency", cName).
-					WithText("winners", strings.Join(winnerNames, ", ")).
-					WithText("total_pool", fmt.Sprintf("%d", totalPool)).
-					WithText("entry_pool", fmt.Sprintf("%d", entryFeePool)).
-					WithText("prize_pool", fmt.Sprintf("%d", prizePoolAmount)).
-					ReplaceText(i18n.TranslateText(locale, "command.bet.message.result_with_pools"))
+				resultMessage = i18n.TranslateText(locale, "command.bet.message.result_with_pools", map[string]any{
+					"currency_name": cName,
+					"winners":       strings.Join(winnerNames, ", "),
+					"total_pool":    totalPool,
+					"entry_pool":    entryFeePool,
+					"prize_pool":    prizePoolAmount,
+				})
 			} else {
-				resultMessage = i18n.BuildContext().
-					WithText("currency_name", cName).
-					WithText("currency", cName).
-					WithText("winners", strings.Join(winnerNames, ", ")).
-					WithText("total_pool", fmt.Sprintf("%d", totalPool)).
-					ReplaceText(i18n.TranslateText(locale, "command.bet.message.result"))
+				resultMessage = i18n.TranslateText(locale, "command.bet.message.result", map[string]any{
+					"currency_name": cName,
+					"winners":       strings.Join(winnerNames, ", "),
+					"total_pool":    totalPool,
+				})
 			}
 		}
 
@@ -1196,12 +1184,11 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 		if currency.Points < *prizePool {
 			cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 			if err := event.RespondMessage(discord.NewMessageBuilder().
-				SetContent(i18n.BuildContext().
-					WithText("currency_name", cName).
-					WithText("currency", cName).
-					WithText("pool", fmt.Sprintf("%d", *prizePool)).
-					WithText("points", fmt.Sprintf("%d", currency.Points)).
-					ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool"))).
+				SetContent(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool", map[string]any{
+					"currency_name": cName,
+					"pool":          *prizePool,
+					"points":        currency.Points,
+				})).
 				SetFlags(discord.MessageFlagEphemeral)); err != nil {
 				return errors.NewError(err)
 			}
@@ -1335,12 +1322,11 @@ func handleEntryButton(c *components.Components, event *events.ComponentInteract
 			cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 			if currency.Points < *betHost.EntryFee {
 				if err := event.CreateMessage(discord.NewMessageCreateBuilder().
-					SetContent(i18n.BuildContext().
-						WithText("currency_name", cName).
-						WithText("currency", cName).
-						WithText("fee", fmt.Sprintf("%d", *betHost.EntryFee)).
-						WithText("points", fmt.Sprintf("%d", currency.Points)).
-						ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_entry_fee"))).
+					SetContent(i18n.TranslateText(locale, "command.bet.error.insufficient_entry_fee", map[string]any{
+						"currency_name": cName,
+						"fee":           *betHost.EntryFee,
+						"points":        currency.Points,
+					})).
 					SetFlags(discord.MessageFlagEphemeral).
 					Build()); err != nil {
 					return err
@@ -1397,11 +1383,10 @@ func handleEntryButton(c *components.Components, event *events.ComponentInteract
 		cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 		var responseMsg string
 		if betHost.EntryFee != nil && *betHost.EntryFee > 0 {
-			responseMsg = i18n.BuildContext().
-				WithText("currency_name", cName).
-				WithText("currency", cName).
-				WithText("fee", fmt.Sprintf("%d", *betHost.EntryFee)).
-				ReplaceText(i18n.TranslateText(locale, "command.bet.message.entered_with_fee"))
+			responseMsg = i18n.TranslateText(locale, "command.bet.message.entered_with_fee", map[string]any{
+				"currency_name": cName,
+				"fee":           *betHost.EntryFee,
+			})
 		} else {
 			responseMsg = i18n.TranslateText(locale, "command.bet.message.entered")
 		}
@@ -1581,12 +1566,11 @@ func handleBattleRoyaleConfig(c *components.Components, event *events.ModalSubmi
 		if currency.Points < *prizePool {
 			cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 			if err := event.RespondMessage(discord.NewMessageBuilder().
-				SetContent(i18n.BuildContext().
-					WithText("currency_name", cName).
-					WithText("currency", cName).
-					WithText("pool", fmt.Sprintf("%d", *prizePool)).
-					WithText("points", fmt.Sprintf("%d", currency.Points)).
-					ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool"))).
+				SetContent(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool", map[string]any{
+					"currency_name": cName,
+					"pool":          *prizePool,
+					"points":        currency.Points,
+				})).
 				SetFlags(discord.MessageFlagEphemeral)); err != nil {
 				return errors.NewError(err)
 			}
@@ -1723,12 +1707,11 @@ func handleBattleRoyaleEntryButton(c *components.Components, event *events.Compo
 		cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 		if currency.Points < *betHost.EntryFee {
 			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
-				SetContent(i18n.BuildContext().
-					WithText("currency_name", cName).
-					WithText("currency", cName).
-					WithText("fee", fmt.Sprintf("%d", *betHost.EntryFee)).
-					WithText("points", fmt.Sprintf("%d", currency.Points)).
-					ReplaceText(i18n.TranslateText(locale, "command.bet.error.insufficient_entry_fee"))).
+				SetContent(i18n.TranslateText(locale, "command.bet.error.insufficient_entry_fee", map[string]any{
+					"currency_name": cName,
+					"fee":           *betHost.EntryFee,
+					"points":        currency.Points,
+				})).
 				SetFlags(discord.MessageFlagEphemeral).
 				Build()); err != nil {
 				return err
@@ -1780,11 +1763,10 @@ func handleBattleRoyaleEntryButton(c *components.Components, event *events.Compo
 			return err
 		}
 
-		responseMsg := i18n.BuildContext().
-			WithText("currency_name", cName).
-			WithText("currency", cName).
-			WithText("fee", fmt.Sprintf("%d", *betHost.EntryFee)).
-			ReplaceText(i18n.TranslateText(locale, "command.bet.message.entered_br"))
+		responseMsg := i18n.TranslateText(locale, "command.bet.message.entered_br", map[string]any{
+			"currency_name": cName,
+			"fee":           *betHost.EntryFee,
+		})
 
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
 			SetContent(responseMsg).
@@ -1975,11 +1957,10 @@ func handleCancelEntryButton(c *components.Components, event *events.ComponentIn
 
 		cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
-			SetContent(i18n.BuildContext().
-				WithText("currency_name", cName).
-				WithText("currency", cName).
-				WithText("amount", fmt.Sprintf("%d", totalRefunded)).
-				ReplaceText(i18n.TranslateText(locale, "command.bet.message.cancelled"))).
+			SetContent(i18n.TranslateText(locale, "command.bet.message.cancelled", map[string]any{
+				"currency_name": cName,
+				"amount":        totalRefunded,
+			})).
 			SetFlags(discord.MessageFlagEphemeral).
 			Build()); err != nil {
 			return err

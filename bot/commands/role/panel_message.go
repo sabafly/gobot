@@ -33,7 +33,7 @@ import (
 	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/embeds"
 	"github.com/sabafly/gobot/internal/emoji"
-	"github.com/sabafly/gobot/internal/translate"
+	"github.com/sabafly/gobot/internal/i18n"
 )
 
 func initialize(edit *models.RolePanelEdit, panel *models.RolePanel) {
@@ -64,21 +64,21 @@ func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *
 
 	embedList := []discord.Embed{
 		discord.NewEmbedBuilder().
-			SetTitle(translate.Message(locale, "components.role.panel.edit.menu.base.title")).
+			SetTitle(i18n.TranslateText(locale, "components.role.panel.edit.menu.base.title", nil)).
 			SetFields(
 				discord.EmbedField{
-					Name:   translate.Message(locale, "components.role.panel.edit.menu.base.field.name"),
+					Name:   i18n.TranslateText(locale, "components.role.panel.edit.menu.base.field.name", nil),
 					Value:  builtin.NonNil(edit.Name),
 					Inline: builtin.Ptr(true),
 				},
 				discord.EmbedField{
-					Name:   translate.Message(locale, "components.role.panel.edit.menu.base.field.description"),
-					Value:  builtin.Or(builtin.NonNil(edit.Description) != "", builtin.NonNil(edit.Description), fmt.Sprintf("`%s`", translate.Message(locale, "components.role.panel.edit.menu.base.field.value.empty"))),
+					Name:   i18n.TranslateText(locale, "components.role.panel.edit.menu.base.field.description", nil),
+					Value:  builtin.Or(builtin.NonNil(edit.Description) != "", builtin.NonNil(edit.Description), fmt.Sprintf("`%s`", i18n.TranslateText(locale, "components.role.panel.edit.menu.base.field.value.empty", nil))),
 					Inline: builtin.Ptr(true),
 				},
 				discord.EmbedField{
-					Name:  translate.Message(locale, "components.role.panel.edit.menu.base.field.roles"),
-					Value: builtin.Or(roleField.String() != "", roleField.String(), fmt.Sprintf("`%s`", translate.Message(locale, "components.role.panel.edit.menu.base.field.value.empty"))),
+					Name:  i18n.TranslateText(locale, "components.role.panel.edit.menu.base.field.roles", nil),
+					Value: builtin.Or(roleField.String() != "", roleField.String(), fmt.Sprintf("`%s`", i18n.TranslateText(locale, "components.role.panel.edit.menu.base.field.value.empty", nil))),
 				}).
 			SetFooterTextf("id: %s", panel.ID).
 			Build(),
@@ -95,36 +95,36 @@ func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *
 		discord.NewActionRow(
 			discord.ButtonComponent{
 				Style:    discord.ButtonStylePrimary,
-				Label:    translate.Message(locale, "components.role.panel.edit.menu.base.components.change_name"),
+				Label:    i18n.TranslateText(locale, "components.role.panel.edit.menu.base.components.change_name", nil),
 				CustomID: fmt.Sprintf("role:panel_edit_component:change_name:%s", edit.ID),
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStylePrimary,
-				Label:    translate.Message(locale, "components.role.panel.edit.menu.base.components.change_description"),
+				Label:    i18n.TranslateText(locale, "components.role.panel.edit.menu.base.components.change_description", nil),
 				CustomID: fmt.Sprintf("role:panel_edit_component:change_description:%s", edit.ID),
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyleSecondary,
-				Label:    translate.Message(locale, "components.role.panel.edit.menu.base.components.modify_roles"),
+				Label:    i18n.TranslateText(locale, "components.role.panel.edit.menu.base.components.modify_roles", nil),
 				CustomID: fmt.Sprintf("role:panel_edit_component:modify_roles:%s", edit.ID),
 			},
 		),
 		discord.NewActionRow(
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyleSuccess,
-				Label:    translate.Message(locale, "components.role.panel.edit.menu.base.components.save_change"),
+				Label:    i18n.TranslateText(locale, "components.role.panel.edit.menu.base.components.save_change", nil),
 				CustomID: fmt.Sprintf("role:panel_edit_component:save_change:%s", edit.ID),
 				Disabled: !edit.Modified,
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyleDanger,
-				Label:    translate.Message(locale, "components.role.panel.edit.menu.base.components.apply_change"),
+				Label:    i18n.TranslateText(locale, "components.role.panel.edit.menu.base.components.apply_change", nil),
 				CustomID: fmt.Sprintf("role:panel_edit_component:apply_change:%s", edit.ID),
 				Disabled: !panel.AppliedAt.Before(panel.UpdatedAt) || len(panel.Roles) < 1 || placeCount < 1,
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStylePrimary,
-				Label:    translate.Message(locale, "components.role.panel.edit.menu.base.components.place"),
+				Label:    i18n.TranslateText(locale, "components.role.panel.edit.menu.base.components.place", nil),
 				CustomID: fmt.Sprintf("role:panel_edit_component:place:%s", edit.ID),
 				Disabled: len(panel.Roles) < 1 || (panel.AppliedAt.Before(panel.UpdatedAt) && placeCount > 0),
 			},
@@ -151,7 +151,7 @@ func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *
 				}
 				return discord.StringSelectMenuComponent{
 					CustomID:    fmt.Sprintf("role:panel_edit_component:select_role:%s", edit.ID),
-					Placeholder: translate.Message(locale, "components.role.panel.edit.menu.base.components.select_role"),
+					Placeholder: i18n.TranslateText(locale, "components.role.panel.edit.menu.base.components.select_role", nil),
 					MinValues:   builtin.Ptr(0),
 					MaxValues:   1,
 					Disabled:    len(edit.Roles) < 1,
@@ -168,7 +168,7 @@ func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyleDanger,
-				Label:    translate.Message(locale, "components.role.panel.edit.menu.base.components.delete"),
+				Label:    i18n.TranslateText(locale, "components.role.panel.edit.menu.base.components.delete", nil),
 				CustomID: fmt.Sprintf("role:panel_edit_component:delete:%s", edit.ID),
 				Disabled: disabled || len(edit.Roles) < 2,
 			},
@@ -182,13 +182,13 @@ func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *
 		discord.NewActionRow(
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyleSuccess,
-				Label:    translate.Message(locale, "components.role.panel.edit.menu.base.components.set_emoji"),
+				Label:    i18n.TranslateText(locale, "components.role.panel.edit.menu.base.components.set_emoji", nil),
 				CustomID: fmt.Sprintf("role:panel_edit_component:set_emoji:%s", edit.ID),
 				Disabled: disabled,
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyleSuccess,
-				Label:    translate.Message(locale, "components.role.panel.edit.menu.base.components.set_display_name"),
+				Label:    i18n.TranslateText(locale, "components.role.panel.edit.menu.base.components.set_display_name", nil),
 				CustomID: fmt.Sprintf("role:panel_edit_component:set_display_name:%s", edit.ID),
 				Disabled: disabled,
 			},
@@ -212,10 +212,10 @@ func rpEditModifyRolesMessage(edit *models.RolePanelEdit, locale discord.Locale)
 	}
 	embedList := []discord.Embed{
 		discord.NewEmbedBuilder().
-			SetTitle(translate.Message(locale, "components.role.panel.edit.menu.modify_roles.title")).
+			SetTitle(i18n.TranslateText(locale, "components.role.panel.edit.menu.modify_roles.title", nil)).
 			SetFields(
 				discord.EmbedField{
-					Name:  translate.Message(locale, "components.role.panel.edit.menu.modify_roles.field.roles"),
+					Name:  i18n.TranslateText(locale, "components.role.panel.edit.menu.modify_roles.field.roles", nil),
 					Value: roleField.String(),
 				},
 			).
@@ -227,7 +227,7 @@ func rpEditModifyRolesMessage(edit *models.RolePanelEdit, locale discord.Locale)
 		discord.NewActionRow(
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyleSecondary,
-				Label:    translate.Message(locale, "components.role.panel.edit.menu.base.components.back_base_menu"),
+				Label:    i18n.TranslateText(locale, "components.role.panel.edit.menu.base.components.back_base_menu", nil),
 				CustomID: fmt.Sprintf("role:panel_edit_component:base_menu:%s", edit.ID),
 			},
 		),
@@ -252,8 +252,8 @@ func rpEditModifyRolesMessage(edit *models.RolePanelEdit, locale discord.Locale)
 func rpEditSetEmojiMessage(edit *models.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
 	builder := discord.NewMessageBuilder()
 	embed := discord.NewEmbedBuilder().
-		SetTitle(translate.Message(locale, "components.role.panel.edit.menu.set_emoji.title")).
-		SetDescription(translate.Message(locale, "components.role.panel.edit.menu.set_emoji.description")).
+		SetTitle(i18n.TranslateText(locale, "components.role.panel.edit.menu.set_emoji.title", nil)).
+		SetDescription(i18n.TranslateText(locale, "components.role.panel.edit.menu.set_emoji.description", nil)).
 		Build()
 
 	builder.SetEmbeds(embeds.SetEmbedProperties(embed))
@@ -262,12 +262,12 @@ func rpEditSetEmojiMessage(edit *models.RolePanelEdit, locale discord.Locale) di
 		discord.NewActionRow(
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyleSecondary,
-				Label:    translate.Message(locale, "components.role.panel.edit.menu.set_emoji.components.cancel"),
+				Label:    i18n.TranslateText(locale, "components.role.panel.edit.menu.set_emoji.components.cancel", nil),
 				CustomID: fmt.Sprintf("role:panel_edit_component:cancel_emoji:%s", edit.ID),
 			},
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyleDanger,
-				Label:    translate.Message(locale, "components.role.panel.edit.menu.set_emoji.components.reset"),
+				Label:    i18n.TranslateText(locale, "components.role.panel.edit.menu.set_emoji.components.reset", nil),
 				CustomID: fmt.Sprintf("role:panel_edit_component:reset_emoji:%s", edit.ID),
 			},
 		),
@@ -289,14 +289,14 @@ func rpPlaceBaseMenu(place *models.RolePanelPlaced, locale discord.Locale) disco
 	}
 	embedList := []discord.Embed{
 		discord.NewEmbedBuilder().
-			SetAuthorName(translate.Message(locale, "components.role.panel.place.menu.author.text")).
+			SetAuthorName(i18n.TranslateText(locale, "components.role.panel.place.menu.author.text", nil)).
 			Build(),
 		discord.NewEmbedBuilder().
 			SetTitle(place.Name).
 			SetDescription(place.Description).
 			SetFields(
 				discord.EmbedField{
-					Name:  translate.Message(locale, "components.role.panel.embed.field.role"),
+					Name:  i18n.TranslateText(locale, "components.role.panel.embed.field.role", nil),
 					Value: roleField.String(),
 				},
 			).
@@ -310,26 +310,26 @@ func rpPlaceBaseMenu(place *models.RolePanelPlaced, locale discord.Locale) disco
 				CustomID:    fmt.Sprintf("role:panel_place_component:type:%s", place.ID),
 				MinValues:   builtin.Ptr(1),
 				MaxValues:   1,
-				Placeholder: translate.Message(locale, "components.role.panel.place.menu.select_type.placeholder"),
+				Placeholder: i18n.TranslateText(locale, "components.role.panel.place.menu.select_type.placeholder", nil),
 				Options: []discord.StringSelectMenuOption{
 					{
-						Label:       translate.Message(locale, "components.role.panel.type.reaction"),
+						Label:       i18n.TranslateText(locale, "components.role.panel.type.reaction", nil),
 						Value:       RolePanelPlacedTypeReaction,
-						Description: translate.Message(locale, "components.role.panel.type.reaction.description"),
+						Description: i18n.TranslateText(locale, "components.role.panel.type.reaction.description", nil),
 						Emoji:       emoji.Reaction,
 						Default:     place.Type == RolePanelPlacedTypeReaction,
 					},
 					{
-						Label:       translate.Message(locale, "components.role.panel.type.select_menu"),
+						Label:       i18n.TranslateText(locale, "components.role.panel.type.select_menu", nil),
 						Value:       RolePanelPlacedTypeSelectMenu,
-						Description: translate.Message(locale, "components.role.panel.type.select_menu.description"),
+						Description: i18n.TranslateText(locale, "components.role.panel.type.select_menu.description", nil),
 						Emoji:       emoji.SelectMenu,
 						Default:     place.Type == RolePanelPlacedTypeSelectMenu,
 					},
 					{
-						Label:       translate.Message(locale, "components.role.panel.type.button"),
+						Label:       i18n.TranslateText(locale, "components.role.panel.type.button", nil),
 						Value:       RolePanelPlacedTypeButton,
-						Description: translate.Message(locale, "components.role.panel.type.button.description"),
+						Description: i18n.TranslateText(locale, "components.role.panel.type.button.description", nil),
 						Emoji:       emoji.Button,
 						Default:     place.Type == RolePanelPlacedTypeButton,
 					},
@@ -348,25 +348,25 @@ func rpPlaceBaseMenu(place *models.RolePanelPlaced, locale discord.Locale) disco
 					MaxValues: 1,
 					Options: []discord.StringSelectMenuOption{
 						{
-							Label:   translate.Message(locale, "components.role.panel.button.color.green"),
+							Label:   i18n.TranslateText(locale, "components.role.panel.button.color.green", nil),
 							Value:   "green",
 							Emoji:   emoji.GreenButton,
 							Default: place.ButtonType == discord.ButtonStyleSuccess,
 						},
 						{
-							Label:   translate.Message(locale, "components.role.panel.button.color.blue"),
+							Label:   i18n.TranslateText(locale, "components.role.panel.button.color.blue", nil),
 							Value:   "blue",
 							Emoji:   emoji.BlueButton,
 							Default: place.ButtonType == discord.ButtonStylePrimary,
 						},
 						{
-							Label:   translate.Message(locale, "components.role.panel.button.color.red"),
+							Label:   i18n.TranslateText(locale, "components.role.panel.button.color.red", nil),
 							Value:   "red",
 							Emoji:   emoji.RedButton,
 							Default: place.ButtonType == discord.ButtonStyleDanger,
 						},
 						{
-							Label:   translate.Message(locale, "components.role.panel.button.color.gray"),
+							Label:   i18n.TranslateText(locale, "components.role.panel.button.color.gray", nil),
 							Value:   "gray",
 							Emoji:   emoji.GrayButton,
 							Default: place.ButtonType == discord.ButtonStyleSecondary,
@@ -377,7 +377,7 @@ func rpPlaceBaseMenu(place *models.RolePanelPlaced, locale discord.Locale) disco
 			discord.NewActionRow(
 				discord.ButtonComponent{
 					Style:    discord.ButtonStyleSecondary,
-					Label:    translate.Message(locale, "components.role.panel.place.menu.button.show_name"),
+					Label:    i18n.TranslateText(locale, "components.role.panel.place.menu.button.show_name", nil),
 					Emoji:    builtin.Or(place.ShowName, emoji.On, emoji.Off),
 					CustomID: fmt.Sprintf("role:panel_place_component:show_name:%s", place.ID),
 				},
@@ -388,7 +388,7 @@ func rpPlaceBaseMenu(place *models.RolePanelPlaced, locale discord.Locale) disco
 			discord.NewActionRow(
 				discord.ButtonComponent{
 					Style:    discord.ButtonStyleSecondary,
-					Label:    translate.Message(locale, "components.role.panel.place.menu.select_menu.folding_select_menu"),
+					Label:    i18n.TranslateText(locale, "components.role.panel.place.menu.select_menu.folding_select_menu", nil),
 					Emoji:    builtin.Or(place.FoldingSelectMenu, emoji.On, emoji.Off),
 					CustomID: fmt.Sprintf("role:panel_place_component:folding_select_menu:%s", place.ID),
 				},
@@ -399,7 +399,7 @@ func rpPlaceBaseMenu(place *models.RolePanelPlaced, locale discord.Locale) disco
 			discord.NewActionRow(
 				discord.ButtonComponent{
 					Style:    discord.ButtonStyleSecondary,
-					Label:    translate.Message(locale, "components.role.panel.place.menu.reaction.hide_notice"),
+					Label:    i18n.TranslateText(locale, "components.role.panel.place.menu.reaction.hide_notice", nil),
 					Emoji:    builtin.Or(place.HideNotice, emoji.On, emoji.Off),
 					CustomID: fmt.Sprintf("role:panel_place_component:hide_notice:%s", place.ID),
 				},
@@ -411,7 +411,7 @@ func rpPlaceBaseMenu(place *models.RolePanelPlaced, locale discord.Locale) disco
 		discord.NewActionRow(
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyleSecondary,
-				Label:    translate.Message(locale, "components.role.panel.place.menu.generic.use_display_name"),
+				Label:    i18n.TranslateText(locale, "components.role.panel.place.menu.generic.use_display_name", nil),
 				Emoji:    builtin.Or(place.UseDisplayName, emoji.On, emoji.Off),
 				CustomID: fmt.Sprintf("role:panel_place_component:use_display_name:%s", place.ID),
 				Disabled: place.Type == "",
@@ -420,7 +420,7 @@ func rpPlaceBaseMenu(place *models.RolePanelPlaced, locale discord.Locale) disco
 		discord.NewActionRow(
 			discord.ButtonComponent{
 				Style:    discord.ButtonStyleSuccess,
-				Label:    translate.Message(locale, "components.role.panel.place.menu.generic.create"),
+				Label:    i18n.TranslateText(locale, "components.role.panel.place.menu.generic.create", nil),
 				CustomID: fmt.Sprintf("role:panel_place_component:create:%s", place.ID),
 				Disabled: place.Type == "",
 			},
@@ -448,7 +448,7 @@ func rpPlacedMessage(place *models.RolePanelPlaced, locale discord.Locale) disco
 			SetDescription(place.Description).
 			SetFields(
 				discord.EmbedField{
-					Name:  translate.Message(locale, "components.role.panel.embed.field.role"),
+					Name:  i18n.TranslateText(locale, "components.role.panel.embed.field.role", nil),
 					Value: roleField.String(),
 				},
 			).
@@ -492,7 +492,7 @@ func rpPlacedMessage(place *models.RolePanelPlaced, locale discord.Locale) disco
 				discord.NewActionRow(
 					discord.ButtonComponent{
 						Style:    discord.ButtonStyleSuccess,
-						Label:    translate.Message(locale, "components.role.panel.components.use_button"),
+						Label:    i18n.TranslateText(locale, "components.role.panel.components.use_button", nil),
 						CustomID: fmt.Sprintf("role:panel_use:select_menu_fold:%s", place.ID),
 					},
 				),
@@ -522,7 +522,7 @@ func rpPlacedSelectMenu(place *models.RolePanelPlaced, locale discord.Locale) di
 	actionRow := discord.NewActionRow(
 		discord.StringSelectMenuComponent{
 			CustomID:    fmt.Sprintf("role:panel_use:select_menu:%s", place.ID.String()),
-			Placeholder: translate.Message(locale, "components.role.panel.components.select_menu.placeholder"),
+			Placeholder: i18n.TranslateText(locale, "components.role.panel.components.select_menu.placeholder", nil),
 			MinValues:   builtin.Ptr(0),
 			MaxValues:   len(place.Roles),
 			Options:     options,

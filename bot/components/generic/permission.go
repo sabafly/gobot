@@ -34,7 +34,7 @@ import (
 
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database/models"
-	"github.com/sabafly/gobot/internal/translate"
+	"github.com/sabafly/gobot/internal/i18n"
 )
 
 func noPermissionMessage(event interface {
@@ -49,9 +49,9 @@ func noPermissionMessage(event interface {
 		discord.NewMessageBuilder().
 			SetEmbeds(
 				discord.NewEmbedBuilder().
-					SetTitlef("⚠️ %s", translate.Message(event.Locale(), "errors.invalid.permission")).
-					SetDescription(translate.Message(event.Locale(), "errors.invalid.permission.description",
-						translate.WithTemplate(map[string]any{"Permission": permStr.String()}),
+					SetTitlef("⚠️ %s", i18n.TranslateText(event.Locale(), "errors.invalid.permission")).
+					SetDescription(i18n.TranslateText(event.Locale(), "errors.invalid.permission.description",
+						map[string]any{"permission": permStr.String()},
 					)).
 					SetColor(0xEEE731).
 					Build(),

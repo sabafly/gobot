@@ -61,7 +61,6 @@ import (
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/internal/emoji"
 	"github.com/sabafly/gobot/internal/i18n"
-	"github.com/sabafly/gobot/internal/translate"
 
 	_ "net/http/pprof"
 )
@@ -142,9 +141,6 @@ func run() error {
 
 	// ent schema migration is removed as we use GORM migration in database.NewDB
 
-	if _, err := translate.LoadDir(config.TranslateDir); err != nil {
-		return fmt.Errorf("翻訳ファイルが読み込めません path=%s: %w", config.TranslateDir, err)
-	}
 	if err := i18n.LoadLocales(config.LocaleDir); err != nil {
 		return fmt.Errorf("ロケールファイルが読み込めません path=%s: %w", config.LocaleDir, err)
 	}

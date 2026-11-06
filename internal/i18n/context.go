@@ -1,6 +1,7 @@
 package i18n
 
 import (
+	"log/slog"
 	"slices"
 	"strings"
 
@@ -153,14 +154,21 @@ func (m MapContext) GetText(key string) (string, bool) {
 	return value, ok
 }
 
-func (m MapContext) ReplaceText(text string) string {
-	if len(m.texts) == 0 {
+func (m MapContext) replaceText(text string) string {
+	if text == "" {
+		return ""
+	}
+	tmpl := newTemplate("component")
+	if _, err := tmpl.Parse(text); err != nil {
+		slog.Error("replaceText: failed to parse template", "text", text, "error", err)
 		return text
 	}
-	for key, value := range m.texts {
-		text = strings.ReplaceAll(text, "{"+key+"}", value)
+	var sb strings.Builder
+	if err := tmpl.Execute(&sb, m.texts); err != nil {
+		slog.Error("replaceText: failed to execute template", "text", text, "error", err)
+		return text
 	}
-	return text
+	return sb.String()
 }
 
 func (m MapContext) GetDefaultValues(customID string, t discord.SelectMenuDefaultValueType) []discord.SelectMenuDefaultValue {
@@ -255,16 +263,20 @@ func (m MapContext) GetURL(key string) string {
 }
 
 func (m MapContext) ReplaceCustomID(id string) string {
-	if len(m.customId) == 0 {
+	if len(m.customId) == 0 || id == "" {
 		return id
 	}
+	oldnews := make([]string, 0, len(m.customId)*2)
 	for key, value := range m.customId {
 		if value == "" {
 			continue
 		}
-		id = strings.ReplaceAll(id, "{"+key+"}", value)
+		oldnews = append(oldnews, "{"+key+"}", value)
 	}
-	return id
+	if len(oldnews) == 0 {
+		return id
+	}
+	return strings.NewReplacer(oldnews...).Replace(id)
 }
 
 func (m *MapContext) WithButtonStyle(customID string, style discord.ButtonStyle) *MapContext {

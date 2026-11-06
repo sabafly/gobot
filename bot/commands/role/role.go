@@ -44,8 +44,8 @@ import (
 	"github.com/sabafly/gobot/internal/embeds"
 	"github.com/sabafly/gobot/internal/emoji"
 	"github.com/sabafly/gobot/internal/errors"
+	"github.com/sabafly/gobot/internal/i18n"
 	"github.com/sabafly/gobot/internal/ratelimit"
-	"github.com/sabafly/gobot/internal/translate"
 )
 
 func Command(c *components.Components) components.Command {
@@ -66,18 +66,18 @@ func Command(c *components.Components) components.Command {
 							{
 								Name:                     "create",
 								Description:              "create role panel",
-								DescriptionLocalizations: translate.MessageMap("components.role.panel.create.command.description", false),
+								DescriptionLocalizations: i18n.TranslateTextMap("components.role.panel.create.command.description"),
 							},
 							{
 								Name:                     "place",
 								Description:              "place role panel",
-								DescriptionLocalizations: translate.MessageMap("components.role.panel.place.command.description", false),
+								DescriptionLocalizations: i18n.TranslateTextMap("components.role.panel.place.command.description"),
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionString{
 										Name:                     "panel",
 										Description:              "panel name or id",
-										NameLocalizations:        translate.MessageMap("components.role.panel.place.command.options.panel.name", false),
-										DescriptionLocalizations: translate.MessageMap("components.role.panel.place.command.options.panel.description", false),
+										NameLocalizations:        i18n.TranslateTextMap("components.role.panel.place.command.options.panel.name"),
+										DescriptionLocalizations: i18n.TranslateTextMap("components.role.panel.place.command.options.panel.description"),
 										Required:                 true,
 										Autocomplete:             true,
 									},
@@ -86,13 +86,13 @@ func Command(c *components.Components) components.Command {
 							{
 								Name:                     "edit",
 								Description:              "edit role panel",
-								DescriptionLocalizations: translate.MessageMap("components.role.panel.edit.command.description", false),
+								DescriptionLocalizations: i18n.TranslateTextMap("components.role.panel.edit.command.description"),
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionString{
 										Name:                     "panel",
 										Description:              "panel name or id",
-										NameLocalizations:        translate.MessageMap("components.role.panel.edit.command.options.panel.name", false),
-										DescriptionLocalizations: translate.MessageMap("components.role.panel.edit.command.options.panel.description", false),
+										NameLocalizations:        i18n.TranslateTextMap("components.role.panel.edit.command.options.panel.name"),
+										DescriptionLocalizations: i18n.TranslateTextMap("components.role.panel.edit.command.options.panel.description"),
 										Required:                 true,
 										Autocomplete:             true,
 									},
@@ -101,13 +101,13 @@ func Command(c *components.Components) components.Command {
 							{
 								Name:                     "delete",
 								Description:              "delete role panel",
-								DescriptionLocalizations: translate.MessageMap("components.role.panel.delete.command.description", false),
+								DescriptionLocalizations: i18n.TranslateTextMap("components.role.panel.delete.command.description"),
 								Options: []discord.ApplicationCommandOption{
 									discord.ApplicationCommandOptionString{
 										Name:                     "panel",
 										Description:              "panel name or id",
-										NameLocalizations:        translate.MessageMap("components.role.panel.delete.command.options.panel.name", false),
-										DescriptionLocalizations: translate.MessageMap("components.role.panel.delete.command.options.panel.description", false),
+										NameLocalizations:        i18n.TranslateTextMap("components.role.panel.delete.command.options.panel.name"),
+										DescriptionLocalizations: i18n.TranslateTextMap("components.role.panel.delete.command.options.panel.description"),
 										Required:                 true,
 										Autocomplete:             true,
 									},
@@ -127,19 +127,19 @@ func Command(c *components.Components) components.Command {
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					if err := event.Modal(
 						discord.NewModalCreateBuilder().
-							SetTitle(translate.Message(event.Locale(), "components.role.panel.create.modal.title")).
+							SetTitle(i18n.TranslateText(event.Locale(), "components.role.panel.create.modal.title", nil)).
 							SetCustomID("role:panel_create_modal").
 							SetComponents(
-								discord.NewLabel(translate.Message(event.Locale(), "components.role.panel.create.modal.input.1.label"),
+								discord.NewLabel(i18n.TranslateText(event.Locale(), "components.role.panel.create.modal.input.1.label", nil),
 									discord.TextInputComponent{
 										CustomID:  "name",
 										Style:     discord.TextInputStyleShort,
 										MinLength: builtin.Ptr(1),
 										MaxLength: 32,
 										Required:  true,
-										Value:     translate.Message(event.Locale(), "components.role.panel.default_name"),
+										Value:     i18n.TranslateText(event.Locale(), "components.role.panel.default_name", nil),
 									}),
-								discord.NewLabel(translate.Message(event.Locale(), "components.role.panel.create.modal.input.2.label"),
+								discord.NewLabel(i18n.TranslateText(event.Locale(), "components.role.panel.create.modal.input.2.label", nil),
 									discord.TextInputComponent{
 										CustomID:  "description",
 										Style:     discord.TextInputStyleParagraph,
@@ -290,8 +290,8 @@ func Command(c *components.Components) components.Command {
 					builder.SetEmbeds(
 						embeds.SetEmbedProperties(
 							discord.NewEmbedBuilder().
-								SetTitle(translate.Message(event.Locale(), "components.role.panel.delete.message.embed.title")).
-								SetDescription(translate.Message(event.Locale(), "components.role.panel.delete.message.embed.description", translate.WithTemplate(map[string]any{"RolePanel": panel.Name}))).
+								SetTitle(i18n.TranslateText(event.Locale(), "components.role.panel.delete.message.embed.title", nil)).
+								SetDescription(i18n.TranslateText(event.Locale(), "components.role.panel.delete.message.embed.description", map[string]any{"role_panel": panel.Name})).
 								Build(),
 						))
 					if err := event.CreateMessage(builder.BuildCreate()); err != nil {
@@ -414,7 +414,11 @@ func Command(c *components.Components) components.Command {
 						if edit.Description != nil {
 							descVal = *edit.Description
 						}
-						modal := discord.NewModalCreateBuilder().SetTitle(translate.Message(event.Locale(), fmt.Sprintf("components.role.panel.edit.action.%s.title", action))).SetCustomID(fmt.Sprintf("role:panel_edit_modal:%s:%s", action, edit.ID)).SetComponents(builtin.Or(action == "change_name", discord.NewLabel(translate.Message(event.Locale(), "components.role.panel.edit.change_name.modal.input.name.label"), discord.TextInputComponent{CustomID: "name", Style: discord.TextInputStyleShort, MinLength: builtin.Ptr(1), MaxLength: 32, Required: true, Value: nameVal}), discord.NewLabel(translate.Message(event.Locale(), "components.role.panel.edit.change_description.modal.input.description.label"), discord.TextInputComponent{CustomID: "description", Style: discord.TextInputStyleParagraph, MaxLength: 140, Value: descVal}))).Build()
+						titleKey := "components.role.panel.edit.action.change_description.title"
+						if action == "change_name" {
+							titleKey = "components.role.panel.edit.action.change_name.title"
+						}
+						modal := discord.NewModalCreateBuilder().SetTitle(i18n.TranslateText(event.Locale(), titleKey, nil)).SetCustomID(fmt.Sprintf("role:panel_edit_modal:%s:%s", action, edit.ID)).SetComponents(builtin.Or(action == "change_name", discord.NewLabel(i18n.TranslateText(event.Locale(), "components.role.panel.edit.change_name.modal.input.name.label", nil), discord.TextInputComponent{CustomID: "name", Style: discord.TextInputStyleShort, MinLength: builtin.Ptr(1), MaxLength: 32, Required: true, Value: nameVal}), discord.NewLabel(i18n.TranslateText(event.Locale(), "components.role.panel.edit.change_description.modal.input.description.label", nil), discord.TextInputComponent{CustomID: "description", Style: discord.TextInputStyleParagraph, MaxLength: 140, Value: descVal}))).Build()
 						if err := event.Modal(modal); err != nil {
 							return errors.NewError(err)
 						}
@@ -466,7 +470,7 @@ func Command(c *components.Components) components.Command {
 							for _, id := range deletedRole {
 								fmt.Fprintf(&s, "- %s\r", discord.RoleMention(id))
 							}
-							embed := discord.NewEmbedBuilder().SetTitle(translate.Message(event.Locale(), "components.role.panel.edit.add_role.deleted_role.embed.title")).SetDescriptionf("%s\n"+s.String(), translate.Message(event.Locale(), "components.role.panel.edit.add_role.deleted_role.embed.description")).Build()
+							embed := discord.NewEmbedBuilder().SetTitle(i18n.TranslateText(event.Locale(), "components.role.panel.edit.add_role.deleted_role.embed.title", nil)).SetDescriptionf("%s\n"+s.String(), i18n.TranslateText(event.Locale(), "components.role.panel.edit.add_role.deleted_role.embed.description", nil)).Build()
 							if err := event.CreateMessage(discord.NewMessageBuilder().
 								SetEmbeds(embeds.SetEmbedProperties(embed)).
 								SetFlags(discord.MessageFlagEphemeral).
@@ -536,7 +540,7 @@ func Command(c *components.Components) components.Command {
 						if edit.SelectedRole != nil {
 							idx := slices.IndexFunc(edit.Roles, func(r models.Role) bool { return r.ID == *edit.SelectedRole })
 							if idx != -1 {
-								modal := discord.NewModalCreateBuilder().SetTitle(translate.Message(event.Locale(), "components.role.panel.edit.set_display.name.modal.title")).SetCustomID(fmt.Sprintf("role:panel_edit_modal:set_display_name:%s", edit.ID)).SetComponents(discord.NewLabel(translate.Message(event.Locale(), "components.role.panel.edit.set_display.name.modal.input.display_name.label"), discord.TextInputComponent{CustomID: "display_name", Style: discord.TextInputStyleShort, MinLength: builtin.Ptr(1), MaxLength: 100, Required: true, Value: edit.Roles[idx].Name})).Build()
+								modal := discord.NewModalCreateBuilder().SetTitle(i18n.TranslateText(event.Locale(), "components.role.panel.edit.set_display.name.modal.title", nil)).SetCustomID(fmt.Sprintf("role:panel_edit_modal:set_display_name:%s", edit.ID)).SetComponents(discord.NewLabel(i18n.TranslateText(event.Locale(), "components.role.panel.edit.set_display.name.modal.input.display_name.label", nil), discord.TextInputComponent{CustomID: "display_name", Style: discord.TextInputStyleShort, MinLength: builtin.Ptr(1), MaxLength: 100, Required: true, Value: edit.Roles[idx].Name})).Build()
 								if err := event.Modal(modal); err != nil {
 									return errors.NewError(err)
 								}
@@ -683,7 +687,7 @@ func Command(c *components.Components) components.Command {
 						if err := rolePanelPlace(event, &place, event.Locale(), event.Client(), true, c); err != nil {
 							return errors.NewError(err)
 						}
-						embed := discord.NewEmbedBuilder().SetTitle(translate.Message(event.Locale(), "components.role.panel.create.message")).SetDescription(translate.Message(event.Locale(), "components.role.panel.create.description")).Build()
+						embed := discord.NewEmbedBuilder().SetTitle(i18n.TranslateText(event.Locale(), "components.role.panel.create.message", nil)).SetDescription(i18n.TranslateText(event.Locale(), "components.role.panel.create.description", nil)).Build()
 						if err := event.UpdateMessage(discord.NewMessageBuilder().
 							SetEmbeds(embeds.SetEmbedProperties(embed)).
 							BuildUpdate()); err != nil {
@@ -736,7 +740,13 @@ func Command(c *components.Components) components.Command {
 							return errors.NewError(errors.ErrorMessage("errors.fail.role.panel", event))
 						}
 					}
-					embed := discord.NewEmbedBuilder().SetTitle(translate.Message(event.Locale(), "components.role.panel.use."+builtin.Or(!contain, "added", "removed"))).SetDescription(translate.Message(event.Locale(), "components.role.panel.use."+builtin.Or(!contain, "added", "removed")+`.description`, translate.WithTemplate(map[string]any{"Role": discord.RoleMention(roleID)}))).Build()
+					useTitleKey := "components.role.panel.use.removed"
+					useDescKey := "components.role.panel.use.removed.description"
+					if !contain {
+						useTitleKey = "components.role.panel.use.added"
+						useDescKey = "components.role.panel.use.added.description"
+					}
+					embed := discord.NewEmbedBuilder().SetTitle(i18n.TranslateText(event.Locale(), useTitleKey, nil)).SetDescription(i18n.TranslateText(event.Locale(), useDescKey, map[string]any{"role": discord.RoleMention(roleID)})).Build()
 					if err := event.CreateMessage(discord.NewMessageBuilder().
 						SetEmbeds(embeds.SetEmbedProperties(embed)).
 						SetFlags(discord.MessageFlagEphemeral).
@@ -752,7 +762,7 @@ func Command(c *components.Components) components.Command {
 						}
 						options[i] = discord.StringSelectMenuOption{Label: role.Name, Value: role.ID.String(), Emoji: emojiVal, Default: slices.Contains(event.Member().RoleIDs, role.ID)}
 					}
-					if err := event.CreateMessage(discord.NewMessageBuilder().SetComponents(discord.NewActionRow(discord.StringSelectMenuComponent{CustomID: fmt.Sprintf("role:panel_use:select_menu:%s", place.ID.String()), Placeholder: translate.Message(event.Locale(), "components.role.panel.components.select_menu.placeholder"), MinValues: builtin.Ptr(0), MaxValues: len(place.Roles), Options: options})).SetFlags(discord.MessageFlagEphemeral).BuildCreate()); err != nil {
+					if err := event.CreateMessage(discord.NewMessageBuilder().SetComponents(discord.NewActionRow(discord.StringSelectMenuComponent{CustomID: fmt.Sprintf("role:panel_use:select_menu:%s", place.ID.String()), Placeholder: i18n.TranslateText(event.Locale(), "components.role.panel.components.select_menu.placeholder", nil), MinValues: builtin.Ptr(0), MaxValues: len(place.Roles), Options: options})).SetFlags(discord.MessageFlagEphemeral).BuildCreate()); err != nil {
 						return errors.NewError(err)
 					}
 				case "select_menu":
@@ -778,27 +788,27 @@ func Command(c *components.Components) components.Command {
 							}
 						}
 					}
-					embed := discord.NewEmbedBuilder().SetTitle(translate.Message(event.Locale(), "components.role.panel.use.changed"))
+					embed := discord.NewEmbedBuilder().SetTitle(i18n.TranslateText(event.Locale(), "components.role.panel.use.changed", nil))
 					if len(addRoles) > 0 {
 						var s strings.Builder
 						for _, id := range addRoles {
 							fmt.Fprintf(&s, "%s\n", discord.RoleMention(id))
 						}
-						embed.AddFields(discord.EmbedField{Name: translate.Message(event.Locale(), "components.role.panel.use.changed.add"), Value: s.String()})
+						embed.AddFields(discord.EmbedField{Name: i18n.TranslateText(event.Locale(), "components.role.panel.use.changed.add", nil), Value: s.String()})
 					}
 					if len(unchangedRole) > 0 {
 						var s strings.Builder
 						for _, id := range unchangedRole {
 							fmt.Fprintf(&s, "%s\n", discord.RoleMention(id))
 						}
-						embed.AddFields(discord.EmbedField{Name: translate.Message(event.Locale(), "components.role.panel.use.changed.unchanged"), Value: s.String()})
+						embed.AddFields(discord.EmbedField{Name: i18n.TranslateText(event.Locale(), "components.role.panel.use.changed.unchanged", nil), Value: s.String()})
 					}
 					if len(removedRoles) > 0 {
 						var s strings.Builder
 						for _, id := range removedRoles {
 							fmt.Fprintf(&s, "%s\n", discord.RoleMention(id))
 						}
-						embed.AddFields(discord.EmbedField{Name: translate.Message(event.Locale(), "components.role.panel.use.changed.remove"), Value: s.String()})
+						embed.AddFields(discord.EmbedField{Name: i18n.TranslateText(event.Locale(), "components.role.panel.use.changed.remove", nil), Value: s.String()})
 					}
 					if err := event.RespondMessage(discord.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed.Build())).SetFlags(discord.MessageFlagEphemeral)); err != nil {
 						return errors.NewError(err)
@@ -890,7 +900,7 @@ func Command(c *components.Components) components.Command {
 						err = event.Client().Rest.AddMemberRole(event.GuildID, event.UserID, role.ID)
 					}
 					if err != nil {
-						embed := discord.NewEmbedBuilder().SetTitlef("❗ %s", translate.Message(u.Locale, "errors.fail.role.panel")).SetDescription(translate.Message(u.Locale, "errors.fail.role.panel.description")).SetColor(0xff2121).Build()
+						embed := discord.NewEmbedBuilder().SetTitlef("❗ %s", i18n.TranslateText(u.Locale, "errors.fail.role.panel", nil)).SetDescription(i18n.TranslateText(u.Locale, "errors.fail.role.panel.description", nil)).SetColor(0xff2121).Build()
 						m, err := event.Client().Rest.CreateMessage(event.ChannelID, discord.NewMessageBuilder().
 							SetEmbeds(embeds.SetEmbedProperties(embed)).
 							SetFlags(discord.MessageFlagEphemeral).
@@ -905,9 +915,15 @@ func Command(c *components.Components) components.Command {
 						return nil
 					}
 					if !place.HideNotice {
+						useTitleKey := "components.role.panel.use.removed"
+						useDescKey := "components.role.panel.use.removed.description"
+						if !contains {
+							useTitleKey = "components.role.panel.use.added"
+							useDescKey = "components.role.panel.use.added.description"
+						}
 						embed := discord.NewEmbedBuilder().
-							SetTitle(translate.Message(u.Locale, "components.role.panel.use."+builtin.Or(!contains, "added", "removed"))).
-							SetDescription(translate.Message(u.Locale, "components.role.panel.use."+builtin.Or(!contains, "added", "removed")+`.description`, translate.WithTemplate(map[string]any{"Role": discord.RoleMention(role.ID)}))).
+							SetTitle(i18n.TranslateText(u.Locale, useTitleKey, nil)).
+							SetDescription(i18n.TranslateText(u.Locale, useDescKey, map[string]any{"role": discord.RoleMention(role.ID)})).
 							Build()
 						m, err := event.Client().Rest.CreateMessage(event.ChannelID, discord.NewMessageBuilder().
 							SetContent(discord.UserMention(event.UserID)).

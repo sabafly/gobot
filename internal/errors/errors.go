@@ -27,7 +27,6 @@ import (
 	"github.com/disgoorg/disgo/rest"
 
 	"github.com/sabafly/gobot/internal/i18n"
-	"github.com/sabafly/gobot/internal/translate"
 )
 
 var (
@@ -42,7 +41,6 @@ type (
 	Config struct {
 		Description string
 		Template    any
-		MapContext  *i18n.MapContext
 	}
 
 	Option func(*Config)
@@ -68,12 +66,6 @@ func WithTemplate(t any) Option {
 	}
 }
 
-func WithMapContext(mc *i18n.MapContext) Option {
-	return func(c *Config) {
-		c.MapContext = mc
-	}
-}
-
 func ErrorMessage(
 	key string,
 	event interface {
@@ -88,24 +80,17 @@ func ErrorMessage(
 	var desc string
 	if cfg.Description != "" {
 		desc = cfg.Description
+	} else if cfg.Template != nil {
+		desc = i18n.TranslateText(event.Locale(), key+".description", cfg.Template)
 	} else {
-		d, err := translate.Localize(event.Locale(), key+".description", cfg.Template, 0)
-		if err == nil {
-			desc = d
-		} else {
-			desc = i18n.TranslateText(event.Locale(), key+".description")
-			if cfg.MapContext != nil {
-				desc = cfg.MapContext.ReplaceText(desc)
-			}
-		}
+		desc = i18n.TranslateText(event.Locale(), key+".description")
 	}
 
-	title := translate.Message(event.Locale(), key)
-	if title == "" || title == key {
+	var title string
+	if cfg.Template != nil {
+		title = i18n.TranslateText(event.Locale(), key, cfg.Template)
+	} else {
 		title = i18n.TranslateText(event.Locale(), key)
-	}
-	if cfg.MapContext != nil {
-		title = cfg.MapContext.ReplaceText(title)
 	}
 
 	return event.RespondMessage(

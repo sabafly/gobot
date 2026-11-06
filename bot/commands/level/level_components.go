@@ -35,7 +35,7 @@ import (
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/internal/embeds"
 	"github.com/sabafly/gobot/internal/errors"
-	"github.com/sabafly/gobot/internal/translate"
+	"github.com/sabafly/gobot/internal/i18n"
 )
 
 func upMessageModalHandler(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
@@ -49,7 +49,7 @@ func upMessageModalHandler(c *components.Components, event *events.ModalSubmitIn
 	}
 
 	embed := discord.NewEmbedBuilder().
-		SetTitle(translate.Message(event.Locale(), "components.level.up.message.message")).
+		SetTitle(i18n.TranslateText(event.Locale(), "components.level.up.message.message", nil)).
 		SetDescription(g.LevelUpMessage).
 		Build()
 

@@ -1,7 +1,7 @@
 # ============================================
 # Build Stage
 # ============================================
-FROM golang:1.25.4 AS builder
+FROM golang:1.27 AS builder
 
 WORKDIR /app
 
@@ -38,7 +38,6 @@ WORKDIR /app
 COPY --from=builder /app/gobot .
 
 # ランタイムに必要なファイルをコピー
-COPY --from=builder /app/lang ./lang
 COPY --from=builder /app/locales ./locales
 
 # 非rootユーザーで実行（セキュリティベストプラクティス）

@@ -30,7 +30,7 @@ import (
 	"github.com/sabafly/gobot/internal/builtin"
 	"github.com/sabafly/gobot/internal/embeds"
 	"github.com/sabafly/gobot/internal/errors"
-	"github.com/sabafly/gobot/internal/translate"
+	"github.com/sabafly/gobot/internal/i18n"
 )
 
 func Command(c *components.Components) components.Command {
@@ -161,7 +161,7 @@ func Command(c *components.Components) components.Command {
 							SetEmbeds(
 								embeds.SetEmbedProperties(
 									discord.NewEmbedBuilder().
-										SetTitle(translate.Message(event.Locale(), "components.permission.set.message.embed.title")).
+										SetTitle(i18n.TranslateText(event.Locale(), "components.permission.set.message.embed.title")).
 										SetDescriptionf("%s```yaml\n%s: %t\n```",
 											mention, perm, value,
 										).
@@ -215,7 +215,7 @@ func Command(c *components.Components) components.Command {
 							SetEmbeds(
 								embeds.SetEmbedProperties(
 									discord.NewEmbedBuilder().
-										SetTitle(translate.Message(event.Locale(), "components.permission.unset.message.embed.title")).
+										SetTitle(i18n.TranslateText(event.Locale(), "components.permission.unset.message.embed.title")).
 										SetDescriptionf("%s```yaml\n%s\n```",
 											mention, perm,
 										).
@@ -262,7 +262,7 @@ func Command(c *components.Components) components.Command {
 							SetEmbeds(
 								embeds.SetEmbedProperties(
 									discord.NewEmbedBuilder().
-										SetTitle(translate.Message(event.Locale(), "components.permission.check.message.embed.title")).
+										SetTitle(i18n.TranslateText(event.Locale(), "components.permission.check.message.embed.title")).
 										SetDescriptionf("%s```yaml\n%s: %t\n```",
 											mention, perm, p,
 										).
@@ -305,7 +305,7 @@ func Command(c *components.Components) components.Command {
 							SetEmbeds(
 								embeds.SetEmbedProperties(
 									discord.NewEmbedBuilder().
-										SetTitle(translate.Message(event.Locale(), "components.permission.list.message.embed.title")).
+										SetTitle(i18n.TranslateText(event.Locale(), "components.permission.list.message.embed.title")).
 										SetDescriptionf("%s```yaml\n%s```",
 											mention,
 											builtin.Or(str != "", str, "Empty"),

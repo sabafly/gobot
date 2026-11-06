@@ -190,6 +190,8 @@ func HALFinish(c *components.Components, data HALData, finishState HALFinishStat
 	}
 	hal_values.Delete(data.id)
 
+	cName := currency.GetCurrencyName(c, guildID)
+
 	var finalStateStr string
 	switch finishState {
 	case HALFinishStateWin:
@@ -197,14 +199,13 @@ func HALFinish(c *components.Components, data HALData, finishState HALFinishStat
 	case HALFinishStateLose:
 		finalStateStr = i18n.TranslateText(event.Locale(), "command.play.high-and-low.finish.lose")
 	case HALFinishStatePayout:
-		finalStateStr = i18n.TranslateText(event.Locale(), "command.play.high-and-low.finish.payout")
+		finalStateStr = i18n.TranslateText(event.Locale(), "command.play.high-and-low.finish.payout", map[string]any{"currency_name": cName})
 	case HALFinishStateJoker:
 		finalStateStr = i18n.TranslateText(event.Locale(), "command.play.high-and-low.finish.joker")
 	default:
 		finalStateStr = i18n.TranslateText(event.Locale(), "command.play.high-and-low.finish.unknown")
 	}
 
-	cName := currency.GetCurrencyName(c, guildID)
 	if err := event.UpdateMessage(discord.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(i18n.BuildContext().

@@ -27,7 +27,7 @@ import (
 
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/builtin"
-	"github.com/sabafly/gobot/internal/translate"
+	"github.com/sabafly/gobot/internal/i18n"
 	"github.com/sabafly/gobot/internal/xppoint"
 )
 
@@ -50,30 +50,28 @@ func levelMessage(
 		).
 		SetThumbnail(member.EffectiveAvatarURL()).
 		SetTitle(
-			translate.Message(
+			i18n.TranslateText(
 				event.Locale(), "components.level.rank.embed.title",
-				translate.WithTemplate(
-					map[string]any{
-						"User": member.EffectiveName(),
-					},
-				),
+				map[string]any{
+					"user": member.EffectiveName(),
+				},
 			),
 		).
-		SetDescription("## "+translate.Message(event.Locale(), "components.level.rank.embed.description",
-			translate.WithTemplate(map[string]any{
-				"Level": m.XP.Level(),
-				"Xp":    m.XP,
-			}),
+		SetDescription("## "+i18n.TranslateText(event.Locale(), "components.level.rank.embed.description",
+			map[string]any{
+				"level": m.XP.Level(),
+				"xp":    m.XP,
+			},
 		)).
 		SetFields(
 			discord.EmbedField{
-				Name:   translate.Message(event.Locale(), "components.level.rank.embed.fields.place"),
+				Name:   i18n.TranslateText(event.Locale(), "components.level.rank.embed.fields.place", nil),
 				Value:  fmt.Sprintf("**#%d**", index+1),
 				Inline: builtin.Ptr(true),
 			},
 			discord.EmbedField{
-				Name: translate.Message(event.Locale(), "components.level.rank.embed.fields.next_level",
-					translate.WithTemplate(map[string]any{"NextLevel": m.XP.Level() + 1}),
+				Name: i18n.TranslateText(event.Locale(), "components.level.rank.embed.fields.next_level",
+					map[string]any{"next_level": m.XP.Level() + 1},
 				),
 				Value: fmt.Sprintf("`%d`xp / `%d`xp",
 					xppoint.RequiredPoint(m.XP.Level())-(xppoint.TotalPoint(m.XP.Level()+1)-uint64(m.XP)),
