@@ -1,4 +1,4 @@
-FROM mariadb:12
+FROM mariadb:13
 
 ENV MARIADB_MYSQL_LOCALHOST_USER=1
 
