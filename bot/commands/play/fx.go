@@ -972,7 +972,7 @@ func FXMarginButtonHandler(c *components.Components, event *events.ComponentInte
 				discord.TextInputComponent{
 					CustomID:    "margin",
 					Style:       discord.TextInputStyleShort,
-					MinLength:   ptr(1),
+					MinLength:   new(1),
 					MaxLength:   10,
 					Required:    true,
 					Value:       strconv.FormatInt(session.SelectedMargin, 10),
@@ -1104,7 +1104,7 @@ func FXAddMarginButtonHandler(c *components.Components, event *events.ComponentI
 				discord.TextInputComponent{
 					CustomID:    "amount",
 					Style:       discord.TextInputStyleShort,
-					MinLength:   ptr(1),
+					MinLength:   new(1),
 					MaxLength:   10,
 					Required:    true,
 					Placeholder: "例: 500",
@@ -1641,7 +1641,7 @@ func FXPendingOrderButtonHandler(c *components.Components, event *events.Compone
 				discord.TextInputComponent{
 					CustomID:    "target_price",
 					Style:       discord.TextInputStyleShort,
-					MinLength:   ptr(1),
+					MinLength:   new(1),
 					MaxLength:   10,
 					Required:    true,
 					Placeholder: i18n.TranslateText(event.Locale(), "components.play.fx.modal_pending_order_price_placeholder"),

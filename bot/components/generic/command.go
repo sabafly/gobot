@@ -372,8 +372,8 @@ func (gc *Command) RegisterRoutes(r handler.Router) {
 			router = r.With(mw...)
 		}
 
-		if strings.HasPrefix(p, "m/") {
-			name := strings.TrimPrefix(p, "m/")
+		if after, ok := strings.CutPrefix(p, "m/"); ok {
+			name := after
 			router.MessageCommand("/"+name, func(data discord.MessageCommandInteractionData, e *handler.CommandEvent) error {
 				if err := c.Handler()(gc.component, e.ApplicationCommandInteractionCreate); err != nil {
 					CreateErrorMessage(err, e)
@@ -381,8 +381,8 @@ func (gc *Command) RegisterRoutes(r handler.Router) {
 				}
 				return nil
 			})
-		} else if strings.HasPrefix(p, "u/") {
-			name := strings.TrimPrefix(p, "u/")
+		} else if after, ok := strings.CutPrefix(p, "u/"); ok {
+			name := after
 			router.UserCommand("/"+name, func(data discord.UserCommandInteractionData, e *handler.CommandEvent) error {
 				if err := c.Handler()(gc.component, e.ApplicationCommandInteractionCreate); err != nil {
 					CreateErrorMessage(err, e)
@@ -452,9 +452,9 @@ func (gc *Command) RegisterRoutes(r handler.Router) {
 		p := pattern
 		c := cmd
 		var commandPath, focusedOption string
-		if idx := strings.Index(p, ":"); idx != -1 {
-			commandPath = p[:idx]
-			focusedOption = p[idx+1:]
+		if before, after, ok := strings.Cut(p, ":"); ok {
+			commandPath = before
+			focusedOption = after
 		} else {
 			commandPath = p
 		}

@@ -69,12 +69,12 @@ func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *
 				discord.EmbedField{
 					Name:   i18n.TranslateText(locale, "components.role.panel.edit.menu.base.field.name", nil),
 					Value:  builtin.NonNil(edit.Name),
-					Inline: builtin.Ptr(true),
+					Inline: new(true),
 				},
 				discord.EmbedField{
 					Name:   i18n.TranslateText(locale, "components.role.panel.edit.menu.base.field.description", nil),
 					Value:  builtin.Or(builtin.NonNil(edit.Description) != "", builtin.NonNil(edit.Description), fmt.Sprintf("`%s`", i18n.TranslateText(locale, "components.role.panel.edit.menu.base.field.value.empty", nil))),
-					Inline: builtin.Ptr(true),
+					Inline: new(true),
 				},
 				discord.EmbedField{
 					Name:  i18n.TranslateText(locale, "components.role.panel.edit.menu.base.field.roles", nil),
@@ -151,7 +151,7 @@ func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *
 				return discord.StringSelectMenuComponent{
 					CustomID:    fmt.Sprintf("role:panel_edit_component:select_role:%s", edit.ID),
 					Placeholder: i18n.TranslateText(locale, "components.role.panel.edit.menu.base.components.select_role", nil),
-					MinValues:   builtin.Ptr(0),
+					MinValues:   new(0),
 					MaxValues:   1,
 					Disabled:    len(edit.Roles) < 1,
 					Options:     options,
@@ -232,7 +232,7 @@ func rpEditModifyRolesMessage(edit *models.RolePanelEdit, locale discord.Locale)
 		discord.NewActionRow(
 			discord.RoleSelectMenuComponent{
 				CustomID:  fmt.Sprintf("role:panel_edit_component:add_role:%s", edit.ID),
-				MinValues: builtin.Ptr(1),
+				MinValues: new(1),
 				MaxValues: 20,
 				DefaultValues: func() []discord.SelectMenuDefaultValue {
 					values := make([]discord.SelectMenuDefaultValue, len(edit.Roles))
@@ -303,7 +303,7 @@ func rpPlaceBaseMenu(place *models.RolePanelPlaced, locale discord.Locale) disco
 		discord.NewActionRow(
 			discord.StringSelectMenuComponent{
 				CustomID:    fmt.Sprintf("role:panel_place_component:type:%s", place.ID),
-				MinValues:   builtin.Ptr(1),
+				MinValues:   new(1),
 				MaxValues:   1,
 				Placeholder: i18n.TranslateText(locale, "components.role.panel.place.menu.select_type.placeholder", nil),
 				Options: []discord.StringSelectMenuOption{
@@ -339,7 +339,7 @@ func rpPlaceBaseMenu(place *models.RolePanelPlaced, locale discord.Locale) disco
 			discord.NewActionRow(
 				discord.StringSelectMenuComponent{
 					CustomID:  fmt.Sprintf("role:panel_place_component:button_type:%s", place.ID),
-					MinValues: builtin.Ptr(1),
+					MinValues: new(1),
 					MaxValues: 1,
 					Options: []discord.StringSelectMenuOption{
 						{
@@ -517,7 +517,7 @@ func rpPlacedSelectMenu(place *models.RolePanelPlaced, locale discord.Locale) di
 		discord.StringSelectMenuComponent{
 			CustomID:    fmt.Sprintf("role:panel_use:select_menu:%s", place.ID.String()),
 			Placeholder: i18n.TranslateText(locale, "components.role.panel.components.select_menu.placeholder", nil),
-			MinValues:   builtin.Ptr(0),
+			MinValues:   new(0),
 			MaxValues:   len(place.Roles),
 			Options:     options,
 		},

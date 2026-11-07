@@ -15,8 +15,9 @@ import (
 	"github.com/sabafly/gobot/internal/i18n"
 )
 
+//go:fix inline
 func ptr[T any](v T) *T {
-	return &v
+	return new(v)
 }
 
 func Command(c *components.Components) components.Command {
@@ -39,8 +40,8 @@ func Command(c *components.Components) components.Command {
 						Description:              "Bet title",
 						DescriptionLocalizations: i18n.TranslateTextMap("command.bet.option.title.description"),
 						Required:                 true,
-						MinLength:                ptr(1),
-						MaxLength:                ptr(100),
+						MinLength:                new(1),
+						MaxLength:                new(100),
 					},
 					discord.ApplicationCommandOptionString{
 						Name:                     "mode",
@@ -153,7 +154,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 						Style:       discord.TextInputStyleShort,
 						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_poll.input.title.placeholder"),
 						Required:    true,
-						MinLength:   ptr(1),
+						MinLength:   new(1),
 						MaxLength:   100,
 						Value:       title,
 					},
@@ -164,7 +165,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 						Style:       discord.TextInputStyleParagraph,
 						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_poll.input.options.placeholder"),
 						Required:    true,
-						MinLength:   ptr(3),
+						MinLength:   new(3),
 						MaxLength:   4000,
 					}),
 				discord.NewLabel(i18n.TranslateText(locale, "command.bet.modal.create_poll.input.prize_pool.label"),
@@ -173,7 +174,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 						Style:       discord.TextInputStyleShort,
 						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_poll.input.prize_pool.placeholder"),
 						Required:    false,
-						MinLength:   ptr(1),
+						MinLength:   new(1),
 						MaxLength:   10,
 					}),
 				discord.NewLabel(i18n.TranslateText(locale, "command.bet.modal.create_poll.input.deadline.label"),
@@ -182,7 +183,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 						Style:       discord.TextInputStyleShort,
 						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_poll.input.deadline.placeholder"),
 						Required:    false,
-						MinLength:   ptr(1),
+						MinLength:   new(1),
 						MaxLength:   10,
 					}),
 			).
@@ -206,7 +207,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 						Style:       discord.TextInputStyleShort,
 						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_race.input.title.placeholder"),
 						Required:    true,
-						MinLength:   ptr(1),
+						MinLength:   new(1),
 						MaxLength:   100,
 						Value:       title,
 					},
@@ -217,7 +218,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 						Style:       discord.TextInputStyleShort,
 						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_race.input.prize_pool.placeholder"),
 						Required:    false,
-						MinLength:   ptr(1),
+						MinLength:   new(1),
 						MaxLength:   10,
 					}),
 				discord.NewLabel(i18n.TranslateText(locale, "command.bet.modal.create_race.input.entry_fee.label"),
@@ -226,7 +227,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 						Style:       discord.TextInputStyleShort,
 						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_race.input.entry_fee.placeholder"),
 						Required:    false,
-						MinLength:   ptr(1),
+						MinLength:   new(1),
 						MaxLength:   10,
 					}),
 				discord.NewLabel(i18n.TranslateText(locale, "command.bet.modal.create_race.input.entry_deadline.label"),
@@ -235,7 +236,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 						Style:       discord.TextInputStyleShort,
 						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_race.input.entry_deadline.placeholder"),
 						Required:    false,
-						MinLength:   ptr(1),
+						MinLength:   new(1),
 						MaxLength:   10,
 					}),
 				discord.NewLabel(i18n.TranslateText(locale, "command.bet.modal.create_race.input.vote_deadline.label"),
@@ -244,7 +245,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 						Style:       discord.TextInputStyleShort,
 						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_race.input.vote_deadline.placeholder"),
 						Required:    false,
-						MinLength:   ptr(1),
+						MinLength:   new(1),
 						MaxLength:   10,
 					}),
 			).
@@ -267,7 +268,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 						Style:       discord.TextInputStyleShort,
 						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_battle_royale.input.title.placeholder"),
 						Required:    true,
-						MinLength:   ptr(1),
+						MinLength:   new(1),
 						MaxLength:   100,
 						Value:       title,
 					},
@@ -278,7 +279,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 						Style:       discord.TextInputStyleShort,
 						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_battle_royale.input.entry_fee.placeholder"),
 						Required:    true,
-						MinLength:   ptr(1),
+						MinLength:   new(1),
 						MaxLength:   10,
 					}),
 				discord.NewLabel(i18n.TranslateText(locale, "command.bet.modal.create_battle_royale.input.prize_pool.label"),
@@ -287,7 +288,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 						Style:       discord.TextInputStyleShort,
 						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_battle_royale.input.prize_pool.placeholder"),
 						Required:    false,
-						MinLength:   ptr(1),
+						MinLength:   new(1),
 						MaxLength:   10,
 					}),
 				discord.NewLabel(i18n.TranslateText(locale, "command.bet.modal.create_battle_royale.input.entry_deadline.label"),
@@ -296,7 +297,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 						Style:       discord.TextInputStyleShort,
 						Placeholder: i18n.TranslateText(locale, "command.bet.modal.create_battle_royale.input.entry_deadline.placeholder"),
 						Required:    false,
-						MinLength:   ptr(1),
+						MinLength:   new(1),
 						MaxLength:   10,
 					}),
 			).

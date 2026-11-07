@@ -66,7 +66,7 @@ func levelMessage(
 			discord.EmbedField{
 				Name:   i18n.TranslateText(event.Locale(), "components.level.rank.embed.fields.place", nil),
 				Value:  fmt.Sprintf("**#%d**", index+1),
-				Inline: builtin.Ptr(true),
+				Inline: new(true),
 			},
 			discord.EmbedField{
 				Name: i18n.TranslateText(event.Locale(), "components.level.rank.embed.fields.next_level",
@@ -76,7 +76,7 @@ func levelMessage(
 					xppoint.RequiredPoint(m.XP.Level())-(xppoint.TotalPoint(m.XP.Level()+1)-uint64(m.XP)),
 					xppoint.RequiredPoint(m.XP.Level()),
 				),
-				Inline: builtin.Ptr(true),
+				Inline: new(true),
 			},
 		)
 }

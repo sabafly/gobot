@@ -48,7 +48,6 @@ import (
 
 	"github.com/sabafly/gobot/bot/commands/bet"
 	"github.com/sabafly/gobot/bot/commands/currency"
-	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/bot/commands/debug"
 	"github.com/sabafly/gobot/bot/commands/level"
 	"github.com/sabafly/gobot/bot/commands/message"
@@ -60,6 +59,7 @@ import (
 	"github.com/sabafly/gobot/bot/commands/user"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/emoji"
 	"github.com/sabafly/gobot/internal/i18n"
 

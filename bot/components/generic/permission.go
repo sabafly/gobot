@@ -118,8 +118,8 @@ func RolePermissionCheck(g *models.Guild, guildID snowflake.ID, client *bot.Clie
 	for _, p := range perms {
 		var r bool
 		hasExplicit := false
-		for i := len(memberRoles) - 1; i >= 0; i-- {
-			role := memberRoles[i]
+		for _, role := range slices.Backward(memberRoles) {
+
 			l := g.Permissions[role.ID]
 			if l.Enabled(p.PermString()) {
 				r = true

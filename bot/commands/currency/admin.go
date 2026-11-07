@@ -124,8 +124,9 @@ func calculateUserTaxAmount(p int64, cfg *models.CurrencyTaxConfig) int64 {
 	return taxAmount
 }
 
+//go:fix inline
 func ptr[T any](v T) *T {
-	return &v
+	return new(v)
 }
 
 func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
@@ -222,7 +223,7 @@ func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandI
 			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_label_rate"),
 				discord.StringSelectMenuComponent{
 					CustomID:  "rate",
-					MinValues: ptr(1),
+					MinValues: new(1),
 					MaxValues: 1,
 					Options:   rateOptions,
 				}),
@@ -236,14 +237,14 @@ func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandI
 			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_label_interval"),
 				discord.StringSelectMenuComponent{
 					CustomID:  "interval_days",
-					MinValues: ptr(1),
+					MinValues: new(1),
 					MaxValues: 1,
 					Options:   intervalOptions,
 				}),
 			discord.NewLabel(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_label_enabled"),
 				discord.StringSelectMenuComponent{
 					CustomID:  "enabled",
-					MinValues: ptr(1),
+					MinValues: new(1),
 					MaxValues: 1,
 					Options:   enabledOptions,
 				}),
@@ -379,7 +380,7 @@ func respondModalError(event *events.ModalSubmitInteractionCreate, text string) 
 		SetIsComponentsV2(true).
 		SetComponents(
 			discord.NewContainer(
-				discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_error_title") + text),
+				discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_error_title")+text),
 			).WithAccentColor(0xE74C3C),
 		),
 	)

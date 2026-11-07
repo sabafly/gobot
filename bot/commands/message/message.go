@@ -98,7 +98,7 @@ func Command(c *components.Components) *generic.Command {
 										Description:              "suffix",
 										DescriptionLocalizations: i18n.TranslateTextMap("components.message.suffix.set.command.options.suffix.description"),
 										Required:                 true,
-										MaxLength:                builtin.Ptr(512),
+										MaxLength:                new(512),
 									},
 									discord.ApplicationCommandOptionString{
 										Name:                     "rule",
@@ -222,8 +222,8 @@ func Command(c *components.Components) *generic.Command {
 									discord.ApplicationCommandOptionString{
 										Name:        "time",
 										Description: "format 2023-01-23 15:16",
-										MinLength:   builtin.Ptr(1),
-										MaxLength:   builtin.Ptr(16),
+										MinLength:   new(1),
+										MaxLength:   new(16),
 										Required:    true,
 									},
 								},
@@ -286,7 +286,7 @@ func Command(c *components.Components) *generic.Command {
 						case PinArgumentTypeDuration1w:
 							d = time.Hour * 24 * 7
 						}
-						expired = builtin.Or(d != 0, builtin.Ptr(time.Now().Add(d)), nil)
+						expired = builtin.Or(d != 0, new(time.Now().Add(d)), nil)
 					}
 
 					var w models.WordSuffix
@@ -564,7 +564,7 @@ func Command(c *components.Components) *generic.Command {
 									discord.TextInputComponent{
 										CustomID:  "content",
 										Style:     discord.TextInputStyleParagraph,
-										MinLength: builtin.Ptr(1),
+										MinLength: new(1),
 										MaxLength: 1000,
 										Required:  true,
 									},
@@ -573,7 +573,7 @@ func Command(c *components.Components) *generic.Command {
 									discord.TextInputComponent{
 										CustomID:  "name",
 										Style:     discord.TextInputStyleShort,
-										MinLength: builtin.Ptr(1),
+										MinLength: new(1),
 										MaxLength: 64,
 										Required:  true,
 										Value: fmt.Sprintf("%s#%d",

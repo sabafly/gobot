@@ -305,7 +305,7 @@ func Command(c *components.Components) components.Command {
 									discord.TextInputComponent{
 										CustomID:  "message_title",
 										Style:     discord.TextInputStyleShort,
-										MinLength: builtin.Ptr(1),
+										MinLength: new(1),
 										MaxLength: 30,
 										Required:  true,
 										Value:     g.BumpMessageTitle,
@@ -315,7 +315,7 @@ func Command(c *components.Components) components.Command {
 									discord.TextInputComponent{
 										CustomID:  "message",
 										Style:     discord.TextInputStyleParagraph,
-										MinLength: builtin.Ptr(1),
+										MinLength: new(1),
 										MaxLength: 300,
 										Required:  true,
 										Value:     g.BumpMessage,
@@ -325,7 +325,7 @@ func Command(c *components.Components) components.Command {
 									discord.TextInputComponent{
 										CustomID:  "remind.message_title",
 										Style:     discord.TextInputStyleShort,
-										MinLength: builtin.Ptr(1),
+										MinLength: new(1),
 										MaxLength: 30,
 										Required:  true,
 										Value:     g.BumpRemindMessageTitle,
@@ -335,7 +335,7 @@ func Command(c *components.Components) components.Command {
 									discord.TextInputComponent{
 										CustomID:  "remind.message",
 										Style:     discord.TextInputStyleParagraph,
-										MinLength: builtin.Ptr(1),
+										MinLength: new(1),
 										MaxLength: 300,
 										Required:  true,
 										Value:     g.BumpRemindMessage,
@@ -368,7 +368,7 @@ func Command(c *components.Components) components.Command {
 									discord.TextInputComponent{
 										CustomID:  "message_title",
 										Style:     discord.TextInputStyleShort,
-										MinLength: builtin.Ptr(1),
+										MinLength: new(1),
 										MaxLength: 30,
 										Required:  true,
 										Value:     g.UpMessageTitle,
@@ -378,7 +378,7 @@ func Command(c *components.Components) components.Command {
 									discord.TextInputComponent{
 										CustomID:  "message",
 										Style:     discord.TextInputStyleParagraph,
-										MinLength: builtin.Ptr(1),
+										MinLength: new(1),
 										MaxLength: 300,
 										Required:  true,
 										Value:     g.UpMessage,
@@ -388,7 +388,7 @@ func Command(c *components.Components) components.Command {
 									discord.TextInputComponent{
 										CustomID:  "remind.message_title",
 										Style:     discord.TextInputStyleShort,
-										MinLength: builtin.Ptr(1),
+										MinLength: new(1),
 										MaxLength: 30,
 										Required:  true,
 										Value:     g.UpRemindMessageTitle,
@@ -398,7 +398,7 @@ func Command(c *components.Components) components.Command {
 									discord.TextInputComponent{
 										CustomID:  "remind.message",
 										Style:     discord.TextInputStyleParagraph,
-										MinLength: builtin.Ptr(1),
+										MinLength: new(1),
 										MaxLength: 300,
 										Required:  true,
 										Value:     g.UpRemindMessage,

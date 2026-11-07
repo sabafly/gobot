@@ -66,8 +66,7 @@ func NewError(err error) Error {
 }
 
 func newError(err error, skip int) *errorImpl {
-	var ei *errorImpl
-	if errors.As(err, &ei) {
+	if ei, ok := errors.AsType[*errorImpl](err); ok {
 		return ei
 	}
 	pc := make([]uintptr, 10) // at least 1 entry needed
@@ -85,8 +84,7 @@ func newError(err error, skip int) *errorImpl {
 		e = err
 	}
 	var debugInfo string
-	var restErr *rest.Error
-	if errors.As(e, &restErr) {
+	if restErr, ok := errors.AsType[*rest.Error](e); ok {
 		e := fmt.Errorf("%w\nurl: %s\nrq: %s\nrs: %s\nhd: %v", restErr, restErr.Request.URL, string(restErr.RqBody), string(restErr.RsBody), restErr.Response.Header)
 		slog.Error("request info", "err", e)
 		debugInfo = e.Error()

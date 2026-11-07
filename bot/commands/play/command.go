@@ -42,8 +42,9 @@ func deleteSlotLock(id uuid.UUID) {
 	delete(slotLocks, id)
 }
 
+//go:fix inline
 func ptr[T any](v T) *T {
-	return &v
+	return new(v)
 }
 
 func Command(c *components.Components) components.Command {
@@ -98,7 +99,7 @@ func Command(c *components.Components) components.Command {
 								Description:              "掛け金を指定します (デフォルト: 10)",
 								DescriptionLocalizations: i18n.TranslateTextMap("command.play.chinchiro.option.bet.description"),
 								Required:                 false,
-								MinValue:                 ptr(1),
+								MinValue:                 new(1),
 							},
 						},
 					},

@@ -83,7 +83,7 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 			}
 			return nil
 		}
-		voteDeadline = ptr(time.Now().Add(time.Duration(mins) * time.Minute))
+		voteDeadline = new(time.Now().Add(time.Duration(mins) * time.Minute))
 	}
 
 	// Filter empty options
@@ -342,7 +342,7 @@ func handleVoteButton(c *components.Components, event *events.ComponentInteracti
 						Style:       discord.TextInputStyleShort,
 						Placeholder: i18n.TranslateText(locale, "command.bet.modal.vote.input.amount.placeholder"),
 						Required:    true,
-						MinLength:   ptr(1),
+						MinLength:   new(1),
 						MaxLength:   10,
 						Value:       "100",
 					}),
@@ -645,7 +645,7 @@ func handleDecideButton(c *components.Components, event *events.ComponentInterac
 						CustomID:    "winner",
 						Placeholder: i18n.TranslateText(locale, "command.bet.modal.decide.input.winner.placeholder"),
 						Options:     selectOptions,
-						MinValues:   ptr(1),
+						MinValues:   new(1),
 						MaxValues:   len(selectOptions),
 					}),
 			).
@@ -1140,7 +1140,7 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 			}
 			return nil
 		}
-		entryDeadline = ptr(time.Now().Add(time.Duration(mins) * time.Minute))
+		entryDeadline = new(time.Now().Add(time.Duration(mins) * time.Minute))
 	}
 
 	// Parse vote deadline (optional)
@@ -1547,7 +1547,7 @@ func handleBattleRoyaleConfig(c *components.Components, event *events.ModalSubmi
 			}
 			return nil
 		}
-		entryDeadline = ptr(time.Now().Add(time.Duration(mins) * time.Minute))
+		entryDeadline = new(time.Now().Add(time.Duration(mins) * time.Minute))
 	}
 
 	if event.GuildID() == nil {

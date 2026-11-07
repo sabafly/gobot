@@ -134,7 +134,7 @@ func Command(c *components.Components) components.Command {
 									discord.TextInputComponent{
 										CustomID:  "name",
 										Style:     discord.TextInputStyleShort,
-										MinLength: builtin.Ptr(1),
+										MinLength: new(1),
 										MaxLength: 32,
 										Required:  true,
 										Value:     i18n.TranslateText(event.Locale(), "components.role.panel.default_name", nil),
@@ -417,7 +417,7 @@ func Command(c *components.Components) components.Command {
 						if action == "change_name" {
 							titleKey = "components.role.panel.edit.action.change_name.title"
 						}
-						modal := discordutil.NewModalCreateBuilder().SetTitle(i18n.TranslateText(event.Locale(), titleKey, nil)).SetCustomID(fmt.Sprintf("role:panel_edit_modal:%s:%s", action, edit.ID)).SetComponents(builtin.Or(action == "change_name", discord.NewLabel(i18n.TranslateText(event.Locale(), "components.role.panel.edit.change_name.modal.input.name.label", nil), discord.TextInputComponent{CustomID: "name", Style: discord.TextInputStyleShort, MinLength: builtin.Ptr(1), MaxLength: 32, Required: true, Value: nameVal}), discord.NewLabel(i18n.TranslateText(event.Locale(), "components.role.panel.edit.change_description.modal.input.description.label", nil), discord.TextInputComponent{CustomID: "description", Style: discord.TextInputStyleParagraph, MaxLength: 140, Value: descVal}))).Build()
+						modal := discordutil.NewModalCreateBuilder().SetTitle(i18n.TranslateText(event.Locale(), titleKey, nil)).SetCustomID(fmt.Sprintf("role:panel_edit_modal:%s:%s", action, edit.ID)).SetComponents(builtin.Or(action == "change_name", discord.NewLabel(i18n.TranslateText(event.Locale(), "components.role.panel.edit.change_name.modal.input.name.label", nil), discord.TextInputComponent{CustomID: "name", Style: discord.TextInputStyleShort, MinLength: new(1), MaxLength: 32, Required: true, Value: nameVal}), discord.NewLabel(i18n.TranslateText(event.Locale(), "components.role.panel.edit.change_description.modal.input.description.label", nil), discord.TextInputComponent{CustomID: "description", Style: discord.TextInputStyleParagraph, MaxLength: 140, Value: descVal}))).Build()
 						if err := event.Modal(modal); err != nil {
 							return errors.NewError(err)
 						}
@@ -492,7 +492,7 @@ func Command(c *components.Components) components.Command {
 					case "select_role":
 						var id *snowflake.ID
 						if values := event.StringSelectMenuInteractionData().Values; len(values) > 0 {
-							id = builtin.Ptr(snowflake.MustParse(values[0]))
+							id = new(snowflake.MustParse(values[0]))
 						}
 						edit.SelectedRole = id
 						c.GormDB().Save(&edit)
@@ -539,7 +539,7 @@ func Command(c *components.Components) components.Command {
 						if edit.SelectedRole != nil {
 							idx := slices.IndexFunc(edit.Roles, func(r models.Role) bool { return r.ID == *edit.SelectedRole })
 							if idx != -1 {
-								modal := discordutil.NewModalCreateBuilder().SetTitle(i18n.TranslateText(event.Locale(), "components.role.panel.edit.set_display.name.modal.title", nil)).SetCustomID(fmt.Sprintf("role:panel_edit_modal:set_display_name:%s", edit.ID)).SetComponents(discord.NewLabel(i18n.TranslateText(event.Locale(), "components.role.panel.edit.set_display.name.modal.input.display_name.label", nil), discord.TextInputComponent{CustomID: "display_name", Style: discord.TextInputStyleShort, MinLength: builtin.Ptr(1), MaxLength: 100, Required: true, Value: edit.Roles[idx].Name})).Build()
+								modal := discordutil.NewModalCreateBuilder().SetTitle(i18n.TranslateText(event.Locale(), "components.role.panel.edit.set_display.name.modal.title", nil)).SetCustomID(fmt.Sprintf("role:panel_edit_modal:set_display_name:%s", edit.ID)).SetComponents(discord.NewLabel(i18n.TranslateText(event.Locale(), "components.role.panel.edit.set_display.name.modal.input.display_name.label", nil), discord.TextInputComponent{CustomID: "display_name", Style: discord.TextInputStyleShort, MinLength: new(1), MaxLength: 100, Required: true, Value: edit.Roles[idx].Name})).Build()
 								if err := event.Modal(modal); err != nil {
 									return errors.NewError(err)
 								}
@@ -548,7 +548,7 @@ func Command(c *components.Components) components.Command {
 					case "set_emoji":
 						if edit.SelectedRole != nil {
 							token := event.Token()
-							edit.EmojiAuthor = builtin.Ptr(event.User().ID)
+							edit.EmojiAuthor = new(event.User().ID)
 							edit.Token = &token
 							c.GormDB().Save(&edit)
 						}
@@ -761,7 +761,7 @@ func Command(c *components.Components) components.Command {
 						}
 						options[i] = discord.StringSelectMenuOption{Label: role.Name, Value: role.ID.String(), Emoji: emojiVal, Default: slices.Contains(event.Member().RoleIDs, role.ID)}
 					}
-					if err := event.CreateMessage(discordutil.NewMessageBuilder().SetComponents(discord.NewActionRow(discord.StringSelectMenuComponent{CustomID: fmt.Sprintf("role:panel_use:select_menu:%s", place.ID.String()), Placeholder: i18n.TranslateText(event.Locale(), "components.role.panel.components.select_menu.placeholder", nil), MinValues: builtin.Ptr(0), MaxValues: len(place.Roles), Options: options})).SetFlags(discord.MessageFlagEphemeral).BuildCreate()); err != nil {
+					if err := event.CreateMessage(discordutil.NewMessageBuilder().SetComponents(discord.NewActionRow(discord.StringSelectMenuComponent{CustomID: fmt.Sprintf("role:panel_use:select_menu:%s", place.ID.String()), Placeholder: i18n.TranslateText(event.Locale(), "components.role.panel.components.select_menu.placeholder", nil), MinValues: new(0), MaxValues: len(place.Roles), Options: options})).SetFlags(discord.MessageFlagEphemeral).BuildCreate()); err != nil {
 						return errors.NewError(err)
 					}
 				case "select_menu":

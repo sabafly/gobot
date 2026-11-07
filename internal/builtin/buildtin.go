@@ -27,7 +27,8 @@ func Or[T any](ok bool, a, b T) T {
 	return b
 }
 
-func Ptr[T any](v T) *T { return &v }
+//go:fix inline
+func Ptr[T any](v T) *T { return new(v) }
 
 func RequireNonNil[T any](v *T) T {
 	if v == nil {

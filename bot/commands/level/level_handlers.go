@@ -241,7 +241,7 @@ func upMessageHandler(c *components.Components, event *events.ApplicationCommand
 		discord.TextInputComponent{
 			CustomID:    "message",
 			Style:       discord.TextInputStyleParagraph,
-			MinLength:   builtin.Ptr(1),
+			MinLength:   new(1),
 			MaxLength:   140,
 			Required:    true,
 			Placeholder: i18n.TranslateText(event.Locale(), "components.level.up.message.modal.input.message.placeholder", nil),

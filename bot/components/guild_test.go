@@ -100,7 +100,7 @@ func TestOnGuildUpdateAndOnUserUpdate(t *testing.T) {
 		GenericUser: &events.GenericUser{
 			User: discord.User{
 				ID:         userID,
-				GlobalName: ptr("New User Name"),
+				GlobalName: new("New User Name"),
 			},
 		},
 	})
@@ -115,6 +115,7 @@ func TestOnGuildUpdateAndOnUserUpdate(t *testing.T) {
 	}
 }
 
+//go:fix inline
 func ptr[T any](v T) *T {
-	return &v
+	return new(v)
 }
