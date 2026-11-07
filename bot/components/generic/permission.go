@@ -168,14 +168,20 @@ func CheckEventPermission(ctx context.Context, event PermCheckEvent, c *componen
 
 	if dPerm != 0 && event.Member() != nil && event.Member().Permissions.Has(dPerm) {
 		var member models.Member
-		if err := c.GormDB().Where("guild_id = ? AND user_id = ?", *event.GuildID(), event.User().ID).First(&member).Error; err == nil {
-			for _, p := range perms {
-				if member.Permission.Disabled(p.PermString()) {
-					return false
+		if c.GormDB() != nil {
+			if err := c.GormDB().Where("guild_id = ? AND user_id = ?", *event.GuildID(), event.User().ID).First(&member).Error; err == nil {
+				for _, p := range perms {
+					if member.Permission.Disabled(p.PermString()) {
+						return false
+					}
 				}
 			}
 		}
 		return true
+	}
+
+	if c.GormDB() == nil {
+		return false
 	}
 
 	g, err := c.GuildCreateID(ctx, *event.GuildID())

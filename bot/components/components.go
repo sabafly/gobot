@@ -61,6 +61,9 @@ func (c *Components) Router() *handler.Mux { return c.router }
 
 // DO NOT REUSE RETURN VALUE, MUST CALL EACH TIME TO GET NEW SESSION
 func (c *Components) GormDB() *gorm.DB {
+	if c.gormDb == nil || c.gormDb.DB == nil {
+		return nil
+	}
 	return c.gormDb.DB.WithContext(c.ctx).
 		Preload(clause.Associations)
 }

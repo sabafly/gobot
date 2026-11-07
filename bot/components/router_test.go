@@ -29,9 +29,12 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/handler"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
 
 	"github.com/sabafly/gobot/bot/components"
+	"github.com/sabafly/gobot/bot/components/generic"
+	gerrors "github.com/sabafly/gobot/internal/errors"
 )
 
 func TestNormalizeCustomID(t *testing.T) {
@@ -207,5 +210,195 @@ func TestRecoveryMiddleware(t *testing.T) {
 	}
 	if err.Error() != "recovered from panic" {
 		t.Errorf("expected error message 'recovered from panic', got %q", err.Error())
+	}
+}
+
+func TestDispatchWithRegisteredCommand(t *testing.T) {
+	c := components.New(context.Background(), components.Config{}, nil)
+
+	var cmdCalled bool
+	cmd := (&generic.Command{
+		Namespace: "testcmd",
+		CommandHandlers: map[string]generic.PermissionCommandHandler{
+			"/testcmd": generic.CommandHandler(func(_ *components.Components, event *events.ApplicationCommandInteractionCreate) gerrors.Error {
+				cmdCalled = true
+				_ = event.CreateMessage(discord.MessageCreate{Content: "pong"})
+				return nil
+			}),
+		},
+	}).SetComponent(c)
+
+	c.AddCommand(cmd)
+	cmd.RegisterRoutes(c.Router())
+
+	rawJSON := []byte(`{
+		"type": 2,
+		"data": {
+			"type": 1,
+			"name": "testcmd",
+			"id": "12345"
+		},
+		"user": {
+			"id": "123456789",
+			"username": "testuser"
+		}
+	}`)
+	interaction, err := discord.UnmarshalInteraction(rawJSON)
+	if err != nil {
+		t.Fatalf("failed to unmarshal: %v", err)
+	}
+
+	var responded bool
+	e := &events.InteractionCreate{
+		GenericEvent: events.NewGenericEvent(nil, 0, 0),
+		Interaction:  interaction,
+		Respond: func(responseType discord.InteractionResponseType, data discord.InteractionResponseData, opts ...rest.RequestOpt) error {
+			responded = true
+			return nil
+		},
+	}
+
+	c.OnEvent()(e)
+
+	if !cmdCalled {
+		t.Errorf("expected command handler to be called")
+	}
+	if !responded {
+		t.Errorf("expected response to be sent")
+	}
+}
+
+func TestDispatchWithPCommandHandler(t *testing.T) {
+	conf := components.Config{
+		Debug: components.ConfigDebug{
+			DebugUsers: []snowflake.ID{snowflake.ID(999)},
+		},
+	}
+	c := components.New(context.Background(), conf, nil)
+
+	var cmdCalled bool
+	cmd := (&generic.Command{
+		Namespace: "bet",
+		CommandHandlers: map[string]generic.PermissionCommandHandler{
+			"/bet": generic.PCommandHandler{
+				Permission: []generic.Permission{generic.PermissionString("admin")},
+				CommandHandler: func(_ *components.Components, event *events.ApplicationCommandInteractionCreate) gerrors.Error {
+					cmdCalled = true
+					_ = event.CreateMessage(discord.MessageCreate{Content: "bet!"})
+					return nil
+				},
+			},
+		},
+	}).SetComponent(c)
+
+	c.AddCommand(cmd)
+	cmd.RegisterRoutes(c.Router())
+
+	rawJSON := []byte(`{
+		"type": 2,
+		"data": {
+			"type": 1,
+			"name": "bet",
+			"id": "12345"
+		},
+		"user": {
+			"id": "999",
+			"username": "debuguser"
+		}
+	}`)
+	interaction, err := discord.UnmarshalInteraction(rawJSON)
+	if err != nil {
+		t.Fatalf("failed to unmarshal: %v", err)
+	}
+
+	var responded bool
+	var responseContent string
+	e := &events.InteractionCreate{
+		GenericEvent: events.NewGenericEvent(nil, 0, 0),
+		Interaction:  interaction,
+		Respond: func(responseType discord.InteractionResponseType, data discord.InteractionResponseData, opts ...rest.RequestOpt) error {
+			responded = true
+			if mc, ok := data.(discord.MessageCreate); ok {
+				responseContent = mc.Content
+			}
+			return nil
+		},
+	}
+
+	c.OnEvent()(e)
+
+	if !cmdCalled {
+		t.Errorf("expected command handler to be called for debug user")
+	}
+	if !responded || responseContent != "bet!" {
+		t.Errorf("expected response 'bet!', got %q", responseContent)
+	}
+}
+
+func TestDispatchWithPCommandHandler_NoPermission(t *testing.T) {
+	c := components.New(context.Background(), components.Config{}, nil)
+
+	var cmdCalled bool
+	cmd := (&generic.Command{
+		Namespace: "bet",
+		CommandHandlers: map[string]generic.PermissionCommandHandler{
+			"/bet": generic.PCommandHandler{
+				Permission: []generic.Permission{generic.PermissionString("admin")},
+				CommandHandler: func(_ *components.Components, event *events.ApplicationCommandInteractionCreate) gerrors.Error {
+					cmdCalled = true
+					_ = event.CreateMessage(discord.MessageCreate{Content: "bet!"})
+					return nil
+				},
+			},
+		},
+	}).SetComponent(c)
+
+	c.AddCommand(cmd)
+	cmd.RegisterRoutes(c.Router())
+
+	guildID := snowflake.ID(12345)
+	rawJSON := []byte(`{
+		"type": 2,
+		"guild_id": "12345",
+		"data": {
+			"type": 1,
+			"name": "bet",
+			"id": "12345"
+		},
+		"user": {
+			"id": "123456789",
+			"username": "regularuser"
+		}
+	}`)
+	interaction, err := discord.UnmarshalInteraction(rawJSON)
+	if err != nil {
+		t.Fatalf("failed to unmarshal: %v", err)
+	}
+
+	var responded bool
+	var responseCreate discord.MessageCreate
+	e := &events.InteractionCreate{
+		GenericEvent: events.NewGenericEvent(nil, 0, 0),
+		Interaction:  interaction,
+		Respond: func(responseType discord.InteractionResponseType, data discord.InteractionResponseData, opts ...rest.RequestOpt) error {
+			responded = true
+			if mc, ok := data.(discord.MessageCreate); ok {
+				responseCreate = mc
+			}
+			return nil
+		},
+	}
+	_ = guildID
+
+	c.OnEvent()(e)
+
+	if cmdCalled {
+		t.Errorf("expected command handler NOT to be called without permission")
+	}
+	if !responded {
+		t.Errorf("expected no-permission response to be sent")
+	}
+	if len(responseCreate.Embeds) == 0 {
+		t.Errorf("expected embed in no-permission response")
 	}
 }

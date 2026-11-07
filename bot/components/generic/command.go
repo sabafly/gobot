@@ -363,18 +363,16 @@ func (gc *Command) RegisterRoutes(r handler.Router) {
 	for pattern, cmd := range gc.CommandHandlers {
 		p := pattern
 		c := cmd
-		var mw []handler.Middleware
-		if len(c.Permissions()) > 0 || c.DiscordPermission() != 0 {
-			mw = append(mw, RequirePermissions(gc.component, c.DiscordPermission(), c.Permissions()...))
-		}
-		router := r
-		if len(mw) > 0 {
-			router = r.With(mw...)
-		}
+		perms := c.Permissions()
+		dPerm := c.DiscordPermission()
+		hasPerms := len(perms) > 0 || dPerm != 0
 
 		if after, ok := strings.CutPrefix(p, "m/"); ok {
 			name := after
-			router.MessageCommand("/"+name, func(data discord.MessageCommandInteractionData, e *handler.CommandEvent) error {
+			r.MessageCommand("/"+name, func(data discord.MessageCommandInteractionData, e *handler.CommandEvent) error {
+				if hasPerms && !permissionCheck(e.Ctx, e, gc.component, perms, dPerm) {
+					return noPermissionMessage(e, perms)
+				}
 				if err := c.Handler()(gc.component, e.ApplicationCommandInteractionCreate); err != nil {
 					CreateErrorMessage(err, e)
 					return err
@@ -383,7 +381,10 @@ func (gc *Command) RegisterRoutes(r handler.Router) {
 			})
 		} else if after, ok := strings.CutPrefix(p, "u/"); ok {
 			name := after
-			router.UserCommand("/"+name, func(data discord.UserCommandInteractionData, e *handler.CommandEvent) error {
+			r.UserCommand("/"+name, func(data discord.UserCommandInteractionData, e *handler.CommandEvent) error {
+				if hasPerms && !permissionCheck(e.Ctx, e, gc.component, perms, dPerm) {
+					return noPermissionMessage(e, perms)
+				}
 				if err := c.Handler()(gc.component, e.ApplicationCommandInteractionCreate); err != nil {
 					CreateErrorMessage(err, e)
 					return err
@@ -395,7 +396,10 @@ func (gc *Command) RegisterRoutes(r handler.Router) {
 			if !strings.HasPrefix(cleanPattern, "/") {
 				cleanPattern = "/" + cleanPattern
 			}
-			router.SlashCommand(cleanPattern, func(data discord.SlashCommandInteractionData, e *handler.CommandEvent) error {
+			r.SlashCommand(cleanPattern, func(data discord.SlashCommandInteractionData, e *handler.CommandEvent) error {
+				if hasPerms && !permissionCheck(e.Ctx, e, gc.component, perms, dPerm) {
+					return noPermissionMessage(e, perms)
+				}
 				if err := c.Handler()(gc.component, e.ApplicationCommandInteractionCreate); err != nil {
 					CreateErrorMessage(err, e)
 					return err
@@ -413,15 +417,14 @@ func (gc *Command) RegisterRoutes(r handler.Router) {
 		if !strings.HasPrefix(cleanPattern, "/") {
 			cleanPattern = "/" + strings.ReplaceAll(cleanPattern, ":", "/")
 		}
-		var mw []handler.Middleware
-		if len(c.Permissions()) > 0 || c.DiscordPermission() != 0 {
-			mw = append(mw, RequirePermissions(gc.component, c.DiscordPermission(), c.Permissions()...))
-		}
-		router := r
-		if len(mw) > 0 {
-			router = r.With(mw...)
-		}
-		router.Component(cleanPattern, func(e *handler.ComponentEvent) error {
+		perms := c.Permissions()
+		dPerm := c.DiscordPermission()
+		hasPerms := len(perms) > 0 || dPerm != 0
+
+		r.Component(cleanPattern, func(e *handler.ComponentEvent) error {
+			if hasPerms && !permissionCheck(e.Ctx, e, gc.component, perms, dPerm) {
+				return noPermissionMessage(e, perms)
+			}
 			if err := c.Handler()(gc.component, e.ComponentInteractionCreate); err != nil {
 				CreateErrorMessage(err, e)
 				return err
@@ -461,15 +464,14 @@ func (gc *Command) RegisterRoutes(r handler.Router) {
 		if !strings.HasPrefix(commandPath, "/") {
 			commandPath = "/" + commandPath
 		}
-		var mw []handler.Middleware
-		if len(c.Permissions()) > 0 || c.DiscordPermission() != 0 {
-			mw = append(mw, RequirePermissions(gc.component, c.DiscordPermission(), c.Permissions()...))
-		}
-		router := r
-		if len(mw) > 0 {
-			router = r.With(mw...)
-		}
-		router.Autocomplete(commandPath, func(e *handler.AutocompleteEvent) error {
+		perms := c.Permissions()
+		dPerm := c.DiscordPermission()
+		hasPerms := len(perms) > 0 || dPerm != 0
+
+		r.Autocomplete(commandPath, func(e *handler.AutocompleteEvent) error {
+			if hasPerms && !permissionCheck(e.Ctx, e, gc.component, perms, dPerm) {
+				return e.AutocompleteResult(nil)
+			}
 			if focusedOption != "" {
 				var focused string
 				for _, ao := range e.Data.Options {
