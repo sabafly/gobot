@@ -10,6 +10,7 @@ import (
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/database/models"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
 )
@@ -142,7 +143,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 	if voteType == models.BetVoteTypeGuess {
 		// Encode allow_vote_change in custom ID
 		customID := fmt.Sprintf("bet:config_poll:%t", allowVoteChange)
-		if err := event.Modal(discord.NewModalCreateBuilder().
+		if err := event.Modal(discordutil.NewModalCreateBuilder().
 			SetCustomID(customID).
 			SetTitle(i18n.TranslateText(locale, "command.bet.modal.create_poll.title")).
 			SetComponents(
@@ -195,7 +196,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 	if voteType == models.BetVoteTypeRace {
 		// Encode allow_vote_change in custom ID
 		customID := fmt.Sprintf("bet:config_race:%t", allowVoteChange)
-		if err := event.Modal(discord.NewModalCreateBuilder().
+		if err := event.Modal(discordutil.NewModalCreateBuilder().
 			SetCustomID(customID).
 			SetTitle(i18n.TranslateText(locale, "command.bet.modal.create_race.title")).
 			SetComponents(
@@ -256,7 +257,7 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 	// For battle royale mode, show modal for battle royale configuration
 	if voteType == models.BetVoteTypeBattleRoyale {
 		customID := "bet:config_battle_royale"
-		if err := event.Modal(discord.NewModalCreateBuilder().
+		if err := event.Modal(discordutil.NewModalCreateBuilder().
 			SetCustomID(customID).
 			SetTitle(i18n.TranslateText(locale, "command.bet.modal.create_battle_royale.title")).
 			SetComponents(
@@ -306,10 +307,10 @@ func handleBetCommand(c *components.Components, event *events.ApplicationCommand
 	}
 
 	// For other modes, show not implemented message
-	if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+	if err := event.CreateMessage(discordutil.NewMessageBuilder().
 		SetContent(i18n.TranslateText(locale, "command.bet.error.mode_not_implemented")).
 		SetFlags(discord.MessageFlagEphemeral).
-		Build()); err != nil {
+		BuildCreate()); err != nil {
 		return errors.NewError(err)
 	}
 	return nil

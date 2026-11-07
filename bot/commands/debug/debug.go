@@ -32,6 +32,7 @@ import (
 
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
 )
@@ -104,7 +105,7 @@ func Command(c *components.Components) *generic.Command {
 				key := event.SlashCommandInteractionData().String("key")
 				locale := discord.Locale(event.SlashCommandInteractionData().String("locale"))
 				if err := event.CreateMessage(
-					discord.NewMessageBuilder().
+					discordutil.NewMessageBuilder().
 						SetContent(i18n.TranslateText(locale, key)).
 						BuildCreate(),
 				); err != nil {
@@ -118,7 +119,7 @@ func Command(c *components.Components) *generic.Command {
 					return errors.NewError(err)
 				}
 				if err := event.CreateMessage(
-					discord.NewMessageBuilder().
+					discordutil.NewMessageBuilder().
 						SetContent("OK").
 						BuildCreate(),
 				); err != nil {
@@ -132,7 +133,7 @@ func Command(c *components.Components) *generic.Command {
 					return errors.NewError(err)
 				}
 				if err := event.CreateMessage(
-					discord.NewMessageBuilder().
+					discordutil.NewMessageBuilder().
 						SetContent("OK").
 						BuildCreate(),
 				); err != nil {
@@ -174,13 +175,13 @@ func Command(c *components.Components) *generic.Command {
 							highest = slices.Max(slices.Collect(idFunc(moreMembers)))
 						}
 					}
-					if err := c.InitializeGuildMember(event, *event.GuildID(), members); err != nil {
+					if err := c.InitializeGuildMember(c.Ctx(), *event.GuildID(), members); err != nil {
 						slog.Error("ギルドメンバーの初期化に失敗", "guild", guild.ID, "err", err)
 						return errors.NewError(err)
 					}
 					slog.Info("ギルドメンバーの初期化に成功", "guild", guild.ID, "count", len(members))
 				}
-				if err := event.RespondMessage(discord.NewMessageBuilder().SetContent("OK")); err != nil {
+				if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().SetContent("OK")); err != nil {
 					return errors.NewError(err)
 				}
 				return nil

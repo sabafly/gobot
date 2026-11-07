@@ -48,7 +48,7 @@ import (
 )
 
 func requiredPointHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-	mem, err := c.MemberCreate(event, event.User(), *event.GuildID())
+	mem, err := c.MemberCreate(c.Ctx(), event.User(), *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -58,23 +58,22 @@ func requiredPointHandler(c *components.Components, event *events.ApplicationCom
 	} else {
 		levelNum = mem.XP.Level() + 1
 	}
-	embed := discord.NewEmbedBuilder().
-		SetTitle(i18n.TranslateText(event.Locale(), "components.level.required-point.embed.title", map[string]any{"level": levelNum})).
-		SetDescriptionf("# `%d`xp\n%s\n%s",
+	embed := discord.NewEmbed().
+		WithTitle(i18n.TranslateText(event.Locale(), "components.level.required-point.embed.title", map[string]any{"level": levelNum})).
+		WithDescriptionf("# `%d`xp\n%s\n%s",
 			xppoint.TotalPoint(levelNum),
 			i18n.TranslateText(event.Locale(), "components.level.required-point.embed.description", map[string]any{"user": event.Member().EffectiveName(), "xp": mem.XP}),
 			i18n.TranslateText(event.Locale(), "components.level.required-point.embed.description.diff", map[string]any{"xp": builtin.Or(xppoint.TotalPoint(levelNum) > uint64(mem.XP), xppoint.TotalPoint(levelNum)-uint64(mem.XP), 0)}),
-		).
-		Build()
+		)
 
-	if err := event.CreateMessage(discord.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed)).BuildCreate()); err != nil {
+	if err := event.CreateMessage(discordutil.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed)).BuildCreate()); err != nil {
 		return errors.NewError(err)
 	}
 	return nil
 }
 
 func rankHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-	g, err := c.GuildCreateID(event, *event.GuildID())
+	g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -85,7 +84,7 @@ func rankHandler(c *components.Components, event *events.ApplicationCommandInter
 	if target.User.Bot || target.User.System {
 		return errors.NewError(errors.ErrorMessage("errors.invalid.bot.target", event))
 	}
-	m, err := c.MemberCreate(event, target.User, *event.GuildID())
+	m, err := c.MemberCreate(c.Ctx(), target.User, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -107,7 +106,7 @@ func rankHandler(c *components.Components, event *events.ApplicationCommandInter
 
 	embed := levelMessage(g, gl, m, index, target.Member, event)
 
-	if err := event.CreateMessage(discord.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed)).BuildCreate()); err != nil {
+	if err := event.CreateMessage(discordutil.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed)).BuildCreate()); err != nil {
 		return errors.NewError(err)
 	}
 	return nil
@@ -115,7 +114,7 @@ func rankHandler(c *components.Components, event *events.ApplicationCommandInter
 
 func leaderboardHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 	const pageCount = 25
-	g, err := c.GuildCreateID(event, *event.GuildID())
+	g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -147,29 +146,27 @@ func leaderboardHandler(c *components.Components, event *events.ApplicationComma
 			m.XP, m.XP.Level())
 	}
 
-	embed := discord.NewEmbedBuilder().
-		SetEmbedAuthor(
-			&discord.EmbedAuthor{
-				Name:    g.Name,
-				IconURL: builtin.NonNil(gl.IconURL()),
-			},
+	embed := discord.NewEmbed().
+		WithAuthor(
+			g.Name,
+			"",
+			builtin.NonNil(gl.IconURL()),
 		).
-		SetTitlef("🏆%s(%d/%d)",
+		WithTitlef("🏆%s(%d/%d)",
 			i18n.TranslateText(event.Locale(), "components.level.leaderboard.title", nil),
 			page,
 			(count+pageCount-1)/pageCount,
 		).
-		SetDescription(leaderboard.String()).
-		Build()
+		WithDescription(leaderboard.String())
 
-	if err := event.CreateMessage(discord.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed)).BuildCreate()); err != nil {
+	if err := event.CreateMessage(discordutil.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed)).BuildCreate()); err != nil {
 		return errors.NewError(err)
 	}
 	return nil
 }
 
 func transferHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-	g, err := c.GuildCreateID(event, *event.GuildID())
+	g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -190,11 +187,11 @@ func transferHandler(c *components.Components, event *events.ApplicationCommandI
 		return errors.NewError(errors.ErrorMessage("errors.invalid.self.target", event))
 	}
 
-	fromUser, err := c.MemberCreate(event, from.User, *event.GuildID())
+	fromUser, err := c.MemberCreate(c.Ctx(), from.User, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
-	toUser, err := c.MemberCreate(event, to.User, *event.GuildID())
+	toUser, err := c.MemberCreate(c.Ctx(), to.User, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -208,7 +205,7 @@ func transferHandler(c *components.Components, event *events.ApplicationCommandI
 		}
 
 		var err error
-		if toUser, err = addXp(event, movedXp, event.Client(), toUser, g, event.Channel().ID(), to.EffectiveName(), true, tx); err != nil {
+		if toUser, err = addXp(c.Ctx(), movedXp, event.Client(), toUser, g, event.Channel().ID(), to.EffectiveName(), true, tx); err != nil {
 			return err
 		}
 		return nil
@@ -224,17 +221,17 @@ func transferHandler(c *components.Components, event *events.ApplicationCommandI
 	embedsList := []discord.Embed{
 		levelMessage(g, gl, fromUser, fromIndex, from.Member, event),
 		levelMessage(g, gl, toUser, toIndex, to.Member, event),
-		discord.NewEmbedBuilder().SetTitlef("`%d`xp 移動しました", movedXp).Build(),
+		discord.NewEmbed().WithTitlef("`%d`xp 移動しました", movedXp),
 	}
 
-	if err := event.CreateMessage(discord.NewMessageBuilder().SetEmbeds(embeds.SetEmbedsProperties(embedsList)...).BuildCreate()); err != nil {
+	if err := event.CreateMessage(discordutil.NewMessageBuilder().SetEmbeds(embeds.SetEmbedsProperties(embedsList)...).BuildCreate()); err != nil {
 		return errors.NewError(err)
 	}
 	return nil
 }
 
 func upMessageHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-	g, err := c.GuildCreateID(event, *event.GuildID())
+	g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -253,7 +250,7 @@ func upMessageHandler(c *components.Components, event *events.ApplicationCommand
 	)
 
 	if err := event.Modal(
-		discord.NewModalCreateBuilder().
+		discordutil.NewModalCreateBuilder().
 			SetTitle(i18n.TranslateText(event.Locale(), "components.level.up.message.modal.title", nil)).
 			SetCustomID("level:up_message_modal").
 			SetComponents(actionRow).
@@ -265,7 +262,7 @@ func upMessageHandler(c *components.Components, event *events.ApplicationCommand
 }
 
 func upMessageChannelHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-	g, err := c.GuildCreateID(event, *event.GuildID())
+	g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -292,7 +289,7 @@ func upMessageChannelHandler(c *components.Components, event *events.Application
 	)
 
 	if err := event.CreateMessage(
-		discord.NewMessageBuilder().
+		discordutil.NewMessageBuilder().
 			SetContent(content).
 			BuildCreate(),
 	); err != nil {
@@ -302,7 +299,7 @@ func upMessageChannelHandler(c *components.Components, event *events.Application
 }
 
 func excludeChannelAddHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-	g, err := c.GuildCreateID(event, *event.GuildID())
+	g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -320,7 +317,7 @@ func excludeChannelAddHandler(c *components.Components, event *events.Applicatio
 	)
 
 	if err := event.CreateMessage(
-		discord.NewMessageBuilder().
+		discordutil.NewMessageBuilder().
 			SetContent(content).
 			BuildCreate(),
 	); err != nil {
@@ -330,7 +327,7 @@ func excludeChannelAddHandler(c *components.Components, event *events.Applicatio
 }
 
 func excludeChannelRemoveHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-	g, err := c.GuildCreateID(event, *event.GuildID())
+	g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -349,7 +346,7 @@ func excludeChannelRemoveHandler(c *components.Components, event *events.Applica
 	)
 
 	if err := event.CreateMessage(
-		discord.NewMessageBuilder().
+		discordutil.NewMessageBuilder().
 			SetContent(content).
 			BuildCreate(),
 	); err != nil {
@@ -359,7 +356,7 @@ func excludeChannelRemoveHandler(c *components.Components, event *events.Applica
 }
 
 func excludeChannelClearHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-	g, err := c.GuildCreateID(event, *event.GuildID())
+	g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -371,7 +368,7 @@ func excludeChannelClearHandler(c *components.Components, event *events.Applicat
 	content := i18n.TranslateText(event.Locale(), "components.level.exclude-channel.clear.message", nil)
 
 	if err := event.CreateMessage(
-		discord.NewMessageBuilder().
+		discordutil.NewMessageBuilder().
 			SetContent(content).
 			BuildCreate(),
 	); err != nil {
@@ -381,7 +378,7 @@ func excludeChannelClearHandler(c *components.Components, event *events.Applicat
 }
 
 func excludeChannelListHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-	g, err := c.GuildCreateID(event, *event.GuildID())
+	g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -390,19 +387,18 @@ func excludeChannelListHandler(c *components.Components, event *events.Applicati
 		fmt.Fprintf(&listStr, "%d. %s\n", i+1, discord.ChannelMention(id))
 	}
 
-	embed := discord.NewEmbedBuilder().
-		SetTitle(i18n.TranslateText(event.Locale(), "components.level.exclude-channel.list.message", nil)).
-		SetDescription(builtin.Or(listStr.String() != "", listStr.String(), "- "+i18n.TranslateText(event.Locale(), "components.level.exclude-channel.list.message.none", nil))).
-		Build()
+	embed := discord.NewEmbed().
+		WithTitle(i18n.TranslateText(event.Locale(), "components.level.exclude-channel.list.message", nil)).
+		WithDescription(builtin.Or(listStr.String() != "", listStr.String(), "- "+i18n.TranslateText(event.Locale(), "components.level.exclude-channel.list.message.none", nil)))
 
-	if err := event.CreateMessage(discord.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed)).BuildCreate()); err != nil {
+	if err := event.CreateMessage(discordutil.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed)).BuildCreate()); err != nil {
 		return errors.NewError(err)
 	}
 	return nil
 }
 
 func importMee6Handler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-	g, err := c.GuildCreateID(event, *event.GuildID())
+	g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -470,7 +466,7 @@ func importMee6Handler(c *components.Components, event *events.ApplicationComman
 			}
 			idx := slices.IndexFunc(discordMembers, func(m discord.Member) bool { return m.User.ID == pID })
 			if idx != -1 {
-				m, err := c.MemberCreate(event, discordMembers[idx].User, *event.GuildID())
+				m, err := c.MemberCreate(c.Ctx(), discordMembers[idx].User, *event.GuildID())
 				if err != nil {
 					return errors.NewError(err)
 				}
@@ -488,7 +484,7 @@ func importMee6Handler(c *components.Components, event *events.ApplicationComman
 		return errors.NewError(err)
 	}
 
-	if err := event.RespondMessage(discord.NewMessageBuilder().SetContent(fmt.Sprintf("# SUCCEED\n```| IMPORTED MEMBER COUNT | %d```", importedCount))); err != nil {
+	if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().SetContent(fmt.Sprintf("# SUCCEED\n```| IMPORTED MEMBER COUNT | %d```", importedCount))); err != nil {
 		return errors.NewError(err)
 	}
 	return nil
@@ -496,7 +492,7 @@ func importMee6Handler(c *components.Components, event *events.ApplicationComman
 
 func resetHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 	target := event.SlashCommandInteractionData().Member("target")
-	m, err := c.MemberCreate(event, target.User, *event.GuildID())
+	m, err := c.MemberCreate(c.Ctx(), target.User, *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -510,7 +506,7 @@ func resetHandler(c *components.Components, event *events.ApplicationCommandInte
 	)
 
 	if err := event.CreateMessage(
-		discord.NewMessageBuilder().
+		discordutil.NewMessageBuilder().
 			SetContent(content).
 			BuildCreate(),
 	); err != nil {
@@ -520,7 +516,7 @@ func resetHandler(c *components.Components, event *events.ApplicationCommandInte
 }
 
 func roleSetHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-	g, err := c.GuildCreateID(event, *event.GuildID())
+	g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -542,7 +538,7 @@ func roleSetHandler(c *components.Components, event *events.ApplicationCommandIn
 		}
 	}
 	highestRole := discordutil.GetHighestRole(roles)
-	if highestRole == nil || role.Managed || role.Compare(*highestRole) != -1 || role.ID == *event.GuildID() {
+	if highestRole == nil || role.Managed || discordutil.CompareRoles(role, *highestRole) != -1 || role.ID == *event.GuildID() {
 		return errors.NewError(errors.ErrorMessage("errors.invalid.role", event))
 	}
 
@@ -550,26 +546,25 @@ func roleSetHandler(c *components.Components, event *events.ApplicationCommandIn
 		return errors.NewError(err)
 	}
 
-	embed := discord.NewEmbedBuilder().
-		SetTitle(i18n.TranslateText(event.Locale(), "components.level.role.set.message.embed.title", nil)).
-		SetDescription(
+	embed := discord.NewEmbed().
+		WithTitle(i18n.TranslateText(event.Locale(), "components.level.role.set.message.embed.title", nil)).
+		WithDescription(
 			i18n.TranslateText(event.Locale(), "components.level.role.set.message.embed.description",
 				map[string]any{
 					"level": strconv.Itoa(levelNum),
 					"role":  discord.RoleMention(role.ID),
 				},
 			),
-		).
-		Build()
+		)
 
-	if err := event.CreateMessage(discord.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed)).BuildCreate()); err != nil {
+	if err := event.CreateMessage(discordutil.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed)).BuildCreate()); err != nil {
 		return errors.NewError(err)
 	}
 	return nil
 }
 
 func roleRemoveHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-	g, err := c.GuildCreateID(event, *event.GuildID())
+	g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -585,26 +580,25 @@ func roleRemoveHandler(c *components.Components, event *events.ApplicationComman
 		return errors.NewError(err)
 	}
 
-	embed := discord.NewEmbedBuilder().
-		SetTitle(i18n.TranslateText(event.Locale(), "components.level.role.remove.message.embed.title", nil)).
-		SetDescription(
+	embed := discord.NewEmbed().
+		WithTitle(i18n.TranslateText(event.Locale(), "components.level.role.remove.message.embed.title", nil)).
+		WithDescription(
 			i18n.TranslateText(event.Locale(), "components.level.role.remove.message.embed.description",
 				map[string]any{
 					"level": strconv.Itoa(levelNum),
 					"role":  discord.RoleMention(rID),
 				},
 			),
-		).
-		Build()
+		)
 
-	if err := event.CreateMessage(discord.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed)).BuildCreate()); err != nil {
+	if err := event.CreateMessage(discordutil.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed)).BuildCreate()); err != nil {
 		return errors.NewError(err)
 	}
 	return nil
 }
 
 func roleListHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-	g, err := c.GuildCreateID(event, *event.GuildID())
+	g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -614,12 +608,11 @@ func roleListHandler(c *components.Components, event *events.ApplicationCommandI
 		listStr.WriteString("- " + i18n.TranslateText(event.Locale(), "components.level.role.list.message", map[string]any{"level": strconv.Itoa(k), "role": discord.RoleMention(v)}) + "\n")
 	}
 
-	embed := discord.NewEmbedBuilder().
-		SetTitle(i18n.TranslateText(event.Locale(), "components.level.role.list.message.embed.title", nil)).
-		SetDescription(builtin.Or(listStr.String() != "", listStr.String(), i18n.TranslateText(event.Locale(), "components.level.role.list.message.none", nil))).
-		Build()
+	embed := discord.NewEmbed().
+		WithTitle(i18n.TranslateText(event.Locale(), "components.level.role.list.message.embed.title", nil)).
+		WithDescription(builtin.Or(listStr.String() != "", listStr.String(), i18n.TranslateText(event.Locale(), "components.level.role.list.message.none", nil)))
 
-	if err := event.RespondMessage(discord.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed))); err != nil {
+	if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed))); err != nil {
 		return errors.NewError(err)
 	}
 	return nil

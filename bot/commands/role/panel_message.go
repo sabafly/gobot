@@ -48,9 +48,9 @@ func initialize(edit *models.RolePanelEdit, panel *models.RolePanel) {
 	}
 }
 
-func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *models.RolePanelEdit, locale discord.Locale) (discord.MessageBuilder, error) {
+func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *models.RolePanelEdit, locale discord.Locale) (discordutil.MessageBuilder, error) {
 	initialize(edit, panel)
-	builder := discord.NewMessageBuilder()
+	builder := discordutil.NewMessageBuilder()
 	var roleField strings.Builder
 	for i, r := range edit.Roles {
 		emojiVal := r.Emoji
@@ -63,9 +63,9 @@ func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *
 	}
 
 	embedList := []discord.Embed{
-		discord.NewEmbedBuilder().
-			SetTitle(i18n.TranslateText(locale, "components.role.panel.edit.menu.base.title", nil)).
-			SetFields(
+		discord.NewEmbed().
+			WithTitle(i18n.TranslateText(locale, "components.role.panel.edit.menu.base.title", nil)).
+			WithFields(
 				discord.EmbedField{
 					Name:   i18n.TranslateText(locale, "components.role.panel.edit.menu.base.field.name", nil),
 					Value:  builtin.NonNil(edit.Name),
@@ -80,8 +80,7 @@ func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *
 					Name:  i18n.TranslateText(locale, "components.role.panel.edit.menu.base.field.roles", nil),
 					Value: builtin.Or(roleField.String() != "", roleField.String(), fmt.Sprintf("`%s`", i18n.TranslateText(locale, "components.role.panel.edit.menu.base.field.value.empty", nil))),
 				}).
-			SetFooterTextf("id: %s", panel.ID).
-			Build(),
+			WithFooterTextf("id: %s", panel.ID),
 	}
 	builder.SetEmbeds(embeds.SetEmbedsProperties(embedList)...)
 
@@ -198,8 +197,8 @@ func rpEditBaseMessage(c *components.Components, panel *models.RolePanel, edit *
 	return builder, nil
 }
 
-func rpEditModifyRolesMessage(edit *models.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
-	builder := discord.NewMessageBuilder()
+func rpEditModifyRolesMessage(edit *models.RolePanelEdit, locale discord.Locale) discordutil.MessageBuilder {
+	builder := discordutil.NewMessageBuilder()
 	var roleField strings.Builder
 	for i, r := range edit.Roles {
 		emojiVal := r.Emoji
@@ -211,15 +210,14 @@ func rpEditModifyRolesMessage(edit *models.RolePanelEdit, locale discord.Locale)
 		fmt.Fprintf(&roleField, "%s: %s: %s\n", discordutil.FormatComponentEmoji(*emojiVal), r.Name, discord.RoleMention(r.ID))
 	}
 	embedList := []discord.Embed{
-		discord.NewEmbedBuilder().
-			SetTitle(i18n.TranslateText(locale, "components.role.panel.edit.menu.modify_roles.title", nil)).
-			SetFields(
+		discord.NewEmbed().
+			WithTitle(i18n.TranslateText(locale, "components.role.panel.edit.menu.modify_roles.title", nil)).
+			WithFields(
 				discord.EmbedField{
 					Name:  i18n.TranslateText(locale, "components.role.panel.edit.menu.modify_roles.field.roles", nil),
 					Value: roleField.String(),
 				},
-			).
-			Build(),
+			),
 	}
 	builder.SetEmbeds(embeds.SetEmbedsProperties(embedList)...)
 
@@ -249,12 +247,11 @@ func rpEditModifyRolesMessage(edit *models.RolePanelEdit, locale discord.Locale)
 	return builder
 }
 
-func rpEditSetEmojiMessage(edit *models.RolePanelEdit, locale discord.Locale) discord.MessageBuilder {
-	builder := discord.NewMessageBuilder()
-	embed := discord.NewEmbedBuilder().
-		SetTitle(i18n.TranslateText(locale, "components.role.panel.edit.menu.set_emoji.title", nil)).
-		SetDescription(i18n.TranslateText(locale, "components.role.panel.edit.menu.set_emoji.description", nil)).
-		Build()
+func rpEditSetEmojiMessage(edit *models.RolePanelEdit, locale discord.Locale) discordutil.MessageBuilder {
+	builder := discordutil.NewMessageBuilder()
+	embed := discord.NewEmbed().
+		WithTitle(i18n.TranslateText(locale, "components.role.panel.edit.menu.set_emoji.title", nil)).
+		WithDescription(i18n.TranslateText(locale, "components.role.panel.edit.menu.set_emoji.description", nil))
 
 	builder.SetEmbeds(embeds.SetEmbedProperties(embed))
 
@@ -275,8 +272,8 @@ func rpEditSetEmojiMessage(edit *models.RolePanelEdit, locale discord.Locale) di
 	return builder
 }
 
-func rpPlaceBaseMenu(place *models.RolePanelPlaced, locale discord.Locale) discord.MessageBuilder {
-	builder := discord.NewMessageBuilder()
+func rpPlaceBaseMenu(place *models.RolePanelPlaced, locale discord.Locale) discordutil.MessageBuilder {
+	builder := discordutil.NewMessageBuilder()
 	var roleField strings.Builder
 	for i, r := range place.Roles {
 		emojiVal := r.Emoji
@@ -288,19 +285,17 @@ func rpPlaceBaseMenu(place *models.RolePanelPlaced, locale discord.Locale) disco
 		fmt.Fprintf(&roleField, "%s| %s\n", discordutil.FormatComponentEmoji(*emojiVal), builtin.Or(place.UseDisplayName, r.Name, discord.RoleMention(r.ID)))
 	}
 	embedList := []discord.Embed{
-		discord.NewEmbedBuilder().
-			SetAuthorName(i18n.TranslateText(locale, "components.role.panel.place.menu.author.text", nil)).
-			Build(),
-		discord.NewEmbedBuilder().
-			SetTitle(place.Name).
-			SetDescription(place.Description).
-			SetFields(
+		discord.NewEmbed().
+			WithAuthorName(i18n.TranslateText(locale, "components.role.panel.place.menu.author.text", nil)),
+		discord.NewEmbed().
+			WithTitle(place.Name).
+			WithDescription(place.Description).
+			WithFields(
 				discord.EmbedField{
 					Name:  i18n.TranslateText(locale, "components.role.panel.embed.field.role", nil),
 					Value: roleField.String(),
 				},
-			).
-			Build(),
+			),
 	}
 	builder.SetEmbeds(embeds.SetEmbedsProperties(embedList)...)
 
@@ -430,8 +425,8 @@ func rpPlaceBaseMenu(place *models.RolePanelPlaced, locale discord.Locale) disco
 	return builder
 }
 
-func rpPlacedMessage(place *models.RolePanelPlaced, locale discord.Locale) discord.MessageBuilder {
-	builder := discord.NewMessageBuilder()
+func rpPlacedMessage(place *models.RolePanelPlaced, locale discord.Locale) discordutil.MessageBuilder {
+	builder := discordutil.NewMessageBuilder()
 	var roleField strings.Builder
 	for i, r := range place.Roles {
 		emojiVal := r.Emoji
@@ -443,16 +438,15 @@ func rpPlacedMessage(place *models.RolePanelPlaced, locale discord.Locale) disco
 		fmt.Fprintf(&roleField, "%s| %s\n", discordutil.FormatComponentEmoji(*emojiVal), builtin.Or(place.UseDisplayName, r.Name, discord.RoleMention(r.ID)))
 	}
 	embedList := []discord.Embed{
-		discord.NewEmbedBuilder().
-			SetTitle(place.Name).
-			SetDescription(place.Description).
-			SetFields(
+		discord.NewEmbed().
+			WithTitle(place.Name).
+			WithDescription(place.Description).
+			WithFields(
 				discord.EmbedField{
 					Name:  i18n.TranslateText(locale, "components.role.panel.embed.field.role", nil),
 					Value: roleField.String(),
 				},
-			).
-			Build(),
+			),
 	}
 	builder.SetEmbeds(embeds.SetEmbedsProperties(embedList)...)
 

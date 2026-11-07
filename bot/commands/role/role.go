@@ -126,7 +126,7 @@ func Command(c *components.Components) components.Command {
 				DiscordPerm: discord.PermissionManageRoles,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					if err := event.Modal(
-						discord.NewModalCreateBuilder().
+						discordutil.NewModalCreateBuilder().
 							SetTitle(i18n.TranslateText(event.Locale(), "components.role.panel.create.modal.title", nil)).
 							SetCustomID("role:panel_create_modal").
 							SetComponents(
@@ -160,7 +160,7 @@ func Command(c *components.Components) components.Command {
 				},
 				DiscordPerm: discord.PermissionManageRoles,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
@@ -218,7 +218,7 @@ func Command(c *components.Components) components.Command {
 				},
 				DiscordPerm: discord.PermissionManageRoles,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
@@ -226,7 +226,7 @@ func Command(c *components.Components) components.Command {
 					if err != nil {
 						return errors.NewError(err)
 					}
-					place, err := createPanelPlace(event, c, panelID, event.Channel().ID(), g)
+					place, err := createPanelPlace(c.Ctx(), c, panelID, event.Channel().ID(), g)
 					if err != nil {
 						return errors.NewError(errors.ErrorMessage("errors.not_exist", event))
 					}
@@ -244,7 +244,7 @@ func Command(c *components.Components) components.Command {
 				},
 				DiscordPerm: discord.PermissionManageRoles,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
@@ -286,13 +286,12 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 
-					builder := discord.NewMessageBuilder()
+					builder := discordutil.NewMessageBuilder()
 					builder.SetEmbeds(
 						embeds.SetEmbedProperties(
-							discord.NewEmbedBuilder().
-								SetTitle(i18n.TranslateText(event.Locale(), "components.role.panel.delete.message.embed.title", nil)).
-								SetDescription(i18n.TranslateText(event.Locale(), "components.role.panel.delete.message.embed.description", map[string]any{"role_panel": panel.Name})).
-								Build(),
+							discord.NewEmbed().
+								WithTitle(i18n.TranslateText(event.Locale(), "components.role.panel.delete.message.embed.title", nil)).
+								WithDescription(i18n.TranslateText(event.Locale(), "components.role.panel.delete.message.embed.description", map[string]any{"role_panel": panel.Name})),
 						))
 					if err := event.CreateMessage(builder.BuildCreate()); err != nil {
 						return errors.NewError(err)
@@ -308,7 +307,7 @@ func Command(c *components.Components) components.Command {
 		},
 		ModalHandlers: map[string]generic.ModalHandler{
 			"role:panel_create_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
-				g, err := c.GuildCreateID(event, *event.GuildID())
+				g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 				if err != nil {
 					return errors.NewError(err)
 				}
@@ -339,7 +338,7 @@ func Command(c *components.Components) components.Command {
 				if err != nil {
 					return errors.NewError(errors.ErrorMessage("errors.timeout", event))
 				}
-				g, err := c.GuildCreateID(event, *event.GuildID())
+				g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 				if err != nil {
 					return errors.NewError(err)
 				}
@@ -392,7 +391,7 @@ func Command(c *components.Components) components.Command {
 					if err != nil {
 						return errors.NewError(errors.ErrorMessage("errors.invalid_argument", event))
 					}
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
@@ -418,7 +417,7 @@ func Command(c *components.Components) components.Command {
 						if action == "change_name" {
 							titleKey = "components.role.panel.edit.action.change_name.title"
 						}
-						modal := discord.NewModalCreateBuilder().SetTitle(i18n.TranslateText(event.Locale(), titleKey, nil)).SetCustomID(fmt.Sprintf("role:panel_edit_modal:%s:%s", action, edit.ID)).SetComponents(builtin.Or(action == "change_name", discord.NewLabel(i18n.TranslateText(event.Locale(), "components.role.panel.edit.change_name.modal.input.name.label", nil), discord.TextInputComponent{CustomID: "name", Style: discord.TextInputStyleShort, MinLength: builtin.Ptr(1), MaxLength: 32, Required: true, Value: nameVal}), discord.NewLabel(i18n.TranslateText(event.Locale(), "components.role.panel.edit.change_description.modal.input.description.label", nil), discord.TextInputComponent{CustomID: "description", Style: discord.TextInputStyleParagraph, MaxLength: 140, Value: descVal}))).Build()
+						modal := discordutil.NewModalCreateBuilder().SetTitle(i18n.TranslateText(event.Locale(), titleKey, nil)).SetCustomID(fmt.Sprintf("role:panel_edit_modal:%s:%s", action, edit.ID)).SetComponents(builtin.Or(action == "change_name", discord.NewLabel(i18n.TranslateText(event.Locale(), "components.role.panel.edit.change_name.modal.input.name.label", nil), discord.TextInputComponent{CustomID: "name", Style: discord.TextInputStyleShort, MinLength: builtin.Ptr(1), MaxLength: 32, Required: true, Value: nameVal}), discord.NewLabel(i18n.TranslateText(event.Locale(), "components.role.panel.edit.change_description.modal.input.description.label", nil), discord.TextInputComponent{CustomID: "description", Style: discord.TextInputStyleParagraph, MaxLength: 140, Value: descVal}))).Build()
 						if err := event.Modal(modal); err != nil {
 							return errors.NewError(err)
 						}
@@ -458,7 +457,7 @@ func Command(c *components.Components) components.Command {
 							if slices.ContainsFunc(edit.Roles, func(r1 models.Role) bool { return r1.ID == r.ID }) {
 								continue
 							}
-							if r.Managed || r.Compare(*highestRole) != -1 {
+							if r.Managed || discordutil.CompareRoles(r, *highestRole) != -1 {
 								delete(selectedRoles, i)
 								deletedRole = append(deletedRole, i)
 								continue
@@ -470,8 +469,8 @@ func Command(c *components.Components) components.Command {
 							for _, id := range deletedRole {
 								fmt.Fprintf(&s, "- %s\r", discord.RoleMention(id))
 							}
-							embed := discord.NewEmbedBuilder().SetTitle(i18n.TranslateText(event.Locale(), "components.role.panel.edit.add_role.deleted_role.embed.title", nil)).SetDescriptionf("%s\n"+s.String(), i18n.TranslateText(event.Locale(), "components.role.panel.edit.add_role.deleted_role.embed.description", nil)).Build()
-							if err := event.CreateMessage(discord.NewMessageBuilder().
+							embed := discord.NewEmbed().WithTitle(i18n.TranslateText(event.Locale(), "components.role.panel.edit.add_role.deleted_role.embed.title", nil)).WithDescriptionf("%s\n"+s.String(), i18n.TranslateText(event.Locale(), "components.role.panel.edit.add_role.deleted_role.embed.description", nil))
+							if err := event.CreateMessage(discordutil.NewMessageBuilder().
 								SetEmbeds(embeds.SetEmbedProperties(embed)).
 								SetFlags(discord.MessageFlagEphemeral).
 								BuildCreate()); err != nil {
@@ -540,7 +539,7 @@ func Command(c *components.Components) components.Command {
 						if edit.SelectedRole != nil {
 							idx := slices.IndexFunc(edit.Roles, func(r models.Role) bool { return r.ID == *edit.SelectedRole })
 							if idx != -1 {
-								modal := discord.NewModalCreateBuilder().SetTitle(i18n.TranslateText(event.Locale(), "components.role.panel.edit.set_display.name.modal.title", nil)).SetCustomID(fmt.Sprintf("role:panel_edit_modal:set_display_name:%s", edit.ID)).SetComponents(discord.NewLabel(i18n.TranslateText(event.Locale(), "components.role.panel.edit.set_display.name.modal.input.display_name.label", nil), discord.TextInputComponent{CustomID: "display_name", Style: discord.TextInputStyleShort, MinLength: builtin.Ptr(1), MaxLength: 100, Required: true, Value: edit.Roles[idx].Name})).Build()
+								modal := discordutil.NewModalCreateBuilder().SetTitle(i18n.TranslateText(event.Locale(), "components.role.panel.edit.set_display.name.modal.title", nil)).SetCustomID(fmt.Sprintf("role:panel_edit_modal:set_display_name:%s", edit.ID)).SetComponents(discord.NewLabel(i18n.TranslateText(event.Locale(), "components.role.panel.edit.set_display.name.modal.input.display_name.label", nil), discord.TextInputComponent{CustomID: "display_name", Style: discord.TextInputStyleShort, MinLength: builtin.Ptr(1), MaxLength: 100, Required: true, Value: edit.Roles[idx].Name})).Build()
 								if err := event.Modal(modal); err != nil {
 									return errors.NewError(err)
 								}
@@ -623,7 +622,7 @@ func Command(c *components.Components) components.Command {
 							return errors.NewError(err)
 						}
 					case "place":
-						place, err := createPanelPlace(event, c, panel.ID, event.Channel().ID(), g)
+						place, err := createPanelPlace(c.Ctx(), c, panel.ID, event.Channel().ID(), g)
 						if err != nil {
 							return errors.NewError(errors.ErrorMessage("errors.not_exist", event))
 						}
@@ -644,7 +643,7 @@ func Command(c *components.Components) components.Command {
 				ComponentHandler: func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
 					args := strings.Split(event.Data.CustomID(), ":")
 					action, placeID := args[2], uuid.MustParse(args[3])
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
@@ -684,11 +683,11 @@ func Command(c *components.Components) components.Command {
 						if len(panel.Roles) < 1 {
 							return errors.NewError(errors.ErrorMessage("errors.not_exist", event))
 						}
-						if err := rolePanelPlace(event, &place, event.Locale(), event.Client(), true, c); err != nil {
+						if err := rolePanelPlace(c.Ctx(), &place, event.Locale(), event.Client(), true, c); err != nil {
 							return errors.NewError(err)
 						}
-						embed := discord.NewEmbedBuilder().SetTitle(i18n.TranslateText(event.Locale(), "components.role.panel.create.message", nil)).SetDescription(i18n.TranslateText(event.Locale(), "components.role.panel.create.description", nil)).Build()
-						if err := event.UpdateMessage(discord.NewMessageBuilder().
+						embed := discord.NewEmbed().WithTitle(i18n.TranslateText(event.Locale(), "components.role.panel.create.message", nil)).WithDescription(i18n.TranslateText(event.Locale(), "components.role.panel.create.description", nil))
+						if err := event.UpdateMessage(discordutil.NewMessageBuilder().
 							SetEmbeds(embeds.SetEmbedProperties(embed)).
 							BuildUpdate()); err != nil {
 							return errors.NewError(err)
@@ -707,7 +706,7 @@ func Command(c *components.Components) components.Command {
 			"role:panel_use": generic.ComponentHandler(func(c *components.Components, event *events.ComponentInteractionCreate) errors.Error {
 				args := strings.Split(event.Data.CustomID(), ":")
 				action, placeID := args[2], uuid.MustParse(args[3])
-				g, err := c.GuildCreateID(event, *event.GuildID())
+				g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 				if err != nil {
 					return errors.NewError(err)
 				}
@@ -746,8 +745,8 @@ func Command(c *components.Components) components.Command {
 						useTitleKey = "components.role.panel.use.added"
 						useDescKey = "components.role.panel.use.added.description"
 					}
-					embed := discord.NewEmbedBuilder().SetTitle(i18n.TranslateText(event.Locale(), useTitleKey, nil)).SetDescription(i18n.TranslateText(event.Locale(), useDescKey, map[string]any{"role": discord.RoleMention(roleID)})).Build()
-					if err := event.CreateMessage(discord.NewMessageBuilder().
+					embed := discord.NewEmbed().WithTitle(i18n.TranslateText(event.Locale(), useTitleKey, nil)).WithDescription(i18n.TranslateText(event.Locale(), useDescKey, map[string]any{"role": discord.RoleMention(roleID)}))
+					if err := event.CreateMessage(discordutil.NewMessageBuilder().
 						SetEmbeds(embeds.SetEmbedProperties(embed)).
 						SetFlags(discord.MessageFlagEphemeral).
 						BuildCreate()); err != nil {
@@ -762,7 +761,7 @@ func Command(c *components.Components) components.Command {
 						}
 						options[i] = discord.StringSelectMenuOption{Label: role.Name, Value: role.ID.String(), Emoji: emojiVal, Default: slices.Contains(event.Member().RoleIDs, role.ID)}
 					}
-					if err := event.CreateMessage(discord.NewMessageBuilder().SetComponents(discord.NewActionRow(discord.StringSelectMenuComponent{CustomID: fmt.Sprintf("role:panel_use:select_menu:%s", place.ID.String()), Placeholder: i18n.TranslateText(event.Locale(), "components.role.panel.components.select_menu.placeholder", nil), MinValues: builtin.Ptr(0), MaxValues: len(place.Roles), Options: options})).SetFlags(discord.MessageFlagEphemeral).BuildCreate()); err != nil {
+					if err := event.CreateMessage(discordutil.NewMessageBuilder().SetComponents(discord.NewActionRow(discord.StringSelectMenuComponent{CustomID: fmt.Sprintf("role:panel_use:select_menu:%s", place.ID.String()), Placeholder: i18n.TranslateText(event.Locale(), "components.role.panel.components.select_menu.placeholder", nil), MinValues: builtin.Ptr(0), MaxValues: len(place.Roles), Options: options})).SetFlags(discord.MessageFlagEphemeral).BuildCreate()); err != nil {
 						return errors.NewError(err)
 					}
 				case "select_menu":
@@ -784,33 +783,40 @@ func Command(c *components.Components) components.Command {
 						} else {
 							if slices.Index(event.Member().RoleIDs, role.ID) != -1 {
 								removedRoles = append(removedRoles, role.ID)
-								_ = event.Client().Rest.RemoveMemberRole(*event.GuildID(), event.User().ID, role.ID)
+							} else {
+								if _, ok := event.Client().Caches.Role(*event.GuildID(), role.ID); ok {
+									_ = event.Client().Rest.RemoveMemberRole(*event.GuildID(), event.User().ID, role.ID)
+								}
 							}
 						}
 					}
-					embed := discord.NewEmbedBuilder().SetTitle(i18n.TranslateText(event.Locale(), "components.role.panel.use.changed", nil))
+					embed := discord.NewEmbed().WithTitle(i18n.TranslateText(event.Locale(), "components.role.panel.use.changed", nil))
+					var fields []discord.EmbedField
 					if len(addRoles) > 0 {
 						var s strings.Builder
 						for _, id := range addRoles {
 							fmt.Fprintf(&s, "%s\n", discord.RoleMention(id))
 						}
-						embed.AddFields(discord.EmbedField{Name: i18n.TranslateText(event.Locale(), "components.role.panel.use.changed.add", nil), Value: s.String()})
+						fields = append(fields, discord.EmbedField{Name: i18n.TranslateText(event.Locale(), "components.role.panel.use.changed.add", nil), Value: s.String()})
 					}
 					if len(unchangedRole) > 0 {
 						var s strings.Builder
 						for _, id := range unchangedRole {
 							fmt.Fprintf(&s, "%s\n", discord.RoleMention(id))
 						}
-						embed.AddFields(discord.EmbedField{Name: i18n.TranslateText(event.Locale(), "components.role.panel.use.changed.unchanged", nil), Value: s.String()})
+						fields = append(fields, discord.EmbedField{Name: i18n.TranslateText(event.Locale(), "components.role.panel.use.changed.unchanged", nil), Value: s.String()})
 					}
 					if len(removedRoles) > 0 {
 						var s strings.Builder
 						for _, id := range removedRoles {
 							fmt.Fprintf(&s, "%s\n", discord.RoleMention(id))
 						}
-						embed.AddFields(discord.EmbedField{Name: i18n.TranslateText(event.Locale(), "components.role.panel.use.changed.remove", nil), Value: s.String()})
+						fields = append(fields, discord.EmbedField{Name: i18n.TranslateText(event.Locale(), "components.role.panel.use.changed.remove", nil), Value: s.String()})
 					}
-					if err := event.RespondMessage(discord.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed.Build())).SetFlags(discord.MessageFlagEphemeral)); err != nil {
+					if len(fields) > 0 {
+						embed = embed.WithFields(fields...)
+					}
+					if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().SetEmbeds(embeds.SetEmbedProperties(embed)).SetFlags(discord.MessageFlagEphemeral)); err != nil {
 						return errors.NewError(err)
 					}
 				}
@@ -823,7 +829,7 @@ func Command(c *components.Components) components.Command {
 				if event.Message.Author.Bot || event.Message.Author.System {
 					return nil
 				}
-				u, err := c.UserCreate(event, event.Message.Author)
+				u, err := c.UserCreate(c.Ctx(), event.Message.Author)
 				if err != nil {
 					return errors.NewError(err)
 				}
@@ -857,7 +863,7 @@ func Command(c *components.Components) components.Command {
 					}
 				}
 			case *events.GuildMessageDelete:
-				g, err := c.GuildCreateID(event, event.GuildID)
+				g, err := c.GuildCreateID(c.Ctx(), event.GuildID)
 				if err != nil {
 					return errors.NewError(err)
 				}
@@ -868,7 +874,7 @@ func Command(c *components.Components) components.Command {
 				if event.Member.User.Bot || event.Member.User.System {
 					return nil
 				}
-				u, err := c.UserCreate(event, event.Member.User)
+				u, err := c.UserCreate(c.Ctx(), event.Member.User)
 				if err != nil {
 					return errors.NewError(err)
 				}
@@ -900,8 +906,8 @@ func Command(c *components.Components) components.Command {
 						err = event.Client().Rest.AddMemberRole(event.GuildID, event.UserID, role.ID)
 					}
 					if err != nil {
-						embed := discord.NewEmbedBuilder().SetTitlef("❗ %s", i18n.TranslateText(u.Locale, "errors.fail.role.panel", nil)).SetDescription(i18n.TranslateText(u.Locale, "errors.fail.role.panel.description", nil)).SetColor(0xff2121).Build()
-						m, err := event.Client().Rest.CreateMessage(event.ChannelID, discord.NewMessageBuilder().
+						embed := discord.NewEmbed().WithTitlef("❗ %s", i18n.TranslateText(u.Locale, "errors.fail.role.panel", nil)).WithDescription(i18n.TranslateText(u.Locale, "errors.fail.role.panel.description", nil)).WithColor(0xff2121)
+						m, err := event.Client().Rest.CreateMessage(event.ChannelID, discordutil.NewMessageBuilder().
 							SetEmbeds(embeds.SetEmbedProperties(embed)).
 							SetFlags(discord.MessageFlagEphemeral).
 							BuildCreate())
@@ -921,11 +927,10 @@ func Command(c *components.Components) components.Command {
 							useTitleKey = "components.role.panel.use.added"
 							useDescKey = "components.role.panel.use.added.description"
 						}
-						embed := discord.NewEmbedBuilder().
-							SetTitle(i18n.TranslateText(u.Locale, useTitleKey, nil)).
-							SetDescription(i18n.TranslateText(u.Locale, useDescKey, map[string]any{"role": discord.RoleMention(role.ID)})).
-							Build()
-						m, err := event.Client().Rest.CreateMessage(event.ChannelID, discord.NewMessageBuilder().
+						embed := discord.NewEmbed().
+							WithTitle(i18n.TranslateText(u.Locale, useTitleKey, nil)).
+							WithDescription(i18n.TranslateText(u.Locale, useDescKey, map[string]any{"role": discord.RoleMention(role.ID)}))
+						m, err := event.Client().Rest.CreateMessage(event.ChannelID, discordutil.NewMessageBuilder().
 							SetContent(discord.UserMention(event.UserID)).
 							SetEmbeds(embeds.SetEmbedProperties(embed)).
 							SetFlags(discord.MessageFlagEphemeral).

@@ -33,13 +33,14 @@ import (
 
 	"github.com/sabafly/gobot/bot/commands/currency"
 	"github.com/sabafly/gobot/bot/components"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/embeds"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
 )
 
 func upMessageModalHandler(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
-	g, err := c.GuildCreateID(event, *event.GuildID())
+	g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -48,13 +49,12 @@ func upMessageModalHandler(c *components.Components, event *events.ModalSubmitIn
 		return errors.NewError(err)
 	}
 
-	embed := discord.NewEmbedBuilder().
-		SetTitle(i18n.TranslateText(event.Locale(), "components.level.up.message.message", nil)).
-		SetDescription(g.LevelUpMessage).
-		Build()
+	embed := discord.NewEmbed().
+		WithTitle(i18n.TranslateText(event.Locale(), "components.level.up.message.message", nil)).
+		WithDescription(g.LevelUpMessage)
 
 	if err := event.CreateMessage(
-		discord.NewMessageBuilder().
+		discordutil.NewMessageBuilder().
 			SetEmbeds(embeds.SetEmbedProperties(embed)).
 			BuildCreate(),
 	); err != nil {
@@ -72,7 +72,7 @@ func eventHandler(c *components.Components, event bot.Event) errors.Error {
 		if event.Message.Type != discord.MessageTypeDefault && event.Message.Type != discord.MessageTypeReply {
 			return nil
 		}
-		g, err := c.GuildCreateID(event, event.GuildID)
+		g, err := c.GuildCreateID(c.Ctx(), event.GuildID)
 		if err != nil || g.LevelingDisabled || slices.Contains(g.LevelUpExcludeChannel, event.ChannelID) {
 			return nil
 		}
@@ -87,7 +87,7 @@ func eventHandler(c *components.Components, event bot.Event) errors.Error {
 		if channel != nil && channel.ParentID() != nil && slices.Contains(g.LevelUpExcludeChannel, *channel.ParentID()) {
 			return nil
 		}
-		m, err := c.MemberCreate(event, event.Message.Author, event.GuildID)
+		m, err := c.MemberCreate(c.Ctx(), event.Message.Author, event.GuildID)
 		if err != nil {
 			return errors.NewError(err)
 		}
@@ -104,7 +104,7 @@ func eventHandler(c *components.Components, event bot.Event) errors.Error {
 			return errors.NewError(err)
 		}
 
-		if _, err = addXp(event, rand.N[uint64](16)+15, event.Client(), m, g, event.ChannelID, event.Message.Author.EffectiveName(), false, c.GormDB()); err != nil {
+		if _, err = addXp(c.Ctx(), rand.N[uint64](16)+15, event.Client(), m, g, event.ChannelID, event.Message.Author.EffectiveName(), false, c.GormDB()); err != nil {
 			return errors.NewError(err)
 		}
 

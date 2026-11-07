@@ -41,18 +41,18 @@ func (c *Components) OnGuildReady() func(event *events.GuildReady) {
 			slog.Error("ギルド準備完了 オーナーの取得に失敗", "err", err)
 			return
 		}
-		u, err := c.UserCreate(event, member.User)
+		u, err := c.UserCreate(c.Ctx(), member.User)
 		if err != nil {
 			slog.Error("ギルド準備完了 オーナーの初期化に失敗", "err", err)
 			return
 		}
 
-		if _, err := c.GuildCreate(event, u.ID, &event.Guild.Guild); err != nil {
+		if _, err := c.GuildCreate(c.Ctx(), u.ID, &event.Guild.Guild); err != nil {
 			slog.Error("ギルドの作成に失敗", "err", err)
 			return
 		}
 
-		if err := c.InitializeGuild(event, event.Guild.Guild); err != nil {
+		if err := c.InitializeGuild(c.Ctx(), event.Guild.Guild); err != nil {
 			slog.Error("ギルドの初期化に失敗", "err", err, "guild_id", event.Guild.ID)
 			return
 		}
@@ -80,18 +80,18 @@ func (c *Components) OnGuildJoin() func(event *events.GuildJoin) {
 			slog.Error("ギルド参加 オーナーの取得に失敗", "err", err)
 			return
 		}
-		u, err := c.UserCreate(event, member.User)
+		u, err := c.UserCreate(c.Ctx(), member.User)
 		if err != nil {
 			slog.Error("ギルド参加 オーナーの初期化に失敗", "err", err)
 			return
 		}
 
-		if _, err := c.GuildCreate(event, u.ID, &event.Guild.Guild); err != nil {
+		if _, err := c.GuildCreate(c.Ctx(), u.ID, &event.Guild.Guild); err != nil {
 			slog.Error("ギルドの作成に失敗", "err", err)
 			return
 		}
 
-		if err := c.InitializeGuild(event, event.Guild.Guild); err != nil {
+		if err := c.InitializeGuild(c.Ctx(), event.Guild.Guild); err != nil {
 			slog.Error("ギルドの初期化に失敗", "err", err, "guild_id", event.Guild.ID)
 			return
 		}
@@ -188,7 +188,7 @@ func (c *Components) GuildCreateID(ctx context.Context, gid snowflake.ID) (*mode
 
 func (c *Components) GuildRequest(client *bot.Client, gid snowflake.ID) (*discord.Guild, error) {
 	if g, ok := client.Caches.Guild(gid); ok {
-		return &g, nil
+		return &g.Guild, nil
 	}
 	g, err := client.Rest.GetGuild(gid, true)
 	if err != nil {

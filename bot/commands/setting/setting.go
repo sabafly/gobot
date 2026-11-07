@@ -34,6 +34,7 @@ import (
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/builtin"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/embeds"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
@@ -135,13 +136,13 @@ func Command(c *components.Components) components.Command {
 				},
 				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
 					l := i18n.TranslateLayout(event.Locale(), "command.settings.view")
 					if err := event.CreateMessage(
-						discord.NewMessageBuilder().
+						discordutil.NewMessageBuilder().
 							SetIsComponentsV2(true).
 							SetComponents(i18n.BuildContext().
 								WithText("guild_name", g.Name).
@@ -173,7 +174,7 @@ func Command(c *components.Components) components.Command {
 				},
 				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
@@ -183,7 +184,7 @@ func Command(c *components.Components) components.Command {
 					}
 
 					if err := event.CreateMessage(
-						discord.NewMessageBuilder().
+						discordutil.NewMessageBuilder().
 							SetContent(builtin.Or(g.BumpEnabled, i18n.TranslateText(event.Locale(), "components.setting.bump.toggle.enabled"), i18n.TranslateText(event.Locale(), "components.setting.bump.toggle.disabled"))).
 							BuildCreate(),
 					); err != nil {
@@ -198,7 +199,7 @@ func Command(c *components.Components) components.Command {
 				},
 				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
@@ -208,7 +209,7 @@ func Command(c *components.Components) components.Command {
 					}
 
 					if err := event.CreateMessage(
-						discord.NewMessageBuilder().
+						discordutil.NewMessageBuilder().
 							SetContent(builtin.Or(g.UpEnabled, i18n.TranslateText(event.Locale(), "components.setting.up.toggle.enabled"), i18n.TranslateText(event.Locale(), "components.setting.up.toggle.disabled"))).
 							BuildCreate(),
 					); err != nil {
@@ -223,7 +224,7 @@ func Command(c *components.Components) components.Command {
 				},
 				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
@@ -237,7 +238,7 @@ func Command(c *components.Components) components.Command {
 					}
 
 					if err := event.CreateMessage(
-						discord.NewMessageBuilder().
+						discordutil.NewMessageBuilder().
 							SetContent(i18n.TranslateText(event.Locale(), "components.setting.bump.mention.used", map[string]any{
 								"role": builtin.Or(g.BumpMention != nil,
 									discord.RoleMention(builtin.NonNil(g.BumpMention)),
@@ -257,7 +258,7 @@ func Command(c *components.Components) components.Command {
 				},
 				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
@@ -271,7 +272,7 @@ func Command(c *components.Components) components.Command {
 					}
 
 					if err := event.CreateMessage(
-						discord.NewMessageBuilder().
+						discordutil.NewMessageBuilder().
 							SetContent(i18n.TranslateText(event.Locale(), "components.setting.up.mention.used", map[string]any{
 								"role": builtin.Or(g.UpMention != nil,
 									discord.RoleMention(builtin.NonNil(g.UpMention)),
@@ -291,12 +292,12 @@ func Command(c *components.Components) components.Command {
 				},
 				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
 					if err := event.Modal(
-						discord.NewModalCreateBuilder().
+						discordutil.NewModalCreateBuilder().
 							SetTitle(i18n.TranslateText(event.Locale(), "components.setting.bump.message.modal.title")).
 							SetCustomID("setting:bump_message").
 							SetComponents(
@@ -354,12 +355,12 @@ func Command(c *components.Components) components.Command {
 				},
 				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
 					if err := event.Modal(
-						discord.NewModalCreateBuilder().
+						discordutil.NewModalCreateBuilder().
 							SetTitle(i18n.TranslateText(event.Locale(), "components.setting.up.message.modal.title")).
 							SetCustomID("setting:up_message").
 							SetComponents(
@@ -427,7 +428,7 @@ func Command(c *components.Components) components.Command {
 				},
 				DiscordPerm: discord.PermissionManageGuild,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
@@ -437,7 +438,7 @@ func Command(c *components.Components) components.Command {
 					}
 
 					if err := event.CreateMessage(
-						discord.NewMessageBuilder().
+						discordutil.NewMessageBuilder().
 							SetContent(builtin.Or(!g.LevelingDisabled, i18n.TranslateText(event.Locale(), "components.setting.leveling.enable.enabled"), i18n.TranslateText(event.Locale(), "components.setting.leveling.enable.disabled"))).
 							BuildCreate(),
 					); err != nil {
@@ -449,7 +450,7 @@ func Command(c *components.Components) components.Command {
 		},
 		ModalHandlers: map[string]generic.ModalHandler{
 			"setting:bump_message": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
-				g, err := c.GuildCreateID(event, *event.GuildID())
+				g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 				if err != nil {
 					return errors.NewError(err)
 				}
@@ -467,7 +468,7 @@ func Command(c *components.Components) components.Command {
 				return nil
 			},
 			"setting:up_message": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
-				g, err := c.GuildCreateID(event, *event.GuildID())
+				g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 				if err != nil {
 					return errors.NewError(err)
 				}
@@ -498,7 +499,7 @@ func Command(c *components.Components) components.Command {
 				if event.Message.Author.ID != c.Config().BumpUserID && event.Message.Author.ID != c.Config().UpUserID {
 					return nil
 				}
-				g, err := c.GuildCreateID(event, event.GuildID)
+				g, err := c.GuildCreateID(c.Ctx(), event.GuildID)
 				if err != nil {
 					return errors.NewError(err)
 				}
@@ -626,17 +627,15 @@ func upHandler(c *components.Components, g *models.Guild, event *events.GuildMes
 }
 
 func createNotice(title, message string, n notice, client *bot.Client, content string) {
+	embed := embeds.SetEmbedProperties(
+		discord.NewEmbed().
+			WithTitle(title).
+			WithDescription(message),
+	)
 	if _, err := client.Rest.CreateMessage(n.channelID,
-		discord.NewMessageBuilder().
+		discordutil.NewMessageBuilder().
 			SetContent(content).
-			SetEmbeds(
-				embeds.SetEmbedProperties(
-					discord.NewEmbedBuilder().
-						SetTitle(title).
-						SetDescription(message).
-						Build(),
-				),
-			).
+			SetEmbeds(embed).
 			BuildCreate(),
 	); err != nil {
 		slog.Error("通知作成に失敗", slog.Any("err", err))

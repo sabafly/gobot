@@ -11,6 +11,7 @@ import (
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/database/models"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
 )
@@ -86,7 +87,7 @@ func handleUserSettings(c *components.Components, event *events.ApplicationComma
 		return errors.NewError(err)
 	}
 
-	if err := event.CreateMessage(discord.NewMessageBuilder().
+	if err := event.CreateMessage(discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(componentsList...).
 		AddFlags(discord.MessageFlagEphemeral).
@@ -119,7 +120,7 @@ func handleToggleDM(c *components.Components, event *events.ComponentInteraction
 	}
 
 	// Update the message in place
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := event.UpdateMessage(discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(componentsList...).
 		BuildUpdate()); err != nil {

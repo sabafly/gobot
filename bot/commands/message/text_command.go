@@ -29,6 +29,8 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
+
+	"github.com/sabafly/gobot/internal/discordutil"
 )
 
 func doTextCommand(ctx context.Context, event *events.GuildMessageCreate) (err error, shouldContinue bool) {
@@ -64,7 +66,7 @@ func doTextCommand(ctx context.Context, event *events.GuildMessageCreate) (err e
 
 		content.WriteString("\nSum: " + strconv.Itoa(sum))
 
-		_, err = event.Client().Rest.CreateMessage(event.ChannelID, discord.NewMessageBuilder().
+		_, err = event.Client().Rest.CreateMessage(event.ChannelID, discordutil.NewMessageBuilder().
 			SetContent(content.String()).
 			SetMessageReferenceByID(event.Message.ID).
 			BuildCreate(),
@@ -132,7 +134,7 @@ func doTextCommand(ctx context.Context, event *events.GuildMessageCreate) (err e
 			result += " | " + result + " | " + result
 		}
 
-		_, err = event.Client().Rest.CreateMessage(event.ChannelID, discord.NewMessageBuilder().
+		_, err = event.Client().Rest.CreateMessage(event.ChannelID, discordutil.NewMessageBuilder().
 			SetContent("Slots: "+result).
 			SetMessageReferenceByID(event.Message.ID).
 			BuildCreate(),

@@ -19,6 +19,7 @@ import (
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/database/models"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
 )
@@ -117,7 +118,7 @@ func ChinchiroPlayCommand(c *components.Components, event *events.ApplicationCom
 
 	cName := currency.GetCurrencyName(c, *event.GuildID())
 	if points < bet*5 {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -125,7 +126,7 @@ func ChinchiroPlayCommand(c *components.Components, event *events.ApplicationCom
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -161,11 +162,11 @@ func ChinchiroPlayCommand(c *components.Components, event *events.ApplicationCom
 		return errors.NewError(err)
 	}
 
-	msgBuilder := discord.NewMessageBuilder().
+	msgBuilder := discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(ChinchiroMessage(c, &dbSession, event.Locale())...)
 
-	err = event.RespondMessage(msgBuilder)
+	err = discordutil.RespondMessage(event, msgBuilder)
 	if err != nil {
 		return errors.NewError(err)
 	}
@@ -367,7 +368,7 @@ func ChinchiroJoinHandler(c *components.Components, event *events.ComponentInter
 	}
 
 	if session.State != models.ChinchiroStateLobby {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -375,14 +376,14 @@ func ChinchiroJoinHandler(c *components.Components, event *events.ComponentInter
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
 	// Check if already joined
 	for _, p := range session.Players {
 		if p.UserID == event.User().ID {
-			builder := discord.NewMessageBuilder().
+			builder := discordutil.NewMessageBuilder().
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
@@ -390,7 +391,7 @@ func ChinchiroJoinHandler(c *components.Components, event *events.ComponentInter
 					).WithAccentColor(0xE74C3C),
 				).
 				AddFlags(discord.MessageFlagEphemeral)
-			_ = event.RespondMessage(builder)
+			_ = discordutil.RespondMessage(event, builder)
 			return nil
 		}
 	}
@@ -402,7 +403,7 @@ func ChinchiroJoinHandler(c *components.Components, event *events.ComponentInter
 	}
 	cName := currency.GetCurrencyName(c, *event.GuildID())
 	if points < session.Bet {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -410,7 +411,7 @@ func ChinchiroJoinHandler(c *components.Components, event *events.ComponentInter
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -436,7 +437,7 @@ func ChinchiroJoinHandler(c *components.Components, event *events.ComponentInter
 		return errors.NewError(err)
 	}
 
-	msgUpdate := discord.NewMessageBuilder().
+	msgUpdate := discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(ChinchiroMessage(c, &dbSession, event.Locale())...).
 		BuildUpdate()
@@ -464,7 +465,7 @@ func ChinchiroStartHandler(c *components.Components, event *events.ComponentInte
 	}
 
 	if session.HostUserID != event.User().ID {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -472,12 +473,12 @@ func ChinchiroStartHandler(c *components.Components, event *events.ComponentInte
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
 	if len(session.Players) < 2 {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -485,7 +486,7 @@ func ChinchiroStartHandler(c *components.Components, event *events.ComponentInte
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -500,7 +501,7 @@ func ChinchiroStartHandler(c *components.Components, event *events.ComponentInte
 
 	cName := currency.GetCurrencyName(c, *event.GuildID())
 	if points < maxLiability {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -508,7 +509,7 @@ func ChinchiroStartHandler(c *components.Components, event *events.ComponentInte
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -530,7 +531,7 @@ func ChinchiroStartHandler(c *components.Components, event *events.ComponentInte
 		return errors.NewError(err)
 	}
 
-	msgUpdate := discord.NewMessageBuilder().
+	msgUpdate := discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(ChinchiroMessage(c, &dbSession, event.Locale())...).
 		BuildUpdate()
@@ -558,7 +559,7 @@ func ChinchiroCancelHandler(c *components.Components, event *events.ComponentInt
 	}
 
 	if session.HostUserID != event.User().ID {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -566,12 +567,12 @@ func ChinchiroCancelHandler(c *components.Components, event *events.ComponentInt
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
 	if session.State != models.ChinchiroStateLobby {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -579,7 +580,7 @@ func ChinchiroCancelHandler(c *components.Components, event *events.ComponentInt
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -598,7 +599,7 @@ func ChinchiroCancelHandler(c *components.Components, event *events.ComponentInt
 		return errors.NewError(txErr)
 	}
 
-	builder := discord.NewMessageBuilder().
+	builder := discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(
 			discord.NewContainer(
@@ -634,7 +635,7 @@ func ChinchiroRollHandler(c *components.Components, event *events.ComponentInter
 	})
 
 	if session.State == models.ChinchiroStateFinished || session.State == models.ChinchiroStateLobby {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -642,14 +643,14 @@ func ChinchiroRollHandler(c *components.Components, event *events.ComponentInter
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
 	switch session.State {
 	case models.ChinchiroStateHostRolling:
 		if event.User().ID != session.HostUserID {
-			builder := discord.NewMessageBuilder().
+			builder := discordutil.NewMessageBuilder().
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
@@ -657,7 +658,7 @@ func ChinchiroRollHandler(c *components.Components, event *events.ComponentInter
 					).WithAccentColor(0xE74C3C),
 				).
 				AddFlags(discord.MessageFlagEphemeral)
-			_ = event.RespondMessage(builder)
+			_ = discordutil.RespondMessage(event, builder)
 			return nil
 		}
 
@@ -721,7 +722,7 @@ func ChinchiroRollHandler(c *components.Components, event *events.ComponentInter
 		activeKid = &kids[session.CurrentPlayerIndex]
 
 		if event.User().ID != activeKid.UserID {
-			builder := discord.NewMessageBuilder().
+			builder := discordutil.NewMessageBuilder().
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
@@ -729,7 +730,7 @@ func ChinchiroRollHandler(c *components.Components, event *events.ComponentInter
 					).WithAccentColor(0xE74C3C),
 				).
 				AddFlags(discord.MessageFlagEphemeral)
-			_ = event.RespondMessage(builder)
+			_ = discordutil.RespondMessage(event, builder)
 			return nil
 		}
 
@@ -783,7 +784,7 @@ func ChinchiroRollHandler(c *components.Components, event *events.ComponentInter
 		return errors.NewError(err)
 	}
 
-	msgUpdate := discord.NewMessageBuilder().
+	msgUpdate := discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(ChinchiroMessage(c, &dbSession, event.Locale())...).
 		BuildUpdate()
@@ -886,7 +887,7 @@ func resolveChinchiroNormalResults(tx *gorm.DB, session *models.ChinchiroSession
 }
 
 func respondSessionNotFound(event *events.ComponentInteractionCreate) errors.Error {
-	builder := discord.NewMessageBuilder().
+	builder := discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(
 			discord.NewContainer(
@@ -894,7 +895,7 @@ func respondSessionNotFound(event *events.ComponentInteractionCreate) errors.Err
 			).WithAccentColor(0xE74C3C),
 		).
 		AddFlags(discord.MessageFlagEphemeral)
-	_ = event.RespondMessage(builder)
+	_ = discordutil.RespondMessage(event, builder)
 	return nil
 }
 
@@ -978,7 +979,7 @@ func advanceToNextRoundOrFinish(c *components.Components, tx *gorm.DB, session *
 	// Post summary of the completed round to the channel
 	if client != nil {
 		roundSummaryText := buildRoundSummaryText(c, session)
-		_, _ = client.Rest.CreateMessage(session.ChannelID, discord.NewMessageBuilder().
+		_, _ = client.Rest.CreateMessage(session.ChannelID, discordutil.NewMessageBuilder().
 			SetContent(roundSummaryText).
 			BuildCreate())
 	}
@@ -1007,7 +1008,7 @@ func advanceToNextRoundOrFinish(c *components.Components, tx *gorm.DB, session *
 			// Skip this host due to insufficient points, and post a message
 			if client != nil {
 				skipMsg := fmt.Sprintf("⚠️ <@%s> は%s不足のため、親の番をスキップします。（必要: %d %s, 現在: %d %s）", nextHost.UserID.String(), cName, maxLiability, cName, points, cName)
-				_, _ = client.Rest.CreateMessage(session.ChannelID, discord.NewMessageBuilder().
+				_, _ = client.Rest.CreateMessage(session.ChannelID, discordutil.NewMessageBuilder().
 					SetContent(skipMsg).
 					BuildCreate())
 			}

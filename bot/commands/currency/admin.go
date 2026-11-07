@@ -17,6 +17,7 @@ import (
 
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database/models"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
 	"github.com/sabafly/gobot/internal/xppoint"
@@ -214,7 +215,7 @@ func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandI
 
 	cName := GetCurrencyName(c, guildID)
 
-	modal := discord.NewModalCreateBuilder().
+	modal := discordutil.NewModalCreateBuilder().
 		SetTitle(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_setup_modal_title")).
 		SetCustomID("currency:tax_setup_modal").
 		SetComponents(
@@ -357,7 +358,7 @@ func TaxSetupModalSubmitHandler(c *components.Components, event *events.ModalSub
 		"currency_name": cName,
 	})
 
-	if errResp := event.RespondMessage(discord.NewMessageBuilder().
+	if errResp := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 		SetEphemeral(true).
 		SetIsComponentsV2(true).
 		SetComponents(
@@ -373,7 +374,7 @@ func TaxSetupModalSubmitHandler(c *components.Components, event *events.ModalSub
 }
 
 func respondModalError(event *events.ModalSubmitInteractionCreate, text string) errors.Error {
-	_ = event.RespondMessage(discord.NewMessageBuilder().
+	_ = discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 		SetEphemeral(true).
 		SetIsComponentsV2(true).
 		SetComponents(
@@ -455,7 +456,7 @@ func TaxStatusHandler(c *components.Components, event *events.ApplicationCommand
 		sb.WriteString(i18n.TranslateText(event.Locale(), "components.currency.admin.tax_status_no_pending"))
 	}
 
-	if err := event.RespondMessage(discord.NewMessageBuilder().
+	if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 		SetEphemeral(true).
 		SetIsComponentsV2(true).
 		SetComponents(
@@ -587,7 +588,7 @@ func TaxForceHandler(c *components.Components, event *events.ApplicationCommandI
 		"exempted":  exemptedCount,
 	}))
 
-	if err := event.RespondMessage(discord.NewMessageBuilder().
+	if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 		SetEphemeral(true).
 		SetIsComponentsV2(true).
 		SetComponents(
@@ -680,7 +681,7 @@ func ResetPointsHandler(c *components.Components, event *events.ApplicationComma
 		})
 	}
 
-	if err := event.RespondMessage(discord.NewMessageBuilder().
+	if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 		SetEphemeral(false).
 		SetIsComponentsV2(true).
 		SetComponents(
@@ -716,7 +717,7 @@ func SeasonStartHandler(c *components.Components, event *events.ApplicationComma
 	var active models.CurrencySeason
 	err := c.GormDB().Where("guild_id = ? AND is_active = ?", guildID, true).First(&active).Error
 	if err == nil {
-		if errResp := event.RespondMessage(discord.NewMessageBuilder().
+		if errResp := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 			SetEphemeral(true).
 			SetIsComponentsV2(true).
 			SetComponents(
@@ -771,7 +772,7 @@ func SeasonStartHandler(c *components.Components, event *events.ApplicationComma
 	if errTx != nil {
 		if after, ok := strings.CutPrefix(errTx.Error(), "overlap:"); ok {
 			overlapName := after
-			if errResp := event.RespondMessage(discord.NewMessageBuilder().
+			if errResp := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 				SetEphemeral(true).
 				SetIsComponentsV2(true).
 				SetComponents(
@@ -808,7 +809,7 @@ func SeasonStartHandler(c *components.Components, event *events.ApplicationComma
 		})
 	}
 
-	if err := event.RespondMessage(discord.NewMessageBuilder().
+	if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 		SetEphemeral(false).
 		SetIsComponentsV2(true).
 		SetComponents(
@@ -853,7 +854,7 @@ func SeasonEndHandler(c *components.Components, event *events.ApplicationCommand
 
 	var active models.CurrencySeason
 	if err := c.GormDB().Where("guild_id = ? AND is_active = ?", guildID, true).First(&active).Error; err != nil {
-		if errResp := event.RespondMessage(discord.NewMessageBuilder().
+		if errResp := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 			SetEphemeral(true).
 			SetIsComponentsV2(true).
 			SetComponents(
@@ -880,7 +881,7 @@ func SeasonEndHandler(c *components.Components, event *events.ApplicationCommand
 		"name": active.Name,
 	})
 
-	if err := event.RespondMessage(discord.NewMessageBuilder().
+	if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 		SetEphemeral(true).
 		SetIsComponentsV2(true).
 		SetComponents(
@@ -899,7 +900,7 @@ func SeasonStatusHandler(c *components.Components, event *events.ApplicationComm
 
 	var active models.CurrencySeason
 	if err := c.GormDB().Where("guild_id = ? AND is_active = ?", guildID, true).First(&active).Error; err != nil {
-		if errResp := event.RespondMessage(discord.NewMessageBuilder().
+		if errResp := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 			SetEphemeral(true).
 			SetIsComponentsV2(true).
 			SetComponents(
@@ -976,7 +977,7 @@ func SeasonStatusHandler(c *components.Components, event *events.ApplicationComm
 		"ranking":    strings.Join(rankingLines, "\n"),
 	})
 
-	if err := event.RespondMessage(discord.NewMessageBuilder().
+	if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 		SetEphemeral(true).
 		SetAllowedMentions(&discord.AllowedMentions{}).
 		SetIsComponentsV2(true).
@@ -1001,7 +1002,7 @@ func SeasonRankingHandler(c *components.Components, event *events.ApplicationCom
 	if hasID {
 		sUUID, err := uuid.Parse(seasonIDStr)
 		if err != nil {
-			if errResp := event.RespondMessage(discord.NewMessageBuilder().
+			if errResp := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 				SetEphemeral(true).
 				SetIsComponentsV2(true).
 				SetComponents(
@@ -1015,7 +1016,7 @@ func SeasonRankingHandler(c *components.Components, event *events.ApplicationCom
 			return nil
 		}
 		if errLoad := c.GormDB().Where("id = ? AND guild_id = ?", sUUID, guildID).First(&season).Error; errLoad != nil {
-			if errResp := event.RespondMessage(discord.NewMessageBuilder().
+			if errResp := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 				SetEphemeral(true).
 				SetIsComponentsV2(true).
 				SetComponents(
@@ -1031,7 +1032,7 @@ func SeasonRankingHandler(c *components.Components, event *events.ApplicationCom
 	} else {
 		if errLoad := c.GormDB().Where("guild_id = ? AND is_active = ?", guildID, true).First(&season).Error; errLoad != nil {
 			if errLatest := c.GormDB().Where("guild_id = ?", guildID).Order("end_time desc").First(&season).Error; errLatest != nil {
-				if errResp := event.RespondMessage(discord.NewMessageBuilder().
+				if errResp := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 					SetEphemeral(true).
 					SetIsComponentsV2(true).
 					SetComponents(
@@ -1100,7 +1101,7 @@ func SeasonRankingHandler(c *components.Components, event *events.ApplicationCom
 
 	msg := title + strings.Join(rankingLines, "\n")
 
-	if err := event.RespondMessage(discord.NewMessageBuilder().
+	if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 		SetEphemeral(false).
 		SetAllowedMentions(&discord.AllowedMentions{}).
 		SetIsComponentsV2(true).
@@ -1276,7 +1277,7 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 			}
 			if s.ChannelID != 0 {
 				cName := GetCurrencyName(c, s.GuildID)
-				_, _ = client.Rest.CreateMessage(s.ChannelID, discord.NewMessageCreateBuilder().
+				_, _ = client.Rest.CreateMessage(s.ChannelID, discordutil.NewMessageBuilder().
 					SetAllowedMentions(&discord.AllowedMentions{}).
 					SetContent(i18n.TranslateText(discord.LocaleUnknown, "components.currency.admin.season_start_announcement", map[string]any{
 						"name":          s.Name,
@@ -1284,7 +1285,7 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 						"end_time":      discord.NewTimestamp(discord.TimestampStyleLongDateTime, s.EndTime).String(),
 						"currency_name": cName,
 					})).
-					Build())
+					BuildCreate())
 			}
 		} else {
 			slog.Error("failed to start scheduled season transaction", "season_id", s.ID, "error", errTx)
@@ -1349,10 +1350,10 @@ func announceSeasonResults(c *components.Components, client *bot.Client, seasonI
 
 	channelID := season.ChannelID
 	if channelID != 0 {
-		_, _ = client.Rest.CreateMessage(channelID, discord.NewMessageCreateBuilder().
+		_, _ = client.Rest.CreateMessage(channelID, discordutil.NewMessageBuilder().
 			SetAllowedMentions(&discord.AllowedMentions{}).
 			SetContent(sb.String()).
-			Build())
+			BuildCreate())
 	}
 }
 

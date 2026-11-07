@@ -29,19 +29,19 @@ import (
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
-	"github.com/disgoorg/disgo/rest"
+	"github.com/disgoorg/disgo/handler"
 
 	"github.com/sabafly/gobot/bot/components"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
 )
 
 var PrintDebugInfo = false
 
-func createErrorMessage(
+func CreateErrorMessage(
 	err errors.Error,
 	event interface {
-		RespondMessage(builder discord.MessageBuilder, opts ...rest.RequestOpt) error
 		Locale() discord.Locale
 	},
 ) {
@@ -49,7 +49,7 @@ func createErrorMessage(
 	if em, ok := err.(errors.ErrorWithMessage); ok {
 		key = em.Key()
 	}
-	builder := discord.NewMessageBuilder().
+	builder := discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(
 			discord.NewContainer(
@@ -62,15 +62,21 @@ func createErrorMessage(
 	if PrintDebugInfo && strings.TrimSpace(err.DebugInfo()) != "" {
 		builder.AddComponents(discord.NewTextDisplayf("**[DEBUG]**\n```%s```", err.DebugInfo()))
 	}
-	if err := event.RespondMessage(
-		builder,
-	); err != nil {
+	if err := discordutil.RespondMessage(event, builder); err != nil {
 		slog.Error("failed to respond to message", "error", err)
 	}
 }
 
+func createErrorMessage(
+	err errors.Error,
+	event interface {
+		Locale() discord.Locale
+	},
+) {
+	CreateErrorMessage(err, event)
+}
+
 func rec(event interface {
-	RespondMessage(messageBuilder discord.MessageBuilder, opts ...rest.RequestOpt) error
 	Locale() discord.Locale
 }) {
 	if v := recover(); v != nil {
@@ -248,7 +254,7 @@ func (gc *Command) CommandHandler() func(event *events.ApplicationCommandInterac
 		if err != nil {
 			return err
 		}
-		if c := permissionCheck(event, gc.component, cmd.Permissions(), cmd.DiscordPermission()); !c {
+		if c := permissionCheck(gc.component.Ctx(), event, gc.component, cmd.Permissions(), cmd.DiscordPermission()); !c {
 			if err := noPermissionMessage(event, cmd.Permissions()); err != nil {
 				createErrorMessage(errors.NewError(err), event)
 				return err
@@ -275,7 +281,7 @@ func (gc *Command) ComponentHandler() func(event *events.ComponentInteractionCre
 		if !ok {
 			return fmt.Errorf("unknown handler: custom_id=%s", event.Data.CustomID())
 		}
-		if c := permissionCheck(event, gc.component, cmd.Permissions(), cmd.DiscordPermission()); !c {
+		if c := permissionCheck(gc.component.Ctx(), event, gc.component, cmd.Permissions(), cmd.DiscordPermission()); !c {
 			if err := noPermissionMessage(event, cmd.Permissions()); err != nil {
 				createErrorMessage(errors.NewError(err), event)
 				return err
@@ -323,7 +329,7 @@ func (gc *Command) AutocompleteHandler() func(event *events.AutocompleteInteract
 		if !ok {
 			return fmt.Errorf("unknown handler: command_path=%s", path)
 		}
-		if c := permissionCheck(event, gc.component, cmd.Permissions(), cmd.DiscordPermission()); !c {
+		if c := permissionCheck(gc.component.Ctx(), event, gc.component, cmd.Permissions(), cmd.DiscordPermission()); !c {
 			if err := event.AutocompleteResult(make([]discord.AutocompleteChoice, 0)); err != nil {
 				return err
 			}
@@ -349,5 +355,137 @@ func (gc *Command) OnEvent() func(event bot.Event) error {
 			return err
 		}
 		return nil
+	}
+}
+
+func (gc *Command) RegisterRoutes(r handler.Router) {
+	// 1. CommandHandlers
+	for pattern, cmd := range gc.CommandHandlers {
+		p := pattern
+		c := cmd
+		var mw []handler.Middleware
+		if len(c.Permissions()) > 0 || c.DiscordPermission() != 0 {
+			mw = append(mw, RequirePermissions(gc.component, c.DiscordPermission(), c.Permissions()...))
+		}
+		router := r
+		if len(mw) > 0 {
+			router = r.With(mw...)
+		}
+
+		if strings.HasPrefix(p, "m/") {
+			name := strings.TrimPrefix(p, "m/")
+			router.MessageCommand("/"+name, func(data discord.MessageCommandInteractionData, e *handler.CommandEvent) error {
+				if err := c.Handler()(gc.component, e.ApplicationCommandInteractionCreate); err != nil {
+					CreateErrorMessage(err, e)
+					return err
+				}
+				return nil
+			})
+		} else if strings.HasPrefix(p, "u/") {
+			name := strings.TrimPrefix(p, "u/")
+			router.UserCommand("/"+name, func(data discord.UserCommandInteractionData, e *handler.CommandEvent) error {
+				if err := c.Handler()(gc.component, e.ApplicationCommandInteractionCreate); err != nil {
+					CreateErrorMessage(err, e)
+					return err
+				}
+				return nil
+			})
+		} else {
+			cleanPattern := p
+			if !strings.HasPrefix(cleanPattern, "/") {
+				cleanPattern = "/" + cleanPattern
+			}
+			router.SlashCommand(cleanPattern, func(data discord.SlashCommandInteractionData, e *handler.CommandEvent) error {
+				if err := c.Handler()(gc.component, e.ApplicationCommandInteractionCreate); err != nil {
+					CreateErrorMessage(err, e)
+					return err
+				}
+				return nil
+			})
+		}
+	}
+
+	// 2. ComponentHandlers
+	for pattern, cmd := range gc.ComponentHandlers {
+		p := pattern
+		c := cmd
+		cleanPattern := p
+		if !strings.HasPrefix(cleanPattern, "/") {
+			cleanPattern = "/" + strings.ReplaceAll(cleanPattern, ":", "/")
+		}
+		var mw []handler.Middleware
+		if len(c.Permissions()) > 0 || c.DiscordPermission() != 0 {
+			mw = append(mw, RequirePermissions(gc.component, c.DiscordPermission(), c.Permissions()...))
+		}
+		router := r
+		if len(mw) > 0 {
+			router = r.With(mw...)
+		}
+		router.Component(cleanPattern, func(e *handler.ComponentEvent) error {
+			if err := c.Handler()(gc.component, e.ComponentInteractionCreate); err != nil {
+				CreateErrorMessage(err, e)
+				return err
+			}
+			return nil
+		})
+	}
+
+	// 3. ModalHandlers
+	for pattern, handlerFunc := range gc.ModalHandlers {
+		p := pattern
+		h := handlerFunc
+		cleanPattern := p
+		if !strings.HasPrefix(cleanPattern, "/") {
+			cleanPattern = "/" + strings.ReplaceAll(cleanPattern, ":", "/")
+		}
+		r.Modal(cleanPattern, func(e *handler.ModalEvent) error {
+			if err := h(gc.component, e.ModalSubmitInteractionCreate); err != nil {
+				CreateErrorMessage(err, e)
+				return err
+			}
+			return nil
+		})
+	}
+
+	// 4. AutocompleteHandlers
+	for pattern, cmd := range gc.AutocompleteHandlers {
+		p := pattern
+		c := cmd
+		var commandPath, focusedOption string
+		if idx := strings.Index(p, ":"); idx != -1 {
+			commandPath = p[:idx]
+			focusedOption = p[idx+1:]
+		} else {
+			commandPath = p
+		}
+		if !strings.HasPrefix(commandPath, "/") {
+			commandPath = "/" + commandPath
+		}
+		var mw []handler.Middleware
+		if len(c.Permissions()) > 0 || c.DiscordPermission() != 0 {
+			mw = append(mw, RequirePermissions(gc.component, c.DiscordPermission(), c.Permissions()...))
+		}
+		router := r
+		if len(mw) > 0 {
+			router = r.With(mw...)
+		}
+		router.Autocomplete(commandPath, func(e *handler.AutocompleteEvent) error {
+			if focusedOption != "" {
+				var focused string
+				for _, ao := range e.Data.Options {
+					if ao.Focused {
+						focused = ao.Name
+						break
+					}
+				}
+				if focused != focusedOption {
+					return nil
+				}
+			}
+			if err := c.Handler()(gc.component, e.AutocompleteInteractionCreate); err != nil {
+				return err
+			}
+			return nil
+		})
 	}
 }

@@ -42,6 +42,7 @@ import (
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/builtin"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
 	"github.com/sabafly/gobot/internal/parse"
@@ -256,12 +257,12 @@ func Command(c *components.Components) *generic.Command {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.bot.target", event))
 					}
 
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						slog.Error("ユーザー取得に失敗", "err", err, "command", event.SlashCommandInteractionData().CommandPath())
 						return errors.NewError(err)
 					}
-					u, err := c.UserCreate(event, event.SlashCommandInteractionData().User("target"))
+					u, err := c.UserCreate(c.Ctx(), event.SlashCommandInteractionData().User("target"))
 					if err != nil {
 						slog.Error("ユーザー取得に失敗", "err", err, "command", event.SlashCommandInteractionData().CommandPath())
 						return errors.NewError(err)
@@ -324,7 +325,7 @@ func Command(c *components.Components) *generic.Command {
 						durationString = i18n.TranslateText(event.Locale(), "components.message.suffix.duration.none", nil)
 					}
 					if err := event.CreateMessage(
-						discord.NewMessageBuilder().
+						discordutil.NewMessageBuilder().
 							SetContentf("%s\n%s",
 								i18n.TranslateText(
 									event.Locale(),
@@ -353,12 +354,12 @@ func Command(c *components.Components) *generic.Command {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.bot.target", event))
 					}
 
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						slog.Error("ユーザー取得に失敗", "err", err, "command", event.SlashCommandInteractionData().CommandPath())
 						return errors.NewError(err)
 					}
-					u, err := c.UserCreate(event, event.SlashCommandInteractionData().User("target"))
+					u, err := c.UserCreate(c.Ctx(), event.SlashCommandInteractionData().User("target"))
 					if err != nil {
 						slog.Error("ユーザー取得に失敗", "err", err, "command", event.SlashCommandInteractionData().CommandPath())
 						return errors.NewError(err)
@@ -369,7 +370,7 @@ func Command(c *components.Components) *generic.Command {
 					if err != nil {
 						if errors.Is(err, gorm.ErrRecordNotFound) {
 							if err := event.CreateMessage(
-								discord.NewMessageBuilder().
+								discordutil.NewMessageBuilder().
 									SetContent(i18n.TranslateText(event.Locale(), "components.message.suffix.remove.message.no_suffix", map[string]any{"user": discord.UserMention(u.ID)})).
 									SetAllowedMentions(&discord.AllowedMentions{}).
 									SetFlags(discord.MessageFlagEphemeral).
@@ -387,7 +388,7 @@ func Command(c *components.Components) *generic.Command {
 					}
 
 					if err := event.CreateMessage(
-						discord.NewMessageBuilder().
+						discordutil.NewMessageBuilder().
 							SetContent(i18n.TranslateText(event.Locale(), "components.message.suffix.remove.message", map[string]any{"user": discord.UserMention(u.ID)})).
 							BuildCreate(),
 					); err != nil {
@@ -411,12 +412,12 @@ func Command(c *components.Components) *generic.Command {
 						return errors.NewError(errors.ErrorMessage("errors.invalid.bot.target", event))
 					}
 
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						slog.Error("ユーザー取得に失敗", "err", err, "command", event.SlashCommandInteractionData().CommandPath())
 						return errors.NewError(err)
 					}
-					u, err := c.UserCreate(event, m.User)
+					u, err := c.UserCreate(c.Ctx(), m.User)
 					if err != nil {
 						slog.Error("ユーザー取得に失敗", "err", err, "command", event.SlashCommandInteractionData().CommandPath())
 						return errors.NewError(err)
@@ -455,7 +456,7 @@ func Command(c *components.Components) *generic.Command {
 					}
 
 					if err := event.CreateMessage(
-						discord.NewMessageBuilder().
+						discordutil.NewMessageBuilder().
 							SetContent(messageStr).
 							SetAllowedMentions(&discord.AllowedMentions{}).
 							BuildCreate(),
@@ -472,7 +473,7 @@ func Command(c *components.Components) *generic.Command {
 				DiscordPerm: discord.PermissionManageMessages,
 				CommandHandler: func(_ *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 					if err := event.Modal(
-						discord.NewModalCreateBuilder().
+						discordutil.NewModalCreateBuilder().
 							SetTitle(i18n.TranslateText(event.Locale(), "components.message.pin.create.modal.title", nil)).
 							SetCustomID("message:pin_create_modal").
 							SetComponents(
@@ -498,7 +499,7 @@ func Command(c *components.Components) *generic.Command {
 				},
 				DiscordPerm: discord.PermissionManageMessages,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					_, err := c.GuildCreateID(event, *event.GuildID())
+					_, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
@@ -521,7 +522,7 @@ func Command(c *components.Components) *generic.Command {
 					}
 
 					if err := event.CreateMessage(
-						discord.NewMessageBuilder().
+						discordutil.NewMessageBuilder().
 							SetContent(i18n.TranslateText(event.Locale(), "components.message.pin.delete.message", nil)).
 							SetFlags(discord.MessageFlagEphemeral).
 							BuildCreate(),
@@ -538,7 +539,7 @@ func Command(c *components.Components) *generic.Command {
 				},
 				DiscordPerm: discord.PermissionManageMessages,
 				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}
@@ -555,7 +556,7 @@ func Command(c *components.Components) *generic.Command {
 					}
 
 					if err := event.Modal(
-						discord.NewModalCreateBuilder().
+						discordutil.NewModalCreateBuilder().
 							SetTitle(i18n.TranslateText(event.Locale(), "components.message.remind.add.modal.title", nil)).
 							SetCustomID(fmt.Sprintf("message:remind_create_modal:%d", tm.Unix())).
 							SetComponents(
@@ -602,7 +603,7 @@ func Command(c *components.Components) *generic.Command {
 					count := res.RowsAffected
 
 					if err := event.CreateMessage(
-						discord.NewMessageBuilder().
+						discordutil.NewMessageBuilder().
 							SetContent(i18n.TranslateText(event.Locale(), "components.message.remind.cancel.message",
 								map[string]any{
 									"count": strconv.FormatInt(count, 10),
@@ -646,7 +647,7 @@ func Command(c *components.Components) *generic.Command {
 
 		ModalHandlers: map[string]generic.ModalHandler{
 			"message:pin_create_modal": func(component *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
-				g, err := component.GuildCreateID(event, *event.GuildID())
+				g, err := component.GuildCreateID(component.Ctx(), *event.GuildID())
 				if err != nil {
 					return errors.NewError(err)
 				}
@@ -678,12 +679,12 @@ func Command(c *components.Components) *generic.Command {
 					return errors.NewError(err)
 				}
 
-				webhook, err := event.Client().WebhookManager.GetMessenger(channel)
+				webhook, err := discordutil.GetWebhookMessenger(event.Client(), channel)
 				if err != nil {
 					return errors.NewError(err)
 				}
 				message, err := webhook.SendWebhook(
-					discord.NewMessageBuilder().
+					discordutil.NewMessageBuilder().
 						SetContent(m.Content).
 						SetEmbeds(m.Embeds...),
 					i18n.TranslateText(g.Locale, "components.message.pin.username", nil),
@@ -700,7 +701,7 @@ func Command(c *components.Components) *generic.Command {
 				}
 
 				if err := event.CreateMessage(
-					discord.NewMessageBuilder().
+					discordutil.NewMessageBuilder().
 						SetContent(i18n.TranslateText(event.Locale(), "components.message.pin.create.message", nil)).
 						SetFlags(discord.MessageFlagEphemeral).
 						BuildCreate(),
@@ -710,7 +711,7 @@ func Command(c *components.Components) *generic.Command {
 				return nil
 			},
 			"message:remind_create_modal": func(c *components.Components, event *events.ModalSubmitInteractionCreate) errors.Error {
-				g, err := c.GuildCreateID(event, *event.GuildID())
+				g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 				if err != nil {
 					return errors.NewError(err)
 				}
@@ -738,7 +739,7 @@ func Command(c *components.Components) *generic.Command {
 				}
 
 				if err := event.CreateMessage(
-					discord.NewMessageBuilder().
+					discordutil.NewMessageBuilder().
 						SetContent(i18n.TranslateText(event.Locale(), "components.message.remind.add.message",
 							map[string]any{
 								"time": discord.FormattedTimestampMention(tm.Unix(), discord.TimestampStyleLongDateTime),
@@ -761,7 +762,7 @@ func Command(c *components.Components) *generic.Command {
 
 					for _, remind := range reminds {
 						if _, err := client.Rest.CreateMessage(remind.ChannelID,
-							discord.NewMessageBuilder().
+							discordutil.NewMessageBuilder().
 								SetContent(remind.Content).
 								BuildCreate(),
 						); err != nil {
@@ -779,7 +780,7 @@ func Command(c *components.Components) *generic.Command {
 			switch e := e.(type) {
 			case *events.GuildMessageCreate:
 
-				err, shouldContinue := doTextCommand(e, e)
+				err, shouldContinue := doTextCommand(c.Ctx(), e)
 				if err != nil {
 					return errors.NewError(err)
 				}
@@ -801,7 +802,7 @@ func Command(c *components.Components) *generic.Command {
 					goto messagePin
 				}
 
-				if u, err = c.UserCreate(e, e.Message.Author); err != nil {
+				if u, err = c.UserCreate(c.Ctx(), e.Message.Author); err != nil {
 					slog.Error("メッセージ著者取得に失敗", "err", err, "uid", e.Message.Author.ID)
 					return errors.NewError(err)
 				}
@@ -855,7 +856,7 @@ func Command(c *components.Components) *generic.Command {
 						}
 					}
 
-					g, err := c.GuildCreateID(event, event.GuildID)
+					g, err := c.GuildCreateID(c.Ctx(), event.GuildID)
 					if err != nil {
 						return errors.NewError(err)
 					}
@@ -874,7 +875,7 @@ func Command(c *components.Components) *generic.Command {
 					// Re-fetch to be safe under lock? Or is it overkill?
 					// The original code fetched it here.
 
-					webhook, err := event.Client().WebhookManager.GetMessenger(channel)
+					webhook, err := discordutil.GetWebhookMessenger(event.Client(), channel)
 					if err != nil {
 						err1 := &rest.Error{}
 						if errors.As(err, &err1) && err1.Response.StatusCode == http.StatusForbidden {
@@ -902,13 +903,13 @@ func Command(c *components.Components) *generic.Command {
 								return errors.NewError(err)
 							}
 						}
-						webhook, err := event.Client().WebhookManager.GetMessenger(channel)
+						webhook, err := discordutil.GetWebhookMessenger(event.Client(), channel)
 						if err != nil {
 							return errors.NewError(err)
 						}
 
 						message, err := webhook.SendWebhook(
-							discord.NewMessageBuilder().
+							discordutil.NewMessageBuilder().
 								SetContent(m.Content).
 								SetEmbeds(m.Embeds...),
 							i18n.TranslateText(g.Locale, "components.message.pin.username", nil),
@@ -938,7 +939,7 @@ func Command(c *components.Components) *generic.Command {
 					return nil
 				}
 
-				g, err := c.GuildCreateID(e, e.GuildID)
+				g, err := c.GuildCreateID(c.Ctx(), e.GuildID)
 				if err != nil {
 					return errors.NewError(err)
 				}
@@ -988,7 +989,7 @@ func messageSuffixMessageCreateHandler(w *models.WordSuffix, u *models.User, e *
 			return nil
 		}
 		if _, err := e.Client().Rest.CreateMessage(e.ChannelID,
-			discord.NewMessageBuilder().
+			discordutil.NewMessageBuilder().
 				SetContentf("%s\n%s",
 					i18n.TranslateText(u.Locale, "components.message.suffix.warn.message.1", nil),
 					i18n.TranslateText(u.Locale, "components.message.suffix.warn.message.2", map[string]any{"suffix": w.Suffix}),
@@ -1060,13 +1061,13 @@ func messageSuffixMessageCreateHandler(w *models.WordSuffix, u *models.User, e *
 			}
 		}
 
-		webhook, err := e.Client().WebhookManager.GetMessenger(channel)
+		webhook, err := discordutil.GetWebhookMessenger(e.Client(), channel)
 		if err != nil {
 			return errors.NewError(err)
 		}
 
 		if _, err := webhook.SendWebhook(
-			discord.NewMessageBuilder().
+			discordutil.NewMessageBuilder().
 				SetContent(content).
 				SetAllowedMentions(
 					&discord.AllowedMentions{

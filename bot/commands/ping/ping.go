@@ -28,6 +28,7 @@ import (
 
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/embeds"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
@@ -48,19 +49,17 @@ func Command(c *components.Components) *generic.Command {
 		},
 		CommandHandlers: map[string]generic.PermissionCommandHandler{
 			"/ping": generic.CommandHandler(func(_ *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+				embed := embeds.SetEmbedProperties(discord.NewEmbed().
+					WithTitlef("🏓 %s", i18n.TranslateText(event.Locale(), "components.ping.pong")).
+					WithFields(
+						discord.EmbedField{
+							Name:  fmt.Sprintf("**Discord API(#%d)**", event.ShardID()),
+							Value: event.Client().ShardManager.Shard(event.ShardID()).Latency().String(),
+						},
+					))
 				if err := event.CreateMessage(
-					discord.NewMessageBuilder().
-						SetEmbeds(
-							embeds.SetEmbedProperties(discord.NewEmbedBuilder().
-								SetTitlef("🏓 %s", i18n.TranslateText(event.Locale(), "components.ping.pong")).
-								SetFields(
-									discord.EmbedField{
-										Name:  fmt.Sprintf("**Discord API(#%d)**", event.ShardID()),
-										Value: event.Client().ShardManager.Shard(event.ShardID()).Latency().String(),
-									},
-								).
-								Build()),
-						).
+					discordutil.NewMessageBuilder().
+						SetEmbeds(embed).
 						BuildCreate(),
 				); err != nil {
 					return errors.NewError(err)

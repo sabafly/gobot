@@ -14,6 +14,7 @@ import (
 	"github.com/sabafly/gobot/bot/commands/currency"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
 )
@@ -206,7 +207,7 @@ func HALFinish(c *components.Components, data HALData, finishState HALFinishStat
 		finalStateStr = i18n.TranslateText(event.Locale(), "command.play.high-and-low.finish.unknown")
 	}
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(i18n.BuildContext().
 			WithText("currency_name", cName).
@@ -222,7 +223,7 @@ func HALFinish(c *components.Components, data HALData, finishState HALFinishStat
 			WithText("final_state", finalStateStr).
 			WithCustomID("option_index", strconv.Itoa(data.startOptionIndex)).
 			Translate(i18n.TranslateLayout(event.Locale(), "command.play.high-and-low.result"))...,
-		).BuildUpdate()); err != nil {
+		)); err != nil {
 		return errors.NewError(err)
 	}
 	return nil

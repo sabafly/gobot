@@ -23,6 +23,7 @@ package components
 import (
 	"context"
 
+	"github.com/disgoorg/disgo/handler"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -34,6 +35,7 @@ func New(ctx context.Context, conf Config, gormDb *database.DB) *Components {
 	return &Components{
 		ctx:              ctx,
 		commandsRegistry: make(map[string]Command),
+		router:           handler.New(),
 		config:           conf,
 		gormDb:           gormDb,
 	}
@@ -46,6 +48,7 @@ type Components struct {
 	config Config
 
 	commandsRegistry map[string]Command
+	router           *handler.Mux
 
 	l smap.SyncedMap[string, *Mu]
 
@@ -53,6 +56,8 @@ type Components struct {
 }
 
 func (c *Components) Ctx() context.Context { return c.ctx }
+
+func (c *Components) Router() *handler.Mux { return c.router }
 
 // DO NOT REUSE RETURN VALUE, MUST CALL EACH TIME TO GET NEW SESSION
 func (c *Components) GormDB() *gorm.DB {

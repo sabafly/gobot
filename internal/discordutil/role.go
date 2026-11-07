@@ -26,9 +26,25 @@ import (
 	"github.com/disgoorg/disgo/discord"
 )
 
+func CompareRoles(a, b discord.Role) int {
+	if a.Position < b.Position {
+		return -1
+	}
+	if a.Position > b.Position {
+		return 1
+	}
+	if a.ID < b.ID {
+		return -1
+	}
+	if a.ID > b.ID {
+		return 1
+	}
+	return 0
+}
+
 func GetHighestRole(roles []discord.Role) *discord.Role {
 	slices.SortStableFunc(roles, func(a, b discord.Role) int {
-		return b.Compare(a)
+		return CompareRoles(b, a)
 	})
 	if len(roles) < 1 {
 		return nil

@@ -41,15 +41,14 @@ func levelMessage(
 		Locale() discord.Locale
 	},
 ) discord.Embed {
-	return discord.NewEmbedBuilder().
-		SetEmbedAuthor(
-			&discord.EmbedAuthor{
-				Name:    g.Name,
-				IconURL: builtin.NonNil(gl.IconURL()),
-			},
+	return discord.NewEmbed().
+		WithAuthor(
+			g.Name,
+			"",
+			builtin.NonNil(gl.IconURL()),
 		).
-		SetThumbnail(member.EffectiveAvatarURL()).
-		SetTitle(
+		WithThumbnail(member.EffectiveAvatarURL()).
+		WithTitle(
 			i18n.TranslateText(
 				event.Locale(), "components.level.rank.embed.title",
 				map[string]any{
@@ -57,13 +56,13 @@ func levelMessage(
 				},
 			),
 		).
-		SetDescription("## "+i18n.TranslateText(event.Locale(), "components.level.rank.embed.description",
+		WithDescription("## "+i18n.TranslateText(event.Locale(), "components.level.rank.embed.description",
 			map[string]any{
 				"level": m.XP.Level(),
 				"xp":    m.XP,
 			},
 		)).
-		SetFields(
+		WithFields(
 			discord.EmbedField{
 				Name:   i18n.TranslateText(event.Locale(), "components.level.rank.embed.fields.place", nil),
 				Value:  fmt.Sprintf("**#%d**", index+1),
@@ -79,6 +78,5 @@ func levelMessage(
 				),
 				Inline: builtin.Ptr(true),
 			},
-		).
-		Build()
+		)
 }

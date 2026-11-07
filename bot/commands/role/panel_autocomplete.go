@@ -35,7 +35,7 @@ import (
 )
 
 func panelAutocomplete(c *components.Components, event *events.AutocompleteInteractionCreate) errors.Error {
-	g, err := c.GuildCreateID(event, *event.GuildID())
+	g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 	if err != nil {
 		return errors.NewError(err)
 	}

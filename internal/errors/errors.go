@@ -26,6 +26,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
 
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/i18n"
 )
 
@@ -69,7 +70,6 @@ func WithTemplate(t any) Option {
 func ErrorMessage(
 	key string,
 	event interface {
-		RespondMessage(messageBuilder discord.MessageBuilder, opts ...rest.RequestOpt) error
 		Locale() discord.Locale
 	},
 	opts ...Option,
@@ -93,18 +93,23 @@ func ErrorMessage(
 		title = i18n.TranslateText(event.Locale(), key)
 	}
 
-	return event.RespondMessage(
-		discord.NewMessageBuilder().
-			SetEphemeral(true).
-			SetIsComponentsV2(true).
-			SetComponents(
-				discord.ContainerComponent{
-					Components: []discord.ContainerSubComponent{
-						discord.NewTextDisplayf("## ❗ %s", title),
-						discord.NewTextDisplayf("%s", desc),
-					},
-					AccentColor: 0xff2121,
+	builder := discordutil.NewMessageBuilder().
+		SetEphemeral(true).
+		SetIsComponentsV2(true).
+		SetComponents(
+			discord.ContainerComponent{
+				Components: []discord.ContainerSubComponent{
+					discord.NewTextDisplayf("## ❗ %s", title),
+					discord.NewTextDisplayf("%s", desc),
 				},
-			),
-	)
+				AccentColor: 0xff2121,
+			},
+		)
+
+	if e, ok := event.(interface {
+		RespondMessage(messageBuilder discordutil.MessageBuilder, opts ...rest.RequestOpt) error
+	}); ok {
+		return e.RespondMessage(builder)
+	}
+	return discordutil.RespondMessage(event, builder)
 }

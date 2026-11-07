@@ -19,6 +19,7 @@ import (
 	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/builtin"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
 )
@@ -50,7 +51,7 @@ func CurrencyNameConfigHandler(c *components.Components, event *events.Applicati
 		if msg == "components.currency.config.name_current" {
 			msg = fmt.Sprintf("現在の通貨名設定: **%s**", currentName)
 		}
-		if errResp := event.RespondMessage(discord.NewMessageBuilder().
+		if errResp := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 			SetEphemeral(true).
 			SetIsComponentsV2(true).
 			SetComponents(
@@ -91,7 +92,7 @@ func CurrencyNameConfigHandler(c *components.Components, event *events.Applicati
 		msg = fmt.Sprintf("通貨名を **%s** に設定しました。", GetCurrencyName(c, guildID))
 	}
 
-	if errResp := event.RespondMessage(discord.NewMessageBuilder().
+	if errResp := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 		SetEphemeral(true).
 		SetIsComponentsV2(true).
 		SetComponents(
@@ -358,7 +359,7 @@ func Command(c *components.Components) components.Command {
 					} else if rank == 0 {
 						ranking = i18n.TranslateText(event.Locale(), "command.currency.ranking.no_data")
 					}
-					if err := event.RespondMessage(discord.NewMessageBuilder().
+					if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 						SetEphemeral(true).
 						SetIsComponentsV2(true).
 						SetComponents(
@@ -406,7 +407,7 @@ func Command(c *components.Components) components.Command {
 						slog.Error("failed to get guild", "error", err, "guild_id", *event.GuildID())
 						return errors.NewError(err)
 					}
-					if err := event.RespondMessage(discord.NewMessageBuilder().
+					if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 						SetIsComponentsV2(true).
 						SetComponents(
 							i18n.BuildContext().
@@ -454,7 +455,7 @@ func Command(c *components.Components) components.Command {
 					}
 					currencyName := GetCurrencyName(c, *event.GuildID())
 					if currentPoint < int64(point) {
-						if err := event.CreateMessage(discord.NewMessageBuilder().
+						if err := event.CreateMessage(discordutil.NewMessageBuilder().
 							SetEphemeral(true).
 							SetIsComponentsV2(true).
 							SetComponents(
@@ -475,7 +476,7 @@ func Command(c *components.Components) components.Command {
 						slog.Error("failed to give Currency", "error", err, "user_id", event.User().ID, "target_user_id", targetUserID.ID, "guild_id", *event.GuildID())
 						return errors.NewError(err)
 					}
-					if err := event.CreateMessage(discord.NewMessageBuilder().
+					if err := event.CreateMessage(discordutil.NewMessageBuilder().
 						SetIsComponentsV2(true).
 						SetComponents(
 							i18n.BuildContext().

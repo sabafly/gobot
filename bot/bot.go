@@ -48,6 +48,7 @@ import (
 
 	"github.com/sabafly/gobot/bot/commands/bet"
 	"github.com/sabafly/gobot/bot/commands/currency"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/bot/commands/debug"
 	"github.com/sabafly/gobot/bot/commands/level"
 	"github.com/sabafly/gobot/bot/commands/message"
@@ -221,7 +222,7 @@ func run() error {
 	slog.Info("bots are now ready")
 
 	// set default webhook
-	bot.WebhookDefaultName = "gobot-webhook"
+	discordutil.WebhookDefaultName = "gobot-webhook"
 	self, ok := client.Caches.SelfUser()
 	if !ok {
 		return fmt.Errorf("cannot cache self user")
@@ -240,7 +241,7 @@ func run() error {
 		if err != nil {
 			return fmt.Errorf("error on read all: %w", err)
 		}
-		bot.WebhookDefaultAvatar = discord.NewIconRaw(discord.IconTypePNG, buf)
+		discordutil.WebhookDefaultAvatar = discord.NewIconRaw(discord.IconTypePNG, buf)
 	}
 
 	slog.Info("Bot is now running")

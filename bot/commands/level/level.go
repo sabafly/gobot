@@ -36,6 +36,7 @@ import (
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/builtin"
+	"github.com/sabafly/gobot/internal/discordutil"
 )
 
 func Command(c *components.Components) components.Command {
@@ -374,7 +375,7 @@ func addXp(ctx context.Context, xp uint64, client *bot.Client, m *models.Member,
 			targetChannel = *g.LevelUpChannel
 		}
 
-		if _, err := client.Rest.CreateMessage(targetChannel, discord.NewMessageBuilder().SetContent(content).BuildCreate()); err != nil {
+		if _, err := client.Rest.CreateMessage(targetChannel, discordutil.NewMessageBuilder().SetContent(content).BuildCreate()); err != nil {
 			return m, err
 		}
 	}

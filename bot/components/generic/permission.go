@@ -29,11 +29,13 @@ import (
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/handler"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
 
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database/models"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/i18n"
 )
 
@@ -45,17 +47,15 @@ func noPermissionMessage(event interface {
 	for _, p := range perms {
 		fmt.Fprintf(&permStr, "`%s` ", p.PermString())
 	}
+	embed := discord.NewEmbed().
+		WithTitle(fmt.Sprintf("⚠️ %s", i18n.TranslateText(event.Locale(), "errors.invalid.permission"))).
+		WithDescription(i18n.TranslateText(event.Locale(), "errors.invalid.permission.description",
+			map[string]any{"permission": permStr.String()},
+		)).
+		WithColor(0xEEE731)
 	return event.CreateMessage(
-		discord.NewMessageBuilder().
-			SetEmbeds(
-				discord.NewEmbedBuilder().
-					SetTitlef("⚠️ %s", i18n.TranslateText(event.Locale(), "errors.invalid.permission")).
-					SetDescription(i18n.TranslateText(event.Locale(), "errors.invalid.permission.description",
-						map[string]any{"permission": permStr.String()},
-					)).
-					SetColor(0xEEE731).
-					Build(),
-			).
+		discordutil.NewMessageBuilder().
+			SetEmbeds(embed).
 			SetFlags(discord.MessageFlagEphemeral).
 			BuildCreate(),
 	)
@@ -105,7 +105,7 @@ func RolePermissionCheck(g *models.Guild, guildID snowflake.ID, client *bot.Clie
 		roles = append(roles, role)
 	}
 	slices.SortStableFunc(roles, func(a, b discord.Role) int {
-		return a.Compare(b)
+		return discordutil.CompareRoles(a, b)
 	})
 	var memberRoles []discord.Role
 	for _, role := range roles {
@@ -146,14 +146,14 @@ func RolePermissionCheck(g *models.Guild, guildID snowflake.ID, client *bot.Clie
 	return false
 }
 
-func permissionCheck(event interface {
-	context.Context
+type PermCheckEvent interface {
 	Member() *discord.ResolvedMember
 	GuildID() *snowflake.ID
 	User() discord.User
 	Client() *bot.Client
-}, c *components.Components, perms []Permission, dPerm discord.Permissions) bool {
+}
 
+func CheckEventPermission(ctx context.Context, event PermCheckEvent, c *components.Components, perms []Permission, dPerm discord.Permissions) bool {
 	if len(perms) == 0 {
 		return true
 	}
@@ -162,7 +162,11 @@ func permissionCheck(event interface {
 		return true
 	}
 
-	if dPerm != 0 && event.Member().Permissions.Has(dPerm) {
+	if event.GuildID() == nil {
+		return true
+	}
+
+	if dPerm != 0 && event.Member() != nil && event.Member().Permissions.Has(dPerm) {
 		var member models.Member
 		if err := c.GormDB().Where("guild_id = ? AND user_id = ?", *event.GuildID(), event.User().ID).First(&member).Error; err == nil {
 			for _, p := range perms {
@@ -174,11 +178,34 @@ func permissionCheck(event interface {
 		return true
 	}
 
-	g, err := c.GuildCreateID(event, *event.GuildID())
+	g, err := c.GuildCreateID(ctx, *event.GuildID())
 	if err != nil {
 		slog.Warn("failed to GuildCreateID", "id", event.GuildID())
 		return false
 	}
 
-	return PermissionCheck(event, c, g, event.Client(), *event.Member(), *event.GuildID(), perms)
+	var m discord.ResolvedMember
+	if event.Member() != nil {
+		m = *event.Member()
+	}
+
+	return PermissionCheck(ctx, c, g, event.Client(), m, *event.GuildID(), perms)
+}
+
+func RequirePermissions(c *components.Components, dPerm discord.Permissions, perms ...Permission) handler.Middleware {
+	return func(next handler.Handler) handler.Handler {
+		return func(e *handler.InteractionEvent) error {
+			if !CheckEventPermission(e.Ctx, e, c, perms, dPerm) {
+				if e.Type() == discord.InteractionTypeAutocomplete {
+					return e.AutocompleteResult(nil)
+				}
+				return noPermissionMessage(e, perms)
+			}
+			return next(e)
+		}
+	}
+}
+
+func permissionCheck(ctx context.Context, event PermCheckEvent, c *components.Components, perms []Permission, dPerm discord.Permissions) bool {
+	return CheckEventPermission(ctx, event, c, perms, dPerm)
 }

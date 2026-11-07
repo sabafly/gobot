@@ -21,6 +21,7 @@ import (
 	currencyCmd "github.com/sabafly/gobot/bot/commands/currency"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database/models"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
 )
@@ -58,7 +59,7 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	if ok && strings.TrimSpace(prizePoolStr) != "" {
 		pool, err := strconv.ParseInt(prizePoolStr, 10, 64)
 		if err != nil || pool < 0 {
-			if err := event.RespondMessage(discord.NewMessageBuilder().
+			if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_prize_pool")).
 				SetFlags(discord.MessageFlagEphemeral)); err != nil {
 				return errors.NewError(err)
@@ -75,7 +76,7 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	if ok && strings.TrimSpace(deadlineStr) != "" {
 		mins, err := strconv.Atoi(deadlineStr)
 		if err != nil {
-			if err := event.RespondMessage(discord.NewMessageBuilder().
+			if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_deadline")).
 				SetFlags(discord.MessageFlagEphemeral)); err != nil {
 				return errors.NewError(err)
@@ -89,7 +90,7 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	validOptions := make([]string, 0)
 	for _, opt := range options {
 		if utf8.RuneCountInString(opt) > 100 {
-			if err := event.RespondMessage(discord.NewMessageBuilder().
+			if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.option_too_long", map[string]any{
 					"option": opt,
 				})).
@@ -104,7 +105,7 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	}
 
 	if len(validOptions) < 2 {
-		if err := event.RespondMessage(discord.NewMessageBuilder().
+		if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 			SetContent(i18n.TranslateText(locale, "command.bet.error.min_options")).
 			SetFlags(discord.MessageFlagEphemeral)); err != nil {
 			return errors.NewError(err)
@@ -112,7 +113,7 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 		return nil
 	}
 	if len(validOptions) > 25 {
-		if err := event.RespondMessage(discord.NewMessageBuilder().
+		if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 			SetContent(i18n.TranslateText(locale, "command.bet.error.max_options")).
 			SetFlags(discord.MessageFlagEphemeral)); err != nil {
 			return errors.NewError(err)
@@ -153,7 +154,7 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 
 			if currency.Points < *prizePool {
 				cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
-				if err := event.RespondMessage(discord.NewMessageBuilder().
+				if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 					SetContent(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool", map[string]any{
 						"currency_name": cName,
 						"pool":          *prizePool,
@@ -212,7 +213,7 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 	}
 
 	// Respond with the bet message using MessageBuilder with ComponentV2
-	msg, err := event.Client().Rest.CreateMessage(event.Channel().ID(), discord.NewMessageBuilder().
+	msg, err := event.Client().Rest.CreateMessage(event.Channel().ID(), discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(layoutComponents...).
 		BuildCreate())
@@ -227,7 +228,7 @@ func handlePollConfig(c *components.Components, event *events.ModalSubmitInterac
 		slog.Error("failed to update bet message ID", "error", err)
 	}
 
-	if err := event.RespondMessage(discord.NewMessageBuilder().
+	if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 		SetContent(i18n.TranslateText(locale, "command.bet.message.created")).
 		SetFlags(discord.MessageFlagEphemeral)); err != nil {
 		return errors.NewError(err)
@@ -263,10 +264,10 @@ func handleVoteButton(c *components.Components, event *events.ComponentInteracti
 
 		// Check if voting is open
 		if betHost.Status != string(models.BetStatusVoting) {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			if err := event.CreateMessage(discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.voting_closed")).
 				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+				BuildCreate()); err != nil {
 				return err
 			}
 			return nil
@@ -292,7 +293,7 @@ func handleVoteButton(c *components.Components, event *events.ComponentInteracti
 		cName := currencyCmd.GetCurrencyName(c, betHost.GuildID)
 		if existingBet.ID != uuid.Nil {
 			if !betHost.AllowVoteDestChange {
-				if err := event.RespondMessage(discord.NewMessageBuilder().
+				if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 					SetContent(i18n.TranslateText(locale, "command.bet.error.already_voted_no_change", map[string]any{
 						"currency_name": cName,
 						"option":        existingBet.Option.OptionText,
@@ -328,7 +329,7 @@ func handleVoteButton(c *components.Components, event *events.ComponentInteracti
 		})
 
 		// Show modal to enter bet amount
-		if err := event.Modal(discord.NewModalCreateBuilder().
+		if err := event.Modal(discordutil.NewModalCreateBuilder().
 			SetCustomID(fmt.Sprintf("bet:vote:%s:%s", hostID, optionID)).
 			SetTitle(i18n.TranslateText(locale, "command.bet.modal.vote.title", map[string]any{
 				"option": option.OptionText,
@@ -378,12 +379,12 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 	amount, err := strconv.ParseInt(amountStr, 10, 64)
 	if err != nil || amount <= 0 {
 		cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+		if err := event.CreateMessage(discordutil.NewMessageBuilder().
 			SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_amount", map[string]any{
 				"currency_name": cName,
 			})).
 			SetFlags(discord.MessageFlagEphemeral).
-			Build()); err != nil {
+			BuildCreate()); err != nil {
 			return errors.NewError(err)
 		}
 		return nil
@@ -415,10 +416,10 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 
 			// If no change in amount or option, return early to avoid unnecessary updates
 			if amount == existingBet.Amount && optionID == existingBet.OptionID {
-				if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+				if err := event.CreateMessage(discordutil.NewMessageBuilder().
 					SetContent(i18n.TranslateText(locale, "command.bet.message.no_change")).
 					SetFlags(discord.MessageFlagEphemeral).
-					Build()); err != nil {
+					BuildCreate()); err != nil {
 					return err
 				}
 				return nil
@@ -426,10 +427,10 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 
 			// Check if amount decrease is attempted (always prohibited)
 			if amount < existingBet.Amount {
-				if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+				if err := event.CreateMessage(discordutil.NewMessageBuilder().
 					SetContent(i18n.TranslateText(locale, "command.bet.error.cannot_decrease")).
 					SetFlags(discord.MessageFlagEphemeral).
-					Build()); err != nil {
+					BuildCreate()); err != nil {
 					return err
 				}
 				return nil
@@ -444,10 +445,10 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 				}
 
 				if !betHost.AllowVoteDestChange {
-					if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+					if err := event.CreateMessage(discordutil.NewMessageBuilder().
 						SetContent(i18n.TranslateText(locale, "command.bet.error.cannot_change_dest")).
 						SetFlags(discord.MessageFlagEphemeral).
-						Build()); err != nil {
+						BuildCreate()); err != nil {
 						return err
 					}
 					return nil
@@ -457,13 +458,13 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 			cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 			pointsDifference := amount - existingBet.Amount
 			if pointsDifference > 0 && currency.Points < pointsDifference {
-				if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+				if err := event.CreateMessage(discordutil.NewMessageBuilder().
 					SetContent(i18n.TranslateText(locale, "command.bet.error.insufficient_points", map[string]any{
 						"currency_name": cName,
 						"points":        currency.Points,
 					})).
 					SetFlags(discord.MessageFlagEphemeral).
-					Build()); err != nil {
+					BuildCreate()); err != nil {
 					return err
 				}
 				return nil
@@ -489,13 +490,13 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 				return err
 			}
 
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			if err := event.CreateMessage(discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.message.updated", map[string]any{
 					"currency_name": cName,
 					"amount":        amount,
 				})).
 				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+				BuildCreate()); err != nil {
 				return err
 			}
 			return nil
@@ -504,13 +505,13 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 		cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 		// Check if user has sufficient points for new bet
 		if currency.Points < amount {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			if err := event.CreateMessage(discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.insufficient_points", map[string]any{
 					"currency_name": cName,
 					"points":        currency.Points,
 				})).
 				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+				BuildCreate()); err != nil {
 				return err
 			}
 			return nil
@@ -541,13 +542,13 @@ func handleVote(c *components.Components, event *events.ModalSubmitInteractionCr
 			return err
 		}
 
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+		if err := event.CreateMessage(discordutil.NewMessageBuilder().
 			SetContent(i18n.TranslateText(locale, "command.bet.message.voted", map[string]any{
 				"currency_name": cName,
 				"amount":        amount,
 			})).
 			SetFlags(discord.MessageFlagEphemeral).
-			Build()); err != nil {
+			BuildCreate()); err != nil {
 			return err
 		}
 		return nil
@@ -574,7 +575,7 @@ func updateBetMessage(c *components.Components, db *gorm.DB, client *bot.Client,
 	if err != nil {
 		return err
 	}
-	_, err = client.Rest.UpdateMessage(betHost.ChannelID, betHost.MessageID, discord.NewMessageBuilder().
+	_, err = client.Rest.UpdateMessage(betHost.ChannelID, betHost.MessageID, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(layoutComponents...).
 		BuildUpdate())
@@ -602,10 +603,10 @@ func handleDecideButton(c *components.Components, event *events.ComponentInterac
 
 		// Check if user is owner
 		if !betHost.IsOwner(event.User().ID) {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			if err := event.CreateMessage(discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.only_organizer_decide")).
 				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+				BuildCreate()); err != nil {
 				return err
 			}
 			return nil
@@ -635,7 +636,7 @@ func handleDecideButton(c *components.Components, event *events.ComponentInterac
 			})
 		}
 
-		if err := event.Modal(discord.NewModalCreateBuilder().
+		if err := event.Modal(discordutil.NewModalCreateBuilder().
 			SetCustomID(fmt.Sprintf("bet:decide:%s", hostID)).
 			SetTitle(i18n.TranslateText(locale, "command.bet.modal.decide.title")).
 			SetComponents(
@@ -707,7 +708,7 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 
 		// Double check ownership
 		if !betHost.IsOwner(event.User().ID) {
-			if err := event.RespondMessage(discord.NewMessageBuilder().
+			if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.only_organizer_decide")).
 				SetFlags(discord.MessageFlagEphemeral)); err != nil {
 				return err
@@ -990,14 +991,14 @@ func handleDecideResult(c *components.Components, event *events.ModalSubmitInter
 		}
 
 		// Update message with ComponentV2
-		if _, err := event.Client().Rest.UpdateMessage(betHost.ChannelID, betHost.MessageID, discord.NewMessageBuilder().
+		if _, err := event.Client().Rest.UpdateMessage(betHost.ChannelID, betHost.MessageID, discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(layoutComponents...).
 			BuildUpdate()); err != nil {
 			slog.Error("failed to update bet message", "error", err, "channelID", betHost.ChannelID, "messageID", betHost.MessageID, "hostID", hostID)
 		}
 
-		if err := event.RespondMessage(discord.NewMessageBuilder().
+		if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 			SetContent(resultMessage)); err != nil {
 			return err
 		}
@@ -1039,7 +1040,7 @@ func handleCloseVoteButton(c *components.Components, event *events.ComponentInte
 
 		// Check if user is owner
 		if !betHost.IsOwner(event.User().ID) {
-			if err := event.RespondMessage(discord.NewMessageBuilder().
+			if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.only_organizer_close")).
 				SetFlags(discord.MessageFlagEphemeral)); err != nil {
 				return err
@@ -1057,7 +1058,7 @@ func handleCloseVoteButton(c *components.Components, event *events.ComponentInte
 			return err
 		}
 
-		if err := event.RespondMessage(discord.NewMessageBuilder().
+		if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 			SetContent(i18n.TranslateText(locale, "command.bet.message.closed")).
 			SetFlags(discord.MessageFlagEphemeral)); err != nil {
 			return err
@@ -1096,7 +1097,7 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 	if ok && strings.TrimSpace(prizePoolStr) != "" {
 		pool, err := strconv.ParseInt(prizePoolStr, 10, 64)
 		if err != nil || pool < 0 {
-			if err := event.RespondMessage(discord.NewMessageBuilder().
+			if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_prize_pool")).
 				SetFlags(discord.MessageFlagEphemeral)); err != nil {
 				return errors.NewError(err)
@@ -1114,7 +1115,7 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 	if ok && strings.TrimSpace(entryFeeStr) != "" {
 		fee, err := strconv.ParseInt(entryFeeStr, 10, 64)
 		if err != nil || fee < 0 {
-			if err := event.RespondMessage(discord.NewMessageBuilder().
+			if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_entry_fee")).
 				SetFlags(discord.MessageFlagEphemeral)); err != nil {
 				return errors.NewError(err)
@@ -1132,7 +1133,7 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 	if ok && strings.TrimSpace(entryDeadlineStr) != "" {
 		mins, err := strconv.Atoi(entryDeadlineStr)
 		if err != nil {
-			if err := event.RespondMessage(discord.NewMessageBuilder().
+			if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_entry_deadline")).
 				SetFlags(discord.MessageFlagEphemeral)); err != nil {
 				return errors.NewError(err)
@@ -1148,7 +1149,7 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 	if ok && strings.TrimSpace(voteDeadlineStr) != "" {
 		mins, err := strconv.Atoi(voteDeadlineStr)
 		if err != nil || mins <= 0 {
-			if err := event.RespondMessage(discord.NewMessageBuilder().
+			if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_vote_deadline")).
 				SetFlags(discord.MessageFlagEphemeral)); err != nil {
 				return errors.NewError(err)
@@ -1157,7 +1158,7 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 		}
 		vd := time.Now().Add(time.Duration(mins) * time.Minute)
 		if entryDeadline != nil && !vd.After(*entryDeadline) {
-			if err := event.RespondMessage(discord.NewMessageBuilder().
+			if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_vote_deadline")).
 				SetFlags(discord.MessageFlagEphemeral)); err != nil {
 				return errors.NewError(err)
@@ -1183,7 +1184,7 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 
 		if currency.Points < *prizePool {
 			cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
-			if err := event.RespondMessage(discord.NewMessageBuilder().
+			if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool", map[string]any{
 					"currency_name": cName,
 					"pool":          *prizePool,
@@ -1233,7 +1234,7 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 	}
 
 	// Respond with the bet message using MessageBuilder with ComponentV2
-	msg, err := event.Client().Rest.CreateMessage(event.Channel().ID(), discord.NewMessageBuilder().
+	msg, err := event.Client().Rest.CreateMessage(event.Channel().ID(), discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(layoutComponents...).
 		BuildCreate())
@@ -1248,7 +1249,7 @@ func handleRaceConfig(c *components.Components, event *events.ModalSubmitInterac
 		slog.Error("failed to update bet message ID", "error", err)
 	}
 
-	if err := event.RespondMessage(discord.NewMessageBuilder().
+	if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 		SetContent(i18n.TranslateText(locale, "command.bet.message.race_created")).
 		SetFlags(discord.MessageFlagEphemeral)); err != nil {
 		return errors.NewError(err)
@@ -1282,10 +1283,10 @@ func handleEntryButton(c *components.Components, event *events.ComponentInteract
 
 		// Check if entry is open
 		if betHost.Status != string(models.BetStatusEntry) {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			if err := event.CreateMessage(discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.entry_closed")).
 				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+				BuildCreate()); err != nil {
 				return err
 			}
 			return nil
@@ -1300,10 +1301,10 @@ func handleEntryButton(c *components.Components, event *events.ComponentInteract
 			}
 			// No existing entrant, continue
 		} else {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			if err := event.CreateMessage(discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.already_entered")).
 				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+				BuildCreate()); err != nil {
 				return err
 			}
 			return nil
@@ -1321,14 +1322,14 @@ func handleEntryButton(c *components.Components, event *events.ComponentInteract
 
 			cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 			if currency.Points < *betHost.EntryFee {
-				if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+				if err := event.CreateMessage(discordutil.NewMessageBuilder().
 					SetContent(i18n.TranslateText(locale, "command.bet.error.insufficient_entry_fee", map[string]any{
 						"currency_name": cName,
 						"fee":           *betHost.EntryFee,
 						"points":        currency.Points,
 					})).
 					SetFlags(discord.MessageFlagEphemeral).
-					Build()); err != nil {
+					BuildCreate()); err != nil {
 					return err
 				}
 				return nil
@@ -1391,10 +1392,10 @@ func handleEntryButton(c *components.Components, event *events.ComponentInteract
 			responseMsg = i18n.TranslateText(locale, "command.bet.message.entered")
 		}
 
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+		if err := event.CreateMessage(discordutil.NewMessageBuilder().
 			SetContent(responseMsg).
 			SetFlags(discord.MessageFlagEphemeral).
-			Build()); err != nil {
+			BuildCreate()); err != nil {
 			return err
 		}
 		return nil
@@ -1425,10 +1426,10 @@ func handleStartVoteButton(c *components.Components, event *events.ComponentInte
 
 		// Check if user is owner
 		if !betHost.IsOwner(event.User().ID) {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			if err := event.CreateMessage(discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.only_organizer_start_vote")).
 				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+				BuildCreate()); err != nil {
 				return err
 			}
 			return nil
@@ -1436,10 +1437,10 @@ func handleStartVoteButton(c *components.Components, event *events.ComponentInte
 
 		// Check if still in entry phase
 		if betHost.Status != string(models.BetStatusEntry) {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			if err := event.CreateMessage(discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.not_in_entry_phase")).
 				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+				BuildCreate()); err != nil {
 				return err
 			}
 			return nil
@@ -1451,7 +1452,7 @@ func handleStartVoteButton(c *components.Components, event *events.ComponentInte
 			return err
 		}
 		if entrantCount < 2 {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			if err := event.CreateMessage(discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.min_entrants")).
 				SetComponents(discord.NewActionRow(
 					discord.NewDangerButton(
@@ -1460,7 +1461,7 @@ func handleStartVoteButton(c *components.Components, event *events.ComponentInte
 					),
 				)).
 				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+				BuildCreate()); err != nil {
 				return err
 			}
 			return nil
@@ -1477,10 +1478,10 @@ func handleStartVoteButton(c *components.Components, event *events.ComponentInte
 			return err
 		}
 
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+		if err := event.CreateMessage(discordutil.NewMessageBuilder().
 			SetContent(i18n.TranslateText(locale, "command.bet.message.vote_started")).
 			SetFlags(discord.MessageFlagEphemeral).
-			Build()); err != nil {
+			BuildCreate()); err != nil {
 			return err
 		}
 		return nil
@@ -1506,7 +1507,7 @@ func handleBattleRoyaleConfig(c *components.Components, event *events.ModalSubmi
 	var entryFee int64
 	fee, err := strconv.ParseInt(entryFeeStr, 10, 64)
 	if err != nil || fee <= 0 {
-		if err := event.RespondMessage(discord.NewMessageBuilder().
+		if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 			SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_entry_fee_required")).
 			SetFlags(discord.MessageFlagEphemeral)); err != nil {
 			return errors.NewError(err)
@@ -1521,7 +1522,7 @@ func handleBattleRoyaleConfig(c *components.Components, event *events.ModalSubmi
 	if ok && strings.TrimSpace(prizePoolStr) != "" {
 		pool, err := strconv.ParseInt(prizePoolStr, 10, 64)
 		if err != nil || pool < 0 {
-			if err := event.RespondMessage(discord.NewMessageBuilder().
+			if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_prize_pool")).
 				SetFlags(discord.MessageFlagEphemeral)); err != nil {
 				return errors.NewError(err)
@@ -1539,7 +1540,7 @@ func handleBattleRoyaleConfig(c *components.Components, event *events.ModalSubmi
 	if ok && strings.TrimSpace(entryDeadlineStr) != "" {
 		mins, err := strconv.Atoi(entryDeadlineStr)
 		if err != nil {
-			if err := event.RespondMessage(discord.NewMessageBuilder().
+			if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.invalid_entry_deadline")).
 				SetFlags(discord.MessageFlagEphemeral)); err != nil {
 				return errors.NewError(err)
@@ -1565,7 +1566,7 @@ func handleBattleRoyaleConfig(c *components.Components, event *events.ModalSubmi
 
 		if currency.Points < *prizePool {
 			cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
-			if err := event.RespondMessage(discord.NewMessageBuilder().
+			if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.insufficient_prize_pool", map[string]any{
 					"currency_name": cName,
 					"pool":          *prizePool,
@@ -1615,7 +1616,7 @@ func handleBattleRoyaleConfig(c *components.Components, event *events.ModalSubmi
 	}
 
 	// Respond with the bet message using MessageBuilder with ComponentV2
-	msg, err := event.Client().Rest.CreateMessage(event.Channel().ID(), discord.NewMessageBuilder().
+	msg, err := event.Client().Rest.CreateMessage(event.Channel().ID(), discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(layoutComponents...).
 		BuildCreate())
@@ -1630,7 +1631,7 @@ func handleBattleRoyaleConfig(c *components.Components, event *events.ModalSubmi
 		slog.Error("failed to update bet message ID", "error", err)
 	}
 
-	if err := event.RespondMessage(discord.NewMessageBuilder().
+	if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 		SetContent(i18n.TranslateText(locale, "command.bet.message.battle_royale_created")).
 		SetFlags(discord.MessageFlagEphemeral)); err != nil {
 		return errors.NewError(err)
@@ -1664,10 +1665,10 @@ func handleBattleRoyaleEntryButton(c *components.Components, event *events.Compo
 
 		// Check if entry is open
 		if betHost.Status != string(models.BetStatusEntry) {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			if err := event.CreateMessage(discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.entry_closed")).
 				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+				BuildCreate()); err != nil {
 				return err
 			}
 			return nil
@@ -1682,10 +1683,10 @@ func handleBattleRoyaleEntryButton(c *components.Components, event *events.Compo
 			}
 			// No existing entrant, continue
 		} else {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			if err := event.CreateMessage(discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.already_entered_br")).
 				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+				BuildCreate()); err != nil {
 				return err
 			}
 			return nil
@@ -1706,14 +1707,14 @@ func handleBattleRoyaleEntryButton(c *components.Components, event *events.Compo
 
 		cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
 		if currency.Points < *betHost.EntryFee {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			if err := event.CreateMessage(discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.insufficient_entry_fee", map[string]any{
 					"currency_name": cName,
 					"fee":           *betHost.EntryFee,
 					"points":        currency.Points,
 				})).
 				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+				BuildCreate()); err != nil {
 				return err
 			}
 			return nil
@@ -1768,10 +1769,10 @@ func handleBattleRoyaleEntryButton(c *components.Components, event *events.Compo
 			"fee":           *betHost.EntryFee,
 		})
 
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+		if err := event.CreateMessage(discordutil.NewMessageBuilder().
 			SetContent(responseMsg).
 			SetFlags(discord.MessageFlagEphemeral).
-			Build()); err != nil {
+			BuildCreate()); err != nil {
 			return err
 		}
 		return nil
@@ -1802,10 +1803,10 @@ func handleBattleRoyaleCloseEntryButton(c *components.Components, event *events.
 
 		// Check if user is owner
 		if !betHost.IsOwner(event.User().ID) {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			if err := event.CreateMessage(discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.only_organizer_close_entry")).
 				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+				BuildCreate()); err != nil {
 				return err
 			}
 			return nil
@@ -1813,10 +1814,10 @@ func handleBattleRoyaleCloseEntryButton(c *components.Components, event *events.
 
 		// Check if still in entry phase
 		if betHost.Status != string(models.BetStatusEntry) {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			if err := event.CreateMessage(discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.not_in_entry_phase")).
 				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+				BuildCreate()); err != nil {
 				return err
 			}
 			return nil
@@ -1828,7 +1829,7 @@ func handleBattleRoyaleCloseEntryButton(c *components.Components, event *events.
 			return err
 		}
 		if entrantCount < 2 {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			if err := event.CreateMessage(discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.min_entrants_br")).
 				SetComponents(discord.NewActionRow(
 					discord.NewDangerButton(
@@ -1837,7 +1838,7 @@ func handleBattleRoyaleCloseEntryButton(c *components.Components, event *events.
 					),
 				)).
 				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+				BuildCreate()); err != nil {
 				return err
 			}
 			return nil
@@ -1854,10 +1855,10 @@ func handleBattleRoyaleCloseEntryButton(c *components.Components, event *events.
 			return err
 		}
 
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+		if err := event.CreateMessage(discordutil.NewMessageBuilder().
 			SetContent(i18n.TranslateText(locale, "command.bet.message.entry_closed_br")).
 			SetFlags(discord.MessageFlagEphemeral).
-			Build()); err != nil {
+			BuildCreate()); err != nil {
 			return err
 		}
 		return nil
@@ -1892,10 +1893,10 @@ func handleCancelEntryButton(c *components.Components, event *events.ComponentIn
 
 		// Check if user is owner
 		if !betHost.IsOwner(event.User().ID) {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			if err := event.CreateMessage(discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.only_organizer_cancel")).
 				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+				BuildCreate()); err != nil {
 				return err
 			}
 			return nil
@@ -1903,10 +1904,10 @@ func handleCancelEntryButton(c *components.Components, event *events.ComponentIn
 
 		// Check if still in entry phase
 		if betHost.Status != string(models.BetStatusEntry) {
-			if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+			if err := event.CreateMessage(discordutil.NewMessageBuilder().
 				SetContent(i18n.TranslateText(locale, "command.bet.error.cannot_cancel_after_entry")).
 				SetFlags(discord.MessageFlagEphemeral).
-				Build()); err != nil {
+				BuildCreate()); err != nil {
 				return err
 			}
 			return nil
@@ -1956,13 +1957,13 @@ func handleCancelEntryButton(c *components.Components, event *events.ComponentIn
 		}
 
 		cName := currencyCmd.GetCurrencyName(c, *event.GuildID())
-		if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+		if err := event.CreateMessage(discordutil.NewMessageBuilder().
 			SetContent(i18n.TranslateText(locale, "command.bet.message.cancelled", map[string]any{
 				"currency_name": cName,
 				"amount":        totalRefunded,
 			})).
 			SetFlags(discord.MessageFlagEphemeral).
-			Build()); err != nil {
+			BuildCreate()); err != nil {
 			return err
 		}
 		return nil
@@ -2082,7 +2083,7 @@ func sendDMNotifications(
 		})
 
 		// EmbedやContainerでリッチに送る
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(

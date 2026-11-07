@@ -15,6 +15,7 @@ import (
 	"github.com/sabafly/gobot/bot/commands/currency"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
 )
@@ -138,7 +139,7 @@ func Command(c *components.Components) components.Command {
 
 					hal_values.Set(data.id, data)
 
-					if err := event.RespondMessage(discord.NewMessageBuilder().
+					if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 						SetIsComponentsV2(true).
 						SetComponents(HALStartMessage(c, *event.GuildID(), *data, event.Locale(), point, data.startOptionIndex)...)); err != nil {
 						return errors.NewError(err)
@@ -187,7 +188,7 @@ func Command(c *components.Components) components.Command {
 
 					slot_values.Set(data.ID, data)
 
-					if err := event.RespondMessage(discord.NewMessageBuilder().
+					if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 						SetIsComponentsV2(true).
 						SetComponents(SlotMessage(c, data, event.Locale())...)); err != nil {
 						return errors.NewError(err)
@@ -262,10 +263,9 @@ func Command(c *components.Components) components.Command {
 
 					hal_values.Set(data.id, data)
 
-					if err := event.UpdateMessage(discord.NewMessageBuilder().
+					if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 						SetIsComponentsV2(true).
-						SetComponents(HALStartMessage(c, *event.GuildID(), *data, event.Locale(), gopoint, selectedOption)...).
-						BuildUpdate()); err != nil {
+						SetComponents(HALStartMessage(c, *event.GuildID(), *data, event.Locale(), gopoint, selectedOption)...)); err != nil {
 						return errors.NewError(err)
 					}
 					return nil
@@ -305,10 +305,9 @@ func Command(c *components.Components) components.Command {
 
 					hal_values.Set(data.id, data)
 
-					if err := event.UpdateMessage(discord.NewMessageBuilder().
+					if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 						SetIsComponentsV2(true).
-						SetComponents(HALMessage(c, *event.GuildID(), *data, event.Locale())...).
-						BuildUpdate()); err != nil {
+						SetComponents(HALMessage(c, *event.GuildID(), *data, event.Locale())...)); err != nil {
 						return errors.NewError(err)
 					}
 					return nil
@@ -331,10 +330,9 @@ func Command(c *components.Components) components.Command {
 						return HALFinish(c, *data, finish, event.User().ID, *event.GuildID(), event)
 					}
 					hal_values.Set(data.id, data)
-					if err := event.UpdateMessage(discord.NewMessageBuilder().
+					if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 						SetIsComponentsV2(true).
-						SetComponents(HALMessage(c, *event.GuildID(), *data, event.Locale())...).
-						BuildUpdate()); err != nil {
+						SetComponents(HALMessage(c, *event.GuildID(), *data, event.Locale())...)); err != nil {
 						return errors.NewError(err)
 					}
 					return nil
@@ -357,10 +355,9 @@ func Command(c *components.Components) components.Command {
 						return HALFinish(c, *data, finish, event.User().ID, *event.GuildID(), event)
 					}
 					hal_values.Set(data.id, data)
-					if err := event.UpdateMessage(discord.NewMessageBuilder().
+					if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 						SetIsComponentsV2(true).
-						SetComponents(HALMessage(c, *event.GuildID(), *data, event.Locale())...).
-						BuildUpdate()); err != nil {
+						SetComponents(HALMessage(c, *event.GuildID(), *data, event.Locale())...)); err != nil {
 						return errors.NewError(err)
 					}
 					return nil
@@ -383,10 +380,9 @@ func Command(c *components.Components) components.Command {
 						return HALFinish(c, *data, finish, event.User().ID, *event.GuildID(), event)
 					}
 					hal_values.Set(data.id, data)
-					if err := event.UpdateMessage(discord.NewMessageBuilder().
+					if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 						SetIsComponentsV2(true).
-						SetComponents(HALMessage(c, *event.GuildID(), *data, event.Locale())...).
-						BuildUpdate()); err != nil {
+						SetComponents(HALMessage(c, *event.GuildID(), *data, event.Locale())...)); err != nil {
 						return errors.NewError(err)
 					}
 					return nil
@@ -419,7 +415,7 @@ func Command(c *components.Components) components.Command {
 
 					hal_values.Set(data.id, data)
 
-					if err := event.RespondMessage(discord.NewMessageBuilder().
+					if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 						SetIsComponentsV2(true).
 						SetComponents(HALStartMessage(c, *event.GuildID(), *data, event.Locale(), point, data.startOptionIndex)...)); err != nil {
 						return errors.NewError(err)
@@ -476,12 +472,12 @@ func Command(c *components.Components) components.Command {
 						if data.Status == SlotStatusBB || data.Status == SlotStatusRB {
 							cost = 1
 						}
-						if err := event.CreateMessage(discord.NewMessageCreateBuilder().
+						if err := event.CreateMessage(discordutil.NewMessageBuilder().
 							SetContent(i18n.TranslateText(event.Locale(), "error.play.slot.insufficient_points.description", map[string]any{
 								"point": cost,
 							})).
 							SetFlags(discord.MessageFlagEphemeral).
-							Build()); err != nil {
+							BuildCreate()); err != nil {
 							return errors.NewError(err)
 						}
 						return nil
@@ -489,10 +485,9 @@ func Command(c *components.Components) components.Command {
 
 					slot_values.Set(data.ID, data)
 
-					if err := event.UpdateMessage(discord.NewMessageBuilder().
+					if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 						SetIsComponentsV2(true).
-						SetComponents(SlotMessage(c, data, event.Locale())...).
-						BuildUpdate()); err != nil {
+						SetComponents(SlotMessage(c, data, event.Locale())...)); err != nil {
 						return errors.NewError(err)
 					}
 					return nil

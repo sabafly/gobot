@@ -14,6 +14,7 @@ import (
 	"github.com/sabafly/gobot/bot/commands/currency"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/errors"
 )
 
@@ -354,10 +355,9 @@ func SlotFinish(c *components.Components, data *SlotData, event *events.Componen
 		discord.NewTextDisplayf("- **収支**： `%s%d %s`", netWinSign, netWin, cName),
 	)
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(container).
-		BuildUpdate()); err != nil {
+		SetComponents(container)); err != nil {
 		return errors.NewError(err)
 	}
 

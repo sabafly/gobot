@@ -299,7 +299,7 @@ func PolymarketPrecondition(event *events.ComponentInteractionCreate) (*Polymark
 	}
 	session, ok := pm_sessions.Get(sessionUUID)
 	if !ok {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -307,11 +307,11 @@ func PolymarketPrecondition(event *events.ComponentInteractionCreate) (*Polymark
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil, nil
 	}
 	if session.UserID != event.User().ID {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -319,7 +319,7 @@ func PolymarketPrecondition(event *events.ComponentInteractionCreate) (*Polymark
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil, nil
 	}
 	return session, nil
@@ -407,14 +407,14 @@ func PolymarketPlayCommand(c *components.Components, event *events.ApplicationCo
 	}
 
 	if apiErr != nil {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
 					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.polymarket.err_api_failed", map[string]any{"error": apiErr.Error()})),
 				).WithAccentColor(0xE74C3C),
 			)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -484,14 +484,14 @@ func PolymarketPlayCommand(c *components.Components, event *events.ApplicationCo
 	}
 
 	if len(sortedMarkets) == 0 {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
 					discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.polymarket.err_no_markets")),
 				).WithAccentColor(0xE74C3C),
 			)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -504,7 +504,7 @@ func PolymarketPlayCommand(c *components.Components, event *events.ApplicationCo
 	}
 	pm_sessions.Set(session.ID, session)
 
-	if err := event.RespondMessage(discord.NewMessageBuilder().
+	if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(PolymarketSearchMessage(c, session, points, event.Locale())...),
 	); err != nil {
@@ -558,10 +558,9 @@ func PolymarketSelectMarketHandler(c *components.Components, event *events.Compo
 		return errors.NewError(err)
 	}
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(PolymarketDetailMessage(c, session, points, event.Locale())...).
-		BuildUpdate(),
+		SetComponents(PolymarketDetailMessage(c, session, points, event.Locale())...),
 	); err != nil {
 		return errors.NewError(err)
 	}
@@ -605,10 +604,9 @@ func PolymarketSelectOutcomeHandler(c *components.Components, event *events.Comp
 		return errors.NewError(err)
 	}
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(PolymarketBetConfirmMessage(c, session, points, event.Locale())...).
-		BuildUpdate(),
+		SetComponents(PolymarketBetConfirmMessage(c, session, points, event.Locale())...),
 	); err != nil {
 		return errors.NewError(err)
 	}
@@ -632,10 +630,9 @@ func PolymarketViewMyBetsHandler(c *components.Components, event *events.Compone
 	session.StatusHeader = ""
 	pm_sessions.Set(session.ID, session)
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(PolymarketMyBetsMessage(c, session, points, event.Locale())...).
-		BuildUpdate(),
+		SetComponents(PolymarketMyBetsMessage(c, session, points, event.Locale())...),
 	); err != nil {
 		return errors.NewError(err)
 	}
@@ -661,10 +658,9 @@ func PolymarketBackToListHandler(c *components.Components, event *events.Compone
 		return errors.NewError(err)
 	}
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(PolymarketSearchMessage(c, session, points, event.Locale())...).
-		BuildUpdate(),
+		SetComponents(PolymarketSearchMessage(c, session, points, event.Locale())...),
 	); err != nil {
 		return errors.NewError(err)
 	}
@@ -689,10 +685,9 @@ func PolymarketBackToDetailHandler(c *components.Components, event *events.Compo
 		return errors.NewError(err)
 	}
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(PolymarketDetailMessage(c, session, points, event.Locale())...).
-		BuildUpdate(),
+		SetComponents(PolymarketDetailMessage(c, session, points, event.Locale())...),
 	); err != nil {
 		return errors.NewError(err)
 	}
@@ -717,10 +712,9 @@ func PolymarketQuitHandler(c *components.Components, event *events.ComponentInte
 		discord.NewTextDisplay(i18n.TranslateText(event.Locale(), "components.play.polymarket.quit_desc")),
 	)
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(container).
-		BuildUpdate(),
+		SetComponents(container),
 	); err != nil {
 		return errors.NewError(err)
 	}
@@ -744,7 +738,7 @@ func PolymarketBetAmountHandler(c *components.Components, event *events.Componen
 
 	if amountStr == "custom_btn" {
 		cName := currency.GetCurrencyName(c, session.GuildID)
-		if err := event.Modal(discord.NewModalCreateBuilder().
+		if err := event.Modal(discordutil.NewModalCreateBuilder().
 			SetTitle(i18n.TranslateText(event.Locale(), "components.play.polymarket.modal_bet_title")).
 			SetCustomID(fmt.Sprintf("play:pm_custom_bet_modal:%s", session.ID.String())).
 			SetComponents(
@@ -833,7 +827,7 @@ func processBetPlacement(c *components.Components, event *events.ComponentIntera
 	if err != nil {
 		if err.Error() == "insufficient_points" {
 			cName := currency.GetCurrencyName(c, session.GuildID)
-			builder := discord.NewMessageBuilder().
+			builder := discordutil.NewMessageBuilder().
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
@@ -845,7 +839,7 @@ func processBetPlacement(c *components.Components, event *events.ComponentIntera
 					).WithAccentColor(0xE74C3C),
 				).
 				AddFlags(discord.MessageFlagEphemeral)
-			_ = event.RespondMessage(builder)
+			_ = discordutil.RespondMessage(event, builder)
 			return nil
 		}
 		return errors.NewError(err)
@@ -858,10 +852,9 @@ func processBetPlacement(c *components.Components, event *events.ComponentIntera
 
 	pointsAfter, _, _ := currency.GetPoint(c, session.UserID, session.GuildID)
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(PolymarketSearchMessage(c, session, pointsAfter, event.Locale())...).
-		BuildUpdate(),
+		SetComponents(PolymarketSearchMessage(c, session, pointsAfter, event.Locale())...),
 	); err != nil {
 		return errors.NewError(err)
 	}
@@ -880,7 +873,7 @@ func PolymarketCustomBetModalHandler(c *components.Components, event *events.Mod
 	}
 	session, ok := pm_sessions.Get(sessionUUID)
 	if !ok {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -888,7 +881,7 @@ func PolymarketCustomBetModalHandler(c *components.Components, event *events.Mod
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -896,7 +889,7 @@ func PolymarketCustomBetModalHandler(c *components.Components, event *events.Mod
 
 	amount, err := strconv.ParseInt(amountStr, 10, 64)
 	if err != nil || amount <= 0 {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -904,7 +897,7 @@ func PolymarketCustomBetModalHandler(c *components.Components, event *events.Mod
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -914,7 +907,7 @@ func PolymarketCustomBetModalHandler(c *components.Components, event *events.Mod
 	if err != nil {
 		if err.Error() == "insufficient_points" {
 			cName := currency.GetCurrencyName(c, session.GuildID)
-			builder := discord.NewMessageBuilder().
+			builder := discordutil.NewMessageBuilder().
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
@@ -926,7 +919,7 @@ func PolymarketCustomBetModalHandler(c *components.Components, event *events.Mod
 					).WithAccentColor(0xE74C3C),
 				).
 				AddFlags(discord.MessageFlagEphemeral)
-			_ = event.RespondMessage(builder)
+			_ = discordutil.RespondMessage(event, builder)
 			return nil
 		}
 		return errors.NewError(err)
@@ -939,10 +932,9 @@ func PolymarketCustomBetModalHandler(c *components.Components, event *events.Mod
 
 	pointsAfter, _, _ := currency.GetPoint(c, session.UserID, session.GuildID)
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(PolymarketSearchMessage(c, session, pointsAfter, event.Locale())...).
-		BuildUpdate(),
+		SetComponents(PolymarketSearchMessage(c, session, pointsAfter, event.Locale())...),
 	); err != nil {
 		return errors.NewError(err)
 	}
@@ -1064,10 +1056,9 @@ func PolymarketRefreshBetsHandler(c *components.Components, event *events.Compon
 	session.StatusHeader = statusHeader
 	pm_sessions.Set(session.ID, session)
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
-		SetComponents(PolymarketMyBetsMessage(c, session, points, event.Locale())...).
-		BuildUpdate(),
+		SetComponents(PolymarketMyBetsMessage(c, session, points, event.Locale())...),
 	); err != nil {
 		return errors.NewError(err)
 	}

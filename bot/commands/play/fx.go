@@ -24,6 +24,7 @@ import (
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/database/models"
+	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
 )
@@ -488,7 +489,7 @@ func liquidatePosition(c *components.Components, client *bot.Client, pos *models
 		templateMap["guild"] = guildName
 		descText := i18n.TranslateText(locale, descKey, withCurrency(c, pos.GuildID, templateMap)) + detailStr.String()
 
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -823,7 +824,7 @@ func FXPrecondition(event *events.ComponentInteractionCreate) (*FXSession, error
 	}
 	session, ok := fx_sessions.Get(id)
 	if !ok {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -831,11 +832,11 @@ func FXPrecondition(event *events.ComponentInteractionCreate) (*FXSession, error
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil, nil
 	}
 	if session.UserID != event.User().ID {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -843,7 +844,7 @@ func FXPrecondition(event *events.ComponentInteractionCreate) (*FXSession, error
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil, nil
 	}
 	return session, nil
@@ -900,7 +901,7 @@ func FXPlayCommand(c *components.Components, event *events.ApplicationCommandInt
 	}
 	fx_sessions.Set(session.ID, session)
 
-	if err := event.RespondMessage(discord.NewMessageBuilder().
+	if err := discordutil.RespondMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...),
 	); err != nil {
@@ -944,7 +945,7 @@ func FXSymbolHandler(c *components.Components, event *events.ComponentInteractio
 		return errors.NewError(err)
 	}
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
@@ -963,7 +964,7 @@ func FXMarginButtonHandler(c *components.Components, event *events.ComponentInte
 		return nil
 	}
 
-	modal := discord.NewModalCreateBuilder().
+	modal := discordutil.NewModalCreateBuilder().
 		SetTitle(i18n.TranslateText(event.Locale(), "components.play.fx.modal_input_margin_title")).
 		SetCustomID("play:fx_margin_modal:" + session.ID.String()).
 		SetComponents(
@@ -998,7 +999,7 @@ func FXMarginModalHandler(c *components.Components, event *events.ModalSubmitInt
 	}
 	session, ok := fx_sessions.Get(id)
 	if !ok {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1006,11 +1007,11 @@ func FXMarginModalHandler(c *components.Components, event *events.ModalSubmitInt
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 	if session.UserID != event.User().ID {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1018,14 +1019,14 @@ func FXMarginModalHandler(c *components.Components, event *events.ModalSubmitInt
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
 	marginStr := event.Data.Text("margin")
 	margin, err := strconv.ParseInt(strings.TrimSpace(marginStr), 10, 64)
 	if err != nil || margin <= 0 {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1033,7 +1034,7 @@ func FXMarginModalHandler(c *components.Components, event *events.ModalSubmitInt
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -1046,7 +1047,7 @@ func FXMarginModalHandler(c *components.Components, event *events.ModalSubmitInt
 	minMargin := max(int64(float64(points)*opt.MinRatio), 1)
 
 	if margin < minMargin {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1059,7 +1060,7 @@ func FXMarginModalHandler(c *components.Components, event *events.ModalSubmitInt
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -1076,7 +1077,7 @@ func FXMarginModalHandler(c *components.Components, event *events.ModalSubmitInt
 		return errors.NewError(err)
 	}
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
@@ -1095,7 +1096,7 @@ func FXAddMarginButtonHandler(c *components.Components, event *events.ComponentI
 		return nil
 	}
 
-	modal := discord.NewModalCreateBuilder().
+	modal := discordutil.NewModalCreateBuilder().
 		SetTitle(i18n.TranslateText(event.Locale(), "components.play.fx.modal_add_margin_title")).
 		SetCustomID("play:fx_add_margin_modal:" + session.ID.String()).
 		SetComponents(
@@ -1129,7 +1130,7 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 	}
 	session, ok := fx_sessions.Get(id)
 	if !ok {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1137,11 +1138,11 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 	if session.UserID != event.User().ID {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1149,14 +1150,14 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
 	amountStr := event.Data.Text("amount")
 	amount, err := strconv.ParseInt(strings.TrimSpace(amountStr), 10, 64)
 	if err != nil || amount <= 0 {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1164,7 +1165,7 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -1174,7 +1175,7 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 	}
 
 	if points < amount {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1185,12 +1186,12 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
 	if session.ActivePositionID == nil {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1198,14 +1199,14 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
 	pos, err := getFXPositionByID(c, *session.ActivePositionID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			builder := discord.NewMessageBuilder().
+			builder := discordutil.NewMessageBuilder().
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
@@ -1213,7 +1214,7 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 					).WithAccentColor(0xE74C3C),
 				).
 				AddFlags(discord.MessageFlagEphemeral)
-			_ = event.RespondMessage(builder)
+			_ = discordutil.RespondMessage(event, builder)
 			return nil
 		}
 		return errors.NewError(err)
@@ -1243,7 +1244,7 @@ func FXAddMarginModalHandler(c *components.Components, event *events.ModalSubmit
 		return errors.NewError(err)
 	}
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
@@ -1290,7 +1291,7 @@ func FXLeverageHandler(c *components.Components, event *events.ComponentInteract
 		return errors.NewError(err)
 	}
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
@@ -1314,7 +1315,7 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 		return errors.NewError(err)
 	}
 	if mcRestricted {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1322,7 +1323,7 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -1332,7 +1333,7 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 	}
 
 	if len(positions) >= 10 {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1340,7 +1341,7 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -1353,7 +1354,7 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 	minMargin := max(int64(float64(points)*opt.MinRatio), 1)
 
 	if session.SelectedMargin < minMargin {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1366,12 +1367,12 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
 	if points < session.SelectedMargin {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1382,7 +1383,7 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -1432,7 +1433,7 @@ func FXBuyHandler(c *components.Components, event *events.ComponentInteractionCr
 	points, _, _ = currency.GetPoint(c, event.User().ID, *event.GuildID())
 	positions, _ = getFXPositions(c, event.User().ID, *event.GuildID())
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
@@ -1456,7 +1457,7 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 		return errors.NewError(err)
 	}
 	if mcRestricted {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1464,7 +1465,7 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -1474,7 +1475,7 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 	}
 
 	if len(positions) >= 10 {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1482,7 +1483,7 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -1495,7 +1496,7 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 	minMargin := max(int64(float64(points)*opt.MinRatio), 1)
 
 	if session.SelectedMargin < minMargin {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1508,12 +1509,12 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
 	if points < session.SelectedMargin {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1524,7 +1525,7 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -1574,7 +1575,7 @@ func FXSellHandler(c *components.Components, event *events.ComponentInteractionC
 	points, _, _ = currency.GetPoint(c, event.User().ID, *event.GuildID())
 	positions, _ = getFXPositions(c, event.User().ID, *event.GuildID())
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
@@ -1598,7 +1599,7 @@ func FXPendingOrderButtonHandler(c *components.Components, event *events.Compone
 		return errors.NewError(err)
 	}
 	if mcRestricted {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1606,7 +1607,7 @@ func FXPendingOrderButtonHandler(c *components.Components, event *events.Compone
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -1620,7 +1621,7 @@ func FXPendingOrderButtonHandler(c *components.Components, event *events.Compone
 		return errors.NewError(err)
 	}
 	if len(positions)+len(orders) >= 10 {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1628,11 +1629,11 @@ func FXPendingOrderButtonHandler(c *components.Components, event *events.Compone
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
-	modal := discord.NewModalCreateBuilder().
+	modal := discordutil.NewModalCreateBuilder().
 		SetTitle(i18n.TranslateText(event.Locale(), "components.play.fx.modal_pending_order_title")).
 		SetCustomID("play:fx_order_modal:"+session.ID.String()).
 		SetComponents(
@@ -1692,7 +1693,7 @@ func FXOrderModalHandler(c *components.Components, event *events.ModalSubmitInte
 	}
 	session, ok := fx_sessions.Get(id)
 	if !ok {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1700,11 +1701,11 @@ func FXOrderModalHandler(c *components.Components, event *events.ModalSubmitInte
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 	if session.UserID != event.User().ID {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1712,7 +1713,7 @@ func FXOrderModalHandler(c *components.Components, event *events.ModalSubmitInte
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -1730,7 +1731,7 @@ func FXOrderModalHandler(c *components.Components, event *events.ModalSubmitInte
 
 	targetPrice, err := strconv.ParseFloat(strings.TrimSpace(priceStr), 64)
 	if err != nil || targetPrice <= 0 || (dirStr != "BUY" && dirStr != "SELL") || (typeStr != "LIMIT" && typeStr != "STOP") {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1738,7 +1739,7 @@ func FXOrderModalHandler(c *components.Components, event *events.ModalSubmitInte
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -1751,7 +1752,7 @@ func FXOrderModalHandler(c *components.Components, event *events.ModalSubmitInte
 	minMargin := max(int64(float64(points)*opt.MinRatio), 1)
 
 	if session.SelectedMargin < minMargin {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1764,12 +1765,12 @@ func FXOrderModalHandler(c *components.Components, event *events.ModalSubmitInte
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
 	if points < session.SelectedMargin {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1780,7 +1781,7 @@ func FXOrderModalHandler(c *components.Components, event *events.ModalSubmitInte
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -1816,7 +1817,7 @@ func FXOrderModalHandler(c *components.Components, event *events.ModalSubmitInte
 		return errors.NewError(err)
 	}
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
@@ -1856,7 +1857,7 @@ func FXCancelOrderHandler(c *components.Components, event *events.ComponentInter
 	})
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			builder := discord.NewMessageBuilder().
+			builder := discordutil.NewMessageBuilder().
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
@@ -1864,7 +1865,7 @@ func FXCancelOrderHandler(c *components.Components, event *events.ComponentInter
 					).WithAccentColor(0xE74C3C),
 				).
 				AddFlags(discord.MessageFlagEphemeral)
-			_ = event.RespondMessage(builder)
+			_ = discordutil.RespondMessage(event, builder)
 			return nil
 		}
 		return errors.NewError(err)
@@ -1887,7 +1888,7 @@ func FXCancelOrderHandler(c *components.Components, event *events.ComponentInter
 		return errors.NewError(err)
 	}
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
@@ -1911,7 +1912,7 @@ func FXSetTPSLButtonHandler(c *components.Components, event *events.ComponentInt
 		return errors.NewError(err)
 	}
 	if mcRestricted {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1919,12 +1920,12 @@ func FXSetTPSLButtonHandler(c *components.Components, event *events.ComponentInt
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
 	if session.ActivePositionID == nil {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -1932,7 +1933,7 @@ func FXSetTPSLButtonHandler(c *components.Components, event *events.ComponentInt
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -1950,7 +1951,7 @@ func FXSetTPSLButtonHandler(c *components.Components, event *events.ComponentInt
 		slVal = fmt.Sprintf("%.3f", *pos.StopLossPrice)
 	}
 
-	modal := discord.NewModalCreateBuilder().
+	modal := discordutil.NewModalCreateBuilder().
 		SetTitle(i18n.TranslateText(event.Locale(), "components.play.fx.modal_tpsl_title")).
 		SetCustomID("play:fx_tpsl_modal:"+session.ID.String()).
 		SetComponents(
@@ -1994,7 +1995,7 @@ func FXTPSLModalHandler(c *components.Components, event *events.ModalSubmitInter
 	}
 	session, ok := fx_sessions.Get(id)
 	if !ok {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -2002,11 +2003,11 @@ func FXTPSLModalHandler(c *components.Components, event *events.ModalSubmitInter
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 	if session.UserID != event.User().ID {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -2014,12 +2015,12 @@ func FXTPSLModalHandler(c *components.Components, event *events.ModalSubmitInter
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
 	if session.ActivePositionID == nil {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -2027,7 +2028,7 @@ func FXTPSLModalHandler(c *components.Components, event *events.ModalSubmitInter
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -2043,7 +2044,7 @@ func FXTPSLModalHandler(c *components.Components, event *events.ModalSubmitInter
 	if tpStr != "" {
 		val, err := strconv.ParseFloat(tpStr, 64)
 		if err != nil || val <= 0 {
-			builder := discord.NewMessageBuilder().
+			builder := discordutil.NewMessageBuilder().
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
@@ -2051,7 +2052,7 @@ func FXTPSLModalHandler(c *components.Components, event *events.ModalSubmitInter
 					).WithAccentColor(0xE74C3C),
 				).
 				AddFlags(discord.MessageFlagEphemeral)
-			_ = event.RespondMessage(builder)
+			_ = discordutil.RespondMessage(event, builder)
 			return nil
 		}
 		tp = &val
@@ -2061,7 +2062,7 @@ func FXTPSLModalHandler(c *components.Components, event *events.ModalSubmitInter
 	if slStr != "" {
 		val, err := strconv.ParseFloat(slStr, 64)
 		if err != nil || val <= 0 {
-			builder := discord.NewMessageBuilder().
+			builder := discordutil.NewMessageBuilder().
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
@@ -2069,7 +2070,7 @@ func FXTPSLModalHandler(c *components.Components, event *events.ModalSubmitInter
 					).WithAccentColor(0xE74C3C),
 				).
 				AddFlags(discord.MessageFlagEphemeral)
-			_ = event.RespondMessage(builder)
+			_ = discordutil.RespondMessage(event, builder)
 			return nil
 		}
 		sl = &val
@@ -2077,7 +2078,7 @@ func FXTPSLModalHandler(c *components.Components, event *events.ModalSubmitInter
 
 	if pos.Direction == models.FXPositionDirectionBuy {
 		if tp != nil && *tp <= pos.EntryPrice {
-			builder := discord.NewMessageBuilder().
+			builder := discordutil.NewMessageBuilder().
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
@@ -2085,11 +2086,11 @@ func FXTPSLModalHandler(c *components.Components, event *events.ModalSubmitInter
 					).WithAccentColor(0xE74C3C),
 				).
 				AddFlags(discord.MessageFlagEphemeral)
-			_ = event.RespondMessage(builder)
+			_ = discordutil.RespondMessage(event, builder)
 			return nil
 		}
 		if sl != nil && *sl >= pos.EntryPrice {
-			builder := discord.NewMessageBuilder().
+			builder := discordutil.NewMessageBuilder().
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
@@ -2097,12 +2098,12 @@ func FXTPSLModalHandler(c *components.Components, event *events.ModalSubmitInter
 					).WithAccentColor(0xE74C3C),
 				).
 				AddFlags(discord.MessageFlagEphemeral)
-			_ = event.RespondMessage(builder)
+			_ = discordutil.RespondMessage(event, builder)
 			return nil
 		}
 	} else {
 		if tp != nil && *tp >= pos.EntryPrice {
-			builder := discord.NewMessageBuilder().
+			builder := discordutil.NewMessageBuilder().
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
@@ -2110,11 +2111,11 @@ func FXTPSLModalHandler(c *components.Components, event *events.ModalSubmitInter
 					).WithAccentColor(0xE74C3C),
 				).
 				AddFlags(discord.MessageFlagEphemeral)
-			_ = event.RespondMessage(builder)
+			_ = discordutil.RespondMessage(event, builder)
 			return nil
 		}
 		if sl != nil && *sl <= pos.EntryPrice {
-			builder := discord.NewMessageBuilder().
+			builder := discordutil.NewMessageBuilder().
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
@@ -2122,7 +2123,7 @@ func FXTPSLModalHandler(c *components.Components, event *events.ModalSubmitInter
 					).WithAccentColor(0xE74C3C),
 				).
 				AddFlags(discord.MessageFlagEphemeral)
-			_ = event.RespondMessage(builder)
+			_ = discordutil.RespondMessage(event, builder)
 			return nil
 		}
 	}
@@ -2147,7 +2148,7 @@ func FXTPSLModalHandler(c *components.Components, event *events.ModalSubmitInter
 		return errors.NewError(err)
 	}
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
@@ -2211,7 +2212,7 @@ func FXRefreshHandler(c *components.Components, event *events.ComponentInteracti
 		return errors.NewError(err)
 	}
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
@@ -2235,7 +2236,7 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 		return errors.NewError(err)
 	}
 	if mcRestricted {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -2243,12 +2244,12 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
 	if session.ActivePositionID == nil {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -2256,14 +2257,14 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
 	pos, err := getFXPositionByID(c, *session.ActivePositionID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			builder := discord.NewMessageBuilder().
+			builder := discordutil.NewMessageBuilder().
 				SetIsComponentsV2(true).
 				SetComponents(
 					discord.NewContainer(
@@ -2271,7 +2272,7 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 					).WithAccentColor(0xE74C3C),
 				).
 				AddFlags(discord.MessageFlagEphemeral)
-			_ = event.RespondMessage(builder)
+			_ = discordutil.RespondMessage(event, builder)
 			return nil
 		}
 		return errors.NewError(err)
@@ -2279,7 +2280,7 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 
 	var existingOrder models.FXOrder
 	if err := c.GormDB().Where("position_id = ?", pos.ID).First(&existingOrder).Error; err == nil {
-		builder := discord.NewMessageBuilder().
+		builder := discordutil.NewMessageBuilder().
 			SetIsComponentsV2(true).
 			SetComponents(
 				discord.NewContainer(
@@ -2287,7 +2288,7 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 				).WithAccentColor(0xE74C3C),
 			).
 			AddFlags(discord.MessageFlagEphemeral)
-		_ = event.RespondMessage(builder)
+		_ = discordutil.RespondMessage(event, builder)
 		return nil
 	}
 
@@ -2342,7 +2343,7 @@ func FXCloseHandler(c *components.Components, event *events.ComponentInteraction
 	points, _, _ := currency.GetPoint(c, event.User().ID, *event.GuildID())
 	positions, _ := getFXPositions(c, event.User().ID, *event.GuildID())
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
@@ -2390,7 +2391,7 @@ func FXQuitHandler(c *components.Components, event *events.ComponentInteractionC
 		}
 	}
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(container).
 		BuildUpdate(),
@@ -2440,7 +2441,7 @@ func FXSwitchPositionHandler(c *components.Components, event *events.ComponentIn
 		return errors.NewError(err)
 	}
 
-	if err := event.UpdateMessage(discord.NewMessageBuilder().
+	if err := discordutil.UpdateMessage(event, discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(FXMessage(c, session, positions, ticker, points, event.Locale())...).
 		BuildUpdate(),
@@ -2578,7 +2579,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 							"guild":         guildName,
 						}))
 
-						builder := discord.NewMessageBuilder().
+						builder := discordutil.NewMessageBuilder().
 							SetIsComponentsV2(true).
 							SetComponents(
 								discord.NewContainer(
@@ -2616,7 +2617,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 							"mc_line": fmt.Sprintf("%.1f%%", opt.MarginCallRatio),
 							"guild":   guildName,
 						})
-						builder := discord.NewMessageBuilder().
+						builder := discordutil.NewMessageBuilder().
 							SetIsComponentsV2(true).
 							SetComponents(
 								discord.NewContainer(
@@ -2762,7 +2763,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 									"guild":     guildName,
 								}))
 
-								builder := discord.NewMessageBuilder().
+								builder := discordutil.NewMessageBuilder().
 									SetIsComponentsV2(true).
 									SetComponents(
 										discord.NewContainer(
@@ -2928,7 +2929,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 									"guild":     guildName,
 								}))
 
-								builder := discord.NewMessageBuilder().
+								builder := discordutil.NewMessageBuilder().
 									SetIsComponentsV2(true).
 									SetComponents(
 										discord.NewContainer(
@@ -2988,7 +2989,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 								"guild":     guildName,
 							}))
 
-							builder := discord.NewMessageBuilder().
+							builder := discordutil.NewMessageBuilder().
 								SetIsComponentsV2(true).
 								SetComponents(
 									discord.NewContainer(
@@ -3068,7 +3069,7 @@ func CheckAllPositionsLiquidation(c *components.Components, client *bot.Client) 
 								"guild":      guildName,
 							})
 
-							builder := discord.NewMessageBuilder().
+							builder := discordutil.NewMessageBuilder().
 								SetIsComponentsV2(true).
 								SetComponents(
 									discord.NewContainer(
@@ -3254,11 +3255,11 @@ func FXPortfolioCommandHandler(c *components.Components, event *events.Applicati
 
 	componentsList := layoutCtx.Translate(i18n.TranslateLayout(locale, "command.play.portfolio"))
 
-	builder := discord.NewMessageBuilder().
+	builder := discordutil.NewMessageBuilder().
 		SetIsComponentsV2(true).
 		SetComponents(componentsList...)
 
-	err = event.RespondMessage(builder)
+	err = discordutil.RespondMessage(event, builder)
 	if err != nil {
 		return errors.NewError(err)
 	}

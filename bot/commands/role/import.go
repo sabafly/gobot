@@ -102,7 +102,7 @@ func ImportCommand(c *components.Components) components.Command {
 						return errors.NewError(errors.ErrorMessage("errors.unsupported", event))
 					}
 
-					g, err := c.GuildCreateID(event, *event.GuildID())
+					g, err := c.GuildCreateID(c.Ctx(), *event.GuildID())
 					if err != nil {
 						return errors.NewError(err)
 					}

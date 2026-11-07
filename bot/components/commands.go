@@ -21,13 +21,15 @@
 package components
 
 import (
+	"context"
+	"fmt"
 	"log/slog"
-	"maps"
 	"strings"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/disgo/handler"
 	"github.com/disgoorg/disgo/rest"
 )
 
@@ -45,10 +47,40 @@ func (c *Components) AddCommand(cmd Command) {
 	c.commandsRegistry[cmd.Name()] = cmd
 }
 
+func NormalizeCustomID(customID string) string {
+	if strings.HasPrefix(customID, "/") {
+		return customID
+	}
+	return "/" + strings.ReplaceAll(customID, ":", "/")
+}
+
+func recoveryMiddleware() handler.Middleware {
+	return func(next handler.Handler) handler.Handler {
+		return func(event *handler.InteractionEvent) (err error) {
+			defer func() {
+				if r := recover(); r != nil {
+					slog.Error("パニックが発生しました", "panic", r)
+					err = fmt.Errorf("panic: %v", r)
+				}
+			}()
+			return next(event)
+		}
+	}
+}
+
 func (c *Components) Initialize(client *bot.Client) error {
 	for _, cmd := range DefaultCommands {
 		c.AddCommand(cmd)
 	}
+
+	c.router = handler.New()
+	c.router.DefaultContext(func() context.Context {
+		return c.Ctx()
+	})
+	c.router.Use(recoveryMiddleware())
+	c.router.Error(func(event *handler.InteractionEvent, err error) {
+		slog.Error("インタラクションエラー", "err", err)
+	})
 
 	var commands, privateCommands []discord.ApplicationCommandCreate
 	for name, cmd := range c.commandsRegistry {
@@ -66,6 +98,7 @@ func (c *Components) Initialize(client *bot.Client) error {
 				commands = append(commands, cmd.Create()...)
 			}
 		}
+		cmd.RegisterRoutes(c.router)
 	}
 
 	if _, err := client.Rest.SetGlobalCommands(client.ApplicationID, commands); err != nil {
@@ -96,76 +129,8 @@ func (c *Components) Initialize(client *bot.Client) error {
 func (c *Components) OnEvent() func(bot bot.Event) {
 	return func(event bot.Event) {
 		switch e := event.(type) {
-		case *events.ApplicationCommandInteractionCreate:
-			cmd, ok := c.commandsRegistry[e.Data.CommandName()]
-			if !ok {
-				for v := range maps.Values(c.commandsRegistry) {
-					if v.HasCommand(e) {
-						cmd = v
-						break
-					}
-				}
-				if cmd == nil {
-					slog.Warn("不明なコマンド", "command_name", e.Data.CommandName())
-					return
-				}
-			}
-			h := cmd.CommandHandler()
-			if h == nil {
-				slog.Warn("コマンド処理がnil", "custom_id", e.Data.CommandName())
-				return
-			}
-			if err := h(e); err != nil {
-				slog.Error("コマンド処理中にエラーが発生しました", "err", err)
-			}
-		case *events.ComponentInteractionCreate:
-			namespace := strings.Split(e.Data.CustomID(), ":")
-			cmd, ok := c.commandsRegistry[namespace[0]]
-			if !ok {
-				slog.Warn("不明なコンポーネント", "custom_id", e.Data.CustomID())
-				return
-			}
-			h := cmd.ComponentHandler()
-			if h == nil {
-				slog.Warn("コンポーネント処理がnil", "custom_id", e.Data.CustomID())
-				return
-			}
-			if err := h(e); err != nil {
-				slog.Error("コンポーネント処理中にエラーが発生しました", "err", err)
-				return
-			}
-		case *events.ModalSubmitInteractionCreate:
-			namespace := strings.Split(e.Data.CustomID, ":")
-			cmd, ok := c.commandsRegistry[namespace[0]]
-			if !ok {
-				slog.Warn("不明なモーダル提出インタラクション", "custom_id", e.Data.CustomID)
-				return
-			}
-			h := cmd.ModalHandler()
-			if h == nil {
-				slog.Warn("モーダル提出インタラクション処理がnil", "custom_id", e.Data.CustomID)
-				return
-			}
-			if err := h(e); err != nil {
-				slog.Error("モーダル提出インタラクション処理中にエラーが発生しました", "err", err)
-				return
-			}
-		case *events.AutocompleteInteractionCreate:
-			namespace := strings.Split(e.Data.CommandName, ":")
-			cmd, ok := c.commandsRegistry[namespace[0]]
-			if !ok {
-				slog.Warn("不明なオートコンプリート", "custom_id", e.Data.CommandName)
-				return
-			}
-			h := cmd.AutocompleteHandler()
-			if h == nil {
-				slog.Warn("オートコンプリート処理がnil", "custom_id", e.Data.CommandName)
-				return
-			}
-			if err := h(e); err != nil {
-				slog.Error("オートコンプリート処理中にエラーが発生しました", "err", err)
-				return
-			}
+		case *events.InteractionCreate:
+			c.dispatchInteraction(e)
 		default:
 			for name, cmd := range c.commandsRegistry {
 				if h := cmd.OnEvent(); h != nil {
@@ -178,11 +143,48 @@ func (c *Components) OnEvent() func(bot bot.Event) {
 	}
 }
 
+func (c *Components) dispatchInteraction(e *events.InteractionCreate) {
+	var path string
+	switch i := e.Interaction.(type) {
+	case discord.ApplicationCommandInteraction:
+		if sci, ok := i.Data.(discord.SlashCommandInteractionData); ok {
+			path = sci.CommandPath()
+		} else {
+			path = "/" + i.Data.CommandName()
+		}
+	case discord.AutocompleteInteraction:
+		path = i.Data.CommandPath()
+	case discord.ComponentInteraction:
+		path = NormalizeCustomID(i.Data.CustomID())
+	case discord.ModalSubmitInteraction:
+		path = NormalizeCustomID(i.Data.CustomID)
+	}
+
+	if path == "" {
+		return
+	}
+
+	ctx := c.Ctx()
+	ic := *e
+	ie := &handler.InteractionEvent{
+		InteractionCreate: &ic,
+		Ctx:               ctx,
+		Vars:              make(map[string]string),
+	}
+	ic.Respond = func(responseType discord.InteractionResponseType, data discord.InteractionResponseData, opts ...rest.RequestOpt) error {
+		return e.Respond(responseType, data, append([]rest.RequestOpt{rest.WithCtx(ie.Ctx)}, opts...)...)
+	}
+	if err := c.router.Handle(path, ie); err != nil {
+		slog.Error("インタラクション処理中にエラーが発生しました", "err", err, "path", path)
+	}
+}
+
 type Command interface {
 	Name() string
 
 	Create() []discord.ApplicationCommandCreate
 	IsPrivate() bool
+	RegisterRoutes(r handler.Router)
 	CommandHandler() func(event *events.ApplicationCommandInteractionCreate) error
 	ComponentHandler() func(event *events.ComponentInteractionCreate) error
 	ModalHandler() func(event *events.ModalSubmitInteractionCreate) error
