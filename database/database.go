@@ -42,6 +42,7 @@ func NewDB(dsn string) (*DB, error) {
 		&models.RolePanelPlaced{},
 		&models.MessagePin{},
 		&models.MessageRemind{},
+		&models.BumpSchedule{},
 		&models.WordSuffix{},
 		&models.FXPosition{},
 		&models.FXOrder{},

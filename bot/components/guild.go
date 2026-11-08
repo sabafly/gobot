@@ -128,6 +128,10 @@ func (c *Components) OnGuildLeave() func(event *events.GuildLeave) {
 				slog.Error("ギルド脱退 メッセージリマインド削除に失敗", "err", err)
 				return err
 			}
+			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.BumpSchedule{}).Error; err != nil {
+				slog.Error("ギルド脱退 Bumpスケジュール削除に失敗", "err", err)
+				return err
+			}
 			if err := tx.Where("guild_id = ?", event.Guild.ID).Delete(&models.RolePanelPlaced{}).Error; err != nil {
 				slog.Error("ギルド脱退 ロールパネル配置削除に失敗", "err", err)
 				return err
