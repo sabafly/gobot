@@ -45,7 +45,25 @@ func createSQLiteTable(db *gorm.DB, model any) error {
 		pkConstraint = fmt.Sprintf(", PRIMARY KEY (%s)", strings.Join(pks, ", "))
 	}
 	query := fmt.Sprintf("CREATE TABLE `%s` (%s%s)", tableName, strings.Join(columns, ", "), pkConstraint)
-	return db.Exec(query).Error
+	if err := db.Exec(query).Error; err != nil {
+		return err
+	}
+
+	for _, idx := range stmt.Schema.ParseIndexes() {
+		var idxCols []string
+		for _, f := range idx.Fields {
+			idxCols = append(idxCols, fmt.Sprintf("`%s`", f.DBName))
+		}
+		uniqueStr := ""
+		if idx.Class == "UNIQUE" {
+			uniqueStr = "UNIQUE "
+		}
+		idxQuery := fmt.Sprintf("CREATE %sINDEX IF NOT EXISTS `%s` ON `%s` (%s)", uniqueStr, idx.Name, tableName, strings.Join(idxCols, ", "))
+		if err := db.Exec(idxQuery).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func setupTestComponent(t *testing.T) (*components.Components, *gorm.DB) {
@@ -455,5 +473,153 @@ func TestEventHandler_GuildMessageUpdate(t *testing.T) {
 	expectedRemindAt := now.Add(2 * time.Hour)
 	if schedule.RemindAt.Sub(expectedRemindAt).Abs() > time.Second {
 		t.Errorf("expected RemindAt ~ %v, got %v", expectedRemindAt, schedule.RemindAt)
+	}
+}
+
+func TestBumpHandler_ReplacesExistingScheduleDifferentMessageID(t *testing.T) {
+	c, gdb := setupTestComponent(t)
+
+	guildID := snowflake.ID(1007)
+	channelID := snowflake.ID(2007)
+	oldTime := time.Date(2026, 11, 8, 10, 0, 0, 0, time.UTC)
+	oldMessageID := snowflake.New(oldTime)
+	newTime := time.Date(2026, 11, 8, 12, 0, 0, 0, time.UTC)
+	newMessageID := snowflake.New(newTime)
+
+	g := &models.Guild{
+		ID:          guildID,
+		BumpEnabled: true,
+	}
+	_ = gdb.Create(g)
+
+	// Pre-existing schedule with oldMessageID
+	oldSchedule := models.BumpSchedule{
+		GuildID:   guildID,
+		ChannelID: channelID,
+		Type:      models.BumpTypeBump,
+		RemindAt:  oldTime.Add(2 * time.Hour),
+		MessageID: oldMessageID,
+	}
+	if err := gdb.Create(&oldSchedule).Error; err != nil {
+		t.Fatalf("failed to create old schedule: %v", err)
+	}
+
+	// New bump event with different message ID
+	event := &events.GuildMessageCreate{
+		GenericGuildMessage: &events.GenericGuildMessage{
+			GuildID:   guildID,
+			ChannelID: channelID,
+			Message: discord.Message{
+				ID:        newMessageID,
+				CreatedAt: newTime,
+				//nolint:staticcheck // SA1019: Interaction is deprecated
+				Interaction: &discord.MessageInteraction{
+					Name: "bump",
+				},
+				Embeds: []discord.Embed{
+					{
+						Image: &discord.EmbedResource{
+							URL: "https://disboard.org/images/bot-command-image-bump.png",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	if err := bumpHandler(c, g, event); err != nil {
+		t.Fatalf("bumpHandler failed to replace schedule: %v", err)
+	}
+
+	var schedules []models.BumpSchedule
+	if err := gdb.Where("guild_id = ? AND type = ?", guildID, models.BumpTypeBump).Find(&schedules).Error; err != nil {
+		t.Fatalf("failed to query schedules: %v", err)
+	}
+
+	if len(schedules) != 1 {
+		t.Fatalf("expected exactly 1 schedule, got %d", len(schedules))
+	}
+	if schedules[0].MessageID != newMessageID {
+		t.Errorf("expected schedule message ID %v, got %v", newMessageID, schedules[0].MessageID)
+	}
+}
+
+func TestScheduler_ProcessesMultipleDueSchedules(t *testing.T) {
+	c, gdb := setupTestComponent(t)
+
+	pastTime := time.Now().Add(-10 * time.Minute)
+
+	// Create 3 guilds and 3 due schedules
+	for i := 1; i <= 3; i++ {
+		gid := snowflake.ID(2000 + i)
+		cid := snowflake.ID(3000 + i)
+		g := &models.Guild{
+			ID:          gid,
+			BumpEnabled: true,
+		}
+		_ = gdb.Create(g)
+
+		s := models.BumpSchedule{
+			GuildID:   gid,
+			ChannelID: cid,
+			Type:      models.BumpTypeBump,
+			RemindAt:  pastTime.Add(time.Duration(i) * time.Minute),
+			MessageID: snowflake.New(pastTime),
+		}
+		if err := gdb.Create(&s).Error; err != nil {
+			t.Fatalf("failed to create schedule %d: %v", i, err)
+		}
+	}
+
+	cmd := Command(c)
+	schedulers := cmd.Scheduler()
+	if len(schedulers) == 0 {
+		t.Fatalf("no schedulers registered")
+	}
+
+	worker := schedulers[0].Worker
+	if err := worker(c, nil); err != nil {
+		t.Fatalf("worker returned error: %v", err)
+	}
+
+	// All 3 schedules must be deleted in a single pass without statement accumulation errors
+	var remainingCount int64
+	if err := gdb.Model(&models.BumpSchedule{}).Count(&remainingCount).Error; err != nil {
+		t.Fatalf("failed to count remaining schedules: %v", err)
+	}
+	if remainingCount != 0 {
+		t.Errorf("expected 0 remaining schedules, got %d", remainingCount)
+	}
+}
+
+func TestScheduler_GuildNotFound_DeletesSchedule(t *testing.T) {
+	c, gdb := setupTestComponent(t)
+
+	nonExistentGuildID := snowflake.ID(99999)
+	channelID := snowflake.ID(88888)
+	pastTime := time.Now().Add(-10 * time.Minute)
+
+	s := models.BumpSchedule{
+		GuildID:   nonExistentGuildID,
+		ChannelID: channelID,
+		Type:      models.BumpTypeBump,
+		RemindAt:  pastTime,
+		MessageID: snowflake.New(pastTime),
+	}
+	if err := gdb.Create(&s).Error; err != nil {
+		t.Fatalf("failed to create schedule: %v", err)
+	}
+
+	cmd := Command(c)
+	worker := cmd.Scheduler()[0].Worker
+	if err := worker(c, nil); err != nil {
+		t.Fatalf("worker returned error: %v", err)
+	}
+
+	// Non-existent guild record should be removed (gorm.ErrRecordNotFound)
+	var count int64
+	gdb.Model(&models.BumpSchedule{}).Where("guild_id = ?", nonExistentGuildID).Count(&count)
+	if count != 0 {
+		t.Errorf("expected orphan schedule to be deleted, but %d remain", count)
 	}
 }

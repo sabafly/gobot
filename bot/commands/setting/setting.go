@@ -21,6 +21,7 @@
 package setting
 
 import (
+	stderrors "errors"
 	"log/slog"
 	"time"
 
@@ -28,6 +29,7 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
+	"gorm.io/gorm"
 
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
@@ -547,20 +549,25 @@ func Command(c *components.Components) components.Command {
 			{
 				Duration: 10 * time.Second,
 				Worker: func(c *components.Components, client *bot.Client) error {
-					db := c.GormDB()
-					if db == nil {
+					if c.GormDB() == nil {
 						return nil
 					}
 					var schedules []models.BumpSchedule
 					now := time.Now()
-					if err := db.Where("remind_at <= ?", now).Find(&schedules).Error; err != nil {
+					if err := c.GormDB().Where("remind_at <= ?", now).Find(&schedules).Error; err != nil {
 						return errors.NewError(err)
 					}
 
 					for _, s := range schedules {
 						g, err := c.GuildCreateID(c.Ctx(), s.GuildID)
 						if err != nil {
-							_ = db.Delete(&s).Error
+							if stderrors.Is(err, gorm.ErrRecordNotFound) {
+								if delErr := c.GormDB().Delete(&s).Error; delErr != nil {
+									slog.Error("存在しないギルドのBumpスケジュール削除に失敗", "id", s.ID, "err", delErr)
+								}
+							} else {
+								slog.Error("ギルド取得に失敗したためBumpスケジュールを保持します", "guild_id", s.GuildID, "err", err)
+							}
 							continue
 						}
 
@@ -577,7 +584,9 @@ func Command(c *components.Components) components.Command {
 							}
 						}
 
-						_ = db.Delete(&s).Error
+						if delErr := c.GormDB().Delete(&s).Error; delErr != nil {
+							slog.Error("Bumpスケジュール削除に失敗", "id", s.ID, "err", delErr)
+						}
 					}
 
 					return nil
@@ -599,14 +608,13 @@ func bumpHandler(c *components.Components, g *models.Guild, event *events.GuildM
 		return nil
 	}
 
-	db := c.GormDB()
-	if db == nil {
+	if c.GormDB() == nil {
 		return nil
 	}
 
 	// Avoid duplicate notifications if the same message was already processed (e.g. from GuildMessageUpdate)
 	var count int64
-	if err := db.Model(&models.BumpSchedule{}).
+	if err := c.GormDB().Model(&models.BumpSchedule{}).
 		Where("guild_id = ? AND type = ? AND message_id = ?", event.GuildID, models.BumpTypeBump, event.Message.ID).
 		Count(&count).Error; err == nil && count > 0 {
 		return nil
@@ -621,7 +629,9 @@ func bumpHandler(c *components.Components, g *models.Guild, event *events.GuildM
 	}
 
 	// Remove any existing pending schedule for this guild and type
-	_ = db.Where("guild_id = ? AND type = ?", event.GuildID, models.BumpTypeBump).Delete(&models.BumpSchedule{}).Error
+	if err := c.GormDB().Where("guild_id = ? AND type = ?", event.GuildID, models.BumpTypeBump).Delete(&models.BumpSchedule{}).Error; err != nil {
+		slog.Error("既存のBumpスケジュール削除に失敗", "guild_id", event.GuildID, "err", err)
+	}
 
 	schedule := models.BumpSchedule{
 		GuildID:   event.GuildID,
@@ -630,7 +640,7 @@ func bumpHandler(c *components.Components, g *models.Guild, event *events.GuildM
 		MessageID: event.Message.ID,
 		RemindAt:  msgTime.Add(time.Hour * 2),
 	}
-	if err := db.Create(&schedule).Error; err != nil {
+	if err := c.GormDB().Create(&schedule).Error; err != nil {
 		return errors.NewError(err)
 	}
 
@@ -654,14 +664,13 @@ func upHandler(c *components.Components, g *models.Guild, event *events.GuildMes
 		return nil
 	}
 
-	db := c.GormDB()
-	if db == nil {
+	if c.GormDB() == nil {
 		return nil
 	}
 
 	// Avoid duplicate notifications if the same message was already processed (e.g. from GuildMessageUpdate)
 	var count int64
-	if err := db.Model(&models.BumpSchedule{}).
+	if err := c.GormDB().Model(&models.BumpSchedule{}).
 		Where("guild_id = ? AND type = ? AND message_id = ?", event.GuildID, models.BumpTypeUp, event.Message.ID).
 		Count(&count).Error; err == nil && count > 0 {
 		return nil
@@ -676,7 +685,9 @@ func upHandler(c *components.Components, g *models.Guild, event *events.GuildMes
 	}
 
 	// Remove any existing pending schedule for this guild and type
-	_ = db.Where("guild_id = ? AND type = ?", event.GuildID, models.BumpTypeUp).Delete(&models.BumpSchedule{}).Error
+	if err := c.GormDB().Where("guild_id = ? AND type = ?", event.GuildID, models.BumpTypeUp).Delete(&models.BumpSchedule{}).Error; err != nil {
+		slog.Error("既存のUPスケジュール削除に失敗", "guild_id", event.GuildID, "err", err)
+	}
 
 	schedule := models.BumpSchedule{
 		GuildID:   event.GuildID,
@@ -685,7 +696,7 @@ func upHandler(c *components.Components, g *models.Guild, event *events.GuildMes
 		MessageID: event.Message.ID,
 		RemindAt:  msgTime.Add(time.Hour * 1),
 	}
-	if err := db.Create(&schedule).Error; err != nil {
+	if err := c.GormDB().Create(&schedule).Error; err != nil {
 		return errors.NewError(err)
 	}
 
