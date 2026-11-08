@@ -673,7 +673,7 @@ func bumpHandler(c *components.Components, g *models.Guild, event *events.GuildM
 
 func upHandler(c *components.Components, g *models.Guild, event *events.GuildMessageCreate) error {
 	//nolint:staticcheck // SA1019: Message.Interaction is deprecated in disgo
-	if event.Message.Interaction == nil || event.Message.Interaction.Name != "dissoku up" {
+	if event.Message.Interaction == nil || event.Message.Interaction.Name != "up" {
 		return nil
 	}
 	if len(event.Message.Embeds) < 1 || event.Message.Embeds[0].Color != c.Config().UpColor {
