@@ -695,7 +695,7 @@ func upHandler(c *components.Components, g *models.Guild, event *events.GuildMes
 		msgTime = time.Now()
 	}
 
-	remindAt := msgTime.Add(time.Hour * 1)
+	remindAt := msgTime.Add(time.Hour * 2)
 	// Ignore stale events (e.g. Discord refreshing embeds on old messages after the reminder window has already passed)
 	if !remindAt.After(time.Now()) {
 		return nil
