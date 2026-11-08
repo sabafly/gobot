@@ -22,6 +22,7 @@ package components
 
 import (
 	"os"
+	"regexp"
 
 	"github.com/disgoorg/snowflake/v2"
 	"gopkg.in/yaml.v2"
@@ -36,10 +37,10 @@ type Config struct {
 	MySQL   string `yaml:"mysql"`
 	GormDSN string `yaml:"gorm_dsn"`
 
-	BumpUserID snowflake.ID `yaml:"bump_user"`
-	BumpImage  string       `yaml:"bump_image"`
-	UpUserID   snowflake.ID `yaml:"up_user"`
-	UpColor    int          `yaml:"up_color"`
+	BumpUserID snowflake.ID   `yaml:"bump_user"`
+	BumpImage  *regexp.Regexp `yaml:"bump_image_regex"`
+	UpUserID   snowflake.ID   `yaml:"up_user"`
+	UpColor    int            `yaml:"up_color"`
 
 	DisableForeignKeys bool `yaml:"foreign_keys"`
 }

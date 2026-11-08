@@ -611,7 +611,7 @@ func bumpHandler(c *components.Components, g *models.Guild, event *events.GuildM
 	if event.Message.Interaction == nil || event.Message.Interaction.Name != "bump" {
 		return nil
 	}
-	if len(event.Message.Embeds) < 1 || event.Message.Embeds[0].Image == nil || event.Message.Embeds[0].Image.URL != c.Config().BumpImage {
+	if len(event.Message.Embeds) < 1 || event.Message.Embeds[0].Image == nil || c.Config().BumpImage == nil || !c.Config().BumpImage.MatchString(event.Message.Embeds[0].Image.URL) {
 		return nil
 	}
 	if !g.BumpEnabled {

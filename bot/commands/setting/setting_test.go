@@ -3,6 +3,7 @@ package setting
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -82,7 +83,7 @@ func setupTestComponent(t *testing.T) (*components.Components, *gorm.DB) {
 
 	conf := components.Config{
 		BumpUserID: snowflake.ID(302050872383242240),
-		BumpImage:  "https://disboard.org/images/bot-command-image-bump.png",
+		BumpImage:  regexp.MustCompile(`https://disboard.org/images/bot-command-image-bump-.+\.png`),
 		UpUserID:   snowflake.ID(761562078095867916),
 		UpColor:    7506394,
 	}
