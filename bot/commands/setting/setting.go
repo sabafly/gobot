@@ -22,7 +22,6 @@ package setting
 
 import (
 	"log/slog"
-	"sync"
 	"time"
 
 	"github.com/disgoorg/disgo/bot"
@@ -489,10 +488,36 @@ func Command(c *components.Components) components.Command {
 
 		EventHandler: func(c *components.Components, event bot.Event) errors.Error {
 			if e, ok := event.(*events.GuildMessageUpdate); ok {
-				event = &events.GuildMessageCreate{GenericGuildMessage: e.GenericGuildMessage}
+				msg := e.Message
+				if msg.Author.ID == 0 && e.OldMessage.Author.ID != 0 {
+					msg.Author = e.OldMessage.Author
+				}
+				if msg.ApplicationID == nil && e.OldMessage.ApplicationID != nil {
+					msg.ApplicationID = e.OldMessage.ApplicationID
+				}
+				//nolint:staticcheck // SA1019: Message.Interaction is deprecated in disgo
+				if msg.Interaction == nil && e.OldMessage.Interaction != nil {
+					msg.Interaction = e.OldMessage.Interaction
+				}
+				if msg.CreatedAt.IsZero() && !e.OldMessage.CreatedAt.IsZero() {
+					msg.CreatedAt = e.OldMessage.CreatedAt
+				}
+				if len(msg.Embeds) == 0 && len(e.OldMessage.Embeds) > 0 {
+					msg.Embeds = e.OldMessage.Embeds
+				}
+				event = &events.GuildMessageCreate{
+					GenericGuildMessage: &events.GenericGuildMessage{
+						GenericEvent: e.GenericEvent,
+						MessageID:    e.MessageID,
+						Message:      msg,
+						ChannelID:    e.ChannelID,
+						GuildID:      e.GuildID,
+					},
+				}
 			}
 			switch event := event.(type) {
 			case *events.GuildMessageCreate:
+				//nolint:staticcheck // SA1019: Message.Interaction is deprecated in disgo
 				if event.Message.Interaction == nil || event.Message.ApplicationID == nil {
 					return nil
 				}
@@ -520,45 +545,39 @@ func Command(c *components.Components) components.Command {
 
 		Schedulers: []components.Scheduler{
 			{
-				Duration: time.Minute,
+				Duration: 10 * time.Second,
 				Worker: func(c *components.Components, client *bot.Client) error {
-					bumpLock.Lock()
-					defer bumpLock.Unlock()
-					for k, n := range bumpNotice {
-						g, err := c.GuildCreateID(c.Ctx(), n.guildID)
-						if err != nil {
-							continue
-						}
-						if !g.BumpEnabled {
-							continue
-						}
-
-						if time.Now().After(n.t.Add(-time.Minute * 2)) {
-							go func() {
-								time.Sleep(time.Until(n.t))
-								createNotice(g.BumpRemindMessageTitle, g.BumpRemindMessage, n, client, builtin.Or(g.BumpMention != nil, discord.RoleMention(builtin.NonNil(g.BumpMention)), ""))
-							}()
-							delete(bumpNotice, k)
-						}
+					db := c.GormDB()
+					if db == nil {
+						return nil
 					}
-					upLock.Lock()
-					defer upLock.Unlock()
-					for k, n := range upNotice {
-						g, err := c.GuildCreateID(c.Ctx(), n.guildID)
+					var schedules []models.BumpSchedule
+					now := time.Now()
+					if err := db.Where("remind_at <= ?", now).Find(&schedules).Error; err != nil {
+						return errors.NewError(err)
+					}
+
+					for _, s := range schedules {
+						g, err := c.GuildCreateID(c.Ctx(), s.GuildID)
 						if err != nil {
-							continue
-						}
-						if !g.UpEnabled {
+							_ = db.Delete(&s).Error
 							continue
 						}
 
-						if time.Now().After(n.t.Add(-time.Minute * 2)) {
-							go func() {
-								time.Sleep(time.Until(n.t))
-								createNotice(g.UpRemindMessageTitle, g.UpRemindMessage, n, client, builtin.Or(g.UpMention != nil, discord.RoleMention(builtin.NonNil(g.UpMention)), ""))
-							}()
-							delete(upNotice, k)
+						switch s.Type {
+						case models.BumpTypeBump:
+							if g.BumpEnabled {
+								createNotice(g.BumpRemindMessageTitle, g.BumpRemindMessage, s.ChannelID, client,
+									builtin.Or(g.BumpMention != nil, discord.RoleMention(builtin.NonNil(g.BumpMention)), ""))
+							}
+						case models.BumpTypeUp:
+							if g.UpEnabled {
+								createNotice(g.UpRemindMessageTitle, g.UpRemindMessage, s.ChannelID, client,
+									builtin.Or(g.UpMention != nil, discord.RoleMention(builtin.NonNil(g.UpMention)), ""))
+							}
 						}
+
+						_ = db.Delete(&s).Error
 					}
 
 					return nil
@@ -568,18 +587,8 @@ func Command(c *components.Components) components.Command {
 	}).SetComponent(c)
 }
 
-type notice struct {
-	channelID snowflake.ID
-	guildID   snowflake.ID
-	t         time.Time
-}
-
-var bumpNotice = map[snowflake.ID]notice{}
-var bumpLock sync.Mutex
-
 func bumpHandler(c *components.Components, g *models.Guild, event *events.GuildMessageCreate) error {
-	bumpLock.Lock()
-	defer bumpLock.Unlock()
+	//nolint:staticcheck // SA1019: Message.Interaction is deprecated in disgo
 	if event.Message.Interaction == nil || event.Message.Interaction.Name != "bump" {
 		return nil
 	}
@@ -589,23 +598,52 @@ func bumpHandler(c *components.Components, g *models.Guild, event *events.GuildM
 	if !g.BumpEnabled {
 		return nil
 	}
-	n :=
-		notice{
-			channelID: event.ChannelID,
-			guildID:   event.GuildID,
-			t:         event.Message.CreatedAt.Add(time.Hour * 2),
-		}
-	bumpNotice[event.GuildID] = n
-	createNotice(g.BumpMessageTitle, g.BumpMessage, n, event.Client(), "")
+
+	db := c.GormDB()
+	if db == nil {
+		return nil
+	}
+
+	// Avoid duplicate notifications if the same message was already processed (e.g. from GuildMessageUpdate)
+	var count int64
+	if err := db.Model(&models.BumpSchedule{}).
+		Where("guild_id = ? AND type = ? AND message_id = ?", event.GuildID, models.BumpTypeBump, event.Message.ID).
+		Count(&count).Error; err == nil && count > 0 {
+		return nil
+	}
+
+	msgTime := event.Message.CreatedAt
+	if msgTime.IsZero() {
+		msgTime = event.Message.ID.Time()
+	}
+	if msgTime.IsZero() {
+		msgTime = time.Now()
+	}
+
+	// Remove any existing pending schedule for this guild and type
+	_ = db.Where("guild_id = ? AND type = ?", event.GuildID, models.BumpTypeBump).Delete(&models.BumpSchedule{}).Error
+
+	schedule := models.BumpSchedule{
+		GuildID:   event.GuildID,
+		Type:      models.BumpTypeBump,
+		ChannelID: event.ChannelID,
+		MessageID: event.Message.ID,
+		RemindAt:  msgTime.Add(time.Hour * 2),
+	}
+	if err := db.Create(&schedule).Error; err != nil {
+		return errors.NewError(err)
+	}
+
+	var client *bot.Client
+	if event.GenericEvent != nil {
+		client = event.Client()
+	}
+	createNotice(g.BumpMessageTitle, g.BumpMessage, event.ChannelID, client, "")
 	return nil
 }
 
-var upNotice = map[snowflake.ID]notice{}
-var upLock sync.Mutex
-
 func upHandler(c *components.Components, g *models.Guild, event *events.GuildMessageCreate) error {
-	upLock.Lock()
-	defer upLock.Unlock()
+	//nolint:staticcheck // SA1019: Message.Interaction is deprecated in disgo
 	if event.Message.Interaction == nil || event.Message.Interaction.Name != "dissoku up" {
 		return nil
 	}
@@ -615,24 +653,60 @@ func upHandler(c *components.Components, g *models.Guild, event *events.GuildMes
 	if !g.UpEnabled {
 		return nil
 	}
-	n :=
-		notice{
-			channelID: event.ChannelID,
-			guildID:   event.GuildID,
-			t:         event.Message.CreatedAt.Add(time.Hour * 1),
-		}
-	upNotice[event.GuildID] = n
-	createNotice(g.UpMessageTitle, g.UpMessage, n, event.Client(), "")
+
+	db := c.GormDB()
+	if db == nil {
+		return nil
+	}
+
+	// Avoid duplicate notifications if the same message was already processed (e.g. from GuildMessageUpdate)
+	var count int64
+	if err := db.Model(&models.BumpSchedule{}).
+		Where("guild_id = ? AND type = ? AND message_id = ?", event.GuildID, models.BumpTypeUp, event.Message.ID).
+		Count(&count).Error; err == nil && count > 0 {
+		return nil
+	}
+
+	msgTime := event.Message.CreatedAt
+	if msgTime.IsZero() {
+		msgTime = event.Message.ID.Time()
+	}
+	if msgTime.IsZero() {
+		msgTime = time.Now()
+	}
+
+	// Remove any existing pending schedule for this guild and type
+	_ = db.Where("guild_id = ? AND type = ?", event.GuildID, models.BumpTypeUp).Delete(&models.BumpSchedule{}).Error
+
+	schedule := models.BumpSchedule{
+		GuildID:   event.GuildID,
+		Type:      models.BumpTypeUp,
+		ChannelID: event.ChannelID,
+		MessageID: event.Message.ID,
+		RemindAt:  msgTime.Add(time.Hour * 1),
+	}
+	if err := db.Create(&schedule).Error; err != nil {
+		return errors.NewError(err)
+	}
+
+	var client *bot.Client
+	if event.GenericEvent != nil {
+		client = event.Client()
+	}
+	createNotice(g.UpMessageTitle, g.UpMessage, event.ChannelID, client, "")
 	return nil
 }
 
-func createNotice(title, message string, n notice, client *bot.Client, content string) {
+func createNotice(title, message string, channelID snowflake.ID, client *bot.Client, content string) {
+	if client == nil || client.Rest == nil {
+		return
+	}
 	embed := embeds.SetEmbedProperties(
 		discord.NewEmbed().
 			WithTitle(title).
 			WithDescription(message),
 	)
-	if _, err := client.Rest.CreateMessage(n.channelID,
+	if _, err := client.Rest.CreateMessage(channelID,
 		discordutil.NewMessageBuilder().
 			SetContent(content).
 			SetEmbeds(embed).
