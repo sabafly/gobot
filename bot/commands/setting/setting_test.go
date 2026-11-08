@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -103,7 +104,7 @@ func TestBumpHandler_NormalCreatedAt(t *testing.T) {
 	}
 	_ = gdb.Create(g)
 
-	createdAt := time.Date(2026, 11, 8, 12, 0, 0, 0, time.UTC)
+	createdAt := time.Now().UTC().Truncate(time.Second)
 	event := &events.GuildMessageCreate{
 		GenericGuildMessage: &events.GenericGuildMessage{
 			GuildID:   guildID,
@@ -149,7 +150,7 @@ func TestBumpHandler_ZeroCreatedAt_UsesSnowflakeTime(t *testing.T) {
 
 	guildID := snowflake.ID(1002)
 	channelID := snowflake.ID(2002)
-	now := time.Date(2026, 11, 8, 12, 0, 0, 0, time.UTC)
+	now := time.Now().UTC()
 	messageID := snowflake.New(now)
 
 	g := &models.Guild{
@@ -206,7 +207,7 @@ func TestBumpHandler_Deduplication(t *testing.T) {
 
 	guildID := snowflake.ID(1003)
 	channelID := snowflake.ID(2003)
-	now := time.Date(2026, 11, 8, 12, 0, 0, 0, time.UTC)
+	now := time.Now().UTC()
 	messageID := snowflake.New(now)
 
 	g := &models.Guild{
@@ -259,7 +260,7 @@ func TestUpHandler_NormalAndZeroCreatedAt(t *testing.T) {
 
 	guildID := snowflake.ID(1004)
 	channelID := snowflake.ID(2004)
-	now := time.Date(2026, 11, 8, 12, 0, 0, 0, time.UTC)
+	now := time.Now().UTC()
 	messageID := snowflake.New(now)
 
 	g := &models.Guild{
@@ -370,7 +371,7 @@ func TestEventHandler_GuildMessageUpdate(t *testing.T) {
 	guildID := snowflake.ID(1006)
 	channelID := snowflake.ID(2006)
 	bumpUserID := snowflake.ID(302050872383242240)
-	now := time.Date(2026, 11, 8, 12, 0, 0, 0, time.UTC)
+	now := time.Now().UTC()
 	messageID := snowflake.New(now)
 
 	g := &models.Guild{
@@ -481,9 +482,9 @@ func TestBumpHandler_ReplacesExistingScheduleDifferentMessageID(t *testing.T) {
 
 	guildID := snowflake.ID(1007)
 	channelID := snowflake.ID(2007)
-	oldTime := time.Date(2026, 11, 8, 10, 0, 0, 0, time.UTC)
+	oldTime := time.Now().UTC().Add(-1 * time.Hour)
 	oldMessageID := snowflake.New(oldTime)
-	newTime := time.Date(2026, 11, 8, 12, 0, 0, 0, time.UTC)
+	newTime := time.Now().UTC()
 	newMessageID := snowflake.New(newTime)
 
 	g := &models.Guild{
@@ -621,5 +622,178 @@ func TestScheduler_GuildNotFound_DeletesSchedule(t *testing.T) {
 	gdb.Model(&models.BumpSchedule{}).Where("guild_id = ?", nonExistentGuildID).Count(&count)
 	if count != 0 {
 		t.Errorf("expected orphan schedule to be deleted, but %d remain", count)
+	}
+}
+
+func TestBumpHandler_IgnoresStaleAndOlderMessages(t *testing.T) {
+	c, gdb := setupTestComponent(t)
+
+	guildID := snowflake.ID(1008)
+	channelID := snowflake.ID(2008)
+
+	g := &models.Guild{
+		ID:          guildID,
+		BumpEnabled: true,
+	}
+	_ = gdb.Create(g)
+
+	// 1. Stale message (3 hours ago, remindAt is 1 hour in the past)
+	staleTime := time.Now().UTC().Add(-3 * time.Hour)
+	staleMessageID := snowflake.New(staleTime)
+	staleEvent := &events.GuildMessageCreate{
+		GenericGuildMessage: &events.GenericGuildMessage{
+			GuildID:   guildID,
+			ChannelID: channelID,
+			Message: discord.Message{
+				ID:        staleMessageID,
+				CreatedAt: staleTime,
+				//nolint:staticcheck // SA1019: Interaction is deprecated
+				Interaction: &discord.MessageInteraction{
+					Name: "bump",
+				},
+				Embeds: []discord.Embed{
+					{
+						Image: &discord.EmbedResource{
+							URL: "https://disboard.org/images/bot-command-image-bump.png",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	if err := bumpHandler(c, g, staleEvent); err != nil {
+		t.Fatalf("bumpHandler returned error for stale event: %v", err)
+	}
+
+	var count int64
+	gdb.Model(&models.BumpSchedule{}).Where("guild_id = ?", guildID).Count(&count)
+	if count != 0 {
+		t.Fatalf("expected stale event to be ignored (0 schedules), got %d", count)
+	}
+
+	// 2. Current valid bump message (now)
+	currentTime := time.Now().UTC()
+	currentMessageID := snowflake.New(currentTime)
+	currentEvent := &events.GuildMessageCreate{
+		GenericGuildMessage: &events.GenericGuildMessage{
+			GuildID:   guildID,
+			ChannelID: channelID,
+			Message: discord.Message{
+				ID:        currentMessageID,
+				CreatedAt: currentTime,
+				//nolint:staticcheck // SA1019: Interaction is deprecated
+				Interaction: &discord.MessageInteraction{
+					Name: "bump",
+				},
+				Embeds: []discord.Embed{
+					{
+						Image: &discord.EmbedResource{
+							URL: "https://disboard.org/images/bot-command-image-bump.png",
+						},
+					},
+				},
+			},
+		},
+	}
+	if err := bumpHandler(c, g, currentEvent); err != nil {
+		t.Fatalf("bumpHandler failed for current event: %v", err)
+	}
+
+	// 3. Out-of-order update for an older message (30 minutes ago, still within 2h window but older than currentMessageID)
+	olderTime := currentTime.Add(-30 * time.Minute)
+	olderMessageID := snowflake.New(olderTime)
+	olderEvent := &events.GuildMessageCreate{
+		GenericGuildMessage: &events.GenericGuildMessage{
+			GuildID:   guildID,
+			ChannelID: channelID,
+			Message: discord.Message{
+				ID:        olderMessageID,
+				CreatedAt: olderTime,
+				//nolint:staticcheck // SA1019: Interaction is deprecated
+				Interaction: &discord.MessageInteraction{
+					Name: "bump",
+				},
+				Embeds: []discord.Embed{
+					{
+						Image: &discord.EmbedResource{
+							URL: "https://disboard.org/images/bot-command-image-bump.png",
+						},
+					},
+				},
+			},
+		},
+	}
+	if err := bumpHandler(c, g, olderEvent); err != nil {
+		t.Fatalf("bumpHandler failed for older event: %v", err)
+	}
+
+	var schedule models.BumpSchedule
+	if err := gdb.Where("guild_id = ? AND type = ?", guildID, models.BumpTypeBump).First(&schedule).Error; err != nil {
+		t.Fatalf("failed to fetch schedule: %v", err)
+	}
+	if schedule.MessageID != currentMessageID {
+		t.Errorf("expected schedule to keep newer MessageID %v, but was overwritten with %v", currentMessageID, schedule.MessageID)
+	}
+}
+
+func TestBumpHandler_ConcurrentSameMessage(t *testing.T) {
+	c, gdb := setupTestComponent(t)
+
+	guildID := snowflake.ID(1009)
+	channelID := snowflake.ID(2009)
+	now := time.Now().UTC()
+	messageID := snowflake.New(now)
+
+	g := &models.Guild{
+		ID:          guildID,
+		BumpEnabled: true,
+	}
+	_ = gdb.Create(g)
+
+	event := &events.GuildMessageCreate{
+		GenericGuildMessage: &events.GenericGuildMessage{
+			GuildID:   guildID,
+			ChannelID: channelID,
+			Message: discord.Message{
+				ID:        messageID,
+				CreatedAt: now,
+				//nolint:staticcheck // SA1019: Interaction is deprecated
+				Interaction: &discord.MessageInteraction{
+					Name: "bump",
+				},
+				Embeds: []discord.Embed{
+					{
+						Image: &discord.EmbedResource{
+							URL: "https://disboard.org/images/bot-command-image-bump.png",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	var wg sync.WaitGroup
+	errs := make(chan error, 2)
+	for range 2 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := bumpHandler(c, g, event); err != nil {
+				errs <- err
+			}
+		}()
+	}
+	wg.Wait()
+	close(errs)
+
+	for err := range errs {
+		t.Errorf("concurrent bumpHandler returned error: %v", err)
+	}
+
+	var count int64
+	gdb.Model(&models.BumpSchedule{}).Where("guild_id = ? AND type = ?", guildID, models.BumpTypeBump).Count(&count)
+	if count != 1 {
+		t.Errorf("expected 1 schedule after concurrent calls, got %d", count)
 	}
 }

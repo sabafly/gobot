@@ -23,6 +23,7 @@ package setting
 import (
 	stderrors "errors"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/disgoorg/disgo/bot"
@@ -30,6 +31,7 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
@@ -39,6 +41,11 @@ import (
 	"github.com/sabafly/gobot/internal/embeds"
 	"github.com/sabafly/gobot/internal/errors"
 	"github.com/sabafly/gobot/internal/i18n"
+)
+
+var (
+	bumpLock sync.Mutex
+	upLock   sync.Mutex
 )
 
 func Command(c *components.Components) components.Command {
@@ -491,6 +498,9 @@ func Command(c *components.Components) components.Command {
 		EventHandler: func(c *components.Components, event bot.Event) errors.Error {
 			if e, ok := event.(*events.GuildMessageUpdate); ok {
 				msg := e.Message
+				if msg.ID == 0 {
+					msg.ID = e.MessageID
+				}
 				if msg.Author.ID == 0 && e.OldMessage.Author.ID != 0 {
 					msg.Author = e.OldMessage.Author
 				}
@@ -530,12 +540,12 @@ func Command(c *components.Components) components.Command {
 				if err != nil {
 					return errors.NewError(err)
 				}
-				if g.BumpEnabled {
+				if g.BumpEnabled && event.Message.Author.ID == c.Config().BumpUserID {
 					if err := bumpHandler(c, g, event); err != nil {
 						return errors.NewError(err)
 					}
 				}
-				if g.UpEnabled {
+				if g.UpEnabled && event.Message.Author.ID == c.Config().UpUserID {
 					if err := upHandler(c, g, event); err != nil {
 						return errors.NewError(err)
 					}
@@ -554,7 +564,7 @@ func Command(c *components.Components) components.Command {
 					}
 					var schedules []models.BumpSchedule
 					now := time.Now()
-					if err := c.GormDB().Where("remind_at <= ?", now).Find(&schedules).Error; err != nil {
+					if err := c.GormDB().Omit(clause.Associations).Where("remind_at <= ?", now).Find(&schedules).Error; err != nil {
 						return errors.NewError(err)
 					}
 
@@ -612,20 +622,29 @@ func bumpHandler(c *components.Components, g *models.Guild, event *events.GuildM
 		return nil
 	}
 
-	// Avoid duplicate notifications if the same message was already processed (e.g. from GuildMessageUpdate)
-	var count int64
-	if err := c.GormDB().Model(&models.BumpSchedule{}).
-		Where("guild_id = ? AND type = ? AND message_id = ?", event.GuildID, models.BumpTypeBump, event.Message.ID).
-		Count(&count).Error; err == nil && count > 0 {
-		return nil
-	}
-
 	msgTime := event.Message.CreatedAt
 	if msgTime.IsZero() {
 		msgTime = event.Message.ID.Time()
 	}
 	if msgTime.IsZero() {
 		msgTime = time.Now()
+	}
+
+	remindAt := msgTime.Add(time.Hour * 2)
+	// Ignore stale events (e.g. Discord refreshing embeds on old messages after the reminder window has already passed)
+	if !remindAt.After(time.Now()) {
+		return nil
+	}
+
+	bumpLock.Lock()
+	defer bumpLock.Unlock()
+
+	// Avoid duplicate or out-of-order notifications if the same or a newer message was already processed
+	var count int64
+	if err := c.GormDB().Model(&models.BumpSchedule{}).
+		Where("guild_id = ? AND type = ? AND message_id >= ?", event.GuildID, models.BumpTypeBump, event.Message.ID).
+		Count(&count).Error; err == nil && count > 0 {
+		return nil
 	}
 
 	// Remove any existing pending schedule for this guild and type
@@ -638,7 +657,7 @@ func bumpHandler(c *components.Components, g *models.Guild, event *events.GuildM
 		Type:      models.BumpTypeBump,
 		ChannelID: event.ChannelID,
 		MessageID: event.Message.ID,
-		RemindAt:  msgTime.Add(time.Hour * 2),
+		RemindAt:  remindAt,
 	}
 	if err := c.GormDB().Create(&schedule).Error; err != nil {
 		return errors.NewError(err)
@@ -668,20 +687,29 @@ func upHandler(c *components.Components, g *models.Guild, event *events.GuildMes
 		return nil
 	}
 
-	// Avoid duplicate notifications if the same message was already processed (e.g. from GuildMessageUpdate)
-	var count int64
-	if err := c.GormDB().Model(&models.BumpSchedule{}).
-		Where("guild_id = ? AND type = ? AND message_id = ?", event.GuildID, models.BumpTypeUp, event.Message.ID).
-		Count(&count).Error; err == nil && count > 0 {
-		return nil
-	}
-
 	msgTime := event.Message.CreatedAt
 	if msgTime.IsZero() {
 		msgTime = event.Message.ID.Time()
 	}
 	if msgTime.IsZero() {
 		msgTime = time.Now()
+	}
+
+	remindAt := msgTime.Add(time.Hour * 1)
+	// Ignore stale events (e.g. Discord refreshing embeds on old messages after the reminder window has already passed)
+	if !remindAt.After(time.Now()) {
+		return nil
+	}
+
+	upLock.Lock()
+	defer upLock.Unlock()
+
+	// Avoid duplicate or out-of-order notifications if the same or a newer message was already processed
+	var count int64
+	if err := c.GormDB().Model(&models.BumpSchedule{}).
+		Where("guild_id = ? AND type = ? AND message_id >= ?", event.GuildID, models.BumpTypeUp, event.Message.ID).
+		Count(&count).Error; err == nil && count > 0 {
+		return nil
 	}
 
 	// Remove any existing pending schedule for this guild and type
@@ -694,7 +722,7 @@ func upHandler(c *components.Components, g *models.Guild, event *events.GuildMes
 		Type:      models.BumpTypeUp,
 		ChannelID: event.ChannelID,
 		MessageID: event.Message.ID,
-		RemindAt:  msgTime.Add(time.Hour * 1),
+		RemindAt:  remindAt,
 	}
 	if err := c.GormDB().Create(&schedule).Error; err != nil {
 		return errors.NewError(err)
