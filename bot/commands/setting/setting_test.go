@@ -120,7 +120,7 @@ func TestBumpHandler_NormalCreatedAt(t *testing.T) {
 				Embeds: []discord.Embed{
 					{
 						Image: &discord.EmbedResource{
-							URL: "https://disboard.org/images/bot-command-image-bump.png",
+							URL: "https://disboard.org/images/bot-command-image-bump-ja.png",
 						},
 					},
 				},
@@ -175,7 +175,7 @@ func TestBumpHandler_ZeroCreatedAt_UsesSnowflakeTime(t *testing.T) {
 				Embeds: []discord.Embed{
 					{
 						Image: &discord.EmbedResource{
-							URL: "https://disboard.org/images/bot-command-image-bump.png",
+							URL: "https://disboard.org/images/bot-command-image-bump-ja.png",
 						},
 					},
 				},
@@ -231,7 +231,7 @@ func TestBumpHandler_Deduplication(t *testing.T) {
 				Embeds: []discord.Embed{
 					{
 						Image: &discord.EmbedResource{
-							URL: "https://disboard.org/images/bot-command-image-bump.png",
+							URL: "https://disboard.org/images/bot-command-image-bump-ja.png",
 						},
 					},
 				},
@@ -279,7 +279,7 @@ func TestUpHandler_NormalAndZeroCreatedAt(t *testing.T) {
 				CreatedAt: time.Time{}, // Zero CreatedAt
 				//nolint:staticcheck // SA1019: Interaction is deprecated
 				Interaction: &discord.MessageInteraction{
-					Name: "dissoku up",
+					Name: "up",
 				},
 				Embeds: []discord.Embed{
 					{
@@ -437,7 +437,7 @@ func TestEventHandler_GuildMessageUpdate(t *testing.T) {
 				Embeds: []discord.Embed{
 					{
 						Image: &discord.EmbedResource{
-							URL: "https://disboard.org/images/bot-command-image-bump.png",
+							URL: "https://disboard.org/images/bot-command-image-bump-ja.png",
 						},
 					},
 				},
@@ -521,7 +521,7 @@ func TestBumpHandler_ReplacesExistingScheduleDifferentMessageID(t *testing.T) {
 				Embeds: []discord.Embed{
 					{
 						Image: &discord.EmbedResource{
-							URL: "https://disboard.org/images/bot-command-image-bump.png",
+							URL: "https://disboard.org/images/bot-command-image-bump-ja.png",
 						},
 					},
 				},
@@ -655,7 +655,7 @@ func TestBumpHandler_IgnoresStaleAndOlderMessages(t *testing.T) {
 				Embeds: []discord.Embed{
 					{
 						Image: &discord.EmbedResource{
-							URL: "https://disboard.org/images/bot-command-image-bump.png",
+							URL: "https://disboard.org/images/bot-command-image-bump-ja.png",
 						},
 					},
 				},
@@ -690,7 +690,7 @@ func TestBumpHandler_IgnoresStaleAndOlderMessages(t *testing.T) {
 				Embeds: []discord.Embed{
 					{
 						Image: &discord.EmbedResource{
-							URL: "https://disboard.org/images/bot-command-image-bump.png",
+							URL: "https://disboard.org/images/bot-command-image-bump-ja.png",
 						},
 					},
 				},
@@ -718,7 +718,7 @@ func TestBumpHandler_IgnoresStaleAndOlderMessages(t *testing.T) {
 				Embeds: []discord.Embed{
 					{
 						Image: &discord.EmbedResource{
-							URL: "https://disboard.org/images/bot-command-image-bump.png",
+							URL: "https://disboard.org/images/bot-command-image-bump-ja.png",
 						},
 					},
 				},
@@ -766,7 +766,7 @@ func TestBumpHandler_ConcurrentSameMessage(t *testing.T) {
 				Embeds: []discord.Embed{
 					{
 						Image: &discord.EmbedResource{
-							URL: "https://disboard.org/images/bot-command-image-bump.png",
+							URL: "https://disboard.org/images/bot-command-image-bump-ja.png",
 						},
 					},
 				},
