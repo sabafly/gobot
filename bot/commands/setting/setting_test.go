@@ -299,7 +299,7 @@ func TestUpHandler_NormalAndZeroCreatedAt(t *testing.T) {
 		t.Fatalf("UP schedule not found: %v", err)
 	}
 
-	expectedRemindAt := messageID.Time().Add(1 * time.Hour)
+	expectedRemindAt := messageID.Time().Add(2 * time.Hour)
 	if schedule.RemindAt.Sub(expectedRemindAt).Abs() > time.Second {
 		t.Errorf("expected RemindAt ~ %v, got %v", expectedRemindAt, schedule.RemindAt)
 	}
