@@ -31,6 +31,7 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/handler"
 	"github.com/disgoorg/disgo/rest"
+	"github.com/disgoorg/snowflake/v2"
 )
 
 var (
@@ -106,7 +107,27 @@ func (c *Components) Initialize(client *bot.Client) error {
 		return err
 	}
 
+	seenGuilds := make(map[snowflake.ID]struct{}, len(c.Config().Debug.DebugGuilds)+len(c.Config().BBS.OperatorGuilds))
+	var privateGuilds []snowflake.ID
 	for _, id := range c.Config().Debug.DebugGuilds {
+		if id == 0 {
+			continue
+		}
+		if _, ok := seenGuilds[id]; !ok {
+			seenGuilds[id] = struct{}{}
+			privateGuilds = append(privateGuilds, id)
+		}
+	}
+	for _, id := range c.Config().BBS.OperatorGuilds {
+		if id == 0 {
+			continue
+		}
+		if _, ok := seenGuilds[id]; !ok {
+			seenGuilds[id] = struct{}{}
+			privateGuilds = append(privateGuilds, id)
+		}
+	}
+	for _, id := range privateGuilds {
 		if _, err := client.Rest.SetGuildCommands(client.ApplicationID, id, privateCommands); err != nil {
 			slog.Error("プライベートコマンドの登録に失敗", "err", err, "guild", id)
 			return err

@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/sabafly/gobot/database/models"
+	"github.com/sabafly/gobot/internal/bbs/gormstore"
 )
 
 func NewDB(dsn string) (*DB, error) {
@@ -27,7 +28,7 @@ func NewDB(dsn string) (*DB, error) {
 	sqlDB.SetMaxOpenConns(100)
 
 	// auto migrate models
-	if err := db.AutoMigrate(
+	migrateModels := append([]any{
 		&models.User{},
 		&models.Guild{},
 		&models.Currency{},
@@ -53,7 +54,8 @@ func NewDB(dsn string) (*DB, error) {
 		&models.CurrencyPendingTax{},
 		&models.CurrencySeason{},
 		&models.CurrencySeasonUser{},
-	); err != nil {
+	}, gormstore.Models()...)
+	if err := db.AutoMigrate(migrateModels...); err != nil {
 		return nil, err
 	}
 

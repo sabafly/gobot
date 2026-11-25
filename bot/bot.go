@@ -22,6 +22,8 @@ package bot
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"log/slog"
@@ -42,10 +44,12 @@ import (
 	"github.com/disgoorg/disgo/gateway"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/disgo/sharding"
+	"github.com/disgoorg/snowflake/v2"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 
+	bbsCmd "github.com/sabafly/gobot/bot/commands/bbs"
 	"github.com/sabafly/gobot/bot/commands/bet"
 	"github.com/sabafly/gobot/bot/commands/currency"
 	"github.com/sabafly/gobot/bot/commands/debug"
@@ -59,6 +63,9 @@ import (
 	"github.com/sabafly/gobot/bot/commands/user"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
+	"github.com/sabafly/gobot/internal/bbs"
+	"github.com/sabafly/gobot/internal/bbs/discordsync"
+	"github.com/sabafly/gobot/internal/bbs/gormstore"
 	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/emoji"
 	"github.com/sabafly/gobot/internal/i18n"
@@ -155,6 +162,8 @@ func run() error {
 	component := components.New(ctx, *config, gormDB)
 	component.Version = version
 
+	bbsSys := initBBSSystem(component, config, gormDB)
+
 	component.AddCommands(
 		debug.Command(component),
 		ping.Command(component),
@@ -168,6 +177,8 @@ func run() error {
 		play.Command(component),
 		bet.Command(component),
 		user.Command(component),
+		bbsCmd.Command(bbsSys),
+		bbsCmd.AdminCommand(bbsSys),
 	)
 
 	ready := make(chan *events.Ready)
@@ -249,4 +260,50 @@ func run() error {
 	slog.Info("Bot is shutting down")
 
 	return nil
+}
+
+func initBBSSystem(component *components.Components, config *components.Config, gormDB *database.DB) *bbsCmd.System {
+	secret := os.Getenv("BBS_SECRET_KEY")
+	if secret == "" {
+		secret = config.BBS.SecretKey
+	}
+	var secretBytes []byte
+	if secret != "" {
+		secretBytes = []byte(secret)
+	} else {
+		var rnd [32]byte
+		_, _ = rand.Read(rnd[:])
+		secretBytes = rnd[:]
+		slog.Warn("BBS_SECRET_KEY and config.bbs.secret_key are empty; using ephemeral random key (IDs/hashes will rotate on restart)",
+			slog.String("hint", hex.EncodeToString(rnd[:4])))
+	}
+
+	seenOps := make(map[snowflake.ID]struct{}, len(config.BBS.Operators)+len(config.Debug.DebugUsers))
+	var operators []snowflake.ID
+	for _, id := range append(append([]snowflake.ID(nil), config.BBS.Operators...), config.Debug.DebugUsers...) {
+		if id == 0 {
+			continue
+		}
+		if _, ok := seenOps[id]; !ok {
+			seenOps[id] = struct{}{}
+			operators = append(operators, id)
+		}
+	}
+
+	store := gormstore.New(gormDB.DB)
+	registry := bbs.NewProviderRegistry(bbs.DefaultProviderKey)
+	registry.Register(store)
+	identity := bbs.NewIdentityGenerator(secretBytes)
+	policy := bbs.NewPolicyManager(bbs.PolicyConfig{
+		Version:          config.BBS.PolicyVersion,
+		TermsURL:         config.BBS.TermsURL,
+		GuidelinesURL:    config.BBS.GuidelinesURL,
+		PrivacyPolicyURL: config.BBS.PrivacyPolicyURL,
+	})
+	svc := bbs.NewService(registry, store, identity, policy, operators)
+	syncer := discordsync.NewSyncer(svc)
+	syncer.CanSendDM = func(ctx context.Context, uid snowflake.ID) bool {
+		return discordsync.CanSendDMToUser(ctx, gormDB, uid)
+	}
+	return bbsCmd.NewSystem(component, svc, syncer, config.BBS.OperatorLogChannel)
 }
