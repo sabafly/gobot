@@ -109,39 +109,48 @@ func TestIdentityGenerator(t *testing.T) {
 }
 
 func TestFormatAndMediaExtraction(t *testing.T) {
-	raw := "@everyone # title\n> quote\n>>1 >>15 >>999\nhttps://example.com/a.png https://example.com/page https://pbs.twimg.com/media/abc?format=jpg&name=large"
+	raw := "@everyone # title\n> quote\n>>1 >>15 >>999 >>10000\nhttps://example.com/a.png https://example.technology/b.png https://example.com/page https://pbs.twimg.com/media/abc?format=jpg&name=large"
+	var resolved []uint32
 	formatted := bbs.RenderFormattedBody(raw, 10, func(resNum uint32) (string, bool) {
-		if resNum == 1 {
-			return "https://discord.com/channels/1/2/3", true
-		}
-		return "", false
+		resolved = append(resolved, resNum)
+		return "https://discord.com/channels/1/2/" + string(rune('0'+resNum%10)), true
 	})
 
 	if strings.Contains(formatted, "@everyone") && !strings.Contains(formatted, "\\@everyone") {
 		t.Fatalf("expected @everyone to be escaped, got %q", formatted)
 	}
-	if !strings.Contains(formatted, "[>>1](<https://discord.com/channels/1/2/3>)") {
+	if !slices.Equal(resolved, []uint32{1}) {
+		t.Fatalf("expected resolver only called for in-range anchors [1], got %v", resolved)
+	}
+	if !strings.Contains(formatted, "[>>1](<https://discord.com/channels/1/2/1>)") {
 		t.Fatalf("expected resolved >>1 jump link, got %q", formatted)
 	}
-	if !strings.Contains(formatted, ">>15") {
-		t.Fatalf("expected unresolved >>15 to remain text, got %q", formatted)
+	if strings.Contains(formatted, "[>>15]") || !strings.Contains(formatted, ">>15") {
+		t.Fatalf("expected out-of-range >>15 to remain plain text, got %q", formatted)
 	}
-	if !strings.Contains(formatted, "<https://example.com/a.png>") {
-		t.Fatalf("expected URL wrapped in <...> to suppress legacy embed, got %q", formatted)
+	if !strings.Contains(formatted, ">>10000") || strings.Contains(formatted, "[>>1000]") {
+		t.Fatalf("expected >>10000 not to partially match >>1000, got %q", formatted)
+	}
+	if !strings.Contains(formatted, "<https://example.com/a.png>") || !strings.Contains(formatted, "<https://example.technology/b.png>") {
+		t.Fatalf("expected URLs (including long TLD) wrapped in <...>, got %q", formatted)
 	}
 
-	anchors := bbs.ExtractAnchors(">>1 >>1 >>5 >>20", 10)
-	if !slices.Equal(anchors, []uint32{1, 5}) {
-		t.Fatalf("unexpected anchors: %v", anchors)
+	if anchors10 := bbs.ExtractAnchors(">>1 >>1 >>5 >>20", 10); !slices.Equal(anchors10, []uint32{1, 5}) {
+		t.Fatalf("unexpected anchors under maxRes=10: %v", anchors10)
+	}
+	anchors := bbs.ExtractAnchors(">>1 >>1 >>5 >>20 >>1000 >>10000", 1000)
+	if !slices.Equal(anchors, []uint32{1, 5, 20, 1000}) {
+		t.Fatalf("unexpected anchors (must ignore >>10000 without partial match): %v", anchors)
 	}
 
 	media := bbs.ExtractMediaURLs(
-		"a https://example.com/1.PNG https://example.com/1.PNG https://example.com/doc.pdf " +
+		"a https://example.com/1.PNG https://example.com/1.PNG https://example.technology/longtld.png https://example.com/doc.pdf " +
 			"https://pbs.twimg.com/media/X?format=webp " +
 			"https://example.com/v.mp4 ftp://example.com/bad.png",
 	)
 	expected := []string{
 		"https://example.com/1.PNG",
+		"https://example.technology/longtld.png",
 		"https://pbs.twimg.com/media/X?format=webp",
 		"https://example.com/v.mp4",
 	}
@@ -344,5 +353,13 @@ func TestThirdPartyProviderExtensibility(t *testing.T) {
 	}
 	if _, err := svc.CreateBoard(ctx, bbs.CreateBoardInput{CategoryID: catID, Scope: bbs.ScopeGlobal, Name: "new"}); !errors.Is(err, bbs.ErrUnsupportedOperation) {
 		t.Fatalf("expected ErrUnsupportedOperation for read-only provider, got %v", err)
+	}
+	if _, err := svc.CreateBoard(ctx, bbs.CreateBoardInput{
+		CategoryID:  catID,
+		Scope:       bbs.ScopeGlobal,
+		ProviderKey: bbs.DefaultProviderKey,
+		Name:        "mismatch",
+	}); !errors.Is(err, bbs.ErrBoardProviderMismatch) {
+		t.Fatalf("expected ErrBoardProviderMismatch for mismatched provider key, got %v", err)
 	}
 }

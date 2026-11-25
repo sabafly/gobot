@@ -36,6 +36,8 @@ import (
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+
+	"github.com/sabafly/gobot/internal/i18n"
 )
 
 const (
@@ -71,24 +73,25 @@ const (
 	MaxCommandDescRunes    = 100
 	MaxAutocompleteChoices = 25
 
-	JSONErrUnknownChannel      rest.JSONErrorCode = 10003
-	JSONErrUnknownMessage      rest.JSONErrorCode = 10008
-	JSONErrUnknownInteraction  rest.JSONErrorCode = 10062
-	JSONErrOpeningDMsTooFast   rest.JSONErrorCode = 40003
-	JSONErrInteractionAcked    rest.JSONErrorCode = 40060
-	JSONErrForumTagRequired    rest.JSONErrorCode = 40067
-	JSONErrMissingAccess       rest.JSONErrorCode = 50001
-	JSONErrCannotDMUser        rest.JSONErrorCode = 50007
-	JSONErrMissingPermissions  rest.JSONErrorCode = 50013
-	JSONErrInvalidFormBody     rest.JSONErrorCode = 50035
-	JSONErrThreadArchived      rest.JSONErrorCode = 50083
-	JSONErrThreadLocked        rest.JSONErrorCode = 160005
-	JSONErrMaxActiveThreads    rest.JSONErrorCode = 160006
-	DefaultDebouncerDelay                         = 2500 * time.Millisecond
-	DefaultDMCooldown                             = 3 * time.Minute
-	DefaultInvalidReqWindow                       = 10 * time.Minute
-	DefaultInvalidReqThreshold                    = 500
-	DefaultMountCircuitFails                      = 3
+	JSONErrUnknownChannel       rest.JSONErrorCode = 10003
+	JSONErrUnknownMessage       rest.JSONErrorCode = 10008
+	JSONErrUnknownInteraction   rest.JSONErrorCode = 10062
+	JSONErrOpeningDMsTooFast    rest.JSONErrorCode = 40003
+	JSONErrInteractionAcked     rest.JSONErrorCode = 40060
+	JSONErrForumTagRequired     rest.JSONErrorCode = 40067
+	JSONErrMissingAccess        rest.JSONErrorCode = 50001
+	JSONErrCannotDMUser         rest.JSONErrorCode = 50007
+	JSONErrMissingPermissions   rest.JSONErrorCode = 50013
+	JSONErrInvalidFormBody      rest.JSONErrorCode = 50035
+	JSONErrThreadArchived       rest.JSONErrorCode = 50083
+	JSONErrThreadLocked         rest.JSONErrorCode = 160005
+	JSONErrMaxActiveThreads     rest.JSONErrorCode = 160006
+	DefaultDebouncerDelay                          = 2500 * time.Millisecond
+	DefaultDMCooldown                              = 3 * time.Minute
+	DefaultInvalidReqWindow                        = 10 * time.Minute
+	DefaultInvalidReqThreshold                     = 500
+	DefaultMountCircuitFails                       = 3
+	DefaultMountCircuitCooldown                    = 5 * time.Minute
 )
 
 // TruncateRunes truncates s to at most maxRunes UTF-8 runes.
@@ -420,6 +423,7 @@ func (v PayloadValidator) ValidateModal(m discord.ModalCreate) (discord.ModalCre
 	}
 
 	out := make([]discord.LayoutComponent, 0, len(m.Components))
+	totalTextRunes := 0
 	for _, comp := range m.Components {
 		switch c := comp.(type) {
 		case discord.LabelComponent:
@@ -479,6 +483,10 @@ func (v PayloadValidator) ValidateModal(m discord.ModalCreate) (discord.ModalCre
 		case discord.TextDisplayComponent:
 			if strings.TrimSpace(c.Content) == "" {
 				return m, errors.New("modal text display cannot be empty")
+			}
+			totalTextRunes += utf8.RuneCountInString(c.Content)
+			if totalTextRunes > MaxTextDisplayRunesTotal {
+				return m, fmt.Errorf("modal text display total runes %d exceeds %d", totalTextRunes, MaxTextDisplayRunesTotal)
 			}
 			out = append(out, c)
 		default:
@@ -717,6 +725,98 @@ var requiredBoardPermissions = []struct {
 	{discord.PermissionReadMessageHistory, "ReadMessageHistory"},
 }
 
+type PreflightErrorKind string
+
+const (
+	PreflightErrEmptyChannelName     PreflightErrorKind = "empty_channel_name"
+	PreflightErrGuildChannelLimit    PreflightErrorKind = "guild_channel_limit"
+	PreflightErrCategoryChannelLimit PreflightErrorKind = "category_channel_limit"
+	PreflightErrMissingBotPerms      PreflightErrorKind = "missing_bot_perms"
+	PreflightErrForumRequiresTag     PreflightErrorKind = "forum_requires_tag"
+	PreflightErrInvalidRoleID        PreflightErrorKind = "invalid_role_id"
+	PreflightErrMissingManageRoles   PreflightErrorKind = "missing_manage_roles"
+	PreflightErrManagedRole          PreflightErrorKind = "managed_role"
+	PreflightErrRoleHierarchy        PreflightErrorKind = "role_hierarchy"
+)
+
+// PreflightError represents a localized preflight check failure before calling Discord REST APIs.
+type PreflightError struct {
+	Kind         PreflightErrorKind
+	Current      int
+	Max          int
+	MissingPerms []string
+	RoleName     string
+	RolePos      int
+	BotPos       int
+}
+
+func (e *PreflightError) Error() string {
+	switch e.Kind {
+	case PreflightErrEmptyChannelName:
+		return "channel name cannot be empty"
+	case PreflightErrGuildChannelLimit:
+		return fmt.Sprintf("guild channel limit reached (%d/%d)", e.Current, e.Max)
+	case PreflightErrCategoryChannelLimit:
+		return fmt.Sprintf("category channel limit reached (%d/%d)", e.Current, e.Max)
+	case PreflightErrMissingBotPerms:
+		return fmt.Sprintf("missing required bot permissions: %s", strings.Join(e.MissingPerms, ", "))
+	case PreflightErrForumRequiresTag:
+		return "forum channel requires a tag but has no available tags"
+	case PreflightErrInvalidRoleID:
+		return "invalid viewer role id"
+	case PreflightErrMissingManageRoles:
+		return "bot lacks ManageRoles permission"
+	case PreflightErrManagedRole:
+		return "cannot assign managed integration role"
+	case PreflightErrRoleHierarchy:
+		return fmt.Sprintf("target role %q (pos %d) is not below bot highest role (pos %d)", e.RoleName, e.RolePos, e.BotPos)
+	default:
+		return string(e.Kind)
+	}
+}
+
+// FormatPreflightError translates a PreflightError (or returns false if err is not a PreflightError).
+func FormatPreflightError(locale discord.Locale, err error) (string, bool) {
+	var pe *PreflightError
+	if !errors.As(err, &pe) {
+		return "", false
+	}
+	switch pe.Kind {
+	case PreflightErrEmptyChannelName:
+		return i18n.TranslateText(locale, "components.bbs.preflight.empty_channel_name"), true
+	case PreflightErrGuildChannelLimit:
+		return i18n.TranslateText(locale, "components.bbs.preflight.guild_channel_limit", map[string]any{
+			"current": pe.Current,
+			"max":     pe.Max,
+		}), true
+	case PreflightErrCategoryChannelLimit:
+		return i18n.TranslateText(locale, "components.bbs.preflight.category_channel_limit", map[string]any{
+			"current": pe.Current,
+			"max":     pe.Max,
+		}), true
+	case PreflightErrMissingBotPerms:
+		return i18n.TranslateText(locale, "components.bbs.preflight.missing_bot_perms", map[string]any{
+			"perms": strings.Join(pe.MissingPerms, ", "),
+		}), true
+	case PreflightErrForumRequiresTag:
+		return i18n.TranslateText(locale, "components.bbs.preflight.forum_requires_tag"), true
+	case PreflightErrInvalidRoleID:
+		return i18n.TranslateText(locale, "components.bbs.preflight.invalid_role_id"), true
+	case PreflightErrMissingManageRoles:
+		return i18n.TranslateText(locale, "components.bbs.preflight.missing_manage_roles"), true
+	case PreflightErrManagedRole:
+		return i18n.TranslateText(locale, "components.bbs.preflight.managed_role"), true
+	case PreflightErrRoleHierarchy:
+		return i18n.TranslateText(locale, "components.bbs.preflight.role_hierarchy", map[string]any{
+			"role":     pe.RoleName,
+			"role_pos": pe.RolePos,
+			"bot_pos":  pe.BotPos,
+		}), true
+	default:
+		return pe.Error(), true
+	}
+}
+
 // CheckChannelCreate verifies guild/category channel caps, bot permissions, and Community requirement for Forum channels.
 func (p *PreflightChecker) CheckChannelCreate(
 	guildID snowflake.ID,
@@ -730,31 +830,16 @@ func (p *PreflightChecker) CheckChannelCreate(
 		ClampedName: TruncateRunes(strings.TrimSpace(name), MaxChannelNameRunes),
 	}
 	if plan.ClampedName == "" {
-		return plan, errors.New("channel name cannot be empty")
+		return plan, &PreflightError{Kind: PreflightErrEmptyChannelName}
 	}
 
 	if p.state != nil {
 		if total := p.state.GuildChannelCount(guildID); total >= MaxGuildChannels {
-			return plan, fmt.Errorf("guild channel limit reached (%d/%d)", total, MaxGuildChannels)
+			return plan, &PreflightError{Kind: PreflightErrGuildChannelLimit, Current: total, Max: MaxGuildChannels}
 		}
 		if parentCategoryID != nil && *parentCategoryID != 0 {
 			if children := p.state.CategoryChildCount(guildID, *parentCategoryID); children >= MaxCategoryChannels {
-				return plan, fmt.Errorf("category channel limit reached (%d/%d)", children, MaxCategoryChannels)
-			}
-		}
-
-		if perms, ok := p.state.BotGuildPermissions(guildID); ok {
-			plan.BotPermissions = perms
-			if !perms.Has(discord.PermissionAdministrator) {
-				var missing []string
-				for _, req := range requiredBoardPermissions {
-					if !perms.Has(req.perm) {
-						missing = append(missing, req.name)
-					}
-				}
-				if len(missing) > 0 {
-					return plan, fmt.Errorf("missing required bot permissions: %s", strings.Join(missing, ", "))
-				}
+				return plan, &PreflightError{Kind: PreflightErrCategoryChannelLimit, Current: children, Max: MaxCategoryChannels}
 			}
 		}
 
@@ -770,6 +855,24 @@ func (p *PreflightChecker) CheckChannelCreate(
 				if !hasCommunity {
 					plan.UseForum = false
 					plan.FallbackReason = "community_required"
+				}
+			}
+		}
+
+		if perms, ok := p.state.BotGuildPermissions(guildID); ok {
+			plan.BotPermissions = perms
+			if !perms.Has(discord.PermissionAdministrator) {
+				var missing []string
+				for _, req := range requiredBoardPermissions {
+					if !perms.Has(req.perm) {
+						missing = append(missing, req.name)
+					}
+				}
+				if !plan.UseForum && !perms.Has(discord.PermissionCreatePublicThreads) {
+					missing = append(missing, "CreatePublicThreads")
+				}
+				if len(missing) > 0 {
+					return plan, &PreflightError{Kind: PreflightErrMissingBotPerms, MissingPerms: missing}
 				}
 			}
 		}
@@ -820,20 +923,20 @@ func ResolveForumTags(forumCh discord.GuildForumChannel) ([]snowflake.ID, error)
 	if len(forumCh.AvailableTags) > 0 {
 		return []snowflake.ID{forumCh.AvailableTags[0].ID}, nil
 	}
-	return nil, errors.New("forum channel requires a tag but has no available tags")
+	return nil, &PreflightError{Kind: PreflightErrForumRequiresTag}
 }
 
 // CheckRoleAssign verifies bot ManageRoles permission and role hierarchy before AddMemberRole.
 func (p *PreflightChecker) CheckRoleAssign(guildID, roleID snowflake.ID) error {
 	if roleID == 0 || roleID == guildID {
-		return errors.New("invalid viewer role id")
+		return &PreflightError{Kind: PreflightErrInvalidRoleID}
 	}
 	if p.state == nil {
 		return nil
 	}
 	if perms, ok := p.state.BotGuildPermissions(guildID); ok {
 		if !perms.Has(discord.PermissionAdministrator) && !perms.Has(discord.PermissionManageRoles) {
-			return errors.New("bot lacks ManageRoles permission")
+			return &PreflightError{Kind: PreflightErrMissingManageRoles}
 		}
 	}
 	role, ok := p.state.Role(guildID, roleID)
@@ -841,11 +944,16 @@ func (p *PreflightChecker) CheckRoleAssign(guildID, roleID snowflake.ID) error {
 		return nil
 	}
 	if role.Managed {
-		return errors.New("cannot assign managed integration role")
+		return &PreflightError{Kind: PreflightErrManagedRole}
 	}
 	if botPos, ok := p.state.BotHighestRolePosition(guildID); ok {
 		if role.Position >= botPos {
-			return fmt.Errorf("target role %q (pos %d) is not below bot highest role (pos %d)", role.Name, role.Position, botPos)
+			return &PreflightError{
+				Kind:     PreflightErrRoleHierarchy,
+				RoleName: role.Name,
+				RolePos:  role.Position,
+				BotPos:   botPos,
+			}
 		}
 	}
 	return nil
@@ -880,48 +988,82 @@ func IsSharedRateLimit(err error) bool {
 
 // EnsureThreadUnarchived unarchives an auto-archived thread before attempting edits or deletes (50083 guard).
 func EnsureThreadUnarchived(client *bot.Client, threadID snowflake.ID) error {
+	_, err := ensureThreadUnarchivedState(client, threadID)
+	return err
+}
+
+func ensureThreadUnarchivedState(client *bot.Client, threadID snowflake.ID) (bool, error) {
 	if client == nil {
-		return nil
+		return false, nil
 	}
 	if th, ok := client.Caches.GuildThread(threadID); ok {
 		if !th.ThreadMetadata.Archived {
-			return nil
+			return false, nil
 		}
 	}
-	return forceUnarchiveThread(client, threadID)
+	return forceUnarchiveThreadState(client, threadID)
 }
 
-func forceUnarchiveThread(client *bot.Client, threadID snowflake.ID) error {
+func forceUnarchiveThreadState(client *bot.Client, threadID snowflake.ID) (bool, error) {
 	ch, err := client.Rest.GetChannel(threadID)
 	if err != nil {
-		return err
+		return false, err
 	}
 	th, ok := ch.(discord.GuildThread)
 	if ok && !th.ThreadMetadata.Archived {
-		return nil
+		return false, nil
 	}
+	wasArchived := ok && th.ThreadMetadata.Archived
 	archivedFalse := false
 	if gc, ok := ch.(discord.GuildChannel); ok && gc.ParentID() != nil {
 		if parent, ok := client.Caches.Channel(*gc.ParentID()); ok && parent.Type() == discord.ChannelTypeGuildForum {
 			_, err = client.Rest.UpdateChannel(threadID, discord.GuildPostUpdate{Archived: &archivedFalse})
-			return err
+			return wasArchived, err
 		}
 	}
 	_, err = client.Rest.UpdateChannel(threadID, discord.GuildThreadUpdate{Archived: &archivedFalse})
-	return err
+	return wasArchived, err
 }
 
 // WithUnarchiveRetry runs fn and, on Discord 50083 (archived thread), unarchives once and retries.
 func WithUnarchiveRetry(client *bot.Client, threadID snowflake.ID, fn func() error) error {
-	if err := EnsureThreadUnarchived(client, threadID); err != nil {
+	_, err := WithUnarchiveRetryState(client, threadID, fn)
+	return err
+}
+
+// WithUnarchiveRetryState runs fn, unarchiving on 50083 if needed, and reports whether the thread was previously archived.
+func WithUnarchiveRetryState(client *bot.Client, threadID snowflake.ID, fn func() error) (bool, error) {
+	wasArchived, err := ensureThreadUnarchivedState(client, threadID)
+	if err != nil {
 		slog.Debug("bbs unarchive check failed before action", "thread_id", threadID, "err", err)
 	}
-	err := fn()
+	err = fn()
 	if err != nil && IsJSONError(err, JSONErrThreadArchived) && client != nil {
-		if uErr := forceUnarchiveThread(client, threadID); uErr == nil {
-			return fn()
+		uWasArch, uErr := forceUnarchiveThreadState(client, threadID)
+		if uErr == nil {
+			wasArchived = true
+			_ = uWasArch
+			return wasArchived, fn()
 		}
 	}
+	return wasArchived, err
+}
+
+// ArchiveThreadOnly re-archives an unlocked Discord thread/forum post without locking it.
+func ArchiveThreadOnly(client *bot.Client, threadID snowflake.ID, isForum bool) error {
+	if client == nil {
+		return nil
+	}
+	archived := true
+	if isForum {
+		_, err := client.Rest.UpdateChannel(threadID, discord.GuildPostUpdate{
+			Archived: &archived,
+		})
+		return err
+	}
+	_, err := client.Rest.UpdateChannel(threadID, discord.GuildThreadUpdate{
+		Archived: &archived,
+	})
 	return err
 }
 
@@ -950,12 +1092,14 @@ func ArchiveAndLockThread(client *bot.Client, threadID snowflake.ID, isForum boo
 
 // SafeResponder guards interaction replies against the 3s initial window, 15m token expiry, and double acks (40060/10062).
 type SafeResponder struct {
-	mu        sync.Mutex
-	createdAt time.Time
-	acked     bool
-	deferred  bool
-	isModal   bool
-	validator PayloadValidator
+	mu           sync.Mutex
+	createdAt    time.Time
+	acked        bool
+	inflight     bool
+	ackUncertain bool
+	deferred     bool
+	isModal      bool
+	validator    PayloadValidator
 }
 
 // NewSafeResponder creates a SafeResponder anchored at interaction creation time.
@@ -974,6 +1118,26 @@ func (r *SafeResponder) tokenValid() bool {
 	return time.Since(r.createdAt) < 15*time.Minute
 }
 
+func (r *SafeResponder) finishInitialAttempt(err error, markDeferred, markModal bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.inflight = false
+	if err == nil {
+		r.acked = true
+		r.deferred = markDeferred
+		r.isModal = markModal
+		return
+	}
+	if IsJSONError(err, JSONErrInteractionAcked) {
+		r.acked = true
+		return
+	}
+	status := HTTPStatusCode(err)
+	if status == 0 || status >= 500 {
+		r.ackUncertain = true
+	}
+}
+
 // RespondModal validates and sends a modal only if not previously acknowledged and within 3 seconds.
 func (r *SafeResponder) RespondModal(event interface {
 	Modal(modalCreate discord.ModalCreate, opts ...rest.RequestOpt) error
@@ -983,14 +1147,15 @@ func (r *SafeResponder) RespondModal(event interface {
 		return err
 	}
 	r.mu.Lock()
-	if !r.canInitialAck() {
+	if r.inflight || r.ackUncertain || !r.canInitialAck() {
 		r.mu.Unlock()
-		return errors.New("interaction already acknowledged or past 3s initial window")
+		return errors.New("interaction already acknowledged, uncertain, or past 3s initial window")
 	}
-	r.acked = true
-	r.isModal = true
+	r.inflight = true
 	r.mu.Unlock()
-	return event.Modal(validated)
+	err = event.Modal(validated)
+	r.finishInitialAttempt(err, false, true)
+	return err
 }
 
 // DeferCreate acknowledges with DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE (without IS_COMPONENTS_V2).
@@ -998,14 +1163,15 @@ func (r *SafeResponder) DeferCreate(event interface {
 	DeferCreateMessage(ephemeral bool, opts ...rest.RequestOpt) error
 }, ephemeral bool) error {
 	r.mu.Lock()
-	if !r.canInitialAck() {
+	if r.inflight || r.ackUncertain || !r.canInitialAck() {
 		r.mu.Unlock()
 		return nil
 	}
-	r.acked = true
-	r.deferred = true
+	r.inflight = true
 	r.mu.Unlock()
-	return event.DeferCreateMessage(ephemeral)
+	err := event.DeferCreateMessage(ephemeral)
+	r.finishInitialAttempt(err, true, false)
+	return err
 }
 
 // RespondMessageCreate sends an initial or deferred interaction message safely.
@@ -1021,18 +1187,46 @@ func (r *SafeResponder) RespondMessageCreate(
 	if err != nil {
 		return err
 	}
+	const (
+		modeInitial = iota
+		modeEditDeferred
+		modeFollowup
+	)
 	r.mu.Lock()
-	if !r.tokenValid() {
+	if r.inflight {
 		r.mu.Unlock()
-		return errors.New("interaction token expired (15m limit)")
+		return errors.New("interaction response already in flight")
 	}
-	alreadyAcked := r.acked
-	wasDeferred := r.deferred && !r.isModal
-	r.acked = true
-	r.deferred = false
+	var mode int
+	switch {
+	case r.deferred && !r.isModal:
+		if !r.tokenValid() {
+			r.mu.Unlock()
+			return errors.New("interaction token expired (15m limit)")
+		}
+		mode = modeEditDeferred
+	case r.acked:
+		if !r.tokenValid() {
+			r.mu.Unlock()
+			return errors.New("interaction token expired (15m limit)")
+		}
+		mode = modeFollowup
+	default:
+		if r.ackUncertain {
+			r.mu.Unlock()
+			return errors.New("previous interaction acknowledgement outcome is uncertain")
+		}
+		if !r.canInitialAck() {
+			r.mu.Unlock()
+			return errors.New("interaction past 3s initial window")
+		}
+		mode = modeInitial
+	}
+	r.inflight = true
 	r.mu.Unlock()
 
-	if wasDeferred {
+	switch mode {
+	case modeEditDeferred:
 		isV2 := validated.Flags.Has(discord.MessageFlagIsComponentsV2)
 		mu := discord.MessageUpdate{
 			Components:      &validated.Components,
@@ -1048,16 +1242,33 @@ func (r *SafeResponder) RespondMessageCreate(
 		}
 		mu, err = r.validator.ValidateAndClampMessageUpdate(mu, isV2)
 		if err != nil {
+			r.mu.Lock()
+			r.inflight = false
+			r.mu.Unlock()
 			return err
 		}
 		_, err = event.UpdateInteractionResponse(mu)
+		r.mu.Lock()
+		r.inflight = false
+		if err == nil {
+			r.deferred = false
+			r.acked = true
+		}
+		r.mu.Unlock()
 		return err
-	}
-	if alreadyAcked {
+
+	case modeFollowup:
 		_, err = event.CreateFollowupMessage(validated)
+		r.mu.Lock()
+		r.inflight = false
+		r.mu.Unlock()
+		return err
+
+	default:
+		err = event.CreateMessage(validated)
+		r.finishInitialAttempt(err, false, false)
 		return err
 	}
-	return event.CreateMessage(validated)
 }
 
 // UpdateComponentMessage updates the source component message or deferred response.
@@ -1073,20 +1284,39 @@ func (r *SafeResponder) UpdateComponentMessage(
 		return err
 	}
 	r.mu.Lock()
-	if !r.tokenValid() {
+	if r.inflight {
 		r.mu.Unlock()
-		return errors.New("interaction token expired (15m limit)")
+		return errors.New("interaction response already in flight")
 	}
-	wasDeferred := r.deferred
-	r.acked = true
-	r.deferred = false
+	wasDeferred := r.deferred && !r.isModal
+	if wasDeferred {
+		if !r.tokenValid() {
+			r.mu.Unlock()
+			return errors.New("interaction token expired (15m limit)")
+		}
+	} else {
+		if r.ackUncertain || !r.canInitialAck() {
+			r.mu.Unlock()
+			return errors.New("interaction already acknowledged, uncertain, or past 3s initial window")
+		}
+	}
+	r.inflight = true
 	r.mu.Unlock()
 
 	if wasDeferred {
-		_, err := event.UpdateInteractionResponse(validated)
+		_, err = event.UpdateInteractionResponse(validated)
+		r.mu.Lock()
+		r.inflight = false
+		if err == nil {
+			r.deferred = false
+			r.acked = true
+		}
+		r.mu.Unlock()
 		return err
 	}
-	return event.UpdateMessage(validated)
+	err = event.UpdateMessage(validated)
+	r.finishInitialAttempt(err, false, false)
+	return err
 }
 
 // SafeRespondComponentModal safely sends a modal from a ComponentInteractionCreate event.
@@ -1094,12 +1324,18 @@ func SafeRespondComponentModal(e *events.ComponentInteractionCreate, modal disco
 	return NewSafeResponder(e.ID().Time()).RespondModal(e, modal)
 }
 
+type debounceEntry struct {
+	seq   uint64
+	timer *time.Timer
+}
+
 // ControlPanelDebouncer coalesces rapid floating control-panel moves per thread mirror.
 type ControlPanelDebouncer struct {
-	delay  time.Duration
-	mu     sync.Mutex
-	timers map[uuid.UUID]*time.Timer
-	closed bool
+	delay   time.Duration
+	mu      sync.Mutex
+	nextSeq uint64
+	timers  map[uuid.UUID]debounceEntry
+	closed  bool
 }
 
 // NewControlPanelDebouncer constructs a debouncer with delay (defaults to 2.5s when <= 0).
@@ -1109,7 +1345,7 @@ func NewControlPanelDebouncer(delay time.Duration) *ControlPanelDebouncer {
 	}
 	return &ControlPanelDebouncer{
 		delay:  delay,
-		timers: make(map[uuid.UUID]*time.Timer),
+		timers: make(map[uuid.UUID]debounceEntry),
 	}
 }
 
@@ -1121,11 +1357,14 @@ func (d *ControlPanelDebouncer) Schedule(mirrorID uuid.UUID, fn func()) {
 		return
 	}
 	if existing, ok := d.timers[mirrorID]; ok {
-		existing.Stop()
+		existing.timer.Stop()
 	}
-	d.timers[mirrorID] = time.AfterFunc(d.delay, func() {
+	d.nextSeq++
+	seq := d.nextSeq
+	t := time.AfterFunc(d.delay, func() {
 		d.mu.Lock()
-		if d.closed {
+		cur, ok := d.timers[mirrorID]
+		if d.closed || !ok || cur.seq != seq {
 			d.mu.Unlock()
 			return
 		}
@@ -1133,6 +1372,7 @@ func (d *ControlPanelDebouncer) Schedule(mirrorID uuid.UUID, fn func()) {
 		d.mu.Unlock()
 		fn()
 	})
+	d.timers[mirrorID] = debounceEntry{seq: seq, timer: t}
 }
 
 // Stop cancels all pending panel reposition timers.
@@ -1140,8 +1380,8 @@ func (d *ControlPanelDebouncer) Stop() {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	d.closed = true
-	for id, t := range d.timers {
-		t.Stop()
+	for id, entry := range d.timers {
+		entry.timer.Stop()
 		delete(d.timers, id)
 	}
 }
@@ -1206,13 +1446,15 @@ func (c *DMChannelCache) Invalidate(userID snowflake.ID) {
 // InvalidRequestGuard tracks 401/403/429 responses (excluding shared 429s) over a 10-minute sliding window
 // to stay well below Discord's 10,000 invalid requests / 10 min Cloudflare ban limit, and manages mount circuit breakers.
 type InvalidRequestGuard struct {
-	mu             sync.Mutex
-	window         time.Duration
-	threshold      int
-	events         []time.Time
-	mountFailures  map[uuid.UUID]int
-	openMounts     map[uuid.UUID]bool
-	mountFailLimit int
+	mu              sync.Mutex
+	window          time.Duration
+	threshold       int
+	events          []time.Time
+	mountFailures   map[uuid.UUID]int
+	openMounts      map[uuid.UUID]time.Time
+	halfOpenProbe   map[uuid.UUID]bool
+	mountFailLimit  int
+	circuitCooldown time.Duration
 }
 
 // NewInvalidRequestGuard creates a guard with threshold invalid requests per window and mount fail limit.
@@ -1227,12 +1469,24 @@ func NewInvalidRequestGuard(window time.Duration, threshold int, mountFailLimit 
 		mountFailLimit = DefaultMountCircuitFails
 	}
 	return &InvalidRequestGuard{
-		window:         window,
-		threshold:      threshold,
-		mountFailures:  make(map[uuid.UUID]int),
-		openMounts:     make(map[uuid.UUID]bool),
-		mountFailLimit: mountFailLimit,
+		window:          window,
+		threshold:       threshold,
+		mountFailures:   make(map[uuid.UUID]int),
+		openMounts:      make(map[uuid.UUID]time.Time),
+		halfOpenProbe:   make(map[uuid.UUID]bool),
+		mountFailLimit:  mountFailLimit,
+		circuitCooldown: DefaultMountCircuitCooldown,
 	}
+}
+
+// SetCircuitCooldown overrides the half-open recovery cooldown for mount circuit breakers.
+func (g *InvalidRequestGuard) SetCircuitCooldown(d time.Duration) {
+	if d <= 0 {
+		return
+	}
+	g.mu.Lock()
+	g.circuitCooldown = d
+	g.mu.Unlock()
 }
 
 // RecordError inspects err and updates global invalid-request tracking and mount circuit breakers.
@@ -1262,9 +1516,14 @@ func (g *InvalidRequestGuard) RecordError(mountID uuid.UUID, err error, now time
 		}
 		if status == 403 || IsJSONError(err, JSONErrMissingAccess) || IsJSONError(err, JSONErrMissingPermissions) {
 			g.mu.Lock()
-			g.mountFailures[mountID]++
-			if g.mountFailures[mountID] >= g.mountFailLimit {
-				g.openMounts[mountID] = true
+			delete(g.halfOpenProbe, mountID)
+			if _, alreadyOpen := g.openMounts[mountID]; alreadyOpen {
+				g.openMounts[mountID] = now
+			} else {
+				g.mountFailures[mountID]++
+				if g.mountFailures[mountID] >= g.mountFailLimit {
+					g.openMounts[mountID] = now
+				}
 			}
 			g.mu.Unlock()
 		}
@@ -1277,14 +1536,28 @@ func (g *InvalidRequestGuard) RecordMountSuccess(mountID uuid.UUID) {
 	g.mu.Lock()
 	delete(g.mountFailures, mountID)
 	delete(g.openMounts, mountID)
+	delete(g.halfOpenProbe, mountID)
 	g.mu.Unlock()
 }
 
-// IsMountOpen returns true if the circuit breaker for mountID is currently tripped.
+// IsMountOpen returns true if the circuit breaker for mountID is currently tripped (and cooldown has not elapsed).
 func (g *InvalidRequestGuard) IsMountOpen(mountID uuid.UUID) bool {
+	return g.IsMountOpenAt(mountID, time.Now())
+}
+
+// IsMountOpenAt evaluates mount circuit breaker state at now, permitting one half-open probe after cooldown.
+func (g *InvalidRequestGuard) IsMountOpenAt(mountID uuid.UUID, now time.Time) bool {
 	g.mu.Lock()
 	defer g.mu.Unlock()
-	return g.openMounts[mountID]
+	openedAt, open := g.openMounts[mountID]
+	if !open {
+		return false
+	}
+	if g.circuitCooldown > 0 && now.Sub(openedAt) >= g.circuitCooldown && !g.halfOpenProbe[mountID] {
+		g.halfOpenProbe[mountID] = true
+		return false
+	}
+	return true
 }
 
 // IsThrottled returns true when invalid requests in the sliding window reached the safety threshold.

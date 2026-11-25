@@ -32,8 +32,8 @@ const MaxAnchorsPerPost = 10
 const MaxMediaPerPost = 10
 
 var (
-	refRegex   = regexp.MustCompile(`\\?>\\?>([1-9]\d{0,3})`)
-	urlRegex   = regexp.MustCompile(`https?://(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&/=]*)`)
+	refRegex   = regexp.MustCompile(`\\?>\\?>([1-9]\d*)`)
+	urlRegex   = regexp.MustCompile(`https?://(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{2,63}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&/=]*)`)
 	quoteRegex = regexp.MustCompile(`(?m)^(>|>{3})\s`)
 )
 
@@ -139,16 +139,16 @@ func RenderFormattedBody(rawBody string, maxRes uint32, resolveURL func(resNum u
 	escaped := ClearFormat(rawBody)
 	count := 0
 	return refRegex.ReplaceAllStringFunc(escaped, func(match string) string {
-		count++
-		if count > MaxAnchorsPerPost {
-			return match
-		}
 		sub := refRegex.FindStringSubmatch(match)
 		if len(sub) < 2 {
 			return match
 		}
 		val, err := strconv.ParseUint(sub[1], 10, 32)
 		if err != nil || val == 0 || uint32(val) > maxRes {
+			return match
+		}
+		count++
+		if count > MaxAnchorsPerPost {
 			return match
 		}
 		n := uint32(val)

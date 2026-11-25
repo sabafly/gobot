@@ -20,6 +20,7 @@
 package gormstore_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -28,6 +29,7 @@ import (
 	"time"
 
 	"github.com/disgoorg/snowflake/v2"
+	"github.com/google/uuid"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
@@ -253,5 +255,199 @@ func TestGormStore_CRUD_Concurrency_Archive_Abone_Ban(t *testing.T) {
 	}
 	if audit.AuthorUserID != userA {
 		t.Fatalf("expected audit AuthorUserID %d, got %d", userA, audit.AuthorUserID)
+	}
+}
+
+func TestGormStore_PR224ReviewRegressionFixes(t *testing.T) {
+	ctx := context.Background()
+	store, svc := openTestService(t)
+
+	guildA := snowflake.ID(11001)
+	guildB := snowflake.ID(11002)
+	adminID := snowflake.ID(22001)
+	userID := snowflake.ID(33001)
+
+	// 1. DefaultUseForum=false and IsForum=false / Active=false must persist accurately (no GORM default:true override).
+	falseVal := false
+	cfgA, err := svc.SetupGuild(ctx, bbs.GuildSetupInput{
+		GuildID:         guildA,
+		Enabled:         true,
+		ActorUserID:     adminID,
+		DefaultUseForum: &falseVal,
+	})
+	if err != nil {
+		t.Fatalf("SetupGuild A failed: %v", err)
+	}
+	if cfgA.DefaultUseForum {
+		t.Fatal("expected initial DefaultUseForum=false to persist")
+	}
+	reloadedCfg, err := store.GetGuildConfig(ctx, guildA)
+	if err != nil || reloadedCfg.DefaultUseForum {
+		t.Fatalf("expected reloaded DefaultUseForum=false, got %+v, err=%v", reloadedCfg, err)
+	}
+
+	if _, err := svc.SetupGuild(ctx, bbs.GuildSetupInput{GuildID: guildB, Enabled: true, ActorUserID: adminID}); err != nil {
+		t.Fatalf("SetupGuild B failed: %v", err)
+	}
+	if _, err := svc.AcceptPolicy(ctx, userID); err != nil {
+		t.Fatalf("AcceptPolicy failed: %v", err)
+	}
+
+	catB, err := svc.CreateCategory(ctx, bbs.CreateCategoryInput{Scope: bbs.ScopeLocal, GuildID: &guildB, Name: "Bカテゴリ"})
+	if err != nil {
+		t.Fatalf("CreateCategory B failed: %v", err)
+	}
+	boardB, err := svc.CreateBoard(ctx, bbs.CreateBoardInput{CategoryID: catB.ID, Scope: bbs.ScopeLocal, GuildID: &guildB, Name: "Bローカル板"})
+	if err != nil {
+		t.Fatalf("CreateBoard B failed: %v", err)
+	}
+
+	// Inactive/non-forum mount persistence check
+	mountID := uuid.New()
+	if err := store.CreateBoardMount(ctx, &bbs.BoardMount{
+		ID:        mountID,
+		BoardID:   boardB.ID,
+		GuildID:   guildB,
+		ChannelID: snowflake.ID(555001),
+		IsForum:   false,
+		Active:    false,
+	}); err != nil {
+		t.Fatalf("CreateBoardMount failed: %v", err)
+	}
+	gotMount, err := store.GetBoardMount(ctx, mountID)
+	if err != nil {
+		t.Fatalf("GetBoardMount failed: %v", err)
+	}
+	if gotMount.IsForum || gotMount.Active {
+		t.Fatalf("expected IsForum=false and Active=false to persist, got %+v", gotMount)
+	}
+
+	// 2. Partial UpdateBoard must preserve Locked=true when only Name is updated, and unlock on Locked=false.
+	lockedTrue := true
+	if _, err := svc.UpdateBoard(ctx, boardB.ID, bbs.UpdateBoardInput{Locked: &lockedTrue}); err != nil {
+		t.Fatalf("lock board failed: %v", err)
+	}
+	newName := "B更新後"
+	renamed, err := svc.UpdateBoard(ctx, boardB.ID, bbs.UpdateBoardInput{Name: &newName})
+	if err != nil || !renamed.Locked || renamed.Name != newName {
+		t.Fatalf("expected Locked=true preserved on partial rename, got %+v, err=%v", renamed, err)
+	}
+	lockedFalse := false
+	unlocked, err := svc.UpdateBoard(ctx, boardB.ID, bbs.UpdateBoardInput{Locked: &lockedFalse})
+	if err != nil || unlocked.Locked {
+		t.Fatalf("expected Locked=false after explicit unlock, got %+v, err=%v", unlocked, err)
+	}
+
+	// 3. Cross-guild local board ownership checks on CreateThread, CreatePost, and CreateReport.
+	if _, _, _, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: boardB.ID,
+		GuildID: guildA,
+		UserID:  userID,
+		Title:   "越境スレ",
+		RawBody: "本文",
+	}); !errors.Is(err, bbs.ErrUnauthorized) {
+		t.Fatalf("expected ErrUnauthorized on cross-guild CreateThread, got %v", err)
+	}
+
+	_, thB, opB, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: boardB.ID,
+		GuildID: guildB,
+		UserID:  userID,
+		Title:   "B専用スレ",
+		RawBody: "OP本文 >>2",
+	})
+	if err != nil {
+		t.Fatalf("CreateThread B failed: %v", err)
+	}
+
+	if _, _, _, _, err := svc.CreatePost(ctx, bbs.CreatePostInput{
+		ThreadID: thB.ID,
+		GuildID:  guildA,
+		UserID:   userID,
+		RawBody:  "越境レス",
+	}); !errors.Is(err, bbs.ErrUnauthorized) {
+		t.Fatalf("expected ErrUnauthorized on cross-guild CreatePost, got %v", err)
+	}
+	if _, err := svc.CreateReport(ctx, guildA, userID, opB.ID, "越境通報"); !errors.Is(err, bbs.ErrUnauthorized) {
+		t.Fatalf("expected ErrUnauthorized on cross-guild CreateReport, got %v", err)
+	}
+
+	// 4. Atomic CreateThreadAndPostMirror & monotonic AdvanceThreadMirrorSync
+	tm := &bbs.ThreadMirror{
+		ID:              uuid.New(),
+		ThreadID:        thB.ID,
+		BoardMountID:    mountID,
+		GuildID:         guildB,
+		DiscordThreadID: snowflake.ID(777001),
+		SyncedUpToRes:   1,
+	}
+	pm := &bbs.PostMirror{
+		ID:               uuid.New(),
+		PostID:           opB.ID,
+		ThreadMirrorID:   tm.ID,
+		GuildID:          guildB,
+		DiscordMessageID: snowflake.ID(888001),
+	}
+	if err := store.CreateThreadAndPostMirror(ctx, tm, pm); err != nil {
+		t.Fatalf("CreateThreadAndPostMirror failed: %v", err)
+	}
+	if err := store.AdvanceThreadMirrorSync(ctx, tm.ID, 10); err != nil {
+		t.Fatalf("AdvanceThreadMirrorSync(10) failed: %v", err)
+	}
+	if err := store.AdvanceThreadMirrorSync(ctx, tm.ID, 5); err != nil {
+		t.Fatalf("AdvanceThreadMirrorSync(5) failed: %v", err)
+	}
+	ctrlID := snowflake.ID(999111)
+	if err := store.UpdateThreadMirrorControl(ctx, tm.ID, &ctrlID); err != nil {
+		t.Fatalf("UpdateThreadMirrorControl failed: %v", err)
+	}
+	reloadedTM, err := store.GetThreadMirror(ctx, tm.ID)
+	if err != nil || reloadedTM.SyncedUpToRes != 10 || reloadedTM.ControlMessageID == nil || *reloadedTM.ControlMessageID != ctrlID {
+		t.Fatalf("unexpected mirror state after monotonic sync & control update: %+v, err=%v", reloadedTM, err)
+	}
+
+	// 5. Watch & reference cleanup on DeleteBoard + ArchiveThread preserves ResCount
+	if err := store.SavePostReferences(ctx, []bbs.PostReference{{ThreadID: thB.ID, FromRes: 2, ToRes: 1}}); err != nil {
+		t.Fatalf("SavePostReferences failed: %v", err)
+	}
+	if err := store.SaveThreadWatch(ctx, &bbs.ThreadWatch{ThreadID: thB.ID, UserID: userID, Locale: "ja"}); err != nil {
+		t.Fatalf("SaveThreadWatch failed: %v", err)
+	}
+	if _, _, err := store.CreatePost(ctx, bbs.CreatePostRecord{
+		ThreadID:     thB.ID,
+		Name:         "名無し",
+		PosterHash:   "h1",
+		Body:         "2レス目",
+		AuthorUserID: userID,
+	}); err != nil {
+		t.Fatalf("CreatePost failed: %v", err)
+	}
+	archivedTh, err := store.ArchiveThread(ctx, thB.ID)
+	if err != nil || archivedTh.ResCount != 2 {
+		t.Fatalf("expected ArchiveThread to preserve ResCount=2, got %+v, err=%v", archivedTh, err)
+	}
+
+	if err := svc.DeleteBoard(ctx, boardB.ID); err != nil {
+		t.Fatalf("DeleteBoard failed: %v", err)
+	}
+	refs, err := store.ListReferencingRes(ctx, thB.ID, 1)
+	if err != nil || len(refs) != 0 {
+		t.Fatalf("expected post references deleted with board, got %v, err=%v", refs, err)
+	}
+	watches, err := store.ListThreadWatches(ctx, thB.ID)
+	if err != nil || len(watches) != 0 {
+		t.Fatalf("expected thread watches deleted with board, got %v, err=%v", watches, err)
+	}
+
+	// 6. Persisted fallback system secret
+	sec1 := []byte("first-generated-secret-32-bytes!!")
+	sec2 := []byte("second-different-secret-ignored!!")
+	got1, err := store.GetOrCreateSystemSecret(ctx, "default_hmac_secret", sec1)
+	if err != nil || !bytes.Equal(got1, sec1) {
+		t.Fatalf("expected first secret persisted, got %x, err=%v", got1, err)
+	}
+	got2, err := store.GetOrCreateSystemSecret(ctx, "default_hmac_secret", sec2)
+	if err != nil || !bytes.Equal(got2, sec1) {
+		t.Fatalf("expected original persisted secret on subsequent boot, got %x, err=%v", got2, err)
 	}
 }

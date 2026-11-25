@@ -21,8 +21,10 @@ package bbs
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
+	"log/slog"
 	"slices"
 	"strings"
 	"sync"
@@ -33,7 +35,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/sabafly/gobot/internal/ratelimit"
-	"github.com/sabafly/gobot/internal/smap"
 	"github.com/sabafly/gobot/internal/uuidv7"
 )
 
@@ -51,14 +52,17 @@ type Service struct {
 	Policy    *PolicyManager
 	Operators []snowflake.ID
 
-	threadRules []ratelimit.Rule
-	postRules   []ratelimit.Rule
-	threadRLMu  sync.Mutex
-	postRLMu    sync.Mutex
-	threadRL    map[snowflake.ID][]time.Time
-	postRL      map[snowflake.ID][]time.Time
+	threadRules   []ratelimit.Rule
+	postRules     []ratelimit.Rule
+	threadRLMu    sync.Mutex
+	postRLMu      sync.Mutex
+	threadRL      map[snowflake.ID][]time.Time
+	postRL        map[snowflake.ID][]time.Time
+	threadRLSweep time.Time
+	postRLSweep   time.Time
 
-	threadLocks smap.SyncedMap[uuid.UUID, *sync.Mutex]
+	threadLocks [256]sync.Mutex
+	guildLocks  [64]sync.Mutex
 }
 
 // NewService constructs a Service with standard anti-spam rate limits.
@@ -94,11 +98,13 @@ func (s *Service) IsOperator(userID snowflake.ID) bool {
 }
 
 func (s *Service) threadMutex(threadID uuid.UUID) *sync.Mutex {
-	if mu, ok := s.threadLocks.Load(threadID); ok {
-		return mu
-	}
-	actual, _ := s.threadLocks.LoadOrStore(threadID, &sync.Mutex{})
-	return actual
+	idx := binary.LittleEndian.Uint64(threadID[:8]) % uint64(len(s.threadLocks))
+	return &s.threadLocks[idx]
+}
+
+func (s *Service) guildMutex(guildID snowflake.ID) *sync.Mutex {
+	idx := uint64(guildID) % uint64(len(s.guildLocks))
+	return &s.guildLocks[idx]
 }
 
 // EnsureGuildEnabled checks whether a guild has opted in to BBS.
@@ -127,6 +133,10 @@ func (s *Service) GetGuildConfig(ctx context.Context, guildID snowflake.ID) (*Gu
 
 // SetupGuild applies guild opt-in settings and records administrator policy agreement.
 func (s *Service) SetupGuild(ctx context.Context, input GuildSetupInput) (*GuildConfig, error) {
+	mu := s.guildMutex(input.GuildID)
+	mu.Lock()
+	defer mu.Unlock()
+
 	cfg, err := s.Store.GetGuildConfig(ctx, input.GuildID)
 	if err != nil && !errors.Is(err, ErrNotFound) {
 		return nil, err
@@ -200,7 +210,7 @@ func (s *Service) CreateCategory(ctx context.Context, input CreateCategoryInput)
 	input.Slug = strings.ToLower(SanitizeSingleLine(input.Slug))
 	input.Description = SanitizeSingleLine(input.Description)
 	if input.Name == "" || utf8.RuneCountInString(input.Name) > 64 {
-		return nil, fmt.Errorf("%w: invalid category name", ErrInvalidInput)
+		return nil, ErrInvalidCategoryName
 	}
 	if input.Slug == "" {
 		input.Slug = strings.ReplaceAll(strings.ToLower(input.Name), " ", "-")
@@ -208,7 +218,7 @@ func (s *Service) CreateCategory(ctx context.Context, input CreateCategoryInput)
 	switch input.Scope {
 	case ScopeLocal:
 		if input.GuildID == nil || *input.GuildID == 0 {
-			return nil, fmt.Errorf("%w: guild_id required for local category", ErrInvalidInput)
+			return nil, ErrGuildIDRequired
 		}
 		if _, err := s.EnsureGuildEnabled(ctx, *input.GuildID); err != nil {
 			return nil, err
@@ -291,7 +301,7 @@ func (s *Service) CreateBoard(ctx context.Context, input CreateBoardInput) (*Boa
 	input.Slug = strings.ToLower(SanitizeSingleLine(input.Slug))
 	input.Description = SanitizeBody(input.Description)
 	if input.Name == "" || utf8.RuneCountInString(input.Name) > 80 {
-		return nil, fmt.Errorf("%w: invalid board name", ErrInvalidInput)
+		return nil, ErrInvalidBoardName
 	}
 	if input.Slug == "" {
 		input.Slug = strings.ReplaceAll(strings.ToLower(input.Name), " ", "-")
@@ -303,7 +313,7 @@ func (s *Service) CreateBoard(ctx context.Context, input CreateBoardInput) (*Boa
 		return nil, err
 	}
 	if cat.Scope != input.Scope {
-		return nil, fmt.Errorf("%w: board scope must match category scope", ErrInvalidInput)
+		return nil, ErrBoardScopeMismatch
 	}
 	if input.Scope == ScopeLocal {
 		if input.GuildID == nil || cat.GuildID == nil || *input.GuildID != *cat.GuildID {
@@ -316,10 +326,10 @@ func (s *Service) CreateBoard(ctx context.Context, input CreateBoardInput) (*Boa
 		input.GuildID = nil
 	}
 
-	provKey := input.ProviderKey
-	if provKey == "" {
-		provKey = cat.ProviderKey
+	if input.ProviderKey != "" && input.ProviderKey != cat.ProviderKey {
+		return nil, ErrBoardProviderMismatch
 	}
+	provKey := cat.ProviderKey
 	p, err := s.Registry.Get(provKey)
 	if err != nil {
 		return nil, err
@@ -413,15 +423,18 @@ func (s *Service) CreateThread(ctx context.Context, input CreateThreadInput) (*B
 
 	title := SanitizeSingleLine(input.Title)
 	if title == "" || utf8.RuneCountInString(title) > MaxTitleRunes {
-		return nil, nil, nil, fmt.Errorf("%w: title must be 1-%d chars", ErrInvalidInput, MaxTitleRunes)
+		return nil, nil, nil, ErrInvalidTitleLength
 	}
 	if utf8.RuneCountInString(SanitizeSingleLine(input.RawName)) > MaxNameRunes {
-		return nil, nil, nil, fmt.Errorf("%w: name exceeds %d chars", ErrInvalidInput, MaxNameRunes)
+		return nil, nil, nil, ErrInvalidNameLength
 	}
 
 	board, err := s.GetBoard(ctx, input.BoardID)
 	if err != nil {
 		return nil, nil, nil, err
+	}
+	if board.Scope == ScopeLocal && (board.GuildID == nil || *board.GuildID != input.GuildID) {
+		return nil, nil, nil, fmt.Errorf("%w: local board guild mismatch", ErrUnauthorized)
 	}
 	if board.Locked {
 		return nil, nil, nil, ErrBoardLocked
@@ -450,7 +463,7 @@ func (s *Service) CreateThread(ctx context.Context, input CreateThreadInput) (*B
 		now,
 	)
 	if parsed.CleanBody == "" || utf8.RuneCountInString(parsed.CleanBody) > MaxBodyRunes {
-		return nil, nil, nil, fmt.Errorf("%w: body must be 1-%d chars", ErrInvalidInput, MaxBodyRunes)
+		return nil, nil, nil, ErrInvalidBodyLength
 	}
 
 	banned, err := s.Store.IsBanned(ctx, board.Scope, input.GuildID, parsed.PosterHash, input.UserID, now)
@@ -501,20 +514,19 @@ func (s *Service) CreatePost(ctx context.Context, input CreatePostInput) (*Board
 		return nil, nil, nil, nil, err
 	}
 	if utf8.RuneCountInString(SanitizeSingleLine(input.RawName)) > MaxNameRunes {
-		return nil, nil, nil, nil, fmt.Errorf("%w: name exceeds %d chars", ErrInvalidInput, MaxNameRunes)
+		return nil, nil, nil, nil, ErrInvalidNameLength
 	}
 
-	defaultProv := s.Registry.Default()
-	if defaultProv == nil {
-		return nil, nil, nil, nil, ErrProviderNotFound
-	}
-	thread, err := defaultProv.GetThread(ctx, input.ThreadID)
+	thread, err := s.GetThread(ctx, input.ThreadID)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
 	board, err := s.GetBoard(ctx, thread.BoardID)
 	if err != nil {
 		return nil, nil, nil, nil, err
+	}
+	if board.Scope == ScopeLocal && (board.GuildID == nil || *board.GuildID != input.GuildID) {
+		return nil, nil, nil, nil, fmt.Errorf("%w: local board guild mismatch", ErrUnauthorized)
 	}
 	if board.Locked {
 		return nil, nil, nil, nil, ErrBoardLocked
@@ -560,7 +572,7 @@ func (s *Service) CreatePost(ctx context.Context, input CreatePostInput) (*Board
 		now,
 	)
 	if parsed.CleanBody == "" || utf8.RuneCountInString(parsed.CleanBody) > MaxBodyRunes {
-		return nil, nil, nil, nil, fmt.Errorf("%w: body must be 1-%d chars", ErrInvalidInput, MaxBodyRunes)
+		return nil, nil, nil, nil, ErrInvalidBodyLength
 	}
 
 	banned, err := s.Store.IsBanned(ctx, board.Scope, input.GuildID, parsed.PosterHash, input.UserID, now)
@@ -593,7 +605,10 @@ func (s *Service) CreatePost(ctx context.Context, input CreatePostInput) (*Board
 	}
 
 	s.recordPostReferences(ctx, thread.ID, post.ResNumber, parsed.CleanBody, maxRes)
-	backwardRefs, _ := s.Store.ListReferencingRes(ctx, thread.ID, post.ResNumber)
+	backwardRefs, refErr := s.Store.ListReferencingRes(ctx, thread.ID, post.ResNumber)
+	if refErr != nil {
+		slog.Warn("bbs failed to list referencing res", "thread_id", thread.ID, "res_number", post.ResNumber, "err", refErr)
+	}
 	return board, updatedThread, post, backwardRefs, nil
 }
 
@@ -661,11 +676,7 @@ func (s *Service) ListThreads(ctx context.Context, filter ThreadFilter) ([]Threa
 
 // AbonePostLocal soft-deletes a post on a local board owned by guildID.
 func (s *Service) AbonePostLocal(ctx context.Context, guildID snowflake.ID, postID uuid.UUID, reason string) (*Post, error) {
-	defaultProv := s.Registry.Default()
-	if defaultProv == nil {
-		return nil, ErrProviderNotFound
-	}
-	post, err := defaultProv.GetPost(ctx, postID)
+	post, err := s.GetPost(ctx, postID)
 	if err != nil {
 		return nil, err
 	}
@@ -692,11 +703,7 @@ func (s *Service) AbonePostGlobal(ctx context.Context, operatorID snowflake.ID, 
 	if !s.IsOperator(operatorID) {
 		return nil, ErrUnauthorized
 	}
-	defaultProv := s.Registry.Default()
-	if defaultProv == nil {
-		return nil, ErrProviderNotFound
-	}
-	post, err := defaultProv.GetPost(ctx, postID)
+	post, err := s.GetPost(ctx, postID)
 	if err != nil {
 		return nil, err
 	}
@@ -795,13 +802,9 @@ func (s *Service) CreateReport(ctx context.Context, guildID snowflake.ID, report
 	}
 	reason = SanitizeSingleLine(reason)
 	if reason == "" {
-		return nil, fmt.Errorf("%w: report reason required", ErrInvalidInput)
+		return nil, ErrReportReasonRequired
 	}
-	defaultProv := s.Registry.Default()
-	if defaultProv == nil {
-		return nil, ErrProviderNotFound
-	}
-	post, err := defaultProv.GetPost(ctx, postID)
+	post, err := s.GetPost(ctx, postID)
 	if err != nil {
 		return nil, err
 	}
@@ -812,6 +815,9 @@ func (s *Service) CreateReport(ctx context.Context, guildID snowflake.ID, report
 	board, err := s.GetBoard(ctx, thread.BoardID)
 	if err != nil {
 		return nil, err
+	}
+	if board.Scope == ScopeLocal && (board.GuildID == nil || *board.GuildID != guildID) {
+		return nil, fmt.Errorf("%w: local post guild mismatch", ErrUnauthorized)
 	}
 	now := time.Now()
 	report := &Report{
@@ -866,13 +872,41 @@ func (s *Service) recordPostReferences(ctx context.Context, threadID uuid.UUID, 
 		})
 	}
 	if len(refs) > 0 {
-		_ = s.Store.SavePostReferences(ctx, refs)
+		if err := s.Store.SavePostReferences(ctx, refs); err != nil {
+			slog.Warn("bbs failed to save post references", "thread_id", threadID, "from_res", fromRes, "err", err)
+		}
 	}
+}
+
+func pruneRateLimitMapLocked(m map[snowflake.ID][]time.Time, maxUnit time.Duration, now time.Time) {
+	for uid, times := range m {
+		if len(times) == 0 || now.Sub(times[0]) > maxUnit {
+			delete(m, uid)
+		}
+	}
+}
+
+// PruneRateLimits removes expired per-user rate-limit entries from memory.
+func (s *Service) PruneRateLimits(now time.Time) {
+	s.threadRLMu.Lock()
+	pruneRateLimitMapLocked(s.threadRL, 10*time.Minute, now)
+	s.threadRLSweep = now
+	s.threadRLMu.Unlock()
+
+	s.postRLMu.Lock()
+	pruneRateLimitMapLocked(s.postRL, 30*time.Second, now)
+	s.postRLSweep = now
+	s.postRLMu.Unlock()
 }
 
 func (s *Service) checkThreadRateLimit(userID snowflake.ID) bool {
 	s.threadRLMu.Lock()
 	defer s.threadRLMu.Unlock()
+	now := time.Now()
+	if s.threadRLSweep.IsZero() || now.Sub(s.threadRLSweep) >= 10*time.Minute {
+		pruneRateLimitMapLocked(s.threadRL, 10*time.Minute, now)
+		s.threadRLSweep = now
+	}
 	next, ok := ratelimit.CheckLimit(s.threadRL[userID], s.threadRules)
 	s.threadRL[userID] = next
 	return ok
@@ -881,6 +915,11 @@ func (s *Service) checkThreadRateLimit(userID snowflake.ID) bool {
 func (s *Service) checkPostRateLimit(userID snowflake.ID) bool {
 	s.postRLMu.Lock()
 	defer s.postRLMu.Unlock()
+	now := time.Now()
+	if s.postRLSweep.IsZero() || now.Sub(s.postRLSweep) >= 10*time.Minute {
+		pruneRateLimitMapLocked(s.postRL, 30*time.Second, now)
+		s.postRLSweep = now
+	}
 	next, ok := ratelimit.CheckLimit(s.postRL[userID], s.postRules)
 	s.postRL[userID] = next
 	return ok

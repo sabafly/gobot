@@ -20,7 +20,9 @@
 package bbs
 
 import (
+	"context"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
@@ -53,17 +55,45 @@ func (c *adminCommand) IsPrivate() bool { return true }
 
 func (c *adminCommand) Create() []discord.ApplicationCommandCreate {
 	slipChoices := []discord.ApplicationCommandOptionChoiceString{
-		{Name: "none (非表示)", Value: "none"},
-		{Name: "vvvvv (端末種別+OS)", Value: "vvvvv"},
+		{
+			Name:              "none (Hidden)",
+			NameLocalizations: i18n.TranslateTextMap("command.bbs.choices.slip.none"),
+			Value:             "none",
+		},
+		{
+			Name:              "vvvvv (Device + OS)",
+			NameLocalizations: i18n.TranslateTextMap("command.bbs.choices.slip.vvvvv"),
+			Value:             "vvvvv",
+		},
 	}
 	statusChoices := []discord.ApplicationCommandOptionChoiceString{
-		{Name: "open (未処理)", Value: string(bbscore.ReportStatusOpen)},
-		{Name: "resolved (対処済)", Value: string(bbscore.ReportStatusResolved)},
-		{Name: "dismissed (却下)", Value: string(bbscore.ReportStatusDismissed)},
+		{
+			Name:              "open (Open)",
+			NameLocalizations: i18n.TranslateTextMap("command.bbs_admin.choices.status.open"),
+			Value:             string(bbscore.ReportStatusOpen),
+		},
+		{
+			Name:              "resolved (Resolved)",
+			NameLocalizations: i18n.TranslateTextMap("command.bbs_admin.choices.status.resolved"),
+			Value:             string(bbscore.ReportStatusResolved),
+		},
+		{
+			Name:              "dismissed (Dismissed)",
+			NameLocalizations: i18n.TranslateTextMap("command.bbs_admin.choices.status.dismissed"),
+			Value:             string(bbscore.ReportStatusDismissed),
+		},
 	}
 	scopeChoices := []discord.ApplicationCommandOptionChoiceString{
-		{Name: "global", Value: string(bbscore.ScopeGlobal)},
-		{Name: "local", Value: string(bbscore.ScopeLocal)},
+		{
+			Name:              "global (Global)",
+			NameLocalizations: i18n.TranslateTextMap("command.bbs_admin.choices.scope.global"),
+			Value:             string(bbscore.ScopeGlobal),
+		},
+		{
+			Name:              "local (Local)",
+			NameLocalizations: i18n.TranslateTextMap("command.bbs_admin.choices.scope.local"),
+			Value:             string(bbscore.ScopeLocal),
+		},
 	}
 
 	return []discord.ApplicationCommandCreate{
@@ -362,7 +392,11 @@ func (c *adminCommand) requireOperatorCmd(e *handler.CommandEvent) bool {
 	if c.sys.Service.IsOperator(e.User().ID) {
 		return true
 	}
-	c.sys.replyCommandError(e, errTitlePermission, "この操作は gobot 運営メンバーのみ実行できます。")
+	loc := e.Locale()
+	c.sys.replyCommandError(e,
+		i18n.TranslateText(loc, "components.bbs.errors.title.permission"),
+		i18n.TranslateText(loc, "components.bbs.errors.operator_required"),
+	)
 	return false
 }
 
@@ -370,16 +404,27 @@ func (c *adminCommand) handleGlobalCategoryCreate(data discord.SlashCommandInter
 	if !c.requireOperatorCmd(e) {
 		return nil
 	}
+	loc := e.Locale()
 	cat, err := c.sys.Service.CreateCategory(e.Ctx, bbscore.CreateCategoryInput{
 		Scope:       bbscore.ScopeGlobal,
 		Name:        data.String("name"),
 		Description: data.String("description"),
 	})
 	if err != nil {
-		c.sys.replyCommandError(e, "作成失敗", describeBBSError(err))
+		c.sys.replyCommandError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.create_failed"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
-	c.sys.replyCommandNotice(e, "グローバルカテゴリを作成しました", fmt.Sprintf("カテゴリ: %s\nID: %s", cat.Name, cat.ID), discordsync.ColorGlobalBoard)
+	c.sys.replyCommandNotice(e,
+		i18n.TranslateText(loc, "components.bbs.admin.cat.created_title"),
+		i18n.TranslateText(loc, "components.bbs.cmd.category.created_body", map[string]any{
+			"name": cat.Name,
+			"id":   cat.ID.String(),
+		}),
+		discordsync.ColorGlobalBoard,
+	)
 	return nil
 }
 
@@ -387,21 +432,26 @@ func (c *adminCommand) handleGlobalCategoryList(_ discord.SlashCommandInteractio
 	if !c.requireOperatorCmd(e) {
 		return nil
 	}
+	loc := e.Locale()
 	scope := bbscore.ScopeGlobal
 	cats, err := c.sys.Service.ListCategories(e.Ctx, bbscore.CategoryFilter{Scope: &scope})
 	if err != nil {
-		c.sys.replyCommandError(e, "取得失敗", describeBBSError(err))
+		c.sys.replyCommandError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
+	listTitle := i18n.TranslateText(loc, "components.bbs.admin.cat.list_title")
 	if len(cats) == 0 {
-		c.sys.replyCommandNotice(e, "グローバルカテゴリ一覧", "グローバルカテゴリはまだありません。", discordsync.ColorNotice)
+		c.sys.replyCommandNotice(e, listTitle, i18n.TranslateText(loc, "components.bbs.admin.cat.list_empty"), discordsync.ColorNotice)
 		return nil
 	}
 	var lines []string
 	for _, cat := range cats {
-		lines = append(lines, fmt.Sprintf("- %s (%s)", cat.Name, cat.ID))
+		lines = append(lines, "- "+cat.Name+" ("+cat.ID.String()+")")
 	}
-	c.sys.replyCommandNotice(e, "グローバルカテゴリ一覧", strings.Join(lines, "\n"), discordsync.ColorGlobalBoard)
+	c.sys.replyCommandNotice(e, listTitle, strings.Join(lines, "\n"), discordsync.ColorGlobalBoard)
 	return nil
 }
 
@@ -409,21 +459,26 @@ func (c *adminCommand) handleGlobalCategoryDelete(data discord.SlashCommandInter
 	if !c.requireOperatorCmd(e) {
 		return nil
 	}
+	loc := e.Locale()
 	catID, err := uuid.Parse(strings.TrimSpace(data.String("category")))
 	if err != nil {
-		c.sys.replyCommandError(e, errTitleInvalidInput, "カテゴリIDが不正です。")
+		c.sys.replyCommandError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.admin.cat.invalid_id"),
+		)
 		return nil
 	}
+	delFailTitle := i18n.TranslateText(loc, "components.bbs.errors.title.delete_failed")
 	cat, err := c.sys.Service.GetCategory(e.Ctx, catID)
 	if err != nil || cat.Scope != bbscore.ScopeGlobal {
-		c.sys.replyCommandError(e, "削除失敗", "対象のグローバルカテゴリが見つかりません。")
+		c.sys.replyCommandError(e, delFailTitle, i18n.TranslateText(loc, "components.bbs.admin.cat.not_found"))
 		return nil
 	}
 	if err := c.sys.Service.DeleteCategory(e.Ctx, catID); err != nil {
-		c.sys.replyCommandError(e, "削除失敗", describeBBSError(err))
+		c.sys.replyCommandError(e, delFailTitle, describeBBSError(loc, err))
 		return nil
 	}
-	c.sys.replyCommandNotice(e, "グローバルカテゴリを削除しました", cat.Name, discordsync.ColorNotice)
+	c.sys.replyCommandNotice(e, i18n.TranslateText(loc, "components.bbs.admin.cat.deleted_title"), cat.Name, discordsync.ColorNotice)
 	return nil
 }
 
@@ -431,9 +486,13 @@ func (c *adminCommand) handleGlobalBoardCreate(data discord.SlashCommandInteract
 	if !c.requireOperatorCmd(e) {
 		return nil
 	}
+	loc := e.Locale()
 	catID, err := uuid.Parse(strings.TrimSpace(data.String("category")))
 	if err != nil {
-		c.sys.replyCommandError(e, errTitleInvalidInput, "カテゴリIDが不正です。")
+		c.sys.replyCommandError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.admin.cat.invalid_id"),
+		)
 		return nil
 	}
 	board, err := c.sys.Service.CreateBoard(e.Ctx, bbscore.CreateBoardInput{
@@ -441,13 +500,23 @@ func (c *adminCommand) handleGlobalBoardCreate(data discord.SlashCommandInteract
 		Scope:       bbscore.ScopeGlobal,
 		Name:        data.String("name"),
 		Description: data.String("description"),
-		Rules:       parseBoardRulesFromSlash(data),
+		Rules:       parseBoardRulesFromSlash(data, loc),
 	})
 	if err != nil {
-		c.sys.replyCommandError(e, "グローバル板作成失敗", describeBBSError(err))
+		c.sys.replyCommandError(e,
+			i18n.TranslateText(loc, "components.bbs.admin.board.create_failed"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
-	c.sys.replyCommandNotice(e, "グローバル板を作成しました", fmt.Sprintf("板: %s\nID: %s\n各サーバーから /bbs global subscribe で購読可能になりました。", board.Name, board.ID), discordsync.ColorGlobalBoard)
+	c.sys.replyCommandNotice(e,
+		i18n.TranslateText(loc, "components.bbs.admin.board.created_title"),
+		i18n.TranslateText(loc, "components.bbs.admin.board.created_body", map[string]any{
+			"name": board.Name,
+			"id":   board.ID.String(),
+		}),
+		discordsync.ColorGlobalBoard,
+	)
 	return nil
 }
 
@@ -455,21 +524,30 @@ func (c *adminCommand) handleGlobalBoardList(_ discord.SlashCommandInteractionDa
 	if !c.requireOperatorCmd(e) {
 		return nil
 	}
+	loc := e.Locale()
 	scope := bbscore.ScopeGlobal
 	boards, err := c.sys.Service.ListBoards(e.Ctx, bbscore.BoardFilter{Scope: &scope})
 	if err != nil {
-		c.sys.replyCommandError(e, "取得失敗", describeBBSError(err))
+		c.sys.replyCommandError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
+	listTitle := i18n.TranslateText(loc, "components.bbs.admin.board.list_title")
 	if len(boards) == 0 {
-		c.sys.replyCommandNotice(e, "グローバル板一覧", "グローバル板はまだありません。", discordsync.ColorNotice)
+		c.sys.replyCommandNotice(e, listTitle, i18n.TranslateText(loc, "components.bbs.admin.board.list_empty"), discordsync.ColorNotice)
 		return nil
 	}
 	var lines []string
 	for _, b := range boards {
-		lines = append(lines, fmt.Sprintf("- %s (%s) 名無し:%s", b.Name, b.ID, b.Rules.Normalize().DefaultName))
+		lines = append(lines, i18n.TranslateText(loc, "components.bbs.admin.board.list_entry", map[string]any{
+			"name":         b.Name,
+			"id":           b.ID.String(),
+			"default_name": b.Rules.Normalize().DefaultName,
+		}))
 	}
-	c.sys.replyCommandNotice(e, "グローバル板一覧", strings.Join(lines, "\n"), discordsync.ColorGlobalBoard)
+	c.sys.replyCommandNotice(e, listTitle, strings.Join(lines, "\n"), discordsync.ColorGlobalBoard)
 	return nil
 }
 
@@ -477,22 +555,34 @@ func (c *adminCommand) handleGlobalBoardEdit(data discord.SlashCommandInteractio
 	if !c.requireOperatorCmd(e) {
 		return nil
 	}
+	loc := e.Locale()
 	boardID, err := uuid.Parse(strings.TrimSpace(data.String("board")))
 	if err != nil {
-		c.sys.replyCommandError(e, errTitleInvalidInput, "板IDが不正です。")
+		c.sys.replyCommandError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.admin.board.invalid_id"),
+		)
 		return nil
 	}
+	editFailTitle := i18n.TranslateText(loc, "components.bbs.errors.title.edit_failed")
 	b, err := c.sys.Service.GetBoard(e.Ctx, boardID)
 	if err != nil || b.Scope != bbscore.ScopeGlobal {
-		c.sys.replyCommandError(e, "編集失敗", "対象のグローバル板が見つかりません。")
+		c.sys.replyCommandError(e, editFailTitle, i18n.TranslateText(loc, "components.bbs.admin.board.not_found"))
 		return nil
 	}
 	updated, err := c.sys.Service.UpdateBoard(e.Ctx, boardID, parseUpdateBoardInput(data))
 	if err != nil {
-		c.sys.replyCommandError(e, "編集失敗", describeBBSError(err))
+		c.sys.replyCommandError(e, editFailTitle, describeBBSError(loc, err))
 		return nil
 	}
-	c.sys.replyCommandNotice(e, "グローバル板を更新しました", fmt.Sprintf("板: %s\n名無し: %s", updated.Name, updated.Rules.Normalize().DefaultName), discordsync.ColorGlobalBoard)
+	c.sys.replyCommandNotice(e,
+		i18n.TranslateText(loc, "components.bbs.admin.board.updated_title"),
+		i18n.TranslateText(loc, "components.bbs.admin.board.updated_body", map[string]any{
+			"name":         updated.Name,
+			"default_name": updated.Rules.Normalize().DefaultName,
+		}),
+		discordsync.ColorGlobalBoard,
+	)
 	return nil
 }
 
@@ -500,26 +590,26 @@ func (c *adminCommand) handleGlobalBoardDelete(data discord.SlashCommandInteract
 	if !c.requireOperatorCmd(e) {
 		return nil
 	}
+	loc := e.Locale()
 	boardID, err := uuid.Parse(strings.TrimSpace(data.String("board")))
 	if err != nil {
-		c.sys.replyCommandError(e, errTitleInvalidInput, "板IDが不正です。")
+		c.sys.replyCommandError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.admin.board.invalid_id"),
+		)
 		return nil
 	}
+	delFailTitle := i18n.TranslateText(loc, "components.bbs.errors.title.delete_failed")
 	b, err := c.sys.Service.GetBoard(e.Ctx, boardID)
 	if err != nil || b.Scope != bbscore.ScopeGlobal {
-		c.sys.replyCommandError(e, "削除失敗", "対象のグローバル板が見つかりません。")
+		c.sys.replyCommandError(e, delFailTitle, i18n.TranslateText(loc, "components.bbs.admin.board.not_found"))
 		return nil
-	}
-	if mounts, mErr := c.sys.Service.Store.ListActiveBoardMountsByBoard(e.Ctx, boardID); mErr == nil {
-		for _, m := range mounts {
-			_ = c.sys.Service.Store.DeactivateBoardMount(e.Ctx, m.ID)
-		}
 	}
 	if err := c.sys.Service.DeleteBoard(e.Ctx, boardID); err != nil {
-		c.sys.replyCommandError(e, "削除失敗", describeBBSError(err))
+		c.sys.replyCommandError(e, delFailTitle, describeBBSError(loc, err))
 		return nil
 	}
-	c.sys.replyCommandNotice(e, "グローバル板を削除しました", b.Name, discordsync.ColorNotice)
+	c.sys.replyCommandNotice(e, i18n.TranslateText(loc, "components.bbs.admin.board.deleted_title"), b.Name, discordsync.ColorNotice)
 	return nil
 }
 
@@ -527,6 +617,7 @@ func (c *adminCommand) handleReportList(data discord.SlashCommandInteractionData
 	if !c.requireOperatorCmd(e) {
 		return nil
 	}
+	loc := e.Locale()
 	filter := bbscore.ReportFilter{Limit: 25}
 	if v, ok := data.OptString("status"); ok && v != "" {
 		st := bbscore.ReportStatus(v)
@@ -534,18 +625,27 @@ func (c *adminCommand) handleReportList(data discord.SlashCommandInteractionData
 	}
 	reports, err := c.sys.Service.Store.ListReports(e.Ctx, filter)
 	if err != nil {
-		c.sys.replyCommandError(e, "取得失敗", describeBBSError(err))
+		c.sys.replyCommandError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
+	listTitle := i18n.TranslateText(loc, "components.bbs.admin.report.list_title")
 	if len(reports) == 0 {
-		c.sys.replyCommandNotice(e, "通報一覧", "該当する通報はありません。", discordsync.ColorNotice)
+		c.sys.replyCommandNotice(e, listTitle, i18n.TranslateText(loc, "components.bbs.admin.report.list_empty"), discordsync.ColorNotice)
 		return nil
 	}
 	var lines []string
 	for _, r := range reports {
-		lines = append(lines, fmt.Sprintf("- [%s] %s | Guild:%d | 理由:%s", r.Status, r.ID, r.GuildID, discordsync.TruncateRunes(r.Reason, 40)))
+		lines = append(lines, i18n.TranslateText(loc, "components.bbs.admin.report.list_entry", map[string]any{
+			"status":   string(r.Status),
+			"id":       r.ID.String(),
+			"guild_id": r.GuildID,
+			"reason":   discordsync.TruncateRunes(r.Reason, 40),
+		}))
 	}
-	c.sys.replyCommandNotice(e, "BBS通報一覧", strings.Join(lines, "\n"), discordsync.ColorError)
+	c.sys.replyCommandNotice(e, listTitle, strings.Join(lines, "\n"), discordsync.ColorError)
 	return nil
 }
 
@@ -553,42 +653,53 @@ func (c *adminCommand) handleReportInspect(data discord.SlashCommandInteractionD
 	if !c.requireOperatorCmd(e) {
 		return nil
 	}
+	loc := e.Locale()
 	reportID, err := uuid.Parse(strings.TrimSpace(data.String("report")))
 	if err != nil {
-		c.sys.replyCommandError(e, errTitleInvalidInput, "通報IDが不正です。")
+		c.sys.replyCommandError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.admin.report.invalid_id"),
+		)
 		return nil
 	}
 	report, audit, err := c.sys.Service.InspectReportForOperator(e.Ctx, e.User().ID, reportID)
 	if err != nil {
-		c.sys.replyCommandError(e, "監査情報取得失敗", describeBBSError(err))
+		c.sys.replyCommandError(e,
+			i18n.TranslateText(loc, "components.bbs.admin.report.audit_failed"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
 
-	preview := "あぼーん済み"
+	preview := i18n.TranslateText(loc, "components.bbs.admin.report.aboned_preview")
 	if !audit.Post.Abone {
 		preview = discordsync.TruncateRunes(audit.Post.Body, 400)
 	}
-	detail := fmt.Sprintf(
-		"通報ID: %s\nステータス: %s / スコープ: %s\n通報元Guild: %d / 通報者: <@%d> (%d)\n対象PostID: %s (>>%d)\n投稿者(運営監査情報): <@%d> (%d)\nPosterHash: %s / ID:%s\n通報理由: %s\n--- 本文抜粋 ---\n%s",
-		report.ID, report.Status, report.Scope,
-		report.GuildID, report.ReporterUserID, report.ReporterUserID,
-		report.PostID, audit.Post.ResNumber,
-		audit.AuthorUserID, audit.AuthorUserID,
-		audit.Post.PosterHash, audit.Post.AnonID,
-		report.Reason,
-		preview,
-	)
+	detail := i18n.TranslateText(loc, "components.bbs.admin.report.inspect_detail", map[string]any{
+		"id":          report.ID.String(),
+		"status":      string(report.Status),
+		"scope":       string(report.Scope),
+		"guild_id":    report.GuildID,
+		"reporter_id": report.ReporterUserID,
+		"post_id":     report.PostID.String(),
+		"res":         audit.Post.ResNumber,
+		"author_id":   audit.AuthorUserID,
+		"hash":        audit.Post.PosterHash,
+		"anon_id":     audit.Post.AnonID,
+		"reason":      report.Reason,
+		"preview":     preview,
+	})
 
 	msg := discord.NewMessageCreateV2(
 		discord.NewContainer(
-			discord.NewTextDisplay("### ■ BBS 通報詳細・運営監査パネル"),
+			discord.NewTextDisplay(i18n.TranslateText(loc, "components.bbs.admin.report.inspect_title")),
 			discord.NewSmallSeparator(),
 			discord.NewTextDisplay(discordsync.TruncateRunes(detail, 1800)),
 			discord.NewLargeSeparator(),
 			discord.NewActionRow(
-				discord.NewDangerButton("グローバルあぼーん", fmt.Sprintf("/bbs/admin/abone/%s", report.ID)),
-				discord.NewDangerButton("グローバルBAN+あぼーん", fmt.Sprintf("/bbs/admin/ban/%s", report.ID)),
-				discord.NewSecondaryButton("却下", fmt.Sprintf("/bbs/admin/dismiss/%s", report.ID)),
+				discord.NewDangerButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.admin.report.btn.abone"), discordsync.MaxButtonLabelRunes), fmt.Sprintf("/bbs/admin/abone/%s", report.ID)),
+				discord.NewDangerButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.admin.report.btn.ban"), discordsync.MaxButtonLabelRunes), fmt.Sprintf("/bbs/admin/ban/%s", report.ID)),
+				discord.NewSecondaryButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.admin.report.btn.dismiss"), discordsync.MaxButtonLabelRunes), fmt.Sprintf("/bbs/admin/dismiss/%s", report.ID)),
 			),
 		).WithAccentColor(discordsync.ColorError),
 	).WithEphemeral(true).WithAllowedMentions(&discord.AllowedMentions{})
@@ -602,6 +713,7 @@ func (c *adminCommand) handleBanList(data discord.SlashCommandInteractionData, e
 	if !c.requireOperatorCmd(e) {
 		return nil
 	}
+	loc := e.Locale()
 	filter := bbscore.BanFilter{Limit: 25}
 	if v, ok := data.OptString("scope"); ok && v != "" {
 		sc := bbscore.Scope(v)
@@ -609,22 +721,33 @@ func (c *adminCommand) handleBanList(data discord.SlashCommandInteractionData, e
 	}
 	bans, err := c.sys.Service.Store.ListBans(e.Ctx, filter)
 	if err != nil {
-		c.sys.replyCommandError(e, "取得失敗", describeBBSError(err))
+		c.sys.replyCommandError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
+	listTitle := i18n.TranslateText(loc, "components.bbs.admin.ban.list_title")
 	if len(bans) == 0 {
-		c.sys.replyCommandNotice(e, "BAN一覧", "BANエントリはありません。", discordsync.ColorNotice)
+		c.sys.replyCommandNotice(e, listTitle, i18n.TranslateText(loc, "components.bbs.admin.ban.list_empty"), discordsync.ColorNotice)
 		return nil
 	}
+	unlimited := i18n.TranslateText(loc, "components.bbs.common.unlimited")
 	var lines []string
 	for _, b := range bans {
-		exp := "無期限"
+		exp := unlimited
 		if b.ExpiresAt != nil {
 			exp = b.ExpiresAt.In(bbscore.JSTLocation).Format("2006/01/02 15:04")
 		}
-		lines = append(lines, fmt.Sprintf("- [%s] %s | Hash:%s | 期限:%s | 理由:%s", b.Scope, b.ID, b.PosterHash, exp, discordsync.TruncateRunes(b.Reason, 30)))
+		lines = append(lines, i18n.TranslateText(loc, "components.bbs.admin.ban.list_entry", map[string]any{
+			"scope":   string(b.Scope),
+			"id":      b.ID.String(),
+			"hash":    b.PosterHash,
+			"expires": exp,
+			"reason":  discordsync.TruncateRunes(b.Reason, 30),
+		}))
 	}
-	c.sys.replyCommandNotice(e, "BBS BAN一覧", strings.Join(lines, "\n"), discordsync.ColorNotice)
+	c.sys.replyCommandNotice(e, listTitle, strings.Join(lines, "\n"), discordsync.ColorNotice)
 	return nil
 }
 
@@ -632,97 +755,163 @@ func (c *adminCommand) handleBanUnban(data discord.SlashCommandInteractionData, 
 	if !c.requireOperatorCmd(e) {
 		return nil
 	}
+	loc := e.Locale()
 	banID, err := uuid.Parse(strings.TrimSpace(data.String("ban")))
 	if err != nil {
-		c.sys.replyCommandError(e, errTitleInvalidInput, "BAN IDが不正です。")
+		c.sys.replyCommandError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.admin.ban.invalid_id"),
+		)
 		return nil
 	}
 	if err := c.sys.Service.Store.DeleteBan(e.Ctx, banID); err != nil {
-		c.sys.replyCommandError(e, "解除失敗", describeBBSError(err))
+		c.sys.replyCommandError(e,
+			i18n.TranslateText(loc, "components.bbs.admin.process_failed"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
-	c.sys.replyCommandNotice(e, "BANを解除しました", fmt.Sprintf("BanID: %s", banID), discordsync.ColorNotice)
+	c.sys.replyCommandNotice(e,
+		i18n.TranslateText(loc, "components.bbs.admin.ban.unbanned_title"),
+		i18n.TranslateText(loc, "components.bbs.admin.ban.unbanned_body", map[string]any{"id": banID.String()}),
+		discordsync.ColorNotice,
+	)
 	return nil
 }
 
 func (c *adminCommand) handleAdminAboneButton(e *handler.ComponentEvent) error {
+	loc := e.Locale()
 	if !c.sys.Service.IsOperator(e.User().ID) {
-		c.sys.replyComponentError(e, errTitlePermission, "運営メンバーのみ実行できます。")
+		c.sys.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.permission"),
+			i18n.TranslateText(loc, "components.bbs.errors.operator_required"),
+		)
 		return nil
 	}
 	reportID, err := uuid.Parse(e.Vars["report_id"])
 	if err != nil {
-		c.sys.replyComponentError(e, errTitleInvalidInput, "通報IDが不正です。")
+		c.sys.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.admin.report.invalid_id"),
+		)
 		return nil
 	}
 	report, err := c.sys.Service.Store.GetReport(e.Ctx, reportID)
 	if err != nil {
-		c.sys.replyComponentError(e, "処理失敗", describeBBSError(err))
+		c.sys.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.admin.process_failed"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
-	post, err := c.sys.Service.AbonePostGlobal(e.Ctx, e.User().ID, report.PostID, "運営による通報対応")
+	post, err := c.sys.Service.AbonePostGlobal(e.Ctx, e.User().ID, report.PostID, "operator_report_abone")
 	if err != nil {
-		c.sys.replyComponentError(e, "あぼーん失敗", describeBBSError(err))
+		c.sys.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.mod.abone_failed"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
 	if thread, tErr := c.sys.Service.GetThread(e.Ctx, post.ThreadID); tErr == nil {
 		go c.sys.Syncer.SyncAbone(c.sys.Components.Ctx(), e.Client(), *post, *thread)
 	}
-	c.markReportStatus(e, report, bbscore.ReportStatusResolved, "global_abone")
 	sr := discordsync.NewSafeResponder(e.ID().Time())
-	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice("グローバルあぼーんを実行しました", fmt.Sprintf("PostID: %s\nReportID: %s", post.ID, report.ID), discordsync.ColorError))
+	if sErr := c.markReportStatus(e.Ctx, e, report, bbscore.ReportStatusResolved, "global_abone"); sErr != nil {
+		slog.Warn("bbs failed to mark report resolved after abone", "report_id", report.ID, "err", sErr)
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.admin.report.status_save_failed_title"),
+			i18n.TranslateText(loc, "components.bbs.admin.report.status_save_failed_body", map[string]any{
+				"id":  report.ID.String(),
+				"err": describeBBSError(loc, sErr),
+			}),
+		))
+		return nil
+	}
+	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(loc,
+		i18n.TranslateText(loc, "components.bbs.admin.aboned_title"),
+		i18n.TranslateText(loc, "components.bbs.admin.aboned_body", map[string]any{
+			"post_id":   post.ID.String(),
+			"report_id": report.ID.String(),
+		}),
+		discordsync.ColorError,
+	))
 	return nil
 }
 
 func (c *adminCommand) handleAdminBanButton(e *handler.ComponentEvent) error {
+	loc := e.Locale()
 	if !c.sys.Service.IsOperator(e.User().ID) {
-		c.sys.replyComponentError(e, errTitlePermission, "運営メンバーのみ実行できます。")
+		c.sys.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.permission"),
+			i18n.TranslateText(loc, "components.bbs.errors.operator_required"),
+		)
 		return nil
 	}
 	reportID := e.Vars["report_id"]
 	if _, err := uuid.Parse(reportID); err != nil {
-		c.sys.replyComponentError(e, errTitleInvalidInput, "通報IDが不正です。")
+		c.sys.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.admin.report.invalid_id"),
+		)
 		return nil
 	}
 	modal := discord.NewModalCreate(
 		fmt.Sprintf("/bbs/admin/banmodal/%s", reportID),
-		"グローバルBAN + あぼーん",
+		discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.admin.ban_modal_title"), discordsync.MaxModalTitleRunes),
 		discord.NewLabel(
-			"BAN期間 (時間数・空欄または0で無期限)",
-			discord.NewShortTextInput("hours").WithRequired(false).WithPlaceholder("例: 168 (7日間) / 0 (無期限)").WithMaxLength(10),
+			discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.mod.ban_hours_label"), discordsync.MaxLabelTextRunes),
+			discord.NewShortTextInput("hours").WithRequired(false).WithPlaceholder(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.admin.ban_hours_placeholder"), discordsync.MaxTextInputPlaceholder)).WithMaxLength(10),
 		),
 		discord.NewLabel(
-			"理由 (監査ログに保存)",
+			discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.admin.ban_reason_label"), discordsync.MaxLabelTextRunes),
 			discord.NewParagraphTextInput("reason").WithRequired(true).WithMaxLength(200),
 		),
 	)
-	if err := discordsync.SafeRespondComponentModal(e.ComponentInteractionCreate, modal); err != nil {
-		c.sys.replyComponentError(e, "モーダル表示失敗", err.Error())
+	sr := discordsync.NewSafeResponder(e.ID().Time())
+	if err := sr.RespondModal(e, modal); err != nil {
+		slog.Warn("bbs failed to open admin ban modal", "err", err)
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.errors.title.modal_failed"),
+			describeBBSError(loc, err),
+		))
 	}
 	return nil
 }
 
 func (c *adminCommand) handleAdminBanModal(e *handler.ModalEvent) error {
+	loc := e.Locale()
 	if !c.sys.Service.IsOperator(e.User().ID) {
-		c.sys.replyModalError(e, errTitlePermission, "運営メンバーのみ実行できます。")
+		c.sys.replyModalError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.permission"),
+			i18n.TranslateText(loc, "components.bbs.errors.operator_required"),
+		)
 		return nil
 	}
 	reportID, err := uuid.Parse(e.Vars["report_id"])
 	if err != nil {
-		c.sys.replyModalError(e, errTitleInvalidInput, "通報IDが不正です。")
+		c.sys.replyModalError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.admin.report.invalid_id"),
+		)
 		return nil
 	}
 	report, err := c.sys.Service.Store.GetReport(e.Ctx, reportID)
 	if err != nil {
-		c.sys.replyModalError(e, "処理失敗", describeBBSError(err))
+		c.sys.replyModalError(e,
+			i18n.TranslateText(loc, "components.bbs.admin.process_failed"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
 	hoursRaw := strings.TrimSpace(e.Data.Text("hours"))
 	var dur *time.Duration
 	if hoursRaw != "" && hoursRaw != "0" {
 		hrs, pErr := strconv.Atoi(hoursRaw)
-		if pErr != nil || hrs < 0 {
-			c.sys.replyModalError(e, errTitleInvalidInput, "BAN期間は0以上の整数(時間数)で入力してください。")
+		if pErr != nil || hrs < 0 || hrs > bbscore.MaxBanHours {
+			c.sys.replyModalError(e,
+				i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+				i18n.TranslateText(loc, "components.bbs.mod.invalid_hours_range", map[string]any{"max": bbscore.MaxBanHours}),
+			)
 			return nil
 		}
 		if hrs > 0 {
@@ -733,50 +922,105 @@ func (c *adminCommand) handleAdminBanModal(e *handler.ModalEvent) error {
 	reason := e.Data.Text("reason")
 	ban, err := c.sys.Service.BanGlobal(e.Ctx, e.User().ID, report.PostID, reason, dur)
 	if err != nil {
-		c.sys.replyModalError(e, "BAN失敗", describeBBSError(err))
+		c.sys.replyModalError(e,
+			i18n.TranslateText(loc, "components.bbs.admin.ban_failed"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
-	if post, aErr := c.sys.Service.AbonePostGlobal(e.Ctx, e.User().ID, report.PostID, reason); aErr == nil {
-		if thread, tErr := c.sys.Service.GetThread(e.Ctx, post.ThreadID); tErr == nil {
-			go c.sys.Syncer.SyncAbone(c.sys.Components.Ctx(), e.Client(), *post, *thread)
-		}
-	}
-	c.markReportStatus(e, report, bbscore.ReportStatusResolved, "global_ban:"+reason)
 	sr := discordsync.NewSafeResponder(e.ID().Time())
-	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice("グローバルBANを実行しました", fmt.Sprintf("BanID: %s\nHash: %s", ban.ID, ban.PosterHash), discordsync.ColorError))
+	post, aErr := c.sys.Service.AbonePostGlobal(e.Ctx, e.User().ID, report.PostID, reason)
+	if aErr != nil {
+		slog.Warn("bbs global ban succeeded but abone failed", "ban_id", ban.ID, "report_id", report.ID, "err", aErr)
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.admin.ban_abone_partial_title"),
+			i18n.TranslateText(loc, "components.bbs.admin.ban_abone_partial_body", map[string]any{
+				"id":        ban.ID.String(),
+				"report_id": report.ID.String(),
+				"err":       describeBBSError(loc, aErr),
+			}),
+		))
+		return nil
+	}
+	if thread, tErr := c.sys.Service.GetThread(e.Ctx, post.ThreadID); tErr == nil {
+		go c.sys.Syncer.SyncAbone(c.sys.Components.Ctx(), e.Client(), *post, *thread)
+	}
+	if sErr := c.markReportStatus(e.Ctx, e, report, bbscore.ReportStatusResolved, "global_ban:"+reason); sErr != nil {
+		slog.Warn("bbs failed to mark report resolved after ban+abone", "report_id", report.ID, "err", sErr)
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.admin.report.status_save_failed_title"),
+			i18n.TranslateText(loc, "components.bbs.admin.report.status_save_failed_body", map[string]any{
+				"id":  report.ID.String(),
+				"err": describeBBSError(loc, sErr),
+			}),
+		))
+		return nil
+	}
+	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(loc,
+		i18n.TranslateText(loc, "components.bbs.admin.banned_title"),
+		i18n.TranslateText(loc, "components.bbs.admin.banned_body", map[string]any{
+			"id":   ban.ID.String(),
+			"hash": ban.PosterHash,
+		}),
+		discordsync.ColorError,
+	))
 	return nil
 }
 
 func (c *adminCommand) handleAdminDismissButton(e *handler.ComponentEvent) error {
+	loc := e.Locale()
 	if !c.sys.Service.IsOperator(e.User().ID) {
-		c.sys.replyComponentError(e, errTitlePermission, "運営メンバーのみ実行できます。")
+		c.sys.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.permission"),
+			i18n.TranslateText(loc, "components.bbs.errors.operator_required"),
+		)
 		return nil
 	}
 	reportID, err := uuid.Parse(e.Vars["report_id"])
 	if err != nil {
-		c.sys.replyComponentError(e, errTitleInvalidInput, "通報IDが不正です。")
+		c.sys.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.admin.report.invalid_id"),
+		)
 		return nil
 	}
 	report, err := c.sys.Service.Store.GetReport(e.Ctx, reportID)
 	if err != nil {
-		c.sys.replyComponentError(e, "処理失敗", describeBBSError(err))
+		c.sys.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.admin.process_failed"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
-	c.markReportStatus(e, report, bbscore.ReportStatusDismissed, "dismissed")
 	sr := discordsync.NewSafeResponder(e.ID().Time())
-	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice("通報を却下しました", fmt.Sprintf("ReportID: %s", report.ID), discordsync.ColorNotice))
+	if sErr := c.markReportStatus(e.Ctx, e, report, bbscore.ReportStatusDismissed, "dismissed"); sErr != nil {
+		slog.Warn("bbs failed to mark report dismissed", "report_id", report.ID, "err", sErr)
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.admin.report.status_save_failed_title"),
+			i18n.TranslateText(loc, "components.bbs.admin.report.status_save_failed_body", map[string]any{
+				"id":  report.ID.String(),
+				"err": describeBBSError(loc, sErr),
+			}),
+		))
+		return nil
+	}
+	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(loc,
+		i18n.TranslateText(loc, "components.bbs.admin.dismissed_title"),
+		i18n.TranslateText(loc, "components.bbs.admin.dismissed_body", map[string]any{"id": report.ID.String()}),
+		discordsync.ColorNotice,
+	))
 	return nil
 }
 
-func (c *adminCommand) markReportStatus(e interface {
+func (c *adminCommand) markReportStatus(ctx context.Context, e interface {
 	User() discord.User
-}, report *bbscore.Report, status bbscore.ReportStatus, note string) {
+}, report *bbscore.Report, status bbscore.ReportStatus, note string) error {
 	actor := e.User().ID
 	report.Status = status
 	report.HandledBy = &actor
 	report.ResolutionNote = note
 	report.UpdatedAt = time.Now()
-	_ = c.sys.Service.Store.UpdateReport(c.sys.Components.Ctx(), report)
+	return c.sys.Service.Store.UpdateReport(ctx, report)
 }
 
 func (c *adminCommand) autocompleteGlobalCategories(e *handler.AutocompleteEvent) error {

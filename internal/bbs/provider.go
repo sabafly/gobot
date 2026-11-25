@@ -170,11 +170,14 @@ type Store interface {
 
 	// Thread mirrors
 	CreateThreadMirror(ctx context.Context, mirror *ThreadMirror) error
+	CreateThreadAndPostMirror(ctx context.Context, threadMirror *ThreadMirror, postMirror *PostMirror) error
 	GetThreadMirror(ctx context.Context, id uuid.UUID) (*ThreadMirror, error)
 	GetThreadMirrorByDiscordThread(ctx context.Context, discordThreadID snowflake.ID) (*ThreadMirror, error)
 	GetThreadMirrorByMountAndThread(ctx context.Context, mountID, threadID uuid.UUID) (*ThreadMirror, error)
 	ListThreadMirrorsByThread(ctx context.Context, threadID uuid.UUID) ([]ThreadMirror, error)
 	UpdateThreadMirror(ctx context.Context, mirror *ThreadMirror) error
+	AdvanceThreadMirrorSync(ctx context.Context, id uuid.UUID, syncedUpTo uint32) error
+	UpdateThreadMirrorControl(ctx context.Context, id uuid.UUID, controlMsgID *snowflake.ID) error
 	DeleteThreadMirror(ctx context.Context, id uuid.UUID) error
 
 	// Post mirrors
@@ -206,4 +209,7 @@ type Store interface {
 	ListReports(ctx context.Context, filter ReportFilter) ([]Report, error)
 	UpdateReport(ctx context.Context, report *Report) error
 	GetAuditPostInfo(ctx context.Context, postID uuid.UUID) (*AuditPostInfo, error)
+
+	// System secrets (persisted fallback HMAC key)
+	GetOrCreateSystemSecret(ctx context.Context, secretKey string, fallback []byte) ([]byte, error)
 }

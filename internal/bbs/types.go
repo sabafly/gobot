@@ -21,6 +21,7 @@ package bbs
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/disgoorg/snowflake/v2"
@@ -34,6 +35,7 @@ const (
 	DefaultDatOchiIdleHrs  = 24 * 50 // 50 days without activity
 	DefaultDatOchiLowResHr = 24 * 10 // 10 days with fewer than 10 posts
 	DefaultPolicyVersion   = "2026-11-25"
+	MaxBanHours            = 24 * 365 * 10
 )
 
 type Scope string
@@ -80,6 +82,17 @@ var (
 	ErrProviderNotFound     = errors.New("bbs: provider not found")
 	ErrUnsupportedOperation = errors.New("bbs: operation not supported by provider")
 	ErrAlreadyExists        = errors.New("bbs: resource already exists")
+
+	ErrInvalidCategoryName   = fmt.Errorf("%w: invalid category name", ErrInvalidInput)
+	ErrInvalidBoardName      = fmt.Errorf("%w: invalid board name", ErrInvalidInput)
+	ErrInvalidTitleLength    = fmt.Errorf("%w: title length invalid", ErrInvalidInput)
+	ErrInvalidNameLength     = fmt.Errorf("%w: name exceeds max length", ErrInvalidInput)
+	ErrInvalidBodyLength     = fmt.Errorf("%w: body length invalid", ErrInvalidInput)
+	ErrReportReasonRequired  = fmt.Errorf("%w: report reason required", ErrInvalidInput)
+	ErrGuildIDRequired       = fmt.Errorf("%w: guild_id required for local category", ErrInvalidInput)
+	ErrBoardScopeMismatch    = fmt.Errorf("%w: board scope must match category scope", ErrInvalidInput)
+	ErrInvalidBanDuration    = fmt.Errorf("%w: ban duration out of range", ErrInvalidInput)
+	ErrBoardProviderMismatch = fmt.Errorf("%w: board provider must match category provider", ErrInvalidInput)
 )
 
 // BoardRules configures anonymous posting behavior for a board or thread.
@@ -212,6 +225,7 @@ type BoardMount struct {
 	BoardID          uuid.UUID
 	GuildID          snowflake.ID
 	ChannelID        snowflake.ID
+	Locale           string
 	IsForum          bool
 	PinnedPostID     *snowflake.ID
 	ControlMessageID *snowflake.ID
@@ -253,6 +267,7 @@ type ThreadWatch struct {
 	ID        uuid.UUID
 	ThreadID  uuid.UUID
 	UserID    snowflake.ID
+	Locale    string
 	CreatedAt time.Time
 }
 

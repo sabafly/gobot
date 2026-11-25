@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -38,7 +39,16 @@ import (
 	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/internal/bbs"
 	"github.com/sabafly/gobot/internal/bbs/discordsync"
+	"github.com/sabafly/gobot/internal/i18n"
 )
+
+func TestMain(m *testing.M) {
+	if err := i18n.LoadLocales("../../../locales"); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to load locales: %v\n", err)
+		os.Exit(1)
+	}
+	os.Exit(m.Run())
+}
 
 func containsPictographEmoji(s string) bool {
 	for _, r := range s {
@@ -131,7 +141,7 @@ func TestPayloadValidator_LimitsAndClamping(t *testing.T) {
 		t.Fatal("expected error for 0-option StringSelect")
 	}
 
-	// 6. Modal validation: disabled select rejected, label clamped <= 45
+	// 6. Modal validation: disabled select rejected, label clamped <= 45, TextDisplay sum <= 4000
 	badModal := discord.ModalCreate{
 		CustomID: "m1",
 		Title:    strings.Repeat("題", 50),
@@ -145,6 +155,29 @@ func TestPayloadValidator_LimitsAndClamping(t *testing.T) {
 	}
 	if _, err := v.ValidateModal(badModal); err == nil {
 		t.Fatal("expected error for disabled select inside modal")
+	}
+
+	overTextModal := discord.ModalCreate{
+		CustomID: "m_over",
+		Title:    "Notice",
+		Components: []discord.LayoutComponent{
+			discord.NewTextDisplay(strings.Repeat("a", 2001)),
+			discord.NewTextDisplay(strings.Repeat("b", 2000)),
+		},
+	}
+	if _, err := v.ValidateModal(overTextModal); err == nil {
+		t.Fatal("expected error when combined modal TextDisplay exceeds 4000 runes")
+	}
+	exactTextModal := discord.ModalCreate{
+		CustomID: "m_exact",
+		Title:    "Notice",
+		Components: []discord.LayoutComponent{
+			discord.NewTextDisplay(strings.Repeat("a", 2000)),
+			discord.NewTextDisplay(strings.Repeat("b", 2000)),
+		},
+	}
+	if _, err := v.ValidateModal(exactTextModal); err != nil {
+		t.Fatalf("expected combined modal TextDisplay == 4000 to pass, got %v", err)
 	}
 
 	okModal := discord.ModalCreate{
@@ -200,7 +233,7 @@ func TestPreflightCheckerAndMasking(t *testing.T) {
 	roleOK := snowflake.ID(201)
 
 	state := fakeGuildState{
-		features: nil, // non-Community guild
+		features: nil, // non-Community guild -> requires CreatePublicThreads
 		botPerms: discord.PermissionManageChannels.Add(
 			discord.PermissionViewChannel,
 			discord.PermissionSendMessages,
@@ -218,12 +251,28 @@ func TestPreflightCheckerAndMasking(t *testing.T) {
 	}
 	checker := discordsync.NewPreflightChecker(state)
 
+	if _, err := checker.CheckChannelCreate(guildID, "テスト板", "説明", true, nil); err == nil {
+		t.Fatal("expected missing CreatePublicThreads error on non-Community guild text fallback")
+	}
+
+	state.botPerms = state.botPerms.Add(discord.PermissionCreatePublicThreads)
+	checker = discordsync.NewPreflightChecker(state)
+
 	plan, err := checker.CheckChannelCreate(guildID, "テスト板", "説明", true, nil)
 	if err != nil {
 		t.Fatalf("CheckChannelCreate failed: %v", err)
 	}
 	if plan.UseForum || plan.FallbackReason != "community_required" {
 		t.Fatalf("expected non-Community fallback to text channel, got %+v", plan)
+	}
+
+	// Community guild forum channel does not require CreatePublicThreads
+	state.features = []discord.GuildFeature{discord.GuildFeatureCommunity}
+	state.botPerms &^= discord.PermissionCreatePublicThreads
+	checker = discordsync.NewPreflightChecker(state)
+	forumPlan, err := checker.CheckChannelCreate(guildID, "テスト板", "説明", true, nil)
+	if err != nil || !forumPlan.UseForum {
+		t.Fatalf("expected Community forum check to pass without CreatePublicThreads, got %+v, err=%v", forumPlan, err)
 	}
 
 	// Overwrites masking prevents 403 from setting bits bot lacks (e.g. ManageWebhooks)
@@ -296,7 +345,7 @@ func TestRenderer_ZeroEmoji_MediaGallery_And_ReaderPagination(t *testing.T) {
 		Body:      "画像テスト https://example.com/pic.png",
 		CreatedAt: time.Now(),
 	}
-	postMsg, err := v.ValidateAndClampMessageCreate(discordsync.RenderPostMessageCreate(post, thread, nil))
+	postMsg, err := v.ValidateAndClampMessageCreate(discordsync.RenderPostMessageCreate(post, thread, nil, discord.LocaleJapanese))
 	if err != nil {
 		t.Fatalf("post message failed: %v", err)
 	}
@@ -313,7 +362,7 @@ func TestRenderer_ZeroEmoji_MediaGallery_And_ReaderPagination(t *testing.T) {
 	}
 
 	post.Abone = true
-	aboneMsg := discordsync.RenderPostMessageCreate(post, thread, nil)
+	aboneMsg := discordsync.RenderPostMessageCreate(post, thread, nil, discord.LocaleJapanese)
 	for _, c := range aboneMsg.Components {
 		if c.Type() == discord.ComponentTypeMediaGallery {
 			t.Fatal("MediaGallery must be removed when post is aboned")
@@ -333,7 +382,7 @@ func TestRenderer_ZeroEmoji_MediaGallery_And_ReaderPagination(t *testing.T) {
 			CreatedAt: time.Now(),
 		})
 	}
-	pageComps, startRes, endRes := discordsync.RenderReaderPage(thread, posts, 0, nil)
+	pageComps, startRes, endRes := discordsync.RenderReaderPage(thread, posts, 0, nil, discord.LocaleJapanese)
 	if startRes != 1 || endRes >= 20 {
 		t.Fatalf("expected multi-page split under 3500 runes, got %d..%d", startRes, endRes)
 	}
@@ -351,22 +400,33 @@ func TestRenderer_ZeroEmoji_MediaGallery_And_ReaderPagination(t *testing.T) {
 }
 
 func TestDebouncerAndInvalidRequestGuard(t *testing.T) {
-	deb := discordsync.NewControlPanelDebouncer(30 * time.Millisecond)
+	deb := discordsync.NewControlPanelDebouncer(20 * time.Millisecond)
 	defer deb.Stop()
 
 	id := uuid.New()
 	var calls atomic.Int32
-	for range 5 {
+	done := make(chan int, 10)
+	for i := range 5 {
+		idx := i
 		deb.Schedule(id, func() {
 			calls.Add(1)
+			done <- idx
 		})
 	}
-	time.Sleep(80 * time.Millisecond)
+	select {
+	case gotIdx := <-done:
+		if gotIdx != 4 {
+			t.Fatalf("expected latest scheduled callback (4) to run, got %d", gotIdx)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for debounced callback")
+	}
 	if got := calls.Load(); got != 1 {
 		t.Fatalf("expected 5 bursts coalesced into 1 call, got %d", got)
 	}
 
-	guard := discordsync.NewInvalidRequestGuard(10*time.Minute, 3, 2)
+	guard := discordsync.NewInvalidRequestGuard(10*time.Minute, 10, 2)
+	guard.SetCircuitCooldown(1 * time.Minute)
 	mountID := uuid.New()
 	now := time.Now()
 
@@ -375,7 +435,7 @@ func TestDebouncerAndInvalidRequestGuard(t *testing.T) {
 	errShared429 := &rest.Error{Response: &http.Response{StatusCode: 429, Header: http.Header{"X-Ratelimit-Scope": []string{"shared"}}}}
 
 	// Shared 429s must not trip global guard
-	for range 5 {
+	for range 15 {
 		guard.RecordError(uuid.Nil, errShared429, now)
 	}
 	if guard.IsThrottled(now) {
@@ -390,13 +450,29 @@ func TestDebouncerAndInvalidRequestGuard(t *testing.T) {
 		t.Fatal("1st 403 should not open circuit breaker yet")
 	}
 	guard.RecordError(mountID, err403, now)
-	if !guard.IsMountOpen(mountID) {
+	if !guard.IsMountOpenAt(mountID, now) {
 		t.Fatal("2nd 403 should open mount circuit breaker")
 	}
 
-	// 3rd invalid request (err403) hits global threshold 3
-	guard.RecordError(uuid.New(), err403, now)
-	if !guard.IsThrottled(now) {
+	// After cooldown, 1 half-open probe is permitted while concurrent check still sees open.
+	afterCooldown := now.Add(2 * time.Minute)
+	if guard.IsMountOpenAt(mountID, afterCooldown) {
+		t.Fatal("expected first check after cooldown to allow half-open probe")
+	}
+	if !guard.IsMountOpenAt(mountID, afterCooldown) {
+		t.Fatal("expected second concurrent check during half-open probe to stay open")
+	}
+	guard.RecordMountSuccess(mountID)
+	if guard.IsMountOpenAt(mountID, afterCooldown) {
+		t.Fatal("expected RecordMountSuccess to close circuit breaker")
+	}
+
+	// Global threshold test with separate mounts
+	smallGuard := discordsync.NewInvalidRequestGuard(10*time.Minute, 3, 2)
+	for range 3 {
+		smallGuard.RecordError(uuid.New(), err403, now)
+	}
+	if !smallGuard.IsThrottled(now) {
 		t.Fatal("expected global InvalidRequestGuard to throttle at threshold 3")
 	}
 
@@ -440,5 +516,289 @@ func TestDebouncerAndInvalidRequestGuard(t *testing.T) {
 	}
 	if discordsync.HasFlaggedMediaScan(flaggedMsg, true) {
 		t.Fatal("expected explicit media in NSFW channel to be allowed")
+	}
+}
+
+func containsJapaneseRune(s string) bool {
+	for _, r := range s {
+		if unicode.In(r, unicode.Hiragana, unicode.Katakana, unicode.Han) {
+			return true
+		}
+	}
+	return false
+}
+
+func assertLayoutENClean(t *testing.T, comps []discord.LayoutComponent) {
+	t.Helper()
+	assertNoEmojiInLayout(t, comps)
+	for _, comp := range comps {
+		switch c := comp.(type) {
+		case discord.TextDisplayComponent:
+			if strings.Contains(c.Content, "components.bbs.") || containsJapaneseRune(c.Content) {
+				t.Fatalf("unexpected untranslated or Japanese text in en-US TextDisplay: %q", c.Content)
+			}
+		case discord.ActionRowComponent:
+			for _, ic := range c.Components {
+				if btn, ok := ic.(discord.ButtonComponent); ok {
+					if strings.Contains(btn.Label, "components.bbs.") || containsJapaneseRune(btn.Label) {
+						t.Fatalf("unexpected untranslated or Japanese text in en-US Button: %q", btn.Label)
+					}
+				}
+			}
+		case discord.ContainerComponent:
+			var sub []discord.LayoutComponent
+			for _, sc := range c.Components {
+				if lc, ok := sc.(discord.LayoutComponent); ok {
+					sub = append(sub, lc)
+				}
+			}
+			assertLayoutENClean(t, sub)
+		}
+	}
+}
+
+func TestRenderer_I18n_JapaneseAndEnglish(t *testing.T) {
+	v := discordsync.PayloadValidator{}
+	boardID := uuid.New()
+	mountID := uuid.New()
+	mirrorID := uuid.New()
+	threadID := uuid.New()
+
+	board := bbs.Board{
+		ID:          boardID,
+		Scope:       bbs.ScopeGlobal,
+		Name:        "TechTalk",
+		Description: "General technology board",
+		Rules: bbs.BoardRules{
+			DefaultName: bbs.DefaultAnonymousName,
+			SLIP:        bbs.SLIPVVVVV,
+			MaxRes:      1000,
+		},
+	}
+	thread := bbs.Thread{
+		ID:        threadID,
+		BoardID:   boardID,
+		Title:     "Go 1.27 Discussion",
+		Status:    bbs.ThreadStatusActive,
+		ResCount:  5,
+		Rules:     board.Rules,
+		CreatedAt: time.Now().Add(-26 * time.Hour),
+	}
+	posts := []bbs.Post{
+		{
+			ID:        uuid.New(),
+			ThreadID:  threadID,
+			ResNumber: 1,
+			Name:      bbs.DefaultAnonymousName,
+			SlipText:  "abcd-efgh",
+			AnonID:    "xyz12345",
+			IsOP:      true,
+			Body:      "Hello >>1",
+			CreatedAt: time.Now(),
+		},
+		{
+			ID:        uuid.New(),
+			ThreadID:  threadID,
+			ResNumber: 2,
+			Abone:     true,
+			CreatedAt: time.Now(),
+		},
+	}
+	pm := bbs.NewPolicyManager(bbs.PolicyConfig{
+		TermsURL: "https://example.com/terms",
+	})
+
+	for _, loc := range []discord.Locale{discord.LocaleJapanese, discord.LocaleEnglishUS} {
+		msgs := []discord.MessageCreate{
+			discordsync.RenderNotice(loc, "", "Notice body", discordsync.ColorNotice),
+			discordsync.RenderError(loc, "Error Title", "Error body"),
+			discordsync.RenderBoardGuide(board, mountID, loc),
+			discordsync.RenderPostMessageCreate(posts[0], thread, nil, loc),
+			discordsync.RenderPostMessageCreate(posts[1], thread, nil, loc),
+			discordsync.RenderLazyCatchupBanner(threadID, 2, 5, loc),
+			discordsync.RenderThreadControlPanel(mirrorID, thread, loc),
+			discordsync.RenderOver1000Message(thread, loc),
+			discordsync.RenderArchivedNotice(loc),
+			discordsync.RenderConsentGate(pm, loc, "tok123"),
+			discordsync.RenderRoleGatePanel(snowflake.ID(100), snowflake.ID(200), "2026-11-25", loc),
+		}
+		for i, m := range msgs {
+			validated, err := v.ValidateAndClampMessageCreate(m)
+			if err != nil {
+				t.Fatalf("locale %s message %d failed validation: %v", loc, i, err)
+			}
+			assertNoEmojiInLayout(t, validated.Components)
+			if loc == discord.LocaleEnglishUS {
+				assertLayoutENClean(t, validated.Components)
+			}
+		}
+
+		latestIdx := discordsync.ComputeLatestReaderStartIndex(thread, posts, nil, loc)
+		readerComps, _, _ := discordsync.RenderReaderPage(thread, posts, latestIdx, nil, loc)
+		if _, err := v.ValidateAndClampMessageCreate(discord.NewMessageCreateV2(readerComps...).WithEphemeral(true)); err != nil {
+			t.Fatalf("locale %s reader failed validation: %v", loc, err)
+		}
+		if loc == discord.LocaleEnglishUS {
+			assertLayoutENClean(t, readerComps)
+		}
+	}
+
+	pe := &discordsync.PreflightError{
+		Kind:     discordsync.PreflightErrRoleHierarchy,
+		RoleName: "Member",
+		RolePos:  8,
+		BotPos:   5,
+	}
+	jaMsg, ok := discordsync.FormatPreflightError(discord.LocaleJapanese, pe)
+	if !ok || !containsJapaneseRune(jaMsg) {
+		t.Fatalf("expected Japanese preflight error message, got ok=%v %q", ok, jaMsg)
+	}
+	enMsg, ok := discordsync.FormatPreflightError(discord.LocaleEnglishUS, pe)
+	if !ok || containsJapaneseRune(enMsg) || strings.Contains(enMsg, "components.bbs.") {
+		t.Fatalf("expected clean English preflight error message, got ok=%v %q", ok, enMsg)
+	}
+}
+
+type mockInteractionEvent struct {
+	deferErr    error
+	createErr   error
+	updateErr   error
+	deferCalls  int
+	createCalls int
+	editCalls   int
+	followCalls int
+	updateCalls int
+	modalCalls  int
+}
+
+func (m *mockInteractionEvent) Modal(_ discord.ModalCreate, _ ...rest.RequestOpt) error {
+	m.modalCalls++
+	return nil
+}
+
+func (m *mockInteractionEvent) DeferCreateMessage(_ bool, _ ...rest.RequestOpt) error {
+	m.deferCalls++
+	return m.deferErr
+}
+
+func (m *mockInteractionEvent) CreateMessage(_ discord.MessageCreate, _ ...rest.RequestOpt) error {
+	m.createCalls++
+	return m.createErr
+}
+
+func (m *mockInteractionEvent) UpdateInteractionResponse(_ discord.MessageUpdate, _ ...rest.RequestOpt) (*discord.Message, error) {
+	m.editCalls++
+	return &discord.Message{}, m.updateErr
+}
+
+func (m *mockInteractionEvent) CreateFollowupMessage(_ discord.MessageCreate, _ ...rest.RequestOpt) (*discord.Message, error) {
+	m.followCalls++
+	return &discord.Message{}, nil
+}
+
+func (m *mockInteractionEvent) UpdateMessage(_ discord.MessageUpdate, _ ...rest.RequestOpt) error {
+	m.updateCalls++
+	return m.updateErr
+}
+
+func TestSafeResponder_WindowsAndAckStates(t *testing.T) {
+	msg := discord.NewMessageCreateV2(discord.NewTextDisplay("ok"))
+	upd := discord.NewMessageUpdateV2(discord.NewTextDisplay("updated"))
+
+	// 1. Stale unacked interaction (>3s) must reject initial CreateMessage and UpdateComponentMessage
+	stale := discordsync.NewSafeResponder(time.Now().Add(-5 * time.Second))
+	evStale := &mockInteractionEvent{}
+	if err := stale.RespondMessageCreate(evStale, msg); err == nil {
+		t.Fatal("expected >3s unacked RespondMessageCreate to fail")
+	}
+	if err := stale.UpdateComponentMessage(evStale, upd); err == nil {
+		t.Fatal("expected >3s unacked UpdateComponentMessage to fail")
+	}
+	if evStale.createCalls != 0 || evStale.updateCalls != 0 {
+		t.Fatalf("stale interaction must not send REST calls: %+v", evStale)
+	}
+
+	// 2. Pre-ack 4xx failure on DeferCreate must keep initial CreateMessage available within 3s
+	srPreAck := discordsync.NewSafeResponder(time.Now())
+	ev400 := &mockInteractionEvent{
+		deferErr: &rest.Error{Response: &http.Response{StatusCode: 400}},
+	}
+	if err := srPreAck.DeferCreate(ev400, true); err == nil {
+		t.Fatal("expected DeferCreate 400 error to propagate")
+	}
+	if err := srPreAck.RespondMessageCreate(ev400, msg); err != nil {
+		t.Fatalf("expected fallback CreateMessage after pre-ack 400 failure, got %v", err)
+	}
+	if ev400.createCalls != 1 || ev400.editCalls != 0 {
+		t.Fatalf("expected CreateMessage fallback instead of UpdateInteractionResponse: %+v", ev400)
+	}
+
+	// 3. Successful DeferCreate allows UpdateInteractionResponse even 10s later, and blocks duplicate UpdateComponentMessage
+	srComp := discordsync.NewSafeResponder(time.Now())
+	evComp := &mockInteractionEvent{}
+	if err := srComp.UpdateComponentMessage(evComp, upd); err != nil {
+		t.Fatalf("first UpdateComponentMessage failed: %v", err)
+	}
+	if err := srComp.UpdateComponentMessage(evComp, upd); err == nil {
+		t.Fatal("duplicate UpdateComponentMessage on same responder must fail")
+	}
+	if evComp.updateCalls != 1 {
+		t.Fatalf("expected exactly 1 UpdateMessage call, got %d", evComp.updateCalls)
+	}
+}
+
+func TestRenderer_ExtDatBudget_And_LinkExpandedPagination(t *testing.T) {
+	v := discordsync.PayloadValidator{}
+	threadID := uuid.New()
+	thread := bbs.Thread{
+		ID:       threadID,
+		Title:    "Test",
+		ResCount: 4,
+		ExtDat:   strings.Repeat("EXT", 55), // 165 runes > 120 old reserve
+		Rules:    bbs.BoardRules{MaxRes: 1000}.Normalize(),
+	}
+
+	op := bbs.Post{
+		ID:        uuid.New(),
+		ThreadID:  threadID,
+		ResNumber: 1,
+		Name:      "名無し",
+		AnonID:    "abcd1234",
+		IsOP:      true,
+		Body:      strings.Repeat("あ", 1800),
+		CreatedAt: time.Now(),
+	}
+	opMsg := discordsync.RenderPostMessageCreate(op, thread, nil, discord.LocaleJapanese)
+	if _, err := v.ValidateAndClampMessageCreate(opMsg); err != nil {
+		t.Fatalf("OP post with long ExtDat failed Components V2 validation: %v", err)
+	}
+
+	// Build 4 posts where without link expansion 3&4 look close, but link expansion pushes size over budget,
+	// and res 2 + res 3 combined exceed budget so Prev from res 4 must land on res 3.
+	posts := []bbs.Post{
+		{ID: uuid.New(), ThreadID: threadID, ResNumber: 1, AnonID: "1", Body: strings.Repeat("a", 400), CreatedAt: time.Now()},
+		{ID: uuid.New(), ThreadID: threadID, ResNumber: 2, AnonID: "2", Body: strings.Repeat("b", 2000), CreatedAt: time.Now()},
+		{ID: uuid.New(), ThreadID: threadID, ResNumber: 3, AnonID: "3", Body: strings.Repeat("c", 2800), CreatedAt: time.Now()},
+		{ID: uuid.New(), ThreadID: threadID, ResNumber: 4, AnonID: "4", Body: ">>1 >>1 >>1 >>1 " + strings.Repeat("d", 300), CreatedAt: time.Now()},
+	}
+	resolveURL := func(resNum uint32) (string, bool) {
+		return fmt.Sprintf("https://discord.com/channels/100000000000000001/200000000000000002/%d", resNum), true
+	}
+	latestIdx := discordsync.ComputeLatestReaderStartIndex(thread, posts, resolveURL, discord.LocaleJapanese)
+	_, startRes, endRes := discordsync.RenderReaderPage(thread, posts, latestIdx, resolveURL, discord.LocaleJapanese)
+	if endRes != 4 {
+		t.Fatalf("expected Latest page (starting idx=%d -> res=%d) to reach final res 4, stopped at %d", latestIdx, startRes, endRes)
+	}
+
+	// Verify Prev navigation from startIndex=3 (res 4) points to res 3, not res 2.
+	comps, _, _ := discordsync.RenderReaderPage(thread, posts, 3, resolveURL, discord.LocaleJapanese)
+	nav := comps[1].(discord.ActionRowComponent)
+	prevBtn := nav.Components[1].(discord.ButtonComponent)
+	if !strings.HasSuffix(prevBtn.CustomID, "/3") {
+		t.Fatalf("expected Prev button to target res 3 right before page start 4, got customID=%q", prevBtn.CustomID)
+	}
+	_, prevStartRes, prevEndRes := discordsync.RenderReaderPage(thread, posts, 2, resolveURL, discord.LocaleJapanese)
+	if prevStartRes != 3 || prevEndRes != 3 {
+		t.Fatalf("expected Prev page at startIndex=2 to render res 3..3, got %d..%d", prevStartRes, prevEndRes)
 	}
 }

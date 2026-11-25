@@ -263,6 +263,7 @@ func run() error {
 }
 
 func initBBSSystem(component *components.Components, config *components.Config, gormDB *database.DB) *bbsCmd.System {
+	store := gormstore.New(gormDB.DB)
 	secret := os.Getenv("BBS_SECRET_KEY")
 	if secret == "" {
 		secret = config.BBS.SecretKey
@@ -273,9 +274,16 @@ func initBBSSystem(component *components.Components, config *components.Config, 
 	} else {
 		var rnd [32]byte
 		_, _ = rand.Read(rnd[:])
-		secretBytes = rnd[:]
-		slog.Warn("BBS_SECRET_KEY and config.bbs.secret_key are empty; using ephemeral random key (IDs/hashes will rotate on restart)",
-			slog.String("hint", hex.EncodeToString(rnd[:4])))
+		persisted, err := store.GetOrCreateSystemSecret(context.Background(), "default_hmac_secret", rnd[:])
+		if err != nil || len(persisted) == 0 {
+			secretBytes = rnd[:]
+			slog.Warn("BBS_SECRET_KEY and config.bbs.secret_key are empty and secret persistence failed; using ephemeral key",
+				slog.Any("err", err))
+		} else {
+			secretBytes = persisted
+			slog.Warn("BBS_SECRET_KEY and config.bbs.secret_key are empty; using DB-persisted auto-generated key (recommend configuring fixed secret)",
+				slog.String("hint", hex.EncodeToString(secretBytes[:min(4, len(secretBytes))])))
+		}
 	}
 
 	seenOps := make(map[snowflake.ID]struct{}, len(config.BBS.Operators)+len(config.Debug.DebugUsers))
@@ -290,7 +298,6 @@ func initBBSSystem(component *components.Components, config *components.Config, 
 		}
 	}
 
-	store := gormstore.New(gormDB.DB)
 	registry := bbs.NewProviderRegistry(bbs.DefaultProviderKey)
 	registry.Register(store)
 	identity := bbs.NewIdentityGenerator(secretBytes)
@@ -304,6 +311,9 @@ func initBBSSystem(component *components.Components, config *components.Config, 
 	syncer := discordsync.NewSyncer(svc)
 	syncer.CanSendDM = func(ctx context.Context, uid snowflake.ID) bool {
 		return discordsync.CanSendDMToUser(ctx, gormDB, uid)
+	}
+	syncer.UserLocale = func(ctx context.Context, uid snowflake.ID) discord.Locale {
+		return discordsync.ResolveUserLocaleFromDB(ctx, gormDB, uid)
 	}
 	return bbsCmd.NewSystem(component, svc, syncer, config.BBS.OperatorLogChannel)
 }

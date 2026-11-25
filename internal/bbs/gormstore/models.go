@@ -42,8 +42,17 @@ func Models() []any {
 		&BBSThreadWatch{},
 		&BBSBan{},
 		&BBSReport{},
+		&BBSSystemSecret{},
 	}
 }
+
+type BBSSystemSecret struct {
+	SecretKey string    `gorm:"column:secret_key;type:varchar(64);primaryKey"`
+	SecretHex string    `gorm:"column:secret_hex;type:varchar(256);not null"`
+	CreatedAt time.Time `gorm:"not null"`
+}
+
+func (BBSSystemSecret) TableName() string { return "bbs_system_secrets" }
 
 type BBSGuildConfig struct {
 	GuildID         snowflake.ID  `gorm:"primaryKey;autoIncrement:false"`
@@ -52,7 +61,7 @@ type BBSGuildConfig struct {
 	AgreedByUserID  snowflake.ID  `gorm:"not null;default:0"`
 	AgreedAt        *time.Time    `gorm:""`
 	ViewerRoleID    *snowflake.ID `gorm:""`
-	DefaultUseForum bool          `gorm:"not null;default:true"`
+	DefaultUseForum bool          `gorm:"not null"`
 	ModLogChannelID *snowflake.ID `gorm:""`
 	UpdatedAt       time.Time     `gorm:"not null"`
 }
@@ -115,10 +124,11 @@ type BBSBoardMount struct {
 	Board            BBSBoard      `gorm:"foreignKey:BoardID;constraint:OnDelete:CASCADE;"`
 	GuildID          snowflake.ID  `gorm:"not null;index"`
 	ChannelID        snowflake.ID  `gorm:"not null;uniqueIndex"`
-	IsForum          bool          `gorm:"not null;default:true"`
+	Locale           string        `gorm:"type:varchar(16);not null;default:'ja'"`
+	IsForum          bool          `gorm:"not null"`
 	PinnedPostID     *snowflake.ID `gorm:""`
 	ControlMessageID *snowflake.ID `gorm:""`
-	Active           bool          `gorm:"not null;default:true"`
+	Active           bool          `gorm:"not null"`
 	CreatedAt        time.Time     `gorm:"not null"`
 }
 
@@ -201,6 +211,7 @@ func (BBSPostMirror) TableName() string { return "bbs_post_mirrors" }
 
 type BBSPostReference struct {
 	ThreadID uuid.UUID `gorm:"type:varchar(36);primaryKey"`
+	Thread   BBSThread `gorm:"foreignKey:ThreadID;constraint:OnDelete:CASCADE;"`
 	FromRes  uint32    `gorm:"primaryKey;autoIncrement:false"`
 	ToRes    uint32    `gorm:"primaryKey;autoIncrement:false;index"`
 }
@@ -210,7 +221,9 @@ func (BBSPostReference) TableName() string { return "bbs_post_references" }
 type BBSThreadWatch struct {
 	ID        uuid.UUID    `gorm:"type:varchar(36);primaryKey"`
 	ThreadID  uuid.UUID    `gorm:"type:varchar(36);not null;uniqueIndex:idx_bbs_watch_thread_user"`
+	Thread    BBSThread    `gorm:"foreignKey:ThreadID;constraint:OnDelete:CASCADE;"`
 	UserID    snowflake.ID `gorm:"not null;uniqueIndex:idx_bbs_watch_thread_user"`
+	Locale    string       `gorm:"type:varchar(16);not null;default:'ja'"`
 	CreatedAt time.Time    `gorm:"not null"`
 }
 

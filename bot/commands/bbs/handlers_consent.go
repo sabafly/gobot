@@ -20,7 +20,7 @@
 package bbs
 
 import (
-	"fmt"
+	"log/slog"
 	"strconv"
 
 	"github.com/disgoorg/disgo/discord"
@@ -29,34 +29,43 @@ import (
 
 	bbscore "github.com/sabafly/gobot/internal/bbs"
 	"github.com/sabafly/gobot/internal/bbs/discordsync"
+	"github.com/sabafly/gobot/internal/i18n"
 )
 
 func (s *System) handleConsentViewDoc(e *handler.ComponentEvent) error {
+	loc := e.Locale()
 	kind := bbscore.PolicyDocKind(e.Vars["doc"])
-	var title string
+	var titleKey string
 	switch kind {
 	case bbscore.PolicyDocTerms:
-		title = "利用規約"
+		titleKey = "components.bbs.consent.btn.terms"
 	case bbscore.PolicyDocGuidelines:
-		title = "コミュニティガイドライン"
+		titleKey = "components.bbs.consent.btn.guidelines"
 	case bbscore.PolicyDocPrivacy:
-		title = "プライバシーポリシー"
+		titleKey = "components.bbs.consent.btn.privacy"
 	default:
-		s.replyComponentError(e, errTitleInvalidInput, "不明な文書種別です。")
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.consent.doc.invalid"),
+		)
 		return nil
 	}
 
-	docText := s.Service.Policy.GetDocument(kind, string(e.Locale()))
-	msg := discordsync.RenderNotice(title, docText, discordsync.ColorLocalBoard)
+	docText := s.Service.Policy.GetDocument(kind, string(loc))
+	msg := discordsync.RenderNotice(loc, i18n.TranslateText(loc, titleKey), docText, discordsync.ColorLocalBoard).WithEphemeral(true)
 	sr := discordsync.NewSafeResponder(e.ID().Time())
 	_ = sr.RespondMessageCreate(e, msg)
 	return nil
 }
 
 func (s *System) handleConsentAccept(e *handler.ComponentEvent) error {
+	loc := e.Locale()
 	consent, err := s.Service.AcceptPolicy(e.Ctx, e.User().ID)
 	if err != nil {
-		s.replyComponentError(e, "同意登録失敗", describeBBSError(err))
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.consent.accept_failed"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
 
@@ -69,17 +78,17 @@ func (s *System) handleConsentAccept(e *handler.ComponentEvent) error {
 					boardName = board.Name
 				}
 			}
-			modal := buildNewThreadModal(act.TargetID, boardName)
+			modal := buildNewThreadModal(loc, act.TargetID, boardName)
 			if err := discordsync.SafeRespondComponentModal(e.ComponentInteractionCreate, modal); err == nil {
 				return nil
 			}
 		case pendingNewPost:
-			modal := buildNewPostModal(act.TargetID)
+			modal := buildNewPostModal(loc, act.TargetID)
 			if err := discordsync.SafeRespondComponentModal(e.ComponentInteractionCreate, modal); err == nil {
 				return nil
 			}
 		case pendingOpenReader:
-			if mu, rErr := s.buildReaderMessageUpdate(e.Ctx, e.GuildID(), act.TargetID, act.Page); rErr == nil {
+			if mu, rErr := s.buildReaderMessageUpdate(e.Ctx, e.GuildID(), act.TargetID, act.Page, loc); rErr == nil {
 				sr := discordsync.NewSafeResponder(e.ID().Time())
 				_ = sr.UpdateComponentMessage(e, mu)
 				return nil
@@ -89,9 +98,11 @@ func (s *System) handleConsentAccept(e *handler.ComponentEvent) error {
 
 	upd := discord.NewMessageUpdateV2(
 		discord.NewContainer(
-			discord.NewTextDisplay("### ■ 同意が完了しました"),
+			discord.NewTextDisplay(i18n.TranslateText(loc, "components.bbs.consent.accepted.title")),
 			discord.NewSmallSeparator(),
-			discord.NewTextDisplayf("BBS利用規約・ガイドライン・プライバシーポリシー (version: %s) への同意を記録しました。\n元のボタンを押して操作を続けてください。", consent.PolicyVersion),
+			discord.NewTextDisplay(i18n.TranslateText(loc, "components.bbs.consent.accepted.body", map[string]any{
+				"version": consent.PolicyVersion,
+			})),
 		).WithAccentColor(discordsync.ColorLocalBoard),
 	).WithAllowedMentions(&discord.AllowedMentions{})
 
@@ -101,15 +112,19 @@ func (s *System) handleConsentAccept(e *handler.ComponentEvent) error {
 }
 
 func (s *System) handleConsentRevoke(e *handler.ComponentEvent) error {
+	loc := e.Locale()
 	if err := s.Service.RevokePolicy(e.Ctx, e.User().ID); err != nil {
-		s.replyComponentError(e, "撤回失敗", describeBBSError(err))
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.consent.revoke_failed"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
 	upd := discord.NewMessageUpdateV2(
 		discord.NewContainer(
-			discord.NewTextDisplay("### ■ ポリシー同意を撤回しました"),
+			discord.NewTextDisplay(i18n.TranslateText(loc, "components.bbs.consent.revoked.title")),
 			discord.NewSmallSeparator(),
-			discord.NewTextDisplay("BBSポリシーへの同意を撤回しました。今後の投稿・閲覧操作には再同意が必要です。"),
+			discord.NewTextDisplay(i18n.TranslateText(loc, "components.bbs.consent.revoked.body")),
 		).WithAccentColor(discordsync.ColorNotice),
 	).WithAllowedMentions(&discord.AllowedMentions{})
 
@@ -119,43 +134,63 @@ func (s *System) handleConsentRevoke(e *handler.ComponentEvent) error {
 }
 
 func (s *System) handleConsentRole(e *handler.ComponentEvent) error {
+	loc := e.Locale()
 	gidVal, err := strconv.ParseUint(e.Vars["guild_id"], 10, 64)
 	if err != nil || gidVal == 0 {
-		s.replyComponentError(e, errTitleInvalidInput, "サーバーIDが不正です。")
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.consent.role.invalid_guild"),
+		)
 		return nil
 	}
 	guildID := snowflake.ID(gidVal)
 
 	if _, err := s.Service.AcceptPolicy(e.Ctx, e.User().ID); err != nil {
-		s.replyComponentError(e, "同意記録失敗", describeBBSError(err))
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.consent.accept_failed"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
 
 	cfg, err := s.Service.EnsureGuildEnabled(e.Ctx, guildID)
 	if err != nil {
-		s.replyComponentError(e, "ロール付与失敗", describeBBSError(err))
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.consent.role.failed"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
 	if cfg.ViewerRoleID == nil || *cfg.ViewerRoleID == 0 {
-		s.replyComponentError(e, "ロール未設定", "このサーバーには閲覧ロールが設定されていません。")
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.consent.role.not_configured_title"),
+			i18n.TranslateText(loc, "components.bbs.consent.role.not_configured_body"),
+		)
 		return nil
 	}
 
 	checker := discordsync.NewPreflightChecker(discordsync.NewClientGuildStateReader(e.Client()))
 	if err := checker.CheckRoleAssign(guildID, *cfg.ViewerRoleID); err != nil {
-		s.replyComponentError(e, "ロール付与不可", err.Error())
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.consent.role.unassignable_title"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
 	if err := e.Client().Rest.AddMemberRole(guildID, e.User().ID, *cfg.ViewerRoleID); err != nil {
-		s.replyComponentError(e, "ロール付与失敗", fmt.Sprintf("ロール付与中にエラーが発生しました: %v", err))
+		slog.Warn("bbs failed to assign viewer role", "guild_id", guildID, "role_id", *cfg.ViewerRoleID, "err", err)
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.consent.role.failed"),
+			i18n.TranslateText(loc, "components.bbs.consent.role.error_body", map[string]any{"err": describeBBSError(loc, err)}),
+		)
 		return nil
 	}
 
 	sr := discordsync.NewSafeResponder(e.ID().Time())
-	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(
-		"同意・閲覧ロール付与完了",
-		fmt.Sprintf("ポリシー同意を記録し、<@&%d> を付与しました。", *cfg.ViewerRoleID),
+	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(loc,
+		i18n.TranslateText(loc, "components.bbs.consent.role.success_title"),
+		i18n.TranslateText(loc, "components.bbs.consent.role.success_body", map[string]any{"role_id": *cfg.ViewerRoleID}),
 		discordsync.ColorLocalBoard,
-	))
+	).WithEphemeral(true))
 	return nil
 }

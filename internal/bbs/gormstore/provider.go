@@ -21,6 +21,7 @@ package gormstore
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"time"
 
@@ -120,14 +121,25 @@ func (p *Provider) CreateCategory(ctx context.Context, input bbs.CreateCategoryI
 }
 
 func (p *Provider) DeleteCategory(ctx context.Context, id uuid.UUID) error {
-	res := p.session(ctx).Where("id = ?", id).Delete(&BBSCategory{})
-	if res.Error != nil {
-		return res.Error
-	}
-	if res.RowsAffected == 0 {
-		return bbs.ErrNotFound
-	}
-	return nil
+	return p.session(ctx).Transaction(func(tx *gorm.DB) error {
+		var boardIDs []uuid.UUID
+		if err := tx.Model(&BBSBoard{}).Where("category_id = ?", id).Pluck("id", &boardIDs).Error; err != nil {
+			return err
+		}
+		for _, bid := range boardIDs {
+			if err := deleteBoardTx(tx, bid); err != nil && !errors.Is(err, bbs.ErrNotFound) {
+				return err
+			}
+		}
+		res := tx.Where("id = ?", id).Delete(&BBSCategory{})
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected == 0 {
+			return bbs.ErrNotFound
+		}
+		return nil
+	})
 }
 
 // --- BoardProvider ---
@@ -193,29 +205,43 @@ func (p *Provider) CreateBoard(ctx context.Context, input bbs.CreateBoardInput) 
 func (p *Provider) UpdateBoard(ctx context.Context, id uuid.UUID, input bbs.UpdateBoardInput) (*bbs.Board, error) {
 	var row BBSBoard
 	err := p.session(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("id = ?", id).First(&row).Error; err != nil {
+		q := tx.Where("id = ?", id)
+		if tx.Name() == "mysql" {
+			q = q.Clauses(clause.Locking{Strength: "UPDATE"})
+		}
+		if err := q.First(&row).Error; err != nil {
 			return mapErr(err)
 		}
+		now := time.Now()
+		updates := map[string]any{
+			"updated_at": now,
+		}
+		row.UpdatedAt = now
 		if input.Name != nil {
 			row.Name = *input.Name
+			updates["name"] = *input.Name
 		}
 		if input.Description != nil {
 			row.Description = *input.Description
+			updates["description"] = *input.Description
 		}
 		if input.DefaultName != nil {
 			row.DefaultName = *input.DefaultName
+			updates["default_name"] = *input.DefaultName
 		}
 		if input.HideID != nil {
 			row.HideID = *input.HideID
+			updates["hide_id"] = *input.HideID
 		}
 		if input.SLIP != nil {
 			row.SLIPLevel = int(*input.SLIP)
+			updates["slip_level"] = int(*input.SLIP)
 		}
 		if input.Locked != nil {
 			row.Locked = *input.Locked
+			updates["locked"] = *input.Locked
 		}
-		row.UpdatedAt = time.Now()
-		return tx.Save(&row).Error
+		return tx.Model(&BBSBoard{}).Where("id = ?", id).Updates(updates).Error
 	})
 	if err != nil {
 		return nil, err
@@ -223,8 +249,44 @@ func (p *Provider) UpdateBoard(ctx context.Context, id uuid.UUID, input bbs.Upda
 	return toDomainBoard(&row), nil
 }
 
-func (p *Provider) DeleteBoard(ctx context.Context, id uuid.UUID) error {
-	res := p.session(ctx).Where("id = ?", id).Delete(&BBSBoard{})
+func deleteBoardTx(tx *gorm.DB, boardID uuid.UUID) error {
+	var threadIDs []uuid.UUID
+	if err := tx.Model(&BBSThread{}).Where("board_id = ?", boardID).Pluck("id", &threadIDs).Error; err != nil {
+		return err
+	}
+	if err := tx.Where("board_id = ?", boardID).Delete(&BBSReport{}).Error; err != nil {
+		return err
+	}
+	if len(threadIDs) > 0 {
+		var mirrorIDs []uuid.UUID
+		if err := tx.Model(&BBSThreadMirror{}).Where("thread_id IN ?", threadIDs).Pluck("id", &mirrorIDs).Error; err != nil {
+			return err
+		}
+		if len(mirrorIDs) > 0 {
+			if err := tx.Where("thread_mirror_id IN ?", mirrorIDs).Delete(&BBSPostMirror{}).Error; err != nil {
+				return err
+			}
+		}
+		if err := tx.Where("thread_id IN ?", threadIDs).Delete(&BBSPostReference{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("thread_id IN ?", threadIDs).Delete(&BBSThreadWatch{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("thread_id IN ?", threadIDs).Delete(&BBSThreadMirror{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("thread_id IN ?", threadIDs).Delete(&BBSPost{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Where("board_id = ?", boardID).Delete(&BBSThread{}).Error; err != nil {
+			return err
+		}
+	}
+	if err := tx.Where("board_id = ?", boardID).Delete(&BBSBoardMount{}).Error; err != nil {
+		return err
+	}
+	res := tx.Where("id = ?", boardID).Delete(&BBSBoard{})
 	if res.Error != nil {
 		return res.Error
 	}
@@ -232,6 +294,12 @@ func (p *Provider) DeleteBoard(ctx context.Context, id uuid.UUID) error {
 		return bbs.ErrNotFound
 	}
 	return nil
+}
+
+func (p *Provider) DeleteBoard(ctx context.Context, id uuid.UUID) error {
+	return p.session(ctx).Transaction(func(tx *gorm.DB) error {
+		return deleteBoardTx(tx, id)
+	})
 }
 
 // --- ThreadProvider ---
@@ -323,16 +391,30 @@ func (p *Provider) CreateThread(ctx context.Context, input bbs.CreateThreadRecor
 func (p *Provider) ArchiveThread(ctx context.Context, id uuid.UUID) (*bbs.Thread, error) {
 	var row BBSThread
 	err := p.session(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("id = ?", id).First(&row).Error; err != nil {
+		q := tx.Where("id = ?", id)
+		if tx.Name() == "mysql" {
+			q = q.Clauses(clause.Locking{Strength: "UPDATE"})
+		}
+		if err := q.First(&row).Error; err != nil {
 			return mapErr(err)
 		}
 		now := time.Now()
-		row.Status = string(bbs.ThreadStatusArchived)
-		if row.ArchivedAt == nil {
-			row.ArchivedAt = &now
+		archivedAt := row.ArchivedAt
+		if archivedAt == nil {
+			archivedAt = &now
 		}
+		updates := map[string]any{
+			"status":      string(bbs.ThreadStatusArchived),
+			"archived_at": archivedAt,
+			"updated_at":  now,
+		}
+		if err := tx.Model(&BBSThread{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+			return err
+		}
+		row.Status = string(bbs.ThreadStatusArchived)
+		row.ArchivedAt = archivedAt
 		row.UpdatedAt = now
-		return tx.Save(&row).Error
+		return nil
 	})
 	if err != nil {
 		return nil, err
@@ -549,11 +631,16 @@ func (p *Provider) CreateBoardMount(ctx context.Context, mount *bbs.BoardMount) 
 	if mount.CreatedAt.IsZero() {
 		mount.CreatedAt = time.Now()
 	}
+	loc := mount.Locale
+	if loc == "" {
+		loc = "ja"
+	}
 	row := BBSBoardMount{
 		ID:               mount.ID,
 		BoardID:          mount.BoardID,
 		GuildID:          mount.GuildID,
 		ChannelID:        mount.ChannelID,
+		Locale:           loc,
 		IsForum:          mount.IsForum,
 		PinnedPostID:     mount.PinnedPostID,
 		ControlMessageID: mount.ControlMessageID,
@@ -612,11 +699,16 @@ func (p *Provider) ListBoardMountsByGuild(ctx context.Context, guildID snowflake
 }
 
 func (p *Provider) UpdateBoardMount(ctx context.Context, mount *bbs.BoardMount) error {
+	loc := mount.Locale
+	if loc == "" {
+		loc = "ja"
+	}
 	row := BBSBoardMount{
 		ID:               mount.ID,
 		BoardID:          mount.BoardID,
 		GuildID:          mount.GuildID,
 		ChannelID:        mount.ChannelID,
+		Locale:           loc,
 		IsForum:          mount.IsForum,
 		PinnedPostID:     mount.PinnedPostID,
 		ControlMessageID: mount.ControlMessageID,
@@ -650,6 +742,49 @@ func (p *Provider) CreateThreadMirror(ctx context.Context, mirror *bbs.ThreadMir
 		CreatedAt:        mirror.CreatedAt,
 	}
 	return p.session(ctx).Create(&row).Error
+}
+
+func (p *Provider) CreateThreadAndPostMirror(ctx context.Context, threadMirror *bbs.ThreadMirror, postMirror *bbs.PostMirror) error {
+	now := time.Now()
+	if threadMirror.ID == uuid.Nil {
+		threadMirror.ID = uuidv7.New()
+	}
+	if threadMirror.CreatedAt.IsZero() {
+		threadMirror.CreatedAt = now
+	}
+	if postMirror.ID == uuid.Nil {
+		postMirror.ID = uuidv7.New()
+	}
+	if postMirror.ThreadMirrorID == uuid.Nil {
+		postMirror.ThreadMirrorID = threadMirror.ID
+	}
+	if postMirror.CreatedAt.IsZero() {
+		postMirror.CreatedAt = now
+	}
+	tmRow := BBSThreadMirror{
+		ID:               threadMirror.ID,
+		ThreadID:         threadMirror.ThreadID,
+		BoardMountID:     threadMirror.BoardMountID,
+		GuildID:          threadMirror.GuildID,
+		DiscordThreadID:  threadMirror.DiscordThreadID,
+		ControlMessageID: threadMirror.ControlMessageID,
+		SyncedUpToRes:    threadMirror.SyncedUpToRes,
+		CreatedAt:        threadMirror.CreatedAt,
+	}
+	pmRow := BBSPostMirror{
+		ID:               postMirror.ID,
+		PostID:           postMirror.PostID,
+		ThreadMirrorID:   postMirror.ThreadMirrorID,
+		GuildID:          postMirror.GuildID,
+		DiscordMessageID: postMirror.DiscordMessageID,
+		CreatedAt:        postMirror.CreatedAt,
+	}
+	return p.session(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&tmRow).Error; err != nil {
+			return err
+		}
+		return tx.Create(&pmRow).Error
+	})
 }
 
 func (p *Provider) GetThreadMirror(ctx context.Context, id uuid.UUID) (*bbs.ThreadMirror, error) {
@@ -700,6 +835,18 @@ func (p *Provider) UpdateThreadMirror(ctx context.Context, mirror *bbs.ThreadMir
 		CreatedAt:        mirror.CreatedAt,
 	}
 	return p.session(ctx).Save(&row).Error
+}
+
+func (p *Provider) AdvanceThreadMirrorSync(ctx context.Context, id uuid.UUID, syncedUpTo uint32) error {
+	return p.session(ctx).Model(&BBSThreadMirror{}).
+		Where("id = ? AND synced_up_to_res < ?", id, syncedUpTo).
+		Update("synced_up_to_res", syncedUpTo).Error
+}
+
+func (p *Provider) UpdateThreadMirrorControl(ctx context.Context, id uuid.UUID, controlMsgID *snowflake.ID) error {
+	return p.session(ctx).Model(&BBSThreadMirror{}).
+		Where("id = ?", id).
+		Update("control_message_id", controlMsgID).Error
 }
 
 func (p *Provider) DeleteThreadMirror(ctx context.Context, id uuid.UUID) error {
@@ -802,6 +949,7 @@ func (p *Provider) GetThreadWatch(ctx context.Context, threadID uuid.UUID, userI
 		ID:        row.ID,
 		ThreadID:  row.ThreadID,
 		UserID:    row.UserID,
+		Locale:    row.Locale,
 		CreatedAt: row.CreatedAt,
 	}, nil
 }
@@ -813,10 +961,15 @@ func (p *Provider) SaveThreadWatch(ctx context.Context, watch *bbs.ThreadWatch) 
 	if watch.CreatedAt.IsZero() {
 		watch.CreatedAt = time.Now()
 	}
+	loc := watch.Locale
+	if loc == "" {
+		loc = "ja"
+	}
 	row := BBSThreadWatch{
 		ID:        watch.ID,
 		ThreadID:  watch.ThreadID,
 		UserID:    watch.UserID,
+		Locale:    loc,
 		CreatedAt: watch.CreatedAt,
 	}
 	return p.session(ctx).Clauses(clause.OnConflict{DoNothing: true}).Create(&row).Error
@@ -837,6 +990,7 @@ func (p *Provider) ListThreadWatches(ctx context.Context, threadID uuid.UUID) ([
 			ID:        r.ID,
 			ThreadID:  r.ThreadID,
 			UserID:    r.UserID,
+			Locale:    r.Locale,
 			CreatedAt: r.CreatedAt,
 		}
 	}
@@ -1004,6 +1158,28 @@ func (p *Provider) GetAuditPostInfo(ctx context.Context, postID uuid.UUID) (*bbs
 	}, nil
 }
 
+// --- Store: System Secret ---
+
+func (p *Provider) GetOrCreateSystemSecret(ctx context.Context, secretKey string, fallback []byte) ([]byte, error) {
+	var row BBSSystemSecret
+	err := p.session(ctx).Where("secret_key = ?", secretKey).First(&row).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		newRow := BBSSystemSecret{
+			SecretKey: secretKey,
+			SecretHex: hex.EncodeToString(fallback),
+			CreatedAt: time.Now(),
+		}
+		if cErr := p.session(ctx).Clauses(clause.OnConflict{DoNothing: true}).Create(&newRow).Error; cErr != nil {
+			return nil, cErr
+		}
+		err = p.session(ctx).Where("secret_key = ?", secretKey).First(&row).Error
+	}
+	if err != nil {
+		return nil, err
+	}
+	return hex.DecodeString(row.SecretHex)
+}
+
 // --- Mappers ---
 
 func toDomainCategory(r *BBSCategory) *bbs.Category {
@@ -1098,6 +1274,7 @@ func toDomainBoardMount(r *BBSBoardMount) *bbs.BoardMount {
 		BoardID:          r.BoardID,
 		GuildID:          r.GuildID,
 		ChannelID:        r.ChannelID,
+		Locale:           r.Locale,
 		IsForum:          r.IsForum,
 		PinnedPostID:     r.PinnedPostID,
 		ControlMessageID: r.ControlMessageID,
