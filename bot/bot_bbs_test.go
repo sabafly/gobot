@@ -21,6 +21,7 @@ package bot
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"gorm.io/driver/sqlite"
@@ -28,6 +29,7 @@ import (
 
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database"
+	"github.com/sabafly/gobot/internal/bbs"
 	"github.com/sabafly/gobot/internal/bbs/gormstore"
 )
 
@@ -51,7 +53,7 @@ func TestInitBBSSystem_FailSafeOnSecretDBError(t *testing.T) {
 		t.Fatalf("expected initBBSSystem error on nil DB, got sys=%v err=%v", sysNil, errNil)
 	}
 
-	// Migrated DB succeeds and returns a usable System.
+	// Overlong PolicyVersion must fail closed in initBBSSystem so Bot startup isolates BBS cleanly.
 	dbHealthy, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	if err != nil {
 		t.Fatalf("open healthy sqlite failed: %v", err)
@@ -61,7 +63,14 @@ func TestInitBBSSystem_FailSafeOnSecretDBError(t *testing.T) {
 	}
 	gdb := &database.DB{DB: dbHealthy}
 	compHealthy := components.New(ctx, components.Config{}, gdb)
-	sysOK, errOK := initBBSSystem(compHealthy, &components.Config{}, gdb)
+	tooLongCfg := &components.Config{BBS: components.ConfigBBS{PolicyVersion: strings.Repeat("v", bbs.MaxPolicyVersionLen+1)}}
+	if sysBad, errBad := initBBSSystem(compHealthy, tooLongCfg, gdb); errBad == nil || sysBad != nil {
+		t.Fatalf("expected initBBSSystem to reject >%d PolicyVersion, got sys=%v err=%v", bbs.MaxPolicyVersionLen, sysBad, errBad)
+	}
+
+	// Migrated DB with valid PolicyVersion succeeds and returns a usable System.
+	validCfg := &components.Config{BBS: components.ConfigBBS{PolicyVersion: strings.Repeat("v", bbs.MaxPolicyVersionLen)}}
+	sysOK, errOK := initBBSSystem(compHealthy, validCfg, gdb)
 	if errOK != nil || sysOK == nil {
 		t.Fatalf("expected healthy initBBSSystem to succeed, got sys=%v err=%v", sysOK, errOK)
 	}

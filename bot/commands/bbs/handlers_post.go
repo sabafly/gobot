@@ -746,15 +746,29 @@ func (s *System) renderReaderComponents(ctx context.Context, guildID *snowflake.
 		}
 	}
 
+	var maxEndRes uint32
 	startIndex := 0
-	if pageSpec == "latest" {
+	trimmedSpec := strings.TrimSpace(pageSpec)
+	if trimmedSpec == "latest" {
 		startIndex = discordsync.ComputeLatestReaderStartIndex(*thread, posts, resolveURL, locale)
 	} else {
-		n, pErr := strconv.ParseUint(strings.TrimSpace(pageSpec), 10, 32)
-		if pErr != nil || n == 0 || (len(posts) > 0 && uint32(n) > thread.ResCount) {
-			return nil, bbscore.ErrInvalidReaderJump
+		startStr, endStr, isRange := strings.Cut(trimmedSpec, "-")
+		var targetRes uint32
+		if isRange {
+			sVal, sErr := strconv.ParseUint(startStr, 10, 32)
+			eVal, eErr := strconv.ParseUint(endStr, 10, 32)
+			if sErr != nil || eErr != nil || sVal == 0 || eVal < sVal || (len(posts) > 0 && uint32(eVal) > thread.ResCount) {
+				return nil, bbscore.ErrInvalidReaderJump
+			}
+			targetRes = uint32(sVal)
+			maxEndRes = uint32(eVal)
+		} else {
+			n, pErr := strconv.ParseUint(trimmedSpec, 10, 32)
+			if pErr != nil || n == 0 || (len(posts) > 0 && uint32(n) > thread.ResCount) {
+				return nil, bbscore.ErrInvalidReaderJump
+			}
+			targetRes = uint32(n)
 		}
-		targetRes := uint32(n)
 		if len(posts) > 0 && targetRes > 1 {
 			startIndex = len(posts) - 1
 			for i, p := range posts {
@@ -769,6 +783,6 @@ func (s *System) renderReaderComponents(ctx context.Context, guildID *snowflake.
 		}
 	}
 
-	comps, _, _ := discordsync.RenderReaderPage(*thread, posts, startIndex, resolveURL, locale)
+	comps, _, _ := discordsync.RenderReaderPageBounded(*thread, posts, startIndex, maxEndRes, resolveURL, locale)
 	return comps, nil
 }

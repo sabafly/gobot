@@ -21,6 +21,7 @@ package bbs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -953,13 +954,32 @@ func (c *adminCommand) handleAdminBanModal(e *handler.ModalEvent) error {
 		return nil
 	}
 	reason := e.Data.Text("reason")
-	ban, err := c.sys.Service.BanGlobal(e.Ctx, e.User().ID, report.PostID, reason, dur)
-	if err != nil {
-		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
-			i18n.TranslateText(loc, "components.bbs.admin.ban_failed"),
-			describeBBSError(loc, err),
-		))
-		return nil
+	var ban *bbscore.Ban
+	if report.BanID != nil {
+		existingBan, gErr := c.sys.Service.Store.GetBan(e.Ctx, *report.BanID)
+		if gErr == nil && existingBan != nil {
+			ban = existingBan
+		} else if !errors.Is(gErr, bbscore.ErrNotFound) {
+			_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+				i18n.TranslateText(loc, "components.bbs.admin.ban_failed"),
+				describeBBSError(loc, gErr),
+			))
+			return nil
+		}
+	}
+	if ban == nil {
+		ban, err = c.sys.Service.BanGlobal(e.Ctx, e.User().ID, report.PostID, reason, dur)
+		if err != nil {
+			_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+				i18n.TranslateText(loc, "components.bbs.admin.ban_failed"),
+				describeBBSError(loc, err),
+			))
+			return nil
+		}
+		report.BanID = &ban.ID
+		if uErr := c.sys.Service.Store.UpdateReport(e.Ctx, report); uErr != nil {
+			slog.Warn("bbs failed to save ban_id on report", "report_id", report.ID, "ban_id", ban.ID, "err", uErr)
+		}
 	}
 	post, aErr := c.sys.Service.AbonePostGlobal(e.Ctx, e.User().ID, report.PostID, reason)
 	if aErr != nil {

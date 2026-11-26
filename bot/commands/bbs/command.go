@@ -547,6 +547,7 @@ func (c *bbsCommand) RegisterRoutes(r handler.Router) {
 	r.Component("/bbs/consent/view/{doc}", c.sys.handleConsentViewDoc)
 	r.Component("/bbs/consent/accept/{version}/{token}", c.sys.handleConsentAccept)
 	r.Component("/bbs/consent/accept/{token}", c.sys.handleConsentAccept)
+	r.Component("/bbs/consent/role/{guild_id}/{role_id}/{version}", c.sys.handleConsentRole)
 	r.Component("/bbs/consent/role/{guild_id}/{version}", c.sys.handleConsentRole)
 	r.Component("/bbs/consent/role/{guild_id}", c.sys.handleConsentRole)
 
@@ -843,19 +844,27 @@ func (c *bbsCommand) handleBoardCreate(data discord.SlashCommandInteractionData,
 		return nil
 	}
 
-	catID, err := c.resolveOrCreateDefaultLocalCategory(e.Ctx, *guildID, data.String("category"), gLoc)
+	boardName := bbscore.SanitizeSingleLine(data.String("name"))
+	if boardName == "" || utf8.RuneCountInString(boardName) > 80 {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.cmd.board.create_failed_title"),
+			describeBBSError(loc, bbscore.ErrInvalidBoardName),
+		))
+		return nil
+	}
+	rules, err := parseBoardRulesFromSlash(data, gLoc)
 	if err != nil {
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
-			i18n.TranslateText(loc, "components.bbs.cmd.board.cat_resolve_failed"),
+			i18n.TranslateText(loc, "components.bbs.cmd.board.create_failed_title"),
 			describeBBSError(loc, err),
 		))
 		return nil
 	}
 
-	rules, err := parseBoardRulesFromSlash(data, gLoc)
+	catID, err := c.resolveOrCreateDefaultLocalCategory(e.Ctx, *guildID, data.String("category"), gLoc)
 	if err != nil {
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
-			i18n.TranslateText(loc, "components.bbs.cmd.board.create_failed_title"),
+			i18n.TranslateText(loc, "components.bbs.cmd.board.cat_resolve_failed"),
 			describeBBSError(loc, err),
 		))
 		return nil
@@ -1065,38 +1074,7 @@ func (c *bbsCommand) handleBoardEdit(data discord.SlashCommandInteractionData, e
 }
 
 func (c *bbsCommand) refreshLocalMountGuide(ctx context.Context, client *bot.Client, guildID snowflake.ID, board bbscore.Board, fallbackLocale discord.Locale) {
-	mount, err := c.sys.Service.Store.GetBoardMountByGuildAndBoard(ctx, guildID, board.ID)
-	if err != nil || !mount.Active {
-		return
-	}
-	mLoc := discordsync.ResolveMountLocale(client, *mount)
-	if mount.Locale == "" && fallbackLocale != "" && fallbackLocale != discord.LocaleUnknown {
-		mLoc = fallbackLocale
-	}
-	guide := discordsync.RenderBoardGuide(board, mount.ID, mLoc)
-	mu := discord.MessageUpdate{
-		Components:      &guide.Components,
-		Flags:           &guide.Flags,
-		AllowedMentions: guide.AllowedMentions,
-	}
-	if err := c.sys.Syncer.Validator.ValidateMessageUpdate(mu, true); err != nil {
-		slog.Warn("bbs refreshLocalMountGuide validation failed", "mount_id", mount.ID, "err", err)
-		return
-	}
-	if mount.PinnedPostID != nil {
-		if err := discordsync.WithUnarchiveRetry(client, *mount.PinnedPostID, func() error {
-			_, editErr := client.Rest.UpdateMessage(*mount.PinnedPostID, *mount.PinnedPostID, mu)
-			return editErr
-		}); err != nil {
-			slog.Warn("bbs failed to refresh forum pinned guide", "mount_id", mount.ID, "post_id", *mount.PinnedPostID, "err", err)
-		}
-		return
-	}
-	if mount.ControlMessageID != nil {
-		if _, err := client.Rest.UpdateMessage(mount.ChannelID, *mount.ControlMessageID, mu); err != nil {
-			slog.Warn("bbs failed to refresh text control guide", "mount_id", mount.ID, "msg_id", *mount.ControlMessageID, "err", err)
-		}
-	}
+	c.sys.Syncer.RefreshBoardGuide(ctx, client, guildID, board.ID, fallbackLocale)
 }
 
 func (c *bbsCommand) handleBoardDelete(data discord.SlashCommandInteractionData, e *handler.CommandEvent) error {
@@ -1549,6 +1527,8 @@ func describeBBSError(locale discord.Locale, err error) string {
 		return i18n.TranslateText(locale, "components.bbs.errors.invalid_extend_command")
 	case errors.Is(err, bbscore.ErrInvalidReaderJump):
 		return i18n.TranslateText(locale, "components.bbs.errors.invalid_reader_jump")
+	case errors.Is(err, bbscore.ErrInvalidPolicyVersion):
+		return i18n.TranslateText(locale, "components.bbs.errors.invalid_policy_version", map[string]any{"max": strconv.Itoa(bbscore.MaxPolicyVersionLen)})
 	case errors.Is(err, bbscore.ErrReportReasonRequired):
 		return i18n.TranslateText(locale, "components.bbs.errors.report_reason_required")
 	case errors.Is(err, bbscore.ErrGuildIDRequired):

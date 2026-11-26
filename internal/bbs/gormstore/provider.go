@@ -1028,6 +1028,14 @@ func (p *Provider) CreateBan(ctx context.Context, ban *bbs.Ban) error {
 	return p.session(ctx).Create(&row).Error
 }
 
+func (p *Provider) GetBan(ctx context.Context, id uuid.UUID) (*bbs.Ban, error) {
+	var row BBSBan
+	if err := p.session(ctx).Where("id = ?", id).First(&row).Error; err != nil {
+		return nil, mapErr(err)
+	}
+	return toDomainBan(&row), nil
+}
+
 func (p *Provider) DeleteBan(ctx context.Context, id uuid.UUID) error {
 	res := p.session(ctx).Where("id = ?", id).Delete(&BBSBan{})
 	if res.Error != nil {
@@ -1108,6 +1116,7 @@ func (p *Provider) CreateReport(ctx context.Context, report *bbs.Report) error {
 		ReporterUserID: report.ReporterUserID,
 		Reason:         report.Reason,
 		Status:         string(report.Status),
+		BanID:          report.BanID,
 		HandledBy:      report.HandledBy,
 		ResolutionNote: report.ResolutionNote,
 		CreatedAt:      report.CreatedAt,
@@ -1149,6 +1158,7 @@ func (p *Provider) ListReports(ctx context.Context, filter bbs.ReportFilter) ([]
 func (p *Provider) UpdateReport(ctx context.Context, report *bbs.Report) error {
 	return p.session(ctx).Model(&BBSReport{}).Where("id = ?", report.ID).Updates(map[string]any{
 		"status":          string(report.Status),
+		"ban_id":          report.BanID,
 		"handled_by":      report.HandledBy,
 		"resolution_note": report.ResolutionNote,
 		"updated_at":      time.Now(),
@@ -1346,6 +1356,7 @@ func toDomainReport(r *BBSReport) *bbs.Report {
 		ReporterUserID: r.ReporterUserID,
 		Reason:         r.Reason,
 		Status:         bbs.ReportStatus(r.Status),
+		BanID:          r.BanID,
 		HandledBy:      r.HandledBy,
 		ResolutionNote: r.ResolutionNote,
 		CreatedAt:      r.CreatedAt,

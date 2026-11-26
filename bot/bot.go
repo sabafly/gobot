@@ -308,15 +308,19 @@ func initBBSSystem(component *components.Components, config *components.Config, 
 		}
 	}
 
-	registry := bbs.NewProviderRegistry(bbs.DefaultProviderKey)
-	registry.Register(store)
-	identity := bbs.NewIdentityGenerator(secretBytes)
-	policy := bbs.NewPolicyManager(bbs.PolicyConfig{
+	policyCfg := bbs.PolicyConfig{
 		Version:          config.BBS.PolicyVersion,
 		TermsURL:         config.BBS.TermsURL,
 		GuidelinesURL:    config.BBS.GuidelinesURL,
 		PrivacyPolicyURL: config.BBS.PrivacyPolicyURL,
-	})
+	}
+	if err := bbs.ValidatePolicyConfig(policyCfg); err != nil {
+		return nil, fmt.Errorf("BBSポリシー設定が不正です: %w", err)
+	}
+	registry := bbs.NewProviderRegistry(bbs.DefaultProviderKey)
+	registry.Register(store)
+	identity := bbs.NewIdentityGenerator(secretBytes)
+	policy := bbs.NewPolicyManager(policyCfg)
 	svc := bbs.NewService(registry, store, identity, policy, operators)
 	syncer := discordsync.NewSyncer(svc)
 	syncer.CanSendDM = func(ctx context.Context, uid snowflake.ID) bool {

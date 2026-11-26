@@ -436,6 +436,18 @@ func RenderReaderPage(
 	resolveURL func(resNum uint32) (string, bool),
 	locale discord.Locale,
 ) (components []discord.LayoutComponent, startRes uint32, endRes uint32) {
+	return RenderReaderPageBounded(thread, posts, startIndex, 0, resolveURL, locale)
+}
+
+// RenderReaderPageBounded packs posts into an ephemeral read.cgi view, stopping at maxEndRes when positive.
+func RenderReaderPageBounded(
+	thread bbs.Thread,
+	posts []bbs.Post,
+	startIndex int,
+	maxEndRes uint32,
+	resolveURL func(resNum uint32) (string, bool),
+	locale discord.Locale,
+) (components []discord.LayoutComponent, startRes uint32, endRes uint32) {
 	titleLine := i18n.TranslateText(locale, "components.bbs.reader.title", map[string]any{
 		"title": TruncateRunes(bbs.ClearFormat(thread.Title), 80),
 		"count": thread.ResCount,
@@ -470,6 +482,9 @@ func RenderReaderPage(
 
 	for i := startIndex; i < len(posts); i++ {
 		p := posts[i]
+		if maxEndRes > 0 && p.ResNumber > maxEndRes && shownCount > 0 {
+			break
+		}
 		rp := buildReaderPostRendered(p, thread, aboneBody, maxRes, resolveURL, locale)
 
 		baseComps := 2
@@ -505,10 +520,10 @@ func RenderReaderPage(
 		shownCount++
 	}
 
-	prevRes := uint32(1)
+	prevCustomID := fmt.Sprintf("/bbs/reader/%s/1", thread.ID)
 	if startIndex > 0 {
 		prevIdx := computeBackwardStartIndex(thread, posts, startIndex-1, resolveURL, locale)
-		prevRes = posts[prevIdx].ResNumber
+		prevCustomID = fmt.Sprintf("/bbs/reader/%s/%d-%d", thread.ID, posts[prevIdx].ResNumber, posts[startIndex-1].ResNumber)
 	}
 	nextRes := endRes + 1
 	if nextRes > thread.ResCount {
@@ -520,7 +535,7 @@ func RenderReaderPage(
 
 	firstBtn := discord.NewSecondaryButton(TruncateRunes(i18n.TranslateText(locale, "components.bbs.reader.btn.first"), MaxButtonLabelRunes), fmt.Sprintf("/bbs/reader/%s/1", thread.ID))
 	firstBtn.Disabled = atStart
-	prevBtn := discord.NewSecondaryButton(TruncateRunes(i18n.TranslateText(locale, "components.bbs.reader.btn.prev"), MaxButtonLabelRunes), fmt.Sprintf("/bbs/reader/%s/%d", thread.ID, prevRes))
+	prevBtn := discord.NewSecondaryButton(TruncateRunes(i18n.TranslateText(locale, "components.bbs.reader.btn.prev"), MaxButtonLabelRunes), prevCustomID)
 	prevBtn.Disabled = atStart
 	nextBtn := discord.NewSecondaryButton(TruncateRunes(i18n.TranslateText(locale, "components.bbs.reader.btn.next"), MaxButtonLabelRunes), fmt.Sprintf("/bbs/reader/%s/%d", thread.ID, nextRes))
 	nextBtn.Disabled = atEnd
@@ -653,7 +668,7 @@ func RenderRoleGatePanel(guildID snowflake.ID, roleID snowflake.ID, version stri
 			discord.NewTextDisplay(hint),
 			discord.NewLargeSeparator(),
 			discord.NewActionRow(
-				discord.NewPrimaryButton(grantBtn, fmt.Sprintf("/bbs/consent/role/%d/%s", guildID, verTok)),
+				discord.NewPrimaryButton(grantBtn, fmt.Sprintf("/bbs/consent/role/%d/%d/%s", guildID, roleID, verTok)),
 				discord.NewSecondaryButton(termsBtn, "/bbs/consent/view/terms"),
 				discord.NewSecondaryButton(guideBtn, "/bbs/consent/view/guidelines"),
 				discord.NewSecondaryButton(privacyBtn, "/bbs/consent/view/privacy"),

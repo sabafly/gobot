@@ -24,6 +24,7 @@ import (
 	"embed"
 	"encoding/hex"
 	"strings"
+	"unicode/utf8"
 )
 
 //go:embed legal/*.md
@@ -43,6 +44,15 @@ type PolicyConfig struct {
 	TermsURL         string
 	GuidelinesURL    string
 	PrivacyPolicyURL string
+}
+
+// ValidatePolicyConfig ensures configured policy metadata satisfies persistence length limits.
+func ValidatePolicyConfig(cfg PolicyConfig) error {
+	ver := strings.TrimSpace(cfg.Version)
+	if len(ver) > MaxPolicyVersionLen || utf8.RuneCountInString(ver) > MaxPolicyVersionLen {
+		return ErrInvalidPolicyVersion
+	}
+	return nil
 }
 
 // PolicyManager serves embedded policy documents and checks consent version compliance.

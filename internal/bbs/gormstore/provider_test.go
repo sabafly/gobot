@@ -594,4 +594,66 @@ func TestGormStore_PR224ReviewRegressionFixes(t *testing.T) {
 	if err != nil || !sageReply.IsSage {
 		t.Fatalf("expected 48-rune name + sage mail to succeed, got %+v, err=%v", sageReply, err)
 	}
+
+	// 11. ClearFormat-empty body/title (e.g. U+EFFD/U+EFFF only) rejected before DB write
+	for i, emptyBody := range []string{"\uEFFD", "\uEFFF", "\uEFFD \uEFFF"} {
+		uid := snowflake.ID(33010 + i)
+		if _, err := svc.AcceptPolicy(ctx, uid); err != nil {
+			t.Fatalf("AcceptPolicy %d failed: %v", uid, err)
+		}
+		if _, _, _, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+			BoardID: disabledBoard.ID,
+			GuildID: guildB,
+			UserID:  uid,
+			Title:   "有効なスレタイ",
+			RawBody: emptyBody,
+		}); !errors.Is(err, bbs.ErrInvalidBodyLength) {
+			t.Fatalf("expected ErrInvalidBodyLength on CreateThread(%q), got %v", emptyBody, err)
+		}
+		if _, _, _, _, err := svc.CreatePost(ctx, bbs.CreatePostInput{
+			ThreadID: disabledTh.ID,
+			GuildID:  guildB,
+			UserID:   uid,
+			RawBody:  emptyBody,
+		}); !errors.Is(err, bbs.ErrInvalidBodyLength) {
+			t.Fatalf("expected ErrInvalidBodyLength on CreatePost(%q), got %v", emptyBody, err)
+		}
+	}
+	if _, _, _, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: disabledBoard.ID,
+		GuildID: guildB,
+		UserID:  snowflake.ID(33010),
+		Title:   "\uEFFD",
+		RawBody: "本文あり",
+	}); !errors.Is(err, bbs.ErrInvalidTitleLength) {
+		t.Fatalf("expected ErrInvalidTitleLength on U+EFFD-only title, got %v", err)
+	}
+
+	// 12. GetBan and Report.BanID round-trip persistence
+	banRow := &bbs.Ban{
+		Scope:      bbs.ScopeGlobal,
+		PosterHash: "rep_ban_hash",
+		Reason:     "spam",
+		CreatedBy:  adminID,
+		CreatedAt:  time.Now(),
+	}
+	if err := store.CreateBan(ctx, banRow); err != nil {
+		t.Fatalf("CreateBan for report failed: %v", err)
+	}
+	gotBan, err := store.GetBan(ctx, banRow.ID)
+	if err != nil || gotBan.ID != banRow.ID {
+		t.Fatalf("GetBan failed: %+v, err=%v", gotBan, err)
+	}
+	rep, err := svc.CreateReport(ctx, guildB, userGoodMail, sageReply.ID, "spam report")
+	if err != nil {
+		t.Fatalf("CreateReport failed: %v", err)
+	}
+	rep.BanID = &banRow.ID
+	if err := store.UpdateReport(ctx, rep); err != nil {
+		t.Fatalf("UpdateReport BanID failed: %v", err)
+	}
+	gotRep, err := store.GetReport(ctx, rep.ID)
+	if err != nil || gotRep.BanID == nil || *gotRep.BanID != banRow.ID {
+		t.Fatalf("expected persisted BanID %v on report, got %+v, err=%v", banRow.ID, gotRep, err)
+	}
 }

@@ -191,6 +191,40 @@ func TestPayloadValidator_StrictRejection(t *testing.T) {
 	if err := v.ValidateModal(badModal); err == nil {
 		t.Fatal("expected error for disabled select inside modal")
 	}
+	minTwo := 2
+	if err := v.ValidateModal(discord.ModalCreate{
+		CustomID: "m_range_default_max",
+		Title:    "Select",
+		Components: []discord.LayoutComponent{
+			discord.NewLabel("Pick", discord.StringSelectMenuComponent{
+				CustomID:  "s_range",
+				MinValues: &minTwo,
+				Options: []discord.StringSelectMenuOption{
+					{Label: "A", Value: "a"},
+					{Label: "B", Value: "b"},
+				},
+			}),
+		},
+	}); err == nil {
+		t.Fatal("expected ValidateModal to reject StringSelect with MinValues=2 and omitted MaxValues=0")
+	}
+	if err := v.ValidateModal(discord.ModalCreate{
+		CustomID: "m_range_explicit_max",
+		Title:    "Select",
+		Components: []discord.LayoutComponent{
+			discord.NewLabel("Pick", discord.StringSelectMenuComponent{
+				CustomID:  "s_range_ok",
+				MinValues: &minTwo,
+				MaxValues: 2,
+				Options: []discord.StringSelectMenuOption{
+					{Label: "A", Value: "a"},
+					{Label: "B", Value: "b"},
+				},
+			}),
+		},
+	}); err != nil {
+		t.Fatalf("expected explicit MaxValues=2 with MinValues=2 to pass ValidateModal, got %v", err)
+	}
 
 	overTitleModal := discord.ModalCreate{
 		CustomID: "m_title",
@@ -396,8 +430,8 @@ func TestRenderer_ZeroEmoji_MediaGallery_And_ReaderPagination(t *testing.T) {
 	}
 
 	roleMsg := discordsync.RenderRoleGatePanel(snowflake.ID(100), snowflake.ID(200), "v2-test", discord.LocaleJapanese)
-	if !strings.Contains(fmt.Sprintf("%#v", roleMsg), "/bbs/consent/role/100/v2-test") {
-		t.Fatal("expected RenderRoleGatePanel button CustomID to include policy version token")
+	if !strings.Contains(fmt.Sprintf("%#v", roleMsg), "/bbs/consent/role/100/200/v2-test") {
+		t.Fatal("expected RenderRoleGatePanel button CustomID to include role_id and policy version token")
 	}
 
 	// MediaGallery added for normal post, removed on Abone
@@ -542,24 +576,46 @@ func TestDebouncerAndInvalidRequestGuard(t *testing.T) {
 		t.Fatal("2nd 403 should open mount circuit breaker")
 	}
 
-	// After cooldown, 1 half-open probe is permitted; non-403 (503) + release must NOT permanently wedge probe lock.
+	// After cooldown, 1 half-open probe is permitted; non-403 (503) + stale/non-probe calls must NOT clear another probe.
 	afterCooldown := now.Add(2 * time.Minute)
-	allowed, release := guard.AcquireMount(mountID, afterCooldown)
-	if !allowed {
-		t.Fatal("expected first AcquireMount after cooldown to permit half-open probe")
+	allowedA, seqA, releaseA := guard.AcquireMountWithProbe(mountID, afterCooldown)
+	if !allowedA || seqA == 0 {
+		t.Fatalf("expected first AcquireMountWithProbe after cooldown to permit half-open probe, allowed=%v seq=%d", allowedA, seqA)
 	}
-	if concurrent, _ := guard.AcquireMount(mountID, afterCooldown); concurrent {
-		t.Fatal("expected concurrent AcquireMount during half-open probe to stay blocked")
+	// Pure IsMountOpenAt check shows mount still waiting/blocked while probe is active (since halfOpenProbe[mountID] != 0).
+	if !guard.IsMountOpenAt(mountID, afterCooldown) {
+		t.Fatal("expected IsMountOpenAt to report true while half-open probe is in flight")
 	}
+	if concurrent, _, _ := guard.AcquireMountWithProbe(mountID, afterCooldown); concurrent {
+		t.Fatal("expected concurrent AcquireMountWithProbe during half-open probe to stay blocked")
+	}
+	// Non-probe RecordError (seq=0) during active probe A must NOT release probe A's marker!
 	guard.RecordError(mountID, err503, afterCooldown)
-	release()
+	if stillBlocked, _, _ := guard.AcquireMountWithProbe(mountID, afterCooldown); stillBlocked {
+		t.Fatal("non-probe 503 must not release another active half-open probe")
+	}
+	// When probe A records its own 503 error, its marker releases immediately so probe B can run.
+	guard.RecordMountError(mountID, seqA, err503, afterCooldown)
 
-	allowedRetry, releaseRetry := guard.AcquireMount(mountID, afterCooldown)
-	if !allowedRetry {
-		t.Fatal("expected AcquireMount to allow new probe after 503 failure cleaned up previous probe")
+	allowedB, seqB, releaseB := guard.AcquireMountWithProbe(mountID, afterCooldown)
+	if !allowedB || seqB == 0 || seqB == seqA {
+		t.Fatalf("expected probe B after probe A 503 failure, got allowed=%v seqB=%d", allowedB, seqB)
+	}
+	// Probe A's delayed defer releaseA() must NOT erase probe B's active marker (ABA check).
+	releaseA()
+	if blockedByB, _, _ := guard.AcquireMountWithProbe(mountID, afterCooldown); blockedByB {
+		t.Fatal("stale probe A release() must not delete probe B's active marker")
+	}
+	// Standalone probe B failure with 503 clears B's own marker so retry C is permitted.
+	guard.RecordMountError(mountID, seqB, err503, afterCooldown)
+	releaseB()
+
+	allowedC, seqC, releaseC := guard.AcquireMountWithProbe(mountID, afterCooldown)
+	if !allowedC || seqC == 0 {
+		t.Fatalf("expected probe C after probe B 503 failure, got allowed=%v seqC=%d", allowedC, seqC)
 	}
 	guard.RecordMountSuccess(mountID)
-	releaseRetry()
+	releaseC()
 	if guard.IsMountOpenAt(mountID, afterCooldown) {
 		t.Fatal("expected RecordMountSuccess to close circuit breaker")
 	}
@@ -890,15 +946,44 @@ func TestRenderer_ExtDatBudget_And_LinkExpandedPagination(t *testing.T) {
 		t.Fatalf("expected Latest page (starting idx=%d -> res=%d) to reach final res 4, stopped at %d", latestIdx, startRes, endRes)
 	}
 
-	// Verify Prev navigation from startIndex=3 (res 4) points to res 3, not res 2.
+	// Verify Prev navigation from startIndex=3 (res 4) targets res 3-3 (bounded), not res 2 or res 4.
 	comps, _, _ := discordsync.RenderReaderPage(thread, posts, 3, resolveURL, discord.LocaleJapanese)
 	nav := comps[1].(discord.ActionRowComponent)
 	prevBtn := nav.Components[1].(discord.ButtonComponent)
-	if !strings.HasSuffix(prevBtn.CustomID, "/3") {
-		t.Fatalf("expected Prev button to target res 3 right before page start 4, got customID=%q", prevBtn.CustomID)
+	if !strings.HasSuffix(prevBtn.CustomID, "/3-3") {
+		t.Fatalf("expected Prev button to target bounded range 3-3 right before page start 4, got customID=%q", prevBtn.CustomID)
 	}
-	_, prevStartRes, prevEndRes := discordsync.RenderReaderPage(thread, posts, 2, resolveURL, discord.LocaleJapanese)
+	_, prevStartRes, prevEndRes := discordsync.RenderReaderPageBounded(thread, posts, 2, 3, resolveURL, discord.LocaleJapanese)
 	if prevStartRes != 3 || prevEndRes != 3 {
-		t.Fatalf("expected Prev page at startIndex=2 to render res 3..3, got %d..%d", prevStartRes, prevEndRes)
+		t.Fatalf("expected Prev page at startIndex=2 bounded to 3 to render res 3..3, got %d..%d", prevStartRes, prevEndRes)
+	}
+
+	// Short 3-post thread: jumping to res 3 and pressing Prev yields bounded 1-2 so Next stays enabled to return to res 3.
+	shortThread := bbs.Thread{
+		ID:       uuid.New(),
+		Title:    "Short Thread",
+		ResCount: 3,
+		Rules:    bbs.BoardRules{MaxRes: 1000}.Normalize(),
+	}
+	shortPosts := []bbs.Post{
+		{ID: uuid.New(), ThreadID: shortThread.ID, ResNumber: 1, AnonID: "1", Body: "first", CreatedAt: time.Now()},
+		{ID: uuid.New(), ThreadID: shortThread.ID, ResNumber: 2, AnonID: "2", Body: "second", CreatedAt: time.Now()},
+		{ID: uuid.New(), ThreadID: shortThread.ID, ResNumber: 3, AnonID: "3", Body: "third", CreatedAt: time.Now()},
+	}
+	jump3Comps, s3, e3 := discordsync.RenderReaderPage(shortThread, shortPosts, 2, nil, discord.LocaleJapanese)
+	if s3 != 3 || e3 != 3 {
+		t.Fatalf("expected res 3 view to start/end at 3, got %d..%d", s3, e3)
+	}
+	prevShortBtn := jump3Comps[1].(discord.ActionRowComponent).Components[1].(discord.ButtonComponent)
+	if !strings.HasSuffix(prevShortBtn.CustomID, "/1-2") {
+		t.Fatalf("expected Prev from res 3 on 3-post thread to use bounded range /1-2, got %q", prevShortBtn.CustomID)
+	}
+	boundedComps, bStart, bEnd := discordsync.RenderReaderPageBounded(shortThread, shortPosts, 0, 2, nil, discord.LocaleJapanese)
+	if bStart != 1 || bEnd != 2 {
+		t.Fatalf("expected bounded Prev page to stop at res 2 (1..2), got %d..%d", bStart, bEnd)
+	}
+	nextShortBtn := boundedComps[1].(discord.ActionRowComponent).Components[2].(discord.ButtonComponent)
+	if nextShortBtn.Disabled || !strings.HasSuffix(nextShortBtn.CustomID, "/3") {
+		t.Fatalf("expected Next button on bounded 1..2 page to be enabled targeting /3, got disabled=%v customID=%q", nextShortBtn.Disabled, nextShortBtn.CustomID)
 	}
 }

@@ -341,12 +341,12 @@ func (s *Syncer) mirrorNewThreadToMount(
 	firstPost bbs.Post,
 	locale discord.Locale,
 ) (snowflake.ID, snowflake.ID, error) {
-	allowed, release := s.Guard.AcquireMount(mount.ID, time.Now())
+	allowed, probeSeq, release := s.Guard.AcquireMountWithProbe(mount.ID, time.Now())
 	if !allowed {
 		return 0, 0, errors.New("sync skipped due to circuit breaker or invalid-request throttle")
 	}
 	defer release()
-	return s.mirrorNewThreadToMountLocked(ctx, client, mount, board, thread, firstPost, locale)
+	return s.mirrorNewThreadToMountLocked(ctx, client, mount, board, thread, firstPost, locale, probeSeq)
 }
 
 func (s *Syncer) mirrorNewThreadToMountLocked(
@@ -357,6 +357,7 @@ func (s *Syncer) mirrorNewThreadToMountLocked(
 	thread bbs.Thread,
 	firstPost bbs.Post,
 	locale discord.Locale,
+	probeSeq uint64,
 ) (snowflake.ID, snowflake.ID, error) {
 	mountLocale := ResolveMountLocale(client, mount)
 	if mount.Locale == "" && locale != "" && locale != discord.LocaleUnknown {
@@ -387,7 +388,7 @@ func (s *Syncer) mirrorNewThreadToMountLocked(
 			AppliedTags:         tags,
 		})
 		if err != nil {
-			s.handleMountRESTError(ctx, mount.ID, err)
+			s.handleMountRESTError(ctx, mount.ID, probeSeq, err)
 			return 0, 0, err
 		}
 		discordThreadID = tp.ID()
@@ -401,7 +402,7 @@ func (s *Syncer) mirrorNewThreadToMountLocked(
 			AutoArchiveDuration: discord.AutoArchiveDuration24h,
 		})
 		if err != nil {
-			s.handleMountRESTError(ctx, mount.ID, err)
+			s.handleMountRESTError(ctx, mount.ID, probeSeq, err)
 			return 0, 0, err
 		}
 		discordThreadID = gt.ID()
@@ -522,7 +523,7 @@ func (s *Syncer) EnsureThreadMirror(
 	excludeTrailingRes uint32,
 	locale discord.Locale,
 ) (*bbs.ThreadMirror, error) {
-	return s.ensureThreadMirror(ctx, client, mount, board, thread, excludeTrailingRes, locale, true)
+	return s.ensureThreadMirror(ctx, client, mount, board, thread, excludeTrailingRes, locale, true, 0)
 }
 
 func (s *Syncer) ensureThreadMirror(
@@ -534,6 +535,7 @@ func (s *Syncer) ensureThreadMirror(
 	excludeTrailingRes uint32,
 	locale discord.Locale,
 	acquireGuard bool,
+	probeSeq uint64,
 ) (*bbs.ThreadMirror, error) {
 	if existing, err := s.Service.Store.GetThreadMirrorByMountAndThread(ctx, mount.ID, thread.ID); err == nil {
 		return existing, nil
@@ -548,7 +550,7 @@ func (s *Syncer) ensureThreadMirror(
 			return nil, err
 		}
 	} else {
-		if _, _, err := s.mirrorNewThreadToMountLocked(ctx, client, mount, board, thread, op, locale); err != nil {
+		if _, _, err := s.mirrorNewThreadToMountLocked(ctx, client, mount, board, thread, op, locale, probeSeq); err != nil {
 			return nil, err
 		}
 	}
@@ -596,13 +598,13 @@ func (s *Syncer) mirrorPostToMount(
 	backwardRefs []uint32,
 	locale discord.Locale,
 ) (snowflake.ID, snowflake.ID, error) {
-	allowed, release := s.Guard.AcquireMount(mount.ID, time.Now())
+	allowed, probeSeq, release := s.Guard.AcquireMountWithProbe(mount.ID, time.Now())
 	if !allowed {
 		return 0, 0, errors.New("sync skipped due to circuit breaker or invalid-request throttle")
 	}
 	defer release()
 
-	mirror, err := s.ensureThreadMirror(ctx, client, mount, board, thread, post.ResNumber, locale, false)
+	mirror, err := s.ensureThreadMirror(ctx, client, mount, board, thread, post.ResNumber, locale, false, probeSeq)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -619,45 +621,67 @@ func (s *Syncer) mirrorPostToMount(
 	}
 
 	var sent *discord.Message
-	err = WithUnarchiveRetry(client, mirror.DiscordThreadID, func() error {
-		var sendErr error
-		sent, sendErr = client.Rest.CreateMessage(mirror.DiscordThreadID, msgCreate)
-		return sendErr
-	})
-	if err != nil {
-		if IsJSONError(err, JSONErrUnknownChannel) || HTTPStatusCode(err) == 404 {
-			s.Guard.RecordError(uuid.Nil, err, time.Now())
-			slog.Warn("bbs deleting missing child thread mirror after 404", "mirror_id", mirror.ID, "discord_thread_id", mirror.DiscordThreadID, "err", err)
-			_ = s.Service.Store.DeleteThreadMirror(ctx, mirror.ID)
-		} else {
-			s.handleMountRESTError(ctx, mount.ID, err)
+	latestThread := thread
+	var sendMirrorErr error
+	func() {
+		muLock := s.threadEditMutex(mirror.DiscordThreadID)
+		muLock.Lock()
+		defer muLock.Unlock()
+
+		sendErr := WithUnarchiveRetry(client, mirror.DiscordThreadID, func() error {
+			var cErr error
+			sent, cErr = client.Rest.CreateMessage(mirror.DiscordThreadID, msgCreate)
+			return cErr
+		})
+		if sendErr != nil {
+			if IsJSONError(sendErr, JSONErrUnknownChannel) || HTTPStatusCode(sendErr) == 404 {
+				s.Guard.RecordError(uuid.Nil, sendErr, time.Now())
+				slog.Warn("bbs deleting missing child thread mirror after 404", "mirror_id", mirror.ID, "discord_thread_id", mirror.DiscordThreadID, "err", sendErr)
+				_ = s.Service.Store.DeleteThreadMirror(ctx, mirror.ID)
+			} else {
+				s.handleMountRESTError(ctx, mount.ID, probeSeq, sendErr)
+			}
+			sendMirrorErr = sendErr
+			return
 		}
-		return 0, 0, err
+		s.Guard.RecordMountSuccess(mount.ID)
+
+		if dbErr := s.Service.Store.CreatePostMirror(ctx, &bbs.PostMirror{
+			ID:               uuidv7.New(),
+			PostID:           post.ID,
+			ThreadMirrorID:   mirror.ID,
+			GuildID:          mount.GuildID,
+			DiscordMessageID: sent.ID,
+			CreatedAt:        time.Now(),
+		}); dbErr != nil {
+			sendMirrorErr = dbErr
+			return
+		}
+
+		mirror.SyncedUpToRes = max(mirror.SyncedUpToRes, post.ResNumber)
+		_ = s.Service.Store.AdvanceThreadMirrorSync(ctx, mirror.ID, post.ResNumber)
+
+		if freshTh, tErr := s.Service.GetThread(ctx, thread.ID); tErr == nil && freshTh != nil {
+			latestThread = *freshTh
+		}
+		if latestThread.Status == bbs.ThreadStatusArchived {
+			if archErr := ArchiveAndLockThread(client, mirror.DiscordThreadID, mount.IsForum); archErr != nil {
+				slog.Warn("bbs failed to restore archived thread lock after late reply sync", "discord_thread_id", mirror.DiscordThreadID, "err", archErr)
+			}
+		}
+	}()
+	if sendMirrorErr != nil {
+		return 0, 0, sendMirrorErr
 	}
-	s.Guard.RecordMountSuccess(mount.ID)
 
-	if err := s.Service.Store.CreatePostMirror(ctx, &bbs.PostMirror{
-		ID:               uuidv7.New(),
-		PostID:           post.ID,
-		ThreadMirrorID:   mirror.ID,
-		GuildID:          mount.GuildID,
-		DiscordMessageID: sent.ID,
-		CreatedAt:        time.Now(),
-	}); err != nil {
-		return 0, 0, err
-	}
-
-	mirror.SyncedUpToRes = max(mirror.SyncedUpToRes, post.ResNumber)
-	_ = s.Service.Store.AdvanceThreadMirrorSync(ctx, mirror.ID, post.ResNumber)
-
-	// Schedule debounced floating control panel move.
-	if thread.Status == bbs.ThreadStatusActive {
-		s.scheduleControlPanel(client, mirror, thread, mountLocale)
+	// Schedule debounced floating control panel move only if thread remains active.
+	if latestThread.Status == bbs.ThreadStatusActive {
+		s.scheduleControlPanel(client, mirror, latestThread, mountLocale)
 	}
 
 	// Pace forward-anchor updates (without GET) up to MaxForwardAnchorEditsPerPost.
 	if len(backwardRefs) > 0 {
-		s.enqueueAnchorUpdates(client, mount.GuildID, mirror.DiscordThreadID, thread, backwardRefs, mountLocale)
+		s.enqueueAnchorUpdates(client, mount.GuildID, mirror.DiscordThreadID, latestThread, backwardRefs, mountLocale)
 	}
 
 	return mirror.DiscordThreadID, sent.ID, nil
@@ -799,11 +823,30 @@ func (s *Syncer) processAnchorJob(discordThreadID snowflake.ID, job anchorItem) 
 			if err := s.Validator.ValidateMessageUpdate(mu, true); err != nil {
 				return
 			}
-			if editErr := WithUnarchiveRetry(job.client, discordThreadID, func() error {
+			wasArchived, editErr := WithUnarchiveRetryState(job.client, discordThreadID, func() error {
 				_, uErr := job.client.Rest.UpdateMessage(discordThreadID, pm.DiscordMessageID, mu)
 				return uErr
-			}); editErr != nil {
+			})
+			if editErr != nil {
 				s.Guard.RecordError(uuid.Nil, editErr, time.Now())
+			}
+			latestTh, thErr := prov.GetThread(ctx, job.thread.ID)
+			if (thErr == nil && latestTh.Status == bbs.ThreadStatusArchived) || wasArchived {
+				isForum := false
+				if tm, tmErr := s.Service.Store.GetThreadMirrorByDiscordThread(ctx, discordThreadID); tmErr == nil && tm != nil {
+					if m, mErr := s.Service.Store.GetBoardMount(ctx, tm.BoardMountID); mErr == nil && m != nil {
+						isForum = m.IsForum
+					}
+				}
+				if thErr == nil && latestTh.Status == bbs.ThreadStatusArchived {
+					if archErr := ArchiveAndLockThread(job.client, discordThreadID, isForum); archErr != nil {
+						s.Guard.RecordError(uuid.Nil, archErr, time.Now())
+					}
+				} else if wasArchived {
+					if archErr := ArchiveThreadOnly(job.client, discordThreadID, isForum); archErr != nil {
+						s.Guard.RecordError(uuid.Nil, archErr, time.Now())
+					}
+				}
 			}
 		}()
 	}
@@ -857,10 +900,16 @@ func (s *Syncer) SyncAbone(ctx context.Context, client *bot.Client, post bbs.Pos
 		if thread.Status == bbs.ThreadStatusArchived {
 			if archErr := ArchiveAndLockThread(client, tm.DiscordThreadID, isForum); archErr != nil {
 				s.Guard.RecordError(uuid.Nil, archErr, time.Now())
+				if !IsJSONError(archErr, JSONErrUnknownChannel) && HTTPStatusCode(archErr) != 404 {
+					errs = append(errs, archErr)
+				}
 			}
 		} else if wasArchived {
 			if archErr := ArchiveThreadOnly(client, tm.DiscordThreadID, isForum); archErr != nil {
 				s.Guard.RecordError(uuid.Nil, archErr, time.Now())
+				if !IsJSONError(archErr, JSONErrUnknownChannel) && HTTPStatusCode(archErr) != 404 {
+					errs = append(errs, archErr)
+				}
 			}
 		}
 		muLock.Unlock()
@@ -901,8 +950,13 @@ func (s *Syncer) SyncArchive(ctx context.Context, client *bot.Client, board bbs.
 		}
 		_ = WithUnarchiveRetry(client, latestMirror.DiscordThreadID, func() error {
 			if latestMirror.ControlMessageID != nil {
-				_ = client.Rest.DeleteMessage(latestMirror.DiscordThreadID, *latestMirror.ControlMessageID)
-				_ = s.Service.Store.UpdateThreadMirrorControl(ctx, latestMirror.ID, nil)
+				delErr := client.Rest.DeleteMessage(latestMirror.DiscordThreadID, *latestMirror.ControlMessageID)
+				if delErr == nil || IsJSONError(delErr, JSONErrUnknownMessage) || IsJSONError(delErr, JSONErrUnknownChannel) || HTTPStatusCode(delErr) == 404 {
+					_ = s.Service.Store.UpdateThreadMirrorControl(ctx, latestMirror.ID, nil)
+				} else {
+					s.Guard.RecordError(uuid.Nil, delErr, time.Now())
+					slog.Warn("bbs failed to delete control panel during archive sync", "mirror_id", latestMirror.ID, "msg_id", *latestMirror.ControlMessageID, "err", delErr)
+				}
 			}
 			if hitMaxRes {
 				overMsg := RenderOver1000Message(thread, mountLocale)
@@ -1018,8 +1072,14 @@ func (s *Syncer) HandleThreadDelete(ctx context.Context, threadID snowflake.ID) 
 	_ = s.Service.Store.DeleteThreadMirror(ctx, mirror.ID)
 }
 
-func (s *Syncer) repositionBoardTextGuide(ctx context.Context, client *bot.Client, mount bbs.BoardMount, board bbs.Board, locale discord.Locale) {
-	if s.Guard.IsThrottled(time.Now()) {
+// RefreshBoardGuide serializes board guide edits against repositionBoardTextGuide under the channel mutex
+// and reloads the latest board rules and guide message/post IDs before updating Discord.
+func (s *Syncer) RefreshBoardGuide(ctx context.Context, client *bot.Client, guildID snowflake.ID, boardID uuid.UUID, fallbackLocale discord.Locale) {
+	if client == nil {
+		return
+	}
+	mount, err := s.Service.Store.GetBoardMountByGuildAndBoard(ctx, guildID, boardID)
+	if err != nil || !mount.Active {
 		return
 	}
 	muLock := s.threadEditMutex(mount.ChannelID)
@@ -1030,7 +1090,57 @@ func (s *Syncer) repositionBoardTextGuide(ctx context.Context, client *bot.Clien
 	if err != nil || !latestMount.Active {
 		return
 	}
-	guideMsg := RenderBoardGuide(board, latestMount.ID, locale)
+	latestBoard, err := s.Service.GetBoard(ctx, boardID)
+	if err != nil {
+		return
+	}
+	mLoc := ResolveMountLocale(client, *latestMount)
+	if latestMount.Locale == "" && fallbackLocale != "" && fallbackLocale != discord.LocaleUnknown {
+		mLoc = fallbackLocale
+	}
+	guide := RenderBoardGuide(*latestBoard, latestMount.ID, mLoc)
+	mu := discord.MessageUpdate{
+		Components:      &guide.Components,
+		Flags:           &guide.Flags,
+		AllowedMentions: guide.AllowedMentions,
+	}
+	if err := s.Validator.ValidateMessageUpdate(mu, true); err != nil {
+		slog.Warn("bbs refreshLocalMountGuide validation failed", "mount_id", latestMount.ID, "err", err)
+		return
+	}
+	if latestMount.PinnedPostID != nil {
+		if err := WithUnarchiveRetry(client, *latestMount.PinnedPostID, func() error {
+			_, editErr := client.Rest.UpdateMessage(*latestMount.PinnedPostID, *latestMount.PinnedPostID, mu)
+			return editErr
+		}); err != nil {
+			slog.Warn("bbs failed to refresh forum pinned guide", "mount_id", latestMount.ID, "post_id", *latestMount.PinnedPostID, "err", err)
+		}
+		return
+	}
+	if latestMount.ControlMessageID != nil {
+		if _, err := client.Rest.UpdateMessage(latestMount.ChannelID, *latestMount.ControlMessageID, mu); err != nil {
+			slog.Warn("bbs failed to refresh text control guide", "mount_id", latestMount.ID, "msg_id", *latestMount.ControlMessageID, "err", err)
+		}
+	}
+}
+
+func (s *Syncer) repositionBoardTextGuide(ctx context.Context, client *bot.Client, mount bbs.BoardMount, board bbs.Board, locale discord.Locale) {
+	if client == nil || s.Guard.IsThrottled(time.Now()) {
+		return
+	}
+	muLock := s.threadEditMutex(mount.ChannelID)
+	muLock.Lock()
+	defer muLock.Unlock()
+
+	latestMount, err := s.Service.Store.GetBoardMount(ctx, mount.ID)
+	if err != nil || !latestMount.Active {
+		return
+	}
+	latestBoard := board
+	if freshBoard, bErr := s.Service.GetBoard(ctx, board.ID); bErr == nil && freshBoard != nil {
+		latestBoard = *freshBoard
+	}
+	guideMsg := RenderBoardGuide(latestBoard, latestMount.ID, locale)
 	if err := s.Validator.ValidateMessageCreate(guideMsg); err != nil {
 		return
 	}
@@ -1184,8 +1294,8 @@ func (s *Syncer) guildURLResolver(ctx context.Context, threadID uuid.UUID, guild
 	}
 }
 
-func (s *Syncer) handleMountRESTError(ctx context.Context, mountID uuid.UUID, err error) {
-	if s.Guard.RecordError(mountID, err, time.Now()) {
+func (s *Syncer) handleMountRESTError(ctx context.Context, mountID uuid.UUID, probeSeq uint64, err error) {
+	if s.Guard.RecordMountError(mountID, probeSeq, err, time.Now()) {
 		slog.Warn("bbs deactivating mount after 404", "mount_id", mountID, "err", err)
 		_ = s.Service.Store.DeactivateBoardMount(ctx, mountID)
 	}

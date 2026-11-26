@@ -57,7 +57,7 @@ func (BBSSystemSecret) TableName() string { return "bbs_system_secrets" }
 type BBSGuildConfig struct {
 	GuildID         snowflake.ID  `gorm:"primaryKey;autoIncrement:false"`
 	Enabled         bool          `gorm:"not null;default:false"`
-	AgreedVersion   string        `gorm:"type:varchar(32);not null;default:''"`
+	AgreedVersion   string        `gorm:"type:varchar(64);not null;default:''"`
 	AgreedByUserID  snowflake.ID  `gorm:"not null;default:0"`
 	AgreedAt        *time.Time    `gorm:""`
 	ViewerRoleID    *snowflake.ID `gorm:""`
@@ -70,7 +70,7 @@ func (BBSGuildConfig) TableName() string { return "bbs_guild_configs" }
 
 type BBSUserConsent struct {
 	UserID        snowflake.ID `gorm:"primaryKey;autoIncrement:false"`
-	PolicyVersion string       `gorm:"type:varchar(32);not null"`
+	PolicyVersion string       `gorm:"type:varchar(64);not null"`
 	AgreedAt      time.Time    `gorm:"not null"`
 	UpdatedAt     time.Time    `gorm:"not null"`
 }
@@ -254,6 +254,7 @@ type BBSReport struct {
 	ReporterUserID snowflake.ID  `gorm:"not null"`
 	Reason         string        `gorm:"type:text;not null"`
 	Status         string        `gorm:"type:varchar(16);not null;index"`
+	BanID          *uuid.UUID    `gorm:"type:varchar(36)"`
 	HandledBy      *snowflake.ID `gorm:""`
 	ResolutionNote string        `gorm:"type:text"`
 	CreatedAt      time.Time     `gorm:"not null"`

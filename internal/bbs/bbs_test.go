@@ -221,6 +221,12 @@ func TestPolicyManager(t *testing.T) {
 	if doc := pm.GetDocument(bbs.PolicyDocPrivacy, "en-US"); !strings.Contains(doc, "Privacy Policy") {
 		t.Fatalf("expected English privacy doc, got %q", doc)
 	}
+	if err := bbs.ValidatePolicyConfig(bbs.PolicyConfig{Version: strings.Repeat("a", bbs.MaxPolicyVersionLen)}); err != nil {
+		t.Fatalf("expected %d-char policy version to pass validation: %v", bbs.MaxPolicyVersionLen, err)
+	}
+	if err := bbs.ValidatePolicyConfig(bbs.PolicyConfig{Version: strings.Repeat("a", bbs.MaxPolicyVersionLen+1)}); !errors.Is(err, bbs.ErrInvalidPolicyVersion) {
+		t.Fatalf("expected ErrInvalidPolicyVersion for %d+1 chars, got %v", bbs.MaxPolicyVersionLen, err)
+	}
 }
 
 // mockThirdPartyProvider simulates a 3rd-party external BBS mounted under a global category.

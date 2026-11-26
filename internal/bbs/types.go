@@ -40,6 +40,7 @@ const (
 	DefaultDatOchiLowResHr = 24 * 10 // 10 days with fewer than 10 posts
 	MaxArchiveDays         = 365
 	DefaultPolicyVersion   = "2026-11-25"
+	MaxPolicyVersionLen    = 64
 	MaxBanHours            = 24 * 365 * 10
 )
 
@@ -105,6 +106,7 @@ var (
 	ErrFormattedBodyTooLong  = fmt.Errorf("%w: formatted body exceeds display limit", ErrInvalidInput)
 	ErrInvalidReaderJump     = fmt.Errorf("%w: invalid reader jump target", ErrInvalidInput)
 	ErrStalePolicyVersion    = fmt.Errorf("%w: outdated policy panel version", ErrInvalidInput)
+	ErrInvalidPolicyVersion  = fmt.Errorf("%w: policy version exceeds max length", ErrInvalidInput)
 )
 
 // BoardRules configures anonymous posting behavior for a board or thread.
@@ -327,6 +329,7 @@ type Report struct {
 	ReporterUserID snowflake.ID
 	Reason         string
 	Status         ReportStatus
+	BanID          *uuid.UUID
 	HandledBy      *snowflake.ID
 	ResolutionNote string
 	CreatedAt      time.Time

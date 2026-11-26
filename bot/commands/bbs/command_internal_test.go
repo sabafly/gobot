@@ -275,6 +275,7 @@ func TestDescribeBBSError_LocalizationAndSpecificity(t *testing.T) {
 		{"invalid_name_command", bbscore.ErrInvalidNameCommand, true},
 		{"invalid_extend_command", bbscore.ErrInvalidExtendCommand, true},
 		{"invalid_reader_jump", bbscore.ErrInvalidReaderJump, true},
+		{"invalid_policy_version", bbscore.ErrInvalidPolicyVersion, true},
 		{"report_reason_required", bbscore.ErrReportReasonRequired, true},
 		{"guild_id_required", bbscore.ErrGuildIDRequired, true},
 		{"board_scope_mismatch", bbscore.ErrBoardScopeMismatch, true},
@@ -644,5 +645,328 @@ func TestConsentVersionMismatch_And_AdminAboneSyncFailure(t *testing.T) {
 	}
 	if storedRep2.Status != bbscore.ReportStatusResolved {
 		t.Fatalf("expected report 2 to become resolved after SyncAbone success, got %s", storedRep2.Status)
+	}
+}
+
+func newInternalModalEvent(
+	t *testing.T,
+	client *bot.Client,
+	guildID snowflake.ID,
+	userID snowflake.ID,
+	customID string,
+	inputs map[string]string,
+	vars map[string]string,
+	onRespond func(discord.InteractionResponseType, discord.InteractionResponseData),
+) *handler.ModalEvent {
+	t.Helper()
+	payload, err := json.Marshal(map[string]any{
+		"type":           discord.InteractionTypeModalSubmit,
+		"id":             snowflake.New(time.Now()).String(),
+		"application_id": "999000",
+		"token":          "test-modal-token",
+		"guild_id":       guildID.String(),
+		"channel":        map[string]any{"id": "555001", "type": 0},
+		"member": map[string]any{
+			"user":        map[string]any{"id": userID.String(), "username": "mod"},
+			"permissions": "8",
+		},
+		"locale": "ja",
+		"data": map[string]any{
+			"custom_id": customID,
+		},
+	})
+	if err != nil {
+		t.Fatalf("marshal modal interaction failed: %v", err)
+	}
+	var mi discord.ModalSubmitInteraction
+	if err := json.Unmarshal(payload, &mi); err != nil {
+		t.Fatalf("unmarshal ModalSubmitInteraction failed: %v", err)
+	}
+	comps := make([]discord.LayoutComponent, 0, len(inputs))
+	for k, v := range inputs {
+		comps = append(comps, discord.NewLabel(k, discord.TextInputComponent{
+			CustomID: k,
+			Style:    discord.TextInputStyleShort,
+			Value:    v,
+		}))
+	}
+	mi.Data.Components = comps
+	return &handler.ModalEvent{
+		ModalSubmitInteractionCreate: &events.ModalSubmitInteractionCreate{
+			GenericEvent:           events.NewGenericEvent(client, 0, 0),
+			ModalSubmitInteraction: mi,
+			Respond: func(respType discord.InteractionResponseType, data discord.InteractionResponseData, opts ...rest.RequestOpt) error {
+				if onRespond != nil {
+					onRespond(respType, data)
+				}
+				return nil
+			},
+		},
+		Vars: vars,
+		Ctx:  context.Background(),
+	}
+}
+
+func newInternalCommandEvent(
+	t *testing.T,
+	client *bot.Client,
+	guildID snowflake.ID,
+	userID snowflake.ID,
+	opts map[string]discord.SlashCommandOption,
+	onRespond func(discord.InteractionResponseType, discord.InteractionResponseData),
+) (discord.SlashCommandInteractionData, *handler.CommandEvent) {
+	t.Helper()
+	payload, err := json.Marshal(map[string]any{
+		"type":           discord.InteractionTypeApplicationCommand,
+		"id":             snowflake.New(time.Now()).String(),
+		"application_id": "999000",
+		"token":          "test-cmd-token",
+		"guild_id":       guildID.String(),
+		"channel":        map[string]any{"id": "555001", "type": 0},
+		"member": map[string]any{
+			"user":        map[string]any{"id": userID.String(), "username": "admin"},
+			"permissions": "8",
+		},
+		"locale": "ja",
+		"data": map[string]any{
+			"id":   "1",
+			"type": discord.ApplicationCommandTypeSlash,
+			"name": "bbs",
+		},
+	})
+	if err != nil {
+		t.Fatalf("marshal command interaction failed: %v", err)
+	}
+	var ai discord.ApplicationCommandInteraction
+	if err := json.Unmarshal(payload, &ai); err != nil {
+		t.Fatalf("unmarshal ApplicationCommandInteraction failed: %v", err)
+	}
+	data := discord.SlashCommandInteractionData{Options: opts}
+	ev := &handler.CommandEvent{
+		ApplicationCommandInteractionCreate: &events.ApplicationCommandInteractionCreate{
+			GenericEvent:                  events.NewGenericEvent(client, 0, 0),
+			ApplicationCommandInteraction: ai,
+			Respond: func(respType discord.InteractionResponseType, d discord.InteractionResponseData, opts ...rest.RequestOpt) error {
+				if onRespond != nil {
+					onRespond(respType, d)
+				}
+				return nil
+			},
+		},
+		Ctx: context.Background(),
+	}
+	return data, ev
+}
+
+func TestRound3_RoleGateBinding_BoardPreValidation_And_BanModalRetryReuse(t *testing.T) {
+	ctx := context.Background()
+	opID := snowflake.ID(910001)
+	roleUserID := snowflake.ID(910002)
+	authorID := snowflake.ID(910003)
+	reporterID := snowflake.ID(910004)
+	guildRole := snowflake.ID(910010)
+	guildBoard := snowflake.ID(910011)
+
+	store, svc, sys := newInternalTestEnv(t, bbscore.PolicyConfig{Version: "2026-03"}, opID)
+	bbsCmd := &bbsCommand{sys: sys}
+	adminCmd := &adminCommand{sys: sys}
+
+	// 1. Role gate button binds to role_id as well as policy version (R3-m03)
+	roleA := snowflake.ID(987654321)
+	roleB := snowflake.ID(987654322)
+	if _, err := svc.SetupGuild(ctx, bbscore.GuildSetupInput{
+		GuildID:      guildRole,
+		Enabled:      true,
+		ActorUserID:  opID,
+		ViewerRoleID: &roleB,
+	}); err != nil {
+		t.Fatalf("SetupGuild role failed: %v", err)
+	}
+	var roleGrantCalls atomic.Int32
+	var lastRolePath string
+	roleClient := newInternalMockClient(t, func(req *http.Request) (*http.Response, error) {
+		p := strings.TrimPrefix(req.URL.Path, "/api/v10")
+		if req.Method == http.MethodPut && strings.Contains(p, "/roles/") {
+			roleGrantCalls.Add(1)
+			lastRolePath = p
+			return jsonResp(http.StatusNoContent, nil), nil
+		}
+		return jsonResp(http.StatusOK, map[string]any{"id": "1"}), nil
+	})
+	verTok := bbscore.PolicyVersionToken("2026-03")
+
+	evMismatchRole := newInternalComponentEvent(t, roleClient, guildRole, roleUserID,
+		"/bbs/consent/role/"+guildRole.String()+"/"+roleA.String()+"/"+verTok,
+		map[string]string{"guild_id": guildRole.String(), "role_id": roleA.String(), "version": verTok},
+		nil,
+	)
+	if err := sys.handleConsentRole(evMismatchRole); err != nil {
+		t.Fatalf("handleConsentRole mismatch returned err: %v", err)
+	}
+	if roleGrantCalls.Load() != 0 {
+		t.Fatalf("expected 0 role grants on mismatched role_id panel, got %d", roleGrantCalls.Load())
+	}
+	if _, err := svc.CheckConsent(ctx, roleUserID); !errors.Is(err, bbscore.ErrConsentRequired) {
+		t.Fatalf("expected consent NOT recorded on mismatched role_id panel, err=%v", err)
+	}
+
+	evLegacyNoRole := newInternalComponentEvent(t, roleClient, guildRole, roleUserID,
+		"/bbs/consent/role/"+guildRole.String()+"/"+verTok,
+		map[string]string{"guild_id": guildRole.String(), "version": verTok},
+		nil,
+	)
+	if err := sys.handleConsentRole(evLegacyNoRole); err != nil {
+		t.Fatalf("handleConsentRole legacy returned err: %v", err)
+	}
+	if roleGrantCalls.Load() != 0 {
+		t.Fatalf("expected 0 role grants on legacy panel missing role_id, got %d", roleGrantCalls.Load())
+	}
+
+	evValidRole := newInternalComponentEvent(t, roleClient, guildRole, roleUserID,
+		"/bbs/consent/role/"+guildRole.String()+"/"+roleB.String()+"/"+verTok,
+		map[string]string{"guild_id": guildRole.String(), "role_id": roleB.String(), "version": verTok},
+		nil,
+	)
+	if err := sys.handleConsentRole(evValidRole); err != nil {
+		t.Fatalf("handleConsentRole valid returned err: %v", err)
+	}
+	if roleGrantCalls.Load() != 1 || !strings.HasSuffix(lastRolePath, "/roles/"+roleB.String()) {
+		t.Fatalf("expected 1 role grant for %s, got calls=%d path=%q", roleB, roleGrantCalls.Load(), lastRolePath)
+	}
+	if _, err := svc.CheckConsent(ctx, roleUserID); err != nil {
+		t.Fatalf("expected valid role panel to record consent, err=%v", err)
+	}
+
+	// 2. /bbs board create validates rules and board name BEFORE resolveOrCreateDefaultLocalCategory (R3-m01)
+	if _, err := svc.SetupGuild(ctx, bbscore.GuildSetupInput{GuildID: guildBoard, Enabled: true, ActorUserID: opID}); err != nil {
+		t.Fatalf("SetupGuild board failed: %v", err)
+	}
+	rawJSON := func(v any) json.RawMessage {
+		b, err := json.Marshal(v)
+		if err != nil {
+			t.Fatalf("marshal value failed: %v", err)
+		}
+		return b
+	}
+	badRulesData, badRulesCmdEv := newInternalCommandEvent(t, roleClient, guildBoard, opID, map[string]discord.SlashCommandOption{
+		"name":         {Type: discord.ApplicationCommandOptionTypeString, Value: rawJSON("valid-board")},
+		"default_name": {Type: discord.ApplicationCommandOptionTypeString, Value: rawJSON("   ")},
+	}, nil)
+	if err := bbsCmd.handleBoardCreate(badRulesData, badRulesCmdEv); err != nil {
+		t.Fatalf("handleBoardCreate invalid rules returned err: %v", err)
+	}
+	badNameData, badNameCmdEv := newInternalCommandEvent(t, roleClient, guildBoard, opID, map[string]discord.SlashCommandOption{
+		"name": {Type: discord.ApplicationCommandOptionTypeString, Value: rawJSON("   ")},
+	}, nil)
+	if err := bbsCmd.handleBoardCreate(badNameData, badNameCmdEv); err != nil {
+		t.Fatalf("handleBoardCreate empty name returned err: %v", err)
+	}
+	localScope := bbscore.ScopeLocal
+	catsAfterReject, err := svc.ListCategories(ctx, bbscore.CategoryFilter{Scope: &localScope, GuildID: &guildBoard})
+	if err != nil {
+		t.Fatalf("ListCategories failed: %v", err)
+	}
+	if len(catsAfterReject) != 0 {
+		t.Fatalf("expected 0 default local categories created after rejected /bbs board create inputs, got %+v", catsAfterReject)
+	}
+
+	// 3. handleAdminBanModal persists BanID on report and reuses it on retry without duplicate Ban (R3-M01)
+	gCat, err := svc.CreateCategory(ctx, bbscore.CreateCategoryInput{Scope: bbscore.ScopeGlobal, Name: "ModGlobalCat"})
+	if err != nil {
+		t.Fatalf("CreateCategory global failed: %v", err)
+	}
+	gBoard, err := svc.CreateBoard(ctx, bbscore.CreateBoardInput{CategoryID: gCat.ID, Scope: bbscore.ScopeGlobal, Name: "ModGlobalBoard"})
+	if err != nil {
+		t.Fatalf("CreateBoard global failed: %v", err)
+	}
+	mountID := uuid.New()
+	if err := store.CreateBoardMount(ctx, &bbscore.BoardMount{
+		ID: mountID, BoardID: gBoard.ID, GuildID: guildRole, ChannelID: snowflake.ID(610001), Active: true, CreatedAt: time.Now(),
+	}); err != nil {
+		t.Fatalf("CreateBoardMount failed: %v", err)
+	}
+	for _, uid := range []snowflake.ID{authorID, reporterID} {
+		if _, err := svc.AcceptPolicy(ctx, uid); err != nil {
+			t.Fatalf("AcceptPolicy %d failed: %v", uid, err)
+		}
+	}
+	_, th, opPost, err := svc.CreateThread(ctx, bbscore.CreateThreadInput{
+		BoardID: gBoard.ID, GuildID: guildRole, UserID: authorID, Title: "BANテスト", RawBody: "違反投稿",
+	})
+	if err != nil {
+		t.Fatalf("CreateThread failed: %v", err)
+	}
+	discordTID := snowflake.ID(610010)
+	mirrorID := uuid.New()
+	if err := store.CreateThreadMirror(ctx, &bbscore.ThreadMirror{
+		ID: mirrorID, ThreadID: th.ID, BoardMountID: mountID, GuildID: guildRole, DiscordThreadID: discordTID, CreatedAt: time.Now(),
+	}); err != nil {
+		t.Fatalf("CreateThreadMirror failed: %v", err)
+	}
+	opMsgID := snowflake.ID(610101)
+	if err := store.CreatePostMirror(ctx, &bbscore.PostMirror{
+		ID: uuid.New(), PostID: opPost.ID, ThreadMirrorID: mirrorID, GuildID: guildRole, DiscordMessageID: opMsgID, CreatedAt: time.Now(),
+	}); err != nil {
+		t.Fatalf("CreatePostMirror failed: %v", err)
+	}
+	banReport, err := svc.CreateReport(ctx, guildRole, reporterID, opPost.ID, "global abuse")
+	if err != nil {
+		t.Fatalf("CreateReport failed: %v", err)
+	}
+
+	var failBanSync atomic.Bool
+	failBanSync.Store(true)
+	banSyncClient := newInternalMockClient(t, func(req *http.Request) (*http.Response, error) {
+		p := strings.TrimPrefix(req.URL.Path, "/api/v10")
+		if req.Method == http.MethodGet && p == "/channels/"+discordTID.String() {
+			return jsonResp(http.StatusOK, map[string]any{"id": discordTID.String(), "type": 11, "thread_metadata": map[string]any{"archived": false}}), nil
+		}
+		if req.Method == http.MethodPatch && strings.HasPrefix(p, "/channels/"+discordTID.String()+"/messages/") {
+			if failBanSync.Load() {
+				return jsonResp(http.StatusServiceUnavailable, map[string]any{"message": "503"}), nil
+			}
+			return jsonResp(http.StatusOK, map[string]any{"id": opMsgID.String()}), nil
+		}
+		return jsonResp(http.StatusOK, map[string]any{"id": "1"}), nil
+	})
+
+	modalEv1 := newInternalModalEvent(t, banSyncClient, guildRole, opID, "/bbs/admin/banmodal/"+banReport.ID.String(),
+		map[string]string{"hours": "24", "reason": "global abuse"},
+		map[string]string{"report_id": banReport.ID.String()},
+		nil,
+	)
+	if err := adminCmd.handleAdminBanModal(modalEv1); err != nil {
+		t.Fatalf("handleAdminBanModal fail attempt returned err: %v", err)
+	}
+
+	bansAfter1, err := store.ListBans(ctx, bbscore.BanFilter{Limit: 10, Now: time.Now()})
+	if err != nil || len(bansAfter1) != 1 {
+		t.Fatalf("expected exactly 1 ban after failed sync attempt, got %d, err=%v", len(bansAfter1), err)
+	}
+	repAfter1, err := store.GetReport(ctx, banReport.ID)
+	if err != nil {
+		t.Fatalf("GetReport 1 failed: %v", err)
+	}
+	if repAfter1.Status != bbscore.ReportStatusOpen || repAfter1.BanID == nil || *repAfter1.BanID != bansAfter1[0].ID {
+		t.Fatalf("expected report open with saved BanID %v, got status=%s banID=%v", bansAfter1[0].ID, repAfter1.Status, repAfter1.BanID)
+	}
+
+	failBanSync.Store(false)
+	modalEv2 := newInternalModalEvent(t, banSyncClient, guildRole, opID, "/bbs/admin/banmodal/"+banReport.ID.String(),
+		map[string]string{"hours": "24", "reason": "global abuse"},
+		map[string]string{"report_id": banReport.ID.String()},
+		nil,
+	)
+	if err := adminCmd.handleAdminBanModal(modalEv2); err != nil {
+		t.Fatalf("handleAdminBanModal retry attempt returned err: %v", err)
+	}
+
+	bansAfter2, err := store.ListBans(ctx, bbscore.BanFilter{Limit: 10, Now: time.Now()})
+	if err != nil || len(bansAfter2) != 1 || bansAfter2[0].ID != bansAfter1[0].ID {
+		t.Fatalf("expected retry to reuse initial Ban %v without duplicate rows, got %+v, err=%v", bansAfter1[0].ID, bansAfter2, err)
+	}
+	repAfter2, err := store.GetReport(ctx, banReport.ID)
+	if err != nil || repAfter2.Status != bbscore.ReportStatusResolved || repAfter2.BanID == nil || *repAfter2.BanID != bansAfter1[0].ID {
+		t.Fatalf("expected report resolved on retry preserving BanID %v, got %+v, err=%v", bansAfter1[0].ID, repAfter2, err)
 	}
 }

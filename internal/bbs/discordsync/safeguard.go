@@ -391,8 +391,12 @@ func validateStringSelect(sel discord.StringSelectMenuComponent, inModal bool) e
 		if *sel.MinValues < 0 || *sel.MinValues > len(sel.Options) {
 			return fmt.Errorf("string select min_values %d out of range", *sel.MinValues)
 		}
-		if sel.MaxValues > 0 && *sel.MinValues > sel.MaxValues {
-			return fmt.Errorf("string select min_values %d exceeds max_values %d", *sel.MinValues, sel.MaxValues)
+		effectiveMax := sel.MaxValues
+		if effectiveMax == 0 {
+			effectiveMax = 1
+		}
+		if *sel.MinValues > effectiveMax {
+			return fmt.Errorf("string select min_values %d exceeds max_values %d", *sel.MinValues, effectiveMax)
 		}
 	}
 	return nil
@@ -1450,7 +1454,8 @@ type InvalidRequestGuard struct {
 	events          []time.Time
 	mountFailures   map[uuid.UUID]int
 	openMounts      map[uuid.UUID]time.Time
-	halfOpenProbe   map[uuid.UUID]bool
+	halfOpenProbe   map[uuid.UUID]uint64
+	nextProbeSeq    uint64
 	mountFailLimit  int
 	circuitCooldown time.Duration
 }
@@ -1471,7 +1476,7 @@ func NewInvalidRequestGuard(window time.Duration, threshold int, mountFailLimit 
 		threshold:       threshold,
 		mountFailures:   make(map[uuid.UUID]int),
 		openMounts:      make(map[uuid.UUID]time.Time),
-		halfOpenProbe:   make(map[uuid.UUID]bool),
+		halfOpenProbe:   make(map[uuid.UUID]uint64),
 		mountFailLimit:  mountFailLimit,
 		circuitCooldown: DefaultMountCircuitCooldown,
 	}
@@ -1488,30 +1493,50 @@ func (g *InvalidRequestGuard) SetCircuitCooldown(d time.Duration) {
 }
 
 // AcquireMount checks global throttling and mount circuit breaker state atomically at now.
-// When allowed, callers MUST defer the returned release func so any half-open probe lock is cleaned up
-// even after non-403 failures or pre-REST aborts.
+// When allowed, callers MUST defer the returned release func so any half-open probe lock is cleaned up.
 func (g *InvalidRequestGuard) AcquireMount(mountID uuid.UUID, now time.Time) (allowed bool, release func()) {
+	allowed, _, release = g.AcquireMountWithProbe(mountID, now)
+	return allowed, release
+}
+
+// AcquireMountWithProbe checks global throttling and mount circuit breaker state atomically at now,
+// returning a unique non-zero probeSeq token when a half-open probe slot was acquired.
+func (g *InvalidRequestGuard) AcquireMountWithProbe(mountID uuid.UUID, now time.Time) (allowed bool, probeSeq uint64, release func()) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	g.pruneLocked(now)
 	if len(g.events) >= g.threshold {
-		return false, func() {}
+		return false, 0, func() {}
 	}
 	if mountID == uuid.Nil {
-		return true, func() {}
+		return true, 0, func() {}
 	}
 	openedAt, open := g.openMounts[mountID]
 	if !open {
-		return true, func() {}
+		return true, 0, func() {}
 	}
-	if g.circuitCooldown > 0 && now.Sub(openedAt) >= g.circuitCooldown && !g.halfOpenProbe[mountID] {
-		g.halfOpenProbe[mountID] = true
-		return true, func() { g.ReleaseMountProbe(mountID) }
+	if g.circuitCooldown > 0 && now.Sub(openedAt) >= g.circuitCooldown && g.halfOpenProbe[mountID] == 0 {
+		g.nextProbeSeq++
+		seq := g.nextProbeSeq
+		g.halfOpenProbe[mountID] = seq
+		return true, seq, func() { g.ReleaseMountProbeSeq(mountID, seq) }
 	}
-	return false, func() {}
+	return false, 0, func() {}
 }
 
-// ReleaseMountProbe clears an in-flight half-open probe marker for mountID.
+// ReleaseMountProbeSeq clears the half-open probe marker for mountID only if its token matches seq.
+func (g *InvalidRequestGuard) ReleaseMountProbeSeq(mountID uuid.UUID, seq uint64) {
+	if mountID == uuid.Nil || seq == 0 {
+		return
+	}
+	g.mu.Lock()
+	if g.halfOpenProbe[mountID] == seq {
+		delete(g.halfOpenProbe, mountID)
+	}
+	g.mu.Unlock()
+}
+
+// ReleaseMountProbe clears an in-flight half-open probe marker for mountID unconditionally.
 func (g *InvalidRequestGuard) ReleaseMountProbe(mountID uuid.UUID) {
 	if mountID == uuid.Nil {
 		return
@@ -1524,6 +1549,12 @@ func (g *InvalidRequestGuard) ReleaseMountProbe(mountID uuid.UUID) {
 // RecordError inspects err and updates global invalid-request tracking and mount circuit breakers.
 // Returns true if the mount should be permanently deactivated (e.g. 404 Unknown Channel).
 func (g *InvalidRequestGuard) RecordError(mountID uuid.UUID, err error, now time.Time) (deactivateMount bool) {
+	return g.RecordMountError(mountID, 0, err, now)
+}
+
+// RecordMountError updates global invalid-request tracking and mount circuit breakers for a REST outcome.
+// Only a matching probeSeq releases an active half-open probe marker on non-403/404 errors.
+func (g *InvalidRequestGuard) RecordMountError(mountID uuid.UUID, probeSeq uint64, err error, now time.Time) (deactivateMount bool) {
 	if err == nil {
 		if mountID != uuid.Nil {
 			g.RecordMountSuccess(mountID)
@@ -1553,9 +1584,13 @@ func (g *InvalidRequestGuard) RecordError(mountID uuid.UUID, err error, now time
 		}
 		if status == 403 || IsJSONError(err, JSONErrMissingAccess) || IsJSONError(err, JSONErrMissingPermissions) {
 			g.mu.Lock()
-			delete(g.halfOpenProbe, mountID)
+			if probeSeq != 0 && g.halfOpenProbe[mountID] == probeSeq {
+				delete(g.halfOpenProbe, mountID)
+			}
 			if _, alreadyOpen := g.openMounts[mountID]; alreadyOpen {
-				g.openMounts[mountID] = now
+				if g.halfOpenProbe[mountID] == 0 {
+					g.openMounts[mountID] = now
+				}
 			} else {
 				g.mountFailures[mountID]++
 				if g.mountFailures[mountID] >= g.mountFailLimit {
@@ -1565,7 +1600,7 @@ func (g *InvalidRequestGuard) RecordError(mountID uuid.UUID, err error, now time
 			g.mu.Unlock()
 			return false
 		}
-		g.ReleaseMountProbe(mountID)
+		g.ReleaseMountProbeSeq(mountID, probeSeq)
 	}
 	return false
 }
@@ -1584,7 +1619,7 @@ func (g *InvalidRequestGuard) IsMountOpen(mountID uuid.UUID) bool {
 	return g.IsMountOpenAt(mountID, time.Now())
 }
 
-// IsMountOpenAt evaluates mount circuit breaker state at now, permitting one half-open probe after cooldown.
+// IsMountOpenAt reports whether mountID is currently blocked by an open circuit breaker without mutating probe state.
 func (g *InvalidRequestGuard) IsMountOpenAt(mountID uuid.UUID, now time.Time) bool {
 	g.mu.Lock()
 	defer g.mu.Unlock()
@@ -1592,8 +1627,7 @@ func (g *InvalidRequestGuard) IsMountOpenAt(mountID uuid.UUID, now time.Time) bo
 	if !open {
 		return false
 	}
-	if g.circuitCooldown > 0 && now.Sub(openedAt) >= g.circuitCooldown && !g.halfOpenProbe[mountID] {
-		g.halfOpenProbe[mountID] = true
+	if g.circuitCooldown > 0 && now.Sub(openedAt) >= g.circuitCooldown && g.halfOpenProbe[mountID] == 0 {
 		return false
 	}
 	return true

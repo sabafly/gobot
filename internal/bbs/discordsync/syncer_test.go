@@ -152,8 +152,10 @@ func TestSyncer_PublishFailSafeIsolation_ControlPanel_And_Guide(t *testing.T) {
 
 	var mu sync.Mutex
 	var nextID int64 = 700000
+	var otherMirrorThreadID snowflake.ID
 	otherThreadMirrored := make(chan struct{}, 4)
-	otherArchived := make(chan struct{}, 4)
+	otherReplyMirrored := make(chan struct{}, 4)
+	otherLockedAndArchived := make(chan struct{}, 4)
 	failSrc := true
 
 	client := newMockRestClient(t, func(req *http.Request) (*http.Response, error) {
@@ -161,6 +163,7 @@ func TestSyncer_PublishFailSafeIsolation_ControlPanel_And_Guide(t *testing.T) {
 		nextID++
 		id := snowflake.ID(nextID)
 		failSourceNow := failSrc
+		otherTID := otherMirrorThreadID
 		mu.Unlock()
 
 		p := strings.TrimPrefix(req.URL.Path, "/api/v10")
@@ -169,19 +172,20 @@ func TestSyncer_PublishFailSafeIsolation_ControlPanel_And_Guide(t *testing.T) {
 			return jsonResponse(http.StatusInternalServerError, map[string]any{"message": "internal error"}), nil
 
 		case req.Method == http.MethodPost && p == fmt.Sprintf("/channels/%d/threads", chOther):
+			mu.Lock()
+			otherMirrorThreadID = id
+			mu.Unlock()
 			return jsonResponse(http.StatusOK, map[string]any{"id": id.String(), "type": 11}), nil
 
 		case req.Method == http.MethodPost && strings.HasPrefix(p, "/channels/") && strings.HasSuffix(p, "/messages"):
-			var payload map[string]any
 			rawBody, _ := io.ReadAll(req.Body)
-			_ = json.Unmarshal(rawBody, &payload)
 			rawStr := string(rawBody)
-			if strings.Contains(rawStr, "Over 1000 Thread") {
+			if otherTID != 0 && p == fmt.Sprintf("/channels/%d/messages", otherTID) && strings.Contains(rawStr, "2レス目 (max到達)") {
 				select {
-				case otherArchived <- struct{}{}:
+				case otherReplyMirrored <- struct{}{}:
 				default:
 				}
-			} else if !strings.Contains(rawStr, "Board Guide") && !strings.Contains(rawStr, "ローカル板") && !strings.Contains(rawStr, "グローバル板") && !strings.Contains(rawStr, "スレッド操作") {
+			} else if !strings.Contains(rawStr, "Over 1000 Thread") && !strings.Contains(rawStr, "Board Guide") && !strings.Contains(rawStr, "ローカル板") && !strings.Contains(rawStr, "グローバル板") && !strings.Contains(rawStr, "スレッド操作") {
 				select {
 				case otherThreadMirrored <- struct{}{}:
 				default:
@@ -190,6 +194,17 @@ func TestSyncer_PublishFailSafeIsolation_ControlPanel_And_Guide(t *testing.T) {
 			return jsonResponse(http.StatusOK, map[string]any{"id": id.String(), "channel_id": "1"}), nil
 
 		case req.Method == http.MethodPatch && strings.HasPrefix(p, "/channels/"):
+			rawBody, _ := io.ReadAll(req.Body)
+			var patchPayload map[string]any
+			_ = json.Unmarshal(rawBody, &patchPayload)
+			arch, _ := patchPayload["archived"].(bool)
+			locked, _ := patchPayload["locked"].(bool)
+			if otherTID != 0 && p == fmt.Sprintf("/channels/%d", otherTID) && arch && locked {
+				select {
+				case otherLockedAndArchived <- struct{}{}:
+				default:
+				}
+			}
 			return jsonResponse(http.StatusOK, map[string]any{"id": strings.TrimPrefix(p, "/channels/"), "type": 11}), nil
 
 		case req.Method == http.MethodGet && strings.HasPrefix(p, "/channels/"):
@@ -231,7 +246,7 @@ func TestSyncer_PublishFailSafeIsolation_ControlPanel_And_Guide(t *testing.T) {
 	}
 
 	// 2. Deactivate mountSrc mid-flight; PublishPost (res #2 reaching MaxRes=2 -> archived) must return ErrSourceMountInactive
-	// YET still sync reply + SyncArchive to mountOther!
+	// YET still sync reply AND send SyncArchive PATCH{archived:true, locked:true} to mountOther!
 	if err := store.DeactivateBoardMount(ctx, mountSrc.ID); err != nil {
 		t.Fatalf("DeactivateBoardMount failed: %v", err)
 	}
@@ -249,9 +264,14 @@ func TestSyncer_PublishFailSafeIsolation_ControlPanel_And_Guide(t *testing.T) {
 		t.Fatalf("expected ErrSourceMountInactive when source mount deactivated, got %v", postSyncErr)
 	}
 	select {
-	case <-otherArchived:
+	case <-otherReplyMirrored:
 	case <-time.After(2 * time.Second):
-		t.Fatal("expected SyncArchive fanout even when source mount was inactive")
+		t.Fatal("expected reply message #2 to sync to mountOther before continuing")
+	}
+	select {
+	case <-otherLockedAndArchived:
+	case <-time.After(2 * time.Second):
+		t.Fatal("expected SyncArchive PATCH with archived=true and locked=true on otherMirrorThreadID")
 	}
 
 	// 3. SyncAbone must return REST error when UpdateMessage fails.
@@ -264,5 +284,202 @@ func TestSyncer_PublishFailSafeIsolation_ControlPanel_And_Guide(t *testing.T) {
 	})
 	if err := errSyncer.SyncAbone(ctx, failClient, *replyPost, *archivedTh); err == nil {
 		t.Fatal("expected SyncAbone to return non-404 REST error")
+	}
+
+	// 4. SyncAbone must also return REST error when UpdateMessage succeeds (200) but ArchiveAndLockThread fails (503).
+	archFailClient := newMockRestClient(t, func(req *http.Request) (*http.Response, error) {
+		p := strings.TrimPrefix(req.URL.Path, "/api/v10")
+		if req.Method == http.MethodPatch && !strings.Contains(p, "/messages/") {
+			return jsonResponse(http.StatusServiceUnavailable, map[string]any{"message": "archive lock failed"}), nil
+		}
+		return jsonResponse(http.StatusOK, map[string]any{"id": "1", "type": 11, "thread_metadata": map[string]any{"archived": false}}), nil
+	})
+	if err := errSyncer.SyncAbone(ctx, archFailClient, *replyPost, *archivedTh); err == nil {
+		t.Fatal("expected SyncAbone to propagate ArchiveAndLockThread 503 failure")
+	}
+}
+
+func TestSyncer_Round3ControlPreservation_LateReplyLock_And_RefreshGuide(t *testing.T) {
+	ctx := context.Background()
+	store, svc := newSyncerTestEnv(t)
+
+	guildID := snowflake.ID(20001)
+	userAuthor := snowflake.ID(40001)
+	userLate := snowflake.ID(40002)
+	if _, err := svc.SetupGuild(ctx, bbs.GuildSetupInput{GuildID: guildID, Enabled: true, ActorUserID: 1}); err != nil {
+		t.Fatalf("SetupGuild failed: %v", err)
+	}
+	for _, uid := range []snowflake.ID{userAuthor, userLate} {
+		if _, err := svc.AcceptPolicy(ctx, uid); err != nil {
+			t.Fatalf("AcceptPolicy %d failed: %v", uid, err)
+		}
+	}
+	cat, err := svc.CreateCategory(ctx, bbs.CreateCategoryInput{Scope: bbs.ScopeLocal, GuildID: &guildID, Name: "カテゴリ"})
+	if err != nil {
+		t.Fatalf("CreateCategory failed: %v", err)
+	}
+	board, err := svc.CreateBoard(ctx, bbs.CreateBoardInput{
+		CategoryID: cat.ID,
+		Scope:      bbs.ScopeLocal,
+		GuildID:    &guildID,
+		Name:       "ローカル板",
+		Rules:      bbs.BoardRules{DefaultName: "初版名無し", MaxRes: 100}.Normalize(),
+	})
+	if err != nil {
+		t.Fatalf("CreateBoard failed: %v", err)
+	}
+	chID := snowflake.ID(51001)
+	ctrlGuideID := snowflake.ID(51002)
+	mount := &bbs.BoardMount{
+		ID:               uuid.New(),
+		BoardID:          board.ID,
+		GuildID:          guildID,
+		ChannelID:        chID,
+		Locale:           "ja",
+		IsForum:          false,
+		ControlMessageID: &ctrlGuideID,
+		Active:           true,
+	}
+	if err := store.CreateBoardMount(ctx, mount); err != nil {
+		t.Fatalf("CreateBoardMount failed: %v", err)
+	}
+
+	_, th, _, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: board.ID,
+		GuildID: guildID,
+		UserID:  userAuthor,
+		Title:   "遅延同期スレッド",
+		RawBody: "1レス目",
+	})
+	if err != nil {
+		t.Fatalf("CreateThread failed: %v", err)
+	}
+	discordTID := snowflake.ID(51010)
+	mirrorCtrlID := snowflake.ID(51011)
+	tm := &bbs.ThreadMirror{
+		ID:               uuid.New(),
+		ThreadID:         th.ID,
+		BoardMountID:     mount.ID,
+		GuildID:          guildID,
+		DiscordThreadID:  discordTID,
+		ControlMessageID: &mirrorCtrlID,
+		SyncedUpToRes:    1,
+	}
+	if err := store.CreateThreadMirror(ctx, tm); err != nil {
+		t.Fatalf("CreateThreadMirror failed: %v", err)
+	}
+
+	// 1. SyncArchive: when DELETE control message returns 503, ControlMessageID must be preserved in DB;
+	// when DELETE returns 200 later, ControlMessageID is cleared to nil.
+	var mu sync.Mutex
+	deleteFail := true
+	rearchivedAfterLateReply := false
+	var guideEditBody string
+
+	client := newMockRestClient(t, func(req *http.Request) (*http.Response, error) {
+		p := strings.TrimPrefix(req.URL.Path, "/api/v10")
+		mu.Lock()
+		shouldFailDel := deleteFail
+		mu.Unlock()
+
+		switch {
+		case req.Method == http.MethodDelete && p == fmt.Sprintf("/channels/%d/messages/%d", discordTID, mirrorCtrlID):
+			if shouldFailDel {
+				return jsonResponse(http.StatusServiceUnavailable, map[string]any{"message": "503"}), nil
+			}
+			return jsonResponse(http.StatusNoContent, nil), nil
+		case req.Method == http.MethodPatch && p == fmt.Sprintf("/channels/%d", discordTID):
+			raw, _ := io.ReadAll(req.Body)
+			var body map[string]any
+			_ = json.Unmarshal(raw, &body)
+			if arch, _ := body["archived"].(bool); arch {
+				if lck, _ := body["locked"].(bool); lck {
+					mu.Lock()
+					rearchivedAfterLateReply = true
+					mu.Unlock()
+				}
+			}
+			return jsonResponse(http.StatusOK, map[string]any{"id": discordTID.String(), "type": 11}), nil
+		case req.Method == http.MethodPatch && p == fmt.Sprintf("/channels/%d/messages/%d", chID, ctrlGuideID):
+			raw, _ := io.ReadAll(req.Body)
+			mu.Lock()
+			guideEditBody = string(raw)
+			mu.Unlock()
+			return jsonResponse(http.StatusOK, map[string]any{"id": ctrlGuideID.String()}), nil
+		case req.Method == http.MethodGet && strings.HasPrefix(p, "/channels/"):
+			return jsonResponse(http.StatusOK, map[string]any{"id": strings.TrimPrefix(p, "/channels/"), "type": 11, "thread_metadata": map[string]any{"archived": false}}), nil
+		}
+		return jsonResponse(http.StatusOK, map[string]any{"id": "880001"}), nil
+	})
+
+	syncer := discordsync.NewSyncer(svc)
+	debouncerScheduled := false
+	syncer.Debouncer = discordsync.NewControlPanelDebouncerWithTimer(time.Second, func(_ time.Duration, _ func()) discordsync.DebounceTimer {
+		debouncerScheduled = true
+		return &fakeTimer{}
+	})
+
+	// Create late reply BEFORE archiving DB thread, then archive thread before late reply mirrors!
+	_, _, latePost, backRefs, err := svc.CreatePost(ctx, bbs.CreatePostInput{
+		ThreadID: th.ID,
+		GuildID:  guildID,
+		UserID:   userLate,
+		RawBody:  "閉鎖直前の遅延レス",
+	})
+	if err != nil {
+		t.Fatalf("CreatePost late failed: %v", err)
+	}
+	archivedTh, err := store.ArchiveThread(ctx, th.ID)
+	if err != nil {
+		t.Fatalf("ArchiveThread failed: %v", err)
+	}
+
+	syncer.SyncArchive(ctx, client, *board, *archivedTh, false)
+	reloadedTM, err := store.GetThreadMirror(ctx, tm.ID)
+	if err != nil || reloadedTM.ControlMessageID == nil || *reloadedTM.ControlMessageID != mirrorCtrlID {
+		t.Fatalf("expected ControlMessageID to be preserved on DELETE 503, got %+v, err=%v", reloadedTM, err)
+	}
+
+	mu.Lock()
+	deleteFail = false
+	rearchivedAfterLateReply = false
+	mu.Unlock()
+	syncer.SyncArchive(ctx, client, *board, *archivedTh, false)
+	reloadedTM, err = store.GetThreadMirror(ctx, tm.ID)
+	if err != nil || reloadedTM.ControlMessageID != nil {
+		t.Fatalf("expected ControlMessageID to be cleared once DELETE succeeds, got %+v, err=%v", reloadedTM, err)
+	}
+
+	// 2. Late PublishPost carrying stale Active snapshot for an already-archived thread must re-lock and NOT schedule control panel.
+	staleActiveTh := *th
+	staleActiveTh.Status = bbs.ThreadStatusActive
+	mu.Lock()
+	rearchivedAfterLateReply = false
+	mu.Unlock()
+	debouncerScheduled = false
+	if _, _, pErr := syncer.PublishPost(ctx, client, mount.ID, *board, staleActiveTh, *latePost, backRefs, "ja"); pErr != nil {
+		t.Fatalf("PublishPost late failed: %v", pErr)
+	}
+	mu.Lock()
+	wasRelocked := rearchivedAfterLateReply
+	mu.Unlock()
+	if !wasRelocked {
+		t.Fatal("expected late reply on DB-archived thread to re-apply ArchiveAndLockThread")
+	}
+	if debouncerScheduled {
+		t.Fatal("expected late reply on DB-archived thread NOT to schedule control panel")
+	}
+
+	// 3. RefreshBoardGuide must reload latest board rules from DB under channel lock.
+	newDefName := "更新後の名無し"
+	if _, err := svc.UpdateBoard(ctx, board.ID, bbs.UpdateBoardInput{DefaultName: &newDefName}); err != nil {
+		t.Fatalf("UpdateBoard failed: %v", err)
+	}
+	syncer.RefreshBoardGuide(ctx, client, guildID, board.ID, "ja")
+	mu.Lock()
+	bodyAfterRefresh := guideEditBody
+	mu.Unlock()
+	if !strings.Contains(bodyAfterRefresh, newDefName) {
+		t.Fatalf("expected RefreshBoardGuide to send updated rule %q, got %s", newDefName, bodyAfterRefresh)
 	}
 }

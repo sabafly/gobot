@@ -147,13 +147,7 @@ func (s *System) handleConsentRole(e *handler.ComponentEvent) error {
 	guildID := snowflake.ID(gidVal)
 
 	versionTok := e.Vars["version"]
-	if versionTok == "" || versionTok != bbscore.PolicyVersionToken(s.Service.Policy.CurrentVersion) {
-		s.replyComponentError(e,
-			i18n.TranslateText(loc, "components.bbs.consent.accept_failed"),
-			describeBBSError(loc, bbscore.ErrStalePolicyVersion),
-		)
-		return nil
-	}
+	roleIDRaw := e.Vars["role_id"]
 
 	cfg, err := s.Service.EnsureGuildEnabled(e.Ctx, guildID)
 	if err != nil {
@@ -167,6 +161,16 @@ func (s *System) handleConsentRole(e *handler.ComponentEvent) error {
 		s.replyComponentError(e,
 			i18n.TranslateText(loc, "components.bbs.consent.role.not_configured_title"),
 			i18n.TranslateText(loc, "components.bbs.consent.role.not_configured_body"),
+		)
+		return nil
+	}
+
+	panelRoleVal, rErr := strconv.ParseUint(roleIDRaw, 10, 64)
+	if versionTok == "" || versionTok != bbscore.PolicyVersionToken(s.Service.Policy.CurrentVersion) ||
+		rErr != nil || panelRoleVal == 0 || snowflake.ID(panelRoleVal) != *cfg.ViewerRoleID {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.consent.role.failed"),
+			i18n.TranslateText(loc, "components.bbs.consent.role.stale_panel"),
 		)
 		return nil
 	}

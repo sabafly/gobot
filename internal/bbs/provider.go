@@ -200,6 +200,7 @@ type Store interface {
 
 	// Bans
 	CreateBan(ctx context.Context, ban *Ban) error
+	GetBan(ctx context.Context, id uuid.UUID) (*Ban, error)
 	DeleteBan(ctx context.Context, id uuid.UUID) error
 	ListBans(ctx context.Context, filter BanFilter) ([]Ban, error)
 	IsBanned(ctx context.Context, scope Scope, guildID snowflake.ID, posterHash string, userID snowflake.ID, now time.Time) (bool, error)

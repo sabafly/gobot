@@ -155,6 +155,9 @@ func (s *Service) SetupGuild(ctx context.Context, input GuildSetupInput) (*Guild
 	cfg.Enabled = input.Enabled
 	now := time.Now()
 	if input.Enabled {
+		if err := ValidatePolicyConfig(PolicyConfig{Version: s.Policy.CurrentVersion}); err != nil {
+			return nil, err
+		}
 		cfg.AgreedVersion = s.Policy.CurrentVersion
 		cfg.AgreedByUserID = input.ActorUserID
 		cfg.AgreedAt = &now
@@ -193,6 +196,9 @@ func (s *Service) CheckConsent(ctx context.Context, userID snowflake.ID) (*UserC
 
 // AcceptPolicy records a user's acceptance of the current policy version.
 func (s *Service) AcceptPolicy(ctx context.Context, userID snowflake.ID) (*UserConsent, error) {
+	if err := ValidatePolicyConfig(PolicyConfig{Version: s.Policy.CurrentVersion}); err != nil {
+		return nil, err
+	}
 	consent := &UserConsent{
 		UserID:        userID,
 		PolicyVersion: s.Policy.CurrentVersion,
@@ -463,7 +469,7 @@ func (s *Service) CreateThread(ctx context.Context, input CreateThreadInput) (*B
 	}
 
 	title := SanitizeSingleLine(input.Title)
-	if title == "" || utf8.RuneCountInString(title) > MaxTitleRunes {
+	if title == "" || strings.TrimSpace(ClearFormat(title)) == "" || utf8.RuneCountInString(title) > MaxTitleRunes {
 		return nil, nil, nil, ErrInvalidTitleLength
 	}
 	if utf8.RuneCountInString(SanitizeSingleLine(input.RawName)) > MaxNameRunes {
@@ -510,7 +516,11 @@ func (s *Service) CreateThread(ctx context.Context, input CreateThreadInput) (*B
 	if parsed.CleanBody == "" || utf8.RuneCountInString(parsed.CleanBody) > MaxBodyRunes {
 		return nil, nil, nil, ErrInvalidBodyLength
 	}
-	if utf8.RuneCountInString(ClearFormat(parsed.CleanBody)) > MaxEscapedBodyRunes {
+	formattedBody := ClearFormat(parsed.CleanBody)
+	if strings.TrimSpace(formattedBody) == "" {
+		return nil, nil, nil, ErrInvalidBodyLength
+	}
+	if utf8.RuneCountInString(formattedBody) > MaxEscapedBodyRunes {
 		return nil, nil, nil, ErrFormattedBodyTooLong
 	}
 
@@ -626,7 +636,11 @@ func (s *Service) CreatePost(ctx context.Context, input CreatePostInput) (*Board
 	if parsed.CleanBody == "" || utf8.RuneCountInString(parsed.CleanBody) > MaxBodyRunes {
 		return nil, nil, nil, nil, ErrInvalidBodyLength
 	}
-	if utf8.RuneCountInString(ClearFormat(parsed.CleanBody)) > MaxEscapedBodyRunes {
+	formattedBody := ClearFormat(parsed.CleanBody)
+	if strings.TrimSpace(formattedBody) == "" {
+		return nil, nil, nil, nil, ErrInvalidBodyLength
+	}
+	if utf8.RuneCountInString(formattedBody) > MaxEscapedBodyRunes {
 		return nil, nil, nil, nil, ErrFormattedBodyTooLong
 	}
 
