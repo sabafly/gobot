@@ -99,22 +99,6 @@ func (m *PolicyManager) GetDocument(kind PolicyDocKind, locale string) string {
 	return string(data)
 }
 
-// GetSummary returns a concise plain-text summary shown in the consent prompt.
-func (m *PolicyManager) GetSummary(locale string) string {
-	if normalizePolicyLocale(locale) == "en" {
-		return "Before using the anonymous BBS, please review and agree to the Terms of Service, Community Guidelines, and Privacy Policy.\n" +
-			"- Local boards are moderated by each server's administrators.\n" +
-			"- Global boards are moderated by gobot operators and synchronized across all subscribed servers.\n" +
-			"- Server administrators cannot view your Discord User ID; moderation uses opaque anonymous hashes.\n" +
-			"- Your Discord User ID is retained only for operator abuse/legal audit handling."
-	}
-	return "匿名掲示板機能を利用するには、以下の利用規約・ガイドライン・プライバシーポリシーへの同意が必要です。\n" +
-		"- ギルドローカル板は各サーバーの管理者が、グローバル板は gobot 運営がモデレーションします。\n" +
-		"- グローバル板の書き込みは購読しているすべてのサーバーに配信されます。\n" +
-		"- ギルド管理者は投稿者の生 Discord ID を閲覧できず、匿名ハッシュ単位でのみモデレーションを行います。\n" +
-		"- 投稿者の Discord ID は、通報・悪質行為への運営監査および法令対応に限り内部保持されます。"
-}
-
 func normalizePolicyLocale(locale string) string {
 	l := strings.ToLower(strings.TrimSpace(locale))
 	if strings.HasPrefix(l, "en") {
