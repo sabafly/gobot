@@ -162,11 +162,6 @@ func (s *Service) SetupGuild(ctx context.Context, input GuildSetupInput) (*Guild
 		cfg.AgreedByUserID = input.ActorUserID
 		cfg.AgreedAt = &now
 	}
-	if input.ClearViewerRole {
-		cfg.ViewerRoleID = nil
-	} else if input.ViewerRoleID != nil {
-		cfg.ViewerRoleID = input.ViewerRoleID
-	}
 	if input.DefaultUseForum != nil {
 		cfg.DefaultUseForum = *input.DefaultUseForum
 	}

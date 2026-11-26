@@ -57,16 +57,17 @@ const (
 type pendingKind string
 
 const (
-	pendingNewThread  pendingKind = "new_thread"
-	pendingNewPost    pendingKind = "new_post"
-	pendingOpenReader pendingKind = "open_reader"
+	pendingNewThread    pendingKind = "new_thread"
+	pendingNewPost      pendingKind = "new_post"
+	pendingWatchThread  pendingKind = "watch_thread"
+	pendingReportThread pendingKind = "report_thread"
+	pendingReportPost   pendingKind = "report_post"
 )
 
 type pendingAction struct {
 	Kind      pendingKind
 	UserID    snowflake.ID
 	TargetID  uuid.UUID
-	Page      string
 	ExpiresAt time.Time
 }
 
@@ -92,7 +93,7 @@ func NewSystem(c *components.Components, svc *bbscore.Service, syncer *discordsy
 	}
 }
 
-func (s *System) savePending(userID snowflake.ID, kind pendingKind, targetID uuid.UUID, page string) string {
+func (s *System) savePending(userID snowflake.ID, kind pendingKind, targetID uuid.UUID) string {
 	var buf [8]byte
 	_, _ = rand.Read(buf[:])
 	token := hex.EncodeToString(buf[:])
@@ -109,7 +110,6 @@ func (s *System) savePending(userID snowflake.ID, kind pendingKind, targetID uui
 		Kind:      kind,
 		UserID:    userID,
 		TargetID:  targetID,
-		Page:      page,
 		ExpiresAt: now.Add(pendingTTL),
 	}
 	return token
@@ -248,7 +248,7 @@ func (c *bbsCommand) Create() []discord.ApplicationCommandCreate {
 			Options: []discord.ApplicationCommandOption{
 				discord.ApplicationCommandOptionSubCommand{
 					Name:                     "setup",
-					Description:              "Enable or disable BBS features and set an optional viewer role",
+					Description:              "Enable or disable BBS features in this server",
 					DescriptionLocalizations: i18n.TranslateTextMap("command.bbs.setup.description"),
 					Options: []discord.ApplicationCommandOption{
 						discord.ApplicationCommandOptionBool{
@@ -256,17 +256,6 @@ func (c *bbsCommand) Create() []discord.ApplicationCommandCreate {
 							Description:              "Enable BBS features in this server",
 							DescriptionLocalizations: i18n.TranslateTextMap("command.bbs.setup.options.enabled.description"),
 							Required:                 true,
-						},
-						discord.ApplicationCommandOptionRole{
-							Name:                     "viewer_role",
-							Description:              "Role granted after accepting BBS policies",
-							DescriptionLocalizations: i18n.TranslateTextMap("command.bbs.setup.options.viewer_role.description"),
-						},
-						discord.ApplicationCommandOptionChannel{
-							Name:                     "gate_channel",
-							Description:              "Channel to post the consent role panel",
-							DescriptionLocalizations: i18n.TranslateTextMap("command.bbs.setup.options.gate_channel.description"),
-							ChannelTypes:             []discord.ChannelType{discord.ChannelTypeGuildText},
 						},
 					},
 				},
@@ -545,11 +534,13 @@ func (c *bbsCommand) RegisterRoutes(r handler.Router) {
 
 	r.Component("/bbs/consent/revoke", c.sys.handleConsentRevoke)
 	r.Component("/bbs/consent/view/{doc}", c.sys.handleConsentViewDoc)
-	r.Component("/bbs/consent/accept/{version}/{token}", c.sys.handleConsentAccept)
-	r.Component("/bbs/consent/accept/{token}", c.sys.handleConsentAccept)
-	r.Component("/bbs/consent/role/{guild_id}/{role_id}/{version}", c.sys.handleConsentRole)
-	r.Component("/bbs/consent/role/{guild_id}/{version}", c.sys.handleConsentRole)
-	r.Component("/bbs/consent/role/{guild_id}", c.sys.handleConsentRole)
+	r.Component("/bbs/consent/open/{version}/{token}", c.sys.handleConsentOpenModal)
+	r.Modal("/bbs/consent/modal/{version}/{token}", c.sys.handleConsentModal)
+	r.Component("/bbs/consent/accept/{version}/{token}", c.sys.handleConsentOpenModal)
+	r.Component("/bbs/consent/accept/{token}", c.sys.handleConsentOpenModal)
+	r.Component("/bbs/consent/role/{guild_id}/{role_id}/{version}", c.sys.handleConsentRoleDeprecated)
+	r.Component("/bbs/consent/role/{guild_id}/{version}", c.sys.handleConsentRoleDeprecated)
+	r.Component("/bbs/consent/role/{guild_id}", c.sys.handleConsentRoleDeprecated)
 
 	r.Component("/bbs/board/threads/{mount_id}", c.sys.handleBoardThreads)
 	r.Component("/bbs/board/jump/{mount_id}", c.sys.handleBoardJumpSelect)
@@ -566,6 +557,7 @@ func (c *bbsCommand) RegisterRoutes(r handler.Router) {
 
 	r.Component("/bbs/report/thread/{thread_id}", c.sys.handleReportThreadButton)
 	r.Modal("/bbs/report/threadmodal/{thread_id}", c.sys.handleReportThreadModal)
+	r.Component("/bbs/report/post/{post_id}", c.sys.handleReportPostButton)
 	r.Modal("/bbs/report/postmodal/{post_id}", c.sys.handleReportPostModal)
 	r.Component("/bbs/mod/abone/{post_id}", c.sys.handleModAboneButton)
 	r.Modal("/bbs/mod/abonemodal/{post_id}", c.sys.handleModAboneModal)
@@ -623,30 +615,12 @@ func (c *bbsCommand) handleSetup(data discord.SlashCommandInteractionData, e *ha
 		return nil
 	}
 	loc := e.Locale()
-	gLoc := guildLocale(e)
 
 	enabled := data.Bool("enabled")
 	input := bbscore.GuildSetupInput{
 		GuildID:     *guildID,
 		Enabled:     enabled,
 		ActorUserID: e.User().ID,
-	}
-	var viewerRoleID *snowflake.ID
-	if role, ok := data.OptRole("viewer_role"); ok {
-		rid := role.ID
-		viewerRoleID = &rid
-		input.ViewerRoleID = &rid
-	}
-
-	checker := discordsync.NewPreflightChecker(discordsync.NewClientGuildStateReader(e.Client()))
-	if viewerRoleID != nil {
-		if err := checker.CheckRoleAssign(*guildID, *viewerRoleID); err != nil {
-			c.sys.replyCommandError(e,
-				i18n.TranslateText(loc, "components.bbs.cmd.setup.role_error_title"),
-				describeBBSError(loc, err),
-			)
-			return nil
-		}
 	}
 
 	cfg, err := c.sys.Service.SetupGuild(e.Ctx, input)
@@ -666,35 +640,6 @@ func (c *bbsCommand) handleSetup(data discord.SlashCommandInteractionData, e *ha
 		"enabled": stateStr,
 		"version": cfg.AgreedVersion,
 	})
-	if cfg.ViewerRoleID != nil {
-		summary += "\n" + i18n.TranslateText(loc, "components.bbs.cmd.setup.viewer_role_line", map[string]any{
-			"role_id": *cfg.ViewerRoleID,
-		})
-	}
-
-	if gateCh, ok := data.OptChannel("gate_channel"); ok {
-		if cfg.ViewerRoleID == nil || *cfg.ViewerRoleID == 0 {
-			summary += "\n" + i18n.TranslateText(loc, "components.bbs.cmd.setup.gate_missing_role")
-		} else {
-			panel := discordsync.RenderRoleGatePanel(*guildID, *cfg.ViewerRoleID, c.sys.Service.Policy.CurrentVersion, gLoc)
-			if vErr := c.sys.Syncer.Validator.ValidateMessageCreate(panel); vErr != nil {
-				slog.Warn("bbs role gate validation failed", "err", vErr)
-				summary += "\n" + i18n.TranslateText(loc, "components.bbs.cmd.setup.gate_validate_failed", map[string]any{
-					"err": describeBBSError(loc, vErr),
-				})
-			} else if _, sendErr := e.Client().Rest.CreateMessage(gateCh.ID, panel); sendErr != nil {
-				slog.Warn("bbs role gate send failed", "channel_id", gateCh.ID, "err", sendErr)
-				summary += "\n" + i18n.TranslateText(loc, "components.bbs.cmd.setup.gate_post_failed", map[string]any{
-					"channel_id": gateCh.ID,
-					"err":        describeBBSError(loc, sendErr),
-				})
-			} else {
-				summary += "\n" + i18n.TranslateText(loc, "components.bbs.cmd.setup.gate_posted", map[string]any{
-					"channel_id": gateCh.ID,
-				})
-			}
-		}
-	}
 
 	c.sys.replyCommandNotice(e,
 		i18n.TranslateText(loc, "components.bbs.cmd.setup.success_title"),
@@ -835,8 +780,7 @@ func (c *bbsCommand) handleBoardCreate(data discord.SlashCommandInteractionData,
 		slog.Warn("bbs board create defer failed", "err", err)
 	}
 
-	cfg, err := c.sys.Service.EnsureGuildEnabled(e.Ctx, *guildID)
-	if err != nil {
+	if _, err := c.sys.Service.EnsureGuildEnabled(e.Ctx, *guildID); err != nil {
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
 			i18n.TranslateText(loc, "components.bbs.cmd.board.create_failed_title"),
 			describeBBSError(loc, err),
@@ -895,7 +839,7 @@ func (c *bbsCommand) handleBoardCreate(data discord.SlashCommandInteractionData,
 		return nil
 	}
 
-	mount, _, err := c.sys.Syncer.ProvisionBoardChannel(e.Ctx, e.Client(), *guildID, *board, discordCatID, wantForum, cfg.ViewerRoleID, gLoc)
+	mount, _, err := c.sys.Syncer.ProvisionBoardChannel(e.Ctx, e.Client(), *guildID, *board, discordCatID, wantForum, gLoc)
 	if err != nil {
 		_ = c.sys.Service.DeleteBoard(e.Ctx, board.ID)
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
@@ -1172,8 +1116,7 @@ func (c *bbsCommand) handleGlobalSubscribe(data discord.SlashCommandInteractionD
 	}
 
 	subFailTitle := i18n.TranslateText(loc, "components.bbs.cmd.global.subscribe_failed")
-	cfg, err := c.sys.Service.EnsureGuildEnabled(e.Ctx, *guildID)
-	if err != nil {
+	if _, err := c.sys.Service.EnsureGuildEnabled(e.Ctx, *guildID); err != nil {
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, subFailTitle, describeBBSError(loc, err)))
 		return nil
 	}
@@ -1209,7 +1152,7 @@ func (c *bbsCommand) handleGlobalSubscribe(data discord.SlashCommandInteractionD
 		discordCatID = &id
 	}
 
-	mount, _, err := c.sys.Syncer.ProvisionBoardChannel(e.Ctx, e.Client(), *guildID, *board, discordCatID, wantForum, cfg.ViewerRoleID, gLoc)
+	mount, _, err := c.sys.Syncer.ProvisionBoardChannel(e.Ctx, e.Client(), *guildID, *board, discordCatID, wantForum, gLoc)
 	if err != nil {
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, subFailTitle, describeBBSError(loc, err)))
 		return nil

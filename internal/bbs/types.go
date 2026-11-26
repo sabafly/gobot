@@ -240,7 +240,6 @@ type GuildConfig struct {
 	AgreedVersion   string
 	AgreedByUserID  snowflake.ID
 	AgreedAt        *time.Time
-	ViewerRoleID    *snowflake.ID
 	DefaultUseForum bool
 	ModLogChannelID *snowflake.ID
 	UpdatedAt       time.Time
@@ -446,8 +445,6 @@ type GuildSetupInput struct {
 	GuildID         snowflake.ID
 	Enabled         bool
 	ActorUserID     snowflake.ID
-	ViewerRoleID    *snowflake.ID
-	ClearViewerRole bool
 	DefaultUseForum *bool
 	ModLogChannelID *snowflake.ID
 	ClearModLog     bool

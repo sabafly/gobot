@@ -57,12 +57,14 @@ const (
 	MaxMediaGalleryItems      = 10
 	MaxMediaDescriptionRunes  = 1024
 
-	MaxModalTitleRunes       = 45
-	MaxModalLabels           = 5
-	MaxLabelTextRunes        = 45
-	MaxLabelDescriptionRunes = 100
-	MaxTextInputPlaceholder  = 100
-	MaxTextInputLength       = 4000
+	MaxModalTitleRunes         = 45
+	MaxModalLabels             = 5
+	MaxLabelTextRunes          = 45
+	MaxLabelDescriptionRunes   = 100
+	MaxTextInputPlaceholder    = 100
+	MaxTextInputLength         = 4000
+	MaxCheckboxGroupOptions    = 10
+	MaxCheckboxOptionTextRunes = 100
 
 	MaxGuildChannels       = 500
 	MaxCategoryChannels    = 50
@@ -402,6 +404,53 @@ func validateStringSelect(sel discord.StringSelectMenuComponent, inModal bool) e
 	return nil
 }
 
+func validateCheckboxGroup(cb discord.CheckboxGroupComponent) error {
+	if cb.CustomID == "" || utf8.RuneCountInString(cb.CustomID) > MaxCustomIDRunes {
+		return fmt.Errorf("checkbox group custom_id must be 1-%d chars", MaxCustomIDRunes)
+	}
+	if len(cb.Options) == 0 || len(cb.Options) > MaxCheckboxGroupOptions {
+		return fmt.Errorf("checkbox group must have 1-%d options, got %d", MaxCheckboxGroupOptions, len(cb.Options))
+	}
+	seenVal := make(map[string]struct{}, len(cb.Options))
+	for _, opt := range cb.Options {
+		if strings.TrimSpace(opt.Label) == "" || strings.TrimSpace(opt.Value) == "" {
+			return errors.New("checkbox group option label and value cannot be empty")
+		}
+		if utf8.RuneCountInString(opt.Label) > MaxCheckboxOptionTextRunes {
+			return fmt.Errorf("checkbox group option label exceeds %d chars", MaxCheckboxOptionTextRunes)
+		}
+		if utf8.RuneCountInString(opt.Value) > MaxCheckboxOptionTextRunes {
+			return fmt.Errorf("checkbox group option value exceeds %d chars", MaxCheckboxOptionTextRunes)
+		}
+		if utf8.RuneCountInString(opt.Description) > MaxCheckboxOptionTextRunes {
+			return fmt.Errorf("checkbox group option description exceeds %d chars", MaxCheckboxOptionTextRunes)
+		}
+		if _, dup := seenVal[opt.Value]; dup {
+			return fmt.Errorf("duplicate checkbox group option value: %q", opt.Value)
+		}
+		seenVal[opt.Value] = struct{}{}
+	}
+	if cb.MaxValues < 0 || cb.MaxValues > len(cb.Options) {
+		return fmt.Errorf("checkbox group max_values %d exceeds options len %d", cb.MaxValues, len(cb.Options))
+	}
+	if cb.MinValues != nil {
+		if *cb.MinValues < 0 || *cb.MinValues > len(cb.Options) {
+			return fmt.Errorf("checkbox group min_values %d out of range", *cb.MinValues)
+		}
+		if cb.Required && *cb.MinValues < 1 {
+			return errors.New("required checkbox group min_values must be at least 1")
+		}
+		effectiveMax := cb.MaxValues
+		if effectiveMax == 0 {
+			effectiveMax = len(cb.Options)
+		}
+		if *cb.MinValues > effectiveMax {
+			return fmt.Errorf("checkbox group min_values %d exceeds max_values %d", *cb.MinValues, effectiveMax)
+		}
+	}
+	return nil
+}
+
 // ValidateModal strictly verifies Discord Modal constraints without mutating the payload.
 func (v PayloadValidator) ValidateModal(m discord.ModalCreate) error {
 	if strings.TrimSpace(m.Title) == "" || utf8.RuneCountInString(m.Title) > MaxModalTitleRunes {
@@ -472,6 +521,14 @@ func (v PayloadValidator) ValidateModal(m discord.ModalCreate) error {
 			case discord.ChannelSelectMenuComponent:
 				if sub.Disabled {
 					return errors.New("disabled components are not allowed in modals")
+				}
+			case discord.CheckboxGroupComponent:
+				if err := validateCheckboxGroup(sub); err != nil {
+					return err
+				}
+			case discord.CheckboxComponent:
+				if sub.CustomID == "" || utf8.RuneCountInString(sub.CustomID) > MaxCustomIDRunes {
+					return fmt.Errorf("checkbox custom_id must be 1-%d chars", MaxCustomIDRunes)
 				}
 			}
 		case discord.TextDisplayComponent:
@@ -598,14 +655,12 @@ func (v PayloadValidator) ValidateAutocompleteChoices(choices []discord.Autocomp
 	return ValidateAutocompleteChoices(choices)
 }
 
-// GuildStateReader abstracts cached Discord guild/channel/role lookups for preflight checks and unit testing.
+// GuildStateReader abstracts cached Discord guild/channel lookups for preflight checks and unit testing.
 type GuildStateReader interface {
 	GuildFeatures(guildID snowflake.ID) ([]discord.GuildFeature, bool)
 	GuildChannelCount(guildID snowflake.ID) int
 	CategoryChildCount(guildID, categoryID snowflake.ID) int
 	BotGuildPermissions(guildID snowflake.ID) (discord.Permissions, bool)
-	BotHighestRolePosition(guildID snowflake.ID) (int, bool)
-	Role(guildID, roleID snowflake.ID) (discord.Role, bool)
 }
 
 type clientGuildStateReader struct {
@@ -663,30 +718,6 @@ func (r *clientGuildStateReader) BotGuildPermissions(guildID snowflake.ID) (disc
 	return r.client.Caches.MemberPermissions(self), true
 }
 
-func (r *clientGuildStateReader) BotHighestRolePosition(guildID snowflake.ID) (int, bool) {
-	if r.client == nil {
-		return 0, false
-	}
-	self, ok := r.client.Caches.SelfMember(guildID)
-	if !ok {
-		return 0, false
-	}
-	highest := 0
-	for _, role := range r.client.Caches.MemberRoles(self) {
-		if role.Position > highest {
-			highest = role.Position
-		}
-	}
-	return highest, true
-}
-
-func (r *clientGuildStateReader) Role(guildID, roleID snowflake.ID) (discord.Role, bool) {
-	if r.client == nil {
-		return discord.Role{}, false
-	}
-	return r.client.Caches.Role(guildID, roleID)
-}
-
 // ChannelCreatePlan is the validated preflight result for provisioning a board channel.
 type ChannelCreatePlan struct {
 	UseForum       bool
@@ -730,10 +761,6 @@ const (
 	PreflightErrCategoryChannelLimit PreflightErrorKind = "category_channel_limit"
 	PreflightErrMissingBotPerms      PreflightErrorKind = "missing_bot_perms"
 	PreflightErrForumRequiresTag     PreflightErrorKind = "forum_requires_tag"
-	PreflightErrInvalidRoleID        PreflightErrorKind = "invalid_role_id"
-	PreflightErrMissingManageRoles   PreflightErrorKind = "missing_manage_roles"
-	PreflightErrManagedRole          PreflightErrorKind = "managed_role"
-	PreflightErrRoleHierarchy        PreflightErrorKind = "role_hierarchy"
 )
 
 // PreflightError represents a localized preflight check failure before calling Discord REST APIs.
@@ -742,9 +769,6 @@ type PreflightError struct {
 	Current      int
 	Max          int
 	MissingPerms []string
-	RoleName     string
-	RolePos      int
-	BotPos       int
 }
 
 func (e *PreflightError) Error() string {
@@ -763,14 +787,6 @@ func (e *PreflightError) Error() string {
 		return fmt.Sprintf("missing required bot permissions: %s", strings.Join(e.MissingPerms, ", "))
 	case PreflightErrForumRequiresTag:
 		return "forum channel requires a tag but has no available tags"
-	case PreflightErrInvalidRoleID:
-		return "invalid viewer role id"
-	case PreflightErrMissingManageRoles:
-		return "bot lacks ManageRoles permission"
-	case PreflightErrManagedRole:
-		return "cannot assign managed integration role"
-	case PreflightErrRoleHierarchy:
-		return fmt.Sprintf("target role %q (pos %d) is not below bot highest role (pos %d)", e.RoleName, e.RolePos, e.BotPos)
 	default:
 		return string(e.Kind)
 	}
@@ -811,18 +827,6 @@ func FormatPreflightError(locale discord.Locale, err error) (string, bool) {
 		}), true
 	case PreflightErrForumRequiresTag:
 		return i18n.TranslateText(locale, "components.bbs.preflight.forum_requires_tag"), true
-	case PreflightErrInvalidRoleID:
-		return i18n.TranslateText(locale, "components.bbs.preflight.invalid_role_id"), true
-	case PreflightErrMissingManageRoles:
-		return i18n.TranslateText(locale, "components.bbs.preflight.missing_manage_roles"), true
-	case PreflightErrManagedRole:
-		return i18n.TranslateText(locale, "components.bbs.preflight.managed_role"), true
-	case PreflightErrRoleHierarchy:
-		return i18n.TranslateText(locale, "components.bbs.preflight.role_hierarchy", map[string]any{
-			"role":     pe.RoleName,
-			"role_pos": pe.RolePos,
-			"bot_pos":  pe.BotPos,
-		}), true
 	default:
 		return pe.Error(), true
 	}
@@ -910,39 +914,6 @@ func ResolveForumTags(forumCh discord.GuildForumChannel) ([]snowflake.ID, error)
 		return []snowflake.ID{forumCh.AvailableTags[0].ID}, nil
 	}
 	return nil, &PreflightError{Kind: PreflightErrForumRequiresTag}
-}
-
-// CheckRoleAssign verifies bot ManageRoles permission and role hierarchy before AddMemberRole.
-func (p *PreflightChecker) CheckRoleAssign(guildID, roleID snowflake.ID) error {
-	if roleID == 0 || roleID == guildID {
-		return &PreflightError{Kind: PreflightErrInvalidRoleID}
-	}
-	if p.state == nil {
-		return nil
-	}
-	if perms, ok := p.state.BotGuildPermissions(guildID); ok {
-		if !perms.Has(discord.PermissionAdministrator) && !perms.Has(discord.PermissionManageRoles) {
-			return &PreflightError{Kind: PreflightErrMissingManageRoles}
-		}
-	}
-	role, ok := p.state.Role(guildID, roleID)
-	if !ok {
-		return nil
-	}
-	if role.Managed {
-		return &PreflightError{Kind: PreflightErrManagedRole}
-	}
-	if botPos, ok := p.state.BotHighestRolePosition(guildID); ok {
-		if role.Position >= botPos {
-			return &PreflightError{
-				Kind:     PreflightErrRoleHierarchy,
-				RoleName: role.Name,
-				RolePos:  role.Position,
-				BotPos:   botPos,
-			}
-		}
-	}
-	return nil
 }
 
 // IsJSONError returns true if err wraps a *rest.Error matching the Discord JSON error code.

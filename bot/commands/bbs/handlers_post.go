@@ -21,6 +21,7 @@ package bbs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -126,9 +127,14 @@ func (s *System) handleNewThreadButton(e *handler.ComponentEvent) error {
 		return nil
 	}
 	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
-		token := s.savePending(e.User().ID, pendingNewThread, mountID, "")
-		sr := discordsync.NewSafeResponder(e.ID().Time())
-		_ = sr.RespondMessageCreate(e, discordsync.RenderConsentGate(s.Service.Policy, loc, token))
+		if errors.Is(err, bbscore.ErrConsentRequired) {
+			s.respondConsentModal(e, e.ID().Time(), loc, e.User().ID, pendingNewThread, mountID)
+			return nil
+		}
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
 	boardName := ""
@@ -270,9 +276,14 @@ func (s *System) handleNewPostButton(e *handler.ComponentEvent) error {
 		return nil
 	}
 	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
-		token := s.savePending(e.User().ID, pendingNewPost, mirrorID, "")
-		sr := discordsync.NewSafeResponder(e.ID().Time())
-		_ = sr.RespondMessageCreate(e, discordsync.RenderConsentGate(s.Service.Policy, loc, token))
+		if errors.Is(err, bbscore.ErrConsentRequired) {
+			s.respondConsentModal(e, e.ID().Time(), loc, e.User().ID, pendingNewPost, mirrorID)
+			return nil
+		}
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
 	sr := discordsync.NewSafeResponder(e.ID().Time())
@@ -557,7 +568,14 @@ func (s *System) handleWatchToggle(e *handler.ComponentEvent) error {
 	}
 
 	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
-		_ = sr.RespondMessageCreate(e, discordsync.RenderConsentGate(s.Service.Policy, loc, "none"))
+		if errors.Is(err, bbscore.ErrConsentRequired) {
+			s.respondConsentModal(e, e.ID().Time(), loc, e.User().ID, pendingWatchThread, threadID)
+			return nil
+		}
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.watch.watch_failed"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
 
@@ -592,12 +610,6 @@ func (s *System) handleReaderPage(e *handler.ComponentEvent) error {
 		return nil
 	}
 	pageSpec := e.Vars["page"]
-	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
-		token := s.savePending(e.User().ID, pendingOpenReader, threadID, pageSpec)
-		sr := discordsync.NewSafeResponder(e.ID().Time())
-		_ = sr.RespondMessageCreate(e, discordsync.RenderConsentGate(s.Service.Policy, loc, token))
-		return nil
-	}
 
 	comps, err := s.renderReaderComponents(e.Ctx, e.GuildID(), threadID, pageSpec, loc)
 	if err != nil {
@@ -630,11 +642,6 @@ func (s *System) handleReaderJumpButton(e *handler.ComponentEvent) error {
 		return nil
 	}
 	sr := discordsync.NewSafeResponder(e.ID().Time())
-	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
-		token := s.savePending(e.User().ID, pendingOpenReader, threadID, "1")
-		_ = sr.RespondMessageCreate(e, discordsync.RenderConsentGate(s.Service.Policy, loc, token))
-		return nil
-	}
 	modal := discord.NewModalCreate(
 		fmt.Sprintf("/bbs/reader/jumpmodal/%s", threadID),
 		discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.modal.jump.title"), discordsync.MaxModalTitleRunes),
@@ -666,11 +673,6 @@ func (s *System) handleReaderJumpModal(e *handler.ModalEvent) error {
 		)
 		return nil
 	}
-	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
-		sr := discordsync.NewSafeResponder(e.ID().Time())
-		_ = sr.RespondMessageCreate(e, discordsync.RenderConsentGate(s.Service.Policy, loc, "none"))
-		return nil
-	}
 	renderFail := i18n.TranslateText(loc, "components.bbs.reader.render_failed")
 	thread, err := s.Service.GetThread(e.Ctx, threadID)
 	if err != nil {
@@ -698,14 +700,6 @@ func (s *System) handleReaderJumpModal(e *handler.ModalEvent) error {
 		_ = sr.RespondMessageCreate(e, msg)
 	}
 	return nil
-}
-
-func (s *System) buildReaderMessageUpdate(ctx context.Context, guildID *snowflake.ID, threadID uuid.UUID, pageSpec string, locale discord.Locale) (discord.MessageUpdate, error) {
-	comps, err := s.renderReaderComponents(ctx, guildID, threadID, pageSpec, locale)
-	if err != nil {
-		return discord.MessageUpdate{}, err
-	}
-	return discord.NewMessageUpdateV2(comps...).WithAllowedMentions(&discord.AllowedMentions{}), nil
 }
 
 func (s *System) renderReaderComponents(ctx context.Context, guildID *snowflake.ID, threadID uuid.UUID, pageSpec string, locale discord.Locale) ([]discord.LayoutComponent, error) {

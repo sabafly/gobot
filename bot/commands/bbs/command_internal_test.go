@@ -59,7 +59,7 @@ func TestPendingActionTokensAndSlashRuleValidation(t *testing.T) {
 	u2 := snowflake.ID(202)
 	target := uuid.New()
 
-	tok := sys.savePending(u1, pendingOpenReader, target, "latest")
+	tok := sys.savePending(u1, pendingWatchThread, target)
 	if tok == "" {
 		t.Fatal("expected non-empty token")
 	}
@@ -70,7 +70,7 @@ func TestPendingActionTokensAndSlashRuleValidation(t *testing.T) {
 	if !ok {
 		t.Fatal("expected u1 to consume pending token")
 	}
-	if act.Kind != pendingOpenReader || act.TargetID != target || act.Page != "latest" {
+	if act.Kind != pendingWatchThread || act.TargetID != target {
 		t.Fatalf("unexpected pending action: %+v", act)
 	}
 	if _, ok := sys.popPending(tok, u1); ok {
@@ -463,8 +463,9 @@ func TestConsentVersionMismatch_And_AdminAboneSyncFailure(t *testing.T) {
 	store, svc, sys := newInternalTestEnv(t, bbscore.PolicyConfig{Version: "2026-02"}, opID)
 	adminCmd := &adminCommand{sys: sys}
 
-	// 1. Stale version in /bbs/consent/accept/{version}/{token} must reject without recording consent.
+	// 1. Consent modal open/submit version and 3-checkbox enforcement.
 	var lastRespBody string
+	var lastRespType discord.InteractionResponseType
 	mockClient := newInternalMockClient(t, func(req *http.Request) (*http.Response, error) {
 		if req.Body != nil {
 			b, _ := io.ReadAll(req.Body)
@@ -474,19 +475,68 @@ func TestConsentVersionMismatch_And_AdminAboneSyncFailure(t *testing.T) {
 		}
 		return jsonResp(http.StatusOK, map[string]any{"id": "1"}), nil
 	})
-	captureRespond := func(_ discord.InteractionResponseType, data any) {
+	captureRespond := func(rt discord.InteractionResponseType, data any) {
+		lastRespType = rt
 		if data != nil {
 			raw, _ := json.Marshal(data)
 			lastRespBody = string(raw)
 		}
 	}
+	captureModalRespond := func(rt discord.InteractionResponseType, data discord.InteractionResponseData) {
+		captureRespond(rt, data)
+	}
 
-	staleEv := newInternalComponentEvent(t, mockClient, guildID, userID, "/bbs/consent/accept/2025-01/none", map[string]string{
+	// Stale open button must reject with stale_version instead of opening modal.
+	staleOpenEv := newInternalComponentEvent(t, mockClient, guildID, userID, "/bbs/consent/open/2025-01/none", map[string]string{
 		"version": "2025-01",
 		"token":   "none",
 	}, captureRespond)
-	if err := sys.handleConsentAccept(staleEv); err != nil {
-		t.Fatalf("handleConsentAccept stale returned err: %v", err)
+	if err := sys.handleConsentOpenModal(staleOpenEv); err != nil {
+		t.Fatalf("handleConsentOpenModal stale returned err: %v", err)
+	}
+	if lastRespType != discord.InteractionResponseTypeCreateMessage || !strings.Contains(lastRespBody, i18n.TranslateText(discord.LocaleJapanese, "components.bbs.consent.stale_version")) {
+		t.Fatalf("expected stale_version message response, got type=%d body=%s", lastRespType, lastRespBody)
+	}
+
+	// Current open button must open the consent modal.
+	validTok := bbscore.PolicyVersionToken("2026-02")
+	validOpenEv := newInternalComponentEvent(t, mockClient, guildID, userID, "/bbs/consent/open/"+validTok+"/none", map[string]string{
+		"version": validTok,
+		"token":   "none",
+	}, captureRespond)
+	if err := sys.handleConsentOpenModal(validOpenEv); err != nil {
+		t.Fatalf("handleConsentOpenModal valid returned err: %v", err)
+	}
+	if lastRespType != discord.InteractionResponseTypeModal || !strings.Contains(lastRespBody, "/bbs/consent/modal/"+validTok+"/none") {
+		t.Fatalf("expected consent modal response, got type=%d body=%s", lastRespType, lastRespBody)
+	}
+
+	// Modal submit with fewer than 3 checkboxes checked must reject without saving consent.
+	partialModalEv := newInternalConsentModalEvent(t, mockClient, guildID, userID, "/bbs/consent/modal/"+validTok+"/none",
+		[]string{discordsync.ConsentOptTerms, discordsync.ConsentOptGuidelines},
+		nil,
+		map[string]string{"version": validTok, "token": "none"},
+		captureModalRespond,
+	)
+	if err := sys.handleConsentModal(partialModalEv); err != nil {
+		t.Fatalf("handleConsentModal partial returned err: %v", err)
+	}
+	if _, err := svc.CheckConsent(ctx, userID); !errors.Is(err, bbscore.ErrConsentRequired) {
+		t.Fatalf("partial checkboxes must not record consent, CheckConsent returned: %v", err)
+	}
+	if !strings.Contains(lastRespBody, i18n.TranslateText(discord.LocaleJapanese, "components.bbs.consent.modal.all_required")) {
+		t.Fatalf("expected all_required error message, got %s", lastRespBody)
+	}
+
+	// Stale modal submit even with all 3 checkboxes checked must reject without saving consent.
+	staleModalEv := newInternalConsentModalEvent(t, mockClient, guildID, userID, "/bbs/consent/modal/2025-01/none",
+		[]string{discordsync.ConsentOptTerms, discordsync.ConsentOptGuidelines, discordsync.ConsentOptPrivacy},
+		nil,
+		map[string]string{"version": "2025-01", "token": "none"},
+		captureModalRespond,
+	)
+	if err := sys.handleConsentModal(staleModalEv); err != nil {
+		t.Fatalf("handleConsentModal stale returned err: %v", err)
 	}
 	if _, err := svc.CheckConsent(ctx, userID); !errors.Is(err, bbscore.ErrConsentRequired) {
 		t.Fatalf("stale policy version must not record user consent, CheckConsent returned: %v", err)
@@ -495,13 +545,15 @@ func TestConsentVersionMismatch_And_AdminAboneSyncFailure(t *testing.T) {
 		t.Fatalf("expected stale_version notice in response, got %s", lastRespBody)
 	}
 
-	validTok := bbscore.PolicyVersionToken("2026-02")
-	validEv := newInternalComponentEvent(t, mockClient, guildID, userID, "/bbs/consent/accept/"+validTok+"/none", map[string]string{
-		"version": validTok,
-		"token":   "none",
-	}, captureRespond)
-	if err := sys.handleConsentAccept(validEv); err != nil {
-		t.Fatalf("handleConsentAccept current returned err: %v", err)
+	// Valid modal submit with all 3 checkboxes checked records consent.
+	validModalEv := newInternalConsentModalEvent(t, mockClient, guildID, userID, "/bbs/consent/modal/"+validTok+"/none",
+		[]string{discordsync.ConsentOptTerms, discordsync.ConsentOptGuidelines, discordsync.ConsentOptPrivacy},
+		nil,
+		map[string]string{"version": validTok, "token": "none"},
+		captureModalRespond,
+	)
+	if err := sys.handleConsentModal(validModalEv); err != nil {
+		t.Fatalf("handleConsentModal valid returned err: %v", err)
 	}
 	if _, err := svc.CheckConsent(ctx, userID); err != nil {
 		t.Fatalf("expected current policy version %q to record consent, err=%v", validTok, err)
@@ -771,70 +823,46 @@ func TestRound3_RoleGateBinding_BoardPreValidation_And_BanModalRetryReuse(t *tes
 	bbsCmd := &bbsCommand{sys: sys}
 	adminCmd := &adminCommand{sys: sys}
 
-	// 1. Role gate button binds to role_id as well as policy version (R3-m03)
-	roleA := snowflake.ID(987654321)
+	// 1. Legacy role gate button returns deprecation notice without granting roles or saving consent.
 	roleB := snowflake.ID(987654322)
 	if _, err := svc.SetupGuild(ctx, bbscore.GuildSetupInput{
-		GuildID:      guildRole,
-		Enabled:      true,
-		ActorUserID:  opID,
-		ViewerRoleID: &roleB,
+		GuildID:     guildRole,
+		Enabled:     true,
+		ActorUserID: opID,
 	}); err != nil {
 		t.Fatalf("SetupGuild role failed: %v", err)
 	}
 	var roleGrantCalls atomic.Int32
-	var lastRolePath string
+	var deprecatedRespBody string
 	roleClient := newInternalMockClient(t, func(req *http.Request) (*http.Response, error) {
 		p := strings.TrimPrefix(req.URL.Path, "/api/v10")
 		if req.Method == http.MethodPut && strings.Contains(p, "/roles/") {
 			roleGrantCalls.Add(1)
-			lastRolePath = p
 			return jsonResp(http.StatusNoContent, nil), nil
 		}
 		return jsonResp(http.StatusOK, map[string]any{"id": "1"}), nil
 	})
 	verTok := bbscore.PolicyVersionToken("2026-03")
 
-	evMismatchRole := newInternalComponentEvent(t, roleClient, guildRole, roleUserID,
-		"/bbs/consent/role/"+guildRole.String()+"/"+roleA.String()+"/"+verTok,
-		map[string]string{"guild_id": guildRole.String(), "role_id": roleA.String(), "version": verTok},
-		nil,
-	)
-	if err := sys.handleConsentRole(evMismatchRole); err != nil {
-		t.Fatalf("handleConsentRole mismatch returned err: %v", err)
-	}
-	if roleGrantCalls.Load() != 0 {
-		t.Fatalf("expected 0 role grants on mismatched role_id panel, got %d", roleGrantCalls.Load())
-	}
-	if _, err := svc.CheckConsent(ctx, roleUserID); !errors.Is(err, bbscore.ErrConsentRequired) {
-		t.Fatalf("expected consent NOT recorded on mismatched role_id panel, err=%v", err)
-	}
-
-	evLegacyNoRole := newInternalComponentEvent(t, roleClient, guildRole, roleUserID,
-		"/bbs/consent/role/"+guildRole.String()+"/"+verTok,
-		map[string]string{"guild_id": guildRole.String(), "version": verTok},
-		nil,
-	)
-	if err := sys.handleConsentRole(evLegacyNoRole); err != nil {
-		t.Fatalf("handleConsentRole legacy returned err: %v", err)
-	}
-	if roleGrantCalls.Load() != 0 {
-		t.Fatalf("expected 0 role grants on legacy panel missing role_id, got %d", roleGrantCalls.Load())
-	}
-
-	evValidRole := newInternalComponentEvent(t, roleClient, guildRole, roleUserID,
+	evDeprecatedRole := newInternalComponentEvent(t, roleClient, guildRole, roleUserID,
 		"/bbs/consent/role/"+guildRole.String()+"/"+roleB.String()+"/"+verTok,
 		map[string]string{"guild_id": guildRole.String(), "role_id": roleB.String(), "version": verTok},
-		nil,
+		func(_ discord.InteractionResponseType, data any) {
+			raw, _ := json.Marshal(data)
+			deprecatedRespBody = string(raw)
+		},
 	)
-	if err := sys.handleConsentRole(evValidRole); err != nil {
-		t.Fatalf("handleConsentRole valid returned err: %v", err)
+	if err := sys.handleConsentRoleDeprecated(evDeprecatedRole); err != nil {
+		t.Fatalf("handleConsentRoleDeprecated returned err: %v", err)
 	}
-	if roleGrantCalls.Load() != 1 || !strings.HasSuffix(lastRolePath, "/roles/"+roleB.String()) {
-		t.Fatalf("expected 1 role grant for %s, got calls=%d path=%q", roleB, roleGrantCalls.Load(), lastRolePath)
+	if roleGrantCalls.Load() != 0 {
+		t.Fatalf("expected 0 role grants on deprecated role gate panel, got %d", roleGrantCalls.Load())
 	}
-	if _, err := svc.CheckConsent(ctx, roleUserID); err != nil {
-		t.Fatalf("expected valid role panel to record consent, err=%v", err)
+	if _, err := svc.CheckConsent(ctx, roleUserID); !errors.Is(err, bbscore.ErrConsentRequired) {
+		t.Fatalf("expected consent NOT recorded on deprecated role gate panel, err=%v", err)
+	}
+	if !strings.Contains(deprecatedRespBody, i18n.TranslateText(discord.LocaleJapanese, "components.bbs.consent.role.deprecated_title")) {
+		t.Fatalf("expected deprecated role gate notice, got %s", deprecatedRespBody)
 	}
 
 	// 2. /bbs board create validates rules and board name BEFORE resolveOrCreateDefaultLocalCategory (R3-m01)
@@ -968,5 +996,394 @@ func TestRound3_RoleGateBinding_BoardPreValidation_And_BanModalRetryReuse(t *tes
 	repAfter2, err := store.GetReport(ctx, banReport.ID)
 	if err != nil || repAfter2.Status != bbscore.ReportStatusResolved || repAfter2.BanID == nil || *repAfter2.BanID != bansAfter1[0].ID {
 		t.Fatalf("expected report resolved on retry preserving BanID %v, got %+v, err=%v", bansAfter1[0].ID, repAfter2, err)
+	}
+}
+
+func newInternalConsentModalEvent(
+	t *testing.T,
+	client *bot.Client,
+	guildID snowflake.ID,
+	userID snowflake.ID,
+	customID string,
+	checkedValues []string,
+	msgFlags *discord.MessageFlags,
+	vars map[string]string,
+	onRespond func(discord.InteractionResponseType, discord.InteractionResponseData),
+) *handler.ModalEvent {
+	t.Helper()
+	payload, err := json.Marshal(map[string]any{
+		"type":           discord.InteractionTypeModalSubmit,
+		"id":             snowflake.New(time.Now()).String(),
+		"application_id": "999000",
+		"token":          "test-consent-modal-token",
+		"guild_id":       guildID.String(),
+		"channel":        map[string]any{"id": "555001", "type": 0},
+		"member": map[string]any{
+			"user": map[string]any{"id": userID.String(), "username": "user"},
+		},
+		"locale": "ja",
+		"data": map[string]any{
+			"custom_id": customID,
+		},
+	})
+	if err != nil {
+		t.Fatalf("marshal consent modal interaction failed: %v", err)
+	}
+	var mi discord.ModalSubmitInteraction
+	if err := json.Unmarshal(payload, &mi); err != nil {
+		t.Fatalf("unmarshal ModalSubmitInteraction failed: %v", err)
+	}
+	mi.Data.Components = []discord.LayoutComponent{
+		discord.NewLabel("checks", discord.CheckboxGroupComponent{
+			CustomID: discordsync.ConsentCheckboxGroupCustomID,
+			Values:   checkedValues,
+		}),
+	}
+	if msgFlags != nil {
+		mi.Message = &discord.Message{
+			ID:    snowflake.ID(555099),
+			Flags: *msgFlags,
+		}
+	}
+	return &handler.ModalEvent{
+		ModalSubmitInteractionCreate: &events.ModalSubmitInteractionCreate{
+			GenericEvent:           events.NewGenericEvent(client, 0, 0),
+			ModalSubmitInteraction: mi,
+			Respond: func(respType discord.InteractionResponseType, data discord.InteractionResponseData, opts ...rest.RequestOpt) error {
+				if onRespond != nil {
+					onRespond(respType, data)
+				}
+				return nil
+			},
+		},
+		Vars: vars,
+		Ctx:  context.Background(),
+	}
+}
+
+func newInternalMessageCommandEvent(
+	t *testing.T,
+	client *bot.Client,
+	guildID snowflake.ID,
+	userID snowflake.ID,
+	targetMsgID snowflake.ID,
+	onRespond func(discord.InteractionResponseType, discord.InteractionResponseData),
+) (discord.MessageCommandInteractionData, *handler.CommandEvent) {
+	t.Helper()
+	payload, err := json.Marshal(map[string]any{
+		"type":           discord.InteractionTypeApplicationCommand,
+		"id":             snowflake.New(time.Now()).String(),
+		"application_id": "999000",
+		"token":          "test-msgcmd-token",
+		"guild_id":       guildID.String(),
+		"channel":        map[string]any{"id": "555001", "type": 0},
+		"member": map[string]any{
+			"user": map[string]any{"id": userID.String(), "username": "reporter"},
+		},
+		"locale": "ja",
+		"data": map[string]any{
+			"id":        "1",
+			"type":      discord.ApplicationCommandTypeMessage,
+			"name":      msgCmdReportName,
+			"target_id": targetMsgID.String(),
+			"resolved": map[string]any{
+				"messages": map[string]any{
+					targetMsgID.String(): map[string]any{
+						"id":         targetMsgID.String(),
+						"channel_id": "555001",
+						"author":     map[string]any{"id": "999000", "username": "bot"},
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("marshal message command interaction failed: %v", err)
+	}
+	var ai discord.ApplicationCommandInteraction
+	if err := json.Unmarshal(payload, &ai); err != nil {
+		t.Fatalf("unmarshal ApplicationCommandInteraction failed: %v", err)
+	}
+	data := ai.MessageCommandInteractionData()
+	ev := &handler.CommandEvent{
+		ApplicationCommandInteractionCreate: &events.ApplicationCommandInteractionCreate{
+			GenericEvent:                  events.NewGenericEvent(client, 0, 0),
+			ApplicationCommandInteraction: ai,
+			Respond: func(respType discord.InteractionResponseType, d discord.InteractionResponseData, opts ...rest.RequestOpt) error {
+				if onRespond != nil {
+					onRespond(respType, d)
+				}
+				return nil
+			},
+		},
+		Ctx: context.Background(),
+	}
+	return data, ev
+}
+
+func TestConsentModalFlow_And_UnconsentedReaderAccess(t *testing.T) {
+	ctx := context.Background()
+	opID := snowflake.ID(920001)
+	authorID := snowflake.ID(920002)
+	guildID := snowflake.ID(920010)
+	ver := "2026-04"
+	verTok := bbscore.PolicyVersionToken(ver)
+
+	store, svc, sys := newInternalTestEnv(t, bbscore.PolicyConfig{Version: ver}, opID)
+	if _, err := svc.SetupGuild(ctx, bbscore.GuildSetupInput{GuildID: guildID, Enabled: true, ActorUserID: opID}); err != nil {
+		t.Fatalf("SetupGuild failed: %v", err)
+	}
+	if _, err := svc.AcceptPolicy(ctx, authorID); err != nil {
+		t.Fatalf("AcceptPolicy author failed: %v", err)
+	}
+	cat, err := svc.CreateCategory(ctx, bbscore.CreateCategoryInput{Scope: bbscore.ScopeLocal, GuildID: &guildID, Name: "雑談"})
+	if err != nil {
+		t.Fatalf("CreateCategory failed: %v", err)
+	}
+	board, err := svc.CreateBoard(ctx, bbscore.CreateBoardInput{CategoryID: cat.ID, Scope: bbscore.ScopeLocal, GuildID: &guildID, Name: "テスト板"})
+	if err != nil {
+		t.Fatalf("CreateBoard failed: %v", err)
+	}
+	mountID := uuid.New()
+	if err := store.CreateBoardMount(ctx, &bbscore.BoardMount{
+		ID: mountID, BoardID: board.ID, GuildID: guildID, ChannelID: snowflake.ID(620001), Active: true, CreatedAt: time.Now(),
+	}); err != nil {
+		t.Fatalf("CreateBoardMount failed: %v", err)
+	}
+	_, th, opPost, err := svc.CreateThread(ctx, bbscore.CreateThreadInput{
+		BoardID: board.ID, GuildID: guildID, UserID: authorID, Title: "リーダーテストスレ", RawBody: "1レス目の本文",
+	})
+	if err != nil {
+		t.Fatalf("CreateThread failed: %v", err)
+	}
+	mirrorID := uuid.New()
+	discordThreadID := snowflake.ID(620010)
+	if err := store.CreateThreadMirror(ctx, &bbscore.ThreadMirror{
+		ID: mirrorID, ThreadID: th.ID, BoardMountID: mountID, GuildID: guildID, DiscordThreadID: discordThreadID, CreatedAt: time.Now(),
+	}); err != nil {
+		t.Fatalf("CreateThreadMirror failed: %v", err)
+	}
+	postMsgID := snowflake.ID(620101)
+	if err := store.CreatePostMirror(ctx, &bbscore.PostMirror{
+		ID: uuid.New(), PostID: opPost.ID, ThreadMirrorID: mirrorID, GuildID: guildID, DiscordMessageID: postMsgID, CreatedAt: time.Now(),
+	}); err != nil {
+		t.Fatalf("CreatePostMirror failed: %v", err)
+	}
+
+	mockClient := newInternalMockClient(t, func(req *http.Request) (*http.Response, error) {
+		return jsonResp(http.StatusOK, map[string]any{"id": "1"}), nil
+	})
+
+	// 1. Unconsented user can read thread history and use jump modal without consent modal.
+	uReader := snowflake.ID(920100)
+	var respType discord.InteractionResponseType
+	var respData any
+	capComp := func(rt discord.InteractionResponseType, data any) {
+		respType = rt
+		respData = data
+	}
+	capModal := func(rt discord.InteractionResponseType, data discord.InteractionResponseData) {
+		respType = rt
+		respData = data
+	}
+
+	readerEv := newInternalComponentEvent(t, mockClient, guildID, uReader, "/bbs/reader/"+th.ID.String()+"/1",
+		map[string]string{"thread_id": th.ID.String(), "page": "1"}, capComp)
+	if err := sys.handleReaderPage(readerEv); err != nil {
+		t.Fatalf("handleReaderPage failed: %v", err)
+	}
+	rawReader, _ := json.Marshal(respData)
+	if respType != discord.InteractionResponseTypeCreateMessage || !strings.Contains(string(rawReader), "1レス目の本文") {
+		t.Fatalf("expected unconsented reader page to render post body, type=%d body=%s", respType, rawReader)
+	}
+
+	jumpBtnEv := newInternalComponentEvent(t, mockClient, guildID, uReader, "/bbs/reader/jump/"+th.ID.String(),
+		map[string]string{"thread_id": th.ID.String()}, capComp)
+	if err := sys.handleReaderJumpButton(jumpBtnEv); err != nil {
+		t.Fatalf("handleReaderJumpButton failed: %v", err)
+	}
+	jumpModal, ok := respData.(discord.ModalCreate)
+	if respType != discord.InteractionResponseTypeModal || !ok || jumpModal.CustomID != "/bbs/reader/jumpmodal/"+th.ID.String() {
+		t.Fatalf("expected unconsented jump button to open jump modal, type=%d data=%#v", respType, respData)
+	}
+
+	jumpModalEv := newInternalModalEvent(t, mockClient, guildID, uReader, "/bbs/reader/jumpmodal/"+th.ID.String(),
+		map[string]string{"target": "1"}, map[string]string{"thread_id": th.ID.String()}, capModal)
+	if err := sys.handleReaderJumpModal(jumpModalEv); err != nil {
+		t.Fatalf("handleReaderJumpModal failed: %v", err)
+	}
+	rawJump, _ := json.Marshal(respData)
+	if !strings.Contains(string(rawJump), "1レス目の本文") {
+		t.Fatalf("expected unconsented jump modal submit to render post body, got %s", rawJump)
+	}
+
+	// 2. Non-BBS message report command returns error without opening consent modal.
+	uMsgNonBBS := snowflake.ID(920101)
+	nonBBSData, nonBBSCmdEv := newInternalMessageCommandEvent(t, mockClient, guildID, uMsgNonBBS, snowflake.ID(999999), capModal)
+	if err := sys.handleReportMessageCommand(nonBBSData, nonBBSCmdEv); err != nil {
+		t.Fatalf("handleReportMessageCommand non-BBS failed: %v", err)
+	}
+	rawNonBBS, _ := json.Marshal(respData)
+	if respType != discord.InteractionResponseTypeCreateMessage || !strings.Contains(string(rawNonBBS), i18n.TranslateText(discord.LocaleJapanese, "components.bbs.report.not_target_title")) {
+		t.Fatalf("expected non-BBS report command to return not_target error, type=%d body=%s", respType, rawNonBBS)
+	}
+
+	// 3. First interactive action by unconsented users opens ConsentModal and stores pending action.
+	allChecks := []string{discordsync.ConsentOptTerms, discordsync.ConsentOptGuidelines, discordsync.ConsentOptPrivacy}
+	prefix := "/bbs/consent/modal/" + verTok + "/"
+	publicFlags := discord.MessageFlags(0)
+
+	// 3a. Watch toggle -> ConsentModal -> submit records consent AND Watch.
+	uWatch := snowflake.ID(920102)
+	watchEv := newInternalComponentEvent(t, mockClient, guildID, uWatch, "/bbs/watch/toggle/"+th.ID.String(),
+		map[string]string{"thread_id": th.ID.String()}, capComp)
+	if err := sys.handleWatchToggle(watchEv); err != nil {
+		t.Fatalf("handleWatchToggle failed: %v", err)
+	}
+	watchConsentModal, ok := respData.(discord.ModalCreate)
+	if respType != discord.InteractionResponseTypeModal || !ok || !strings.HasPrefix(watchConsentModal.CustomID, prefix) {
+		t.Fatalf("expected watch toggle to open consent modal, type=%d data=%#v", respType, respData)
+	}
+	watchTok := strings.TrimPrefix(watchConsentModal.CustomID, prefix)
+	watchModalSubmit := newInternalConsentModalEvent(t, mockClient, guildID, uWatch, watchConsentModal.CustomID,
+		allChecks, &publicFlags, map[string]string{"version": verTok, "token": watchTok}, capModal)
+	if err := sys.handleConsentModal(watchModalSubmit); err != nil {
+		t.Fatalf("handleConsentModal watch failed: %v", err)
+	}
+	if respType != discord.InteractionResponseTypeCreateMessage {
+		t.Fatalf("expected ephemeral message response after watch consent, got %d", respType)
+	}
+	if _, err := svc.CheckConsent(ctx, uWatch); err != nil {
+		t.Fatalf("expected uWatch consent recorded, err=%v", err)
+	}
+	if w, wErr := store.GetThreadWatch(ctx, th.ID, uWatch); wErr != nil || w == nil {
+		t.Fatalf("expected uWatch thread watch saved automatically, got %+v err=%v", w, wErr)
+	}
+
+	// 3b. NewThread / NewPost / ReportThread / ReportMessage -> ConsentModal -> continue button ephemeral response.
+	actionCases := []struct {
+		name           string
+		userID         snowflake.ID
+		trigger        func() error
+		expectedBtnID  string
+		expectedLabelK string
+	}{
+		{
+			name:   "new_thread",
+			userID: snowflake.ID(920103),
+			trigger: func() error {
+				ev := newInternalComponentEvent(t, mockClient, guildID, snowflake.ID(920103), "/bbs/thread/new/"+mountID.String(),
+					map[string]string{"mount_id": mountID.String()}, capComp)
+				return sys.handleNewThreadButton(ev)
+			},
+			expectedBtnID:  "/bbs/thread/new/" + mountID.String(),
+			expectedLabelK: "components.bbs.consent.continue.new_thread",
+		},
+		{
+			name:   "new_post",
+			userID: snowflake.ID(920104),
+			trigger: func() error {
+				ev := newInternalComponentEvent(t, mockClient, guildID, snowflake.ID(920104), "/bbs/post/new/"+mirrorID.String(),
+					map[string]string{"mirror_id": mirrorID.String()}, capComp)
+				return sys.handleNewPostButton(ev)
+			},
+			expectedBtnID:  "/bbs/post/new/" + mirrorID.String(),
+			expectedLabelK: "components.bbs.consent.continue.new_post",
+		},
+		{
+			name:   "report_thread",
+			userID: snowflake.ID(920105),
+			trigger: func() error {
+				ev := newInternalComponentEvent(t, mockClient, guildID, snowflake.ID(920105), "/bbs/report/thread/"+th.ID.String(),
+					map[string]string{"thread_id": th.ID.String()}, capComp)
+				return sys.handleReportThreadButton(ev)
+			},
+			expectedBtnID:  "/bbs/report/thread/" + th.ID.String(),
+			expectedLabelK: "components.bbs.consent.continue.report_thread",
+		},
+		{
+			name:   "report_post_msgcmd",
+			userID: snowflake.ID(920106),
+			trigger: func() error {
+				d, ev := newInternalMessageCommandEvent(t, mockClient, guildID, snowflake.ID(920106), postMsgID, capModal)
+				return sys.handleReportMessageCommand(d, ev)
+			},
+			expectedBtnID:  "/bbs/report/post/" + opPost.ID.String(),
+			expectedLabelK: "components.bbs.consent.continue.report_post",
+		},
+	}
+
+	for _, tc := range actionCases {
+		if err := tc.trigger(); err != nil {
+			t.Fatalf("%s trigger failed: %v", tc.name, err)
+		}
+		m, ok := respData.(discord.ModalCreate)
+		if respType != discord.InteractionResponseTypeModal || !ok || !strings.HasPrefix(m.CustomID, prefix) {
+			t.Fatalf("%s expected consent modal, got type=%d data=%#v", tc.name, respType, respData)
+		}
+		tok := strings.TrimPrefix(m.CustomID, prefix)
+		subEv := newInternalConsentModalEvent(t, mockClient, guildID, tc.userID, m.CustomID,
+			allChecks, &publicFlags, map[string]string{"version": verTok, "token": tok}, capModal)
+		if err := sys.handleConsentModal(subEv); err != nil {
+			t.Fatalf("%s handleConsentModal failed: %v", tc.name, err)
+		}
+		if respType != discord.InteractionResponseTypeCreateMessage {
+			t.Fatalf("%s expected CreateMessage (ephemeral) rather than UpdateMessage, got type=%d", tc.name, respType)
+		}
+		mc, ok := respData.(discord.MessageCreate)
+		if !ok || !mc.Flags.Has(discord.MessageFlagEphemeral) {
+			t.Fatalf("%s expected ephemeral MessageCreate, got %#v", tc.name, respData)
+		}
+		rawMC, _ := json.Marshal(mc)
+		if !strings.Contains(string(rawMC), tc.expectedBtnID) || !strings.Contains(string(rawMC), i18n.TranslateText(discord.LocaleJapanese, tc.expectedLabelK)) {
+			t.Fatalf("%s expected continue button %q in %s", tc.name, tc.expectedBtnID, rawMC)
+		}
+	}
+
+	// 3c. Consented user pressing continue button for post report opens the post report modal.
+	repPostBtnEv := newInternalComponentEvent(t, mockClient, guildID, snowflake.ID(920106), "/bbs/report/post/"+opPost.ID.String(),
+		map[string]string{"post_id": opPost.ID.String()}, capComp)
+	if err := sys.handleReportPostButton(repPostBtnEv); err != nil {
+		t.Fatalf("handleReportPostButton failed: %v", err)
+	}
+	repModal, ok := respData.(discord.ModalCreate)
+	if respType != discord.InteractionResponseTypeModal || !ok || repModal.CustomID != "/bbs/report/postmodal/"+opPost.ID.String() {
+		t.Fatalf("expected post report modal, got type=%d data=%#v", respType, respData)
+	}
+
+	// 4. Legacy /bbs/consent/accept/{version}/{token} redirects to ConsentModal without recording consent.
+	uLegacy := snowflake.ID(920107)
+	legacyEv := newInternalComponentEvent(t, mockClient, guildID, uLegacy, "/bbs/consent/accept/"+verTok+"/none",
+		map[string]string{"version": verTok, "token": "none"}, capComp)
+	if err := sys.handleConsentOpenModal(legacyEv); err != nil {
+		t.Fatalf("legacy handleConsentOpenModal failed: %v", err)
+	}
+	if respType != discord.InteractionResponseTypeModal {
+		t.Fatalf("expected legacy accept button to open modal, got type=%d", respType)
+	}
+	if _, err := svc.CheckConsent(ctx, uLegacy); !errors.Is(err, bbscore.ErrConsentRequired) {
+		t.Fatalf("legacy button must not record consent before modal submit, err=%v", err)
+	}
+
+	// 5. ConsentModal without pending action updates ephemeral message, and creates ephemeral message when source is public.
+	uEphemeral := snowflake.ID(920108)
+	ephFlags := discord.MessageFlagEphemeral | discord.MessageFlagIsComponentsV2
+	ephModalEv := newInternalConsentModalEvent(t, mockClient, guildID, uEphemeral, "/bbs/consent/modal/"+verTok+"/none",
+		allChecks, &ephFlags, map[string]string{"version": verTok, "token": "none"}, capModal)
+	if err := sys.handleConsentModal(ephModalEv); err != nil {
+		t.Fatalf("handleConsentModal ephemeral failed: %v", err)
+	}
+	if respType != discord.InteractionResponseTypeUpdateMessage {
+		t.Fatalf("expected UpdateMessage for ephemeral consent gate modal submit, got type=%d", respType)
+	}
+
+	uPublic := snowflake.ID(920109)
+	pubModalEv := newInternalConsentModalEvent(t, mockClient, guildID, uPublic, "/bbs/consent/modal/"+verTok+"/none",
+		allChecks, &publicFlags, map[string]string{"version": verTok, "token": "none"}, capModal)
+	if err := sys.handleConsentModal(pubModalEv); err != nil {
+		t.Fatalf("handleConsentModal public failed: %v", err)
+	}
+	if respType != discord.InteractionResponseTypeCreateMessage {
+		t.Fatalf("expected CreateMessage (ephemeral) when source message is non-ephemeral, got type=%d", respType)
 	}
 }

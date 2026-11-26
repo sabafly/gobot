@@ -48,7 +48,7 @@ Collected information is used strictly within the scope of the following purpose
 ## 7. Withdrawal of Consent and Data Deletion
 
 1. Users may withdraw their consent to this Policy at any time via the `/bbs policy` command.
-2. Upon withdrawal, consent records and active thread notification subscriptions (DM notification settings) are immediately deleted, and subsequent new postings, notification subscriptions, DM notifications, and reader access will be suspended.
+2. Upon withdrawal, consent records and active thread notification subscriptions (DM notification settings) are immediately deleted, and subsequent new postings, notification subscriptions, DM notifications, and reporting will be suspended.
 3. Notwithstanding the preceding paragraph, existing anonymous post data itself is retained to preserve board integrity (problematic posts will be handled via "abone" through reporting and moderation). Furthermore, audit identification information and report records may continue to be retained as necessary to prevent recurring abuse, maintain active bans, and comply with lawful disclosure requests.
 
 ## 8. Amendments, Inquiries, and Prevailing Language

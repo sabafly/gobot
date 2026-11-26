@@ -290,6 +290,127 @@ func TestPayloadValidator_StrictRejection(t *testing.T) {
 	if err := v.ValidateModal(okModal); err != nil {
 		t.Fatalf("unexpected modal error: %v", err)
 	}
+
+	// 8. CheckboxGroup modal validation
+	minZero := 0
+	minThree := 3
+	if err := v.ValidateModal(discord.ModalCreate{
+		CustomID: "m_cb_empty",
+		Title:    "Consent",
+		Components: []discord.LayoutComponent{
+			discord.NewLabel("Agree", discord.CheckboxGroupComponent{
+				CustomID: "cb",
+				Required: true,
+			}),
+		},
+	}); err == nil {
+		t.Fatal("expected error for 0-option CheckboxGroup")
+	}
+
+	opts11 := make([]discord.CheckboxGroupOption, 11)
+	for i := range opts11 {
+		opts11[i] = discord.NewCheckboxGroupOption(fmt.Sprintf("v%d", i), fmt.Sprintf("L%d", i))
+	}
+	if err := v.ValidateModal(discord.ModalCreate{
+		CustomID: "m_cb_11",
+		Title:    "Consent",
+		Components: []discord.LayoutComponent{
+			discord.NewLabel("Agree", discord.CheckboxGroupComponent{
+				CustomID: "cb",
+				Options:  opts11,
+			}),
+		},
+	}); err == nil {
+		t.Fatal("expected error for 11-option CheckboxGroup")
+	}
+
+	if err := v.ValidateModal(discord.ModalCreate{
+		CustomID: "m_cb_dup",
+		Title:    "Consent",
+		Components: []discord.LayoutComponent{
+			discord.NewLabel("Agree", discord.CheckboxGroupComponent{
+				CustomID: "cb",
+				Options: []discord.CheckboxGroupOption{
+					discord.NewCheckboxGroupOption("a", "Label A"),
+					discord.NewCheckboxGroupOption("a", "Label B"),
+				},
+			}),
+		},
+	}); err == nil {
+		t.Fatal("expected error for duplicate CheckboxGroup option values")
+	}
+
+	if err := v.ValidateModal(discord.ModalCreate{
+		CustomID: "m_cb_emptylabel",
+		Title:    "Consent",
+		Components: []discord.LayoutComponent{
+			discord.NewLabel("Agree", discord.CheckboxGroupComponent{
+				CustomID: "cb",
+				Options: []discord.CheckboxGroupOption{
+					discord.NewCheckboxGroupOption("a", "   "),
+				},
+			}),
+		},
+	}); err == nil {
+		t.Fatal("expected error for empty CheckboxGroup option label")
+	}
+
+	if err := v.ValidateModal(discord.ModalCreate{
+		CustomID: "m_cb_req_min0",
+		Title:    "Consent",
+		Components: []discord.LayoutComponent{
+			discord.NewLabel("Agree", discord.CheckboxGroupComponent{
+				CustomID:  "cb",
+				Required:  true,
+				MinValues: &minZero,
+				Options: []discord.CheckboxGroupOption{
+					discord.NewCheckboxGroupOption("a", "A"),
+				},
+			}),
+		},
+	}); err == nil {
+		t.Fatal("expected error for required CheckboxGroup with MinValues=0")
+	}
+
+	if err := v.ValidateModal(discord.ModalCreate{
+		CustomID: "m_cb_minmax",
+		Title:    "Consent",
+		Components: []discord.LayoutComponent{
+			discord.NewLabel("Agree", discord.CheckboxGroupComponent{
+				CustomID:  "cb",
+				Required:  true,
+				MinValues: &minThree,
+				MaxValues: 2,
+				Options: []discord.CheckboxGroupOption{
+					discord.NewCheckboxGroupOption("a", "A"),
+					discord.NewCheckboxGroupOption("b", "B"),
+					discord.NewCheckboxGroupOption("c", "C"),
+				},
+			}),
+		},
+	}); err == nil {
+		t.Fatal("expected error for CheckboxGroup MinValues > MaxValues")
+	}
+
+	if err := v.ValidateModal(discord.ModalCreate{
+		CustomID: "m_cb_ok",
+		Title:    "Consent",
+		Components: []discord.LayoutComponent{
+			discord.NewLabel("Agree", discord.CheckboxGroupComponent{
+				CustomID:  "cb",
+				Required:  true,
+				MinValues: &minThree,
+				MaxValues: 3,
+				Options: []discord.CheckboxGroupOption{
+					discord.NewCheckboxGroupOption("a", "A"),
+					discord.NewCheckboxGroupOption("b", "B"),
+					discord.NewCheckboxGroupOption("c", "C"),
+				},
+			}),
+		},
+	}); err != nil {
+		t.Fatalf("expected valid 3-item required CheckboxGroup to pass, got %v", err)
+	}
 }
 
 type fakeGuildState struct {
@@ -297,8 +418,6 @@ type fakeGuildState struct {
 	channelCnt  int
 	catChildren int
 	botPerms    discord.Permissions
-	botPos      int
-	roles       map[snowflake.ID]discord.Role
 }
 
 func (f fakeGuildState) GuildFeatures(_ snowflake.ID) ([]discord.GuildFeature, bool) {
@@ -311,18 +430,9 @@ func (f fakeGuildState) CategoryChildCount(_, _ snowflake.ID) int {
 func (f fakeGuildState) BotGuildPermissions(_ snowflake.ID) (discord.Permissions, bool) {
 	return f.botPerms, true
 }
-func (f fakeGuildState) BotHighestRolePosition(_ snowflake.ID) (int, bool) {
-	return f.botPos, true
-}
-func (f fakeGuildState) Role(_, roleID snowflake.ID) (discord.Role, bool) {
-	r, ok := f.roles[roleID]
-	return r, ok
-}
 
 func TestPreflightChecker_ForumWithoutCommunityAndStrictPerms(t *testing.T) {
 	guildID := snowflake.ID(100)
-	roleHigh := snowflake.ID(200)
-	roleOK := snowflake.ID(201)
 
 	state := fakeGuildState{
 		features: nil, // non-Community guild
@@ -333,13 +443,7 @@ func TestPreflightChecker_ForumWithoutCommunityAndStrictPerms(t *testing.T) {
 			discord.PermissionManageThreads,
 			discord.PermissionManageMessages,
 			discord.PermissionReadMessageHistory,
-			discord.PermissionManageRoles,
 		),
-		botPos: 10,
-		roles: map[snowflake.ID]discord.Role{
-			roleHigh: {ID: roleHigh, Name: "Admin", Position: 12},
-			roleOK:   {ID: roleOK, Name: "BBSViewer", Position: 5},
-		},
 	}
 	checker := discordsync.NewPreflightChecker(state)
 
@@ -376,13 +480,6 @@ func TestPreflightChecker_ForumWithoutCommunityAndStrictPerms(t *testing.T) {
 	}
 	if _, err := checker.CheckChannelCreate(guildID, "板", strings.Repeat("あ", 4097), true, nil); err == nil {
 		t.Fatal("expected error for forum channel topic > 4096 runes")
-	}
-
-	if err := checker.CheckRoleAssign(guildID, roleHigh); err == nil {
-		t.Fatal("expected role hierarchy error when target position >= bot position")
-	}
-	if err := checker.CheckRoleAssign(guildID, roleOK); err != nil {
-		t.Fatalf("unexpected error for assignable role: %v", err)
 	}
 }
 
@@ -425,14 +522,23 @@ func TestRenderer_ZeroEmoji_MediaGallery_And_ReaderPagination(t *testing.T) {
 		t.Fatalf("consent gate validation failed: %v", err)
 	}
 	assertNoEmojiInLayout(t, consentMsg.Components)
-	if !strings.Contains(fmt.Sprintf("%#v", consentMsg), "/bbs/consent/accept/v2-test/tok") {
+	if !strings.Contains(fmt.Sprintf("%#v", consentMsg), "/bbs/consent/open/v2-test/tok") {
 		t.Fatal("expected RenderConsentGate button CustomID to include policy version token")
 	}
 
-	roleMsg := discordsync.RenderRoleGatePanel(snowflake.ID(100), snowflake.ID(200), "v2-test", discord.LocaleJapanese)
-	if !strings.Contains(fmt.Sprintf("%#v", roleMsg), "/bbs/consent/role/100/200/v2-test") {
-		t.Fatal("expected RenderRoleGatePanel button CustomID to include role_id and policy version token")
+	consentModal := discordsync.RenderConsentModal(pm, discord.LocaleJapanese, "tok")
+	if err := v.ValidateModal(consentModal); err != nil {
+		t.Fatalf("consent modal validation failed: %v", err)
 	}
+	if consentModal.CustomID != "/bbs/consent/modal/v2-test/tok" {
+		t.Fatalf("unexpected consent modal CustomID: %q", consentModal.CustomID)
+	}
+
+	docView := discordsync.RenderPolicyDocumentView(pm, bbs.PolicyDocTerms, discord.LocaleJapanese)
+	if err := v.ValidateMessageCreate(docView); err != nil {
+		t.Fatalf("policy doc view validation failed: %v", err)
+	}
+	assertNoEmojiInLayout(t, docView.Components)
 
 	// MediaGallery added for normal post, removed on Abone
 	post := bbs.Post{
@@ -762,6 +868,7 @@ func TestRenderer_I18n_JapaneseAndEnglish(t *testing.T) {
 		},
 	}
 	pm := bbs.NewPolicyManager(bbs.PolicyConfig{
+		Version:  "2026-11-25",
 		TermsURL: "https://example.com/terms",
 	})
 
@@ -777,7 +884,7 @@ func TestRenderer_I18n_JapaneseAndEnglish(t *testing.T) {
 			discordsync.RenderOver1000Message(thread, loc),
 			discordsync.RenderArchivedNotice(loc),
 			discordsync.RenderConsentGate(pm, loc, "tok123"),
-			discordsync.RenderRoleGatePanel(snowflake.ID(100), snowflake.ID(200), "2026-11-25", loc),
+			discordsync.RenderPolicyDocumentView(pm, bbs.PolicyDocTerms, loc),
 		}
 		for i, m := range msgs {
 			if err := v.ValidateMessageCreate(m); err != nil {
@@ -786,6 +893,54 @@ func TestRenderer_I18n_JapaneseAndEnglish(t *testing.T) {
 			assertNoEmojiInLayout(t, m.Components)
 			if loc == discord.LocaleEnglishUS {
 				assertLayoutENClean(t, m.Components)
+			}
+		}
+
+		// Verify current doc switch button is disabled in RenderPolicyDocumentView
+		docView := msgs[len(msgs)-1]
+		docContainer := docView.Components[0].(discord.ContainerComponent)
+		docSwitchRow := docContainer.Components[4].(discord.ActionRowComponent)
+		if !docSwitchRow.Components[0].(discord.ButtonComponent).Disabled ||
+			docSwitchRow.Components[1].(discord.ButtonComponent).Disabled ||
+			docSwitchRow.Components[2].(discord.ButtonComponent).Disabled {
+			t.Fatalf("expected only current policy doc button to be disabled in %s", loc)
+		}
+
+		modal := discordsync.RenderConsentModal(pm, loc, "tok123")
+		if err := v.ValidateModal(modal); err != nil {
+			t.Fatalf("locale %s consent modal failed validation: %v", loc, err)
+		}
+		if len(modal.Components) != 2 {
+			t.Fatalf("expected 2 components in consent modal, got %d", len(modal.Components))
+		}
+		td := modal.Components[0].(discord.TextDisplayComponent)
+		if !strings.Contains(td.Content, "https://example.com/terms") {
+			t.Fatalf("expected consent modal TextDisplay to embed configured TermsURL, got %q", td.Content)
+		}
+		lbl := modal.Components[1].(discord.LabelComponent)
+		cb := lbl.Component.(discord.CheckboxGroupComponent)
+		if !cb.Required || cb.MinValues == nil || *cb.MinValues != 3 || cb.MaxValues != 3 || len(cb.Options) != 3 {
+			t.Fatalf("unexpected CheckboxGroup configuration: %+v", cb)
+		}
+		for _, opt := range cb.Options {
+			if opt.Default {
+				t.Fatalf("consent checkbox option %q must default to false", opt.Value)
+			}
+			if containsPictographEmoji(opt.Label) || containsPictographEmoji(opt.Description) {
+				t.Fatalf("unexpected emoji in option %+v", opt)
+			}
+			if loc == discord.LocaleEnglishUS && (containsJapaneseRune(opt.Label) || containsJapaneseRune(opt.Description)) {
+				t.Fatalf("unexpected Japanese rune in en-US option %+v", opt)
+			}
+		}
+		if containsPictographEmoji(modal.Title) || containsPictographEmoji(td.Content) || containsPictographEmoji(lbl.Label) || containsPictographEmoji(lbl.Description) {
+			t.Fatalf("unexpected emoji in consent modal for %s", loc)
+		}
+		if loc == discord.LocaleEnglishUS {
+			for _, txt := range []string{modal.Title, td.Content, lbl.Label, lbl.Description} {
+				if strings.Contains(txt, "components.bbs.") || containsJapaneseRune(txt) {
+					t.Fatalf("unexpected untranslated or Japanese text in en-US consent modal: %q", txt)
+				}
 			}
 		}
 
@@ -800,10 +955,8 @@ func TestRenderer_I18n_JapaneseAndEnglish(t *testing.T) {
 	}
 
 	pe := &discordsync.PreflightError{
-		Kind:     discordsync.PreflightErrRoleHierarchy,
-		RoleName: "Member",
-		RolePos:  8,
-		BotPos:   5,
+		Kind:         discordsync.PreflightErrMissingBotPerms,
+		MissingPerms: []string{"ManageChannels"},
 	}
 	jaMsg, ok := discordsync.FormatPreflightError(discord.LocaleJapanese, pe)
 	if !ok || !containsJapaneseRune(jaMsg) {

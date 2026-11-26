@@ -20,6 +20,7 @@
 package bbs
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -37,15 +38,30 @@ import (
 	"github.com/sabafly/gobot/internal/i18n"
 )
 
+func buildReportPostModal(loc discord.Locale, postID uuid.UUID) discord.ModalCreate {
+	return discord.NewModalCreate(
+		fmt.Sprintf("/bbs/report/postmodal/%s", postID),
+		discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.report.modal_post_title"), discordsync.MaxModalTitleRunes),
+		discord.NewLabel(
+			discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.report.modal_post_label"), discordsync.MaxLabelTextRunes),
+			discord.NewParagraphTextInput("reason").WithRequired(true).WithMaxLength(300),
+		),
+	)
+}
+
+func buildReportThreadModal(loc discord.Locale, threadID uuid.UUID) discord.ModalCreate {
+	return discord.NewModalCreate(
+		fmt.Sprintf("/bbs/report/threadmodal/%s", threadID),
+		discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.report.modal_thread_title"), discordsync.MaxModalTitleRunes),
+		discord.NewLabel(
+			discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.report.modal_thread_label"), discordsync.MaxLabelTextRunes),
+			discord.NewParagraphTextInput("reason").WithRequired(true).WithMaxLength(300),
+		),
+	)
+}
+
 func (s *System) handleReportMessageCommand(data discord.MessageCommandInteractionData, e *handler.CommandEvent) error {
 	loc := e.Locale()
-	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
-		msg := discordsync.RenderConsentGate(s.Service.Policy, loc, "none")
-		sr := discordsync.NewSafeResponder(e.ID().Time())
-		_ = sr.RespondMessageCreate(e, msg)
-		return nil
-	}
-
 	targetMsg := data.TargetMessage()
 	guildID := e.GuildID()
 	pm, err := s.Service.Store.GetPostMirrorByDiscordMessage(e.Ctx, targetMsg.ID)
@@ -57,17 +73,96 @@ func (s *System) handleReportMessageCommand(data discord.MessageCommandInteracti
 		return nil
 	}
 
-	modal := discord.NewModalCreate(
-		fmt.Sprintf("/bbs/report/postmodal/%s", pm.PostID),
-		discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.report.modal_post_title"), discordsync.MaxModalTitleRunes),
-		discord.NewLabel(
-			discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.report.modal_post_label"), discordsync.MaxLabelTextRunes),
-			discord.NewParagraphTextInput("reason").WithRequired(true).WithMaxLength(300),
-		),
-	)
+	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
+		if errors.Is(err, bbscore.ErrConsentRequired) {
+			s.respondConsentModal(e, e.ID().Time(), loc, e.User().ID, pendingReportPost, pm.PostID)
+			return nil
+		}
+		s.replyCommandError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, err),
+		)
+		return nil
+	}
+
+	modal := buildReportPostModal(loc, pm.PostID)
 	sr := discordsync.NewSafeResponder(e.ID().Time())
 	if err := sr.RespondModal(e, modal); err != nil {
 		slog.Warn("bbs failed to open report post modal", "err", err)
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.errors.title.modal_failed"),
+			describeBBSError(loc, err),
+		))
+	}
+	return nil
+}
+
+func (s *System) handleReportPostButton(e *handler.ComponentEvent) error {
+	loc := e.Locale()
+	postID, err := uuid.Parse(e.Vars["post_id"])
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.report.invalid_post_id"),
+		)
+		return nil
+	}
+	guildID := e.GuildID()
+	if guildID == nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.errors.guild_only"),
+		)
+		return nil
+	}
+	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
+		if errors.Is(err, bbscore.ErrConsentRequired) {
+			s.respondConsentModal(e, e.ID().Time(), loc, e.User().ID, pendingReportPost, postID)
+			return nil
+		}
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, err),
+		)
+		return nil
+	}
+
+	post, err := s.Service.GetPost(e.Ctx, postID)
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed"),
+			describeBBSError(loc, err),
+		)
+		return nil
+	}
+	thread, err := s.Service.GetThread(e.Ctx, post.ThreadID)
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed"),
+			describeBBSError(loc, err),
+		)
+		return nil
+	}
+	board, err := s.Service.GetBoard(e.Ctx, thread.BoardID)
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed"),
+			describeBBSError(loc, err),
+		)
+		return nil
+	}
+	if board.Scope == bbscore.ScopeLocal && (board.GuildID == nil || *board.GuildID != *guildID) {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.permission"),
+			i18n.TranslateText(loc, "components.bbs.errors.unauthorized"),
+		)
+		return nil
+	}
+
+	modal := buildReportPostModal(loc, postID)
+	sr := discordsync.NewSafeResponder(e.ID().Time())
+	if err := sr.RespondModal(e, modal); err != nil {
+		slog.Warn("bbs failed to open report post modal from button", "err", err)
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
 			i18n.TranslateText(loc, "components.bbs.errors.title.modal_failed"),
 			describeBBSError(loc, err),
@@ -87,19 +182,17 @@ func (s *System) handleReportThreadButton(e *handler.ComponentEvent) error {
 		return nil
 	}
 	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
-		msg := discordsync.RenderConsentGate(s.Service.Policy, loc, "none")
-		sr := discordsync.NewSafeResponder(e.ID().Time())
-		_ = sr.RespondMessageCreate(e, msg)
+		if errors.Is(err, bbscore.ErrConsentRequired) {
+			s.respondConsentModal(e, e.ID().Time(), loc, e.User().ID, pendingReportThread, threadID)
+			return nil
+		}
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, err),
+		)
 		return nil
 	}
-	modal := discord.NewModalCreate(
-		fmt.Sprintf("/bbs/report/threadmodal/%s", threadID),
-		discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.report.modal_thread_title"), discordsync.MaxModalTitleRunes),
-		discord.NewLabel(
-			discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.report.modal_thread_label"), discordsync.MaxLabelTextRunes),
-			discord.NewParagraphTextInput("reason").WithRequired(true).WithMaxLength(300),
-		),
-	)
+	modal := buildReportThreadModal(loc, threadID)
 	sr := discordsync.NewSafeResponder(e.ID().Time())
 	if err := sr.RespondModal(e, modal); err != nil {
 		slog.Warn("bbs failed to open report thread modal", "err", err)

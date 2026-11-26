@@ -137,7 +137,6 @@ func (s *Syncer) ProvisionBoardChannel(
 	board bbs.Board,
 	categoryDiscordID *snowflake.ID,
 	wantForum bool,
-	viewerRoleID *snowflake.ID,
 	locale discord.Locale,
 ) (*bbs.BoardMount, ChannelCreatePlan, error) {
 	if existing, err := s.Service.Store.GetBoardMountByGuildAndBoard(ctx, guildID, board.ID); err == nil && existing != nil {
@@ -154,7 +153,7 @@ func (s *Syncer) ProvisionBoardChannel(
 		return nil, plan, err
 	}
 
-	overwrites := buildBoardOverwrites(guildID, client.ApplicationID, viewerRoleID)
+	overwrites := buildBoardOverwrites(guildID, client.ApplicationID)
 
 	var parentID snowflake.ID
 	if categoryDiscordID != nil {
@@ -246,16 +245,13 @@ func (s *Syncer) ProvisionBoardChannel(
 	return mount, plan, nil
 }
 
-func buildBoardOverwrites(guildID, botID snowflake.ID, viewerRoleID *snowflake.ID) []discord.PermissionOverwrite {
+func buildBoardOverwrites(guildID, botID snowflake.ID) []discord.PermissionOverwrite {
 	everyoneDeny := discord.PermissionSendMessages.Add(
 		discord.PermissionSendMessagesInThreads,
 		discord.PermissionCreatePublicThreads,
 		discord.PermissionCreatePrivateThreads,
 	)
-	if viewerRoleID != nil && *viewerRoleID != 0 {
-		everyoneDeny = everyoneDeny.Add(discord.PermissionViewChannel)
-	}
-	overwrites := []discord.PermissionOverwrite{
+	return []discord.PermissionOverwrite{
 		discord.RolePermissionOverwrite{
 			RoleID: guildID,
 			Deny:   everyoneDeny,
@@ -273,13 +269,6 @@ func buildBoardOverwrites(guildID, botID snowflake.ID, viewerRoleID *snowflake.I
 			),
 		},
 	}
-	if viewerRoleID != nil && *viewerRoleID != 0 {
-		overwrites = append(overwrites, discord.RolePermissionOverwrite{
-			RoleID: *viewerRoleID,
-			Allow:  discord.PermissionViewChannel.Add(discord.PermissionReadMessageHistory),
-		})
-	}
-	return overwrites
 }
 
 // PublishThread creates Discord mirrors across the source mount (synchronously) and other mounts (asynchronously).

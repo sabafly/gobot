@@ -60,7 +60,6 @@ type BBSGuildConfig struct {
 	AgreedVersion   string        `gorm:"type:varchar(64);not null;default:''"`
 	AgreedByUserID  snowflake.ID  `gorm:"not null;default:0"`
 	AgreedAt        *time.Time    `gorm:""`
-	ViewerRoleID    *snowflake.ID `gorm:""`
 	DefaultUseForum bool          `gorm:"not null"`
 	ModLogChannelID *snowflake.ID `gorm:""`
 	UpdatedAt       time.Time     `gorm:"not null"`
