@@ -106,7 +106,7 @@ type BBSBoard struct {
 	Description        string        `gorm:"type:text"`
 	DefaultName        string        `gorm:"type:varchar(64);not null"`
 	HideID             bool          `gorm:"not null;default:false"`
-	SLIPLevel          int           `gorm:"not null;default:0"`
+	SLIPLevel          int           `gorm:"column:slip_level;not null;default:0"`
 	MaxRes             uint32        `gorm:"not null;default:1000"`
 	DatOchiIdleHours   int           `gorm:"not null;default:1200"`
 	DatOchiLowResHours int           `gorm:"not null;default:240"`
@@ -144,7 +144,7 @@ type BBSThread struct {
 	ResCount           uint32     `gorm:"not null;default:0"`
 	DefaultName        string     `gorm:"type:varchar(64);not null"`
 	HideID             bool       `gorm:"not null;default:false"`
-	SLIPLevel          int        `gorm:"not null;default:0"`
+	SLIPLevel          int        `gorm:"column:slip_level;not null;default:0"`
 	MaxRes             uint32     `gorm:"not null;default:1000"`
 	DatOchiIdleHours   int        `gorm:"not null;default:1200"`
 	DatOchiLowResHours int        `gorm:"not null;default:240"`
@@ -181,11 +181,11 @@ type BBSPost struct {
 	ResNumber    uint32       `gorm:"not null;uniqueIndex:idx_bbs_thread_res"`
 	Name         string       `gorm:"type:varchar(64);not null"`
 	Trip         string       `gorm:"type:varchar(32)"`
+	Cap          string       `gorm:"type:varchar(64)"`
 	SlipText     string       `gorm:"type:varchar(32)"`
 	AnonID       string       `gorm:"type:varchar(32)"`
 	PosterHash   string       `gorm:"type:varchar(32);not null;index"`
 	IsOP         bool         `gorm:"not null;default:false"`
-	IsSage       bool         `gorm:"not null;default:false"`
 	Body         string       `gorm:"type:text;not null"`
 	Abone        bool         `gorm:"not null;default:false"`
 	AboneReason  string       `gorm:"type:varchar(255)"`

@@ -322,6 +322,19 @@ func initBBSSystem(component *components.Components, config *components.Config, 
 	identity := bbs.NewIdentityGenerator(secretBytes)
 	policy := bbs.NewPolicyManager(policyCfg)
 	svc := bbs.NewService(registry, store, identity, policy, operators)
+	capDefs := make([]bbs.CapDefinition, 0, len(config.BBS.Caps))
+	for _, c := range config.BBS.Caps {
+		capDefs = append(capDefs, bbs.CapDefinition{
+			ID:             c.ID,
+			Name:           c.Name,
+			Description:    c.Description,
+			Users:          c.Users,
+			GrantOperators: c.GrantOperators,
+		})
+	}
+	if err := svc.SetAdminCaps(capDefs); err != nil {
+		return nil, fmt.Errorf("BBSキャップ設定が不正です: %w", err)
+	}
 	syncer := discordsync.NewSyncer(svc)
 	syncer.CanSendDM = func(ctx context.Context, uid snowflake.ID) bool {
 		return discordsync.CanSendDMToUser(ctx, gormDB, uid)

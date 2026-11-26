@@ -120,7 +120,7 @@ func (v PayloadValidator) ValidateMessageCreate(mc discord.MessageCreate) error 
 		if mc.Content != "" || len(mc.Embeds) > 0 || len(mc.StickerIDs) > 0 || mc.Poll != nil {
 			return errors.New("components v2 message cannot include legacy content, embeds, stickers, or poll")
 		}
-		totalCount, totalTextRunes, err := validateLayoutComponents(mc.Components)
+		totalCount, totalTextRunes, err := validateLayoutComponents(mc.Components, make(map[string]struct{}))
 		if err != nil {
 			return err
 		}
@@ -151,7 +151,7 @@ func (v PayloadValidator) ValidateMessageUpdate(mu discord.MessageUpdate, isV2 b
 			return errors.New("components v2 message update cannot include legacy content or embeds")
 		}
 		if mu.Components != nil {
-			totalCount, totalTextRunes, err := validateLayoutComponents(*mu.Components)
+			totalCount, totalTextRunes, err := validateLayoutComponents(*mu.Components, make(map[string]struct{}))
 			if err != nil {
 				return err
 			}
@@ -173,7 +173,18 @@ func (v PayloadValidator) ValidateMessageUpdate(mu discord.MessageUpdate, isV2 b
 	return nil
 }
 
-func validateLayoutComponents(list []discord.LayoutComponent) (int, int, error) {
+func registerCustomID(seen map[string]struct{}, customID string) error {
+	if customID == "" || seen == nil {
+		return nil
+	}
+	if _, dup := seen[customID]; dup {
+		return fmt.Errorf("duplicate component custom_id %q", customID)
+	}
+	seen[customID] = struct{}{}
+	return nil
+}
+
+func validateLayoutComponents(list []discord.LayoutComponent, seen map[string]struct{}) (int, int, error) {
 	totalCount := 0
 	totalTextRunes := 0
 
@@ -211,14 +222,14 @@ func validateLayoutComponents(list []discord.LayoutComponent) (int, int, error) 
 			totalCount++
 
 		case discord.ActionRowComponent:
-			rowCount, err := validateActionRow(c)
+			rowCount, err := validateActionRow(c, seen)
 			if err != nil {
 				return 0, 0, err
 			}
 			totalCount += rowCount
 
 		case discord.SectionComponent:
-			cnt, runes, err := validateSection(c)
+			cnt, runes, err := validateSection(c, seen)
 			if err != nil {
 				return 0, 0, err
 			}
@@ -226,7 +237,7 @@ func validateLayoutComponents(list []discord.LayoutComponent) (int, int, error) 
 			totalTextRunes += runes
 
 		case discord.ContainerComponent:
-			cnt, runes, err := validateContainer(c)
+			cnt, runes, err := validateContainer(c, seen)
 			if err != nil {
 				return 0, 0, err
 			}
@@ -240,7 +251,7 @@ func validateLayoutComponents(list []discord.LayoutComponent) (int, int, error) 
 	return totalCount, totalTextRunes, nil
 }
 
-func validateContainer(c discord.ContainerComponent) (int, int, error) {
+func validateContainer(c discord.ContainerComponent, seen map[string]struct{}) (int, int, error) {
 	if len(c.Components) == 0 {
 		return 0, 0, errors.New("empty container component is not allowed")
 	}
@@ -252,7 +263,7 @@ func validateContainer(c discord.ContainerComponent) (int, int, error) {
 		}
 		subLayout = append(subLayout, lc)
 	}
-	subCount, subRunes, err := validateLayoutComponents(subLayout)
+	subCount, subRunes, err := validateLayoutComponents(subLayout, seen)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -262,7 +273,7 @@ func validateContainer(c discord.ContainerComponent) (int, int, error) {
 	return 1 + subCount, subRunes, nil
 }
 
-func validateSection(s discord.SectionComponent) (int, int, error) {
+func validateSection(s discord.SectionComponent, seen map[string]struct{}) (int, int, error) {
 	if len(s.Components) == 0 || len(s.Components) > 3 {
 		return 0, 0, fmt.Errorf("section must have 1-3 child components, got %d", len(s.Components))
 	}
@@ -287,12 +298,17 @@ func validateSection(s discord.SectionComponent) (int, int, error) {
 		if err := validateButton(btn); err != nil {
 			return 0, 0, err
 		}
+		if btn.Style != discord.ButtonStyleLink && btn.Style != discord.ButtonStylePremium {
+			if err := registerCustomID(seen, btn.CustomID); err != nil {
+				return 0, 0, err
+			}
+		}
 	}
 	cnt++
 	return cnt, runes, nil
 }
 
-func validateActionRow(row discord.ActionRowComponent) (int, error) {
+func validateActionRow(row discord.ActionRowComponent, seen map[string]struct{}) (int, error) {
 	if len(row.Components) == 0 {
 		return 0, errors.New("empty action row component is not allowed")
 	}
@@ -305,6 +321,11 @@ func validateActionRow(row discord.ActionRowComponent) (int, error) {
 			if err := validateButton(item); err != nil {
 				return 0, err
 			}
+			if item.Style != discord.ButtonStyleLink && item.Style != discord.ButtonStylePremium {
+				if err := registerCustomID(seen, item.CustomID); err != nil {
+					return 0, err
+				}
+			}
 
 		case discord.StringSelectMenuComponent:
 			if len(row.Components) > 1 {
@@ -313,10 +334,18 @@ func validateActionRow(row discord.ActionRowComponent) (int, error) {
 			if err := validateStringSelect(item, false); err != nil {
 				return 0, err
 			}
+			if err := registerCustomID(seen, item.CustomID); err != nil {
+				return 0, err
+			}
 
 		default:
 			if len(row.Components) > 1 {
 				return 0, errors.New("select menu must be the only component in an action row")
+			}
+			if idComp, ok := ic.(interface{ GetCustomID() string }); ok {
+				if err := registerCustomID(seen, idComp.GetCustomID()); err != nil {
+					return 0, err
+				}
 			}
 		}
 	}
@@ -464,6 +493,7 @@ func (v PayloadValidator) ValidateModal(m discord.ModalCreate) error {
 	}
 
 	totalTextRunes := 0
+	seenCustomIDs := make(map[string]struct{})
 	for _, comp := range m.Components {
 		switch c := comp.(type) {
 		case discord.LabelComponent:
@@ -477,6 +507,9 @@ func (v PayloadValidator) ValidateModal(m discord.ModalCreate) error {
 			case discord.TextInputComponent:
 				if sub.CustomID == "" || utf8.RuneCountInString(sub.CustomID) > MaxCustomIDRunes {
 					return fmt.Errorf("text input custom_id must be 1-%d chars", MaxCustomIDRunes)
+				}
+				if err := registerCustomID(seenCustomIDs, sub.CustomID); err != nil {
+					return err
 				}
 				if utf8.RuneCountInString(sub.Placeholder) > MaxTextInputPlaceholder {
 					return fmt.Errorf("text input placeholder exceeds %d chars", MaxTextInputPlaceholder)
@@ -506,29 +539,50 @@ func (v PayloadValidator) ValidateModal(m discord.ModalCreate) error {
 				if err := validateStringSelect(sub, true); err != nil {
 					return err
 				}
+				if err := registerCustomID(seenCustomIDs, sub.CustomID); err != nil {
+					return err
+				}
 			case discord.UserSelectMenuComponent:
 				if sub.Disabled {
 					return errors.New("disabled components are not allowed in modals")
+				}
+				if err := registerCustomID(seenCustomIDs, sub.CustomID); err != nil {
+					return err
 				}
 			case discord.RoleSelectMenuComponent:
 				if sub.Disabled {
 					return errors.New("disabled components are not allowed in modals")
 				}
+				if err := registerCustomID(seenCustomIDs, sub.CustomID); err != nil {
+					return err
+				}
 			case discord.MentionableSelectMenuComponent:
 				if sub.Disabled {
 					return errors.New("disabled components are not allowed in modals")
+				}
+				if err := registerCustomID(seenCustomIDs, sub.CustomID); err != nil {
+					return err
 				}
 			case discord.ChannelSelectMenuComponent:
 				if sub.Disabled {
 					return errors.New("disabled components are not allowed in modals")
 				}
+				if err := registerCustomID(seenCustomIDs, sub.CustomID); err != nil {
+					return err
+				}
 			case discord.CheckboxGroupComponent:
 				if err := validateCheckboxGroup(sub); err != nil {
+					return err
+				}
+				if err := registerCustomID(seenCustomIDs, sub.CustomID); err != nil {
 					return err
 				}
 			case discord.CheckboxComponent:
 				if sub.CustomID == "" || utf8.RuneCountInString(sub.CustomID) > MaxCustomIDRunes {
 					return fmt.Errorf("checkbox custom_id must be 1-%d chars", MaxCustomIDRunes)
+				}
+				if err := registerCustomID(seenCustomIDs, sub.CustomID); err != nil {
+					return err
 				}
 			}
 		case discord.TextDisplayComponent:

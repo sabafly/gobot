@@ -49,6 +49,9 @@ import (
 
 func hasPictographEmoji(s string) bool {
 	for _, r := range s {
+		if r == '★' || r == '☆' {
+			continue
+		}
 		if (r >= 0x1F300 && r <= 0x1FAFF) || (r >= 0x2600 && r <= 0x27BF) {
 			return true
 		}

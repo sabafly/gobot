@@ -21,9 +21,13 @@ package bot
 
 import (
 	"context"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	"github.com/disgoorg/snowflake/v2"
+	"github.com/google/uuid"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
@@ -73,5 +77,57 @@ func TestInitBBSSystem_FailSafeOnSecretDBError(t *testing.T) {
 	sysOK, errOK := initBBSSystem(compHealthy, validCfg, gdb)
 	if errOK != nil || sysOK == nil {
 		t.Fatalf("expected healthy initBBSSystem to succeed, got sys=%v err=%v", sysOK, errOK)
+	}
+
+	// Config YAML decoding & wiring of bbs.caps + fail-closed on invalid cap config.
+	opUser := snowflake.ID(111111111111111111)
+	capUser := snowflake.ID(222222222222222222)
+	otherUser := snowflake.ID(333333333333333333)
+	cfgPath := filepath.Join(t.TempDir(), "gobot.yml")
+	yamlBody := `bbs:
+  secret_key: yaml-test-secret
+  operators:
+    - 111111111111111111
+  caps:
+    - id: admin
+      name: 管理人
+      description: 運営公式用
+      grant_operators: true
+      users:
+        - 222222222222222222
+    - id: notice
+      name: お知らせ
+      grant_operators: false
+      users:
+        - 222222222222222222
+`
+	if err := os.WriteFile(cfgPath, []byte(yamlBody), 0o600); err != nil {
+		t.Fatalf("write temp config failed: %v", err)
+	}
+	loadedCfg, err := components.LoadConfig(cfgPath)
+	if err != nil {
+		t.Fatalf("LoadConfig failed: %v", err)
+	}
+	sysWithCaps, err := initBBSSystem(compHealthy, loadedCfg, gdb)
+	if err != nil || sysWithCaps == nil {
+		t.Fatalf("initBBSSystem with caps failed: sys=%v err=%v", sysWithCaps, err)
+	}
+	if opCaps := sysWithCaps.Service.ListAvailableCaps(ctx, opUser, uuid.Nil); len(opCaps) != 1 || opCaps[0].ID != "admin" {
+		t.Fatalf("expected operator to hold [admin], got %+v", opCaps)
+	}
+	if userCaps := sysWithCaps.Service.ListAvailableCaps(ctx, capUser, uuid.Nil); len(userCaps) != 2 || userCaps[0].ID != "admin" || userCaps[1].ID != "notice" {
+		t.Fatalf("expected capUser to hold [admin, notice], got %+v", userCaps)
+	}
+	if noneCaps := sysWithCaps.Service.ListAvailableCaps(ctx, otherUser, uuid.Nil); len(noneCaps) != 0 {
+		t.Fatalf("expected non-holder to have no caps, got %+v", noneCaps)
+	}
+
+	invalidCapsCfg := &components.Config{BBS: components.ConfigBBS{
+		Caps: []components.ConfigBBSCap{
+			{ID: bbs.CapSelectNoneValue, Name: "Reserved"},
+		},
+	}}
+	if sysBadCap, errBadCap := initBBSSystem(compHealthy, invalidCapsCfg, gdb); errBadCap == nil || sysBadCap != nil {
+		t.Fatalf("expected initBBSSystem to reject reserved cap id %q, got sys=%v err=%v", bbs.CapSelectNoneValue, sysBadCap, errBadCap)
 	}
 }

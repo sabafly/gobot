@@ -56,6 +56,15 @@ type ConfigBBS struct {
 	TermsURL           string         `yaml:"terms_url"`
 	GuidelinesURL      string         `yaml:"guidelines_url"`
 	PrivacyPolicyURL   string         `yaml:"privacy_policy_url"`
+	Caps               []ConfigBBSCap `yaml:"caps"`
+}
+
+type ConfigBBSCap struct {
+	ID             string         `yaml:"id"`
+	Name           string         `yaml:"name"`
+	Description    string         `yaml:"description"`
+	Users          []snowflake.ID `yaml:"users"`
+	GrantOperators bool           `yaml:"grant_operators"`
 }
 
 type ConfigDebug struct {

@@ -1440,6 +1440,8 @@ func describeBBSError(locale discord.Locale, err error) string {
 		return i18n.TranslateText(locale, "components.bbs.errors.max_res_reached")
 	case errors.Is(err, bbscore.ErrBoardLocked):
 		return i18n.TranslateText(locale, "components.bbs.errors.board_locked")
+	case errors.Is(err, bbscore.ErrCapNotAuthorized):
+		return i18n.TranslateText(locale, "components.bbs.errors.cap_not_authorized")
 	case errors.Is(err, bbscore.ErrUnauthorized):
 		return i18n.TranslateText(locale, "components.bbs.errors.unauthorized")
 	case errors.Is(err, bbscore.ErrAlreadyExists):
@@ -1462,8 +1464,6 @@ func describeBBSError(locale discord.Locale, err error) string {
 		return i18n.TranslateText(locale, "components.bbs.errors.invalid_body_length", map[string]any{"max": strconv.Itoa(bbscore.MaxBodyRunes)})
 	case errors.Is(err, bbscore.ErrFormattedBodyTooLong):
 		return i18n.TranslateText(locale, "components.bbs.errors.formatted_body_too_long", map[string]any{"max": strconv.Itoa(bbscore.MaxEscapedBodyRunes)})
-	case errors.Is(err, bbscore.ErrInvalidMail):
-		return i18n.TranslateText(locale, "components.bbs.errors.invalid_mail")
 	case errors.Is(err, bbscore.ErrInvalidNameCommand):
 		return i18n.TranslateText(locale, "components.bbs.errors.invalid_name_command")
 	case errors.Is(err, bbscore.ErrInvalidExtendCommand):

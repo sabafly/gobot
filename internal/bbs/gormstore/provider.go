@@ -213,35 +213,33 @@ func (p *Provider) UpdateBoard(ctx context.Context, id uuid.UUID, input bbs.Upda
 			return mapErr(err)
 		}
 		now := time.Now()
-		updates := map[string]any{
-			"updated_at": now,
-		}
+		cols := []string{"UpdatedAt"}
 		row.UpdatedAt = now
 		if input.Name != nil {
 			row.Name = *input.Name
-			updates["name"] = *input.Name
+			cols = append(cols, "Name")
 		}
 		if input.Description != nil {
 			row.Description = *input.Description
-			updates["description"] = *input.Description
+			cols = append(cols, "Description")
 		}
 		if input.DefaultName != nil {
 			row.DefaultName = *input.DefaultName
-			updates["default_name"] = *input.DefaultName
+			cols = append(cols, "DefaultName")
 		}
 		if input.HideID != nil {
 			row.HideID = *input.HideID
-			updates["hide_id"] = *input.HideID
+			cols = append(cols, "HideID")
 		}
 		if input.SLIP != nil {
 			row.SLIPLevel = int(*input.SLIP)
-			updates["slip_level"] = int(*input.SLIP)
+			cols = append(cols, "SLIPLevel")
 		}
 		if input.Locked != nil {
 			row.Locked = *input.Locked
-			updates["locked"] = *input.Locked
+			cols = append(cols, "Locked")
 		}
-		return tx.Model(&BBSBoard{}).Where("id = ?", id).Updates(updates).Error
+		return tx.Model(&BBSBoard{}).Where("id = ?", id).Select(cols).Updates(&row).Error
 	})
 	if err != nil {
 		return nil, err
@@ -366,11 +364,11 @@ func (p *Provider) CreateThread(ctx context.Context, input bbs.CreateThreadRecor
 		ResNumber:    1,
 		Name:         input.FirstPost.Name,
 		Trip:         input.FirstPost.Trip,
+		Cap:          input.FirstPost.Cap,
 		SlipText:     input.FirstPost.SlipText,
 		AnonID:       input.FirstPost.AnonID,
 		PosterHash:   input.FirstPost.PosterHash,
 		IsOP:         true,
-		IsSage:       input.FirstPost.IsSage,
 		Body:         input.FirstPost.Body,
 		AuthorUserID: input.FirstPost.AuthorUserID,
 		CreatedAt:    now,
@@ -508,11 +506,11 @@ func (p *Provider) CreatePost(ctx context.Context, input bbs.CreatePostRecord) (
 			ResNumber:    nextRes,
 			Name:         input.Name,
 			Trip:         input.Trip,
+			Cap:          input.Cap,
 			SlipText:     input.SlipText,
 			AnonID:       input.AnonID,
 			PosterHash:   input.PosterHash,
 			IsOP:         input.IsOP,
-			IsSage:       input.IsSage,
 			Body:         input.Body,
 			AuthorUserID: input.AuthorUserID,
 			CreatedAt:    now,
@@ -523,9 +521,7 @@ func (p *Provider) CreatePost(ctx context.Context, input bbs.CreatePostRecord) (
 
 		thRow.ResCount = nextRes
 		thRow.UpdatedAt = now
-		if !input.IsSage {
-			thRow.BumpedAt = now
-		}
+		thRow.BumpedAt = now
 		if nextRes >= maxRes {
 			thRow.Status = string(bbs.ThreadStatusArchived)
 			thRow.ArchivedAt = &now
@@ -1278,11 +1274,11 @@ func toDomainPost(r *BBSPost) *bbs.Post {
 		ResNumber:   r.ResNumber,
 		Name:        r.Name,
 		Trip:        r.Trip,
+		Cap:         r.Cap,
 		SlipText:    r.SlipText,
 		AnonID:      r.AnonID,
 		PosterHash:  r.PosterHash,
 		IsOP:        r.IsOP,
-		IsSage:      r.IsSage,
 		Body:        r.Body,
 		Abone:       r.Abone,
 		AboneReason: r.AboneReason,

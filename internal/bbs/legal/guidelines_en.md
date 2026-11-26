@@ -5,7 +5,6 @@ These Guidelines establish the standards of conduct required to keep the gobot A
 ## 1. Basic Etiquette
 
 - Respect anonymous bulletin board culture and engage in civil discussion and casual chat. Anonymity is not a shield for attacking others or evading rules.
-- If you do not want to bump a thread (*sage*), enter `sage` in the name field.
 - To reference another post, use two half-width greater-than signs followed by the post number (e.g., `>>1`).
 
 ## 2. Prohibited Content and Conduct

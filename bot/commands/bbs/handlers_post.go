@@ -38,7 +38,51 @@ import (
 	"github.com/sabafly/gobot/internal/i18n"
 )
 
-func buildNewThreadModal(locale discord.Locale, mountID uuid.UUID, boardName string) discord.ModalCreate {
+const capSelectCustomID = "cap"
+
+func buildCapSelectLabel(locale discord.Locale, caps []bbscore.Cap) discord.LabelComponent {
+	options := make([]discord.StringSelectMenuOption, 0, min(len(caps)+1, discordsync.MaxSelectOptions))
+	options = append(options, discord.NewStringSelectMenuOption(
+		discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.field.option.cap_none"), discordsync.MaxSelectTextRunes),
+		bbscore.CapSelectNoneValue,
+	).WithDefault(true))
+
+	maxCaps := discordsync.MaxSelectOptions - 1
+	for i, c := range caps {
+		if i >= maxCaps {
+			break
+		}
+		opt := discord.NewStringSelectMenuOption(
+			discordsync.TruncateRunes(c.Name, discordsync.MaxSelectTextRunes),
+			c.ID,
+		)
+		if desc := strings.TrimSpace(c.Description); desc != "" {
+			opt = opt.WithDescription(discordsync.TruncateRunes(desc, discordsync.MaxSelectTextRunes))
+		}
+		options = append(options, opt)
+	}
+
+	menu := discord.NewStringSelectMenu(
+		capSelectCustomID,
+		discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.field.placeholder.cap"), discordsync.MaxSelectPlaceholderRunes),
+		options...,
+	).WithRequired(false).WithMinValues(0).WithMaxValues(1)
+
+	return discord.NewLabel(
+		discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.field.label.cap"), discordsync.MaxLabelTextRunes),
+		menu,
+	)
+}
+
+func selectedCapID(data discord.ModalSubmitInteractionData) string {
+	vals := data.StringValues(capSelectCustomID)
+	if len(vals) == 0 || vals[0] == bbscore.CapSelectNoneValue {
+		return ""
+	}
+	return vals[0]
+}
+
+func buildNewThreadModal(locale discord.Locale, mountID uuid.UUID, boardName string, caps []bbscore.Cap) discord.ModalCreate {
 	title := i18n.TranslateText(locale, "components.bbs.modal.new_thread.default_title")
 	if boardName != "" {
 		title = i18n.TranslateText(locale, "components.bbs.modal.new_thread.board_title", map[string]any{
@@ -47,9 +91,7 @@ func buildNewThreadModal(locale discord.Locale, mountID uuid.UUID, boardName str
 	}
 	title = discordsync.TruncateRunes(title, discordsync.MaxModalTitleRunes)
 
-	return discord.NewModalCreate(
-		fmt.Sprintf("/bbs/thread/modal/%s", mountID),
-		title,
+	comps := []discord.LayoutComponent{
 		discord.NewLabel(
 			discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.new_thread.label.title"), discordsync.MaxLabelTextRunes),
 			discord.NewShortTextInput("title").
@@ -65,39 +107,47 @@ func buildNewThreadModal(locale discord.Locale, mountID uuid.UUID, boardName str
 				WithMaxLength(bbscore.MaxNameRunes).
 				WithPlaceholder(discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.field.placeholder.name"), discordsync.MaxTextInputPlaceholder)),
 		),
-		discord.NewLabel(
-			discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.field.label.mail"), discordsync.MaxLabelTextRunes),
-			discord.NewShortTextInput("mail").
-				WithRequired(false).
-				WithMaxLength(32).
-				WithPlaceholder("sage"),
-		),
-		discord.NewLabel(
-			discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.new_thread.label.body"), discordsync.MaxLabelTextRunes),
-			discord.NewParagraphTextInput("body").
-				WithRequired(true).
-				WithMinLength(1).
-				WithMaxLength(bbscore.MaxBodyRunes),
-		),
+	}
+	if len(caps) > 0 {
+		comps = append(comps, buildCapSelectLabel(locale, caps))
+	}
+	comps = append(comps, discord.NewLabel(
+		discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.new_thread.label.body"), discordsync.MaxLabelTextRunes),
+		discord.NewParagraphTextInput("body").
+			WithRequired(true).
+			WithMinLength(1).
+			WithMaxLength(bbscore.MaxBodyRunes),
+	))
+
+	return discord.NewModalCreate(
+		fmt.Sprintf("/bbs/thread/modal/%s", mountID),
+		title,
+		comps...,
 	)
 }
 
-func buildNewPostModal(locale discord.Locale, mirrorID uuid.UUID) discord.ModalCreate {
+func buildNewPostModal(locale discord.Locale, mirrorID uuid.UUID, caps []bbscore.Cap) discord.ModalCreate {
+	comps := []discord.LayoutComponent{
+		discord.NewLabel(
+			discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.field.label.name"), discordsync.MaxLabelTextRunes),
+			discord.NewShortTextInput("name").
+				WithRequired(false).
+				WithMaxLength(bbscore.MaxNameRunes).
+				WithPlaceholder(discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.field.placeholder.name"), discordsync.MaxTextInputPlaceholder)),
+		),
+	}
+	if len(caps) > 0 {
+		comps = append(comps, buildCapSelectLabel(locale, caps))
+	}
+	comps = append(comps, discord.NewLabel(
+		discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.new_post.label.body"), discordsync.MaxLabelTextRunes),
+		discord.NewParagraphTextInput("body").WithRequired(true).WithMinLength(1).WithMaxLength(bbscore.MaxBodyRunes),
+	))
+
 	return discord.NewModalCreate(
 		fmt.Sprintf("/bbs/post/modal/%s", mirrorID),
 		discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.new_post.title"), discordsync.MaxModalTitleRunes),
-		discord.NewLabel(
-			discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.field.label.name"), discordsync.MaxLabelTextRunes),
-			discord.NewShortTextInput("name").WithRequired(false).WithMaxLength(bbscore.MaxNameRunes),
-		),
-		discord.NewLabel(
-			discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.field.label.mail"), discordsync.MaxLabelTextRunes),
-			discord.NewShortTextInput("mail").WithRequired(false).WithMaxLength(32).WithPlaceholder("sage"),
-		),
-		discord.NewLabel(
-			discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.new_post.label.body"), discordsync.MaxLabelTextRunes),
-			discord.NewParagraphTextInput("body").WithRequired(true).WithMinLength(1).WithMaxLength(bbscore.MaxBodyRunes),
-		),
+		comps...,
 	)
 }
 
@@ -141,7 +191,8 @@ func (s *System) handleNewThreadButton(e *handler.ComponentEvent) error {
 	if b, bErr := s.Service.GetBoard(e.Ctx, mount.BoardID); bErr == nil {
 		boardName = b.Name
 	}
-	modal := buildNewThreadModal(loc, mountID, boardName)
+	caps := s.Service.ListAvailableCaps(e.Ctx, e.User().ID, mount.BoardID)
+	modal := buildNewThreadModal(loc, mountID, boardName, caps)
 	sr := discordsync.NewSafeResponder(e.ID().Time())
 	if err := sr.RespondModal(e, modal); err != nil {
 		slog.Warn("bbs failed to open new thread modal", "err", err)
@@ -181,7 +232,7 @@ func (s *System) handleNewThreadModal(e *handler.ModalEvent) error {
 
 	title := e.Data.Text("title")
 	rawName := e.Data.Text("name")
-	rawMail := e.Data.Text("mail")
+	capID := selectedCapID(e.Data)
 	rawBody := e.Data.Text("body")
 
 	board, thread, firstPost, err := s.Service.CreateThread(e.Ctx, bbscore.CreateThreadInput{
@@ -190,7 +241,7 @@ func (s *System) handleNewThreadModal(e *handler.ModalEvent) error {
 		UserID:  e.User().ID,
 		Title:   title,
 		RawName: rawName,
-		RawMail: rawMail,
+		CapID:   capID,
 		RawBody: rawBody,
 		Now:     time.Now(),
 	})
@@ -286,8 +337,9 @@ func (s *System) handleNewPostButton(e *handler.ComponentEvent) error {
 		)
 		return nil
 	}
+	caps := s.Service.ListAvailableCaps(e.Ctx, e.User().ID, thread.BoardID)
 	sr := discordsync.NewSafeResponder(e.ID().Time())
-	if err := sr.RespondModal(e, buildNewPostModal(loc, mirrorID)); err != nil {
+	if err := sr.RespondModal(e, buildNewPostModal(loc, mirrorID, caps)); err != nil {
 		slog.Warn("bbs failed to open new post modal", "err", err)
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
 			i18n.TranslateText(loc, "components.bbs.errors.title.modal_failed"),
@@ -325,7 +377,7 @@ func (s *System) handleNewPostModal(e *handler.ModalEvent) error {
 	}
 
 	rawName := e.Data.Text("name")
-	rawMail := e.Data.Text("mail")
+	capID := selectedCapID(e.Data)
 	rawBody := e.Data.Text("body")
 
 	board, thread, post, backRefs, err := s.Service.CreatePost(e.Ctx, bbscore.CreatePostInput{
@@ -333,7 +385,7 @@ func (s *System) handleNewPostModal(e *handler.ModalEvent) error {
 		GuildID:  mirror.GuildID,
 		UserID:   e.User().ID,
 		RawName:  rawName,
-		RawMail:  rawMail,
+		CapID:    capID,
 		RawBody:  rawBody,
 		Now:      time.Now(),
 	})
@@ -354,9 +406,13 @@ func (s *System) handleNewPostModal(e *handler.ModalEvent) error {
 		return nil
 	}
 	url := discord.MessageURL(mirror.GuildID, thChID, msgID)
+	noticeBody := url
+	if post.AnonID != "" {
+		noticeBody = fmt.Sprintf("ID:%s\n%s", post.AnonID, url)
+	}
 	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(loc,
 		i18n.TranslateText(loc, "components.bbs.post_ui.post_created_title", map[string]any{"res": post.ResNumber}),
-		fmt.Sprintf("ID:%s\n%s", post.AnonID, url),
+		noticeBody,
 		discordsync.ColorLocalBoard,
 	).WithEphemeral(true))
 	return nil
@@ -623,11 +679,27 @@ func (s *System) handleReaderPage(e *handler.ComponentEvent) error {
 	sr := discordsync.NewSafeResponder(e.ID().Time())
 	if e.Message.Flags.Has(discord.MessageFlagEphemeral) {
 		upd := discord.NewMessageUpdateV2(comps...).WithAllowedMentions(&discord.AllowedMentions{})
-		_ = sr.UpdateComponentMessage(e, upd)
+		if err := sr.UpdateComponentMessage(e, upd); err != nil {
+			slog.Warn("bbs failed to update reader page", "thread_id", threadID, "page", pageSpec, "err", err)
+			if err2 := sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+				i18n.TranslateText(loc, "components.bbs.reader.render_failed"),
+				describeBBSError(loc, err),
+			)); err2 != nil {
+				slog.Warn("bbs failed to send reader update fallback error", "thread_id", threadID, "err", err2)
+			}
+		}
 		return nil
 	}
 	msg := discord.NewMessageCreateV2(comps...).WithEphemeral(true).WithAllowedMentions(&discord.AllowedMentions{})
-	_ = sr.RespondMessageCreate(e, msg)
+	if err := sr.RespondMessageCreate(e, msg); err != nil {
+		slog.Warn("bbs failed to open reader page", "thread_id", threadID, "page", pageSpec, "err", err)
+		if err2 := sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.reader.render_failed"),
+			describeBBSError(loc, err),
+		)); err2 != nil {
+			slog.Warn("bbs failed to send reader open fallback error", "thread_id", threadID, "err", err2)
+		}
+	}
 	return nil
 }
 
@@ -696,8 +768,14 @@ func (s *System) handleReaderJumpModal(e *handler.ModalEvent) error {
 	sr := discordsync.NewSafeResponder(e.ID().Time())
 	upd := discord.NewMessageUpdateV2(comps...).WithAllowedMentions(&discord.AllowedMentions{})
 	if uErr := sr.UpdateComponentMessage(e, upd); uErr != nil {
+		slog.Warn("bbs reader jump update fell back to ephemeral create", "thread_id", threadID, "err", uErr)
 		msg := discord.NewMessageCreateV2(comps...).WithEphemeral(true).WithAllowedMentions(&discord.AllowedMentions{})
-		_ = sr.RespondMessageCreate(e, msg)
+		if cErr := sr.RespondMessageCreate(e, msg); cErr != nil {
+			slog.Warn("bbs failed to send reader jump page", "thread_id", threadID, "err", cErr)
+			if err2 := sr.RespondMessageCreate(e, discordsync.RenderError(loc, renderFail, describeBBSError(loc, cErr))); err2 != nil {
+				slog.Warn("bbs failed to send reader jump fallback error", "thread_id", threadID, "err", err2)
+			}
+		}
 	}
 	return nil
 }
@@ -743,9 +821,12 @@ func (s *System) renderReaderComponents(ctx context.Context, guildID *snowflake.
 	var maxEndRes uint32
 	startIndex := 0
 	trimmedSpec := strings.TrimSpace(pageSpec)
-	if trimmedSpec == "latest" {
+	switch trimmedSpec {
+	case "latest":
 		startIndex = discordsync.ComputeLatestReaderStartIndex(*thread, posts, resolveURL, locale)
-	} else {
+	case "first":
+		startIndex = 0
+	default:
 		startStr, endStr, isRange := strings.Cut(trimmedSpec, "-")
 		var targetRes uint32
 		if isRange {

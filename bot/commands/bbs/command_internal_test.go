@@ -271,7 +271,7 @@ func TestDescribeBBSError_LocalizationAndSpecificity(t *testing.T) {
 		{"invalid_name_length", bbscore.ErrInvalidNameLength, true},
 		{"invalid_body_length", bbscore.ErrInvalidBodyLength, true},
 		{"formatted_body_too_long", bbscore.ErrFormattedBodyTooLong, true},
-		{"invalid_mail", bbscore.ErrInvalidMail, true},
+		{"cap_not_authorized", bbscore.ErrCapNotAuthorized, true},
 		{"invalid_name_command", bbscore.ErrInvalidNameCommand, true},
 		{"invalid_extend_command", bbscore.ErrInvalidExtendCommand, true},
 		{"invalid_reader_jump", bbscore.ErrInvalidReaderJump, true},
@@ -1192,9 +1192,42 @@ func TestConsentModalFlow_And_UnconsentedReaderAccess(t *testing.T) {
 	if err := sys.handleReaderPage(readerEv); err != nil {
 		t.Fatalf("handleReaderPage failed: %v", err)
 	}
+	readerMC, ok := respData.(discord.MessageCreate)
 	rawReader, _ := json.Marshal(respData)
-	if respType != discord.InteractionResponseTypeCreateMessage || !strings.Contains(string(rawReader), "1レス目の本文") {
+	if respType != discord.InteractionResponseTypeCreateMessage || !ok || !strings.Contains(string(rawReader), "1レス目の本文") {
 		t.Fatalf("expected unconsented reader page to render post body, type=%d body=%s", respType, rawReader)
+	}
+	pv := discordsync.PayloadValidator{}
+	if err := pv.ValidateMessageCreate(readerMC); err != nil {
+		t.Fatalf("reader page response failed ValidateMessageCreate: %v", err)
+	}
+
+	readerFirstEv := newInternalComponentEvent(t, mockClient, guildID, uReader, "/bbs/reader/"+th.ID.String()+"/first",
+		map[string]string{"thread_id": th.ID.String(), "page": "first"}, capComp)
+	if err := sys.handleReaderPage(readerFirstEv); err != nil {
+		t.Fatalf("handleReaderPage(first) failed: %v", err)
+	}
+	firstMC, ok := respData.(discord.MessageCreate)
+	rawFirst, _ := json.Marshal(respData)
+	if respType != discord.InteractionResponseTypeCreateMessage || !ok || !strings.Contains(string(rawFirst), "1レス目の本文") {
+		t.Fatalf("expected /first reader page to render post 1, type=%d body=%s", respType, rawFirst)
+	}
+	if err := pv.ValidateMessageCreate(firstMC); err != nil {
+		t.Fatalf("/first reader page failed ValidateMessageCreate: %v", err)
+	}
+
+	readerUpdEv := newInternalComponentEvent(t, mockClient, guildID, uReader, "/bbs/reader/"+th.ID.String()+"/first",
+		map[string]string{"thread_id": th.ID.String(), "page": "first"}, capComp)
+	readerUpdEv.Message.Flags = discord.MessageFlagEphemeral | discord.MessageFlagIsComponentsV2
+	if err := sys.handleReaderPage(readerUpdEv); err != nil {
+		t.Fatalf("handleReaderPage(ephemeral update) failed: %v", err)
+	}
+	updMU, ok := respData.(discord.MessageUpdate)
+	if respType != discord.InteractionResponseTypeUpdateMessage || !ok {
+		t.Fatalf("expected UpdateMessage for ephemeral reader nav, got type=%d data=%#v", respType, respData)
+	}
+	if err := pv.ValidateMessageUpdate(updMU, true); err != nil {
+		t.Fatalf("ephemeral reader page update failed ValidateMessageUpdate: %v", err)
 	}
 
 	jumpBtnEv := newInternalComponentEvent(t, mockClient, guildID, uReader, "/bbs/reader/jump/"+th.ID.String(),
@@ -1385,5 +1418,113 @@ func TestConsentModalFlow_And_UnconsentedReaderAccess(t *testing.T) {
 	}
 	if respType != discord.InteractionResponseTypeCreateMessage {
 		t.Fatalf("expected CreateMessage (ephemeral) when source message is non-ephemeral, got type=%d", respType)
+	}
+}
+
+func modalLabelCustomIDs(m discord.ModalCreate) []string {
+	var ids []string
+	for _, c := range m.Components {
+		lbl, ok := c.(discord.LabelComponent)
+		if !ok {
+			continue
+		}
+		switch sub := lbl.Component.(type) {
+		case discord.TextInputComponent:
+			ids = append(ids, sub.CustomID)
+		case discord.StringSelectMenuComponent:
+			ids = append(ids, sub.CustomID)
+		}
+	}
+	return ids
+}
+
+func findModalCapSelect(m discord.ModalCreate) (discord.StringSelectMenuComponent, bool) {
+	for _, c := range m.Components {
+		lbl, ok := c.(discord.LabelComponent)
+		if !ok {
+			continue
+		}
+		if sel, ok := lbl.Component.(discord.StringSelectMenuComponent); ok && sel.CustomID == capSelectCustomID {
+			return sel, true
+		}
+	}
+	return discord.StringSelectMenuComponent{}, false
+}
+
+func TestBuildPostingModals_ConditionalCapSelect(t *testing.T) {
+	if err := i18n.LoadLocales("../../../locales"); err != nil {
+		t.Fatalf("load locales failed: %v", err)
+	}
+	v := discordsync.PayloadValidator{}
+	targetID := uuid.New()
+
+	// 1. Without caps: no mail field and no cap select menu.
+	thNoCap := buildNewThreadModal(discord.LocaleJapanese, targetID, "テスト板", nil)
+	if err := v.ValidateModal(thNoCap); err != nil {
+		t.Fatalf("thNoCap failed ValidateModal: %v", err)
+	}
+	if ids := modalLabelCustomIDs(thNoCap); strings.Join(ids, ",") != "title,name,body" {
+		t.Fatalf("expected thread modal labels [title,name,body] without caps, got %v", ids)
+	}
+
+	postNoCap := buildNewPostModal(discord.LocaleEnglishUS, targetID, nil)
+	if err := v.ValidateModal(postNoCap); err != nil {
+		t.Fatalf("postNoCap failed ValidateModal: %v", err)
+	}
+	if ids := modalLabelCustomIDs(postNoCap); strings.Join(ids, ",") != "name,body" {
+		t.Fatalf("expected post modal labels [name,body] without caps, got %v", ids)
+	}
+
+	// 2. With caps held: cap StringSelectMenu appears with default __none__ + caps.
+	twoCaps := []bbscore.Cap{
+		{ID: "admin", Name: "管理人", Description: "運営告知用"},
+		{ID: "mod", Name: "モデレーター"},
+	}
+	thWithCap := buildNewThreadModal(discord.LocaleJapanese, targetID, "テスト板", twoCaps)
+	if err := v.ValidateModal(thWithCap); err != nil {
+		t.Fatalf("thWithCap failed ValidateModal: %v", err)
+	}
+	if ids := modalLabelCustomIDs(thWithCap); strings.Join(ids, ",") != "title,name,cap,body" {
+		t.Fatalf("expected thread modal labels [title,name,cap,body] with caps, got %v", ids)
+	}
+	postWithCap := buildNewPostModal(discord.LocaleJapanese, targetID, twoCaps)
+	if err := v.ValidateModal(postWithCap); err != nil {
+		t.Fatalf("postWithCap failed ValidateModal: %v", err)
+	}
+	if ids := modalLabelCustomIDs(postWithCap); strings.Join(ids, ",") != "name,cap,body" {
+		t.Fatalf("expected post modal labels [name,cap,body] with caps, got %v", ids)
+	}
+
+	for _, m := range []discord.ModalCreate{thWithCap, postWithCap} {
+		sel, ok := findModalCapSelect(m)
+		if !ok {
+			t.Fatalf("expected cap select menu in modal %q", m.CustomID)
+		}
+		if sel.Required || sel.Disabled || sel.MaxValues != 1 || sel.MinValues == nil || *sel.MinValues != 0 {
+			t.Fatalf("unexpected cap select attributes: %+v", sel)
+		}
+		if len(sel.Options) != 3 || sel.Options[0].Value != bbscore.CapSelectNoneValue || !sel.Options[0].Default {
+			t.Fatalf("unexpected cap select options: %+v", sel.Options)
+		}
+		if sel.Options[1].Value != "admin" || sel.Options[1].Description != "運営告知用" || sel.Options[2].Value != "mod" {
+			t.Fatalf("unexpected cap option values: %+v", sel.Options)
+		}
+	}
+
+	// 3. >24 caps clamps cleanly to MaxSelectOptions (25) and passes ValidateModal.
+	var manyCaps []bbscore.Cap
+	for i := range 30 {
+		manyCaps = append(manyCaps, bbscore.Cap{
+			ID:   "cap_" + string(rune('a'+i%26)) + "_" + string(rune('0'+i/26)),
+			Name: "Cap",
+		})
+	}
+	thClamped := buildNewThreadModal(discord.LocaleJapanese, targetID, "板", manyCaps)
+	if err := v.ValidateModal(thClamped); err != nil {
+		t.Fatalf("thClamped failed ValidateModal: %v", err)
+	}
+	selClamped, _ := findModalCapSelect(thClamped)
+	if len(selClamped.Options) != discordsync.MaxSelectOptions {
+		t.Fatalf("expected %d clamped cap options, got %d", discordsync.MaxSelectOptions, len(selClamped.Options))
 	}
 }

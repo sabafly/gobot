@@ -52,6 +52,10 @@ func TestMain(m *testing.M) {
 
 func containsPictographEmoji(s string) bool {
 	for _, r := range s {
+		if r == '★' || r == '☆' {
+			// Monochrome 5ch-style cap marks are intentional text badges, not colored emoji.
+			continue
+		}
 		if (r >= 0x1F300 && r <= 0x1FAFF) || (r >= 0x2600 && r <= 0x27BF) {
 			return true
 		}
@@ -120,6 +124,48 @@ func TestPayloadValidator_StrictRejection(t *testing.T) {
 		discord.NewActionRow(discord.NewPrimaryButton(strings.Repeat("x", 81), "/test")),
 	)); err == nil {
 		t.Fatal("expected error when button label exceeds 80 chars")
+	}
+
+	// Duplicate custom_id within the same ActionRow, across Container/Section/Rows, Update, and Modal must be rejected (prevents 50035).
+	if err := v.ValidateMessageCreate(discord.NewMessageCreateV2(
+		discord.NewActionRow(
+			discord.NewPrimaryButton("A", "/dup"),
+			discord.NewSecondaryButton("B", "/dup"),
+		),
+	)); err == nil {
+		t.Fatal("expected error for duplicate button custom_id in same ActionRow")
+	}
+	if err := v.ValidateMessageCreate(discord.NewMessageCreateV2(
+		discord.NewContainer(
+			discord.NewSection(discord.NewTextDisplay("hi")).WithAccessory(discord.NewPrimaryButton("A", "/dup2")),
+			discord.NewActionRow(discord.NewSecondaryButton("B", "/dup2")),
+		),
+	)); err == nil {
+		t.Fatal("expected error for duplicate button custom_id across Section and ActionRow")
+	}
+	if err := v.ValidateMessageCreate(discord.NewMessageCreateV2(
+		discord.NewActionRow(discord.NewStringSelectMenu("sel_dup", "pick", discord.NewStringSelectMenuOption("A", "a"))),
+		discord.NewActionRow(discord.NewPrimaryButton("B", "sel_dup")),
+	)); err == nil {
+		t.Fatal("expected error for duplicate custom_id between StringSelect and Button")
+	}
+	dupComps := []discord.LayoutComponent{
+		discord.NewActionRow(discord.NewPrimaryButton("A", "/upd_dup")),
+		discord.NewActionRow(discord.NewSecondaryButton("B", "/upd_dup")),
+	}
+	updFlags := discord.MessageFlagIsComponentsV2
+	if err := v.ValidateMessageUpdate(discord.MessageUpdate{Flags: &updFlags, Components: &dupComps}, true); err == nil {
+		t.Fatal("expected error for duplicate custom_id in ValidateMessageUpdate")
+	}
+	if err := v.ValidateModal(discord.ModalCreate{
+		CustomID: "dup_modal",
+		Title:    "Dup",
+		Components: []discord.LayoutComponent{
+			discord.NewLabel("Field 1", discord.NewShortTextInput("same_id")),
+			discord.NewLabel("Field 2", discord.NewStringSelectMenu("same_id", "pick", discord.NewStringSelectMenuOption("A", "a"))),
+		},
+	}); err == nil {
+		t.Fatal("expected error for duplicate custom_id across modal labels")
 	}
 
 	// Valid V2 passes.
@@ -1139,4 +1185,163 @@ func TestRenderer_ExtDatBudget_And_LinkExpandedPagination(t *testing.T) {
 	if nextShortBtn.Disabled || !strings.HasSuffix(nextShortBtn.CustomID, "/3") {
 		t.Fatalf("expected Next button on bounded 1..2 page to be enabled targeting /3, got disabled=%v customID=%q", nextShortBtn.Disabled, nextShortBtn.CustomID)
 	}
+}
+
+func TestRenderPostHeader_TripAndCap(t *testing.T) {
+	v := discordsync.PayloadValidator{}
+	now := time.Date(2026, 11, 26, 22, 0, 0, 0, bbs.JSTLocation)
+	rules := bbs.BoardRules{DefaultName: "風吹けば名無し"}.Normalize()
+	thread := bbs.Thread{
+		ID:       uuid.New(),
+		BoardID:  uuid.New(),
+		Title:    "キャップ・トリップテスト",
+		Status:   bbs.ThreadStatusActive,
+		ResCount: 1,
+		Rules:    rules,
+	}
+
+	// 1. Genuine tripcode renders bold, while spoofed symbols & markdown in Name are neutralized.
+	spoofPost := bbs.Post{
+		ID:        uuid.New(),
+		ThreadID:  thread.ID,
+		ResNumber: 1,
+		Name:      "偽◆名★♦❖⬥✦⭑⭐**管理人**",
+		Trip:      "◆AbcDefGhiJ",
+		AnonID:    "12345678",
+		Body:      "テスト本文",
+		CreatedAt: now,
+	}
+	spoofHeader := discordsync.RenderPostHeader(spoofPost, rules, discord.LocaleJapanese)
+	if strings.Contains(spoofHeader, "偽◆") || strings.Contains(spoofHeader, "★") {
+		t.Fatalf("spoofed ◆/★ leaked into header: %q", spoofHeader)
+	}
+	if !strings.Contains(spoofHeader, "偽◇名☆◇◇◇☆☆☆\\*\\*管理人\\*\\* **◆AbcDefGhiJ**") {
+		t.Fatalf("unexpected spoof-neutralized header: %q", spoofHeader)
+	}
+
+	// 2. Cap with empty name -> "**管理人 ★**" and no ID.
+	capOnlyPost := bbs.Post{
+		ID:        uuid.New(),
+		ThreadID:  thread.ID,
+		ResNumber: 2,
+		Cap:       "管理人",
+		Body:      "公式告知",
+		CreatedAt: now,
+	}
+	capOnlyHeader := discordsync.RenderPostHeader(capOnlyPost, rules, discord.LocaleJapanese)
+	if !strings.Contains(capOnlyHeader, ":**管理人 ★**:") || strings.Contains(capOnlyHeader, "ID:") {
+		t.Fatalf("unexpected cap-only header: %q", capOnlyHeader)
+	}
+
+	// 3. Cap with empty name + trip -> "**管理人 ★** **◆...**".
+	capEmptyTripPost := bbs.Post{
+		ID:        uuid.New(),
+		ThreadID:  thread.ID,
+		ResNumber: 3,
+		Trip:      "◆Trippppppp",
+		Cap:       "管理人",
+		Body:      "トリップ併用告知",
+		CreatedAt: now,
+	}
+	capEmptyTripHeader := discordsync.RenderPostHeader(capEmptyTripPost, rules, discord.LocaleJapanese)
+	if !strings.Contains(capEmptyTripHeader, ":**管理人 ★** **◆Trippppppp**:") {
+		t.Fatalf("unexpected cap+trip header with empty name: %q", capEmptyTripHeader)
+	}
+
+	// 4. Cap with custom name + trip -> "さばふらい **◆...** **★管理人**".
+	capNamedPost := bbs.Post{
+		ID:        uuid.New(),
+		ThreadID:  thread.ID,
+		ResNumber: 4,
+		Name:      "さばふらい",
+		Trip:      "◆Trippppppp",
+		Cap:       "管理人",
+		Body:      "名前あり告知",
+		CreatedAt: now,
+	}
+	capNamedHeader := discordsync.RenderPostHeader(capNamedPost, rules, discord.LocaleJapanese)
+	if !strings.Contains(capNamedHeader, ":さばふらい **◆Trippppppp** **★管理人**:") || strings.Contains(capNamedHeader, "ID:") {
+		t.Fatalf("unexpected named cap+trip header: %q", capNamedHeader)
+	}
+
+	// 5. All headers pass RenderPostMessageCreate validation and zero-emoji check.
+	for _, p := range []bbs.Post{spoofPost, capOnlyPost, capEmptyTripPost, capNamedPost} {
+		mc := discordsync.RenderPostMessageCreate(p, thread, nil, discord.LocaleJapanese)
+		if err := v.ValidateMessageCreate(mc); err != nil {
+			t.Fatalf("RenderPostMessageCreate validation failed for res %d: %v", p.ResNumber, err)
+		}
+		assertNoEmojiInLayout(t, mc.Components)
+	}
+}
+
+func TestRenderReaderPage_UniqueCustomIDsAllStates(t *testing.T) {
+	v := discordsync.PayloadValidator{}
+	now := time.Date(2026, 11, 26, 23, 0, 0, 0, bbs.JSTLocation)
+	rules := bbs.BoardRules{MaxRes: 1000}.Normalize()
+
+	assertValidReaderComps := func(label string, comps []discord.LayoutComponent) {
+		t.Helper()
+		mc := discord.NewMessageCreateV2(comps...).WithEphemeral(true)
+		if err := v.ValidateMessageCreate(mc); err != nil {
+			t.Fatalf("%s failed ValidateMessageCreate: %v", label, err)
+		}
+		assertNoEmojiInLayout(t, comps)
+		nav, ok := comps[1].(discord.ActionRowComponent)
+		if !ok || len(nav.Components) != 5 {
+			t.Fatalf("%s expected 5-button nav row, got %#v", label, comps)
+		}
+		seen := make(map[string]struct{}, len(nav.Components))
+		for _, ic := range nav.Components {
+			btn := ic.(discord.ButtonComponent)
+			if btn.CustomID == "" {
+				t.Fatalf("%s has empty button custom_id", label)
+			}
+			if _, dup := seen[btn.CustomID]; dup {
+				t.Fatalf("%s has duplicate button custom_id %q", label, btn.CustomID)
+			}
+			seen[btn.CustomID] = struct{}{}
+		}
+	}
+
+	// 1. 1-post thread (both atStart and atEnd on page 1).
+	thSingle := bbs.Thread{ID: uuid.New(), Title: "Single Post Thread", ResCount: 1, Rules: rules}
+	singlePosts := []bbs.Post{
+		{ID: uuid.New(), ThreadID: thSingle.ID, ResNumber: 1, AnonID: "1", Body: "only post", CreatedAt: now},
+	}
+	cSingle, sRes, eRes := discordsync.RenderReaderPage(thSingle, singlePosts, 0, nil, discord.LocaleJapanese)
+	if sRes != 1 || eRes != 1 {
+		t.Fatalf("expected 1..1 for single post thread, got %d..%d", sRes, eRes)
+	}
+	assertValidReaderComps("single_post_page1", cSingle)
+
+	// 2. Multi-page thread: verify page 1, middle page, and latest page all have unique custom_ids.
+	thMulti := bbs.Thread{ID: uuid.New(), Title: "Multi Page Thread", ResCount: 10, Rules: rules}
+	multiPosts := make([]bbs.Post, 10)
+	for i := range multiPosts {
+		multiPosts[i] = bbs.Post{
+			ID:        uuid.New(),
+			ThreadID:  thMulti.ID,
+			ResNumber: uint32(i + 1),
+			AnonID:    fmt.Sprintf("id%d", i),
+			Body:      strings.Repeat("本文", 350),
+			CreatedAt: now,
+		}
+	}
+	cFirst, _, firstEnd := discordsync.RenderReaderPage(thMulti, multiPosts, 0, nil, discord.LocaleJapanese)
+	assertValidReaderComps("multi_first_page", cFirst)
+
+	if firstEnd < 10 {
+		cMid, _, midEnd := discordsync.RenderReaderPage(thMulti, multiPosts, int(firstEnd), nil, discord.LocaleJapanese)
+		if midEnd >= 10 {
+			t.Fatalf("expected middle page before end, got midEnd=%d", midEnd)
+		}
+		assertValidReaderComps("multi_middle_page", cMid)
+	}
+
+	latestIdx := discordsync.ComputeLatestReaderStartIndex(thMulti, multiPosts, nil, discord.LocaleJapanese)
+	cLatest, _, latestEnd := discordsync.RenderReaderPage(thMulti, multiPosts, latestIdx, nil, discord.LocaleJapanese)
+	if latestEnd != 10 {
+		t.Fatalf("expected latest page to end at 10, got %d", latestEnd)
+	}
+	assertValidReaderComps("multi_latest_page", cLatest)
 }

@@ -42,6 +42,10 @@ const (
 	DefaultPolicyVersion   = "2026-11-25"
 	MaxPolicyVersionLen    = 64
 	MaxBanHours            = 24 * 365 * 10
+	MaxCapIDRunes          = 64
+	MaxCapNameRunes        = 48
+	MaxCapDescriptionRunes = 100
+	CapSelectNoneValue     = "__none__"
 )
 
 type Scope string
@@ -100,7 +104,8 @@ var (
 	ErrInvalidBanDuration    = fmt.Errorf("%w: ban duration out of range", ErrInvalidInput)
 	ErrBoardProviderMismatch = fmt.Errorf("%w: board provider must match category provider", ErrInvalidInput)
 	ErrInvalidBoardRules     = fmt.Errorf("%w: invalid board rules", ErrInvalidInput)
-	ErrInvalidMail           = fmt.Errorf("%w: invalid mail field", ErrInvalidInput)
+	ErrInvalidCapConfig      = fmt.Errorf("%w: invalid cap configuration", ErrInvalidInput)
+	ErrCapNotAuthorized      = fmt.Errorf("%w: cap not found or not authorized", ErrUnauthorized)
 	ErrInvalidNameCommand    = fmt.Errorf("%w: unsupported name command", ErrInvalidInput)
 	ErrInvalidExtendCommand  = fmt.Errorf("%w: invalid !extend syntax", ErrInvalidInput)
 	ErrFormattedBodyTooLong  = fmt.Errorf("%w: formatted body exceeds display limit", ErrInvalidInput)
@@ -121,6 +126,7 @@ type BoardRules struct {
 
 // Normalize fills zero-value rule fields with sensible defaults while preserving DatOchiDisabled (-1).
 func (r BoardRules) Normalize() BoardRules {
+	r.DefaultName = SanitizeDisplayName(r.DefaultName)
 	if r.DefaultName == "" {
 		r.DefaultName = DefaultAnonymousName
 	}
@@ -215,15 +221,31 @@ type Post struct {
 	ResNumber   uint32
 	Name        string
 	Trip        string
+	Cap         string
 	SlipText    string
 	AnonID      string
 	PosterHash  string
 	IsOP        bool
-	IsSage      bool
 	Body        string
 	Abone       bool
 	AboneReason string
 	CreatedAt   time.Time
+}
+
+// CapDefinition configures a static operator/admin cap loaded from config.
+type CapDefinition struct {
+	ID             string
+	Name           string
+	Description    string
+	Users          []snowflake.ID
+	GrantOperators bool
+}
+
+// Cap represents an identity cap available to a user when posting.
+type Cap struct {
+	ID          string
+	Name        string
+	Description string
 }
 
 // AuditPostInfo contains operator-only attribution for abuse/legal investigations.
@@ -408,11 +430,11 @@ type CreatePostRecord struct {
 	ThreadID     uuid.UUID
 	Name         string
 	Trip         string
+	Cap          string
 	SlipText     string
 	AnonID       string
 	PosterHash   string
 	IsOP         bool
-	IsSage       bool
 	Body         string
 	AuthorUserID snowflake.ID
 }
@@ -424,7 +446,7 @@ type CreateThreadInput struct {
 	UserID  snowflake.ID
 	Title   string
 	RawName string
-	RawMail string
+	CapID   string
 	RawBody string
 	Now     time.Time
 }
@@ -435,7 +457,7 @@ type CreatePostInput struct {
 	GuildID  snowflake.ID
 	UserID   snowflake.ID
 	RawName  string
-	RawMail  string
+	CapID    string
 	RawBody  string
 	Now      time.Time
 }

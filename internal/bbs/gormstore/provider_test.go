@@ -160,7 +160,6 @@ func TestGormStore_CRUD_Concurrency_Archive_Abone_Ban(t *testing.T) {
 				Name:         "風吹けば名無し",
 				AnonID:       "anon1234",
 				PosterHash:   fmt.Sprintf("hash%d", idx),
-				IsSage:       idx == 0,
 				Body:         fmt.Sprintf("並行レス %d >>1", idx),
 				AuthorUserID: uid,
 			})
@@ -188,7 +187,7 @@ func TestGormStore_CRUD_Concurrency_Archive_Abone_Ban(t *testing.T) {
 		}
 	}
 
-	// Sage check: post with sage does not bump bumped_at relative to non-sage post
+	// Unconditional bump check: replying always updates BumpedAt even at MaxRes.
 	updatedTh, err := svc.GetThread(ctx, thread.ID)
 	if err != nil {
 		t.Fatalf("GetThread failed: %v", err)
@@ -196,27 +195,26 @@ func TestGormStore_CRUD_Concurrency_Archive_Abone_Ban(t *testing.T) {
 	prevBump := updatedTh.BumpedAt
 	time.Sleep(10 * time.Millisecond)
 
-	// 12th post (sage) hits MaxRes=12 -> archives thread, does not update BumpedAt
-	sagePost, archivedTh, err := store.CreatePost(ctx, bbs.CreatePostRecord{
+	// 12th post hits MaxRes=12 -> archives thread and updates BumpedAt.
+	finalPost, archivedTh, err := store.CreatePost(ctx, bbs.CreatePostRecord{
 		ThreadID:     thread.ID,
 		Name:         "風吹けば名無し",
-		AnonID:       "sageanon",
-		PosterHash:   "sagehash",
-		IsSage:       true,
-		Body:         "sage進行で12到達",
+		AnonID:       "anonfinal",
+		PosterHash:   "finalhash",
+		Body:         "12到達で自動アーカイブ",
 		AuthorUserID: userB,
 	})
 	if err != nil {
 		t.Fatalf("12th CreatePost failed: %v", err)
 	}
-	if sagePost.ResNumber != 12 {
-		t.Fatalf("expected res 12, got %d", sagePost.ResNumber)
+	if finalPost.ResNumber != 12 {
+		t.Fatalf("expected res 12, got %d", finalPost.ResNumber)
 	}
 	if archivedTh.Status != bbs.ThreadStatusArchived {
 		t.Fatalf("expected archived status at MaxRes=12, got %s", archivedTh.Status)
 	}
-	if !archivedTh.BumpedAt.Equal(prevBump) {
-		t.Fatalf("sage post must not update BumpedAt: prev=%v, now=%v", prevBump, archivedTh.BumpedAt)
+	if !archivedTh.BumpedAt.After(prevBump) {
+		t.Fatalf("reply must update BumpedAt: prev=%v, now=%v", prevBump, archivedTh.BumpedAt)
 	}
 
 	// Abone preserves res number
@@ -553,11 +551,10 @@ func TestGormStore_PR224ReviewRegressionFixes(t *testing.T) {
 		t.Fatalf("expected ListBans(Limit=1) to return active_hash rather than expired ban, got %+v, err=%v", listedBans, err)
 	}
 
-	// 10. CreateThread/CreatePost reject ClearFormat-expanded body exceeding MaxEscapedBodyRunes & check UUIDv7 lock distribution
+	// 10. CreateThread/CreatePost reject ClearFormat-expanded body exceeding MaxEscapedBodyRunes & preserve MaxNameRunes
 	userEscaped := snowflake.ID(33003)
-	userBadMail := snowflake.ID(33004)
-	userGoodMail := snowflake.ID(33005)
-	for _, uid := range []snowflake.ID{userEscaped, userBadMail, userGoodMail} {
+	userNameTest := snowflake.ID(33005)
+	for _, uid := range []snowflake.ID{userEscaped, userNameTest} {
 		if _, err := svc.AcceptPolicy(ctx, uid); err != nil {
 			t.Fatalf("AcceptPolicy %d failed: %v", uid, err)
 		}
@@ -572,27 +569,15 @@ func TestGormStore_PR224ReviewRegressionFixes(t *testing.T) {
 	}); !errors.Is(err, bbs.ErrFormattedBodyTooLong) {
 		t.Fatalf("expected ErrFormattedBodyTooLong, got %v", err)
 	}
-	// Reply with valid mail="sage" & 48-char name succeeds; invalid mail rejected before DB write
-	if _, _, _, _, err := svc.CreatePost(ctx, bbs.CreatePostInput{
+	_, _, longReply, _, err := svc.CreatePost(ctx, bbs.CreatePostInput{
 		ThreadID: disabledTh.ID,
 		GuildID:  guildB,
-		UserID:   userBadMail,
+		UserID:   userNameTest,
 		RawName:  strings.Repeat("な", bbs.MaxNameRunes),
-		RawMail:  "age",
-		RawBody:  "テスト",
-	}); !errors.Is(err, bbs.ErrInvalidMail) {
-		t.Fatalf("expected ErrInvalidMail on reply, got %v", err)
-	}
-	_, _, sageReply, _, err := svc.CreatePost(ctx, bbs.CreatePostInput{
-		ThreadID: disabledTh.ID,
-		GuildID:  guildB,
-		UserID:   userGoodMail,
-		RawName:  strings.Repeat("な", bbs.MaxNameRunes),
-		RawMail:  "sage",
 		RawBody:  "テスト>>1",
 	})
-	if err != nil || !sageReply.IsSage {
-		t.Fatalf("expected 48-rune name + sage mail to succeed, got %+v, err=%v", sageReply, err)
+	if err != nil || longReply.Name != strings.Repeat("な", bbs.MaxNameRunes) {
+		t.Fatalf("expected 48-rune name reply to succeed, got %+v, err=%v", longReply, err)
 	}
 
 	// 11. ClearFormat-empty body/title (e.g. U+EFFD/U+EFFF only) rejected before DB write
@@ -644,7 +629,7 @@ func TestGormStore_PR224ReviewRegressionFixes(t *testing.T) {
 	if err != nil || gotBan.ID != banRow.ID {
 		t.Fatalf("GetBan failed: %+v, err=%v", gotBan, err)
 	}
-	rep, err := svc.CreateReport(ctx, guildB, userGoodMail, sageReply.ID, "spam report")
+	rep, err := svc.CreateReport(ctx, guildB, userNameTest, longReply.ID, "spam report")
 	if err != nil {
 		t.Fatalf("CreateReport failed: %v", err)
 	}
@@ -655,5 +640,217 @@ func TestGormStore_PR224ReviewRegressionFixes(t *testing.T) {
 	gotRep, err := store.GetReport(ctx, rep.ID)
 	if err != nil || gotRep.BanID == nil || *gotRep.BanID != banRow.ID {
 		t.Fatalf("expected persisted BanID %v on report, got %+v, err=%v", banRow.ID, gotRep, err)
+	}
+}
+
+func TestServiceCapPersistenceAndSanitization(t *testing.T) {
+	ctx := context.Background()
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("open sqlite failed: %v", err)
+	}
+	if err := db.AutoMigrate(gormstore.Models()...); err != nil {
+		t.Fatalf("automigrate failed: %v", err)
+	}
+
+	store := gormstore.New(db)
+	reg := bbs.NewProviderRegistry(bbs.DefaultProviderKey)
+	reg.Register(store)
+	idGen := bbs.NewIdentityGenerator([]byte("cap-test-hmac-secret"))
+	pm := bbs.NewPolicyManager(bbs.PolicyConfig{Version: "v1"})
+
+	opUser := snowflake.ID(70001)
+	capUser := snowflake.ID(70002)
+	normalUser := snowflake.ID(70003)
+	guildID := snowflake.ID(88801)
+
+	svc := bbs.NewService(reg, store, idGen, pm, []snowflake.ID{opUser})
+	if err := svc.SetAdminCaps([]bbs.CapDefinition{
+		{ID: "admin", Name: "管理人", Description: "運営", GrantOperators: true, Users: []snowflake.ID{capUser}},
+		{ID: "mod", Name: "監視員", GrantOperators: false, Users: []snowflake.ID{capUser}},
+	}); err != nil {
+		t.Fatalf("SetAdminCaps failed: %v", err)
+	}
+
+	if _, err := svc.SetupGuild(ctx, bbs.GuildSetupInput{GuildID: guildID, Enabled: true, ActorUserID: opUser}); err != nil {
+		t.Fatalf("SetupGuild failed: %v", err)
+	}
+	for _, uid := range []snowflake.ID{opUser, capUser, normalUser} {
+		if _, err := svc.AcceptPolicy(ctx, uid); err != nil {
+			t.Fatalf("AcceptPolicy %d failed: %v", uid, err)
+		}
+	}
+
+	cat, err := svc.CreateCategory(ctx, bbs.CreateCategoryInput{
+		Scope: bbs.ScopeLocal, GuildID: &guildID, Slug: "capcat", Name: "Cap Category",
+	})
+	if err != nil {
+		t.Fatalf("CreateCategory failed: %v", err)
+	}
+	board, err := svc.CreateBoard(ctx, bbs.CreateBoardInput{
+		CategoryID: cat.ID,
+		Scope:      bbs.ScopeLocal,
+		GuildID:    &guildID,
+		Slug:       "capboard",
+		Name:       "Cap Board",
+		Rules:      bbs.BoardRules{DefaultName: "偽◆名★子", HideID: false, SLIP: bbs.SLIPVVVVV},
+	})
+	if err != nil {
+		t.Fatalf("CreateBoard failed: %v", err)
+	}
+	if board.Rules.DefaultName != "偽◇名☆子" {
+		t.Fatalf("expected CreateBoard to sanitize DefaultName, got %q", board.Rules.DefaultName)
+	}
+	updatedName := "更新◆板★名"
+	board, err = svc.UpdateBoard(ctx, board.ID, bbs.UpdateBoardInput{DefaultName: &updatedName})
+	if err != nil || board.Rules.DefaultName != "更新◇板☆名" {
+		t.Fatalf("expected UpdateBoard to sanitize DefaultName, got %+v, err=%v", board, err)
+	}
+
+	// ListAvailableCaps authorization checks
+	if got := svc.ListAvailableCaps(ctx, opUser, board.ID); len(got) != 1 || got[0].ID != "admin" {
+		t.Fatalf("expected operator caps [admin], got %+v", got)
+	}
+	if got := svc.ListAvailableCaps(ctx, capUser, board.ID); len(got) != 2 || got[0].ID != "admin" || got[1].ID != "mod" {
+		t.Fatalf("expected capUser caps [admin, mod], got %+v", got)
+	}
+	if got := svc.ListAvailableCaps(ctx, normalUser, board.ID); len(got) != 0 {
+		t.Fatalf("expected normalUser to have 0 caps, got %+v", got)
+	}
+
+	// Unauthorized / unknown CapID rejected with ErrCapNotAuthorized
+	for _, badCap := range []string{"admin", "unknown_cap"} {
+		if _, _, _, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+			BoardID: board.ID, GuildID: guildID, UserID: normalUser,
+			Title: "不正キャップ", CapID: badCap, RawBody: "テスト",
+		}); !errors.Is(err, bbs.ErrCapNotAuthorized) {
+			t.Fatalf("expected ErrCapNotAuthorized on CreateThread(cap=%q), got %v", badCap, err)
+		}
+	}
+
+	// Authorized Cap: persists Post.Cap, hides AnonID & SlipText, and bypasses thread & post rate limits
+	_, th1, p1, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: board.ID, GuildID: guildID, UserID: opUser,
+		Title: "運営告知スレ1", RawName: "", CapID: "admin", RawBody: "第一告知",
+	})
+	if err != nil {
+		t.Fatalf("CreateThread #1 with cap failed: %v", err)
+	}
+	if p1.Cap != "管理人" || p1.Name != "" || p1.AnonID != "" || p1.SlipText != "" {
+		t.Fatalf("unexpected cap first post: %+v", p1)
+	}
+	// Immediate 2nd CreateThread succeeds (rate limit bypassed)
+	_, _, p2, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: board.ID, GuildID: guildID, UserID: opUser,
+		Title: "運営告知スレ2", RawName: "運営担当 !id:on", CapID: "admin", RawBody: "連続告知",
+	})
+	if err != nil {
+		t.Fatalf("rapid CreateThread #2 with cap must bypass rate limit: %v", err)
+	}
+	if p2.Cap != "管理人" || p2.Name != "運営担当" || p2.AnonID != "" || p2.SlipText != "" {
+		t.Fatalf("unexpected second cap post: %+v", p2)
+	}
+
+	// Rapid replies with cap also persist Cap, hide ID, and bypass post rate limit
+	for i := range 3 {
+		_, _, reply, _, err := svc.CreatePost(ctx, bbs.CreatePostInput{
+			ThreadID: th1.ID, GuildID: guildID, UserID: capUser,
+			RawName: "", CapID: "mod", RawBody: fmt.Sprintf("監視レス %d", i+1),
+		})
+		if err != nil {
+			t.Fatalf("rapid CreatePost #%d with cap failed: %v", i, err)
+		}
+		if reply.Cap != "監視員" || reply.AnonID != "" || reply.SlipText != "" {
+			t.Fatalf("unexpected cap reply: %+v", reply)
+		}
+	}
+
+	// Unauthorized CapID on CreatePost rejected cleanly
+	if _, _, _, _, err := svc.CreatePost(ctx, bbs.CreatePostInput{
+		ThreadID: th1.ID, GuildID: guildID, UserID: normalUser,
+		CapID: "mod", RawBody: "なりすまし",
+	}); !errors.Is(err, bbs.ErrCapNotAuthorized) {
+		t.Fatalf("expected ErrCapNotAuthorized on CreatePost, got %v", err)
+	}
+
+	// Reload from DB to verify Cap field round-trips through GORM
+	persisted, err := svc.ListPosts(ctx, th1.ID, 0, 10)
+	if err != nil || len(persisted) != 4 || persisted[0].Cap != "管理人" || persisted[1].Cap != "監視員" {
+		t.Fatalf("expected persisted Cap fields from DB, got %+v, err=%v", persisted, err)
+	}
+}
+
+func TestUpdateBoard_SLIPAndPartialFields(t *testing.T) {
+	ctx := context.Background()
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("open sqlite failed: %v", err)
+	}
+	if err := db.AutoMigrate(gormstore.Models()...); err != nil {
+		t.Fatalf("automigrate failed: %v", err)
+	}
+	if !db.Migrator().HasColumn(&gormstore.BBSBoard{}, "slip_level") {
+		t.Fatal("expected bbs_boards table to have slip_level column")
+	}
+	if !db.Migrator().HasColumn(&gormstore.BBSThread{}, "slip_level") {
+		t.Fatal("expected bbs_threads table to have slip_level column")
+	}
+
+	store := gormstore.New(db)
+	reg := bbs.NewProviderRegistry(bbs.DefaultProviderKey)
+	reg.Register(store)
+	idGen := bbs.NewIdentityGenerator([]byte("slip-test-secret"))
+	pm := bbs.NewPolicyManager(bbs.PolicyConfig{Version: "v1"})
+	opUser := snowflake.ID(77001)
+	guildID := snowflake.ID(77100)
+	svc := bbs.NewService(reg, store, idGen, pm, []snowflake.ID{opUser})
+
+	if _, err := svc.SetupGuild(ctx, bbs.GuildSetupInput{GuildID: guildID, Enabled: true, ActorUserID: opUser}); err != nil {
+		t.Fatalf("SetupGuild failed: %v", err)
+	}
+	cat, err := svc.CreateCategory(ctx, bbs.CreateCategoryInput{
+		Scope: bbs.ScopeLocal, GuildID: &guildID, Slug: "slipcat", Name: "SLIP Cat",
+	})
+	if err != nil {
+		t.Fatalf("CreateCategory failed: %v", err)
+	}
+	board, err := svc.CreateBoard(ctx, bbs.CreateBoardInput{
+		CategoryID: cat.ID,
+		Scope:      bbs.ScopeLocal,
+		GuildID:    &guildID,
+		Slug:       "slipboard",
+		Name:       "SLIP Board",
+		Rules:      bbs.BoardRules{DefaultName: "初期名無し", HideID: true, SLIP: bbs.SLIPNone},
+	})
+	if err != nil {
+		t.Fatalf("CreateBoard failed: %v", err)
+	}
+	lockedTrue := true
+	if _, err := svc.UpdateBoard(ctx, board.ID, bbs.UpdateBoardInput{Locked: &lockedTrue}); err != nil {
+		t.Fatalf("lock board failed: %v", err)
+	}
+
+	// Update SLIP from None -> VVVVV while preserving DefaultName, HideID=true, Locked=true.
+	slipOn := bbs.SLIPVVVVV
+	updatedOn, err := svc.UpdateBoard(ctx, board.ID, bbs.UpdateBoardInput{SLIP: &slipOn})
+	if err != nil {
+		t.Fatalf("UpdateBoard SLIP=vvvvv failed: %v", err)
+	}
+	if updatedOn.Rules.SLIP != bbs.SLIPVVVVV || !updatedOn.Locked || !updatedOn.Rules.HideID || updatedOn.Rules.DefaultName != "初期名無し" {
+		t.Fatalf("unexpected board after SLIP=vvvvv: %+v", updatedOn)
+	}
+	reloadedOn, err := svc.GetBoard(ctx, board.ID)
+	if err != nil || reloadedOn.Rules.SLIP != bbs.SLIPVVVVV || !reloadedOn.Locked || !reloadedOn.Rules.HideID || reloadedOn.Rules.DefaultName != "初期名無し" {
+		t.Fatalf("expected persisted SLIP=vvvvv after reload, got %+v, err=%v", reloadedOn, err)
+	}
+
+	// Update SLIP back to None (zero value must persist) and keep untouched fields intact.
+	slipOff := bbs.SLIPNone
+	if _, err := svc.UpdateBoard(ctx, board.ID, bbs.UpdateBoardInput{SLIP: &slipOff}); err != nil {
+		t.Fatalf("UpdateBoard SLIP=none failed: %v", err)
+	}
+	reloadedOff, err := svc.GetBoard(ctx, board.ID)
+	if err != nil || reloadedOff.Rules.SLIP != bbs.SLIPNone || !reloadedOff.Locked || !reloadedOff.Rules.HideID || reloadedOff.Rules.DefaultName != "初期名無し" {
+		t.Fatalf("expected persisted SLIP=none after reload, got %+v, err=%v", reloadedOff, err)
 	}
 }

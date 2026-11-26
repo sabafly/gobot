@@ -78,8 +78,9 @@ func FormatTimestamp5ch(t time.Time, locale discord.Locale) string {
 }
 
 func resolveAnonymousDisplayName(raw string, locale discord.Locale) string {
-	clean := bbs.ClearFormat(strings.TrimSpace(raw))
-	if clean == "" || strings.TrimSpace(raw) == bbs.DefaultAnonymousName {
+	sanitized := bbs.SanitizeDisplayName(raw)
+	clean := bbs.ClearFormat(sanitized)
+	if clean == "" || sanitized == bbs.DefaultAnonymousName {
 		return i18n.TranslateText(locale, "components.bbs.post.default_name")
 	}
 	return clean
@@ -174,15 +175,41 @@ func RenderPostHeader(post bbs.Post, threadRules bbs.BoardRules, locale discord.
 			"res": post.ResNumber,
 		})
 	}
-	name := resolveAnonymousDisplayName(post.Name, locale)
-	if strings.TrimSpace(post.Name) == "" {
-		name = resolveAnonymousDisplayName(threadRules.Normalize().DefaultName, locale)
-	}
 	var namePart strings.Builder
-	namePart.WriteString(name)
-	if post.Trip != "" {
-		namePart.WriteByte(' ')
-		namePart.WriteString(bbs.ClearFormat(post.Trip))
+	capName := bbs.ClearFormat(bbs.SanitizeDisplayName(post.Cap))
+	if capName != "" {
+		cleanUserName := bbs.ClearFormat(bbs.SanitizeDisplayName(post.Name))
+		if cleanUserName == "" {
+			namePart.WriteString("**")
+			namePart.WriteString(capName)
+			namePart.WriteString(" ★**")
+			if post.Trip != "" {
+				namePart.WriteString(" **")
+				namePart.WriteString(bbs.ClearFormat(post.Trip))
+				namePart.WriteString("**")
+			}
+		} else {
+			namePart.WriteString(cleanUserName)
+			if post.Trip != "" {
+				namePart.WriteString(" **")
+				namePart.WriteString(bbs.ClearFormat(post.Trip))
+				namePart.WriteString("**")
+			}
+			namePart.WriteString(" **★")
+			namePart.WriteString(capName)
+			namePart.WriteString("**")
+		}
+	} else {
+		name := resolveAnonymousDisplayName(post.Name, locale)
+		if strings.TrimSpace(post.Name) == "" {
+			name = resolveAnonymousDisplayName(threadRules.Normalize().DefaultName, locale)
+		}
+		namePart.WriteString(name)
+		if post.Trip != "" {
+			namePart.WriteString(" **")
+			namePart.WriteString(bbs.ClearFormat(post.Trip))
+			namePart.WriteString("**")
+		}
 	}
 	if post.SlipText != "" {
 		slipPrefix := i18n.TranslateText(locale, "components.bbs.post.slip_prefix")
@@ -525,7 +552,10 @@ func RenderReaderPageBounded(
 		shownCount++
 	}
 
-	prevCustomID := fmt.Sprintf("/bbs/reader/%s/1", thread.ID)
+	atStart := startRes <= 1
+	atEnd := endRes >= thread.ResCount
+
+	prevCustomID := fmt.Sprintf("/bbs/reader/%s/prev-0", thread.ID)
 	if startIndex > 0 {
 		prevIdx := computeBackwardStartIndex(thread, posts, startIndex-1, resolveURL, locale)
 		prevCustomID = fmt.Sprintf("/bbs/reader/%s/%d-%d", thread.ID, posts[prevIdx].ResNumber, posts[startIndex-1].ResNumber)
@@ -534,15 +564,16 @@ func RenderReaderPageBounded(
 	if nextRes > thread.ResCount {
 		nextRes = thread.ResCount
 	}
+	nextCustomID := fmt.Sprintf("/bbs/reader/%s/next-end", thread.ID)
+	if !atEnd {
+		nextCustomID = fmt.Sprintf("/bbs/reader/%s/%d", thread.ID, nextRes)
+	}
 
-	atStart := startRes <= 1
-	atEnd := endRes >= thread.ResCount
-
-	firstBtn := discord.NewSecondaryButton(TruncateRunes(i18n.TranslateText(locale, "components.bbs.reader.btn.first"), MaxButtonLabelRunes), fmt.Sprintf("/bbs/reader/%s/1", thread.ID))
+	firstBtn := discord.NewSecondaryButton(TruncateRunes(i18n.TranslateText(locale, "components.bbs.reader.btn.first"), MaxButtonLabelRunes), fmt.Sprintf("/bbs/reader/%s/first", thread.ID))
 	firstBtn.Disabled = atStart
 	prevBtn := discord.NewSecondaryButton(TruncateRunes(i18n.TranslateText(locale, "components.bbs.reader.btn.prev"), MaxButtonLabelRunes), prevCustomID)
 	prevBtn.Disabled = atStart
-	nextBtn := discord.NewSecondaryButton(TruncateRunes(i18n.TranslateText(locale, "components.bbs.reader.btn.next"), MaxButtonLabelRunes), fmt.Sprintf("/bbs/reader/%s/%d", thread.ID, nextRes))
+	nextBtn := discord.NewSecondaryButton(TruncateRunes(i18n.TranslateText(locale, "components.bbs.reader.btn.next"), MaxButtonLabelRunes), nextCustomID)
 	nextBtn.Disabled = atEnd
 	latestBtn := discord.NewSecondaryButton(TruncateRunes(i18n.TranslateText(locale, "components.bbs.reader.btn.latest"), MaxButtonLabelRunes), fmt.Sprintf("/bbs/reader/%s/latest", thread.ID))
 	latestBtn.Disabled = atEnd

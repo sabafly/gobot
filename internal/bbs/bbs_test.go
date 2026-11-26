@@ -64,17 +64,17 @@ func TestIdentityGenerator(t *testing.T) {
 		t.Fatalf("different users should yield different IDs: %q", id1a)
 	}
 
-	// Tripcode + commands + extend + mail
+	// Tripcode + commands + extend
 	parsed, err := gen.ParsePostIdentity(
 		boardA,
 		bbs.ScopeLocal,
 		snowflake.ID(999),
 		user1,
 		"名無しの権兵衛#mysecret",
-		"",
 		"!extend:checked:vvvvv\n本文テスト",
 		bbs.BoardRules{HideID: true, SLIP: bbs.SLIPNone},
 		true,
+		nil,
 		day1,
 	)
 	if err != nil {
@@ -86,6 +86,14 @@ func TestIdentityGenerator(t *testing.T) {
 	if !strings.HasPrefix(parsed.Trip, "◆") || len([]rune(parsed.Trip)) != 11 {
 		t.Fatalf("unexpected tripcode: %q", parsed.Trip)
 	}
+	// Tripcode uses HMAC-SHA256 with server secret: different secret must produce a different tripcode.
+	otherGen := bbs.NewIdentityGenerator([]byte("different-secret-key-for-bbs"))
+	if parsed.Trip != gen.GenerateTrip("mysecret") {
+		t.Fatalf("GenerateTrip must be deterministic for the same secret and key")
+	}
+	if parsed.Trip == otherGen.GenerateTrip("mysecret") {
+		t.Fatalf("GenerateTrip must depend on server secret to resist offline dictionary attacks")
+	}
 	if parsed.AnonID == "" || parsed.SlipText == "" {
 		t.Fatalf("expected !extend:checked:vvvvv to enable AnonID and SLIP")
 	}
@@ -96,35 +104,54 @@ func TestIdentityGenerator(t *testing.T) {
 		t.Fatalf("unexpected clean body: %q", parsed.CleanBody)
 	}
 
-	sageParsed, err := gen.ParsePostIdentity(
+	// Plain "sage" is now treated as an ordinary name; "!sage" is rejected.
+	sageName, err := gen.ParsePostIdentity(
 		boardA,
 		bbs.ScopeGlobal,
 		snowflake.ID(999),
 		user1,
 		"sage",
-		"",
 		"  hello  ",
 		bbs.BoardRules{DefaultName: "風吹けば名無し"},
 		false,
+		nil,
 		day1,
 	)
-	if err != nil || !sageParsed.IsSage || sageParsed.DisplayName != "風吹けば名無し" {
-		t.Fatalf("expected sage and default name, got %+v, err=%v", sageParsed, err)
+	if err != nil || sageName.DisplayName != "sage" {
+		t.Fatalf("expected plain sage to remain literal name, got %+v, err=%v", sageName, err)
 	}
 
-	// Separate mail="sage" preserves 48-rune name without exceeding MaxNameRunes
-	name48 := strings.Repeat("あ", bbs.MaxNameRunes)
-	mailSage, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, name48, "SAGE", "body", bbs.BoardRules{}, false, day1)
-	if err != nil || !mailSage.IsSage || mailSage.DisplayName != name48 {
-		t.Fatalf("expected 48-rune name with separate mail=SAGE to succeed, got %+v, err=%v", mailSage, err)
+	// Spoof symbols (◆/★ and lookalikes) are neutralized in names and board default names.
+	spoofed, err := gen.ParsePostIdentity(
+		boardA,
+		bbs.ScopeLocal,
+		999,
+		user1,
+		"偽◆名♦\uFE0F❖⬥★✦⭑⭐#mysecret",
+		"body",
+		bbs.BoardRules{DefaultName: "板◆デフォ★ルト"},
+		false,
+		nil,
+		day1,
+	)
+	if err != nil {
+		t.Fatalf("ParsePostIdentity with spoofed symbols failed: %v", err)
+	}
+	if spoofed.DisplayName != "偽◇名◇◇◇☆☆☆☆" {
+		t.Fatalf("expected neutralized name, got %q", spoofed.DisplayName)
+	}
+	if spoofed.Trip != parsed.Trip {
+		t.Fatalf("expected trip generation from #mysecret unaffected by name sanitization, got %q vs %q", spoofed.Trip, parsed.Trip)
+	}
+	if normDefault := (bbs.BoardRules{DefaultName: "板◆デフォ★ルト"}).Normalize().DefaultName; normDefault != "板◇デフォ☆ルト" {
+		t.Fatalf("expected sanitized BoardRules.DefaultName, got %q", normDefault)
 	}
 
-	// Strict rejection cases: invalid mail, unrecognized ! command, malformed/reply !extend
-	if _, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, "", "age", "body", bbs.BoardRules{}, false, day1); !errors.Is(err, bbs.ErrInvalidMail) {
-		t.Fatalf("expected ErrInvalidMail for non-sage mail, got %v", err)
-	}
-	if _, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, "!id:off", "", "body", bbs.BoardRules{}, false, day1); !errors.Is(err, bbs.ErrInvalidNameCommand) {
-		t.Fatalf("expected ErrInvalidNameCommand for !id:off, got %v", err)
+	// Strict rejection cases: unrecognized ! command (!sage, !id:off) and malformed/reply !extend
+	for _, badName := range []string{"!id:off", "!sage"} {
+		if _, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, badName, "body", bbs.BoardRules{}, false, nil, day1); !errors.Is(err, bbs.ErrInvalidNameCommand) {
+			t.Fatalf("expected ErrInvalidNameCommand for %q, got %v", badName, err)
+		}
 	}
 	for _, badBody := range []string{
 		"!extend:checked:vvvvv",
@@ -132,12 +159,90 @@ func TestIdentityGenerator(t *testing.T) {
 		"!extend:checked:bad\nhi",
 		"!extend:checked:none extra\nhi",
 	} {
-		if _, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, "", "", badBody, bbs.BoardRules{}, true, day1); !errors.Is(err, bbs.ErrInvalidExtendCommand) {
+		if _, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, "", badBody, bbs.BoardRules{}, true, nil, day1); !errors.Is(err, bbs.ErrInvalidExtendCommand) {
 			t.Fatalf("expected ErrInvalidExtendCommand for %q on new thread, got %v", badBody, err)
 		}
 	}
-	if _, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, "", "", "!extend:checked:none\nhi", bbs.BoardRules{}, false, day1); !errors.Is(err, bbs.ErrInvalidExtendCommand) {
+	if _, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, "", "!extend:checked:none\nhi", bbs.BoardRules{}, false, nil, day1); !errors.Is(err, bbs.ErrInvalidExtendCommand) {
 		t.Fatalf("expected ErrInvalidExtendCommand for !extend in reply, got %v", err)
+	}
+}
+
+func TestCapValidationAndIdentity(t *testing.T) {
+	gen := bbs.NewIdentityGenerator([]byte("cap-identity-secret"))
+	boardID := uuid.New()
+	uid := snowflake.ID(555)
+	day := time.Date(2026, 11, 26, 12, 0, 0, 0, bbs.JSTLocation)
+
+	// Valid definitions normalize whitespace, sanitize reserved marks in Name, and dedup users.
+	valid, err := bbs.ValidateCapDefinitions([]bbs.CapDefinition{
+		{
+			ID:             " admin ",
+			Name:           "管理人★◆",
+			Description:    "  運営公式  ",
+			Users:          []snowflake.ID{0, 1001, 1001, 1002},
+			GrantOperators: true,
+		},
+	})
+	if err != nil {
+		t.Fatalf("ValidateCapDefinitions valid failed: %v", err)
+	}
+	if len(valid) != 1 || valid[0].ID != "admin" || valid[0].Name != "管理人☆◇" || valid[0].Description != "運営公式" || !slices.Equal(valid[0].Users, []snowflake.ID{1001, 1002}) {
+		t.Fatalf("unexpected normalized cap definitions: %+v", valid)
+	}
+
+	// Invalid cap definitions fail validation.
+	badCases := [][]bbs.CapDefinition{
+		{{ID: "", Name: "管理人"}},
+		{{ID: bbs.CapSelectNoneValue, Name: "管理人"}},
+		{{ID: strings.Repeat("a", bbs.MaxCapIDRunes+1), Name: "管理人"}},
+		{{ID: "dup", Name: "A"}, {ID: "dup", Name: "B"}},
+		{{ID: "empty_name", Name: "   "}},
+		{{ID: "long_name", Name: strings.Repeat("名", bbs.MaxCapNameRunes+1)}},
+		{{ID: "long_desc", Name: "OK", Description: strings.Repeat("説明", bbs.MaxCapDescriptionRunes)}},
+	}
+	for i, tc := range badCases {
+		if _, err := bbs.ValidateCapDefinitions(tc); !errors.Is(err, bbs.ErrInvalidCapConfig) {
+			t.Fatalf("case %d: expected ErrInvalidCapConfig, got %v", i, err)
+		}
+	}
+
+	// Cap identity: empty name stays empty (not board default), ID & SLIP are always hidden even with !id:on or !extend:checked:vvvvv.
+	cap := &bbs.Cap{ID: "admin", Name: "管理人"}
+	capOnly, err := gen.ParsePostIdentity(
+		boardID, bbs.ScopeGlobal, 0, uid,
+		"!id:on", "!extend:checked:vvvvv\n告知本文",
+		bbs.BoardRules{DefaultName: "風吹けば名無し", HideID: false, SLIP: bbs.SLIPVVVVV},
+		true, cap, day,
+	)
+	if err != nil {
+		t.Fatalf("ParsePostIdentity with cap failed: %v", err)
+	}
+	if capOnly.DisplayName != "" || capOnly.CapName != "管理人" {
+		t.Fatalf("expected empty DisplayName and CapName=管理人, got %+v", capOnly)
+	}
+	if capOnly.AnonID != "" || capOnly.SlipText != "" {
+		t.Fatalf("expected AnonID and SlipText hidden when using cap, got AnonID=%q SlipText=%q", capOnly.AnonID, capOnly.SlipText)
+	}
+	if capOnly.ThreadRules.HideID || capOnly.ThreadRules.SLIP != bbs.SLIPVVVVV {
+		t.Fatalf("expected !extend thread rules preserved for replies even when OP used cap, got %+v", capOnly.ThreadRules)
+	}
+
+	// Custom name + trip + cap preserves custom name & trip while hiding ID.
+	capNamed, err := gen.ParsePostIdentity(
+		boardID, bbs.ScopeLocal, 999, uid,
+		"さばふらい#key", "レス本文",
+		bbs.BoardRules{HideID: false, SLIP: bbs.SLIPVVVVV},
+		false, cap, day,
+	)
+	if err != nil {
+		t.Fatalf("ParsePostIdentity with named cap failed: %v", err)
+	}
+	if capNamed.DisplayName != "さばふらい" || capNamed.CapName != "管理人" || !strings.HasPrefix(capNamed.Trip, "◆") {
+		t.Fatalf("unexpected named cap identity: %+v", capNamed)
+	}
+	if capNamed.AnonID != "" || capNamed.SlipText != "" {
+		t.Fatalf("expected hidden ID/SLIP on named cap post, got AnonID=%q SlipText=%q", capNamed.AnonID, capNamed.SlipText)
 	}
 }
 

@@ -56,13 +56,33 @@ func NewIdentityGenerator(secret []byte) *IdentityGenerator {
 type ParsedIdentity struct {
 	DisplayName string
 	Trip        string
+	CapName     string
 	SlipText    string
 	AnonID      string
 	PosterHash  string
-	IsSage      bool
 	ThreadRules BoardRules
 	ExtDat      string
 	CleanBody   string
+}
+
+var reservedNameSymbolReplacer = strings.NewReplacer(
+	"♦\uFE0F", "◇",
+	"★\uFE0F", "☆",
+	"⭐\uFE0F", "☆",
+	"◆", "◇",
+	"♦", "◇",
+	"❖", "◇",
+	"⬥", "◇",
+	"★", "☆",
+	"✦", "☆",
+	"⭑", "☆",
+	"⭐", "☆",
+)
+
+// SanitizeDisplayName normalizes single-line display names and neutralizes symbols
+// reserved for system tripcodes ('◆') and caps ('★').
+func SanitizeDisplayName(s string) string {
+	return strings.TrimSpace(reservedNameSymbolReplacer.Replace(SanitizeSingleLine(s)))
 }
 
 // SanitizeSingleLine trims whitespace and replaces newlines/control characters in single-line inputs.
@@ -116,9 +136,9 @@ func (g *IdentityGenerator) GenerateAnonID(boardID uuid.UUID, userID snowflake.I
 	return b.String()
 }
 
-// GenerateTrip derives a 10-character tripcode string prefixed by '◆' from the user's raw key.
+// GenerateTrip derives a 10-character HMAC-SHA256 tripcode string prefixed by '◆' from the user's raw key.
 func (g *IdentityGenerator) GenerateTrip(rawKey string) string {
-	sum := sha256.Sum256([]byte("trip:" + rawKey))
+	sum := g.hmacSum("trip:" + rawKey)
 	var b strings.Builder
 	b.Grow(13)
 	b.WriteString("◆")
@@ -155,33 +175,23 @@ func (g *IdentityGenerator) GeneratePosterHash(scope Scope, guildID snowflake.ID
 	return fmt.Sprintf("%x", sum[:8])
 }
 
-// ParsePostIdentity resolves nickname commands (!id:on, !slip:vvvvv, sage, #trip),
-// mail field ("sage" only), thread creation !extend commands, and anonymous identifiers.
+// ParsePostIdentity resolves nickname commands (!id:on, !slip:vvvvv, #trip),
+// thread creation !extend commands, cap overrides, and anonymous identifiers.
 func (g *IdentityGenerator) ParsePostIdentity(
 	boardID uuid.UUID,
 	scope Scope,
 	guildID snowflake.ID,
 	userID snowflake.ID,
 	rawName string,
-	rawMail string,
 	rawBody string,
 	baseRules BoardRules,
 	isNewThread bool,
+	cap *Cap,
 	at time.Time,
 ) (ParsedIdentity, error) {
 	rules := baseRules.Normalize()
 	if at.IsZero() {
 		at = time.Now()
-	}
-
-	var isSage bool
-	mailInput := SanitizeSingleLine(rawMail)
-	switch {
-	case mailInput == "":
-	case strings.EqualFold(mailInput, "sage"):
-		isSage = true
-	default:
-		return ParsedIdentity{}, ErrInvalidMail
 	}
 
 	nameInput := SanitizeSingleLine(rawName)
@@ -206,14 +216,6 @@ func (g *IdentityGenerator) ParsePostIdentity(
 			hideID = false
 		case "!slip:vvvvv":
 			slipLevel = SLIPVVVVV
-		case "!sage":
-			isSage = true
-		case "sage":
-			if len(fields) == 1 && trip == "" {
-				isSage = true
-			} else {
-				remainingTokens = append(remainingTokens, tok)
-			}
 		default:
 			if strings.HasPrefix(lower, "!") {
 				return ParsedIdentity{}, ErrInvalidNameCommand
@@ -222,8 +224,11 @@ func (g *IdentityGenerator) ParsePostIdentity(
 		}
 	}
 
-	displayName := strings.Join(remainingTokens, " ")
-	if displayName == "" {
+	displayName := SanitizeDisplayName(strings.Join(remainingTokens, " "))
+	var capName string
+	if cap != nil {
+		capName = SanitizeDisplayName(cap.Name)
+	} else if displayName == "" {
 		displayName = rules.DefaultName
 	}
 
@@ -284,6 +289,10 @@ func (g *IdentityGenerator) ParsePostIdentity(
 		}
 	}
 
+	if cap != nil {
+		hideID = true
+	}
+
 	var anonID string
 	if !hideID {
 		anonID = g.GenerateAnonID(boardID, userID, at)
@@ -296,10 +305,10 @@ func (g *IdentityGenerator) ParsePostIdentity(
 	return ParsedIdentity{
 		DisplayName: displayName,
 		Trip:        trip,
+		CapName:     capName,
 		SlipText:    slipText,
 		AnonID:      anonID,
 		PosterHash:  g.GeneratePosterHash(scope, guildID, userID),
-		IsSage:      isSage,
 		ThreadRules: rules,
 		ExtDat:      extDat,
 		CleanBody:   bodyNorm,

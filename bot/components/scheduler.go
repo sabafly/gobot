@@ -52,10 +52,10 @@ func execSchedule(c *Components, client *bot.Client, s Scheduler) {
 
 func doSchedule(c *Components, client *bot.Client, s Scheduler) {
 	defer recoverSchedule()
-	slog.Debug("Executing scheduled task", "duration", s.Duration)
+	// slog.Debug("Executing scheduled task", "duration", s.Duration)
 	if err := s.Worker(c, client); err != nil {
 		slog.Error("コンポーネント処理中にエラーが発生しました", "err", err)
 		return
 	}
-	slog.Debug("Scheduled task completed", "duration", s.Duration)
+	// slog.Debug("Scheduled task completed", "duration", s.Duration)
 }

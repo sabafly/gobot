@@ -52,6 +52,7 @@ type Service struct {
 	Identity  *IdentityGenerator
 	Policy    *PolicyManager
 	Operators []snowflake.ID
+	adminCaps []CapDefinition
 
 	threadRules   []ratelimit.Rule
 	postRules     []ratelimit.Rule
@@ -96,6 +97,61 @@ func NewService(
 // IsOperator returns true if userID is configured as a gobot BBS operator.
 func (s *Service) IsOperator(userID snowflake.ID) bool {
 	return slices.Contains(s.Operators, userID)
+}
+
+// SetAdminCaps validates and configures static operator/admin caps on the service.
+func (s *Service) SetAdminCaps(defs []CapDefinition) error {
+	validated, err := ValidateCapDefinitions(defs)
+	if err != nil {
+		return err
+	}
+	s.adminCaps = validated
+	return nil
+}
+
+func (s *Service) userHasAdminCap(userID snowflake.ID, def CapDefinition) bool {
+	if userID == 0 {
+		return false
+	}
+	if def.GrantOperators && s.IsOperator(userID) {
+		return true
+	}
+	return slices.Contains(def.Users, userID)
+}
+
+// ListAvailableCaps returns caps held by userID that can be used when posting on boardID.
+func (s *Service) ListAvailableCaps(_ context.Context, userID snowflake.ID, _ uuid.UUID) []Cap {
+	if userID == 0 || len(s.adminCaps) == 0 {
+		return nil
+	}
+	var caps []Cap
+	for _, def := range s.adminCaps {
+		if !s.userHasAdminCap(userID, def) {
+			continue
+		}
+		caps = append(caps, Cap{
+			ID:          def.ID,
+			Name:        def.Name,
+			Description: def.Description,
+		})
+	}
+	return caps
+}
+
+// ResolveUserCap validates that userID holds capID on boardID.
+// An empty capID or CapSelectNoneValue resolves to (nil, nil).
+func (s *Service) ResolveUserCap(ctx context.Context, userID snowflake.ID, boardID uuid.UUID, capID string) (*Cap, error) {
+	cleanID := SanitizeSingleLine(capID)
+	if cleanID == "" || cleanID == CapSelectNoneValue {
+		return nil, nil
+	}
+	for _, c := range s.ListAvailableCaps(ctx, userID, boardID) {
+		if c.ID == cleanID {
+			cp := c
+			return &cp, nil
+		}
+	}
+	return nil, ErrCapNotAuthorized
 }
 
 func (s *Service) threadMutex(threadID uuid.UUID) *sync.Mutex {
@@ -320,7 +376,7 @@ func (s *Service) CreateBoard(ctx context.Context, input CreateBoardInput) (*Boa
 	if input.Slug == "" {
 		input.Slug = strings.ReplaceAll(strings.ToLower(input.Name), " ", "-")
 	}
-	input.Rules.DefaultName = SanitizeSingleLine(input.Rules.DefaultName)
+	input.Rules.DefaultName = SanitizeDisplayName(input.Rules.DefaultName)
 	if err := input.Rules.Validate(); err != nil {
 		return nil, err
 	}
@@ -421,7 +477,7 @@ func (s *Service) UpdateBoard(ctx context.Context, boardID uuid.UUID, input Upda
 		input.Description = &clean
 	}
 	if input.DefaultName != nil {
-		clean := SanitizeSingleLine(*input.DefaultName)
+		clean := SanitizeDisplayName(*input.DefaultName)
 		if clean == "" || utf8.RuneCountInString(clean) > MaxNameRunes {
 			return nil, ErrInvalidNameLength
 		}
@@ -489,6 +545,11 @@ func (s *Service) CreateThread(ctx context.Context, input CreateThreadInput) (*B
 		return nil, nil, nil, ErrUnsupportedOperation
 	}
 
+	cap, err := s.ResolveUserCap(ctx, input.UserID, board.ID, input.CapID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
 	now := input.Now
 	if now.IsZero() {
 		now = time.Now()
@@ -499,10 +560,10 @@ func (s *Service) CreateThread(ctx context.Context, input CreateThreadInput) (*B
 		input.GuildID,
 		input.UserID,
 		input.RawName,
-		input.RawMail,
 		input.RawBody,
 		board.Rules,
 		true,
+		cap,
 		now,
 	)
 	if err != nil {
@@ -527,7 +588,7 @@ func (s *Service) CreateThread(ctx context.Context, input CreateThreadInput) (*B
 		return nil, nil, nil, ErrBanned
 	}
 
-	if !s.checkThreadRateLimit(input.UserID) {
+	if cap == nil && !s.checkThreadRateLimit(input.UserID) {
 		return nil, nil, nil, ErrRateLimited
 	}
 
@@ -541,11 +602,11 @@ func (s *Service) CreateThread(ctx context.Context, input CreateThreadInput) (*B
 		FirstPost: CreatePostRecord{
 			Name:         parsed.DisplayName,
 			Trip:         parsed.Trip,
+			Cap:          parsed.CapName,
 			SlipText:     parsed.SlipText,
 			AnonID:       parsed.AnonID,
 			PosterHash:   parsed.PosterHash,
 			IsOP:         true,
-			IsSage:       parsed.IsSage,
 			Body:         parsed.CleanBody,
 			AuthorUserID: input.UserID,
 		},
@@ -592,6 +653,11 @@ func (s *Service) CreatePost(ctx context.Context, input CreatePostInput) (*Board
 		return nil, nil, nil, nil, ErrUnsupportedOperation
 	}
 
+	cap, err := s.ResolveUserCap(ctx, input.UserID, board.ID, input.CapID)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
 	mu := s.threadMutex(thread.ID)
 	mu.Lock()
 	defer mu.Unlock()
@@ -619,10 +685,10 @@ func (s *Service) CreatePost(ctx context.Context, input CreatePostInput) (*Board
 		input.GuildID,
 		input.UserID,
 		input.RawName,
-		input.RawMail,
 		input.RawBody,
 		thread.Rules,
 		false,
+		cap,
 		now,
 	)
 	if err != nil {
@@ -647,7 +713,7 @@ func (s *Service) CreatePost(ctx context.Context, input CreatePostInput) (*Board
 		return nil, nil, nil, nil, ErrBanned
 	}
 
-	if !s.checkPostRateLimit(input.UserID) {
+	if cap == nil && !s.checkPostRateLimit(input.UserID) {
 		return nil, nil, nil, nil, ErrRateLimited
 	}
 
@@ -656,11 +722,11 @@ func (s *Service) CreatePost(ctx context.Context, input CreatePostInput) (*Board
 		ThreadID:     thread.ID,
 		Name:         parsed.DisplayName,
 		Trip:         parsed.Trip,
+		Cap:          parsed.CapName,
 		SlipText:     parsed.SlipText,
 		AnonID:       parsed.AnonID,
 		PosterHash:   parsed.PosterHash,
 		IsOP:         isOP,
-		IsSage:       parsed.IsSage,
 		Body:         parsed.CleanBody,
 		AuthorUserID: input.UserID,
 	})
