@@ -214,6 +214,18 @@ func TestBBSCommands_ValidateAndZeroEmojiAndRouting(t *testing.T) {
 	if !r.Match("/bbs/consent/revoke", discord.InteractionTypeComponent, int(discord.ComponentTypeButton)) {
 		t.Fatal("expected /bbs/consent/revoke route to match")
 	}
+	if !r.Match("/bbs/consent/accept/2026-01/tok123", discord.InteractionTypeComponent, int(discord.ComponentTypeButton)) {
+		t.Fatal("expected versioned /bbs/consent/accept/{version}/{token} route to match")
+	}
+	if !r.Match("/bbs/consent/accept/tok123", discord.InteractionTypeComponent, int(discord.ComponentTypeButton)) {
+		t.Fatal("expected legacy /bbs/consent/accept/{token} route to match")
+	}
+	if !r.Match("/bbs/consent/role/123456789/2026-01", discord.InteractionTypeComponent, int(discord.ComponentTypeButton)) {
+		t.Fatal("expected versioned /bbs/consent/role/{guild_id}/{version} route to match")
+	}
+	if !r.Match("/bbs/consent/role/123456789", discord.InteractionTypeComponent, int(discord.ComponentTypeButton)) {
+		t.Fatal("expected legacy /bbs/consent/role/{guild_id} route to match")
+	}
 	if !r.Match("/BBS - Report Post", discord.InteractionTypeApplicationCommand, int(discord.ApplicationCommandTypeMessage)) {
 		t.Fatal("expected report message command route to match")
 	}

@@ -166,6 +166,7 @@ type Store interface {
 	ListActiveBoardMountsByBoard(ctx context.Context, boardID uuid.UUID) ([]BoardMount, error)
 	ListBoardMountsByGuild(ctx context.Context, guildID snowflake.ID) ([]BoardMount, error)
 	UpdateBoardMount(ctx context.Context, mount *BoardMount) error
+	UpdateBoardMountControl(ctx context.Context, id uuid.UUID, controlMsgID *snowflake.ID) (bool, error)
 	DeactivateBoardMount(ctx context.Context, id uuid.UUID) error
 
 	// Thread mirrors

@@ -90,10 +90,10 @@ func assertNoEmojiInLayout(t *testing.T, comps []discord.LayoutComponent) {
 	}
 }
 
-func TestPayloadValidator_LimitsAndClamping(t *testing.T) {
+func TestPayloadValidator_StrictRejection(t *testing.T) {
 	v := discordsync.PayloadValidator{}
 
-	// 1. V2 clears legacy fields and drops empty MediaGallery
+	// 1. V2 rejects legacy fields instead of silently clearing them.
 	mc := discord.MessageCreate{
 		Flags:      discord.MessageFlagIsComponentsV2,
 		Content:    "legacy",
@@ -101,22 +101,34 @@ func TestPayloadValidator_LimitsAndClamping(t *testing.T) {
 		StickerIDs: []snowflake.ID{1},
 		Components: []discord.LayoutComponent{
 			discord.NewTextDisplay("hello"),
-			discord.NewMediaGallery(),
 		},
 	}
-	validated, err := v.ValidateAndClampMessageCreate(mc)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	if err := v.ValidateMessageCreate(mc); err == nil {
+		t.Fatal("expected error when Components V2 message sets legacy fields")
 	}
-	if validated.Content != "" || len(validated.Embeds) != 0 || len(validated.StickerIDs) != 0 {
-		t.Fatal("expected legacy fields cleared on Components V2 message")
+
+	// Empty MediaGallery must be rejected instead of stripped.
+	if err := v.ValidateMessageCreate(discord.NewMessageCreateV2(
+		discord.NewTextDisplay("hello"),
+		discord.NewMediaGallery(),
+	)); err == nil {
+		t.Fatal("expected error for empty MediaGallery")
 	}
-	if len(validated.Components) != 1 {
-		t.Fatalf("expected empty MediaGallery stripped, got %d components", len(validated.Components))
+
+	// Over-limit button label (>80) must be rejected instead of clamped.
+	if err := v.ValidateMessageCreate(discord.NewMessageCreateV2(
+		discord.NewActionRow(discord.NewPrimaryButton(strings.Repeat("x", 81), "/test")),
+	)); err == nil {
+		t.Fatal("expected error when button label exceeds 80 chars")
+	}
+
+	// Valid V2 passes.
+	if err := v.ValidateMessageCreate(discord.NewMessageCreateV2(discord.NewTextDisplay("hello"))); err != nil {
+		t.Fatalf("unexpected error for valid V2 message: %v", err)
 	}
 
 	// 2. Reject empty TextDisplay (prevents 50006)
-	if _, err := v.ValidateAndClampMessageCreate(discord.NewMessageCreateV2(discord.NewTextDisplay("   "))); err == nil {
+	if err := v.ValidateMessageCreate(discord.NewMessageCreateV2(discord.NewTextDisplay("   "))); err == nil {
 		t.Fatal("expected error for whitespace-only TextDisplay")
 	}
 
@@ -125,36 +137,86 @@ func TestPayloadValidator_LimitsAndClamping(t *testing.T) {
 	for i := range tooMany {
 		tooMany[i] = discord.NewTextDisplay("a")
 	}
-	if _, err := v.ValidateAndClampMessageCreate(discord.NewMessageCreateV2(tooMany...)); err == nil {
+	if err := v.ValidateMessageCreate(discord.NewMessageCreateV2(tooMany...)); err == nil {
 		t.Fatal("expected error when exceeding 40 components")
 	}
 
 	// 4. Reject >4000 total text display runes
 	big := strings.Repeat("あ", 4001)
-	if _, err := v.ValidateAndClampMessageCreate(discord.NewMessageCreateV2(discord.NewTextDisplay(big))); err == nil {
+	if err := v.ValidateMessageCreate(discord.NewMessageCreateV2(discord.NewTextDisplay(big))); err == nil {
 		t.Fatal("expected error when exceeding 4000 runes")
 	}
 
-	// 5. Reject 0-option StringSelect
+	// 5. Reject 0-option and >25-option StringSelect
 	emptySel := discord.NewStringSelectMenu("sel", "pick")
-	if _, err := v.ValidateAndClampMessageCreate(discord.NewMessageCreateV2(discord.NewActionRow(emptySel))); err == nil {
+	if err := v.ValidateMessageCreate(discord.NewMessageCreateV2(discord.NewActionRow(emptySel))); err == nil {
 		t.Fatal("expected error for 0-option StringSelect")
 	}
+	opts26 := make([]discord.StringSelectMenuOption, 26)
+	for i := range opts26 {
+		opts26[i] = discord.NewStringSelectMenuOption(fmt.Sprintf("O%d", i), fmt.Sprintf("v%d", i))
+	}
+	if err := v.ValidateMessageCreate(discord.NewMessageCreateV2(discord.NewActionRow(
+		discord.NewStringSelectMenu("sel", "pick", opts26...),
+	))); err == nil {
+		t.Fatal("expected error for 26-option StringSelect")
+	}
 
-	// 6. Modal validation: disabled select rejected, label clamped <= 45, TextDisplay sum <= 4000
+	// 6. Autocomplete rejects >25 items and >100 char names without clamping
+	ac26 := make([]discord.AutocompleteChoice, 26)
+	for i := range ac26 {
+		ac26[i] = discord.AutocompleteChoiceString{Name: "a", Value: "a"}
+	}
+	if err := discordsync.ValidateAutocompleteChoices(ac26); err == nil {
+		t.Fatal("expected error when autocomplete choices exceed 25")
+	}
+	if err := discordsync.ValidateAutocompleteChoices([]discord.AutocompleteChoice{
+		discord.AutocompleteChoiceString{Name: strings.Repeat("a", 101), Value: "1"},
+	}); err == nil {
+		t.Fatal("expected error when autocomplete choice name exceeds 100 chars")
+	}
+
+	// 7. Modal validation: disabled select, >45 title, >45 label, value > MaxLength all rejected strictly
 	badModal := discord.ModalCreate{
 		CustomID: "m1",
-		Title:    strings.Repeat("題", 50),
+		Title:    "Title",
 		Components: []discord.LayoutComponent{
-			discord.NewLabel(strings.Repeat("項目", 30), discord.StringSelectMenuComponent{
+			discord.NewLabel("Field", discord.StringSelectMenuComponent{
 				CustomID: "s1",
 				Disabled: true,
 				Options:  []discord.StringSelectMenuOption{{Label: "A", Value: "a"}},
 			}),
 		},
 	}
-	if _, err := v.ValidateModal(badModal); err == nil {
+	if err := v.ValidateModal(badModal); err == nil {
 		t.Fatal("expected error for disabled select inside modal")
+	}
+
+	overTitleModal := discord.ModalCreate{
+		CustomID: "m_title",
+		Title:    strings.Repeat("題", 46),
+		Components: []discord.LayoutComponent{
+			discord.NewLabel("項目", discord.NewShortTextInput("in").WithMaxLength(100)),
+		},
+	}
+	if err := v.ValidateModal(overTitleModal); err == nil {
+		t.Fatal("expected error when modal title exceeds 45 chars")
+	}
+
+	overValueModal := discord.ModalCreate{
+		CustomID: "m_val",
+		Title:    "Notice",
+		Components: []discord.LayoutComponent{
+			discord.NewLabel("項目", discord.TextInputComponent{
+				CustomID:  "in",
+				Style:     discord.TextInputStyleShort,
+				MaxLength: 5,
+				Value:     "123456",
+			}),
+		},
+	}
+	if err := v.ValidateModal(overValueModal); err == nil {
+		t.Fatal("expected error when pre-filled modal value exceeds MaxLength")
 	}
 
 	overTextModal := discord.ModalCreate{
@@ -165,7 +227,7 @@ func TestPayloadValidator_LimitsAndClamping(t *testing.T) {
 			discord.NewTextDisplay(strings.Repeat("b", 2000)),
 		},
 	}
-	if _, err := v.ValidateModal(overTextModal); err == nil {
+	if err := v.ValidateModal(overTextModal); err == nil {
 		t.Fatal("expected error when combined modal TextDisplay exceeds 4000 runes")
 	}
 	exactTextModal := discord.ModalCreate{
@@ -176,27 +238,23 @@ func TestPayloadValidator_LimitsAndClamping(t *testing.T) {
 			discord.NewTextDisplay(strings.Repeat("b", 2000)),
 		},
 	}
-	if _, err := v.ValidateModal(exactTextModal); err != nil {
+	if err := v.ValidateModal(exactTextModal); err != nil {
 		t.Fatalf("expected combined modal TextDisplay == 4000 to pass, got %v", err)
 	}
 
 	okModal := discord.ModalCreate{
 		CustomID: "m2",
-		Title:    strings.Repeat("題", 50),
+		Title:    strings.Repeat("題", 45),
 		Components: []discord.LayoutComponent{
-			discord.NewLabel(strings.Repeat("項目", 30), discord.TextInputComponent{
+			discord.NewLabel(strings.Repeat("項", 45), discord.TextInputComponent{
 				CustomID:  "in",
 				Style:     discord.TextInputStyleShort,
 				MaxLength: 100,
 			}),
 		},
 	}
-	vm, err := v.ValidateModal(okModal)
-	if err != nil {
+	if err := v.ValidateModal(okModal); err != nil {
 		t.Fatalf("unexpected modal error: %v", err)
-	}
-	if len([]rune(vm.Title)) > discordsync.MaxModalTitleRunes {
-		t.Fatalf("expected title clamped to 45, got %d", len([]rune(vm.Title)))
 	}
 }
 
@@ -227,13 +285,13 @@ func (f fakeGuildState) Role(_, roleID snowflake.ID) (discord.Role, bool) {
 	return r, ok
 }
 
-func TestPreflightCheckerAndMasking(t *testing.T) {
+func TestPreflightChecker_ForumWithoutCommunityAndStrictPerms(t *testing.T) {
 	guildID := snowflake.ID(100)
 	roleHigh := snowflake.ID(200)
 	roleOK := snowflake.ID(201)
 
 	state := fakeGuildState{
-		features: nil, // non-Community guild -> requires CreatePublicThreads
+		features: nil, // non-Community guild
 		botPerms: discord.PermissionManageChannels.Add(
 			discord.PermissionViewChannel,
 			discord.PermissionSendMessages,
@@ -251,44 +309,39 @@ func TestPreflightCheckerAndMasking(t *testing.T) {
 	}
 	checker := discordsync.NewPreflightChecker(state)
 
+	// Missing CreatePublicThreads & CreatePrivateThreads must be rejected with PreflightErrMissingBotPerms.
 	if _, err := checker.CheckChannelCreate(guildID, "テスト板", "説明", true, nil); err == nil {
-		t.Fatal("expected missing CreatePublicThreads error on non-Community guild text fallback")
+		t.Fatal("expected missing thread permissions error")
 	}
 
+	// Only CreatePublicThreads is still insufficient without CreatePrivateThreads (since overwrites deny it).
 	state.botPerms = state.botPerms.Add(discord.PermissionCreatePublicThreads)
 	checker = discordsync.NewPreflightChecker(state)
-
-	plan, err := checker.CheckChannelCreate(guildID, "テスト板", "説明", true, nil)
-	if err != nil {
-		t.Fatalf("CheckChannelCreate failed: %v", err)
-	}
-	if plan.UseForum || plan.FallbackReason != "community_required" {
-		t.Fatalf("expected non-Community fallback to text channel, got %+v", plan)
+	if _, err := checker.CheckChannelCreate(guildID, "テスト板", "説明", true, nil); err == nil {
+		t.Fatal("expected missing CreatePrivateThreads error")
 	}
 
-	// Community guild forum channel does not require CreatePublicThreads
-	state.features = []discord.GuildFeature{discord.GuildFeatureCommunity}
-	state.botPerms &^= discord.PermissionCreatePublicThreads
+	// Non-Community guild WITH required permissions creates Forum channel directly (no fallback to text).
+	state.botPerms = state.botPerms.Add(discord.PermissionCreatePrivateThreads)
 	checker = discordsync.NewPreflightChecker(state)
-	forumPlan, err := checker.CheckChannelCreate(guildID, "テスト板", "説明", true, nil)
-	if err != nil || !forumPlan.UseForum {
-		t.Fatalf("expected Community forum check to pass without CreatePublicThreads, got %+v, err=%v", forumPlan, err)
+
+	plan, err := checker.CheckChannelCreate(guildID, "テスト板", strings.Repeat("あ", 2000), true, nil)
+	if err != nil {
+		t.Fatalf("CheckChannelCreate failed on non-Community guild: %v", err)
+	}
+	if !plan.UseForum {
+		t.Fatalf("expected non-Community guild to support forum channel, got %+v", plan)
 	}
 
-	// Overwrites masking prevents 403 from setting bits bot lacks (e.g. ManageWebhooks)
-	masked := discordsync.MaskPermissionOverwrites(
-		discord.PermissionViewChannel.Add(discord.PermissionSendMessages),
-		[]discord.PermissionOverwrite{
-			discord.RolePermissionOverwrite{
-				RoleID: guildID,
-				Allow:  discord.PermissionViewChannel.Add(discord.PermissionManageWebhooks),
-				Deny:   discord.PermissionSendMessages.Add(discord.PermissionMentionEveryone),
-			},
-		},
-	)
-	ow := masked[0].(discord.RolePermissionOverwrite)
-	if ow.Allow.Has(discord.PermissionManageWebhooks) || ow.Deny.Has(discord.PermissionMentionEveryone) {
-		t.Fatalf("expected unheld permissions masked out, got allow=%v deny=%v", ow.Allow, ow.Deny)
+	// Over-length name/topic must be rejected instead of clamped.
+	if _, err := checker.CheckChannelCreate(guildID, strings.Repeat("板", 101), "説明", true, nil); err == nil {
+		t.Fatal("expected error for channel name > 100 runes")
+	}
+	if _, err := checker.CheckChannelCreate(guildID, "板", strings.Repeat("あ", 1025), false, nil); err == nil {
+		t.Fatal("expected error for text channel topic > 1024 runes")
+	}
+	if _, err := checker.CheckChannelCreate(guildID, "板", strings.Repeat("あ", 4097), true, nil); err == nil {
+		t.Fatal("expected error for forum channel topic > 4096 runes")
 	}
 
 	if err := checker.CheckRoleAssign(guildID, roleHigh); err == nil {
@@ -321,18 +374,31 @@ func TestRenderer_ZeroEmoji_MediaGallery_And_ReaderPagination(t *testing.T) {
 		Rules:    bbs.BoardRules{}.Normalize(),
 	}
 
-	guide, err := v.ValidateAndClampMessageCreate(discordsync.RenderBoardGuide(board, mountID, discord.LocaleJapanese))
-	if err != nil {
+	guide := discordsync.RenderBoardGuide(board, mountID, discord.LocaleJapanese)
+	if err := v.ValidateMessageCreate(guide); err != nil {
 		t.Fatalf("guide validation failed: %v", err)
 	}
 	assertNoEmojiInLayout(t, guide.Components)
 
-	pm := bbs.NewPolicyManager(bbs.PolicyConfig{})
-	consentMsg, err := v.ValidateAndClampMessageCreate(discordsync.RenderConsentGate(pm, discord.LocaleJapanese, "tok"))
-	if err != nil {
+	notice := discordsync.RenderNotice(discord.LocaleJapanese, "Title", "Body @everyone", discordsync.ColorNotice)
+	if notice.AllowedMentions == nil || len(notice.AllowedMentions.Parse) != 0 {
+		t.Fatalf("expected RenderNotice to suppress mentions cleanly, got %+v", notice.AllowedMentions)
+	}
+
+	pm := bbs.NewPolicyManager(bbs.PolicyConfig{Version: "v2-test"})
+	consentMsg := discordsync.RenderConsentGate(pm, discord.LocaleJapanese, "tok")
+	if err := v.ValidateMessageCreate(consentMsg); err != nil {
 		t.Fatalf("consent gate validation failed: %v", err)
 	}
 	assertNoEmojiInLayout(t, consentMsg.Components)
+	if !strings.Contains(fmt.Sprintf("%#v", consentMsg), "/bbs/consent/accept/v2-test/tok") {
+		t.Fatal("expected RenderConsentGate button CustomID to include policy version token")
+	}
+
+	roleMsg := discordsync.RenderRoleGatePanel(snowflake.ID(100), snowflake.ID(200), "v2-test", discord.LocaleJapanese)
+	if !strings.Contains(fmt.Sprintf("%#v", roleMsg), "/bbs/consent/role/100/v2-test") {
+		t.Fatal("expected RenderRoleGatePanel button CustomID to include policy version token")
+	}
 
 	// MediaGallery added for normal post, removed on Abone
 	post := bbs.Post{
@@ -342,11 +408,11 @@ func TestRenderer_ZeroEmoji_MediaGallery_And_ReaderPagination(t *testing.T) {
 		Name:      "風吹けば名無し",
 		AnonID:    "abcd1234",
 		IsOP:      true,
-		Body:      "画像テスト https://example.com/pic.png",
+		Body:      "画像テスト https://example.com/a!pic.png",
 		CreatedAt: time.Now(),
 	}
-	postMsg, err := v.ValidateAndClampMessageCreate(discordsync.RenderPostMessageCreate(post, thread, nil, discord.LocaleJapanese))
-	if err != nil {
+	postMsg := discordsync.RenderPostMessageCreate(post, thread, nil, discord.LocaleJapanese)
+	if err := v.ValidateMessageCreate(postMsg); err != nil {
 		t.Fatalf("post message failed: %v", err)
 	}
 	assertNoEmojiInLayout(t, postMsg.Components)
@@ -369,7 +435,7 @@ func TestRenderer_ZeroEmoji_MediaGallery_And_ReaderPagination(t *testing.T) {
 		}
 	}
 
-	// Reader pagination & jump syntax
+	// Reader pagination & strict jump syntax
 	var posts []bbs.Post
 	for i := 1; i <= 20; i++ {
 		posts = append(posts, bbs.Post{
@@ -386,43 +452,64 @@ func TestRenderer_ZeroEmoji_MediaGallery_And_ReaderPagination(t *testing.T) {
 	if startRes != 1 || endRes >= 20 {
 		t.Fatalf("expected multi-page split under 3500 runes, got %d..%d", startRes, endRes)
 	}
-	if _, err := v.ValidateAndClampMessageCreate(discord.NewMessageCreateV2(pageComps...).WithEphemeral(true)); err != nil {
+	if err := v.ValidateMessageCreate(discord.NewMessageCreateV2(pageComps...).WithEphemeral(true)); err != nil {
 		t.Fatalf("reader page failed validation: %v", err)
 	}
 	assertNoEmojiInLayout(t, pageComps)
 
-	if got := discordsync.ParseReaderJumpInput("l5", 20); got != 16 {
-		t.Fatalf("expected l5 -> 16, got %d", got)
+	if got, err := discordsync.ParseReaderJumpInput("l5", 20); err != nil || got != 16 {
+		t.Fatalf("expected l5 -> 16, nil; got %d, %v", got, err)
 	}
-	if got := discordsync.ParseReaderJumpInput("99", 20); got != 20 {
-		t.Fatalf("expected clamped jump 99 -> 20, got %d", got)
+	for _, badJump := range []string{"", "0", "99", "abc", "l", "l0", "l99"} {
+		if _, err := discordsync.ParseReaderJumpInput(badJump, 20); !errors.Is(err, bbs.ErrInvalidReaderJump) {
+			t.Fatalf("expected ErrInvalidReaderJump for %q, got %v", badJump, err)
+		}
 	}
 }
 
+type fakeTimer struct {
+	fn      func()
+	stopped atomic.Bool
+}
+
+func (f *fakeTimer) Stop() bool {
+	return !f.stopped.Swap(true)
+}
+
 func TestDebouncerAndInvalidRequestGuard(t *testing.T) {
-	deb := discordsync.NewControlPanelDebouncer(20 * time.Millisecond)
+	var timers []*fakeTimer
+	deb := discordsync.NewControlPanelDebouncerWithTimer(2500*time.Millisecond, func(_ time.Duration, f func()) discordsync.DebounceTimer {
+		ft := &fakeTimer{fn: f}
+		timers = append(timers, ft)
+		return ft
+	})
 	defer deb.Stop()
 
 	id := uuid.New()
 	var calls atomic.Int32
-	done := make(chan int, 10)
+	var gotIdx int
 	for i := range 5 {
 		idx := i
 		deb.Schedule(id, func() {
 			calls.Add(1)
-			done <- idx
+			gotIdx = idx
 		})
 	}
-	select {
-	case gotIdx := <-done:
-		if gotIdx != 4 {
-			t.Fatalf("expected latest scheduled callback (4) to run, got %d", gotIdx)
-		}
-	case <-time.After(2 * time.Second):
-		t.Fatal("timed out waiting for debounced callback")
+	if len(timers) != 5 {
+		t.Fatalf("expected 5 timer registrations, got %d", len(timers))
 	}
-	if got := calls.Load(); got != 1 {
-		t.Fatalf("expected 5 bursts coalesced into 1 call, got %d", got)
+	for i := range 4 {
+		if !timers[i].stopped.Load() {
+			t.Fatalf("expected superseded timer %d to be stopped", i)
+		}
+		timers[i].fn() // stale timer callback must be ignored even if fired after Stop
+	}
+	if calls.Load() != 0 {
+		t.Fatalf("stale timers must not trigger callback, got %d calls", calls.Load())
+	}
+	timers[4].fn()
+	if calls.Load() != 1 || gotIdx != 4 {
+		t.Fatalf("expected latest scheduled callback (4) to run once, got calls=%d idx=%d", calls.Load(), gotIdx)
 	}
 
 	guard := discordsync.NewInvalidRequestGuard(10*time.Minute, 10, 2)
@@ -431,6 +518,7 @@ func TestDebouncerAndInvalidRequestGuard(t *testing.T) {
 	now := time.Now()
 
 	err403 := &rest.Error{Response: &http.Response{StatusCode: 403, Header: http.Header{}}, Code: discordsync.JSONErrMissingPermissions}
+	err503 := &rest.Error{Response: &http.Response{StatusCode: 503, Header: http.Header{}}}
 	err404 := &rest.Error{Response: &http.Response{StatusCode: 404, Header: http.Header{}}, Code: discordsync.JSONErrUnknownChannel}
 	errShared429 := &rest.Error{Response: &http.Response{StatusCode: 429, Header: http.Header{"X-Ratelimit-Scope": []string{"shared"}}}}
 
@@ -454,26 +542,39 @@ func TestDebouncerAndInvalidRequestGuard(t *testing.T) {
 		t.Fatal("2nd 403 should open mount circuit breaker")
 	}
 
-	// After cooldown, 1 half-open probe is permitted while concurrent check still sees open.
+	// After cooldown, 1 half-open probe is permitted; non-403 (503) + release must NOT permanently wedge probe lock.
 	afterCooldown := now.Add(2 * time.Minute)
-	if guard.IsMountOpenAt(mountID, afterCooldown) {
-		t.Fatal("expected first check after cooldown to allow half-open probe")
+	allowed, release := guard.AcquireMount(mountID, afterCooldown)
+	if !allowed {
+		t.Fatal("expected first AcquireMount after cooldown to permit half-open probe")
 	}
-	if !guard.IsMountOpenAt(mountID, afterCooldown) {
-		t.Fatal("expected second concurrent check during half-open probe to stay open")
+	if concurrent, _ := guard.AcquireMount(mountID, afterCooldown); concurrent {
+		t.Fatal("expected concurrent AcquireMount during half-open probe to stay blocked")
+	}
+	guard.RecordError(mountID, err503, afterCooldown)
+	release()
+
+	allowedRetry, releaseRetry := guard.AcquireMount(mountID, afterCooldown)
+	if !allowedRetry {
+		t.Fatal("expected AcquireMount to allow new probe after 503 failure cleaned up previous probe")
 	}
 	guard.RecordMountSuccess(mountID)
+	releaseRetry()
 	if guard.IsMountOpenAt(mountID, afterCooldown) {
 		t.Fatal("expected RecordMountSuccess to close circuit breaker")
 	}
 
-	// Global threshold test with separate mounts
+	// Global threshold test with separate mounts: throttled AcquireMount must fail closed without leaking probe.
 	smallGuard := discordsync.NewInvalidRequestGuard(10*time.Minute, 3, 2)
 	for range 3 {
 		smallGuard.RecordError(uuid.New(), err403, now)
 	}
 	if !smallGuard.IsThrottled(now) {
 		t.Fatal("expected global InvalidRequestGuard to throttle at threshold 3")
+	}
+	if ok, rel := smallGuard.AcquireMount(uuid.New(), now); ok {
+		rel()
+		t.Fatal("expected throttled AcquireMount to deny execution")
 	}
 
 	// 404 immediately signals mount deactivation
@@ -623,19 +724,18 @@ func TestRenderer_I18n_JapaneseAndEnglish(t *testing.T) {
 			discordsync.RenderRoleGatePanel(snowflake.ID(100), snowflake.ID(200), "2026-11-25", loc),
 		}
 		for i, m := range msgs {
-			validated, err := v.ValidateAndClampMessageCreate(m)
-			if err != nil {
+			if err := v.ValidateMessageCreate(m); err != nil {
 				t.Fatalf("locale %s message %d failed validation: %v", loc, i, err)
 			}
-			assertNoEmojiInLayout(t, validated.Components)
+			assertNoEmojiInLayout(t, m.Components)
 			if loc == discord.LocaleEnglishUS {
-				assertLayoutENClean(t, validated.Components)
+				assertLayoutENClean(t, m.Components)
 			}
 		}
 
 		latestIdx := discordsync.ComputeLatestReaderStartIndex(thread, posts, nil, loc)
 		readerComps, _, _ := discordsync.RenderReaderPage(thread, posts, latestIdx, nil, loc)
-		if _, err := v.ValidateAndClampMessageCreate(discord.NewMessageCreateV2(readerComps...).WithEphemeral(true)); err != nil {
+		if err := v.ValidateMessageCreate(discord.NewMessageCreateV2(readerComps...).WithEphemeral(true)); err != nil {
 			t.Fatalf("locale %s reader failed validation: %v", loc, err)
 		}
 		if loc == discord.LocaleEnglishUS {
@@ -769,7 +869,7 @@ func TestRenderer_ExtDatBudget_And_LinkExpandedPagination(t *testing.T) {
 		CreatedAt: time.Now(),
 	}
 	opMsg := discordsync.RenderPostMessageCreate(op, thread, nil, discord.LocaleJapanese)
-	if _, err := v.ValidateAndClampMessageCreate(opMsg); err != nil {
+	if err := v.ValidateMessageCreate(opMsg); err != nil {
 		t.Fatalf("OP post with long ExtDat failed Components V2 validation: %v", err)
 	}
 

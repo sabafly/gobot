@@ -495,12 +495,20 @@ func (c *adminCommand) handleGlobalBoardCreate(data discord.SlashCommandInteract
 		)
 		return nil
 	}
+	rules, rErr := parseBoardRulesFromSlash(data, loc)
+	if rErr != nil {
+		c.sys.replyCommandError(e,
+			i18n.TranslateText(loc, "components.bbs.admin.board.create_failed"),
+			describeBBSError(loc, rErr),
+		)
+		return nil
+	}
 	board, err := c.sys.Service.CreateBoard(e.Ctx, bbscore.CreateBoardInput{
 		CategoryID:  catID,
 		Scope:       bbscore.ScopeGlobal,
 		Name:        data.String("name"),
 		Description: data.String("description"),
-		Rules:       parseBoardRulesFromSlash(data, loc),
+		Rules:       rules,
 	})
 	if err != nil {
 		c.sys.replyCommandError(e,
@@ -570,7 +578,12 @@ func (c *adminCommand) handleGlobalBoardEdit(data discord.SlashCommandInteractio
 		c.sys.replyCommandError(e, editFailTitle, i18n.TranslateText(loc, "components.bbs.admin.board.not_found"))
 		return nil
 	}
-	updated, err := c.sys.Service.UpdateBoard(e.Ctx, boardID, parseUpdateBoardInput(data))
+	input, pErr := parseUpdateBoardInput(data)
+	if pErr != nil {
+		c.sys.replyCommandError(e, editFailTitle, describeBBSError(loc, pErr))
+		return nil
+	}
+	updated, err := c.sys.Service.UpdateBoard(e.Ctx, boardID, input)
 	if err != nil {
 		c.sys.replyCommandError(e, editFailTitle, describeBBSError(loc, err))
 		return nil
@@ -796,26 +809,42 @@ func (c *adminCommand) handleAdminAboneButton(e *handler.ComponentEvent) error {
 		)
 		return nil
 	}
+	sr := discordsync.NewSafeResponder(e.ID().Time())
+	if err := sr.DeferCreate(e, true); err != nil {
+		slog.Warn("bbs admin abone defer failed", "err", err)
+	}
 	report, err := c.sys.Service.Store.GetReport(e.Ctx, reportID)
 	if err != nil {
-		c.sys.replyComponentError(e,
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
 			i18n.TranslateText(loc, "components.bbs.admin.process_failed"),
 			describeBBSError(loc, err),
-		)
+		))
 		return nil
 	}
 	post, err := c.sys.Service.AbonePostGlobal(e.Ctx, e.User().ID, report.PostID, "operator_report_abone")
 	if err != nil {
-		c.sys.replyComponentError(e,
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
 			i18n.TranslateText(loc, "components.bbs.mod.abone_failed"),
 			describeBBSError(loc, err),
-		)
+		))
 		return nil
 	}
-	if thread, tErr := c.sys.Service.GetThread(e.Ctx, post.ThreadID); tErr == nil {
-		go c.sys.Syncer.SyncAbone(c.sys.Components.Ctx(), e.Client(), *post, *thread)
+	thread, tErr := c.sys.Service.GetThread(e.Ctx, post.ThreadID)
+	syncErr := tErr
+	if tErr == nil {
+		syncErr = c.sys.Syncer.SyncAbone(e.Ctx, e.Client(), *post, *thread)
 	}
-	sr := discordsync.NewSafeResponder(e.ID().Time())
+	if syncErr != nil {
+		slog.Warn("bbs admin abone sync failed; keeping report open", "report_id", report.ID, "post_id", post.ID, "err", syncErr)
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.admin.abone_sync_failed_title"),
+			i18n.TranslateText(loc, "components.bbs.admin.abone_sync_failed_body", map[string]any{
+				"report_id": report.ID.String(),
+				"err":       describeBBSError(loc, syncErr),
+			}),
+		))
+		return nil
+	}
 	if sErr := c.markReportStatus(e.Ctx, e, report, bbscore.ReportStatusResolved, "global_abone"); sErr != nil {
 		slog.Warn("bbs failed to mark report resolved after abone", "report_id", report.ID, "err", sErr)
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
@@ -834,7 +863,7 @@ func (c *adminCommand) handleAdminAboneButton(e *handler.ComponentEvent) error {
 			"report_id": report.ID.String(),
 		}),
 		discordsync.ColorError,
-	))
+	).WithEphemeral(true))
 	return nil
 }
 
@@ -895,14 +924,6 @@ func (c *adminCommand) handleAdminBanModal(e *handler.ModalEvent) error {
 		)
 		return nil
 	}
-	report, err := c.sys.Service.Store.GetReport(e.Ctx, reportID)
-	if err != nil {
-		c.sys.replyModalError(e,
-			i18n.TranslateText(loc, "components.bbs.admin.process_failed"),
-			describeBBSError(loc, err),
-		)
-		return nil
-	}
 	hoursRaw := strings.TrimSpace(e.Data.Text("hours"))
 	var dur *time.Duration
 	if hoursRaw != "" && hoursRaw != "0" {
@@ -919,16 +940,27 @@ func (c *adminCommand) handleAdminBanModal(e *handler.ModalEvent) error {
 			dur = &d
 		}
 	}
+	sr := discordsync.NewSafeResponder(e.ID().Time())
+	if err := sr.DeferCreate(e, true); err != nil {
+		slog.Warn("bbs admin ban modal defer failed", "err", err)
+	}
+	report, err := c.sys.Service.Store.GetReport(e.Ctx, reportID)
+	if err != nil {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.admin.process_failed"),
+			describeBBSError(loc, err),
+		))
+		return nil
+	}
 	reason := e.Data.Text("reason")
 	ban, err := c.sys.Service.BanGlobal(e.Ctx, e.User().ID, report.PostID, reason, dur)
 	if err != nil {
-		c.sys.replyModalError(e,
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
 			i18n.TranslateText(loc, "components.bbs.admin.ban_failed"),
 			describeBBSError(loc, err),
-		)
+		))
 		return nil
 	}
-	sr := discordsync.NewSafeResponder(e.ID().Time())
 	post, aErr := c.sys.Service.AbonePostGlobal(e.Ctx, e.User().ID, report.PostID, reason)
 	if aErr != nil {
 		slog.Warn("bbs global ban succeeded but abone failed", "ban_id", ban.ID, "report_id", report.ID, "err", aErr)
@@ -942,8 +974,21 @@ func (c *adminCommand) handleAdminBanModal(e *handler.ModalEvent) error {
 		))
 		return nil
 	}
-	if thread, tErr := c.sys.Service.GetThread(e.Ctx, post.ThreadID); tErr == nil {
-		go c.sys.Syncer.SyncAbone(c.sys.Components.Ctx(), e.Client(), *post, *thread)
+	thread, tErr := c.sys.Service.GetThread(e.Ctx, post.ThreadID)
+	syncErr := tErr
+	if tErr == nil {
+		syncErr = c.sys.Syncer.SyncAbone(e.Ctx, e.Client(), *post, *thread)
+	}
+	if syncErr != nil {
+		slog.Warn("bbs global ban+abone sync failed; keeping report open", "ban_id", ban.ID, "report_id", report.ID, "err", syncErr)
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.admin.abone_sync_failed_title"),
+			i18n.TranslateText(loc, "components.bbs.admin.abone_sync_failed_body", map[string]any{
+				"report_id": report.ID.String(),
+				"err":       describeBBSError(loc, syncErr),
+			}),
+		))
+		return nil
 	}
 	if sErr := c.markReportStatus(e.Ctx, e, report, bbscore.ReportStatusResolved, "global_ban:"+reason); sErr != nil {
 		slog.Warn("bbs failed to mark report resolved after ban+abone", "report_id", report.ID, "err", sErr)
@@ -963,7 +1008,7 @@ func (c *adminCommand) handleAdminBanModal(e *handler.ModalEvent) error {
 			"hash": ban.PosterHash,
 		}),
 		discordsync.ColorError,
-	))
+	).WithEphemeral(true))
 	return nil
 }
 
@@ -1008,7 +1053,7 @@ func (c *adminCommand) handleAdminDismissButton(e *handler.ComponentEvent) error
 		i18n.TranslateText(loc, "components.bbs.admin.dismissed_title"),
 		i18n.TranslateText(loc, "components.bbs.admin.dismissed_body", map[string]any{"id": report.ID.String()}),
 		discordsync.ColorNotice,
-	))
+	).WithEphemeral(true))
 	return nil
 }
 
@@ -1035,6 +1080,9 @@ func (c *adminCommand) autocompleteGlobalCategories(e *handler.AutocompleteEvent
 	q := strings.ToLower(strings.TrimSpace(e.Data.Focused().String()))
 	var choices []discord.AutocompleteChoice
 	for _, cat := range cats {
+		if len(choices) >= discordsync.MaxAutocompleteChoices {
+			break
+		}
 		if q == "" || strings.Contains(strings.ToLower(cat.Name), q) {
 			choices = append(choices, discord.AutocompleteChoiceString{
 				Name:  discordsync.TruncateRunes(cat.Name, 90),
@@ -1042,7 +1090,11 @@ func (c *adminCommand) autocompleteGlobalCategories(e *handler.AutocompleteEvent
 			})
 		}
 	}
-	return e.AutocompleteResult(discordsync.ValidateAutocompleteChoices(choices))
+	if err := discordsync.ValidateAutocompleteChoices(choices); err != nil {
+		slog.Warn("bbs global category autocomplete validation failed", "err", err)
+		return e.AutocompleteResult(nil)
+	}
+	return e.AutocompleteResult(choices)
 }
 
 func (c *adminCommand) autocompleteGlobalBoards(e *handler.AutocompleteEvent) error {
@@ -1057,6 +1109,9 @@ func (c *adminCommand) autocompleteGlobalBoards(e *handler.AutocompleteEvent) er
 	q := strings.ToLower(strings.TrimSpace(e.Data.Focused().String()))
 	var choices []discord.AutocompleteChoice
 	for _, b := range boards {
+		if len(choices) >= discordsync.MaxAutocompleteChoices {
+			break
+		}
 		if q == "" || strings.Contains(strings.ToLower(b.Name), q) {
 			choices = append(choices, discord.AutocompleteChoiceString{
 				Name:  discordsync.TruncateRunes(b.Name, 90),
@@ -1064,7 +1119,11 @@ func (c *adminCommand) autocompleteGlobalBoards(e *handler.AutocompleteEvent) er
 			})
 		}
 	}
-	return e.AutocompleteResult(discordsync.ValidateAutocompleteChoices(choices))
+	if err := discordsync.ValidateAutocompleteChoices(choices); err != nil {
+		slog.Warn("bbs global board autocomplete validation failed", "err", err)
+		return e.AutocompleteResult(nil)
+	}
+	return e.AutocompleteResult(choices)
 }
 
 func (c *adminCommand) autocompleteReports(e *handler.AutocompleteEvent) error {
@@ -1078,6 +1137,9 @@ func (c *adminCommand) autocompleteReports(e *handler.AutocompleteEvent) error {
 	q := strings.ToLower(strings.TrimSpace(e.Data.Focused().String()))
 	var choices []discord.AutocompleteChoice
 	for _, r := range reports {
+		if len(choices) >= discordsync.MaxAutocompleteChoices {
+			break
+		}
 		label := fmt.Sprintf("[%s] %s - %s", r.Status, r.ID.String()[:8], discordsync.TruncateRunes(r.Reason, 45))
 		if q == "" || strings.Contains(strings.ToLower(label), q) || strings.Contains(strings.ToLower(r.ID.String()), q) {
 			choices = append(choices, discord.AutocompleteChoiceString{
@@ -1086,7 +1148,11 @@ func (c *adminCommand) autocompleteReports(e *handler.AutocompleteEvent) error {
 			})
 		}
 	}
-	return e.AutocompleteResult(discordsync.ValidateAutocompleteChoices(choices))
+	if err := discordsync.ValidateAutocompleteChoices(choices); err != nil {
+		slog.Warn("bbs reports autocomplete validation failed", "err", err)
+		return e.AutocompleteResult(nil)
+	}
+	return e.AutocompleteResult(choices)
 }
 
 func (c *adminCommand) autocompleteBans(e *handler.AutocompleteEvent) error {
@@ -1100,6 +1166,9 @@ func (c *adminCommand) autocompleteBans(e *handler.AutocompleteEvent) error {
 	q := strings.ToLower(strings.TrimSpace(e.Data.Focused().String()))
 	var choices []discord.AutocompleteChoice
 	for _, b := range bans {
+		if len(choices) >= discordsync.MaxAutocompleteChoices {
+			break
+		}
 		label := fmt.Sprintf("[%s] %s (%s)", b.Scope, b.PosterHash, discordsync.TruncateRunes(b.Reason, 45))
 		if q == "" || strings.Contains(strings.ToLower(label), q) {
 			choices = append(choices, discord.AutocompleteChoiceString{
@@ -1108,5 +1177,9 @@ func (c *adminCommand) autocompleteBans(e *handler.AutocompleteEvent) error {
 			})
 		}
 	}
-	return e.AutocompleteResult(discordsync.ValidateAutocompleteChoices(choices))
+	if err := discordsync.ValidateAutocompleteChoices(choices); err != nil {
+		slog.Warn("bbs bans autocomplete validation failed", "err", err)
+		return e.AutocompleteResult(nil)
+	}
+	return e.AutocompleteResult(choices)
 }

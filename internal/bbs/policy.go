@@ -20,7 +20,9 @@
 package bbs
 
 import (
+	"crypto/sha256"
 	"embed"
+	"encoding/hex"
 	"strings"
 )
 
@@ -109,4 +111,27 @@ func normalizePolicyLocale(locale string) string {
 		return "en"
 	}
 	return "ja"
+}
+
+// PolicyVersionToken encodes a policy version string into a route-safe token for component CustomIDs.
+func PolicyVersionToken(version string) string {
+	v := strings.TrimSpace(version)
+	if v == "" {
+		v = DefaultPolicyVersion
+	}
+	if len(v) <= 32 {
+		safe := true
+		for i := 0; i < len(v); i++ {
+			b := v[i]
+			if (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') && (b < '0' || b > '9') && b != '.' && b != '_' && b != '-' {
+				safe = false
+				break
+			}
+		}
+		if safe {
+			return v
+		}
+	}
+	sum := sha256.Sum256([]byte(v))
+	return "h_" + hex.EncodeToString(sum[:8])
 }

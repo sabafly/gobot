@@ -64,18 +64,22 @@ func TestIdentityGenerator(t *testing.T) {
 		t.Fatalf("different users should yield different IDs: %q", id1a)
 	}
 
-	// Tripcode + commands + extend + sage
-	parsed := gen.ParsePostIdentity(
+	// Tripcode + commands + extend + mail
+	parsed, err := gen.ParsePostIdentity(
 		boardA,
 		bbs.ScopeLocal,
 		snowflake.ID(999),
 		user1,
 		"名無しの権兵衛#mysecret",
+		"",
 		"!extend:checked:vvvvv\n本文テスト",
 		bbs.BoardRules{HideID: true, SLIP: bbs.SLIPNone},
 		true,
 		day1,
 	)
+	if err != nil {
+		t.Fatalf("ParsePostIdentity unexpected error: %v", err)
+	}
 	if parsed.DisplayName != "名無しの権兵衛" {
 		t.Fatalf("unexpected display name: %q", parsed.DisplayName)
 	}
@@ -92,24 +96,53 @@ func TestIdentityGenerator(t *testing.T) {
 		t.Fatalf("unexpected clean body: %q", parsed.CleanBody)
 	}
 
-	sageParsed := gen.ParsePostIdentity(
+	sageParsed, err := gen.ParsePostIdentity(
 		boardA,
 		bbs.ScopeGlobal,
 		snowflake.ID(999),
 		user1,
 		"sage",
+		"",
 		"  hello  ",
 		bbs.BoardRules{DefaultName: "風吹けば名無し"},
 		false,
 		day1,
 	)
-	if !sageParsed.IsSage || sageParsed.DisplayName != "風吹けば名無し" {
-		t.Fatalf("expected sage and default name, got %+v", sageParsed)
+	if err != nil || !sageParsed.IsSage || sageParsed.DisplayName != "風吹けば名無し" {
+		t.Fatalf("expected sage and default name, got %+v, err=%v", sageParsed, err)
+	}
+
+	// Separate mail="sage" preserves 48-rune name without exceeding MaxNameRunes
+	name48 := strings.Repeat("あ", bbs.MaxNameRunes)
+	mailSage, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, name48, "SAGE", "body", bbs.BoardRules{}, false, day1)
+	if err != nil || !mailSage.IsSage || mailSage.DisplayName != name48 {
+		t.Fatalf("expected 48-rune name with separate mail=SAGE to succeed, got %+v, err=%v", mailSage, err)
+	}
+
+	// Strict rejection cases: invalid mail, unrecognized ! command, malformed/reply !extend
+	if _, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, "", "age", "body", bbs.BoardRules{}, false, day1); !errors.Is(err, bbs.ErrInvalidMail) {
+		t.Fatalf("expected ErrInvalidMail for non-sage mail, got %v", err)
+	}
+	if _, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, "!id:off", "", "body", bbs.BoardRules{}, false, day1); !errors.Is(err, bbs.ErrInvalidNameCommand) {
+		t.Fatalf("expected ErrInvalidNameCommand for !id:off, got %v", err)
+	}
+	for _, badBody := range []string{
+		"!extend:checked:vvvvv",
+		"!extend:bad:none\nhi",
+		"!extend:checked:bad\nhi",
+		"!extend:checked:none extra\nhi",
+	} {
+		if _, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, "", "", badBody, bbs.BoardRules{}, true, day1); !errors.Is(err, bbs.ErrInvalidExtendCommand) {
+			t.Fatalf("expected ErrInvalidExtendCommand for %q on new thread, got %v", badBody, err)
+		}
+	}
+	if _, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, "", "", "!extend:checked:none\nhi", bbs.BoardRules{}, false, day1); !errors.Is(err, bbs.ErrInvalidExtendCommand) {
+		t.Fatalf("expected ErrInvalidExtendCommand for !extend in reply, got %v", err)
 	}
 }
 
 func TestFormatAndMediaExtraction(t *testing.T) {
-	raw := "@everyone # title\n> quote\n>>1 >>15 >>999 >>10000\nhttps://example.com/a.png https://example.technology/b.png https://example.com/page https://pbs.twimg.com/media/abc?format=jpg&name=large"
+	raw := "@everyone # title\n> quote\n>>1 >>15 >>999 >>10000\nhttps://example.com/a!b.png https://example.technology/b.png https://example.com/page https://pbs.twimg.com/media/abc?format=jpg&name=large"
 	var resolved []uint32
 	formatted := bbs.RenderFormattedBody(raw, 10, func(resNum uint32) (string, bool) {
 		resolved = append(resolved, resNum)
@@ -131,8 +164,8 @@ func TestFormatAndMediaExtraction(t *testing.T) {
 	if !strings.Contains(formatted, ">>10000") || strings.Contains(formatted, "[>>1000]") {
 		t.Fatalf("expected >>10000 not to partially match >>1000, got %q", formatted)
 	}
-	if !strings.Contains(formatted, "<https://example.com/a.png>") || !strings.Contains(formatted, "<https://example.technology/b.png>") {
-		t.Fatalf("expected URLs (including long TLD) wrapped in <...>, got %q", formatted)
+	if !strings.Contains(formatted, "<https://example.com/a!b.png>") || !strings.Contains(formatted, "<https://example.technology/b.png>") {
+		t.Fatalf("expected URLs (including ! path char and long TLD) wrapped in <...>, got %q", formatted)
 	}
 
 	if anchors10 := bbs.ExtractAnchors(">>1 >>1 >>5 >>20", 10); !slices.Equal(anchors10, []uint32{1, 5}) {
@@ -144,12 +177,13 @@ func TestFormatAndMediaExtraction(t *testing.T) {
 	}
 
 	media := bbs.ExtractMediaURLs(
-		"a https://example.com/1.PNG https://example.com/1.PNG https://example.technology/longtld.png https://example.com/doc.pdf " +
+		"a https://example.com/1.PNG https://example.com/1.PNG https://example.com/a!b.png https://example.technology/longtld.png https://example.com/doc.pdf " +
 			"https://pbs.twimg.com/media/X?format=webp " +
 			"https://example.com/v.mp4 ftp://example.com/bad.png",
 	)
 	expected := []string{
 		"https://example.com/1.PNG",
+		"https://example.com/a!b.png",
 		"https://example.technology/longtld.png",
 		"https://pbs.twimg.com/media/X?format=webp",
 		"https://example.com/v.mp4",

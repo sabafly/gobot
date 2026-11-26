@@ -21,7 +21,6 @@ package discordsync
 
 import (
 	"context"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -45,6 +44,9 @@ const (
 	MaxForwardAnchorEditsPerPost = 5
 	MaxFanoutConcurrency         = 4
 )
+
+// ErrSourceMountInactive indicates the originating mount was deactivated or missing during publish.
+var ErrSourceMountInactive = errors.New("discordsync: source board mount is inactive")
 
 type anchorItem struct {
 	client  *bot.Client
@@ -75,9 +77,9 @@ type Syncer struct {
 }
 
 func (s *Syncer) threadEditMutex(discordThreadID snowflake.ID) *sync.Mutex {
-	var buf [8]byte
-	binary.LittleEndian.PutUint64(buf[:], uint64(discordThreadID))
-	idx := binary.LittleEndian.Uint64(buf[:]) % uint64(len(s.threadEditLocks))
+	v := uint64(discordThreadID)
+	v ^= v >> 22
+	idx := v % uint64(len(s.threadEditLocks))
 	return &s.threadEditLocks[idx]
 }
 
@@ -127,7 +129,7 @@ func NewSyncer(svc *bbs.Service) *Syncer {
 	}
 }
 
-// ProvisionBoardChannel creates a Forum (or Text fallback) channel for a board and mounts it for guildID.
+// ProvisionBoardChannel creates a Forum or Text channel for a board and mounts it for guildID.
 func (s *Syncer) ProvisionBoardChannel(
 	ctx context.Context,
 	client *bot.Client,
@@ -153,7 +155,6 @@ func (s *Syncer) ProvisionBoardChannel(
 	}
 
 	overwrites := buildBoardOverwrites(guildID, client.ApplicationID, viewerRoleID)
-	overwrites = MaskPermissionOverwrites(plan.BotPermissions, overwrites)
 
 	var parentID snowflake.ID
 	if categoryDiscordID != nil {
@@ -163,15 +164,15 @@ func (s *Syncer) ProvisionBoardChannel(
 	var ch discord.GuildChannel
 	if plan.UseForum {
 		ch, err = client.Rest.CreateGuildChannel(guildID, discord.GuildForumChannelCreate{
-			Name:                 plan.ClampedName,
-			Topic:                plan.ClampedTopic,
+			Name:                 plan.Name,
+			Topic:                plan.Topic,
 			ParentID:             parentID,
 			PermissionOverwrites: overwrites,
 		})
 	} else {
 		ch, err = client.Rest.CreateGuildChannel(guildID, discord.GuildTextChannelCreate{
-			Name:                 plan.ClampedName,
-			Topic:                plan.ClampedTopic,
+			Name:                 plan.Name,
+			Topic:                plan.Topic,
 			ParentID:             parentID,
 			PermissionOverwrites: overwrites,
 		})
@@ -191,8 +192,8 @@ func (s *Syncer) ProvisionBoardChannel(
 		CreatedAt: time.Now(),
 	}
 
-	guideMsg, err := s.Validator.ValidateAndClampMessageCreate(RenderBoardGuide(board, mount.ID, resolvedLocale))
-	if err != nil {
+	guideMsg := RenderBoardGuide(board, mount.ID, resolvedLocale)
+	if err := s.Validator.ValidateMessageCreate(guideMsg); err != nil {
 		if delErr := client.Rest.DeleteChannel(ch.ID()); delErr != nil {
 			slog.Warn("bbs failed to cleanup orphan channel after guide validation error", "channel_id", ch.ID(), "err", delErr)
 		}
@@ -205,7 +206,7 @@ func (s *Syncer) ProvisionBoardChannel(
 			tags, _ = ResolveForumTags(fc)
 		}
 		post, err := client.Rest.CreatePostInThreadChannel(ch.ID(), discord.ThreadChannelPostCreate{
-			Name:        plan.ClampedName,
+			Name:        plan.Name,
 			Message:     guideMsg,
 			AppliedTags: tags,
 		})
@@ -265,6 +266,7 @@ func buildBoardOverwrites(guildID, botID snowflake.ID, viewerRoleID *snowflake.I
 				discord.PermissionSendMessages,
 				discord.PermissionSendMessagesInThreads,
 				discord.PermissionCreatePublicThreads,
+				discord.PermissionCreatePrivateThreads,
 				discord.PermissionManageThreads,
 				discord.PermissionManageMessages,
 				discord.PermissionReadMessageHistory,
@@ -281,6 +283,7 @@ func buildBoardOverwrites(guildID, botID snowflake.ID, viewerRoleID *snowflake.I
 }
 
 // PublishThread creates Discord mirrors across the source mount (synchronously) and other mounts (asynchronously).
+// A failure or inactive state on the source mount does not prevent fanout to other active mounts.
 func (s *Syncer) PublishThread(
 	ctx context.Context,
 	client *bot.Client,
@@ -296,17 +299,24 @@ func (s *Syncer) PublishThread(
 	}
 
 	var srcChannelID, srcMsgID snowflake.ID
+	var srcErr error
+	var sourceMatched bool
 	var otherMounts []bbs.BoardMount
 	for _, m := range mounts {
 		if m.ID == sourceMountID {
+			sourceMatched = true
 			chID, mID, err := s.mirrorNewThreadToMount(ctx, client, m, board, thread, firstPost, locale)
 			if err != nil {
-				return 0, 0, err
+				srcErr = err
+			} else {
+				srcChannelID, srcMsgID = chID, mID
 			}
-			srcChannelID, srcMsgID = chID, mID
 		} else {
 			otherMounts = append(otherMounts, m)
 		}
+	}
+	if !sourceMatched && srcErr == nil {
+		srcErr = ErrSourceMountInactive
 	}
 
 	if len(otherMounts) > 0 {
@@ -315,6 +325,9 @@ func (s *Syncer) PublishThread(
 				slog.Warn("bbs fanout thread mirror failed", "mount_id", m.ID, "guild_id", m.GuildID, "err", err)
 			}
 		})
+	}
+	if srcErr != nil {
+		return 0, 0, srcErr
 	}
 	return srcChannelID, srcMsgID, nil
 }
@@ -328,17 +341,30 @@ func (s *Syncer) mirrorNewThreadToMount(
 	firstPost bbs.Post,
 	locale discord.Locale,
 ) (snowflake.ID, snowflake.ID, error) {
-	if s.Guard.IsMountOpenAt(mount.ID, time.Now()) || s.Guard.IsThrottled(time.Now()) {
+	allowed, release := s.Guard.AcquireMount(mount.ID, time.Now())
+	if !allowed {
 		return 0, 0, errors.New("sync skipped due to circuit breaker or invalid-request throttle")
 	}
+	defer release()
+	return s.mirrorNewThreadToMountLocked(ctx, client, mount, board, thread, firstPost, locale)
+}
 
+func (s *Syncer) mirrorNewThreadToMountLocked(
+	ctx context.Context,
+	client *bot.Client,
+	mount bbs.BoardMount,
+	board bbs.Board,
+	thread bbs.Thread,
+	firstPost bbs.Post,
+	locale discord.Locale,
+) (snowflake.ID, snowflake.ID, error) {
 	mountLocale := ResolveMountLocale(client, mount)
 	if mount.Locale == "" && locale != "" && locale != discord.LocaleUnknown {
 		mountLocale = locale
 	}
 
-	msgCreate, err := s.Validator.ValidateAndClampMessageCreate(RenderPostMessageCreate(firstPost, thread, nil, mountLocale))
-	if err != nil {
+	msgCreate := RenderPostMessageCreate(firstPost, thread, nil, mountLocale)
+	if err := s.Validator.ValidateMessageCreate(msgCreate); err != nil {
 		return 0, 0, err
 	}
 	title := TruncateRunes(thread.Title, MaxChannelNameRunes)
@@ -348,9 +374,10 @@ func (s *Syncer) mirrorNewThreadToMount(
 	if mount.IsForum {
 		var tags []snowflake.ID
 		if fc, ok := client.Caches.GuildForumChannel(mount.ChannelID); ok {
-			tags, err = ResolveForumTags(fc)
-			if err != nil {
-				return 0, 0, err
+			var tErr error
+			tags, tErr = ResolveForumTags(fc)
+			if tErr != nil {
+				return 0, 0, tErr
 			}
 		}
 		tp, err := client.Rest.CreatePostInThreadChannel(mount.ChannelID, discord.ThreadChannelPostCreate{
@@ -424,6 +451,7 @@ func (s *Syncer) mirrorNewThreadToMount(
 }
 
 // PublishPost mirrors a newly created reply to the source guild synchronously and other subscribed guilds asynchronously.
+// Source mount failure or deactivation does not stop other mounts, watcher DMs, or archive locking.
 func (s *Syncer) PublishPost(
 	ctx context.Context,
 	client *bot.Client,
@@ -440,22 +468,30 @@ func (s *Syncer) PublishPost(
 	}
 
 	var srcGuildID, srcThreadID, srcMsgID snowflake.ID
+	var srcErr error
+	var sourceMatched bool
 	var otherMounts []bbs.BoardMount
 	for _, m := range mounts {
 		if m.ID == sourceMountID {
+			sourceMatched = true
 			tID, mID, err := s.mirrorPostToMount(ctx, client, m, board, thread, post, backwardRefs, locale)
 			if err != nil {
-				return 0, 0, err
+				srcErr = err
+			} else {
+				srcGuildID, srcThreadID, srcMsgID = m.GuildID, tID, mID
 			}
-			srcGuildID, srcThreadID, srcMsgID = m.GuildID, tID, mID
 		} else {
 			otherMounts = append(otherMounts, m)
 		}
+	}
+	if !sourceMatched && srcErr == nil {
+		srcErr = ErrSourceMountInactive
 	}
 
 	go s.notifyWatchers(s.backgroundCtx(), client, board, thread, post, srcGuildID, srcThreadID, srcMsgID)
 
 	if len(otherMounts) > 0 || thread.Status == bbs.ThreadStatusArchived {
+		hitMaxRes := post.ResNumber >= thread.Rules.Normalize().MaxRes
 		go func() {
 			if len(otherMounts) > 0 {
 				s.fanout(otherMounts, func(m bbs.BoardMount) {
@@ -465,11 +501,14 @@ func (s *Syncer) PublishPost(
 				})
 			}
 			if thread.Status == bbs.ThreadStatusArchived {
-				s.SyncArchive(s.backgroundCtx(), client, board, thread, true)
+				s.SyncArchive(s.backgroundCtx(), client, board, thread, hitMaxRes)
 			}
 		}()
 	}
 
+	if srcErr != nil {
+		return 0, 0, srcErr
+	}
 	return srcThreadID, srcMsgID, nil
 }
 
@@ -483,6 +522,19 @@ func (s *Syncer) EnsureThreadMirror(
 	excludeTrailingRes uint32,
 	locale discord.Locale,
 ) (*bbs.ThreadMirror, error) {
+	return s.ensureThreadMirror(ctx, client, mount, board, thread, excludeTrailingRes, locale, true)
+}
+
+func (s *Syncer) ensureThreadMirror(
+	ctx context.Context,
+	client *bot.Client,
+	mount bbs.BoardMount,
+	board bbs.Board,
+	thread bbs.Thread,
+	excludeTrailingRes uint32,
+	locale discord.Locale,
+	acquireGuard bool,
+) (*bbs.ThreadMirror, error) {
 	if existing, err := s.Service.Store.GetThreadMirrorByMountAndThread(ctx, mount.ID, thread.ID); err == nil {
 		return existing, nil
 	}
@@ -491,8 +543,14 @@ func (s *Syncer) EnsureThreadMirror(
 		return nil, fmt.Errorf("failed to load OP for lazy mirror: %w", err)
 	}
 	op := posts[0]
-	if _, _, err := s.mirrorNewThreadToMount(ctx, client, mount, board, thread, op, locale); err != nil {
-		return nil, err
+	if acquireGuard {
+		if _, _, err := s.mirrorNewThreadToMount(ctx, client, mount, board, thread, op, locale); err != nil {
+			return nil, err
+		}
+	} else {
+		if _, _, err := s.mirrorNewThreadToMountLocked(ctx, client, mount, board, thread, op, locale); err != nil {
+			return nil, err
+		}
 	}
 	mirror, err := s.Service.Store.GetThreadMirrorByMountAndThread(ctx, mount.ID, thread.ID)
 	if err != nil {
@@ -511,8 +569,8 @@ func (s *Syncer) EnsureThreadMirror(
 		if mount.Locale == "" && locale != "" && locale != discord.LocaleUnknown {
 			mountLocale = locale
 		}
-		banner, vErr := s.Validator.ValidateAndClampMessageCreate(RenderLazyCatchupBanner(thread.ID, 2, lastPrior, mountLocale))
-		if vErr == nil {
+		banner := RenderLazyCatchupBanner(thread.ID, 2, lastPrior, mountLocale)
+		if vErr := s.Validator.ValidateMessageCreate(banner); vErr == nil {
 			sendErr := WithUnarchiveRetry(client, mirror.DiscordThreadID, func() error {
 				_, err := client.Rest.CreateMessage(mirror.DiscordThreadID, banner)
 				return err
@@ -538,11 +596,13 @@ func (s *Syncer) mirrorPostToMount(
 	backwardRefs []uint32,
 	locale discord.Locale,
 ) (snowflake.ID, snowflake.ID, error) {
-	if s.Guard.IsMountOpenAt(mount.ID, time.Now()) || s.Guard.IsThrottled(time.Now()) {
+	allowed, release := s.Guard.AcquireMount(mount.ID, time.Now())
+	if !allowed {
 		return 0, 0, errors.New("sync skipped due to circuit breaker or invalid-request throttle")
 	}
+	defer release()
 
-	mirror, err := s.EnsureThreadMirror(ctx, client, mount, board, thread, post.ResNumber, locale)
+	mirror, err := s.ensureThreadMirror(ctx, client, mount, board, thread, post.ResNumber, locale, false)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -553,8 +613,8 @@ func (s *Syncer) mirrorPostToMount(
 	}
 
 	resolveURL := s.guildURLResolver(ctx, thread.ID, mount.GuildID, mirror.DiscordThreadID)
-	msgCreate, err := s.Validator.ValidateAndClampMessageCreate(RenderPostMessageCreate(post, thread, resolveURL, mountLocale))
-	if err != nil {
+	msgCreate := RenderPostMessageCreate(post, thread, resolveURL, mountLocale)
+	if err := s.Validator.ValidateMessageCreate(msgCreate); err != nil {
 		return 0, 0, err
 	}
 
@@ -610,16 +670,23 @@ func (s *Syncer) scheduleControlPanel(client *bot.Client, mirror *bbs.ThreadMirr
 		if s.Guard.IsThrottled(time.Now()) {
 			return
 		}
+		muLock := s.threadEditMutex(mirrorCopy.DiscordThreadID)
+		muLock.Lock()
+		defer muLock.Unlock()
+
 		latestMirror, err := s.Service.Store.GetThreadMirror(ctx, mirrorCopy.ID)
 		if err != nil {
+			return
+		}
+		if mount, mErr := s.Service.Store.GetBoardMount(ctx, latestMirror.BoardMountID); mErr != nil || !mount.Active {
 			return
 		}
 		latestThread, err := s.Service.GetThread(ctx, thread.ID)
 		if err != nil || latestThread.Status != bbs.ThreadStatusActive {
 			return
 		}
-		panelMsg, err := s.Validator.ValidateAndClampMessageCreate(RenderThreadControlPanel(latestMirror.ID, *latestThread, locale))
-		if err != nil {
+		panelMsg := RenderThreadControlPanel(latestMirror.ID, *latestThread, locale)
+		if err := s.Validator.ValidateMessageCreate(panelMsg); err != nil {
 			return
 		}
 		oldControlID := latestMirror.ControlMessageID
@@ -728,8 +795,8 @@ func (s *Syncer) processAnchorJob(discordThreadID snowflake.ID, job anchorItem) 
 			if err != nil {
 				return
 			}
-			mu, err := s.Validator.ValidateAndClampMessageUpdate(RenderPostMessageUpdate(*post, job.thread, resolveURL, job.locale), true)
-			if err != nil {
+			mu := RenderPostMessageUpdate(*post, job.thread, resolveURL, job.locale)
+			if err := s.Validator.ValidateMessageUpdate(mu, true); err != nil {
 				return
 			}
 			if editErr := WithUnarchiveRetry(job.client, discordThreadID, func() error {
@@ -742,17 +809,22 @@ func (s *Syncer) processAnchorJob(discordThreadID snowflake.ID, job anchorItem) 
 	}
 }
 
-// SyncAbone updates all Discord mirror messages of a soft-deleted post.
-func (s *Syncer) SyncAbone(ctx context.Context, client *bot.Client, post bbs.Post, thread bbs.Thread) {
+// SyncAbone updates all Discord mirror messages of a soft-deleted post and returns any non-404 errors.
+func (s *Syncer) SyncAbone(ctx context.Context, client *bot.Client, post bbs.Post, thread bbs.Thread) error {
 	mirrors, err := s.Service.Store.ListPostMirrorsByPost(ctx, post.ID)
 	if err != nil {
 		slog.Error("bbs failed to list post mirrors for abone", "post_id", post.ID, "err", err)
-		return
+		return err
+	}
+	if client == nil || len(mirrors) == 0 {
+		return nil
 	}
 	post.Abone = true
+	var errs []error
 	for _, pm := range mirrors {
 		tm, err := s.Service.Store.GetThreadMirror(ctx, pm.ThreadMirrorID)
 		if err != nil {
+			errs = append(errs, err)
 			continue
 		}
 		var mountLocale discord.Locale
@@ -763,8 +835,9 @@ func (s *Syncer) SyncAbone(ctx context.Context, client *bot.Client, post bbs.Pos
 		} else {
 			mountLocale = ResolveGuildLocale(client, pm.GuildID, discord.LocaleJapanese)
 		}
-		mu, err := s.Validator.ValidateAndClampMessageUpdate(RenderPostMessageUpdate(post, thread, nil, mountLocale), true)
-		if err != nil {
+		mu := RenderPostMessageUpdate(post, thread, nil, mountLocale)
+		if err := s.Validator.ValidateMessageUpdate(mu, true); err != nil {
+			errs = append(errs, err)
 			continue
 		}
 
@@ -777,6 +850,9 @@ func (s *Syncer) SyncAbone(ctx context.Context, client *bot.Client, post bbs.Pos
 		if editErr != nil {
 			s.Guard.RecordError(uuid.Nil, editErr, time.Now())
 			slog.Warn("bbs failed to sync abone message", "mirror_id", pm.ID, "err", editErr)
+			if !IsJSONError(editErr, JSONErrUnknownChannel) && !IsJSONError(editErr, JSONErrUnknownMessage) && HTTPStatusCode(editErr) != 404 {
+				errs = append(errs, editErr)
+			}
 		}
 		if thread.Status == bbs.ThreadStatusArchived {
 			if archErr := ArchiveAndLockThread(client, tm.DiscordThreadID, isForum); archErr != nil {
@@ -789,6 +865,7 @@ func (s *Syncer) SyncAbone(ctx context.Context, client *bot.Client, post bbs.Pos
 		}
 		muLock.Unlock()
 	}
+	return errors.Join(errs...)
 }
 
 // SyncArchive posts the 1001/archive warehouse notices and locks+archives every Discord mirror of thread.
@@ -815,26 +892,40 @@ func (s *Syncer) SyncArchive(ctx context.Context, client *bot.Client, board bbs.
 		} else {
 			mountLocale = ResolveGuildLocale(client, mirror.GuildID, discord.LocaleJapanese)
 		}
-		_ = WithUnarchiveRetry(client, mirror.DiscordThreadID, func() error {
-			if mirror.ControlMessageID != nil {
-				_ = client.Rest.DeleteMessage(mirror.DiscordThreadID, *mirror.ControlMessageID)
-				mirror.ControlMessageID = nil
-				_ = s.Service.Store.UpdateThreadMirrorControl(ctx, mirror.ID, nil)
+
+		muLock := s.threadEditMutex(mirror.DiscordThreadID)
+		muLock.Lock()
+		latestMirror := mirror
+		if fresh, gErr := s.Service.Store.GetThreadMirror(ctx, mirror.ID); gErr == nil && fresh != nil {
+			latestMirror = *fresh
+		}
+		_ = WithUnarchiveRetry(client, latestMirror.DiscordThreadID, func() error {
+			if latestMirror.ControlMessageID != nil {
+				_ = client.Rest.DeleteMessage(latestMirror.DiscordThreadID, *latestMirror.ControlMessageID)
+				_ = s.Service.Store.UpdateThreadMirrorControl(ctx, latestMirror.ID, nil)
 			}
 			if hitMaxRes {
-				if overMsg, err := s.Validator.ValidateAndClampMessageCreate(RenderOver1000Message(thread, mountLocale)); err == nil {
-					_, _ = client.Rest.CreateMessage(mirror.DiscordThreadID, overMsg)
+				overMsg := RenderOver1000Message(thread, mountLocale)
+				if err := s.Validator.ValidateMessageCreate(overMsg); err == nil {
+					_, _ = client.Rest.CreateMessage(latestMirror.DiscordThreadID, overMsg)
 				}
 			}
-			if archMsg, err := s.Validator.ValidateAndClampMessageCreate(RenderArchivedNotice(mountLocale)); err == nil {
-				_, _ = client.Rest.CreateMessage(mirror.DiscordThreadID, archMsg)
+			archMsg := RenderArchivedNotice(mountLocale)
+			if err := s.Validator.ValidateMessageCreate(archMsg); err == nil {
+				_, _ = client.Rest.CreateMessage(latestMirror.DiscordThreadID, archMsg)
 			}
 			return nil
 		})
 		isForum := mount.IsForum
-		if err := ArchiveAndLockThread(client, mirror.DiscordThreadID, isForum); err != nil {
-			slog.Warn("bbs failed to archive/lock discord thread", "discord_thread_id", mirror.DiscordThreadID, "err", err)
+		if !hasMount {
+			if mRow, mErr := s.Service.Store.GetBoardMount(ctx, mirror.BoardMountID); mErr == nil && mRow != nil {
+				isForum = mRow.IsForum
+			}
 		}
+		if err := ArchiveAndLockThread(client, latestMirror.DiscordThreadID, isForum); err != nil {
+			slog.Warn("bbs failed to archive/lock discord thread", "discord_thread_id", latestMirror.DiscordThreadID, "err", err)
+		}
+		muLock.Unlock()
 	}
 }
 
@@ -903,7 +994,9 @@ func (s *Syncer) HandleMessageUpdate(ctx context.Context, client *bot.Client, ev
 		}
 	}
 	if aboned != nil {
-		s.SyncAbone(ctx, client, *aboned, *thread)
+		if syncErr := s.SyncAbone(ctx, client, *aboned, *thread); syncErr != nil {
+			slog.Warn("bbs failed to sync flagged media abone", "post_id", aboned.ID, "err", syncErr)
+		}
 	}
 }
 
@@ -929,23 +1022,31 @@ func (s *Syncer) repositionBoardTextGuide(ctx context.Context, client *bot.Clien
 	if s.Guard.IsThrottled(time.Now()) {
 		return
 	}
-	guideMsg, err := s.Validator.ValidateAndClampMessageCreate(RenderBoardGuide(board, mount.ID, locale))
-	if err != nil {
+	muLock := s.threadEditMutex(mount.ChannelID)
+	muLock.Lock()
+	defer muLock.Unlock()
+
+	latestMount, err := s.Service.Store.GetBoardMount(ctx, mount.ID)
+	if err != nil || !latestMount.Active {
 		return
 	}
-	oldControlID := mount.ControlMessageID
-	sent, err := client.Rest.CreateMessage(mount.ChannelID, guideMsg)
+	guideMsg := RenderBoardGuide(board, latestMount.ID, locale)
+	if err := s.Validator.ValidateMessageCreate(guideMsg); err != nil {
+		return
+	}
+	oldControlID := latestMount.ControlMessageID
+	sent, err := client.Rest.CreateMessage(latestMount.ChannelID, guideMsg)
 	if err != nil {
 		s.Guard.RecordError(uuid.Nil, err, time.Now())
 		return
 	}
-	mount.ControlMessageID = &sent.ID
-	if dbErr := s.Service.Store.UpdateBoardMount(ctx, &mount); dbErr != nil {
-		_ = client.Rest.DeleteMessage(mount.ChannelID, sent.ID)
+	updated, dbErr := s.Service.Store.UpdateBoardMountControl(ctx, latestMount.ID, &sent.ID)
+	if dbErr != nil || !updated {
+		_ = client.Rest.DeleteMessage(latestMount.ChannelID, sent.ID)
 		return
 	}
 	if oldControlID != nil && *oldControlID != sent.ID {
-		if delErr := client.Rest.DeleteMessage(mount.ChannelID, *oldControlID); delErr != nil {
+		if delErr := client.Rest.DeleteMessage(latestMount.ChannelID, *oldControlID); delErr != nil {
 			s.Guard.RecordError(uuid.Nil, delErr, time.Now())
 		}
 	}
@@ -1026,12 +1127,11 @@ func (s *Syncer) notifyWatchers(
 					discord.NewTextDisplay(TruncateRunes(bodyText, 1000)),
 				).WithAccessory(discord.NewDangerButton(unwatchBtn, fmt.Sprintf("/bbs/watch/toggle/%s", thread.ID))),
 			).WithAccentColor(ColorNotice),
-		)
-		validated, vErr := s.Validator.ValidateAndClampMessageCreate(dmMsg)
-		if vErr != nil {
+		).WithAllowedMentions(&discord.AllowedMentions{})
+		if vErr := s.Validator.ValidateMessageCreate(dmMsg); vErr != nil {
 			continue
 		}
-		if _, err := client.Rest.CreateMessage(dmChID, validated); err != nil {
+		if _, err := client.Rest.CreateMessage(dmChID, dmMsg); err != nil {
 			if IsJSONError(err, JSONErrCannotDMUser) {
 				s.DMCache.Invalidate(w.UserID)
 				_ = s.Service.Store.DeleteThreadWatch(ctx, thread.ID, w.UserID)
@@ -1054,12 +1154,33 @@ func CanSendDMToUser(ctx context.Context, gdb *database.DB, userID snowflake.ID)
 }
 
 func (s *Syncer) guildURLResolver(ctx context.Context, threadID uuid.UUID, guildID snowflake.ID, discordThreadID snowflake.ID) func(resNum uint32) (string, bool) {
+	var mu sync.Mutex
+	cache := make(map[uint32]string)
+	missed := make(map[uint32]bool)
 	return func(resNum uint32) (string, bool) {
-		pm, err := s.Service.Store.GetPostMirrorByResAndGuild(ctx, threadID, resNum, guildID)
-		if err != nil || pm.DiscordMessageID == 0 {
+		mu.Lock()
+		if u, ok := cache[resNum]; ok {
+			mu.Unlock()
+			return u, true
+		}
+		if missed[resNum] {
+			mu.Unlock()
 			return "", false
 		}
-		return discord.MessageURL(guildID, discordThreadID, pm.DiscordMessageID), true
+		mu.Unlock()
+
+		pm, err := s.Service.Store.GetPostMirrorByResAndGuild(ctx, threadID, resNum, guildID)
+		if err != nil || pm.DiscordMessageID == 0 {
+			mu.Lock()
+			missed[resNum] = true
+			mu.Unlock()
+			return "", false
+		}
+		u := discord.MessageURL(guildID, discordThreadID, pm.DiscordMessageID)
+		mu.Lock()
+		cache[resNum] = u
+		mu.Unlock()
+		return u, true
 	}
 }
 

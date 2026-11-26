@@ -156,21 +156,32 @@ func (g *IdentityGenerator) GeneratePosterHash(scope Scope, guildID snowflake.ID
 }
 
 // ParsePostIdentity resolves nickname commands (!id:on, !slip:vvvvv, sage, #trip),
-// thread creation !extend commands, and anonymous identifiers.
+// mail field ("sage" only), thread creation !extend commands, and anonymous identifiers.
 func (g *IdentityGenerator) ParsePostIdentity(
 	boardID uuid.UUID,
 	scope Scope,
 	guildID snowflake.ID,
 	userID snowflake.ID,
 	rawName string,
+	rawMail string,
 	rawBody string,
 	baseRules BoardRules,
 	isNewThread bool,
 	at time.Time,
-) ParsedIdentity {
+) (ParsedIdentity, error) {
 	rules := baseRules.Normalize()
 	if at.IsZero() {
 		at = time.Now()
+	}
+
+	var isSage bool
+	mailInput := SanitizeSingleLine(rawMail)
+	switch {
+	case mailInput == "":
+	case strings.EqualFold(mailInput, "sage"):
+		isSage = true
+	default:
+		return ParsedIdentity{}, ErrInvalidMail
 	}
 
 	nameInput := SanitizeSingleLine(rawName)
@@ -182,13 +193,13 @@ func (g *IdentityGenerator) ParsePostIdentity(
 		}
 	}
 
-	// Parse special commands from the name field.
+	// Parse special commands from the name field; reject unrecognized '!' commands.
 	var remainingTokens []string
-	var isSage bool
 	hideID := rules.HideID
 	slipLevel := rules.SLIP
+	fields := strings.Fields(nameInput)
 
-	for _, tok := range strings.Fields(nameInput) {
+	for _, tok := range fields {
 		lower := strings.ToLower(tok)
 		switch lower {
 		case "!id:on":
@@ -198,12 +209,15 @@ func (g *IdentityGenerator) ParsePostIdentity(
 		case "!sage":
 			isSage = true
 		case "sage":
-			if len(strings.Fields(nameInput)) == 1 {
+			if len(fields) == 1 && trip == "" {
 				isSage = true
 			} else {
 				remainingTokens = append(remainingTokens, tok)
 			}
 		default:
+			if strings.HasPrefix(lower, "!") {
+				return ParsedIdentity{}, ErrInvalidNameCommand
+			}
 			remainingTokens = append(remainingTokens, tok)
 		}
 	}
@@ -215,25 +229,42 @@ func (g *IdentityGenerator) ParsePostIdentity(
 
 	bodyNorm := SanitizeBody(rawBody)
 	var extDat string
-	if isNewThread && strings.HasPrefix(bodyNorm, "!extend:") {
-		if firstLine, rest, found := strings.Cut(bodyNorm, "\n"); found {
-			spec := strings.TrimPrefix(strings.TrimSpace(firstLine), "!extend:")
-			parts := strings.Split(spec, ":")
-			parsedRules := rules
-			valid := len(parts) > 0
-			if valid {
-				switch strings.ToLower(parts[0]) {
-				case "default":
-					parsedRules.HideID = rules.HideID
-				case "none":
-					parsedRules.HideID = true
-				case "checked":
-					parsedRules.HideID = false
-				default:
-					valid = false
-				}
+	lowerBody := strings.ToLower(bodyNorm)
+	if strings.HasPrefix(lowerBody, "!extend") {
+		isCmdPrefix := len(lowerBody) == len("!extend") ||
+			lowerBody[len("!extend")] == ':' ||
+			lowerBody[len("!extend")] == ' ' ||
+			lowerBody[len("!extend")] == '\t' ||
+			lowerBody[len("!extend")] == '\n'
+		if isCmdPrefix {
+			if !isNewThread || !strings.HasPrefix(lowerBody, "!extend:") {
+				return ParsedIdentity{}, ErrInvalidExtendCommand
 			}
-			if valid && len(parts) > 1 {
+			firstLine, rest, found := strings.Cut(bodyNorm, "\n")
+			if !found {
+				return ParsedIdentity{}, ErrInvalidExtendCommand
+			}
+			trimmedFirst := strings.TrimSpace(firstLine)
+			spec := trimmedFirst[len("!extend:"):]
+			if spec == "" || strings.ContainsAny(spec, " \t") {
+				return ParsedIdentity{}, ErrInvalidExtendCommand
+			}
+			parts := strings.Split(spec, ":")
+			if len(parts) < 1 || len(parts) > 2 {
+				return ParsedIdentity{}, ErrInvalidExtendCommand
+			}
+			parsedRules := rules
+			switch strings.ToLower(parts[0]) {
+			case "default":
+				parsedRules.HideID = rules.HideID
+			case "none":
+				parsedRules.HideID = true
+			case "checked":
+				parsedRules.HideID = false
+			default:
+				return ParsedIdentity{}, ErrInvalidExtendCommand
+			}
+			if len(parts) == 2 {
 				switch strings.ToLower(parts[1]) {
 				case "default":
 					parsedRules.SLIP = rules.SLIP
@@ -242,16 +273,14 @@ func (g *IdentityGenerator) ParsePostIdentity(
 				case "vvvvv":
 					parsedRules.SLIP = SLIPVVVVV
 				default:
-					valid = false
+					return ParsedIdentity{}, ErrInvalidExtendCommand
 				}
 			}
-			if valid {
-				rules = parsedRules
-				hideID = parsedRules.HideID
-				slipLevel = parsedRules.SLIP
-				extDat = fmt.Sprintf("EXTDAT:%s:----: EXT was configured", spec)
-				bodyNorm = SanitizeBody(rest)
-			}
+			rules = parsedRules
+			hideID = parsedRules.HideID
+			slipLevel = parsedRules.SLIP
+			extDat = fmt.Sprintf("EXTDAT:%s:----: EXT was configured", spec)
+			bodyNorm = SanitizeBody(rest)
 		}
 	}
 
@@ -274,7 +303,7 @@ func (g *IdentityGenerator) ParsePostIdentity(
 		ThreadRules: rules,
 		ExtDat:      extDat,
 		CleanBody:   bodyNorm,
-	}
+	}, nil
 }
 
 func (g *IdentityGenerator) hmacSum(msg string) [32]byte {

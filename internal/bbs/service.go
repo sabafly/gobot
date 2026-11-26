@@ -39,9 +39,10 @@ import (
 )
 
 const (
-	MaxTitleRunes = 100
-	MaxBodyRunes  = 1800
-	MaxNameRunes  = 48
+	MaxTitleRunes       = 100
+	MaxBodyRunes        = 1800
+	MaxEscapedBodyRunes = 2200
+	MaxNameRunes        = 48
 )
 
 // Service orchestrates BBS domain rules, opt-in checks, consent, rate limits, and providers.
@@ -98,7 +99,11 @@ func (s *Service) IsOperator(userID snowflake.ID) bool {
 }
 
 func (s *Service) threadMutex(threadID uuid.UUID) *sync.Mutex {
-	idx := binary.LittleEndian.Uint64(threadID[:8]) % uint64(len(s.threadLocks))
+	v := binary.LittleEndian.Uint64(threadID[8:16]) ^ binary.BigEndian.Uint64(threadID[0:8])
+	v ^= v >> 32
+	v ^= v >> 16
+	v ^= v >> 8
+	idx := v % uint64(len(s.threadLocks))
 	return &s.threadLocks[idx]
 }
 
@@ -197,6 +202,14 @@ func (s *Service) AcceptPolicy(ctx context.Context, userID snowflake.ID) (*UserC
 		return nil, err
 	}
 	return consent, nil
+}
+
+// AcceptPolicyVersion validates that versionToken matches the active policy version before recording consent.
+func (s *Service) AcceptPolicyVersion(ctx context.Context, userID snowflake.ID, versionToken string) (*UserConsent, error) {
+	if versionToken == "" || versionToken != PolicyVersionToken(s.Policy.CurrentVersion) {
+		return nil, ErrStalePolicyVersion
+	}
+	return s.AcceptPolicy(ctx, userID)
 }
 
 // RevokePolicy withdraws user consent and removes active thread watch subscriptions.
@@ -306,7 +319,14 @@ func (s *Service) CreateBoard(ctx context.Context, input CreateBoardInput) (*Boa
 	if input.Slug == "" {
 		input.Slug = strings.ReplaceAll(strings.ToLower(input.Name), " ", "-")
 	}
+	input.Rules.DefaultName = SanitizeSingleLine(input.Rules.DefaultName)
+	if err := input.Rules.Validate(); err != nil {
+		return nil, err
+	}
 	input.Rules = input.Rules.Normalize()
+	if err := input.Rules.Validate(); err != nil {
+		return nil, err
+	}
 
 	cat, err := s.GetCategory(ctx, input.CategoryID)
 	if err != nil {
@@ -386,8 +406,29 @@ func (s *Service) ListBoards(ctx context.Context, filter BoardFilter) ([]Board, 
 	return out, nil
 }
 
-// UpdateBoard updates board configuration fields.
+// UpdateBoard validates and updates board configuration fields.
 func (s *Service) UpdateBoard(ctx context.Context, boardID uuid.UUID, input UpdateBoardInput) (*Board, error) {
+	if input.Name != nil {
+		clean := SanitizeSingleLine(*input.Name)
+		if clean == "" || utf8.RuneCountInString(clean) > 80 {
+			return nil, ErrInvalidBoardName
+		}
+		input.Name = &clean
+	}
+	if input.Description != nil {
+		clean := SanitizeBody(*input.Description)
+		input.Description = &clean
+	}
+	if input.DefaultName != nil {
+		clean := SanitizeSingleLine(*input.DefaultName)
+		if clean == "" || utf8.RuneCountInString(clean) > MaxNameRunes {
+			return nil, ErrInvalidNameLength
+		}
+		input.DefaultName = &clean
+	}
+	if input.SLIP != nil && *input.SLIP != SLIPNone && *input.SLIP != SLIPVVVVV {
+		return nil, ErrInvalidBoardRules
+	}
 	b, err := s.GetBoard(ctx, boardID)
 	if err != nil {
 		return nil, err
@@ -451,19 +492,26 @@ func (s *Service) CreateThread(ctx context.Context, input CreateThreadInput) (*B
 	if now.IsZero() {
 		now = time.Now()
 	}
-	parsed := s.Identity.ParsePostIdentity(
+	parsed, err := s.Identity.ParsePostIdentity(
 		board.ID,
 		board.Scope,
 		input.GuildID,
 		input.UserID,
 		input.RawName,
+		input.RawMail,
 		input.RawBody,
 		board.Rules,
 		true,
 		now,
 	)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	if parsed.CleanBody == "" || utf8.RuneCountInString(parsed.CleanBody) > MaxBodyRunes {
 		return nil, nil, nil, ErrInvalidBodyLength
+	}
+	if utf8.RuneCountInString(ClearFormat(parsed.CleanBody)) > MaxEscapedBodyRunes {
+		return nil, nil, nil, ErrFormattedBodyTooLong
 	}
 
 	banned, err := s.Store.IsBanned(ctx, board.Scope, input.GuildID, parsed.PosterHash, input.UserID, now)
@@ -560,19 +608,26 @@ func (s *Service) CreatePost(ctx context.Context, input CreatePostInput) (*Board
 	if now.IsZero() {
 		now = time.Now()
 	}
-	parsed := s.Identity.ParsePostIdentity(
+	parsed, err := s.Identity.ParsePostIdentity(
 		board.ID,
 		board.Scope,
 		input.GuildID,
 		input.UserID,
 		input.RawName,
+		input.RawMail,
 		input.RawBody,
 		thread.Rules,
 		false,
 		now,
 	)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
 	if parsed.CleanBody == "" || utf8.RuneCountInString(parsed.CleanBody) > MaxBodyRunes {
 		return nil, nil, nil, nil, ErrInvalidBodyLength
+	}
+	if utf8.RuneCountInString(ClearFormat(parsed.CleanBody)) > MaxEscapedBodyRunes {
+		return nil, nil, nil, nil, ErrFormattedBodyTooLong
 	}
 
 	banned, err := s.Store.IsBanned(ctx, board.Scope, input.GuildID, parsed.PosterHash, input.UserID, now)

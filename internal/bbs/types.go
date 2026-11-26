@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"unicode/utf8"
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
@@ -32,8 +33,12 @@ const (
 	DefaultProviderKey     = "native"
 	DefaultAnonymousName   = "風吹けば名無し"
 	DefaultMaxRes          = uint32(1000)
+	MinSlashBoardMaxRes    = uint32(50)
+	MaxBoardMaxRes         = uint32(1000)
+	DatOchiDisabled        = -1
 	DefaultDatOchiIdleHrs  = 24 * 50 // 50 days without activity
 	DefaultDatOchiLowResHr = 24 * 10 // 10 days with fewer than 10 posts
+	MaxArchiveDays         = 365
 	DefaultPolicyVersion   = "2026-11-25"
 	MaxBanHours            = 24 * 365 * 10
 )
@@ -93,6 +98,13 @@ var (
 	ErrBoardScopeMismatch    = fmt.Errorf("%w: board scope must match category scope", ErrInvalidInput)
 	ErrInvalidBanDuration    = fmt.Errorf("%w: ban duration out of range", ErrInvalidInput)
 	ErrBoardProviderMismatch = fmt.Errorf("%w: board provider must match category provider", ErrInvalidInput)
+	ErrInvalidBoardRules     = fmt.Errorf("%w: invalid board rules", ErrInvalidInput)
+	ErrInvalidMail           = fmt.Errorf("%w: invalid mail field", ErrInvalidInput)
+	ErrInvalidNameCommand    = fmt.Errorf("%w: unsupported name command", ErrInvalidInput)
+	ErrInvalidExtendCommand  = fmt.Errorf("%w: invalid !extend syntax", ErrInvalidInput)
+	ErrFormattedBodyTooLong  = fmt.Errorf("%w: formatted body exceeds display limit", ErrInvalidInput)
+	ErrInvalidReaderJump     = fmt.Errorf("%w: invalid reader jump target", ErrInvalidInput)
+	ErrStalePolicyVersion    = fmt.Errorf("%w: outdated policy panel version", ErrInvalidInput)
 )
 
 // BoardRules configures anonymous posting behavior for a board or thread.
@@ -105,7 +117,7 @@ type BoardRules struct {
 	DatOchiLowResHours int
 }
 
-// Normalize fills zero-value rule fields with sensible defaults.
+// Normalize fills zero-value rule fields with sensible defaults while preserving DatOchiDisabled (-1).
 func (r BoardRules) Normalize() BoardRules {
 	if r.DefaultName == "" {
 		r.DefaultName = DefaultAnonymousName
@@ -113,13 +125,33 @@ func (r BoardRules) Normalize() BoardRules {
 	if r.MaxRes == 0 {
 		r.MaxRes = DefaultMaxRes
 	}
-	if r.DatOchiIdleHours <= 0 {
+	if r.DatOchiIdleHours == 0 {
 		r.DatOchiIdleHours = DefaultDatOchiIdleHrs
 	}
-	if r.DatOchiLowResHours <= 0 {
+	if r.DatOchiLowResHours == 0 {
 		r.DatOchiLowResHours = DefaultDatOchiLowResHr
 	}
 	return r
+}
+
+// Validate rejects out-of-range or unsupported board rule values.
+func (r BoardRules) Validate() error {
+	if r.DefaultName != "" && utf8.RuneCountInString(SanitizeSingleLine(r.DefaultName)) > MaxNameRunes {
+		return ErrInvalidNameLength
+	}
+	if r.SLIP != SLIPNone && r.SLIP != SLIPVVVVV {
+		return ErrInvalidBoardRules
+	}
+	if r.MaxRes > MaxBoardMaxRes {
+		return ErrInvalidBoardRules
+	}
+	if r.DatOchiIdleHours < DatOchiDisabled || r.DatOchiIdleHours > MaxArchiveDays*24 {
+		return ErrInvalidBoardRules
+	}
+	if r.DatOchiLowResHours < DatOchiDisabled || r.DatOchiLowResHours > MaxArchiveDays*24 {
+		return ErrInvalidBoardRules
+	}
+	return nil
 }
 
 // Category represents a top-level board grouping (local to a guild or global).
@@ -390,6 +422,7 @@ type CreateThreadInput struct {
 	UserID  snowflake.ID
 	Title   string
 	RawName string
+	RawMail string
 	RawBody string
 	Now     time.Time
 }
@@ -400,6 +433,7 @@ type CreatePostInput struct {
 	GuildID  snowflake.ID
 	UserID   snowflake.ID
 	RawName  string
+	RawMail  string
 	RawBody  string
 	Now      time.Time
 }
@@ -423,9 +457,10 @@ type ReportFilter struct {
 	Limit  int
 }
 
-// BanFilter selects active or historical bans.
+// BanFilter selects active bans as of Now (defaults to current time when zero).
 type BanFilter struct {
 	Scope   *Scope
 	GuildID *snowflake.ID
 	Limit   int
+	Now     time.Time
 }

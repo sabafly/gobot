@@ -430,10 +430,8 @@ func (p *Provider) ListStaleThreads(ctx context.Context, now time.Time) ([]bbs.T
 	var stale []bbs.Thread
 	for i := range active {
 		th := &active[i]
-		idleDur := time.Duration(max(th.DatOchiIdleHours, 1)) * time.Hour
-		lowResDur := time.Duration(max(th.DatOchiLowResHours, 1)) * time.Hour
-		isIdle := th.UpdatedAt.Add(idleDur).Before(now)
-		isLowRes := th.ResCount < 10 && th.CreatedAt.Add(lowResDur).Before(now)
+		isIdle := th.DatOchiIdleHours > 0 && th.UpdatedAt.Add(time.Duration(th.DatOchiIdleHours)*time.Hour).Before(now)
+		isLowRes := th.DatOchiLowResHours > 0 && th.ResCount < 10 && th.CreatedAt.Add(time.Duration(th.DatOchiLowResHours)*time.Hour).Before(now)
 		isOverMax := th.MaxRes > 0 && th.ResCount >= th.MaxRes
 		if isIdle || isLowRes || isOverMax {
 			stale = append(stale, *toDomainThread(th))
@@ -716,6 +714,16 @@ func (p *Provider) UpdateBoardMount(ctx context.Context, mount *bbs.BoardMount) 
 		CreatedAt:        mount.CreatedAt,
 	}
 	return p.session(ctx).Save(&row).Error
+}
+
+func (p *Provider) UpdateBoardMountControl(ctx context.Context, id uuid.UUID, controlMsgID *snowflake.ID) (bool, error) {
+	res := p.session(ctx).Model(&BBSBoardMount{}).
+		Where("id = ? AND active = ?", id, true).
+		Update("control_message_id", controlMsgID)
+	if res.Error != nil {
+		return false, res.Error
+	}
+	return res.RowsAffected > 0, nil
 }
 
 func (p *Provider) DeactivateBoardMount(ctx context.Context, id uuid.UUID) error {
@@ -1032,7 +1040,13 @@ func (p *Provider) DeleteBan(ctx context.Context, id uuid.UUID) error {
 }
 
 func (p *Provider) ListBans(ctx context.Context, filter bbs.BanFilter) ([]bbs.Ban, error) {
-	q := p.session(ctx).Model(&BBSBan{}).Order("created_at DESC")
+	now := filter.Now
+	if now.IsZero() {
+		now = time.Now()
+	}
+	q := p.session(ctx).Model(&BBSBan{}).
+		Where("expires_at IS NULL OR expires_at > ?", now).
+		Order("created_at DESC")
 	if filter.Scope != nil {
 		q = q.Where("scope = ?", string(*filter.Scope))
 	}

@@ -132,13 +132,14 @@ func (s *System) handleReportPostModal(e *handler.ModalEvent) error {
 		)
 		return nil
 	}
-	s.notifyReportLog(e.Client(), report)
 	sr := discordsync.NewSafeResponder(e.ID().Time())
 	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(loc,
 		i18n.TranslateText(loc, "components.bbs.report.accepted_title"),
 		i18n.TranslateText(loc, "components.bbs.report.accepted_body", map[string]any{"id": report.ID.String()}),
 		discordsync.ColorNotice,
 	).WithEphemeral(true))
+	repCopy := *report
+	go s.notifyReportLog(e.Client(), &repCopy)
 	return nil
 }
 
@@ -166,18 +167,19 @@ func (s *System) handleReportThreadModal(e *handler.ModalEvent) error {
 		s.replyModalError(e, reportFail, describeBBSError(loc, err))
 		return nil
 	}
-	s.notifyReportLog(e.Client(), report)
 	sr := discordsync.NewSafeResponder(e.ID().Time())
 	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(loc,
 		i18n.TranslateText(loc, "components.bbs.report.accepted_title"),
 		i18n.TranslateText(loc, "components.bbs.report.accepted_body", map[string]any{"id": report.ID.String()}),
 		discordsync.ColorNotice,
 	).WithEphemeral(true))
+	repCopy := *report
+	go s.notifyReportLog(e.Client(), &repCopy)
 	return nil
 }
 
 func (s *System) notifyReportLog(client *bot.Client, report *bbscore.Report) {
-	if client == nil || s.LogChannel == nil || *s.LogChannel == 0 {
+	if client == nil || s.LogChannel == nil || *s.LogChannel == 0 || report == nil {
 		return
 	}
 	var logGuildID snowflake.ID
@@ -196,12 +198,14 @@ func (s *System) notifyReportLog(client *bot.Client, report *bbscore.Report) {
 			"reason":   discordsync.TruncateRunes(report.Reason, 200),
 		}),
 		discordsync.ColorError,
-	).WithEphemeral(false)
-	validated, err := s.Syncer.Validator.ValidateAndClampMessageCreate(msg)
-	if err != nil {
+	).WithEphemeral(false).WithAllowedMentions(&discord.AllowedMentions{})
+	if err := s.Syncer.Validator.ValidateMessageCreate(msg); err != nil {
+		slog.Warn("bbs failed to validate report log message", "report_id", report.ID, "err", err)
 		return
 	}
-	_, _ = client.Rest.CreateMessage(*s.LogChannel, validated)
+	if _, err := client.Rest.CreateMessage(*s.LogChannel, msg); err != nil {
+		slog.Warn("bbs failed to send report log message", "report_id", report.ID, "err", err)
+	}
 }
 
 func (s *System) handleModerateMessageCommand(data discord.MessageCommandInteractionData, e *handler.CommandEvent) error {
@@ -350,7 +354,11 @@ func (s *System) handleModAboneModal(e *handler.ModalEvent) error {
 		return nil
 	}
 	if thread, tErr := s.Service.GetThread(e.Ctx, post.ThreadID); tErr == nil {
-		go s.Syncer.SyncAbone(s.Components.Ctx(), e.Client(), *post, *thread)
+		go func() {
+			if syncErr := s.Syncer.SyncAbone(s.Components.Ctx(), e.Client(), *post, *thread); syncErr != nil {
+				slog.Warn("bbs failed to sync local abone", "post_id", post.ID, "err", syncErr)
+			}
+		}()
 	}
 	sr := discordsync.NewSafeResponder(e.ID().Time())
 	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(loc,

@@ -33,7 +33,7 @@ const MaxMediaPerPost = 10
 
 var (
 	refRegex   = regexp.MustCompile(`\\?>\\?>([1-9]\d*)`)
-	urlRegex   = regexp.MustCompile(`https?://(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{2,63}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&/=]*)`)
+	urlRegex   = regexp.MustCompile(`https?://(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{2,63}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&/=!$'*,;]*[-a-zA-Z0-9()@:%_\+~#/=$'*])?`)
 	quoteRegex = regexp.MustCompile(`(?m)^(>|>{3})\s`)
 )
 

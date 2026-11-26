@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -449,5 +450,148 @@ func TestGormStore_PR224ReviewRegressionFixes(t *testing.T) {
 	got2, err := store.GetOrCreateSystemSecret(ctx, "default_hmac_secret", sec2)
 	if err != nil || !bytes.Equal(got2, sec1) {
 		t.Fatalf("expected original persisted secret on subsequent boot, got %x, err=%v", got2, err)
+	}
+
+	// 7. DatOchiDisabled (-1) preserved across Normalize, CreateBoard/Thread, and excluded from ListStaleThreads
+	disabledBoard, err := svc.CreateBoard(ctx, bbs.CreateBoardInput{
+		CategoryID: catB.ID,
+		Scope:      bbs.ScopeLocal,
+		GuildID:    &guildB,
+		Name:       "落ちない板",
+		Rules: bbs.BoardRules{
+			DefaultName:        "名無し",
+			MaxRes:             1000,
+			DatOchiIdleHours:   bbs.DatOchiDisabled,
+			DatOchiLowResHours: bbs.DatOchiDisabled,
+		},
+	})
+	if err != nil {
+		t.Fatalf("CreateBoard with DatOchiDisabled failed: %v", err)
+	}
+	if disabledBoard.Rules.DatOchiIdleHours != bbs.DatOchiDisabled || disabledBoard.Rules.DatOchiLowResHours != bbs.DatOchiDisabled {
+		t.Fatalf("expected DatOchiDisabled preserved, got %+v", disabledBoard.Rules)
+	}
+	userDisabled := snowflake.ID(33002)
+	if _, err := svc.AcceptPolicy(ctx, userDisabled); err != nil {
+		t.Fatalf("AcceptPolicy userDisabled failed: %v", err)
+	}
+	_, disabledTh, _, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: disabledBoard.ID,
+		GuildID: guildB,
+		UserID:  userDisabled,
+		Title:   "永久スレッド",
+		RawBody: "落ちないはず",
+	})
+	if err != nil {
+		t.Fatalf("CreateThread on DatOchiDisabled board failed: %v", err)
+	}
+	staleFarFuture, err := store.ListStaleThreads(ctx, time.Now().Add(365*24*time.Hour))
+	if err != nil {
+		t.Fatalf("ListStaleThreads failed: %v", err)
+	}
+	for _, st := range staleFarFuture {
+		if st.ID == disabledTh.ID {
+			t.Fatal("DatOchiDisabled thread must never be returned as stale")
+		}
+	}
+
+	// 8. UpdateBoardMountControl only updates active=true mounts and does not overwrite concurrent active=false
+	activeMountID := uuid.New()
+	if err := store.CreateBoardMount(ctx, &bbs.BoardMount{
+		ID:        activeMountID,
+		BoardID:   disabledBoard.ID,
+		GuildID:   guildB,
+		ChannelID: snowflake.ID(555002),
+		Active:    true,
+	}); err != nil {
+		t.Fatalf("CreateBoardMount active failed: %v", err)
+	}
+	ctrlMsg := snowflake.ID(666001)
+	ok, err := store.UpdateBoardMountControl(ctx, activeMountID, &ctrlMsg)
+	if err != nil || !ok {
+		t.Fatalf("expected UpdateBoardMountControl on active mount to succeed, ok=%v err=%v", ok, err)
+	}
+	if err := store.DeactivateBoardMount(ctx, activeMountID); err != nil {
+		t.Fatalf("DeactivateBoardMount failed: %v", err)
+	}
+	ctrlMsg2 := snowflake.ID(666002)
+	ok, err = store.UpdateBoardMountControl(ctx, activeMountID, &ctrlMsg2)
+	if err != nil || ok {
+		t.Fatalf("expected UpdateBoardMountControl on inactive mount to return false without reactivating, ok=%v err=%v", ok, err)
+	}
+	reloadedMount, err := store.GetBoardMount(ctx, activeMountID)
+	if err != nil || reloadedMount.Active || (reloadedMount.ControlMessageID != nil && *reloadedMount.ControlMessageID == ctrlMsg2) {
+		t.Fatalf("inactive mount state unexpectedly overwritten: %+v, err=%v", reloadedMount, err)
+	}
+
+	// 9. ListBans filters out expired bans before applying Limit
+	nowBan := time.Now()
+	expiredAt := nowBan.Add(-1 * time.Hour)
+	futureAt := nowBan.Add(1 * time.Hour)
+	if err := store.CreateBan(ctx, &bbs.Ban{
+		Scope:      bbs.ScopeGlobal,
+		PosterHash: "expired_hash",
+		Reason:     "expired",
+		CreatedBy:  adminID,
+		ExpiresAt:  &expiredAt,
+		CreatedAt:  nowBan.Add(-2 * time.Hour),
+	}); err != nil {
+		t.Fatalf("CreateBan expired failed: %v", err)
+	}
+	if err := store.CreateBan(ctx, &bbs.Ban{
+		Scope:      bbs.ScopeGlobal,
+		PosterHash: "active_hash",
+		Reason:     "active",
+		CreatedBy:  adminID,
+		ExpiresAt:  &futureAt,
+		CreatedAt:  nowBan.Add(-3 * time.Hour),
+	}); err != nil {
+		t.Fatalf("CreateBan active failed: %v", err)
+	}
+	listedBans, err := store.ListBans(ctx, bbs.BanFilter{Limit: 1, Now: nowBan})
+	if err != nil || len(listedBans) != 1 || listedBans[0].PosterHash != "active_hash" {
+		t.Fatalf("expected ListBans(Limit=1) to return active_hash rather than expired ban, got %+v, err=%v", listedBans, err)
+	}
+
+	// 10. CreateThread/CreatePost reject ClearFormat-expanded body exceeding MaxEscapedBodyRunes & check UUIDv7 lock distribution
+	userEscaped := snowflake.ID(33003)
+	userBadMail := snowflake.ID(33004)
+	userGoodMail := snowflake.ID(33005)
+	for _, uid := range []snowflake.ID{userEscaped, userBadMail, userGoodMail} {
+		if _, err := svc.AcceptPolicy(ctx, uid); err != nil {
+			t.Fatalf("AcceptPolicy %d failed: %v", uid, err)
+		}
+	}
+	escapedOver := strings.Repeat("*", 1200) // 1200 raw <= 1800, 2400 escaped > 2200
+	if _, _, _, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: disabledBoard.ID,
+		GuildID: guildB,
+		UserID:  userEscaped,
+		Title:   "エスケープ超過スレ",
+		RawBody: escapedOver,
+	}); !errors.Is(err, bbs.ErrFormattedBodyTooLong) {
+		t.Fatalf("expected ErrFormattedBodyTooLong, got %v", err)
+	}
+	// Reply with valid mail="sage" & 48-char name succeeds; invalid mail rejected before DB write
+	if _, _, _, _, err := svc.CreatePost(ctx, bbs.CreatePostInput{
+		ThreadID: disabledTh.ID,
+		GuildID:  guildB,
+		UserID:   userBadMail,
+		RawName:  strings.Repeat("な", bbs.MaxNameRunes),
+		RawMail:  "age",
+		RawBody:  "テスト",
+	}); !errors.Is(err, bbs.ErrInvalidMail) {
+		t.Fatalf("expected ErrInvalidMail on reply, got %v", err)
+	}
+	_, _, sageReply, _, err := svc.CreatePost(ctx, bbs.CreatePostInput{
+		ThreadID: disabledTh.ID,
+		GuildID:  guildB,
+		UserID:   userGoodMail,
+		RawName:  strings.Repeat("な", bbs.MaxNameRunes),
+		RawMail:  "sage",
+		RawBody:  "テスト>>1",
+	})
+	if err != nil || !sageReply.IsSage {
+		t.Fatalf("expected 48-rune name + sage mail to succeed, got %+v, err=%v", sageReply, err)
 	}
 }

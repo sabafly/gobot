@@ -100,22 +100,6 @@ func buildNewPostModal(locale discord.Locale, mirrorID uuid.UUID) discord.ModalC
 	)
 }
 
-func combineNameAndMail(rawName, rawMail string) string {
-	name := strings.TrimSpace(rawName)
-	mail := strings.TrimSpace(rawMail)
-	if !strings.EqualFold(mail, "sage") {
-		return name
-	}
-	if name == "" {
-		return "sage"
-	}
-	if strings.Contains(name, "#") {
-		before, after, _ := strings.Cut(name, "#")
-		return strings.TrimSpace("!sage "+before) + "#" + after
-	}
-	return "!sage " + name
-}
-
 func (s *System) handleNewThreadButton(e *handler.ComponentEvent) error {
 	loc := e.Locale()
 	mountID, err := uuid.Parse(e.Vars["mount_id"])
@@ -184,9 +168,14 @@ func (s *System) handleNewThreadModal(e *handler.ModalEvent) error {
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, failTitle, i18n.TranslateText(loc, "components.bbs.post_ui.mount_missing_or_inactive")))
 		return nil
 	}
+	if _, err := s.Service.EnsureGuildEnabled(e.Ctx, mount.GuildID); err != nil {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, failTitle, describeBBSError(loc, err)))
+		return nil
+	}
 
 	title := e.Data.Text("title")
-	rawName := combineNameAndMail(e.Data.Text("name"), e.Data.Text("mail"))
+	rawName := e.Data.Text("name")
+	rawMail := e.Data.Text("mail")
 	rawBody := e.Data.Text("body")
 
 	board, thread, firstPost, err := s.Service.CreateThread(e.Ctx, bbscore.CreateThreadInput{
@@ -195,6 +184,7 @@ func (s *System) handleNewThreadModal(e *handler.ModalEvent) error {
 		UserID:  e.User().ID,
 		Title:   title,
 		RawName: rawName,
+		RawMail: rawMail,
 		RawBody: rawBody,
 		Now:     time.Now(),
 	})
@@ -214,7 +204,7 @@ func (s *System) handleNewThreadModal(e *handler.ModalEvent) error {
 				"err":   describeBBSError(loc, syncErr),
 			}),
 			discordsync.ColorNotice,
-		))
+		).WithEphemeral(true))
 		return nil
 	}
 	url := discord.MessageURL(mount.GuildID, threadChID, msgID)
@@ -225,7 +215,7 @@ func (s *System) handleNewThreadModal(e *handler.ModalEvent) error {
 			"url":   url,
 		}),
 		discordsync.ColorLocalBoard,
-	))
+	).WithEphemeral(true))
 	return nil
 }
 
@@ -244,6 +234,14 @@ func (s *System) handleNewPostButton(e *handler.ComponentEvent) error {
 		s.replyComponentError(e,
 			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
 			i18n.TranslateText(loc, "components.bbs.post_ui.mirror_not_found"),
+		)
+		return nil
+	}
+	mount, err := s.Service.Store.GetBoardMount(e.Ctx, mirror.BoardMountID)
+	if err != nil || !mount.Active {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			i18n.TranslateText(loc, "components.bbs.post_ui.mount_missing_or_inactive"),
 		)
 		return nil
 	}
@@ -309,8 +307,14 @@ func (s *System) handleNewPostModal(e *handler.ModalEvent) error {
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, failTitle, i18n.TranslateText(loc, "components.bbs.post_ui.mirror_not_found")))
 		return nil
 	}
+	mount, err := s.Service.Store.GetBoardMount(e.Ctx, mirror.BoardMountID)
+	if err != nil || !mount.Active {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, failTitle, i18n.TranslateText(loc, "components.bbs.post_ui.mount_missing_or_inactive")))
+		return nil
+	}
 
-	rawName := combineNameAndMail(e.Data.Text("name"), e.Data.Text("mail"))
+	rawName := e.Data.Text("name")
+	rawMail := e.Data.Text("mail")
 	rawBody := e.Data.Text("body")
 
 	board, thread, post, backRefs, err := s.Service.CreatePost(e.Ctx, bbscore.CreatePostInput{
@@ -318,6 +322,7 @@ func (s *System) handleNewPostModal(e *handler.ModalEvent) error {
 		GuildID:  mirror.GuildID,
 		UserID:   e.User().ID,
 		RawName:  rawName,
+		RawMail:  rawMail,
 		RawBody:  rawBody,
 		Now:      time.Now(),
 	})
@@ -326,10 +331,7 @@ func (s *System) handleNewPostModal(e *handler.ModalEvent) error {
 		return nil
 	}
 
-	mountLocale := guildLocale(e)
-	if mount, mErr := s.Service.Store.GetBoardMount(e.Ctx, mirror.BoardMountID); mErr == nil {
-		mountLocale = discordsync.ResolveMountLocale(e.Client(), *mount)
-	}
+	mountLocale := discordsync.ResolveMountLocale(e.Client(), *mount)
 	thChID, msgID, syncErr := s.Syncer.PublishPost(e.Ctx, e.Client(), mirror.BoardMountID, *board, *thread, *post, backRefs, mountLocale)
 	if syncErr != nil {
 		slog.Warn("bbs publish post sync failed", "thread_id", thread.ID, "res", post.ResNumber, "err", syncErr)
@@ -337,7 +339,7 @@ func (s *System) handleNewPostModal(e *handler.ModalEvent) error {
 			i18n.TranslateText(loc, "components.bbs.post_ui.post_created_partial_title", map[string]any{"res": post.ResNumber}),
 			i18n.TranslateText(loc, "components.bbs.post_ui.post_created_partial_body", map[string]any{"err": describeBBSError(loc, syncErr)}),
 			discordsync.ColorNotice,
-		))
+		).WithEphemeral(true))
 		return nil
 	}
 	url := discord.MessageURL(mirror.GuildID, thChID, msgID)
@@ -345,7 +347,7 @@ func (s *System) handleNewPostModal(e *handler.ModalEvent) error {
 		i18n.TranslateText(loc, "components.bbs.post_ui.post_created_title", map[string]any{"res": post.ResNumber}),
 		fmt.Sprintf("ID:%s\n%s", post.AnonID, url),
 		discordsync.ColorLocalBoard,
-	))
+	).WithEphemeral(true))
 	return nil
 }
 
@@ -363,6 +365,10 @@ func (s *System) handleBoardThreads(e *handler.ComponentEvent) error {
 	mount, err := s.Service.Store.GetBoardMount(e.Ctx, mountID)
 	if err != nil || !mount.Active {
 		s.replyComponentError(e, fetchFail, i18n.TranslateText(loc, "components.bbs.post_ui.mount_missing_or_inactive"))
+		return nil
+	}
+	if _, err := s.Service.EnsureGuildEnabled(e.Ctx, mount.GuildID); err != nil {
+		s.replyComponentError(e, fetchFail, describeBBSError(loc, err))
 		return nil
 	}
 	board, err := s.Service.GetBoard(e.Ctx, mount.BoardID)
@@ -460,6 +466,13 @@ func (s *System) handleBoardJumpSelect(e *handler.ComponentEvent) error {
 		))
 		return nil
 	}
+	if _, err := s.Service.EnsureGuildEnabled(e.Ctx, mount.GuildID); err != nil {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, err),
+		))
+		return nil
+	}
 	board, err := s.Service.GetBoard(e.Ctx, mount.BoardID)
 	if err != nil {
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, fetchFail, describeBBSError(loc, err)))
@@ -468,6 +481,13 @@ func (s *System) handleBoardJumpSelect(e *handler.ComponentEvent) error {
 	thread, err := s.Service.GetThread(e.Ctx, threadID)
 	if err != nil {
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, fetchFail, describeBBSError(loc, err)))
+		return nil
+	}
+	if thread.BoardID != board.ID {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.errors.unauthorized"),
+		))
 		return nil
 	}
 
@@ -657,7 +677,14 @@ func (s *System) handleReaderJumpModal(e *handler.ModalEvent) error {
 		s.replyModalError(e, renderFail, describeBBSError(loc, err))
 		return nil
 	}
-	target := discordsync.ParseReaderJumpInput(e.Data.Text("target"), thread.ResCount)
+	target, jErr := discordsync.ParseReaderJumpInput(e.Data.Text("target"), thread.ResCount)
+	if jErr != nil {
+		s.replyModalError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			describeBBSError(loc, jErr),
+		)
+		return nil
+	}
 	comps, err := s.renderReaderComponents(e.Ctx, e.GuildID(), threadID, strconv.FormatUint(uint64(target), 10), loc)
 	if err != nil {
 		s.replyModalError(e, renderFail, describeBBSError(loc, err))
@@ -697,12 +724,23 @@ func (s *System) renderReaderComponents(ctx context.Context, guildID *snowflake.
 			if tm, tErr := s.Service.Store.GetThreadMirror(ctx, pm.ThreadMirrorID); tErr == nil {
 				gid := *guildID
 				tid := tm.DiscordThreadID
+				urlCache := make(map[uint32]string)
+				urlMissed := make(map[uint32]bool)
 				resolveURL = func(resNum uint32) (string, bool) {
-					m, mErr := s.Service.Store.GetPostMirrorByResAndGuild(ctx, threadID, resNum, gid)
-					if mErr != nil || m.DiscordMessageID == 0 {
+					if u, ok := urlCache[resNum]; ok {
+						return u, true
+					}
+					if urlMissed[resNum] {
 						return "", false
 					}
-					return discord.MessageURL(gid, tid, m.DiscordMessageID), true
+					m, mErr := s.Service.Store.GetPostMirrorByResAndGuild(ctx, threadID, resNum, gid)
+					if mErr != nil || m.DiscordMessageID == 0 {
+						urlMissed[resNum] = true
+						return "", false
+					}
+					u := discord.MessageURL(gid, tid, m.DiscordMessageID)
+					urlCache[resNum] = u
+					return u, true
 				}
 			}
 		}
@@ -713,8 +751,11 @@ func (s *System) renderReaderComponents(ctx context.Context, guildID *snowflake.
 		startIndex = discordsync.ComputeLatestReaderStartIndex(*thread, posts, resolveURL, locale)
 	} else {
 		n, pErr := strconv.ParseUint(strings.TrimSpace(pageSpec), 10, 32)
-		if pErr == nil && n > 1 {
-			targetRes := uint32(n)
+		if pErr != nil || n == 0 || (len(posts) > 0 && uint32(n) > thread.ResCount) {
+			return nil, bbscore.ErrInvalidReaderJump
+		}
+		targetRes := uint32(n)
+		if len(posts) > 0 && targetRes > 1 {
 			startIndex = len(posts) - 1
 			for i, p := range posts {
 				if p.ResNumber >= targetRes {

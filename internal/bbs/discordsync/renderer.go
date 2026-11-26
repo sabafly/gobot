@@ -95,7 +95,7 @@ func RenderNotice(locale discord.Locale, title string, body string, color int) d
 	if bodyText != "" {
 		comps = append(comps, discord.NewSmallSeparator(), discord.NewTextDisplay(bodyText))
 	}
-	return discord.NewMessageCreateV2(discord.NewContainer(comps...).WithAccentColor(color))
+	return discord.NewMessageCreateV2(discord.NewContainer(comps...).WithAccentColor(color)).WithAllowedMentions(&discord.AllowedMentions{})
 }
 
 // RenderError builds a pure text-based Components V2 ephemeral error message (no emojis).
@@ -199,7 +199,7 @@ func RenderPostHeader(post bbs.Post, threadRules bbs.BoardRules, locale discord.
 	return b.String()
 }
 
-// RenderPostComponents constructs the Components V2 layout for a single post message.
+// RenderPostComponents constructs the Components V2 layout for a single post message without silent truncation.
 func RenderPostComponents(
 	post bbs.Post,
 	thread bbs.Thread,
@@ -216,19 +216,13 @@ func RenderPostComponents(
 		}
 	}
 
-	header = TruncateRunes(header, 400)
 	var extDat string
 	if includeExtDat && post.ResNumber == 1 && thread.ExtDat != "" {
-		extDat = TruncateRunes(thread.ExtDat, 200)
+		extDat = thread.ExtDat
 	}
 
 	maxRes := thread.Rules.Normalize().MaxRes
 	formattedBody := bbs.RenderFormattedBody(post.Body, maxRes, resolveURL)
-	maxBodyAllowed := SafeTextDisplayRunesTotal - utf8.RuneCountInString(header) - utf8.RuneCountInString(extDat) - 40
-	if maxBodyAllowed < 200 {
-		maxBodyAllowed = 200
-	}
-	formattedBody = TruncateRunes(formattedBody, maxBodyAllowed)
 
 	comps := []discord.LayoutComponent{
 		discord.NewTextDisplay(header),
@@ -351,32 +345,86 @@ func RenderArchivedNotice(locale discord.Locale) discord.MessageCreate {
 	).WithAllowedMentions(&discord.AllowedMentions{})
 }
 
-// ParseReaderJumpInput parses user input from the jump modal ("85" or "l10") into a 1-based start res number.
-func ParseReaderJumpInput(input string, totalRes uint32) uint32 {
+// ParseReaderJumpInput strictly parses user input from the jump modal ("85" or "l10") into a 1-based start res number.
+func ParseReaderJumpInput(input string, totalRes uint32) (uint32, error) {
 	if totalRes == 0 {
-		return 1
+		return 0, bbs.ErrInvalidReaderJump
 	}
 	s := strings.ToLower(strings.TrimSpace(input))
+	if s == "" {
+		return 0, bbs.ErrInvalidReaderJump
+	}
 	if strings.HasPrefix(s, "l") {
-		n, err := strconv.ParseUint(strings.TrimPrefix(s, "l"), 10, 32)
-		if err != nil || n == 0 {
-			return 1
+		rest := strings.TrimPrefix(s, "l")
+		if rest == "" {
+			return 0, bbs.ErrInvalidReaderJump
 		}
-		count := uint32(n)
-		if count >= totalRes {
-			return 1
+		n, err := strconv.ParseUint(rest, 10, 32)
+		if err != nil || n == 0 || uint32(n) > totalRes {
+			return 0, bbs.ErrInvalidReaderJump
 		}
-		return totalRes - count + 1
+		return totalRes - uint32(n) + 1, nil
 	}
 	n, err := strconv.ParseUint(s, 10, 32)
-	if err != nil || n == 0 {
-		return 1
+	if err != nil || n == 0 || uint32(n) > totalRes {
+		return 0, bbs.ErrInvalidReaderJump
 	}
-	res := uint32(n)
-	if res > totalRes {
-		return totalRes
+	return uint32(n), nil
+}
+
+type readerPostRendered struct {
+	header    string
+	body      string
+	mediaURLs []string
+	runes     int
+}
+
+func buildReaderPostRendered(
+	p bbs.Post,
+	thread bbs.Thread,
+	aboneBody string,
+	maxRes uint32,
+	resolveURL func(resNum uint32) (string, bool),
+	locale discord.Locale,
+) readerPostRendered {
+	header := RenderPostHeader(p, thread.Rules, locale)
+	body := aboneBody
+	var mediaURLs []string
+	if !p.Abone {
+		body = bbs.RenderFormattedBody(p.Body, maxRes, resolveURL)
+		mediaURLs = bbs.ExtractMediaURLs(p.Body)
 	}
-	return res
+	return readerPostRendered{
+		header:    header,
+		body:      body,
+		mediaURLs: mediaURLs,
+		runes:     utf8.RuneCountInString(header) + utf8.RuneCountInString(body),
+	}
+}
+
+func forwardPackEnd(rendered []*readerPostRendered, titleRunes int, startIdx int) int {
+	usedRunes := titleRunes
+	usedComponents := 3 // outer container + titleLine + top separator
+	endIdx := startIdx
+	for i := startIdx; i < len(rendered); i++ {
+		rp := rendered[i]
+		shown := i - startIdx
+		baseComps := 2
+		if shown > 0 {
+			baseComps = 3
+		}
+		totalComps := baseComps
+		if len(rp.mediaURLs) > 0 {
+			totalComps++
+		}
+		if shown > 0 && (usedRunes+rp.runes > SafeReaderTextDisplayRunes || usedComponents+totalComps > SafeReaderMaxComponents) {
+			break
+		}
+		usedRunes += rp.runes
+		usedComponents += totalComps
+		endIdx = i
+	}
+	return endIdx
 }
 
 // RenderReaderPage packs posts dynamically into a single ephemeral read.cgi view
@@ -407,13 +455,12 @@ func RenderReaderPage(
 	}
 
 	usedRunes := utf8.RuneCountInString(titleLine)
-	usedComponents := 2 // outer container + titleLine
+	usedComponents := 3 // outer container + titleLine + separator
 
 	subComps := []discord.ContainerSubComponent{
 		discord.NewTextDisplay(titleLine),
 		discord.NewSmallSeparator(),
 	}
-	usedComponents++ // separator
 
 	aboneBody := i18n.TranslateText(locale, "components.bbs.post.abone_body")
 	startRes = posts[startIndex].ResNumber
@@ -423,39 +470,17 @@ func RenderReaderPage(
 
 	for i := startIndex; i < len(posts); i++ {
 		p := posts[i]
-		header := RenderPostHeader(p, thread.Rules, locale)
-		body := aboneBody
-		var mediaURLs []string
-		if !p.Abone {
-			body = bbs.RenderFormattedBody(p.Body, maxRes, resolveURL)
-			mediaURLs = bbs.ExtractMediaURLs(p.Body)
-		}
+		rp := buildReaderPostRendered(p, thread, aboneBody, maxRes, resolveURL, locale)
 
-		if shownCount == 0 {
-			budget := SafeReaderTextDisplayRunes - usedRunes - utf8.RuneCountInString(header) - 40
-			if budget < 200 {
-				budget = 200
-			}
-			body = TruncateRunes(body, budget)
+		baseComps := 2
+		if shownCount > 0 {
+			baseComps = 3
 		}
-
-		postRunes := utf8.RuneCountInString(header) + utf8.RuneCountInString(body)
-		postCompCount := 3 // separator + header + body
-		if len(mediaURLs) > 0 && shownCount == 0 {
-			if usedComponents+postCompCount+1 <= SafeReaderMaxComponents {
-				postCompCount++
-			} else {
-				mediaURLs = nil
-			}
-		} else if len(mediaURLs) > 0 {
-			if usedComponents+postCompCount+1 <= SafeReaderMaxComponents {
-				postCompCount++
-			} else {
-				mediaURLs = nil
-			}
+		totalComps := baseComps
+		if len(rp.mediaURLs) > 0 {
+			totalComps++
 		}
-
-		if shownCount > 0 && (usedRunes+postRunes > SafeReaderTextDisplayRunes || usedComponents+postCompCount > SafeReaderMaxComponents) {
+		if shownCount > 0 && (usedRunes+rp.runes > SafeReaderTextDisplayRunes || usedComponents+totalComps > SafeReaderMaxComponents) {
 			break
 		}
 
@@ -463,13 +488,13 @@ func RenderReaderPage(
 			subComps = append(subComps, discord.NewSmallSeparator())
 			usedComponents++
 		}
-		subComps = append(subComps, discord.NewTextDisplay(header), discord.NewTextDisplay(body))
-		usedRunes += postRunes
+		subComps = append(subComps, discord.NewTextDisplay(rp.header), discord.NewTextDisplay(rp.body))
+		usedRunes += rp.runes
 		usedComponents += 2
 
-		if len(mediaURLs) > 0 {
-			items := make([]discord.MediaGalleryItem, 0, len(mediaURLs))
-			for _, u := range mediaURLs {
+		if len(rp.mediaURLs) > 0 {
+			items := make([]discord.MediaGalleryItem, 0, len(rp.mediaURLs))
+			for _, u := range rp.mediaURLs {
 				items = append(items, discord.MediaGalleryItem{Media: discord.UnfurledMediaItem{URL: u}})
 			}
 			subComps = append(subComps, discord.NewMediaGallery(items...))
@@ -538,44 +563,26 @@ func computeBackwardStartIndex(
 		"title": TruncateRunes(bbs.ClearFormat(thread.Title), 80),
 		"count": thread.ResCount,
 	})
+	titleRunes := utf8.RuneCountInString(titleLine)
 	aboneBody := i18n.TranslateText(locale, "components.bbs.post.abone_body")
-	usedRunes := utf8.RuneCountInString(titleLine)
-	usedComponents := 3
 	maxRes := thread.Rules.Normalize().MaxRes
 
-	startIdx := targetEndIdx
-	for i := targetEndIdx; i >= 0; i-- {
-		p := posts[i]
-		header := RenderPostHeader(p, thread.Rules, locale)
-		body := aboneBody
-		var mediaURLs []string
-		if !p.Abone {
-			body = bbs.RenderFormattedBody(p.Body, maxRes, resolveURL)
-			mediaURLs = bbs.ExtractMediaURLs(p.Body)
+	rendered := make([]*readerPostRendered, targetEndIdx+1)
+	best := targetEndIdx
+	for cand := targetEndIdx; cand >= 0; cand-- {
+		if rendered[cand] == nil {
+			rp := buildReaderPostRendered(posts[cand], thread, aboneBody, maxRes, resolveURL, locale)
+			rendered[cand] = &rp
 		}
-		if i == targetEndIdx {
-			budget := SafeReaderTextDisplayRunes - usedRunes - utf8.RuneCountInString(header) - 40
-			if budget < 200 {
-				budget = 200
-			}
-			body = TruncateRunes(body, budget)
-		}
-		postRunes := utf8.RuneCountInString(header) + utf8.RuneCountInString(body)
-		postComps := 3
-		if len(mediaURLs) > 0 && usedComponents+postComps+1 <= SafeReaderMaxComponents {
-			postComps++
-		}
-		if i < targetEndIdx && (usedRunes+postRunes > SafeReaderTextDisplayRunes || usedComponents+postComps > SafeReaderMaxComponents) {
+		if forwardPackEnd(rendered, titleRunes, cand) < targetEndIdx {
 			break
 		}
-		usedRunes += postRunes
-		usedComponents += postComps
-		startIdx = i
+		best = cand
 	}
-	return startIdx
+	return best
 }
 
-// RenderConsentGate builds the ephemeral policy consent UI (zero emojis).
+// RenderConsentGate builds the ephemeral policy consent UI (zero emojis) with version-bound button CustomID.
 func RenderConsentGate(pm *bbs.PolicyManager, locale discord.Locale, actionToken string) discord.MessageCreate {
 	title := i18n.TranslateText(locale, "components.bbs.consent.title")
 	summary := i18n.TranslateText(locale, "components.bbs.consent.summary")
@@ -617,8 +624,9 @@ func RenderConsentGate(pm *bbs.PolicyManager, locale discord.Locale, actionToken
 	if len(urlButtons) > 0 {
 		subComps = append(subComps, discord.NewActionRow(urlButtons...))
 	}
+	verTok := bbs.PolicyVersionToken(pm.CurrentVersion)
 	subComps = append(subComps, discord.NewActionRow(
-		discord.NewSuccessButton(acceptLabel, fmt.Sprintf("/bbs/consent/accept/%s", actionToken)),
+		discord.NewSuccessButton(acceptLabel, fmt.Sprintf("/bbs/consent/accept/%s/%s", verTok, actionToken)),
 	))
 
 	return discord.NewMessageCreateV2(
@@ -626,7 +634,7 @@ func RenderConsentGate(pm *bbs.PolicyManager, locale discord.Locale, actionToken
 	).WithEphemeral(true).WithAllowedMentions(&discord.AllowedMentions{})
 }
 
-// RenderRoleGatePanel builds the public guild role-gate panel (placed by admins in /bbs setup).
+// RenderRoleGatePanel builds the public guild role-gate panel (placed by admins in /bbs setup) with version-bound CustomID.
 func RenderRoleGatePanel(guildID snowflake.ID, roleID snowflake.ID, version string, locale discord.Locale) discord.MessageCreate {
 	title := i18n.TranslateText(locale, "components.bbs.role_gate.title")
 	desc := i18n.TranslateText(locale, "components.bbs.role_gate.desc", map[string]any{"version": version})
@@ -636,6 +644,7 @@ func RenderRoleGatePanel(guildID snowflake.ID, roleID snowflake.ID, version stri
 	guideBtn := TruncateRunes(i18n.TranslateText(locale, "components.bbs.consent.btn.guidelines"), MaxButtonLabelRunes)
 	privacyBtn := TruncateRunes(i18n.TranslateText(locale, "components.bbs.consent.btn.privacy"), MaxButtonLabelRunes)
 
+	verTok := bbs.PolicyVersionToken(version)
 	return discord.NewMessageCreateV2(
 		discord.NewContainer(
 			discord.NewTextDisplay(title),
@@ -644,7 +653,7 @@ func RenderRoleGatePanel(guildID snowflake.ID, roleID snowflake.ID, version stri
 			discord.NewTextDisplay(hint),
 			discord.NewLargeSeparator(),
 			discord.NewActionRow(
-				discord.NewPrimaryButton(grantBtn, fmt.Sprintf("/bbs/consent/role/%d", guildID)),
+				discord.NewPrimaryButton(grantBtn, fmt.Sprintf("/bbs/consent/role/%d/%s", guildID, verTok)),
 				discord.NewSecondaryButton(termsBtn, "/bbs/consent/view/terms"),
 				discord.NewSecondaryButton(guideBtn, "/bbs/consent/view/guidelines"),
 				discord.NewSecondaryButton(privacyBtn, "/bbs/consent/view/privacy"),

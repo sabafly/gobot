@@ -112,177 +112,160 @@ func TruncateRunes(s string, maxRunes int) string {
 // PayloadValidator enforces Discord API component, modal, and command constraints before REST calls.
 type PayloadValidator struct{}
 
-// ValidateAndClampMessageCreate verifies and normalizes a MessageCreate payload against Discord limits.
-func (v PayloadValidator) ValidateAndClampMessageCreate(mc discord.MessageCreate) (discord.MessageCreate, error) {
+// ValidateMessageCreate strictly verifies a MessageCreate payload against Discord limits without mutating it.
+func (v PayloadValidator) ValidateMessageCreate(mc discord.MessageCreate) error {
 	if mc.Flags.Has(discord.MessageFlagIsComponentsV2) {
-		mc.Content = ""
-		mc.Embeds = nil
-		mc.StickerIDs = nil
-		mc.Poll = nil
-
-		validated, totalCount, totalTextRunes, err := validateLayoutComponents(mc.Components)
+		if mc.Content != "" || len(mc.Embeds) > 0 || len(mc.StickerIDs) > 0 || mc.Poll != nil {
+			return errors.New("components v2 message cannot include legacy content, embeds, stickers, or poll")
+		}
+		totalCount, totalTextRunes, err := validateLayoutComponents(mc.Components)
 		if err != nil {
-			return mc, err
+			return err
 		}
 		if totalCount == 0 {
-			return mc, errors.New("components v2 message must include at least 1 component")
+			return errors.New("components v2 message must include at least 1 component")
 		}
 		if totalCount > MaxComponentsPerMessage {
-			return mc, fmt.Errorf("components v2 total component count %d exceeds %d", totalCount, MaxComponentsPerMessage)
+			return fmt.Errorf("components v2 total component count %d exceeds %d", totalCount, MaxComponentsPerMessage)
 		}
 		if totalTextRunes > MaxTextDisplayRunesTotal {
-			return mc, fmt.Errorf("components v2 text display total runes %d exceeds %d", totalTextRunes, MaxTextDisplayRunesTotal)
+			return fmt.Errorf("components v2 text display total runes %d exceeds %d", totalTextRunes, MaxTextDisplayRunesTotal)
 		}
-		mc.Components = validated
+		return nil
 	}
-	return mc, nil
+	if utf8.RuneCountInString(mc.Content) > 2000 {
+		return fmt.Errorf("message content length %d exceeds 2000", utf8.RuneCountInString(mc.Content))
+	}
+	return nil
 }
 
-// ValidateAndClampMessageUpdate verifies and normalizes a MessageUpdate payload against Discord limits.
-func (v PayloadValidator) ValidateAndClampMessageUpdate(mu discord.MessageUpdate, isV2 bool) (discord.MessageUpdate, error) {
+// ValidateMessageUpdate strictly verifies a MessageUpdate payload against Discord limits without mutating it.
+func (v PayloadValidator) ValidateMessageUpdate(mu discord.MessageUpdate, isV2 bool) error {
 	if isV2 {
-		flags := discord.MessageFlagIsComponentsV2
-		if mu.Flags != nil {
-			flags = mu.Flags.Add(discord.MessageFlagIsComponentsV2)
+		if mu.Flags == nil || !mu.Flags.Has(discord.MessageFlagIsComponentsV2) {
+			return errors.New("components v2 message update must include IS_COMPONENTS_V2 flag")
 		}
-		mu.Flags = &flags
-		mu.Content = nil
-		mu.Embeds = nil
+		if mu.Content != nil || mu.Embeds != nil {
+			return errors.New("components v2 message update cannot include legacy content or embeds")
+		}
 		if mu.Components != nil {
-			validated, totalCount, totalTextRunes, err := validateLayoutComponents(*mu.Components)
+			totalCount, totalTextRunes, err := validateLayoutComponents(*mu.Components)
 			if err != nil {
-				return mu, err
+				return err
 			}
 			if totalCount == 0 {
-				return mu, errors.New("components v2 message must include at least 1 component")
+				return errors.New("components v2 message must include at least 1 component")
 			}
 			if totalCount > MaxComponentsPerMessage {
-				return mu, fmt.Errorf("components v2 total component count %d exceeds %d", totalCount, MaxComponentsPerMessage)
+				return fmt.Errorf("components v2 total component count %d exceeds %d", totalCount, MaxComponentsPerMessage)
 			}
 			if totalTextRunes > MaxTextDisplayRunesTotal {
-				return mu, fmt.Errorf("components v2 text display total runes %d exceeds %d", totalTextRunes, MaxTextDisplayRunesTotal)
+				return fmt.Errorf("components v2 text display total runes %d exceeds %d", totalTextRunes, MaxTextDisplayRunesTotal)
 			}
-			mu.Components = &validated
 		}
+		return nil
 	}
-	return mu, nil
+	if mu.Content != nil && utf8.RuneCountInString(*mu.Content) > 2000 {
+		return fmt.Errorf("message content length %d exceeds 2000", utf8.RuneCountInString(*mu.Content))
+	}
+	return nil
 }
 
-func validateLayoutComponents(list []discord.LayoutComponent) ([]discord.LayoutComponent, int, int, error) {
-	out := make([]discord.LayoutComponent, 0, len(list))
+func validateLayoutComponents(list []discord.LayoutComponent) (int, int, error) {
 	totalCount := 0
 	totalTextRunes := 0
 
 	for _, comp := range list {
 		if comp == nil {
-			continue
+			return 0, 0, errors.New("nil layout component is not allowed")
 		}
 		switch c := comp.(type) {
 		case discord.TextDisplayComponent:
 			if strings.TrimSpace(c.Content) == "" {
-				return nil, 0, 0, errors.New("empty text display component is not allowed")
+				return 0, 0, errors.New("empty text display component is not allowed")
 			}
 			totalCount++
 			totalTextRunes += utf8.RuneCountInString(c.Content)
-			out = append(out, c)
 
 		case discord.SeparatorComponent:
 			totalCount++
-			out = append(out, c)
 
 		case discord.MediaGalleryComponent:
 			if len(c.Items) == 0 {
-				continue
+				return 0, 0, errors.New("empty media gallery component is not allowed")
 			}
-			items := make([]discord.MediaGalleryItem, 0, min(len(c.Items), MaxMediaGalleryItems))
+			if len(c.Items) > MaxMediaGalleryItems {
+				return 0, 0, fmt.Errorf("media gallery items %d exceeds %d", len(c.Items), MaxMediaGalleryItems)
+			}
 			for _, it := range c.Items {
-				if len(items) >= MaxMediaGalleryItems {
-					break
-				}
 				u, err := url.Parse(it.Media.URL)
 				if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-					continue
+					return 0, 0, fmt.Errorf("invalid media gallery URL: %q", it.Media.URL)
 				}
-				it.Description = TruncateRunes(it.Description, MaxMediaDescriptionRunes)
-				items = append(items, it)
+				if utf8.RuneCountInString(it.Description) > MaxMediaDescriptionRunes {
+					return 0, 0, fmt.Errorf("media gallery description exceeds %d chars", MaxMediaDescriptionRunes)
+				}
 			}
-			if len(items) == 0 {
-				continue
-			}
-			c.Items = items
 			totalCount++
-			out = append(out, c)
 
 		case discord.ActionRowComponent:
-			row, rowCount, err := validateActionRow(c)
+			rowCount, err := validateActionRow(c)
 			if err != nil {
-				return nil, 0, 0, err
-			}
-			if rowCount == 0 {
-				continue
+				return 0, 0, err
 			}
 			totalCount += rowCount
-			out = append(out, row)
 
 		case discord.SectionComponent:
-			sec, cnt, runes, err := validateSection(c)
+			cnt, runes, err := validateSection(c)
 			if err != nil {
-				return nil, 0, 0, err
+				return 0, 0, err
 			}
 			totalCount += cnt
 			totalTextRunes += runes
-			out = append(out, sec)
 
 		case discord.ContainerComponent:
-			cont, cnt, runes, err := validateContainer(c)
+			cnt, runes, err := validateContainer(c)
 			if err != nil {
-				return nil, 0, 0, err
-			}
-			if cnt == 0 {
-				continue
+				return 0, 0, err
 			}
 			totalCount += cnt
 			totalTextRunes += runes
-			out = append(out, cont)
 
 		default:
 			totalCount++
-			out = append(out, comp)
 		}
 	}
-	return out, totalCount, totalTextRunes, nil
+	return totalCount, totalTextRunes, nil
 }
 
-func validateContainer(c discord.ContainerComponent) (discord.ContainerComponent, int, int, error) {
+func validateContainer(c discord.ContainerComponent) (int, int, error) {
+	if len(c.Components) == 0 {
+		return 0, 0, errors.New("empty container component is not allowed")
+	}
 	subLayout := make([]discord.LayoutComponent, 0, len(c.Components))
 	for _, sub := range c.Components {
-		if lc, ok := sub.(discord.LayoutComponent); ok {
-			subLayout = append(subLayout, lc)
+		lc, ok := sub.(discord.LayoutComponent)
+		if !ok {
+			return 0, 0, errors.New("unsupported container subcomponent")
 		}
+		subLayout = append(subLayout, lc)
 	}
-	validated, subCount, subRunes, err := validateLayoutComponents(subLayout)
+	subCount, subRunes, err := validateLayoutComponents(subLayout)
 	if err != nil {
-		return c, 0, 0, err
+		return 0, 0, err
 	}
 	if subCount == 0 {
-		return c, 0, 0, nil
+		return 0, 0, errors.New("empty container component is not allowed")
 	}
-	children := make([]discord.ContainerSubComponent, 0, len(validated))
-	for _, lc := range validated {
-		if sc, ok := lc.(discord.ContainerSubComponent); ok {
-			children = append(children, sc)
-		}
-	}
-	c.Components = children
-	return c, 1 + subCount, subRunes, nil
+	return 1 + subCount, subRunes, nil
 }
 
-func validateSection(s discord.SectionComponent) (discord.SectionComponent, int, int, error) {
+func validateSection(s discord.SectionComponent) (int, int, error) {
 	if len(s.Components) == 0 || len(s.Components) > 3 {
-		return s, 0, 0, fmt.Errorf("section must have 1-3 child components, got %d", len(s.Components))
+		return 0, 0, fmt.Errorf("section must have 1-3 child components, got %d", len(s.Components))
 	}
 	if s.Accessory == nil {
-		return s, 0, 0, errors.New("section accessory cannot be nil")
+		return 0, 0, errors.New("section accessory cannot be nil")
 	}
 	cnt := 1
 	runes := 0
@@ -293,208 +276,211 @@ func validateSection(s discord.SectionComponent) (discord.SectionComponent, int,
 			continue
 		}
 		if strings.TrimSpace(td.Content) == "" {
-			return s, 0, 0, errors.New("section text display cannot be empty")
+			return 0, 0, errors.New("section text display cannot be empty")
 		}
 		cnt++
 		runes += utf8.RuneCountInString(td.Content)
 	}
 	if btn, ok := s.Accessory.(discord.ButtonComponent); ok {
-		b, err := validateButton(btn)
-		if err != nil {
-			return s, 0, 0, err
+		if err := validateButton(btn); err != nil {
+			return 0, 0, err
 		}
-		s.Accessory = b
 	}
 	cnt++
-	return s, cnt, runes, nil
+	return cnt, runes, nil
 }
 
-func validateActionRow(row discord.ActionRowComponent) (discord.ActionRowComponent, int, error) {
+func validateActionRow(row discord.ActionRowComponent) (int, error) {
 	if len(row.Components) == 0 {
-		return row, 0, nil
+		return 0, errors.New("empty action row component is not allowed")
 	}
-	out := make([]discord.InteractiveComponent, 0, len(row.Components))
+	if len(row.Components) > MaxActionRowButtons {
+		return 0, fmt.Errorf("action row components %d exceeds max %d", len(row.Components), MaxActionRowButtons)
+	}
 	for _, ic := range row.Components {
 		switch item := ic.(type) {
 		case discord.ButtonComponent:
-			if len(out) >= MaxActionRowButtons {
-				break
+			if err := validateButton(item); err != nil {
+				return 0, err
 			}
-			b, err := validateButton(item)
-			if err != nil {
-				return row, 0, err
-			}
-			out = append(out, b)
 
 		case discord.StringSelectMenuComponent:
 			if len(row.Components) > 1 {
-				return row, 0, errors.New("select menu must be the only component in an action row")
+				return 0, errors.New("select menu must be the only component in an action row")
 			}
-			sel, err := validateStringSelect(item, false)
-			if err != nil {
-				return row, 0, err
+			if err := validateStringSelect(item, false); err != nil {
+				return 0, err
 			}
-			out = append(out, sel)
 
 		default:
-			out = append(out, ic)
+			if len(row.Components) > 1 {
+				return 0, errors.New("select menu must be the only component in an action row")
+			}
 		}
 	}
-	row.Components = out
-	return row, 1 + len(out), nil
+	return 1 + len(row.Components), nil
 }
 
-func validateButton(b discord.ButtonComponent) (discord.ButtonComponent, error) {
+func validateButton(b discord.ButtonComponent) error {
 	if b.Style != discord.ButtonStylePremium {
-		b.Label = TruncateRunes(strings.TrimSpace(b.Label), MaxButtonLabelRunes)
-		if b.Label == "" && b.Emoji == nil {
-			return b, errors.New("button must have a non-empty label")
+		if strings.TrimSpace(b.Label) == "" && b.Emoji == nil {
+			return errors.New("button must have a non-empty label")
+		}
+		if utf8.RuneCountInString(b.Label) > MaxButtonLabelRunes {
+			return fmt.Errorf("button label length exceeds %d chars", MaxButtonLabelRunes)
 		}
 	}
 	if b.Style == discord.ButtonStyleLink {
-		b.CustomID = ""
+		if b.CustomID != "" {
+			return errors.New("link button cannot specify custom_id")
+		}
 		u, err := url.Parse(b.URL)
 		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-			return b, fmt.Errorf("invalid link button URL: %q", b.URL)
+			return fmt.Errorf("invalid link button URL: %q", b.URL)
 		}
 		if utf8.RuneCountInString(b.URL) > MaxButtonURLRunes {
-			return b, fmt.Errorf("link button URL exceeds %d chars", MaxButtonURLRunes)
+			return fmt.Errorf("link button URL exceeds %d chars", MaxButtonURLRunes)
 		}
 	} else if b.Style != discord.ButtonStylePremium {
-		b.URL = ""
+		if b.URL != "" {
+			return errors.New("non-link button cannot specify url")
+		}
 		if b.CustomID == "" || utf8.RuneCountInString(b.CustomID) > MaxCustomIDRunes {
-			return b, fmt.Errorf("button custom_id length must be 1-%d chars: %q", MaxCustomIDRunes, b.CustomID)
+			return fmt.Errorf("button custom_id length must be 1-%d chars: %q", MaxCustomIDRunes, b.CustomID)
 		}
 	}
-	return b, nil
+	return nil
 }
 
-func validateStringSelect(sel discord.StringSelectMenuComponent, inModal bool) (discord.StringSelectMenuComponent, error) {
+func validateStringSelect(sel discord.StringSelectMenuComponent, inModal bool) error {
 	if sel.CustomID == "" || utf8.RuneCountInString(sel.CustomID) > MaxCustomIDRunes {
-		return sel, fmt.Errorf("select custom_id must be 1-%d chars", MaxCustomIDRunes)
+		return fmt.Errorf("select custom_id must be 1-%d chars", MaxCustomIDRunes)
 	}
 	if inModal && sel.Disabled {
-		return sel, errors.New("disabled components are not allowed in modals")
+		return errors.New("disabled components are not allowed in modals")
 	}
-	if len(sel.Options) == 0 {
-		return sel, errors.New("string select menu must have at least 1 option")
-	}
-	if len(sel.Options) > MaxSelectOptions {
-		sel.Options = sel.Options[:MaxSelectOptions]
+	if len(sel.Options) == 0 || len(sel.Options) > MaxSelectOptions {
+		return fmt.Errorf("string select menu must have 1-%d options, got %d", MaxSelectOptions, len(sel.Options))
 	}
 	seenVal := make(map[string]struct{}, len(sel.Options))
-	opts := make([]discord.StringSelectMenuOption, 0, len(sel.Options))
 	for _, opt := range sel.Options {
-		opt.Label = TruncateRunes(strings.TrimSpace(opt.Label), MaxSelectTextRunes)
-		opt.Value = TruncateRunes(strings.TrimSpace(opt.Value), MaxSelectTextRunes)
-		opt.Description = TruncateRunes(strings.TrimSpace(opt.Description), MaxSelectTextRunes)
-		if opt.Label == "" || opt.Value == "" {
-			return sel, errors.New("string select option label and value cannot be empty")
+		if strings.TrimSpace(opt.Label) == "" || strings.TrimSpace(opt.Value) == "" {
+			return errors.New("string select option label and value cannot be empty")
+		}
+		if utf8.RuneCountInString(opt.Label) > MaxSelectTextRunes {
+			return fmt.Errorf("string select option label exceeds %d chars", MaxSelectTextRunes)
+		}
+		if utf8.RuneCountInString(opt.Value) > MaxSelectTextRunes {
+			return fmt.Errorf("string select option value exceeds %d chars", MaxSelectTextRunes)
+		}
+		if utf8.RuneCountInString(opt.Description) > MaxSelectTextRunes {
+			return fmt.Errorf("string select option description exceeds %d chars", MaxSelectTextRunes)
 		}
 		if _, dup := seenVal[opt.Value]; dup {
-			return sel, fmt.Errorf("duplicate string select option value: %q", opt.Value)
+			return fmt.Errorf("duplicate string select option value: %q", opt.Value)
 		}
 		seenVal[opt.Value] = struct{}{}
-		opts = append(opts, opt)
 	}
-	sel.Options = opts
-	sel.Placeholder = TruncateRunes(sel.Placeholder, MaxSelectPlaceholderRunes)
-	if sel.MaxValues > len(opts) {
-		sel.MaxValues = len(opts)
+	if utf8.RuneCountInString(sel.Placeholder) > MaxSelectPlaceholderRunes {
+		return fmt.Errorf("string select placeholder exceeds %d chars", MaxSelectPlaceholderRunes)
 	}
-	if sel.MinValues != nil && *sel.MinValues > len(opts) {
-		v := len(opts)
-		sel.MinValues = &v
+	if sel.MaxValues < 0 || sel.MaxValues > len(sel.Options) {
+		return fmt.Errorf("string select max_values %d exceeds options len %d", sel.MaxValues, len(sel.Options))
 	}
-	return sel, nil
+	if sel.MinValues != nil {
+		if *sel.MinValues < 0 || *sel.MinValues > len(sel.Options) {
+			return fmt.Errorf("string select min_values %d out of range", *sel.MinValues)
+		}
+		if sel.MaxValues > 0 && *sel.MinValues > sel.MaxValues {
+			return fmt.Errorf("string select min_values %d exceeds max_values %d", *sel.MinValues, sel.MaxValues)
+		}
+	}
+	return nil
 }
 
-// ValidateModal checks Discord Modal constraints (<= 45 title/label, <= 5 labels, no disabled fields).
-func (v PayloadValidator) ValidateModal(m discord.ModalCreate) (discord.ModalCreate, error) {
-	m.Title = TruncateRunes(strings.TrimSpace(m.Title), MaxModalTitleRunes)
-	if m.Title == "" {
-		return m, errors.New("modal title cannot be empty")
+// ValidateModal strictly verifies Discord Modal constraints without mutating the payload.
+func (v PayloadValidator) ValidateModal(m discord.ModalCreate) error {
+	if strings.TrimSpace(m.Title) == "" || utf8.RuneCountInString(m.Title) > MaxModalTitleRunes {
+		return fmt.Errorf("modal title must be 1-%d chars", MaxModalTitleRunes)
 	}
 	if m.CustomID == "" || utf8.RuneCountInString(m.CustomID) > MaxCustomIDRunes {
-		return m, fmt.Errorf("modal custom_id must be 1-%d chars", MaxCustomIDRunes)
+		return fmt.Errorf("modal custom_id must be 1-%d chars", MaxCustomIDRunes)
 	}
 	if len(m.Components) == 0 || len(m.Components) > MaxModalLabels {
-		return m, fmt.Errorf("modal must have 1-%d components, got %d", MaxModalLabels, len(m.Components))
+		return fmt.Errorf("modal must have 1-%d components, got %d", MaxModalLabels, len(m.Components))
 	}
 
-	out := make([]discord.LayoutComponent, 0, len(m.Components))
 	totalTextRunes := 0
 	for _, comp := range m.Components {
 		switch c := comp.(type) {
 		case discord.LabelComponent:
-			c.Label = TruncateRunes(strings.TrimSpace(c.Label), MaxLabelTextRunes)
-			if c.Label == "" {
-				return m, errors.New("modal label text cannot be empty")
+			if strings.TrimSpace(c.Label) == "" || utf8.RuneCountInString(c.Label) > MaxLabelTextRunes {
+				return fmt.Errorf("modal label text must be 1-%d chars", MaxLabelTextRunes)
 			}
-			c.Description = TruncateRunes(strings.TrimSpace(c.Description), MaxLabelDescriptionRunes)
+			if utf8.RuneCountInString(c.Description) > MaxLabelDescriptionRunes {
+				return fmt.Errorf("modal label description exceeds %d chars", MaxLabelDescriptionRunes)
+			}
 			switch sub := c.Component.(type) {
 			case discord.TextInputComponent:
 				if sub.CustomID == "" || utf8.RuneCountInString(sub.CustomID) > MaxCustomIDRunes {
-					return m, fmt.Errorf("text input custom_id must be 1-%d chars", MaxCustomIDRunes)
+					return fmt.Errorf("text input custom_id must be 1-%d chars", MaxCustomIDRunes)
 				}
-				sub.Placeholder = TruncateRunes(sub.Placeholder, MaxTextInputPlaceholder)
-				if sub.MaxLength <= 0 || sub.MaxLength > MaxTextInputLength {
-					sub.MaxLength = MaxTextInputLength
+				if utf8.RuneCountInString(sub.Placeholder) > MaxTextInputPlaceholder {
+					return fmt.Errorf("text input placeholder exceeds %d chars", MaxTextInputPlaceholder)
+				}
+				if sub.MaxLength < 0 || sub.MaxLength > MaxTextInputLength {
+					return fmt.Errorf("text input max_length %d out of range", sub.MaxLength)
+				}
+				effectiveMax := sub.MaxLength
+				if effectiveMax == 0 {
+					effectiveMax = MaxTextInputLength
 				}
 				if sub.MinLength != nil {
-					if *sub.MinLength < 0 || *sub.MinLength > sub.MaxLength {
-						return m, fmt.Errorf("text input min_length %d invalid for max_length %d", *sub.MinLength, sub.MaxLength)
+					if *sub.MinLength < 0 || *sub.MinLength > effectiveMax {
+						return fmt.Errorf("text input min_length %d invalid for max_length %d", *sub.MinLength, effectiveMax)
 					}
 				}
 				if sub.Value != "" {
 					valRunes := utf8.RuneCountInString(sub.Value)
-					if valRunes > sub.MaxLength {
-						sub.Value = TruncateRunes(sub.Value, sub.MaxLength)
+					if valRunes > effectiveMax {
+						return fmt.Errorf("text input pre-filled value %d exceeds max_length %d", valRunes, effectiveMax)
 					}
-					if sub.MinLength != nil && utf8.RuneCountInString(sub.Value) < *sub.MinLength {
-						return m, errors.New("text input pre-filled value is shorter than min_length")
+					if sub.MinLength != nil && valRunes < *sub.MinLength {
+						return errors.New("text input pre-filled value is shorter than min_length")
 					}
 				}
-				c.Component = sub
 			case discord.StringSelectMenuComponent:
-				sel, err := validateStringSelect(sub, true)
-				if err != nil {
-					return m, err
+				if err := validateStringSelect(sub, true); err != nil {
+					return err
 				}
-				c.Component = sel
 			case discord.UserSelectMenuComponent:
 				if sub.Disabled {
-					return m, errors.New("disabled components are not allowed in modals")
+					return errors.New("disabled components are not allowed in modals")
 				}
 			case discord.RoleSelectMenuComponent:
 				if sub.Disabled {
-					return m, errors.New("disabled components are not allowed in modals")
+					return errors.New("disabled components are not allowed in modals")
 				}
 			case discord.MentionableSelectMenuComponent:
 				if sub.Disabled {
-					return m, errors.New("disabled components are not allowed in modals")
+					return errors.New("disabled components are not allowed in modals")
 				}
 			case discord.ChannelSelectMenuComponent:
 				if sub.Disabled {
-					return m, errors.New("disabled components are not allowed in modals")
+					return errors.New("disabled components are not allowed in modals")
 				}
 			}
-			out = append(out, c)
 		case discord.TextDisplayComponent:
 			if strings.TrimSpace(c.Content) == "" {
-				return m, errors.New("modal text display cannot be empty")
+				return errors.New("modal text display cannot be empty")
 			}
 			totalTextRunes += utf8.RuneCountInString(c.Content)
 			if totalTextRunes > MaxTextDisplayRunesTotal {
-				return m, fmt.Errorf("modal text display total runes %d exceeds %d", totalTextRunes, MaxTextDisplayRunesTotal)
+				return fmt.Errorf("modal text display total runes %d exceeds %d", totalTextRunes, MaxTextDisplayRunesTotal)
 			}
-			out = append(out, c)
-		default:
-			out = append(out, comp)
 		}
 	}
-	m.Components = out
-	return m, nil
+	return nil
 }
 
 // ValidateApplicationCommands checks command names, option names, and all description localizations.
@@ -585,23 +571,27 @@ func validateOptions(opts []discord.ApplicationCommandOption) error {
 	return nil
 }
 
-// ValidateAutocompleteChoices truncates choices to Discord's 25-item / 100-char bounds.
-func ValidateAutocompleteChoices(choices []discord.AutocompleteChoice) []discord.AutocompleteChoice {
+// ValidateAutocompleteChoices rejects choices exceeding Discord's 25-item or 100-char bounds without clamping.
+func ValidateAutocompleteChoices(choices []discord.AutocompleteChoice) error {
 	if len(choices) > MaxAutocompleteChoices {
-		choices = choices[:MaxAutocompleteChoices]
+		return fmt.Errorf("autocomplete choices count %d exceeds %d", len(choices), MaxAutocompleteChoices)
 	}
-	out := make([]discord.AutocompleteChoice, 0, len(choices))
 	for _, c := range choices {
-		switch ch := c.(type) {
-		case discord.AutocompleteChoiceString:
-			ch.Name = TruncateRunes(ch.Name, MaxSelectTextRunes)
-			ch.Value = TruncateRunes(ch.Value, MaxSelectTextRunes)
-			out = append(out, ch)
-		default:
-			out = append(out, c)
+		if ch, ok := c.(discord.AutocompleteChoiceString); ok {
+			if strings.TrimSpace(ch.Name) == "" || utf8.RuneCountInString(ch.Name) > MaxSelectTextRunes {
+				return fmt.Errorf("autocomplete choice name must be 1-%d chars: %q", MaxSelectTextRunes, ch.Name)
+			}
+			if ch.Value == "" || utf8.RuneCountInString(ch.Value) > MaxSelectTextRunes {
+				return fmt.Errorf("autocomplete choice value must be 1-%d chars: %q", MaxSelectTextRunes, ch.Value)
+			}
 		}
 	}
-	return out
+	return nil
+}
+
+// ValidateAutocompleteChoices strictly validates choices against Discord's bounds without clamping.
+func (v PayloadValidator) ValidateAutocompleteChoices(choices []discord.AutocompleteChoice) error {
+	return ValidateAutocompleteChoices(choices)
 }
 
 // GuildStateReader abstracts cached Discord guild/channel/role lookups for preflight checks and unit testing.
@@ -693,16 +683,15 @@ func (r *clientGuildStateReader) Role(guildID, roleID snowflake.ID) (discord.Rol
 	return r.client.Caches.Role(guildID, roleID)
 }
 
-// ChannelCreatePlan is the preflight result for provisioning a board channel.
+// ChannelCreatePlan is the validated preflight result for provisioning a board channel.
 type ChannelCreatePlan struct {
 	UseForum       bool
-	FallbackReason string
 	BotPermissions discord.Permissions
-	ClampedName    string
-	ClampedTopic   string
+	Name           string
+	Topic          string
 }
 
-// PreflightChecker verifies guild limits, features, permissions, and role hierarchies before REST calls.
+// PreflightChecker verifies guild limits, permissions, and role hierarchies before REST calls.
 type PreflightChecker struct {
 	state GuildStateReader
 }
@@ -720,6 +709,8 @@ var requiredBoardPermissions = []struct {
 	{discord.PermissionViewChannel, "ViewChannel"},
 	{discord.PermissionSendMessages, "SendMessages"},
 	{discord.PermissionSendMessagesInThreads, "SendMessagesInThreads"},
+	{discord.PermissionCreatePublicThreads, "CreatePublicThreads"},
+	{discord.PermissionCreatePrivateThreads, "CreatePrivateThreads"},
 	{discord.PermissionManageThreads, "ManageThreads"},
 	{discord.PermissionManageMessages, "ManageMessages"},
 	{discord.PermissionReadMessageHistory, "ReadMessageHistory"},
@@ -729,6 +720,8 @@ type PreflightErrorKind string
 
 const (
 	PreflightErrEmptyChannelName     PreflightErrorKind = "empty_channel_name"
+	PreflightErrChannelNameTooLong   PreflightErrorKind = "channel_name_too_long"
+	PreflightErrChannelTopicTooLong  PreflightErrorKind = "channel_topic_too_long"
 	PreflightErrGuildChannelLimit    PreflightErrorKind = "guild_channel_limit"
 	PreflightErrCategoryChannelLimit PreflightErrorKind = "category_channel_limit"
 	PreflightErrMissingBotPerms      PreflightErrorKind = "missing_bot_perms"
@@ -754,6 +747,10 @@ func (e *PreflightError) Error() string {
 	switch e.Kind {
 	case PreflightErrEmptyChannelName:
 		return "channel name cannot be empty"
+	case PreflightErrChannelNameTooLong:
+		return fmt.Sprintf("channel name exceeds max length (%d/%d)", e.Current, e.Max)
+	case PreflightErrChannelTopicTooLong:
+		return fmt.Sprintf("channel topic exceeds max length (%d/%d)", e.Current, e.Max)
 	case PreflightErrGuildChannelLimit:
 		return fmt.Sprintf("guild channel limit reached (%d/%d)", e.Current, e.Max)
 	case PreflightErrCategoryChannelLimit:
@@ -784,6 +781,16 @@ func FormatPreflightError(locale discord.Locale, err error) (string, bool) {
 	switch pe.Kind {
 	case PreflightErrEmptyChannelName:
 		return i18n.TranslateText(locale, "components.bbs.preflight.empty_channel_name"), true
+	case PreflightErrChannelNameTooLong:
+		return i18n.TranslateText(locale, "components.bbs.preflight.channel_name_too_long", map[string]any{
+			"current": pe.Current,
+			"max":     pe.Max,
+		}), true
+	case PreflightErrChannelTopicTooLong:
+		return i18n.TranslateText(locale, "components.bbs.preflight.channel_topic_too_long", map[string]any{
+			"current": pe.Current,
+			"max":     pe.Max,
+		}), true
 	case PreflightErrGuildChannelLimit:
 		return i18n.TranslateText(locale, "components.bbs.preflight.guild_channel_limit", map[string]any{
 			"current": pe.Current,
@@ -817,7 +824,7 @@ func FormatPreflightError(locale discord.Locale, err error) (string, bool) {
 	}
 }
 
-// CheckChannelCreate verifies guild/category channel caps, bot permissions, and Community requirement for Forum channels.
+// CheckChannelCreate strictly verifies channel bounds, guild/category caps, and required bot permissions.
 func (p *PreflightChecker) CheckChannelCreate(
 	guildID snowflake.ID,
 	name string,
@@ -825,12 +832,35 @@ func (p *PreflightChecker) CheckChannelCreate(
 	wantForum bool,
 	parentCategoryID *snowflake.ID,
 ) (ChannelCreatePlan, error) {
-	plan := ChannelCreatePlan{
-		UseForum:    wantForum,
-		ClampedName: TruncateRunes(strings.TrimSpace(name), MaxChannelNameRunes),
+	trimmedName := strings.TrimSpace(name)
+	if trimmedName == "" {
+		return ChannelCreatePlan{UseForum: wantForum}, &PreflightError{Kind: PreflightErrEmptyChannelName}
 	}
-	if plan.ClampedName == "" {
-		return plan, &PreflightError{Kind: PreflightErrEmptyChannelName}
+	if nameRunes := utf8.RuneCountInString(trimmedName); nameRunes > MaxChannelNameRunes {
+		return ChannelCreatePlan{UseForum: wantForum}, &PreflightError{
+			Kind:    PreflightErrChannelNameTooLong,
+			Current: nameRunes,
+			Max:     MaxChannelNameRunes,
+		}
+	}
+
+	trimmedTopic := strings.TrimSpace(topic)
+	topicLimit := MaxTextTopicRunes
+	if wantForum {
+		topicLimit = MaxForumTopicRunes
+	}
+	if topicRunes := utf8.RuneCountInString(trimmedTopic); topicRunes > topicLimit {
+		return ChannelCreatePlan{UseForum: wantForum}, &PreflightError{
+			Kind:    PreflightErrChannelTopicTooLong,
+			Current: topicRunes,
+			Max:     topicLimit,
+		}
+	}
+
+	plan := ChannelCreatePlan{
+		UseForum: wantForum,
+		Name:     trimmedName,
+		Topic:    trimmedTopic,
 	}
 
 	if p.state != nil {
@@ -843,22 +873,6 @@ func (p *PreflightChecker) CheckChannelCreate(
 			}
 		}
 
-		if wantForum {
-			if features, ok := p.state.GuildFeatures(guildID); ok {
-				hasCommunity := false
-				for _, f := range features {
-					if f == discord.GuildFeatureCommunity {
-						hasCommunity = true
-						break
-					}
-				}
-				if !hasCommunity {
-					plan.UseForum = false
-					plan.FallbackReason = "community_required"
-				}
-			}
-		}
-
 		if perms, ok := p.state.BotGuildPermissions(guildID); ok {
 			plan.BotPermissions = perms
 			if !perms.Has(discord.PermissionAdministrator) {
@@ -868,9 +882,6 @@ func (p *PreflightChecker) CheckChannelCreate(
 						missing = append(missing, req.name)
 					}
 				}
-				if !plan.UseForum && !perms.Has(discord.PermissionCreatePublicThreads) {
-					missing = append(missing, "CreatePublicThreads")
-				}
 				if len(missing) > 0 {
 					return plan, &PreflightError{Kind: PreflightErrMissingBotPerms, MissingPerms: missing}
 				}
@@ -878,36 +889,7 @@ func (p *PreflightChecker) CheckChannelCreate(
 		}
 	}
 
-	topicLimit := MaxTextTopicRunes
-	if plan.UseForum {
-		topicLimit = MaxForumTopicRunes
-	}
-	plan.ClampedTopic = TruncateRunes(strings.TrimSpace(topic), topicLimit)
 	return plan, nil
-}
-
-// MaskPermissionOverwrites restricts overwrite Allow/Deny bits to permissions held by the bot
-// unless the bot holds Administrator, preventing Discord 403 (50013) on channel creation.
-func MaskPermissionOverwrites(botPerms discord.Permissions, overwrites []discord.PermissionOverwrite) []discord.PermissionOverwrite {
-	if botPerms == 0 || botPerms.Has(discord.PermissionAdministrator) {
-		return overwrites
-	}
-	out := make([]discord.PermissionOverwrite, 0, len(overwrites))
-	for _, ow := range overwrites {
-		switch o := ow.(type) {
-		case discord.RolePermissionOverwrite:
-			o.Allow &= botPerms
-			o.Deny &= botPerms
-			out = append(out, o)
-		case discord.MemberPermissionOverwrite:
-			o.Allow &= botPerms
-			o.Deny &= botPerms
-			out = append(out, o)
-		default:
-			out = append(out, ow)
-		}
-	}
-	return out
 }
 
 // ResolveForumTags returns an applicable tag ID slice when the forum requires tags (40067/40066 prevention).
@@ -1142,8 +1124,7 @@ func (r *SafeResponder) finishInitialAttempt(err error, markDeferred, markModal 
 func (r *SafeResponder) RespondModal(event interface {
 	Modal(modalCreate discord.ModalCreate, opts ...rest.RequestOpt) error
 }, modal discord.ModalCreate) error {
-	validated, err := r.validator.ValidateModal(modal)
-	if err != nil {
+	if err := r.validator.ValidateModal(modal); err != nil {
 		return err
 	}
 	r.mu.Lock()
@@ -1153,7 +1134,7 @@ func (r *SafeResponder) RespondModal(event interface {
 	}
 	r.inflight = true
 	r.mu.Unlock()
-	err = event.Modal(validated)
+	err := event.Modal(modal)
 	r.finishInitialAttempt(err, false, true)
 	return err
 }
@@ -1183,8 +1164,7 @@ func (r *SafeResponder) RespondMessageCreate(
 	},
 	mc discord.MessageCreate,
 ) error {
-	validated, err := r.validator.ValidateAndClampMessageCreate(mc)
-	if err != nil {
+	if err := r.validator.ValidateMessageCreate(mc); err != nil {
 		return err
 	}
 	const (
@@ -1227,27 +1207,26 @@ func (r *SafeResponder) RespondMessageCreate(
 
 	switch mode {
 	case modeEditDeferred:
-		isV2 := validated.Flags.Has(discord.MessageFlagIsComponentsV2)
+		isV2 := mc.Flags.Has(discord.MessageFlagIsComponentsV2)
 		mu := discord.MessageUpdate{
-			Components:      &validated.Components,
-			AllowedMentions: validated.AllowedMentions,
+			Components:      &mc.Components,
+			AllowedMentions: mc.AllowedMentions,
 		}
 		if !isV2 {
-			c := validated.Content
+			c := mc.Content
 			mu.Content = &c
-			mu.Embeds = &validated.Embeds
+			mu.Embeds = &mc.Embeds
 		} else {
-			flags := validated.Flags
+			flags := mc.Flags
 			mu.Flags = &flags
 		}
-		mu, err = r.validator.ValidateAndClampMessageUpdate(mu, isV2)
-		if err != nil {
+		if err := r.validator.ValidateMessageUpdate(mu, isV2); err != nil {
 			r.mu.Lock()
 			r.inflight = false
 			r.mu.Unlock()
 			return err
 		}
-		_, err = event.UpdateInteractionResponse(mu)
+		_, err := event.UpdateInteractionResponse(mu)
 		r.mu.Lock()
 		r.inflight = false
 		if err == nil {
@@ -1258,14 +1237,14 @@ func (r *SafeResponder) RespondMessageCreate(
 		return err
 
 	case modeFollowup:
-		_, err = event.CreateFollowupMessage(validated)
+		_, err := event.CreateFollowupMessage(mc)
 		r.mu.Lock()
 		r.inflight = false
 		r.mu.Unlock()
 		return err
 
 	default:
-		err = event.CreateMessage(validated)
+		err := event.CreateMessage(mc)
 		r.finishInitialAttempt(err, false, false)
 		return err
 	}
@@ -1279,8 +1258,7 @@ func (r *SafeResponder) UpdateComponentMessage(
 	},
 	mu discord.MessageUpdate,
 ) error {
-	validated, err := r.validator.ValidateAndClampMessageUpdate(mu, true)
-	if err != nil {
+	if err := r.validator.ValidateMessageUpdate(mu, true); err != nil {
 		return err
 	}
 	r.mu.Lock()
@@ -1304,7 +1282,7 @@ func (r *SafeResponder) UpdateComponentMessage(
 	r.mu.Unlock()
 
 	if wasDeferred {
-		_, err = event.UpdateInteractionResponse(validated)
+		_, err := event.UpdateInteractionResponse(mu)
 		r.mu.Lock()
 		r.inflight = false
 		if err == nil {
@@ -1314,7 +1292,7 @@ func (r *SafeResponder) UpdateComponentMessage(
 		r.mu.Unlock()
 		return err
 	}
-	err = event.UpdateMessage(validated)
+	err := event.UpdateMessage(mu)
 	r.finishInitialAttempt(err, false, false)
 	return err
 }
@@ -1324,28 +1302,48 @@ func SafeRespondComponentModal(e *events.ComponentInteractionCreate, modal disco
 	return NewSafeResponder(e.ID().Time()).RespondModal(e, modal)
 }
 
+// DebounceTimer abstracts *time.Timer for deterministic debouncer unit tests.
+type DebounceTimer interface {
+	Stop() bool
+}
+
+// AfterFunc schedules f after d and returns a DebounceTimer.
+type AfterFunc func(d time.Duration, f func()) DebounceTimer
+
 type debounceEntry struct {
 	seq   uint64
-	timer *time.Timer
+	timer DebounceTimer
 }
 
 // ControlPanelDebouncer coalesces rapid floating control-panel moves per thread mirror.
 type ControlPanelDebouncer struct {
-	delay   time.Duration
-	mu      sync.Mutex
-	nextSeq uint64
-	timers  map[uuid.UUID]debounceEntry
-	closed  bool
+	delay     time.Duration
+	afterFunc AfterFunc
+	mu        sync.Mutex
+	nextSeq   uint64
+	timers    map[uuid.UUID]debounceEntry
+	closed    bool
 }
 
 // NewControlPanelDebouncer constructs a debouncer with delay (defaults to 2.5s when <= 0).
 func NewControlPanelDebouncer(delay time.Duration) *ControlPanelDebouncer {
+	return NewControlPanelDebouncerWithTimer(delay, nil)
+}
+
+// NewControlPanelDebouncerWithTimer constructs a debouncer using an injectable timer factory.
+func NewControlPanelDebouncerWithTimer(delay time.Duration, afterFn AfterFunc) *ControlPanelDebouncer {
 	if delay <= 0 {
 		delay = DefaultDebouncerDelay
 	}
+	if afterFn == nil {
+		afterFn = func(d time.Duration, f func()) DebounceTimer {
+			return time.AfterFunc(d, f)
+		}
+	}
 	return &ControlPanelDebouncer{
-		delay:  delay,
-		timers: make(map[uuid.UUID]debounceEntry),
+		delay:     delay,
+		afterFunc: afterFn,
+		timers:    make(map[uuid.UUID]debounceEntry),
 	}
 }
 
@@ -1361,7 +1359,7 @@ func (d *ControlPanelDebouncer) Schedule(mirrorID uuid.UUID, fn func()) {
 	}
 	d.nextSeq++
 	seq := d.nextSeq
-	t := time.AfterFunc(d.delay, func() {
+	t := d.afterFunc(d.delay, func() {
 		d.mu.Lock()
 		cur, ok := d.timers[mirrorID]
 		if d.closed || !ok || cur.seq != seq {
@@ -1489,6 +1487,40 @@ func (g *InvalidRequestGuard) SetCircuitCooldown(d time.Duration) {
 	g.mu.Unlock()
 }
 
+// AcquireMount checks global throttling and mount circuit breaker state atomically at now.
+// When allowed, callers MUST defer the returned release func so any half-open probe lock is cleaned up
+// even after non-403 failures or pre-REST aborts.
+func (g *InvalidRequestGuard) AcquireMount(mountID uuid.UUID, now time.Time) (allowed bool, release func()) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.pruneLocked(now)
+	if len(g.events) >= g.threshold {
+		return false, func() {}
+	}
+	if mountID == uuid.Nil {
+		return true, func() {}
+	}
+	openedAt, open := g.openMounts[mountID]
+	if !open {
+		return true, func() {}
+	}
+	if g.circuitCooldown > 0 && now.Sub(openedAt) >= g.circuitCooldown && !g.halfOpenProbe[mountID] {
+		g.halfOpenProbe[mountID] = true
+		return true, func() { g.ReleaseMountProbe(mountID) }
+	}
+	return false, func() {}
+}
+
+// ReleaseMountProbe clears an in-flight half-open probe marker for mountID.
+func (g *InvalidRequestGuard) ReleaseMountProbe(mountID uuid.UUID) {
+	if mountID == uuid.Nil {
+		return
+	}
+	g.mu.Lock()
+	delete(g.halfOpenProbe, mountID)
+	g.mu.Unlock()
+}
+
 // RecordError inspects err and updates global invalid-request tracking and mount circuit breakers.
 // Returns true if the mount should be permanently deactivated (e.g. 404 Unknown Channel).
 func (g *InvalidRequestGuard) RecordError(mountID uuid.UUID, err error, now time.Time) (deactivateMount bool) {
@@ -1512,6 +1544,11 @@ func (g *InvalidRequestGuard) RecordError(mountID uuid.UUID, err error, now time
 
 	if mountID != uuid.Nil {
 		if status == 404 || IsJSONError(err, JSONErrUnknownChannel) {
+			g.mu.Lock()
+			delete(g.halfOpenProbe, mountID)
+			delete(g.openMounts, mountID)
+			delete(g.mountFailures, mountID)
+			g.mu.Unlock()
 			return true
 		}
 		if status == 403 || IsJSONError(err, JSONErrMissingAccess) || IsJSONError(err, JSONErrMissingPermissions) {
@@ -1526,7 +1563,9 @@ func (g *InvalidRequestGuard) RecordError(mountID uuid.UUID, err error, now time
 				}
 			}
 			g.mu.Unlock()
+			return false
 		}
+		g.ReleaseMountProbe(mountID)
 	}
 	return false
 }

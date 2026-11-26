@@ -60,12 +60,15 @@ func (s *System) handleConsentViewDoc(e *handler.ComponentEvent) error {
 
 func (s *System) handleConsentAccept(e *handler.ComponentEvent) error {
 	loc := e.Locale()
-	consent, err := s.Service.AcceptPolicy(e.Ctx, e.User().ID)
+	sr := discordsync.NewSafeResponder(e.ID().Time())
+
+	versionTok := e.Vars["version"]
+	consent, err := s.Service.AcceptPolicyVersion(e.Ctx, e.User().ID, versionTok)
 	if err != nil {
-		s.replyComponentError(e,
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
 			i18n.TranslateText(loc, "components.bbs.consent.accept_failed"),
 			describeBBSError(loc, err),
-		)
+		))
 		return nil
 	}
 
@@ -79,17 +82,16 @@ func (s *System) handleConsentAccept(e *handler.ComponentEvent) error {
 				}
 			}
 			modal := buildNewThreadModal(loc, act.TargetID, boardName)
-			if err := discordsync.SafeRespondComponentModal(e.ComponentInteractionCreate, modal); err == nil {
+			if err := sr.RespondModal(e, modal); err == nil {
 				return nil
 			}
 		case pendingNewPost:
 			modal := buildNewPostModal(loc, act.TargetID)
-			if err := discordsync.SafeRespondComponentModal(e.ComponentInteractionCreate, modal); err == nil {
+			if err := sr.RespondModal(e, modal); err == nil {
 				return nil
 			}
 		case pendingOpenReader:
 			if mu, rErr := s.buildReaderMessageUpdate(e.Ctx, e.GuildID(), act.TargetID, act.Page, loc); rErr == nil {
-				sr := discordsync.NewSafeResponder(e.ID().Time())
 				_ = sr.UpdateComponentMessage(e, mu)
 				return nil
 			}
@@ -106,7 +108,6 @@ func (s *System) handleConsentAccept(e *handler.ComponentEvent) error {
 		).WithAccentColor(discordsync.ColorLocalBoard),
 	).WithAllowedMentions(&discord.AllowedMentions{})
 
-	sr := discordsync.NewSafeResponder(e.ID().Time())
 	_ = sr.UpdateComponentMessage(e, upd)
 	return nil
 }
@@ -145,10 +146,11 @@ func (s *System) handleConsentRole(e *handler.ComponentEvent) error {
 	}
 	guildID := snowflake.ID(gidVal)
 
-	if _, err := s.Service.AcceptPolicy(e.Ctx, e.User().ID); err != nil {
+	versionTok := e.Vars["version"]
+	if versionTok == "" || versionTok != bbscore.PolicyVersionToken(s.Service.Policy.CurrentVersion) {
 		s.replyComponentError(e,
 			i18n.TranslateText(loc, "components.bbs.consent.accept_failed"),
-			describeBBSError(loc, err),
+			describeBBSError(loc, bbscore.ErrStalePolicyVersion),
 		)
 		return nil
 	}
@@ -177,6 +179,15 @@ func (s *System) handleConsentRole(e *handler.ComponentEvent) error {
 		)
 		return nil
 	}
+
+	if _, err := s.Service.AcceptPolicyVersion(e.Ctx, e.User().ID, versionTok); err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.consent.accept_failed"),
+			describeBBSError(loc, err),
+		)
+		return nil
+	}
+
 	if err := e.Client().Rest.AddMemberRole(guildID, e.User().ID, *cfg.ViewerRoleID); err != nil {
 		slog.Warn("bbs failed to assign viewer role", "guild_id", guildID, "role_id", *cfg.ViewerRoleID, "err", err)
 		s.replyComponentError(e,

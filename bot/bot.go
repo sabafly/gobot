@@ -162,9 +162,12 @@ func run() error {
 	component := components.New(ctx, *config, gormDB)
 	component.Version = version
 
-	bbsSys := initBBSSystem(component, config, gormDB)
+	bbsSys, err := initBBSSystem(component, config, gormDB)
+	if err != nil {
+		slog.Error("BBSシステムの初期化に失敗したためBBSコマンドを無効化します", slog.Any("error", err))
+	}
 
-	component.AddCommands(
+	cmds := []components.Command{
 		debug.Command(component),
 		ping.Command(component),
 		message.Command(component),
@@ -177,9 +180,11 @@ func run() error {
 		play.Command(component),
 		bet.Command(component),
 		user.Command(component),
-		bbsCmd.Command(bbsSys),
-		bbsCmd.AdminCommand(bbsSys),
-	)
+	}
+	if bbsSys != nil {
+		cmds = append(cmds, bbsCmd.Command(bbsSys), bbsCmd.AdminCommand(bbsSys))
+	}
+	component.AddCommands(cmds...)
 
 	ready := make(chan *events.Ready)
 
@@ -262,7 +267,10 @@ func run() error {
 	return nil
 }
 
-func initBBSSystem(component *components.Components, config *components.Config, gormDB *database.DB) *bbsCmd.System {
+func initBBSSystem(component *components.Components, config *components.Config, gormDB *database.DB) (*bbsCmd.System, error) {
+	if gormDB == nil || gormDB.DB == nil {
+		return nil, fmt.Errorf("BBS用のデータベース接続が初期化されていません")
+	}
 	store := gormstore.New(gormDB.DB)
 	secret := os.Getenv("BBS_SECRET_KEY")
 	if secret == "" {
@@ -273,17 +281,19 @@ func initBBSSystem(component *components.Components, config *components.Config, 
 		secretBytes = []byte(secret)
 	} else {
 		var rnd [32]byte
-		_, _ = rand.Read(rnd[:])
-		persisted, err := store.GetOrCreateSystemSecret(context.Background(), "default_hmac_secret", rnd[:])
-		if err != nil || len(persisted) == 0 {
-			secretBytes = rnd[:]
-			slog.Warn("BBS_SECRET_KEY and config.bbs.secret_key are empty and secret persistence failed; using ephemeral key",
-				slog.Any("err", err))
-		} else {
-			secretBytes = persisted
-			slog.Warn("BBS_SECRET_KEY and config.bbs.secret_key are empty; using DB-persisted auto-generated key (recommend configuring fixed secret)",
-				slog.String("hint", hex.EncodeToString(secretBytes[:min(4, len(secretBytes))])))
+		if _, err := rand.Read(rnd[:]); err != nil {
+			return nil, fmt.Errorf("BBSシステムシークレットの乱数生成に失敗しました: %w", err)
 		}
+		persisted, err := store.GetOrCreateSystemSecret(context.Background(), "default_hmac_secret", rnd[:])
+		if err != nil {
+			return nil, fmt.Errorf("BBSシステムシークレットの取得・保存に失敗しました: %w", err)
+		}
+		if len(persisted) == 0 {
+			return nil, fmt.Errorf("BBSシステムシークレットが空です")
+		}
+		secretBytes = persisted
+		slog.Warn("BBS_SECRET_KEY and config.bbs.secret_key are empty; using DB-persisted auto-generated key (recommend configuring fixed secret)",
+			slog.String("hint", hex.EncodeToString(secretBytes[:min(4, len(secretBytes))])))
 	}
 
 	seenOps := make(map[snowflake.ID]struct{}, len(config.BBS.Operators)+len(config.Debug.DebugUsers))
@@ -315,5 +325,5 @@ func initBBSSystem(component *components.Components, config *components.Config, 
 	syncer.UserLocale = func(ctx context.Context, uid snowflake.ID) discord.Locale {
 		return discordsync.ResolveUserLocaleFromDB(ctx, gormDB, uid)
 	}
-	return bbsCmd.NewSystem(component, svc, syncer, config.BBS.OperatorLogChannel)
+	return bbsCmd.NewSystem(component, svc, syncer, config.BBS.OperatorLogChannel), nil
 }

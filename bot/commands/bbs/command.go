@@ -29,6 +29,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
@@ -178,7 +179,7 @@ func (s *System) replyCommandError(e *handler.CommandEvent, title, body string) 
 
 func (s *System) replyCommandNotice(e *handler.CommandEvent, title, body string, color int) {
 	sr := discordsync.NewSafeResponder(e.ID().Time())
-	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(e.Locale(), title, body, color))
+	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(e.Locale(), title, body, color).WithEphemeral(true))
 }
 
 func (s *System) replyComponentError(e *handler.ComponentEvent, title, body string) {
@@ -352,7 +353,7 @@ func (c *bbsCommand) Create() []discord.ApplicationCommandCreate {
 								},
 								discord.ApplicationCommandOptionBool{
 									Name:                     "forum",
-									Description:              "Create as a forum channel (falls back to text if non-Community)",
+									Description:              "Create as a forum channel",
 									DescriptionLocalizations: i18n.TranslateTextMap("command.bbs.board.create.options.forum.description"),
 								},
 								discord.ApplicationCommandOptionChannel{
@@ -544,7 +545,9 @@ func (c *bbsCommand) RegisterRoutes(r handler.Router) {
 
 	r.Component("/bbs/consent/revoke", c.sys.handleConsentRevoke)
 	r.Component("/bbs/consent/view/{doc}", c.sys.handleConsentViewDoc)
+	r.Component("/bbs/consent/accept/{version}/{token}", c.sys.handleConsentAccept)
 	r.Component("/bbs/consent/accept/{token}", c.sys.handleConsentAccept)
+	r.Component("/bbs/consent/role/{guild_id}/{version}", c.sys.handleConsentRole)
 	r.Component("/bbs/consent/role/{guild_id}", c.sys.handleConsentRole)
 
 	r.Component("/bbs/board/threads/{mount_id}", c.sys.handleBoardThreads)
@@ -673,13 +676,12 @@ func (c *bbsCommand) handleSetup(data discord.SlashCommandInteractionData, e *ha
 			summary += "\n" + i18n.TranslateText(loc, "components.bbs.cmd.setup.gate_missing_role")
 		} else {
 			panel := discordsync.RenderRoleGatePanel(*guildID, *cfg.ViewerRoleID, c.sys.Service.Policy.CurrentVersion, gLoc)
-			validated, vErr := c.sys.Syncer.Validator.ValidateAndClampMessageCreate(panel)
-			if vErr != nil {
+			if vErr := c.sys.Syncer.Validator.ValidateMessageCreate(panel); vErr != nil {
 				slog.Warn("bbs role gate validation failed", "err", vErr)
 				summary += "\n" + i18n.TranslateText(loc, "components.bbs.cmd.setup.gate_validate_failed", map[string]any{
 					"err": describeBBSError(loc, vErr),
 				})
-			} else if _, sendErr := e.Client().Rest.CreateMessage(gateCh.ID, validated); sendErr != nil {
+			} else if _, sendErr := e.Client().Rest.CreateMessage(gateCh.ID, panel); sendErr != nil {
 				slog.Warn("bbs role gate send failed", "channel_id", gateCh.ID, "err", sendErr)
 				summary += "\n" + i18n.TranslateText(loc, "components.bbs.cmd.setup.gate_post_failed", map[string]any{
 					"channel_id": gateCh.ID,
@@ -850,7 +852,14 @@ func (c *bbsCommand) handleBoardCreate(data discord.SlashCommandInteractionData,
 		return nil
 	}
 
-	rules := parseBoardRulesFromSlash(data, gLoc)
+	rules, err := parseBoardRulesFromSlash(data, gLoc)
+	if err != nil {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.cmd.board.create_failed_title"),
+			describeBBSError(loc, err),
+		))
+		return nil
+	}
 	wantForum := true
 	if f, ok := data.OptBool("forum"); ok {
 		wantForum = f
@@ -877,7 +886,7 @@ func (c *bbsCommand) handleBoardCreate(data discord.SlashCommandInteractionData,
 		return nil
 	}
 
-	mount, plan, err := c.sys.Syncer.ProvisionBoardChannel(e.Ctx, e.Client(), *guildID, *board, discordCatID, wantForum, cfg.ViewerRoleID, gLoc)
+	mount, _, err := c.sys.Syncer.ProvisionBoardChannel(e.Ctx, e.Client(), *guildID, *board, discordCatID, wantForum, cfg.ViewerRoleID, gLoc)
 	if err != nil {
 		_ = c.sys.Service.DeleteBoard(e.Ctx, board.ID)
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
@@ -894,9 +903,6 @@ func (c *bbsCommand) handleBoardCreate(data discord.SlashCommandInteractionData,
 		"channel_id": mount.ChannelID,
 		"max_res":    board.Rules.MaxRes,
 	})
-	if plan.FallbackReason == "community_required" {
-		msg += "\n" + i18n.TranslateText(loc, "components.bbs.cmd.board.community_fallback")
-	}
 	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(loc,
 		i18n.TranslateText(loc, "components.bbs.cmd.board.created_title"),
 		msg,
@@ -1024,7 +1030,14 @@ func (c *bbsCommand) handleBoardEdit(data discord.SlashCommandInteractionData, e
 		)
 		return nil
 	}
-	input := parseUpdateBoardInput(data)
+	input, err := parseUpdateBoardInput(data)
+	if err != nil {
+		c.sys.replyCommandError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.edit_failed"),
+			describeBBSError(loc, err),
+		)
+		return nil
+	}
 	updated, err := c.sys.Service.UpdateBoard(e.Ctx, boardID, input)
 	if err != nil {
 		c.sys.replyCommandError(e,
@@ -1053,7 +1066,7 @@ func (c *bbsCommand) handleBoardEdit(data discord.SlashCommandInteractionData, e
 
 func (c *bbsCommand) refreshLocalMountGuide(ctx context.Context, client *bot.Client, guildID snowflake.ID, board bbscore.Board, fallbackLocale discord.Locale) {
 	mount, err := c.sys.Service.Store.GetBoardMountByGuildAndBoard(ctx, guildID, board.ID)
-	if err != nil || !mount.Active || mount.ControlMessageID == nil {
+	if err != nil || !mount.Active {
 		return
 	}
 	mLoc := discordsync.ResolveMountLocale(client, *mount)
@@ -1066,11 +1079,24 @@ func (c *bbsCommand) refreshLocalMountGuide(ctx context.Context, client *bot.Cli
 		Flags:           &guide.Flags,
 		AllowedMentions: guide.AllowedMentions,
 	}
-	validated, err := c.sys.Syncer.Validator.ValidateAndClampMessageUpdate(mu, true)
-	if err != nil {
+	if err := c.sys.Syncer.Validator.ValidateMessageUpdate(mu, true); err != nil {
+		slog.Warn("bbs refreshLocalMountGuide validation failed", "mount_id", mount.ID, "err", err)
 		return
 	}
-	_, _ = client.Rest.UpdateMessage(mount.ChannelID, *mount.ControlMessageID, validated)
+	if mount.PinnedPostID != nil {
+		if err := discordsync.WithUnarchiveRetry(client, *mount.PinnedPostID, func() error {
+			_, editErr := client.Rest.UpdateMessage(*mount.PinnedPostID, *mount.PinnedPostID, mu)
+			return editErr
+		}); err != nil {
+			slog.Warn("bbs failed to refresh forum pinned guide", "mount_id", mount.ID, "post_id", *mount.PinnedPostID, "err", err)
+		}
+		return
+	}
+	if mount.ControlMessageID != nil {
+		if _, err := client.Rest.UpdateMessage(mount.ChannelID, *mount.ControlMessageID, mu); err != nil {
+			slog.Warn("bbs failed to refresh text control guide", "mount_id", mount.ID, "msg_id", *mount.ControlMessageID, "err", err)
+		}
+	}
 }
 
 func (c *bbsCommand) handleBoardDelete(data discord.SlashCommandInteractionData, e *handler.CommandEvent) error {
@@ -1205,7 +1231,7 @@ func (c *bbsCommand) handleGlobalSubscribe(data discord.SlashCommandInteractionD
 		discordCatID = &id
 	}
 
-	mount, plan, err := c.sys.Syncer.ProvisionBoardChannel(e.Ctx, e.Client(), *guildID, *board, discordCatID, wantForum, cfg.ViewerRoleID, gLoc)
+	mount, _, err := c.sys.Syncer.ProvisionBoardChannel(e.Ctx, e.Client(), *guildID, *board, discordCatID, wantForum, cfg.ViewerRoleID, gLoc)
 	if err != nil {
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, subFailTitle, describeBBSError(loc, err)))
 		return nil
@@ -1215,9 +1241,6 @@ func (c *bbsCommand) handleGlobalSubscribe(data discord.SlashCommandInteractionD
 		"name":       board.Name,
 		"channel_id": mount.ChannelID,
 	})
-	if plan.FallbackReason == "community_required" {
-		msg += "\n" + i18n.TranslateText(loc, "components.bbs.cmd.board.community_fallback")
-	}
 	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(loc,
 		i18n.TranslateText(loc, "components.bbs.cmd.global.subscribed_title"),
 		msg,
@@ -1314,6 +1337,9 @@ func (c *bbsCommand) autocompleteLocalCategories(e *handler.AutocompleteEvent) e
 	q := strings.ToLower(strings.TrimSpace(e.Data.Focused().String()))
 	var choices []discord.AutocompleteChoice
 	for _, cat := range cats {
+		if len(choices) >= discordsync.MaxAutocompleteChoices {
+			break
+		}
 		if q == "" || strings.Contains(strings.ToLower(cat.Name), q) {
 			choices = append(choices, discord.AutocompleteChoiceString{
 				Name:  discordsync.TruncateRunes(cat.Name, 90),
@@ -1321,7 +1347,11 @@ func (c *bbsCommand) autocompleteLocalCategories(e *handler.AutocompleteEvent) e
 			})
 		}
 	}
-	return e.AutocompleteResult(discordsync.ValidateAutocompleteChoices(choices))
+	if err := discordsync.ValidateAutocompleteChoices(choices); err != nil {
+		slog.Warn("bbs local category autocomplete validation failed", "err", err)
+		return e.AutocompleteResult(nil)
+	}
+	return e.AutocompleteResult(choices)
 }
 
 func (c *bbsCommand) autocompleteLocalBoards(e *handler.AutocompleteEvent) error {
@@ -1369,6 +1399,9 @@ func (c *bbsCommand) respondBoardChoices(e *handler.AutocompleteEvent, boards []
 	q := strings.ToLower(strings.TrimSpace(e.Data.Focused().String()))
 	var choices []discord.AutocompleteChoice
 	for _, b := range boards {
+		if len(choices) >= discordsync.MaxAutocompleteChoices {
+			break
+		}
 		if q == "" || strings.Contains(strings.ToLower(b.Name), q) || strings.Contains(strings.ToLower(b.Slug), q) {
 			choices = append(choices, discord.AutocompleteChoiceString{
 				Name:  discordsync.TruncateRunes(b.Name, 90),
@@ -1376,41 +1409,70 @@ func (c *bbsCommand) respondBoardChoices(e *handler.AutocompleteEvent, boards []
 			})
 		}
 	}
-	return e.AutocompleteResult(discordsync.ValidateAutocompleteChoices(choices))
+	if err := discordsync.ValidateAutocompleteChoices(choices); err != nil {
+		slog.Warn("bbs board autocomplete validation failed", "err", err)
+		return e.AutocompleteResult(nil)
+	}
+	return e.AutocompleteResult(choices)
 }
 
-func parseBoardRulesFromSlash(data discord.SlashCommandInteractionData, defaultLocale discord.Locale) bbscore.BoardRules {
+func parseBoardRulesFromSlash(data discord.SlashCommandInteractionData, defaultLocale discord.Locale) (bbscore.BoardRules, error) {
 	rules := bbscore.BoardRules{}
-	if v, ok := data.OptString("default_name"); ok && strings.TrimSpace(v) != "" {
-		rules.DefaultName = strings.TrimSpace(v)
+	if v, ok := data.OptString("default_name"); ok {
+		trimmed := strings.TrimSpace(v)
+		if trimmed == "" || utf8.RuneCountInString(trimmed) > bbscore.MaxNameRunes {
+			return bbscore.BoardRules{}, bbscore.ErrInvalidBoardRules
+		}
+		rules.DefaultName = trimmed
 	} else {
 		rules.DefaultName = i18n.TranslateText(defaultLocale, "components.bbs.post.default_name")
 	}
 	if v, ok := data.OptBool("hide_id"); ok {
 		rules.HideID = v
 	}
-	if v, ok := data.OptString("slip"); ok && v == "vvvvv" {
-		rules.SLIP = bbscore.SLIPVVVVV
+	if v, ok := data.OptString("slip"); ok {
+		switch v {
+		case "none":
+			rules.SLIP = bbscore.SLIPNone
+		case "vvvvv":
+			rules.SLIP = bbscore.SLIPVVVVV
+		default:
+			return bbscore.BoardRules{}, bbscore.ErrInvalidBoardRules
+		}
 	}
-	if v, ok := data.OptInt("max_res"); ok && v >= 50 && v <= 1000 {
+	if v, ok := data.OptInt("max_res"); ok {
+		if v < int(bbscore.MinSlashBoardMaxRes) || v > int(bbscore.MaxBoardMaxRes) {
+			return bbscore.BoardRules{}, bbscore.ErrInvalidBoardRules
+		}
 		rules.MaxRes = uint32(v)
 	}
 	if v, ok := data.OptInt("archive_days"); ok {
-		if v <= 0 {
-			rules.DatOchiIdleHours = -1
-			rules.DatOchiLowResHours = -1
+		if v < 0 || v > bbscore.MaxArchiveDays {
+			return bbscore.BoardRules{}, bbscore.ErrInvalidBoardRules
+		}
+		if v == 0 {
+			rules.DatOchiIdleHours = bbscore.DatOchiDisabled
+			rules.DatOchiLowResHours = bbscore.DatOchiDisabled
 		} else {
 			rules.DatOchiIdleHours = v * 24
 			rules.DatOchiLowResHours = v * 24
 		}
 	}
-	return rules.Normalize()
+	rules = rules.Normalize()
+	if err := rules.Validate(); err != nil {
+		return bbscore.BoardRules{}, err
+	}
+	return rules, nil
 }
 
-func parseUpdateBoardInput(data discord.SlashCommandInteractionData) bbscore.UpdateBoardInput {
+func parseUpdateBoardInput(data discord.SlashCommandInteractionData) (bbscore.UpdateBoardInput, error) {
 	var input bbscore.UpdateBoardInput
 	if v, ok := data.OptString("default_name"); ok {
-		input.DefaultName = &v
+		trimmed := strings.TrimSpace(v)
+		if trimmed == "" || utf8.RuneCountInString(trimmed) > bbscore.MaxNameRunes {
+			return bbscore.UpdateBoardInput{}, bbscore.ErrInvalidBoardRules
+		}
+		input.DefaultName = &trimmed
 	}
 	if v, ok := data.OptString("description"); ok {
 		input.Description = &v
@@ -1419,16 +1481,21 @@ func parseUpdateBoardInput(data discord.SlashCommandInteractionData) bbscore.Upd
 		input.HideID = &v
 	}
 	if v, ok := data.OptString("slip"); ok {
-		lvl := bbscore.SLIPNone
-		if v == "vvvvv" {
-			lvl = bbscore.SLIPVVVVV
+		switch v {
+		case "none":
+			lvl := bbscore.SLIPNone
+			input.SLIP = &lvl
+		case "vvvvv":
+			lvl := bbscore.SLIPVVVVV
+			input.SLIP = &lvl
+		default:
+			return bbscore.UpdateBoardInput{}, bbscore.ErrInvalidBoardRules
 		}
-		input.SLIP = &lvl
 	}
 	if v, ok := data.OptBool("locked"); ok {
 		input.Locked = &v
 	}
-	return input
+	return input, nil
 }
 
 func describeBBSError(locale discord.Locale, err error) string {
@@ -1440,6 +1507,8 @@ func describeBBSError(locale discord.Locale, err error) string {
 		return i18n.TranslateText(locale, "components.bbs.errors.guild_not_enabled")
 	case errors.Is(err, bbscore.ErrConsentRequired):
 		return i18n.TranslateText(locale, "components.bbs.errors.consent_required")
+	case errors.Is(err, bbscore.ErrStalePolicyVersion):
+		return i18n.TranslateText(locale, "components.bbs.consent.stale_version")
 	case errors.Is(err, bbscore.ErrBanned):
 		return i18n.TranslateText(locale, "components.bbs.errors.banned")
 	case errors.Is(err, bbscore.ErrRateLimited):
@@ -1456,16 +1525,30 @@ func describeBBSError(locale discord.Locale, err error) string {
 		return i18n.TranslateText(locale, "components.bbs.errors.already_exists")
 	case errors.Is(err, bbscore.ErrNotFound):
 		return i18n.TranslateText(locale, "components.bbs.errors.not_found")
+	case errors.Is(err, discordsync.ErrSourceMountInactive):
+		return i18n.TranslateText(locale, "components.bbs.post_ui.mount_missing_or_inactive")
 	case errors.Is(err, bbscore.ErrInvalidCategoryName):
 		return i18n.TranslateText(locale, "components.bbs.errors.invalid_category_name")
 	case errors.Is(err, bbscore.ErrInvalidBoardName):
 		return i18n.TranslateText(locale, "components.bbs.errors.invalid_board_name")
+	case errors.Is(err, bbscore.ErrInvalidBoardRules):
+		return i18n.TranslateText(locale, "components.bbs.errors.invalid_board_rules")
 	case errors.Is(err, bbscore.ErrInvalidTitleLength):
 		return i18n.TranslateText(locale, "components.bbs.errors.invalid_title_length", map[string]any{"max": strconv.Itoa(bbscore.MaxTitleRunes)})
 	case errors.Is(err, bbscore.ErrInvalidNameLength):
 		return i18n.TranslateText(locale, "components.bbs.errors.invalid_name_length", map[string]any{"max": strconv.Itoa(bbscore.MaxNameRunes)})
 	case errors.Is(err, bbscore.ErrInvalidBodyLength):
 		return i18n.TranslateText(locale, "components.bbs.errors.invalid_body_length", map[string]any{"max": strconv.Itoa(bbscore.MaxBodyRunes)})
+	case errors.Is(err, bbscore.ErrFormattedBodyTooLong):
+		return i18n.TranslateText(locale, "components.bbs.errors.formatted_body_too_long", map[string]any{"max": strconv.Itoa(bbscore.MaxEscapedBodyRunes)})
+	case errors.Is(err, bbscore.ErrInvalidMail):
+		return i18n.TranslateText(locale, "components.bbs.errors.invalid_mail")
+	case errors.Is(err, bbscore.ErrInvalidNameCommand):
+		return i18n.TranslateText(locale, "components.bbs.errors.invalid_name_command")
+	case errors.Is(err, bbscore.ErrInvalidExtendCommand):
+		return i18n.TranslateText(locale, "components.bbs.errors.invalid_extend_command")
+	case errors.Is(err, bbscore.ErrInvalidReaderJump):
+		return i18n.TranslateText(locale, "components.bbs.errors.invalid_reader_jump")
 	case errors.Is(err, bbscore.ErrReportReasonRequired):
 		return i18n.TranslateText(locale, "components.bbs.errors.report_reason_required")
 	case errors.Is(err, bbscore.ErrGuildIDRequired):
