@@ -22,6 +22,8 @@ package bot
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"log/slog"
@@ -42,10 +44,12 @@ import (
 	"github.com/disgoorg/disgo/gateway"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/disgo/sharding"
+	"github.com/disgoorg/snowflake/v2"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 
+	bbsCmd "github.com/sabafly/gobot/bot/commands/bbs"
 	"github.com/sabafly/gobot/bot/commands/bet"
 	"github.com/sabafly/gobot/bot/commands/currency"
 	"github.com/sabafly/gobot/bot/commands/debug"
@@ -59,6 +63,9 @@ import (
 	"github.com/sabafly/gobot/bot/commands/user"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
+	"github.com/sabafly/gobot/internal/bbs"
+	"github.com/sabafly/gobot/internal/bbs/discordsync"
+	"github.com/sabafly/gobot/internal/bbs/gormstore"
 	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/emoji"
 	"github.com/sabafly/gobot/internal/i18n"
@@ -155,7 +162,12 @@ func run() error {
 	component := components.New(ctx, *config, gormDB)
 	component.Version = version
 
-	component.AddCommands(
+	bbsSys, err := initBBSSystem(component, config, gormDB)
+	if err != nil {
+		slog.Error("BBSシステムの初期化に失敗したためBBSコマンドを無効化します", slog.Any("error", err))
+	}
+
+	cmds := []components.Command{
 		debug.Command(component),
 		ping.Command(component),
 		message.Command(component),
@@ -168,7 +180,11 @@ func run() error {
 		play.Command(component),
 		bet.Command(component),
 		user.Command(component),
-	)
+	}
+	if bbsSys != nil {
+		cmds = append(cmds, bbsCmd.Command(bbsSys), bbsCmd.AdminCommand(bbsSys))
+	}
+	component.AddCommands(cmds...)
 
 	ready := make(chan *events.Ready)
 
@@ -249,4 +265,69 @@ func run() error {
 	slog.Info("Bot is shutting down")
 
 	return nil
+}
+
+func initBBSSystem(component *components.Components, config *components.Config, gormDB *database.DB) (*bbsCmd.System, error) {
+	if gormDB == nil || gormDB.DB == nil {
+		return nil, fmt.Errorf("BBS用のデータベース接続が初期化されていません")
+	}
+	store := gormstore.New(gormDB.DB)
+	secret := os.Getenv("BBS_SECRET_KEY")
+	if secret == "" {
+		secret = config.BBS.SecretKey
+	}
+	var secretBytes []byte
+	if secret != "" {
+		secretBytes = []byte(secret)
+	} else {
+		var rnd [32]byte
+		if _, err := rand.Read(rnd[:]); err != nil {
+			return nil, fmt.Errorf("BBSシステムシークレットの乱数生成に失敗しました: %w", err)
+		}
+		persisted, err := store.GetOrCreateSystemSecret(context.Background(), "default_hmac_secret", rnd[:])
+		if err != nil {
+			return nil, fmt.Errorf("BBSシステムシークレットの取得・保存に失敗しました: %w", err)
+		}
+		if len(persisted) == 0 {
+			return nil, fmt.Errorf("BBSシステムシークレットが空です")
+		}
+		secretBytes = persisted
+		slog.Warn("BBS_SECRET_KEY and config.bbs.secret_key are empty; using DB-persisted auto-generated key (recommend configuring fixed secret)",
+			slog.String("hint", hex.EncodeToString(secretBytes[:min(4, len(secretBytes))])))
+	}
+
+	seenOps := make(map[snowflake.ID]struct{}, len(config.BBS.Operators)+len(config.Debug.DebugUsers))
+	var operators []snowflake.ID
+	for _, id := range append(append([]snowflake.ID(nil), config.BBS.Operators...), config.Debug.DebugUsers...) {
+		if id == 0 {
+			continue
+		}
+		if _, ok := seenOps[id]; !ok {
+			seenOps[id] = struct{}{}
+			operators = append(operators, id)
+		}
+	}
+
+	policyCfg := bbs.PolicyConfig{
+		Version:          config.BBS.PolicyVersion,
+		TermsURL:         config.BBS.TermsURL,
+		GuidelinesURL:    config.BBS.GuidelinesURL,
+		PrivacyPolicyURL: config.BBS.PrivacyPolicyURL,
+	}
+	if err := bbs.ValidatePolicyConfig(policyCfg); err != nil {
+		return nil, fmt.Errorf("BBSポリシー設定が不正です: %w", err)
+	}
+	registry := bbs.NewProviderRegistry(bbs.DefaultProviderKey)
+	registry.Register(store)
+	identity := bbs.NewIdentityGenerator(secretBytes)
+	policy := bbs.NewPolicyManager(policyCfg)
+	svc := bbs.NewService(registry, store, identity, policy, operators)
+	syncer := discordsync.NewSyncer(svc)
+	syncer.CanSendDM = func(ctx context.Context, uid snowflake.ID) bool {
+		return discordsync.CanSendDMToUser(ctx, gormDB, uid)
+	}
+	syncer.UserLocale = func(ctx context.Context, uid snowflake.ID) discord.Locale {
+		return discordsync.ResolveUserLocaleFromDB(ctx, gormDB, uid)
+	}
+	return bbsCmd.NewSystem(component, svc, syncer, config.BBS.OperatorLogChannel), nil
 }

@@ -1,0 +1,788 @@
+/*
+ * gobot -- a useful discord bot
+ *
+ * Copyright (C) 2024 Sabafly Developers
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package bbs
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/handler"
+	"github.com/disgoorg/snowflake/v2"
+	"github.com/google/uuid"
+
+	bbscore "github.com/sabafly/gobot/internal/bbs"
+	"github.com/sabafly/gobot/internal/bbs/discordsync"
+	"github.com/sabafly/gobot/internal/i18n"
+)
+
+func buildNewThreadModal(locale discord.Locale, mountID uuid.UUID, boardName string) discord.ModalCreate {
+	title := i18n.TranslateText(locale, "components.bbs.modal.new_thread.default_title")
+	if boardName != "" {
+		title = i18n.TranslateText(locale, "components.bbs.modal.new_thread.board_title", map[string]any{
+			"board": bbscore.ClearFormat(boardName),
+		})
+	}
+	title = discordsync.TruncateRunes(title, discordsync.MaxModalTitleRunes)
+
+	return discord.NewModalCreate(
+		fmt.Sprintf("/bbs/thread/modal/%s", mountID),
+		title,
+		discord.NewLabel(
+			discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.new_thread.label.title"), discordsync.MaxLabelTextRunes),
+			discord.NewShortTextInput("title").
+				WithRequired(true).
+				WithMinLength(1).
+				WithMaxLength(bbscore.MaxTitleRunes).
+				WithPlaceholder(discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.new_thread.placeholder.title"), discordsync.MaxTextInputPlaceholder)),
+		),
+		discord.NewLabel(
+			discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.field.label.name"), discordsync.MaxLabelTextRunes),
+			discord.NewShortTextInput("name").
+				WithRequired(false).
+				WithMaxLength(bbscore.MaxNameRunes).
+				WithPlaceholder(discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.field.placeholder.name"), discordsync.MaxTextInputPlaceholder)),
+		),
+		discord.NewLabel(
+			discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.field.label.mail"), discordsync.MaxLabelTextRunes),
+			discord.NewShortTextInput("mail").
+				WithRequired(false).
+				WithMaxLength(32).
+				WithPlaceholder("sage"),
+		),
+		discord.NewLabel(
+			discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.new_thread.label.body"), discordsync.MaxLabelTextRunes),
+			discord.NewParagraphTextInput("body").
+				WithRequired(true).
+				WithMinLength(1).
+				WithMaxLength(bbscore.MaxBodyRunes),
+		),
+	)
+}
+
+func buildNewPostModal(locale discord.Locale, mirrorID uuid.UUID) discord.ModalCreate {
+	return discord.NewModalCreate(
+		fmt.Sprintf("/bbs/post/modal/%s", mirrorID),
+		discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.new_post.title"), discordsync.MaxModalTitleRunes),
+		discord.NewLabel(
+			discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.field.label.name"), discordsync.MaxLabelTextRunes),
+			discord.NewShortTextInput("name").WithRequired(false).WithMaxLength(bbscore.MaxNameRunes),
+		),
+		discord.NewLabel(
+			discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.field.label.mail"), discordsync.MaxLabelTextRunes),
+			discord.NewShortTextInput("mail").WithRequired(false).WithMaxLength(32).WithPlaceholder("sage"),
+		),
+		discord.NewLabel(
+			discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.new_post.label.body"), discordsync.MaxLabelTextRunes),
+			discord.NewParagraphTextInput("body").WithRequired(true).WithMinLength(1).WithMaxLength(bbscore.MaxBodyRunes),
+		),
+	)
+}
+
+func (s *System) handleNewThreadButton(e *handler.ComponentEvent) error {
+	loc := e.Locale()
+	mountID, err := uuid.Parse(e.Vars["mount_id"])
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.post_ui.invalid_mount"),
+		)
+		return nil
+	}
+	mount, err := s.Service.Store.GetBoardMount(e.Ctx, mountID)
+	if err != nil || !mount.Active {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			i18n.TranslateText(loc, "components.bbs.post_ui.mount_inactive"),
+		)
+		return nil
+	}
+	if _, err := s.Service.EnsureGuildEnabled(e.Ctx, mount.GuildID); err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, err),
+		)
+		return nil
+	}
+	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
+		token := s.savePending(e.User().ID, pendingNewThread, mountID, "")
+		sr := discordsync.NewSafeResponder(e.ID().Time())
+		_ = sr.RespondMessageCreate(e, discordsync.RenderConsentGate(s.Service.Policy, loc, token))
+		return nil
+	}
+	boardName := ""
+	if b, bErr := s.Service.GetBoard(e.Ctx, mount.BoardID); bErr == nil {
+		boardName = b.Name
+	}
+	modal := buildNewThreadModal(loc, mountID, boardName)
+	sr := discordsync.NewSafeResponder(e.ID().Time())
+	if err := sr.RespondModal(e, modal); err != nil {
+		slog.Warn("bbs failed to open new thread modal", "err", err)
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.errors.title.modal_failed"),
+			describeBBSError(loc, err),
+		))
+	}
+	return nil
+}
+
+func (s *System) handleNewThreadModal(e *handler.ModalEvent) error {
+	loc := e.Locale()
+	mountID, err := uuid.Parse(e.Vars["mount_id"])
+	if err != nil {
+		s.replyModalError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.post_ui.invalid_mount"),
+		)
+		return nil
+	}
+	sr := discordsync.NewSafeResponder(e.ID().Time())
+	if err := sr.DeferCreate(e, true); err != nil {
+		slog.Warn("bbs new thread defer failed", "err", err)
+	}
+
+	failTitle := i18n.TranslateText(loc, "components.bbs.post_ui.thread_create_failed")
+	mount, err := s.Service.Store.GetBoardMount(e.Ctx, mountID)
+	if err != nil || !mount.Active {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, failTitle, i18n.TranslateText(loc, "components.bbs.post_ui.mount_missing_or_inactive")))
+		return nil
+	}
+	if _, err := s.Service.EnsureGuildEnabled(e.Ctx, mount.GuildID); err != nil {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, failTitle, describeBBSError(loc, err)))
+		return nil
+	}
+
+	title := e.Data.Text("title")
+	rawName := e.Data.Text("name")
+	rawMail := e.Data.Text("mail")
+	rawBody := e.Data.Text("body")
+
+	board, thread, firstPost, err := s.Service.CreateThread(e.Ctx, bbscore.CreateThreadInput{
+		BoardID: mount.BoardID,
+		GuildID: mount.GuildID,
+		UserID:  e.User().ID,
+		Title:   title,
+		RawName: rawName,
+		RawMail: rawMail,
+		RawBody: rawBody,
+		Now:     time.Now(),
+	})
+	if err != nil {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, failTitle, describeBBSError(loc, err)))
+		return nil
+	}
+
+	mountLocale := discordsync.ResolveMountLocale(e.Client(), *mount)
+	threadChID, msgID, syncErr := s.Syncer.PublishThread(e.Ctx, e.Client(), mount.ID, *board, *thread, *firstPost, mountLocale)
+	if syncErr != nil {
+		slog.Warn("bbs publish thread sync failed", "thread_id", thread.ID, "err", syncErr)
+		_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(loc,
+			i18n.TranslateText(loc, "components.bbs.post_ui.thread_created_partial_title"),
+			i18n.TranslateText(loc, "components.bbs.post_ui.thread_created_partial_body", map[string]any{
+				"title": thread.Title,
+				"err":   describeBBSError(loc, syncErr),
+			}),
+			discordsync.ColorNotice,
+		).WithEphemeral(true))
+		return nil
+	}
+	url := discord.MessageURL(mount.GuildID, threadChID, msgID)
+	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(loc,
+		i18n.TranslateText(loc, "components.bbs.post_ui.thread_created_title"),
+		i18n.TranslateText(loc, "components.bbs.post_ui.thread_created_body", map[string]any{
+			"title": thread.Title,
+			"url":   url,
+		}),
+		discordsync.ColorLocalBoard,
+	).WithEphemeral(true))
+	return nil
+}
+
+func (s *System) handleNewPostButton(e *handler.ComponentEvent) error {
+	loc := e.Locale()
+	mirrorID, err := uuid.Parse(e.Vars["mirror_id"])
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.post_ui.invalid_mirror"),
+		)
+		return nil
+	}
+	mirror, err := s.Service.Store.GetThreadMirror(e.Ctx, mirrorID)
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			i18n.TranslateText(loc, "components.bbs.post_ui.mirror_not_found"),
+		)
+		return nil
+	}
+	mount, err := s.Service.Store.GetBoardMount(e.Ctx, mirror.BoardMountID)
+	if err != nil || !mount.Active {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			i18n.TranslateText(loc, "components.bbs.post_ui.mount_missing_or_inactive"),
+		)
+		return nil
+	}
+	if _, err := s.Service.EnsureGuildEnabled(e.Ctx, mirror.GuildID); err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, err),
+		)
+		return nil
+	}
+	thread, err := s.Service.GetThread(e.Ctx, mirror.ThreadID)
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, err),
+		)
+		return nil
+	}
+	cannotPostTitle := i18n.TranslateText(loc, "components.bbs.post_ui.cannot_post_title")
+	if thread.Status != bbscore.ThreadStatusActive {
+		s.replyComponentError(e, cannotPostTitle, i18n.TranslateText(loc, "components.bbs.errors.thread_archived"))
+		return nil
+	}
+	if thread.ResCount >= thread.Rules.Normalize().MaxRes {
+		s.replyComponentError(e, cannotPostTitle, i18n.TranslateText(loc, "components.bbs.errors.max_res_reached"))
+		return nil
+	}
+	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
+		token := s.savePending(e.User().ID, pendingNewPost, mirrorID, "")
+		sr := discordsync.NewSafeResponder(e.ID().Time())
+		_ = sr.RespondMessageCreate(e, discordsync.RenderConsentGate(s.Service.Policy, loc, token))
+		return nil
+	}
+	sr := discordsync.NewSafeResponder(e.ID().Time())
+	if err := sr.RespondModal(e, buildNewPostModal(loc, mirrorID)); err != nil {
+		slog.Warn("bbs failed to open new post modal", "err", err)
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.errors.title.modal_failed"),
+			describeBBSError(loc, err),
+		))
+	}
+	return nil
+}
+
+func (s *System) handleNewPostModal(e *handler.ModalEvent) error {
+	loc := e.Locale()
+	mirrorID, err := uuid.Parse(e.Vars["mirror_id"])
+	if err != nil {
+		s.replyModalError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.post_ui.invalid_mirror"),
+		)
+		return nil
+	}
+	sr := discordsync.NewSafeResponder(e.ID().Time())
+	if err := sr.DeferCreate(e, true); err != nil {
+		slog.Warn("bbs new post defer failed", "err", err)
+	}
+
+	failTitle := i18n.TranslateText(loc, "components.bbs.post_ui.post_failed")
+	mirror, err := s.Service.Store.GetThreadMirror(e.Ctx, mirrorID)
+	if err != nil {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, failTitle, i18n.TranslateText(loc, "components.bbs.post_ui.mirror_not_found")))
+		return nil
+	}
+	mount, err := s.Service.Store.GetBoardMount(e.Ctx, mirror.BoardMountID)
+	if err != nil || !mount.Active {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, failTitle, i18n.TranslateText(loc, "components.bbs.post_ui.mount_missing_or_inactive")))
+		return nil
+	}
+
+	rawName := e.Data.Text("name")
+	rawMail := e.Data.Text("mail")
+	rawBody := e.Data.Text("body")
+
+	board, thread, post, backRefs, err := s.Service.CreatePost(e.Ctx, bbscore.CreatePostInput{
+		ThreadID: mirror.ThreadID,
+		GuildID:  mirror.GuildID,
+		UserID:   e.User().ID,
+		RawName:  rawName,
+		RawMail:  rawMail,
+		RawBody:  rawBody,
+		Now:      time.Now(),
+	})
+	if err != nil {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, failTitle, describeBBSError(loc, err)))
+		return nil
+	}
+
+	mountLocale := discordsync.ResolveMountLocale(e.Client(), *mount)
+	thChID, msgID, syncErr := s.Syncer.PublishPost(e.Ctx, e.Client(), mirror.BoardMountID, *board, *thread, *post, backRefs, mountLocale)
+	if syncErr != nil {
+		slog.Warn("bbs publish post sync failed", "thread_id", thread.ID, "res", post.ResNumber, "err", syncErr)
+		_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(loc,
+			i18n.TranslateText(loc, "components.bbs.post_ui.post_created_partial_title", map[string]any{"res": post.ResNumber}),
+			i18n.TranslateText(loc, "components.bbs.post_ui.post_created_partial_body", map[string]any{"err": describeBBSError(loc, syncErr)}),
+			discordsync.ColorNotice,
+		).WithEphemeral(true))
+		return nil
+	}
+	url := discord.MessageURL(mirror.GuildID, thChID, msgID)
+	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(loc,
+		i18n.TranslateText(loc, "components.bbs.post_ui.post_created_title", map[string]any{"res": post.ResNumber}),
+		fmt.Sprintf("ID:%s\n%s", post.AnonID, url),
+		discordsync.ColorLocalBoard,
+	).WithEphemeral(true))
+	return nil
+}
+
+func (s *System) handleBoardThreads(e *handler.ComponentEvent) error {
+	loc := e.Locale()
+	mountID, err := uuid.Parse(e.Vars["mount_id"])
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.post_ui.invalid_mount"),
+		)
+		return nil
+	}
+	fetchFail := i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed")
+	mount, err := s.Service.Store.GetBoardMount(e.Ctx, mountID)
+	if err != nil || !mount.Active {
+		s.replyComponentError(e, fetchFail, i18n.TranslateText(loc, "components.bbs.post_ui.mount_missing_or_inactive"))
+		return nil
+	}
+	if _, err := s.Service.EnsureGuildEnabled(e.Ctx, mount.GuildID); err != nil {
+		s.replyComponentError(e, fetchFail, describeBBSError(loc, err))
+		return nil
+	}
+	board, err := s.Service.GetBoard(e.Ctx, mount.BoardID)
+	if err != nil {
+		s.replyComponentError(e, fetchFail, describeBBSError(loc, err))
+		return nil
+	}
+	status := bbscore.ThreadStatusActive
+	threads, err := s.Service.ListThreads(e.Ctx, bbscore.ThreadFilter{
+		BoardID: board.ID,
+		Status:  &status,
+		Limit:   25,
+	})
+	if err != nil {
+		s.replyComponentError(e, fetchFail, describeBBSError(loc, err))
+		return nil
+	}
+
+	subComps := []discord.ContainerSubComponent{
+		discord.NewTextDisplay(i18n.TranslateText(loc, "components.bbs.threads.list_title", map[string]any{
+			"board": bbscore.ClearFormat(board.Name),
+		})),
+		discord.NewSmallSeparator(),
+	}
+	if len(threads) == 0 {
+		subComps = append(subComps, discord.NewTextDisplay(i18n.TranslateText(loc, "components.bbs.threads.empty")))
+	} else {
+		var lines []string
+		var options []discord.StringSelectMenuOption
+		for i, th := range threads {
+			cleanTitle := discordsync.TruncateRunes(bbscore.ClearFormat(th.Title), 65)
+			lines = append(lines, i18n.TranslateText(loc, "components.bbs.threads.line", map[string]any{
+				"index": i + 1,
+				"title": cleanTitle,
+				"count": th.ResCount,
+			}))
+			options = append(options, discord.NewStringSelectMenuOption(
+				discordsync.TruncateRunes(cleanTitle, 90),
+				th.ID.String(),
+			).WithDescription(i18n.TranslateText(loc, "components.bbs.threads.desc", map[string]any{
+				"count": th.ResCount,
+			})))
+		}
+		subComps = append(subComps, discord.NewTextDisplay(discordsync.TruncateRunes(strings.Join(lines, "\n"), 1800)))
+		if len(options) > 0 {
+			subComps = append(subComps, discord.NewActionRow(
+				discord.NewStringSelectMenu(
+					fmt.Sprintf("/bbs/board/jump/%s", mount.ID),
+					discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.threads.select_placeholder"), discordsync.MaxSelectPlaceholderRunes),
+					options...,
+				),
+			))
+		}
+	}
+
+	msg := discord.NewMessageCreateV2(
+		discord.NewContainer(subComps...).WithAccentColor(discordsync.ColorLocalBoard),
+	).WithEphemeral(true).WithAllowedMentions(&discord.AllowedMentions{})
+
+	sr := discordsync.NewSafeResponder(e.ID().Time())
+	_ = sr.RespondMessageCreate(e, msg)
+	return nil
+}
+
+func (s *System) handleBoardJumpSelect(e *handler.ComponentEvent) error {
+	loc := e.Locale()
+	invalidTitle := i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input")
+	mountID, err := uuid.Parse(e.Vars["mount_id"])
+	if err != nil {
+		s.replyComponentError(e, invalidTitle, i18n.TranslateText(loc, "components.bbs.post_ui.invalid_mount"))
+		return nil
+	}
+	vals := e.StringSelectMenuInteractionData().Values
+	if len(vals) == 0 {
+		s.replyComponentError(e, invalidTitle, i18n.TranslateText(loc, "components.bbs.threads.none_selected"))
+		return nil
+	}
+	threadID, err := uuid.Parse(vals[0])
+	if err != nil {
+		s.replyComponentError(e, invalidTitle, i18n.TranslateText(loc, "components.bbs.threads.invalid_id"))
+		return nil
+	}
+
+	sr := discordsync.NewSafeResponder(e.ID().Time())
+	if err := sr.DeferCreate(e, true); err != nil {
+		slog.Warn("bbs board jump defer failed", "err", err)
+	}
+
+	fetchFail := i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed")
+	mount, err := s.Service.Store.GetBoardMount(e.Ctx, mountID)
+	if err != nil || !mount.Active {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			i18n.TranslateText(loc, "components.bbs.threads.mount_not_found"),
+		))
+		return nil
+	}
+	if _, err := s.Service.EnsureGuildEnabled(e.Ctx, mount.GuildID); err != nil {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, err),
+		))
+		return nil
+	}
+	board, err := s.Service.GetBoard(e.Ctx, mount.BoardID)
+	if err != nil {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, fetchFail, describeBBSError(loc, err)))
+		return nil
+	}
+	thread, err := s.Service.GetThread(e.Ctx, threadID)
+	if err != nil {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, fetchFail, describeBBSError(loc, err)))
+		return nil
+	}
+	if thread.BoardID != board.ID {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.errors.unauthorized"),
+		))
+		return nil
+	}
+
+	mountLocale := discordsync.ResolveMountLocale(e.Client(), *mount)
+	mirror, err := s.Syncer.EnsureThreadMirror(e.Ctx, e.Client(), *mount, *board, *thread, 0, mountLocale)
+	if err != nil {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.threads.mirror_failed"),
+			describeBBSError(loc, err),
+		))
+		return nil
+	}
+
+	msg := discord.NewMessageCreateV2(
+		discord.NewContainer(
+			discord.NewTextDisplayf("### ■ %s", discordsync.TruncateRunes(bbscore.ClearFormat(thread.Title), 80)),
+			discord.NewSmallSeparator(),
+			discord.NewTextDisplay(i18n.TranslateText(loc, "components.bbs.threads.jump_body", map[string]any{
+				"channel_id": mirror.DiscordThreadID,
+				"count":      thread.ResCount,
+			})),
+			discord.NewLargeSeparator(),
+			discord.NewActionRow(
+				discord.NewSecondaryButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.control_panel.btn.reader"), discordsync.MaxButtonLabelRunes), fmt.Sprintf("/bbs/reader/%s/1", thread.ID)),
+			),
+		).WithAccentColor(discordsync.ColorLocalBoard),
+	).WithEphemeral(true).WithAllowedMentions(&discord.AllowedMentions{})
+
+	_ = sr.RespondMessageCreate(e, msg)
+	return nil
+}
+
+func (s *System) handleWatchToggle(e *handler.ComponentEvent) error {
+	loc := e.Locale()
+	threadID, err := uuid.Parse(e.Vars["thread_id"])
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.threads.invalid_id"),
+		)
+		return nil
+	}
+	thread, err := s.Service.GetThread(e.Ctx, threadID)
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed"),
+			describeBBSError(loc, err),
+		)
+		return nil
+	}
+
+	sr := discordsync.NewSafeResponder(e.ID().Time())
+	if existing, gErr := s.Service.Store.GetThreadWatch(e.Ctx, threadID, e.User().ID); gErr == nil && existing != nil {
+		if err := s.Service.Store.DeleteThreadWatch(e.Ctx, threadID, e.User().ID); err != nil {
+			s.replyComponentError(e,
+				i18n.TranslateText(loc, "components.bbs.watch.unwatch_failed"),
+				describeBBSError(loc, err),
+			)
+			return nil
+		}
+		_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(loc,
+			i18n.TranslateText(loc, "components.bbs.watch.unwatched_title"),
+			i18n.TranslateText(loc, "components.bbs.watch.unwatched_body", map[string]any{"title": thread.Title}),
+			discordsync.ColorNotice,
+		).WithEphemeral(true))
+		return nil
+	}
+
+	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderConsentGate(s.Service.Policy, loc, "none"))
+		return nil
+	}
+
+	if err := s.Service.Store.SaveThreadWatch(e.Ctx, &bbscore.ThreadWatch{
+		ThreadID:  threadID,
+		UserID:    e.User().ID,
+		Locale:    string(loc),
+		CreatedAt: time.Now(),
+	}); err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.watch.watch_failed"),
+			describeBBSError(loc, err),
+		)
+		return nil
+	}
+	_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(loc,
+		i18n.TranslateText(loc, "components.bbs.watch.watched_title"),
+		i18n.TranslateText(loc, "components.bbs.watch.watched_body", map[string]any{"title": thread.Title}),
+		discordsync.ColorLocalBoard,
+	).WithEphemeral(true))
+	return nil
+}
+
+func (s *System) handleReaderPage(e *handler.ComponentEvent) error {
+	loc := e.Locale()
+	threadID, err := uuid.Parse(e.Vars["thread_id"])
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.threads.invalid_id"),
+		)
+		return nil
+	}
+	pageSpec := e.Vars["page"]
+	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
+		token := s.savePending(e.User().ID, pendingOpenReader, threadID, pageSpec)
+		sr := discordsync.NewSafeResponder(e.ID().Time())
+		_ = sr.RespondMessageCreate(e, discordsync.RenderConsentGate(s.Service.Policy, loc, token))
+		return nil
+	}
+
+	comps, err := s.renderReaderComponents(e.Ctx, e.GuildID(), threadID, pageSpec, loc)
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.reader.render_failed"),
+			describeBBSError(loc, err),
+		)
+		return nil
+	}
+
+	sr := discordsync.NewSafeResponder(e.ID().Time())
+	if e.Message.Flags.Has(discord.MessageFlagEphemeral) {
+		upd := discord.NewMessageUpdateV2(comps...).WithAllowedMentions(&discord.AllowedMentions{})
+		_ = sr.UpdateComponentMessage(e, upd)
+		return nil
+	}
+	msg := discord.NewMessageCreateV2(comps...).WithEphemeral(true).WithAllowedMentions(&discord.AllowedMentions{})
+	_ = sr.RespondMessageCreate(e, msg)
+	return nil
+}
+
+func (s *System) handleReaderJumpButton(e *handler.ComponentEvent) error {
+	loc := e.Locale()
+	threadID, err := uuid.Parse(e.Vars["thread_id"])
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.threads.invalid_id"),
+		)
+		return nil
+	}
+	sr := discordsync.NewSafeResponder(e.ID().Time())
+	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
+		token := s.savePending(e.User().ID, pendingOpenReader, threadID, "1")
+		_ = sr.RespondMessageCreate(e, discordsync.RenderConsentGate(s.Service.Policy, loc, token))
+		return nil
+	}
+	modal := discord.NewModalCreate(
+		fmt.Sprintf("/bbs/reader/jumpmodal/%s", threadID),
+		discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.modal.jump.title"), discordsync.MaxModalTitleRunes),
+		discord.NewLabel(
+			discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.modal.jump.label"), discordsync.MaxLabelTextRunes),
+			discord.NewShortTextInput("target").
+				WithRequired(true).
+				WithMaxLength(16).
+				WithPlaceholder(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.modal.jump.placeholder"), discordsync.MaxTextInputPlaceholder)),
+		),
+	)
+	if err := sr.RespondModal(e, modal); err != nil {
+		slog.Warn("bbs failed to open reader jump modal", "err", err)
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.errors.title.modal_failed"),
+			describeBBSError(loc, err),
+		))
+	}
+	return nil
+}
+
+func (s *System) handleReaderJumpModal(e *handler.ModalEvent) error {
+	loc := e.Locale()
+	threadID, err := uuid.Parse(e.Vars["thread_id"])
+	if err != nil {
+		s.replyModalError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.threads.invalid_id"),
+		)
+		return nil
+	}
+	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
+		sr := discordsync.NewSafeResponder(e.ID().Time())
+		_ = sr.RespondMessageCreate(e, discordsync.RenderConsentGate(s.Service.Policy, loc, "none"))
+		return nil
+	}
+	renderFail := i18n.TranslateText(loc, "components.bbs.reader.render_failed")
+	thread, err := s.Service.GetThread(e.Ctx, threadID)
+	if err != nil {
+		s.replyModalError(e, renderFail, describeBBSError(loc, err))
+		return nil
+	}
+	target, jErr := discordsync.ParseReaderJumpInput(e.Data.Text("target"), thread.ResCount)
+	if jErr != nil {
+		s.replyModalError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			describeBBSError(loc, jErr),
+		)
+		return nil
+	}
+	comps, err := s.renderReaderComponents(e.Ctx, e.GuildID(), threadID, strconv.FormatUint(uint64(target), 10), loc)
+	if err != nil {
+		s.replyModalError(e, renderFail, describeBBSError(loc, err))
+		return nil
+	}
+
+	sr := discordsync.NewSafeResponder(e.ID().Time())
+	upd := discord.NewMessageUpdateV2(comps...).WithAllowedMentions(&discord.AllowedMentions{})
+	if uErr := sr.UpdateComponentMessage(e, upd); uErr != nil {
+		msg := discord.NewMessageCreateV2(comps...).WithEphemeral(true).WithAllowedMentions(&discord.AllowedMentions{})
+		_ = sr.RespondMessageCreate(e, msg)
+	}
+	return nil
+}
+
+func (s *System) buildReaderMessageUpdate(ctx context.Context, guildID *snowflake.ID, threadID uuid.UUID, pageSpec string, locale discord.Locale) (discord.MessageUpdate, error) {
+	comps, err := s.renderReaderComponents(ctx, guildID, threadID, pageSpec, locale)
+	if err != nil {
+		return discord.MessageUpdate{}, err
+	}
+	return discord.NewMessageUpdateV2(comps...).WithAllowedMentions(&discord.AllowedMentions{}), nil
+}
+
+func (s *System) renderReaderComponents(ctx context.Context, guildID *snowflake.ID, threadID uuid.UUID, pageSpec string, locale discord.Locale) ([]discord.LayoutComponent, error) {
+	thread, err := s.Service.GetThread(ctx, threadID)
+	if err != nil {
+		return nil, err
+	}
+	posts, err := s.Service.ListPosts(ctx, threadID, 0, int(max(thread.ResCount, 1000)))
+	if err != nil {
+		return nil, err
+	}
+
+	var resolveURL func(resNum uint32) (string, bool)
+	if guildID != nil && len(posts) > 0 {
+		if pm, pErr := s.Service.Store.GetPostMirrorByPostAndGuild(ctx, posts[0].ID, *guildID); pErr == nil {
+			if tm, tErr := s.Service.Store.GetThreadMirror(ctx, pm.ThreadMirrorID); tErr == nil {
+				gid := *guildID
+				tid := tm.DiscordThreadID
+				urlCache := make(map[uint32]string)
+				urlMissed := make(map[uint32]bool)
+				resolveURL = func(resNum uint32) (string, bool) {
+					if u, ok := urlCache[resNum]; ok {
+						return u, true
+					}
+					if urlMissed[resNum] {
+						return "", false
+					}
+					m, mErr := s.Service.Store.GetPostMirrorByResAndGuild(ctx, threadID, resNum, gid)
+					if mErr != nil || m.DiscordMessageID == 0 {
+						urlMissed[resNum] = true
+						return "", false
+					}
+					u := discord.MessageURL(gid, tid, m.DiscordMessageID)
+					urlCache[resNum] = u
+					return u, true
+				}
+			}
+		}
+	}
+
+	var maxEndRes uint32
+	startIndex := 0
+	trimmedSpec := strings.TrimSpace(pageSpec)
+	if trimmedSpec == "latest" {
+		startIndex = discordsync.ComputeLatestReaderStartIndex(*thread, posts, resolveURL, locale)
+	} else {
+		startStr, endStr, isRange := strings.Cut(trimmedSpec, "-")
+		var targetRes uint32
+		if isRange {
+			sVal, sErr := strconv.ParseUint(startStr, 10, 32)
+			eVal, eErr := strconv.ParseUint(endStr, 10, 32)
+			if sErr != nil || eErr != nil || sVal == 0 || eVal < sVal || (len(posts) > 0 && uint32(eVal) > thread.ResCount) {
+				return nil, bbscore.ErrInvalidReaderJump
+			}
+			targetRes = uint32(sVal)
+			maxEndRes = uint32(eVal)
+		} else {
+			n, pErr := strconv.ParseUint(trimmedSpec, 10, 32)
+			if pErr != nil || n == 0 || (len(posts) > 0 && uint32(n) > thread.ResCount) {
+				return nil, bbscore.ErrInvalidReaderJump
+			}
+			targetRes = uint32(n)
+		}
+		if len(posts) > 0 && targetRes > 1 {
+			startIndex = len(posts) - 1
+			for i, p := range posts {
+				if p.ResNumber >= targetRes {
+					startIndex = i
+					break
+				}
+			}
+			if startIndex < 0 {
+				startIndex = 0
+			}
+		}
+	}
+
+	comps, _, _ := discordsync.RenderReaderPageBounded(*thread, posts, startIndex, maxEndRes, resolveURL, locale)
+	return comps, nil
+}

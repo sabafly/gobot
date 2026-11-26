@@ -43,6 +43,19 @@ type Config struct {
 	UpColor    int            `yaml:"up_color"`
 
 	DisableForeignKeys bool `yaml:"foreign_keys"`
+
+	BBS ConfigBBS `yaml:"bbs"`
+}
+
+type ConfigBBS struct {
+	SecretKey          string         `yaml:"secret_key"`
+	Operators          []snowflake.ID `yaml:"operators"`
+	OperatorGuilds     []snowflake.ID `yaml:"operator_guilds"`
+	OperatorLogChannel *snowflake.ID  `yaml:"operator_log_channel"`
+	PolicyVersion      string         `yaml:"policy_version"`
+	TermsURL           string         `yaml:"terms_url"`
+	GuidelinesURL      string         `yaml:"guidelines_url"`
+	PrivacyPolicyURL   string         `yaml:"privacy_policy_url"`
 }
 
 type ConfigDebug struct {
