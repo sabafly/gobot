@@ -62,7 +62,12 @@ func (c *adminCommand) Create() []discord.ApplicationCommandCreate {
 			Value:             "none",
 		},
 		{
-			Name:              "vvvvv (Device + OS)",
+			Name:              "vvv (Nickname only)",
+			NameLocalizations: i18n.TranslateTextMap("command.bbs.choices.slip.vvv"),
+			Value:             "vvv",
+		},
+		{
+			Name:              "vvvvv (Nickname + Fixed ID / Korokoro)",
 			NameLocalizations: i18n.TranslateTextMap("command.bbs.choices.slip.vvvvv"),
 			Value:             "vvvvv",
 		},

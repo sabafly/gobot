@@ -182,7 +182,7 @@ type BBSPost struct {
 	Name         string       `gorm:"type:varchar(64);not null"`
 	Trip         string       `gorm:"type:varchar(32)"`
 	Cap          string       `gorm:"type:varchar(64)"`
-	SlipText     string       `gorm:"type:varchar(32)"`
+	SlipText     string       `gorm:"type:varchar(96)"`
 	AnonID       string       `gorm:"type:varchar(32)"`
 	PosterHash   string       `gorm:"type:varchar(32);not null;index"`
 	IsOP         bool         `gorm:"not null;default:false"`

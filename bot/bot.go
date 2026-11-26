@@ -335,6 +335,19 @@ func initBBSSystem(component *components.Components, config *components.Config, 
 	if err := svc.SetAdminCaps(capDefs); err != nil {
 		return nil, fmt.Errorf("BBSキャップ設定が不正です: %w", err)
 	}
+	slipEvents := make([]bbs.SlipEventDefinition, 0, len(config.BBS.SlipEvents))
+	for _, ev := range config.BBS.SlipEvents {
+		slipEvents = append(slipEvents, bbs.SlipEventDefinition{
+			ID:        ev.ID,
+			Label:     ev.Label,
+			StartDate: ev.StartDate,
+			EndDate:   ev.EndDate,
+			Mode:      bbs.SlipEventMode(ev.Mode),
+		})
+	}
+	if err := svc.SetSlipEvents(slipEvents); err != nil {
+		return nil, fmt.Errorf("BBS SLIPイベント設定が不正です: %w", err)
+	}
 	syncer := discordsync.NewSyncer(svc)
 	syncer.CanSendDM = func(ctx context.Context, uid snowflake.ID) bool {
 		return discordsync.CanSendDMToUser(ctx, gormDB, uid)

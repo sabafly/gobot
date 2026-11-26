@@ -48,15 +48,24 @@ type Config struct {
 }
 
 type ConfigBBS struct {
-	SecretKey          string         `yaml:"secret_key"`
-	Operators          []snowflake.ID `yaml:"operators"`
-	OperatorGuilds     []snowflake.ID `yaml:"operator_guilds"`
-	OperatorLogChannel *snowflake.ID  `yaml:"operator_log_channel"`
-	PolicyVersion      string         `yaml:"policy_version"`
-	TermsURL           string         `yaml:"terms_url"`
-	GuidelinesURL      string         `yaml:"guidelines_url"`
-	PrivacyPolicyURL   string         `yaml:"privacy_policy_url"`
-	Caps               []ConfigBBSCap `yaml:"caps"`
+	SecretKey          string               `yaml:"secret_key"`
+	Operators          []snowflake.ID       `yaml:"operators"`
+	OperatorGuilds     []snowflake.ID       `yaml:"operator_guilds"`
+	OperatorLogChannel *snowflake.ID        `yaml:"operator_log_channel"`
+	PolicyVersion      string               `yaml:"policy_version"`
+	TermsURL           string               `yaml:"terms_url"`
+	GuidelinesURL      string               `yaml:"guidelines_url"`
+	PrivacyPolicyURL   string               `yaml:"privacy_policy_url"`
+	Caps               []ConfigBBSCap       `yaml:"caps"`
+	SlipEvents         []ConfigBBSSlipEvent `yaml:"slip_events"`
+}
+
+type ConfigBBSSlipEvent struct {
+	ID        string `yaml:"id"`
+	Label     string `yaml:"label"`
+	StartDate string `yaml:"start_date"`
+	EndDate   string `yaml:"end_date"`
+	Mode      string `yaml:"mode"`
 }
 
 type ConfigBBSCap struct {

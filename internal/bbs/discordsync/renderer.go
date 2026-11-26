@@ -127,8 +127,11 @@ func RenderBoardGuide(board bbs.Board, mountID uuid.UUID, locale discord.Locale)
 	idMode := i18n.TranslateText(locale, idKey)
 
 	slipKey := "components.bbs.board_guide.slip.off"
-	if board.Rules.SLIP == bbs.SLIPVVVVV {
-		slipKey = "components.bbs.board_guide.slip.on"
+	switch board.Rules.SLIP {
+	case bbs.SLIPVVV:
+		slipKey = "components.bbs.board_guide.slip.vvv"
+	case bbs.SLIPVVVVV:
+		slipKey = "components.bbs.board_guide.slip.vvvvv"
 	}
 	slipMode := i18n.TranslateText(locale, slipKey)
 
@@ -212,10 +215,7 @@ func RenderPostHeader(post bbs.Post, threadRules bbs.BoardRules, locale discord.
 		}
 	}
 	if post.SlipText != "" {
-		slipPrefix := i18n.TranslateText(locale, "components.bbs.post.slip_prefix")
 		namePart.WriteString(" (")
-		namePart.WriteString(slipPrefix)
-		namePart.WriteByte(' ')
 		namePart.WriteString(bbs.ClearFormat(post.SlipText))
 		namePart.WriteByte(')')
 	}

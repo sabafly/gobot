@@ -1345,3 +1345,46 @@ func TestRenderReaderPage_UniqueCustomIDsAllStates(t *testing.T) {
 	}
 	assertValidReaderComps("multi_latest_page", cLatest)
 }
+
+func TestRenderSLIP_ModesAndHeader(t *testing.T) {
+	v := discordsync.PayloadValidator{}
+	boardID := uuid.New()
+	mountID := uuid.New()
+	threadID := uuid.New()
+	now := time.Date(2026, 1, 1, 12, 0, 0, 0, bbs.JSTLocation)
+
+	// 1. RenderBoardGuide handles none / vvv / vvvvv cleanly for JA and EN.
+	for _, slip := range []bbs.SLIPLevel{bbs.SLIPNone, bbs.SLIPVVV, bbs.SLIPVVVVV} {
+		board := bbs.Board{
+			ID:    boardID,
+			Scope: bbs.ScopeLocal,
+			Name:  "SLIP Test Board",
+			Rules: bbs.BoardRules{DefaultName: bbs.DefaultAnonymousName, SLIP: slip}.Normalize(),
+		}
+		for _, loc := range []discord.Locale{discord.LocaleJapanese, discord.LocaleEnglishUS} {
+			guide := discordsync.RenderBoardGuide(board, mountID, loc)
+			if err := v.ValidateMessageCreate(guide); err != nil {
+				t.Fatalf("RenderBoardGuide(%v, %s) failed validation: %v", slip, loc, err)
+			}
+			assertNoEmojiInLayout(t, guide.Components)
+			if loc == discord.LocaleEnglishUS {
+				assertLayoutENClean(t, guide.Components)
+			}
+		}
+	}
+
+	// 2. RenderPostHeader formats SLIP without a redundant fixed prefix.
+	rules := bbs.BoardRules{DefaultName: bbs.DefaultAnonymousName, SLIP: bbs.SLIPVVVVV}.Normalize()
+	vvvHeader := discordsync.RenderPostHeader(bbs.Post{
+		ID: uuid.New(), ThreadID: threadID, ResNumber: 1, SlipText: "ﾌﾞｰｽﾄｳｵ", AnonID: "id1", CreatedAt: now,
+	}, rules, discord.LocaleJapanese)
+	if !strings.Contains(vvvHeader, "風吹けば名無し (ﾌﾞｰｽﾄｳｵ):") {
+		t.Fatalf("unexpected vvv header: %q", vvvHeader)
+	}
+	vvvvvHeader := discordsync.RenderPostHeader(bbs.Post{
+		ID: uuid.New(), ThreadID: threadID, ResNumber: 2, SlipText: "ｵｼｮｳｶﾞﾂ ﾌﾞｰｽﾄｳｵ Ab12-Cd34", AnonID: "id1", CreatedAt: now,
+	}, rules, discord.LocaleEnglishUS)
+	if !strings.Contains(vvvvvHeader, "Anonymous (ｵｼｮｳｶﾞﾂ ﾌﾞｰｽﾄｳｵ Ab12\\-Cd34):") {
+		t.Fatalf("unexpected vvvvv event header: %q", vvvvvHeader)
+	}
+}

@@ -115,6 +115,19 @@ func TestPendingActionTokensAndSlashRuleValidation(t *testing.T) {
 		}
 	}
 
+	// Also verify slip=vvv works in parseBoardRulesFromSlash and parseUpdateBoardInput.
+	dataVVV := discord.SlashCommandInteractionData{
+		Options: map[string]discord.SlashCommandOption{
+			"slip": {Type: discord.ApplicationCommandOptionTypeString, Value: rawJSON("vvv")},
+		},
+	}
+	if rVVV, err := parseBoardRulesFromSlash(dataVVV, discord.LocaleJapanese); err != nil || rVVV.SLIP != bbscore.SLIPVVV {
+		t.Fatalf("expected parseBoardRulesFromSlash slip=vvv -> SLIPVVV, got %+v, err=%v", rVVV, err)
+	}
+	if uVVV, err := parseUpdateBoardInput(dataVVV); err != nil || uVVV.SLIP == nil || *uVVV.SLIP != bbscore.SLIPVVV {
+		t.Fatalf("expected parseUpdateBoardInput slip=vvv -> SLIPVVV, got %+v, err=%v", uVVV, err)
+	}
+
 	// parseUpdateBoardInput also rejects empty default_name or invalid slip.
 	if _, err := parseUpdateBoardInput(discord.SlashCommandInteractionData{
 		Options: map[string]discord.SlashCommandOption{
@@ -1526,5 +1539,87 @@ func TestBuildPostingModals_ConditionalCapSelect(t *testing.T) {
 	selClamped, _ := findModalCapSelect(thClamped)
 	if len(selClamped.Options) != discordsync.MaxSelectOptions {
 		t.Fatalf("expected %d clamped cap options, got %d", discordsync.MaxSelectOptions, len(selClamped.Options))
+	}
+}
+
+func TestBuildSlipContext_ExtractsMemberVoiceAndGuildTraits(t *testing.T) {
+	guildID := snowflake.ID(66001)
+	userID := snowflake.ID(77001)
+	chID := snowflake.ID(88001)
+	joined := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+	boosted := time.Date(2025, 6, 1, 0, 0, 0, 0, time.UTC)
+
+	client := newInternalMockClient(t, nil)
+	client.Caches = cache.New(cache.WithCaches(cache.FlagsAll))
+	client.Caches.AddGuild(discord.CacheGuild{
+		Guild: discord.Guild{
+			ID:          guildID,
+			Name:        "SecretGuildName",
+			PremiumTier: discord.PremiumTier3,
+			Features:    []discord.GuildFeature{discord.GuildFeatureCommunity, discord.GuildFeatureVanityURL},
+		},
+		MemberCount: 800,
+	})
+	client.Caches.AddVoiceState(discord.VoiceState{
+		GuildID:    guildID,
+		ChannelID:  &chID,
+		UserID:     userID,
+		SelfStream: true,
+	})
+
+	payload, err := json.Marshal(map[string]any{
+		"type":           discord.InteractionTypeModalSubmit,
+		"id":             snowflake.New(time.Now()).String(),
+		"application_id": "999000",
+		"token":          "test-modal-token",
+		"guild_id":       guildID.String(),
+		"locale":         "ja",
+		"member": map[string]any{
+			"nick":          "鯖ﾆｯｸ",
+			"joined_at":     joined.Format(time.RFC3339),
+			"premium_since": boosted.Format(time.RFC3339),
+			"roles":         []string{"1", "2", "3"},
+			"user": map[string]any{
+				"id":           userID.String(),
+				"username":     "user_raw",
+				"global_name":  "GlobalDisplay",
+				"public_flags": int(discord.UserFlagHouseBrilliance | discord.UserFlagEarlySupporter),
+			},
+		},
+		"data": map[string]any{
+			"custom_id":  "/bbs/post/modal/test",
+			"components": []any{},
+		},
+	})
+	if err != nil {
+		t.Fatalf("marshal modal interaction failed: %v", err)
+	}
+	var mi discord.ModalSubmitInteraction
+	if err := json.Unmarshal(payload, &mi); err != nil {
+		t.Fatalf("unmarshal ModalSubmitInteraction failed: %v", err)
+	}
+	ev := &handler.ModalEvent{
+		ModalSubmitInteractionCreate: &events.ModalSubmitInteractionCreate{
+			GenericEvent:           events.NewGenericEvent(client, 0, 0),
+			ModalSubmitInteraction: mi,
+		},
+		Ctx: context.Background(),
+	}
+
+	sc := buildSlipContext(ev, guildID)
+	if sc.MemberNick != "鯖ﾆｯｸ" || sc.GlobalName != "GlobalDisplay" || sc.Username != "user_raw" {
+		t.Fatalf("unexpected names in SlipContext: %+v", sc)
+	}
+	if sc.HypeSquadHouse != "brilliance" || !sc.HasSpecialBadge || !sc.IsDefaultAvatar || sc.UserLocale != "ja" {
+		t.Fatalf("unexpected user flags/locale in SlipContext: %+v", sc)
+	}
+	if !sc.IsGuildBooster || sc.RoleCount != 3 || sc.HasZeroRoles || !sc.HasServerNick || sc.MemberJoinedAt == nil {
+		t.Fatalf("unexpected member attrs in SlipContext: %+v", sc)
+	}
+	if !sc.InVoiceChannel || !sc.IsVoiceStreaming || sc.IsVoiceMutedOrDeaf {
+		t.Fatalf("unexpected voice state in SlipContext: %+v", sc)
+	}
+	if sc.GuildMemberCount != 800 || sc.GuildBoostTier != 3 || !sc.GuildIsCommunity || !sc.GuildHasVanityURL {
+		t.Fatalf("unexpected guild attrs in SlipContext: %+v", sc)
 	}
 }

@@ -38,8 +38,19 @@ var JSTLocation = time.FixedZone("JST", 9*60*60)
 
 // IdentityGenerator derives HMAC-SHA256 anonymous IDs, tripcodes, SLIPs, and moderation hashes.
 type IdentityGenerator struct {
-	secret []byte
-	loc    *time.Location
+	secret     []byte
+	loc        *time.Location
+	slipEvents []parsedSlipEvent
+}
+
+// SetSlipEvents validates and configures custom date-based SLIP events on the generator.
+func (g *IdentityGenerator) SetSlipEvents(defs []SlipEventDefinition) error {
+	_, parsed, err := parseSlipEventDefinitions(defs)
+	if err != nil {
+		return err
+	}
+	g.slipEvents = parsed
+	return nil
 }
 
 // NewIdentityGenerator creates an IdentityGenerator using the provided HMAC secret.
@@ -148,20 +159,6 @@ func (g *IdentityGenerator) GenerateTrip(rawKey string) string {
 	return b.String()
 }
 
-// GenerateSlip derives an abcd-efgh SLIP identifier (Watchoi) from the user's Discord ID.
-func (g *IdentityGenerator) GenerateSlip(userID snowflake.ID) string {
-	sum := g.hmacSum(fmt.Sprintf("slip:%d", userID))
-	var b strings.Builder
-	b.Grow(9)
-	for i := range 8 {
-		if i == 4 {
-			b.WriteByte('-')
-		}
-		b.WriteByte(idAlphabet[int(sum[i])%len(idAlphabet)])
-	}
-	return b.String()
-}
-
 // GeneratePosterHash generates an opaque 16-hex-character moderation identifier.
 // Local boards scope the hash per (guildID, userID) while global boards scope per userID.
 func (g *IdentityGenerator) GeneratePosterHash(scope Scope, guildID snowflake.ID, userID snowflake.ID) string {
@@ -175,7 +172,7 @@ func (g *IdentityGenerator) GeneratePosterHash(scope Scope, guildID snowflake.ID
 	return fmt.Sprintf("%x", sum[:8])
 }
 
-// ParsePostIdentity resolves nickname commands (!id:on, !slip:vvvvv, #trip),
+// ParsePostIdentity resolves nickname commands (!id:on, !slip:vvv, !slip:vvvvv, #trip),
 // thread creation !extend commands, cap overrides, and anonymous identifiers.
 func (g *IdentityGenerator) ParsePostIdentity(
 	boardID uuid.UUID,
@@ -187,6 +184,7 @@ func (g *IdentityGenerator) ParsePostIdentity(
 	baseRules BoardRules,
 	isNewThread bool,
 	cap *Cap,
+	slipCtx SlipContext,
 	at time.Time,
 ) (ParsedIdentity, error) {
 	rules := baseRules.Normalize()
@@ -214,6 +212,8 @@ func (g *IdentityGenerator) ParsePostIdentity(
 		switch lower {
 		case "!id:on":
 			hideID = false
+		case "!slip:vvv":
+			slipLevel = SLIPVVV
 		case "!slip:vvvvv":
 			slipLevel = SLIPVVVVV
 		default:
@@ -275,6 +275,8 @@ func (g *IdentityGenerator) ParsePostIdentity(
 					parsedRules.SLIP = rules.SLIP
 				case "none":
 					parsedRules.SLIP = SLIPNone
+				case "vvv":
+					parsedRules.SLIP = SLIPVVV
 				case "vvvvv":
 					parsedRules.SLIP = SLIPVVVVV
 				default:
@@ -298,8 +300,8 @@ func (g *IdentityGenerator) ParsePostIdentity(
 		anonID = g.GenerateAnonID(boardID, userID, at)
 	}
 	var slipText string
-	if slipLevel == SLIPVVVVV && !hideID {
-		slipText = g.GenerateSlip(userID)
+	if slipLevel.Enabled() && !hideID {
+		slipText = g.GenerateSlip(slipLevel, boardID, scope, guildID, userID, slipCtx, at)
 	}
 
 	return ParsedIdentity{

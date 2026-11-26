@@ -830,7 +830,16 @@ func TestUpdateBoard_SLIPAndPartialFields(t *testing.T) {
 		t.Fatalf("lock board failed: %v", err)
 	}
 
-	// Update SLIP from None -> VVVVV while preserving DefaultName, HideID=true, Locked=true.
+	// Update SLIP from None -> VVV -> VVVVV -> None while preserving DefaultName, HideID=true, Locked=true.
+	slipVVV := bbs.SLIPVVV
+	updatedVVV, err := svc.UpdateBoard(ctx, board.ID, bbs.UpdateBoardInput{SLIP: &slipVVV})
+	if err != nil || updatedVVV.Rules.SLIP != bbs.SLIPVVV {
+		t.Fatalf("UpdateBoard SLIP=vvv failed: %+v, err=%v", updatedVVV, err)
+	}
+	if reloadedVVV, err := svc.GetBoard(ctx, board.ID); err != nil || reloadedVVV.Rules.SLIP != bbs.SLIPVVV {
+		t.Fatalf("expected persisted SLIP=vvv after reload, got %+v, err=%v", reloadedVVV, err)
+	}
+
 	slipOn := bbs.SLIPVVVVV
 	updatedOn, err := svc.UpdateBoard(ctx, board.ID, bbs.UpdateBoardInput{SLIP: &slipOn})
 	if err != nil {
@@ -852,5 +861,39 @@ func TestUpdateBoard_SLIPAndPartialFields(t *testing.T) {
 	reloadedOff, err := svc.GetBoard(ctx, board.ID)
 	if err != nil || reloadedOff.Rules.SLIP != bbs.SLIPNone || !reloadedOff.Locked || !reloadedOff.Rules.HideID || reloadedOff.Rules.DefaultName != "初期名無し" {
 		t.Fatalf("expected persisted SLIP=none after reload, got %+v, err=%v", reloadedOff, err)
+	}
+
+	// Unlock board and verify long event + nickname + MMMM-XXXX SLIP text persists cleanly in BBSPost.
+	lockedFalse := false
+	if _, err := svc.UpdateBoard(ctx, board.ID, bbs.UpdateBoardInput{Locked: &lockedFalse, SLIP: &slipOn}); err != nil {
+		t.Fatalf("unlock + SLIP=vvvvv failed: %v", err)
+	}
+	if _, err := svc.AcceptPolicy(ctx, opUser); err != nil {
+		t.Fatalf("AcceptPolicy opUser failed: %v", err)
+	}
+	if err := svc.SetSlipEvents([]bbs.SlipEventDefinition{
+		{ID: "long_evt", Label: strings.Repeat("ｲﾍﾞﾝﾄ", 4), StartDate: "01-01", Mode: bbs.SlipEventModeAppend},
+	}); err != nil {
+		t.Fatalf("SetSlipEvents failed: %v", err)
+	}
+	_, thSlip, firstSlipPost, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: board.ID,
+		GuildID: guildID,
+		UserID:  opUser,
+		Title:   "SLIP永続化テスト",
+		RawName: "!id:on",
+		RawBody: "本文",
+		SlipContext: bbs.SlipContext{
+			MemberNick:     "テストニック",
+			IsGuildBooster: true,
+		},
+		Now: time.Date(2026, 1, 1, 12, 0, 0, 0, bbs.JSTLocation),
+	})
+	if err != nil {
+		t.Fatalf("CreateThread with event SLIP failed: %v", err)
+	}
+	listPosts, err := svc.ListPosts(ctx, thSlip.ID, 0, 10)
+	if err != nil || len(listPosts) != 1 || listPosts[0].SlipText == "" || listPosts[0].SlipText != firstSlipPost.SlipText {
+		t.Fatalf("expected persisted SlipText %q, got %+v, err=%v", firstSlipPost.SlipText, listPosts, err)
 	}
 }

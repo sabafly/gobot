@@ -24,6 +24,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -38,7 +39,70 @@ import (
 	"github.com/sabafly/gobot/internal/i18n"
 )
 
-const capSelectCustomID = "cap"
+const (
+	capSelectCustomID       = "cap"
+	userFlagActiveDeveloper = discord.UserFlags(1 << 22)
+)
+
+func buildSlipContext(e *handler.ModalEvent, guildID snowflake.ID) bbscore.SlipContext {
+	user := e.User()
+	sc := bbscore.SlipContext{
+		Username:        user.Username,
+		UserCreatedAt:   user.CreatedAt(),
+		IsDefaultAvatar: user.Avatar == nil,
+		HasProfileDecor: user.Banner != nil || user.AvatarDecorationData != nil || user.PrimaryGuild != nil || user.Collectibles != nil,
+		UserLocale:      string(e.Locale()),
+	}
+	if user.GlobalName != nil {
+		sc.GlobalName = *user.GlobalName
+	}
+	switch {
+	case user.PublicFlags.Has(discord.UserFlagHouseBravery):
+		sc.HypeSquadHouse = "bravery"
+	case user.PublicFlags.Has(discord.UserFlagHouseBrilliance):
+		sc.HypeSquadHouse = "brilliance"
+	case user.PublicFlags.Has(discord.UserFlagHouseBalance):
+		sc.HypeSquadHouse = "balance"
+	}
+	specialMask := discord.UserFlagDiscordEmployee |
+		discord.UserFlagPartneredServerOwner |
+		discord.UserFlagHypeSquadEvents |
+		discord.UserFlagBugHunterLevel1 |
+		discord.UserFlagBugHunterLevel2 |
+		discord.UserFlagEarlySupporter |
+		discord.UserFlagEarlyVerifiedBotDeveloper |
+		discord.UserFlagDiscordCertifiedModerator |
+		userFlagActiveDeveloper
+	sc.HasSpecialBadge = (user.PublicFlags & specialMask) != 0
+
+	if member := e.Member(); member != nil {
+		if member.Nick != nil && strings.TrimSpace(*member.Nick) != "" {
+			sc.MemberNick = *member.Nick
+			sc.HasServerNick = true
+		}
+		sc.HasServerAvatar = member.Avatar != nil || member.Banner != nil || member.AvatarDecorationData != nil
+		sc.MemberJoinedAt = member.JoinedAt
+		sc.IsGuildBooster = member.PremiumSince != nil
+		sc.RoleCount = len(member.RoleIDs)
+		sc.HasZeroRoles = len(member.RoleIDs) == 0
+	}
+
+	if client := e.Client(); client != nil && guildID != 0 {
+		if vs, ok := client.Caches.VoiceState(guildID, user.ID); ok && vs.ChannelID != nil {
+			sc.InVoiceChannel = true
+			sc.IsVoiceStreaming = vs.SelfStream || vs.SelfVideo
+			sc.IsVoiceMutedOrDeaf = vs.SelfMute || vs.GuildMute || vs.SelfDeaf || vs.GuildDeaf
+		}
+		if g, ok := client.Caches.Guild(guildID); ok {
+			sc.GuildCreatedAt = g.CreatedAt()
+			sc.GuildMemberCount = g.MemberCount
+			sc.GuildBoostTier = int(g.PremiumTier)
+			sc.GuildIsCommunity = slices.Contains(g.Features, discord.GuildFeatureCommunity)
+			sc.GuildHasVanityURL = (g.VanityURLCode != nil && *g.VanityURLCode != "") || slices.Contains(g.Features, discord.GuildFeatureVanityURL)
+		}
+	}
+	return sc
+}
 
 func buildCapSelectLabel(locale discord.Locale, caps []bbscore.Cap) discord.LabelComponent {
 	options := make([]discord.StringSelectMenuOption, 0, min(len(caps)+1, discordsync.MaxSelectOptions))
@@ -236,14 +300,15 @@ func (s *System) handleNewThreadModal(e *handler.ModalEvent) error {
 	rawBody := e.Data.Text("body")
 
 	board, thread, firstPost, err := s.Service.CreateThread(e.Ctx, bbscore.CreateThreadInput{
-		BoardID: mount.BoardID,
-		GuildID: mount.GuildID,
-		UserID:  e.User().ID,
-		Title:   title,
-		RawName: rawName,
-		CapID:   capID,
-		RawBody: rawBody,
-		Now:     time.Now(),
+		BoardID:     mount.BoardID,
+		GuildID:     mount.GuildID,
+		UserID:      e.User().ID,
+		Title:       title,
+		RawName:     rawName,
+		CapID:       capID,
+		RawBody:     rawBody,
+		SlipContext: buildSlipContext(e, mount.GuildID),
+		Now:         time.Now(),
 	})
 	if err != nil {
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, failTitle, describeBBSError(loc, err)))
@@ -381,13 +446,14 @@ func (s *System) handleNewPostModal(e *handler.ModalEvent) error {
 	rawBody := e.Data.Text("body")
 
 	board, thread, post, backRefs, err := s.Service.CreatePost(e.Ctx, bbscore.CreatePostInput{
-		ThreadID: mirror.ThreadID,
-		GuildID:  mirror.GuildID,
-		UserID:   e.User().ID,
-		RawName:  rawName,
-		CapID:    capID,
-		RawBody:  rawBody,
-		Now:      time.Now(),
+		ThreadID:    mirror.ThreadID,
+		GuildID:     mirror.GuildID,
+		UserID:      e.User().ID,
+		RawName:     rawName,
+		CapID:       capID,
+		RawBody:     rawBody,
+		SlipContext: buildSlipContext(e, mirror.GuildID),
+		Now:         time.Now(),
 	})
 	if err != nil {
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, failTitle, describeBBSError(loc, err)))

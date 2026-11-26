@@ -23,7 +23,7 @@ Collected information is used strictly within the scope of the following purpose
 
 ## 3. Protection of Anonymity and Non-Disclosure to Guild Administrators
 
-1. Only daily, board-specific anonymous IDs are displayed on the boards; other users cannot view your Discord User ID or account name. However, on boards where Watchoi (SLIP) is enabled, or in threads with `!slip:vvvvv` / `!extend` specified where ID hiding is disabled, a fixed SLIP string (e.g., `abcd-efgh`) derived from your User ID using a secret key will be publicly displayed across dates and boards.
+1. Only daily, board-specific anonymous IDs are displayed on the boards; other users cannot view your Discord User ID or account name. However, on boards where Watchoi (SLIP) is enabled, or in threads with `!slip:vvv` / `!slip:vvvvv` / `!extend` specified where ID hiding is disabled, a playful nickname derived from anonymous Discord traits (such as account age, badges, voice activity, or general server tier/size without disclosing raw usernames or server names) and posting date/time will be publicly displayed. In addition, under `vvvvv` mode, an 8-character identifier in `abcd-efgh` format—combining a 4-character prefix fixed to your User ID and a 4-character suffix ("Korokoro") incorporating your display name—will also be publicly displayed.
 2. Even when Guild Administrators use moderation features, raw Discord User IDs are never disclosed to them. Guild Administrators may only perform post masking/removal ("abone") and Local Bans on Guild-Local Boards using the anonymous moderation hash.
 
 ## 4. Operator's Use of Audit Information and Provision to Third Parties

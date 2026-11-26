@@ -109,6 +109,11 @@ func (s *Service) SetAdminCaps(defs []CapDefinition) error {
 	return nil
 }
 
+// SetSlipEvents validates and configures custom date-based SLIP events on the service.
+func (s *Service) SetSlipEvents(defs []SlipEventDefinition) error {
+	return s.Identity.SetSlipEvents(defs)
+}
+
 func (s *Service) userHasAdminCap(userID snowflake.ID, def CapDefinition) bool {
 	if userID == 0 {
 		return false
@@ -483,7 +488,7 @@ func (s *Service) UpdateBoard(ctx context.Context, boardID uuid.UUID, input Upda
 		}
 		input.DefaultName = &clean
 	}
-	if input.SLIP != nil && *input.SLIP != SLIPNone && *input.SLIP != SLIPVVVVV {
+	if input.SLIP != nil && !input.SLIP.IsValid() {
 		return nil, ErrInvalidBoardRules
 	}
 	b, err := s.GetBoard(ctx, boardID)
@@ -564,6 +569,7 @@ func (s *Service) CreateThread(ctx context.Context, input CreateThreadInput) (*B
 		board.Rules,
 		true,
 		cap,
+		input.SlipContext,
 		now,
 	)
 	if err != nil {
@@ -689,6 +695,7 @@ func (s *Service) CreatePost(ctx context.Context, input CreatePostInput) (*Board
 		thread.Rules,
 		false,
 		cap,
+		input.SlipContext,
 		now,
 	)
 	if err != nil {

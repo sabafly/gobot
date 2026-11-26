@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
@@ -100,6 +101,12 @@ func TestInitBBSSystem_FailSafeOnSecretDBError(t *testing.T) {
       grant_operators: false
       users:
         - 222222222222222222
+  slip_events:
+    - id: custom_day
+      label: ｶｽﾀﾑﾋﾞ
+      start_date: "06-15"
+      end_date: "06-16"
+      mode: override
 `
 	if err := os.WriteFile(cfgPath, []byte(yamlBody), 0o600); err != nil {
 		t.Fatalf("write temp config failed: %v", err)
@@ -111,6 +118,9 @@ func TestInitBBSSystem_FailSafeOnSecretDBError(t *testing.T) {
 	sysWithCaps, err := initBBSSystem(compHealthy, loadedCfg, gdb)
 	if err != nil || sysWithCaps == nil {
 		t.Fatalf("initBBSSystem with caps failed: sys=%v err=%v", sysWithCaps, err)
+	}
+	if got := sysWithCaps.Service.Identity.GenerateSlip(bbs.SLIPVVV, uuid.New(), bbs.ScopeLocal, 1, capUser, bbs.SlipContext{}, time.Date(2026, 6, 15, 12, 0, 0, 0, bbs.JSTLocation)); got != "ｶｽﾀﾑﾋﾞ" {
+		t.Fatalf("expected custom slip_events wired from YAML, got %q", got)
 	}
 	if opCaps := sysWithCaps.Service.ListAvailableCaps(ctx, opUser, uuid.Nil); len(opCaps) != 1 || opCaps[0].ID != "admin" {
 		t.Fatalf("expected operator to hold [admin], got %+v", opCaps)
@@ -129,5 +139,14 @@ func TestInitBBSSystem_FailSafeOnSecretDBError(t *testing.T) {
 	}}
 	if sysBadCap, errBadCap := initBBSSystem(compHealthy, invalidCapsCfg, gdb); errBadCap == nil || sysBadCap != nil {
 		t.Fatalf("expected initBBSSystem to reject reserved cap id %q, got sys=%v err=%v", bbs.CapSelectNoneValue, sysBadCap, errBadCap)
+	}
+
+	invalidSlipCfg := &components.Config{BBS: components.ConfigBBS{
+		SlipEvents: []components.ConfigBBSSlipEvent{
+			{ID: "bad_date", Label: "X", StartDate: "99-99"},
+		},
+	}}
+	if sysBadSlip, errBadSlip := initBBSSystem(compHealthy, invalidSlipCfg, gdb); errBadSlip == nil || sysBadSlip != nil {
+		t.Fatalf("expected initBBSSystem to reject invalid slip_events, got sys=%v err=%v", sysBadSlip, errBadSlip)
 	}
 }

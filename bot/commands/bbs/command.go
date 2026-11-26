@@ -233,7 +233,12 @@ func (c *bbsCommand) Create() []discord.ApplicationCommandCreate {
 			Value:             "none",
 		},
 		{
-			Name:              "vvvvv (Device + OS)",
+			Name:              "vvv (Nickname only)",
+			NameLocalizations: i18n.TranslateTextMap("command.bbs.choices.slip.vvv"),
+			Value:             "vvv",
+		},
+		{
+			Name:              "vvvvv (Nickname + Fixed ID / Korokoro)",
 			NameLocalizations: i18n.TranslateTextMap("command.bbs.choices.slip.vvvvv"),
 			Value:             "vvvvv",
 		},
@@ -1355,6 +1360,8 @@ func parseBoardRulesFromSlash(data discord.SlashCommandInteractionData, defaultL
 		switch v {
 		case "none":
 			rules.SLIP = bbscore.SLIPNone
+		case "vvv":
+			rules.SLIP = bbscore.SLIPVVV
 		case "vvvvv":
 			rules.SLIP = bbscore.SLIPVVVVV
 		default:
@@ -1405,6 +1412,9 @@ func parseUpdateBoardInput(data discord.SlashCommandInteractionData) (bbscore.Up
 		switch v {
 		case "none":
 			lvl := bbscore.SLIPNone
+			input.SLIP = &lvl
+		case "vvv":
+			lvl := bbscore.SLIPVVV
 			input.SLIP = &lvl
 		case "vvvvv":
 			lvl := bbscore.SLIPVVVVV

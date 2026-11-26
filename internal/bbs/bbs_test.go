@@ -75,6 +75,7 @@ func TestIdentityGenerator(t *testing.T) {
 		bbs.BoardRules{HideID: true, SLIP: bbs.SLIPNone},
 		true,
 		nil,
+		bbs.SlipContext{},
 		day1,
 	)
 	if err != nil {
@@ -115,6 +116,7 @@ func TestIdentityGenerator(t *testing.T) {
 		bbs.BoardRules{DefaultName: "風吹けば名無し"},
 		false,
 		nil,
+		bbs.SlipContext{},
 		day1,
 	)
 	if err != nil || sageName.DisplayName != "sage" {
@@ -132,6 +134,7 @@ func TestIdentityGenerator(t *testing.T) {
 		bbs.BoardRules{DefaultName: "板◆デフォ★ルト"},
 		false,
 		nil,
+		bbs.SlipContext{},
 		day1,
 	)
 	if err != nil {
@@ -149,7 +152,7 @@ func TestIdentityGenerator(t *testing.T) {
 
 	// Strict rejection cases: unrecognized ! command (!sage, !id:off) and malformed/reply !extend
 	for _, badName := range []string{"!id:off", "!sage"} {
-		if _, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, badName, "body", bbs.BoardRules{}, false, nil, day1); !errors.Is(err, bbs.ErrInvalidNameCommand) {
+		if _, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, badName, "body", bbs.BoardRules{}, false, nil, bbs.SlipContext{}, day1); !errors.Is(err, bbs.ErrInvalidNameCommand) {
 			t.Fatalf("expected ErrInvalidNameCommand for %q, got %v", badName, err)
 		}
 	}
@@ -159,11 +162,11 @@ func TestIdentityGenerator(t *testing.T) {
 		"!extend:checked:bad\nhi",
 		"!extend:checked:none extra\nhi",
 	} {
-		if _, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, "", badBody, bbs.BoardRules{}, true, nil, day1); !errors.Is(err, bbs.ErrInvalidExtendCommand) {
+		if _, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, "", badBody, bbs.BoardRules{}, true, nil, bbs.SlipContext{}, day1); !errors.Is(err, bbs.ErrInvalidExtendCommand) {
 			t.Fatalf("expected ErrInvalidExtendCommand for %q on new thread, got %v", badBody, err)
 		}
 	}
-	if _, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, "", "!extend:checked:none\nhi", bbs.BoardRules{}, false, nil, day1); !errors.Is(err, bbs.ErrInvalidExtendCommand) {
+	if _, err := gen.ParsePostIdentity(boardA, bbs.ScopeLocal, 999, user1, "", "!extend:checked:none\nhi", bbs.BoardRules{}, false, nil, bbs.SlipContext{}, day1); !errors.Is(err, bbs.ErrInvalidExtendCommand) {
 		t.Fatalf("expected ErrInvalidExtendCommand for !extend in reply, got %v", err)
 	}
 }
@@ -213,7 +216,7 @@ func TestCapValidationAndIdentity(t *testing.T) {
 		boardID, bbs.ScopeGlobal, 0, uid,
 		"!id:on", "!extend:checked:vvvvv\n告知本文",
 		bbs.BoardRules{DefaultName: "風吹けば名無し", HideID: false, SLIP: bbs.SLIPVVVVV},
-		true, cap, day,
+		true, cap, bbs.SlipContext{}, day,
 	)
 	if err != nil {
 		t.Fatalf("ParsePostIdentity with cap failed: %v", err)
@@ -233,7 +236,7 @@ func TestCapValidationAndIdentity(t *testing.T) {
 		boardID, bbs.ScopeLocal, 999, uid,
 		"さばふらい#key", "レス本文",
 		bbs.BoardRules{HideID: false, SLIP: bbs.SLIPVVVVV},
-		false, cap, day,
+		false, cap, bbs.SlipContext{}, day,
 	)
 	if err != nil {
 		t.Fatalf("ParsePostIdentity with named cap failed: %v", err)
@@ -243,6 +246,207 @@ func TestCapValidationAndIdentity(t *testing.T) {
 	}
 	if capNamed.AnonID != "" || capNamed.SlipText != "" {
 		t.Fatalf("expected hidden ID/SLIP on named cap post, got AnonID=%q SlipText=%q", capNamed.AnonID, capNamed.SlipText)
+	}
+}
+
+func TestSlipVVV_Korokoro_Attributes_And_Events(t *testing.T) {
+	gen := bbs.NewIdentityGenerator([]byte("slip-overhaul-test-secret"))
+	boardID := uuid.New()
+	guildID := snowflake.ID(8801)
+	uid := snowflake.ID(424242)
+	normalDay := time.Date(2026, 11, 25, 14, 15, 0, 0, bbs.JSTLocation)
+
+	// 1. SLIPLevel validity and VVV vs VVVVV modes + commands.
+	if !bbs.SLIPNone.IsValid() || !bbs.SLIPVVV.IsValid() || !bbs.SLIPVVVVV.IsValid() || bbs.SLIPLevel(99).IsValid() {
+		t.Fatal("unexpected SLIPLevel.IsValid behavior")
+	}
+	if bbs.SLIPNone.Enabled() || !bbs.SLIPVVV.Enabled() || !bbs.SLIPVVVVV.Enabled() {
+		t.Fatal("unexpected SLIPLevel.Enabled behavior")
+	}
+
+	scBooster := bbs.SlipContext{
+		MemberNick:     "サーバー名A",
+		GlobalName:     "グローバル名",
+		Username:       "username",
+		IsGuildBooster: true,
+	}
+	pVVV, err := gen.ParsePostIdentity(
+		boardID, bbs.ScopeLocal, guildID, uid,
+		"!slip:vvv", "本文",
+		bbs.BoardRules{HideID: false, SLIP: bbs.SLIPNone},
+		false, nil, scBooster, normalDay,
+	)
+	if err != nil {
+		t.Fatalf("ParsePostIdentity !slip:vvv failed: %v", err)
+	}
+	if pVVV.SlipText != "ﾌﾞｰｽﾄｳｵ" && pVVV.SlipText != "ﾆﾄﾛｾﾞｲ" {
+		t.Fatalf("expected booster half-width Katakana nickname only for SLIPVVV, got %q", pVVV.SlipText)
+	}
+	if strings.Contains(pVVV.SlipText, "-") {
+		t.Fatalf("expected SLIPVVV to omit MMMM-XXXX code, got %q", pVVV.SlipText)
+	}
+
+	pExtendVVV, err := gen.ParsePostIdentity(
+		boardID, bbs.ScopeLocal, guildID, uid,
+		"", "!extend:checked:vvv\n本文",
+		bbs.BoardRules{HideID: true, SLIP: bbs.SLIPNone},
+		true, nil, scBooster, normalDay,
+	)
+	if err != nil || pExtendVVV.ThreadRules.SLIP != bbs.SLIPVVV || pExtendVVV.SlipText == "" || strings.Contains(pExtendVVV.SlipText, "-") {
+		t.Fatalf("expected !extend:checked:vvv to set SLIPVVV without code, got rules=%+v slip=%q err=%v", pExtendVVV.ThreadRules, pExtendVVV.SlipText, err)
+	}
+
+	code := gen.GenerateSlipCode(bbs.ScopeLocal, uid, scBooster)
+	pVVVVV, err := gen.ParsePostIdentity(
+		boardID, bbs.ScopeLocal, guildID, uid,
+		"", "本文",
+		bbs.BoardRules{HideID: false, SLIP: bbs.SLIPVVVVV},
+		false, nil, scBooster, normalDay,
+	)
+	if err != nil || pVVVVV.SlipText != pVVV.SlipText+" "+code {
+		t.Fatalf("expected SLIPVVVVV = %q, got %q, err=%v", pVVV.SlipText+" "+code, pVVVVV.SlipText, err)
+	}
+
+	// Cap still hides both vvv and vvvvv SLIP.
+	capObj := &bbs.Cap{ID: "admin", Name: "管理人"}
+	pCapVVV, err := gen.ParsePostIdentity(
+		boardID, bbs.ScopeLocal, guildID, uid,
+		"!id:on !slip:vvv", "本文",
+		bbs.BoardRules{HideID: false, SLIP: bbs.SLIPVVVVV},
+		false, capObj, scBooster, normalDay,
+	)
+	if err != nil || pCapVVV.SlipText != "" || pCapVVV.AnonID != "" {
+		t.Fatalf("expected Cap to suppress SLIP and AnonID, got %+v, err=%v", pCapVVV, err)
+	}
+
+	// 2. KOROKORO fallback order & fixed-prefix + rotating-suffix property.
+	if got := bbs.ResolveKorokoroName(bbs.ScopeLocal, bbs.SlipContext{MemberNick: "Nick", GlobalName: "Global", Username: "User"}); got != "Nick" {
+		t.Fatalf("local KOROKORO expected Nick, got %q", got)
+	}
+	if got := bbs.ResolveKorokoroName(bbs.ScopeLocal, bbs.SlipContext{MemberNick: " ", GlobalName: "Global", Username: "User"}); got != "Global" {
+		t.Fatalf("local KOROKORO fallback expected Global, got %q", got)
+	}
+	if got := bbs.ResolveKorokoroName(bbs.ScopeLocal, bbs.SlipContext{Username: "User"}); got != "User" {
+		t.Fatalf("local KOROKORO fallback expected User, got %q", got)
+	}
+	if got := bbs.ResolveKorokoroName(bbs.ScopeGlobal, bbs.SlipContext{MemberNick: "LocalNickOnly", GlobalName: "Global", Username: "User"}); got != "Global" {
+		t.Fatalf("global KOROKORO must ignore MemberNick and prefer GlobalName, got %q", got)
+	}
+	if got := bbs.ResolveKorokoroName(bbs.ScopeGlobal, bbs.SlipContext{MemberNick: "LocalNickOnly", Username: "User"}); got != "User" {
+		t.Fatalf("global KOROKORO fallback expected User, got %q", got)
+	}
+
+	codeLocalA := gen.GenerateSlipCode(bbs.ScopeLocal, uid, bbs.SlipContext{MemberNick: "名前1", GlobalName: "G1", Username: "U1"})
+	codeLocalB := gen.GenerateSlipCode(bbs.ScopeLocal, uid, bbs.SlipContext{MemberNick: "名前2", GlobalName: "G1", Username: "U1"})
+	partsA := strings.Split(codeLocalA, "-")
+	partsB := strings.Split(codeLocalB, "-")
+	if len(partsA) != 2 || len(partsB) != 2 || len(partsA[0]) != 4 || len(partsA[1]) != 4 {
+		t.Fatalf("expected 4-4 slip code format, got %q / %q", codeLocalA, codeLocalB)
+	}
+	if partsA[0] != partsB[0] {
+		t.Fatalf("expected first 4 chars to stay fixed on nickname change: %q vs %q", partsA[0], partsB[0])
+	}
+	if partsA[1] == partsB[1] {
+		t.Fatalf("expected KOROKORO last 4 chars to rotate on nickname change: %q vs %q", partsA[1], partsB[1])
+	}
+	codeGlobalA := gen.GenerateSlipCode(bbs.ScopeGlobal, uid, bbs.SlipContext{GlobalName: "同じグローバル", Username: "U1"})
+	codeGlobalB := gen.GenerateSlipCode(bbs.ScopeGlobal, uid, bbs.SlipContext{GlobalName: "変更グローバル", Username: "U1"})
+	if gA, gB := strings.Split(codeGlobalA, "-"), strings.Split(codeGlobalB, "-"); gA[0] != partsA[0] || gA[1] == gB[1] {
+		t.Fatalf("expected global code to share fixed prefix %q and rotate suffix on GlobalName change: %q vs %q", partsA[0], codeGlobalA, codeGlobalB)
+	}
+
+	// 3. Attribute, time, zorome, and rare traits produce expected pools cleanly.
+	assertOneOf := func(got string, allowed ...string) {
+		t.Helper()
+		if !slices.Contains(allowed, got) {
+			t.Fatalf("got %q, expected one of %v", got, allowed)
+		}
+	}
+	// VC streaming > time/local attrs
+	assertOneOf(gen.GenerateSlipNickname(boardID, bbs.ScopeLocal, guildID, uid, bbs.SlipContext{InVoiceChannel: true, IsVoiceStreaming: true, IsGuildBooster: true}, normalDay), "ﾅﾏﾊｲｼﾝ", "ｶﾒﾗﾏﾝ")
+	// VC muted
+	assertOneOf(gen.GenerateSlipNickname(boardID, bbs.ScopeLocal, guildID, uid, bbs.SlipContext{InVoiceChannel: true, IsVoiceMutedOrDeaf: true}, normalDay), "ｷｷｾﾝ", "ﾑｺﾞﾝﾂｳﾜ")
+	// Global community/large/tier3/old guild
+	oldGuildAt := normalDay.Add(-5 * 365 * 24 * time.Hour)
+	assertOneOf(gen.GenerateSlipNickname(boardID, bbs.ScopeGlobal, guildID, uid, bbs.SlipContext{GuildMemberCount: 1200, GuildBoostTier: 3, GuildIsCommunity: true, GuildCreatedAt: oldGuildAt}, normalDay),
+		"ｵｵﾃｻﾊﾞ", "ﾀﾞｲﾄｶｲ", "ｺﾞｰｼﾞｬｽ", "ｷﾗｷﾗｻﾊﾞ", "ｼﾆｾｻﾊﾞ", "ｲﾆｼｴｻﾊﾞ", "ﾋﾛﾊﾞ", "ｺﾐｭﾆﾃｨ")
+	// User common attributes (HypeSquad + old account)
+	assertOneOf(gen.GenerateSlipNickname(boardID, bbs.ScopeLocal, guildID, uid, bbs.SlipContext{HypeSquadHouse: "bravery"}, normalDay), "ﾌﾞﾚｲﾌﾞ", "ﾕｳｶﾝ")
+	assertOneOf(gen.GenerateSlipNickname(boardID, bbs.ScopeLocal, guildID, uid, bbs.SlipContext{UserLocale: "en-US"}, normalDay), "ｶｲｶﾞｲ", "ｵｰﾊﾞｰｼｰ")
+	// Time rules: 00:00 cinderella, 22:22 zorome, 03:00 late night, Sat 06:00 early morning
+	assertOneOf(gen.GenerateSlipNickname(boardID, bbs.ScopeLocal, guildID, uid, bbs.SlipContext{}, time.Date(2026, 11, 25, 0, 0, 0, 0, bbs.JSTLocation)), "ｼﾝﾃﾞﾚﾗ")
+	assertOneOf(gen.GenerateSlipNickname(boardID, bbs.ScopeLocal, guildID, uid, bbs.SlipContext{}, time.Date(2026, 11, 25, 22, 22, 0, 0, bbs.JSTLocation)), "ｿﾞﾛﾒﾉﾀﾐ")
+	assertOneOf(gen.GenerateSlipNickname(boardID, bbs.ScopeLocal, guildID, uid, bbs.SlipContext{}, time.Date(2026, 11, 25, 3, 15, 0, 0, bbs.JSTLocation)), "ﾖﾌｶｼ", "ｳｼﾐﾂ", "ﾌｸﾛｳ")
+	assertOneOf(gen.GenerateSlipNickname(boardID, bbs.ScopeLocal, guildID, uid, bbs.SlipContext{}, time.Date(2026, 11, 28, 6, 30, 0, 0, bbs.JSTLocation)), "ﾊﾔｵｷ")
+	// Rare drop scan (across minutes, rare should trigger roughly ~1.5% of the time)
+	hitRare := false
+	for m := range 600 {
+		tm := time.Date(2026, 11, 25, 14, 1, 0, 0, bbs.JSTLocation).Add(time.Duration(m) * time.Minute)
+		got := gen.GenerateSlipNickname(boardID, bbs.ScopeLocal, guildID, uid, bbs.SlipContext{}, tm)
+		if got == "ｷﾝﾉｻﾊﾞ" || got == "ﾂﾁﾉｺ" || got == "ﾏﾎﾞﾛｼ" {
+			hitRare = true
+			break
+		}
+	}
+	if !hitRare {
+		t.Fatal("expected rare SLIP nickname to trigger within 600 sample minutes")
+	}
+
+	// 4. Built-in date events & custom SlipEventDefinitions.
+	newYearNick := gen.GenerateSlipNickname(boardID, bbs.ScopeLocal, guildID, uid, scBooster, time.Date(2026, 1, 1, 12, 0, 0, 0, bbs.JSTLocation))
+	if !strings.HasPrefix(newYearNick, "ｵｼｮｳｶﾞﾂ ") {
+		t.Fatalf("expected New Year append event, got %q", newYearNick)
+	}
+	catNick := gen.GenerateSlipNickname(boardID, bbs.ScopeLocal, guildID, uid, scBooster, time.Date(2026, 2, 22, 12, 0, 0, 0, bbs.JSTLocation))
+	if !strings.HasPrefix(catNick, "ﾆｬﾝﾆｬﾝ ") {
+		t.Fatalf("expected Cat Day append event, got %q", catNick)
+	}
+	aprilNick := gen.GenerateSlipNickname(boardID, bbs.ScopeLocal, guildID, uid, scBooster, time.Date(2026, 4, 1, 12, 0, 0, 0, bbs.JSTLocation))
+	if aprilNick != "ｳｿﾂｷ" {
+		t.Fatalf("expected April Fools override event = ｳｿﾂｷ, got %q", aprilNick)
+	}
+	fri13Nick := gen.GenerateSlipNickname(boardID, bbs.ScopeLocal, guildID, uid, scBooster, time.Date(2026, 11, 13, 12, 0, 0, 0, bbs.JSTLocation))
+	if !strings.HasPrefix(fri13Nick, "ｼﾞｪｲｿﾝ ") {
+		t.Fatalf("expected Friday the 13th append event, got %q", fri13Nick)
+	}
+	meatNick := gen.GenerateSlipNickname(boardID, bbs.ScopeLocal, guildID, uid, scBooster, time.Date(2026, 10, 29, 12, 0, 0, 0, bbs.JSTLocation))
+	if !strings.HasPrefix(meatNick, "ﾆｸﾉﾋ ") {
+		t.Fatalf("expected 29th Meat Day append event, got %q", meatNick)
+	}
+
+	// Validation rejections on invalid SlipEventDefinitions.
+	badEvents := [][]bbs.SlipEventDefinition{
+		{{ID: "", Label: "A", StartDate: "01-01"}},
+		{{ID: "dup", Label: "A", StartDate: "01-01"}, {ID: "dup", Label: "B", StartDate: "01-02"}},
+		{{ID: "bad_label", Label: "   ", StartDate: "01-01"}},
+		{{ID: "long_label", Label: strings.Repeat("ｱ", bbs.MaxSlipEventLabelRunes+1), StartDate: "01-01"}},
+		{{ID: "bad_date", Label: "X", StartDate: "13-40"}},
+		{{ID: "mixed_fmt", Label: "X", StartDate: "01-01", EndDate: "2026-01-02"}},
+		{{ID: "reversed_ymd", Label: "X", StartDate: "2026-05-02", EndDate: "2026-05-01"}},
+		{{ID: "bad_mode", Label: "X", StartDate: "01-01", Mode: "replace"}},
+	}
+	for i, tc := range badEvents {
+		if _, err := bbs.ValidateSlipEventDefinitions(tc); !errors.Is(err, bbs.ErrInvalidSlipConfig) {
+			t.Fatalf("bad event case %d: expected ErrInvalidSlipConfig, got %v", i, err)
+		}
+	}
+
+	customGen := bbs.NewIdentityGenerator([]byte("custom-slip-event-secret"))
+	if err := customGen.SetSlipEvents([]bbs.SlipEventDefinition{
+		{ID: "winter_custom", Label: "ﾈﾝﾏﾂ★ﾅｳ", StartDate: "12-29", EndDate: "01-02", Mode: bbs.SlipEventModeOverride},
+		{ID: "specific_day", Label: "ﾄｸﾍﾞﾂ", StartDate: "2026-11-25", Mode: bbs.SlipEventModeAppend},
+	}); err != nil {
+		t.Fatalf("SetSlipEvents valid failed: %v", err)
+	}
+	// Annual cross-year wraps Dec 31 and overrides built-in New Year on Jan 1, sanitizing ★->☆.
+	if got := customGen.GenerateSlipNickname(boardID, bbs.ScopeLocal, guildID, uid, scBooster, time.Date(2026, 1, 1, 12, 0, 0, 0, bbs.JSTLocation)); got != "ﾈﾝﾏﾂ☆ﾅｳ" {
+		t.Fatalf("expected custom event to override built-in New Year and sanitize ★, got %q", got)
+	}
+	if got := customGen.GenerateSlipNickname(boardID, bbs.ScopeLocal, guildID, uid, scBooster, time.Date(2026, 12, 30, 12, 0, 0, 0, bbs.JSTLocation)); got != "ﾈﾝﾏﾂ☆ﾅｳ" {
+		t.Fatalf("expected cross-year custom event match on Dec 30, got %q", got)
+	}
+	if got := customGen.GenerateSlipNickname(boardID, bbs.ScopeLocal, guildID, uid, scBooster, normalDay); !strings.HasPrefix(got, "ﾄｸﾍﾞﾂ ") {
+		t.Fatalf("expected specific YYYY-MM-DD append event on 2026-11-25, got %q", got)
 	}
 }
 

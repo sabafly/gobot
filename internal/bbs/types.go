@@ -46,6 +46,8 @@ const (
 	MaxCapNameRunes        = 48
 	MaxCapDescriptionRunes = 100
 	CapSelectNoneValue     = "__none__"
+	MaxSlipEventIDRunes    = 64
+	MaxSlipEventLabelRunes = 24
 )
 
 type Scope string
@@ -59,8 +61,19 @@ type SLIPLevel int
 
 const (
 	SLIPNone  SLIPLevel = 0
-	SLIPVVVVV SLIPLevel = 1
+	SLIPVVV   SLIPLevel = 1
+	SLIPVVVVV SLIPLevel = 2
 )
+
+// IsValid reports whether l is a supported SLIP display level.
+func (l SLIPLevel) IsValid() bool {
+	return l == SLIPNone || l == SLIPVVV || l == SLIPVVVVV
+}
+
+// Enabled reports whether SLIP generation is enabled for l.
+func (l SLIPLevel) Enabled() bool {
+	return l == SLIPVVV || l == SLIPVVVVV
+}
 
 type ThreadStatus string
 
@@ -105,6 +118,7 @@ var (
 	ErrBoardProviderMismatch = fmt.Errorf("%w: board provider must match category provider", ErrInvalidInput)
 	ErrInvalidBoardRules     = fmt.Errorf("%w: invalid board rules", ErrInvalidInput)
 	ErrInvalidCapConfig      = fmt.Errorf("%w: invalid cap configuration", ErrInvalidInput)
+	ErrInvalidSlipConfig     = fmt.Errorf("%w: invalid slip configuration", ErrInvalidInput)
 	ErrCapNotAuthorized      = fmt.Errorf("%w: cap not found or not authorized", ErrUnauthorized)
 	ErrInvalidNameCommand    = fmt.Errorf("%w: unsupported name command", ErrInvalidInput)
 	ErrInvalidExtendCommand  = fmt.Errorf("%w: invalid !extend syntax", ErrInvalidInput)
@@ -147,7 +161,7 @@ func (r BoardRules) Validate() error {
 	if r.DefaultName != "" && utf8.RuneCountInString(SanitizeSingleLine(r.DefaultName)) > MaxNameRunes {
 		return ErrInvalidNameLength
 	}
-	if r.SLIP != SLIPNone && r.SLIP != SLIPVVVVV {
+	if !r.SLIP.IsValid() {
 		return ErrInvalidBoardRules
 	}
 	if r.MaxRes > MaxBoardMaxRes {
@@ -439,27 +453,76 @@ type CreatePostRecord struct {
 	AuthorUserID snowflake.ID
 }
 
+// SlipEventMode controls how a date-specific SLIP event combines with the base nickname.
+type SlipEventMode string
+
+const (
+	SlipEventModeAppend   SlipEventMode = "append"
+	SlipEventModeOverride SlipEventMode = "override"
+)
+
+// SlipEventDefinition configures a date-specific SLIP nickname event loaded from config.
+type SlipEventDefinition struct {
+	ID        string
+	Label     string
+	StartDate string
+	EndDate   string
+	Mode      SlipEventMode
+}
+
+// SlipContext supplies anonymous Discord user, member, and guild traits used to derive playful SLIP nicknames and KOROKORO hashes.
+type SlipContext struct {
+	MemberNick string
+	GlobalName string
+	Username   string
+
+	UserCreatedAt   time.Time
+	HypeSquadHouse  string // "bravery", "brilliance", "balance", or ""
+	HasSpecialBadge bool
+	IsDefaultAvatar bool
+	HasProfileDecor bool
+	UserLocale      string
+
+	MemberJoinedAt     *time.Time
+	IsGuildBooster     bool
+	RoleCount          int
+	HasZeroRoles       bool
+	HasServerNick      bool
+	HasServerAvatar    bool
+	InVoiceChannel     bool
+	IsVoiceStreaming   bool
+	IsVoiceMutedOrDeaf bool
+
+	GuildCreatedAt    time.Time
+	GuildMemberCount  int
+	GuildBoostTier    int
+	GuildIsCommunity  bool
+	GuildHasVanityURL bool
+}
+
 // CreateThreadInput is the high-level user request to open a thread.
 type CreateThreadInput struct {
-	BoardID uuid.UUID
-	GuildID snowflake.ID
-	UserID  snowflake.ID
-	Title   string
-	RawName string
-	CapID   string
-	RawBody string
-	Now     time.Time
+	BoardID     uuid.UUID
+	GuildID     snowflake.ID
+	UserID      snowflake.ID
+	Title       string
+	RawName     string
+	CapID       string
+	RawBody     string
+	SlipContext SlipContext
+	Now         time.Time
 }
 
 // CreatePostInput is the high-level user request to post a reply.
 type CreatePostInput struct {
-	ThreadID uuid.UUID
-	GuildID  snowflake.ID
-	UserID   snowflake.ID
-	RawName  string
-	CapID    string
-	RawBody  string
-	Now      time.Time
+	ThreadID    uuid.UUID
+	GuildID     snowflake.ID
+	UserID      snowflake.ID
+	RawName     string
+	CapID       string
+	RawBody     string
+	SlipContext SlipContext
+	Now         time.Time
 }
 
 // GuildSetupInput updates guild-level BBS opt-in configuration.
