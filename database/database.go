@@ -1,8 +1,10 @@
 package database
 
 import (
+	"context"
 	"log/slog"
 
+	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -105,4 +107,29 @@ func GetGuild(db *gorm.DB, guildID snowflake.ID) (*models.Guild, error) {
 		return nil, err
 	}
 	return &guild, nil
+}
+
+// GetGuildLocaleOverride returns the explicit gobot locale override configured for guildID,
+// or an empty locale when none is set.
+func GetGuildLocaleOverride(ctx context.Context, db *gorm.DB, guildID snowflake.ID) discord.Locale {
+	if db == nil || guildID == 0 {
+		return ""
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	var row struct {
+		LocaleOverride discord.Locale
+	}
+	if err := db.WithContext(ctx).
+		Model(&models.Guild{}).
+		Select("locale_override").
+		Where("id = ?", guildID).
+		Take(&row).Error; err != nil {
+		return ""
+	}
+	if row.LocaleOverride == "" || row.LocaleOverride == discord.LocaleUnknown {
+		return ""
+	}
+	return row.LocaleOverride
 }

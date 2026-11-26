@@ -646,6 +646,14 @@ strings:
   components.setting.leveling.enable.enabled: "レベル機能を有効化しました"
   components.setting.leveling.enable.disabled: "レベル機能を無効化しました"
   components.setting.leveling.toggle: "レベル機能の有効化/無効化"
+  components.setting.locale: "ギルドで使用する言語を上書き設定する"
+  components.setting.locale.option: "使用する言語（省略または自動でDiscord設定に従う）"
+  components.setting.locale.choice.auto: "自動（Discordのサーバー言語に従う）"
+  components.setting.locale.set: "このサーバーで使用する言語を **{{.locale}}** に上書き設定しました。"
+  components.setting.locale.reset: "このサーバーの言語上書きを解除しました（現在の実効言語: **{{.locale}}**）。"
+  components.setting.locale.invalid: "指定された言語はサポートされていません。選択肢から有効な言語を選んでください。"
+  components.setting.locale.view.override: "{{.locale}}（上書き設定）"
+  components.setting.locale.view.auto: "自動（現在: {{.locale}}）"
   components.settings: "設定を表示する"
   components.settings.view: "設定を表示（仮テキスト）"
   errors.generic.message: "エラーが発生しました"
@@ -1127,6 +1135,9 @@ components:
       components:
         - "# {{.guild_name}}の設定"
         - type: separator
+        - "## 言語設定"
+        - |-
+          - **ギルドの言語**：{{.guild_locale}}
         - "## BUMP通知設定"
         - |-
           - **Bump通知**：{{.bump_enabled}}

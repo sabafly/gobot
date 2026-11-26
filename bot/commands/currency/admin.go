@@ -1278,11 +1278,12 @@ func ProcessBackgroundTasks(c *components.Components, client *bot.Client) error 
 			}
 			if s.ChannelID != 0 {
 				cName := GetCurrencyName(c, s.GuildID)
+				guildLoc := c.ResolveGuildLocale(c.Ctx(), client, s.GuildID, i18n.DefaultLocale())
 				_, _ = client.Rest.CreateMessage(s.ChannelID, discordutil.NewMessageBuilder().
 					SetAllowedMentions(&discord.AllowedMentions{}).
-					SetContent(i18n.TranslateText(discord.LocaleUnknown, "components.currency.admin.season_start_announcement", map[string]any{
+					SetContent(i18n.TranslateText(guildLoc, "components.currency.admin.season_start_announcement", map[string]any{
 						"name":          s.Name,
-						"criteria":      criteriaDisplayName(discord.LocaleUnknown, s.Criteria, cName),
+						"criteria":      criteriaDisplayName(guildLoc, s.Criteria, cName),
 						"end_time":      discord.NewTimestamp(discord.TimestampStyleLongDateTime, s.EndTime).String(),
 						"currency_name": cName,
 					})).
@@ -1309,16 +1310,17 @@ func announceSeasonResults(c *components.Components, client *bot.Client, seasonI
 	}
 
 	cName := GetCurrencyName(c, season.GuildID)
+	guildLoc := c.ResolveGuildLocale(c.Ctx(), client, season.GuildID, i18n.DefaultLocale())
 
 	var sb strings.Builder
-	sb.WriteString(i18n.TranslateText(discord.LocaleUnknown, "components.currency.admin.season_end_announcement_title", map[string]any{
+	sb.WriteString(i18n.TranslateText(guildLoc, "components.currency.admin.season_end_announcement_title", map[string]any{
 		"name":          season.Name,
-		"criteria":      criteriaDisplayName(discord.LocaleUnknown, season.Criteria, cName),
+		"criteria":      criteriaDisplayName(guildLoc, season.Criteria, cName),
 		"currency_name": cName,
 	}))
 
 	if len(records) == 0 {
-		sb.WriteString(i18n.TranslateText(discord.LocaleUnknown, "components.currency.admin.season_end_announcement_no_data", map[string]any{
+		sb.WriteString(i18n.TranslateText(guildLoc, "components.currency.admin.season_end_announcement_no_data", map[string]any{
 			"currency_name": cName,
 		}))
 	} else {
@@ -1340,7 +1342,7 @@ func announceSeasonResults(c *components.Components, client *bot.Client, seasonI
 			if err == nil && user != nil {
 				name = fmt.Sprintf("**%s**", user.EffectiveName())
 			}
-			sb.WriteString(i18n.TranslateText(discord.LocaleUnknown, "components.currency.admin.season_end_announcement_entry", map[string]any{
+			sb.WriteString(i18n.TranslateText(guildLoc, "components.currency.admin.season_end_announcement_entry", map[string]any{
 				"medal":         medal,
 				"name":          name,
 				"points":        r.PointsEarned,

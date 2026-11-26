@@ -21,12 +21,14 @@ package bot
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 	"gorm.io/driver/sqlite"
@@ -34,6 +36,7 @@ import (
 
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database"
+	"github.com/sabafly/gobot/database/models"
 	"github.com/sabafly/gobot/internal/bbs"
 	"github.com/sabafly/gobot/internal/bbs/gormstore"
 )
@@ -65,6 +68,29 @@ func TestInitBBSSystem_FailSafeOnSecretDBError(t *testing.T) {
 	}
 	if err := dbHealthy.AutoMigrate(gormstore.Models()...); err != nil {
 		t.Fatalf("automigrate failed: %v", err)
+	}
+	{
+		stmt := &gorm.Statement{DB: dbHealthy}
+		if err := stmt.Parse(&models.Guild{}); err != nil {
+			t.Fatalf("parse guild schema failed: %v", err)
+		}
+		var cols, pks []string
+		for _, f := range stmt.Schema.Fields {
+			if f.DBName == "" {
+				continue
+			}
+			if f.PrimaryKey {
+				pks = append(pks, fmt.Sprintf("`%s`", f.DBName))
+			}
+			cols = append(cols, fmt.Sprintf("`%s` TEXT", f.DBName))
+		}
+		pkClause := ""
+		if len(pks) > 0 {
+			pkClause = fmt.Sprintf(", PRIMARY KEY (%s)", strings.Join(pks, ", "))
+		}
+		if err := dbHealthy.Exec(fmt.Sprintf("CREATE TABLE `%s` (%s%s)", stmt.Schema.Table, strings.Join(cols, ", "), pkClause)).Error; err != nil {
+			t.Fatalf("create sqlite guilds table failed: %v", err)
+		}
 	}
 	gdb := &database.DB{DB: dbHealthy}
 	compHealthy := components.New(ctx, components.Config{}, gdb)
@@ -131,6 +157,19 @@ func TestInitBBSSystem_FailSafeOnSecretDBError(t *testing.T) {
 	if noneCaps := sysWithCaps.Service.ListAvailableCaps(ctx, otherUser, uuid.Nil); len(noneCaps) != 0 {
 		t.Fatalf("expected non-holder to have no caps, got %+v", noneCaps)
 	}
+
+	if sysWithCaps.Syncer == nil || sysWithCaps.Syncer.GuildLocale == nil {
+		t.Fatal("expected initBBSSystem to wire Syncer.GuildLocale")
+	}
+	testGuildID := snowflake.ID(444444444444444444)
+	if err := compHealthy.SetGuildLocaleOverride(ctx, testGuildID, discord.LocaleJapanese); err != nil {
+		t.Fatalf("SetGuildLocaleOverride failed: %v", err)
+	}
+	if got := sysWithCaps.Syncer.GuildLocale(ctx, testGuildID); got != discord.LocaleJapanese {
+		t.Fatalf("expected Syncer.GuildLocale to return %q, got %q", discord.LocaleJapanese, got)
+	}
+	// Triggering NotifyGuildLocaleChanged with nil client must be safe.
+	compHealthy.NotifyGuildLocaleChanged(ctx, nil, testGuildID, discord.LocaleEnglishUS)
 
 	invalidCapsCfg := &components.Config{BBS: components.ConfigBBS{
 		Caps: []components.ConfigBBSCap{

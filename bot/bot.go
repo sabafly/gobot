@@ -355,5 +355,14 @@ func initBBSSystem(component *components.Components, config *components.Config, 
 	syncer.UserLocale = func(ctx context.Context, uid snowflake.ID) discord.Locale {
 		return discordsync.ResolveUserLocaleFromDB(ctx, gormDB, uid)
 	}
+	if component != nil {
+		syncer.GuildLocale = component.GuildLocaleOverride
+		component.RegisterGuildLocaleChangeHook(func(ctx context.Context, client *bot.Client, guildID snowflake.ID, resolvedLocale discord.Locale) {
+			if client == nil {
+				return
+			}
+			go syncer.RefreshGuildBoardGuides(context.Background(), client, guildID, resolvedLocale)
+		})
+	}
 	return bbsCmd.NewSystem(component, svc, syncer, config.BBS.OperatorLogChannel), nil
 }

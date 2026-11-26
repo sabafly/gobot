@@ -22,9 +22,12 @@ package components
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
+	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/database/models"
+	"github.com/sabafly/gobot/internal/i18n"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
@@ -241,4 +244,66 @@ func (c *Components) OnGuildUpdate() func(event *events.GuildUpdate) {
 			slog.Error("ギルドの名称更新に失敗", "err", err, "guild_id", event.Guild.ID)
 		}
 	}
+}
+
+// GuildLocaleOverride returns the explicit gobot locale override stored for guildID, or "".
+func (c *Components) GuildLocaleOverride(ctx context.Context, guildID snowflake.ID) discord.Locale {
+	if c == nil || c.gormDb == nil || c.gormDb.DB == nil || guildID == 0 {
+		return ""
+	}
+	return database.GetGuildLocaleOverride(ctx, c.gormDb.DB, guildID)
+}
+
+// SetGuildLocaleOverride sets or clears (when locale is empty) the explicit gobot locale override for guildID.
+func (c *Components) SetGuildLocaleOverride(ctx context.Context, guildID snowflake.ID, locale discord.Locale) error {
+	if c == nil || c.gormDb == nil || c.gormDb.DB == nil {
+		return errors.New("database is not initialized")
+	}
+	if guildID == 0 {
+		return errors.New("guild id is required")
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	db := c.gormDb.DB.WithContext(ctx)
+	var g models.Guild
+	if err := db.FirstOrCreate(&g, models.Guild{ID: guildID}).Error; err != nil {
+		return err
+	}
+	if locale == discord.LocaleUnknown {
+		locale = ""
+	}
+	return db.Model(&models.Guild{}).Where("id = ?", guildID).Update("locale_override", string(locale)).Error
+}
+
+// ResolveGuildLocale returns the effective locale for guildID:
+// DB override -> cached Discord PreferredLocale -> fallback -> i18n.DefaultLocale().
+func (c *Components) ResolveGuildLocale(ctx context.Context, client *bot.Client, guildID snowflake.ID, fallback discord.Locale) discord.Locale {
+	return c.ResolveGuildLocaleWithInteraction(ctx, client, guildID, nil, fallback)
+}
+
+// ResolveGuildLocaleWithInteraction returns the effective locale for guildID:
+// DB override -> cached Discord PreferredLocale -> interactionGuildLocale -> fallback -> i18n.DefaultLocale().
+func (c *Components) ResolveGuildLocaleWithInteraction(
+	ctx context.Context,
+	client *bot.Client,
+	guildID snowflake.ID,
+	interactionGuildLocale *discord.Locale,
+	fallback discord.Locale,
+) discord.Locale {
+	if ov := c.GuildLocaleOverride(ctx, guildID); ov != "" && ov != discord.LocaleUnknown {
+		return ov
+	}
+	if client != nil && client.Caches != nil && guildID != 0 {
+		if g, ok := client.Caches.Guild(guildID); ok && g.PreferredLocale != "" && g.PreferredLocale != discord.LocaleUnknown.Code() {
+			return discord.Locale(g.PreferredLocale)
+		}
+	}
+	if interactionGuildLocale != nil && *interactionGuildLocale != "" && *interactionGuildLocale != discord.LocaleUnknown {
+		return *interactionGuildLocale
+	}
+	if fallback != "" && fallback != discord.LocaleUnknown {
+		return fallback
+	}
+	return i18n.DefaultLocale()
 }

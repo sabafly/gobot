@@ -13,6 +13,7 @@ type Guild struct {
 	ID                     snowflake.ID                            `gorm:"primary_key;column:id;type:bigint(20) unsigned;not null"`
 	Name                   string                                  `gorm:"not null"`
 	Locale                 discord.Locale                          `gorm:"default:'ja'"`
+	LocaleOverride         discord.Locale                          `gorm:"type:varchar(16);not null;default:''"`
 	LevelUpMessage         string                                  `gorm:"default:'{user}がレベルアップしたよ！🥳\n**{before_level} レベル → {after_level} レベル**'"`
 	LevelUpChannel         *snowflake.ID                           `gorm:"type:bigint(20)"`
 	LevelUpExcludeChannel  []snowflake.ID                          `gorm:"serializer:json"`

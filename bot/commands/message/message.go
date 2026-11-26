@@ -687,7 +687,7 @@ func Command(c *components.Components) *generic.Command {
 					discordutil.NewMessageBuilder().
 						SetContent(m.Content).
 						SetEmbeds(m.Embeds...),
-					i18n.TranslateText(g.Locale, "components.message.pin.username", nil),
+					i18n.TranslateText(component.ResolveGuildLocale(component.Ctx(), event.Client(), g.ID, g.Locale), "components.message.pin.username", nil),
 					component.Config().Message.PinIconImage,
 					"",
 				)
@@ -912,7 +912,7 @@ func Command(c *components.Components) *generic.Command {
 							discordutil.NewMessageBuilder().
 								SetContent(m.Content).
 								SetEmbeds(m.Embeds...),
-							i18n.TranslateText(g.Locale, "components.message.pin.username", nil),
+							i18n.TranslateText(c.ResolveGuildLocale(c.Ctx(), event.Client(), g.ID, g.Locale), "components.message.pin.username", nil),
 							c.Config().Message.PinIconImage,
 							"",
 						)

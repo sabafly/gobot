@@ -22,14 +22,20 @@ package components
 
 import (
 	"context"
+	"sync"
 
+	"github.com/disgoorg/disgo/bot"
+	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/handler"
+	"github.com/disgoorg/snowflake/v2"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
 	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/internal/smap"
 )
+
+type GuildLocaleChangeHook func(ctx context.Context, client *bot.Client, guildID snowflake.ID, resolvedLocale discord.Locale)
 
 func New(ctx context.Context, conf Config, gormDb *database.DB) *Components {
 	return &Components{
@@ -52,7 +58,31 @@ type Components struct {
 
 	l smap.SyncedMap[string, *Mu]
 
+	guildLocaleHooksMu sync.RWMutex
+	guildLocaleHooks   []GuildLocaleChangeHook
+
 	Version string
+}
+
+func (c *Components) RegisterGuildLocaleChangeHook(hook GuildLocaleChangeHook) {
+	if c == nil || hook == nil {
+		return
+	}
+	c.guildLocaleHooksMu.Lock()
+	c.guildLocaleHooks = append(c.guildLocaleHooks, hook)
+	c.guildLocaleHooksMu.Unlock()
+}
+
+func (c *Components) NotifyGuildLocaleChanged(ctx context.Context, client *bot.Client, guildID snowflake.ID, resolvedLocale discord.Locale) {
+	if c == nil {
+		return
+	}
+	c.guildLocaleHooksMu.RLock()
+	hooks := append([]GuildLocaleChangeHook(nil), c.guildLocaleHooks...)
+	c.guildLocaleHooksMu.RUnlock()
+	for _, hook := range hooks {
+		hook(ctx, client, guildID, resolvedLocale)
+	}
 }
 
 func (c *Components) Ctx() context.Context { return c.ctx }

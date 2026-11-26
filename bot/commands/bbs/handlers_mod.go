@@ -20,6 +20,7 @@
 package bbs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -279,7 +280,12 @@ func (s *System) notifyReportLog(client *bot.Client, report *bbscore.Report) {
 	if ch, ok := client.Caches.Channel(*s.LogChannel); ok {
 		logGuildID = ch.GuildID()
 	}
-	logLocale := discordsync.ResolveGuildLocale(client, logGuildID, discord.LocaleJapanese)
+	var logLocale discord.Locale
+	if s != nil && s.Syncer != nil {
+		logLocale = s.Syncer.ResolveGuildLocale(context.Background(), client, logGuildID, i18n.DefaultLocale())
+	} else {
+		logLocale = discordsync.ResolveGuildLocale(client, logGuildID, i18n.DefaultLocale())
+	}
 
 	msg := discordsync.RenderNotice(logLocale,
 		i18n.TranslateText(logLocale, "components.bbs.report.log_title"),

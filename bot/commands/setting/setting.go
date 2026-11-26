@@ -23,6 +23,7 @@ package setting
 import (
 	stderrors "errors"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
 
@@ -134,6 +135,20 @@ func Command(c *components.Components) components.Command {
 							},
 						},
 					},
+					discord.ApplicationCommandOptionSubCommand{
+						Name:                     "locale",
+						Description:              "override guild language",
+						DescriptionLocalizations: i18n.TranslateTextMap("components.setting.locale"),
+						Options: []discord.ApplicationCommandOption{
+							discord.ApplicationCommandOptionString{
+								Name:                     "locale",
+								Description:              "language to use for this server (omit or select auto to reset)",
+								DescriptionLocalizations: i18n.TranslateTextMap("components.setting.locale.option"),
+								Required:                 false,
+								Choices:                  buildLocaleChoices(),
+							},
+						},
+					},
 				},
 			},
 		},
@@ -155,6 +170,7 @@ func Command(c *components.Components) components.Command {
 							SetComponents(i18n.BuildContext().
 								WithText("guild_name", g.Name).
 								WithText("guild_id", g.ID.String()).
+								WithText("guild_locale", formatGuildLocaleView(c, event, g)).
 								WithText("bump_enabled", builtin.Or(g.BumpEnabled, i18n.TranslateText(event.Locale(), "general.state.enabled"), i18n.TranslateText(event.Locale(), "general.state.disabled"))).
 								WithText("bump_mention", builtin.Or(g.BumpMention != nil, discord.RoleMention(builtin.NonNil(g.BumpMention)), i18n.TranslateText(event.Locale(), "general.value.none"))).
 								WithText("bump_message_title", g.BumpMessageTitle).
@@ -453,6 +469,15 @@ func Command(c *components.Components) components.Command {
 						return errors.NewError(err)
 					}
 					return nil
+				},
+			},
+			"/setting/locale": generic.PCommandHandler{
+				Permission: []generic.Permission{
+					generic.PermissionString("setting.locale"),
+				},
+				DiscordPerm: discord.PermissionManageGuild,
+				CommandHandler: func(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+					return handleSettingLocale(c, event)
 				},
 			},
 		},
@@ -754,4 +779,111 @@ func createNotice(title, message string, channelID snowflake.ID, client *bot.Cli
 		slog.Error("通知作成に失敗", slog.Any("err", err))
 		return
 	}
+}
+
+const localeChoiceAuto = "auto"
+
+func buildLocaleChoices() []discord.ApplicationCommandOptionChoiceString {
+	choices := []discord.ApplicationCommandOptionChoiceString{
+		{
+			Name:              "Auto (Follow Discord server language)",
+			NameLocalizations: i18n.TranslateTextMap("components.setting.locale.choice.auto"),
+			Value:             localeChoiceAuto,
+		},
+	}
+	locs := i18n.AvailableLocales()
+	if len(locs) == 0 {
+		locs = []discord.Locale{discord.LocaleJapanese, discord.LocaleEnglishUS}
+	}
+	seen := make(map[discord.Locale]struct{}, len(locs))
+	for _, loc := range locs {
+		if loc == "" || loc == discord.LocaleUnknown {
+			continue
+		}
+		if _, ok := seen[loc]; ok {
+			continue
+		}
+		seen[loc] = struct{}{}
+		if len(choices) >= 25 {
+			break
+		}
+		choices = append(choices, discord.ApplicationCommandOptionChoiceString{
+			Name:  i18n.LocaleDisplayName(loc),
+			Value: loc.Code(),
+		})
+	}
+	return choices
+}
+
+func formatGuildLocaleView(c *components.Components, event *events.ApplicationCommandInteractionCreate, g *models.Guild) string {
+	if g != nil && g.LocaleOverride != "" && g.LocaleOverride != discord.LocaleUnknown {
+		return i18n.TranslateText(event.Locale(), "components.setting.locale.view.override", map[string]any{
+			"locale": i18n.LocaleDisplayName(g.LocaleOverride),
+		})
+	}
+	var gid snowflake.ID
+	if g != nil {
+		gid = g.ID
+	} else if event.GuildID() != nil {
+		gid = *event.GuildID()
+	}
+	effective := c.ResolveGuildLocaleWithInteraction(c.Ctx(), event.Client(), gid, event.GuildLocale(), event.Locale())
+	return i18n.TranslateText(event.Locale(), "components.setting.locale.view.auto", map[string]any{
+		"locale": i18n.LocaleDisplayName(effective),
+	})
+}
+
+func handleSettingLocale(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
+	if event.GuildID() == nil {
+		return errors.NewError(stderrors.New("guild only"))
+	}
+	guildID := *event.GuildID()
+	rawLocale, ok := event.SlashCommandInteractionData().OptString("locale")
+	trimmed := strings.TrimSpace(rawLocale)
+
+	if !ok || trimmed == "" || trimmed == localeChoiceAuto {
+		if err := c.SetGuildLocaleOverride(c.Ctx(), guildID, ""); err != nil {
+			return errors.NewError(err)
+		}
+		effective := c.ResolveGuildLocaleWithInteraction(c.Ctx(), event.Client(), guildID, event.GuildLocale(), event.Locale())
+		c.NotifyGuildLocaleChanged(c.Ctx(), event.Client(), guildID, effective)
+		if err := event.CreateMessage(
+			discordutil.NewMessageBuilder().
+				SetContent(i18n.TranslateText(event.Locale(), "components.setting.locale.reset", map[string]any{
+					"locale": i18n.LocaleDisplayName(effective),
+				})).
+				BuildCreate(),
+		); err != nil {
+			return errors.NewError(err)
+		}
+		return nil
+	}
+
+	loc := discord.Locale(trimmed)
+	if !i18n.IsSupportedLocale(loc) {
+		if err := event.CreateMessage(
+			discordutil.NewMessageBuilder().
+				SetContent(i18n.TranslateText(event.Locale(), "components.setting.locale.invalid")).
+				SetFlags(discord.MessageFlagEphemeral).
+				BuildCreate(),
+		); err != nil {
+			return errors.NewError(err)
+		}
+		return nil
+	}
+
+	if err := c.SetGuildLocaleOverride(c.Ctx(), guildID, loc); err != nil {
+		return errors.NewError(err)
+	}
+	c.NotifyGuildLocaleChanged(c.Ctx(), event.Client(), guildID, loc)
+	if err := event.CreateMessage(
+		discordutil.NewMessageBuilder().
+			SetContent(i18n.TranslateText(event.Locale(), "components.setting.locale.set", map[string]any{
+				"locale": i18n.LocaleDisplayName(loc),
+			})).
+			BuildCreate(),
+	); err != nil {
+		return errors.NewError(err)
+	}
+	return nil
 }

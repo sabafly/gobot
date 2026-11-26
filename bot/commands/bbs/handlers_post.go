@@ -315,7 +315,7 @@ func (s *System) handleNewThreadModal(e *handler.ModalEvent) error {
 		return nil
 	}
 
-	mountLocale := discordsync.ResolveMountLocale(e.Client(), *mount)
+	mountLocale := s.Syncer.ResolveMountLocale(e.Ctx, e.Client(), *mount)
 	threadChID, msgID, syncErr := s.Syncer.PublishThread(e.Ctx, e.Client(), mount.ID, *board, *thread, *firstPost, mountLocale)
 	if syncErr != nil {
 		slog.Warn("bbs publish thread sync failed", "thread_id", thread.ID, "err", syncErr)
@@ -460,7 +460,7 @@ func (s *System) handleNewPostModal(e *handler.ModalEvent) error {
 		return nil
 	}
 
-	mountLocale := discordsync.ResolveMountLocale(e.Client(), *mount)
+	mountLocale := s.Syncer.ResolveMountLocale(e.Ctx, e.Client(), *mount)
 	thChID, msgID, syncErr := s.Syncer.PublishPost(e.Ctx, e.Client(), mirror.BoardMountID, *board, *thread, *post, backRefs, mountLocale)
 	if syncErr != nil {
 		slog.Warn("bbs publish post sync failed", "thread_id", thread.ID, "res", post.ResNumber, "err", syncErr)
@@ -624,7 +624,7 @@ func (s *System) handleBoardJumpSelect(e *handler.ComponentEvent) error {
 		return nil
 	}
 
-	mountLocale := discordsync.ResolveMountLocale(e.Client(), *mount)
+	mountLocale := s.Syncer.ResolveMountLocale(e.Ctx, e.Client(), *mount)
 	mirror, err := s.Syncer.EnsureThreadMirror(e.Ctx, e.Client(), *mount, *board, *thread, 0, mountLocale)
 	if err != nil {
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,

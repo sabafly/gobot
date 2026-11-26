@@ -84,6 +84,9 @@ type System struct {
 
 // NewSystem constructs a System orchestrating BBS commands and interactions.
 func NewSystem(c *components.Components, svc *bbscore.Service, syncer *discordsync.Syncer, logCh *snowflake.ID) *System {
+	if syncer != nil && syncer.GuildLocale == nil && c != nil {
+		syncer.GuildLocale = c.GuildLocaleOverride
+	}
 	return &System{
 		Components: c,
 		Service:    svc,
@@ -192,19 +195,30 @@ func (s *System) replyModalError(e *handler.ModalEvent, title, body string) {
 	_ = sr.RespondMessageCreate(e, discordsync.RenderError(e.Locale(), title, body))
 }
 
-func guildLocale(e interface {
+func (s *System) guildLocale(ctx context.Context, e interface {
 	GuildID() *snowflake.ID
 	GuildLocale() *discord.Locale
 	Locale() discord.Locale
 	Client() *bot.Client
 }) discord.Locale {
+	var gid snowflake.ID
+	if e.GuildID() != nil {
+		gid = *e.GuildID()
+	}
+	if s != nil && s.Syncer != nil && s.Syncer.GuildLocale != nil && gid != 0 {
+		if ov := s.Syncer.GuildLocale(ctx, gid); ov != "" && ov != discord.LocaleUnknown {
+			return ov
+		}
+	}
+	if s != nil && s.Components != nil && gid != 0 {
+		return s.Components.ResolveGuildLocaleWithInteraction(ctx, e.Client(), gid, e.GuildLocale(), e.Locale())
+	}
 	fb := e.Locale()
 	if gl := e.GuildLocale(); gl != nil && *gl != "" && *gl != discord.LocaleUnknown {
 		fb = *gl
 	}
-	var gid snowflake.ID
-	if e.GuildID() != nil {
-		gid = *e.GuildID()
+	if s != nil && s.Syncer != nil {
+		return s.Syncer.ResolveGuildLocale(ctx, e.Client(), gid, fb)
 	}
 	return discordsync.ResolveGuildLocale(e.Client(), gid, fb)
 }
@@ -778,7 +792,7 @@ func (c *bbsCommand) handleBoardCreate(data discord.SlashCommandInteractionData,
 		return nil
 	}
 	loc := e.Locale()
-	gLoc := guildLocale(e)
+	gLoc := c.sys.guildLocale(e.Ctx, e)
 
 	sr := discordsync.NewSafeResponder(e.ID().Time())
 	if err := sr.DeferCreate(e, true); err != nil {
@@ -1004,7 +1018,7 @@ func (c *bbsCommand) handleBoardEdit(data discord.SlashCommandInteractionData, e
 		)
 		return nil
 	}
-	c.refreshLocalMountGuide(e.Ctx, e.Client(), *guildID, *updated, guildLocale(e))
+	c.refreshLocalMountGuide(e.Ctx, e.Client(), *guildID, *updated, c.sys.guildLocale(e.Ctx, e))
 
 	hideKey := "components.bbs.common.disabled"
 	if updated.Rules.HideID {
@@ -1113,7 +1127,7 @@ func (c *bbsCommand) handleGlobalSubscribe(data discord.SlashCommandInteractionD
 		return nil
 	}
 	loc := e.Locale()
-	gLoc := guildLocale(e)
+	gLoc := c.sys.guildLocale(e.Ctx, e)
 
 	sr := discordsync.NewSafeResponder(e.ID().Time())
 	if err := sr.DeferCreate(e, true); err != nil {

@@ -1,10 +1,12 @@
 package i18n
 
 import (
+	"fmt"
 	"log/slog"
 	"maps"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"text/template"
 
@@ -16,6 +18,68 @@ var (
 	defaultLocale discord.Locale
 	globalLocales = make(map[discord.Locale]*LocalizedValues, 0)
 )
+
+// DefaultLocale returns the configured default locale, falling back to Japanese.
+func DefaultLocale() discord.Locale {
+	if defaultLocale != "" && defaultLocale != discord.LocaleUnknown {
+		return defaultLocale
+	}
+	return discord.LocaleJapanese
+}
+
+// AvailableLocales returns all loaded locales with DefaultLocale first followed by sorted locale codes.
+func AvailableLocales() []discord.Locale {
+	if len(globalLocales) == 0 {
+		return nil
+	}
+	def := DefaultLocale()
+	var out []discord.Locale
+	if _, ok := globalLocales[def]; ok {
+		out = append(out, def)
+	}
+	var rest []discord.Locale
+	for loc := range globalLocales {
+		if loc == def {
+			continue
+		}
+		rest = append(rest, loc)
+	}
+	slices.SortFunc(rest, func(a, b discord.Locale) int {
+		return strings.Compare(string(a), string(b))
+	})
+	return append(out, rest...)
+}
+
+// IsSupportedLocale reports whether locale can be selected as a gobot override locale.
+func IsSupportedLocale(locale discord.Locale) bool {
+	if locale == "" || locale == discord.LocaleUnknown {
+		return false
+	}
+	if len(globalLocales) > 0 {
+		_, ok := globalLocales[locale]
+		return ok
+	}
+	return locale == discord.LocaleJapanese || locale == discord.LocaleEnglishUS
+}
+
+// LocaleDisplayName returns a human-readable display string for locale.
+func LocaleDisplayName(locale discord.Locale) string {
+	switch locale {
+	case discord.LocaleUnknown:
+		return LocaleDisplayName(DefaultLocale())
+	case discord.LocaleJapanese:
+		return "日本語 (ja)"
+	case discord.LocaleEnglishUS:
+		return "English (US) (en-US)"
+	case discord.LocaleEnglishGB:
+		return "English (UK) (en-GB)"
+	default:
+		if locale.String() != discord.LocaleUnknown.String() {
+			return fmt.Sprintf("%s (%s)", locale.String(), locale.Code())
+		}
+		return locale.Code()
+	}
+}
 
 func newTemplate(name string) *template.Template {
 	return template.New(name).

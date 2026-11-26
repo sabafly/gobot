@@ -63,13 +63,14 @@ type anchorQueue struct {
 
 // Syncer bridges BBS domain state with Discord channels, threads, and multi-guild mirrors.
 type Syncer struct {
-	Service    *bbs.Service
-	Validator  PayloadValidator
-	Debouncer  *ControlPanelDebouncer
-	DMCache    *DMChannelCache
-	Guard      *InvalidRequestGuard
-	CanSendDM  func(ctx context.Context, userID snowflake.ID) bool
-	UserLocale func(ctx context.Context, userID snowflake.ID) discord.Locale
+	Service     *bbs.Service
+	Validator   PayloadValidator
+	Debouncer   *ControlPanelDebouncer
+	DMCache     *DMChannelCache
+	Guard       *InvalidRequestGuard
+	CanSendDM   func(ctx context.Context, userID snowflake.ID) bool
+	UserLocale  func(ctx context.Context, userID snowflake.ID) discord.Locale
+	GuildLocale func(ctx context.Context, guildID snowflake.ID) discord.Locale
 
 	anchorMu        sync.Mutex
 	anchorQ         map[snowflake.ID]*anchorQueue
@@ -93,7 +94,7 @@ func ResolveGuildLocale(client *bot.Client, guildID snowflake.ID, fallback disco
 	if fallback != "" && fallback != discord.LocaleUnknown {
 		return fallback
 	}
-	return discord.LocaleJapanese
+	return i18n.DefaultLocale()
 }
 
 // ResolveMountLocale returns the effective locale for a board mount.
@@ -103,6 +104,50 @@ func ResolveMountLocale(client *bot.Client, mount bbs.BoardMount) discord.Locale
 		fb = discord.Locale(mount.Locale)
 	}
 	return ResolveGuildLocale(client, mount.GuildID, fb)
+}
+
+// ResolveGuildLocale resolves the guild's effective locale, preferring any explicit override
+// configured via Syncer.GuildLocale before falling back to Discord's PreferredLocale or fallback.
+func (s *Syncer) ResolveGuildLocale(ctx context.Context, client *bot.Client, guildID snowflake.ID, fallback discord.Locale) discord.Locale {
+	if s != nil && s.GuildLocale != nil && guildID != 0 {
+		if ov := s.GuildLocale(ctx, guildID); ov != "" && ov != discord.LocaleUnknown {
+			return ov
+		}
+	}
+	return ResolveGuildLocale(client, guildID, fallback)
+}
+
+// ResolveMountLocale returns the effective locale for mount, respecting Syncer.GuildLocale.
+func (s *Syncer) ResolveMountLocale(ctx context.Context, client *bot.Client, mount bbs.BoardMount) discord.Locale {
+	return s.resolveMountLocaleWithFallback(ctx, client, mount, "")
+}
+
+func (s *Syncer) resolveMountLocaleWithFallback(ctx context.Context, client *bot.Client, mount bbs.BoardMount, fallback discord.Locale) discord.Locale {
+	var fb discord.Locale
+	if mount.Locale != "" {
+		fb = discord.Locale(mount.Locale)
+	} else if fallback != "" && fallback != discord.LocaleUnknown {
+		fb = fallback
+	}
+	return s.ResolveGuildLocale(ctx, client, mount.GuildID, fb)
+}
+
+// RefreshGuildBoardGuides re-renders active board guides in guildID using the updated effective locale.
+func (s *Syncer) RefreshGuildBoardGuides(ctx context.Context, client *bot.Client, guildID snowflake.ID, fallbackLocale discord.Locale) {
+	if s == nil || s.Service == nil || client == nil || guildID == 0 {
+		return
+	}
+	mounts, err := s.Service.Store.ListBoardMountsByGuild(ctx, guildID)
+	if err != nil {
+		slog.Warn("bbs failed to list guild mounts for locale refresh", "guild_id", guildID, "err", err)
+		return
+	}
+	for _, m := range mounts {
+		if !m.Active {
+			continue
+		}
+		s.RefreshBoardGuide(ctx, client, guildID, m.BoardID, fallbackLocale)
+	}
 }
 
 // ResolveUserLocaleFromDB looks up the user's saved locale in gobot's core users table.
@@ -143,7 +188,7 @@ func (s *Syncer) ProvisionBoardChannel(
 		return existing, ChannelCreatePlan{UseForum: existing.IsForum}, bbs.ErrAlreadyExists
 	}
 
-	resolvedLocale := ResolveGuildLocale(client, guildID, locale)
+	resolvedLocale := s.ResolveGuildLocale(ctx, client, guildID, locale)
 	channelName := i18n.TranslateText(resolvedLocale, "components.bbs.sync.channel_name", map[string]any{
 		"name": board.Name,
 	})
@@ -348,10 +393,7 @@ func (s *Syncer) mirrorNewThreadToMountLocked(
 	locale discord.Locale,
 	probeSeq uint64,
 ) (snowflake.ID, snowflake.ID, error) {
-	mountLocale := ResolveMountLocale(client, mount)
-	if mount.Locale == "" && locale != "" && locale != discord.LocaleUnknown {
-		mountLocale = locale
-	}
+	mountLocale := s.resolveMountLocaleWithFallback(ctx, client, mount, locale)
 
 	msgCreate := RenderPostMessageCreate(firstPost, thread, nil, mountLocale)
 	if err := s.Validator.ValidateMessageCreate(msgCreate); err != nil {
@@ -556,10 +598,7 @@ func (s *Syncer) ensureThreadMirror(
 		lastPrior = thread.ResCount
 	}
 	if lastPrior >= 2 {
-		mountLocale := ResolveMountLocale(client, mount)
-		if mount.Locale == "" && locale != "" && locale != discord.LocaleUnknown {
-			mountLocale = locale
-		}
+		mountLocale := s.resolveMountLocaleWithFallback(ctx, client, mount, locale)
 		banner := RenderLazyCatchupBanner(thread.ID, 2, lastPrior, mountLocale)
 		if vErr := s.Validator.ValidateMessageCreate(banner); vErr == nil {
 			sendErr := WithUnarchiveRetry(client, mirror.DiscordThreadID, func() error {
@@ -598,10 +637,7 @@ func (s *Syncer) mirrorPostToMount(
 		return 0, 0, err
 	}
 
-	mountLocale := ResolveMountLocale(client, mount)
-	if mount.Locale == "" && locale != "" && locale != discord.LocaleUnknown {
-		mountLocale = locale
-	}
+	mountLocale := s.resolveMountLocaleWithFallback(ctx, client, mount, locale)
 
 	resolveURL := s.guildURLResolver(ctx, thread.ID, mount.GuildID, mirror.DiscordThreadID)
 	msgCreate := RenderPostMessageCreate(post, thread, resolveURL, mountLocale)
@@ -862,10 +898,10 @@ func (s *Syncer) SyncAbone(ctx context.Context, client *bot.Client, post bbs.Pos
 		var mountLocale discord.Locale
 		isForum := false
 		if mount, mErr := s.Service.Store.GetBoardMount(ctx, tm.BoardMountID); mErr == nil {
-			mountLocale = ResolveMountLocale(client, *mount)
+			mountLocale = s.ResolveMountLocale(ctx, client, *mount)
 			isForum = mount.IsForum
 		} else {
-			mountLocale = ResolveGuildLocale(client, pm.GuildID, discord.LocaleJapanese)
+			mountLocale = s.ResolveGuildLocale(ctx, client, pm.GuildID, i18n.DefaultLocale())
 		}
 		mu := RenderPostMessageUpdate(post, thread, nil, mountLocale)
 		if err := s.Validator.ValidateMessageUpdate(mu, true); err != nil {
@@ -924,11 +960,11 @@ func (s *Syncer) SyncArchive(ctx context.Context, client *bot.Client, board bbs.
 			return
 		}
 		mount, hasMount := mountMap[mirror.BoardMountID]
-		mountLocale := discord.LocaleJapanese
+		mountLocale := i18n.DefaultLocale()
 		if hasMount {
-			mountLocale = ResolveMountLocale(client, mount)
+			mountLocale = s.ResolveMountLocale(ctx, client, mount)
 		} else {
-			mountLocale = ResolveGuildLocale(client, mirror.GuildID, discord.LocaleJapanese)
+			mountLocale = s.ResolveGuildLocale(ctx, client, mirror.GuildID, i18n.DefaultLocale())
 		}
 
 		muLock := s.threadEditMutex(mirror.DiscordThreadID)
@@ -1083,9 +1119,12 @@ func (s *Syncer) RefreshBoardGuide(ctx context.Context, client *bot.Client, guil
 	if err != nil {
 		return
 	}
-	mLoc := ResolveMountLocale(client, *latestMount)
-	if latestMount.Locale == "" && fallbackLocale != "" && fallbackLocale != discord.LocaleUnknown {
-		mLoc = fallbackLocale
+	mLoc := s.resolveMountLocaleWithFallback(ctx, client, *latestMount, fallbackLocale)
+	if latestMount.Locale != string(mLoc) {
+		latestMount.Locale = string(mLoc)
+		if uErr := s.Service.Store.UpdateBoardMount(ctx, latestMount); uErr != nil {
+			slog.Warn("bbs failed to sync mount locale", "mount_id", latestMount.ID, "err", uErr)
+		}
 	}
 	guide := RenderBoardGuide(*latestBoard, latestMount.ID, mLoc)
 	mu := discord.MessageUpdate{

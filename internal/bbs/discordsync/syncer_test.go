@@ -34,6 +34,7 @@ import (
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/cache"
+	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
@@ -43,6 +44,7 @@ import (
 	"github.com/sabafly/gobot/internal/bbs"
 	"github.com/sabafly/gobot/internal/bbs/discordsync"
 	"github.com/sabafly/gobot/internal/bbs/gormstore"
+	"github.com/sabafly/gobot/internal/i18n"
 )
 
 type roundTripFunc func(*http.Request) (*http.Response, error)
@@ -481,5 +483,137 @@ func TestSyncer_Round3ControlPreservation_LateReplyLock_And_RefreshGuide(t *test
 	mu.Unlock()
 	if !strings.Contains(bodyAfterRefresh, newDefName) {
 		t.Fatalf("expected RefreshBoardGuide to send updated rule %q, got %s", newDefName, bodyAfterRefresh)
+	}
+}
+
+func TestSyncer_GuildLocaleOverride_And_RefreshGuildBoardGuides(t *testing.T) {
+	ctx := context.Background()
+	if err := i18n.LoadLocales("../../../locales"); err != nil {
+		t.Fatalf("LoadLocales failed: %v", err)
+	}
+	store, svc := newSyncerTestEnv(t)
+
+	guildID := snowflake.ID(70001)
+	if _, err := svc.SetupGuild(ctx, bbs.GuildSetupInput{GuildID: guildID, Enabled: true, ActorUserID: 1}); err != nil {
+		t.Fatalf("SetupGuild failed: %v", err)
+	}
+	cat, err := svc.CreateCategory(ctx, bbs.CreateCategoryInput{Scope: bbs.ScopeLocal, GuildID: &guildID, Name: "カテゴリ"})
+	if err != nil {
+		t.Fatalf("CreateCategory failed: %v", err)
+	}
+	board, err := svc.CreateBoard(ctx, bbs.CreateBoardInput{
+		CategoryID: cat.ID,
+		Scope:      bbs.ScopeLocal,
+		GuildID:    &guildID,
+		Name:       "雑談板",
+	})
+	if err != nil {
+		t.Fatalf("CreateBoard failed: %v", err)
+	}
+
+	var mu sync.Mutex
+	var createdChannelName string
+	var createdGuideBody string
+	var updatedGuideBody string
+	chID := snowflake.ID(71001)
+	ctrlMsgID := snowflake.ID(72001)
+
+	client := newMockRestClient(t, func(req *http.Request) (*http.Response, error) {
+		p := strings.TrimPrefix(req.URL.Path, "/api/v10")
+		switch {
+		case req.Method == http.MethodPost && p == fmt.Sprintf("/guilds/%d/channels", guildID):
+			raw, _ := io.ReadAll(req.Body)
+			var payload map[string]any
+			_ = json.Unmarshal(raw, &payload)
+			mu.Lock()
+			if n, ok := payload["name"].(string); ok {
+				createdChannelName = n
+			}
+			mu.Unlock()
+			return jsonResponse(http.StatusOK, map[string]any{
+				"id":       chID.String(),
+				"guild_id": guildID.String(),
+				"type":     0,
+				"name":     payload["name"],
+			}), nil
+		case req.Method == http.MethodPost && p == fmt.Sprintf("/channels/%d/messages", chID):
+			raw, _ := io.ReadAll(req.Body)
+			mu.Lock()
+			createdGuideBody = string(raw)
+			mu.Unlock()
+			return jsonResponse(http.StatusOK, map[string]any{"id": ctrlMsgID.String(), "channel_id": chID.String()}), nil
+		case req.Method == http.MethodPatch && p == fmt.Sprintf("/channels/%d/messages/%d", chID, ctrlMsgID):
+			raw, _ := io.ReadAll(req.Body)
+			mu.Lock()
+			updatedGuideBody = string(raw)
+			mu.Unlock()
+			return jsonResponse(http.StatusOK, map[string]any{"id": ctrlMsgID.String(), "channel_id": chID.String()}), nil
+		default:
+			return jsonResponse(http.StatusNotFound, map[string]any{"message": "unexpected: " + req.Method + " " + p}), nil
+		}
+	})
+	client.Caches = cache.New(cache.WithCaches(cache.FlagsAll))
+	client.Caches.AddGuild(discord.CacheGuild{
+		Guild: discord.Guild{
+			ID:              guildID,
+			Name:            "NonCommunityGuild",
+			PreferredLocale: "en-US",
+		},
+	})
+
+	overrideLoc := discord.LocaleJapanese
+	syncer := discordsync.NewSyncer(svc)
+	syncer.GuildLocale = func(_ context.Context, gid snowflake.ID) discord.Locale {
+		if gid == guildID {
+			return overrideLoc
+		}
+		return ""
+	}
+
+	if got := syncer.ResolveGuildLocale(ctx, client, guildID, discord.LocaleEnglishUS); got != discord.LocaleJapanese {
+		t.Fatalf("expected Syncer.ResolveGuildLocale ja, got %q", got)
+	}
+	if got := syncer.ResolveMountLocale(ctx, client, bbs.BoardMount{GuildID: guildID, Locale: "en-US"}); got != discord.LocaleJapanese {
+		t.Fatalf("expected Syncer.ResolveMountLocale ja override, got %q", got)
+	}
+
+	// Provision board text channel using override (ja) even though PreferredLocale & fallback are en-US.
+	mount, _, err := syncer.ProvisionBoardChannel(ctx, client, guildID, *board, nil, false, discord.LocaleEnglishUS)
+	if err != nil {
+		t.Fatalf("ProvisionBoardChannel failed: %v", err)
+	}
+	expectedJAName := i18n.TranslateText(discord.LocaleJapanese, "components.bbs.sync.channel_name", map[string]any{"name": board.Name})
+	expectedJABtn := i18n.TranslateText(discord.LocaleJapanese, "components.bbs.board_guide.btn.new_thread")
+	mu.Lock()
+	gotChName := createdChannelName
+	gotGuideJA := createdGuideBody
+	mu.Unlock()
+	if gotChName != expectedJAName {
+		t.Fatalf("expected Japanese channel name %q, got %q", expectedJAName, gotChName)
+	}
+	if !strings.Contains(gotGuideJA, expectedJABtn) {
+		t.Fatalf("expected Japanese board guide button %q in %s", expectedJABtn, gotGuideJA)
+	}
+	if mount.Locale != "ja" {
+		t.Fatalf("expected mount.Locale 'ja', got %q", mount.Locale)
+	}
+
+	// Reset override ("") -> falls back to cached PreferredLocale ("en-US") and refreshes active board guides.
+	overrideLoc = ""
+	syncer.RefreshGuildBoardGuides(ctx, client, guildID, discord.LocaleEnglishUS)
+
+	expectedENBtn := i18n.TranslateText(discord.LocaleEnglishUS, "components.bbs.board_guide.btn.new_thread")
+	mu.Lock()
+	gotGuideEN := updatedGuideBody
+	mu.Unlock()
+	if !strings.Contains(gotGuideEN, expectedENBtn) {
+		t.Fatalf("expected English refreshed guide button %q in %s", expectedENBtn, gotGuideEN)
+	}
+	reloadedMount, err := store.GetBoardMount(ctx, mount.ID)
+	if err != nil {
+		t.Fatalf("GetBoardMount failed: %v", err)
+	}
+	if reloadedMount.Locale != "en-US" {
+		t.Fatalf("expected refreshed mount.Locale 'en-US', got %q", reloadedMount.Locale)
 	}
 }

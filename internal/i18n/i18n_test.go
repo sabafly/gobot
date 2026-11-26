@@ -657,3 +657,48 @@ func TestSecurity_NoSSTIOrDoubleExpansion(t *testing.T) {
 		}
 	})
 }
+
+func TestLocaleHelpers(t *testing.T) {
+	localesDir := filepath.Join("..", "..", "locales")
+	if err := LoadLocales(localesDir); err != nil {
+		t.Fatalf("LoadLocales failed: %v", err)
+	}
+
+	if got := DefaultLocale(); got != discord.LocaleJapanese {
+		t.Fatalf("expected DefaultLocale ja, got %q", got)
+	}
+	locs := AvailableLocales()
+	if len(locs) < 2 {
+		t.Fatalf("expected at least 2 locales, got %v", locs)
+	}
+	if locs[0] != discord.LocaleJapanese {
+		t.Fatalf("expected default locale ja first, got %v", locs)
+	}
+	if !slices.Contains(locs, discord.LocaleEnglishUS) {
+		t.Fatalf("expected AvailableLocales to contain en-US, got %v", locs)
+	}
+	locs2 := AvailableLocales()
+	if !slices.Equal(locs, locs2) {
+		t.Fatalf("expected deterministic AvailableLocales order: %v vs %v", locs, locs2)
+	}
+
+	if !IsSupportedLocale(discord.LocaleJapanese) || !IsSupportedLocale(discord.LocaleEnglishUS) {
+		t.Fatal("expected ja and en-US to be supported")
+	}
+	if IsSupportedLocale("") || IsSupportedLocale(discord.LocaleUnknown) || IsSupportedLocale(discord.Locale("xx-INVALID")) {
+		t.Fatal("expected empty/unknown/invalid locale not to be supported")
+	}
+
+	if got := LocaleDisplayName(discord.LocaleJapanese); got != "日本語 (ja)" {
+		t.Fatalf("unexpected display name for ja: %q", got)
+	}
+	if got := LocaleDisplayName(discord.LocaleEnglishUS); got != "English (US) (en-US)" {
+		t.Fatalf("unexpected display name for en-US: %q", got)
+	}
+	if got := LocaleDisplayName(""); got != "日本語 (ja)" {
+		t.Fatalf("unexpected display name for empty locale: %q", got)
+	}
+	if got := LocaleDisplayName(discord.LocaleKorean); got != "Korean (ko)" {
+		t.Fatalf("unexpected display name for ko: %q", got)
+	}
+}

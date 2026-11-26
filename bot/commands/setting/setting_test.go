@@ -2,15 +2,21 @@ package setting
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/disgoorg/disgo/bot"
+	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -18,6 +24,7 @@ import (
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/database"
 	"github.com/sabafly/gobot/database/models"
+	"github.com/sabafly/gobot/internal/i18n"
 )
 
 func createSQLiteTable(db *gorm.DB, model any) error {
@@ -794,5 +801,218 @@ func TestBumpHandler_ConcurrentSameMessage(t *testing.T) {
 	gdb.Model(&models.BumpSchedule{}).Where("guild_id = ? AND type = ?", guildID, models.BumpTypeBump).Count(&count)
 	if count != 1 {
 		t.Errorf("expected 1 schedule after concurrent calls, got %d", count)
+	}
+}
+
+func newTestSlashCommandEvent(t *testing.T, client *bot.Client, guildID snowflake.ID, subcommand string, localeOpt *string) (*events.ApplicationCommandInteractionCreate, *string, *discord.MessageFlags) {
+	t.Helper()
+	var subOpts []map[string]any
+	if localeOpt != nil {
+		subOpts = append(subOpts, map[string]any{
+			"name":  "locale",
+			"type":  discord.ApplicationCommandOptionTypeString,
+			"value": *localeOpt,
+		})
+	}
+	payload, err := json.Marshal(map[string]any{
+		"type":           discord.InteractionTypeApplicationCommand,
+		"id":             snowflake.New(time.Now()).String(),
+		"application_id": "999000",
+		"token":          "test-setting-token",
+		"guild_id":       guildID.String(),
+		"guild_locale":   "en-US",
+		"locale":         "ja",
+		"channel":        map[string]any{"id": "555001", "type": 0},
+		"member":         map[string]any{"user": map[string]any{"id": "123456", "username": "tester"}},
+		"data": map[string]any{
+			"id":   "111",
+			"name": "setting",
+			"type": discord.ApplicationCommandTypeSlash,
+			"options": []map[string]any{
+				{
+					"name":    subcommand,
+					"type":    discord.ApplicationCommandOptionTypeSubCommand,
+					"options": subOpts,
+				},
+			},
+		},
+	})
+	if err != nil {
+		t.Fatalf("marshal interaction failed: %v", err)
+	}
+	var aci discord.ApplicationCommandInteraction
+	if err := json.Unmarshal(payload, &aci); err != nil {
+		t.Fatalf("unmarshal ApplicationCommandInteraction failed: %v", err)
+	}
+	var capturedBody string
+	var capturedFlags discord.MessageFlags
+	ev := &events.ApplicationCommandInteractionCreate{
+		GenericEvent:                  events.NewGenericEvent(client, 0, 0),
+		ApplicationCommandInteraction: aci,
+		Respond: func(_ discord.InteractionResponseType, data discord.InteractionResponseData, _ ...rest.RequestOpt) error {
+			if mc, ok := data.(discord.MessageCreate); ok {
+				capturedBody = mc.Content
+				capturedFlags = mc.Flags
+			} else if raw, mErr := json.Marshal(data); mErr == nil {
+				capturedBody = string(raw)
+			}
+			return nil
+		},
+	}
+	return ev, &capturedBody, &capturedFlags
+}
+
+func TestSettingLocaleCommand_And_SettingsView(t *testing.T) {
+	if err := i18n.LoadLocales(filepath.Join("..", "..", "..", "locales")); err != nil {
+		t.Fatalf("LoadLocales failed: %v", err)
+	}
+
+	c, gdb := setupTestComponent(t)
+	cmd := Command(c)
+
+	// 1. Validate /setting locale option & choices.
+	var settingCmd discord.SlashCommandCreate
+	foundSetting := false
+	for _, cc := range cmd.Create() {
+		if sc, ok := cc.(discord.SlashCommandCreate); ok && sc.Name == "setting" {
+			settingCmd = sc
+			foundSetting = true
+			break
+		}
+	}
+	if !foundSetting {
+		t.Fatal("expected /setting command definition")
+	}
+	var localeOptChoices []discord.ApplicationCommandOptionChoiceString
+	foundLocaleSub := false
+	for _, opt := range settingCmd.Options {
+		if sub, ok := opt.(discord.ApplicationCommandOptionSubCommand); ok && sub.Name == "locale" {
+			foundLocaleSub = true
+			if len(sub.Options) != 1 {
+				t.Fatalf("expected 1 option under /setting locale, got %d", len(sub.Options))
+			}
+			strOpt, ok := sub.Options[0].(discord.ApplicationCommandOptionString)
+			if !ok {
+				t.Fatalf("expected string option under /setting locale, got %T", sub.Options[0])
+			}
+			if strOpt.Required {
+				t.Fatal("expected /setting locale option to be optional")
+			}
+			localeOptChoices = strOpt.Choices
+		}
+	}
+	if !foundLocaleSub {
+		t.Fatal("expected /setting locale subcommand")
+	}
+	var choiceVals []string
+	for _, ch := range localeOptChoices {
+		choiceVals = append(choiceVals, ch.Value)
+	}
+	if len(choiceVals) < 3 || choiceVals[0] != localeChoiceAuto || !slices.Contains(choiceVals, "ja") || !slices.Contains(choiceVals, "en-US") {
+		t.Fatalf("unexpected /setting locale choices: %v", choiceVals)
+	}
+
+	// 2. Handler & view tests on a non-community guild (PreferredLocale: en-US).
+	guildID := snowflake.ID(91001)
+	if err := gdb.Create(&models.Guild{ID: guildID, Name: "NonCommunity", BumpEnabled: true}).Error; err != nil {
+		t.Fatalf("create guild failed: %v", err)
+	}
+	client := &bot.Client{
+		Caches: cache.New(cache.WithCaches(cache.FlagsAll)),
+	}
+	client.Caches.AddGuild(discord.CacheGuild{
+		Guild: discord.Guild{
+			ID:              guildID,
+			Name:            "NonCommunity",
+			PreferredLocale: "en-US",
+		},
+	})
+
+	type hookCall struct {
+		gid snowflake.ID
+		loc discord.Locale
+	}
+	var hooks []hookCall
+	c.RegisterGuildLocaleChangeHook(func(_ context.Context, _ *bot.Client, gid snowflake.ID, loc discord.Locale) {
+		hooks = append(hooks, hookCall{gid: gid, loc: loc})
+	})
+
+	var g models.Guild
+	if err := gdb.First(&g, "id = ?", guildID).Error; err != nil {
+		t.Fatalf("reload guild failed: %v", err)
+	}
+	evView, _, _ := newTestSlashCommandEvent(t, client, guildID, "locale", nil)
+	autoView := formatGuildLocaleView(c, evView, &g)
+	if !strings.Contains(autoView, "English (US) (en-US)") {
+		t.Fatalf("expected auto view to show Discord PreferredLocale en-US, got %q", autoView)
+	}
+
+	// Set override to ja.
+	jaVal := "ja"
+	evSet, bodySet, _ := newTestSlashCommandEvent(t, client, guildID, "locale", &jaVal)
+	if err := handleSettingLocale(c, evSet); err != nil {
+		t.Fatalf("handleSettingLocale(ja) failed: %v", err)
+	}
+	if !strings.Contains(*bodySet, "日本語 (ja)") {
+		t.Fatalf("expected confirmation mentioning 日本語 (ja), got %q", *bodySet)
+	}
+	if got := c.GuildLocaleOverride(c.Ctx(), guildID); got != discord.LocaleJapanese {
+		t.Fatalf("expected persisted override ja, got %q", got)
+	}
+	if len(hooks) != 1 || hooks[0] != (hookCall{gid: guildID, loc: discord.LocaleJapanese}) {
+		t.Fatalf("unexpected hook calls after set ja: %+v", hooks)
+	}
+	if err := gdb.First(&g, "id = ?", guildID).Error; err != nil {
+		t.Fatalf("reload guild failed: %v", err)
+	}
+	overrideView := formatGuildLocaleView(c, evView, &g)
+	if !strings.Contains(overrideView, "日本語 (ja)") {
+		t.Fatalf("expected overridden view to show 日本語 (ja), got %q", overrideView)
+	}
+
+	// Reset via "auto".
+	autoVal := localeChoiceAuto
+	evAuto, bodyAuto, _ := newTestSlashCommandEvent(t, client, guildID, "locale", &autoVal)
+	if err := handleSettingLocale(c, evAuto); err != nil {
+		t.Fatalf("handleSettingLocale(auto) failed: %v", err)
+	}
+	if !strings.Contains(*bodyAuto, "English (US) (en-US)") {
+		t.Fatalf("expected reset response mentioning English (US) (en-US), got %q", *bodyAuto)
+	}
+	if got := c.GuildLocaleOverride(c.Ctx(), guildID); got != "" {
+		t.Fatalf("expected cleared override after auto, got %q", got)
+	}
+	if len(hooks) != 2 || hooks[1] != (hookCall{gid: guildID, loc: discord.LocaleEnglishUS}) {
+		t.Fatalf("unexpected hook calls after reset: %+v", hooks)
+	}
+
+	// Set to en-US, then reset via omitted option.
+	enVal := "en-US"
+	evEn, _, _ := newTestSlashCommandEvent(t, client, guildID, "locale", &enVal)
+	if err := handleSettingLocale(c, evEn); err != nil {
+		t.Fatalf("handleSettingLocale(en-US) failed: %v", err)
+	}
+	if got := c.GuildLocaleOverride(c.Ctx(), guildID); got != discord.LocaleEnglishUS {
+		t.Fatalf("expected override en-US, got %q", got)
+	}
+	evOmit, _, _ := newTestSlashCommandEvent(t, client, guildID, "locale", nil)
+	if err := handleSettingLocale(c, evOmit); err != nil {
+		t.Fatalf("handleSettingLocale(omitted) failed: %v", err)
+	}
+	if got := c.GuildLocaleOverride(c.Ctx(), guildID); got != "" {
+		t.Fatalf("expected cleared override when omitted, got %q", got)
+	}
+
+	// Invalid locale must fail ephemerally without modifying override.
+	badVal := "xx-INVALID"
+	evBad, bodyBad, flagsBad := newTestSlashCommandEvent(t, client, guildID, "locale", &badVal)
+	if err := handleSettingLocale(c, evBad); err != nil {
+		t.Fatalf("handleSettingLocale(invalid) returned error: %v", err)
+	}
+	if !flagsBad.Has(discord.MessageFlagEphemeral) {
+		t.Fatalf("expected ephemeral flag on invalid locale response, got %v", *flagsBad)
+	}
+	if *bodyBad != i18n.TranslateText(discord.LocaleJapanese, "components.setting.locale.invalid") {
+		t.Fatalf("unexpected invalid locale message: %q", *bodyBad)
 	}
 }

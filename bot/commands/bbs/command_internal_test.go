@@ -24,6 +24,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -44,6 +45,8 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/sabafly/gobot/bot/components"
+	"github.com/sabafly/gobot/database"
+	"github.com/sabafly/gobot/database/models"
 	bbscore "github.com/sabafly/gobot/internal/bbs"
 	"github.com/sabafly/gobot/internal/bbs/discordsync"
 	"github.com/sabafly/gobot/internal/bbs/gormstore"
@@ -1621,5 +1624,120 @@ func TestBuildSlipContext_ExtractsMemberVoiceAndGuildTraits(t *testing.T) {
 	}
 	if sc.GuildMemberCount != 800 || sc.GuildBoostTier != 3 || !sc.GuildIsCommunity || !sc.GuildHasVanityURL {
 		t.Fatalf("unexpected guild attrs in SlipContext: %+v", sc)
+	}
+}
+
+func TestSystemGuildLocale_RespectsDBOverrideOverInteractionGuildLocale(t *testing.T) {
+	ctx := context.Background()
+	if err := i18n.LoadLocales("../../../locales"); err != nil {
+		t.Fatalf("load locales failed: %v", err)
+	}
+
+	gdb, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("open sqlite failed: %v", err)
+	}
+	sqlDB, err := gdb.DB()
+	if err != nil {
+		t.Fatalf("sql.DB failed: %v", err)
+	}
+	sqlDB.SetMaxOpenConns(1)
+	t.Cleanup(func() { _ = sqlDB.Close() })
+
+	if err := gdb.AutoMigrate(gormstore.Models()...); err != nil {
+		t.Fatalf("automigrate failed: %v", err)
+	}
+	{
+		stmt := &gorm.Statement{DB: gdb}
+		if err := stmt.Parse(&models.Guild{}); err != nil {
+			t.Fatalf("parse guild schema failed: %v", err)
+		}
+		var cols, pks []string
+		for _, f := range stmt.Schema.Fields {
+			if f.DBName == "" {
+				continue
+			}
+			if f.PrimaryKey {
+				pks = append(pks, fmt.Sprintf("`%s`", f.DBName))
+			}
+			cols = append(cols, fmt.Sprintf("`%s` TEXT", f.DBName))
+		}
+		pkClause := ""
+		if len(pks) > 0 {
+			pkClause = fmt.Sprintf(", PRIMARY KEY (%s)", strings.Join(pks, ", "))
+		}
+		if err := gdb.Exec(fmt.Sprintf("CREATE TABLE `%s` (%s%s)", stmt.Schema.Table, strings.Join(cols, ", "), pkClause)).Error; err != nil {
+			t.Fatalf("create sqlite guilds table failed: %v", err)
+		}
+	}
+
+	store := gormstore.New(gdb)
+	reg := bbscore.NewProviderRegistry(bbscore.DefaultProviderKey)
+	reg.Register(store)
+	svc := bbscore.NewService(reg, store, bbscore.NewIdentityGenerator([]byte("guild-locale-test-secret-32bytes")), bbscore.NewPolicyManager(bbscore.PolicyConfig{}), nil)
+	syncer := discordsync.NewSyncer(svc)
+	comp := components.New(ctx, components.Config{}, &database.DB{DB: gdb})
+	sys := NewSystem(comp, svc, syncer, nil)
+
+	guildID := snowflake.ID(68001)
+	if err := gdb.Create(&models.Guild{ID: guildID, Name: "NonCommunityGuild"}).Error; err != nil {
+		t.Fatalf("create guild failed: %v", err)
+	}
+	if err := comp.SetGuildLocaleOverride(ctx, guildID, discord.LocaleJapanese); err != nil {
+		t.Fatalf("SetGuildLocaleOverride failed: %v", err)
+	}
+
+	client := newInternalMockClient(t, nil)
+	client.Caches = cache.New(cache.WithCaches(cache.FlagsAll))
+	client.Caches.AddGuild(discord.CacheGuild{
+		Guild: discord.Guild{
+			ID:              guildID,
+			Name:            "NonCommunityGuild",
+			PreferredLocale: "en-US",
+		},
+	})
+
+	payload, err := json.Marshal(map[string]any{
+		"type":           discord.InteractionTypeApplicationCommand,
+		"id":             snowflake.New(time.Now()).String(),
+		"application_id": "999000",
+		"token":          "test-cmd-token",
+		"guild_id":       guildID.String(),
+		"guild_locale":   "en-US",
+		"locale":         "en-US",
+		"channel":        map[string]any{"id": "555001", "type": 0},
+		"member":         map[string]any{"user": map[string]any{"id": "123456", "username": "tester"}},
+		"data": map[string]any{
+			"id":   "111",
+			"name": "bbs",
+			"type": discord.ApplicationCommandTypeSlash,
+		},
+	})
+	if err != nil {
+		t.Fatalf("marshal failed: %v", err)
+	}
+	var aci discord.ApplicationCommandInteraction
+	if err := json.Unmarshal(payload, &aci); err != nil {
+		t.Fatalf("unmarshal failed: %v", err)
+	}
+	cmdEv := &handler.CommandEvent{
+		ApplicationCommandInteractionCreate: &events.ApplicationCommandInteractionCreate{
+			GenericEvent:                  events.NewGenericEvent(client, 0, 0),
+			ApplicationCommandInteraction: aci,
+		},
+		Ctx: ctx,
+	}
+
+	// DB override ("ja") must win even when both cached PreferredLocale and event GuildLocale() are "en-US".
+	if got := sys.guildLocale(ctx, cmdEv); got != discord.LocaleJapanese {
+		t.Fatalf("expected sys.guildLocale ja via DB override, got %q", got)
+	}
+
+	// Clearing override falls back cleanly to Discord PreferredLocale ("en-US").
+	if err := comp.SetGuildLocaleOverride(ctx, guildID, ""); err != nil {
+		t.Fatalf("clear override failed: %v", err)
+	}
+	if got := sys.guildLocale(ctx, cmdEv); got != discord.LocaleEnglishUS {
+		t.Fatalf("expected sys.guildLocale en-US after reset, got %q", got)
 	}
 }
