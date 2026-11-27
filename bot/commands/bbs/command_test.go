@@ -49,7 +49,7 @@ import (
 
 func hasPictographEmoji(s string) bool {
 	for _, r := range s {
-		if r == '★' || r == '☆' {
+		if r == '★' || r == '☆' || r == '☰' {
 			continue
 		}
 		if (r >= 0x1F300 && r <= 0x1FAFF) || (r >= 0x2600 && r <= 0x27BF) {
@@ -191,14 +191,7 @@ func TestBBSCommands_ValidateAndZeroEmojiAndRouting(t *testing.T) {
 			}
 			assertNoEmojiInOptions(t, typed.Options)
 		case discord.MessageCommandCreate:
-			if hasPictographEmoji(typed.Name) {
-				t.Fatalf("unexpected pictograph emoji in message command %q", typed.Name)
-			}
-			for _, l := range typed.NameLocalizations {
-				if hasPictographEmoji(l) {
-					t.Fatalf("unexpected pictograph emoji in message command localization %q", l)
-				}
-			}
+			t.Fatalf("unexpected MessageCommandCreate %q; BBS post actions use section menu buttons", typed.Name)
 		}
 	}
 
@@ -223,6 +216,12 @@ func TestBBSCommands_ValidateAndZeroEmojiAndRouting(t *testing.T) {
 	if !r.Match("/bbs/consent/modal/2026-01/tok123", discord.InteractionTypeModalSubmit, 0) {
 		t.Fatal("expected /bbs/consent/modal/{version}/{token} modal route to match")
 	}
+	if !r.Match("/bbs/post/menu/"+tid, discord.InteractionTypeComponent, int(discord.ComponentTypeButton)) {
+		t.Fatal("expected /bbs/post/menu/{post_id} route to match")
+	}
+	if !r.Match("/bbs/post/reply/"+tid, discord.InteractionTypeComponent, int(discord.ComponentTypeButton)) {
+		t.Fatal("expected /bbs/post/reply/{post_id} route to match")
+	}
 	if !r.Match("/bbs/report/post/"+tid, discord.InteractionTypeComponent, int(discord.ComponentTypeButton)) {
 		t.Fatal("expected /bbs/report/post/{post_id} route to match")
 	}
@@ -240,12 +239,6 @@ func TestBBSCommands_ValidateAndZeroEmojiAndRouting(t *testing.T) {
 	}
 	if !r.Match("/bbs/consent/role/123456789", discord.InteractionTypeComponent, int(discord.ComponentTypeButton)) {
 		t.Fatal("expected deprecated /bbs/consent/role/{guild_id} route to match")
-	}
-	if !r.Match("/BBS - Report Post", discord.InteractionTypeApplicationCommand, int(discord.ApplicationCommandTypeMessage)) {
-		t.Fatal("expected report message command route to match")
-	}
-	if !r.Match("/BBS - Moderate Post", discord.InteractionTypeApplicationCommand, int(discord.ApplicationCommandTypeMessage)) {
-		t.Fatal("expected moderate message command route to match")
 	}
 	if !r.Match("/bbs-admin/report/inspect", discord.InteractionTypeApplicationCommand, int(discord.ApplicationCommandTypeSlash)) {
 		t.Fatal("expected /bbs-admin/report/inspect route to match")

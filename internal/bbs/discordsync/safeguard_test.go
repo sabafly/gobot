@@ -52,8 +52,8 @@ func TestMain(m *testing.M) {
 
 func containsPictographEmoji(s string) bool {
 	for _, r := range s {
-		if r == '★' || r == '☆' {
-			// Monochrome 5ch-style cap marks are intentional text badges, not colored emoji.
+		if r == '★' || r == '☆' || r == '☰' {
+			// Monochrome 5ch-style cap marks and trigram menu icon are intentional text badges, not colored emoji.
 			continue
 		}
 		if (r >= 0x1F300 && r <= 0x1FAFF) || (r >= 0x2600 && r <= 0x27BF) {
@@ -80,6 +80,19 @@ func assertNoEmojiInLayout(t *testing.T, comps []discord.LayoutComponent) {
 					if btn.Emoji != nil || containsPictographEmoji(btn.Label) {
 						t.Fatalf("unexpected emoji in Button: %+v", btn)
 					}
+				}
+			}
+		case discord.SectionComponent:
+			for _, sc := range c.Components {
+				if td, ok := sc.(discord.TextDisplayComponent); ok {
+					if containsPictographEmoji(td.Content) {
+						t.Fatalf("unexpected emoji in Section TextDisplay: %q", td.Content)
+					}
+				}
+			}
+			if btn, ok := c.Accessory.(discord.ButtonComponent); ok {
+				if btn.Emoji != nil || containsPictographEmoji(btn.Label) {
+					t.Fatalf("unexpected emoji in Section Accessory Button: %+v", btn)
 				}
 			}
 		case discord.ContainerComponent:
@@ -603,6 +616,15 @@ func TestRenderer_ZeroEmoji_MediaGallery_And_ReaderPagination(t *testing.T) {
 	}
 	assertNoEmojiInLayout(t, postMsg.Components)
 
+	sec, ok := postMsg.Components[0].(discord.SectionComponent)
+	if !ok || len(sec.Components) != 2 {
+		t.Fatalf("expected SectionComponent with 2 text displays as post header+body, got %#v", postMsg.Components[0])
+	}
+	menuBtn, ok := sec.Accessory.(discord.ButtonComponent)
+	if !ok || menuBtn.Label != discordsync.PostMenuButtonLabel || menuBtn.CustomID != "/bbs/post/menu/"+post.ID.String() {
+		t.Fatalf("expected post section accessory button %q -> /bbs/post/menu/%s, got %#v", discordsync.PostMenuButtonLabel, post.ID, sec.Accessory)
+	}
+
 	hasGallery := false
 	for _, c := range postMsg.Components {
 		if c.Type() == discord.ComponentTypeMediaGallery {
@@ -615,6 +637,13 @@ func TestRenderer_ZeroEmoji_MediaGallery_And_ReaderPagination(t *testing.T) {
 
 	post.Abone = true
 	aboneMsg := discordsync.RenderPostMessageCreate(post, thread, nil, discord.LocaleJapanese)
+	aboneSec, ok := aboneMsg.Components[0].(discord.SectionComponent)
+	if !ok {
+		t.Fatalf("expected SectionComponent on aboned post, got %#v", aboneMsg.Components[0])
+	}
+	if aboneBtn, ok := aboneSec.Accessory.(discord.ButtonComponent); !ok || aboneBtn.CustomID != "/bbs/post/menu/"+post.ID.String() {
+		t.Fatalf("expected menu accessory button preserved on aboned post, got %#v", aboneSec.Accessory)
+	}
 	for _, c := range aboneMsg.Components {
 		if c.Type() == discord.ComponentTypeMediaGallery {
 			t.Fatal("MediaGallery must be removed when post is aboned")
@@ -854,6 +883,19 @@ func assertLayoutENClean(t *testing.T, comps []discord.LayoutComponent) {
 					}
 				}
 			}
+		case discord.SectionComponent:
+			for _, sc := range c.Components {
+				if td, ok := sc.(discord.TextDisplayComponent); ok {
+					if strings.Contains(td.Content, "components.bbs.") || containsJapaneseRune(td.Content) {
+						t.Fatalf("unexpected untranslated or Japanese text in en-US Section TextDisplay: %q", td.Content)
+					}
+				}
+			}
+			if btn, ok := c.Accessory.(discord.ButtonComponent); ok {
+				if strings.Contains(btn.Label, "components.bbs.") || containsJapaneseRune(btn.Label) {
+					t.Fatalf("unexpected untranslated or Japanese text in en-US Section Button: %q", btn.Label)
+				}
+			}
 		case discord.ContainerComponent:
 			var sub []discord.LayoutComponent
 			for _, sc := range c.Components {
@@ -884,6 +926,12 @@ func TestRenderer_I18n_JapaneseAndEnglish(t *testing.T) {
 			MaxRes:      1000,
 		},
 	}
+	localBoard := bbs.Board{
+		ID:    uuid.New(),
+		Scope: bbs.ScopeLocal,
+		Name:  "LocalTalk",
+		Rules: board.Rules,
+	}
 	thread := bbs.Thread{
 		ID:        threadID,
 		BoardID:   boardID,
@@ -893,24 +941,28 @@ func TestRenderer_I18n_JapaneseAndEnglish(t *testing.T) {
 		Rules:     board.Rules,
 		CreatedAt: time.Now().Add(-26 * time.Hour),
 	}
+	archivedThread := thread
+	archivedThread.Status = bbs.ThreadStatusArchived
 	posts := []bbs.Post{
 		{
-			ID:        uuid.New(),
-			ThreadID:  threadID,
-			ResNumber: 1,
-			Name:      bbs.DefaultAnonymousName,
-			SlipText:  "abcd-efgh",
-			AnonID:    "xyz12345",
-			IsOP:      true,
-			Body:      "Hello >>1",
-			CreatedAt: time.Now(),
+			ID:         uuid.New(),
+			ThreadID:   threadID,
+			ResNumber:  1,
+			Name:       bbs.DefaultAnonymousName,
+			SlipText:   "abcd-efgh",
+			AnonID:     "xyz12345",
+			PosterHash: "hash001",
+			IsOP:       true,
+			Body:       "Hello >>1",
+			CreatedAt:  time.Now(),
 		},
 		{
-			ID:        uuid.New(),
-			ThreadID:  threadID,
-			ResNumber: 2,
-			Abone:     true,
-			CreatedAt: time.Now(),
+			ID:         uuid.New(),
+			ThreadID:   threadID,
+			ResNumber:  2,
+			Abone:      true,
+			PosterHash: "hash002",
+			CreatedAt:  time.Now(),
 		},
 	}
 	pm := bbs.NewPolicyManager(bbs.PolicyConfig{
@@ -930,6 +982,32 @@ func TestRenderer_I18n_JapaneseAndEnglish(t *testing.T) {
 			discordsync.RenderOver1000Message(thread, loc),
 			discordsync.RenderArchivedNotice(loc),
 			discordsync.RenderConsentGate(pm, loc, "tok123"),
+			discordsync.RenderPostActionMenu(discordsync.PostActionMenuOptions{
+				Board:    localBoard,
+				Thread:   thread,
+				Post:     posts[0],
+				CanReply: true,
+			}, loc),
+			discordsync.RenderPostActionMenu(discordsync.PostActionMenuOptions{
+				Board:       localBoard,
+				Thread:      thread,
+				Post:        posts[0],
+				CanReply:    true,
+				CanLocalMod: true,
+			}, loc),
+			discordsync.RenderPostActionMenu(discordsync.PostActionMenuOptions{
+				Board:       localBoard,
+				Thread:      archivedThread,
+				Post:        posts[1],
+				CanLocalMod: true,
+			}, loc),
+			discordsync.RenderPostActionMenu(discordsync.PostActionMenuOptions{
+				Board:             board,
+				Thread:            thread,
+				Post:              posts[0],
+				CanReply:          true,
+				ShowGlobalModNote: true,
+			}, loc),
 			discordsync.RenderPolicyDocumentView(pm, bbs.PolicyDocTerms, loc),
 		}
 		for i, m := range msgs {
@@ -1386,5 +1464,77 @@ func TestRenderSLIP_ModesAndHeader(t *testing.T) {
 	}, rules, discord.LocaleEnglishUS)
 	if !strings.Contains(vvvvvHeader, "Anonymous (ｵｼｮｳｶﾞﾂ ﾌﾞｰｽﾄｳｵ Ab12\\-Cd34):") {
 		t.Fatalf("unexpected vvvvv event header: %q", vvvvvHeader)
+	}
+}
+
+func TestRenderReaderPage_SectionsAndSixPostPagination(t *testing.T) {
+	v := discordsync.PayloadValidator{}
+	now := time.Date(2026, 11, 27, 10, 0, 0, 0, bbs.JSTLocation)
+	rules := bbs.BoardRules{MaxRes: 1000}.Normalize()
+	thread := bbs.Thread{ID: uuid.New(), Title: "Short Reader Pagination", ResCount: 10, Rules: rules}
+	posts := make([]bbs.Post, 10)
+	for i := range posts {
+		posts[i] = bbs.Post{
+			ID:        uuid.New(),
+			ThreadID:  thread.ID,
+			ResNumber: uint32(i + 1),
+			AnonID:    fmt.Sprintf("id%d", i),
+			Body:      fmt.Sprintf("short body %d", i+1),
+			CreatedAt: now,
+		}
+	}
+
+	page1, s1, e1 := discordsync.RenderReaderPage(thread, posts, 0, nil, discord.LocaleJapanese)
+	if s1 != 1 || e1 != 6 {
+		t.Fatalf("expected page 1 of short posts to pack 1..6 under component cap, got %d..%d", s1, e1)
+	}
+	if err := v.ValidateMessageCreate(discord.NewMessageCreateV2(page1...).WithEphemeral(true)); err != nil {
+		t.Fatalf("page 1 failed ValidateMessageCreate: %v", err)
+	}
+	assertNoEmojiInLayout(t, page1)
+
+	container, ok := page1[0].(discord.ContainerComponent)
+	if !ok {
+		t.Fatalf("expected ContainerComponent at index 0, got %#v", page1[0])
+	}
+	seenMenuIDs := make(map[string]struct{})
+	for _, sc := range container.Components {
+		sec, ok := sc.(discord.SectionComponent)
+		if !ok {
+			continue
+		}
+		btn, ok := sec.Accessory.(discord.ButtonComponent)
+		if !ok || btn.Label != discordsync.PostMenuButtonLabel || !strings.HasPrefix(btn.CustomID, "/bbs/post/menu/") {
+			t.Fatalf("unexpected reader section accessory: %#v", sec.Accessory)
+		}
+		if _, dup := seenMenuIDs[btn.CustomID]; dup {
+			t.Fatalf("duplicate menu button custom_id %q in reader page", btn.CustomID)
+		}
+		seenMenuIDs[btn.CustomID] = struct{}{}
+	}
+	if len(seenMenuIDs) != 6 {
+		t.Fatalf("expected 6 Section menu buttons on page 1, got %d", len(seenMenuIDs))
+	}
+
+	page2, s2, e2 := discordsync.RenderReaderPage(thread, posts, 6, nil, discord.LocaleJapanese)
+	if s2 != 7 || e2 != 10 {
+		t.Fatalf("expected page 2 to cover 7..10, got %d..%d", s2, e2)
+	}
+	if err := v.ValidateMessageCreate(discord.NewMessageCreateV2(page2...).WithEphemeral(true)); err != nil {
+		t.Fatalf("page 2 failed ValidateMessageCreate: %v", err)
+	}
+
+	prevBtn := page2[1].(discord.ActionRowComponent).Components[1].(discord.ButtonComponent)
+	if !strings.HasSuffix(prevBtn.CustomID, "/1-6") {
+		t.Fatalf("expected Prev button on page 2 (7..10) to target /1-6, got %q", prevBtn.CustomID)
+	}
+	latestIdx := discordsync.ComputeLatestReaderStartIndex(thread, posts, nil, discord.LocaleJapanese)
+	if latestIdx != 4 {
+		// Backward pack from post 10 fits 6 posts (5..10, index 4)
+		t.Fatalf("expected ComputeLatestReaderStartIndex for 10 short posts to pack 5..10 (idx=4), got %d", latestIdx)
+	}
+	_, ls, le := discordsync.RenderReaderPage(thread, posts, latestIdx, nil, discord.LocaleJapanese)
+	if ls != 5 || le != 10 {
+		t.Fatalf("expected latest page 5..10, got %d..%d", ls, le)
 	}
 }

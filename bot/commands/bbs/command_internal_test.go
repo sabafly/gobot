@@ -1077,64 +1077,54 @@ func newInternalConsentModalEvent(
 	}
 }
 
-func newInternalMessageCommandEvent(
+func newInternalAdminComponentEvent(
 	t *testing.T,
 	client *bot.Client,
 	guildID snowflake.ID,
 	userID snowflake.ID,
-	targetMsgID snowflake.ID,
-	onRespond func(discord.InteractionResponseType, discord.InteractionResponseData),
-) (discord.MessageCommandInteractionData, *handler.CommandEvent) {
+	customID string,
+	vars map[string]string,
+	onRespond func(discord.InteractionResponseType, any),
+) *handler.ComponentEvent {
 	t.Helper()
 	payload, err := json.Marshal(map[string]any{
-		"type":           discord.InteractionTypeApplicationCommand,
+		"type":           discord.InteractionTypeComponent,
 		"id":             snowflake.New(time.Now()).String(),
 		"application_id": "999000",
-		"token":          "test-msgcmd-token",
+		"token":          "test-admin-interaction-token",
 		"guild_id":       guildID.String(),
 		"channel":        map[string]any{"id": "555001", "type": 0},
 		"member": map[string]any{
-			"user": map[string]any{"id": userID.String(), "username": "reporter"},
+			"user":        map[string]any{"id": userID.String(), "username": "guildadmin"},
+			"permissions": "32",
 		},
 		"locale": "ja",
 		"data": map[string]any{
-			"id":        "1",
-			"type":      discord.ApplicationCommandTypeMessage,
-			"name":      msgCmdReportName,
-			"target_id": targetMsgID.String(),
-			"resolved": map[string]any{
-				"messages": map[string]any{
-					targetMsgID.String(): map[string]any{
-						"id":         targetMsgID.String(),
-						"channel_id": "555001",
-						"author":     map[string]any{"id": "999000", "username": "bot"},
-					},
-				},
-			},
+			"component_type": discord.ComponentTypeButton,
+			"custom_id":      customID,
 		},
 	})
 	if err != nil {
-		t.Fatalf("marshal message command interaction failed: %v", err)
+		t.Fatalf("marshal admin component interaction failed: %v", err)
 	}
-	var ai discord.ApplicationCommandInteraction
-	if err := json.Unmarshal(payload, &ai); err != nil {
-		t.Fatalf("unmarshal ApplicationCommandInteraction failed: %v", err)
+	var ci discord.ComponentInteraction
+	if err := json.Unmarshal(payload, &ci); err != nil {
+		t.Fatalf("unmarshal ComponentInteraction failed: %v", err)
 	}
-	data := ai.MessageCommandInteractionData()
-	ev := &handler.CommandEvent{
-		ApplicationCommandInteractionCreate: &events.ApplicationCommandInteractionCreate{
-			GenericEvent:                  events.NewGenericEvent(client, 0, 0),
-			ApplicationCommandInteraction: ai,
-			Respond: func(respType discord.InteractionResponseType, d discord.InteractionResponseData, opts ...rest.RequestOpt) error {
+	return &handler.ComponentEvent{
+		ComponentInteractionCreate: &events.ComponentInteractionCreate{
+			GenericEvent:         events.NewGenericEvent(client, 0, 0),
+			ComponentInteraction: ci,
+			Respond: func(respType discord.InteractionResponseType, data discord.InteractionResponseData, opts ...rest.RequestOpt) error {
 				if onRespond != nil {
-					onRespond(respType, d)
+					onRespond(respType, data)
 				}
 				return nil
 			},
 		},
-		Ctx: context.Background(),
+		Vars: vars,
+		Ctx:  context.Background(),
 	}
-	return data, ev
 }
 
 func TestConsentModalFlow_And_UnconsentedReaderAccess(t *testing.T) {
@@ -1266,15 +1256,34 @@ func TestConsentModalFlow_And_UnconsentedReaderAccess(t *testing.T) {
 		t.Fatalf("expected unconsented jump modal submit to render post body, got %s", rawJump)
 	}
 
-	// 2. Non-BBS message report command returns error without opening consent modal.
-	uMsgNonBBS := snowflake.ID(920101)
-	nonBBSData, nonBBSCmdEv := newInternalMessageCommandEvent(t, mockClient, guildID, uMsgNonBBS, snowflake.ID(999999), capModal)
-	if err := sys.handleReportMessageCommand(nonBBSData, nonBBSCmdEv); err != nil {
-		t.Fatalf("handleReportMessageCommand non-BBS failed: %v", err)
+	// 2. Unconsented user can open the Post Action Menu without consent modal, and unknown post_id fails without consent modal.
+	uMenuViewer := snowflake.ID(920101)
+	menuEv := newInternalComponentEvent(t, mockClient, guildID, uMenuViewer, "/bbs/post/menu/"+opPost.ID.String(),
+		map[string]string{"post_id": opPost.ID.String()}, capComp)
+	if err := sys.handlePostMenuButton(menuEv); err != nil {
+		t.Fatalf("handlePostMenuButton unconsented failed: %v", err)
 	}
-	rawNonBBS, _ := json.Marshal(respData)
-	if respType != discord.InteractionResponseTypeCreateMessage || !strings.Contains(string(rawNonBBS), i18n.TranslateText(discord.LocaleJapanese, "components.bbs.report.not_target_title")) {
-		t.Fatalf("expected non-BBS report command to return not_target error, type=%d body=%s", respType, rawNonBBS)
+	menuMC, ok := respData.(discord.MessageCreate)
+	rawMenu, _ := json.Marshal(respData)
+	if respType != discord.InteractionResponseTypeCreateMessage || !ok || !menuMC.Flags.Has(discord.MessageFlagEphemeral) {
+		t.Fatalf("expected unconsented menu button to return ephemeral menu, type=%d data=%#v", respType, respData)
+	}
+	if err := pv.ValidateMessageCreate(menuMC); err != nil {
+		t.Fatalf("post menu response failed ValidateMessageCreate: %v", err)
+	}
+	if !strings.Contains(string(rawMenu), "/bbs/post/reply/"+opPost.ID.String()) || !strings.Contains(string(rawMenu), "/bbs/report/post/"+opPost.ID.String()) {
+		t.Fatalf("expected reply and report buttons in unconsented post menu, got %s", rawMenu)
+	}
+
+	unknownPostID := uuid.New()
+	unknownMenuEv := newInternalComponentEvent(t, mockClient, guildID, uMenuViewer, "/bbs/post/menu/"+unknownPostID.String(),
+		map[string]string{"post_id": unknownPostID.String()}, capComp)
+	if err := sys.handlePostMenuButton(unknownMenuEv); err != nil {
+		t.Fatalf("handlePostMenuButton unknown post failed: %v", err)
+	}
+	rawUnknown, _ := json.Marshal(respData)
+	if respType != discord.InteractionResponseTypeCreateMessage || !strings.Contains(string(rawUnknown), i18n.TranslateText(discord.LocaleJapanese, "components.bbs.errors.title.fetch_failed")) {
+		t.Fatalf("expected unknown post_id menu click to return fetch_failed error, type=%d body=%s", respType, rawUnknown)
 	}
 
 	// 3. First interactive action by unconsented users opens ConsentModal and stores pending action.
@@ -1309,7 +1318,7 @@ func TestConsentModalFlow_And_UnconsentedReaderAccess(t *testing.T) {
 		t.Fatalf("expected uWatch thread watch saved automatically, got %+v err=%v", w, wErr)
 	}
 
-	// 3b. NewThread / NewPost / ReportThread / ReportMessage -> ConsentModal -> continue button ephemeral response.
+	// 3b. NewThread / NewPost / ReplyPost / ReportThread / ReportPostButton -> ConsentModal -> continue button ephemeral response.
 	actionCases := []struct {
 		name           string
 		userID         snowflake.ID
@@ -1340,6 +1349,17 @@ func TestConsentModalFlow_And_UnconsentedReaderAccess(t *testing.T) {
 			expectedLabelK: "components.bbs.consent.continue.new_post",
 		},
 		{
+			name:   "reply_post",
+			userID: snowflake.ID(920110),
+			trigger: func() error {
+				ev := newInternalComponentEvent(t, mockClient, guildID, snowflake.ID(920110), "/bbs/post/reply/"+opPost.ID.String(),
+					map[string]string{"post_id": opPost.ID.String()}, capComp)
+				return sys.handleReplyPostButton(ev)
+			},
+			expectedBtnID:  "/bbs/post/reply/" + opPost.ID.String(),
+			expectedLabelK: "components.bbs.consent.continue.reply_post",
+		},
+		{
 			name:   "report_thread",
 			userID: snowflake.ID(920105),
 			trigger: func() error {
@@ -1351,11 +1371,12 @@ func TestConsentModalFlow_And_UnconsentedReaderAccess(t *testing.T) {
 			expectedLabelK: "components.bbs.consent.continue.report_thread",
 		},
 		{
-			name:   "report_post_msgcmd",
+			name:   "report_post_btn",
 			userID: snowflake.ID(920106),
 			trigger: func() error {
-				d, ev := newInternalMessageCommandEvent(t, mockClient, guildID, snowflake.ID(920106), postMsgID, capModal)
-				return sys.handleReportMessageCommand(d, ev)
+				ev := newInternalComponentEvent(t, mockClient, guildID, snowflake.ID(920106), "/bbs/report/post/"+opPost.ID.String(),
+					map[string]string{"post_id": opPost.ID.String()}, capComp)
+				return sys.handleReportPostButton(ev)
 			},
 			expectedBtnID:  "/bbs/report/post/" + opPost.ID.String(),
 			expectedLabelK: "components.bbs.consent.continue.report_post",
@@ -1389,7 +1410,28 @@ func TestConsentModalFlow_And_UnconsentedReaderAccess(t *testing.T) {
 		}
 	}
 
-	// 3c. Consented user pressing continue button for post report opens the post report modal.
+	// 3c. Consented user pressing continue button for reply opens prefilled reply modal, and report opens report modal.
+	replyBtnEv := newInternalComponentEvent(t, mockClient, guildID, snowflake.ID(920110), "/bbs/post/reply/"+opPost.ID.String(),
+		map[string]string{"post_id": opPost.ID.String()}, capComp)
+	if err := sys.handleReplyPostButton(replyBtnEv); err != nil {
+		t.Fatalf("handleReplyPostButton failed: %v", err)
+	}
+	replyModal, ok := respData.(discord.ModalCreate)
+	if respType != discord.InteractionResponseTypeModal || !ok || replyModal.CustomID != "/bbs/post/modal/"+mirrorID.String() {
+		t.Fatalf("expected prefilled post reply modal, got type=%d data=%#v", respType, respData)
+	}
+	var gotPrefill string
+	for _, mc := range replyModal.Components {
+		if lbl, ok := mc.(discord.LabelComponent); ok {
+			if ti, ok := lbl.Component.(discord.TextInputComponent); ok && ti.CustomID == "body" {
+				gotPrefill = ti.Value
+			}
+		}
+	}
+	if gotPrefill != ">>1\n" {
+		t.Fatalf("expected reply modal body prefill %q, got %q", ">>1\n", gotPrefill)
+	}
+
 	repPostBtnEv := newInternalComponentEvent(t, mockClient, guildID, snowflake.ID(920106), "/bbs/report/post/"+opPost.ID.String(),
 		map[string]string{"post_id": opPost.ID.String()}, capComp)
 	if err := sys.handleReportPostButton(repPostBtnEv); err != nil {
@@ -1483,12 +1525,28 @@ func TestBuildPostingModals_ConditionalCapSelect(t *testing.T) {
 		t.Fatalf("expected thread modal labels [title,name,body] without caps, got %v", ids)
 	}
 
-	postNoCap := buildNewPostModal(discord.LocaleEnglishUS, targetID, nil)
+	postNoCap := buildNewPostModal(discord.LocaleEnglishUS, targetID, nil, "")
 	if err := v.ValidateModal(postNoCap); err != nil {
 		t.Fatalf("postNoCap failed ValidateModal: %v", err)
 	}
 	if ids := modalLabelCustomIDs(postNoCap); strings.Join(ids, ",") != "name,body" {
 		t.Fatalf("expected post modal labels [name,body] without caps, got %v", ids)
+	}
+
+	postPrefill := buildNewPostModal(discord.LocaleJapanese, targetID, nil, ">>5\n")
+	if err := v.ValidateModal(postPrefill); err != nil {
+		t.Fatalf("postPrefill failed ValidateModal: %v", err)
+	}
+	var gotBodyVal string
+	for _, mc := range postPrefill.Components {
+		if lbl, ok := mc.(discord.LabelComponent); ok {
+			if ti, ok := lbl.Component.(discord.TextInputComponent); ok && ti.CustomID == "body" {
+				gotBodyVal = ti.Value
+			}
+		}
+	}
+	if gotBodyVal != ">>5\n" {
+		t.Fatalf("expected prefilled body value %q, got %q", ">>5\n", gotBodyVal)
 	}
 
 	// 2. With caps held: cap StringSelectMenu appears with default __none__ + caps.
@@ -1503,7 +1561,7 @@ func TestBuildPostingModals_ConditionalCapSelect(t *testing.T) {
 	if ids := modalLabelCustomIDs(thWithCap); strings.Join(ids, ",") != "title,name,cap,body" {
 		t.Fatalf("expected thread modal labels [title,name,cap,body] with caps, got %v", ids)
 	}
-	postWithCap := buildNewPostModal(discord.LocaleJapanese, targetID, twoCaps)
+	postWithCap := buildNewPostModal(discord.LocaleJapanese, targetID, twoCaps, "")
 	if err := v.ValidateModal(postWithCap); err != nil {
 		t.Fatalf("postWithCap failed ValidateModal: %v", err)
 	}
@@ -1739,5 +1797,247 @@ func TestSystemGuildLocale_RespectsDBOverrideOverInteractionGuildLocale(t *testi
 	}
 	if got := sys.guildLocale(ctx, cmdEv); got != discord.LocaleEnglishUS {
 		t.Fatalf("expected sys.guildLocale en-US after reset, got %q", got)
+	}
+}
+
+func TestPostActionMenu_Permissions_Boundaries_And_States(t *testing.T) {
+	ctx := context.Background()
+	opID := snowflake.ID(940001)
+	authorID := snowflake.ID(940002)
+	globalAuthorID := snowflake.ID(940005)
+	regularID := snowflake.ID(940003)
+	adminID := snowflake.ID(940004)
+	guildA := snowflake.ID(940010)
+	guildB := snowflake.ID(940011)
+
+	store, svc, sys := newInternalTestEnv(t, bbscore.PolicyConfig{Version: "2026-04"}, opID)
+	for _, gid := range []snowflake.ID{guildA, guildB} {
+		if _, err := svc.SetupGuild(ctx, bbscore.GuildSetupInput{GuildID: gid, Enabled: true, ActorUserID: opID}); err != nil {
+			t.Fatalf("SetupGuild %d failed: %v", gid, err)
+		}
+	}
+	for _, uid := range []snowflake.ID{authorID, globalAuthorID, regularID, adminID} {
+		if _, err := svc.AcceptPolicy(ctx, uid); err != nil {
+			t.Fatalf("AcceptPolicy %d failed: %v", uid, err)
+		}
+	}
+
+	localCat, err := svc.CreateCategory(ctx, bbscore.CreateCategoryInput{Scope: bbscore.ScopeLocal, GuildID: &guildA, Name: "ローカル"})
+	if err != nil {
+		t.Fatalf("CreateCategory local failed: %v", err)
+	}
+	localBoard, err := svc.CreateBoard(ctx, bbscore.CreateBoardInput{CategoryID: localCat.ID, Scope: bbscore.ScopeLocal, GuildID: &guildA, Name: "ローカル板"})
+	if err != nil {
+		t.Fatalf("CreateBoard local failed: %v", err)
+	}
+	localMountID := uuid.New()
+	if err := store.CreateBoardMount(ctx, &bbscore.BoardMount{
+		ID: localMountID, BoardID: localBoard.ID, GuildID: guildA, ChannelID: snowflake.ID(740001), Active: true, CreatedAt: time.Now(),
+	}); err != nil {
+		t.Fatalf("CreateBoardMount local failed: %v", err)
+	}
+	_, localThread, localPost, err := svc.CreateThread(ctx, bbscore.CreateThreadInput{
+		BoardID: localBoard.ID, GuildID: guildA, UserID: authorID, Title: "ローカルスレッド", RawBody: "ローカル本文",
+	})
+	if err != nil {
+		t.Fatalf("CreateThread local failed: %v", err)
+	}
+	localMirrorID := uuid.New()
+	if err := store.CreateThreadMirror(ctx, &bbscore.ThreadMirror{
+		ID: localMirrorID, ThreadID: localThread.ID, BoardMountID: localMountID, GuildID: guildA, DiscordThreadID: snowflake.ID(740010), CreatedAt: time.Now(),
+	}); err != nil {
+		t.Fatalf("CreateThreadMirror local failed: %v", err)
+	}
+
+	globalCat, err := svc.CreateCategory(ctx, bbscore.CreateCategoryInput{Scope: bbscore.ScopeGlobal, Name: "グローバル"})
+	if err != nil {
+		t.Fatalf("CreateCategory global failed: %v", err)
+	}
+	globalBoard, err := svc.CreateBoard(ctx, bbscore.CreateBoardInput{CategoryID: globalCat.ID, Scope: bbscore.ScopeGlobal, Name: "グローバル板"})
+	if err != nil {
+		t.Fatalf("CreateBoard global failed: %v", err)
+	}
+	globalMountID := uuid.New()
+	if err := store.CreateBoardMount(ctx, &bbscore.BoardMount{
+		ID: globalMountID, BoardID: globalBoard.ID, GuildID: guildA, ChannelID: snowflake.ID(740002), Active: true, CreatedAt: time.Now(),
+	}); err != nil {
+		t.Fatalf("CreateBoardMount global failed: %v", err)
+	}
+	_, globalThread, globalPost, err := svc.CreateThread(ctx, bbscore.CreateThreadInput{
+		BoardID: globalBoard.ID, GuildID: guildA, UserID: globalAuthorID, Title: "グローバルスレッド", RawBody: "グローバル本文",
+	})
+	if err != nil {
+		t.Fatalf("CreateThread global failed: %v", err)
+	}
+	globalMirrorID := uuid.New()
+	if err := store.CreateThreadMirror(ctx, &bbscore.ThreadMirror{
+		ID: globalMirrorID, ThreadID: globalThread.ID, BoardMountID: globalMountID, GuildID: guildA, DiscordThreadID: snowflake.ID(740020), CreatedAt: time.Now(),
+	}); err != nil {
+		t.Fatalf("CreateThreadMirror global failed: %v", err)
+	}
+
+	pv := discordsync.PayloadValidator{}
+	mockClient := newInternalMockClient(t, nil)
+
+	findButtons := func(mc discord.MessageCreate) map[string]discord.ButtonComponent {
+		out := make(map[string]discord.ButtonComponent)
+		for _, lc := range mc.Components {
+			cont, ok := lc.(discord.ContainerComponent)
+			if !ok {
+				continue
+			}
+			for _, sc := range cont.Components {
+				row, ok := sc.(discord.ActionRowComponent)
+				if !ok {
+					continue
+				}
+				for _, ic := range row.Components {
+					if btn, ok := ic.(discord.ButtonComponent); ok && btn.CustomID != "" {
+						out[btn.CustomID] = btn
+					}
+				}
+			}
+		}
+		return out
+	}
+
+	var respType discord.InteractionResponseType
+	var respData any
+	capComp := func(rt discord.InteractionResponseType, d any) {
+		respType = rt
+		respData = d
+	}
+
+	// 1. Regular user on local board sees Reply + Report, never PosterHash / AuthorUserID / mod buttons.
+	regEv := newInternalComponentEvent(t, mockClient, guildA, regularID, "/bbs/post/menu/"+localPost.ID.String(),
+		map[string]string{"post_id": localPost.ID.String()}, capComp)
+	if err := sys.handlePostMenuButton(regEv); err != nil {
+		t.Fatalf("regular menu failed: %v", err)
+	}
+	regMC, ok := respData.(discord.MessageCreate)
+	if respType != discord.InteractionResponseTypeCreateMessage || !ok || !regMC.Flags.Has(discord.MessageFlagEphemeral) {
+		t.Fatalf("expected ephemeral menu for regular user, got type=%d data=%#v", respType, respData)
+	}
+	if err := pv.ValidateMessageCreate(regMC); err != nil {
+		t.Fatalf("regular menu ValidateMessageCreate failed: %v", err)
+	}
+	regRaw, _ := json.Marshal(regMC)
+	regStr := string(regRaw)
+	if strings.Contains(regStr, localPost.PosterHash) || strings.Contains(regStr, authorID.String()) || strings.Contains(regStr, "/bbs/mod/") {
+		t.Fatalf("regular user menu leaked sensitive/mod data: %s", regStr)
+	}
+	regBtns := findButtons(regMC)
+	if _, ok := regBtns["/bbs/post/reply/"+localPost.ID.String()]; !ok {
+		t.Fatalf("expected reply button for regular user, got %v", regBtns)
+	}
+	if _, ok := regBtns["/bbs/report/post/"+localPost.ID.String()]; !ok {
+		t.Fatalf("expected report button for regular user, got %v", regBtns)
+	}
+
+	// 2. Guild admin on local board sees PosterHash + 3 mod buttons, never AuthorUserID.
+	admEv := newInternalAdminComponentEvent(t, mockClient, guildA, adminID, "/bbs/post/menu/"+localPost.ID.String(),
+		map[string]string{"post_id": localPost.ID.String()}, capComp)
+	if err := sys.handlePostMenuButton(admEv); err != nil {
+		t.Fatalf("admin menu failed: %v", err)
+	}
+	admMC := respData.(discord.MessageCreate)
+	if err := pv.ValidateMessageCreate(admMC); err != nil {
+		t.Fatalf("admin menu ValidateMessageCreate failed: %v", err)
+	}
+	admRaw, _ := json.Marshal(admMC)
+	admStr := string(admRaw)
+	if !strings.Contains(admStr, localPost.PosterHash) {
+		t.Fatalf("expected PosterHash in local admin menu, got %s", admStr)
+	}
+	if strings.Contains(admStr, authorID.String()) {
+		t.Fatalf("local admin menu leaked AuthorUserID: %s", admStr)
+	}
+	admBtns := findButtons(admMC)
+	aboneBtn, okAb := admBtns["/bbs/mod/abone/"+localPost.ID.String()]
+	archBtn, okAr := admBtns["/bbs/mod/archive/"+localThread.ID.String()]
+	_, okBan := admBtns["/bbs/mod/ban/"+localPost.ID.String()]
+	if !okAb || !okAr || !okBan || aboneBtn.Disabled || archBtn.Disabled {
+		t.Fatalf("expected all 3 enabled mod buttons on active post, got %+v", admBtns)
+	}
+
+	// 3. Aboned post disables abone button & hides Reply; Archived thread disables archive button too.
+	if _, err := svc.AbonePostLocal(ctx, guildA, localPost.ID, "spam"); err != nil {
+		t.Fatalf("AbonePostLocal failed: %v", err)
+	}
+	admAbonedEv := newInternalAdminComponentEvent(t, mockClient, guildA, adminID, "/bbs/post/menu/"+localPost.ID.String(),
+		map[string]string{"post_id": localPost.ID.String()}, capComp)
+	if err := sys.handlePostMenuButton(admAbonedEv); err != nil {
+		t.Fatalf("admin menu after abone failed: %v", err)
+	}
+	abonedBtns := findButtons(respData.(discord.MessageCreate))
+	if _, hasReply := abonedBtns["/bbs/post/reply/"+localPost.ID.String()]; hasReply {
+		t.Fatal("aboned post menu must hide Reply button")
+	}
+	if !abonedBtns["/bbs/mod/abone/"+localPost.ID.String()].Disabled {
+		t.Fatal("aboned post menu must disable abone button")
+	}
+	if abonedBtns["/bbs/mod/archive/"+localThread.ID.String()].Disabled {
+		t.Fatal("active thread archive button must remain enabled")
+	}
+
+	if _, err := svc.ArchiveThreadLocal(ctx, guildA, localThread.ID); err != nil {
+		t.Fatalf("ArchiveThreadLocal failed: %v", err)
+	}
+	admArchEv := newInternalAdminComponentEvent(t, mockClient, guildA, adminID, "/bbs/post/menu/"+localPost.ID.String(),
+		map[string]string{"post_id": localPost.ID.String()}, capComp)
+	if err := sys.handlePostMenuButton(admArchEv); err != nil {
+		t.Fatalf("admin menu after archive failed: %v", err)
+	}
+	archBtns := findButtons(respData.(discord.MessageCreate))
+	if !archBtns["/bbs/mod/archive/"+localThread.ID.String()].Disabled {
+		t.Fatal("archived thread menu must disable archive button")
+	}
+
+	// 4. Guild admin on global board sees global mod note + Report, never PosterHash or local /bbs/mod/ buttons.
+	globAdmEv := newInternalAdminComponentEvent(t, mockClient, guildA, adminID, "/bbs/post/menu/"+globalPost.ID.String(),
+		map[string]string{"post_id": globalPost.ID.String()}, capComp)
+	if err := sys.handlePostMenuButton(globAdmEv); err != nil {
+		t.Fatalf("global admin menu failed: %v", err)
+	}
+	globMC := respData.(discord.MessageCreate)
+	if err := pv.ValidateMessageCreate(globMC); err != nil {
+		t.Fatalf("global admin menu ValidateMessageCreate failed: %v", err)
+	}
+	globRaw, _ := json.Marshal(globMC)
+	globStr := string(globRaw)
+	if strings.Contains(globStr, globalPost.PosterHash) || strings.Contains(globStr, globalAuthorID.String()) || strings.Contains(globStr, "/bbs/mod/") {
+		t.Fatalf("global admin menu leaked PosterHash/AuthorUserID/local mod buttons: %s", globStr)
+	}
+	if !strings.Contains(globStr, i18n.TranslateText(discord.LocaleJapanese, "components.bbs.post_menu.global_mod_note")) {
+		t.Fatalf("expected global mod note in global admin menu, got %s", globStr)
+	}
+
+	// 5. Cross-guild boundary rejects foreign local post and unsubscribed global post across menu/reply/report.
+	permTitle := i18n.TranslateText(discord.LocaleJapanese, "components.bbs.errors.title.permission")
+	for _, target := range []struct {
+		name   string
+		postID uuid.UUID
+	}{
+		{"foreign_local", localPost.ID},
+		{"unsubscribed_global", globalPost.ID},
+	} {
+		for _, act := range []struct {
+			op string
+			fn func(*handler.ComponentEvent) error
+		}{
+			{"menu", sys.handlePostMenuButton},
+			{"reply", sys.handleReplyPostButton},
+			{"report", sys.handleReportPostButton},
+		} {
+			ev := newInternalComponentEvent(t, mockClient, guildB, regularID, "/bbs/post/menu/"+target.postID.String(),
+				map[string]string{"post_id": target.postID.String()}, capComp)
+			if err := act.fn(ev); err != nil {
+				t.Fatalf("%s %s returned error: %v", target.name, act.op, err)
+			}
+			rawErr, _ := json.Marshal(respData)
+			if respType != discord.InteractionResponseTypeCreateMessage || !strings.Contains(string(rawErr), permTitle) {
+				t.Fatalf("expected permission error for %s %s, got type=%d body=%s", target.name, act.op, respType, rawErr)
+			}
+		}
 	}
 }

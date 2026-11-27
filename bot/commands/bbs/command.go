@@ -35,7 +35,6 @@ import (
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/handler"
-	"github.com/disgoorg/omit"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 
@@ -47,11 +46,9 @@ import (
 )
 
 const (
-	pendingTTL         = 10 * time.Minute
-	maxPendingEntries  = 2048
-	msgCmdReportName   = "BBS - Report Post"
-	msgCmdModerateName = "BBS - Moderate Post"
-	datCheckInterval   = 15 * time.Minute
+	pendingTTL        = 10 * time.Minute
+	maxPendingEntries = 2048
+	datCheckInterval  = 15 * time.Minute
 )
 
 type pendingKind string
@@ -59,6 +56,7 @@ type pendingKind string
 const (
 	pendingNewThread    pendingKind = "new_thread"
 	pendingNewPost      pendingKind = "new_post"
+	pendingReplyPost    pendingKind = "reply_post"
 	pendingWatchThread  pendingKind = "watch_thread"
 	pendingReportThread pendingKind = "report_thread"
 	pendingReportPost   pendingKind = "report_post"
@@ -513,17 +511,6 @@ func (c *bbsCommand) Create() []discord.ApplicationCommandCreate {
 				},
 			},
 		},
-		discord.MessageCommandCreate{
-			Name:              msgCmdReportName,
-			NameLocalizations: i18n.TranslateTextMap("command.bbs.msg.report.name"),
-			Contexts:          guildCtx,
-		},
-		discord.MessageCommandCreate{
-			Name:                     msgCmdModerateName,
-			NameLocalizations:        i18n.TranslateTextMap("command.bbs.msg.moderate.name"),
-			DefaultMemberPermissions: omit.NewPtr(discord.PermissionManageGuild),
-			Contexts:                 guildCtx,
-		},
 	}
 }
 
@@ -548,9 +535,6 @@ func (c *bbsCommand) RegisterRoutes(r handler.Router) {
 	r.Autocomplete("/bbs/global/subscribe", c.autocompleteGlobalBoards)
 	r.Autocomplete("/bbs/global/unsubscribe", c.autocompleteSubscribedGlobalBoards)
 
-	r.MessageCommand("/"+msgCmdReportName, c.sys.handleReportMessageCommand)
-	r.MessageCommand("/"+msgCmdModerateName, c.sys.handleModerateMessageCommand)
-
 	r.Component("/bbs/consent/revoke", c.sys.handleConsentRevoke)
 	r.Component("/bbs/consent/view/{doc}", c.sys.handleConsentViewDoc)
 	r.Component("/bbs/consent/open/{version}/{token}", c.sys.handleConsentOpenModal)
@@ -566,6 +550,8 @@ func (c *bbsCommand) RegisterRoutes(r handler.Router) {
 	r.Component("/bbs/thread/new/{mount_id}", c.sys.handleNewThreadButton)
 	r.Modal("/bbs/thread/modal/{mount_id}", c.sys.handleNewThreadModal)
 	r.Component("/bbs/post/new/{mirror_id}", c.sys.handleNewPostButton)
+	r.Component("/bbs/post/menu/{post_id}", c.sys.handlePostMenuButton)
+	r.Component("/bbs/post/reply/{post_id}", c.sys.handleReplyPostButton)
 	r.Modal("/bbs/post/modal/{mirror_id}", c.sys.handleNewPostModal)
 	r.Component("/bbs/watch/toggle/{thread_id}", c.sys.handleWatchToggle)
 

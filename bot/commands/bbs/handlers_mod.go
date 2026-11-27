@@ -61,40 +61,93 @@ func buildReportThreadModal(loc discord.Locale, threadID uuid.UUID) discord.Moda
 	)
 }
 
-func (s *System) handleReportMessageCommand(data discord.MessageCommandInteractionData, e *handler.CommandEvent) error {
-	loc := e.Locale()
-	targetMsg := data.TargetMessage()
-	guildID := e.GuildID()
-	pm, err := s.Service.Store.GetPostMirrorByDiscordMessage(e.Ctx, targetMsg.ID)
-	if err != nil || guildID == nil || pm.GuildID != *guildID {
-		s.replyCommandError(e,
-			i18n.TranslateText(loc, "components.bbs.report.not_target_title"),
-			i18n.TranslateText(loc, "components.bbs.report.not_target_body"),
-		)
-		return nil
+func (s *System) loadPostForGuild(ctx context.Context, guildID snowflake.ID, postID uuid.UUID) (*bbscore.Board, *bbscore.Thread, *bbscore.Post, error) {
+	post, err := s.Service.GetPost(ctx, postID)
+	if err != nil {
+		return nil, nil, nil, err
 	}
-
-	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
-		if errors.Is(err, bbscore.ErrConsentRequired) {
-			s.respondConsentModal(e, e.ID().Time(), loc, e.User().ID, pendingReportPost, pm.PostID)
-			return nil
+	thread, err := s.Service.GetThread(ctx, post.ThreadID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	board, err := s.Service.GetBoard(ctx, thread.BoardID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	switch board.Scope {
+	case bbscore.ScopeLocal:
+		if board.GuildID == nil || *board.GuildID != guildID {
+			return nil, nil, nil, bbscore.ErrUnauthorized
 		}
-		s.replyCommandError(e,
-			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
-			describeBBSError(loc, err),
+	case bbscore.ScopeGlobal:
+		mount, mErr := s.Service.Store.GetBoardMountByGuildAndBoard(ctx, guildID, board.ID)
+		if mErr != nil || mount == nil {
+			pm, pErr := s.Service.Store.GetPostMirrorByPostAndGuild(ctx, post.ID, guildID)
+			if pErr != nil || pm == nil {
+				return nil, nil, nil, bbscore.ErrUnauthorized
+			}
+		}
+	default:
+		return nil, nil, nil, bbscore.ErrUnauthorized
+	}
+	return board, thread, post, nil
+}
+
+func (s *System) handlePostMenuButton(e *handler.ComponentEvent) error {
+	loc := e.Locale()
+	postID, err := uuid.Parse(e.Vars["post_id"])
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.report.invalid_post_id"),
+		)
+		return nil
+	}
+	guildID := e.GuildID()
+	if guildID == nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.errors.guild_only"),
 		)
 		return nil
 	}
 
-	modal := buildReportPostModal(loc, pm.PostID)
-	sr := discordsync.NewSafeResponder(e.ID().Time())
-	if err := sr.RespondModal(e, modal); err != nil {
-		slog.Warn("bbs failed to open report post modal", "err", err)
-		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
-			i18n.TranslateText(loc, "components.bbs.errors.title.modal_failed"),
-			describeBBSError(loc, err),
-		))
+	board, thread, post, err := s.loadPostForGuild(e.Ctx, *guildID, postID)
+	if err != nil {
+		errTitle := i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed")
+		if errors.Is(err, bbscore.ErrUnauthorized) {
+			errTitle = i18n.TranslateText(loc, "components.bbs.errors.title.permission")
+		}
+		s.replyComponentError(e, errTitle, describeBBSError(loc, err))
+		return nil
 	}
+
+	var canReply bool
+	if !post.Abone && thread.Status == bbscore.ThreadStatusActive && thread.ResCount < thread.Rules.Normalize().MaxRes {
+		if mount, mErr := s.Service.Store.GetBoardMountByGuildAndBoard(e.Ctx, *guildID, board.ID); mErr == nil && mount != nil && mount.Active {
+			if _, gErr := s.Service.EnsureGuildEnabled(e.Ctx, *guildID); gErr == nil {
+				if mirror, tmErr := s.Service.Store.GetThreadMirrorByMountAndThread(e.Ctx, mount.ID, thread.ID); tmErr == nil && mirror != nil {
+					canReply = true
+				}
+			}
+		}
+	}
+
+	isAdmin := s.hasGuildAdmin(e.Ctx, e.Member(), guildID, e.User(), e.Client())
+	canLocalMod := isAdmin && board.Scope == bbscore.ScopeLocal && board.GuildID != nil && *board.GuildID == *guildID
+	showGlobalModNote := isAdmin && board.Scope == bbscore.ScopeGlobal
+
+	msg := discordsync.RenderPostActionMenu(discordsync.PostActionMenuOptions{
+		Board:             *board,
+		Thread:            *thread,
+		Post:              *post,
+		CanReply:          canReply,
+		CanLocalMod:       canLocalMod,
+		ShowGlobalModNote: showGlobalModNote,
+	}, loc)
+
+	sr := discordsync.NewSafeResponder(e.ID().Time())
+	_ = sr.RespondMessageCreate(e, msg)
 	return nil
 }
 
@@ -116,6 +169,16 @@ func (s *System) handleReportPostButton(e *handler.ComponentEvent) error {
 		)
 		return nil
 	}
+
+	if _, _, _, err := s.loadPostForGuild(e.Ctx, *guildID, postID); err != nil {
+		errTitle := i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed")
+		if errors.Is(err, bbscore.ErrUnauthorized) {
+			errTitle = i18n.TranslateText(loc, "components.bbs.errors.title.permission")
+		}
+		s.replyComponentError(e, errTitle, describeBBSError(loc, err))
+		return nil
+	}
+
 	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
 		if errors.Is(err, bbscore.ErrConsentRequired) {
 			s.respondConsentModal(e, e.ID().Time(), loc, e.User().ID, pendingReportPost, postID)
@@ -124,38 +187,6 @@ func (s *System) handleReportPostButton(e *handler.ComponentEvent) error {
 		s.replyComponentError(e,
 			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
 			describeBBSError(loc, err),
-		)
-		return nil
-	}
-
-	post, err := s.Service.GetPost(e.Ctx, postID)
-	if err != nil {
-		s.replyComponentError(e,
-			i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed"),
-			describeBBSError(loc, err),
-		)
-		return nil
-	}
-	thread, err := s.Service.GetThread(e.Ctx, post.ThreadID)
-	if err != nil {
-		s.replyComponentError(e,
-			i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed"),
-			describeBBSError(loc, err),
-		)
-		return nil
-	}
-	board, err := s.Service.GetBoard(e.Ctx, thread.BoardID)
-	if err != nil {
-		s.replyComponentError(e,
-			i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed"),
-			describeBBSError(loc, err),
-		)
-		return nil
-	}
-	if board.Scope == bbscore.ScopeLocal && (board.GuildID == nil || *board.GuildID != *guildID) {
-		s.replyComponentError(e,
-			i18n.TranslateText(loc, "components.bbs.errors.title.permission"),
-			i18n.TranslateText(loc, "components.bbs.errors.unauthorized"),
 		)
 		return nil
 	}
@@ -305,87 +336,6 @@ func (s *System) notifyReportLog(client *bot.Client, report *bbscore.Report) {
 	if _, err := client.Rest.CreateMessage(*s.LogChannel, msg); err != nil {
 		slog.Warn("bbs failed to send report log message", "report_id", report.ID, "err", err)
 	}
-}
-
-func (s *System) handleModerateMessageCommand(data discord.MessageCommandInteractionData, e *handler.CommandEvent) error {
-	if !s.requireCmdGuildAdmin(e) {
-		return nil
-	}
-	guildID := e.GuildID()
-	if guildID == nil {
-		return nil
-	}
-	loc := e.Locale()
-
-	targetMsg := data.TargetMessage()
-	pm, err := s.Service.Store.GetPostMirrorByDiscordMessage(e.Ctx, targetMsg.ID)
-	if err != nil || pm.GuildID != *guildID {
-		s.replyCommandError(e,
-			i18n.TranslateText(loc, "components.bbs.mod.not_target_title"),
-			i18n.TranslateText(loc, "components.bbs.mod.not_target_body"),
-		)
-		return nil
-	}
-	fetchFail := i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed")
-	post, err := s.Service.GetPost(e.Ctx, pm.PostID)
-	if err != nil {
-		s.replyCommandError(e, fetchFail, describeBBSError(loc, err))
-		return nil
-	}
-	thread, err := s.Service.GetThread(e.Ctx, post.ThreadID)
-	if err != nil {
-		s.replyCommandError(e, fetchFail, describeBBSError(loc, err))
-		return nil
-	}
-	board, err := s.Service.GetBoard(e.Ctx, thread.BoardID)
-	if err != nil {
-		s.replyCommandError(e, fetchFail, describeBBSError(loc, err))
-		return nil
-	}
-
-	if board.Scope != bbscore.ScopeLocal || board.GuildID == nil || *board.GuildID != *guildID {
-		globalInfo := i18n.TranslateText(loc, "components.bbs.mod.global_info", map[string]any{
-			"board":   board.Name,
-			"scope":   string(board.Scope),
-			"thread":  thread.Title,
-			"res":     post.ResNumber,
-			"anon_id": post.AnonID,
-		})
-		s.replyCommandNotice(e,
-			i18n.TranslateText(loc, "components.bbs.mod.global_notice_title"),
-			i18n.TranslateText(loc, "components.bbs.mod.global_notice_body", map[string]any{"info": globalInfo}),
-			discordsync.ColorGlobalBoard,
-		)
-		return nil
-	}
-
-	// Strict anonymity boundary: guild moderators only ever inspect local-scoped PosterHash, never AuthorUserID.
-	info := i18n.TranslateText(loc, "components.bbs.mod.info", map[string]any{
-		"board":   board.Name,
-		"scope":   string(board.Scope),
-		"thread":  thread.Title,
-		"res":     post.ResNumber,
-		"hash":    post.PosterHash,
-		"anon_id": post.AnonID,
-	})
-
-	msg := discord.NewMessageCreateV2(
-		discord.NewContainer(
-			discord.NewTextDisplay(i18n.TranslateText(loc, "components.bbs.mod.local_panel_title")),
-			discord.NewSmallSeparator(),
-			discord.NewTextDisplay(info),
-			discord.NewLargeSeparator(),
-			discord.NewActionRow(
-				discord.NewDangerButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.mod.btn.abone"), discordsync.MaxButtonLabelRunes), fmt.Sprintf("/bbs/mod/abone/%s", post.ID)),
-				discord.NewSecondaryButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.mod.btn.archive"), discordsync.MaxButtonLabelRunes), fmt.Sprintf("/bbs/mod/archive/%s", thread.ID)),
-				discord.NewDangerButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.mod.btn.ban"), discordsync.MaxButtonLabelRunes), fmt.Sprintf("/bbs/mod/ban/%s", post.ID)),
-			),
-		).WithAccentColor(discordsync.ColorError),
-	).WithEphemeral(true).WithAllowedMentions(&discord.AllowedMentions{})
-
-	sr := discordsync.NewSafeResponder(e.ID().Time())
-	_ = sr.RespondMessageCreate(e, msg)
-	return nil
 }
 
 func (s *System) handleModAboneButton(e *handler.ComponentEvent) error {

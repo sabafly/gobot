@@ -186,7 +186,7 @@ func (s *System) handleConsentModal(e *handler.ModalEvent) error {
 			).WithEphemeral(true))
 			return nil
 
-		case pendingNewThread, pendingNewPost, pendingReportThread, pendingReportPost:
+		case pendingNewThread, pendingNewPost, pendingReplyPost, pendingReportThread, pendingReportPost:
 			var btnLabelKey, btnCustomID string
 			switch act.Kind {
 			case pendingNewThread:
@@ -195,6 +195,9 @@ func (s *System) handleConsentModal(e *handler.ModalEvent) error {
 			case pendingNewPost:
 				btnLabelKey = "components.bbs.consent.continue.new_post"
 				btnCustomID = fmt.Sprintf("/bbs/post/new/%s", act.TargetID)
+			case pendingReplyPost:
+				btnLabelKey = "components.bbs.consent.continue.reply_post"
+				btnCustomID = fmt.Sprintf("/bbs/post/reply/%s", act.TargetID)
 			case pendingReportThread:
 				btnLabelKey = "components.bbs.consent.continue.report_thread"
 				btnCustomID = fmt.Sprintf("/bbs/report/thread/%s", act.TargetID)

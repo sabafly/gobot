@@ -190,7 +190,7 @@ func buildNewThreadModal(locale discord.Locale, mountID uuid.UUID, boardName str
 	)
 }
 
-func buildNewPostModal(locale discord.Locale, mirrorID uuid.UUID, caps []bbscore.Cap) discord.ModalCreate {
+func buildNewPostModal(locale discord.Locale, mirrorID uuid.UUID, caps []bbscore.Cap, initialBody string) discord.ModalCreate {
 	comps := []discord.LayoutComponent{
 		discord.NewLabel(
 			discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.field.label.name"), discordsync.MaxLabelTextRunes),
@@ -203,9 +203,13 @@ func buildNewPostModal(locale discord.Locale, mirrorID uuid.UUID, caps []bbscore
 	if len(caps) > 0 {
 		comps = append(comps, buildCapSelectLabel(locale, caps))
 	}
+	bodyInput := discord.NewParagraphTextInput("body").WithRequired(true).WithMinLength(1).WithMaxLength(bbscore.MaxBodyRunes)
+	if initialBody != "" {
+		bodyInput = bodyInput.WithValue(initialBody)
+	}
 	comps = append(comps, discord.NewLabel(
 		discordsync.TruncateRunes(i18n.TranslateText(locale, "components.bbs.modal.new_post.label.body"), discordsync.MaxLabelTextRunes),
-		discord.NewParagraphTextInput("body").WithRequired(true).WithMinLength(1).WithMaxLength(bbscore.MaxBodyRunes),
+		bodyInput,
 	))
 
 	return discord.NewModalCreate(
@@ -404,8 +408,101 @@ func (s *System) handleNewPostButton(e *handler.ComponentEvent) error {
 	}
 	caps := s.Service.ListAvailableCaps(e.Ctx, e.User().ID, thread.BoardID)
 	sr := discordsync.NewSafeResponder(e.ID().Time())
-	if err := sr.RespondModal(e, buildNewPostModal(loc, mirrorID, caps)); err != nil {
+	if err := sr.RespondModal(e, buildNewPostModal(loc, mirrorID, caps, "")); err != nil {
 		slog.Warn("bbs failed to open new post modal", "err", err)
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.errors.title.modal_failed"),
+			describeBBSError(loc, err),
+		))
+	}
+	return nil
+}
+
+func (s *System) handleReplyPostButton(e *handler.ComponentEvent) error {
+	loc := e.Locale()
+	postID, err := uuid.Parse(e.Vars["post_id"])
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.report.invalid_post_id"),
+		)
+		return nil
+	}
+	guildID := e.GuildID()
+	if guildID == nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
+			i18n.TranslateText(loc, "components.bbs.errors.guild_only"),
+		)
+		return nil
+	}
+
+	board, thread, post, err := s.loadPostForGuild(e.Ctx, *guildID, postID)
+	if err != nil {
+		errTitle := i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed")
+		if errors.Is(err, bbscore.ErrUnauthorized) {
+			errTitle = i18n.TranslateText(loc, "components.bbs.errors.title.permission")
+		}
+		s.replyComponentError(e, errTitle, describeBBSError(loc, err))
+		return nil
+	}
+
+	mount, err := s.Service.Store.GetBoardMountByGuildAndBoard(e.Ctx, *guildID, board.ID)
+	if err != nil || mount == nil || !mount.Active {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			i18n.TranslateText(loc, "components.bbs.post_ui.mount_missing_or_inactive"),
+		)
+		return nil
+	}
+	if _, err := s.Service.EnsureGuildEnabled(e.Ctx, mount.GuildID); err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, err),
+		)
+		return nil
+	}
+
+	cannotPostTitle := i18n.TranslateText(loc, "components.bbs.post_ui.cannot_post_title")
+	if post.Abone {
+		s.replyComponentError(e, cannotPostTitle, i18n.TranslateText(loc, "components.bbs.post_menu.cannot_reply_aboned"))
+		return nil
+	}
+	if thread.Status != bbscore.ThreadStatusActive {
+		s.replyComponentError(e, cannotPostTitle, i18n.TranslateText(loc, "components.bbs.errors.thread_archived"))
+		return nil
+	}
+	if thread.ResCount >= thread.Rules.Normalize().MaxRes {
+		s.replyComponentError(e, cannotPostTitle, i18n.TranslateText(loc, "components.bbs.errors.max_res_reached"))
+		return nil
+	}
+
+	mirror, err := s.Service.Store.GetThreadMirrorByMountAndThread(e.Ctx, mount.ID, thread.ID)
+	if err != nil || mirror == nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			i18n.TranslateText(loc, "components.bbs.post_ui.mirror_not_found"),
+		)
+		return nil
+	}
+
+	if _, err := s.Service.CheckConsent(e.Ctx, e.User().ID); err != nil {
+		if errors.Is(err, bbscore.ErrConsentRequired) {
+			s.respondConsentModal(e, e.ID().Time(), loc, e.User().ID, pendingReplyPost, postID)
+			return nil
+		}
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, err),
+		)
+		return nil
+	}
+
+	caps := s.Service.ListAvailableCaps(e.Ctx, e.User().ID, thread.BoardID)
+	sr := discordsync.NewSafeResponder(e.ID().Time())
+	modal := buildNewPostModal(loc, mirror.ID, caps, fmt.Sprintf(">>%d\n", post.ResNumber))
+	if err := sr.RespondModal(e, modal); err != nil {
+		slog.Warn("bbs failed to open reply post modal", "err", err)
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
 			i18n.TranslateText(loc, "components.bbs.errors.title.modal_failed"),
 			describeBBSError(loc, err),

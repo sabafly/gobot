@@ -44,6 +44,8 @@ const (
 	ConsentOptTerms              = "terms"
 	ConsentOptGuidelines         = "guidelines"
 	ConsentOptPrivacy            = "privacy"
+
+	PostMenuButtonLabel = "☰"
 )
 
 // FormatTimestamp5ch formats time in classic 5ch JST style using localized weekday labels.
@@ -231,6 +233,15 @@ func RenderPostHeader(post bbs.Post, threadRules bbs.BoardRules, locale discord.
 	return b.String()
 }
 
+func buildPostSection(postID uuid.UUID, header, body string) discord.SectionComponent {
+	return discord.NewSection(
+		discord.NewTextDisplay(header),
+		discord.NewTextDisplay(body),
+	).WithAccessory(
+		discord.NewSecondaryButton(PostMenuButtonLabel, fmt.Sprintf("/bbs/post/menu/%s", postID)),
+	)
+}
+
 // RenderPostComponents constructs the Components V2 layout for a single post message without silent truncation.
 func RenderPostComponents(
 	post bbs.Post,
@@ -242,8 +253,7 @@ func RenderPostComponents(
 	header := RenderPostHeader(post, thread.Rules, locale)
 	if post.Abone {
 		return []discord.LayoutComponent{
-			discord.NewTextDisplay(header),
-			discord.NewTextDisplay(i18n.TranslateText(locale, "components.bbs.post.abone_body")),
+			buildPostSection(post.ID, header, i18n.TranslateText(locale, "components.bbs.post.abone_body")),
 			discord.NewLargeSeparator(),
 		}
 	}
@@ -257,8 +267,7 @@ func RenderPostComponents(
 	formattedBody := bbs.RenderFormattedBody(post.Body, maxRes, resolveURL)
 
 	comps := []discord.LayoutComponent{
-		discord.NewTextDisplay(header),
-		discord.NewTextDisplay(formattedBody),
+		buildPostSection(post.ID, header, formattedBody),
 	}
 
 	mediaURLs := bbs.ExtractMediaURLs(post.Body)
@@ -304,6 +313,111 @@ func RenderPostMessageUpdate(
 		Components:      &comps,
 		AllowedMentions: &discord.AllowedMentions{},
 	}
+}
+
+// PostActionMenuOptions configures the ephemeral post action menu built from a post's menu accessory button.
+type PostActionMenuOptions struct {
+	Board             bbs.Board
+	Thread            bbs.Thread
+	Post              bbs.Post
+	CanReply          bool
+	CanLocalMod       bool
+	ShowGlobalModNote bool
+}
+
+// RenderPostActionMenu builds an ephemeral action menu containing reply, report, and conditional moderation controls.
+func RenderPostActionMenu(opts PostActionMenuOptions, locale discord.Locale) discord.MessageCreate {
+	scopeKey := "components.bbs.common.scope.local"
+	color := ColorLocalBoard
+	if opts.Board.Scope == bbs.ScopeGlobal {
+		scopeKey = "components.bbs.common.scope.global"
+		color = ColorGlobalBoard
+	}
+	scopeLabel := i18n.TranslateText(locale, scopeKey)
+	boardName := TruncateRunes(bbs.ClearFormat(opts.Board.Name), 80)
+	threadTitle := TruncateRunes(bbs.ClearFormat(opts.Thread.Title), 80)
+
+	titleText := i18n.TranslateText(locale, "components.bbs.post_menu.title", map[string]any{
+		"res": opts.Post.ResNumber,
+	})
+
+	var infoText string
+	if opts.Post.AnonID != "" && !opts.Post.Abone {
+		infoText = i18n.TranslateText(locale, "components.bbs.post_menu.info", map[string]any{
+			"board":   boardName,
+			"scope":   scopeLabel,
+			"thread":  threadTitle,
+			"res":     opts.Post.ResNumber,
+			"anon_id": opts.Post.AnonID,
+		})
+	} else {
+		infoText = i18n.TranslateText(locale, "components.bbs.post_menu.info_no_id", map[string]any{
+			"board":  boardName,
+			"scope":  scopeLabel,
+			"thread": threadTitle,
+			"res":    opts.Post.ResNumber,
+		})
+	}
+	if opts.Post.Abone {
+		infoText += "\n" + i18n.TranslateText(locale, "components.bbs.post_menu.aboned_note")
+	}
+
+	var userBtns []discord.InteractiveComponent
+	if opts.CanReply {
+		userBtns = append(userBtns, discord.NewPrimaryButton(
+			TruncateRunes(i18n.TranslateText(locale, "components.bbs.post_menu.btn.reply"), MaxButtonLabelRunes),
+			fmt.Sprintf("/bbs/post/reply/%s", opts.Post.ID),
+		))
+	}
+	userBtns = append(userBtns, discord.NewDangerButton(
+		TruncateRunes(i18n.TranslateText(locale, "components.bbs.post_menu.btn.report"), MaxButtonLabelRunes),
+		fmt.Sprintf("/bbs/report/post/%s", opts.Post.ID),
+	))
+
+	subComps := []discord.ContainerSubComponent{
+		discord.NewTextDisplay(titleText),
+		discord.NewSmallSeparator(),
+		discord.NewTextDisplay(infoText),
+		discord.NewLargeSeparator(),
+		discord.NewActionRow(userBtns...),
+	}
+
+	if opts.CanLocalMod && opts.Board.Scope == bbs.ScopeLocal {
+		// Strict anonymity boundary: guild moderators only ever inspect local PosterHash, never AuthorUserID.
+		modTitle := i18n.TranslateText(locale, "components.bbs.mod.local_panel_title")
+		modInfo := i18n.TranslateText(locale, "components.bbs.post_menu.mod_info", map[string]any{
+			"hash": opts.Post.PosterHash,
+		})
+		aboneBtn := discord.NewDangerButton(
+			TruncateRunes(i18n.TranslateText(locale, "components.bbs.mod.btn.abone"), MaxButtonLabelRunes),
+			fmt.Sprintf("/bbs/mod/abone/%s", opts.Post.ID),
+		)
+		aboneBtn.Disabled = opts.Post.Abone
+		archiveBtn := discord.NewSecondaryButton(
+			TruncateRunes(i18n.TranslateText(locale, "components.bbs.mod.btn.archive"), MaxButtonLabelRunes),
+			fmt.Sprintf("/bbs/mod/archive/%s", opts.Thread.ID),
+		)
+		archiveBtn.Disabled = opts.Thread.Status == bbs.ThreadStatusArchived
+		banBtn := discord.NewDangerButton(
+			TruncateRunes(i18n.TranslateText(locale, "components.bbs.mod.btn.ban"), MaxButtonLabelRunes),
+			fmt.Sprintf("/bbs/mod/ban/%s", opts.Post.ID),
+		)
+		subComps = append(subComps,
+			discord.NewSmallSeparator(),
+			discord.NewTextDisplay(modTitle),
+			discord.NewTextDisplay(modInfo),
+			discord.NewActionRow(aboneBtn, archiveBtn, banBtn),
+		)
+	} else if opts.ShowGlobalModNote {
+		subComps = append(subComps,
+			discord.NewSmallSeparator(),
+			discord.NewTextDisplay(i18n.TranslateText(locale, "components.bbs.post_menu.global_mod_note")),
+		)
+	}
+
+	return discord.NewMessageCreateV2(
+		discord.NewContainer(subComps...).WithAccentColor(color),
+	).WithEphemeral(true).WithAllowedMentions(&discord.AllowedMentions{})
 }
 
 // RenderLazyCatchupBanner builds the banner inserted after >>1 when mirroring a pre-existing global thread.
@@ -441,9 +555,9 @@ func forwardPackEnd(rendered []*readerPostRendered, titleRunes int, startIdx int
 	for i := startIdx; i < len(rendered); i++ {
 		rp := rendered[i]
 		shown := i - startIdx
-		baseComps := 2
+		baseComps := 4 // section + header + body + menu accessory button
 		if shown > 0 {
-			baseComps = 3
+			baseComps = 5 // + small separator
 		}
 		totalComps := baseComps
 		if len(rp.mediaURLs) > 0 {
@@ -519,9 +633,9 @@ func RenderReaderPageBounded(
 		}
 		rp := buildReaderPostRendered(p, thread, aboneBody, maxRes, resolveURL, locale)
 
-		baseComps := 2
+		baseComps := 4 // section + header + body + menu accessory button
 		if shownCount > 0 {
-			baseComps = 3
+			baseComps = 5 // + small separator
 		}
 		totalComps := baseComps
 		if len(rp.mediaURLs) > 0 {
@@ -535,9 +649,9 @@ func RenderReaderPageBounded(
 			subComps = append(subComps, discord.NewSmallSeparator())
 			usedComponents++
 		}
-		subComps = append(subComps, discord.NewTextDisplay(rp.header), discord.NewTextDisplay(rp.body))
+		subComps = append(subComps, buildPostSection(p.ID, rp.header, rp.body))
 		usedRunes += rp.runes
-		usedComponents += 2
+		usedComponents += 4
 
 		if len(rp.mediaURLs) > 0 {
 			items := make([]discord.MediaGalleryItem, 0, len(rp.mediaURLs))
