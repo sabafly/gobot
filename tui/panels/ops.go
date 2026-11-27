@@ -135,7 +135,7 @@ type OpsAuditPanel struct {
 // NewOpsAuditPanel constructs the Ops, Audit Logs, and Sessions panel.
 func NewOpsAuditPanel(theme ui.Theme) *OpsAuditPanel {
 	vp := viewport.New(viewport.WithWidth(44), viewport.WithHeight(16))
-	vp.SoftWrap = true
+	vp.SoftWrap = false
 	return &OpsAuditPanel{
 		theme:      theme,
 		auditInput: ui.NewRealCursorInput("action filter (e.g. guild.update)", 32),
@@ -461,14 +461,17 @@ func (p *OpsAuditPanel) View(width, height int) string {
 		p.width = width
 		p.height = height
 		p.auditInput.SetWidth(max(width-lipgloss.Width(auditFilterPrompt)-24, 16))
+		auditViewH := max(height-2, 4)
+		bodyH := max(auditViewH-2, 4)
 		detailW := width - 2
-		detailH := max((height-6)/2, 4)
+		listInnerH := max((bodyH/2)-3, 3)
+		detailInnerH := max(bodyH-listInnerH-6, 4)
 		if width >= 88 {
 			detailW = max(width-max(width*48/100, 34)-1, 30)
-			detailH = max(height-6, 4)
+			detailInnerH = max(bodyH-3, 4)
 		}
 		p.auditVP.SetWidth(max(detailW-4, 20))
-		p.auditVP.SetHeight(detailH)
+		p.auditVP.SetHeight(max(detailInnerH-1, 1))
 		p.rebuildAuditDetail()
 	}
 
@@ -672,8 +675,9 @@ func (p *OpsAuditPanel) renderSessionsView(width, height int) string {
 }
 
 func (p *OpsAuditPanel) rebuildAuditDetail() {
+	wrapW := max(p.auditVP.Width(), 1)
 	if len(p.auditEntries) == 0 || p.auditIdx < 0 || p.auditIdx >= len(p.auditEntries) {
-		p.auditVP.SetContent(p.theme.MutedText.Render("Select an audit entry to inspect details."))
+		p.auditVP.SetContent(ui.WrapViewportText(p.theme.MutedText.Render("Select an audit entry to inspect details."), wrapW))
 		return
 	}
 	e := p.auditEntries[p.auditIdx]
@@ -689,7 +693,7 @@ func (p *OpsAuditPanel) rebuildAuditDetail() {
 	kv := func(k, v string) string {
 		return p.theme.Label.Render(ui.PadRightWidth(k+":", 12)) + " " + p.theme.Value.Render(v)
 	}
-	p.auditVP.SetContent(strings.Join([]string{
+	p.auditVP.SetContent(ui.WrapViewportText(strings.Join([]string{
 		kv("ID", e.ID),
 		kv("Time", e.CreatedAt.Local().Format("2006-01-02 15:04:05")),
 		kv("Actor", fmt.Sprintf("%s (%s / %s)", e.ActorName, e.ActorRole, e.ActorUserID)),
@@ -701,7 +705,7 @@ func (p *OpsAuditPanel) rebuildAuditDetail() {
 		"",
 		p.theme.Label.Render("Detail JSON:"),
 		prettyDetail,
-	}, "\n"))
+	}, "\n"), wrapW))
 }
 
 func (p *OpsAuditPanel) onSubTabActivated(ctx ui.PanelContext) tea.Cmd {

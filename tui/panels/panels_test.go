@@ -623,3 +623,108 @@ func TestOpsAuditPanel_Permissions_AuditFilterCursor_And_SessionRevoke(t *testin
 		t.Fatalf("expected UnauthorizedMsg after revoking current session, got %#v", emitted)
 	}
 }
+
+func TestLogsPanel_NoVerticalOverflow_AllAndDebugJapaneseTabsANSI(t *testing.T) {
+	allEntries := make([]admin.LogEntry, 0, 30)
+	now := time.Now()
+	for i := range 30 {
+		lvl := "DEBUG"
+		msg := "ギルドオーナー情報\tタブ入り確認-長い連結データ-boundary"
+		if i%5 == 0 {
+			lvl = "INFO"
+			msg = "定常処理完了\r\n改行テスト"
+		} else if i%7 == 0 {
+			lvl = "WARN"
+			msg = "警告\rキャリッジリターン\x1b[31mred-attack\x1b[0m"
+		}
+		allEntries = append(allEntries, admin.LogEntry{
+			Seq:     uint64(i + 1),
+			Time:    now.Add(time.Duration(i) * time.Millisecond),
+			Level:   lvl,
+			Message: msg,
+			Source:  fmt.Sprintf("bot/components/guild.go:%d", 74+i),
+			Attrs: map[string]any{
+				"own_guilds": "[{ID:123456789012345678 Name:日本語テストギルド壱番館},{ID:234567890123456789 Name:日本語テストギルド弐番館}]",
+				"guilds":     "[日本語サーバAlpha-ベータ運営コミュニティ, テスト用チャンネル管理サーバーその参, 長文属性チェック用ギルド\tタブ含む]",
+				"evil_ansi":  "\x1b[31mraw-escape\x1b[0m",
+			},
+		})
+	}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/v1/logs":
+			lvl := strings.ToUpper(r.URL.Query().Get("level"))
+			var filtered []admin.LogEntry
+			for _, e := range allEntries {
+				if lvl == "DEBUG" && e.Level != "DEBUG" && e.Level != "INFO" && e.Level != "WARN" && e.Level != "ERROR" {
+					continue
+				}
+				filtered = append(filtered, e)
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(admin.LogsResponse{
+				Entries: filtered,
+				NextSeq: 30,
+			})
+		case "/api/v1/logs/stream":
+			flusher, _ := w.(http.Flusher)
+			w.Header().Set("Content-Type", "text/event-stream")
+			w.WriteHeader(http.StatusOK)
+			_, _ = fmt.Fprint(w, ": connected\n\n")
+			if flusher != nil {
+				flusher.Flush()
+			}
+			<-r.Context().Done()
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+
+	ctx := testSuperCtx(srv.URL)
+	lp := NewLogsPanel(ui.DefaultTheme())
+	defer lp.Close()
+
+	var p ui.Panel = lp
+	_ = p.View(75, 24)
+	p, _ = pumpPanelCmd(t, p, ctx, p.Init(ctx), 150*time.Millisecond)
+
+	assertBounds := func(label string, w, h int) {
+		t.Helper()
+		rendered := p.View(w, h)
+		if gotH := lipgloss.Height(rendered); gotH != h {
+			t.Fatalf("%s (%dx%d): rendered height=%d, want %d\n---VIEW---\n%s", label, w, h, gotH, h, rendered)
+		}
+		for idx, line := range strings.Split(rendered, "\n") {
+			if lw := lipgloss.Width(line); lw > w {
+				t.Fatalf("%s (%dx%d): line %d width=%d exceeds %d: %q", label, w, h, idx, lw, w, line)
+			}
+		}
+		if strings.Contains(rendered, "\x1b[31m") {
+			t.Fatalf("%s (%dx%d): expected raw injected ANSI stripped", label, w, h)
+		}
+	}
+
+	sizes := []struct{ w, h int }{{73, 24}, {75, 18}, {50, 16}, {100, 30}}
+	for _, sz := range sizes {
+		assertBounds("ALL", sz.w, sz.h)
+	}
+
+	// Switch ALL -> DEBUG ('l') and verify again across odd/narrow/standard sizes.
+	var cmd tea.Cmd
+	p, cmd = p.Update(tea.KeyPressMsg{Code: 'l', Text: "l"}, ctx)
+	p, _ = pumpPanelCmd(t, p, ctx, cmd, 150*time.Millisecond)
+	if logLevelCycle[lp.levelIdx] != "DEBUG" {
+		t.Fatalf("expected DEBUG level active, got %q", logLevelCycle[lp.levelIdx])
+	}
+	for _, sz := range sizes {
+		assertBounds("DEBUG", sz.w, sz.h)
+	}
+
+	// Scrolling up ('k') and jumping bottom ('G') preserve height invariant.
+	p, _ = p.Update(tea.KeyPressMsg{Code: 'k', Text: "k"}, ctx)
+	assertBounds("DEBUG-scroll-up", 73, 18)
+	p, _ = p.Update(tea.KeyPressMsg{Code: 'G', Text: "G"}, ctx)
+	assertBounds("DEBUG-scroll-bottom", 73, 18)
+}

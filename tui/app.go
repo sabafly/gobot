@@ -381,7 +381,7 @@ func (a *App) View() tea.View {
 			innerH = max(availH-a.theme.ContentBox.GetVerticalFrameSize(), 6)
 
 			sidebar := a.renderSidebar(sideW, availH)
-			panelView := a.renderActivePanel(innerW, innerH)
+			panelView := ui.ClampBox(a.renderActivePanel(innerW, innerH), innerW, innerH)
 			contentBox := a.theme.ContentBox.Width(contentW).Height(availH).Render(panelView)
 			mainArea = lipgloss.JoinHorizontal(lipgloss.Top, sidebar, " ", contentBox)
 
@@ -394,7 +394,7 @@ func (a *App) View() tea.View {
 			innerW = max(w-a.theme.ContentBox.GetHorizontalFrameSize(), 20)
 			innerH = max(boxH-a.theme.ContentBox.GetVerticalFrameSize(), 4)
 
-			panelView := a.renderActivePanel(innerW, innerH)
+			panelView := ui.ClampBox(a.renderActivePanel(innerW, innerH), innerW, innerH)
 			contentBox := a.theme.ContentBox.Width(w).Height(boxH).Render(panelView)
 			mainArea = lipgloss.JoinVertical(lipgloss.Left, topTabs, contentBox)
 
@@ -570,6 +570,7 @@ func (a *App) renderHeader(width int) string {
 
 func (a *App) renderSidebar(width, height int) string {
 	innerW := max(width-a.theme.Sidebar.GetHorizontalFrameSize(), 8)
+	innerH := max(height-a.theme.Sidebar.GetVerticalFrameSize(), 1)
 	var rows []string
 	rows = append(rows, a.theme.CardTitle.Render("Panels"), "")
 	for i, p := range a.visiblePanels {
@@ -582,7 +583,8 @@ func (a *App) renderSidebar(width, height int) string {
 	}
 	rows = append(rows, "", a.theme.MutedText.Render(ui.TruncateWidth("Tab/1-9 switch", innerW)))
 	rows = append(rows, a.theme.MutedText.Render(ui.TruncateWidth("? help  L logout", innerW)))
-	return a.theme.Sidebar.Width(width).Height(height).Render(strings.Join(rows, "\n"))
+	content := ui.ClampBox(strings.Join(rows, "\n"), innerW, innerH)
+	return a.theme.Sidebar.Width(width).Height(height).Render(content)
 }
 
 func (a *App) renderTopTabs(width int) string {

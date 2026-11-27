@@ -20,11 +20,14 @@
 package ui
 
 import (
+	"bytes"
 	"fmt"
 	"image/color"
+	"io"
 	"strings"
 
 	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 )
 
 // Theme centralizes colors and Lip Gloss v2 styles across the TUI shell and panels.
@@ -223,42 +226,19 @@ func DefaultTheme() Theme {
 	}
 }
 
-// TruncateWidth truncates single-line s so its terminal display width does not exceed maxWidth.
+// TruncateWidth truncates single-line s (preserving ANSI escape sequences) so its terminal display width does not exceed maxWidth.
 func TruncateWidth(s string, maxWidth int) string {
-	s = strings.ReplaceAll(strings.ReplaceAll(s, "\r", " "), "\n", " ")
+	s = strings.NewReplacer("\r\n", " ", "\r", " ", "\n", " ", "\t", " ").Replace(s)
 	if maxWidth <= 0 {
 		return ""
 	}
-	if lipgloss.Width(s) <= maxWidth {
+	if ansi.StringWidth(s) <= maxWidth {
 		return s
 	}
 	if maxWidth <= 3 {
-		var b strings.Builder
-		w := 0
-		for _, r := range s {
-			rw := lipgloss.Width(string(r))
-			if w+rw > maxWidth {
-				break
-			}
-			b.WriteRune(r)
-			w += rw
-		}
-		return b.String()
+		return ansi.Truncate(s, maxWidth, "")
 	}
-
-	target := maxWidth - 3
-	var b strings.Builder
-	w := 0
-	for _, r := range s {
-		rw := lipgloss.Width(string(r))
-		if w+rw > target {
-			break
-		}
-		b.WriteRune(r)
-		w += rw
-	}
-	b.WriteString("...")
-	return b.String()
+	return ansi.Truncate(s, maxWidth, "...")
 }
 
 // PadRightWidth fits s within width display columns and pads trailing spaces to align columns cleanly.
@@ -272,6 +252,70 @@ func PadRightWidth(s string, width int) string {
 		return t + strings.Repeat(" ", width-w)
 	}
 	return t
+}
+
+// SanitizeLogText strips untrusted ANSI escape sequences and non-newline control characters from log text.
+func SanitizeLogText(s string) string {
+	s = ansi.Strip(s)
+	s = strings.ReplaceAll(s, "\r\n", "\n")
+	s = strings.ReplaceAll(s, "\r", "\n")
+	s = strings.ReplaceAll(s, "\t", "  ")
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
+		if r == '\n' || (r >= 0x20 && r != 0x7f) {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
+// WrapViewportText pre-wraps content for a SoftWrap=false viewport so every line is guaranteed
+// to fit within width display columns with no tabs or carriage returns left for lipgloss to re-wrap.
+func WrapViewportText(content string, width int) string {
+	content = strings.ReplaceAll(content, "\r\n", "\n")
+	content = strings.ReplaceAll(content, "\r", "\n")
+	content = strings.ReplaceAll(content, "\t", "  ")
+	if width <= 0 || content == "" {
+		return content
+	}
+	wrapped := lipgloss.Wrap(content, width, "")
+	rawLines := strings.Split(wrapped, "\n")
+	out := make([]string, 0, len(rawLines))
+	for _, line := range rawLines {
+		if ansi.StringWidth(line) <= width {
+			out = append(out, line)
+			continue
+		}
+		var buf bytes.Buffer
+		ww := lipgloss.NewWrapWriter(&buf)
+		_, _ = io.WriteString(ww, ansi.Hardwrap(line, width, true))
+		_ = ww.Close()
+		for _, sub := range strings.Split(buf.String(), "\n") {
+			if ansi.StringWidth(sub) > width {
+				sub = ansi.Truncate(sub, width, "")
+			}
+			out = append(out, sub)
+		}
+	}
+	return strings.Join(out, "\n")
+}
+
+// ClampBox constrains rendered panel or sidebar content to at most height lines and width display columns
+// before passing it into a bordered lipgloss Style so outer borders are never clipped or expanded.
+func ClampBox(s string, width, height int) string {
+	lines := strings.Split(s, "\n")
+	if height > 0 && len(lines) > height {
+		lines = lines[:height]
+	}
+	if width > 0 {
+		for i, line := range lines {
+			if ansi.StringWidth(line) > width {
+				lines[i] = ansi.Truncate(line, width, "")
+			}
+		}
+	}
+	return strings.Join(lines, "\n")
 }
 
 // FormatDuration formats seconds into a compact human-readable uptime string.

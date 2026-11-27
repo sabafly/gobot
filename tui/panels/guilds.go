@@ -84,7 +84,7 @@ type GuildsPanel struct {
 // NewGuildsPanel constructs the Guilds management panel.
 func NewGuildsPanel(theme ui.Theme) *GuildsPanel {
 	vp := viewport.New(viewport.WithWidth(40), viewport.WithHeight(18))
-	vp.SoftWrap = true
+	vp.SoftWrap = false
 	return &GuildsPanel{
 		theme:       theme,
 		searchInput: ui.NewRealCursorInput("name or guild ID", 32),
@@ -363,7 +363,7 @@ func (p *GuildsPanel) View(width, height int) string {
 		p.height = height
 		p.searchInput.SetWidth(max(width-lipgloss.Width(guildsSearchPrompt)-24, 16))
 		p.detailVP.SetWidth(max(detailW-4, 20))
-		p.detailVP.SetHeight(detailInnerH)
+		p.detailVP.SetHeight(max(detailInnerH-1, 1))
 		p.rebuildDetail()
 	}
 
@@ -457,15 +457,16 @@ func (p *GuildsPanel) renderGuildList(cardW, innerH int) string {
 }
 
 func (p *GuildsPanel) rebuildDetail() {
+	wrapW := max(p.detailVP.Width(), 1)
 	if p.errMsg != "" && p.detail == nil {
-		p.detailVP.SetContent(p.theme.BadgeErr.Render("Error: " + p.errMsg))
+		p.detailVP.SetContent(ui.WrapViewportText(p.theme.BadgeErr.Render("Error: "+p.errMsg), wrapW))
 		return
 	}
 	if p.detail == nil {
 		if p.loadingDetail {
-			p.detailVP.SetContent(p.theme.MutedText.Render("Loading guild detail..."))
+			p.detailVP.SetContent(ui.WrapViewportText(p.theme.MutedText.Render("Loading guild detail..."), wrapW))
 		} else {
-			p.detailVP.SetContent(p.theme.MutedText.Render("Select a guild to view details."))
+			p.detailVP.SetContent(ui.WrapViewportText(p.theme.MutedText.Render("Select a guild to view details."), wrapW))
 		}
 		return
 	}
@@ -509,7 +510,7 @@ func (p *GuildsPanel) rebuildDetail() {
 		"",
 		p.theme.MutedText.Render("Shortcuts: [l] set locale override  [b] toggle BBS"),
 	}
-	p.detailVP.SetContent(strings.Join(lines, "\n"))
+	p.detailVP.SetContent(ui.WrapViewportText(strings.Join(lines, "\n"), wrapW))
 }
 
 func (p *GuildsPanel) findIndexByID(id string) int {

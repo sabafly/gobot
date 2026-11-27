@@ -555,3 +555,102 @@ func TestCLI_LoginStatusLogout_WithBasePath(t *testing.T) {
 		t.Fatalf("unexpected runLogout output:\n%s", out.String())
 	}
 }
+
+func TestApp_LogsView_NeverOverflowsTerminalHeight(t *testing.T) {
+	baseURL, hub := setupRealAdminEnv(t)
+	for i := range 40 {
+		hub.Append(admin.LogEntry{
+			Level:   "DEBUG",
+			Message: fmt.Sprintf("ギルドオーナー情報 #%d\t長い全角ログメッセージ\r\n2行目候補", i),
+			Source:  fmt.Sprintf("bot/components/guild.go:%d", 74+i),
+			Attrs: map[string]any{
+				"own_guilds": "[{ID:111111111111111111 Name:日本語テストギルドアルファ},{ID:222222222222222222 Name:日本語テストギルドベータ}]",
+				"guilds":     "[全角文字多数ギルドA, 全角文字多数ギルドB, タブ\t混入ギルドC]",
+				"ansi":       "\x1b[31minjected\x1b[0m",
+			},
+		})
+	}
+
+	sessPath := filepath.Join(t.TempDir(), "tui_session.json")
+	store, err := adminclient.NewFileSessionStore(sessPath)
+	if err != nil {
+		t.Fatalf("NewFileSessionStore failed: %v", err)
+	}
+
+	origOpen := openBrowserFn
+	t.Cleanup(func() { openBrowserFn = origOpen })
+	openBrowserFn = func(rawURL string) error {
+		u, err := url.Parse(rawURL)
+		if err != nil {
+			return err
+		}
+		state := u.Query().Get("state")
+		cbURL := fmt.Sprintf("%s/api/v1/auth/discord/callback?code=code-super&state=%s", baseURL, url.QueryEscape(state))
+		go func() {
+			resp, err := http.Get(cbURL)
+			if err == nil {
+				_ = resp.Body.Close()
+			}
+		}()
+		return nil
+	}
+
+	app := NewApp(AppOptions{
+		BaseURL: baseURL,
+		Client:  adminclient.New(baseURL, ""),
+		Store:   store,
+	})
+	defer app.Close()
+	app.login.pollInterval = 20 * time.Millisecond
+
+	_, _ = app.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
+	pumpAppCmd(t, app, app.Init(), 250*time.Millisecond)
+	deadline := time.Now().Add(2 * time.Second)
+	for app.mode != modeDashboard && time.Now().Before(deadline) {
+		_, pollCmd := app.Update(loginPollTickMsg{Gen: app.login.gen})
+		pumpAppCmd(t, app, pollCmd, 200*time.Millisecond)
+		if app.mode != modeDashboard {
+			time.Sleep(15 * time.Millisecond)
+		}
+	}
+	if app.mode != modeDashboard {
+		t.Fatalf("expected modeDashboard, got %v", app.mode)
+	}
+
+	// Switch to Logs panel ('2').
+	_, switchCmd := app.Update(tea.KeyPressMsg{Code: '2', Text: "2"})
+	pumpAppCmd(t, app, switchCmd, 250*time.Millisecond)
+
+	sizes := []tea.WindowSizeMsg{
+		{Width: 100, Height: 30},
+		{Width: 101, Height: 24},
+		{Width: 99, Height: 20},
+		{Width: 79, Height: 20},
+	}
+	checkAllSizes := func(label string) {
+		t.Helper()
+		for _, ws := range sizes {
+			_, _ = app.Update(ws)
+			v := app.View()
+			lines := strings.Split(v.Content, "\n")
+			if len(lines) != ws.Height {
+				t.Fatalf("%s %dx%d: rendered height=%d, want %d", label, ws.Width, ws.Height, len(lines), ws.Height)
+			}
+			bottomBorder := lines[len(lines)-2]
+			footerLine := lines[len(lines)-1]
+			if !strings.Contains(bottomBorder, "╰") || !strings.Contains(bottomBorder, "╯") {
+				t.Fatalf("%s %dx%d: expected bottom border corners on row %d, got %q", label, ws.Width, ws.Height, len(lines)-2, bottomBorder)
+			}
+			if !strings.Contains(footerLine, "l:level") {
+				t.Fatalf("%s %dx%d: expected footer shortcut 'l:level' on bottom row, got %q", label, ws.Width, ws.Height, footerLine)
+			}
+		}
+	}
+
+	checkAllSizes("ALL")
+
+	// Switch ALL -> DEBUG ('l') and verify across all terminal dimensions.
+	_, lvlCmd := app.Update(tea.KeyPressMsg{Code: 'l', Text: "l"})
+	pumpAppCmd(t, app, lvlCmd, 250*time.Millisecond)
+	checkAllSizes("DEBUG")
+}

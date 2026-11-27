@@ -64,7 +64,7 @@ type OverviewPanel struct {
 // NewOverviewPanel constructs the Overview dashboard panel.
 func NewOverviewPanel(theme ui.Theme) *OverviewPanel {
 	vp := viewport.New(viewport.WithWidth(76), viewport.WithHeight(20))
-	vp.SoftWrap = true
+	vp.SoftWrap = false
 	return &OverviewPanel{
 		theme: theme,
 		vp:    vp,
@@ -223,12 +223,13 @@ func (p *OverviewPanel) rebuildContent() {
 	if w <= 0 {
 		w = 80
 	}
+	wrapW := max(p.vp.Width(), 1)
 	if p.errMsg != "" && p.data == nil {
-		p.vp.SetContent(p.theme.BadgeErr.Render("Failed to load overview: " + p.errMsg))
+		p.vp.SetContent(ui.WrapViewportText(p.theme.BadgeErr.Render("Failed to load overview: "+p.errMsg), wrapW))
 		return
 	}
 	if p.data == nil {
-		p.vp.SetContent(p.theme.MutedText.Render("Loading overview metrics..."))
+		p.vp.SetContent(ui.WrapViewportText(p.theme.MutedText.Render("Loading overview metrics..."), wrapW))
 		return
 	}
 	d := p.data
@@ -327,5 +328,5 @@ func (p *OverviewPanel) rebuildContent() {
 		blocks = append(blocks, botCard, "", sysCard, "", shardCard, "", bbsCard)
 	}
 
-	p.vp.SetContent(strings.Join(blocks, "\n"))
+	p.vp.SetContent(ui.WrapViewportText(strings.Join(blocks, "\n"), wrapW))
 }

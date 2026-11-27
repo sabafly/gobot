@@ -96,7 +96,7 @@ type LogsPanel struct {
 // NewLogsPanel constructs the real-time slog viewer panel.
 func NewLogsPanel(theme ui.Theme) *LogsPanel {
 	vp := viewport.New(viewport.WithWidth(76), viewport.WithHeight(20))
-	vp.SoftWrap = true
+	vp.SoftWrap = false
 	si := ui.NewRealCursorInput("keyword (Enter apply, Esc cancel)", 36)
 	return &LogsPanel{
 		theme:       theme,
@@ -465,25 +465,26 @@ func (p *LogsPanel) appendEntry(dst *[]admin.LogEntry, e admin.LogEntry) {
 }
 
 func (p *LogsPanel) rebuildContent() {
+	wrapW := max(p.vp.Width(), 1)
 	if len(p.entries) == 0 {
 		if p.streamErr != "" {
-			p.vp.SetContent(p.theme.BadgeErr.Render("Failed to load logs: " + p.streamErr))
+			p.vp.SetContent(ui.WrapViewportText(p.theme.BadgeErr.Render("Failed to load logs: "+ui.SanitizeLogText(p.streamErr)), wrapW))
 		} else if p.loading {
-			p.vp.SetContent(p.theme.MutedText.Render("Loading log buffer..."))
+			p.vp.SetContent(ui.WrapViewportText(p.theme.MutedText.Render("Loading log buffer..."), wrapW))
 		} else {
-			p.vp.SetContent(p.theme.MutedText.Render("No log entries match current filter."))
+			p.vp.SetContent(ui.WrapViewportText(p.theme.MutedText.Render("No log entries match current filter."), wrapW))
 		}
 		return
 	}
 
 	var lines []string
 	if p.streamErr != "" {
-		lines = append(lines, p.theme.BadgeWarn.Render("Stream notice: "+p.streamErr))
+		lines = append(lines, p.theme.BadgeWarn.Render("Stream notice: "+ui.SanitizeLogText(p.streamErr)))
 	}
 	for _, e := range p.entries {
 		lines = append(lines, p.formatEntry(e))
 	}
-	p.vp.SetContent(strings.Join(lines, "\n"))
+	p.vp.SetContent(ui.WrapViewportText(strings.Join(lines, "\n"), wrapW))
 	if p.follow {
 		p.vp.GotoBottom()
 	}
@@ -501,7 +502,7 @@ func (p *LogsPanel) formatEntry(e admin.LogEntry) string {
 	case "DEBUG":
 		lvlRendered = p.theme.MutedText.Render("DEBUG")
 	default:
-		lvlRendered = p.theme.BadgeInfo.Render(ui.PadRightWidth(lvl, 5))
+		lvlRendered = p.theme.BadgeInfo.Render(ui.PadRightWidth(ui.SanitizeLogText(lvl), 5))
 	}
 
 	var attrStr strings.Builder
@@ -512,16 +513,16 @@ func (p *LogsPanel) formatEntry(e admin.LogEntry) string {
 		}
 		slices.Sort(keys)
 		for _, k := range keys {
-			fmt.Fprintf(&attrStr, " %s=%v", k, e.Attrs[k])
+			fmt.Fprintf(&attrStr, " %s=%s", ui.SanitizeLogText(k), ui.SanitizeLogText(fmt.Sprint(e.Attrs[k])))
 		}
 	}
 	if e.Source != "" {
-		fmt.Fprintf(&attrStr, " src=%s", e.Source)
+		fmt.Fprintf(&attrStr, " src=%s", ui.SanitizeLogText(e.Source))
 	}
 	return fmt.Sprintf("%s [%s] %s%s",
 		p.theme.MutedText.Render(ts),
 		lvlRendered,
-		p.theme.Value.Render(e.Message),
+		p.theme.Value.Render(ui.SanitizeLogText(e.Message)),
 		p.theme.MutedText.Render(attrStr.String()),
 	)
 }
