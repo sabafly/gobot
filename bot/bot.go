@@ -397,7 +397,7 @@ func initBBSSystem(component *components.Components, config *components.Config, 
 			GrantOperators: c.GrantOperators,
 		})
 	}
-	if err := svc.SetAdminCaps(capDefs); err != nil {
+	if err := svc.LoadOrSeedAdminCaps(context.Background(), capDefs); err != nil {
 		return nil, fmt.Errorf("BBSキャップ設定が不正です: %w", err)
 	}
 	slipEvents := make([]bbs.SlipEventDefinition, 0, len(config.BBS.SlipEvents))
@@ -410,7 +410,7 @@ func initBBSSystem(component *components.Components, config *components.Config, 
 			Mode:      bbs.SlipEventMode(ev.Mode),
 		})
 	}
-	if err := svc.SetSlipEvents(slipEvents); err != nil {
+	if err := svc.LoadOrSeedSlipEvents(context.Background(), slipEvents); err != nil {
 		return nil, fmt.Errorf("BBS SLIPイベント設定が不正です: %w", err)
 	}
 	syncer := discordsync.NewSyncer(svc)

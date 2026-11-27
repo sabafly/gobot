@@ -23,6 +23,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/disgoorg/snowflake/v2"
@@ -118,6 +119,32 @@ func (p *Provider) CreateCategory(ctx context.Context, input bbs.CreateCategoryI
 		return nil, err
 	}
 	return toDomainCategory(&row), nil
+}
+
+func (p *Provider) UpdateCategory(ctx context.Context, id uuid.UUID, input bbs.UpdateCategoryInput) (*bbs.Category, error) {
+	updates := map[string]any{
+		"updated_at": time.Now(),
+	}
+	if input.Name != nil {
+		updates["name"] = *input.Name
+	}
+	if input.Slug != nil {
+		updates["slug"] = *input.Slug
+	}
+	if input.Description != nil {
+		updates["description"] = *input.Description
+	}
+	if input.SortOrder != nil {
+		updates["sort_order"] = *input.SortOrder
+	}
+	res := p.session(ctx).Model(&BBSCategory{}).Where("id = ?", id).Updates(updates)
+	if res.Error != nil {
+		return nil, res.Error
+	}
+	if res.RowsAffected == 0 {
+		return nil, bbs.ErrNotFound
+	}
+	return p.GetCategory(ctx, id)
 }
 
 func (p *Provider) DeleteCategory(ctx context.Context, id uuid.UUID) error {
@@ -311,9 +338,16 @@ func (p *Provider) GetThread(ctx context.Context, id uuid.UUID) (*bbs.Thread, er
 }
 
 func (p *Provider) ListThreads(ctx context.Context, filter bbs.ThreadFilter) ([]bbs.Thread, error) {
-	q := p.session(ctx).Model(&BBSThread{}).Where("board_id = ?", filter.BoardID).Order("bumped_at DESC")
+	q := p.session(ctx).Model(&BBSThread{}).Order("bumped_at DESC")
+	if filter.BoardID != uuid.Nil {
+		q = q.Where("board_id = ?", filter.BoardID)
+	}
 	if filter.Status != nil {
 		q = q.Where("status = ?", string(*filter.Status))
+	}
+	if kw := strings.TrimSpace(filter.Query); kw != "" {
+		esc := strings.NewReplacer("!", "!!", "%", "!%", "_", "!_").Replace(strings.ToLower(kw))
+		q = q.Where("LOWER(title) LIKE ? ESCAPE '!'", "%"+esc+"%")
 	}
 	if filter.Limit > 0 {
 		q = q.Limit(filter.Limit)

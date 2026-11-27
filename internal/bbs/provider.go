@@ -34,6 +34,7 @@ type CategoryProvider interface {
 	GetCategory(ctx context.Context, id uuid.UUID) (*Category, error)
 	ListCategories(ctx context.Context, filter CategoryFilter) ([]Category, error)
 	CreateCategory(ctx context.Context, input CreateCategoryInput) (*Category, error)
+	UpdateCategory(ctx context.Context, id uuid.UUID, input UpdateCategoryInput) (*Category, error)
 	DeleteCategory(ctx context.Context, id uuid.UUID) error
 }
 
@@ -214,4 +215,22 @@ type Store interface {
 
 	// System secrets (persisted fallback HMAC key)
 	GetOrCreateSystemSecret(ctx context.Context, secretKey string, fallback []byte) ([]byte, error)
+
+	// Admin queries & mounts
+	ListBoardMounts(ctx context.Context, filter BoardMountFilter) ([]BoardMount, error)
+	GetBBSStats(ctx context.Context) (*Stats, error)
+
+	// Admin caps (persisted runtime config)
+	ListAdminCaps(ctx context.Context) ([]CapDefinition, error)
+	GetAdminCap(ctx context.Context, id string) (*CapDefinition, error)
+	UpsertAdminCap(ctx context.Context, def CapDefinition) error
+	DeleteAdminCap(ctx context.Context, id string) error
+	SeedAdminCapsIfEmpty(ctx context.Context, defs []CapDefinition) ([]CapDefinition, error)
+
+	// SLIP events (persisted runtime config)
+	ListSlipEvents(ctx context.Context) ([]SlipEventDefinition, error)
+	GetSlipEvent(ctx context.Context, id string) (*SlipEventDefinition, error)
+	UpsertSlipEvent(ctx context.Context, def SlipEventDefinition) error
+	DeleteSlipEvent(ctx context.Context, id string) error
+	SeedSlipEventsIfEmpty(ctx context.Context, defs []SlipEventDefinition) ([]SlipEventDefinition, error)
 }

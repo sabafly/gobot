@@ -240,11 +240,11 @@ func (s *stubPanel) Init(ui.PanelContext) tea.Cmd         { return nil }
 func (s *stubPanel) Update(_ tea.Msg, _ ui.PanelContext) (ui.Panel, tea.Cmd) {
 	return s, nil
 }
-func (s *stubPanel) View(w, h int) string             { return s.title }
-func (s *stubPanel) Cursor() *tea.Cursor              { return nil }
-func (s *stubPanel) CapturingInput() bool             { return false }
+func (s *stubPanel) View(w, h int) string                    { return s.title }
+func (s *stubPanel) Cursor() *tea.Cursor                     { return nil }
+func (s *stubPanel) CapturingInput() bool                    { return false }
 func (s *stubPanel) ShortHelp(ui.PanelContext) []key.Binding { return nil }
-func (s *stubPanel) Close()                           { s.closed = true }
+func (s *stubPanel) Close()                                  { s.closed = true }
 
 func TestApp_RealServer_OAuthLogin_RBAC_CursorAndLogout(t *testing.T) {
 	baseURL, _ := setupRealAdminEnv(t)
@@ -316,11 +316,12 @@ func TestApp_RealServer_OAuthLogin_RBAC_CursorAndLogout(t *testing.T) {
 		t.Fatalf("expected session file permission 0600, got %o", fi.Mode().Perm())
 	}
 
-	// RBAC sidebar filtering: Register a PermBBSAdmin plugin panel and verify super_admin sees it vs viewer hides it.
-	bbsPlugin := &stubPanel{id: "bbs", title: "BBS", perm: admin.PermBBSAdmin}
+	// RBAC sidebar filtering: built-in BBS panel (PermBBSRead) + custom PermBBSAdmin plugin.
+	// super_admin sees 5 built-in panels + 1 plugin (6 total); viewer without PermBBSRead sees 4 panels.
+	bbsPlugin := &stubPanel{id: "custom_plugin", title: "Plugin", perm: admin.PermBBSAdmin}
 	app.RegisterPanel(bbsPlugin)
-	if len(app.visiblePanels) != 5 {
-		t.Fatalf("expected 5 visible panels for super_admin, got %d", len(app.visiblePanels))
+	if len(app.visiblePanels) != 6 {
+		t.Fatalf("expected 6 visible panels for super_admin, got %d", len(app.visiblePanels))
 	}
 
 	savedPrincipal := app.principal
@@ -332,7 +333,7 @@ func TestApp_RealServer_OAuthLogin_RBAC_CursorAndLogout(t *testing.T) {
 	}
 	app.rebuildVisiblePanels()
 	if len(app.visiblePanels) != 4 {
-		t.Fatalf("expected PermBBSAdmin panel hidden for viewer (4 panels), got %d", len(app.visiblePanels))
+		t.Fatalf("expected BBS and PermBBSAdmin panels hidden for viewer (4 panels), got %d", len(app.visiblePanels))
 	}
 	app.principal = savedPrincipal
 	app.rebuildVisiblePanels()

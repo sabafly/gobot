@@ -33,6 +33,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -184,10 +185,7 @@ func (l *ipRateLimiter) Allow(key string, now time.Time) (bool, time.Duration) {
 		return true, 0
 	}
 	deficit := 1.0 - b.tokens
-	waitSec := int(math.Ceil(deficit / max(l.ratePerSec, 0.001)))
-	if waitSec < 1 {
-		waitSec = 1
-	}
+	waitSec := max(int(math.Ceil(deficit/max(l.ratePerSec, 0.001))), 1)
 	return false, time.Duration(waitSec) * time.Second
 }
 
@@ -288,7 +286,7 @@ func NormalizeBasePath(raw string) (string, error) {
 	if !strings.HasPrefix(s, "/") {
 		s = "/" + s
 	}
-	for _, seg := range strings.Split(s[1:], "/") {
+	for seg := range strings.SplitSeq(s[1:], "/") {
 		if seg == "" || seg == "." || seg == ".." {
 			return "", fmt.Errorf("admin server: invalid base_path segment in %q", raw)
 		}
@@ -544,6 +542,43 @@ func (s *Server) registerRoutes() {
 	s.handle(http.MethodPost, "/api/v1/ops/sync-commands", s.withAuth(PermOpsExecute, s.handleOpsSyncCommands))
 	s.handle(http.MethodPost, "/api/v1/ops/bbs-dat-check", s.withAuth(PermOpsExecute, s.handleOpsBBSDatCheck))
 	s.handle(http.MethodGet, "/api/v1/audit", s.withAuth(PermAuditRead, s.handleListAuditLogs))
+
+	// BBS management endpoints
+	s.handle(http.MethodGet, "/api/v1/bbs/stats", s.withAuth(PermBBSRead, s.handleBBSStats))
+
+	s.handle(http.MethodGet, "/api/v1/bbs/categories", s.withAuth(PermBBSRead, s.handleBBSListCategories))
+	s.handle(http.MethodPost, "/api/v1/bbs/categories", s.withAuth(PermBBSAdmin, s.handleBBSCreateCategory))
+	s.handle(http.MethodPatch, "/api/v1/bbs/categories/{id}", s.withAuth(PermBBSAdmin, s.handleBBSUpdateCategory))
+	s.handle(http.MethodDelete, "/api/v1/bbs/categories/{id}", s.withAuth(PermBBSAdmin, s.handleBBSDeleteCategory))
+
+	s.handle(http.MethodGet, "/api/v1/bbs/boards", s.withAuth(PermBBSRead, s.handleBBSListBoards))
+	s.handle(http.MethodPost, "/api/v1/bbs/boards", s.withAuth(PermBBSAdmin, s.handleBBSCreateBoard))
+	s.handle(http.MethodPatch, "/api/v1/bbs/boards/{id}", s.withAuth(PermBBSAdmin, s.handleBBSUpdateBoard))
+	s.handle(http.MethodDelete, "/api/v1/bbs/boards/{id}", s.withAuth(PermBBSAdmin, s.handleBBSDeleteBoard))
+	s.handle(http.MethodGet, "/api/v1/bbs/boards/{id}/mounts", s.withAuth(PermBBSRead, s.handleBBSListBoardMounts))
+
+	s.handle(http.MethodGet, "/api/v1/bbs/threads", s.withAuth(PermBBSRead, s.handleBBSListThreads))
+	s.handle(http.MethodGet, "/api/v1/bbs/threads/{id}", s.withAuth(PermBBSRead, s.handleBBSGetThread))
+	s.handle(http.MethodPost, "/api/v1/bbs/threads/{id}/archive", s.withAuth(PermBBSModerate, s.handleBBSArchiveThread))
+	s.handle(http.MethodPost, "/api/v1/bbs/posts/{id}/abone", s.withAuth(PermBBSModerate, s.handleBBSAbonePost))
+
+	s.handle(http.MethodGet, "/api/v1/bbs/reports", s.withAuth(PermBBSRead, s.handleBBSListReports))
+	s.handle(http.MethodGet, "/api/v1/bbs/reports/{id}/inspect", s.withAuth(PermBBSModerate, s.handleBBSInspectReport))
+	s.handle(http.MethodPost, "/api/v1/bbs/reports/{id}/resolve", s.withAuth(PermBBSModerate, s.handleBBSResolveReport))
+
+	s.handle(http.MethodGet, "/api/v1/bbs/bans", s.withAuth(PermBBSRead, s.handleBBSListBans))
+	s.handle(http.MethodPost, "/api/v1/bbs/bans", s.withAuth(PermBBSModerate, s.handleBBSCreateBan))
+	s.handle(http.MethodDelete, "/api/v1/bbs/bans/{id}", s.withAuth(PermBBSModerate, s.handleBBSDeleteBan))
+
+	s.handle(http.MethodGet, "/api/v1/bbs/config/caps", s.withAuth(PermBBSRead, s.handleBBSListCaps))
+	s.handle(http.MethodPost, "/api/v1/bbs/config/caps", s.withAuth(PermBBSAdmin, s.handleBBSCreateCap))
+	s.handle(http.MethodPut, "/api/v1/bbs/config/caps/{id}", s.withAuth(PermBBSAdmin, s.handleBBSUpdateCap))
+	s.handle(http.MethodDelete, "/api/v1/bbs/config/caps/{id}", s.withAuth(PermBBSAdmin, s.handleBBSDeleteCap))
+
+	s.handle(http.MethodGet, "/api/v1/bbs/config/slip-events", s.withAuth(PermBBSRead, s.handleBBSListSlipEvents))
+	s.handle(http.MethodPost, "/api/v1/bbs/config/slip-events", s.withAuth(PermBBSAdmin, s.handleBBSCreateSlipEvent))
+	s.handle(http.MethodPut, "/api/v1/bbs/config/slip-events/{id}", s.withAuth(PermBBSAdmin, s.handleBBSUpdateSlipEvent))
+	s.handle(http.MethodDelete, "/api/v1/bbs/config/slip-events/{id}", s.withAuth(PermBBSAdmin, s.handleBBSDeleteSlipEvent))
 }
 
 // Handler returns the root HTTP handler wrapped with panic recovery, CORS/Origin enforcement, and security headers.
@@ -575,7 +610,7 @@ func (s *Server) Handler() http.Handler {
 						return
 					}
 				}
-			} else if !(r.Method == http.MethodGet && r.URL.Path == callbackPath) {
+			} else if r.Method != http.MethodGet || r.URL.Path != callbackPath {
 				writeError(w, http.StatusForbidden, "forbidden_origin", "origin is not allowed")
 				return
 			}
@@ -712,10 +747,7 @@ func decodeJSONBody(w http.ResponseWriter, r *http.Request, dst any, allowEmpty 
 }
 
 func writeRateLimited(w http.ResponseWriter, retryAfter time.Duration, code, msg string) {
-	secs := int(math.Ceil(retryAfter.Seconds()))
-	if secs < 1 {
-		secs = 1
-	}
+	secs := max(int(math.Ceil(retryAfter.Seconds())), 1)
 	w.Header().Set("Retry-After", strconv.Itoa(secs))
 	writeError(w, http.StatusTooManyRequests, code, msg)
 }
@@ -747,15 +779,15 @@ func (s *Server) clientRemoteAddr(r *http.Request) string {
 	}
 	var hops []string
 	for _, hdr := range xffVals {
-		for _, part := range strings.Split(hdr, ",") {
+		for part := range strings.SplitSeq(hdr, ",") {
 			hops = append(hops, strings.TrimSpace(part))
 		}
 	}
-	for i := len(hops) - 1; i >= 0; i-- {
-		if hops[i] == "" {
+	for _, hop := range slices.Backward(hops) {
+		if hop == "" {
 			return truncateRunes(peerAddr.String(), 64)
 		}
-		hopAddr, err := netip.ParseAddr(hops[i])
+		hopAddr, err := netip.ParseAddr(hop)
 		if err != nil {
 			return truncateRunes(peerAddr.String(), 64)
 		}

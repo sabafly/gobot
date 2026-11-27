@@ -43,6 +43,8 @@ func Models() []any {
 		&BBSBan{},
 		&BBSReport{},
 		&BBSSystemSecret{},
+		&BBSAdminCap{},
+		&BBSSlipEvent{},
 	}
 }
 
@@ -261,3 +263,29 @@ type BBSReport struct {
 }
 
 func (BBSReport) TableName() string { return "bbs_reports" }
+
+type BBSAdminCap struct {
+	ID             string    `gorm:"type:varchar(64);primaryKey"`
+	Name           string    `gorm:"type:varchar(128);not null"`
+	Description    string    `gorm:"type:varchar(255);not null;default:''"`
+	GrantOperators bool      `gorm:"not null;default:false"`
+	UsersJSON      string    `gorm:"column:users_json;type:text;not null"`
+	SortOrder      int       `gorm:"not null;default:0"`
+	CreatedAt      time.Time `gorm:"not null"`
+	UpdatedAt      time.Time `gorm:"not null"`
+}
+
+func (BBSAdminCap) TableName() string { return "bbs_admin_caps" }
+
+type BBSSlipEvent struct {
+	ID        string    `gorm:"type:varchar(64);primaryKey"`
+	Label     string    `gorm:"type:varchar(64);not null"`
+	StartDate string    `gorm:"column:start_date;type:varchar(16);not null"`
+	EndDate   string    `gorm:"column:end_date;type:varchar(16);not null"`
+	Mode      string    `gorm:"type:varchar(16);not null;default:'override'"`
+	SortOrder int       `gorm:"not null;default:0"`
+	CreatedAt time.Time `gorm:"not null"`
+	UpdatedAt time.Time `gorm:"not null"`
+}
+
+func (BBSSlipEvent) TableName() string { return "bbs_slip_events" }

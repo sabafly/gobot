@@ -571,6 +571,9 @@ func (m *mockThirdPartyProvider) ListCategories(_ context.Context, filter bbs.Ca
 func (m *mockThirdPartyProvider) CreateCategory(_ context.Context, _ bbs.CreateCategoryInput) (*bbs.Category, error) {
 	return nil, bbs.ErrUnsupportedOperation
 }
+func (m *mockThirdPartyProvider) UpdateCategory(_ context.Context, _ uuid.UUID, _ bbs.UpdateCategoryInput) (*bbs.Category, error) {
+	return nil, bbs.ErrUnsupportedOperation
+}
 func (m *mockThirdPartyProvider) DeleteCategory(_ context.Context, _ uuid.UUID) error {
 	return bbs.ErrUnsupportedOperation
 }

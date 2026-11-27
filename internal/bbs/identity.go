@@ -24,6 +24,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -40,6 +41,7 @@ var JSTLocation = time.FixedZone("JST", 9*60*60)
 type IdentityGenerator struct {
 	secret     []byte
 	loc        *time.Location
+	mu         sync.RWMutex
 	slipEvents []parsedSlipEvent
 }
 
@@ -49,8 +51,17 @@ func (g *IdentityGenerator) SetSlipEvents(defs []SlipEventDefinition) error {
 	if err != nil {
 		return err
 	}
+	g.mu.Lock()
 	g.slipEvents = parsed
+	g.mu.Unlock()
 	return nil
+}
+
+func (g *IdentityGenerator) getSlipEvents() []parsedSlipEvent {
+	g.mu.RLock()
+	events := g.slipEvents
+	g.mu.RUnlock()
+	return events
 }
 
 // NewIdentityGenerator creates an IdentityGenerator using the provided HMAC secret.
@@ -205,9 +216,9 @@ func (g *IdentityGenerator) ParsePostIdentity(
 	var remainingTokens []string
 	hideID := rules.HideID
 	slipLevel := rules.SLIP
-	fields := strings.Fields(nameInput)
+	fields := strings.FieldsSeq(nameInput)
 
-	for _, tok := range fields {
+	for tok := range fields {
 		lower := strings.ToLower(tok)
 		switch lower {
 		case "!id:on":

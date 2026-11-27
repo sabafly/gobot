@@ -31,6 +31,7 @@ import (
 	"github.com/sabafly/gobot/internal/admin"
 	"github.com/sabafly/gobot/internal/adminclient"
 	"github.com/sabafly/gobot/tui/panels"
+	bbspanel "github.com/sabafly/gobot/tui/panels/bbs"
 	"github.com/sabafly/gobot/tui/ui"
 )
 
@@ -135,6 +136,7 @@ func NewApp(opts AppOptions) *App {
 		a.RegisterPanel(panels.NewLogsPanel(theme))
 		a.RegisterPanel(panels.NewGuildsPanel(theme))
 		a.RegisterPanel(panels.NewOpsAuditPanel(theme))
+		a.RegisterPanel(bbspanel.NewPanel(theme))
 	}
 	return a
 }

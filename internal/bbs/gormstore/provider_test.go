@@ -897,3 +897,290 @@ func TestUpdateBoard_SLIPAndPartialFields(t *testing.T) {
 		t.Fatalf("expected persisted SlipText %q, got %+v, err=%v", firstSlipPost.SlipText, listPosts, err)
 	}
 }
+
+func TestAdminCapsAndSlipEvents_SeedPersistenceAndLiveReload(t *testing.T) {
+	store, svc := openTestService(t)
+	ctx := context.Background()
+
+	opUser := snowflake.ID(9999)
+	userA := snowflake.ID(7001)
+	userB := snowflake.ID(7002)
+
+	// 1. Empty DB seeds from YAML and reflects immediately in memory.
+	initialCaps := []bbs.CapDefinition{
+		{ID: "Admin", Name: "管理人", Description: "公式", GrantOperators: true, Users: []snowflake.ID{userA}},
+	}
+	initialSlips := []bbs.SlipEventDefinition{
+		{ID: "sakura", Label: "ｻｸﾗ", StartDate: "04-01", EndDate: "04-05", Mode: bbs.SlipEventModeOverride},
+	}
+	if err := svc.LoadOrSeedAdminCaps(ctx, initialCaps); err != nil {
+		t.Fatalf("LoadOrSeedAdminCaps initial failed: %v", err)
+	}
+	if err := svc.LoadOrSeedSlipEvents(ctx, initialSlips); err != nil {
+		t.Fatalf("LoadOrSeedSlipEvents initial failed: %v", err)
+	}
+	if caps := svc.ListAvailableCaps(ctx, opUser, uuid.Nil); len(caps) != 1 || caps[0].ID != "Admin" {
+		t.Fatalf("expected operator cap [Admin], got %+v", caps)
+	}
+	aprDay := time.Date(2026, 4, 2, 12, 0, 0, 0, bbs.JSTLocation)
+	if slip := svc.Identity.GenerateSlip(bbs.SLIPVVV, uuid.New(), bbs.ScopeGlobal, 0, userA, bbs.SlipContext{}, aprDay); slip != "ｻｸﾗ" {
+		t.Fatalf("expected seeded slip event ｻｸﾗ, got %q", slip)
+	}
+
+	// 2. Subsequent LoadOrSeed with different YAML ignores YAML because DB is already authoritative.
+	if err := svc.LoadOrSeedAdminCaps(ctx, []bbs.CapDefinition{
+		{ID: "other", Name: "別キャップ", Users: []snowflake.ID{userB}},
+	}); err != nil {
+		t.Fatalf("LoadOrSeedAdminCaps restart failed: %v", err)
+	}
+	if list, err := svc.ListAdminCaps(ctx); err != nil || len(list) != 1 || list[0].ID != "Admin" {
+		t.Fatalf("expected DB cap [Admin] to win over YAML on restart, got %+v, err=%v", list, err)
+	}
+
+	// 3. Invalid YAML fails closed even when DB is seeded.
+	if err := svc.LoadOrSeedAdminCaps(ctx, []bbs.CapDefinition{{ID: bbs.CapSelectNoneValue, Name: "bad"}}); !errors.Is(err, bbs.ErrInvalidCapConfig) {
+		t.Fatalf("expected ErrInvalidCapConfig on invalid YAML, got %v", err)
+	}
+	if err := svc.LoadOrSeedSlipEvents(ctx, []bbs.SlipEventDefinition{{ID: "bad", Label: "x", StartDate: "99-99"}}); !errors.Is(err, bbs.ErrInvalidSlipConfig) {
+		t.Fatalf("expected ErrInvalidSlipConfig on invalid YAML, got %v", err)
+	}
+
+	// 4. Create / Update (case-insensitive) / ErrAlreadyExists / ErrNotFound / Remove.
+	if _, err := svc.CreateAdminCap(ctx, bbs.CapDefinition{ID: "admin", Name: "dup"}); !errors.Is(err, bbs.ErrAlreadyExists) {
+		t.Fatalf("expected ErrAlreadyExists on duplicate cap ID, got %v", err)
+	}
+	createdCap, err := svc.CreateAdminCap(ctx, bbs.CapDefinition{
+		ID:             "notice",
+		Name:           "お知らせ",
+		Description:    "告知",
+		GrantOperators: false,
+		Users:          []snowflake.ID{userB},
+	})
+	if err != nil || createdCap.ID != "notice" {
+		t.Fatalf("CreateAdminCap failed: cap=%+v err=%v", createdCap, err)
+	}
+	if caps := svc.ListAvailableCaps(ctx, userB, uuid.Nil); len(caps) != 1 || caps[0].ID != "notice" {
+		t.Fatalf("expected live userB cap [notice], got %+v", caps)
+	}
+	updatedCap, err := svc.UpdateAdminCap(ctx, "NOTICE", bbs.CapDefinition{
+		Name:  "お知らせ改",
+		Users: []snowflake.ID{userA, userB},
+	})
+	if err != nil || updatedCap.ID != "notice" || updatedCap.Name != "お知らせ改" {
+		t.Fatalf("UpdateAdminCap case-insensitive failed: cap=%+v err=%v", updatedCap, err)
+	}
+	if _, err := svc.CreateSlipEvent(ctx, bbs.SlipEventDefinition{
+		ID:        "exact_day",
+		Label:     "ｷﾈﾝﾋﾞ",
+		StartDate: "2026-08-15",
+		EndDate:   "2026-08-16",
+		Mode:      bbs.SlipEventModeAppend,
+	}); err != nil {
+		t.Fatalf("CreateSlipEvent YYYY-MM-DD failed: %v", err)
+	}
+	augDay := time.Date(2026, 8, 15, 12, 0, 0, 0, bbs.JSTLocation)
+	if got := svc.Identity.GenerateSlip(bbs.SLIPVVV, uuid.New(), bbs.ScopeGlobal, 0, userA, bbs.SlipContext{}, augDay); !strings.HasPrefix(got, "ｷﾈﾝﾋﾞ ") {
+		t.Fatalf("expected YYYY-MM-DD append slip event ｷﾈﾝﾋﾞ ..., got %q", got)
+	}
+	if _, err := svc.UpdateSlipEvent(ctx, "EXACT_DAY", bbs.SlipEventDefinition{
+		Label:     "ﾊﾁｶﾞﾂ",
+		StartDate: "2026-08-15",
+		EndDate:   "2026-08-16",
+		Mode:      bbs.SlipEventModeOverride,
+	}); err != nil {
+		t.Fatalf("UpdateSlipEvent failed: %v", err)
+	}
+	if got := svc.Identity.GenerateSlip(bbs.SLIPVVV, uuid.New(), bbs.ScopeGlobal, 0, userA, bbs.SlipContext{}, augDay); got != "ﾊﾁｶﾞﾂ" {
+		t.Fatalf("expected updated override slip event ﾊﾁｶﾞﾂ, got %q", got)
+	}
+
+	// 5. Concurrent reads and writes under -race.
+	var wg sync.WaitGroup
+	for i := range 8 {
+		wg.Add(1)
+		go func(n int) {
+			defer wg.Done()
+			for range 10 {
+				_ = svc.ListAvailableCaps(ctx, userA, uuid.Nil)
+				_ = svc.Identity.GenerateSlip(bbs.SLIPVVV, uuid.New(), bbs.ScopeGlobal, 0, userA, bbs.SlipContext{}, augDay)
+				if n%2 == 0 {
+					_, _ = store.GetBBSStats(ctx)
+				}
+			}
+		}(i)
+	}
+	for i := range 4 {
+		wg.Add(1)
+		go func(n int) {
+			defer wg.Done()
+			_, _ = svc.UpdateAdminCap(ctx, "notice", bbs.CapDefinition{
+				Name:  fmt.Sprintf("お知らせ%d", n),
+				Users: []snowflake.ID{userA, userB},
+			})
+		}(i)
+	}
+	wg.Wait()
+
+	// 6. Deleting all caps/events marks seeded, so YAML will NOT resurrect them on restart.
+	if err := svc.RemoveAdminCap(ctx, "ADMIN"); err != nil {
+		t.Fatalf("RemoveAdminCap ADMIN failed: %v", err)
+	}
+	if err := svc.RemoveAdminCap(ctx, "notice"); err != nil {
+		t.Fatalf("RemoveAdminCap notice failed: %v", err)
+	}
+	if err := svc.RemoveAdminCap(ctx, "missing"); !errors.Is(err, bbs.ErrNotFound) {
+		t.Fatalf("expected ErrNotFound on missing cap delete, got %v", err)
+	}
+	if err := svc.RemoveSlipEvent(ctx, "sakura"); err != nil {
+		t.Fatalf("RemoveSlipEvent sakura failed: %v", err)
+	}
+	if err := svc.RemoveSlipEvent(ctx, "EXACT_DAY"); err != nil {
+		t.Fatalf("RemoveSlipEvent exact_day failed: %v", err)
+	}
+	if err := svc.RemoveSlipEvent(ctx, "missing"); !errors.Is(err, bbs.ErrNotFound) {
+		t.Fatalf("expected ErrNotFound on missing slip delete, got %v", err)
+	}
+
+	if err := svc.LoadOrSeedAdminCaps(ctx, initialCaps); err != nil {
+		t.Fatalf("LoadOrSeedAdminCaps after delete-all failed: %v", err)
+	}
+	if caps, err := svc.ListAdminCaps(ctx); err != nil || len(caps) != 0 {
+		t.Fatalf("expected deleted caps to stay empty after restart, got %+v, err=%v", caps, err)
+	}
+	if err := svc.LoadOrSeedSlipEvents(ctx, initialSlips); err != nil {
+		t.Fatalf("LoadOrSeedSlipEvents after delete-all failed: %v", err)
+	}
+	if evs, err := svc.ListSlipEvents(ctx); err != nil || len(evs) != 0 {
+		t.Fatalf("expected deleted slip events to stay empty after restart, got %+v, err=%v", evs, err)
+	}
+}
+
+func TestAdminQueries_UpdateCategory_ThreadSearch_Mounts_Stats(t *testing.T) {
+	store, svc := openTestService(t)
+	ctx := context.Background()
+	guildID := snowflake.ID(555001)
+	userID := snowflake.ID(666001)
+	if _, err := svc.SetupGuild(ctx, bbs.GuildSetupInput{GuildID: guildID, Enabled: true, ActorUserID: userID}); err != nil {
+		t.Fatalf("SetupGuild failed: %v", err)
+	}
+	if _, err := svc.AcceptPolicy(ctx, userID); err != nil {
+		t.Fatalf("AcceptPolicy failed: %v", err)
+	}
+	user2 := snowflake.ID(666002)
+	if _, err := svc.AcceptPolicy(ctx, user2); err != nil {
+		t.Fatalf("AcceptPolicy user2 failed: %v", err)
+	}
+
+	cat, err := svc.CreateCategory(ctx, bbs.CreateCategoryInput{
+		Scope: bbs.ScopeLocal, GuildID: &guildID, Slug: "old", Name: "OldCat", SortOrder: 1,
+	})
+	if err != nil {
+		t.Fatalf("CreateCategory failed: %v", err)
+	}
+	newName := "UpdatedCat"
+	newSlug := "newcat"
+	newDesc := "Updated Desc"
+	newSort := 7
+	updatedCat, err := svc.UpdateCategory(ctx, cat.ID, bbs.UpdateCategoryInput{
+		Name: &newName, Slug: &newSlug, Description: &newDesc, SortOrder: &newSort,
+	})
+	if err != nil || updatedCat.Name != "UpdatedCat" || updatedCat.Slug != "newcat" || updatedCat.SortOrder != 7 {
+		t.Fatalf("UpdateCategory failed: %+v, err=%v", updatedCat, err)
+	}
+
+	board, err := svc.CreateBoard(ctx, bbs.CreateBoardInput{
+		CategoryID: cat.ID, Scope: bbs.ScopeLocal, GuildID: &guildID, Slug: "misc", Name: "MiscBoard",
+	})
+	if err != nil {
+		t.Fatalf("CreateBoard failed: %v", err)
+	}
+
+	if err := store.CreateBoardMount(ctx, &bbs.BoardMount{
+		BoardID: board.ID, GuildID: guildID, ChannelID: snowflake.ID(777001), Locale: "ja", Active: true,
+	}); err != nil {
+		t.Fatalf("CreateBoardMount 1 failed: %v", err)
+	}
+	inactive := &bbs.BoardMount{
+		BoardID: board.ID, GuildID: guildID, ChannelID: snowflake.ID(777002), Locale: "en-US", Active: false,
+	}
+	if err := store.CreateBoardMount(ctx, inactive); err != nil {
+		t.Fatalf("CreateBoardMount 2 failed: %v", err)
+	}
+	if err := store.DeactivateBoardMount(ctx, inactive.ID); err != nil {
+		t.Fatalf("DeactivateBoardMount failed: %v", err)
+	}
+	onlyActive := true
+	activeMounts, err := svc.ListBoardMounts(ctx, bbs.BoardMountFilter{BoardID: &board.ID, Active: &onlyActive})
+	if err != nil || len(activeMounts) != 1 || activeMounts[0].ChannelID != snowflake.ID(777001) {
+		t.Fatalf("expected 1 active mount, got %+v, err=%v", activeMounts, err)
+	}
+
+	_, thWild, p1, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: board.ID, GuildID: guildID, UserID: userID, Title: "100%テスト_検索スレ", RawBody: "OP body",
+		Now: time.Now().Add(-5 * time.Minute),
+	})
+	if err != nil {
+		t.Fatalf("CreateThread 1 failed: %v", err)
+	}
+	_, thOther, _, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: board.ID, GuildID: guildID, UserID: user2, Title: "100XテストY他スレ", RawBody: "Other",
+		Now: time.Now(),
+	})
+	if err != nil {
+		t.Fatalf("CreateThread 2 failed: %v", err)
+	}
+	if _, _, err := svc.ArchiveThreadByAdmin(ctx, thOther.ID); err != nil {
+		t.Fatalf("ArchiveThreadByAdmin failed: %v", err)
+	}
+
+	// Literal % and _ in Query must NOT match thOther ("100XテストY...").
+	matched, err := svc.ListThreads(ctx, bbs.ThreadFilter{Query: "%テスト_"})
+	if err != nil || len(matched) != 1 || matched[0].ID != thWild.ID {
+		t.Fatalf("expected literal LIKE match on thWild only, got %+v, err=%v", matched, err)
+	}
+
+	reporterID := snowflake.ID(888001)
+	if _, err := svc.AcceptPolicy(ctx, reporterID); err != nil {
+		t.Fatalf("AcceptPolicy reporter failed: %v", err)
+	}
+	rep, err := svc.CreateReport(ctx, guildID, reporterID, p1.ID, "spam link")
+	if err != nil {
+		t.Fatalf("SubmitReport failed: %v", err)
+	}
+	gotRep, gotAudit, err := svc.InspectReportForAdmin(ctx, rep.ID)
+	if err != nil || gotRep.ID != rep.ID || gotAudit == nil || gotAudit.AuthorUserID != userID {
+		t.Fatalf("InspectReportForAdmin failed: rep=%+v audit=%+v err=%v", gotRep, gotAudit, err)
+	}
+
+	ban, err := svc.CreateBanByAdmin(ctx, bbs.AdminBanInput{
+		Scope: bbs.ScopeLocal, PostID: &p1.ID, Reason: "test ban", DurationHours: 2, ActorID: snowflake.ID(9999),
+	})
+	if err != nil || ban.GuildID == nil || *ban.GuildID != guildID || ban.TargetUserID == nil || *ban.TargetUserID != userID {
+		t.Fatalf("CreateBanByAdmin with PostID fallback failed: %+v, err=%v", ban, err)
+	}
+	past := time.Now().Add(-1 * time.Hour)
+	if err := store.CreateBan(ctx, &bbs.Ban{
+		Scope: bbs.ScopeGlobal, PosterHash: "expiredhash", CreatedBy: snowflake.ID(9999), ExpiresAt: &past,
+	}); err != nil {
+		t.Fatalf("CreateBan expired failed: %v", err)
+	}
+
+	st, err := svc.GetStats(ctx)
+	if err != nil {
+		t.Fatalf("GetStats failed: %v", err)
+	}
+	if st.Categories != 1 || st.Boards != 1 || st.ActiveThreads != 1 || st.OpenReports != 1 || st.ActiveBans != 1 {
+		t.Fatalf("unexpected BBSStats: %+v", st)
+	}
+
+	if _, err := svc.ResolveReportForAdmin(ctx, rep.ID, bbs.ReportStatusResolved, snowflake.ID(9999), "handled"); err != nil {
+		t.Fatalf("ResolveReportForAdmin failed: %v", err)
+	}
+	aboned, thAfter, err := svc.AbonePostByAdmin(ctx, p1.ID, "removed")
+	if err != nil || !aboned.Abone || thAfter.ID != thWild.ID {
+		t.Fatalf("AbonePostByAdmin failed: post=%+v err=%v", aboned, err)
+	}
+	if err := svc.DeleteBan(ctx, ban.ID); err != nil {
+		t.Fatalf("DeleteBan failed: %v", err)
+	}
+}

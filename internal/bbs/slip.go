@@ -374,7 +374,7 @@ func (g *IdentityGenerator) GenerateSlipNickname(
 		base = pickSlipWord(fallbackSum, 0, []string{"ﾜｯﾁｮｲ", "ｻﾊﾞﾌﾗｲ", "ﾄﾞﾝｸﾞﾘ", "ｱｳｱｳ", "ｽｯﾌﾟ"})
 	}
 
-	if evLabel, evMode, ok := matchSlipEvent(g.slipEvents, jst); ok {
+	if evLabel, evMode, ok := matchSlipEvent(g.getSlipEvents(), jst); ok {
 		if evMode == SlipEventModeOverride {
 			return evLabel
 		}

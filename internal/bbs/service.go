@@ -52,6 +52,9 @@ type Service struct {
 	Identity  *IdentityGenerator
 	Policy    *PolicyManager
 	Operators []snowflake.ID
+
+	capMu     sync.RWMutex
+	configMu  sync.Mutex
 	adminCaps []CapDefinition
 
 	threadRules   []ratelimit.Rule
@@ -105,7 +108,9 @@ func (s *Service) SetAdminCaps(defs []CapDefinition) error {
 	if err != nil {
 		return err
 	}
+	s.capMu.Lock()
 	s.adminCaps = validated
+	s.capMu.Unlock()
 	return nil
 }
 
@@ -126,11 +131,17 @@ func (s *Service) userHasAdminCap(userID snowflake.ID, def CapDefinition) bool {
 
 // ListAvailableCaps returns caps held by userID that can be used when posting on boardID.
 func (s *Service) ListAvailableCaps(_ context.Context, userID snowflake.ID, _ uuid.UUID) []Cap {
-	if userID == 0 || len(s.adminCaps) == 0 {
+	if userID == 0 {
+		return nil
+	}
+	s.capMu.RLock()
+	defs := s.adminCaps
+	s.capMu.RUnlock()
+	if len(defs) == 0 {
 		return nil
 	}
 	var caps []Cap
-	for _, def := range s.adminCaps {
+	for _, def := range defs {
 		if !s.userHasAdminCap(userID, def) {
 			continue
 		}
@@ -798,13 +809,17 @@ func (s *Service) GetPost(ctx context.Context, postID uuid.UUID) (*Post, error) 
 	return nil, ErrNotFound
 }
 
-// ListThreads lists threads in a board via its provider.
+// ListThreads lists threads matching filter via the target board's provider (or default provider when BoardID is zero).
 func (s *Service) ListThreads(ctx context.Context, filter ThreadFilter) ([]Thread, error) {
-	b, err := s.GetBoard(ctx, filter.BoardID)
-	if err != nil {
-		return nil, err
+	var providerKey string
+	if filter.BoardID != uuid.Nil {
+		b, err := s.GetBoard(ctx, filter.BoardID)
+		if err != nil {
+			return nil, err
+		}
+		providerKey = b.ProviderKey
 	}
-	p, err := s.Registry.Get(b.ProviderKey)
+	p, err := s.Registry.Get(providerKey)
 	if err != nil {
 		return nil, err
 	}

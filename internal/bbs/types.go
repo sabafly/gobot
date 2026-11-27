@@ -424,6 +424,7 @@ type UpdateBoardInput struct {
 type ThreadFilter struct {
 	BoardID uuid.UUID
 	Status  *ThreadStatus
+	Query   string
 	Limit   int
 	Offset  int
 }
