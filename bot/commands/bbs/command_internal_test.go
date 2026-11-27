@@ -1613,12 +1613,10 @@ func TestBuildSlipContext_ExtractsMemberVoiceAndGuildTraits(t *testing.T) {
 	client := newInternalMockClient(t, nil)
 	client.Caches = cache.New(cache.WithCaches(cache.FlagsAll))
 	client.Caches.AddGuild(discord.CacheGuild{
-		Guild: discord.Guild{
-			ID:          guildID,
-			Name:        "SecretGuildName",
-			PremiumTier: discord.PremiumTier3,
-			Features:    []discord.GuildFeature{discord.GuildFeatureCommunity, discord.GuildFeatureVanityURL},
-		},
+		ID:          guildID,
+		Name:        "SecretGuildName",
+		PremiumTier: discord.PremiumTier3,
+		Features:    []discord.GuildFeature{discord.GuildFeatureCommunity, discord.GuildFeatureVanityURL},
 		MemberCount: 800,
 	})
 	client.Caches.AddVoiceState(discord.VoiceState{
@@ -1748,11 +1746,9 @@ func TestSystemGuildLocale_RespectsDBOverrideOverInteractionGuildLocale(t *testi
 	client := newInternalMockClient(t, nil)
 	client.Caches = cache.New(cache.WithCaches(cache.FlagsAll))
 	client.Caches.AddGuild(discord.CacheGuild{
-		Guild: discord.Guild{
-			ID:              guildID,
-			Name:            "NonCommunityGuild",
-			PreferredLocale: "en-US",
-		},
+		ID:              guildID,
+		Name:            "NonCommunityGuild",
+		PreferredLocale: "en-US",
 	})
 
 	payload, err := json.Marshal(map[string]any{

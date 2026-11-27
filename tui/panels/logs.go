@@ -92,8 +92,8 @@ type LogsPanel struct {
 	captureUpdating  bool
 	appliedQuery     string
 	lastSeq          uint64
-	entries      []admin.LogEntry
-	pausedBuf    []admin.LogEntry
+	entries          []admin.LogEntry
+	pausedBuf        []admin.LogEntry
 
 	streamGen    uint64
 	streamCancel context.CancelFunc

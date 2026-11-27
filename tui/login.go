@@ -76,22 +76,22 @@ type LoginSuccessMsg struct {
 
 // LoginModel drives the interactive Discord OAuth2 handshake inside the TUI.
 type LoginModel struct {
-	theme         ui.Theme
-	client        *adminclient.Client
-	store         *adminclient.FileSessionStore
-	baseURL       string
-	noBrowser     bool
-	pollInterval  time.Duration
-	spin          spinner.Model
-	gen           uint64
-	state         loginState
-	authorizeURL  string
-	loginID       string
-	pollSecret    string
-	expiresAt     time.Time
-	notice        string
-	errMsg        string
-	browserNote   string
+	theme        ui.Theme
+	client       *adminclient.Client
+	store        *adminclient.FileSessionStore
+	baseURL      string
+	noBrowser    bool
+	pollInterval time.Duration
+	spin         spinner.Model
+	gen          uint64
+	state        loginState
+	authorizeURL string
+	loginID      string
+	pollSecret   string
+	expiresAt    time.Time
+	notice       string
+	errMsg       string
+	browserNote  string
 }
 
 // NewLoginModel constructs an OAuth2 login screen targeting baseURL.

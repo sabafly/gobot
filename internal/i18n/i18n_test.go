@@ -27,8 +27,8 @@ func extractTemplateFields(tmplStr string) (map[string]struct{}, error) {
 		return nil, err
 	}
 	fields := make(map[string]struct{})
-	if parsed.Tree != nil && parsed.Tree.Root != nil {
-		walkParseNode(parsed.Tree.Root, fields)
+	if parsed.Tree != nil && parsed.Root != nil {
+		walkParseNode(parsed.Root, fields)
 	}
 	return fields, nil
 }
@@ -344,8 +344,7 @@ func TestAllCallSitesStaticAnalysis(t *testing.T) {
 
 	for _, fa := range files {
 		// Collect all .WithText("key", ...) keys and local variables in each function body
-		var inspectFuncBody func(fnName string, body *ast.BlockStmt)
-		inspectFuncBody = func(fnName string, body *ast.BlockStmt) {
+		var inspectFuncBody = func(fnName string, body *ast.BlockStmt) {
 			localStringVars := make(map[string][]string)
 			localMapVars := make(map[string]map[string]struct{})
 			withTextKeysInFunc := make(map[string]struct{})
@@ -438,7 +437,7 @@ func TestAllCallSitesStaticAnalysis(t *testing.T) {
 						if len(call.Args) < 2 {
 							return true
 						}
-						// Skip internal helper definitions or debug command arbitrary key lookup
+
 						if strings.HasSuffix(fa.path, filepath.Join("internal", "i18n", "translates.go")) ||
 							strings.HasSuffix(fa.path, filepath.Join("internal", "errors", "errors.go")) ||
 							strings.HasSuffix(fa.path, filepath.Join("bot", "commands", "debug", "debug.go")) {

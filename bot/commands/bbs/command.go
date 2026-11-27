@@ -234,8 +234,6 @@ func (c *bbsCommand) Name() string { return "bbs" }
 
 func (c *bbsCommand) IsPrivate() bool { return false }
 
-func intPtr(v int) *int { return &v }
-
 func (c *bbsCommand) Create() []discord.ApplicationCommandCreate {
 	guildCtx := []discord.InteractionContextType{discord.InteractionContextTypeGuild}
 	slipChoices := []discord.ApplicationCommandOptionChoiceString{
@@ -291,13 +289,13 @@ func (c *bbsCommand) Create() []discord.ApplicationCommandCreate {
 									Description:              "Category name",
 									DescriptionLocalizations: i18n.TranslateTextMap("command.bbs.category.create.options.name.description"),
 									Required:                 true,
-									MaxLength:                intPtr(60),
+									MaxLength:                new(60),
 								},
 								discord.ApplicationCommandOptionString{
 									Name:                     "description",
 									Description:              "Category description",
 									DescriptionLocalizations: i18n.TranslateTextMap("command.bbs.category.create.options.description.description"),
-									MaxLength:                intPtr(200),
+									MaxLength:                new(200),
 								},
 							},
 						},
@@ -337,7 +335,7 @@ func (c *bbsCommand) Create() []discord.ApplicationCommandCreate {
 									Description:              "Board name",
 									DescriptionLocalizations: i18n.TranslateTextMap("command.bbs.board.create.options.name.description"),
 									Required:                 true,
-									MaxLength:                intPtr(80),
+									MaxLength:                new(80),
 								},
 								discord.ApplicationCommandOptionString{
 									Name:                     "category",
@@ -349,13 +347,13 @@ func (c *bbsCommand) Create() []discord.ApplicationCommandCreate {
 									Name:                     "description",
 									Description:              "Board description",
 									DescriptionLocalizations: i18n.TranslateTextMap("command.bbs.board.create.options.description.description"),
-									MaxLength:                intPtr(300),
+									MaxLength:                new(300),
 								},
 								discord.ApplicationCommandOptionString{
 									Name:                     "default_name",
 									Description:              "Default anonymous name",
 									DescriptionLocalizations: i18n.TranslateTextMap("command.bbs.board.create.options.default_name.description"),
-									MaxLength:                intPtr(bbscore.MaxNameRunes),
+									MaxLength:                new(bbscore.MaxNameRunes),
 								},
 								discord.ApplicationCommandOptionBool{
 									Name:                     "forum",
@@ -383,15 +381,15 @@ func (c *bbsCommand) Create() []discord.ApplicationCommandCreate {
 									Name:                     "max_res",
 									Description:              "Max replies per thread (50-1000)",
 									DescriptionLocalizations: i18n.TranslateTextMap("command.bbs.board.create.options.max_res.description"),
-									MinValue:                 intPtr(50),
-									MaxValue:                 intPtr(1000),
+									MinValue:                 new(50),
+									MaxValue:                 new(1000),
 								},
 								discord.ApplicationCommandOptionInt{
 									Name:                     "archive_days",
 									Description:              "Days of inactivity before auto-archive (0 disables)",
 									DescriptionLocalizations: i18n.TranslateTextMap("command.bbs.board.create.options.archive_days.description"),
-									MinValue:                 intPtr(0),
-									MaxValue:                 intPtr(365),
+									MinValue:                 new(0),
+									MaxValue:                 new(365),
 								},
 							},
 						},
@@ -416,13 +414,13 @@ func (c *bbsCommand) Create() []discord.ApplicationCommandCreate {
 									Name:                     "default_name",
 									Description:              "New default anonymous name",
 									DescriptionLocalizations: i18n.TranslateTextMap("command.bbs.board.edit.options.default_name.description"),
-									MaxLength:                intPtr(bbscore.MaxNameRunes),
+									MaxLength:                new(bbscore.MaxNameRunes),
 								},
 								discord.ApplicationCommandOptionString{
 									Name:                     "description",
 									Description:              "New board description",
 									DescriptionLocalizations: i18n.TranslateTextMap("command.bbs.board.edit.options.description.description"),
-									MaxLength:                intPtr(300),
+									MaxLength:                new(300),
 								},
 								discord.ApplicationCommandOptionBool{
 									Name:                     "hide_id",

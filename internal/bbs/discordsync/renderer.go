@@ -506,8 +506,8 @@ func ParseReaderJumpInput(input string, totalRes uint32) (uint32, error) {
 	if s == "" {
 		return 0, bbs.ErrInvalidReaderJump
 	}
-	if strings.HasPrefix(s, "l") {
-		rest := strings.TrimPrefix(s, "l")
+	if after, ok := strings.CutPrefix(s, "l"); ok {
+		rest := after
 		if rest == "" {
 			return 0, bbs.ErrInvalidReaderJump
 		}
@@ -680,10 +680,7 @@ func RenderReaderPageBounded(
 		prevIdx := computeBackwardStartIndex(thread, posts, startIndex-1, resolveURL, locale)
 		prevCustomID = fmt.Sprintf("/bbs/reader/%s/%d-%d", thread.ID, posts[prevIdx].ResNumber, posts[startIndex-1].ResNumber)
 	}
-	nextRes := endRes + 1
-	if nextRes > thread.ResCount {
-		nextRes = thread.ResCount
-	}
+	nextRes := min(endRes+1, thread.ResCount)
 	nextCustomID := fmt.Sprintf("/bbs/reader/%s/next-end", thread.ID)
 	if !atEnd {
 		nextCustomID = fmt.Sprintf("/bbs/reader/%s/%d", thread.ID, nextRes)

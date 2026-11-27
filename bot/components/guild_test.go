@@ -145,11 +145,9 @@ func TestGuildLocaleOverride_And_ResolvePriority(t *testing.T) {
 		Caches: cache.New(cache.WithCaches(cache.FlagsAll)),
 	}
 	client.Caches.AddGuild(discord.CacheGuild{
-		Guild: discord.Guild{
-			ID:              guildID,
-			Name:            "NonCommunityGuild",
-			PreferredLocale: "en-US",
-		},
+		ID:              guildID,
+		Name:            "NonCommunityGuild",
+		PreferredLocale: "en-US",
 	})
 
 	// 1. Without override, Discord PreferredLocale (en-US) wins over fallback.
@@ -263,9 +261,4 @@ func TestGuildLocaleOverride_And_ResolvePriority(t *testing.T) {
 	if preserved.Name != "CachedGuild" || !preserved.BumpEnabled || preserved.LocaleOverride != discord.LocaleEnglishUS {
 		t.Fatalf("expected atomic upsert to preserve Name/BumpEnabled, got %+v", preserved)
 	}
-}
-
-//go:fix inline
-func ptr[T any](v T) *T {
-	return new(v)
 }

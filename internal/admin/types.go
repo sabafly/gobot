@@ -165,27 +165,27 @@ type BBSSummary struct {
 }
 
 type OverviewResponse struct {
-	Version          string        `json:"version"`
-	StartedAt        time.Time     `json:"started_at"`
-	UptimeSeconds    int64         `json:"uptime_seconds"`
-	GoVersion        string        `json:"go_version"`
-	Goroutines       int           `json:"goroutines"`
-	MemAllocBytes    uint64        `json:"mem_alloc_bytes"`
-	MemSysBytes      uint64        `json:"mem_sys_bytes"`
-	DBConnected      bool          `json:"db_connected"`
-	DBLatencyMs      int64         `json:"db_latency_ms"`
-	DBError          string        `json:"db_error,omitempty"`
-	BotConnected     bool          `json:"bot_connected"`
-	BotUsername      string        `json:"bot_username,omitempty"`
-	CachedGuilds     int           `json:"cached_guilds"`
-	DBGuilds         int64         `json:"db_guilds"`
-	DBUsers          int64         `json:"db_users"`
-	AvgShardPingMs   int64         `json:"avg_shard_ping_ms"`
-	Shards           []ShardStatus `json:"shards"`
-	LogBufferLen     int           `json:"log_buffer_len"`
-	LogBufferCap     int           `json:"log_buffer_cap"`
-	ActiveSessions   int64         `json:"active_sessions"`
-	BBS              BBSSummary    `json:"bbs"`
+	Version        string        `json:"version"`
+	StartedAt      time.Time     `json:"started_at"`
+	UptimeSeconds  int64         `json:"uptime_seconds"`
+	GoVersion      string        `json:"go_version"`
+	Goroutines     int           `json:"goroutines"`
+	MemAllocBytes  uint64        `json:"mem_alloc_bytes"`
+	MemSysBytes    uint64        `json:"mem_sys_bytes"`
+	DBConnected    bool          `json:"db_connected"`
+	DBLatencyMs    int64         `json:"db_latency_ms"`
+	DBError        string        `json:"db_error,omitempty"`
+	BotConnected   bool          `json:"bot_connected"`
+	BotUsername    string        `json:"bot_username,omitempty"`
+	CachedGuilds   int           `json:"cached_guilds"`
+	DBGuilds       int64         `json:"db_guilds"`
+	DBUsers        int64         `json:"db_users"`
+	AvgShardPingMs int64         `json:"avg_shard_ping_ms"`
+	Shards         []ShardStatus `json:"shards"`
+	LogBufferLen   int           `json:"log_buffer_len"`
+	LogBufferCap   int           `json:"log_buffer_cap"`
+	ActiveSessions int64         `json:"active_sessions"`
+	BBS            BBSSummary    `json:"bbs"`
 }
 
 type GuildSummary struct {

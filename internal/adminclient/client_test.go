@@ -122,7 +122,7 @@ func TestClient_EndToEnd_REST_And_SSE(t *testing.T) {
 		Caches:        cache.New(cache.WithCaches(cache.FlagsAll)),
 	}
 	client.Caches.AddGuild(discord.CacheGuild{
-		Guild: discord.Guild{ID: guildID, Name: "ClientTestGuild", PreferredLocale: "en-US"},
+		ID: guildID, Name: "ClientTestGuild", PreferredLocale: "en-US",
 	})
 	hub := admin.NewLogHub(100)
 
@@ -345,7 +345,7 @@ func TestClient_EndToEnd_WithBasePath(t *testing.T) {
 		Caches:        cache.New(cache.WithCaches(cache.FlagsAll)),
 	}
 	client.Caches.AddGuild(discord.CacheGuild{
-		Guild: discord.Guild{ID: guildID, Name: "BasePathGuild", PreferredLocale: "en-US"},
+		ID: guildID, Name: "BasePathGuild", PreferredLocale: "en-US",
 	})
 	hub := admin.NewLogHub(50)
 

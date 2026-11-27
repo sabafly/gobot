@@ -923,11 +923,9 @@ func TestSettingLocaleCommand_And_SettingsView(t *testing.T) {
 		Caches: cache.New(cache.WithCaches(cache.FlagsAll)),
 	}
 	client.Caches.AddGuild(discord.CacheGuild{
-		Guild: discord.Guild{
-			ID:              guildID,
-			Name:            "NonCommunity",
-			PreferredLocale: "en-US",
-		},
+		ID:              guildID,
+		Name:            "NonCommunity",
+		PreferredLocale: "en-US",
 	})
 
 	type hookCall struct {

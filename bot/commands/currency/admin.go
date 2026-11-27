@@ -124,11 +124,6 @@ func calculateUserTaxAmount(p int64, cfg *models.CurrencyTaxConfig) int64 {
 	return taxAmount
 }
 
-//go:fix inline
-func ptr[T any](v T) *T {
-	return new(v)
-}
-
 func TaxSetupHandler(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
 	guildID := *event.GuildID()
 

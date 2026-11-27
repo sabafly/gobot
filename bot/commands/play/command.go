@@ -42,11 +42,6 @@ func deleteSlotLock(id uuid.UUID) {
 	delete(slotLocks, id)
 }
 
-//go:fix inline
-func ptr[T any](v T) *T {
-	return new(v)
-}
-
 func Command(c *components.Components) components.Command {
 	return (&generic.Command{
 		Namespace: "play",

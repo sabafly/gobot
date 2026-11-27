@@ -336,12 +336,10 @@ func TestAdminServer_OAuthFlow_RBAC_CommonEndpoints(t *testing.T) {
 		Caches:        cache.New(cache.WithCaches(cache.FlagsAll)),
 	}
 	client.Caches.AddGuild(discord.CacheGuild{
-		Guild: discord.Guild{
-			ID:              guildID,
-			Name:            "NonCommunity",
-			PreferredLocale: "en-US",
-		},
-		MemberCount: 42,
+		ID:              guildID,
+		Name:            "NonCommunity",
+		PreferredLocale: "en-US",
+		MemberCount:     42,
 	})
 
 	logHub := admin.NewLogHub(100)
@@ -695,7 +693,7 @@ func TestAdminServer_PublicURL_BasePath_EnvAndCORS(t *testing.T) {
 		Caches:        cache.New(cache.WithCaches(cache.FlagsAll)),
 	}
 	client.Caches.AddGuild(discord.CacheGuild{
-		Guild: discord.Guild{ID: guildID, Name: "BetaGuild", PreferredLocale: "en-US"},
+		ID: guildID, Name: "BetaGuild", PreferredLocale: "en-US",
 	})
 
 	newTestServer := func(publicURL, basePath string) (*admin.Server, error) {
@@ -1069,7 +1067,7 @@ func TestAdminServer_SecurityAndConsistencyFixes(t *testing.T) {
 		if err := db.DB.Create(&models.Guild{ID: gid, Name: fmt.Sprintf("Guild-%d", i), LocaleOverride: discord.LocaleJapanese}).Error; err != nil {
 			t.Fatalf("seed guild %d failed: %v", i, err)
 		}
-		client.Caches.AddGuild(discord.CacheGuild{Guild: discord.Guild{ID: gid, Name: fmt.Sprintf("Guild-%d", i), PreferredLocale: "en-US"}})
+		client.Caches.AddGuild(discord.CacheGuild{ID: gid, Name: fmt.Sprintf("Guild-%d", i), PreferredLocale: "en-US"})
 	}
 	targetGID := guildIDs[0]
 

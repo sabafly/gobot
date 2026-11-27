@@ -464,7 +464,7 @@ func TestGuildsPanel_SearchCursor_ViewerVsAdminWrite(t *testing.T) {
 
 	// 3. Super admin edits locale override via SelectModal and toggles BBS via ConfirmModal.
 	superCtx := testSuperCtx(srv.URL)
-	p, cmd = p.Update(tea.KeyPressMsg{Code: 'l', Text: "l"}, superCtx)
+	p, _ = p.Update(tea.KeyPressMsg{Code: 'l', Text: "l"}, superCtx)
 	if !gp.selectModal.Active || !p.CapturingInput() {
 		t.Fatal("expected locale SelectModal to activate for super_admin")
 	}
@@ -474,12 +474,12 @@ func TestGuildsPanel_SearchCursor_ViewerVsAdminWrite(t *testing.T) {
 	p, cmd = p.Update(tea.KeyPressMsg{Code: tea.KeyEnter}, superCtx)
 	p, _ = pumpPanelCmd(t, p, superCtx, cmd, 150*time.Millisecond)
 
-	p, cmd = p.Update(tea.KeyPressMsg{Code: 'b', Text: "b"}, superCtx)
+	p, _ = p.Update(tea.KeyPressMsg{Code: 'b', Text: "b"}, superCtx)
 	if !gp.confirmModal.Active || !p.CapturingInput() {
 		t.Fatal("expected BBS toggle ConfirmModal to activate")
 	}
-	p, cmd = p.Update(tea.KeyPressMsg{Code: 'y', Text: "y"}, superCtx)
-	p, _ = pumpPanelCmd(t, p, superCtx, cmd, 150*time.Millisecond)
+	_, cmd = p.Update(tea.KeyPressMsg{Code: 'y', Text: "y"}, superCtx)
+	_, _ = pumpPanelCmd(t, p, superCtx, cmd, 150*time.Millisecond)
 
 	mu.Lock()
 	patches := len(patchBodies)
@@ -787,21 +787,21 @@ func TestLogsPanel_NextSeqCatchup_And_CaptureLevelToggle(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	// Viewer without PermOpsExecute sees capture badge but pressing 'L' does not PUT.
+	// Viewer without PermOpsExecute sees capture badge but pressing 'C' does not PUT.
 	viewerCtx := testViewerCtx(srv.URL)
 	lpViewer := NewLogsPanel(ui.DefaultTheme())
 	defer lpViewer.Close()
 	var pv ui.Panel = lpViewer
 	_ = pv.View(110, 20)
 	pv, _ = pumpPanelCmd(t, pv, viewerCtx, pv.Init(viewerCtx), 150*time.Millisecond)
-	pv, _ = pv.Update(tea.KeyPressMsg{Code: 'C', Text: "C"}, viewerCtx)
+	_, _ = pv.Update(tea.KeyPressMsg{Code: 'C', Text: "C"}, viewerCtx)
 	mu.Lock()
 	if len(putBodies) != 0 {
 		t.Fatalf("expected viewer without ops.execute not to trigger PUT /logs/level, got %v", putBodies)
 	}
 	mu.Unlock()
 
-	// SuperAdmin receives Seq=5 without off-by-one skip and toggles capture level with 'L'.
+	// SuperAdmin receives Seq=5 without off-by-one skip and toggles capture level with 'C'.
 	superCtx := testSuperCtx(srv.URL)
 	lp := NewLogsPanel(ui.DefaultTheme())
 	defer lp.Close()

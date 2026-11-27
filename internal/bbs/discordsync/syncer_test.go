@@ -555,11 +555,9 @@ func TestSyncer_GuildLocaleOverride_And_RefreshGuildBoardGuides(t *testing.T) {
 	})
 	client.Caches = cache.New(cache.WithCaches(cache.FlagsAll))
 	client.Caches.AddGuild(discord.CacheGuild{
-		Guild: discord.Guild{
-			ID:              guildID,
-			Name:            "NonCommunityGuild",
-			PreferredLocale: "en-US",
-		},
+		ID:              guildID,
+		Name:            "NonCommunityGuild",
+		PreferredLocale: "en-US",
 	})
 
 	overrideLoc := discord.LocaleJapanese
@@ -663,11 +661,9 @@ func TestSyncer_ResetToAutoOnNonCommunityGuild_RevertsToDefaultLocale(t *testing
 	// Non-community guild: empty PreferredLocale in cache.
 	client.Caches = cache.New(cache.WithCaches(cache.FlagsAll))
 	client.Caches.AddGuild(discord.CacheGuild{
-		Guild: discord.Guild{
-			ID:              guildID,
-			Name:            "NoPreferredLocaleGuild",
-			PreferredLocale: "",
-		},
+		ID:              guildID,
+		Name:            "NoPreferredLocaleGuild",
+		PreferredLocale: "",
 	})
 
 	var override atomic.Value

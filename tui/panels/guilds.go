@@ -37,8 +37,8 @@ import (
 )
 
 const (
-	guildsSearchPrompt   = "Search: "
-	guildModalLocaleTag  = "guild.locale"
+	guildsSearchPrompt     = "Search: "
+	guildModalLocaleTag    = "guild.locale"
 	guildModalToggleBBSTag = "guild.bbs"
 )
 

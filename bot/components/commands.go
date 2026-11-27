@@ -130,8 +130,7 @@ func (c *Components) SyncCommands(client *bot.Client) (int, int, error) {
 	}
 
 	if _, err := client.Rest.SetGlobalCommands(client.ApplicationID, commands); err != nil {
-		var restErr *rest.Error
-		if errors.As(err, &restErr) {
+		if restErr, ok := errors.AsType[*rest.Error](err); ok {
 			slog.Error("コマンドの登録に失敗", slog.Any("err", err), slog.String("body", string(restErr.RsBody)))
 		} else {
 			slog.Error("コマンドの登録に失敗", slog.Any("err", err))

@@ -71,11 +71,11 @@ func NewOverviewPanel(theme ui.Theme) *OverviewPanel {
 	}
 }
 
-func (p *OverviewPanel) ID() string                          { return "overview" }
-func (p *OverviewPanel) Title() string                       { return "Overview" }
+func (p *OverviewPanel) ID() string                           { return "overview" }
+func (p *OverviewPanel) Title() string                        { return "Overview" }
 func (p *OverviewPanel) RequiredPermission() admin.Permission { return admin.PermDashboardRead }
-func (p *OverviewPanel) Cursor() *tea.Cursor                 { return nil }
-func (p *OverviewPanel) CapturingInput() bool                { return false }
+func (p *OverviewPanel) Cursor() *tea.Cursor                  { return nil }
+func (p *OverviewPanel) CapturingInput() bool                 { return false }
 
 func (p *OverviewPanel) Close() {
 	p.active = false

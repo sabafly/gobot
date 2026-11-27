@@ -47,10 +47,10 @@ const (
 )
 
 const (
-	auditFilterPrompt    = "Action: "
-	auditPageLimit       = 25
-	opsConfirmActionTag  = "ops.exec"
-	opsConfirmRevokeTag  = "sessions.revoke"
+	auditFilterPrompt   = "Action: "
+	auditPageLimit      = 25
+	opsConfirmActionTag = "ops.exec"
+	opsConfirmRevokeTag = "sessions.revoke"
 )
 
 type opActionDef struct {
@@ -496,7 +496,7 @@ func (p *OpsAuditPanel) View(width, height int) string {
 		tabParts = append(tabParts, st.Render(tb.label))
 	}
 	topBar := ui.TruncateWidth(
-		lipgloss.JoinHorizontal(lipgloss.Center, tabParts...) + "   " + p.theme.MutedText.Render("[/] subtabs"),
+		lipgloss.JoinHorizontal(lipgloss.Center, tabParts...)+"   "+p.theme.MutedText.Render("[/] subtabs"),
 		width,
 	)
 

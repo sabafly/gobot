@@ -291,7 +291,7 @@ func WrapViewportText(content string, width int) string {
 		ww := lipgloss.NewWrapWriter(&buf)
 		_, _ = io.WriteString(ww, ansi.Hardwrap(line, width, true))
 		_ = ww.Close()
-		for _, sub := range strings.Split(buf.String(), "\n") {
+		for sub := range strings.SplitSeq(buf.String(), "\n") {
 			if ansi.StringWidth(sub) > width {
 				sub = ansi.Truncate(sub, width, "")
 			}

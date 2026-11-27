@@ -15,11 +15,6 @@ import (
 	"github.com/sabafly/gobot/internal/i18n"
 )
 
-//go:fix inline
-func ptr[T any](v T) *T {
-	return new(v)
-}
-
 func Command(c *components.Components) components.Command {
 	return (&generic.Command{
 		Namespace: "bet",

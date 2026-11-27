@@ -972,8 +972,7 @@ func ResolveForumTags(forumCh discord.GuildForumChannel) ([]snowflake.ID, error)
 
 // IsJSONError returns true if err wraps a *rest.Error matching the Discord JSON error code.
 func IsJSONError(err error, code rest.JSONErrorCode) bool {
-	var re *rest.Error
-	if errors.As(err, &re) {
+	if re, ok := errors.AsType[*rest.Error](err); ok {
 		return re.Code == code
 	}
 	return false
