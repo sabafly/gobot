@@ -32,6 +32,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
@@ -63,6 +64,7 @@ import (
 	"github.com/sabafly/gobot/bot/commands/user"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
+	"github.com/sabafly/gobot/internal/admin"
 	"github.com/sabafly/gobot/internal/bbs"
 	"github.com/sabafly/gobot/internal/bbs/discordsync"
 	"github.com/sabafly/gobot/internal/bbs/gormstore"
@@ -121,15 +123,20 @@ func run() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	defer cancel()
 
-	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+	startedAt := time.Now().UTC()
+	logHub := admin.NewLogHub(0)
+	slog.SetDefault(slog.New(admin.NewTeeHandler(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
 		AddSource: true,
 		Level:     LogLevel{},
-	})))
+	}), logHub)))
 	_ = godotenv.Load()
 
 	config, err := components.LoadConfig("gobot.yml")
 	if err != nil {
 		return fmt.Errorf("設定ファイルを読み込めません: %w", err)
+	}
+	if config.Admin.LogBufferSize > 0 {
+		logHub.SetCapacity(config.Admin.LogBufferSize)
 	}
 
 	if config.Debug.Trace {
@@ -229,6 +236,22 @@ func run() error {
 		return fmt.Errorf("コンポーネントを初期化できません: %w", err)
 	}
 
+	var adminDone chan struct{}
+	if config.Admin.Enabled {
+		adminSrv, adminErr := initAdminServer(component, config, gormDB, client, bbsSys, logHub, version, startedAt)
+		if adminErr != nil {
+			slog.Error("管理APIサーバーの初期化に失敗したため管理APIを無効化します", slog.Any("error", adminErr))
+		} else {
+			adminDone = make(chan struct{})
+			go func() {
+				defer close(adminDone)
+				if serveErr := adminSrv.ListenAndServe(ctx); serveErr != nil {
+					slog.Error("管理APIサーバーでエラーが発生しました", slog.Any("error", serveErr))
+				}
+			}()
+		}
+	}
+
 	if err := client.OpenShardManager(ctx); err != nil {
 		return fmt.Errorf("discord ゲートウェイを開けません: %w", err)
 	}
@@ -263,8 +286,44 @@ func run() error {
 	slog.Info("Bot is now running")
 	<-ctx.Done()
 	slog.Info("Bot is shutting down")
+	if adminDone != nil {
+		<-adminDone
+	}
 
 	return nil
+}
+
+func initAdminServer(
+	component *components.Components,
+	config *components.Config,
+	gormDB *database.DB,
+	client *bot.Client,
+	bbsSys *bbsCmd.System,
+	logHub *admin.LogHub,
+	ver string,
+	startedAt time.Time,
+) (*admin.Server, error) {
+	if config == nil {
+		return nil, fmt.Errorf("設定が空です")
+	}
+	var bbsSvc *bbs.Service
+	var bbsSync *discordsync.Syncer
+	if bbsSys != nil {
+		bbsSvc = bbsSys.Service
+		bbsSync = bbsSys.Syncer
+	}
+	return admin.NewServer(admin.ServerDeps{
+		Config:      *config,
+		AdminConfig: config.Admin,
+		DB:          gormDB,
+		Components:  component,
+		Client:      client,
+		BBSService:  bbsSvc,
+		BBSSyncer:   bbsSync,
+		LogHub:      logHub,
+		Version:     ver,
+		StartedAt:   startedAt,
+	})
 }
 
 func initBBSSystem(component *components.Components, config *components.Config, gormDB *database.DB) (*bbsCmd.System, error) {

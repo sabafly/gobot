@@ -56,6 +56,8 @@ func NewDB(dsn string) (*DB, error) {
 		&models.CurrencyPendingTax{},
 		&models.CurrencySeason{},
 		&models.CurrencySeasonUser{},
+		&models.AdminSession{},
+		&models.AdminAuditLog{},
 	}, gormstore.Models()...)
 	if err := db.AutoMigrate(migrateModels...); err != nil {
 		return nil, err

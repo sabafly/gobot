@@ -44,7 +44,33 @@ type Config struct {
 
 	DisableForeignKeys bool `yaml:"foreign_keys"`
 
-	BBS ConfigBBS `yaml:"bbs"`
+	BBS   ConfigBBS   `yaml:"bbs"`
+	Admin ConfigAdmin `yaml:"admin"`
+}
+
+type ConfigAdmin struct {
+	Enabled         bool                       `yaml:"enabled"`
+	ListenAddr      string                     `yaml:"listen_addr"`
+	SessionTTLHours int                        `yaml:"session_ttl_hours"`
+	LogBufferSize   int                        `yaml:"log_buffer_size"`
+	OAuth           ConfigAdminOAuth           `yaml:"oauth"`
+	Roles           map[string]ConfigAdminRole `yaml:"roles"`
+	Users           []ConfigAdminUser          `yaml:"users"`
+}
+
+type ConfigAdminOAuth struct {
+	ClientID     string `yaml:"client_id"`
+	ClientSecret string `yaml:"client_secret"`
+	RedirectURL  string `yaml:"redirect_url"`
+}
+
+type ConfigAdminRole struct {
+	Permissions []string `yaml:"permissions"`
+}
+
+type ConfigAdminUser struct {
+	UserID snowflake.ID `yaml:"user_id"`
+	Role   string       `yaml:"role"`
 }
 
 type ConfigBBS struct {

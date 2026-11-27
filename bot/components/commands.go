@@ -22,6 +22,7 @@ package components
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -83,7 +84,6 @@ func (c *Components) Initialize(client *bot.Client) error {
 		slog.Error("インタラクションエラー", "err", err)
 	})
 
-	var commands, privateCommands []discord.ApplicationCommandCreate
 	for name, cmd := range c.commandsRegistry {
 		if len(cmd.Scheduler()) > 0 {
 			slog.Info("コマンドスケジューラ―を登録します", "name", name, "count", len(cmd.Create()))
@@ -91,6 +91,34 @@ func (c *Components) Initialize(client *bot.Client) error {
 				go execSchedule(c, client, s)
 			}
 		}
+		cmd.RegisterRoutes(c.router)
+	}
+
+	if _, _, err := c.SyncCommands(client); err != nil {
+		return err
+	}
+
+	client.EventManager.AddEventListeners(
+		bot.NewListenerFunc(c.OnEvent()),
+		&events.ListenerAdapter{
+			OnGuildReady:  c.OnGuildReady(),
+			OnGuildJoin:   c.OnGuildJoin(),
+			OnGuildLeave:  c.OnGuildLeave(),
+			OnGuildUpdate: c.OnGuildUpdate(),
+			OnUserUpdate:  c.OnUserUpdate(),
+		},
+	)
+	return nil
+}
+
+// SyncCommands pushes registered global and private guild application commands to Discord.
+func (c *Components) SyncCommands(client *bot.Client) (int, int, error) {
+	if client == nil || client.Rest == nil {
+		return 0, 0, fmt.Errorf("discord client is not initialized")
+	}
+
+	var commands, privateCommands []discord.ApplicationCommandCreate
+	for name, cmd := range c.commandsRegistry {
 		if len(cmd.Create()) > 0 {
 			slog.Info("コマンドを登録します", "name", name, "count", len(cmd.Create()), "is_private", cmd.IsPrivate())
 			if cmd.IsPrivate() {
@@ -99,12 +127,16 @@ func (c *Components) Initialize(client *bot.Client) error {
 				commands = append(commands, cmd.Create()...)
 			}
 		}
-		cmd.RegisterRoutes(c.router)
 	}
 
 	if _, err := client.Rest.SetGlobalCommands(client.ApplicationID, commands); err != nil {
-		slog.Error("コマンドの登録に失敗", slog.Any("err", err), slog.String("body", string(err.(*rest.Error).RsBody)))
-		return err
+		var restErr *rest.Error
+		if errors.As(err, &restErr) {
+			slog.Error("コマンドの登録に失敗", slog.Any("err", err), slog.String("body", string(restErr.RsBody)))
+		} else {
+			slog.Error("コマンドの登録に失敗", slog.Any("err", err))
+		}
+		return 0, 0, err
 	}
 
 	seenGuilds := make(map[snowflake.ID]struct{}, len(c.Config().Debug.DebugGuilds)+len(c.Config().BBS.OperatorGuilds))
@@ -130,21 +162,11 @@ func (c *Components) Initialize(client *bot.Client) error {
 	for _, id := range privateGuilds {
 		if _, err := client.Rest.SetGuildCommands(client.ApplicationID, id, privateCommands); err != nil {
 			slog.Error("プライベートコマンドの登録に失敗", "err", err, "guild", id)
-			return err
+			return 0, 0, err
 		}
 	}
 
-	client.EventManager.AddEventListeners(
-		bot.NewListenerFunc(c.OnEvent()),
-		&events.ListenerAdapter{
-			OnGuildReady:  c.OnGuildReady(),
-			OnGuildJoin:   c.OnGuildJoin(),
-			OnGuildLeave:  c.OnGuildLeave(),
-			OnGuildUpdate: c.OnGuildUpdate(),
-			OnUserUpdate:  c.OnUserUpdate(),
-		},
-	)
-	return nil
+	return len(commands), len(privateGuilds), nil
 }
 
 func (c *Components) OnEvent() func(bot bot.Event) {
