@@ -28,9 +28,12 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/disgoorg/disgo/bot"
 
@@ -74,22 +77,152 @@ type ServerDeps struct {
 
 // Server exposes gobot's management HTTP/SSE API secured by Discord OAuth2 + RBAC.
 type Server struct {
-	cfg        components.Config
-	adminCfg   components.ConfigAdmin
-	listenAddr string
-	db         *database.DB
-	components *components.Components
-	client     *bot.Client
-	bbsSvc     *bbs.Service
-	bbsSync    *discordsync.Syncer
-	logHub     *LogHub
-	rbac       *RBAC
-	sessions   *SessionStore
-	audit      *AuditStore
-	oauth      *OAuthManager
-	version    string
-	startedAt  time.Time
-	mux        *http.ServeMux
+	cfg              components.Config
+	adminCfg         components.ConfigAdmin
+	listenAddr       string
+	publicURL        string
+	basePath         string
+	allowedOrigin    string
+	oauthRedirectURL string
+	db               *database.DB
+	components       *components.Components
+	client           *bot.Client
+	bbsSvc           *bbs.Service
+	bbsSync          *discordsync.Syncer
+	logHub           *LogHub
+	rbac             *RBAC
+	sessions         *SessionStore
+	audit            *AuditStore
+	oauth            *OAuthManager
+	version          string
+	startedAt        time.Time
+	mux              *http.ServeMux
+}
+
+// NormalizeBasePath validates and normalizes a HTTP server base path ("" for root, or "/prefix").
+func NormalizeBasePath(raw string) (string, error) {
+	s := strings.TrimSpace(raw)
+	if s == "" || s == "/" {
+		return "", nil
+	}
+	if strings.Contains(s, "://") {
+		return "", fmt.Errorf("admin server: base_path must be a path, not a full URL %q", raw)
+	}
+	for _, r := range s {
+		if r < 0x20 || r == 0x7f || unicode.IsSpace(r) {
+			return "", fmt.Errorf("admin server: base_path contains invalid whitespace or control character %q", raw)
+		}
+	}
+	if strings.ContainsAny(s, "?#\\{}") || strings.Contains(s, "%") {
+		return "", fmt.Errorf("admin server: base_path contains forbidden characters %q", raw)
+	}
+	if strings.Contains(s, "//") {
+		return "", fmt.Errorf("admin server: base_path must not contain empty path segments %q", raw)
+	}
+	s = strings.TrimSuffix(s, "/")
+	if s == "" {
+		return "", nil
+	}
+	if !strings.HasPrefix(s, "/") {
+		s = "/" + s
+	}
+	for _, seg := range strings.Split(s[1:], "/") {
+		if seg == "" || seg == "." || seg == ".." {
+			return "", fmt.Errorf("admin server: invalid base_path segment in %q", raw)
+		}
+	}
+	if path.Clean(s) != s {
+		return "", fmt.Errorf("admin server: invalid base_path %q", raw)
+	}
+	return s, nil
+}
+
+func formatCanonicalOrigin(u *url.URL) (string, error) {
+	if u == nil {
+		return "", errors.New("nil URL")
+	}
+	scheme := strings.ToLower(u.Scheme)
+	if scheme != "http" && scheme != "https" {
+		return "", fmt.Errorf("unsupported scheme %q", u.Scheme)
+	}
+	hostname := strings.ToLower(u.Hostname())
+	if hostname == "" || strings.HasSuffix(u.Host, ":") {
+		return "", errors.New("host is required")
+	}
+	port := u.Port()
+	if (scheme == "http" && port == "80") || (scheme == "https" && port == "443") {
+		port = ""
+	}
+	var canonHost string
+	switch {
+	case port != "":
+		canonHost = net.JoinHostPort(hostname, port)
+	case strings.Contains(hostname, ":"):
+		canonHost = "[" + hostname + "]"
+	default:
+		canonHost = hostname
+	}
+	return scheme + "://" + canonHost, nil
+}
+
+// NormalizePublicURL validates and normalizes the public external URL, returning (publicURL, basePath, origin, err).
+func NormalizePublicURL(raw string) (publicURL, basePath, origin string, err error) {
+	s := strings.TrimSpace(raw)
+	if s == "" {
+		return "", "", "", errors.New("admin server: public_url is required")
+	}
+	for _, r := range s {
+		if r < 0x20 || r == 0x7f || unicode.IsSpace(r) {
+			return "", "", "", fmt.Errorf("admin server: public_url contains invalid whitespace or control character %q", raw)
+		}
+	}
+	if strings.ContainsAny(s, "?#") {
+		return "", "", "", fmt.Errorf("admin server: public_url must not contain query or fragment %q", raw)
+	}
+	u, err := url.Parse(s)
+	if err != nil || u.User != nil || u.RawQuery != "" || u.Fragment != "" || u.Host == "" || u.Hostname() == "" || strings.HasSuffix(u.Host, ":") {
+		return "", "", "", fmt.Errorf("admin server: invalid public_url %q", raw)
+	}
+	origin, err = formatCanonicalOrigin(u)
+	if err != nil {
+		return "", "", "", fmt.Errorf("admin server: invalid public_url %q: %w", raw, err)
+	}
+	basePath, err = NormalizeBasePath(u.EscapedPath())
+	if err != nil {
+		return "", "", "", fmt.Errorf("admin server: invalid path in public_url %q: %w", raw, err)
+	}
+	return origin + basePath, basePath, origin, nil
+}
+
+func canonicalOrigin(raw string) (string, bool) {
+	s := strings.TrimSpace(raw)
+	if s == "" || strings.EqualFold(s, "null") {
+		return "", false
+	}
+	for _, r := range s {
+		if r < 0x20 || r == 0x7f || unicode.IsSpace(r) {
+			return "", false
+		}
+	}
+	if strings.ContainsAny(s, "?#") {
+		return "", false
+	}
+	u, err := url.Parse(s)
+	if err != nil || u.User != nil || u.Path != "" || u.RawQuery != "" || u.Fragment != "" || u.Host == "" || u.Hostname() == "" || strings.HasSuffix(u.Host, ":") {
+		return "", false
+	}
+	orig, err := formatCanonicalOrigin(u)
+	return orig, err == nil
+}
+
+// PublicURL returns the normalized public base URL configured for this server.
+func (s *Server) PublicURL() string {
+	return s.publicURL
+}
+
+// BasePath returns the normalized effective HTTP route prefix ("" when mounted at root).
+func (s *Server) BasePath() string {
+	return s.basePath
 }
 
 // NewServer validates configuration and initializes the admin HTTP/SSE API server.
@@ -99,7 +232,7 @@ func NewServer(deps ServerDeps) (*Server, error) {
 	}
 
 	adminCfg := deps.AdminConfig
-	if !adminCfg.Enabled && adminCfg.ListenAddr == "" && len(adminCfg.Users) == 0 && len(adminCfg.Roles) == 0 && adminCfg.OAuth == (components.ConfigAdminOAuth{}) {
+	if !adminCfg.Enabled && adminCfg.ListenAddr == "" && adminCfg.PublicURL == "" && adminCfg.BasePath == "" && len(adminCfg.Users) == 0 && len(adminCfg.Roles) == 0 && adminCfg.OAuth == (components.ConfigAdminOAuth{}) {
 		adminCfg = deps.Config.Admin
 	}
 
@@ -111,6 +244,27 @@ func NewServer(deps ServerDeps) (*Server, error) {
 	listenAddr := strings.TrimSpace(adminCfg.ListenAddr)
 	if listenAddr == "" {
 		listenAddr = defaultListenAddr
+	}
+
+	rawPublicURL := strings.TrimSpace(os.Getenv("ADMIN_PUBLIC_URL"))
+	if rawPublicURL == "" {
+		rawPublicURL = strings.TrimSpace(adminCfg.PublicURL)
+	}
+	publicURL, publicPath, allowedOrigin, err := NormalizePublicURL(rawPublicURL)
+	if err != nil {
+		return nil, err
+	}
+
+	rawBasePath := strings.TrimSpace(os.Getenv("ADMIN_BASE_PATH"))
+	if rawBasePath == "" {
+		rawBasePath = strings.TrimSpace(adminCfg.BasePath)
+	}
+	basePath := publicPath
+	if rawBasePath != "" {
+		basePath, err = NormalizeBasePath(rawBasePath)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	sessionTTL := defaultSessionTTL
@@ -131,7 +285,7 @@ func NewServer(deps ServerDeps) (*Server, error) {
 		clientSecret = strings.TrimSpace(adminCfg.OAuth.ClientSecret)
 	}
 
-	redirectURL := strings.TrimSpace(adminCfg.OAuth.RedirectURL)
+	redirectURL := publicURL + "/api/v1/auth/discord/callback"
 
 	logHub := deps.LogHub
 	if logHub == nil {
@@ -161,54 +315,64 @@ func NewServer(deps ServerDeps) (*Server, error) {
 	}
 
 	s := &Server{
-		cfg:        deps.Config,
-		adminCfg:   adminCfg,
-		listenAddr: listenAddr,
-		db:         deps.DB,
-		components: deps.Components,
-		client:     deps.Client,
-		bbsSvc:     deps.BBSService,
-		bbsSync:    deps.BBSSyncer,
-		logHub:     logHub,
-		rbac:       rbac,
-		sessions:   sessions,
-		audit:      audit,
-		oauth:      oauthMgr,
-		version:    deps.Version,
-		startedAt:  startedAt,
-		mux:        http.NewServeMux(),
+		cfg:              deps.Config,
+		adminCfg:         adminCfg,
+		listenAddr:       listenAddr,
+		publicURL:        publicURL,
+		basePath:         basePath,
+		allowedOrigin:    allowedOrigin,
+		oauthRedirectURL: redirectURL,
+		db:               deps.DB,
+		components:       deps.Components,
+		client:           deps.Client,
+		bbsSvc:           deps.BBSService,
+		bbsSync:          deps.BBSSyncer,
+		logHub:           logHub,
+		rbac:             rbac,
+		sessions:         sessions,
+		audit:            audit,
+		oauth:            oauthMgr,
+		version:          deps.Version,
+		startedAt:        startedAt,
+		mux:              http.NewServeMux(),
 	}
 	s.registerRoutes()
 	return s, nil
 }
 
-func (s *Server) registerRoutes() {
-	// Unauthenticated OAuth2 handshake endpoints
-	s.mux.HandleFunc("POST /api/v1/auth/discord/start", s.handleAuthStart)
-	s.mux.HandleFunc("GET /api/v1/auth/discord/callback", s.handleAuthCallback)
-	s.mux.HandleFunc("POST /api/v1/auth/discord/poll", s.handleAuthPoll)
-
-	// Authenticated session lifecycle endpoints
-	s.mux.HandleFunc("GET /api/v1/auth/me", s.withAuth("", s.handleAuthMe))
-	s.mux.HandleFunc("POST /api/v1/auth/logout", s.withAuth("", s.handleAuthLogout))
-	s.mux.HandleFunc("GET /api/v1/auth/sessions", s.withAuth("", s.handleListSessions))
-	s.mux.HandleFunc("DELETE /api/v1/auth/sessions/{id}", s.withAuth("", s.handleRevokeSession))
-
-	// Common dashboard endpoints
-	s.mux.HandleFunc("GET /api/v1/overview", s.withAuth(PermDashboardRead, s.handleOverview))
-	s.mux.HandleFunc("GET /api/v1/logs", s.withAuth(PermLogsRead, s.handleLogs))
-	s.mux.HandleFunc("GET /api/v1/logs/stream", s.withAuth(PermLogsRead, s.handleLogsStream))
-	s.mux.HandleFunc("GET /api/v1/guilds", s.withAuth(PermGuildsRead, s.handleListGuilds))
-	s.mux.HandleFunc("GET /api/v1/guilds/{id}", s.withAuth(PermGuildsRead, s.handleGetGuild))
-	s.mux.HandleFunc("PATCH /api/v1/guilds/{id}", s.withAuth(PermGuildsWrite, s.handleUpdateGuild))
-	s.mux.HandleFunc("POST /api/v1/ops/reload-locales", s.withAuth(PermOpsExecute, s.handleOpsReloadLocales))
-	s.mux.HandleFunc("POST /api/v1/ops/sync-commands", s.withAuth(PermOpsExecute, s.handleOpsSyncCommands))
-	s.mux.HandleFunc("POST /api/v1/ops/bbs-dat-check", s.withAuth(PermOpsExecute, s.handleOpsBBSDatCheck))
-	s.mux.HandleFunc("GET /api/v1/audit", s.withAuth(PermAuditRead, s.handleListAuditLogs))
+func (s *Server) handle(method, pattern string, h http.HandlerFunc) {
+	s.mux.HandleFunc(method+" "+s.basePath+pattern, h)
 }
 
-// Handler returns the root HTTP handler wrapped with panic recovery and security headers.
+func (s *Server) registerRoutes() {
+	// Unauthenticated OAuth2 handshake endpoints
+	s.handle(http.MethodPost, "/api/v1/auth/discord/start", s.handleAuthStart)
+	s.handle(http.MethodGet, "/api/v1/auth/discord/callback", s.handleAuthCallback)
+	s.handle(http.MethodPost, "/api/v1/auth/discord/poll", s.handleAuthPoll)
+
+	// Authenticated session lifecycle endpoints
+	s.handle(http.MethodGet, "/api/v1/auth/me", s.withAuth("", s.handleAuthMe))
+	s.handle(http.MethodPost, "/api/v1/auth/logout", s.withAuth("", s.handleAuthLogout))
+	s.handle(http.MethodGet, "/api/v1/auth/sessions", s.withAuth("", s.handleListSessions))
+	s.handle(http.MethodDelete, "/api/v1/auth/sessions/{id}", s.withAuth("", s.handleRevokeSession))
+
+	// Common dashboard endpoints
+	s.handle(http.MethodGet, "/api/v1/overview", s.withAuth(PermDashboardRead, s.handleOverview))
+	s.handle(http.MethodGet, "/api/v1/logs", s.withAuth(PermLogsRead, s.handleLogs))
+	s.handle(http.MethodGet, "/api/v1/logs/stream", s.withAuth(PermLogsRead, s.handleLogsStream))
+	s.handle(http.MethodGet, "/api/v1/guilds", s.withAuth(PermGuildsRead, s.handleListGuilds))
+	s.handle(http.MethodGet, "/api/v1/guilds/{id}", s.withAuth(PermGuildsRead, s.handleGetGuild))
+	s.handle(http.MethodPatch, "/api/v1/guilds/{id}", s.withAuth(PermGuildsWrite, s.handleUpdateGuild))
+	s.handle(http.MethodPost, "/api/v1/ops/reload-locales", s.withAuth(PermOpsExecute, s.handleOpsReloadLocales))
+	s.handle(http.MethodPost, "/api/v1/ops/sync-commands", s.withAuth(PermOpsExecute, s.handleOpsSyncCommands))
+	s.handle(http.MethodPost, "/api/v1/ops/bbs-dat-check", s.withAuth(PermOpsExecute, s.handleOpsBBSDatCheck))
+	s.handle(http.MethodGet, "/api/v1/audit", s.withAuth(PermAuditRead, s.handleListAuditLogs))
+}
+
+// Handler returns the root HTTP handler wrapped with panic recovery, CORS/Origin enforcement, and security headers.
 func (s *Server) Handler() http.Handler {
+	callbackPath := s.basePath + "/api/v1/auth/discord/callback"
+	apiPrefix := s.basePath + "/api/v1/"
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if rec := recover(); rec != nil {
@@ -218,6 +382,28 @@ func (s *Server) Handler() http.Handler {
 		}()
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Add("Vary", "Origin")
+
+		if rawOrigin := strings.TrimSpace(r.Header.Get("Origin")); rawOrigin != "" {
+			if orig, ok := canonicalOrigin(rawOrigin); ok && orig == s.allowedOrigin {
+				w.Header().Set("Access-Control-Allow-Origin", rawOrigin)
+				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")
+				w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+				w.Header().Set("Access-Control-Max-Age", "600")
+				if r.Method == http.MethodOptions {
+					w.Header().Add("Vary", "Access-Control-Request-Method")
+					w.Header().Add("Vary", "Access-Control-Request-Headers")
+					if strings.HasPrefix(r.URL.Path, apiPrefix) {
+						w.WriteHeader(http.StatusNoContent)
+						return
+					}
+				}
+			} else if !(r.Method == http.MethodGet && r.URL.Path == callbackPath) {
+				writeError(w, http.StatusForbidden, "forbidden_origin", "origin is not allowed")
+				return
+			}
+		}
+
 		s.mux.ServeHTTP(w, r)
 	})
 }
@@ -234,9 +420,19 @@ func (s *Server) ListenAndServe(ctx context.Context) error {
 		IdleTimeout:       120 * time.Second,
 	}
 
+	displayBasePath := s.basePath
+	if displayBasePath == "" {
+		displayBasePath = "/"
+	}
+
 	errCh := make(chan error, 1)
 	go func() {
-		slog.Info("管理APIサーバーを起動しました", "addr", ln.Addr().String())
+		slog.Info("管理APIサーバーを起動しました",
+			"addr", ln.Addr().String(),
+			"base_path", displayBasePath,
+			"public_url", s.publicURL,
+			"oauth_redirect_url", s.oauthRedirectURL,
+		)
 		if serveErr := srv.Serve(ln); serveErr != nil && !errors.Is(serveErr, http.ErrServerClosed) {
 			errCh <- serveErr
 			return

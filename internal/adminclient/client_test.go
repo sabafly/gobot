@@ -126,13 +126,16 @@ func TestClient_EndToEnd_REST_And_SSE(t *testing.T) {
 	})
 	hub := admin.NewLogHub(100)
 
+	t.Setenv("ADMIN_PUBLIC_URL", "")
+	t.Setenv("ADMIN_BASE_PATH", "")
+
 	srv, err := admin.NewServer(admin.ServerDeps{
 		Config: components.Config{LocaleDir: "../../locales"},
 		AdminConfig: components.ConfigAdmin{
-			Enabled: true,
+			Enabled:   true,
+			PublicURL: "http://127.0.0.1:8080",
 			OAuth: components.ConfigAdminOAuth{
 				ClientSecret: "sec",
-				RedirectURL:  "http://127.0.0.1:8080/api/v1/auth/discord/callback",
 			},
 			Users: []components.ConfigAdminUser{{UserID: snowflake.ID(1001), Role: admin.RoleSuperAdmin}},
 		},
@@ -269,8 +272,11 @@ func TestFileSessionStore(t *testing.T) {
 	if err != nil || !ok || got.Token != "tok-abc" || got.Role != admin.RoleSuperAdmin {
 		t.Fatalf("unexpected loaded session: got=%+v ok=%v err=%v", got, ok, err)
 	}
-	if err := store.Save("https://bot.ts.net", adminclient.StoredSession{Token: "tok-ts"}); err != nil {
-		t.Fatalf("Save second URL failed: %v", err)
+	if err := store.Save("https://dash.sabafly.net/gobot/beta/", adminclient.StoredSession{Token: "tok-beta"}); err != nil {
+		t.Fatalf("Save beta URL failed: %v", err)
+	}
+	if err := store.Save("https://dash.sabafly.net/gobot/prod", adminclient.StoredSession{Token: "tok-prod"}); err != nil {
+		t.Fatalf("Save prod URL failed: %v", err)
 	}
 	if err := store.Delete("http://127.0.0.1:8080"); err != nil {
 		t.Fatalf("Delete failed: %v", err)
@@ -278,7 +284,150 @@ func TestFileSessionStore(t *testing.T) {
 	if _, ok, _ := store.Get("http://127.0.0.1:8080"); ok {
 		t.Fatal("expected first URL session deleted")
 	}
-	if got2, ok2, _ := store.Get("https://bot.ts.net"); !ok2 || got2.Token != "tok-ts" {
-		t.Fatalf("expected second URL session preserved, got=%+v ok=%v", got2, ok2)
+	if gotBeta, okBeta, _ := store.Get("https://dash.sabafly.net/gobot/beta"); !okBeta || gotBeta.Token != "tok-beta" {
+		t.Fatalf("expected beta subpath session preserved, got=%+v ok=%v", gotBeta, okBeta)
+	}
+	if gotProd, okProd, _ := store.Get("https://dash.sabafly.net/gobot/prod/"); !okProd || gotProd.Token != "tok-prod" {
+		t.Fatalf("expected prod subpath session preserved independently, got=%+v ok=%v", gotProd, okProd)
+	}
+	if err := store.Delete("https://dash.sabafly.net/gobot/beta"); err != nil {
+		t.Fatalf("Delete beta failed: %v", err)
+	}
+	if _, ok, _ := store.Get("https://dash.sabafly.net/gobot/beta"); ok {
+		t.Fatal("expected beta session deleted")
+	}
+	if gotProd, okProd, _ := store.Get("https://dash.sabafly.net/gobot/prod"); !okProd || gotProd.Token != "tok-prod" {
+		t.Fatalf("expected prod session still intact after deleting beta, got=%+v ok=%v", gotProd, okProd)
+	}
+}
+
+func TestClient_EndToEnd_WithBasePath(t *testing.T) {
+	t.Setenv("ADMIN_PUBLIC_URL", "")
+	t.Setenv("ADMIN_BASE_PATH", "")
+	if err := i18n.LoadLocales("../../locales"); err != nil {
+		t.Fatalf("LoadLocales failed: %v", err)
+	}
+	gdb, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("open sqlite failed: %v", err)
+	}
+	sqlDB, _ := gdb.DB()
+	sqlDB.SetMaxOpenConns(1)
+	t.Cleanup(func() { _ = sqlDB.Close() })
+
+	createSQLiteTable(t, gdb, &models.User{})
+	createSQLiteTable(t, gdb, &models.Guild{})
+	if err := gdb.AutoMigrate(&models.AdminSession{}, &models.AdminAuditLog{}); err != nil {
+		t.Fatalf("automigrate failed: %v", err)
+	}
+
+	db := &database.DB{DB: gdb}
+	guildID := snowflake.ID(700002)
+	gdb.Create(&models.Guild{ID: guildID, Name: "BasePathGuild"})
+
+	discordMock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/oauth2/token":
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{"access_token": "tok-bp"})
+		case "/users/@me":
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{"id": "1001", "username": "opbp", "global_name": "Op BasePath"})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer discordMock.Close()
+
+	comp := components.New(context.Background(), components.Config{LocaleDir: "../../locales"}, db)
+	client := &bot.Client{
+		ApplicationID: snowflake.ID(999000),
+		Caches:        cache.New(cache.WithCaches(cache.FlagsAll)),
+	}
+	client.Caches.AddGuild(discord.CacheGuild{
+		Guild: discord.Guild{ID: guildID, Name: "BasePathGuild", PreferredLocale: "en-US"},
+	})
+	hub := admin.NewLogHub(50)
+
+	srv, err := admin.NewServer(admin.ServerDeps{
+		Config: components.Config{LocaleDir: "../../locales"},
+		AdminConfig: components.ConfigAdmin{
+			Enabled:   true,
+			PublicURL: "https://dash.sabafly.net/gobot/beta",
+			OAuth: components.ConfigAdminOAuth{
+				ClientSecret: "sec",
+			},
+			Users: []components.ConfigAdminUser{{UserID: snowflake.ID(1001), Role: admin.RoleSuperAdmin}},
+		},
+		DB:                 db,
+		Components:         comp,
+		Client:             client,
+		LogHub:             hub,
+		Version:            "v-bp",
+		OAuthAPIBase:       discordMock.URL,
+		OAuthAuthorizeBase: discordMock.URL + "/oauth2/authorize",
+		OAuthHTTPClient:    discordMock.Client(),
+	})
+	if err != nil {
+		t.Fatalf("NewServer failed: %v", err)
+	}
+	if srv.BasePath() != "/gobot/beta" {
+		t.Fatalf("expected inherited basePath /gobot/beta, got %q", srv.BasePath())
+	}
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+
+	ctx := context.Background()
+	c := adminclient.New(ts.URL+"/gobot/beta/", "")
+	start, err := c.StartDiscordLogin(ctx, "bp-tui")
+	if err != nil {
+		t.Fatalf("StartDiscordLogin failed: %v", err)
+	}
+	parsedAuth, _ := url.Parse(start.AuthorizeURL)
+	cbResp, err := http.Get(fmt.Sprintf("%s/gobot/beta/api/v1/auth/discord/callback?code=c1&state=%s", ts.URL, url.QueryEscape(parsedAuth.Query().Get("state"))))
+	if err != nil {
+		t.Fatalf("callback failed: %v", err)
+	}
+	_ = cbResp.Body.Close()
+
+	poll, err := c.PollDiscordLogin(ctx, start.LoginID, start.PollSecret)
+	if err != nil || poll.Status != "approved" || poll.SessionToken == "" {
+		t.Fatalf("PollDiscordLogin failed: poll=%+v err=%v", poll, err)
+	}
+	c.Token = poll.SessionToken
+
+	if me, err := c.Me(ctx); err != nil || me.Username != "opbp" {
+		t.Fatalf("Me failed: me=%+v err=%v", me, err)
+	}
+	if ov, err := c.Overview(ctx); err != nil || ov.Version != "v-bp" {
+		t.Fatalf("Overview failed: ov=%+v err=%v", ov, err)
+	}
+	ja := "ja"
+	if gd, err := c.UpdateGuild(ctx, guildID.String(), admin.UpdateGuildRequest{LocaleOverride: &ja}); err != nil || gd.Guild.LocaleOverride != "ja" {
+		t.Fatalf("UpdateGuild failed: gd=%+v err=%v", gd, err)
+	}
+
+	streamCtx, streamCancel := context.WithTimeout(ctx, 3*time.Second)
+	defer streamCancel()
+	go func() {
+		time.Sleep(40 * time.Millisecond)
+		hub.Append(admin.LogEntry{Level: "INFO", Message: "subpath sse line"})
+	}()
+	var gotSSE string
+	err = c.StreamLogs(streamCtx, admin.LogFilter{MinLevel: "INFO"}, func(e admin.LogEntry) error {
+		if e.Message == "subpath sse line" {
+			gotSSE = e.Message
+			streamCancel()
+		}
+		return nil
+	})
+	if err != nil && !errors.Is(err, context.Canceled) {
+		t.Fatalf("StreamLogs failed: %v", err)
+	}
+	if gotSSE != "subpath sse line" {
+		t.Fatalf("expected SSE line under base_path, got %q", gotSSE)
+	}
+	if err := c.Logout(ctx); err != nil {
+		t.Fatalf("Logout failed: %v", err)
 	}
 }

@@ -288,6 +288,8 @@ func doJSONReq(t *testing.T, method, targetURL, token string, body any) (int, []
 func TestAdminServer_OAuthFlow_RBAC_CommonEndpoints(t *testing.T) {
 	t.Setenv("ADMIN_DISCORD_CLIENT_SECRET", "")
 	t.Setenv("DISCORD_CLIENT_SECRET", "")
+	t.Setenv("ADMIN_PUBLIC_URL", "")
+	t.Setenv("ADMIN_BASE_PATH", "")
 	if err := i18n.LoadLocales("../../locales"); err != nil {
 		t.Fatalf("LoadLocales failed: %v", err)
 	}
@@ -295,12 +297,13 @@ func TestAdminServer_OAuthFlow_RBAC_CommonEndpoints(t *testing.T) {
 	db := newTestAdminDB(t)
 	ctx := context.Background()
 
-	// Fail closed when client secret / redirect is missing.
+	// Fail closed when client secret / public_url is missing.
 	if _, err := admin.NewServer(admin.ServerDeps{
 		DB: db,
 		AdminConfig: components.ConfigAdmin{
-			Enabled: true,
-			OAuth:   components.ConfigAdminOAuth{ClientID: "999000", RedirectURL: "http://127.0.0.1:8080/api/v1/auth/discord/callback"},
+			Enabled:   true,
+			PublicURL: "http://127.0.0.1:8080",
+			OAuth:     components.ConfigAdminOAuth{ClientID: "999000"},
 		},
 	}); err == nil {
 		t.Fatal("expected fail-closed error when client_secret is missing")
@@ -347,10 +350,10 @@ func TestAdminServer_OAuthFlow_RBAC_CommonEndpoints(t *testing.T) {
 	srv, err := admin.NewServer(admin.ServerDeps{
 		Config: components.Config{LocaleDir: "../../locales"},
 		AdminConfig: components.ConfigAdmin{
-			Enabled: true,
+			Enabled:   true,
+			PublicURL: "http://127.0.0.1:8080",
 			OAuth: components.ConfigAdminOAuth{
 				ClientSecret: "oauth-test-secret",
-				RedirectURL:  "http://127.0.0.1:8080/api/v1/auth/discord/callback",
 			},
 			Users: []components.ConfigAdminUser{
 				{UserID: snowflake.ID(1001), Role: admin.RoleSuperAdmin},
@@ -581,5 +584,319 @@ func TestAdminServer_OAuthFlow_RBAC_CommonEndpoints(t *testing.T) {
 	}
 	if !foundLive {
 		t.Fatal("expected live SSE log entry before timeout")
+	}
+}
+
+func TestNormalizeBasePathAndPublicURL(t *testing.T) {
+	validBasePaths := []struct {
+		in   string
+		want string
+	}{
+		{"", ""},
+		{"   ", ""},
+		{"/", ""},
+		{" / ", ""},
+		{"/gobot/beta", "/gobot/beta"},
+		{"/gobot/beta/", "/gobot/beta"},
+		{"gobot/beta", "/gobot/beta"},
+		{" /gobot/v1-beta/ ", "/gobot/v1-beta"},
+	}
+	for _, tc := range validBasePaths {
+		got, err := admin.NormalizeBasePath(tc.in)
+		if err != nil {
+			t.Fatalf("NormalizeBasePath(%q) unexpected error: %v", tc.in, err)
+		}
+		if got != tc.want {
+			t.Fatalf("NormalizeBasePath(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
+
+	invalidBasePaths := []string{
+		"https://example.com/a",
+		"/a//b",
+		"//",
+		"/a/./b",
+		"/a/../b",
+		"..",
+		".",
+		"/a?x=1",
+		"/a#frag",
+		"/a/{id}",
+		"/a b",
+		"/a%20b",
+		"/a\\b",
+	}
+	for _, raw := range invalidBasePaths {
+		if got, err := admin.NormalizeBasePath(raw); err == nil {
+			t.Fatalf("NormalizeBasePath(%q) expected error, got %q", raw, got)
+		}
+	}
+
+	validPublicURLs := []struct {
+		in         string
+		wantURL    string
+		wantPath   string
+		wantOrigin string
+	}{
+		{"https://dash.sabafly.net/gobot/beta", "https://dash.sabafly.net/gobot/beta", "/gobot/beta", "https://dash.sabafly.net"},
+		{"https://DASH.SABAFLY.NET:443/gobot/beta/", "https://dash.sabafly.net/gobot/beta", "/gobot/beta", "https://dash.sabafly.net"},
+		{"http://127.0.0.1:8080/", "http://127.0.0.1:8080", "", "http://127.0.0.1:8080"},
+		{"http://127.0.0.1:80", "http://127.0.0.1", "", "http://127.0.0.1"},
+		{"http://[::1]:8080/admin", "http://[::1]:8080/admin", "/admin", "http://[::1]:8080"},
+	}
+	for _, tc := range validPublicURLs {
+		gotURL, gotPath, gotOrig, err := admin.NormalizePublicURL(tc.in)
+		if err != nil {
+			t.Fatalf("NormalizePublicURL(%q) unexpected error: %v", tc.in, err)
+		}
+		if gotURL != tc.wantURL || gotPath != tc.wantPath || gotOrig != tc.wantOrigin {
+			t.Fatalf("NormalizePublicURL(%q) = (%q, %q, %q), want (%q, %q, %q)",
+				tc.in, gotURL, gotPath, gotOrig, tc.wantURL, tc.wantPath, tc.wantOrigin)
+		}
+	}
+
+	invalidPublicURLs := []string{
+		"",
+		"   ",
+		"/gobot/beta",
+		"ftp://example.com",
+		"https://user:pass@example.com",
+		"https://example.com/a?x=1",
+		"https://example.com/a#f",
+		"https://example.com/a/../b",
+		"https://example.com/a//b",
+		"https://example.com:",
+		"https://example.com/a%20b",
+	}
+	for _, raw := range invalidPublicURLs {
+		if u, p, o, err := admin.NormalizePublicURL(raw); err == nil {
+			t.Fatalf("NormalizePublicURL(%q) expected error, got (%q, %q, %q)", raw, u, p, o)
+		}
+	}
+}
+
+func TestAdminServer_PublicURL_BasePath_EnvAndCORS(t *testing.T) {
+	t.Setenv("ADMIN_DISCORD_CLIENT_SECRET", "")
+	t.Setenv("DISCORD_CLIENT_SECRET", "")
+	t.Setenv("ADMIN_PUBLIC_URL", "")
+	t.Setenv("ADMIN_BASE_PATH", "")
+
+	db := newTestAdminDB(t)
+	discordMock := newMockDiscordOAuthServer(t, "secret-bp")
+	defer discordMock.Close()
+
+	guildID := snowflake.ID(888001)
+	if err := db.DB.Create(&models.Guild{ID: guildID, Name: "BetaGuild"}).Error; err != nil {
+		t.Fatalf("create guild failed: %v", err)
+	}
+	comp := components.New(context.Background(), components.Config{}, db)
+	client := &bot.Client{
+		ApplicationID: snowflake.ID(999000),
+		Caches:        cache.New(cache.WithCaches(cache.FlagsAll)),
+	}
+	client.Caches.AddGuild(discord.CacheGuild{
+		Guild: discord.Guild{ID: guildID, Name: "BetaGuild", PreferredLocale: "en-US"},
+	})
+
+	newTestServer := func(publicURL, basePath string) (*admin.Server, error) {
+		return admin.NewServer(admin.ServerDeps{
+			DB:         db,
+			Components: comp,
+			Client:     client,
+			AdminConfig: components.ConfigAdmin{
+				Enabled:   true,
+				PublicURL: publicURL,
+				BasePath:  basePath,
+				OAuth:     components.ConfigAdminOAuth{ClientSecret: "secret-bp"},
+				Users:     []components.ConfigAdminUser{{UserID: snowflake.ID(1001), Role: admin.RoleSuperAdmin}},
+			},
+			OAuthAPIBase:       discordMock.URL,
+			OAuthAuthorizeBase: discordMock.URL + "/oauth2/authorize",
+			OAuthHTTPClient:    discordMock.Client(),
+		})
+	}
+
+	// Fail closed on missing/invalid public_url or invalid base_path.
+	for _, tc := range []struct {
+		pub  string
+		base string
+	}{
+		{"", ""},
+		{"/relative-only", ""},
+		{"https://dash.sabafly.net/gobot/beta", "https://dash.sabafly.net/gobot/beta"},
+		{"https://dash.sabafly.net/gobot/beta", "/a/../b"},
+	} {
+		if srv, err := newTestServer(tc.pub, tc.base); err == nil || srv != nil {
+			t.Fatalf("expected fail-closed error for public_url=%q base_path=%q, got srv=%v", tc.pub, tc.base, srv)
+		}
+	}
+
+	// 1. Inherited base_path from public_url + strict routing + CORS/Origin verification.
+	srv, err := newTestServer("https://dash.sabafly.net/gobot/beta/", "")
+	if err != nil {
+		t.Fatalf("newTestServer failed: %v", err)
+	}
+	if srv.PublicURL() != "https://dash.sabafly.net/gobot/beta" || srv.BasePath() != "/gobot/beta" {
+		t.Fatalf("unexpected resolved server config: publicURL=%q basePath=%q", srv.PublicURL(), srv.BasePath())
+	}
+
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+
+	// Complete full OAuth flow and check redirect_uri + overview + {id} route under base_path.
+	st, startRaw := doJSONReq(t, http.MethodPost, ts.URL+"/gobot/beta/api/v1/auth/discord/start", "", admin.AuthStartRequest{ClientInfo: "bp-test"})
+	if st != http.StatusOK {
+		t.Fatalf("start under base_path failed: %d %s", st, startRaw)
+	}
+	var startResp admin.AuthStartResponse
+	_ = json.Unmarshal(startRaw, &startResp)
+	authU, _ := url.Parse(startResp.AuthorizeURL)
+	wantRedirect := "https://dash.sabafly.net/gobot/beta/api/v1/auth/discord/callback"
+	if gotRedirect := authU.Query().Get("redirect_uri"); gotRedirect != wantRedirect {
+		t.Fatalf("authorize redirect_uri = %q, want %q", gotRedirect, wantRedirect)
+	}
+	cbResp, err := http.Get(fmt.Sprintf("%s/gobot/beta/api/v1/auth/discord/callback?code=code-super&state=%s", ts.URL, url.QueryEscape(authU.Query().Get("state"))))
+	if err != nil {
+		t.Fatalf("callback under base_path failed: %v", err)
+	}
+	_ = cbResp.Body.Close()
+	if cbResp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 callback, got %d", cbResp.StatusCode)
+	}
+	pollStatus, pollRaw := doJSONReq(t, http.MethodPost, ts.URL+"/gobot/beta/api/v1/auth/discord/poll", "", admin.AuthPollRequest{
+		LoginID:    startResp.LoginID,
+		PollSecret: startResp.PollSecret,
+	})
+	if pollStatus != http.StatusOK {
+		t.Fatalf("poll failed: %d %s", pollStatus, pollRaw)
+	}
+	var pollResp admin.AuthPollResponse
+	_ = json.Unmarshal(pollRaw, &pollResp)
+
+	if ovSt, _ := doJSONReq(t, http.MethodGet, ts.URL+"/gobot/beta/api/v1/overview", pollResp.SessionToken, nil); ovSt != http.StatusOK {
+		t.Fatalf("expected 200 on /gobot/beta/api/v1/overview, got %d", ovSt)
+	}
+	if gSt, _ := doJSONReq(t, http.MethodGet, ts.URL+"/gobot/beta/api/v1/guilds/"+guildID.String(), pollResp.SessionToken, nil); gSt != http.StatusOK {
+		t.Fatalf("expected 200 on /gobot/beta/api/v1/guilds/{id}, got %d", gSt)
+	}
+
+	// Strict prefix isolation: root, partial-segment overlap, and bare prefix must 404.
+	for _, missPath := range []string{"/api/v1/overview", "/gobot/beta2/api/v1/overview", "/gobot/beta"} {
+		missSt, _ := doJSONReq(t, http.MethodGet, ts.URL+missPath, pollResp.SessionToken, nil)
+		if missSt != http.StatusNotFound {
+			t.Fatalf("expected 404 for %s, got %d", missPath, missSt)
+		}
+	}
+
+	// CORS / Origin enforcement.
+	runHTTP := func(method, target, origin string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(method, target, nil)
+		if origin != "" {
+			req.Header.Set("Origin", origin)
+		}
+		rec := httptest.NewRecorder()
+		srv.Handler().ServeHTTP(rec, req)
+		return rec
+	}
+
+	noOrig := runHTTP(http.MethodGet, "/gobot/beta/api/v1/overview", "")
+	if noOrig.Code != http.StatusUnauthorized || !slices.Contains(noOrig.Header().Values("Vary"), "Origin") || noOrig.Header().Get("Access-Control-Allow-Origin") != "" {
+		t.Fatalf("unexpected no-Origin response: code=%d headers=%v", noOrig.Code, noOrig.Header())
+	}
+
+	matchOrig := runHTTP(http.MethodGet, "/gobot/beta/api/v1/overview", "https://dash.sabafly.net")
+	if matchOrig.Header().Get("Access-Control-Allow-Origin") != "https://dash.sabafly.net" {
+		t.Fatalf("expected ACAO for matching origin, got %q", matchOrig.Header().Get("Access-Control-Allow-Origin"))
+	}
+
+	preflightOK := runHTTP(http.MethodOptions, "/gobot/beta/api/v1/overview", "https://dash.sabafly.net")
+	if preflightOK.Code != http.StatusNoContent ||
+		preflightOK.Header().Get("Access-Control-Allow-Methods") == "" ||
+		preflightOK.Header().Get("Access-Control-Allow-Headers") == "" ||
+		preflightOK.Header().Get("Access-Control-Max-Age") != "600" {
+		t.Fatalf("unexpected matching OPTIONS preflight: code=%d headers=%v", preflightOK.Code, preflightOK.Header())
+	}
+
+	preflightOut := runHTTP(http.MethodOptions, "/api/v1/overview", "https://dash.sabafly.net")
+	if preflightOut.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 for OPTIONS outside base_path, got %d", preflightOut.Code)
+	}
+
+	for _, badCase := range []struct {
+		method string
+		path   string
+		origin string
+	}{
+		{http.MethodGet, "/gobot/beta/api/v1/overview", "https://evil.example"},
+		{http.MethodOptions, "/gobot/beta/api/v1/overview", "https://evil.example"},
+		{http.MethodGet, "/gobot/beta/api/v1/overview", "null"},
+	} {
+		rec := runHTTP(badCase.method, badCase.path, badCase.origin)
+		if rec.Code != http.StatusForbidden {
+			t.Fatalf("%s %s (Origin=%q): expected 403, got %d", badCase.method, badCase.path, badCase.origin, rec.Code)
+		}
+		if rec.Header().Get("Access-Control-Allow-Origin") != "" {
+			t.Fatalf("%s %s: unexpected ACAO on rejected origin", badCase.method, badCase.path)
+		}
+		var errEnv admin.ErrorResponse
+		_ = json.Unmarshal(rec.Body.Bytes(), &errEnv)
+		if errEnv.Error.Code != "forbidden_origin" {
+			t.Fatalf("expected error code forbidden_origin, got %+v", errEnv)
+		}
+	}
+
+	for _, cbOrigin := range []string{"https://evil.example", "null"} {
+		cbRec := runHTTP(http.MethodGet, "/gobot/beta/api/v1/auth/discord/callback?state=bad", cbOrigin)
+		if cbRec.Code != http.StatusBadRequest {
+			t.Fatalf("OAuth callback with Origin=%q should bypass CORS 403 and reach handler (400), got %d", cbOrigin, cbRec.Code)
+		}
+		if cbRec.Header().Get("Access-Control-Allow-Origin") != "" {
+			t.Fatalf("OAuth callback with Origin=%q must not emit ACAO", cbOrigin)
+		}
+	}
+
+	// 2. Explicit base_path: "/" strips subpath for listener while keeping full redirect_uri.
+	srvRoot, err := newTestServer("https://dash.sabafly.net/gobot/beta", "/")
+	if err != nil {
+		t.Fatalf("newTestServer root override failed: %v", err)
+	}
+	if srvRoot.BasePath() != "" {
+		t.Fatalf("expected root BasePath \"\", got %q", srvRoot.BasePath())
+	}
+	tsRoot := httptest.NewServer(srvRoot.Handler())
+	defer tsRoot.Close()
+
+	stRoot, rawRoot := doJSONReq(t, http.MethodPost, tsRoot.URL+"/api/v1/auth/discord/start", "", admin.AuthStartRequest{})
+	if stRoot != http.StatusOK {
+		t.Fatalf("expected 200 on root start, got %d", stRoot)
+	}
+	var rootStartResp admin.AuthStartResponse
+	_ = json.Unmarshal(rawRoot, &rootStartResp)
+	rootAuthU, _ := url.Parse(rootStartResp.AuthorizeURL)
+	if got := rootAuthU.Query().Get("redirect_uri"); got != wantRedirect {
+		t.Fatalf("expected redirect_uri %q when base_path=/, got %q", wantRedirect, got)
+	}
+	if subMissSt, _ := doJSONReq(t, http.MethodGet, tsRoot.URL+"/gobot/beta/api/v1/overview", "", nil); subMissSt != http.StatusNotFound {
+		t.Fatalf("expected 404 on /gobot/beta/api/v1/overview when base_path=/, got %d", subMissSt)
+	}
+
+	// 3. Env overrides take precedence over YAML.
+	t.Setenv("ADMIN_PUBLIC_URL", "https://env.example.com/sub")
+	t.Setenv("ADMIN_BASE_PATH", "/custom")
+	srvEnv, err := newTestServer("http://127.0.0.1:8080", "/old")
+	if err != nil {
+		t.Fatalf("newTestServer env override failed: %v", err)
+	}
+	if srvEnv.PublicURL() != "https://env.example.com/sub" || srvEnv.BasePath() != "/custom" {
+		t.Fatalf("unexpected env override server: publicURL=%q basePath=%q", srvEnv.PublicURL(), srvEnv.BasePath())
+	}
+
+	t.Setenv("ADMIN_BASE_PATH", "/")
+	srvEnvRoot, err := newTestServer("http://127.0.0.1:8080", "/old")
+	if err != nil {
+		t.Fatalf("newTestServer env root override failed: %v", err)
+	}
+	if srvEnvRoot.PublicURL() != "https://env.example.com/sub" || srvEnvRoot.BasePath() != "" {
+		t.Fatalf("unexpected env root override server: publicURL=%q basePath=%q", srvEnvRoot.PublicURL(), srvEnvRoot.BasePath())
 	}
 }

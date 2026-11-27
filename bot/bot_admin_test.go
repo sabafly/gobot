@@ -42,15 +42,16 @@ import (
 func TestInitAdminServer_ConfigAndFailClosed(t *testing.T) {
 	t.Setenv("ADMIN_DISCORD_CLIENT_SECRET", "")
 	t.Setenv("DISCORD_CLIENT_SECRET", "")
+	t.Setenv("ADMIN_PUBLIC_URL", "")
+	t.Setenv("ADMIN_BASE_PATH", "")
 
 	cfgPath := filepath.Join(t.TempDir(), "gobot.yml")
 	yamlBody := `admin:
   enabled: true
   listen_addr: "127.0.0.1:18080"
+  public_url: "https://dash.sabafly.net/gobot/beta"
   session_ttl_hours: 48
   log_buffer_size: 500
-  oauth:
-    redirect_url: "http://127.0.0.1:18080/api/v1/auth/discord/callback"
   roles:
     custom_mod:
       permissions:
@@ -69,7 +70,7 @@ func TestInitAdminServer_ConfigAndFailClosed(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadConfig failed: %v", err)
 	}
-	if !cfg.Admin.Enabled || cfg.Admin.ListenAddr != "127.0.0.1:18080" || cfg.Admin.SessionTTLHours != 48 || cfg.Admin.LogBufferSize != 500 {
+	if !cfg.Admin.Enabled || cfg.Admin.ListenAddr != "127.0.0.1:18080" || cfg.Admin.PublicURL != "https://dash.sabafly.net/gobot/beta" || cfg.Admin.SessionTTLHours != 48 || cfg.Admin.LogBufferSize != 500 {
 		t.Fatalf("unexpected decoded admin config: %+v", cfg.Admin)
 	}
 	if len(cfg.Admin.Users) != 2 || cfg.Admin.Users[0].Role != "super_admin" {
@@ -93,17 +94,58 @@ func TestInitAdminServer_ConfigAndFailClosed(t *testing.T) {
 		t.Fatalf("expected fail-closed error when secret missing, got srv=%v err=%v", srv, err)
 	}
 
-	// Setting ADMIN_DISCORD_CLIENT_SECRET enables healthy creation.
+	// Setting ADMIN_DISCORD_CLIENT_SECRET enables healthy creation with inherited base_path.
 	t.Setenv("ADMIN_DISCORD_CLIENT_SECRET", "env-secret-123")
 	srv, err := initAdminServer(comp, cfg, db, client, nil, hub, "vtest", time.Now())
 	if err != nil || srv == nil {
 		t.Fatalf("expected initAdminServer success, got srv=%v err=%v", srv, err)
 	}
+	if srv.PublicURL() != "https://dash.sabafly.net/gobot/beta" || srv.BasePath() != "/gobot/beta" {
+		t.Fatalf("unexpected server urls: publicURL=%q basePath=%q", srv.PublicURL(), srv.BasePath())
+	}
 
 	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/overview", nil)
+	req := httptest.NewRequest(http.MethodGet, "/gobot/beta/api/v1/overview", nil)
 	srv.Handler().ServeHTTP(rec, req)
 	if rec.Code != http.StatusUnauthorized {
-		t.Fatalf("expected 401 unauthenticated overview, got %d", rec.Code)
+		t.Fatalf("expected 401 unauthenticated overview under base_path, got %d", rec.Code)
+	}
+
+	rec404 := httptest.NewRecorder()
+	req404 := httptest.NewRequest(http.MethodGet, "/api/v1/overview", nil)
+	srv.Handler().ServeHTTP(rec404, req404)
+	if rec404.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 without base_path, got %d", rec404.Code)
+	}
+
+	// ADMIN_BASE_PATH="/" overrides public_url subpath back to root.
+	t.Setenv("ADMIN_BASE_PATH", "/")
+	srvRoot, err := initAdminServer(comp, cfg, db, client, nil, hub, "vtest", time.Now())
+	if err != nil || srvRoot == nil {
+		t.Fatalf("expected initAdminServer with ADMIN_BASE_PATH=/ success, got srv=%v err=%v", srvRoot, err)
+	}
+	if srvRoot.BasePath() != "" {
+		t.Fatalf("expected empty root basePath, got %q", srvRoot.BasePath())
+	}
+	recRoot := httptest.NewRecorder()
+	srvRoot.Handler().ServeHTTP(recRoot, httptest.NewRequest(http.MethodGet, "/api/v1/overview", nil))
+	if recRoot.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 at root /api/v1/overview when ADMIN_BASE_PATH=/, got %d", recRoot.Code)
+	}
+	recSub404 := httptest.NewRecorder()
+	srvRoot.Handler().ServeHTTP(recSub404, httptest.NewRequest(http.MethodGet, "/gobot/beta/api/v1/overview", nil))
+	if recSub404.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 at prefixed path when ADMIN_BASE_PATH=/, got %d", recSub404.Code)
+	}
+
+	// ADMIN_PUBLIC_URL overrides YAML public_url and auto-inherits its subpath when ADMIN_BASE_PATH is unset.
+	t.Setenv("ADMIN_PUBLIC_URL", "https://override.example.com/v2/")
+	t.Setenv("ADMIN_BASE_PATH", "")
+	srvEnv, err := initAdminServer(comp, cfg, db, client, nil, hub, "vtest", time.Now())
+	if err != nil {
+		t.Fatalf("expected initAdminServer with ADMIN_PUBLIC_URL success, got err=%v", err)
+	}
+	if srvEnv.PublicURL() != "https://override.example.com/v2" || srvEnv.BasePath() != "/v2" {
+		t.Fatalf("unexpected env override result: publicURL=%q basePath=%q", srvEnv.PublicURL(), srvEnv.BasePath())
 	}
 }

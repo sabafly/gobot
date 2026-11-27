@@ -51,6 +51,8 @@ type Config struct {
 type ConfigAdmin struct {
 	Enabled         bool                       `yaml:"enabled"`
 	ListenAddr      string                     `yaml:"listen_addr"`
+	PublicURL       string                     `yaml:"public_url"`
+	BasePath        string                     `yaml:"base_path"`
 	SessionTTLHours int                        `yaml:"session_ttl_hours"`
 	LogBufferSize   int                        `yaml:"log_buffer_size"`
 	OAuth           ConfigAdminOAuth           `yaml:"oauth"`
@@ -61,7 +63,6 @@ type ConfigAdmin struct {
 type ConfigAdminOAuth struct {
 	ClientID     string `yaml:"client_id"`
 	ClientSecret string `yaml:"client_secret"`
-	RedirectURL  string `yaml:"redirect_url"`
 }
 
 type ConfigAdminRole struct {
