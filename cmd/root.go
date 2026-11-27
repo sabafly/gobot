@@ -27,6 +27,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sabafly/gobot/bot"
+	"github.com/sabafly/gobot/tui"
 )
 
 var root = &cobra.Command{
@@ -36,6 +37,7 @@ var root = &cobra.Command{
 
 func init() {
 	root.AddCommand(bot.Command())
+	root.AddCommand(tui.Command())
 }
 
 func Execute() {
