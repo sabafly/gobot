@@ -38,12 +38,16 @@ const (
 
 // LogHub stores recent slog records in a fixed-capacity ring buffer and broadcasts new records to subscribers.
 type LogHub struct {
-	mu      sync.RWMutex
-	cap     int
-	entries []LogEntry
-	nextSeq uint64
-	subs    map[uint64]chan LogEntry
-	nextSub uint64
+	mu              sync.RWMutex
+	cap             int
+	entries         []LogEntry
+	nextSeq         uint64
+	subs            map[uint64]chan LogEntry
+	nextSub         uint64
+	captureMode     string
+	captureLevel    slog.Level
+	captureExplicit bool
+	downstream      slog.Handler
 }
 
 // NewLogHub constructs a LogHub with capacity entries retained in memory.
@@ -52,11 +56,148 @@ func NewLogHub(capacity int) *LogHub {
 		capacity = defaultLogBufferSize
 	}
 	return &LogHub{
-		cap:     capacity,
-		entries: make([]LogEntry, 0, min(capacity, 256)),
-		nextSeq: 1,
-		subs:    make(map[uint64]chan LogEntry),
+		cap:         capacity,
+		entries:     make([]LogEntry, 0, min(capacity, 256)),
+		nextSeq:     1,
+		subs:        make(map[uint64]chan LogEntry),
+		captureMode: "auto",
 	}
+}
+
+// ParseLogCaptureLevel validates a runtime or config LogHub capture level ("auto", "debug", "info", "warn", "error").
+func ParseLogCaptureLevel(raw string) (mode string, level slog.Level, explicit bool, err error) {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "", "auto":
+		return "auto", 0, false, nil
+	case "debug":
+		return "debug", slog.LevelDebug, true, nil
+	case "info":
+		return "info", slog.LevelInfo, true, nil
+	case "warn", "warning":
+		return "warn", slog.LevelWarn, true, nil
+	case "error", "err":
+		return "error", slog.LevelError, true, nil
+	default:
+		return "", 0, false, fmt.Errorf("invalid log level %q (expected auto, debug, info, warn, or error)", raw)
+	}
+}
+
+// SetDownstreamHandler records the primary slog handler used to evaluate effective level in "auto" mode.
+func (h *LogHub) SetDownstreamHandler(down slog.Handler) {
+	if h == nil || down == nil {
+		return
+	}
+	h.mu.Lock()
+	h.downstream = down
+	h.mu.Unlock()
+}
+
+// SetCaptureLevel configures the minimum level mirrored into this LogHub (or "auto" to follow downstream).
+func (h *LogHub) SetCaptureLevel(raw string) (LogLevelResponse, error) {
+	mode, lvl, explicit, err := ParseLogCaptureLevel(raw)
+	if err != nil {
+		return LogLevelResponse{}, err
+	}
+	if h == nil {
+		eff := "INFO"
+		if explicit {
+			eff = formatSlogLevelUpper(lvl)
+		}
+		return LogLevelResponse{Mode: mode, EffectiveLevel: eff}, nil
+	}
+	h.mu.Lock()
+	h.captureMode = mode
+	h.captureLevel = lvl
+	h.captureExplicit = explicit
+	down := h.downstream
+	h.mu.Unlock()
+
+	return h.resolveCaptureLevel(context.Background(), mode, lvl, explicit, down), nil
+}
+
+// CaptureLevel returns the active capture mode and effective minimum log level for this LogHub.
+func (h *LogHub) CaptureLevel(ctx context.Context) LogLevelResponse {
+	if h == nil {
+		return LogLevelResponse{Mode: "auto", EffectiveLevel: "INFO"}
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	h.mu.RLock()
+	mode := h.captureMode
+	lvl := h.captureLevel
+	explicit := h.captureExplicit
+	down := h.downstream
+	h.mu.RUnlock()
+	if mode == "" {
+		mode = "auto"
+	}
+	return h.resolveCaptureLevel(ctx, mode, lvl, explicit, down)
+}
+
+func (h *LogHub) resolveCaptureLevel(ctx context.Context, mode string, lvl slog.Level, explicit bool, down slog.Handler) LogLevelResponse {
+	if explicit {
+		return LogLevelResponse{
+			Mode:           mode,
+			EffectiveLevel: formatSlogLevelUpper(lvl),
+		}
+	}
+	eff := "INFO"
+	if down != nil {
+		switch {
+		case down.Enabled(ctx, slog.LevelDebug):
+			eff = "DEBUG"
+		case down.Enabled(ctx, slog.LevelInfo):
+			eff = "INFO"
+		case down.Enabled(ctx, slog.LevelWarn):
+			eff = "WARN"
+		case down.Enabled(ctx, slog.LevelError):
+			eff = "ERROR"
+		default:
+			eff = "OFF"
+		}
+	}
+	return LogLevelResponse{
+		Mode:           mode,
+		EffectiveLevel: eff,
+	}
+}
+
+func formatSlogLevelUpper(lvl slog.Level) string {
+	switch {
+	case lvl <= slog.LevelDebug:
+		return "DEBUG"
+	case lvl <= slog.LevelInfo:
+		return "INFO"
+	case lvl <= slog.LevelWarn:
+		return "WARN"
+	default:
+		return "ERROR"
+	}
+}
+
+// ShouldCapture reports whether a record at level should be stored in this LogHub.
+func (h *LogHub) ShouldCapture(ctx context.Context, downstream slog.Handler, level slog.Level) bool {
+	if h == nil {
+		return false
+	}
+	h.mu.RLock()
+	explicit := h.captureExplicit
+	capLevel := h.captureLevel
+	fallbackDown := h.downstream
+	h.mu.RUnlock()
+
+	if explicit {
+		return level >= capLevel
+	}
+	down := downstream
+	if down == nil {
+		down = fallbackDown
+	}
+	if down == nil {
+		return level >= slog.LevelInfo
+	}
+	return down.Enabled(ctx, level)
 }
 
 // SetCapacity resizes the ring buffer while preserving the most recent entries up to capacity.
@@ -144,10 +285,16 @@ func (h *LogHub) List(filter LogFilter) ([]LogEntry, uint64) {
 		}
 		matched = append(matched, e)
 	}
+	nextSeq := h.nextSeq
 	if len(matched) > limit {
-		matched = matched[len(matched)-limit:]
+		if filter.AfterSeq > 0 {
+			matched = matched[:limit]
+			nextSeq = matched[len(matched)-1].Seq + 1
+		} else {
+			matched = matched[len(matched)-limit:]
+		}
 	}
-	return matched, h.nextSeq
+	return matched, nextSeq
 }
 
 // MatchLogEntry reports whether entry satisfies minLevel and query filters.
@@ -231,6 +378,9 @@ type TeeHandler struct {
 
 // NewTeeHandler returns an slog.Handler that forwards to downstream and mirrors records into hub.
 func NewTeeHandler(downstream slog.Handler, hub *LogHub) slog.Handler {
+	if hub != nil && downstream != nil {
+		hub.SetDownstreamHandler(downstream)
+	}
 	return &TeeHandler{
 		downstream: downstream,
 		hub:        hub,
@@ -239,7 +389,8 @@ func NewTeeHandler(downstream slog.Handler, hub *LogHub) slog.Handler {
 
 func (t *TeeHandler) Enabled(ctx context.Context, level slog.Level) bool {
 	downOK := t.downstream != nil && t.downstream.Enabled(ctx, level)
-	return downOK || t.hub != nil
+	hubOK := t.hub != nil && t.hub.ShouldCapture(ctx, t.downstream, level)
+	return downOK || hubOK
 }
 
 func (t *TeeHandler) Handle(ctx context.Context, r slog.Record) error {
@@ -247,7 +398,7 @@ func (t *TeeHandler) Handle(ctx context.Context, r slog.Record) error {
 	if t.downstream != nil && t.downstream.Enabled(ctx, r.Level) {
 		err = t.downstream.Handle(ctx, r)
 	}
-	if t.hub != nil {
+	if t.hub != nil && t.hub.ShouldCapture(ctx, t.downstream, r.Level) {
 		attrs := make(map[string]any, len(t.attrs)+r.NumAttrs())
 		prefix := strings.Join(t.groups, ".")
 		for _, a := range t.attrs {

@@ -34,6 +34,7 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/snowflake/v2"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func (c *Components) OnGuildReady() func(event *events.GuildReady) {
@@ -251,7 +252,26 @@ func (c *Components) GuildLocaleOverride(ctx context.Context, guildID snowflake.
 	if c == nil || c.gormDb == nil || c.gormDb.DB == nil || guildID == 0 {
 		return ""
 	}
-	return database.GetGuildLocaleOverride(ctx, c.gormDb.DB, guildID)
+	c.guildLocaleCacheMu.RLock()
+	if c.guildLocaleCache != nil {
+		if cached, ok := c.guildLocaleCache[guildID]; ok {
+			c.guildLocaleCacheMu.RUnlock()
+			return cached
+		}
+	}
+	c.guildLocaleCacheMu.RUnlock()
+
+	loc, err := database.LookupGuildLocaleOverride(ctx, c.gormDb.DB, guildID)
+	if err != nil {
+		return ""
+	}
+	c.guildLocaleCacheMu.Lock()
+	if c.guildLocaleCache == nil {
+		c.guildLocaleCache = make(map[snowflake.ID]discord.Locale)
+	}
+	c.guildLocaleCache[guildID] = loc
+	c.guildLocaleCacheMu.Unlock()
+	return loc
 }
 
 // SetGuildLocaleOverride sets or clears (when locale is empty) the explicit gobot locale override for guildID.
@@ -265,15 +285,27 @@ func (c *Components) SetGuildLocaleOverride(ctx context.Context, guildID snowfla
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	db := c.gormDb.DB.WithContext(ctx)
-	var g models.Guild
-	if err := db.FirstOrCreate(&g, models.Guild{ID: guildID}).Error; err != nil {
-		return err
-	}
 	if locale == discord.LocaleUnknown {
 		locale = ""
 	}
-	return db.Model(&models.Guild{}).Where("id = ?", guildID).Update("locale_override", string(locale)).Error
+	db := c.gormDb.DB.WithContext(ctx)
+	row := models.Guild{
+		ID:             guildID,
+		LocaleOverride: locale,
+	}
+	if err := db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"locale_override"}),
+	}).Create(&row).Error; err != nil {
+		return err
+	}
+	c.guildLocaleCacheMu.Lock()
+	if c.guildLocaleCache == nil {
+		c.guildLocaleCache = make(map[snowflake.ID]discord.Locale)
+	}
+	c.guildLocaleCache[guildID] = locale
+	c.guildLocaleCacheMu.Unlock()
+	return nil
 }
 
 // ResolveGuildLocale returns the effective locale for guildID:

@@ -138,6 +138,15 @@ type LogsResponse struct {
 	NextSeq uint64     `json:"next_seq"`
 }
 
+type LogLevelResponse struct {
+	Mode           string `json:"mode"`
+	EffectiveLevel string `json:"effective_level"`
+}
+
+type UpdateLogLevelRequest struct {
+	Level string `json:"level"`
+}
+
 type ShardStatus struct {
 	ShardID   int    `json:"shard_id"`
 	Status    string `json:"status"`

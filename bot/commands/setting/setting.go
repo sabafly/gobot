@@ -827,10 +827,33 @@ func formatGuildLocaleView(c *components.Components, event *events.ApplicationCo
 	} else if event.GuildID() != nil {
 		gid = *event.GuildID()
 	}
-	effective := c.ResolveGuildLocaleWithInteraction(c.Ctx(), event.Client(), gid, event.GuildLocale(), event.Locale())
+	effective := c.ResolveGuildLocaleWithInteraction(c.Ctx(), event.Client(), gid, event.GuildLocale(), i18n.DefaultLocale())
 	return i18n.TranslateText(event.Locale(), "components.setting.locale.view.auto", map[string]any{
 		"locale": i18n.LocaleDisplayName(effective),
 	})
+}
+
+func sendSettingLocaleResponse(event *events.ApplicationCommandInteractionCreate, deferred bool, content string) errors.Error {
+	if deferred && event.Client() != nil && event.Client().Rest != nil {
+		if _, err := event.Client().Rest.UpdateInteractionResponse(
+			event.ApplicationID(),
+			event.Token(),
+			discordutil.NewMessageBuilder().
+				SetContent(content).
+				BuildUpdate(),
+		); err != nil {
+			return errors.NewError(err)
+		}
+		return nil
+	}
+	if err := event.CreateMessage(
+		discordutil.NewMessageBuilder().
+			SetContent(content).
+			BuildCreate(),
+	); err != nil {
+		return errors.NewError(err)
+	}
+	return nil
 }
 
 func handleSettingLocale(c *components.Components, event *events.ApplicationCommandInteractionCreate) errors.Error {
@@ -840,50 +863,58 @@ func handleSettingLocale(c *components.Components, event *events.ApplicationComm
 	guildID := *event.GuildID()
 	rawLocale, ok := event.SlashCommandInteractionData().OptString("locale")
 	trimmed := strings.TrimSpace(rawLocale)
+	isReset := !ok || trimmed == "" || trimmed == localeChoiceAuto
 
-	if !ok || trimmed == "" || trimmed == localeChoiceAuto {
-		if err := c.SetGuildLocaleOverride(c.Ctx(), guildID, ""); err != nil {
+	var targetLocale discord.Locale
+	if !isReset {
+		loc := discord.Locale(trimmed)
+		if !i18n.IsSupportedLocale(loc) {
+			if err := event.CreateMessage(
+				discordutil.NewMessageBuilder().
+					SetContent(i18n.TranslateText(event.Locale(), "components.setting.locale.invalid")).
+					SetFlags(discord.MessageFlagEphemeral).
+					BuildCreate(),
+			); err != nil {
+				return errors.NewError(err)
+			}
+			return nil
+		}
+		targetLocale = loc
+	}
+
+	// Defer before performing database writes when a REST client is available so Discord's 3s window is never exceeded.
+	useDefer := event.Client() != nil && event.Client().Rest != nil
+	if useDefer {
+		if err := event.DeferCreateMessage(false); err != nil {
 			return errors.NewError(err)
 		}
-		effective := c.ResolveGuildLocaleWithInteraction(c.Ctx(), event.Client(), guildID, event.GuildLocale(), event.Locale())
+	}
+
+	if err := c.SetGuildLocaleOverride(c.Ctx(), guildID, targetLocale); err != nil {
+		if useDefer {
+			_, _ = event.Client().Rest.UpdateInteractionResponse(
+				event.ApplicationID(),
+				event.Token(),
+				discordutil.NewMessageBuilder().
+					SetContent(i18n.TranslateText(event.Locale(), "errors.generic.message")).
+					BuildUpdate(),
+			)
+		}
+		return errors.NewError(err)
+	}
+
+	var responseText string
+	if isReset {
+		effective := c.ResolveGuildLocaleWithInteraction(c.Ctx(), event.Client(), guildID, event.GuildLocale(), i18n.DefaultLocale())
 		c.NotifyGuildLocaleChanged(c.Ctx(), event.Client(), guildID, effective)
-		if err := event.CreateMessage(
-			discordutil.NewMessageBuilder().
-				SetContent(i18n.TranslateText(event.Locale(), "components.setting.locale.reset", map[string]any{
-					"locale": i18n.LocaleDisplayName(effective),
-				})).
-				BuildCreate(),
-		); err != nil {
-			return errors.NewError(err)
-		}
-		return nil
+		responseText = i18n.TranslateText(event.Locale(), "components.setting.locale.reset", map[string]any{
+			"locale": i18n.LocaleDisplayName(effective),
+		})
+	} else {
+		c.NotifyGuildLocaleChanged(c.Ctx(), event.Client(), guildID, targetLocale)
+		responseText = i18n.TranslateText(event.Locale(), "components.setting.locale.set", map[string]any{
+			"locale": i18n.LocaleDisplayName(targetLocale),
+		})
 	}
-
-	loc := discord.Locale(trimmed)
-	if !i18n.IsSupportedLocale(loc) {
-		if err := event.CreateMessage(
-			discordutil.NewMessageBuilder().
-				SetContent(i18n.TranslateText(event.Locale(), "components.setting.locale.invalid")).
-				SetFlags(discord.MessageFlagEphemeral).
-				BuildCreate(),
-		); err != nil {
-			return errors.NewError(err)
-		}
-		return nil
-	}
-
-	if err := c.SetGuildLocaleOverride(c.Ctx(), guildID, loc); err != nil {
-		return errors.NewError(err)
-	}
-	c.NotifyGuildLocaleChanged(c.Ctx(), event.Client(), guildID, loc)
-	if err := event.CreateMessage(
-		discordutil.NewMessageBuilder().
-			SetContent(i18n.TranslateText(event.Locale(), "components.setting.locale.set", map[string]any{
-				"locale": i18n.LocaleDisplayName(loc),
-			})).
-			BuildCreate(),
-	); err != nil {
-		return errors.NewError(err)
-	}
-	return nil
+	return sendSettingLocaleResponse(event, useDefer, responseText)
 }

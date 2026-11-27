@@ -26,12 +26,16 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"math"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"os"
 	"path"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 
@@ -96,7 +100,165 @@ type Server struct {
 	oauth            *OAuthManager
 	version          string
 	startedAt        time.Time
+	trustedProxies   []netip.Prefix
+	authStartLimiter *ipRateLimiter
+	authPollLimiter  *ipRateLimiter
 	mux              *http.ServeMux
+}
+
+type ipRateBucket struct {
+	tokens   float64
+	lastSeen time.Time
+}
+
+type ipRateLimiter struct {
+	mu         sync.Mutex
+	burst      float64
+	ratePerSec float64
+	maxKeys    int
+	buckets    map[string]*ipRateBucket
+}
+
+func newIPRateLimiter(burst float64, ratePerSec float64, maxKeys int) *ipRateLimiter {
+	if maxKeys <= 0 {
+		maxKeys = 4096
+	}
+	return &ipRateLimiter{
+		burst:      burst,
+		ratePerSec: ratePerSec,
+		maxKeys:    maxKeys,
+		buckets:    make(map[string]*ipRateBucket),
+	}
+}
+
+func (l *ipRateLimiter) Allow(key string, now time.Time) (bool, time.Duration) {
+	if l == nil {
+		return true, 0
+	}
+	k := strings.TrimSpace(key)
+	if k == "" {
+		k = "_unknown"
+	}
+
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	b, ok := l.buckets[k]
+	if !ok {
+		if len(l.buckets) >= l.maxKeys {
+			idleCutoff := now.Add(-10 * time.Minute)
+			for bk, bv := range l.buckets {
+				if bv.lastSeen.Before(idleCutoff) {
+					delete(l.buckets, bk)
+				}
+			}
+		}
+		if len(l.buckets) >= l.maxKeys {
+			var oldestKey string
+			var oldestSeen time.Time
+			for bk, bv := range l.buckets {
+				if oldestKey == "" || bv.lastSeen.Before(oldestSeen) {
+					oldestKey = bk
+					oldestSeen = bv.lastSeen
+				}
+			}
+			if oldestKey != "" {
+				delete(l.buckets, oldestKey)
+			}
+		}
+		b = &ipRateBucket{
+			tokens:   l.burst,
+			lastSeen: now,
+		}
+		l.buckets[k] = b
+	} else {
+		elapsed := now.Sub(b.lastSeen).Seconds()
+		if elapsed > 0 {
+			b.tokens = min(l.burst, b.tokens+elapsed*l.ratePerSec)
+		}
+		b.lastSeen = now
+	}
+
+	if b.tokens >= 1.0 {
+		b.tokens -= 1.0
+		return true, 0
+	}
+	deficit := 1.0 - b.tokens
+	waitSec := int(math.Ceil(deficit / max(l.ratePerSec, 0.001)))
+	if waitSec < 1 {
+		waitSec = 1
+	}
+	return false, time.Duration(waitSec) * time.Second
+}
+
+func parseTrustedProxies(entries []string) ([]netip.Prefix, error) {
+	if len(entries) == 0 {
+		return nil, nil
+	}
+	out := make([]netip.Prefix, 0, len(entries))
+	for _, raw := range entries {
+		s := strings.TrimSpace(raw)
+		if s == "" {
+			return nil, errors.New("admin server: trusted_proxies entry must not be empty")
+		}
+		if pfx, err := netip.ParsePrefix(s); err == nil {
+			if pfx.Addr().Is4In6() {
+				out = append(out, netip.PrefixFrom(pfx.Addr().Unmap(), max(0, pfx.Bits()-96)).Masked())
+			} else {
+				out = append(out, pfx.Masked())
+			}
+			continue
+		}
+		if addr, err := netip.ParseAddr(s); err == nil {
+			u := addr.Unmap()
+			out = append(out, netip.PrefixFrom(u, u.BitLen()))
+			continue
+		}
+		return nil, fmt.Errorf("admin server: invalid trusted_proxies entry %q", raw)
+	}
+	return out, nil
+}
+
+func ipInPrefixes(addr netip.Addr, prefixes []netip.Prefix) bool {
+	for _, pfx := range prefixes {
+		if pfx.Contains(addr) {
+			return true
+		}
+	}
+	return false
+}
+
+func isLoopbackHost(host string) bool {
+	h := strings.Trim(strings.TrimSpace(host), "[]")
+	if h == "" {
+		return false
+	}
+	if strings.EqualFold(h, "localhost") {
+		return true
+	}
+	addr, err := netip.ParseAddr(h)
+	if err != nil {
+		return false
+	}
+	return addr.Unmap().IsLoopback()
+}
+
+// ExposureWarnings returns human-readable startup warnings when the admin server binds or exposes HTTP on non-loopback addresses.
+func ExposureWarnings(listenAddr, publicURL string) []string {
+	var warns []string
+	listenHost := strings.TrimSpace(listenAddr)
+	if h, _, err := net.SplitHostPort(listenHost); err == nil {
+		listenHost = h
+	}
+	if !isLoopbackHost(listenHost) {
+		warns = append(warns, fmt.Sprintf("管理APIがループバック以外のアドレス (%s) で待ち受けています。TLS終端と信頼できるリバースプロキシ（必要に応じて admin.trusted_proxies 設定）の背後で運用してください", listenAddr))
+	}
+	if u, err := url.Parse(strings.TrimSpace(publicURL)); err == nil {
+		if strings.EqualFold(u.Scheme, "http") && !isLoopbackHost(u.Hostname()) {
+			warns = append(warns, fmt.Sprintf("admin.public_url (%s) が非ループバック環境で平文 HTTP を使用しています。本番公開時はリバースプロキシ等で HTTPS を構成してください", publicURL))
+		}
+	}
+	return warns
 }
 
 // NormalizeBasePath validates and normalizes a HTTP server base path ("" for root, or "/prefix").
@@ -232,8 +394,13 @@ func NewServer(deps ServerDeps) (*Server, error) {
 	}
 
 	adminCfg := deps.AdminConfig
-	if !adminCfg.Enabled && adminCfg.ListenAddr == "" && adminCfg.PublicURL == "" && adminCfg.BasePath == "" && len(adminCfg.Users) == 0 && len(adminCfg.Roles) == 0 && adminCfg.OAuth == (components.ConfigAdminOAuth{}) {
+	if !adminCfg.Enabled && adminCfg.ListenAddr == "" && adminCfg.PublicURL == "" && adminCfg.BasePath == "" && adminCfg.LogLevel == "" && len(adminCfg.TrustedProxies) == 0 && len(adminCfg.Users) == 0 && len(adminCfg.Roles) == 0 && adminCfg.OAuth == (components.ConfigAdminOAuth{}) {
 		adminCfg = deps.Config.Admin
+	}
+
+	trustedProxies, err := parseTrustedProxies(adminCfg.TrustedProxies)
+	if err != nil {
+		return nil, err
 	}
 
 	rbac, err := NewRBAC(adminCfg)
@@ -293,6 +460,11 @@ func NewServer(deps ServerDeps) (*Server, error) {
 	} else if adminCfg.LogBufferSize > 0 {
 		logHub.SetCapacity(adminCfg.LogBufferSize)
 	}
+	if strings.TrimSpace(adminCfg.LogLevel) != "" {
+		if _, err := logHub.SetCaptureLevel(adminCfg.LogLevel); err != nil {
+			return nil, fmt.Errorf("admin server: %w", err)
+		}
+	}
 
 	sessions := NewSessionStore(deps.DB.DB)
 	audit := NewAuditStore(deps.DB.DB)
@@ -334,6 +506,9 @@ func NewServer(deps ServerDeps) (*Server, error) {
 		oauth:            oauthMgr,
 		version:          deps.Version,
 		startedAt:        startedAt,
+		trustedProxies:   trustedProxies,
+		authStartLimiter: newIPRateLimiter(10, float64(10)/60.0, 4096),
+		authPollLimiter:  newIPRateLimiter(60, 2.0, 4096),
 		mux:              http.NewServeMux(),
 	}
 	s.registerRoutes()
@@ -360,6 +535,8 @@ func (s *Server) registerRoutes() {
 	s.handle(http.MethodGet, "/api/v1/overview", s.withAuth(PermDashboardRead, s.handleOverview))
 	s.handle(http.MethodGet, "/api/v1/logs", s.withAuth(PermLogsRead, s.handleLogs))
 	s.handle(http.MethodGet, "/api/v1/logs/stream", s.withAuth(PermLogsRead, s.handleLogsStream))
+	s.handle(http.MethodGet, "/api/v1/logs/level", s.withAuth(PermLogsRead, s.handleGetLogLevel))
+	s.handle(http.MethodPut, "/api/v1/logs/level", s.withAuth(PermOpsExecute, s.handleUpdateLogLevel))
 	s.handle(http.MethodGet, "/api/v1/guilds", s.withAuth(PermGuildsRead, s.handleListGuilds))
 	s.handle(http.MethodGet, "/api/v1/guilds/{id}", s.withAuth(PermGuildsRead, s.handleGetGuild))
 	s.handle(http.MethodPatch, "/api/v1/guilds/{id}", s.withAuth(PermGuildsWrite, s.handleUpdateGuild))
@@ -427,6 +604,9 @@ func (s *Server) ListenAndServe(ctx context.Context) error {
 
 	errCh := make(chan error, 1)
 	go func() {
+		for _, w := range ExposureWarnings(s.listenAddr, s.publicURL) {
+			slog.Warn(w)
+		}
 		slog.Info("管理APIサーバーを起動しました",
 			"addr", ln.Addr().String(),
 			"base_path", displayBasePath,
@@ -531,12 +711,58 @@ func decodeJSONBody(w http.ResponseWriter, r *http.Request, dst any, allowEmpty 
 	return nil
 }
 
-func clientRemoteAddr(r *http.Request) string {
+func writeRateLimited(w http.ResponseWriter, retryAfter time.Duration, code, msg string) {
+	secs := int(math.Ceil(retryAfter.Seconds()))
+	if secs < 1 {
+		secs = 1
+	}
+	w.Header().Set("Retry-After", strconv.Itoa(secs))
+	writeError(w, http.StatusTooManyRequests, code, msg)
+}
+
+func (s *Server) clientRemoteAddr(r *http.Request) string {
 	if r == nil {
 		return ""
 	}
-	if host, _, err := net.SplitHostPort(strings.TrimSpace(r.RemoteAddr)); err == nil && host != "" {
-		return truncateRunes(host, 64)
+	peerHost := strings.TrimSpace(r.RemoteAddr)
+	if host, _, err := net.SplitHostPort(peerHost); err == nil && host != "" {
+		peerHost = host
 	}
-	return truncateRunes(r.RemoteAddr, 64)
+	peerHost = strings.Trim(peerHost, "[]")
+	if s == nil || len(s.trustedProxies) == 0 {
+		return truncateRunes(peerHost, 64)
+	}
+	peerAddr, err := netip.ParseAddr(peerHost)
+	if err != nil {
+		return truncateRunes(peerHost, 64)
+	}
+	peerAddr = peerAddr.Unmap()
+	if !ipInPrefixes(peerAddr, s.trustedProxies) {
+		return truncateRunes(peerAddr.String(), 64)
+	}
+
+	xffVals := r.Header.Values("X-Forwarded-For")
+	if len(xffVals) == 0 {
+		return truncateRunes(peerAddr.String(), 64)
+	}
+	var hops []string
+	for _, hdr := range xffVals {
+		for _, part := range strings.Split(hdr, ",") {
+			hops = append(hops, strings.TrimSpace(part))
+		}
+	}
+	for i := len(hops) - 1; i >= 0; i-- {
+		if hops[i] == "" {
+			return truncateRunes(peerAddr.String(), 64)
+		}
+		hopAddr, err := netip.ParseAddr(hops[i])
+		if err != nil {
+			return truncateRunes(peerAddr.String(), 64)
+		}
+		hopAddr = hopAddr.Unmap()
+		if !ipInPrefixes(hopAddr, s.trustedProxies) {
+			return truncateRunes(hopAddr.String(), 64)
+		}
+	}
+	return truncateRunes(peerAddr.String(), 64)
 }

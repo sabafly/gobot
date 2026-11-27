@@ -234,6 +234,12 @@ func RenderPostHeader(post bbs.Post, threadRules bbs.BoardRules, locale discord.
 }
 
 func buildPostSection(postID uuid.UUID, header, body string) discord.SectionComponent {
+	if strings.TrimSpace(header) == "" {
+		header = "-"
+	}
+	if strings.TrimSpace(body) == "" {
+		body = "-"
+	}
 	return discord.NewSection(
 		discord.NewTextDisplay(header),
 		discord.NewTextDisplay(body),

@@ -43,6 +43,8 @@ import (
 const (
 	MaxForwardAnchorEditsPerPost = 5
 	MaxFanoutConcurrency         = 4
+	defaultLocaleRefreshDebounce = 500 * time.Millisecond
+	defaultLocaleRefreshTimeout  = 30 * time.Second
 )
 
 // ErrSourceMountInactive indicates the originating mount was deactivated or missing during publish.
@@ -61,19 +63,33 @@ type anchorQueue struct {
 	jobs    []anchorItem
 }
 
+type guildLocaleRefreshState struct {
+	parentCtx context.Context
+	client    *bot.Client
+	fallback  discord.Locale
+	dirty     bool
+	running   bool
+	gen       uint64
+	timer     *time.Timer
+}
+
 // Syncer bridges BBS domain state with Discord channels, threads, and multi-guild mirrors.
 type Syncer struct {
-	Service     *bbs.Service
-	Validator   PayloadValidator
-	Debouncer   *ControlPanelDebouncer
-	DMCache     *DMChannelCache
-	Guard       *InvalidRequestGuard
-	CanSendDM   func(ctx context.Context, userID snowflake.ID) bool
-	UserLocale  func(ctx context.Context, userID snowflake.ID) discord.Locale
-	GuildLocale func(ctx context.Context, guildID snowflake.ID) discord.Locale
+	Service               *bbs.Service
+	Validator             PayloadValidator
+	Debouncer             *ControlPanelDebouncer
+	DMCache               *DMChannelCache
+	Guard                 *InvalidRequestGuard
+	CanSendDM             func(ctx context.Context, userID snowflake.ID) bool
+	UserLocale            func(ctx context.Context, userID snowflake.ID) discord.Locale
+	GuildLocale           func(ctx context.Context, guildID snowflake.ID) discord.Locale
+	LocaleRefreshDebounce time.Duration
+	LocaleRefreshTimeout  time.Duration
 
 	anchorMu        sync.Mutex
 	anchorQ         map[snowflake.ID]*anchorQueue
+	localeRefreshMu sync.Mutex
+	localeRefresh   map[snowflake.ID]*guildLocaleRefreshState
 	threadEditLocks [64]sync.Mutex
 }
 
@@ -124,12 +140,95 @@ func (s *Syncer) ResolveMountLocale(ctx context.Context, client *bot.Client, mou
 
 func (s *Syncer) resolveMountLocaleWithFallback(ctx context.Context, client *bot.Client, mount bbs.BoardMount, fallback discord.Locale) discord.Locale {
 	var fb discord.Locale
-	if mount.Locale != "" {
-		fb = discord.Locale(mount.Locale)
-	} else if fallback != "" && fallback != discord.LocaleUnknown {
+	if fallback != "" && fallback != discord.LocaleUnknown {
 		fb = fallback
+	} else if mount.Locale != "" {
+		fb = discord.Locale(mount.Locale)
 	}
 	return s.ResolveGuildLocale(ctx, client, mount.GuildID, fb)
+}
+
+// ScheduleRefreshGuildBoardGuides coalesces rapid guild locale updates per guildID and executes
+// RefreshGuildBoardGuides under a bounded timeout derived from parentCtx (single-flight per guild).
+func (s *Syncer) ScheduleRefreshGuildBoardGuides(parentCtx context.Context, client *bot.Client, guildID snowflake.ID, fallbackLocale discord.Locale) {
+	if s == nil || client == nil || guildID == 0 {
+		return
+	}
+	if parentCtx == nil {
+		parentCtx = context.Background()
+	}
+	if parentCtx.Err() != nil {
+		return
+	}
+
+	debounce := s.LocaleRefreshDebounce
+	if debounce <= 0 {
+		debounce = defaultLocaleRefreshDebounce
+	}
+
+	s.localeRefreshMu.Lock()
+	defer s.localeRefreshMu.Unlock()
+	if s.localeRefresh == nil {
+		s.localeRefresh = make(map[snowflake.ID]*guildLocaleRefreshState)
+	}
+	st, ok := s.localeRefresh[guildID]
+	if !ok {
+		st = &guildLocaleRefreshState{}
+		s.localeRefresh[guildID] = st
+	}
+	st.parentCtx = parentCtx
+	st.client = client
+	st.fallback = fallbackLocale
+	st.dirty = true
+	if st.running {
+		return
+	}
+	st.gen++
+	gen := st.gen
+	if st.timer != nil {
+		st.timer.Stop()
+	}
+	st.timer = time.AfterFunc(debounce, func() {
+		s.runScheduledGuildLocaleRefresh(guildID, gen)
+	})
+}
+
+func (s *Syncer) runScheduledGuildLocaleRefresh(guildID snowflake.ID, gen uint64) {
+	s.localeRefreshMu.Lock()
+	st := s.localeRefresh[guildID]
+	if st == nil || st.gen != gen || st.running || !st.dirty {
+		s.localeRefreshMu.Unlock()
+		return
+	}
+	st.running = true
+	st.timer = nil
+
+	timeout := s.LocaleRefreshTimeout
+	if timeout <= 0 {
+		timeout = defaultLocaleRefreshTimeout
+	}
+
+	for st.dirty {
+		parentCtx := st.parentCtx
+		client := st.client
+		fallback := st.fallback
+		st.dirty = false
+		if parentCtx == nil || parentCtx.Err() != nil || client == nil {
+			break
+		}
+		s.localeRefreshMu.Unlock()
+
+		runCtx, cancel := context.WithTimeout(parentCtx, timeout)
+		s.RefreshGuildBoardGuides(runCtx, client, guildID, fallback)
+		cancel()
+
+		s.localeRefreshMu.Lock()
+	}
+	st.running = false
+	if s.localeRefresh[guildID] == st && !st.dirty && st.timer == nil {
+		delete(s.localeRefresh, guildID)
+	}
+	s.localeRefreshMu.Unlock()
 }
 
 // RefreshGuildBoardGuides re-renders active board guides in guildID using the updated effective locale.

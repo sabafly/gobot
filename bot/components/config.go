@@ -55,6 +55,8 @@ type ConfigAdmin struct {
 	BasePath        string                     `yaml:"base_path"`
 	SessionTTLHours int                        `yaml:"session_ttl_hours"`
 	LogBufferSize   int                        `yaml:"log_buffer_size"`
+	LogLevel        string                     `yaml:"log_level"`
+	TrustedProxies  []string                   `yaml:"trusted_proxies"`
 	OAuth           ConfigAdminOAuth           `yaml:"oauth"`
 	Roles           map[string]ConfigAdminRole `yaml:"roles"`
 	Users           []ConfigAdminUser          `yaml:"users"`

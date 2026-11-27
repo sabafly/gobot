@@ -24,6 +24,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"runtime"
 	"slices"
@@ -45,6 +46,11 @@ import (
 // --- Auth & Session Handlers ---
 
 func (s *Server) handleAuthStart(w http.ResponseWriter, r *http.Request) {
+	remoteIP := s.clientRemoteAddr(r)
+	if allowed, retryAfter := s.authStartLimiter.Allow(remoteIP, time.Now()); !allowed {
+		writeRateLimited(w, retryAfter, "rate_limited", "too many login start requests; please retry later")
+		return
+	}
 	var req AuthStartRequest
 	if err := decodeJSONBody(w, r, &req, true); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_json", "invalid request body")
@@ -53,8 +59,12 @@ func (s *Server) handleAuthStart(w http.ResponseWriter, r *http.Request) {
 	if strings.TrimSpace(req.ClientInfo) == "" {
 		req.ClientInfo = r.UserAgent()
 	}
-	resp, err := s.oauth.Start(req.ClientInfo)
+	resp, err := s.oauth.Start(req.ClientInfo, remoteIP)
 	if err != nil {
+		if errors.Is(err, ErrTooManyPendingLogins) {
+			writeRateLimited(w, 60*time.Second, "too_many_pending_logins", "too many pending login requests; please retry later")
+			return
+		}
 		writeError(w, http.StatusInternalServerError, "oauth_start_failed", err.Error())
 		return
 	}
@@ -68,24 +78,29 @@ func (s *Server) handleAuthCallback(w http.ResponseWriter, r *http.Request) {
 	oauthErr := q.Get("error")
 	oauthErrDesc := q.Get("error_description")
 
-	principal, err := s.oauth.HandleCallback(r.Context(), code, state, oauthErr, oauthErrDesc, clientRemoteAddr(r))
+	remoteIP := s.clientRemoteAddr(r)
+	principal, err := s.oauth.HandleCallback(r.Context(), code, state, oauthErr, oauthErrDesc, remoteIP)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err != nil {
 		status := http.StatusBadRequest
 		heading := "認可に失敗しました"
 		msg := "認証処理を完了できませんでした。ターミナルに戻ってやり直してください。"
+		detailCode := "oauth_exchange_failed"
 		switch {
 		case errors.Is(err, ErrOAuthUnauthorized):
 			status = http.StatusForbidden
 			heading = "アクセス権限がありません"
 			msg = "この Discord アカウントは gobot 管理ダッシュボードの許可ユーザーに登録されていません。"
+			detailCode = "unauthorized"
 		case errors.Is(err, ErrOAuthInvalidState):
 			status = http.StatusBadRequest
 			heading = "認証セッションが無効または期限切れです"
 			msg = "ターミナル側で再度ログインを開始してください。"
+			detailCode = "invalid_or_expired_state"
 		}
+		slog.Warn("admin oauth callback failed", "code", detailCode, "remote_addr", remoteIP, "err", err)
 		w.WriteHeader(status)
-		renderCallbackPage(w, false, heading, msg, err.Error())
+		renderCallbackPage(w, false, heading, msg, detailCode)
 		return
 	}
 
@@ -98,6 +113,11 @@ func (s *Server) handleAuthCallback(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleAuthPoll(w http.ResponseWriter, r *http.Request) {
+	remoteIP := s.clientRemoteAddr(r)
+	if allowed, retryAfter := s.authPollLimiter.Allow(remoteIP, time.Now()); !allowed {
+		writeRateLimited(w, retryAfter, "rate_limited", "too many poll requests; please retry later")
+		return
+	}
 	var req AuthPollRequest
 	if err := decodeJSONBody(w, r, &req, false); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid_json", "invalid poll request body")
@@ -133,7 +153,7 @@ func (s *Server) handleAuthLogout(w http.ResponseWriter, r *http.Request, auth a
 	}
 	s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 		"auth.logout", "session", auth.Session.ID.String(),
-		"Operator logged out current session", nil, "success", clientRemoteAddr(r))
+		"Operator logged out current session", nil, "success", s.clientRemoteAddr(r))
 	writeJSON(w, http.StatusOK, map[string]any{"revoked": true})
 }
 
@@ -193,7 +213,7 @@ func (s *Server) handleRevokeSession(w http.ResponseWriter, r *http.Request, aut
 		"session.revoke", "session", id.String(),
 		fmt.Sprintf("Revoked session for user %s", target.UserID.String()),
 		map[string]any{"target_user_id": target.UserID.String(), "self": target.ID == auth.Session.ID},
-		"success", clientRemoteAddr(r))
+		"success", s.clientRemoteAddr(r))
 	writeJSON(w, http.StatusOK, map[string]any{"revoked": true, "id": id.String()})
 }
 
@@ -373,6 +393,32 @@ func (s *Server) handleLogs(w http.ResponseWriter, r *http.Request, _ authContex
 	})
 }
 
+func (s *Server) handleGetLogLevel(w http.ResponseWriter, r *http.Request, _ authContext) {
+	writeJSON(w, http.StatusOK, s.logHub.CaptureLevel(r.Context()))
+}
+
+func (s *Server) handleUpdateLogLevel(w http.ResponseWriter, r *http.Request, auth authContext) {
+	var req UpdateLogLevelRequest
+	if err := decodeJSONBody(w, r, &req, false); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid_json", "invalid log level payload")
+		return
+	}
+	resp, err := s.logHub.SetCaptureLevel(req.Level)
+	if err != nil {
+		s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
+			"logs.level.update", "logs", "capture_level", "Rejected invalid log capture level",
+			map[string]any{"level": req.Level, "error": err.Error()}, "error", s.clientRemoteAddr(r))
+		writeError(w, http.StatusBadRequest, "invalid_log_level", err.Error())
+		return
+	}
+	s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
+		"logs.level.update", "logs", "capture_level",
+		fmt.Sprintf("Updated log capture level to %s (effective: %s)", resp.Mode, resp.EffectiveLevel),
+		map[string]any{"mode": resp.Mode, "effective_level": resp.EffectiveLevel},
+		"success", s.clientRemoteAddr(r))
+	writeJSON(w, http.StatusOK, resp)
+}
+
 func (s *Server) handleLogsStream(w http.ResponseWriter, r *http.Request, _ authContext) {
 	flusher, ok := w.(http.Flusher)
 	if !ok {
@@ -408,7 +454,7 @@ func (s *Server) handleLogsStream(w http.ResponseWriter, r *http.Request, _ auth
 			MinLevel: minLevel,
 			Query:    queryStr,
 			AfterSeq: afterSeq,
-			Limit:    defaultLogListLimit,
+			Limit:    maxLogListLimit,
 		})
 		for _, entry := range backlog {
 			if err := writeSSELogEvent(w, entry); err != nil {
@@ -513,32 +559,28 @@ func (s *Server) handleUpdateGuild(w http.ResponseWriter, r *http.Request, auth 
 		return
 	}
 
+	// Pre-validate both requested updates before mutating state to avoid partial updates.
 	var targetLocale discord.Locale
+	var prevLocale discord.Locale
+	var rawLocale string
 	if req.LocaleOverride != nil {
 		if s.components == nil {
 			writeError(w, http.StatusServiceUnavailable, "unavailable", "components not initialized")
 			return
 		}
-		raw := strings.TrimSpace(*req.LocaleOverride)
-		if raw != "" && raw != "auto" {
-			loc := discord.Locale(raw)
+		rawLocale = strings.TrimSpace(*req.LocaleOverride)
+		if rawLocale != "" && rawLocale != "auto" {
+			loc := discord.Locale(rawLocale)
 			if !i18n.IsSupportedLocale(loc) {
-				writeError(w, http.StatusBadRequest, "invalid_locale", fmt.Sprintf("unsupported locale %q", raw))
+				writeError(w, http.StatusBadRequest, "invalid_locale", fmt.Sprintf("unsupported locale %q", rawLocale))
 				return
 			}
 			targetLocale = loc
 		}
-		if err := s.components.SetGuildLocaleOverride(ctx, gid, targetLocale); err != nil {
-			s.audit.RecordAction(ctx, auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
-				"guild.update", "guild", gid.String(), "Failed to update guild locale override",
-				map[string]any{"locale_override": raw, "error": err.Error()}, "error", clientRemoteAddr(r))
-			writeError(w, http.StatusInternalServerError, "guild_update_failed", err.Error())
-			return
-		}
-		effective := s.components.ResolveGuildLocale(ctx, s.client, gid, "")
-		s.components.NotifyGuildLocaleChanged(ctx, s.client, gid, effective)
+		prevLocale = s.components.GuildLocaleOverride(ctx, gid)
 	}
 
+	var setupIn bbs.GuildSetupInput
 	if req.BBSEnabled != nil {
 		if s.bbsSvc == nil {
 			writeError(w, http.StatusServiceUnavailable, "bbs_unavailable", "BBS system is not initialized")
@@ -549,7 +591,7 @@ func (s *Server) handleUpdateGuild(w http.ResponseWriter, r *http.Request, auth 
 			writeError(w, http.StatusInternalServerError, "bbs_config_load_failed", cfgErr.Error())
 			return
 		}
-		setupIn := bbs.GuildSetupInput{
+		setupIn = bbs.GuildSetupInput{
 			GuildID:     gid,
 			Enabled:     *req.BBSEnabled,
 			ActorUserID: auth.Session.UserID,
@@ -559,19 +601,43 @@ func (s *Server) handleUpdateGuild(w http.ResponseWriter, r *http.Request, auth 
 			setupIn.DefaultUseForum = &defForum
 			setupIn.ModLogChannelID = existingCfg.ModLogChannelID
 		}
+	}
+
+	if req.LocaleOverride != nil {
+		if err := s.components.SetGuildLocaleOverride(ctx, gid, targetLocale); err != nil {
+			s.audit.RecordAction(ctx, auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
+				"guild.update", "guild", gid.String(), "Failed to update guild locale override",
+				map[string]any{"locale_override": rawLocale, "error": err.Error()}, "error", s.clientRemoteAddr(r))
+			writeError(w, http.StatusInternalServerError, "guild_update_failed", err.Error())
+			return
+		}
+	}
+
+	if req.BBSEnabled != nil {
 		if _, err := s.bbsSvc.SetupGuild(ctx, setupIn); err != nil {
+			if req.LocaleOverride != nil {
+				if rbErr := s.components.SetGuildLocaleOverride(ctx, gid, prevLocale); rbErr != nil {
+					slog.Error("failed to rollback guild locale override after bbs setup error",
+						"guild_id", gid, "prev_locale", prevLocale, "err", rbErr)
+				}
+			}
 			s.audit.RecordAction(ctx, auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 				"guild.update", "guild", gid.String(), "Failed to update guild BBS enabled state",
-				map[string]any{"bbs_enabled": *req.BBSEnabled, "error": err.Error()}, "error", clientRemoteAddr(r))
+				map[string]any{"bbs_enabled": *req.BBSEnabled, "error": err.Error()}, "error", s.clientRemoteAddr(r))
 			writeError(w, http.StatusInternalServerError, "bbs_setup_failed", err.Error())
 			return
 		}
 	}
 
+	if req.LocaleOverride != nil {
+		effective := s.components.ResolveGuildLocale(ctx, s.client, gid, "")
+		s.components.NotifyGuildLocaleChanged(ctx, s.client, gid, effective)
+	}
+
 	s.audit.RecordAction(ctx, auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 		"guild.update", "guild", gid.String(),
 		fmt.Sprintf("Updated settings for guild %s", gid.String()),
-		req, "success", clientRemoteAddr(r))
+		req, "success", s.clientRemoteAddr(r))
 
 	detail, _, err := s.collectGuildDetail(ctx, gid)
 	if err != nil {
@@ -730,14 +796,11 @@ func (s *Server) collectGuildDetail(ctx context.Context, gid snowflake.ID) (Guil
 	}, found, nil
 }
 
-func (s *Server) resolveGuildLocale(ctx context.Context, gid snowflake.ID, override, preferred string) discord.Locale {
-	if s.components != nil {
-		return s.components.ResolveGuildLocale(ctx, s.client, gid, "")
-	}
-	if override != "" {
+func (s *Server) resolveGuildLocale(_ context.Context, _ snowflake.ID, override, preferred string) discord.Locale {
+	if override != "" && override != discord.LocaleUnknown.Code() {
 		return discord.Locale(override)
 	}
-	if preferred != "" {
+	if preferred != "" && preferred != discord.LocaleUnknown.Code() {
 		return discord.Locale(preferred)
 	}
 	return i18n.DefaultLocale()
@@ -763,14 +826,14 @@ func (s *Server) handleOpsReloadLocales(w http.ResponseWriter, r *http.Request, 
 	if err := i18n.LoadLocales(dir); err != nil {
 		s.audit.RecordAction(ctx, auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 			"ops.reload_locales", "locales", dir, "Failed to reload locale files",
-			map[string]any{"dir": dir, "error": err.Error()}, "error", clientRemoteAddr(r))
+			map[string]any{"dir": dir, "error": err.Error()}, "error", s.clientRemoteAddr(r))
 		writeError(w, http.StatusInternalServerError, "reload_locales_failed", err.Error())
 		return
 	}
 	codes := availableLocaleCodes()
 	s.audit.RecordAction(ctx, auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 		"ops.reload_locales", "locales", dir, "Reloaded locale files",
-		map[string]any{"dir": dir, "locales": codes}, "success", clientRemoteAddr(r))
+		map[string]any{"dir": dir, "locales": codes}, "success", s.clientRemoteAddr(r))
 	writeJSON(w, http.StatusOK, OpsReloadLocalesResponse{Locales: codes})
 }
 
@@ -784,14 +847,14 @@ func (s *Server) handleOpsSyncCommands(w http.ResponseWriter, r *http.Request, a
 	if err != nil {
 		s.audit.RecordAction(ctx, auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 			"ops.sync_commands", "commands", "", "Failed to sync Discord slash commands",
-			map[string]any{"error": err.Error()}, "error", clientRemoteAddr(r))
+			map[string]any{"error": err.Error()}, "error", s.clientRemoteAddr(r))
 		writeError(w, http.StatusInternalServerError, "sync_commands_failed", err.Error())
 		return
 	}
 	s.audit.RecordAction(ctx, auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 		"ops.sync_commands", "commands", "",
 		fmt.Sprintf("Synced %d global commands and %d private guilds", globalCnt, privGuilds),
-		map[string]any{"global_commands": globalCnt, "private_guild_count": privGuilds}, "success", clientRemoteAddr(r))
+		map[string]any{"global_commands": globalCnt, "private_guild_count": privGuilds}, "success", s.clientRemoteAddr(r))
 	writeJSON(w, http.StatusOK, OpsSyncCommandsResponse{
 		GlobalCommands:    globalCnt,
 		PrivateGuildCount: privGuilds,
@@ -807,13 +870,13 @@ func (s *Server) handleOpsBBSDatCheck(w http.ResponseWriter, r *http.Request, au
 	if err := s.bbsSync.RunDatOchiCheck(ctx, s.client); err != nil {
 		s.audit.RecordAction(ctx, auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 			"ops.bbs_dat_check", "bbs", "", "BBS dat-ochi check failed",
-			map[string]any{"error": err.Error()}, "error", clientRemoteAddr(r))
+			map[string]any{"error": err.Error()}, "error", s.clientRemoteAddr(r))
 		writeError(w, http.StatusInternalServerError, "bbs_dat_check_failed", err.Error())
 		return
 	}
 	s.audit.RecordAction(ctx, auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 		"ops.bbs_dat_check", "bbs", "", "Executed manual BBS dat-ochi archive check",
-		nil, "success", clientRemoteAddr(r))
+		nil, "success", s.clientRemoteAddr(r))
 	writeJSON(w, http.StatusOK, OpsDatCheckResponse{Executed: true})
 }
 

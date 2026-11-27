@@ -44,6 +44,7 @@ func New(ctx context.Context, conf Config, gormDb *database.DB) *Components {
 		router:           handler.New(),
 		config:           conf,
 		gormDb:           gormDb,
+		guildLocaleCache: make(map[snowflake.ID]discord.Locale),
 	}
 }
 
@@ -60,6 +61,9 @@ type Components struct {
 
 	guildLocaleHooksMu sync.RWMutex
 	guildLocaleHooks   []GuildLocaleChangeHook
+
+	guildLocaleCacheMu sync.RWMutex
+	guildLocaleCache   map[snowflake.ID]discord.Locale
 
 	Version string
 }

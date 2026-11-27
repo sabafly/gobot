@@ -45,10 +45,17 @@ const (
 )
 
 var logLevelCycle = []string{"", "DEBUG", "INFO", "WARN", "ERROR"}
+var captureLevelCycle = []string{"auto", "debug", "info", "warn", "error"}
 
 type logsInitialLoadedMsg struct {
-	Gen  uint64
-	Resp admin.LogsResponse
+	Gen          uint64
+	Resp         admin.LogsResponse
+	CaptureLevel *admin.LogLevelResponse
+	Err          error
+}
+
+type logCaptureLevelUpdatedMsg struct {
+	Resp admin.LogLevelResponse
 	Err  error
 }
 
@@ -79,9 +86,12 @@ type LogsPanel struct {
 	reconnecting bool
 	streamErr    string
 
-	levelIdx     int
-	appliedQuery string
-	lastSeq      uint64
+	levelIdx         int
+	captureMode      string
+	captureEffective string
+	captureUpdating  bool
+	appliedQuery     string
+	lastSeq          uint64
 	entries      []admin.LogEntry
 	pausedBuf    []admin.LogEntry
 
@@ -129,14 +139,20 @@ func (p *LogsPanel) Cursor() *tea.Cursor {
 	return &cur
 }
 
-func (p *LogsPanel) ShortHelp(_ ui.PanelContext) []key.Binding {
-	return []key.Binding{
+func (p *LogsPanel) ShortHelp(ctx ui.PanelContext) []key.Binding {
+	bindings := []key.Binding{
 		key.NewBinding(key.WithKeys("l"), key.WithHelp("l", "level")),
+	}
+	if ctx.HasPerm(admin.PermOpsExecute) {
+		bindings = append(bindings, key.NewBinding(key.WithKeys("C"), key.WithHelp("C", "capture")))
+	}
+	bindings = append(bindings,
 		key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "search")),
 		key.NewBinding(key.WithKeys("space"), key.WithHelp("space", "pause/resume")),
 		key.NewBinding(key.WithKeys("G"), key.WithHelp("G", "follow")),
 		key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "reload")),
-	}
+	)
+	return bindings
 }
 
 func (p *LogsPanel) Init(ctx ui.PanelContext) tea.Cmd {
@@ -172,12 +188,32 @@ func (p *LogsPanel) Update(msg tea.Msg, ctx ui.PanelContext) (ui.Panel, tea.Cmd)
 				p.lastSeq = e.Seq
 			}
 		}
-		if m.Resp.NextSeq > p.lastSeq {
-			p.lastSeq = m.Resp.NextSeq
+		if m.Resp.NextSeq > 1 && m.Resp.NextSeq-1 > p.lastSeq {
+			p.lastSeq = m.Resp.NextSeq - 1
+		}
+		if m.CaptureLevel != nil {
+			p.captureMode = m.CaptureLevel.Mode
+			p.captureEffective = m.CaptureLevel.EffectiveLevel
 		}
 		p.streamErr = ""
 		p.rebuildContent()
 		return p, p.startStreamCmd(ctx.Client, m.Gen)
+
+	case logCaptureLevelUpdatedMsg:
+		p.captureUpdating = false
+		if m.Err != nil {
+			if adminclient.IsUnauthorized(m.Err) {
+				p.stopStream()
+				return p, func() tea.Msg { return ui.UnauthorizedMsg{Err: m.Err} }
+			}
+			p.streamErr = m.Err.Error()
+			p.rebuildContent()
+			return p, nil
+		}
+		p.captureMode = m.Resp.Mode
+		p.captureEffective = m.Resp.EffectiveLevel
+		p.streamErr = ""
+		return p, p.reloadAndStream(ctx)
 
 	case logStreamMsg:
 		if m.Gen != p.streamGen {
@@ -250,6 +286,19 @@ func (p *LogsPanel) Update(msg tea.Msg, ctx ui.PanelContext) (ui.Panel, tea.Cmd)
 		case "l":
 			p.levelIdx = (p.levelIdx + 1) % len(logLevelCycle)
 			return p, p.reloadAndStream(ctx)
+		case "C":
+			if !ctx.HasPerm(admin.PermOpsExecute) || p.captureUpdating || ctx.Client == nil {
+				return p, nil
+			}
+			nextMode := nextCaptureLevelMode(p.captureMode)
+			p.captureUpdating = true
+			client := ctx.Client
+			return p, func() tea.Msg {
+				reqCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				resp, err := client.SetLogLevel(reqCtx, nextMode)
+				return logCaptureLevelUpdatedMsg{Resp: resp, Err: err}
+			}
 		case "space":
 			p.paused = !p.paused
 			if !p.paused && len(p.pausedBuf) > 0 {
@@ -333,11 +382,21 @@ func (p *LogsPanel) View(width, height int) string {
 	if p.follow {
 		followLabel = "follow:on"
 	}
+	capBadge := ""
+	if p.captureEffective != "" {
+		capText := strings.ToUpper(p.captureMode)
+		if capText == "" || capText == "AUTO" {
+			capBadge = "  " + p.theme.BadgeInfo.Render("Cap:AUTO("+p.captureEffective+")")
+		} else {
+			capBadge = "  " + p.theme.BadgeInfo.Render("Cap:"+capText)
+		}
+	}
 	header := ui.TruncateWidth(
 		p.theme.CardTitle.Render("Live Logs")+"  "+
 			streamBadge+"  "+
-			p.theme.BadgeInfo.Render("Level:"+lvlLabel)+"  "+
-			p.theme.MutedText.Render(fmt.Sprintf("entries:%d  %s  [l] level [space] pause [G] bottom", len(p.entries), followLabel)),
+			p.theme.BadgeInfo.Render("Level:"+lvlLabel)+
+			capBadge+"  "+
+			p.theme.MutedText.Render(fmt.Sprintf("entries:%d  %s  [l] filter [C] capture [space] pause [G] bottom", len(p.entries), followLabel)),
 		width,
 	)
 
@@ -386,8 +445,26 @@ func (p *LogsPanel) reloadAndStream(ctx ui.PanelContext) tea.Cmd {
 		reqCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		resp, err := client.ListLogs(reqCtx, filter)
-		return logsInitialLoadedMsg{Gen: gen, Resp: resp, Err: err}
+		var capPtr *admin.LogLevelResponse
+		if err == nil {
+			if capResp, capErr := client.GetLogLevel(reqCtx); capErr == nil {
+				capPtr = &capResp
+			} else if adminclient.IsUnauthorized(capErr) {
+				err = capErr
+			}
+		}
+		return logsInitialLoadedMsg{Gen: gen, Resp: resp, CaptureLevel: capPtr, Err: err}
 	}
+}
+
+func nextCaptureLevelMode(cur string) string {
+	norm := strings.ToLower(strings.TrimSpace(cur))
+	for i, m := range captureLevelCycle {
+		if m == norm {
+			return captureLevelCycle[(i+1)%len(captureLevelCycle)]
+		}
+	}
+	return captureLevelCycle[1] // "debug"
 }
 
 func (p *LogsPanel) stopStream() {

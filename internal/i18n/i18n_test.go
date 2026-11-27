@@ -702,3 +702,89 @@ func TestLocaleHelpers(t *testing.T) {
 		t.Fatalf("unexpected display name for ko: %q", got)
 	}
 }
+
+func TestLocaleComponentTemplatesParity(t *testing.T) {
+	localesDir := filepath.Join("..", "..", "locales")
+	if err := LoadLocales(localesDir); err != nil {
+		t.Fatalf("LoadLocales failed: %v", err)
+	}
+
+	defValues, ok := globalLocales[defaultLocale]
+	if !ok {
+		t.Fatalf("default locale %q not found", defaultLocale)
+	}
+	enValues, ok := globalLocales[discord.LocaleEnglishUS]
+	if !ok {
+		t.Fatalf("en-US locale not found")
+	}
+
+	collectFieldsForKey := func(loc discord.Locale, key string, comps []Component) map[string]struct{} {
+		fields := make(map[string]struct{})
+		for i, c := range comps {
+			for _, txt := range collectComponentTexts(c) {
+				f, err := extractTemplateFields(txt)
+				if err != nil {
+					t.Errorf("locale %s component %q [%d] parse failed: %v", loc, key, i, err)
+					continue
+				}
+				for k := range f {
+					fields[k] = struct{}{}
+				}
+			}
+		}
+		return fields
+	}
+
+	for key, defComps := range defValues.Components {
+		enComps, exists := enValues.Components[key]
+		if !exists {
+			t.Errorf("en-US is missing components template key %q", key)
+			continue
+		}
+		if len(enComps) != len(defComps) {
+			t.Errorf("en-US components[%q] length=%d, want %d", key, len(enComps), len(defComps))
+		}
+		defFields := collectFieldsForKey(defaultLocale, key, defComps)
+		enFields := collectFieldsForKey(discord.LocaleEnglishUS, key, enComps)
+		if !maps.Equal(defFields, enFields) {
+			t.Errorf("en-US components[%q] template fields %v do not match default fields %v",
+				key, slices.Collect(maps.Keys(enFields)), slices.Collect(maps.Keys(defFields)))
+		}
+	}
+
+	layout := BuildContext().
+		WithText("guild_name", "TestGuild").
+		WithText("guild_locale", "English (US) (en-US) (Overridden)").
+		WithText("bump_enabled", "Enabled").
+		WithText("bump_message_title", "Bump Title").
+		WithText("bump_message", "Bump Body").
+		WithText("bump_remind_message_title", "Remind Title").
+		WithText("bump_remind_message", "Remind Body").
+		WithText("bump_mention", "None").
+		WithText("up_enabled", "Enabled").
+		WithText("up_message_title", "Up Title").
+		WithText("up_message", "Up Body").
+		WithText("up_remind_message_title", "Up Remind").
+		WithText("up_remind_message", "Up Remind Body").
+		WithText("up_mention", "None").
+		WithText("leveling_enabled", "Disabled").
+		Translate(TranslateLayout(discord.LocaleEnglishUS, "command.settings.view"))
+	if len(layout) != 1 {
+		t.Fatalf("expected 1 container layout, got %d", len(layout))
+	}
+	cont, ok := layout[0].(discord.ContainerComponent)
+	if !ok {
+		t.Fatalf("expected ContainerComponent, got %T", layout[0])
+	}
+	var joined strings.Builder
+	for _, sub := range cont.Components {
+		if td, ok := sub.(discord.TextDisplayComponent); ok {
+			joined.WriteString(td.Content)
+			joined.WriteByte('\n')
+		}
+	}
+	rendered := joined.String()
+	if !strings.Contains(rendered, "TestGuild Settings") || !strings.Contains(rendered, "**Guild Language**: English (US) (en-US) (Overridden)") {
+		t.Fatalf("unexpected rendered en-US settings view:\n%s", rendered)
+	}
+}

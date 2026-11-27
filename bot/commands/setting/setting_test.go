@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -1015,4 +1017,181 @@ func TestSettingLocaleCommand_And_SettingsView(t *testing.T) {
 	if *bodyBad != i18n.TranslateText(discord.LocaleJapanese, "components.setting.locale.invalid") {
 		t.Fatalf("unexpected invalid locale message: %q", *bodyBad)
 	}
+}
+
+func TestSettingLocaleCommand_DefaultFallbackAndDeferFlow(t *testing.T) {
+	if err := i18n.LoadLocales(filepath.Join("..", "..", "..", "locales")); err != nil {
+		t.Fatalf("LoadLocales failed: %v", err)
+	}
+	c, gdb := setupTestComponent(t)
+
+	guildID := snowflake.ID(91099)
+	if err := gdb.Create(&models.Guild{ID: guildID, Name: "FallbackGuild", BumpEnabled: true}).Error; err != nil {
+		t.Fatalf("create guild failed: %v", err)
+	}
+
+	var mu sync.Mutex
+	var eventsLog []string
+	var patchedBody string
+
+	httpClient := &http.Client{
+		Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+			if req.Method == http.MethodPatch && strings.Contains(req.URL.Path, "/messages/@original") {
+				raw, _ := io.ReadAll(req.Body)
+				mu.Lock()
+				eventsLog = append(eventsLog, "patch_original")
+				patchedBody = string(raw)
+				mu.Unlock()
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Header:     http.Header{"Content-Type": []string{"application/json"}},
+					Body:       io.NopCloser(strings.NewReader(`{"id":"777001","channel_id":"555001","content":"ok"}`)),
+				}, nil
+			}
+			return &http.Response{
+				StatusCode: http.StatusNotFound,
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
+				Body:       io.NopCloser(strings.NewReader(`{"message":"unexpected"}`)),
+			}, nil
+		}),
+	}
+	client := &bot.Client{
+		ApplicationID: snowflake.ID(999000),
+		Caches:        cache.New(cache.WithCaches(cache.FlagsAll)),
+		Rest:          rest.New(rest.NewClient("Bot test-token", rest.WithHTTPClient(httpClient))),
+	}
+
+	buildCustomEvent := func(guildLocale *string, userLocale string, localeOpt *string) (*events.ApplicationCommandInteractionCreate, *discord.InteractionResponseType, *string, *discord.MessageFlags) {
+		var subOpts []map[string]any
+		if localeOpt != nil {
+			subOpts = append(subOpts, map[string]any{
+				"name":  "locale",
+				"type":  discord.ApplicationCommandOptionTypeString,
+				"value": *localeOpt,
+			})
+		}
+		m := map[string]any{
+			"type":           discord.InteractionTypeApplicationCommand,
+			"id":             snowflake.New(time.Now()).String(),
+			"application_id": "999000",
+			"token":          "defer-token",
+			"guild_id":       guildID.String(),
+			"locale":         userLocale,
+			"channel":        map[string]any{"id": "555001", "type": 0},
+			"member":         map[string]any{"user": map[string]any{"id": "123456", "username": "tester"}},
+			"data": map[string]any{
+				"id":   "111",
+				"name": "setting",
+				"type": discord.ApplicationCommandTypeSlash,
+				"options": []map[string]any{
+					{
+						"name":    "locale",
+						"type":    discord.ApplicationCommandOptionTypeSubCommand,
+						"options": subOpts,
+					},
+				},
+			},
+		}
+		if guildLocale != nil {
+			m["guild_locale"] = *guildLocale
+		}
+		raw, err := json.Marshal(m)
+		if err != nil {
+			t.Fatalf("marshal failed: %v", err)
+		}
+		var aci discord.ApplicationCommandInteraction
+		if err := json.Unmarshal(raw, &aci); err != nil {
+			t.Fatalf("unmarshal failed: %v", err)
+		}
+		var respType discord.InteractionResponseType
+		var capturedBody string
+		var capturedFlags discord.MessageFlags
+		ev := &events.ApplicationCommandInteractionCreate{
+			GenericEvent:                  events.NewGenericEvent(client, 0, 0),
+			ApplicationCommandInteraction: aci,
+			Respond: func(rt discord.InteractionResponseType, data discord.InteractionResponseData, _ ...rest.RequestOpt) error {
+				respType = rt
+				if rt == discord.InteractionResponseTypeDeferredCreateMessage {
+					mu.Lock()
+					eventsLog = append(eventsLog, "defer")
+					mu.Unlock()
+					return nil
+				}
+				if mc, ok := data.(discord.MessageCreate); ok {
+					capturedBody = mc.Content
+					capturedFlags = mc.Flags
+				}
+				mu.Lock()
+				eventsLog = append(eventsLog, "create_message")
+				mu.Unlock()
+				return nil
+			},
+		}
+		return ev, &respType, &capturedBody, &capturedFlags
+	}
+
+	c.RegisterGuildLocaleChangeHook(func(_ context.Context, _ *bot.Client, _ snowflake.ID, _ discord.Locale) {
+		mu.Lock()
+		eventsLog = append(eventsLog, "hook")
+		mu.Unlock()
+	})
+
+	// 1. No override, no cached PreferredLocale, no guild_locale, user locale = en-US -> falls back to i18n.DefaultLocale() ("ja"), NOT en-US.
+	var g models.Guild
+	if err := gdb.First(&g, "id = ?", guildID).Error; err != nil {
+		t.Fatalf("load guild failed: %v", err)
+	}
+	evView, _, _, _ := buildCustomEvent(nil, "en-US", nil)
+	autoView := formatGuildLocaleView(c, evView, &g)
+	if !strings.Contains(autoView, i18n.LocaleDisplayName(i18n.DefaultLocale())) {
+		t.Fatalf("expected auto view fallback to %q (not en-US user locale), got %q", i18n.LocaleDisplayName(i18n.DefaultLocale()), autoView)
+	}
+
+	// 2. /setting locale en-US with REST client must DeferCreateMessage BEFORE hook/DB completion and finish via UpdateInteractionResponse.
+	enVal := "en-US"
+	evSet, rtSet, _, _ := buildCustomEvent(nil, "en-US", &enVal)
+	if err := handleSettingLocale(c, evSet); err != nil {
+		t.Fatalf("handleSettingLocale failed: %v", err)
+	}
+	if *rtSet != discord.InteractionResponseTypeDeferredCreateMessage {
+		t.Fatalf("expected DeferCreateMessage response type, got %v", *rtSet)
+	}
+	mu.Lock()
+	gotLog := slices.Clone(eventsLog)
+	gotPatch := patchedBody
+	mu.Unlock()
+	if !slices.Equal(gotLog, []string{"defer", "hook", "patch_original"}) {
+		t.Fatalf("expected defer -> hook -> patch_original order, got %v", gotLog)
+	}
+	if !strings.Contains(gotPatch, "English (US) (en-US)") {
+		t.Fatalf("expected updated response mentioning en-US, got %q", gotPatch)
+	}
+
+	// 3. Invalid locale must reply immediately as ephemeral CreateMessage WITHOUT calling DeferCreateMessage.
+	mu.Lock()
+	eventsLog = nil
+	mu.Unlock()
+	badVal := "bad-loc"
+	evBad, rtBad, bodyBad, flagsBad := buildCustomEvent(nil, "ja", &badVal)
+	if err := handleSettingLocale(c, evBad); err != nil {
+		t.Fatalf("handleSettingLocale(invalid) failed: %v", err)
+	}
+	if *rtBad != discord.InteractionResponseTypeCreateMessage || !flagsBad.Has(discord.MessageFlagEphemeral) {
+		t.Fatalf("expected immediate ephemeral CreateMessage for invalid locale, got rt=%v flags=%v", *rtBad, *flagsBad)
+	}
+	if *bodyBad == "" {
+		t.Fatal("expected non-empty invalid locale message")
+	}
+	mu.Lock()
+	badEvents := slices.Clone(eventsLog)
+	mu.Unlock()
+	if !slices.Equal(badEvents, []string{"create_message"}) {
+		t.Fatalf("expected no defer/patch on invalid locale, got %v", badEvents)
+	}
+}
+
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
 }

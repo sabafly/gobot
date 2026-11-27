@@ -209,9 +209,9 @@ func (s *System) guildLocale(ctx context.Context, e interface {
 		}
 	}
 	if s != nil && s.Components != nil && gid != 0 {
-		return s.Components.ResolveGuildLocaleWithInteraction(ctx, e.Client(), gid, e.GuildLocale(), e.Locale())
+		return s.Components.ResolveGuildLocaleWithInteraction(ctx, e.Client(), gid, e.GuildLocale(), i18n.DefaultLocale())
 	}
-	fb := e.Locale()
+	fb := i18n.DefaultLocale()
 	if gl := e.GuildLocale(); gl != nil && *gl != "" && *gl != discord.LocaleUnknown {
 		fb = *gl
 	}

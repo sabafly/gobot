@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	"github.com/disgoorg/disgo/discord"
@@ -111,11 +112,11 @@ func GetGuild(db *gorm.DB, guildID snowflake.ID) (*models.Guild, error) {
 	return &guild, nil
 }
 
-// GetGuildLocaleOverride returns the explicit gobot locale override configured for guildID,
-// or an empty locale when none is set.
-func GetGuildLocaleOverride(ctx context.Context, db *gorm.DB, guildID snowflake.ID) discord.Locale {
+// LookupGuildLocaleOverride returns the explicit gobot locale override configured for guildID,
+// an empty locale when none is set or no guild row exists, or a database error if lookup fails.
+func LookupGuildLocaleOverride(ctx context.Context, db *gorm.DB, guildID snowflake.ID) (discord.Locale, error) {
 	if db == nil || guildID == 0 {
-		return ""
+		return "", nil
 	}
 	if ctx == nil {
 		ctx = context.Background()
@@ -123,15 +124,29 @@ func GetGuildLocaleOverride(ctx context.Context, db *gorm.DB, guildID snowflake.
 	var row struct {
 		LocaleOverride discord.Locale
 	}
-	if err := db.WithContext(ctx).
+	err := db.WithContext(ctx).
 		Model(&models.Guild{}).
 		Select("locale_override").
 		Where("id = ?", guildID).
-		Take(&row).Error; err != nil {
-		return ""
+		Take(&row).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", nil
+		}
+		return "", err
 	}
 	if row.LocaleOverride == "" || row.LocaleOverride == discord.LocaleUnknown {
+		return "", nil
+	}
+	return row.LocaleOverride, nil
+}
+
+// GetGuildLocaleOverride returns the explicit gobot locale override configured for guildID,
+// or an empty locale when none is set.
+func GetGuildLocaleOverride(ctx context.Context, db *gorm.DB, guildID snowflake.ID) discord.Locale {
+	loc, err := LookupGuildLocaleOverride(ctx, db, guildID)
+	if err != nil {
 		return ""
 	}
-	return row.LocaleOverride
+	return loc
 }

@@ -728,3 +728,122 @@ func TestLogsPanel_NoVerticalOverflow_AllAndDebugJapaneseTabsANSI(t *testing.T) 
 	p, _ = p.Update(tea.KeyPressMsg{Code: 'G', Text: "G"}, ctx)
 	assertBounds("DEBUG-scroll-bottom", 73, 18)
 }
+
+func TestLogsPanel_NextSeqCatchup_And_CaptureLevelToggle(t *testing.T) {
+	var mu sync.Mutex
+	curMode := "auto"
+	curEffective := "INFO"
+	var recordedStreamQueries []string
+	var putBodies []string
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/logs":
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(admin.LogsResponse{
+				Entries: []admin.LogEntry{
+					{Seq: 1, Time: time.Now(), Level: "INFO", Message: "booted"},
+					{Seq: 2, Time: time.Now(), Level: "INFO", Message: "ready"},
+				},
+				NextSeq: 5, // Entries 3..4 filtered out; next live entry will be Seq=5!
+			})
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/logs/level":
+			mu.Lock()
+			resp := admin.LogLevelResponse{Mode: curMode, EffectiveLevel: curEffective}
+			mu.Unlock()
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(resp)
+		case r.Method == http.MethodPut && r.URL.Path == "/api/v1/logs/level":
+			var req admin.UpdateLogLevelRequest
+			_ = json.NewDecoder(r.Body).Decode(&req)
+			mu.Lock()
+			putBodies = append(putBodies, req.Level)
+			curMode = req.Level
+			curEffective = strings.ToUpper(req.Level)
+			if curEffective == "AUTO" {
+				curEffective = "INFO"
+			}
+			resp := admin.LogLevelResponse{Mode: curMode, EffectiveLevel: curEffective}
+			mu.Unlock()
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(resp)
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/logs/stream":
+			mu.Lock()
+			recordedStreamQueries = append(recordedStreamQueries, r.URL.RawQuery)
+			mu.Unlock()
+			flusher, _ := w.(http.Flusher)
+			w.Header().Set("Content-Type", "text/event-stream")
+			w.WriteHeader(http.StatusOK)
+			// Emit Seq=5 (= initial NextSeq); must NOT be dropped by off-by-one!
+			b, _ := json.Marshal(admin.LogEntry{Seq: 5, Time: time.Now(), Level: "WARN", Message: "seq5-not-dropped"})
+			_, _ = fmt.Fprintf(w, "event: log\ndata: %s\n\n", b)
+			if flusher != nil {
+				flusher.Flush()
+			}
+			<-r.Context().Done()
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+
+	// Viewer without PermOpsExecute sees capture badge but pressing 'L' does not PUT.
+	viewerCtx := testViewerCtx(srv.URL)
+	lpViewer := NewLogsPanel(ui.DefaultTheme())
+	defer lpViewer.Close()
+	var pv ui.Panel = lpViewer
+	_ = pv.View(110, 20)
+	pv, _ = pumpPanelCmd(t, pv, viewerCtx, pv.Init(viewerCtx), 150*time.Millisecond)
+	pv, _ = pv.Update(tea.KeyPressMsg{Code: 'C', Text: "C"}, viewerCtx)
+	mu.Lock()
+	if len(putBodies) != 0 {
+		t.Fatalf("expected viewer without ops.execute not to trigger PUT /logs/level, got %v", putBodies)
+	}
+	mu.Unlock()
+
+	// SuperAdmin receives Seq=5 without off-by-one skip and toggles capture level with 'L'.
+	superCtx := testSuperCtx(srv.URL)
+	lp := NewLogsPanel(ui.DefaultTheme())
+	defer lp.Close()
+	var p ui.Panel = lp
+	_ = p.View(110, 20)
+	initMsgs := collectFastMsgs(t, p.Init(superCtx), 150*time.Millisecond)
+	if len(initMsgs) != 1 {
+		t.Fatalf("expected 1 initial msg, got %d", len(initMsgs))
+	}
+	var streamCmd tea.Cmd
+	p, streamCmd = p.Update(initMsgs[0], superCtx)
+	if lp.lastSeq != 4 {
+		t.Fatalf("expected lastSeq=NextSeq-1=4 to preserve Seq=5, got %d", lp.lastSeq)
+	}
+	liveMsgs := collectFastMsgs(t, streamCmd, 150*time.Millisecond)
+	if len(liveMsgs) != 1 {
+		t.Fatalf("expected 1 live stream msg, got %d", len(liveMsgs))
+	}
+	p, _ = p.Update(liveMsgs[0], superCtx)
+	view1 := p.View(110, 20)
+	if !strings.Contains(view1, "seq5-not-dropped") {
+		t.Fatalf("expected Seq=5 entry rendered without off-by-one drop:\n%s", view1)
+	}
+	if !strings.Contains(view1, "Cap:AUTO(INFO)") {
+		t.Fatalf("expected Cap:AUTO(INFO) header badge, got:\n%s", view1)
+	}
+
+	var capCmd tea.Cmd
+	p, capCmd = p.Update(tea.KeyPressMsg{Code: 'C', Text: "C"}, superCtx)
+	p, _ = pumpPanelCmd(t, p, superCtx, capCmd, 150*time.Millisecond)
+	mu.Lock()
+	gotPuts := append([]string(nil), putBodies...)
+	gotStreamQs := append([]string(nil), recordedStreamQueries...)
+	mu.Unlock()
+	if len(gotPuts) != 1 || gotPuts[0] != "debug" {
+		t.Fatalf("expected Shift+C from auto to cycle to debug via PUT, got %v", gotPuts)
+	}
+	if len(gotStreamQs) == 0 || !strings.Contains(gotStreamQs[0], "after_seq=4") {
+		t.Fatalf("expected stream query with after_seq=4, got %v", gotStreamQs)
+	}
+	view2 := p.View(110, 20)
+	if !strings.Contains(view2, "Cap:DEBUG") {
+		t.Fatalf("expected Cap:DEBUG header badge after toggle, got:\n%s", view2)
+	}
+}

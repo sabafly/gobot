@@ -1798,6 +1798,46 @@ func TestSystemGuildLocale_RespectsDBOverrideOverInteractionGuildLocale(t *testi
 	if got := sys.guildLocale(ctx, cmdEv); got != discord.LocaleEnglishUS {
 		t.Fatalf("expected sys.guildLocale en-US after reset, got %q", got)
 	}
+
+	// When override, cached PreferredLocale, and event.GuildLocale() are all empty,
+	// sys.guildLocale must fall back to i18n.DefaultLocale() ("ja"), NOT invoking user's e.Locale() ("en-US").
+	emptyGuild := snowflake.ID(68002)
+	emptyPayload, err := json.Marshal(map[string]any{
+		"type":           discord.InteractionTypeApplicationCommand,
+		"id":             snowflake.New(time.Now()).String(),
+		"application_id": "999000",
+		"token":          "test-cmd-token-empty",
+		"guild_id":       emptyGuild.String(),
+		"locale":         "en-US",
+		"channel":        map[string]any{"id": "555002", "type": 0},
+		"member":         map[string]any{"user": map[string]any{"id": "123456", "username": "tester"}},
+		"data": map[string]any{
+			"id":   "111",
+			"name": "bbs",
+			"type": discord.ApplicationCommandTypeSlash,
+		},
+	})
+	if err != nil {
+		t.Fatalf("marshal empty guild payload failed: %v", err)
+	}
+	var aciEmpty discord.ApplicationCommandInteraction
+	if err := json.Unmarshal(emptyPayload, &aciEmpty); err != nil {
+		t.Fatalf("unmarshal empty guild payload failed: %v", err)
+	}
+	emptyEv := &handler.CommandEvent{
+		ApplicationCommandInteractionCreate: &events.ApplicationCommandInteractionCreate{
+			GenericEvent:                  events.NewGenericEvent(client, 0, 0),
+			ApplicationCommandInteraction: aciEmpty,
+		},
+		Ctx: ctx,
+	}
+	if got := sys.guildLocale(ctx, emptyEv); got != i18n.DefaultLocale() {
+		t.Fatalf("expected sys.guildLocale to fall back to default %q rather than user locale en-US, got %q", i18n.DefaultLocale(), got)
+	}
+	sysNoComp := &System{Syncer: syncer}
+	if got := sysNoComp.guildLocale(ctx, emptyEv); got != i18n.DefaultLocale() {
+		t.Fatalf("expected sysNoComp.guildLocale fallback to %q, got %q", i18n.DefaultLocale(), got)
+	}
 }
 
 func TestPostActionMenu_Permissions_Boundaries_And_States(t *testing.T) {
@@ -2039,5 +2079,130 @@ func TestPostActionMenu_Permissions_Boundaries_And_States(t *testing.T) {
 				t.Fatalf("expected permission error for %s %s, got type=%d body=%s", target.name, act.op, respType, rawErr)
 			}
 		}
+	}
+}
+
+func TestGlobalPostMenuAndReply_AvoidsDuplicateBoardMountQuery(t *testing.T) {
+	ctx := context.Background()
+	opID := snowflake.ID(950001)
+	authorID := snowflake.ID(950002)
+	regularID := snowflake.ID(950003)
+	guildA := snowflake.ID(950010)
+
+	gdb, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("open sqlite failed: %v", err)
+	}
+	sqlDB, _ := gdb.DB()
+	sqlDB.SetMaxOpenConns(1)
+	t.Cleanup(func() { _ = sqlDB.Close() })
+	if err := gdb.AutoMigrate(gormstore.Models()...); err != nil {
+		t.Fatalf("automigrate failed: %v", err)
+	}
+	for _, m := range []any{&models.User{}, &models.Guild{}} {
+		stmt := &gorm.Statement{DB: gdb}
+		if err := stmt.Parse(m); err != nil {
+			t.Fatalf("parse schema %T failed: %v", m, err)
+		}
+		var cols, pks []string
+		for _, f := range stmt.Schema.Fields {
+			if f.DBName == "" {
+				continue
+			}
+			if f.PrimaryKey {
+				pks = append(pks, fmt.Sprintf("`%s`", f.DBName))
+			}
+			cols = append(cols, fmt.Sprintf("`%s` TEXT", f.DBName))
+		}
+		pkClause := ""
+		if len(pks) > 0 {
+			pkClause = fmt.Sprintf(", PRIMARY KEY (%s)", strings.Join(pks, ", "))
+		}
+		if err := gdb.Exec(fmt.Sprintf("CREATE TABLE `%s` (%s%s)", stmt.Schema.Table, strings.Join(cols, ", "), pkClause)).Error; err != nil {
+			t.Fatalf("create table %s failed: %v", stmt.Schema.Table, err)
+		}
+	}
+	prov := gormstore.New(gdb)
+	reg := bbscore.NewProviderRegistry(bbscore.DefaultProviderKey)
+	reg.Register(prov)
+	svc := bbscore.NewService(reg, prov, bbscore.NewIdentityGenerator([]byte("dedup-mount-query-test-secret-32b")), bbscore.NewPolicyManager(bbscore.PolicyConfig{Version: "2026-04"}), []snowflake.ID{opID})
+	syncer := discordsync.NewSyncer(svc)
+	comp := components.New(ctx, components.Config{}, &database.DB{DB: gdb})
+	sys := NewSystem(comp, svc, syncer, nil)
+
+	if _, err := svc.SetupGuild(ctx, bbscore.GuildSetupInput{GuildID: guildA, Enabled: true, ActorUserID: opID}); err != nil {
+		t.Fatalf("SetupGuild failed: %v", err)
+	}
+	for _, uid := range []snowflake.ID{authorID, regularID} {
+		if _, err := svc.AcceptPolicy(ctx, uid); err != nil {
+			t.Fatalf("AcceptPolicy %d failed: %v", uid, err)
+		}
+	}
+	cat, err := svc.CreateCategory(ctx, bbscore.CreateCategoryInput{Scope: bbscore.ScopeGlobal, Name: "GlobalCat"})
+	if err != nil {
+		t.Fatalf("CreateCategory failed: %v", err)
+	}
+	board, err := svc.CreateBoard(ctx, bbscore.CreateBoardInput{CategoryID: cat.ID, Scope: bbscore.ScopeGlobal, Name: "GlobalBoard"})
+	if err != nil {
+		t.Fatalf("CreateBoard failed: %v", err)
+	}
+	mountID := uuid.New()
+	if err := prov.CreateBoardMount(ctx, &bbscore.BoardMount{
+		ID: mountID, BoardID: board.ID, GuildID: guildA, ChannelID: snowflake.ID(750001), Active: true, CreatedAt: time.Now(),
+	}); err != nil {
+		t.Fatalf("CreateBoardMount failed: %v", err)
+	}
+	_, th, post, err := svc.CreateThread(ctx, bbscore.CreateThreadInput{
+		BoardID: board.ID, GuildID: guildA, UserID: authorID, Title: "Global Thread", RawBody: "Global Body",
+	})
+	if err != nil {
+		t.Fatalf("CreateThread failed: %v", err)
+	}
+	if err := prov.CreateThreadMirror(ctx, &bbscore.ThreadMirror{
+		ID: uuid.New(), ThreadID: th.ID, BoardMountID: mountID, GuildID: guildA, DiscordThreadID: snowflake.ID(750010), CreatedAt: time.Now(),
+	}); err != nil {
+		t.Fatalf("CreateThreadMirror failed: %v", err)
+	}
+
+	var mountLookupQueries int
+	if err := gdb.Callback().Query().Before("gorm:query").Register("test_count_mount_queries", func(tx *gorm.DB) {
+		if tx.Statement != nil && tx.Statement.Table == "bbs_board_mounts" {
+			mountLookupQueries++
+		}
+	}); err != nil {
+		t.Fatalf("register mount query callback failed: %v", err)
+	}
+	defer func() { _ = gdb.Callback().Query().Remove("test_count_mount_queries") }()
+
+	mockClient := newInternalMockClient(t, nil)
+	var respType discord.InteractionResponseType
+	capComp := func(rt discord.InteractionResponseType, _ any) {
+		respType = rt
+	}
+
+	mountLookupQueries = 0
+	menuEv := newInternalComponentEvent(t, mockClient, guildA, regularID, "/bbs/post/menu/"+post.ID.String(),
+		map[string]string{"post_id": post.ID.String()}, capComp)
+	if err := sys.handlePostMenuButton(menuEv); err != nil {
+		t.Fatalf("handlePostMenuButton failed: %v", err)
+	}
+	if respType != discord.InteractionResponseTypeCreateMessage {
+		t.Fatalf("expected menu response CreateMessage, got %d", respType)
+	}
+	if mountLookupQueries != 1 {
+		t.Fatalf("expected exactly 1 bbs_board_mounts query in handlePostMenuButton, got %d", mountLookupQueries)
+	}
+
+	mountLookupQueries = 0
+	replyEv := newInternalComponentEvent(t, mockClient, guildA, regularID, "/bbs/post/reply/"+post.ID.String(),
+		map[string]string{"post_id": post.ID.String()}, capComp)
+	if err := sys.handleReplyPostButton(replyEv); err != nil {
+		t.Fatalf("handleReplyPostButton failed: %v", err)
+	}
+	if respType != discord.InteractionResponseTypeModal {
+		t.Fatalf("expected reply response Modal, got %d", respType)
+	}
+	if mountLookupQueries != 1 {
+		t.Fatalf("expected exactly 1 bbs_board_mounts query in handleReplyPostButton, got %d", mountLookupQueries)
 	}
 }

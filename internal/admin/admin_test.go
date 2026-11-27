@@ -900,3 +900,571 @@ func TestAdminServer_PublicURL_BasePath_EnvAndCORS(t *testing.T) {
 		t.Fatalf("unexpected env root override server: publicURL=%q basePath=%q", srvEnvRoot.PublicURL(), srvEnvRoot.BasePath())
 	}
 }
+
+func TestLogHub_TeeHandlerCaptureLevel_And_AfterSeqPagination(t *testing.T) {
+	hub := admin.NewLogHub(50)
+	var outBuf bytes.Buffer
+	base := slog.NewTextHandler(&outBuf, &slog.HandlerOptions{Level: slog.LevelInfo})
+	tee := admin.NewTeeHandler(base, hub)
+	logger := slog.New(tee)
+	child := logger.With("mod", "bbs").WithGroup("sync")
+
+	// 1. In default "auto" mode with INFO downstream, DEBUG logs must NOT be captured into LogHub.
+	logger.Debug("hidden debug auto")
+	child.Debug("child hidden debug auto")
+	logger.Info("visible info auto")
+
+	entries, _ := hub.List(admin.LogFilter{})
+	if len(entries) != 1 || entries[0].Message != "visible info auto" {
+		t.Fatalf("expected only INFO entry in auto mode, got %+v", entries)
+	}
+	if strings.Contains(outBuf.String(), "hidden debug auto") {
+		t.Fatalf("expected DEBUG excluded from INFO stdout: %q", outBuf.String())
+	}
+	if lvl := hub.CaptureLevel(context.Background()); lvl.Mode != "auto" || lvl.EffectiveLevel != "INFO" {
+		t.Fatalf("unexpected auto CaptureLevel: %+v", lvl)
+	}
+
+	// 2. Setting LogHub capture level to "debug" captures DEBUG into LogHub (and child loggers)
+	// WITHOUT leaking DEBUG into INFO stdout.
+	if resp, err := hub.SetCaptureLevel("debug"); err != nil || resp.Mode != "debug" || resp.EffectiveLevel != "DEBUG" {
+		t.Fatalf("SetCaptureLevel(debug) unexpected: resp=%+v err=%v", resp, err)
+	}
+	logger.Debug("captured debug")
+	child.Debug("child captured debug", "res", 42)
+	if strings.Contains(outBuf.String(), "captured debug") {
+		t.Fatalf("expected stdout INFO handler still not emitting DEBUG, got %q", outBuf.String())
+	}
+	entries, _ = hub.List(admin.LogFilter{})
+	if len(entries) != 3 || entries[1].Message != "captured debug" || entries[2].Message != "child captured debug" {
+		t.Fatalf("expected DEBUG entries captured for parent and child logger, got %+v", entries)
+	}
+
+	// 3. Setting capture level to "warn" filters LogHub while keeping stdout INFO intact.
+	if resp, err := hub.SetCaptureLevel("warn"); err != nil || resp.Mode != "warn" || resp.EffectiveLevel != "WARN" {
+		t.Fatalf("SetCaptureLevel(warn) unexpected: resp=%+v err=%v", resp, err)
+	}
+	logger.Info("stdout only info")
+	logger.Warn("hub and stdout warn")
+	if !strings.Contains(outBuf.String(), "stdout only info") {
+		t.Fatalf("expected stdout to still receive INFO when hub is WARN")
+	}
+	entries, _ = hub.List(admin.LogFilter{})
+	if entries[len(entries)-1].Message != "hub and stdout warn" || len(entries) != 4 {
+		t.Fatalf("expected WARN capture only, got %+v", entries)
+	}
+	if _, err := hub.SetCaptureLevel("invalid-lvl"); err == nil {
+		t.Fatal("expected SetCaptureLevel error for invalid level")
+	}
+	if _, err := hub.SetCaptureLevel("auto"); err != nil {
+		t.Fatalf("SetCaptureLevel(auto) failed: %v", err)
+	}
+
+	// 4. AfterSeq pagination returns oldest unread slice (matched[:limit]) and accurate nextSeq,
+	// while AfterSeq == 0 continues to return the latest slice.
+	pgHub := admin.NewLogHub(50)
+	for i := 1; i <= 10; i++ {
+		pgHub.Append(admin.LogEntry{Level: "INFO", Message: fmt.Sprintf("msg-%02d", i)})
+	}
+	latest, latestNext := pgHub.List(admin.LogFilter{Limit: 3})
+	if len(latest) != 3 || latest[0].Message != "msg-08" || latest[2].Message != "msg-10" || latestNext != 11 {
+		t.Fatalf("unexpected latest slice (AfterSeq=0): entries=%+v next=%d", latest, latestNext)
+	}
+
+	page1, n1 := pgHub.List(admin.LogFilter{AfterSeq: 2, Limit: 3})
+	if len(page1) != 3 || page1[0].Seq != 3 || page1[2].Seq != 5 || n1 != 6 {
+		t.Fatalf("expected page1 seqs 3..5 next=6, got entries=%+v next=%d", page1, n1)
+	}
+	page2, n2 := pgHub.List(admin.LogFilter{AfterSeq: page1[len(page1)-1].Seq, Limit: 3})
+	if len(page2) != 3 || page2[0].Seq != 6 || page2[2].Seq != 8 || n2 != 9 {
+		t.Fatalf("expected page2 seqs 6..8 next=9, got entries=%+v next=%d", page2, n2)
+	}
+	page3, n3 := pgHub.List(admin.LogFilter{AfterSeq: page2[len(page2)-1].Seq, Limit: 3})
+	if len(page3) != 2 || page3[0].Seq != 9 || page3[1].Seq != 10 || n3 != 11 {
+		t.Fatalf("expected page3 seqs 9..10 next=11, got entries=%+v next=%d", page3, n3)
+	}
+}
+
+func TestAdminServer_SecurityAndConsistencyFixes(t *testing.T) {
+	if err := i18n.LoadLocales("../../locales"); err != nil {
+		t.Fatalf("LoadLocales failed: %v", err)
+	}
+
+	// Exposure warnings for #13
+	if ws := admin.ExposureWarnings("127.0.0.1:8080", "https://dash.example.com"); len(ws) != 0 {
+		t.Fatalf("expected no warnings for loopback bind + https, got %v", ws)
+	}
+	if ws := admin.ExposureWarnings("127.0.0.1:8080", "http://localhost:8080"); len(ws) != 0 {
+		t.Fatalf("expected no warnings for loopback http://localhost, got %v", ws)
+	}
+	if ws := admin.ExposureWarnings("0.0.0.0:8080", "http://dash.example.com"); len(ws) != 2 {
+		t.Fatalf("expected 2 exposure warnings for public bind + plaintext http, got %v", ws)
+	}
+
+	db := newTestAdminDB(t)
+	discordMock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodPost && r.URL.Path == "/oauth2/token":
+			_ = r.ParseForm()
+			code := r.Form.Get("code")
+			if code == "upstream-leak" {
+				http.Error(w, "INTERNAL_SECRET_UPSTREAM_SQL_STATE", http.StatusBadGateway)
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{"access_token": "tok-" + code, "token_type": "Bearer"})
+		case r.Method == http.MethodGet && r.URL.Path == "/users/@me":
+			tok := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+			if tok == "tok-super" {
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(map[string]any{"id": "1001", "username": "superop", "global_name": "Super"})
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{"id": "9999", "username": "outsider"})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer discordMock.Close()
+
+	// Invalid log_level and invalid trusted_proxies fail fast.
+	for _, badCfg := range []components.ConfigAdmin{
+		{
+			Enabled:   true,
+			PublicURL: "http://127.0.0.1:8080",
+			LogLevel:  "verbose",
+			OAuth:     components.ConfigAdminOAuth{ClientID: "999", ClientSecret: "sec"},
+		},
+		{
+			Enabled:        true,
+			PublicURL:      "http://127.0.0.1:8080",
+			TrustedProxies: []string{"not-an-ip"},
+			OAuth:          components.ConfigAdminOAuth{ClientID: "999", ClientSecret: "sec"},
+		},
+	} {
+		if _, err := admin.NewServer(admin.ServerDeps{
+			AdminConfig: badCfg,
+			DB:          db,
+		}); err == nil {
+			t.Fatalf("expected NewServer to fail on invalid admin config %+v", badCfg)
+		}
+	}
+
+	comp := components.New(context.Background(), components.Config{LocaleDir: "../../locales"}, db)
+	client := &bot.Client{
+		ApplicationID: snowflake.ID(999000),
+		Caches:        cache.New(cache.WithCaches(cache.FlagsAll)),
+	}
+	var hookCalls int
+	comp.RegisterGuildLocaleChangeHook(func(_ context.Context, _ *bot.Client, _ snowflake.ID, _ discord.Locale) {
+		hookCalls++
+	})
+
+	// Seed 6 guilds for N+1 check (#8) and guild update rollback check (#10)
+	var guildIDs []snowflake.ID
+	for i := range 6 {
+		gid := snowflake.ID(700001 + i)
+		guildIDs = append(guildIDs, gid)
+		if err := db.DB.Create(&models.Guild{ID: gid, Name: fmt.Sprintf("Guild-%d", i), LocaleOverride: discord.LocaleJapanese}).Error; err != nil {
+			t.Fatalf("seed guild %d failed: %v", i, err)
+		}
+		client.Caches.AddGuild(discord.CacheGuild{Guild: discord.Guild{ID: gid, Name: fmt.Sprintf("Guild-%d", i), PreferredLocale: "en-US"}})
+	}
+	targetGID := guildIDs[0]
+
+	store := gormstore.New(db.DB)
+	reg := bbs.NewProviderRegistry(bbs.DefaultProviderKey)
+	reg.Register(store)
+	bbsSvc := bbs.NewService(reg, store, bbs.NewIdentityGenerator([]byte("admin-sec-test-secret-key-32byte")), bbs.NewPolicyManager(bbs.PolicyConfig{}), nil)
+	bbsSync := discordsync.NewSyncer(bbsSvc)
+
+	var outBuf bytes.Buffer
+	base := slog.NewTextHandler(&outBuf, &slog.HandlerOptions{Level: slog.LevelInfo})
+	logHub := admin.NewLogHub(100)
+	_ = admin.NewTeeHandler(base, logHub)
+
+	// Server with trusted_proxies including test client loopback 127.0.0.1 and 10.0.0.0/8.
+	srv, err := admin.NewServer(admin.ServerDeps{
+		Config: components.Config{LocaleDir: "../../locales"},
+		AdminConfig: components.ConfigAdmin{
+			Enabled:        true,
+			PublicURL:      "http://127.0.0.1:8080",
+			LogLevel:       "warn",
+			TrustedProxies: []string{"10.0.0.0/8"},
+			OAuth:          components.ConfigAdminOAuth{ClientSecret: "sec"},
+			Users: []components.ConfigAdminUser{
+				{UserID: snowflake.ID(1001), Role: admin.RoleSuperAdmin},
+				{UserID: snowflake.ID(1003), Role: admin.RoleViewer},
+			},
+		},
+		DB:                 db,
+		Components:         comp,
+		Client:             client,
+		BBSService:         bbsSvc,
+		BBSSyncer:          bbsSync,
+		LogHub:             logHub,
+		OAuthAPIBase:       discordMock.URL,
+		OAuthAuthorizeBase: discordMock.URL + "/oauth2/authorize",
+		OAuthHTTPClient:    discordMock.Client(),
+	})
+	if err != nil {
+		t.Fatalf("NewServer failed: %v", err)
+	}
+
+	// Authenticate super_admin directly via SessionStore? Wait: use OAuth HTTP flow on httptest server!
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+
+	st, rawStart := doJSONReq(t, http.MethodPost, ts.URL+"/api/v1/auth/discord/start", "", admin.AuthStartRequest{})
+	if st != http.StatusOK {
+		t.Fatalf("start failed: %d %s", st, rawStart)
+	}
+	var startResp admin.AuthStartResponse
+	_ = json.Unmarshal(rawStart, &startResp)
+	au, _ := url.Parse(startResp.AuthorizeURL)
+	cbResp, _ := http.Get(fmt.Sprintf("%s/api/v1/auth/discord/callback?code=super&state=%s", ts.URL, url.QueryEscape(au.Query().Get("state"))))
+	_ = cbResp.Body.Close()
+	_, rawPoll := doJSONReq(t, http.MethodPost, ts.URL+"/api/v1/auth/discord/poll", "", admin.AuthPollRequest{
+		LoginID:    startResp.LoginID,
+		PollSecret: startResp.PollSecret,
+	})
+	var pollResp admin.AuthPollResponse
+	_ = json.Unmarshal(rawPoll, &pollResp)
+	superTok := pollResp.SessionToken
+
+	// Check #7: runtime log level endpoints & RBAC
+	st, rawLvl := doJSONReq(t, http.MethodGet, ts.URL+"/api/v1/logs/level", superTok, nil)
+	if st != http.StatusOK || !strings.Contains(string(rawLvl), `"warn"`) {
+		t.Fatalf("expected warn from GET /logs/level, got %d %s", st, rawLvl)
+	}
+	putLevel := func(lvl string) (int, []byte) {
+		rawBody, _ := json.Marshal(admin.UpdateLogLevelRequest{Level: lvl})
+		req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/v1/logs/level", bytes.NewReader(rawBody))
+		req.Header.Set("Authorization", "Bearer "+superTok)
+		req.Header.Set("Content-Type", "application/json")
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatalf("PUT /logs/level failed: %v", err)
+		}
+		defer func() { _ = resp.Body.Close() }()
+		b, _ := io.ReadAll(resp.Body)
+		return resp.StatusCode, b
+	}
+	if st, b := putLevel("debug"); st != http.StatusOK || !strings.Contains(string(b), `"DEBUG"`) {
+		t.Fatalf("PUT /logs/level debug failed: %d %s", st, b)
+	}
+	if st, _ := putLevel("bogus"); st != http.StatusBadRequest {
+		t.Fatalf("expected 400 on bogus log level, got %d", st)
+	}
+
+	// Check #8: collectGuildSummaries avoids N+1 queries against guilds table
+	var guildTableQueries int
+	if err := db.DB.Callback().Query().Before("gorm:query").Register("test_admin_n_plus_1", func(tx *gorm.DB) {
+		if tx.Statement != nil && tx.Statement.Table == "guilds" {
+			guildTableQueries++
+		}
+	}); err != nil {
+		t.Fatalf("register callback failed: %v", err)
+	}
+	st, guildsRaw := doJSONReq(t, http.MethodGet, ts.URL+"/api/v1/guilds", superTok, nil)
+	_ = db.DB.Callback().Query().Remove("test_admin_n_plus_1")
+	if st != http.StatusOK {
+		t.Fatalf("GET /guilds failed: %d %s", st, guildsRaw)
+	}
+	if guildTableQueries != 1 {
+		t.Fatalf("expected exactly 1 SELECT on guilds across 6 guilds (no N+1), got %d", guildTableQueries)
+	}
+
+	// Check #10: handleUpdateGuild rolls back locale_override and skips hook when SetupGuild fails.
+	en := "en-US"
+	bbsOn := true
+	if err := db.DB.Callback().Create().Before("gorm:create").Register("test_fail_bbs_setup", func(tx *gorm.DB) {
+		if tx.Statement != nil && tx.Statement.Table == "bbs_guild_configs" {
+			_ = tx.AddError(fmt.Errorf("injected bbs setup failure"))
+		}
+	}); err != nil {
+		t.Fatalf("register bbs failure callback failed: %v", err)
+	}
+	st, _ = doJSONReq(t, http.MethodPatch, ts.URL+"/api/v1/guilds/"+targetGID.String(), superTok, admin.UpdateGuildRequest{
+		LocaleOverride: &en,
+		BBSEnabled:     &bbsOn,
+	})
+	_ = db.DB.Callback().Create().Remove("test_fail_bbs_setup")
+	if st != http.StatusInternalServerError {
+		t.Fatalf("expected 500 when SetupGuild fails, got %d", st)
+	}
+	if got := comp.GuildLocaleOverride(context.Background(), targetGID); got != discord.LocaleJapanese {
+		t.Fatalf("expected locale_override rolled back to ja, got %q", got)
+	}
+	if hookCalls != 0 {
+		t.Fatalf("expected 0 locale change hook calls on partial failure, got %d", hookCalls)
+	}
+
+	// Check #10 also pre-validates missing bbsSvc BEFORE writing locale_override.
+	srvNoBBS, err := admin.NewServer(admin.ServerDeps{
+		Config: components.Config{LocaleDir: "../../locales"},
+		AdminConfig: components.ConfigAdmin{
+			Enabled:   true,
+			PublicURL: "http://127.0.0.1:8080",
+			OAuth:     components.ConfigAdminOAuth{ClientSecret: "sec"},
+			Users:     []components.ConfigAdminUser{{UserID: snowflake.ID(1001), Role: admin.RoleSuperAdmin}},
+		},
+		DB:                 db,
+		Components:         comp,
+		Client:             client,
+		LogHub:             logHub,
+		OAuthAPIBase:       discordMock.URL,
+		OAuthAuthorizeBase: discordMock.URL + "/oauth2/authorize",
+		OAuthHTTPClient:    discordMock.Client(),
+	})
+	if err != nil {
+		t.Fatalf("NewServer(no BBS) failed: %v", err)
+	}
+	reqNoBBS := httptest.NewRequest(http.MethodPatch, "/api/v1/guilds/"+targetGID.String(), strings.NewReader(`{"locale_override":"en-US","bbs_enabled":true}`))
+	reqNoBBS.Header.Set("Authorization", "Bearer "+superTok)
+	reqNoBBS.Header.Set("Content-Type", "application/json")
+	recNoBBS := httptest.NewRecorder()
+	srvNoBBS.Handler().ServeHTTP(recNoBBS, reqNoBBS)
+	if recNoBBS.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected 503 when bbsSvc missing, got %d", recNoBBS.Code)
+	}
+	if got := comp.GuildLocaleOverride(context.Background(), targetGID); got != discord.LocaleJapanese || hookCalls != 0 {
+		t.Fatalf("expected no locale change when pre-validation failed, override=%q hooks=%d", got, hookCalls)
+	}
+
+	// Check #12: OAuth callback HTML must NOT leak upstream internal error text.
+	_, sLeakRaw := doJSONReq(t, http.MethodPost, ts.URL+"/api/v1/auth/discord/start", "", admin.AuthStartRequest{})
+	var leakStart admin.AuthStartResponse
+	_ = json.Unmarshal(sLeakRaw, &leakStart)
+	lu, _ := url.Parse(leakStart.AuthorizeURL)
+	cbLeak, err := http.Get(fmt.Sprintf("%s/api/v1/auth/discord/callback?code=upstream-leak&state=%s", ts.URL, url.QueryEscape(lu.Query().Get("state"))))
+	if err != nil {
+		t.Fatalf("callback leak request failed: %v", err)
+	}
+	leakBody, _ := io.ReadAll(cbLeak.Body)
+	_ = cbLeak.Body.Close()
+	if strings.Contains(string(leakBody), "INTERNAL_SECRET_UPSTREAM_SQL_STATE") || strings.Contains(string(leakBody), "status 502") {
+		t.Fatalf("callback HTML leaked internal error details: %s", leakBody)
+	}
+	if !strings.Contains(string(leakBody), "oauth_exchange_failed") {
+		t.Fatalf("expected safe fixed error code in callback HTML, got: %s", leakBody)
+	}
+
+	// Check #11 & #13: OAuthManager global pending cap (256, no eviction), per-IP pending cap (8),
+	// per-IP rate limit (429 + Retry-After), and trusted_proxies X-Forwarded-For resolution.
+	sessStore := admin.NewSessionStore(db.DB)
+	auditStore := admin.NewAuditStore(db.DB)
+	rbac, _ := admin.NewRBAC(components.ConfigAdmin{
+		Users: []components.ConfigAdminUser{{UserID: snowflake.ID(1001), Role: admin.RoleSuperAdmin}},
+	})
+	mgr, err := admin.NewOAuthManager(admin.OAuthConfig{
+		ClientID:     "999",
+		ClientSecret: "sec",
+		RedirectURL:  "http://127.0.0.1:8080/api/v1/auth/discord/callback",
+		PendingTTL:   5 * time.Minute,
+	}, rbac, sessStore, auditStore)
+	if err != nil {
+		t.Fatalf("NewOAuthManager failed: %v", err)
+	}
+	firstStart, err := mgr.Start("first", "198.51.100.1")
+	if err != nil {
+		t.Fatalf("first Start failed: %v", err)
+	}
+	// Exceed per-IP cap (8 total from 198.51.100.1)
+	for i := 1; i < 8; i++ {
+		if _, err := mgr.Start("c", "198.51.100.1"); err != nil {
+			t.Fatalf("Start #%d for same IP unexpectedly failed: %v", i+1, err)
+		}
+	}
+	if _, err := mgr.Start("c9", "198.51.100.1"); err != admin.ErrTooManyPendingLogins {
+		t.Fatalf("expected ErrTooManyPendingLogins on 9th per-IP pending login, got %v", err)
+	}
+	// Fill remaining global capacity up to 256 across distinct IPs (8 pending per IP -> 31 other IPs * 8 + 7 = 255)
+	count := 8
+	for ipIdx := 2; count < 256; ipIdx++ {
+		ip := fmt.Sprintf("198.51.%d.%d", ipIdx/250+1, ipIdx%250+1)
+		for k := 0; k < 8 && count < 256; k++ {
+			if _, err := mgr.Start("bulk", ip); err != nil {
+				t.Fatalf("Start count=%d ip=%s failed: %v", count, ip, err)
+			}
+			count++
+		}
+	}
+	if _, err := mgr.Start("overflow", "203.0.113.99"); err != admin.ErrTooManyPendingLogins {
+		t.Fatalf("expected ErrTooManyPendingLogins at 256 global limit, got %v", err)
+	}
+	// Crucial: first entry MUST NOT have been evicted!
+	if pr, pErr := mgr.Poll(firstStart.LoginID, firstStart.PollSecret); pErr != nil || pr.Status != "pending" {
+		t.Fatalf("expected first login to survive 256 cap without eviction, got resp=%+v err=%v", pr, pErr)
+	}
+
+	// Test HTTP trusted_proxies + X-Forwarded-For (127.0.0.1 trusted proxy + XFF spoofing protection + rate limiting)
+	srvProxy, err := admin.NewServer(admin.ServerDeps{
+		Config: components.Config{LocaleDir: "../../locales"},
+		AdminConfig: components.ConfigAdmin{
+			Enabled:        true,
+			PublicURL:      "http://127.0.0.1:8080",
+			TrustedProxies: []string{"127.0.0.1/32", "10.0.0.0/8"},
+			OAuth:          components.ConfigAdminOAuth{ClientID: "999000", ClientSecret: "sec"},
+			Users:          []components.ConfigAdminUser{{UserID: snowflake.ID(1001), Role: admin.RoleSuperAdmin}},
+		},
+		DB:                 db,
+		Client:             client,
+		OAuthAPIBase:       discordMock.URL,
+		OAuthAuthorizeBase: discordMock.URL + "/oauth2/authorize",
+		OAuthHTTPClient:    discordMock.Client(),
+	})
+	if err != nil {
+		t.Fatalf("NewServer(trusted_proxies) failed: %v", err)
+	}
+	callStart := func(remoteAddr, xff string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/discord/start", strings.NewReader(`{}`))
+		req.RemoteAddr = remoteAddr
+		if xff != "" {
+			req.Header.Set("X-Forwarded-For", xff)
+		}
+		req.Header.Set("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+		srvProxy.Handler().ServeHTTP(rec, req)
+		return rec
+	}
+	// Same untrusted XFF spoof ("malformed, 203.0.113.55, 10.0.0.2") from trusted proxy 127.0.0.1 resolves right-to-left to 203.0.113.55!
+	for i := range 8 {
+		rec := callStart("127.0.0.1:1234", "malformed-spoof, 203.0.113.55, 10.0.0.2")
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200 on request %d for client 203.0.113.55, got %d %s", i+1, rec.Code, rec.Body.String())
+		}
+	}
+	// 9th from 203.0.113.55 hits per-IP pending cap -> 429 with Retry-After.
+	recCap := callStart("127.0.0.1:1234", "203.0.113.55, 10.0.0.3")
+	if recCap.Code != http.StatusTooManyRequests || recCap.Header().Get("Retry-After") == "" {
+		t.Fatalf("expected 429 with Retry-After on per-IP pending cap, got %d headers=%v", recCap.Code, recCap.Header())
+	}
+	// Another IP (203.0.113.77) behind trusted proxy still succeeds!
+	recOther := callStart("127.0.0.1:1234", "203.0.113.77")
+	if recOther.Code != http.StatusOK {
+		t.Fatalf("expected 200 for separate forwarded IP 203.0.113.77, got %d", recOther.Code)
+	}
+	// Direct untrusted peer (198.51.100.5) trying to spoof XFF is ignored and rate-limited on its peer IP!
+	for i := range 8 {
+		rec := callStart("198.51.100.5:9000", fmt.Sprintf("198.51.100.%d", 100+i))
+		if rec.Code != http.StatusOK {
+			t.Fatalf("expected 200 for untrusted peer req %d, got %d", i+1, rec.Code)
+		}
+	}
+	recSpoofBlocked := callStart("198.51.100.5:9000", "198.51.100.250")
+	if recSpoofBlocked.Code != http.StatusTooManyRequests {
+		t.Fatalf("expected untrusted peer XFF spoof to still count against peer IP cap (429), got %d", recSpoofBlocked.Code)
+	}
+
+	// Verify HTTP per-IP rate limiters trigger 429 on /start (burst 10) and /poll (burst 60),
+	// even from a distinct IP using completed/bad logins, plus viewer 403 on PUT /api/v1/logs/level.
+	for i := range 10 {
+		rec := callStart("198.51.200.10:5000", "")
+		if i < 8 && rec.Code != http.StatusOK {
+			t.Fatalf("expected 200 before cap on rate-limit test i=%d, got %d", i, rec.Code)
+		}
+		if i >= 8 && rec.Code != http.StatusTooManyRequests {
+			t.Fatalf("expected 429 on i=%d, got %d", i, rec.Code)
+		}
+	}
+	recRateLimitedStart := callStart("198.51.200.10:5000", "")
+	if recRateLimitedStart.Code != http.StatusTooManyRequests || recRateLimitedStart.Header().Get("Retry-After") == "" {
+		t.Fatalf("expected rate-limited 429 with Retry-After on 11th /start, got %d", recRateLimitedStart.Code)
+	}
+	for i := range 60 {
+		reqPoll := httptest.NewRequest(http.MethodPost, "/api/v1/auth/discord/poll", strings.NewReader(`{"login_id":"x","poll_secret":"y"}`))
+		reqPoll.RemoteAddr = "198.51.200.11:5000"
+		reqPoll.Header.Set("Content-Type", "application/json")
+		recPoll := httptest.NewRecorder()
+		srvProxy.Handler().ServeHTTP(recPoll, reqPoll)
+		if recPoll.Code == http.StatusTooManyRequests {
+			t.Fatalf("did not expect 429 within burst 60 at i=%d", i)
+		}
+	}
+	reqPollOver := httptest.NewRequest(http.MethodPost, "/api/v1/auth/discord/poll", strings.NewReader(`{"login_id":"x","poll_secret":"y"}`))
+	reqPollOver.RemoteAddr = "198.51.200.11:5000"
+	reqPollOver.Header.Set("Content-Type", "application/json")
+	recPollOver := httptest.NewRecorder()
+	srvProxy.Handler().ServeHTTP(recPollOver, reqPollOver)
+	if recPollOver.Code != http.StatusTooManyRequests || recPollOver.Header().Get("Retry-After") == "" {
+		t.Fatalf("expected 429 with Retry-After on 61st /poll, got %d", recPollOver.Code)
+	}
+
+	// Viewer cannot PUT /api/v1/logs/level (403)
+	rawViewerSess, viewerSess, err := sessStore.Create(context.Background(), snowflake.ID(1003), "viewer", "Viewer", admin.RoleViewer, "test", time.Hour)
+	if err != nil || viewerSess == nil {
+		t.Fatalf("create viewer session failed: %v", err)
+	}
+	if stGet, _ := doJSONReq(t, http.MethodGet, ts.URL+"/api/v1/logs/level", rawViewerSess, nil); stGet != http.StatusOK {
+		t.Fatalf("expected viewer GET /logs/level 200, got %d", stGet)
+	}
+	reqVPut, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/v1/logs/level", strings.NewReader(`{"level":"info"}`))
+	reqVPut.Header.Set("Authorization", "Bearer "+rawViewerSess)
+	reqVPut.Header.Set("Content-Type", "application/json")
+	respVPut, err := http.DefaultClient.Do(reqVPut)
+	if err != nil {
+		t.Fatalf("viewer PUT /logs/level request failed: %v", err)
+	}
+	_ = respVPut.Body.Close()
+	if respVPut.StatusCode != http.StatusForbidden {
+		t.Fatalf("expected viewer PUT /logs/level 403, got %d", respVPut.StatusCode)
+	}
+
+	// SSE stream with after_seq delivers >200 buffered unread entries without 200 truncation (#9)
+	sseHub := admin.NewLogHub(500)
+	srvSSE, err := admin.NewServer(admin.ServerDeps{
+		Config: components.Config{LocaleDir: "../../locales"},
+		AdminConfig: components.ConfigAdmin{
+			Enabled:   true,
+			PublicURL: "http://127.0.0.1:8080",
+			OAuth:     components.ConfigAdminOAuth{ClientID: "999000", ClientSecret: "sec"},
+			Users:     []components.ConfigAdminUser{{UserID: snowflake.ID(1001), Role: admin.RoleSuperAdmin}},
+		},
+		DB:                 db,
+		Client:             client,
+		LogHub:             sseHub,
+		OAuthAPIBase:       discordMock.URL,
+		OAuthAuthorizeBase: discordMock.URL + "/oauth2/authorize",
+		OAuthHTTPClient:    discordMock.Client(),
+	})
+	if err != nil {
+		t.Fatalf("NewServer(SSE) failed: %v", err)
+	}
+	for i := 1; i <= 260; i++ {
+		sseHub.Append(admin.LogEntry{Level: "INFO", Message: fmt.Sprintf("backlog-%03d", i)})
+	}
+	tsSSE := httptest.NewServer(srvSSE.Handler())
+	defer tsSSE.Close()
+	sseCtx, sseCancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer sseCancel()
+	sseReq, _ := http.NewRequestWithContext(sseCtx, http.MethodGet, tsSSE.URL+"/api/v1/logs/stream?after_seq=10", nil)
+	sseReq.Header.Set("Authorization", "Bearer "+superTok)
+	sseResp, err := http.DefaultClient.Do(sseReq)
+	if err != nil {
+		t.Fatalf("open backlog SSE failed: %v", err)
+	}
+	defer func() { _ = sseResp.Body.Close() }()
+	sc := bufio.NewScanner(sseResp.Body)
+	seenSeq11 := false
+	seenSeq260 := false
+	backlogCount := 0
+	for sc.Scan() {
+		line := sc.Text()
+		if strings.HasPrefix(line, "data: ") {
+			backlogCount++
+			if strings.Contains(line, `"backlog-011"`) {
+				seenSeq11 = true
+			}
+			if strings.Contains(line, `"backlog-260"`) {
+				seenSeq260 = true
+				sseCancel()
+				break
+			}
+		}
+	}
+	if !seenSeq11 || !seenSeq260 || backlogCount != 250 {
+		t.Fatalf("expected 250 SSE backlog entries (11..260), got count=%d seen11=%v seen260=%v", backlogCount, seenSeq11, seenSeq260)
+	}
+}

@@ -1538,3 +1538,48 @@ func TestRenderReaderPage_SectionsAndSixPostPagination(t *testing.T) {
 		t.Fatalf("expected latest page 5..10, got %d..%d", ls, le)
 	}
 }
+
+func TestRenderPostComponents_EmptyAndControlMarkerBodyFallback(t *testing.T) {
+	v := discordsync.PayloadValidator{}
+	thread := bbs.Thread{
+		ID:    uuid.New(),
+		Title: "テストスレッド",
+	}
+
+	for _, tc := range []struct {
+		name string
+		body string
+	}{
+		{name: "empty", body: ""},
+		{name: "whitespace", body: "   \n\t  "},
+		{name: "only_markers", body: "\uEFFD\uEFFF\uEFFD"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			post := bbs.Post{
+				ID:        uuid.New(),
+				ThreadID:  thread.ID,
+				ResNumber: 2,
+				Body:      tc.body,
+				CreatedAt: time.Now(),
+			}
+			comps := discordsync.RenderPostComponents(post, thread, nil, false, discord.LocaleJapanese)
+			msg := discord.NewMessageCreateV2(comps...)
+			if err := v.ValidateMessageCreate(msg); err != nil {
+				t.Fatalf("%s: ValidateMessageCreate failed: %v", tc.name, err)
+			}
+			sec, ok := comps[0].(discord.SectionComponent)
+			if !ok {
+				t.Fatalf("%s: expected SectionComponent, got %T", tc.name, comps[0])
+			}
+			bodyDisp, ok := sec.Components[1].(discord.TextDisplayComponent)
+			if !ok || bodyDisp.Content != "-" {
+				t.Fatalf("%s: expected fallback '-' body TextDisplay, got %#v", tc.name, sec.Components[1])
+			}
+
+			page, _, _ := discordsync.RenderReaderPage(thread, []bbs.Post{post}, 0, nil, discord.LocaleJapanese)
+			if err := v.ValidateMessageCreate(discord.NewMessageCreateV2(page...).WithEphemeral(true)); err != nil {
+				t.Fatalf("%s: RenderReaderPage failed ValidateMessageCreate: %v", tc.name, err)
+			}
+		})
+	}
+}

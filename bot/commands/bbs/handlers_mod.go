@@ -61,36 +61,39 @@ func buildReportThreadModal(loc discord.Locale, threadID uuid.UUID) discord.Moda
 	)
 }
 
-func (s *System) loadPostForGuild(ctx context.Context, guildID snowflake.ID, postID uuid.UUID) (*bbscore.Board, *bbscore.Thread, *bbscore.Post, error) {
+func (s *System) loadPostForGuild(ctx context.Context, guildID snowflake.ID, postID uuid.UUID) (*bbscore.Board, *bbscore.Thread, *bbscore.Post, *bbscore.BoardMount, error) {
 	post, err := s.Service.GetPost(ctx, postID)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	thread, err := s.Service.GetThread(ctx, post.ThreadID)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
 	board, err := s.Service.GetBoard(ctx, thread.BoardID)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, nil, err
 	}
+	var mount *bbscore.BoardMount
 	switch board.Scope {
 	case bbscore.ScopeLocal:
 		if board.GuildID == nil || *board.GuildID != guildID {
-			return nil, nil, nil, bbscore.ErrUnauthorized
+			return nil, nil, nil, nil, bbscore.ErrUnauthorized
 		}
 	case bbscore.ScopeGlobal:
-		mount, mErr := s.Service.Store.GetBoardMountByGuildAndBoard(ctx, guildID, board.ID)
+		var mErr error
+		mount, mErr = s.Service.Store.GetBoardMountByGuildAndBoard(ctx, guildID, board.ID)
 		if mErr != nil || mount == nil {
+			mount = nil
 			pm, pErr := s.Service.Store.GetPostMirrorByPostAndGuild(ctx, post.ID, guildID)
 			if pErr != nil || pm == nil {
-				return nil, nil, nil, bbscore.ErrUnauthorized
+				return nil, nil, nil, nil, bbscore.ErrUnauthorized
 			}
 		}
 	default:
-		return nil, nil, nil, bbscore.ErrUnauthorized
+		return nil, nil, nil, nil, bbscore.ErrUnauthorized
 	}
-	return board, thread, post, nil
+	return board, thread, post, mount, nil
 }
 
 func (s *System) handlePostMenuButton(e *handler.ComponentEvent) error {
@@ -112,7 +115,7 @@ func (s *System) handlePostMenuButton(e *handler.ComponentEvent) error {
 		return nil
 	}
 
-	board, thread, post, err := s.loadPostForGuild(e.Ctx, *guildID, postID)
+	board, thread, post, mount, err := s.loadPostForGuild(e.Ctx, *guildID, postID)
 	if err != nil {
 		errTitle := i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed")
 		if errors.Is(err, bbscore.ErrUnauthorized) {
@@ -124,7 +127,12 @@ func (s *System) handlePostMenuButton(e *handler.ComponentEvent) error {
 
 	var canReply bool
 	if !post.Abone && thread.Status == bbscore.ThreadStatusActive && thread.ResCount < thread.Rules.Normalize().MaxRes {
-		if mount, mErr := s.Service.Store.GetBoardMountByGuildAndBoard(e.Ctx, *guildID, board.ID); mErr == nil && mount != nil && mount.Active {
+		if mount == nil && board.Scope == bbscore.ScopeLocal {
+			if m, mErr := s.Service.Store.GetBoardMountByGuildAndBoard(e.Ctx, *guildID, board.ID); mErr == nil {
+				mount = m
+			}
+		}
+		if mount != nil && mount.Active {
 			if _, gErr := s.Service.EnsureGuildEnabled(e.Ctx, *guildID); gErr == nil {
 				if mirror, tmErr := s.Service.Store.GetThreadMirrorByMountAndThread(e.Ctx, mount.ID, thread.ID); tmErr == nil && mirror != nil {
 					canReply = true
@@ -170,7 +178,7 @@ func (s *System) handleReportPostButton(e *handler.ComponentEvent) error {
 		return nil
 	}
 
-	if _, _, _, err := s.loadPostForGuild(e.Ctx, *guildID, postID); err != nil {
+	if _, _, _, _, err := s.loadPostForGuild(e.Ctx, *guildID, postID); err != nil {
 		errTitle := i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed")
 		if errors.Is(err, bbscore.ErrUnauthorized) {
 			errTitle = i18n.TranslateText(loc, "components.bbs.errors.title.permission")

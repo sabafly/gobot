@@ -437,7 +437,7 @@ func (s *System) handleReplyPostButton(e *handler.ComponentEvent) error {
 		return nil
 	}
 
-	board, thread, post, err := s.loadPostForGuild(e.Ctx, *guildID, postID)
+	board, thread, post, mount, err := s.loadPostForGuild(e.Ctx, *guildID, postID)
 	if err != nil {
 		errTitle := i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed")
 		if errors.Is(err, bbscore.ErrUnauthorized) {
@@ -447,8 +447,14 @@ func (s *System) handleReplyPostButton(e *handler.ComponentEvent) error {
 		return nil
 	}
 
-	mount, err := s.Service.Store.GetBoardMountByGuildAndBoard(e.Ctx, *guildID, board.ID)
-	if err != nil || mount == nil || !mount.Active {
+	if mount == nil && board.Scope == bbscore.ScopeLocal {
+		var mErr error
+		mount, mErr = s.Service.Store.GetBoardMountByGuildAndBoard(e.Ctx, *guildID, board.ID)
+		if mErr != nil {
+			mount = nil
+		}
+	}
+	if mount == nil || !mount.Active {
 		s.replyComponentError(e,
 			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
 			i18n.TranslateText(loc, "components.bbs.post_ui.mount_missing_or_inactive"),

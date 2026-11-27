@@ -31,6 +31,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -137,6 +138,11 @@ func run() error {
 	}
 	if config.Admin.LogBufferSize > 0 {
 		logHub.SetCapacity(config.Admin.LogBufferSize)
+	}
+	if strings.TrimSpace(config.Admin.LogLevel) != "" {
+		if _, err := logHub.SetCaptureLevel(config.Admin.LogLevel); err != nil {
+			return fmt.Errorf("管理ログレベル設定が不正です: %w", err)
+		}
 	}
 
 	if config.Debug.Trace {
@@ -420,7 +426,7 @@ func initBBSSystem(component *components.Components, config *components.Config, 
 			if client == nil {
 				return
 			}
-			go syncer.RefreshGuildBoardGuides(context.Background(), client, guildID, resolvedLocale)
+			syncer.ScheduleRefreshGuildBoardGuides(component.Ctx(), client, guildID, resolvedLocale)
 		})
 	}
 	return bbsCmd.NewSystem(component, svc, syncer, config.BBS.OperatorLogChannel), nil

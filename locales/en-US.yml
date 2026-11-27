@@ -666,3 +666,526 @@ strings:
   components.bbs.admin.report.status_save_failed_body: "The moderation action succeeded, but saving status for report {{.id}} failed: {{.err}}"
   components.bbs.admin.abone_sync_failed_title: "Failed to Sync Abone to Discord"
   components.bbs.admin.abone_sync_failed_body: "Abone was saved in the database, but Discord message sync failed, so report {{.report_id}} remains open: {{.err}}"
+components:
+  command.user.settings.view:
+    - type: container
+      components:
+        - "# ⚙️ User Settings"
+        - type: separator
+        - "### 🔔 Notification Settings"
+        - type: section
+          accessory:
+            type: button
+            style: secondary
+            label: "{{.dm_btn_label}}"
+            id: "user:toggle_dm"
+          components:
+            - |-
+              - DM Notifications on Result: **{{.dm_status}}**
+  command.settings.view:
+    - type: container
+      components:
+        - "# {{.guild_name}} Settings"
+        - type: separator
+        - "## Language Settings"
+        - |-
+          - **Guild Language**: {{.guild_locale}}
+        - "## Bump Notification Settings"
+        - |-
+          - **Bump Notifications**: {{.bump_enabled}}
+          - **Bump Notification Message**:
+          ```
+          {{.bump_message_title}}
+          ``````
+          {{.bump_message}}
+          ```
+          - **Bump Reminder Notification**:
+          ```
+          {{.bump_remind_message_title}}
+          ``````
+          {{.bump_remind_message}}
+          ```
+          - **Bump Mention Target**: {{.bump_mention}}
+        - "## UP Notification Settings"
+        - |-
+          - **UP Notifications**: {{.up_enabled}}
+          - **UP Notification Message**:
+          ```
+          {{.up_message_title}}
+          ``````
+          {{.up_message}}
+          ```
+          - **UP Reminder Notification**:
+          ```
+          {{.up_remind_message_title}}
+          ``````
+          {{.up_remind_message}}
+          ```
+          - **UP Mention Target**: {{.up_mention}}
+        - "## Leveling Settings"
+        - |-
+          - **Leveling**: {{.leveling_enabled}}
+  command.currency.view:
+    - type: container
+      components:
+        - type: section
+          accessory:
+            type: thumbnail
+            url: "{user_icon}"
+          components:
+            - "## {{.user_name}}'s Currency"
+            - |-
+              ### Balance
+              - **Balance**: `{{.point}} {{.currency_name}}`
+        - type: separator
+          height: 2
+        - |-
+          ### Leaderboard
+          {{.ranking}}
+  command.currency.ranking:
+    - type: container
+      components:
+        - "## 👑 {{.guild_name}} Currency Leaderboard"
+        - |-
+          Showing entries: `{{.limit}}`
+          -# Showing results starting from #{{.skip}}.
+        - |-
+          {{.ranking}}
+  command.currency.give.not_enough_point:
+    - "You do not have enough {{.currency_name}} to transfer `{{.point}} {{.currency_name}}`."
+    - "Your current {{.currency_name}} balance is `{{.current_point}} {{.currency_name}}`."
+  command.currency.give.success:
+    - "Currency transfer completed."
+    - "Transferred `{{.point}} {{.currency_name}}` to `{{.target_user_name}}`."
+  command.play.high-and-low.start:
+    - "{{.mention}}"
+    - type: container
+      components:
+        - "# High & Low"
+        - |-
+          ## Rules
+          - High & Low is a game where you guess whether the next card will be higher or lower than the current card.
+          - Choose HIGH if you think the next card's rank is higher, or LOW if you think it is lower.
+          - Guessing correctly adds current {{.currency_name}} × bonus percentage to your pot.
+          - Guessing wrong ends the game.
+          ### SAME Chance
+          - When two consecutive cards had matching numbers or when available, you can guess SAME.
+          - Guessing SAME correctly adds the card rank × initial bonus percentage to the bonus rate.
+          - Furthermore, if it matches the previous card's suit as well, your current {{.currency_name}} is multiplied by rank × 1.5.
+          - Guessing SAME and missing ends the game.
+          ### Extra {{.currency_name}}
+          - Spending additional {{.currency_name}} increases the starting pot and initial multiplier.
+        - type: separator
+          height: 2
+        - |-
+          Selected Start Option: {{.selected_option}}
+          Current Balance: `{{.gopoint}} {{.currency_name}}`
+          Select a start option and press "Start" to begin.
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:hal_select_opt:{uuid}"
+              placeholder: "Select a start option"
+              options: "hal_start_options"
+        - type: action_row
+          components:
+            - type: button
+              style: primary
+              label: "Start"
+              id: "play:hal_start:{uuid}"
+  command.play.high-and-low.game:
+    - "{{.mention}}"
+    - type: container
+      components:
+        - "## High & Low"
+        - "### Turn {{.turn}}"
+        - type: separator
+          height: 2
+        - |-
+          ### **Current Card**
+          # {{.current_card}}
+          - **Previous Card**: {{.last_card}}
+          - **Current {{.currency_name}}**: `{{.point}} {{.currency_name}}` (Bonus {{.multiplier}}%)
+          - **Last Choice**: **{{.last_choice}}** | Last Result: **{{.last_result}}**
+        - "### {{.message}}"
+        - type: action_row
+          components:
+            - type: button
+              style: success
+              label: "HIGH"
+              id: "play:hal_high:{uuid}"
+            - type: button
+              style: secondary
+              label: "SAME"
+              id: "play:hal_same:{uuid}"
+            - type: button
+              style: danger
+              label: "LOW"
+              id: "play:hal_low:{uuid}"
+        - type: action_row
+          components:
+            - type: button
+              style: secondary
+              label: "Cash Out / End"
+              id: "play:hal_cancel:{uuid}"
+  command.play.high-and-low.result:
+    - "{{.mention}}"
+    - type: container
+      components:
+        - "## High & Low"
+        - "### Turn {{.turn}}"
+        - type: separator
+          height: 2
+        - "## {{.final_state}}"
+        - type: separator
+          height: 1
+        - |-
+          ### **Final Card**
+          # {{.current_card}}
+          - **Previous Card**: {{.last_card}}
+          - **Result**: `{{.point}} {{.currency_name}}` (Bonus {{.multiplier}}%)
+          - **Final Choice**: **{{.last_choice}}** | Result: **{{.last_result}}**
+        - type: separator
+          height: 2
+        - type: button
+          style: secondary
+          label: Play Again
+          id: "play:hal_retry:{option_index}"
+  command.play.fx.order_screen:
+    - type: container
+      components:
+        - "📈 **FX TRADING SIMULATOR** 📉"
+        - type: separator
+          height: 2
+        - |-
+          ### 💱 Current Exchange Rates
+          {{.rates_text}}
+        - type: separator
+        - "🪙 **Available {{.currency_name}}**: `{{.points}} {{.currency_name}}`"
+        - type: separator
+        - |-
+          ### 🆕 New Order Form
+          {{.form_info}}
+          {{.restriction_warning}}
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:fx_symbol:{uuid}"
+              placeholder: "1. Select currency pair"
+              options: "symbol_options"
+        - type: action_row
+          components:
+            - type: button
+              style: primary
+              label: "{{.btn_input_margin}}"
+              id: "play:fx_margin_btn:{uuid}"
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:fx_leverage:{uuid}"
+              placeholder: "3. Select leverage"
+              options: "leverage_options"
+        - type: action_row
+          components:
+            - type: button
+              style: success
+              label: "🟢 Buy"
+              id: "play:fx_buy:{uuid}"
+            - type: button
+              style: danger
+              label: "🔴 Sell"
+              id: "play:fx_sell:{uuid}"
+            - type: button
+              style: primary
+              label: "Limit / Stop Order"
+              id: "play:fx_pending_order_btn:{uuid}"
+        - type: action_row
+          components:
+            - type: button
+              style: primary
+              label: "Refresh Rates"
+              id: "play:fx_refresh:{uuid}"
+            - type: button
+              style: secondary
+              label: "Close"
+              id: "play:fx_quit:{uuid}"
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:fx_switch_pos:{uuid}"
+              placeholder: "Select a position to manage"
+              options: "position_options"
+  command.play.fx.position_screen:
+    - type: container
+      components:
+        - "📈 **FX TRADING SIMULATOR** 📉"
+        - type: separator
+        - |-
+          ### 💱 Current Exchange Rates
+          {{.rates_text}}
+        - type: separator
+        - "🪙 **Available {{.currency_name}}**: `{{.points}} {{.currency_name}}`"
+        - type: separator
+        - |-
+          {{.position_info}}
+          {{.restriction_warning}}
+        - type: action_row
+          components:
+            - type: button
+              style: success
+              label: "Close Position (TP/SL)"
+              id: "play:fx_close:{uuid}"
+            - type: button
+              style: primary
+              label: "Add Margin"
+              id: "play:fx_add_margin_btn:{uuid}"
+            - type: button
+              style: primary
+              label: "Set TP / SL"
+              id: "play:fx_set_tpsl_btn:{uuid}"
+            - type: button
+              style: primary
+              label: "Refresh Rates / PnL"
+              id: "play:fx_refresh:{uuid}"
+            - type: button
+              style: secondary
+              label: "Close"
+              id: "play:fx_quit:{uuid}"
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:fx_switch_pos:{uuid}"
+              placeholder: "Select a position to manage"
+              options: "position_options"
+  command.play.fx.order_detail_screen:
+    - type: container
+      components:
+        - "📈 **FX TRADING SIMULATOR** 📉"
+        - type: separator
+        - |-
+          ### 💱 Current Exchange Rates
+          {{.rates_text}}
+        - type: separator
+        - "🪙 **Available {{.currency_name}}**: `{{.points}} {{.currency_name}}`"
+        - type: separator
+        - |-
+          {{.order_info}}
+        - type: action_row
+          components:
+            - type: button
+              style: danger
+              label: "🔴 Cancel Order"
+              id: "play:fx_cancel_order:{uuid}"
+            - type: button
+              style: primary
+              label: "Refresh Rates / Status"
+              id: "play:fx_refresh:{uuid}"
+            - type: button
+              style: secondary
+              label: "Close"
+              id: "play:fx_quit:{uuid}"
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:fx_switch_pos:{uuid}"
+              placeholder: "Select a position to manage"
+              options: "position_options"
+  command.play.portfolio:
+    - type: container
+      components:
+        - "### 📊 **{{.user_name}}**'s FX Portfolio 📊"
+        - type: separator
+          height: 2
+        - "🪙 **Available {{.currency_name}}**: `{{.points}} {{.currency_name}}`"
+        - type: separator
+        - |-
+          ### 💼 Open Positions ({{.pos_count}})
+          {{.positions_list}}
+        - type: separator
+        - |-
+          ### ⏳ Pending Limit / Stop Orders ({{.order_count}})
+          {{.orders_list}}
+  command.play.chinchiro.lobby:
+    - type: container
+      components:
+        - "🎲 **Chinchiro Lobby** 🎲"
+        - type: separator
+        - "🪙 **Entry Bet**: `{{.bet}} {{.currency_name}}`"
+        - type: separator
+        - |-
+          ### 👥 Players ({{.player_count}})
+          {{.players_list}}
+        - type: separator
+        - "Host (Dealer): {{.host_mention}}"
+        - type: action_row
+          components:
+            - type: button
+              style: primary
+              label: "Join"
+              id: "play:chinchiro_join:{uuid}"
+            - type: button
+              style: success
+              label: "Start Game"
+              id: "play:chinchiro_start:{uuid}"
+            - type: button
+              style: danger
+              label: "Cancel"
+              id: "play:chinchiro_cancel:{uuid}"
+  command.play.chinchiro.game:
+    - type: container
+      components:
+        - "🎲 **Chinchiro in Progress** 🎲"
+        - type: separator
+        - |-
+          ### 🎴 Game Status
+          {{.game_status}}
+        - type: separator
+        - |-
+          ### 👥 Player Results & Status
+          {{.players_status}}
+        - type: action_row
+          components:
+            - type: button
+              style: success
+              label: "Roll Dice"
+              id: "play:chinchiro_roll:{uuid}"
+  command.play.chinchiro.finished:
+    - type: container
+      components:
+        - "🎲 **Chinchiro Game Finished** 🎲"
+        - type: separator
+        - |-
+          ### 🏁 Final Results
+          {{.game_status}}
+        - type: separator
+        - |-
+          ### 👥 Player Results & Status
+          {{.players_status}}
+  command.play.polymarket.search_screen:
+    - type: container
+      components:
+        - "🔮 **Polymarket Prediction Betting** 🔮"
+        - type: separator
+        - |-
+          ### 🔎 Markets
+          {{.query_info}}
+
+          Select a prediction market below to inspect details or place a bet.
+          {{.status}}
+        - type: separator
+        - "🪙 **Available {{.currency_name}}**: `{{.points}} {{.currency_name}}`"
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:pm_select_market:{uuid}"
+              placeholder: "Select a market..."
+              options: "market_options"
+        - type: action_row
+          components:
+            - type: button
+              style: success
+              label: "My Bets"
+              id: "play:pm_view_my_bets:{uuid}"
+            - type: button
+              style: secondary
+              label: "Close"
+              id: "play:pm_quit:{uuid}"
+  command.play.polymarket.market_detail_screen:
+    - type: container
+      components:
+        - "🔮 **Polymarket Market Details** 🔮"
+        - type: separator
+        - |-
+          ### {{.market_question}}
+
+          📅 **End Date**: {{.end_date}}
+          📊 **Volume**: ${{.volume}} | **Liquidity**: {{.liquidity}}
+
+          **Current Prices (Odds / Implied %):**
+          {{.odds_text}}
+        - type: separator
+        - "🪙 **Available {{.currency_name}}**: `{{.points}} {{.currency_name}}`"
+        - type: action_row
+          components:
+            - type: string_select_menu
+              id: "play:pm_select_outcome:{uuid}"
+              placeholder: "Select an outcome to bet on..."
+              options: "outcome_options"
+        - type: action_row
+          components:
+            - type: button
+              style: secondary
+              label: "Back to Markets"
+              id: "play:pm_back_to_list:{uuid}"
+            - type: button
+              style: secondary
+              label: "Close"
+              id: "play:pm_quit:{uuid}"
+  command.play.polymarket.bet_placement_screen:
+    - type: container
+      components:
+        - "🔮 **Polymarket Place Bet** 🔮"
+        - type: separator
+        - |-
+          ### {{.market_question}}
+
+          👉 **Selected Outcome**: `{{.selected_outcome}}` (Current Price: `{{.outcome_price}} {{.currency_name}}` / share)
+
+          *Note: If your prediction is correct, each share pays out `1 {{.currency_name}}`. Payout multiplier is `1 / {{.outcome_price}} = {{.multiplier}}x`.*
+        - type: separator
+        - "🪙 **Available {{.currency_name}}**: `{{.points}} {{.currency_name}}`"
+        - type: action_row
+          components:
+            - type: button
+              style: primary
+              label: "Bet 10 {{.currency_name}}"
+              id: "play:pm_bet_amount:10:{uuid}"
+            - type: button
+              style: primary
+              label: "Bet 50 {{.currency_name}}"
+              id: "play:pm_bet_amount:50:{uuid}"
+            - type: button
+              style: primary
+              label: "Bet 100 {{.currency_name}}"
+              id: "play:pm_bet_amount:100:{uuid}"
+            - type: button
+              style: primary
+              label: "Bet 500 {{.currency_name}}"
+              id: "play:pm_bet_amount:500:{uuid}"
+            - type: button
+              style: success
+              label: "Custom Amount"
+              id: "play:pm_bet_amount:custom_btn:{uuid}"
+        - type: action_row
+          components:
+            - type: button
+              style: secondary
+              label: "Back to Details"
+              id: "play:pm_back_to_detail:{uuid}"
+            - type: button
+              style: secondary
+              label: "Close"
+              id: "play:pm_quit:{uuid}"
+  command.play.polymarket.my_bets_screen:
+    - type: container
+      components:
+        - "🔮 **Your Polymarket Bets & History** 🔮"
+        - type: separator
+        - |-
+          {{.status_header}}
+          {{.bets_list}}
+        - type: separator
+        - type: action_row
+          components:
+            - type: button
+              style: success
+              label: "Check & Settle"
+              id: "play:pm_refresh_bets:{uuid}"
+            - type: button
+              style: secondary
+              label: "Back to Markets"
+              id: "play:pm_back_to_list:{uuid}"
+            - type: button
+              style: secondary
+              label: "Close"
+              id: "play:pm_quit:{uuid}"

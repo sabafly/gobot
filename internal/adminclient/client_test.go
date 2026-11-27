@@ -402,6 +402,15 @@ func TestClient_EndToEnd_WithBasePath(t *testing.T) {
 	if ov, err := c.Overview(ctx); err != nil || ov.Version != "v-bp" {
 		t.Fatalf("Overview failed: ov=%+v err=%v", ov, err)
 	}
+	if lvl, err := c.GetLogLevel(ctx); err != nil || lvl.Mode != "auto" {
+		t.Fatalf("GetLogLevel failed: lvl=%+v err=%v", lvl, err)
+	}
+	if lvl, err := c.SetLogLevel(ctx, "debug"); err != nil || lvl.Mode != "debug" || lvl.EffectiveLevel != "DEBUG" {
+		t.Fatalf("SetLogLevel(debug) failed: lvl=%+v err=%v", lvl, err)
+	}
+	if lvl, err := c.SetLogLevel(ctx, "auto"); err != nil || lvl.Mode != "auto" {
+		t.Fatalf("SetLogLevel(auto) failed: lvl=%+v err=%v", lvl, err)
+	}
 	ja := "ja"
 	if gd, err := c.UpdateGuild(ctx, guildID.String(), admin.UpdateGuildRequest{LocaleOverride: &ja}); err != nil || gd.Guild.LocaleOverride != "ja" {
 		t.Fatalf("UpdateGuild failed: gd=%+v err=%v", gd, err)

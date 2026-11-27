@@ -29,6 +29,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -615,5 +616,220 @@ func TestSyncer_GuildLocaleOverride_And_RefreshGuildBoardGuides(t *testing.T) {
 	}
 	if reloadedMount.Locale != "en-US" {
 		t.Fatalf("expected refreshed mount.Locale 'en-US', got %q", reloadedMount.Locale)
+	}
+}
+
+func TestSyncer_ResetToAutoOnNonCommunityGuild_RevertsToDefaultLocale(t *testing.T) {
+	ctx := context.Background()
+	if err := i18n.LoadLocales("../../../locales"); err != nil {
+		t.Fatalf("LoadLocales failed: %v", err)
+	}
+	store, svc := newSyncerTestEnv(t)
+
+	guildID := snowflake.ID(70002)
+	if _, err := svc.SetupGuild(ctx, bbs.GuildSetupInput{GuildID: guildID, Enabled: true, ActorUserID: 1}); err != nil {
+		t.Fatalf("SetupGuild failed: %v", err)
+	}
+	cat, err := svc.CreateCategory(ctx, bbs.CreateCategoryInput{Scope: bbs.ScopeLocal, GuildID: &guildID, Name: "カテゴリ"})
+	if err != nil {
+		t.Fatalf("CreateCategory failed: %v", err)
+	}
+	board, err := svc.CreateBoard(ctx, bbs.CreateBoardInput{CategoryID: cat.ID, Scope: bbs.ScopeLocal, GuildID: &guildID, Name: "一般板"})
+	if err != nil {
+		t.Fatalf("CreateBoard failed: %v", err)
+	}
+
+	var mu sync.Mutex
+	var lastPatchBody string
+	chID := snowflake.ID(71002)
+	ctrlMsgID := snowflake.ID(72002)
+	client := newMockRestClient(t, func(req *http.Request) (*http.Response, error) {
+		p := strings.TrimPrefix(req.URL.Path, "/api/v10")
+		switch {
+		case req.Method == http.MethodPost && p == fmt.Sprintf("/guilds/%d/channels", guildID):
+			return jsonResponse(http.StatusOK, map[string]any{"id": chID.String(), "guild_id": guildID.String(), "type": 0, "name": "general"}), nil
+		case req.Method == http.MethodPost && p == fmt.Sprintf("/channels/%d/messages", chID):
+			return jsonResponse(http.StatusOK, map[string]any{"id": ctrlMsgID.String(), "channel_id": chID.String()}), nil
+		case req.Method == http.MethodPatch && p == fmt.Sprintf("/channels/%d/messages/%d", chID, ctrlMsgID):
+			raw, _ := io.ReadAll(req.Body)
+			mu.Lock()
+			lastPatchBody = string(raw)
+			mu.Unlock()
+			return jsonResponse(http.StatusOK, map[string]any{"id": ctrlMsgID.String(), "channel_id": chID.String()}), nil
+		default:
+			return jsonResponse(http.StatusNotFound, map[string]any{"message": "unexpected: " + req.Method + " " + p}), nil
+		}
+	})
+	// Non-community guild: empty PreferredLocale in cache.
+	client.Caches = cache.New(cache.WithCaches(cache.FlagsAll))
+	client.Caches.AddGuild(discord.CacheGuild{
+		Guild: discord.Guild{
+			ID:              guildID,
+			Name:            "NoPreferredLocaleGuild",
+			PreferredLocale: "",
+		},
+	})
+
+	var override atomic.Value
+	override.Store(discord.LocaleEnglishUS)
+	syncer := discordsync.NewSyncer(svc)
+	syncer.GuildLocale = func(_ context.Context, gid snowflake.ID) discord.Locale {
+		if gid == guildID {
+			return override.Load().(discord.Locale)
+		}
+		return ""
+	}
+
+	mount, _, err := syncer.ProvisionBoardChannel(ctx, client, guildID, *board, nil, false, i18n.DefaultLocale())
+	if err != nil {
+		t.Fatalf("ProvisionBoardChannel failed: %v", err)
+	}
+	if mount.Locale != "en-US" {
+		t.Fatalf("expected initial mount.Locale en-US from override, got %q", mount.Locale)
+	}
+
+	// Clear override (auto) and pass i18n.DefaultLocale() (ja); stale mount.Locale ("en-US") must NOT stick.
+	override.Store(discord.Locale(""))
+	syncer.RefreshGuildBoardGuides(ctx, client, guildID, i18n.DefaultLocale())
+
+	reloaded, err := store.GetBoardMount(ctx, mount.ID)
+	if err != nil {
+		t.Fatalf("GetBoardMount failed: %v", err)
+	}
+	if reloaded.Locale != i18n.DefaultLocale().Code() {
+		t.Fatalf("expected mount.Locale reverted to %q, got %q", i18n.DefaultLocale().Code(), reloaded.Locale)
+	}
+	expectedJABtn := i18n.TranslateText(i18n.DefaultLocale(), "components.bbs.board_guide.btn.new_thread")
+	mu.Lock()
+	body := lastPatchBody
+	mu.Unlock()
+	if !strings.Contains(body, expectedJABtn) {
+		t.Fatalf("expected refreshed guide body to contain Japanese button %q, got %s", expectedJABtn, body)
+	}
+}
+
+func TestSyncer_ScheduleRefreshGuildBoardGuides_DebouncesAndRerunsLatest(t *testing.T) {
+	ctx := context.Background()
+	if err := i18n.LoadLocales("../../../locales"); err != nil {
+		t.Fatalf("LoadLocales failed: %v", err)
+	}
+	_, svc := newSyncerTestEnv(t)
+	guildID := snowflake.ID(70003)
+	if _, err := svc.SetupGuild(ctx, bbs.GuildSetupInput{GuildID: guildID, Enabled: true, ActorUserID: 1}); err != nil {
+		t.Fatalf("SetupGuild failed: %v", err)
+	}
+	cat, err := svc.CreateCategory(ctx, bbs.CreateCategoryInput{Scope: bbs.ScopeLocal, GuildID: &guildID, Name: "カテゴリ"})
+	if err != nil {
+		t.Fatalf("CreateCategory failed: %v", err)
+	}
+	board, err := svc.CreateBoard(ctx, bbs.CreateBoardInput{CategoryID: cat.ID, Scope: bbs.ScopeLocal, GuildID: &guildID, Name: "テスト板"})
+	if err != nil {
+		t.Fatalf("CreateBoard failed: %v", err)
+	}
+
+	chID := snowflake.ID(71003)
+	ctrlMsgID := snowflake.ID(72003)
+	var patchCount atomic.Int32
+	inFlightEntered := make(chan struct{}, 4)
+	releaseInFlight := make(chan struct{})
+	var blockFirst atomic.Bool
+	var mu sync.Mutex
+	var patchBodies []string
+
+	client := newMockRestClient(t, func(req *http.Request) (*http.Response, error) {
+		p := strings.TrimPrefix(req.URL.Path, "/api/v10")
+		switch {
+		case req.Method == http.MethodPost && p == fmt.Sprintf("/guilds/%d/channels", guildID):
+			return jsonResponse(http.StatusOK, map[string]any{"id": chID.String(), "guild_id": guildID.String(), "type": 0, "name": "test"}), nil
+		case req.Method == http.MethodPost && p == fmt.Sprintf("/channels/%d/messages", chID):
+			return jsonResponse(http.StatusOK, map[string]any{"id": ctrlMsgID.String(), "channel_id": chID.String()}), nil
+		case req.Method == http.MethodPatch && p == fmt.Sprintf("/channels/%d/messages/%d", chID, ctrlMsgID):
+			raw, _ := io.ReadAll(req.Body)
+			n := patchCount.Add(1)
+			if n == 1 && blockFirst.Load() {
+				inFlightEntered <- struct{}{}
+				<-releaseInFlight
+			}
+			mu.Lock()
+			patchBodies = append(patchBodies, string(raw))
+			mu.Unlock()
+			return jsonResponse(http.StatusOK, map[string]any{"id": ctrlMsgID.String(), "channel_id": chID.String()}), nil
+		default:
+			return jsonResponse(http.StatusNotFound, map[string]any{"message": "unexpected"}), nil
+		}
+	})
+	client.Caches = cache.New(cache.WithCaches(cache.FlagsAll))
+
+	var override atomic.Value
+	override.Store(discord.LocaleJapanese)
+	syncer := discordsync.NewSyncer(svc)
+	syncer.LocaleRefreshDebounce = 30 * time.Millisecond
+	syncer.LocaleRefreshTimeout = 2 * time.Second
+	syncer.GuildLocale = func(_ context.Context, gid snowflake.ID) discord.Locale {
+		if gid == guildID {
+			return override.Load().(discord.Locale)
+		}
+		return ""
+	}
+	if _, _, err := syncer.ProvisionBoardChannel(ctx, client, guildID, *board, nil, false, discord.LocaleJapanese); err != nil {
+		t.Fatalf("ProvisionBoardChannel failed: %v", err)
+	}
+
+	// Burst 3 updates within debounce window -> must coalesce to 1 refresh with final locale (en-US).
+	blockFirst.Store(true)
+	override.Store(discord.LocaleJapanese)
+	syncer.ScheduleRefreshGuildBoardGuides(ctx, client, guildID, discord.LocaleJapanese)
+	override.Store(discord.LocaleEnglishUS)
+	syncer.ScheduleRefreshGuildBoardGuides(ctx, client, guildID, discord.LocaleEnglishUS)
+	override.Store(discord.LocaleJapanese)
+	syncer.ScheduleRefreshGuildBoardGuides(ctx, client, guildID, discord.LocaleJapanese)
+	override.Store(discord.LocaleEnglishUS)
+	syncer.ScheduleRefreshGuildBoardGuides(ctx, client, guildID, discord.LocaleEnglishUS)
+
+	select {
+	case <-inFlightEntered:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for debounced refresh to start")
+	}
+
+	// Trigger another locale update while first refresh is in flight -> must schedule one trailing rerun.
+	override.Store(discord.LocaleJapanese)
+	syncer.ScheduleRefreshGuildBoardGuides(ctx, client, guildID, discord.LocaleJapanese)
+	close(releaseInFlight)
+
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if patchCount.Load() == 2 {
+			mu.Lock()
+			n := len(patchBodies)
+			mu.Unlock()
+			if n == 2 {
+				break
+			}
+		}
+		time.Sleep(15 * time.Millisecond)
+	}
+	time.Sleep(80 * time.Millisecond)
+	if got := patchCount.Load(); got != 2 {
+		t.Fatalf("expected exactly 2 refreshes (1 coalesced + 1 trailing), got %d", got)
+	}
+	mu.Lock()
+	firstBody := patchBodies[0]
+	secondBody := patchBodies[1]
+	mu.Unlock()
+	if !strings.Contains(firstBody, i18n.TranslateText(discord.LocaleEnglishUS, "components.bbs.board_guide.btn.new_thread")) {
+		t.Fatalf("expected first coalesced refresh to use en-US, got %s", firstBody)
+	}
+	if !strings.Contains(secondBody, i18n.TranslateText(discord.LocaleJapanese, "components.bbs.board_guide.btn.new_thread")) {
+		t.Fatalf("expected trailing refresh to use ja, got %s", secondBody)
+	}
+
+	// Canceled parentCtx must not trigger another refresh.
+	cancelCtx, cancel := context.WithCancel(context.Background())
+	cancel()
+	syncer.ScheduleRefreshGuildBoardGuides(cancelCtx, client, guildID, discord.LocaleEnglishUS)
+	time.Sleep(60 * time.Millisecond)
+	if got := patchCount.Load(); got != 2 {
+		t.Fatalf("expected canceled context not to run refresh, got count=%d", got)
 	}
 }

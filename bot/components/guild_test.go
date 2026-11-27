@@ -219,6 +219,50 @@ func TestGuildLocaleOverride_And_ResolvePriority(t *testing.T) {
 	if hookGuild != guildID || hookLocale != discord.LocaleJapanese {
 		t.Fatalf("unexpected hook args: guild=%d locale=%q", hookGuild, hookLocale)
 	}
+
+	// 6. Cache avoids repeated SELECT queries (including for empty override) and updates write-through.
+	var selectCount int
+	if err := gdb.Callback().Query().Before("gorm:query").Register("test_count_guild_queries", func(_ *gorm.DB) {
+		selectCount++
+	}); err != nil {
+		t.Fatalf("failed to register query callback: %v", err)
+	}
+	defer func() { _ = gdb.Callback().Query().Remove("test_count_guild_queries") }()
+
+	uncachedGuild := snowflake.ID(555003)
+	if err := gdb.Create(&models.Guild{ID: uncachedGuild, Name: "CachedGuild", BumpEnabled: true}).Error; err != nil {
+		t.Fatalf("failed to create guild: %v", err)
+	}
+	selectCount = 0
+	if got := c.GuildLocaleOverride(ctx, uncachedGuild); got != "" {
+		t.Fatalf("expected empty initial override, got %q", got)
+	}
+	if selectCount != 1 {
+		t.Fatalf("expected 1 DB query on cold cache miss, got %d", selectCount)
+	}
+	if got := c.GuildLocaleOverride(ctx, uncachedGuild); got != "" {
+		t.Fatalf("expected cached empty override, got %q", got)
+	}
+	if selectCount != 1 {
+		t.Fatalf("expected 0 extra DB queries on empty cache hit, got %d total", selectCount)
+	}
+	if err := c.SetGuildLocaleOverride(ctx, uncachedGuild, discord.LocaleEnglishUS); err != nil {
+		t.Fatalf("SetGuildLocaleOverride failed: %v", err)
+	}
+	selectBeforeCachedRead := selectCount
+	if got := c.GuildLocaleOverride(ctx, uncachedGuild); got != discord.LocaleEnglishUS {
+		t.Fatalf("expected cached override en-US, got %q", got)
+	}
+	if selectCount != selectBeforeCachedRead {
+		t.Fatalf("expected 0 DB queries after write-through SetGuildLocaleOverride, got +%d", selectCount-selectBeforeCachedRead)
+	}
+	var preserved models.Guild
+	if err := gdb.First(&preserved, "id = ?", uncachedGuild).Error; err != nil {
+		t.Fatalf("reload guild failed: %v", err)
+	}
+	if preserved.Name != "CachedGuild" || !preserved.BumpEnabled || preserved.LocaleOverride != discord.LocaleEnglishUS {
+		t.Fatalf("expected atomic upsert to preserve Name/BumpEnabled, got %+v", preserved)
+	}
 }
 
 //go:fix inline

@@ -41,14 +41,16 @@ const (
 	defaultDiscordAuthorizeBase = "https://discord.com/oauth2/authorize"
 	defaultPendingLoginTTL      = 5 * time.Minute
 	maxPendingLogins            = 256
+	maxPendingLoginsPerIP       = 8
 )
 
 var (
-	ErrLoginNotFound      = errors.New("admin oauth: login request not found or expired")
-	ErrInvalidPollSecret  = errors.New("admin oauth: invalid poll secret")
-	ErrOAuthUnauthorized  = errors.New("admin oauth: discord user is not authorized for admin dashboard")
-	ErrOAuthInvalidState  = errors.New("admin oauth: invalid or expired state parameter")
-	ErrOAuthUpstreamError = errors.New("admin oauth: discord oauth exchange failed")
+	ErrLoginNotFound        = errors.New("admin oauth: login request not found or expired")
+	ErrInvalidPollSecret    = errors.New("admin oauth: invalid poll secret")
+	ErrOAuthUnauthorized    = errors.New("admin oauth: discord user is not authorized for admin dashboard")
+	ErrOAuthInvalidState    = errors.New("admin oauth: invalid or expired state parameter")
+	ErrOAuthUpstreamError   = errors.New("admin oauth: discord oauth exchange failed")
+	ErrTooManyPendingLogins = errors.New("admin oauth: too many pending login requests")
 )
 
 var callbackHTMLTmpl = template.Must(template.New("oauth_callback").Parse(`<!DOCTYPE html>
@@ -91,6 +93,7 @@ type pendingLogin struct {
 	State            string
 	PollSecretHash   string
 	ClientInfo       string
+	RemoteAddr       string
 	Status           string // pending | approved | denied
 	ErrMessage       string
 	SessionToken     string
@@ -165,7 +168,7 @@ func (m *OAuthManager) pruneExpiredLocked(now time.Time) {
 }
 
 // Start creates a pending OAuth2 login entry and returns the Discord authorization URL and poll credentials.
-func (m *OAuthManager) Start(clientInfo string) (AuthStartResponse, error) {
+func (m *OAuthManager) Start(clientInfo, remoteAddr string) (AuthStartResponse, error) {
 	loginID, err := generateRandomToken(16)
 	if err != nil {
 		return AuthStartResponse{}, err
@@ -194,24 +197,24 @@ func (m *OAuthManager) Start(clientInfo string) (AuthStartResponse, error) {
 
 	now := time.Now().UTC()
 	expiresAt := now.Add(m.cfg.PendingTTL)
+	normRemote := truncateRunes(strings.TrimSpace(remoteAddr), 64)
 
 	m.mu.Lock()
 	m.pruneExpiredLocked(now)
 	if len(m.pendingByLogin) >= maxPendingLogins {
-		// Evict oldest entry to keep pending memory bounded.
-		var oldestID string
-		var oldestTime time.Time
-		for id, p := range m.pendingByLogin {
-			if oldestID == "" || p.ExpiresAt.Before(oldestTime) {
-				oldestID = id
-				oldestTime = p.ExpiresAt
+		m.mu.Unlock()
+		return AuthStartResponse{}, ErrTooManyPendingLogins
+	}
+	if normRemote != "" {
+		perIPCount := 0
+		for _, p := range m.pendingByLogin {
+			if p.Status == "pending" && p.RemoteAddr == normRemote {
+				perIPCount++
 			}
 		}
-		if oldestID != "" {
-			if old := m.pendingByLogin[oldestID]; old != nil {
-				delete(m.loginByState, old.State)
-			}
-			delete(m.pendingByLogin, oldestID)
+		if perIPCount >= maxPendingLoginsPerIP {
+			m.mu.Unlock()
+			return AuthStartResponse{}, ErrTooManyPendingLogins
 		}
 	}
 	m.pendingByLogin[loginID] = &pendingLogin{
@@ -219,6 +222,7 @@ func (m *OAuthManager) Start(clientInfo string) (AuthStartResponse, error) {
 		State:          state,
 		PollSecretHash: HashToken(pollSecret),
 		ClientInfo:     truncateRunes(clientInfo, 200),
+		RemoteAddr:     normRemote,
 		Status:         "pending",
 		ExpiresAt:      expiresAt,
 	}

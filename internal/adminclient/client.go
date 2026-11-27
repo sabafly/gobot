@@ -238,6 +238,20 @@ func (c *Client) ListLogs(ctx context.Context, filter admin.LogFilter) (admin.Lo
 	return out, err
 }
 
+// GetLogLevel returns the current server LogHub capture level configuration and effective level.
+func (c *Client) GetLogLevel(ctx context.Context) (admin.LogLevelResponse, error) {
+	var out admin.LogLevelResponse
+	err := c.doJSON(ctx, http.MethodGet, "/api/v1/logs/level", nil, &out)
+	return out, err
+}
+
+// SetLogLevel updates the server LogHub capture level in memory (auto/debug/info/warn/error).
+func (c *Client) SetLogLevel(ctx context.Context, level string) (admin.LogLevelResponse, error) {
+	var out admin.LogLevelResponse
+	err := c.doJSON(ctx, http.MethodPut, "/api/v1/logs/level", admin.UpdateLogLevelRequest{Level: level}, &out)
+	return out, err
+}
+
 // StreamLogs subscribes to the SSE log stream and invokes onEntry until ctx is canceled or an error occurs.
 func (c *Client) StreamLogs(ctx context.Context, filter admin.LogFilter, onEntry func(admin.LogEntry) error) error {
 	if c == nil || c.BaseURL == "" {
