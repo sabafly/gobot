@@ -440,19 +440,39 @@ func (s *Service) CreateBanByAdmin(ctx context.Context, input AdminBanInput) (*B
 		return nil, fmt.Errorf("%w: scope must be local or global", ErrInvalidInput)
 	}
 
+	var audit *AuditPostInfo
+	var postBoard *Board
+	var postGuildID snowflake.ID
+	if input.PostID != nil {
+		var err error
+		audit, err = s.Store.GetAuditPostInfo(ctx, *input.PostID)
+		if err != nil {
+			return nil, err
+		}
+		if th, thErr := s.GetThread(ctx, audit.Post.ThreadID); thErr == nil {
+			if bd, bdErr := s.GetBoard(ctx, th.BoardID); bdErr == nil {
+				postBoard = bd
+			}
+		}
+		if postBoard != nil && postBoard.Scope == ScopeLocal && postBoard.GuildID != nil && *postBoard.GuildID != 0 {
+			postGuildID = *postBoard.GuildID
+		} else if audit.GuildID != 0 {
+			postGuildID = audit.GuildID
+		}
+	}
+
 	var guildIDPtr *snowflake.ID
 	var guildIDVal snowflake.ID
 	if scope == ScopeLocal {
-		if input.GuildID == 0 && input.PostID != nil {
-			audit, err := s.Store.GetAuditPostInfo(ctx, *input.PostID)
-			if err != nil {
-				return nil, err
-			}
-			if audit.GuildID != 0 {
-				input.GuildID = audit.GuildID
-			} else if th, thErr := s.GetThread(ctx, audit.Post.ThreadID); thErr == nil {
-				if bd, bdErr := s.GetBoard(ctx, th.BoardID); bdErr == nil && bd.Scope == ScopeLocal && bd.GuildID != nil {
-					input.GuildID = *bd.GuildID
+		if input.PostID != nil {
+			if input.GuildID == 0 {
+				input.GuildID = postGuildID
+			} else {
+				if postGuildID == 0 {
+					return nil, fmt.Errorf("%w: post has no associated guild for local ban", ErrInvalidInput)
+				}
+				if input.GuildID != postGuildID {
+					return nil, fmt.Errorf("%w: post does not belong to guild %d", ErrInvalidInput, input.GuildID)
 				}
 			}
 		}
@@ -470,17 +490,15 @@ func (s *Service) CreateBanByAdmin(ctx context.Context, input AdminBanInput) (*B
 		targetUserID = &uid
 	}
 
-	if input.PostID != nil {
-		audit, err := s.Store.GetAuditPostInfo(ctx, *input.PostID)
-		if err != nil {
-			return nil, err
-		}
-		if targetPosterHash == "" {
-			targetPosterHash = audit.Post.PosterHash
-		}
+	if audit != nil {
 		if targetUserID == nil && audit.AuthorUserID != 0 {
 			uid := audit.AuthorUserID
 			targetUserID = &uid
+		}
+		postScopeMatchesTarget := (scope == ScopeGlobal && postBoard != nil && postBoard.Scope == ScopeGlobal) ||
+			(scope == ScopeLocal && postBoard != nil && postBoard.Scope == ScopeLocal && postBoard.GuildID != nil && *postBoard.GuildID == guildIDVal)
+		if targetPosterHash == "" && postScopeMatchesTarget {
+			targetPosterHash = audit.Post.PosterHash
 		}
 	}
 
@@ -489,6 +507,9 @@ func (s *Service) CreateBanByAdmin(ctx context.Context, input AdminBanInput) (*B
 	}
 	if targetPosterHash == "" && targetUserID == nil {
 		return nil, fmt.Errorf("%w: post_id, target_user_id, or target_poster_hash is required", ErrInvalidInput)
+	}
+	if scope == ScopeLocal && targetPosterHash == "" {
+		return nil, fmt.Errorf("%w: unable to derive local poster_hash for ban", ErrInvalidInput)
 	}
 
 	var expiresAt *time.Time

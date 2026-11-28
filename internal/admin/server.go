@@ -50,8 +50,11 @@ import (
 )
 
 const (
-	defaultListenAddr = "127.0.0.1:8080"
-	maxJSONBodyBytes  = 1 << 20 // 1 MiB
+	defaultListenAddr         = "127.0.0.1:8080"
+	maxJSONBodyBytes          = 1 << 20 // 1 MiB
+	defaultBBSSyncConcurrency = 4
+	defaultBBSSyncTimeout     = 2 * time.Minute
+	defaultBBSSyncDrainWait   = 10 * time.Second
 )
 
 type authContextKey struct{}
@@ -106,6 +109,12 @@ type Server struct {
 	authPollLimiter  *ipRateLimiter
 	nameCache        *nameResolverCache
 	mux              *http.ServeMux
+	bgMu             sync.Mutex
+	bgClosed         bool
+	bgCtx            context.Context
+	bgCancel         context.CancelFunc
+	bgWG             sync.WaitGroup
+	syncSem          chan struct{}
 }
 
 type ipRateBucket struct {
@@ -485,6 +494,8 @@ func NewServer(deps ServerDeps) (*Server, error) {
 		startedAt = time.Now().UTC()
 	}
 
+	bgCtx, bgCancel := context.WithCancel(context.Background())
+
 	s := &Server{
 		cfg:              deps.Config,
 		adminCfg:         adminCfg,
@@ -510,6 +521,9 @@ func NewServer(deps ServerDeps) (*Server, error) {
 		authPollLimiter:  newIPRateLimiter(60, 2.0, 4096),
 		nameCache:        newNameResolverCache(),
 		mux:              http.NewServeMux(),
+		bgCtx:            bgCtx,
+		bgCancel:         bgCancel,
+		syncSem:          make(chan struct{}, defaultBBSSyncConcurrency),
 	}
 	s.registerRoutes()
 	return s, nil
@@ -662,10 +676,96 @@ func (s *Server) ListenAndServe(ctx context.Context) error {
 		shutCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 		_ = srv.Shutdown(shutCtx)
+		s.drainBackgroundSync(defaultBBSSyncDrainWait)
 		return <-errCh
 	case serveErr := <-errCh:
+		s.drainBackgroundSync(defaultBBSSyncDrainWait)
 		return serveErr
 	}
+}
+
+func (s *Server) enqueueBBSSync(name string, fn func(ctx context.Context)) {
+	if s == nil || fn == nil {
+		return
+	}
+	s.bgMu.Lock()
+	if s.bgClosed || s.bgCtx == nil {
+		s.bgMu.Unlock()
+		slog.Warn("skipping admin BBS background sync during shutdown", "task", name)
+		return
+	}
+	baseCtx := s.bgCtx
+	s.bgWG.Add(1)
+	s.bgMu.Unlock()
+
+	go func() {
+		defer s.bgWG.Done()
+		defer func() {
+			if rec := recover(); rec != nil {
+				slog.Error("admin BBS background sync panic recovered", "task", name, "panic", rec)
+			}
+		}()
+
+		if s.syncSem != nil {
+			select {
+			case s.syncSem <- struct{}{}:
+				defer func() { <-s.syncSem }()
+			case <-baseCtx.Done():
+				slog.Warn("admin BBS background sync aborted before start", "task", name, "err", baseCtx.Err())
+				return
+			}
+		}
+
+		syncCtx, cancel := context.WithTimeout(baseCtx, defaultBBSSyncTimeout)
+		defer cancel()
+		fn(syncCtx)
+	}()
+}
+
+// WaitBackgroundSync waits until all queued background BBS Discord sync tasks finish or ctx expires.
+func (s *Server) WaitBackgroundSync(ctx context.Context) error {
+	if s == nil {
+		return nil
+	}
+	done := make(chan struct{})
+	go func() {
+		s.bgWG.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func (s *Server) drainBackgroundSync(timeout time.Duration) {
+	if s == nil {
+		return
+	}
+	s.bgMu.Lock()
+	s.bgClosed = true
+	cancel := s.bgCancel
+	s.bgMu.Unlock()
+
+	if timeout > 0 {
+		waitCtx, waitCancel := context.WithTimeout(context.Background(), timeout)
+		err := s.WaitBackgroundSync(waitCtx)
+		waitCancel()
+		if err != nil {
+			slog.Warn("admin BBS background sync did not finish before shutdown timeout; canceling", "err", err)
+			if cancel != nil {
+				cancel()
+			}
+			s.bgWG.Wait()
+			return
+		}
+	}
+	if cancel != nil {
+		cancel()
+	}
+	s.bgWG.Wait()
 }
 
 type authedHandler func(w http.ResponseWriter, r *http.Request, auth authContext)

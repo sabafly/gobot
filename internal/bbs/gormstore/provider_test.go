@@ -24,6 +24,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -1182,5 +1183,327 @@ func TestAdminQueries_UpdateCategory_ThreadSearch_Mounts_Stats(t *testing.T) {
 	}
 	if err := svc.DeleteBan(ctx, ban.ID); err != nil {
 		t.Fatalf("DeleteBan failed: %v", err)
+	}
+}
+
+func TestSeedAdminCapsAndSlipEvents_ConcurrentFirstBoot(t *testing.T) {
+	ctx := context.Background()
+	dbPath := filepath.Join(t.TempDir(), "seed_race.db")
+	dsn := fmt.Sprintf("file:%s?_journal_mode=WAL&_busy_timeout=5000&_synchronous=NORMAL", filepath.ToSlash(dbPath))
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to open sqlite: %v", err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("failed to get sql.DB: %v", err)
+	}
+	t.Cleanup(func() {
+		_ = sqlDB.Close()
+	})
+	if err := db.AutoMigrate(gormstore.Models()...); err != nil {
+		t.Fatalf("AutoMigrate failed: %v", err)
+	}
+	sqlDB.SetMaxOpenConns(8)
+
+	store := gormstore.New(db)
+	initialCaps := []bbs.CapDefinition{
+		{ID: "admin", Name: "管理人", Description: "公式", GrantOperators: true, Users: []snowflake.ID{1001}},
+		{ID: "staff", Name: "スタッフ", Description: "案内", Users: []snowflake.ID{1002}},
+	}
+	initialSlips := []bbs.SlipEventDefinition{
+		{ID: "sakura", Label: "ｻｸﾗ", StartDate: "04-01", EndDate: "04-05", Mode: bbs.SlipEventModeOverride},
+		{ID: "natsu", Label: "ﾅﾂ", StartDate: "08-01", EndDate: "08-03", Mode: bbs.SlipEventModeAppend},
+	}
+
+	const workers = 8
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	capErrs := make([]error, workers)
+	capCounts := make([]int, workers)
+	slipErrs := make([]error, workers)
+	slipCounts := make([]int, workers)
+
+	for i := range workers {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			<-start
+			caps, cErr := store.SeedAdminCapsIfEmpty(ctx, initialCaps)
+			capErrs[idx] = cErr
+			capCounts[idx] = len(caps)
+			slips, sErr := store.SeedSlipEventsIfEmpty(ctx, initialSlips)
+			slipErrs[idx] = sErr
+			slipCounts[idx] = len(slips)
+		}(i)
+	}
+	close(start)
+	wg.Wait()
+
+	for i := range workers {
+		if capErrs[i] != nil {
+			t.Fatalf("worker %d SeedAdminCapsIfEmpty failed: %v", i, capErrs[i])
+		}
+		if capCounts[i] != len(initialCaps) {
+			t.Fatalf("worker %d expected %d caps, got %d", i, len(initialCaps), capCounts[i])
+		}
+		if slipErrs[i] != nil {
+			t.Fatalf("worker %d SeedSlipEventsIfEmpty failed: %v", i, slipErrs[i])
+		}
+		if slipCounts[i] != len(initialSlips) {
+			t.Fatalf("worker %d expected %d slips, got %d", i, len(initialSlips), slipCounts[i])
+		}
+	}
+
+	// Deleting all caps/events must keep seed marker active so re-seeding does not resurrect defaults.
+	for _, c := range initialCaps {
+		if err := store.DeleteAdminCap(ctx, c.ID); err != nil {
+			t.Fatalf("DeleteAdminCap %s failed: %v", c.ID, err)
+		}
+	}
+	for _, s := range initialSlips {
+		if err := store.DeleteSlipEvent(ctx, s.ID); err != nil {
+			t.Fatalf("DeleteSlipEvent %s failed: %v", s.ID, err)
+		}
+	}
+	if got, err := store.SeedAdminCapsIfEmpty(ctx, initialCaps); err != nil || len(got) != 0 {
+		t.Fatalf("expected no cap resurrection after delete, got %+v err=%v", got, err)
+	}
+	if got, err := store.SeedSlipEventsIfEmpty(ctx, initialSlips); err != nil || len(got) != 0 {
+		t.Fatalf("expected no slip resurrection after delete, got %+v err=%v", got, err)
+	}
+}
+
+func TestCreateBanByAdmin_GuildPostConsistencyAndCrossScope(t *testing.T) {
+	ctx := context.Background()
+	store, svc := openTestService(t)
+
+	guildA := snowflake.ID(11001)
+	guildB := snowflake.ID(11002)
+	userLocal := snowflake.ID(21001)
+	userGlobal1 := snowflake.ID(21002)
+	userGlobal2 := snowflake.ID(21003)
+	actor := snowflake.ID(9999)
+
+	for _, gid := range []snowflake.ID{guildA, guildB} {
+		if _, err := svc.SetupGuild(ctx, bbs.GuildSetupInput{GuildID: gid, Enabled: true, ActorUserID: actor}); err != nil {
+			t.Fatalf("SetupGuild %d failed: %v", gid, err)
+		}
+	}
+	for _, uid := range []snowflake.ID{userLocal, userGlobal1, userGlobal2} {
+		if _, err := svc.AcceptPolicy(ctx, uid); err != nil {
+			t.Fatalf("AcceptPolicy %d failed: %v", uid, err)
+		}
+	}
+
+	catA, err := svc.CreateCategory(ctx, bbs.CreateCategoryInput{
+		Scope: bbs.ScopeLocal, GuildID: &guildA, Slug: "cat-a", Name: "ローカルA",
+	})
+	if err != nil {
+		t.Fatalf("CreateCategory local failed: %v", err)
+	}
+	boardLocalA, err := svc.CreateBoard(ctx, bbs.CreateBoardInput{
+		CategoryID: catA.ID, Scope: bbs.ScopeLocal, GuildID: &guildA, Slug: "board-a", Name: "ローカル板A",
+	})
+	if err != nil {
+		t.Fatalf("CreateBoard local failed: %v", err)
+	}
+	catG, err := svc.CreateCategory(ctx, bbs.CreateCategoryInput{
+		Scope: bbs.ScopeGlobal, Slug: "cat-g", Name: "グローバル",
+	})
+	if err != nil {
+		t.Fatalf("CreateCategory global failed: %v", err)
+	}
+	boardGlobal, err := svc.CreateBoard(ctx, bbs.CreateBoardInput{
+		CategoryID: catG.ID, Scope: bbs.ScopeGlobal, Slug: "board-g", Name: "グローバル板",
+	})
+	if err != nil {
+		t.Fatalf("CreateBoard global failed: %v", err)
+	}
+
+	_, _, localPostA, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: boardLocalA.ID, GuildID: guildA, UserID: userLocal, Title: "Local Thread", RawBody: "Local OP",
+	})
+	if err != nil {
+		t.Fatalf("CreateThread local failed: %v", err)
+	}
+	_, globalTh1, globalPostWithMirrorA, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: boardGlobal.ID, GuildID: guildA, UserID: userGlobal1, Title: "Global Thread Mirrored", RawBody: "Global OP 1",
+		Now: time.Now().Add(time.Second),
+	})
+	if err != nil {
+		t.Fatalf("CreateThread global 1 failed: %v", err)
+	}
+	mountGlobalA := &bbs.BoardMount{
+		ID: uuid.New(), BoardID: boardGlobal.ID, GuildID: guildA, ChannelID: snowflake.ID(70001), Locale: "ja", Active: true,
+	}
+	if err := store.CreateBoardMount(ctx, mountGlobalA); err != nil {
+		t.Fatalf("CreateBoardMount global failed: %v", err)
+	}
+	if err := store.CreateThreadAndPostMirror(ctx,
+		&bbs.ThreadMirror{ThreadID: globalTh1.ID, BoardMountID: mountGlobalA.ID, GuildID: guildA, DiscordThreadID: snowflake.ID(80001)},
+		&bbs.PostMirror{PostID: globalPostWithMirrorA.ID, ThreadID: globalTh1.ID, ResNumber: 1, GuildID: guildA, DiscordMessageID: snowflake.ID(90001)},
+	); err != nil {
+		t.Fatalf("CreateThreadAndPostMirror failed: %v", err)
+	}
+	_, _, globalPostNoMirror, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: boardGlobal.ID, GuildID: guildA, UserID: userGlobal2, Title: "Global Thread Unmirrored", RawBody: "Global OP 2",
+		Now: time.Now().Add(2 * time.Second),
+	})
+	if err != nil {
+		t.Fatalf("CreateThread global 2 failed: %v", err)
+	}
+
+	// 1. ScopeLocal + mismatched GuildID + local PostID must be rejected.
+	if _, err := svc.CreateBanByAdmin(ctx, bbs.AdminBanInput{
+		Scope: bbs.ScopeLocal, GuildID: guildB, PostID: &localPostA.ID, Reason: "mismatch", ActorID: actor,
+	}); !errors.Is(err, bbs.ErrInvalidInput) {
+		t.Fatalf("expected ErrInvalidInput for mismatched guildB vs localPostA, got %v", err)
+	}
+
+	// 2. ScopeLocal + mismatched GuildID + mirrored global PostID must be rejected.
+	if _, err := svc.CreateBanByAdmin(ctx, bbs.AdminBanInput{
+		Scope: bbs.ScopeLocal, GuildID: guildB, PostID: &globalPostWithMirrorA.ID, Reason: "mismatch global", ActorID: actor,
+	}); !errors.Is(err, bbs.ErrInvalidInput) {
+		t.Fatalf("expected ErrInvalidInput for mismatched guildB vs globalPostWithMirrorA, got %v", err)
+	}
+
+	// 3. ScopeLocal + GuildID(A) + unmirrored global PostID (postGuildID==0) must be rejected.
+	if _, err := svc.CreateBanByAdmin(ctx, bbs.AdminBanInput{
+		Scope: bbs.ScopeLocal, GuildID: guildA, PostID: &globalPostNoMirror.ID, Reason: "unknown guild", ActorID: actor,
+	}); !errors.Is(err, bbs.ErrInvalidInput) {
+		t.Fatalf("expected ErrInvalidInput for local ban on global post with no guild record, got %v", err)
+	}
+
+	// 4. Cross-scope: ScopeGlobal + localPostA must derive global PosterHash (not copy local post's PosterHash).
+	globalBan, err := svc.CreateBanByAdmin(ctx, bbs.AdminBanInput{
+		Scope: bbs.ScopeGlobal, PostID: &localPostA.ID, Reason: "cross scope global", ActorID: actor,
+	})
+	if err != nil {
+		t.Fatalf("CreateBanByAdmin ScopeGlobal on local post failed: %v", err)
+	}
+	wantGlobalHash := svc.Identity.GeneratePosterHash(bbs.ScopeGlobal, 0, userLocal)
+	if globalBan.PosterHash != wantGlobalHash || globalBan.PosterHash == localPostA.PosterHash {
+		t.Fatalf("expected global PosterHash %q (!= local %q), got %q", wantGlobalHash, localPostA.PosterHash, globalBan.PosterHash)
+	}
+	if err := svc.DeleteBan(ctx, globalBan.ID); err != nil {
+		t.Fatalf("DeleteBan global failed: %v", err)
+	}
+
+	// 5. Cross-scope: ScopeLocal + GuildID(A) + globalPostWithMirrorA must derive local PosterHash for GuildA (not copy global post's PosterHash).
+	localBanFromGlobal, err := svc.CreateBanByAdmin(ctx, bbs.AdminBanInput{
+		Scope: bbs.ScopeLocal, GuildID: guildA, PostID: &globalPostWithMirrorA.ID, Reason: "cross scope local", ActorID: actor,
+	})
+	if err != nil {
+		t.Fatalf("CreateBanByAdmin ScopeLocal on mirrored global post failed: %v", err)
+	}
+	wantLocalHash := svc.Identity.GeneratePosterHash(bbs.ScopeLocal, guildA, userGlobal1)
+	if localBanFromGlobal.PosterHash != wantLocalHash || localBanFromGlobal.PosterHash == globalPostWithMirrorA.PosterHash {
+		t.Fatalf("expected local PosterHash %q (!= global %q), got %q", wantLocalHash, globalPostWithMirrorA.PosterHash, localBanFromGlobal.PosterHash)
+	}
+	banned, err := store.IsBanned(ctx, bbs.ScopeLocal, guildA, wantLocalHash, userGlobal1, time.Now())
+	if err != nil || !banned {
+		t.Fatalf("expected IsBanned=true with recomputed local hash, got banned=%v err=%v", banned, err)
+	}
+
+	// 6. ScopeLocal + GuildID(0) + localPostA fills GuildID automatically.
+	autoBan, err := svc.CreateBanByAdmin(ctx, bbs.AdminBanInput{
+		Scope: bbs.ScopeLocal, PostID: &localPostA.ID, Reason: "auto guild", ActorID: actor,
+	})
+	if err != nil || autoBan.GuildID == nil || *autoBan.GuildID != guildA {
+		t.Fatalf("expected auto-filled guildA ban, got %+v err=%v", autoBan, err)
+	}
+}
+
+func TestUpdateBoard_MaxResAndDatOchiRules(t *testing.T) {
+	ctx := context.Background()
+	_, svc := openTestService(t)
+
+	guildID := snowflake.ID(12001)
+	userID := snowflake.ID(22001)
+	userID2 := snowflake.ID(22002)
+	if _, err := svc.SetupGuild(ctx, bbs.GuildSetupInput{GuildID: guildID, Enabled: true, ActorUserID: userID}); err != nil {
+		t.Fatalf("SetupGuild failed: %v", err)
+	}
+	if _, err := svc.AcceptPolicy(ctx, userID); err != nil {
+		t.Fatalf("AcceptPolicy failed: %v", err)
+	}
+	if _, err := svc.AcceptPolicy(ctx, userID2); err != nil {
+		t.Fatalf("AcceptPolicy userID2 failed: %v", err)
+	}
+	cat, err := svc.CreateCategory(ctx, bbs.CreateCategoryInput{
+		Scope: bbs.ScopeLocal, GuildID: &guildID, Slug: "rules", Name: "ルール",
+	})
+	if err != nil {
+		t.Fatalf("CreateCategory failed: %v", err)
+	}
+	board, err := svc.CreateBoard(ctx, bbs.CreateBoardInput{
+		CategoryID: cat.ID, Scope: bbs.ScopeLocal, GuildID: &guildID, Slug: "test", Name: "テスト板",
+	})
+	if err != nil {
+		t.Fatalf("CreateBoard failed: %v", err)
+	}
+
+	// Create thread1 before updating board rules; snapshot must stay untouched after update.
+	_, th1, _, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: board.ID, GuildID: guildID, UserID: userID, Title: "Before Update", RawBody: "Body 1",
+		Now: time.Now(),
+	})
+	if err != nil {
+		t.Fatalf("CreateThread 1 failed: %v", err)
+	}
+
+	maxRes := uint32(500)
+	idleOff := bbs.DatOchiDisabled
+	lowRes := 72
+	upd, err := svc.UpdateBoard(ctx, board.ID, bbs.UpdateBoardInput{
+		MaxRes:             &maxRes,
+		DatOchiIdleHours:   &idleOff,
+		DatOchiLowResHours: &lowRes,
+	})
+	if err != nil || upd.Rules.MaxRes != 500 || upd.Rules.DatOchiIdleHours != -1 || upd.Rules.DatOchiLowResHours != 72 {
+		t.Fatalf("UpdateBoard rules failed: %+v err=%v", upd, err)
+	}
+
+	// Partial update of Name preserves rule fields.
+	newName := "テスト板改"
+	renamed, err := svc.UpdateBoard(ctx, board.ID, bbs.UpdateBoardInput{Name: &newName})
+	if err != nil || renamed.Name != newName || renamed.Rules.MaxRes != 500 || renamed.Rules.DatOchiIdleHours != -1 || renamed.Rules.DatOchiLowResHours != 72 {
+		t.Fatalf("partial UpdateBoard lost rule fields: %+v err=%v", renamed, err)
+	}
+
+	// Existing thread1 retains original snapshot; new thread2 inherits updated rules.
+	reloadedTh1, err := svc.GetThread(ctx, th1.ID)
+	if err != nil || reloadedTh1.Rules.MaxRes != bbs.DefaultMaxRes || reloadedTh1.Rules.DatOchiIdleHours != bbs.DefaultDatOchiIdleHrs || reloadedTh1.Rules.DatOchiLowResHours != bbs.DefaultDatOchiLowResHr {
+		t.Fatalf("existing thread snapshot changed unexpectedly: %+v err=%v", reloadedTh1, err)
+	}
+	_, th2, _, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: board.ID, GuildID: guildID, UserID: userID2, Title: "After Update", RawBody: "Body 2",
+		Now: time.Now().Add(time.Minute),
+	})
+	if err != nil || th2.Rules.MaxRes != 500 || th2.Rules.DatOchiIdleHours != -1 || th2.Rules.DatOchiLowResHours != 72 {
+		t.Fatalf("new thread did not inherit updated rules: %+v err=%v", th2, err)
+	}
+
+	// Validation boundary checks.
+	zeroRes := uint32(0)
+	tooLargeRes := bbs.MaxBoardMaxRes + 1
+	zeroHrs := 0
+	tooLowHrs := -2
+	tooHighHrs := bbs.MaxArchiveDays*24 + 1
+	invalidCases := []bbs.UpdateBoardInput{
+		{MaxRes: &zeroRes},
+		{MaxRes: &tooLargeRes},
+		{DatOchiIdleHours: &zeroHrs},
+		{DatOchiIdleHours: &tooLowHrs},
+		{DatOchiIdleHours: &tooHighHrs},
+		{DatOchiLowResHours: &zeroHrs},
+		{DatOchiLowResHours: &tooLowHrs},
+		{DatOchiLowResHours: &tooHighHrs},
+	}
+	for i, tc := range invalidCases {
+		if _, err := svc.UpdateBoard(ctx, board.ID, tc); !errors.Is(err, bbs.ErrInvalidBoardRules) {
+			t.Fatalf("case %d expected ErrInvalidBoardRules, got %v", i, err)
+		}
 	}
 }

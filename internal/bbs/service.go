@@ -569,6 +569,23 @@ func (s *Service) UpdateBoard(ctx context.Context, boardID uuid.UUID, input Upda
 	if input.SLIP != nil && !input.SLIP.IsValid() {
 		return nil, ErrInvalidBoardRules
 	}
+	if input.MaxRes != nil {
+		if *input.MaxRes == 0 || *input.MaxRes > MaxBoardMaxRes {
+			return nil, ErrInvalidBoardRules
+		}
+	}
+	if input.DatOchiIdleHours != nil {
+		v := *input.DatOchiIdleHours
+		if v < DatOchiDisabled || v == 0 || v > MaxArchiveDays*24 {
+			return nil, ErrInvalidBoardRules
+		}
+	}
+	if input.DatOchiLowResHours != nil {
+		v := *input.DatOchiLowResHours
+		if v < DatOchiDisabled || v == 0 || v > MaxArchiveDays*24 {
+			return nil, ErrInvalidBoardRules
+		}
+	}
 	b, err := s.GetBoard(ctx, boardID)
 	if err != nil {
 		return nil, err

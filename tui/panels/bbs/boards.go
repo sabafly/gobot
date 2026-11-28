@@ -105,6 +105,13 @@ func (s *boardsState) selectedPost() (admin.BBSPostDTO, bool) {
 	return s.threadDetail.Posts[s.postIdx], true
 }
 
+func formatDatOchiHours(h int) string {
+	if h < 0 {
+		return "off"
+	}
+	return fmt.Sprintf("%dh", h)
+}
+
 func (s *boardsState) currentThreadStatus() string {
 	return threadStatusCycle[s.threadStatusIdx]
 }
@@ -140,7 +147,7 @@ func (s *boardsState) rebuildDetail(theme ui.Theme) {
 			kvLine(theme, "Hide ID", fmt.Sprintf("%v", b.Rules.HideID)),
 			kvLine(theme, "SLIP Level", fmt.Sprintf("%d", b.Rules.SLIPLevel)),
 			kvLine(theme, "Max Res", fmt.Sprintf("%d", b.Rules.MaxRes)),
-			kvLine(theme, "Idle/LowRes", fmt.Sprintf("%dh / %dh", b.Rules.DatOchiIdleHours, b.Rules.DatOchiLowResHours)),
+			kvLine(theme, "Idle/LowRes", fmt.Sprintf("%s / %s", formatDatOchiHours(b.Rules.DatOchiIdleHours), formatDatOchiHours(b.Rules.DatOchiLowResHours))),
 			"",
 			theme.CardTitle.Render("Description"),
 			b.Description,
@@ -450,7 +457,8 @@ func (p *Panel) updateBoardsRoot(k tea.KeyPressMsg, ctx ui.PanelContext) tea.Cmd
 			{Key: "hide_id", Label: "Hide ID", Kind: ui.FieldBool, BoolVal: false},
 			{Key: "slip_level", Label: "SLIP (0/1/2)", Kind: ui.FieldCycle, Options: []string{"0", "1", "2"}, Value: "0"},
 			{Key: "max_res", Label: "Max Res", Kind: ui.FieldText, Value: "1000", CharLimit: 6},
-			{Key: "dat_ochi_idle", Label: "Idle Ochi (h)", Kind: ui.FieldText, Value: "1200", CharLimit: 6},
+			{Key: "dat_ochi_idle", Label: "Idle Ochi (h, -1=off)", Kind: ui.FieldText, Value: "1200", CharLimit: 6},
+			{Key: "dat_ochi_low_res", Label: "LowRes Ochi (h, -1=off)", Kind: ui.FieldText, Value: "240", CharLimit: 6},
 		}, nil)
 	case "e":
 		if !ctx.HasPerm(admin.PermBBSAdmin) {
@@ -463,6 +471,9 @@ func (p *Panel) updateBoardsRoot(k tea.KeyPressMsg, ctx ui.PanelContext) tea.Cmd
 				{Key: "default_name", Label: "Default Name", Kind: ui.FieldText, Value: b.Rules.DefaultName, CharLimit: 32},
 				{Key: "hide_id", Label: "Hide ID", Kind: ui.FieldBool, BoolVal: b.Rules.HideID},
 				{Key: "slip_level", Label: "SLIP (0/1/2)", Kind: ui.FieldCycle, Options: []string{"0", "1", "2"}, Value: strconv.Itoa(b.Rules.SLIPLevel)},
+				{Key: "max_res", Label: "Max Res", Kind: ui.FieldText, Value: strconv.FormatUint(uint64(b.Rules.MaxRes), 10), CharLimit: 6},
+				{Key: "dat_ochi_idle", Label: "Idle Ochi (h, -1=off)", Kind: ui.FieldText, Value: strconv.Itoa(b.Rules.DatOchiIdleHours), CharLimit: 6},
+				{Key: "dat_ochi_low_res", Label: "LowRes Ochi (h, -1=off)", Kind: ui.FieldText, Value: strconv.Itoa(b.Rules.DatOchiLowResHours), CharLimit: 6},
 				{Key: "locked", Label: "Locked", Kind: ui.FieldBool, BoolVal: b.Locked},
 			}, b)
 		}

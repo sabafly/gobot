@@ -119,13 +119,22 @@ func toDomainSlipEvent(row *BBSSlipEvent) bbs.SlipEventDefinition {
 	}
 }
 
-func markSeededTx(tx *gorm.DB, key string) error {
+func claimSeedMarkerTx(tx *gorm.DB, key string, now time.Time) (bool, error) {
 	row := BBSSystemSecret{
 		SecretKey: key,
 		SecretHex: "31",
-		CreatedAt: time.Now(),
+		CreatedAt: now,
 	}
-	return tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&row).Error
+	res := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&row)
+	if res.Error != nil {
+		return false, res.Error
+	}
+	return res.RowsAffected > 0, nil
+}
+
+func markSeededTx(tx *gorm.DB, key string) error {
+	_, err := claimSeedMarkerTx(tx, key, time.Now())
+	return err
 }
 
 func isSeededTx(tx *gorm.DB, key string) (bool, error) {
@@ -134,6 +143,70 @@ func isSeededTx(tx *gorm.DB, key string) (bool, error) {
 		return false, err
 	}
 	return count > 0, nil
+}
+
+func seedIfEmpty[T any](
+	db *gorm.DB,
+	seedKey string,
+	emptyDefs bool,
+	listFn func(*gorm.DB) ([]T, error),
+	insertFn func(*gorm.DB, time.Time) error,
+) ([]T, error) {
+	if emptyDefs {
+		return listFn(db)
+	}
+	// Check seed marker BEFORE listing rows so a concurrent first-boot commit
+	// cannot interleave between observing empty rows and seeded=true.
+	seeded, err := isSeededTx(db, seedKey)
+	if err != nil {
+		return nil, err
+	}
+	if seeded {
+		return listFn(db)
+	}
+	existing, err := listFn(db)
+	if err != nil {
+		return nil, err
+	}
+	if len(existing) > 0 {
+		return existing, nil
+	}
+
+	var out []T
+	var needsReload bool
+	err = db.Transaction(func(tx *gorm.DB) error {
+		now := time.Now()
+		// Claim the seed marker as the first statement so write locks are acquired immediately.
+		claimed, cErr := claimSeedMarkerTx(tx, seedKey, now)
+		if cErr != nil {
+			return cErr
+		}
+		if !claimed {
+			needsReload = true
+			return nil
+		}
+		existingTx, lErr := listFn(tx)
+		if lErr != nil {
+			return lErr
+		}
+		if len(existingTx) > 0 {
+			out = existingTx
+			return nil
+		}
+		if iErr := insertFn(tx, now); iErr != nil {
+			return iErr
+		}
+		out, lErr = listFn(tx)
+		return lErr
+	})
+	if err != nil {
+		return nil, err
+	}
+	if needsReload {
+		// Read outside the aborted claim transaction to observe the winner's committed snapshot.
+		return listFn(db)
+	}
+	return out, nil
 }
 
 func (p *Provider) ListAdminCaps(ctx context.Context) ([]bbs.CapDefinition, error) {
@@ -225,25 +298,7 @@ func (p *Provider) DeleteAdminCap(ctx context.Context, id string) error {
 }
 
 func (p *Provider) SeedAdminCapsIfEmpty(ctx context.Context, defs []bbs.CapDefinition) ([]bbs.CapDefinition, error) {
-	var out []bbs.CapDefinition
-	err := p.session(ctx).Transaction(func(tx *gorm.DB) error {
-		existing, err := listAdminCapsTx(tx)
-		if err != nil {
-			return err
-		}
-		if len(existing) > 0 {
-			out = existing
-			return nil
-		}
-		seeded, err := isSeededTx(tx, adminCapsSeedKey)
-		if err != nil {
-			return err
-		}
-		if seeded || len(defs) == 0 {
-			out = []bbs.CapDefinition{}
-			return nil
-		}
-		now := time.Now()
+	return seedIfEmpty(p.session(ctx), adminCapsSeedKey, len(defs) == 0, listAdminCapsTx, func(tx *gorm.DB, now time.Time) error {
 		for i, def := range defs {
 			usersJSON, err := encodeSnowflakesJSON(def.Users)
 			if err != nil {
@@ -259,17 +314,12 @@ func (p *Provider) SeedAdminCapsIfEmpty(ctx context.Context, defs []bbs.CapDefin
 				CreatedAt:      now,
 				UpdatedAt:      now,
 			}
-			if err := tx.Create(&row).Error; err != nil {
+			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&row).Error; err != nil {
 				return err
 			}
 		}
-		if err := markSeededTx(tx, adminCapsSeedKey); err != nil {
-			return err
-		}
-		out, err = listAdminCapsTx(tx)
-		return err
+		return nil
 	})
-	return out, err
 }
 
 func (p *Provider) ListSlipEvents(ctx context.Context) ([]bbs.SlipEventDefinition, error) {
@@ -350,25 +400,7 @@ func (p *Provider) DeleteSlipEvent(ctx context.Context, id string) error {
 }
 
 func (p *Provider) SeedSlipEventsIfEmpty(ctx context.Context, defs []bbs.SlipEventDefinition) ([]bbs.SlipEventDefinition, error) {
-	var out []bbs.SlipEventDefinition
-	err := p.session(ctx).Transaction(func(tx *gorm.DB) error {
-		existing, err := listSlipEventsTx(tx)
-		if err != nil {
-			return err
-		}
-		if len(existing) > 0 {
-			out = existing
-			return nil
-		}
-		seeded, err := isSeededTx(tx, slipEventsSeedKey)
-		if err != nil {
-			return err
-		}
-		if seeded || len(defs) == 0 {
-			out = []bbs.SlipEventDefinition{}
-			return nil
-		}
-		now := time.Now()
+	return seedIfEmpty(p.session(ctx), slipEventsSeedKey, len(defs) == 0, listSlipEventsTx, func(tx *gorm.DB, now time.Time) error {
 		for i, def := range defs {
 			row := BBSSlipEvent{
 				ID:        def.ID,
@@ -380,17 +412,12 @@ func (p *Provider) SeedSlipEventsIfEmpty(ctx context.Context, defs []bbs.SlipEve
 				CreatedAt: now,
 				UpdatedAt: now,
 			}
-			if err := tx.Create(&row).Error; err != nil {
+			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&row).Error; err != nil {
 				return err
 			}
 		}
-		if err := markSeededTx(tx, slipEventsSeedKey); err != nil {
-			return err
-		}
-		out, err = listSlipEventsTx(tx)
-		return err
+		return nil
 	})
-	return out, err
 }
 
 func (p *Provider) GetBBSStats(ctx context.Context) (*bbs.Stats, error) {

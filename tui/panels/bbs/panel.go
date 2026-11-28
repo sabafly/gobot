@@ -654,9 +654,6 @@ func (p *Panel) handleAsyncMsg(msg tea.Msg, ctx ui.PanelContext) (tea.Cmd, bool)
 			return ui.ShowToastCmd(ui.ToastError, "Abone failed: "+m.Err.Error()), true
 		}
 		msgTxt := fmt.Sprintf("Aboned post #%d", m.Resp.Post.ResNumber)
-		if m.Resp.SyncError != "" {
-			msgTxt += " (sync warn: " + m.Resp.SyncError + ")"
-		}
 		if m.FromReport {
 			return tea.Batch(p.fetchReportsCmd(ctx.Client), ui.ShowToastCmd(ui.ToastSuccess, msgTxt)), true
 		}
@@ -897,17 +894,22 @@ func (p *Panel) handleFormSubmit(ctx ui.PanelContext, tag string, v map[string]s
 		if err != nil {
 			return ui.ShowToastCmd(ui.ToastError, "invalid dat_ochi_idle")
 		}
+		lowResH, err := strconv.Atoi(strings.TrimSpace(v["dat_ochi_low_res"]))
+		if err != nil {
+			return ui.ShowToastCmd(ui.ToastError, "invalid dat_ochi_low_res")
+		}
 		return p.createBoardCmd(ctx.Client, admin.CreateBBSBoardRequest{
 			CategoryID:  catVal,
 			Slug:        strings.TrimSpace(v["slug"]),
 			Name:        strings.TrimSpace(v["name"]),
 			Description: strings.TrimSpace(v["description"]),
 			Rules: admin.BBSBoardRulesDTO{
-				DefaultName:      strings.TrimSpace(v["default_name"]),
-				HideID:           v["hide_id"] == "true",
-				SLIPLevel:        slip,
-				MaxRes:           uint32(maxRes),
-				DatOchiIdleHours: idleH,
+				DefaultName:        strings.TrimSpace(v["default_name"]),
+				HideID:             v["hide_id"] == "true",
+				SLIPLevel:          slip,
+				MaxRes:             uint32(maxRes),
+				DatOchiIdleHours:   idleH,
+				DatOchiLowResHours: lowResH,
 			},
 		})
 	case "board.edit":
@@ -921,13 +923,29 @@ func (p *Panel) handleFormSubmit(ctx ui.PanelContext, tag string, v map[string]s
 		if err != nil {
 			return ui.ShowToastCmd(ui.ToastError, "invalid SLIP level")
 		}
+		maxResU64, err := strconv.ParseUint(strings.TrimSpace(v["max_res"]), 10, 32)
+		if err != nil {
+			return ui.ShowToastCmd(ui.ToastError, "invalid max_res")
+		}
+		maxRes := uint32(maxResU64)
+		idleH, err := strconv.Atoi(strings.TrimSpace(v["dat_ochi_idle"]))
+		if err != nil {
+			return ui.ShowToastCmd(ui.ToastError, "invalid dat_ochi_idle")
+		}
+		lowResH, err := strconv.Atoi(strings.TrimSpace(v["dat_ochi_low_res"]))
+		if err != nil {
+			return ui.ShowToastCmd(ui.ToastError, "invalid dat_ochi_low_res")
+		}
 		return p.updateBoardCmd(ctx.Client, b.ID, admin.UpdateBBSBoardRequest{
-			Name:        &name,
-			Description: &desc,
-			DefaultName: &defName,
-			HideID:      &hideID,
-			SLIPLevel:   &slip,
-			Locked:      &locked,
+			Name:               &name,
+			Description:        &desc,
+			DefaultName:        &defName,
+			HideID:             &hideID,
+			SLIPLevel:          &slip,
+			MaxRes:             &maxRes,
+			DatOchiIdleHours:   &idleH,
+			DatOchiLowResHours: &lowResH,
+			Locked:             &locked,
 		})
 	case "post.abone":
 		post, _ := payload.(admin.BBSPostDTO)

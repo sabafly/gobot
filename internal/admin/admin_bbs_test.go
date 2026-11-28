@@ -20,19 +20,23 @@
 package admin_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 
@@ -215,6 +219,11 @@ func TestAdminServer_BBSManagement_EndToEnd_RBAC_And_ConfigReload(t *testing.T) 
 	if err != nil {
 		t.Fatalf("NewServer failed: %v", err)
 	}
+	t.Cleanup(func() {
+		waitCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = srv.WaitBackgroundSync(waitCtx)
+	})
 	ts := httptest.NewServer(srv.Handler())
 	defer ts.Close()
 
@@ -263,9 +272,27 @@ func TestAdminServer_BBSManagement_EndToEnd_RBAC_And_ConfigReload(t *testing.T) 
 	}
 	lockedTrue := true
 	slip2 := 2
-	boardUpd, err := superCli.UpdateBBSBoard(ctx, board.ID, admin.UpdateBBSBoardRequest{Locked: &lockedTrue, SLIPLevel: &slip2})
-	if err != nil || !boardUpd.Locked || boardUpd.Rules.SLIPLevel != 2 {
+	updMaxRes := uint32(500)
+	updIdleH := -1
+	updLowResH := 48
+	boardUpd, err := superCli.UpdateBBSBoard(ctx, board.ID, admin.UpdateBBSBoardRequest{
+		Locked:             &lockedTrue,
+		SLIPLevel:          &slip2,
+		MaxRes:             &updMaxRes,
+		DatOchiIdleHours:   &updIdleH,
+		DatOchiLowResHours: &updLowResH,
+	})
+	if err != nil || !boardUpd.Locked || boardUpd.Rules.SLIPLevel != 2 ||
+		boardUpd.Rules.MaxRes != 500 || boardUpd.Rules.DatOchiIdleHours != -1 || boardUpd.Rules.DatOchiLowResHours != 48 {
 		t.Fatalf("UpdateBBSBoard failed: %+v err=%v", boardUpd, err)
+	}
+	zeroMaxRes := uint32(0)
+	if _, err := superCli.UpdateBBSBoard(ctx, board.ID, admin.UpdateBBSBoardRequest{MaxRes: &zeroMaxRes}); !isAPIStatus(err, http.StatusBadRequest) {
+		t.Fatalf("expected 400 on max_res=0 update, got %v", err)
+	}
+	zeroIdleH := 0
+	if _, err := superCli.UpdateBBSBoard(ctx, board.ID, admin.UpdateBBSBoardRequest{DatOchiIdleHours: &zeroIdleH}); !isAPIStatus(err, http.StatusBadRequest) {
+		t.Fatalf("expected 400 on dat_ochi_idle_hours=0 update, got %v", err)
 	}
 	lockedFalse := false
 	if _, err := superCli.UpdateBBSBoard(ctx, board.ID, admin.UpdateBBSBoardRequest{Locked: &lockedFalse}); err != nil {
@@ -293,6 +320,18 @@ func TestAdminServer_BBSManagement_EndToEnd_RBAC_And_ConfigReload(t *testing.T) 
 	}
 	if thDetail, err := viewCli.GetBBSThreadDetail(ctx, th.ID.String(), 0, 50); err != nil || len(thDetail.Posts) != 1 || thDetail.Posts[0].Body != "テスト投稿" {
 		t.Fatalf("GetBBSThreadDetail failed: %+v err=%v", thDetail, err)
+	}
+
+	// Viewer MUST NOT see ReporterUserID or ReporterName on ListBBSReports; Moderator sees both.
+	viewReps, err := viewCli.ListBBSReports(ctx, admin.BBSReportFilter{})
+	if err != nil || len(viewReps.Reports) != 1 || viewReps.Reports[0].ReporterUserID != "" || viewReps.Reports[0].ReporterName != "" ||
+		viewReps.Reports[0].GuildName != "BBSGuild" || viewReps.Reports[0].BoardName != "ラウンジ" {
+		t.Fatalf("expected ReporterUserID and ReporterName redacted for viewer, got %+v err=%v", viewReps, err)
+	}
+	modReps, err := modCli.ListBBSReports(ctx, admin.BBSReportFilter{})
+	if err != nil || len(modReps.Reports) != 1 || modReps.Reports[0].ReporterUserID != reporterUID.String() ||
+		modReps.Reports[0].ReporterName != "ReporterUser" {
+		t.Fatalf("expected ReporterUserID and ReporterName visible for moderator, got %+v err=%v", modReps, err)
 	}
 
 	ins, err := modCli.InspectBBSReport(ctx, rep.ID.String())
@@ -402,8 +441,264 @@ func TestAdminServer_BBSManagement_EndToEnd_RBAC_And_ConfigReload(t *testing.T) 
 		t.Fatalf("DeleteBBSCategory failed: %v", err)
 	}
 
+	// 5. Consistent "error" audit logging across all mutation/inspect handlers (#229).
+	missingUUID := uuid.NewString()
+	_, _ = superCli.CreateBBSCategory(ctx, admin.CreateBBSCategoryRequest{Scope: "invalid", Slug: "bad", Name: "Bad"})
+	_, _ = superCli.UpdateBBSCategory(ctx, missingUUID, admin.UpdateBBSCategoryRequest{Name: &updName})
+	_ = superCli.DeleteBBSCategory(ctx, missingUUID)
+	_, _ = superCli.CreateBBSBoard(ctx, admin.CreateBBSBoardRequest{CategoryID: missingUUID, Slug: "x", Name: "X"})
+	_, _ = superCli.UpdateBBSBoard(ctx, missingUUID, admin.UpdateBBSBoardRequest{Locked: &lockedTrue})
+	_ = superCli.DeleteBBSBoard(ctx, missingUUID)
+	_, _ = modCli.ArchiveBBSThread(ctx, missingUUID)
+	_, _ = modCli.AboneBBSPost(ctx, missingUUID, "x")
+	_, _ = modCli.InspectBBSReport(ctx, missingUUID)
+	_, _ = modCli.ResolveBBSReport(ctx, missingUUID, admin.ResolveBBSReportRequest{Status: "resolved"})
+	_, _ = modCli.CreateBBSBan(ctx, admin.CreateBBSBanRequest{Scope: "local", Reason: "no guild"})
+	_, _ = superCli.UpdateBBSCap(ctx, "missing_cap", admin.SaveBBSCapRequest{Name: "X"})
+	_ = superCli.DeleteBBSCap(ctx, "missing_cap")
+	_, _ = superCli.CreateBBSSlipEvent(ctx, admin.SaveBBSSlipEventRequest{ID: "bad_slip", Label: "x", StartDate: "99-99", Mode: "override"})
+	_ = superCli.DeleteBBSSlipEvent(ctx, "missing_slip")
+
+	errAudits, err := superCli.ListAuditLogs(ctx, admin.AuditFilter{Status: "error", Limit: 100})
+	if err != nil {
+		t.Fatalf("ListAuditLogs error status failed: %v", err)
+	}
+	seenActions := make(map[string]bool, len(errAudits.Entries))
+	for _, entry := range errAudits.Entries {
+		seenActions[entry.Action] = true
+	}
+	for _, wantAction := range []string{
+		"bbs.category.create",
+		"bbs.category.update",
+		"bbs.category.delete",
+		"bbs.board.create",
+		"bbs.board.update",
+		"bbs.board.delete",
+		"bbs.thread.archive",
+		"bbs.post.abone",
+		"bbs.report.inspect",
+		"bbs.report.resolve",
+		"bbs.ban.create",
+		"bbs.ban.delete",
+		"bbs.cap.create",
+		"bbs.cap.update",
+		"bbs.cap.delete",
+		"bbs.slip_event.create",
+		"bbs.slip_event.update",
+		"bbs.slip_event.delete",
+	} {
+		if !seenActions[wantAction] {
+			t.Fatalf("expected error audit log entry for %q, seen=%v", wantAction, seenActions)
+		}
+	}
+
 	stats, err := viewCli.BBSStats(ctx)
 	if err != nil || !stats.Available || stats.Categories != 0 || stats.Boards != 0 || stats.ActiveBans != 0 {
 		t.Fatalf("unexpected final BBSStats: %+v err=%v", stats, err)
+	}
+}
+
+type asyncTestRoundTrip func(*http.Request) (*http.Response, error)
+
+func (f asyncTestRoundTrip) RoundTrip(r *http.Request) (*http.Response, error) {
+	return f(r)
+}
+
+func TestAdminServer_BBSAsyncDiscordSync(t *testing.T) {
+	ctx := context.Background()
+	db := newTestAdminDB(t)
+	discordMock := newBBSRoleMockOAuth(t, "bbs-async-secret")
+	defer discordMock.Close()
+
+	guildID := snowflake.ID(888001)
+	channelID := snowflake.ID(888101)
+	ctrlMsgID := snowflake.ID(888201)
+	discordThreadID := snowflake.ID(888301)
+	discordPostMsgID := snowflake.ID(888401)
+	discordCtrlThreadMsgID := snowflake.ID(888501)
+	userID := snowflake.ID(1001)
+
+	if err := db.DB.Create(&models.Guild{ID: guildID, Name: "AsyncGuild"}).Error; err != nil {
+		t.Fatalf("create guild failed: %v", err)
+	}
+	if err := db.DB.Create(&models.User{ID: userID, Name: "AsyncUser"}).Error; err != nil {
+		t.Fatalf("create user failed: %v", err)
+	}
+
+	comp := components.New(ctx, components.Config{LocaleDir: "../../locales"}, db)
+	store := gormstore.New(db.DB)
+	reg := bbs.NewProviderRegistry(bbs.DefaultProviderKey)
+	reg.Register(store)
+	bbsSvc := bbs.NewService(
+		reg,
+		store,
+		bbs.NewIdentityGenerator([]byte("admin-async-test-secret-32-byte!")),
+		bbs.NewPolicyManager(bbs.PolicyConfig{Version: "2026-01"}),
+		[]snowflake.ID{userID},
+	)
+	bbsSync := discordsync.NewSyncer(bbsSvc)
+
+	if _, err := bbsSvc.SetupGuild(ctx, bbs.GuildSetupInput{GuildID: guildID, Enabled: true, ActorUserID: userID}); err != nil {
+		t.Fatalf("SetupGuild failed: %v", err)
+	}
+	if _, err := bbsSvc.AcceptPolicy(ctx, userID); err != nil {
+		t.Fatalf("AcceptPolicy failed: %v", err)
+	}
+	cat, err := bbsSvc.CreateCategory(ctx, bbs.CreateCategoryInput{
+		Scope: bbs.ScopeLocal, GuildID: &guildID, Slug: "async-cat", Name: "AsyncCat",
+	})
+	if err != nil {
+		t.Fatalf("CreateCategory failed: %v", err)
+	}
+	board, err := bbsSvc.CreateBoard(ctx, bbs.CreateBoardInput{
+		CategoryID: cat.ID, Scope: bbs.ScopeLocal, GuildID: &guildID, Slug: "async-board", Name: "AsyncBoard",
+	})
+	if err != nil {
+		t.Fatalf("CreateBoard failed: %v", err)
+	}
+	mount := &bbs.BoardMount{
+		ID: uuid.New(), BoardID: board.ID, GuildID: guildID, ChannelID: channelID,
+		ControlMessageID: &ctrlMsgID, Locale: "ja", Active: true,
+	}
+	if err := store.CreateBoardMount(ctx, mount); err != nil {
+		t.Fatalf("CreateBoardMount failed: %v", err)
+	}
+	_, th, p1, err := bbsSvc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: board.ID, GuildID: guildID, UserID: userID, Title: "Async Thread", RawBody: "Body",
+	})
+	if err != nil {
+		t.Fatalf("CreateThread failed: %v", err)
+	}
+	if err := store.CreateThreadAndPostMirror(ctx,
+		&bbs.ThreadMirror{
+			ThreadID: th.ID, BoardMountID: mount.ID, GuildID: guildID,
+			DiscordThreadID: discordThreadID, ControlMessageID: &discordCtrlThreadMsgID,
+		},
+		&bbs.PostMirror{
+			PostID: p1.ID, ThreadID: th.ID, ResNumber: 1,
+			GuildID: guildID, DiscordMessageID: discordPostMsgID,
+		},
+	); err != nil {
+		t.Fatalf("CreateThreadAndPostMirror failed: %v", err)
+	}
+
+	var (
+		mu             sync.Mutex
+		guideUpdated   bool
+		aboneAttempted bool
+		archivePatched bool
+		ctxActiveCount int
+	)
+	startedCh := make(chan string, 16)
+	releaseCh := make(chan struct{})
+
+	httpClient := &http.Client{
+		Transport: asyncTestRoundTrip(func(req *http.Request) (*http.Response, error) {
+			p := strings.TrimPrefix(req.URL.Path, "/api/v10")
+			select {
+			case startedCh <- req.Method + " " + p:
+			default:
+			}
+			<-releaseCh
+
+			mu.Lock()
+			if req.Context().Err() == nil {
+				ctxActiveCount++
+			}
+			switch {
+			case req.Method == http.MethodPatch && p == "/channels/"+channelID.String()+"/messages/"+ctrlMsgID.String():
+				guideUpdated = true
+			case req.Method == http.MethodPatch && p == "/channels/"+discordThreadID.String()+"/messages/"+discordPostMsgID.String():
+				aboneAttempted = true
+				mu.Unlock()
+				raw, _ := json.Marshal(map[string]any{"message": "upstream unavailable"})
+				return &http.Response{
+					StatusCode: http.StatusServiceUnavailable,
+					Header:     http.Header{"Content-Type": []string{"application/json"}},
+					Body:       io.NopCloser(bytes.NewReader(raw)),
+				}, nil
+			case req.Method == http.MethodPatch && p == "/channels/"+discordThreadID.String():
+				archivePatched = true
+			}
+			mu.Unlock()
+
+			raw, _ := json.Marshal(map[string]any{"id": "1"})
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
+				Body:       io.NopCloser(bytes.NewReader(raw)),
+			}, nil
+		}),
+	}
+	client := &bot.Client{
+		ApplicationID: snowflake.ID(999000),
+		Rest:          rest.New(rest.NewClient("Bot async-test-token", rest.WithHTTPClient(httpClient))),
+		Caches:        cache.New(cache.WithCaches(cache.FlagsAll)),
+	}
+	client.Caches.AddGuild(discord.CacheGuild{ID: guildID, Name: "AsyncGuild", PreferredLocale: "ja"})
+
+	srv, err := admin.NewServer(admin.ServerDeps{
+		AdminConfig: components.ConfigAdmin{
+			Enabled:   true,
+			PublicURL: "http://127.0.0.1:8080",
+			OAuth:     components.ConfigAdminOAuth{ClientSecret: "bbs-async-secret"},
+			Users: []components.ConfigAdminUser{
+				{UserID: userID, Role: admin.RoleSuperAdmin},
+			},
+		},
+		DB:                 db,
+		Components:         comp,
+		Client:             client,
+		BBSService:         bbsSvc,
+		BBSSyncer:          bbsSync,
+		LogHub:             admin.NewLogHub(16),
+		OAuthAPIBase:       discordMock.URL,
+		OAuthAuthorizeBase: discordMock.URL + "/oauth2/authorize",
+		OAuthHTTPClient:    discordMock.Client(),
+	})
+	if err != nil {
+		t.Fatalf("NewServer failed: %v", err)
+	}
+	t.Cleanup(func() {
+		waitCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = srv.WaitBackgroundSync(waitCtx)
+	})
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+
+	superCli := loginClient(t, ts.URL, "super")
+
+	// 1. All three handlers must return immediately while Discord REST is blocked on releaseCh!
+	newDesc := "async updated"
+	if _, err := superCli.UpdateBBSBoard(ctx, board.ID.String(), admin.UpdateBBSBoardRequest{Description: &newDesc}); err != nil {
+		t.Fatalf("UpdateBBSBoard failed while Discord REST blocked: %v", err)
+	}
+	if _, err := superCli.AboneBBSPost(ctx, p1.ID.String(), "async abone"); err != nil {
+		t.Fatalf("AboneBBSPost failed while Discord REST blocked: %v", err)
+	}
+	if _, err := superCli.ArchiveBBSThread(ctx, th.ID.String()); err != nil {
+		t.Fatalf("ArchiveBBSThread failed while Discord REST blocked: %v", err)
+	}
+
+	// Wait until the first blocked REST call has started before releasing, proving it runs async post-response.
+	select {
+	case <-startedCh:
+	case <-time.After(3 * time.Second):
+		t.Fatal("expected background Discord REST sync to start")
+	}
+	close(releaseCh)
+
+	waitCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	if err := srv.WaitBackgroundSync(waitCtx); err != nil {
+		t.Fatalf("WaitBackgroundSync failed: %v", err)
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+	if !guideUpdated || !aboneAttempted || !archivePatched || ctxActiveCount == 0 {
+		t.Fatalf("expected all async sync operations to complete with active bgCtx: guide=%v abone=%v archive=%v activeCtx=%d",
+			guideUpdated, aboneAttempted, archivePatched, ctxActiveCount)
 	}
 }

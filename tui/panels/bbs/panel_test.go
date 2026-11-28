@@ -123,6 +123,7 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 		abonedCalls     []string
 		archivedCalls   []string
 		createdBoards   []admin.CreateBBSBoardRequest
+		updatedBoards   []admin.UpdateBBSBoardRequest
 		createdCats     []admin.CreateBBSCategoryRequest
 		createdBans     []admin.CreateBBSBanRequest
 		deletedBanIDs   []string
@@ -194,7 +195,7 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 					ID: "44444444-4444-4444-4444-444444444444", CategoryID: "55555555-5555-5555-5555-555555555555",
 					CategoryName: "ニュース",
 					Scope:        "local", GuildID: &guildStr, GuildName: "BBS Guild", Slug: "vip", Name: "VIP板テスト",
-					Rules: admin.BBSBoardRulesDTO{DefaultName: "名無し", MaxRes: 1000, DatOchiIdleHours: 1200}, CreatedAt: now,
+					Rules: admin.BBSBoardRulesDTO{DefaultName: "名無し", MaxRes: 1000, DatOchiIdleHours: 1200, DatOchiLowResHours: 240}, CreatedAt: now,
 				}},
 			})
 		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/bbs/boards/44444444-4444-4444-4444-444444444444/mounts":
@@ -211,6 +212,17 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 			createdBoards = append(createdBoards, req)
 			mu.Unlock()
 			_ = json.NewEncoder(w).Encode(admin.BBSBoardDTO{ID: "44444444-4444-4444-4444-444444444445", Name: req.Name, Scope: "global", CreatedAt: now})
+		case r.Method == http.MethodPatch && r.URL.Path == "/api/v1/bbs/boards/44444444-4444-4444-4444-444444444444":
+			var req admin.UpdateBBSBoardRequest
+			_ = json.NewDecoder(r.Body).Decode(&req)
+			mu.Lock()
+			updatedBoards = append(updatedBoards, req)
+			mu.Unlock()
+			_ = json.NewEncoder(w).Encode(admin.BBSBoardDTO{
+				ID: "44444444-4444-4444-4444-444444444444", Name: *req.Name,
+				Rules:     admin.BBSBoardRulesDTO{MaxRes: *req.MaxRes, DatOchiIdleHours: *req.DatOchiIdleHours, DatOchiLowResHours: *req.DatOchiLowResHours},
+				CreatedAt: now,
+			})
 		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/bbs/threads":
 			mu.Lock()
 			lastThreadQuery = r.URL.Query().Get("q")
@@ -412,6 +424,19 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 
 	// Back to Boards -> Create Board via FormModal.
 	p, _ = p.Update(tea.KeyPressMsg{Code: tea.KeyEsc}, sCtx)
+	// Edit existing board and verify MaxRes / DatOchiIdleHours / DatOchiLowResHours prefill & PATCH payload.
+	p, _ = p.Update(tea.KeyPressMsg{Code: 'e', Text: "e"}, sCtx)
+	vEditForm := p.View(120, 32)
+	if !strings.Contains(vEditForm, "Max Res") || !strings.Contains(vEditForm, "Idle Ochi") || !strings.Contains(vEditForm, "LowRes Ochi") {
+		t.Fatalf("expected board.edit form to show MaxRes and DatOchi fields, got:\n%s", vEditForm)
+	}
+	p, cmd = p.Update(tea.KeyPressMsg{Code: tea.KeyEnter}, sCtx)
+	p, _ = pumpPanelCmd(t, p, sCtx, cmd, 200*time.Millisecond)
+	if len(updatedBoards) != 1 || updatedBoards[0].MaxRes == nil || *updatedBoards[0].MaxRes != 1000 ||
+		updatedBoards[0].DatOchiIdleHours == nil || *updatedBoards[0].DatOchiIdleHours != 1200 ||
+		updatedBoards[0].DatOchiLowResHours == nil || *updatedBoards[0].DatOchiLowResHours != 240 {
+		t.Fatalf("expected board.edit PATCH to send MaxRes/DatOchi fields, got %+v", updatedBoards)
+	}
 	p, _ = p.Update(tea.KeyPressMsg{Code: 'n', Text: "n"}, sCtx)
 	p, _ = p.Update(tea.KeyPressMsg{Code: tea.KeyTab}, sCtx) // slug
 	p, _ = p.Update(tea.KeyPressMsg{Text: "chat"}, sCtx)
@@ -419,8 +444,8 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 	p, _ = p.Update(tea.KeyPressMsg{Text: "新規雑談"}, sCtx)
 	p, cmd = p.Update(tea.KeyPressMsg{Code: tea.KeyEnter}, sCtx)
 	p, _ = pumpPanelCmd(t, p, sCtx, cmd, 200*time.Millisecond)
-	if len(createdBoards) != 1 || createdBoards[0].Slug != "chat" || createdBoards[0].CategoryID != "55555555-5555-5555-5555-555555555555" {
-		t.Fatalf("expected created board payload, got %+v", createdBoards)
+	if len(createdBoards) != 1 || createdBoards[0].Slug != "chat" || createdBoards[0].CategoryID != "55555555-5555-5555-5555-555555555555" || createdBoards[0].Rules.DatOchiLowResHours != 240 {
+		t.Fatalf("expected created board payload with DatOchiLowResHours=240, got %+v", createdBoards)
 	}
 
 	// 4. Categories subtab (']'): create category.
@@ -505,5 +530,43 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 			}
 			_ = lipgloss.Width(line)
 		}
+	}
+}
+
+func TestBBSPanel_HiddenReporterDisplay(t *testing.T) {
+	now := time.Now().UTC()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/api/v1/bbs/stats":
+			_ = json.NewEncoder(w).Encode(admin.BBSStatsResponse{Available: true, OpenReports: 1})
+		case "/api/v1/bbs/reports":
+			_ = json.NewEncoder(w).Encode(admin.BBSReportsResponse{
+				Reports: []admin.BBSReportDTO{{
+					ID:        "11111111-1111-1111-1111-111111111111",
+					Scope:     "global",
+					GuildID:   "888001",
+					GuildName: "BBS Guild",
+					PostID:    "22222222-2222-2222-2222-222222222222",
+					ThreadID:  "33333333-3333-3333-3333-333333333333",
+					BoardID:   "44444444-4444-4444-4444-444444444444",
+					Reason:    "隠匿テスト",
+					Status:    "open",
+					CreatedAt: now,
+					UpdatedAt: now,
+				}},
+			})
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+
+	vCtx := viewerCtx(srv.URL)
+	p := ui.Panel(bbspanel.NewPanel(ui.DefaultTheme()))
+	p, _ = pumpPanelCmd(t, p, vCtx, p.Init(vCtx), 200*time.Millisecond)
+	out := ansi.Strip(p.View(120, 32))
+	if !strings.Contains(out, "(hidden)") {
+		t.Fatalf("expected hidden reporter display '(hidden)', got:\n%s", out)
 	}
 }

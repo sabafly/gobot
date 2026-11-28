@@ -91,7 +91,7 @@ func (s *Server) enrichBBSBoardMounts(ctx context.Context, mounts []bbs.BoardMou
 	return out
 }
 
-func (s *Server) enrichBBSReports(ctx context.Context, reps []bbs.Report) []BBSReportDTO {
+func (s *Server) enrichBBSReports(ctx context.Context, reps []bbs.Report, includeReporter bool) []BBSReportDTO {
 	guildIDs := make([]snowflake.ID, 0, len(reps))
 	userIDs := make([]snowflake.ID, 0, len(reps)*2)
 	boardIDs := make([]uuid.UUID, 0, len(reps))
@@ -100,7 +100,7 @@ func (s *Server) enrichBBSReports(ctx context.Context, reps []bbs.Report) []BBSR
 		if r.GuildID != 0 {
 			guildIDs = append(guildIDs, r.GuildID)
 		}
-		if r.ReporterUserID != 0 {
+		if includeReporter && r.ReporterUserID != 0 {
 			userIDs = append(userIDs, r.ReporterUserID)
 		}
 		if r.HandledBy != nil && *r.HandledBy != 0 {
@@ -119,7 +119,12 @@ func (s *Server) enrichBBSReports(ctx context.Context, reps []bbs.Report) []BBSR
 		dto.GuildName = guildNames[r.GuildID]
 		dto.BoardName = boardNames[r.BoardID]
 		dto.ThreadTitle = threadTitles[r.ThreadID]
-		dto.ReporterName = userNames[r.ReporterUserID]
+		if includeReporter {
+			dto.ReporterName = userNames[r.ReporterUserID]
+		} else {
+			dto.ReporterUserID = ""
+			dto.ReporterName = ""
+		}
 		if r.HandledBy != nil {
 			dto.HandledByName = userNames[*r.HandledBy]
 		}

@@ -114,12 +114,15 @@ type CreateBBSBoardRequest struct {
 }
 
 type UpdateBBSBoardRequest struct {
-	Name        *string `json:"name,omitempty"`
-	Description *string `json:"description,omitempty"`
-	DefaultName *string `json:"default_name,omitempty"`
-	HideID      *bool   `json:"hide_id,omitempty"`
-	SLIPLevel   *int    `json:"slip_level,omitempty"`
-	Locked      *bool   `json:"locked,omitempty"`
+	Name               *string `json:"name,omitempty"`
+	Description        *string `json:"description,omitempty"`
+	DefaultName        *string `json:"default_name,omitempty"`
+	HideID             *bool   `json:"hide_id,omitempty"`
+	SLIPLevel          *int    `json:"slip_level,omitempty"`
+	MaxRes             *uint32 `json:"max_res,omitempty"`
+	DatOchiIdleHours   *int    `json:"dat_ochi_idle_hours,omitempty"`
+	DatOchiLowResHours *int    `json:"dat_ochi_low_res_hours,omitempty"`
+	Locked             *bool   `json:"locked,omitempty"`
 }
 
 type BBSBoardMountDTO struct {
@@ -199,8 +202,7 @@ type AboneBBSPostRequest struct {
 }
 
 type BBSAbonePostResponse struct {
-	Post      BBSPostDTO `json:"post"`
-	SyncError string     `json:"sync_error,omitempty"`
+	Post BBSPostDTO `json:"post"`
 }
 
 type BBSReportFilter struct {
@@ -219,7 +221,7 @@ type BBSReportDTO struct {
 	ThreadTitle    string    `json:"thread_title,omitempty"`
 	BoardID        string    `json:"board_id"`
 	BoardName      string    `json:"board_name,omitempty"`
-	ReporterUserID string    `json:"reporter_user_id"`
+	ReporterUserID string    `json:"reporter_user_id,omitempty"`
 	ReporterName   string    `json:"reporter_name,omitempty"`
 	Reason         string    `json:"reason"`
 	Status         string    `json:"status"`

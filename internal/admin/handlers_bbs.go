@@ -20,7 +20,9 @@
 package admin
 
 import (
+	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -30,6 +32,21 @@ import (
 
 	"github.com/sabafly/gobot/internal/bbs"
 )
+
+func (s *Server) recordBBSAuditError(r *http.Request, auth authContext, action, targetType, targetID, message string, detail map[string]any, err error) {
+	if s.audit == nil {
+		return
+	}
+	payload := make(map[string]any, len(detail)+1)
+	for k, v := range detail {
+		payload[k] = v
+	}
+	if err != nil {
+		payload["error"] = err.Error()
+	}
+	s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
+		action, targetType, targetID, message, payload, "error", s.clientRemoteAddr(r))
+}
 
 func (s *Server) requireBBSSvc(w http.ResponseWriter) bool {
 	if s.bbsSvc == nil {
@@ -346,9 +363,8 @@ func (s *Server) handleBBSCreateCategory(w http.ResponseWriter, r *http.Request,
 		SortOrder:   req.SortOrder,
 	})
 	if err != nil {
-		s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
-			"bbs.category.create", "bbs_category", "",
-			"Failed to create BBS category", map[string]any{"name": req.Name, "error": err.Error()}, "error", s.clientRemoteAddr(r))
+		s.recordBBSAuditError(r, auth, "bbs.category.create", "bbs_category", "",
+			"Failed to create BBS category", map[string]any{"name": req.Name}, err)
 		writeBBSError(w, err)
 		return
 	}
@@ -380,6 +396,8 @@ func (s *Server) handleBBSUpdateCategory(w http.ResponseWriter, r *http.Request,
 		SortOrder:   req.SortOrder,
 	})
 	if err != nil {
+		s.recordBBSAuditError(r, auth, "bbs.category.update", "bbs_category", id.String(),
+			"Failed to update BBS category", nil, err)
 		writeBBSError(w, err)
 		return
 	}
@@ -400,6 +418,8 @@ func (s *Server) handleBBSDeleteCategory(w http.ResponseWriter, r *http.Request,
 		return
 	}
 	if err := s.bbsSvc.DeleteCategory(r.Context(), id); err != nil {
+		s.recordBBSAuditError(r, auth, "bbs.category.delete", "bbs_category", id.String(),
+			"Failed to delete BBS category", nil, err)
 		writeBBSError(w, err)
 		return
 	}
@@ -463,6 +483,8 @@ func (s *Server) handleBBSCreateBoard(w http.ResponseWriter, r *http.Request, au
 	}
 	cat, err := s.bbsSvc.GetCategory(r.Context(), catID)
 	if err != nil {
+		s.recordBBSAuditError(r, auth, "bbs.board.create", "bbs_board", "",
+			"Failed to create BBS board", map[string]any{"name": req.Name, "category_id": catID.String()}, err)
 		writeBBSError(w, err)
 		return
 	}
@@ -496,9 +518,8 @@ func (s *Server) handleBBSCreateBoard(w http.ResponseWriter, r *http.Request, au
 		},
 	})
 	if err != nil {
-		s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
-			"bbs.board.create", "bbs_board", "",
-			"Failed to create BBS board", map[string]any{"name": req.Name, "error": err.Error()}, "error", s.clientRemoteAddr(r))
+		s.recordBBSAuditError(r, auth, "bbs.board.create", "bbs_board", "",
+			"Failed to create BBS board", map[string]any{"name": req.Name, "category_id": catID.String()}, err)
 		writeBBSError(w, err)
 		return
 	}
@@ -529,29 +550,45 @@ func (s *Server) handleBBSUpdateBoard(w http.ResponseWriter, r *http.Request, au
 		slipPtr = &lv
 	}
 	updated, err := s.bbsSvc.UpdateBoard(r.Context(), id, bbs.UpdateBoardInput{
-		Name:        req.Name,
-		Description: req.Description,
-		DefaultName: req.DefaultName,
-		HideID:      req.HideID,
-		SLIP:        slipPtr,
-		Locked:      req.Locked,
+		Name:               req.Name,
+		Description:        req.Description,
+		DefaultName:        req.DefaultName,
+		HideID:             req.HideID,
+		SLIP:               slipPtr,
+		MaxRes:             req.MaxRes,
+		DatOchiIdleHours:   req.DatOchiIdleHours,
+		DatOchiLowResHours: req.DatOchiLowResHours,
+		Locked:             req.Locked,
 	})
 	if err != nil {
+		s.recordBBSAuditError(r, auth, "bbs.board.update", "bbs_board", id.String(),
+			"Failed to update BBS board", nil, err)
 		writeBBSError(w, err)
 		return
-	}
-	if s.bbsSync != nil && s.client != nil {
-		if mounts, mErr := s.bbsSvc.ListBoardMounts(r.Context(), bbs.BoardMountFilter{BoardID: &updated.ID}); mErr == nil {
-			for _, m := range mounts {
-				if m.Active {
-					s.bbsSync.RefreshBoardGuide(r.Context(), s.client, m.GuildID, updated.ID, "")
-				}
-			}
-		}
 	}
 	s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 		"bbs.board.update", "bbs_board", id.String(),
 		"Updated BBS board", map[string]any{"name": updated.Name}, "success", s.clientRemoteAddr(r))
+	if s.bbsSync != nil && s.client != nil {
+		boardID := updated.ID
+		active := true
+		s.enqueueBBSSync("board.update", func(syncCtx context.Context) {
+			mounts, mErr := s.bbsSvc.ListBoardMounts(syncCtx, bbs.BoardMountFilter{BoardID: &boardID, Active: &active})
+			if mErr != nil {
+				slog.Warn("admin BBS async board mount list failed", "board_id", boardID, "err", mErr)
+				return
+			}
+			for _, m := range mounts {
+				if syncCtx.Err() != nil {
+					slog.Warn("admin BBS async board guide refresh canceled", "board_id", boardID, "err", syncCtx.Err())
+					return
+				}
+				if m.Active {
+					s.bbsSync.RefreshBoardGuide(syncCtx, s.client, m.GuildID, boardID, "")
+				}
+			}
+		})
+	}
 	enriched := s.enrichBBSBoards(r.Context(), []bbs.Board{*updated})
 	writeJSON(w, http.StatusOK, enriched[0])
 }
@@ -566,6 +603,8 @@ func (s *Server) handleBBSDeleteBoard(w http.ResponseWriter, r *http.Request, au
 		return
 	}
 	if err := s.bbsSvc.DeleteBoard(r.Context(), id); err != nil {
+		s.recordBBSAuditError(r, auth, "bbs.board.delete", "bbs_board", id.String(),
+			"Failed to delete BBS board", nil, err)
 		writeBBSError(w, err)
 		return
 	}
@@ -691,15 +730,21 @@ func (s *Server) handleBBSArchiveThread(w http.ResponseWriter, r *http.Request, 
 	}
 	board, archived, err := s.bbsSvc.ArchiveThreadByAdmin(r.Context(), id)
 	if err != nil {
+		s.recordBBSAuditError(r, auth, "bbs.thread.archive", "bbs_thread", id.String(),
+			"Failed to archive BBS thread", nil, err)
 		writeBBSError(w, err)
 		return
-	}
-	if s.bbsSync != nil && s.client != nil {
-		s.bbsSync.SyncArchive(r.Context(), s.client, *board, *archived, false)
 	}
 	s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 		"bbs.thread.archive", "bbs_thread", id.String(),
 		"Archived BBS thread", map[string]any{"board_id": board.ID.String()}, "success", s.clientRemoteAddr(r))
+	if s.bbsSync != nil && s.client != nil {
+		boardCopy := *board
+		archivedCopy := *archived
+		s.enqueueBBSSync("thread.archive", func(syncCtx context.Context) {
+			s.bbsSync.SyncArchive(syncCtx, s.client, boardCopy, archivedCopy, false)
+		})
+	}
 	writeJSON(w, http.StatusOK, BBSArchiveThreadResponse{
 		Thread: toBBSThreadDTO(*archived),
 	})
@@ -721,24 +766,29 @@ func (s *Server) handleBBSAbonePost(w http.ResponseWriter, r *http.Request, auth
 	}
 	aboned, thread, err := s.bbsSvc.AbonePostByAdmin(r.Context(), id, req.Reason)
 	if err != nil {
+		s.recordBBSAuditError(r, auth, "bbs.post.abone", "bbs_post", id.String(),
+			"Failed to soft-delete (abone) BBS post", nil, err)
 		writeBBSError(w, err)
 		return
 	}
-	resp := BBSAbonePostResponse{
-		Post: toBBSPostDTO(*aboned),
-	}
-	if s.bbsSync != nil && s.client != nil {
-		if syncErr := s.bbsSync.SyncAbone(r.Context(), s.client, *aboned, *thread); syncErr != nil {
-			resp.SyncError = syncErr.Error()
-		}
-	}
 	s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 		"bbs.post.abone", "bbs_post", id.String(),
-		"Soft-deleted (abone) BBS post", map[string]any{"thread_id": thread.ID.String(), "reason": aboned.AboneReason, "sync_error": resp.SyncError}, "success", s.clientRemoteAddr(r))
-	writeJSON(w, http.StatusOK, resp)
+		"Soft-deleted (abone) BBS post", map[string]any{"thread_id": thread.ID.String(), "reason": aboned.AboneReason}, "success", s.clientRemoteAddr(r))
+	if s.bbsSync != nil && s.client != nil {
+		abonedCopy := *aboned
+		threadCopy := *thread
+		s.enqueueBBSSync("post.abone", func(syncCtx context.Context) {
+			if syncErr := s.bbsSync.SyncAbone(syncCtx, s.client, abonedCopy, threadCopy); syncErr != nil {
+				slog.Warn("admin BBS async SyncAbone failed", "post_id", abonedCopy.ID, "thread_id", threadCopy.ID, "err", syncErr)
+			}
+		})
+	}
+	writeJSON(w, http.StatusOK, BBSAbonePostResponse{
+		Post: toBBSPostDTO(*aboned),
+	})
 }
 
-func (s *Server) handleBBSListReports(w http.ResponseWriter, r *http.Request, _ authContext) {
+func (s *Server) handleBBSListReports(w http.ResponseWriter, r *http.Request, auth authContext) {
 	if !s.requireBBSSvc(w) {
 		return
 	}
@@ -772,7 +822,7 @@ func (s *Server) handleBBSListReports(w http.ResponseWriter, r *http.Request, _ 
 		writeBBSError(w, err)
 		return
 	}
-	out := s.enrichBBSReports(r.Context(), reps)
+	out := s.enrichBBSReports(r.Context(), reps, HasPermission(auth.Principal.Permissions, PermBBSModerate))
 	writeJSON(w, http.StatusOK, BBSReportsResponse{Reports: out})
 }
 
@@ -787,10 +837,12 @@ func (s *Server) handleBBSInspectReport(w http.ResponseWriter, r *http.Request, 
 	}
 	rep, auditInfo, err := s.bbsSvc.InspectReportForAdmin(r.Context(), id)
 	if err != nil {
+		s.recordBBSAuditError(r, auth, "bbs.report.inspect", "bbs_report", id.String(),
+			"Failed to inspect BBS report author attribution", nil, err)
 		writeBBSError(w, err)
 		return
 	}
-	enrichedReps := s.enrichBBSReports(r.Context(), []bbs.Report{*rep})
+	enrichedReps := s.enrichBBSReports(r.Context(), []bbs.Report{*rep}, true)
 	resp := BBSReportInspectResponse{
 		Report: enrichedReps[0],
 	}
@@ -837,13 +889,15 @@ func (s *Server) handleBBSResolveReport(w http.ResponseWriter, r *http.Request, 
 		req.ResolutionNote,
 	)
 	if err != nil {
+		s.recordBBSAuditError(r, auth, "bbs.report.resolve", "bbs_report", id.String(),
+			"Failed to resolve BBS report", map[string]any{"status": strings.TrimSpace(req.Status)}, err)
 		writeBBSError(w, err)
 		return
 	}
 	s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 		"bbs.report.resolve", "bbs_report", id.String(),
 		"Resolved BBS report", map[string]any{"status": updated.Status, "note": updated.ResolutionNote}, "success", s.clientRemoteAddr(r))
-	enriched := s.enrichBBSReports(r.Context(), []bbs.Report{*updated})
+	enriched := s.enrichBBSReports(r.Context(), []bbs.Report{*updated}, true)
 	writeJSON(w, http.StatusOK, enriched[0])
 }
 
@@ -927,9 +981,8 @@ func (s *Server) handleBBSCreateBan(w http.ResponseWriter, r *http.Request, auth
 	}
 	created, err := s.bbsSvc.CreateBanByAdmin(r.Context(), input)
 	if err != nil {
-		s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
-			"bbs.ban.create", "bbs_ban", "",
-			"Failed to create BBS ban", map[string]any{"scope": req.Scope, "error": err.Error()}, "error", s.clientRemoteAddr(r))
+		s.recordBBSAuditError(r, auth, "bbs.ban.create", "bbs_ban", "",
+			"Failed to create BBS ban", map[string]any{"scope": req.Scope}, err)
 		writeBBSError(w, err)
 		return
 	}
@@ -950,6 +1003,8 @@ func (s *Server) handleBBSDeleteBan(w http.ResponseWriter, r *http.Request, auth
 		return
 	}
 	if err := s.bbsSvc.DeleteBan(r.Context(), id); err != nil {
+		s.recordBBSAuditError(r, auth, "bbs.ban.delete", "bbs_ban", id.String(),
+			"Failed to delete BBS ban", nil, err)
 		writeBBSError(w, err)
 		return
 	}
@@ -1012,6 +1067,8 @@ func (s *Server) handleBBSCreateCap(w http.ResponseWriter, r *http.Request, auth
 		Users:          users,
 	})
 	if err != nil {
+		s.recordBBSAuditError(r, auth, "bbs.cap.create", "bbs_admin_cap", strings.TrimSpace(req.ID),
+			"Failed to create BBS admin cap", map[string]any{"name": req.Name}, err)
 		writeBBSError(w, err)
 		return
 	}
@@ -1048,6 +1105,8 @@ func (s *Server) handleBBSUpdateCap(w http.ResponseWriter, r *http.Request, auth
 		Users:          users,
 	})
 	if err != nil {
+		s.recordBBSAuditError(r, auth, "bbs.cap.update", "bbs_admin_cap", id,
+			"Failed to update BBS admin cap", map[string]any{"name": req.Name}, err)
 		writeBBSError(w, err)
 		return
 	}
@@ -1067,6 +1126,8 @@ func (s *Server) handleBBSDeleteCap(w http.ResponseWriter, r *http.Request, auth
 		return
 	}
 	if err := s.bbsSvc.RemoveAdminCap(r.Context(), id); err != nil {
+		s.recordBBSAuditError(r, auth, "bbs.cap.delete", "bbs_admin_cap", id,
+			"Failed to delete BBS admin cap", nil, err)
 		writeBBSError(w, err)
 		return
 	}
@@ -1109,6 +1170,8 @@ func (s *Server) handleBBSCreateSlipEvent(w http.ResponseWriter, r *http.Request
 		Mode:      bbs.SlipEventMode(strings.TrimSpace(req.Mode)),
 	})
 	if err != nil {
+		s.recordBBSAuditError(r, auth, "bbs.slip_event.create", "bbs_slip_event", strings.TrimSpace(req.ID),
+			"Failed to create BBS SLIP event", map[string]any{"label": req.Label}, err)
 		writeBBSError(w, err)
 		return
 	}
@@ -1140,6 +1203,8 @@ func (s *Server) handleBBSUpdateSlipEvent(w http.ResponseWriter, r *http.Request
 		Mode:      bbs.SlipEventMode(strings.TrimSpace(req.Mode)),
 	})
 	if err != nil {
+		s.recordBBSAuditError(r, auth, "bbs.slip_event.update", "bbs_slip_event", id,
+			"Failed to update BBS SLIP event", map[string]any{"label": req.Label}, err)
 		writeBBSError(w, err)
 		return
 	}
@@ -1159,6 +1224,8 @@ func (s *Server) handleBBSDeleteSlipEvent(w http.ResponseWriter, r *http.Request
 		return
 	}
 	if err := s.bbsSvc.RemoveSlipEvent(r.Context(), id); err != nil {
+		s.recordBBSAuditError(r, auth, "bbs.slip_event.delete", "bbs_slip_event", id,
+			"Failed to delete BBS SLIP event", nil, err)
 		writeBBSError(w, err)
 		return
 	}

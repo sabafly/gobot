@@ -90,6 +90,10 @@ func (s *reportsState) rebuildDetail(theme ui.Theme) {
 		return
 	}
 
+	reporterStr := "(hidden)"
+	if rep.ReporterUserID != "" {
+		reporterStr = ui.FormatIDWithName(rep.ReporterName, rep.ReporterUserID)
+	}
 	lines := []string{
 		kvLine(theme, "Report ID", rep.ID),
 		kvLine(theme, "Status", rep.Status),
@@ -98,7 +102,7 @@ func (s *reportsState) rebuildDetail(theme ui.Theme) {
 		kvLine(theme, "Board", ui.FormatIDWithName(rep.BoardName, rep.BoardID)),
 		kvLine(theme, "Thread", ui.FormatIDWithName(rep.ThreadTitle, rep.ThreadID)),
 		kvLine(theme, "Post ID", rep.PostID),
-		kvLine(theme, "Reporter", ui.FormatIDWithName(rep.ReporterName, rep.ReporterUserID)),
+		kvLine(theme, "Reporter", reporterStr),
 		kvLine(theme, "Created", rep.CreatedAt.Local().Format("2006-01-02 15:04:05")),
 	}
 	if rep.HandledBy != nil {

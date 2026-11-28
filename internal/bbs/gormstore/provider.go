@@ -262,6 +262,18 @@ func (p *Provider) UpdateBoard(ctx context.Context, id uuid.UUID, input bbs.Upda
 			row.SLIPLevel = int(*input.SLIP)
 			cols = append(cols, "SLIPLevel")
 		}
+		if input.MaxRes != nil {
+			row.MaxRes = *input.MaxRes
+			cols = append(cols, "MaxRes")
+		}
+		if input.DatOchiIdleHours != nil {
+			row.DatOchiIdleHours = *input.DatOchiIdleHours
+			cols = append(cols, "DatOchiIdleHours")
+		}
+		if input.DatOchiLowResHours != nil {
+			row.DatOchiLowResHours = *input.DatOchiLowResHours
+			cols = append(cols, "DatOchiLowResHours")
+		}
 		if input.Locked != nil {
 			row.Locked = *input.Locked
 			cols = append(cols, "Locked")

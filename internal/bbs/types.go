@@ -508,12 +508,15 @@ type CreateBoardInput struct {
 
 // UpdateBoardInput modifies mutable board settings.
 type UpdateBoardInput struct {
-	Name        *string
-	Description *string
-	DefaultName *string
-	HideID      *bool
-	SLIP        *SLIPLevel
-	Locked      *bool
+	Name               *string
+	Description        *string
+	DefaultName        *string
+	HideID             *bool
+	SLIP               *SLIPLevel
+	MaxRes             *uint32
+	DatOchiIdleHours   *int
+	DatOchiLowResHours *int
+	Locked             *bool
 }
 
 // ThreadFilter selects threads within a board.
