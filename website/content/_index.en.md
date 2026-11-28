@@ -5,7 +5,7 @@ layout: hextra-home
 
 <div class="hx:mt-6 hx:mb-6">
 {{< hextra/hero-headline >}}
-  Make Your Discord Server<span class="hx:sm:hidden">&nbsp;</span><br class="hx:sm:block hx:hidden" />Smarter and More Fun
+  Make Your Discord Server<span class="gobot-mobile-space">&nbsp;</span><br class="hx:sm:block hx:hidden" />Smarter and More Fun
 {{< /hextra/hero-headline >}}
 </div>
 
