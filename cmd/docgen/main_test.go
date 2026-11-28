@@ -52,7 +52,7 @@ func TestGenerate_PublicCommandsBilingual(t *testing.T) {
 			t.Fatalf("read %s failed: %v", idxPath, err)
 		}
 		idxStr := string(idxBytes)
-		if strings.Contains(idxStr, "debug") || strings.Contains(idxStr, "bbsadmin") {
+		if strings.Contains(idxStr, "debug") || strings.Contains(idxStr, "bbs-admin") {
 			t.Fatalf("private commands must not appear in %s", idxPath)
 		}
 		for _, def := range defs {
@@ -72,7 +72,44 @@ func TestGenerate_PublicCommandsBilingual(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read bbs.ja.md failed: %v", err)
 	}
-	if !strings.Contains(string(bbsJA), "/bbs") {
+	bbsJAStr := string(bbsJA)
+	if !strings.Contains(bbsJAStr, "/bbs") {
 		t.Fatalf("expected /bbs content in bbs.ja.md")
+	}
+	if !strings.Contains(bbsJAStr, "`bbs.admin`") || !strings.Contains(bbsJAStr, "Manage Server") {
+		t.Fatalf("expected /bbs admin routes to document bbs.admin / Manage Server permissions")
+	}
+	if _, afterPolicy, ok := strings.Cut(bbsJAStr, "### `/bbs policy`"); !ok {
+		t.Fatalf("expected /bbs policy section in bbs.ja.md")
+	} else {
+		policySection, _, _ := strings.Cut(afterPolicy, "\n### ")
+		if strings.Contains(policySection, "bbs.admin") {
+			t.Fatalf("/bbs policy must not list bbs.admin permission")
+		}
+	}
+
+	// Verify message command permissions are rendered (e.g. import-rolepanel -> role.panel.import).
+	importJA, err := os.ReadFile(filepath.Join(outDir, "import-rolepanel.ja.md"))
+	if err != nil {
+		t.Fatalf("read import-rolepanel.ja.md failed: %v", err)
+	}
+	if !strings.Contains(string(importJA), "`role.panel.import`") {
+		t.Fatalf("expected message command permission role.panel.import in import-rolepanel.ja.md")
+	}
+
+	// Verify alternative Discord permission vs gobot permission node formatting.
+	permJA, err := os.ReadFile(filepath.Join(outDir, "permission.ja.md"))
+	if err != nil {
+		t.Fatalf("read permission.ja.md failed: %v", err)
+	}
+	if !strings.Contains(string(permJA), "または `permission.set`") {
+		t.Fatalf("expected alternative permission wording in permission.ja.md")
+	}
+	permEN, err := os.ReadFile(filepath.Join(outDir, "permission.en.md"))
+	if err != nil {
+		t.Fatalf("read permission.en.md failed: %v", err)
+	}
+	if !strings.Contains(string(permEN), "or `permission.set`") {
+		t.Fatalf("expected alternative permission wording in permission.en.md")
 	}
 }
