@@ -45,11 +45,12 @@ import (
 )
 
 const (
-	sseHeartbeatInterval    = 25 * time.Second
-	userSlipCacheTTL        = 5 * time.Minute
-	userSlipCacheMaxEntries = 2048
-	userSlipFetchTimeout    = 3 * time.Second
-	userFlagActiveDeveloper = discord.UserFlags(1 << 22)
+	sseHeartbeatInterval     = 25 * time.Second
+	userSlipCacheTTL         = 5 * time.Minute
+	userSlipNegativeCacheTTL = 30 * time.Second
+	userSlipCacheMaxEntries  = 2048
+	userSlipFetchTimeout     = 3 * time.Second
+	userFlagActiveDeveloper  = discord.UserFlags(1 << 22)
 )
 
 type cachedOriginUserSlip struct {
@@ -997,14 +998,17 @@ func (s *Server) buildOriginSlipContext(ctx context.Context, userID snowflake.ID
 			resolved = u
 		}
 	}
-	if resolved == nil {
-		return base
+	sc := bbs.SlipContext{UserCreatedAt: userID.Time()}
+	ttl := userSlipNegativeCacheTTL
+	if resolved != nil {
+		sc = slipContextFromDiscordUser(*resolved)
+		ttl = userSlipCacheTTL
 	}
-	sc := slipContextFromDiscordUser(*resolved)
+	storeNow := time.Now()
 	s.userSlipMu.Lock()
 	if len(s.userSlipCache) >= userSlipCacheMaxEntries {
 		for k, v := range s.userSlipCache {
-			if !now.Before(v.expiresAt) {
+			if !storeNow.Before(v.expiresAt) {
 				delete(s.userSlipCache, k)
 			}
 		}
@@ -1015,7 +1019,7 @@ func (s *Server) buildOriginSlipContext(ctx context.Context, userID snowflake.ID
 			}
 		}
 	}
-	s.userSlipCache[userID] = cachedOriginUserSlip{ctx: sc, expiresAt: now.Add(userSlipCacheTTL)}
+	s.userSlipCache[userID] = cachedOriginUserSlip{ctx: sc, expiresAt: storeNow.Add(ttl)}
 	s.userSlipMu.Unlock()
 
 	sc.BaseNicknameOverride = slipLabel
