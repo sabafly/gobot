@@ -35,6 +35,7 @@ import (
 	"strings"
 	"time"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
@@ -43,7 +44,7 @@ import (
 )
 
 const (
-	ProtocolVersion        = 1
+	ProtocolVersion        = 2
 	HeaderUserToken        = "X-BBS-User-Token"
 	DefaultEventBufferSize = 2048
 	DefaultAccessTokenTTL  = 60 * time.Minute
@@ -101,6 +102,7 @@ type PeerConfig struct {
 	AllowCaps       bool
 	RedirectURIs    []string
 	AllowedBoardIDs []string
+	SlipLabel       string
 
 	ParsedBoardIDs map[uuid.UUID]struct{}
 }
@@ -266,6 +268,15 @@ func ResolveServerConfig(cfg ServerConfig) (ServerConfig, error) {
 			cleanURIs = append(cleanURIs, trimmed)
 		}
 		p.RedirectURIs = cleanURIs
+		if strings.TrimSpace(p.SlipLabel) != "" {
+			cleanLabel := bbs.SanitizeDisplayName(p.SlipLabel)
+			if cleanLabel == "" || strings.TrimSpace(bbs.ClearFormat(cleanLabel)) == "" || utf8.RuneCountInString(cleanLabel) > bbs.MaxSlipEventLabelRunes {
+				return cfg, fmt.Errorf("federation server: invalid slip_label %q for peer %q", p.SlipLabel, p.ID)
+			}
+			p.SlipLabel = cleanLabel
+		} else {
+			p.SlipLabel = ""
+		}
 
 		if p.AllowWrite || p.EffectiveAllowReport() {
 			needsOAuth = true
@@ -481,16 +492,13 @@ type CapsListResponse struct {
 	Caps []bbs.Cap `json:"caps"`
 }
 
-// CreateThreadRequest carries a delegated thread creation payload from a trusted peer.
-// Trust boundary: GuildID and SlipContext are self-reported by the peer authenticated via its
-// shared peer bearer token and are not independently verifiable by Origin.
+// CreateThreadRequest carries a delegated thread creation payload from a peer.
+// Origin derives user identity and SLIP traits directly from its own Discord client and peer config.
 type CreateThreadRequest struct {
-	GuildID     snowflake.ID    `json:"guild_id"`
-	Title       string          `json:"title"`
-	RawName     string          `json:"raw_name"`
-	CapID       string          `json:"cap_id"`
-	RawBody     string          `json:"raw_body"`
-	SlipContext bbs.SlipContext `json:"slip_context"`
+	Title   string `json:"title"`
+	RawName string `json:"raw_name"`
+	CapID   string `json:"cap_id"`
+	RawBody string `json:"raw_body"`
 }
 
 type CreateThreadResponse struct {
@@ -499,14 +507,12 @@ type CreateThreadResponse struct {
 	Post   bbs.Post   `json:"post"`
 }
 
-// CreatePostRequest carries a delegated reply payload from a trusted peer.
-// Trust boundary: GuildID and SlipContext are self-reported by the authenticated peer.
+// CreatePostRequest carries a delegated reply payload from a peer.
+// Origin derives user identity and SLIP traits directly from its own Discord client and peer config.
 type CreatePostRequest struct {
-	GuildID     snowflake.ID    `json:"guild_id"`
-	RawName     string          `json:"raw_name"`
-	CapID       string          `json:"cap_id"`
-	RawBody     string          `json:"raw_body"`
-	SlipContext bbs.SlipContext `json:"slip_context"`
+	RawName string `json:"raw_name"`
+	CapID   string `json:"cap_id"`
+	RawBody string `json:"raw_body"`
 }
 
 type CreatePostResponse struct {
@@ -524,16 +530,17 @@ type CreateReportRequest struct {
 }
 
 type CreateReportResponse struct {
-	ID        uuid.UUID        `json:"id"`
-	Scope     bbs.Scope        `json:"scope"`
-	GuildID   snowflake.ID     `json:"guild_id"`
-	PostID    uuid.UUID        `json:"post_id"`
-	ThreadID  uuid.UUID        `json:"thread_id"`
-	BoardID   uuid.UUID        `json:"board_id"`
-	Reason    string           `json:"reason"`
-	Status    bbs.ReportStatus `json:"status"`
-	CreatedAt time.Time        `json:"created_at"`
-	UpdatedAt time.Time        `json:"updated_at"`
+	ID         uuid.UUID        `json:"id"`
+	Scope      bbs.Scope        `json:"scope"`
+	OriginPeer string           `json:"origin_peer,omitempty"`
+	GuildID    snowflake.ID     `json:"guild_id"`
+	PostID     uuid.UUID        `json:"post_id"`
+	ThreadID   uuid.UUID        `json:"thread_id"`
+	BoardID    uuid.UUID        `json:"board_id"`
+	Reason     string           `json:"reason"`
+	Status     bbs.ReportStatus `json:"status"`
+	CreatedAt  time.Time        `json:"created_at"`
+	UpdatedAt  time.Time        `json:"updated_at"`
 }
 
 type TokenResponse struct {

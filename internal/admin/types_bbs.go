@@ -211,6 +211,7 @@ type BBSReportFilter struct {
 type BBSReportDTO struct {
 	ID             string    `json:"id"`
 	Scope          string    `json:"scope"`
+	OriginPeer     string    `json:"origin_peer,omitempty"`
 	GuildID        string    `json:"guild_id"`
 	GuildName      string    `json:"guild_name,omitempty"`
 	PostID         string    `json:"post_id"`

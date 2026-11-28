@@ -241,12 +241,17 @@ func (g *IdentityGenerator) GenerateSlipNickname(
 	timeSum := g.hmacSum(fmt.Sprintf("slip-time:%s:%d:%s", boardID, userID, jst.Format("2006-01-02")))
 
 	var base string
-	hhmm := jst.Hour()*100 + jst.Minute()
-	switch hhmm {
-	case 0:
-		base = "ｼﾝﾃﾞﾚﾗ"
-	case 1111, 2222:
-		base = "ｿﾞﾛﾒﾉﾀﾐ"
+	if override := SanitizeDisplayName(sc.BaseNicknameOverride); override != "" {
+		base = override
+	}
+	if base == "" {
+		hhmm := jst.Hour()*100 + jst.Minute()
+		switch hhmm {
+		case 0:
+			base = "ｼﾝﾃﾞﾚﾗ"
+		case 1111, 2222:
+			base = "ｿﾞﾛﾒﾉﾀﾐ"
+		}
 	}
 
 	if base == "" {

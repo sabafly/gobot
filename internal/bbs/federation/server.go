@@ -34,6 +34,9 @@ import (
 	"time"
 
 	"github.com/disgoorg/disgo/bot"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/rest"
+	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
 
 	"github.com/sabafly/gobot/internal/bbs"
@@ -41,7 +44,19 @@ import (
 	"github.com/sabafly/gobot/internal/i18n"
 )
 
-const sseHeartbeatInterval = 25 * time.Second
+const (
+	sseHeartbeatInterval     = 25 * time.Second
+	userSlipCacheTTL         = 5 * time.Minute
+	userSlipNegativeCacheTTL = 30 * time.Second
+	userSlipCacheMaxEntries  = 2048
+	userSlipFetchTimeout     = 3 * time.Second
+	userFlagActiveDeveloper  = discord.UserFlags(1 << 22)
+)
+
+type cachedOriginUserSlip struct {
+	ctx       bbs.SlipContext
+	expiresAt time.Time
+}
 
 // ServerDeps groups dependencies needed by Origin's dedicated federation HTTP/SSE + OAuth2 server.
 type ServerDeps struct {
@@ -73,6 +88,9 @@ type Server struct {
 
 	clientMu sync.RWMutex
 	client   *bot.Client
+
+	userSlipMu    sync.RWMutex
+	userSlipCache map[snowflake.ID]cachedOriginUserSlip
 }
 
 // NewServer validates configuration and builds Origin's federation server.
@@ -88,13 +106,14 @@ func NewServer(deps ServerDeps) (*Server, error) {
 		return nil, err
 	}
 	s := &Server{
-		cfg:      resolved,
-		basePath: resolved.BasePath,
-		svc:      deps.Service,
-		syncer:   deps.Syncer,
-		hub:      deps.Hub,
-		mux:      http.NewServeMux(),
-		client:   deps.Client,
+		cfg:           resolved,
+		basePath:      resolved.BasePath,
+		svc:           deps.Service,
+		syncer:        deps.Syncer,
+		hub:           deps.Hub,
+		mux:           http.NewServeMux(),
+		client:        deps.Client,
+		userSlipCache: make(map[snowflake.ID]cachedOriginUserSlip),
 	}
 	s.oauth = newOAuthManager(s, deps.OAuthAPIBase, deps.OAuthAuthorizeBase, deps.OAuthHTTPClient)
 	s.registerRoutes()
@@ -643,15 +662,15 @@ func (s *Server) handleCreateThread(w http.ResponseWriter, r *http.Request, peer
 	}
 
 	allowCaps := peer.AllowCaps && ug.Grant.HasScope(bbs.FederationScopeCaps)
+	slipCtx := s.buildOriginSlipContext(r.Context(), ug.Grant.UserID, peer.SlipLabel)
 	board, thread, post, err := s.svc.CreateThreadFromFederation(r.Context(), peer.ID, allowCaps, bbs.CreateThreadInput{
 		BoardID:     boardID,
-		GuildID:     req.GuildID,
 		UserID:      ug.Grant.UserID,
 		Title:       req.Title,
 		RawName:     req.RawName,
 		CapID:       req.CapID,
 		RawBody:     req.RawBody,
-		SlipContext: req.SlipContext,
+		SlipContext: slipCtx,
 		Now:         time.Now().UTC(),
 	})
 	if err != nil {
@@ -704,14 +723,14 @@ func (s *Server) handleCreatePost(w http.ResponseWriter, r *http.Request, peer P
 	}
 
 	allowCaps := peer.AllowCaps && ug.Grant.HasScope(bbs.FederationScopeCaps)
+	slipCtx := s.buildOriginSlipContext(r.Context(), ug.Grant.UserID, peer.SlipLabel)
 	board, thread, post, backwardRefs, err := s.svc.CreatePostFromFederation(r.Context(), peer.ID, allowCaps, bbs.CreatePostInput{
 		ThreadID:    threadID,
-		GuildID:     req.GuildID,
 		UserID:      ug.Grant.UserID,
 		RawName:     req.RawName,
 		CapID:       req.CapID,
 		RawBody:     req.RawBody,
-		SlipContext: req.SlipContext,
+		SlipContext: slipCtx,
 		Now:         time.Now().UTC(),
 	})
 	if err != nil {
@@ -777,16 +796,17 @@ func (s *Server) handleCreateReport(w http.ResponseWriter, r *http.Request, peer
 		return
 	}
 	writeJSON(w, http.StatusCreated, CreateReportResponse{
-		ID:        rep.ID,
-		Scope:     rep.Scope,
-		GuildID:   rep.GuildID,
-		PostID:    rep.PostID,
-		ThreadID:  rep.ThreadID,
-		BoardID:   rep.BoardID,
-		Reason:    rep.Reason,
-		Status:    rep.Status,
-		CreatedAt: rep.CreatedAt,
-		UpdatedAt: rep.UpdatedAt,
+		ID:         rep.ID,
+		Scope:      rep.Scope,
+		OriginPeer: rep.OriginPeer,
+		GuildID:    rep.GuildID,
+		PostID:     rep.PostID,
+		ThreadID:   rep.ThreadID,
+		BoardID:    rep.BoardID,
+		Reason:     rep.Reason,
+		Status:     rep.Status,
+		CreatedAt:  rep.CreatedAt,
+		UpdatedAt:  rep.UpdatedAt,
 	})
 }
 
@@ -914,4 +934,94 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 
 func writeAPIError(w http.ResponseWriter, status int, code, msg string) {
 	writeJSON(w, status, ErrorResponse{Code: code, Error: msg})
+}
+
+func slipContextFromDiscordUser(user discord.User) bbs.SlipContext {
+	sc := bbs.SlipContext{
+		Username:        user.Username,
+		UserCreatedAt:   user.ID.Time(),
+		IsDefaultAvatar: user.Avatar == nil,
+		HasProfileDecor: user.AvatarDecorationData != nil || user.Banner != nil || user.AccentColor != nil,
+	}
+	if user.GlobalName != nil {
+		sc.GlobalName = *user.GlobalName
+	}
+	switch {
+	case user.PublicFlags.Has(discord.UserFlagHouseBravery):
+		sc.HypeSquadHouse = "bravery"
+	case user.PublicFlags.Has(discord.UserFlagHouseBrilliance):
+		sc.HypeSquadHouse = "brilliance"
+	case user.PublicFlags.Has(discord.UserFlagHouseBalance):
+		sc.HypeSquadHouse = "balance"
+	}
+	specialMask := discord.UserFlagDiscordEmployee |
+		discord.UserFlagPartneredServerOwner |
+		discord.UserFlagHypeSquadEvents |
+		discord.UserFlagBugHunterLevel1 |
+		discord.UserFlagBugHunterLevel2 |
+		discord.UserFlagEarlySupporter |
+		discord.UserFlagEarlyVerifiedBotDeveloper |
+		discord.UserFlagDiscordCertifiedModerator |
+		userFlagActiveDeveloper
+	sc.HasSpecialBadge = (user.PublicFlags & specialMask) != 0
+	return sc
+}
+
+func (s *Server) buildOriginSlipContext(ctx context.Context, userID snowflake.ID, slipLabel string) bbs.SlipContext {
+	base := bbs.SlipContext{
+		BaseNicknameOverride: slipLabel,
+		UserCreatedAt:        userID.Time(),
+	}
+	if userID == 0 {
+		return base
+	}
+	now := time.Now()
+	s.userSlipMu.RLock()
+	cached, ok := s.userSlipCache[userID]
+	s.userSlipMu.RUnlock()
+	if ok && now.Before(cached.expiresAt) {
+		sc := cached.ctx
+		sc.BaseNicknameOverride = slipLabel
+		return sc
+	}
+
+	dc := s.discordClient()
+	if dc == nil {
+		return base
+	}
+	var resolved *discord.User
+	if dc.Rest != nil {
+		fetchCtx, cancel := context.WithTimeout(ctx, userSlipFetchTimeout)
+		u, err := dc.Rest.GetUser(userID, rest.WithCtx(fetchCtx))
+		cancel()
+		if err == nil && u != nil {
+			resolved = u
+		}
+	}
+	sc := bbs.SlipContext{UserCreatedAt: userID.Time()}
+	ttl := userSlipNegativeCacheTTL
+	if resolved != nil {
+		sc = slipContextFromDiscordUser(*resolved)
+		ttl = userSlipCacheTTL
+	}
+	storeNow := time.Now()
+	s.userSlipMu.Lock()
+	if len(s.userSlipCache) >= userSlipCacheMaxEntries {
+		for k, v := range s.userSlipCache {
+			if !storeNow.Before(v.expiresAt) {
+				delete(s.userSlipCache, k)
+			}
+		}
+		if len(s.userSlipCache) >= userSlipCacheMaxEntries {
+			for k := range s.userSlipCache {
+				delete(s.userSlipCache, k)
+				break
+			}
+		}
+	}
+	s.userSlipCache[userID] = cachedOriginUserSlip{ctx: sc, expiresAt: storeNow.Add(ttl)}
+	s.userSlipMu.Unlock()
+
+	sc.BaseNicknameOverride = slipLabel
+	return sc
 }

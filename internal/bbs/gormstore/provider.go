@@ -1196,6 +1196,7 @@ func (p *Provider) CreateReport(ctx context.Context, report *bbs.Report) error {
 	row := BBSReport{
 		ID:             report.ID,
 		Scope:          string(report.Scope),
+		OriginPeer:     report.OriginPeer,
 		GuildID:        report.GuildID,
 		PostID:         report.PostID,
 		ThreadID:       report.ThreadID,
@@ -1441,6 +1442,7 @@ func toDomainReport(r *BBSReport) *bbs.Report {
 	return &bbs.Report{
 		ID:             r.ID,
 		Scope:          bbs.Scope(r.Scope),
+		OriginPeer:     r.OriginPeer,
 		GuildID:        r.GuildID,
 		PostID:         r.PostID,
 		ThreadID:       r.ThreadID,

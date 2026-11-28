@@ -632,12 +632,10 @@ func (p *RemoteProvider) CreateRemoteThread(ctx context.Context, input bbs.Creat
 		return nil, nil, nil, err
 	}
 	req := CreateThreadRequest{
-		GuildID:     input.GuildID,
-		Title:       input.Title,
-		RawName:     input.RawName,
-		CapID:       input.CapID,
-		RawBody:     input.RawBody,
-		SlipContext: input.SlipContext,
+		Title:   input.Title,
+		RawName: input.RawName,
+		CapID:   input.CapID,
+		RawBody: input.RawBody,
 	}
 	resp, err := p.client.CreateThread(ctx, input.BoardID, accessTok, req)
 	if err != nil {
@@ -668,11 +666,9 @@ func (p *RemoteProvider) CreateRemotePost(ctx context.Context, input bbs.CreateP
 		return nil, nil, nil, nil, err
 	}
 	req := CreatePostRequest{
-		GuildID:     input.GuildID,
-		RawName:     input.RawName,
-		CapID:       input.CapID,
-		RawBody:     input.RawBody,
-		SlipContext: input.SlipContext,
+		RawName: input.RawName,
+		CapID:   input.CapID,
+		RawBody: input.RawBody,
 	}
 	resp, err := p.client.CreatePost(ctx, input.ThreadID, accessTok, req)
 	if err != nil {
@@ -723,6 +719,7 @@ func (p *RemoteProvider) CreateRemoteReport(ctx context.Context, guildID, report
 	return &bbs.Report{
 		ID:             resp.ID,
 		Scope:          resp.Scope,
+		OriginPeer:     resp.OriginPeer,
 		GuildID:        resp.GuildID,
 		PostID:         resp.PostID,
 		ThreadID:       resp.ThreadID,
