@@ -28,6 +28,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"net/netip"
 	"net/url"
 	"os"
 	"strconv"
@@ -71,16 +72,17 @@ const (
 
 // ServerConfig configures the Origin federation HTTP/SSE + OAuth2 authorization server.
 type ServerConfig struct {
-	Enabled        bool
-	ListenAddr     string
-	PublicURL      string
-	BasePath       string
-	TrustedProxies []string
-	BufferSize     int
-	AccessTTL      time.Duration
-	RefreshTTL     time.Duration
-	OAuth          OAuthConfig
-	Peers          []PeerConfig
+	Enabled              bool
+	ListenAddr           string
+	PublicURL            string
+	BasePath             string
+	TrustedProxies       []string
+	ParsedTrustedProxies []netip.Prefix
+	BufferSize           int
+	AccessTTL            time.Duration
+	RefreshTTL           time.Duration
+	OAuth                OAuthConfig
+	Peers                []PeerConfig
 }
 
 // OAuthConfig configures the Origin federation-dedicated Discord OAuth2 application.
@@ -183,6 +185,11 @@ func ResolveServerConfig(cfg ServerConfig) (ServerConfig, error) {
 	}
 	cfg.BasePath = NormalizeBasePath(cfg.BasePath)
 	cfg.PublicURL = strings.TrimRight(strings.TrimSpace(cfg.PublicURL), "/")
+	parsedProxies, err := parseTrustedProxies(cfg.TrustedProxies)
+	if err != nil {
+		return cfg, err
+	}
+	cfg.ParsedTrustedProxies = parsedProxies
 	if cfg.BufferSize <= 0 {
 		cfg.BufferSize = DefaultEventBufferSize
 	}
@@ -474,6 +481,9 @@ type CapsListResponse struct {
 	Caps []bbs.Cap `json:"caps"`
 }
 
+// CreateThreadRequest carries a delegated thread creation payload from a trusted peer.
+// Trust boundary: GuildID and SlipContext are self-reported by the peer authenticated via its
+// shared peer bearer token and are not independently verifiable by Origin.
 type CreateThreadRequest struct {
 	GuildID     snowflake.ID    `json:"guild_id"`
 	Title       string          `json:"title"`
@@ -489,6 +499,8 @@ type CreateThreadResponse struct {
 	Post   bbs.Post   `json:"post"`
 }
 
+// CreatePostRequest carries a delegated reply payload from a trusted peer.
+// Trust boundary: GuildID and SlipContext are self-reported by the authenticated peer.
 type CreatePostRequest struct {
 	GuildID     snowflake.ID    `json:"guild_id"`
 	RawName     string          `json:"raw_name"`
@@ -504,6 +516,8 @@ type CreatePostResponse struct {
 	BackwardRefs []uint32   `json:"backward_refs,omitempty"`
 }
 
+// CreateReportRequest carries a delegated post report payload from a trusted peer.
+// Trust boundary: GuildID is self-reported by the authenticated peer.
 type CreateReportRequest struct {
 	GuildID snowflake.ID `json:"guild_id"`
 	Reason  string       `json:"reason"`
@@ -636,4 +650,41 @@ func parsePositiveUint32(raw string) (uint32, bool) {
 		return 0, false
 	}
 	return uint32(v), true
+}
+
+func parseTrustedProxies(entries []string) ([]netip.Prefix, error) {
+	if len(entries) == 0 {
+		return nil, nil
+	}
+	out := make([]netip.Prefix, 0, len(entries))
+	for _, raw := range entries {
+		s := strings.TrimSpace(raw)
+		if s == "" {
+			return nil, errors.New("federation server: trusted_proxies entry must not be empty")
+		}
+		if pfx, err := netip.ParsePrefix(s); err == nil {
+			if pfx.Addr().Is4In6() {
+				out = append(out, netip.PrefixFrom(pfx.Addr().Unmap(), max(0, pfx.Bits()-96)).Masked())
+			} else {
+				out = append(out, pfx.Masked())
+			}
+			continue
+		}
+		if addr, err := netip.ParseAddr(s); err == nil {
+			u := addr.Unmap()
+			out = append(out, netip.PrefixFrom(u, u.BitLen()))
+			continue
+		}
+		return nil, fmt.Errorf("federation server: invalid trusted_proxies entry %q", raw)
+	}
+	return out, nil
+}
+
+func ipInPrefixes(addr netip.Addr, prefixes []netip.Prefix) bool {
+	for _, pfx := range prefixes {
+		if pfx.Contains(addr) {
+			return true
+		}
+	}
+	return false
 }

@@ -479,7 +479,13 @@ func (p *RemoteProvider) deleteLocalUserToken(ctx context.Context, userID snowfl
 	}
 }
 
+var errDelegationScopeMissing = errors.New("federation delegation lacks required scope")
+
 func (p *RemoteProvider) ensureAccessToken(ctx context.Context, userID snowflake.ID, forceRefresh bool) (string, []string, error) {
+	return p.ensureAccessTokenForScope(ctx, userID, forceRefresh, "")
+}
+
+func (p *RemoteProvider) ensureAccessTokenForScope(ctx context.Context, userID snowflake.ID, forceRefresh bool, requiredScope string) (string, []string, error) {
 	if p.store == nil || p.cipher == nil || userID == 0 {
 		return "", nil, bbs.ErrFederationAuthRequired
 	}
@@ -493,6 +499,9 @@ func (p *RemoteProvider) ensureAccessToken(ctx context.Context, userID snowflake
 			return "", nil, bbs.ErrFederationAuthRequired
 		}
 		return "", nil, err
+	}
+	if requiredScope != "" && !tok.HasScope(requiredScope) {
+		return "", nil, errDelegationScopeMissing
 	}
 
 	caps, cErr := p.EnsureCapabilities(ctx)
@@ -730,11 +739,7 @@ func (p *RemoteProvider) ListRemoteAvailableCaps(ctx context.Context, userID sno
 	if !p.CanUseCaps() || p.store == nil || userID == 0 {
 		return nil, nil
 	}
-	tok, err := p.store.GetFederationUserToken(ctx, p.cfg.Key, userID)
-	if err != nil || !tok.HasScope(bbs.FederationScopeCaps) {
-		return nil, nil
-	}
-	accessTok, scopes, err := p.ensureAccessToken(ctx, userID, false)
+	accessTok, scopes, err := p.ensureAccessTokenForScope(ctx, userID, false, bbs.FederationScopeCaps)
 	if err != nil {
 		return nil, nil
 	}

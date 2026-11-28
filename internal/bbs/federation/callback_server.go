@@ -240,9 +240,13 @@ func (s *CallbackServer) BeginUserAuth(ctx context.Context, req BeginAuthRequest
 	now := time.Now().UTC()
 	s.pendingMu.Lock()
 	for k, p := range s.pending {
-		if now.After(p.ExpiresAt) || len(s.pending) >= maxPendingClientAuths {
+		if now.After(p.ExpiresAt) {
 			delete(s.pending, k)
 		}
+	}
+	if len(s.pending) >= maxPendingClientAuths {
+		s.pendingMu.Unlock()
+		return "", rp.DisplayLabel(), fmt.Errorf("%w: too many pending authorization requests", bbs.ErrFederationUnavailable)
 	}
 	s.pending[state] = &pendingClientAuth{
 		State:        state,
