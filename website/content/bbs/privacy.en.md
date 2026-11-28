@@ -14,6 +14,7 @@ The Operator stores the following information in its database to provide, mainta
 - **Notification Subscription Records**: Discord User ID of users subscribed to thread notifications, display locale, and registration timestamp.
 - **Report Records**: Reporter's Discord User ID, target post/thread ID, reason for report, and handling status.
 - **Audit Identification Information**: Poster's Discord User ID and an HMAC-SHA256 hash derived using a secret key (anonymous moderation hash).
+- **Federation Authentication Tokens**: Encrypted OAuth 2.0 access and refresh tokens issued when a User authorizes posting or interacting with federated External Instances.
 
 ## 2. Purpose of Use
 
@@ -33,7 +34,7 @@ Collected information is used strictly within the scope of the following purpose
 
 1. Posters' Discord User IDs stored on the server are not viewed during normal operations.
 2. The Operator will not provide user information to third parties except in the following cases:
-   - **Synchronization to Global Boards**: Posts submitted to boards under the Global category are synchronized and delivered in the same anonymous format to other Discord servers subscribing to those boards. The Operator assumes no responsibility whatsoever for how synchronizing servers store, repost, delete, or manage such data.
+   - **Synchronization to Global Boards and External Server Federation**: Posts submitted to boards under the Global category are synchronized and delivered in the same anonymous format to other Discord servers and federated External Instances (such as other gobot servers) subscribing to those boards. In addition, when a User authorizes OAuth 2.0 federation to post or submit reports on a Global Board hosted by an External Instance, User Content, report details, and Discord User ID / profile traits obtained via OAuth 2.0 are provided to that External Instance. The Operator assumes no responsibility whatsoever for how synchronizing servers or External Instances store, repost, delete, or manage such data.
    - **Disclosure Based on Laws and Regulations**: When requested pursuant to a court warrant, official law enforcement inquiry, lawful sender information disclosure request/order under the Information Distribution Platform Act of Japan (formerly the Provider Liability Limitation Act), or other applicable laws. The Operator shall not be liable for any damages incurred by a User due to disclosures made in good faith pursuant to legal requests, except in cases of willful misconduct or gross negligence by the Operator.
    - **Protection of Life and Property**: When urgently necessary to protect a person's life, body, or property, and obtaining the User's consent is difficult.
 3. Solely for responding to reports, enforcing Global Bans against severe Terms violations or trolling, or complying with lawful disclosure requests, the Operator may inspect posters' Discord User IDs via audit logs.
@@ -45,12 +46,12 @@ Collected information is used strictly within the scope of the following purpose
 
 ## 6. Security Measures, Retention Period, and Disclaimer
 
-1. The Operator strives to prevent the leakage, loss, or damage of user information within a reasonable scope through measures such as database access controls and secret-key hashing (HMAC-SHA256). However, due to the inherent nature of internet communications and electronic data management, absolute security cannot be guaranteed. The Operator shall not be liable for any data breaches, leaks, or losses caused by unauthorized access, cyberattacks, software vulnerabilities, hardware failures, or other causes not attributable to the Operator.
+1. The Operator strives to prevent the leakage, loss, or damage of user information within a reasonable scope through measures such as database access controls, transport encryption (TLS / HTTPS), secret-key hashing (HMAC-SHA256), and encrypted storage of federation tokens. However, due to the inherent nature of internet communications and electronic data management, absolute security cannot be guaranteed. The Operator shall not be liable for any data breaches, leaks, or losses caused by unauthorized access, cyberattacks, software vulnerabilities, hardware failures, or other causes not attributable to the Operator.
 2. Collected information is retained for the period necessary to provide the Feature, prevent abuse, and comply with legal obligations. However, the Operator does not guarantee permanent data retention and assumes no liability for data loss caused by system failures or specification changes.
 
 ## 7. Withdrawal of Consent and Data Deletion
 
-1. Users may withdraw their consent to this Policy at any time via the `/bbs policy` command.
+1. Users may withdraw their consent to this Policy (and revoke federated OAuth 2.0 tokens) at any time via the `/bbs policy` command.
 2. Upon withdrawal, consent records and active thread notification subscriptions (DM notification settings) are immediately deleted, and subsequent new postings, notification subscriptions, DM notifications, and reporting will be suspended.
 3. Notwithstanding the preceding paragraph, existing anonymous post data itself is retained to preserve board integrity (problematic posts will be handled via "abone" through reporting and moderation). Furthermore, audit identification information and report records may continue to be retained as necessary to prevent recurring abuse, maintain active bans, and comply with lawful disclosure requests.
 
@@ -60,4 +61,4 @@ Collected information is used strictly within the scope of the following purpose
 2. For inquiries or requests regarding this Policy, please contact us at the Support Server.
 3. In the event of any discrepancy between the Japanese version and this English translation, the Japanese version shall prevail.
 
-Effective Date: November 26, 2026
+Effective Date: November 26, 2026 (Last Updated: November 29, 2026)

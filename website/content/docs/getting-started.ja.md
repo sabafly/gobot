@@ -19,7 +19,7 @@ gobot をあなたの Discord サーバーに導入して使い始めるまで�
 
 - `/setting` — サーバーごとの基本設定や通知チャンネルなどを構成します。
 - `/permission` — コマンドの実行権限やロール制御を調整します。
-- `/bbs` — 匿名掲示板（BBS）の板やスレッドを利用します。BBS の利用にあたっては [BBS 利用規約](/bbs/terms/) および [BBS ガイドライン](/bbs/guidelines/) をご確認ください。
+- `/bbs` — 匿名掲示板（BBS）の板やスレッドを利用します。詳しい使い方は [匿名掲示板 (BBS) ガイド](/docs/bbs/)、規約は [BBS 利用規約](/bbs/terms/) および [BBS ガイドライン](/bbs/guidelines/) をご確認ください。
 
 各コマンドの詳細なオプションやサブコマンドは [コマンド一覧](/docs/commands/) を参照してください。
 
@@ -31,12 +31,24 @@ gobot は GitHub Container Registry（GHCR）でマルチアーキテクチャ�
 docker pull ghcr.io/sabafly/gobot:latest
 ```
 
-リポジトリ内の `docker-compose.yml` を使って起動する場合は、`.env-sample` をコピーして環境変数を設定します。
+リポジトリ内の `docker-compose.yml` を使って起動する場合は、ルートの `.env` に加えて、MariaDB コンテナおよび gobot コンテナが `env_file` として読み込む `mysql/.env` を作成する必要があります。
 
 ```bash
+# 1. Bot 用の環境変数ファイルを作成
 cp .env-sample .env
 # .env を編集して Discord Bot Token などを設定
+
+# 2. MariaDB 用の環境変数ファイルを作成（docker-compose.yml で必須）
+cat <<'EOF' > mysql/.env
+MYSQL_ROOT_PASSWORD=change_me_root_password
+MYSQL_DATABASE=gobot
+MYSQL_USER=gobot
+MYSQL_PASSWORD=change_me_db_password
+EOF
+
+# 3. コンテナを起動
 docker compose up -d
 ```
 
-ソースコードと最新の構成方法は [GitHub リポジトリ](https://github.com/sabafly/gobot) を参照してください。
+- `MYSQL_ROOT_PASSWORD` は `mysql/Dockerfile` のヘルスチェック（`mariadb-admin ping`）でも使用されるため、必ず設定してください。
+- ソースコードと最新の構成方法は [GitHub リポジトリ](https://github.com/sabafly/gobot) を参照してください。

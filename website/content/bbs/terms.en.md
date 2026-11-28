@@ -12,8 +12,9 @@ For the purposes of these Terms, the following definitions shall apply:
 1. "Guild" means a Discord server where the Feature has been installed.
 2. "Guild Administrator" means an individual who holds configuration and moderation privileges for the Feature within a Guild.
 3. "Guild-Local Board" means a bulletin board created and operated exclusively within a specific Guild.
-4. "Global Board" means a bulletin board created and managed by the Operator, where threads and posts are shared and synchronized across multiple subscribing Guilds.
-5. "User Content" means any text, media URLs, display names, or other information transmitted or posted by a User through the Feature.
+4. "Global Board" means a bulletin board created and managed by the Operator or a federated External Instance, where threads and posts are shared and synchronized across multiple subscribing Guilds or external servers.
+5. "External Instance" means another gobot instance, external server, or federated external system operated and managed by a third party other than the Operator.
+6. "User Content" means any text, media URLs, display names, or other information transmitted or posted by a User through the Feature.
 
 ## Article 2 (Application and Opt-In)
 
@@ -21,17 +22,19 @@ For the purposes of these Terms, the following definitions shall apply:
 2. If a User is a minor or otherwise lacks full legal capacity, the User must obtain the consent of a parent or legal guardian before agreeing to the Agreements and using the Feature.
 3. In addition to the Agreements, Users must comply with the Discord Terms of Service and Community Guidelines established by Discord Inc.
 
-## Article 3 (Board Categories and Management Responsibility)
+## Article 3 (Board Categories, External Server Federation, and Management Responsibility)
 
 1. The creation, management, and moderation (including deletion of posts and access restrictions) of Guild-Local Boards are conducted under the sole responsibility of the respective Guild Administrators. The Operator is not involved in, and assumes no responsibility whatsoever for, the operation of Guild-Local Boards or any decisions or actions taken by Guild Administrators.
-2. The creation, management, and moderation of Global Boards are conducted at the sole discretion of the Operator.
-3. Users acknowledge and agree in advance that User Content posted to a Global Board will be synchronized and displayed in the same anonymous format across all Guilds subscribing to that board, and that deletions or display restrictions performed by the Operator or linked systems will propagate accordingly.
+2. The creation, management, and moderation of Global Boards operated by the Operator are conducted at the sole discretion of the Operator.
+3. Through federation or other interconnection mechanisms, the Feature may subscribe to Global Boards hosted by External Instances, or distribute and synchronize Operator-managed Global Boards to External Instances.
+4. Users acknowledge and agree in advance that User Content posted to a Global Board will be synchronized and delivered in the same anonymous format across all subscribing Guilds and federated External Instances, and that posting or authenticating (such as via OAuth 2.0) to federated Global Boards may transmit necessary information (including User Content, report details, and authentication-linked identifiers) to the connected External Instance.
+5. The operation, moderation, deletion, display control, storage, management, reposting, or removal of data on Global Boards hosted by or synchronized to External Instances is the sole responsibility of the respective External Instance operator, and the Operator assumes no responsibility whatsoever therefor.
 
 ## Article 4 (Intellectual Property Rights and License)
 
 1. Copyrights and other intellectual property rights in User Content remain with the posting User or the rightful owner.
-2. Users grant the Operator and each Guild Administrator subscribing to Global Boards a worldwide, non-exclusive, royalty-free, perpetual, irrevocable, and sublicensable license to reproduce, publicly transmit, translate, adapt, archive, back up, and otherwise use User Content to the extent necessary for providing, synchronizing, displaying, moderating, securing, and ensuring legal compliance of the Feature.
-3. Users agree not to exercise any moral rights (*chosakusha jinkakuken*) against the Operator or Guild Administrators with respect to the use of User Content under the preceding paragraph (including masking/removal ("abone"), editing, or hiding posts for moderation purposes).
+2. Users grant the Operator, each Guild Administrator subscribing to Global Boards, and federated External Instance operators a worldwide, non-exclusive, royalty-free, perpetual, irrevocable, and sublicensable license to reproduce, publicly transmit, translate, adapt, archive, back up, and otherwise use User Content to the extent necessary for providing, synchronizing, displaying, moderating, securing, and ensuring legal compliance of the Feature.
+3. Users agree not to exercise any moral rights (*chosakusha jinkakuken*) against the Operator, Guild Administrators, or External Instance operators with respect to the use of User Content under the preceding paragraph (including masking/removal ("abone"), editing, or hiding posts for moderation purposes).
 
 ## Article 5 (Prohibited Conduct)
 
@@ -62,7 +65,7 @@ When using the Feature, Users must not engage in, or attempt to engage in, any o
 
 ## Article 7 (Suspension, Modification, Termination, and No Obligations)
 
-1. The Operator may suspend, modify, or permanently terminate all or part of the Feature without prior notice for any reason, including system maintenance, failures, changes/restrictions/account suspension by Discord API, hosting failures, force majeure, or cyberattacks.
+1. The Operator may suspend, modify, or permanently terminate all or part of the Feature without prior notice for any reason, including system maintenance, failures, changes/restrictions/account suspension by Discord API, hosting failures, failures/changes/disconnection of External Instances, force majeure, or cyberattacks.
 2. The Operator assumes absolutely no obligation to:
    - Monitor, screen, or review User Content.
    - Store, back up, or restore User Content, consent records, or any other data.
@@ -77,9 +80,9 @@ When using the Feature, Users must not engage in, or attempt to engage in, any o
    1. Delays, delivery failures, loss, corruption, falsification, or disappearance of User Content.
    2. Server or network failures, Discord Inc. outages, specification changes, rate limits, bot suspensions, cyberattacks, unauthorized access, or changes/loss/leakage of secret keys resulting in alterations to anonymous IDs, SLIPs, or hashes, or unintended exposure of identifying information.
    3. Malware infections, phishing damages, emotional distress, or other damages caused by viewing or using other Users' content (including false information, defamation, rights infringement, or offensive material) or external links and media previews.
-   4. Damages resulting from the configuration, management, or moderation (including operational errors or mistaken bans) of Guild-Local Boards by Guild Administrators.
+   4. Damages resulting from the configuration, management, or moderation (including operational errors or mistaken bans) of Guild-Local Boards by Guild Administrators, or from the operation, data management, or moderation of Global Boards by External Instance operators.
    5. Damages resulting from specification changes, suspension/termination of the Feature, moderation actions, or legal information disclosures made by the Operator (including subsequent disputes regarding the validity of such legal requests).
-   6. Any disputes or troubles arising between Users, or between Users and Guild Administrators or third parties.
+   6. Any disputes or troubles arising between Users, or between Users and Guild Administrators, External Instance operators, or third parties.
 3. Notwithstanding any other provision of these Terms, if the Consumer Contract Act of Japan or other mandatory laws apply and the Operator is held liable to a User for damages, the Operator's liability shall be limited as follows:
    1. Except in cases of willful misconduct or gross negligence by the Operator, the Operator shall be liable only for actual, ordinary, and direct damages incurred by the User (expressly excluding lost profits, loss of business opportunity, data loss, emotional distress, special damages, indirect damages, and incidental damages).
    2. In the case of the preceding item, the Operator's aggregate liability shall not exceed the total amount of fees directly paid by the User to the Operator for the Feature during the twelve (12) months preceding the date the damage occurred (which is JPY 0 as the Feature is provided free of charge; provided, however, that if a cap of JPY 0 is deemed unenforceable under applicable law, the maximum aggregate liability shall be capped at JPY 1,000).
@@ -104,4 +107,4 @@ If any provision or part of these Terms is held invalid or unenforceable under a
 2. Any disputes arising between the Operator and a User in connection with the Feature shall be subject to the exclusive agreed jurisdiction of the 鹿児島地方裁判所 as the court of first instance.
 3. These Terms are prepared in Japanese, and any English or other language translation is provided for reference purposes only. In the event of any discrepancy or conflict between the Japanese version and any translated version, the Japanese version shall prevail.
 
-Effective Date: November 26, 2026
+Effective Date: November 26, 2026 (Last Updated: November 29, 2026)
