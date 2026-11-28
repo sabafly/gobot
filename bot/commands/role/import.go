@@ -39,8 +39,17 @@ import (
 	"github.com/sabafly/gobot/internal/i18n"
 )
 
+// ImportDefinition returns the static command specification without requiring runtime dependencies.
+func ImportDefinition() components.CommandDefinition {
+	return generic.DefinitionFromCommand(components.CommandCategoryModeration, buildImportCommand)
+}
+
 func ImportCommand(c *components.Components) components.Command {
-	return (&generic.Command{
+	return buildImportCommand().SetComponent(c)
+}
+
+func buildImportCommand() *generic.Command {
+	return &generic.Command{
 		Namespace: "import-rolepanel",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.MessageCommandCreate{
@@ -142,7 +151,7 @@ func ImportCommand(c *components.Components) components.Command {
 				},
 			},
 		},
-	}).SetComponent(c)
+	}
 }
 
 var roleRegexp = regexp.MustCompile("<@&([0-9]{18,20})>")

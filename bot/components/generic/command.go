@@ -491,3 +491,36 @@ func (gc *Command) RegisterRoutes(r handler.Router) {
 		})
 	}
 }
+
+// DefinitionFromCommand derives a runtime-independent CommandDefinition from a pure generic.Command builder.
+// Calling build lazily inside Commands ensures i18n translations loaded after init are reflected.
+func DefinitionFromCommand(category components.CommandCategory, build func() *Command) components.CommandDefinition {
+	sample := build()
+	perms := make(map[string]components.CommandPermissionMeta, len(sample.CommandHandlers))
+	for route, h := range sample.CommandHandlers {
+		if h == nil {
+			continue
+		}
+		var nodes []string
+		for _, p := range h.Permissions() {
+			if p != nil && p.PermString() != "" {
+				nodes = append(nodes, p.PermString())
+			}
+		}
+		if len(nodes) > 0 || h.DiscordPermission() != 0 {
+			perms[route] = components.CommandPermissionMeta{
+				Permissions:       nodes,
+				DiscordPermission: h.DiscordPermission(),
+			}
+		}
+	}
+	return components.CommandDefinition{
+		Name:     sample.Namespace,
+		Category: category,
+		Private:  sample.Private,
+		Commands: func() []discord.ApplicationCommandCreate {
+			return build().Create()
+		},
+		Permissions: perms,
+	}
+}

@@ -42,6 +42,16 @@ import (
 )
 
 // AdminCommand returns the private operator-only /bbs-admin command.
+// AdminDefinition returns the static command specification for /bbsadmin without requiring runtime dependencies.
+func AdminDefinition() components.CommandDefinition {
+	return components.CommandDefinition{
+		Name:     "bbs-admin",
+		Category: components.CommandCategoryAdmin,
+		Private:  true,
+		Commands: adminCommandCreates,
+	}
+}
+
 func AdminCommand(sys *System) components.Command {
 	return &adminCommand{sys: sys}
 }
@@ -55,6 +65,10 @@ func (c *adminCommand) Name() string { return "bbs-admin" }
 func (c *adminCommand) IsPrivate() bool { return true }
 
 func (c *adminCommand) Create() []discord.ApplicationCommandCreate {
+	return adminCommandCreates()
+}
+
+func adminCommandCreates() []discord.ApplicationCommandCreate {
 	slipChoices := []discord.ApplicationCommandOptionChoiceString{
 		{
 			Name:              "none (Hidden)",

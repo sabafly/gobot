@@ -49,8 +49,17 @@ var (
 	upLock   sync.Mutex
 )
 
+// Definition returns the static command specification without requiring runtime dependencies.
+func Definition() components.CommandDefinition {
+	return generic.DefinitionFromCommand(components.CommandCategoryModeration, buildCommand)
+}
+
 func Command(c *components.Components) components.Command {
-	return (&generic.Command{
+	return buildCommand().SetComponent(c)
+}
+
+func buildCommand() *generic.Command {
+	return &generic.Command{
 		Namespace: "setting",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
@@ -487,10 +496,10 @@ func Command(c *components.Components) components.Command {
 				if err != nil {
 					return errors.NewError(err)
 				}
-				g.BumpMessageTitle = event.ModalSubmitInteraction.Data.Text("message_title")
-				g.BumpMessage = event.ModalSubmitInteraction.Data.Text("message")
-				g.BumpRemindMessageTitle = event.ModalSubmitInteraction.Data.Text("remind.message_title")
-				g.BumpRemindMessage = event.ModalSubmitInteraction.Data.Text("remind.message")
+				g.BumpMessageTitle = event.Data.Text("message_title")
+				g.BumpMessage = event.Data.Text("message")
+				g.BumpRemindMessageTitle = event.Data.Text("remind.message_title")
+				g.BumpRemindMessage = event.Data.Text("remind.message")
 				if err := c.GormDB().Save(g).Error; err != nil {
 					return errors.NewError(err)
 				}
@@ -505,10 +514,10 @@ func Command(c *components.Components) components.Command {
 				if err != nil {
 					return errors.NewError(err)
 				}
-				g.UpMessageTitle = event.ModalSubmitInteraction.Data.Text("message_title")
-				g.UpMessage = event.ModalSubmitInteraction.Data.Text("message")
-				g.UpRemindMessageTitle = event.ModalSubmitInteraction.Data.Text("remind.message_title")
-				g.UpRemindMessage = event.ModalSubmitInteraction.Data.Text("remind.message")
+				g.UpMessageTitle = event.Data.Text("message_title")
+				g.UpMessage = event.Data.Text("message")
+				g.UpRemindMessageTitle = event.Data.Text("remind.message_title")
+				g.UpRemindMessage = event.Data.Text("remind.message")
 				if err := c.GormDB().Save(g).Error; err != nil {
 					return errors.NewError(err)
 				}
@@ -628,7 +637,7 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 		},
-	}).SetComponent(c)
+	}
 }
 
 func bumpHandler(c *components.Components, g *models.Guild, event *events.GuildMessageCreate) error {
