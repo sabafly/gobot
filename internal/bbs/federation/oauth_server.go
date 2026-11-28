@@ -28,9 +28,12 @@ import (
 	"html/template"
 	"io"
 	"log/slog"
+	"math"
+	"net"
 	"net/http"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -48,7 +51,93 @@ const (
 	pendingOAuthTxTTL           = 10 * time.Minute
 	pendingOAuthCodeTTL         = 60 * time.Second
 	maxPendingOAuthEntries      = 512
+	oauthAuthorizeRateBurst     = 20
+	oauthAuthorizeRatePerSec    = 0.5
+	oauthRateLimiterMaxBuckets  = 4096
+	oauthRateLimiterStaleAfter  = 15 * time.Minute
 )
+
+type oauthRateBucket struct {
+	tokens   float64
+	lastSeen time.Time
+}
+
+type oauthRateLimiter struct {
+	mu         sync.Mutex
+	burst      float64
+	ratePerSec float64
+	buckets    map[string]*oauthRateBucket
+}
+
+func newOAuthRateLimiter(burst int, ratePerSec float64) *oauthRateLimiter {
+	return &oauthRateLimiter{
+		burst:      float64(burst),
+		ratePerSec: ratePerSec,
+		buckets:    make(map[string]*oauthRateBucket),
+	}
+}
+
+func (l *oauthRateLimiter) Allow(key string, now time.Time) (bool, time.Duration) {
+	if l == nil || l.burst <= 0 {
+		return true, 0
+	}
+	if key == "" {
+		key = "unknown"
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	b, ok := l.buckets[key]
+	if !ok {
+		if len(l.buckets) >= oauthRateLimiterMaxBuckets {
+			for k, v := range l.buckets {
+				if now.Sub(v.lastSeen) > oauthRateLimiterStaleAfter {
+					delete(l.buckets, k)
+				}
+			}
+			if len(l.buckets) >= oauthRateLimiterMaxBuckets {
+				var oldestKey string
+				var oldestTime time.Time
+				for k, v := range l.buckets {
+					if oldestKey == "" || v.lastSeen.Before(oldestTime) {
+						oldestKey = k
+						oldestTime = v.lastSeen
+					}
+				}
+				if oldestKey != "" {
+					delete(l.buckets, oldestKey)
+				}
+			}
+		}
+		b = &oauthRateBucket{tokens: l.burst, lastSeen: now}
+		l.buckets[key] = b
+	} else {
+		elapsed := now.Sub(b.lastSeen).Seconds()
+		if elapsed > 0 {
+			b.tokens = min(l.burst, b.tokens+elapsed*l.ratePerSec)
+		}
+		b.lastSeen = now
+	}
+
+	if b.tokens >= 1.0 {
+		b.tokens -= 1.0
+		return true, 0
+	}
+	deficit := 1.0 - b.tokens
+	waitSec := max(int(math.Ceil(deficit/max(l.ratePerSec, 0.001))), 1)
+	return false, time.Duration(waitSec) * time.Second
+}
+
+func oauthClientIP(r *http.Request) string {
+	if r == nil {
+		return ""
+	}
+	addr := strings.TrimSpace(r.RemoteAddr)
+	if host, _, err := net.SplitHostPort(addr); err == nil && host != "" {
+		return host
+	}
+	return addr
+}
 
 type pendingOAuthTx struct {
 	TxID               string
@@ -82,6 +171,7 @@ type oauthManager struct {
 	discordAPIBase string
 	discordAuthURL string
 	httpClient     *http.Client
+	authLimiter    *oauthRateLimiter
 
 	mu          sync.Mutex
 	txByID      map[string]*pendingOAuthTx
@@ -104,6 +194,7 @@ func newOAuthManager(srv *Server, apiBase, authBase string, client *http.Client)
 		discordAPIBase: strings.TrimRight(apiBase, "/"),
 		discordAuthURL: authBase,
 		httpClient:     client,
+		authLimiter:    newOAuthRateLimiter(oauthAuthorizeRateBurst, oauthAuthorizeRatePerSec),
 		txByID:         make(map[string]*pendingOAuthTx),
 		txByDiscord:    make(map[string]string),
 		codesByHash:    make(map[string]*pendingOAuthCode),
@@ -226,6 +317,12 @@ func redirectOAuthError(w http.ResponseWriter, r *http.Request, redirectURI, err
 }
 
 func (m *oauthManager) handleAuthorize(w http.ResponseWriter, r *http.Request) {
+	if ok, retryAfter := m.authLimiter.Allow(oauthClientIP(r), time.Now().UTC()); !ok {
+		secs := max(int(math.Ceil(retryAfter.Seconds())), 1)
+		w.Header().Set("Retry-After", strconv.Itoa(secs))
+		renderStatusPage(w, http.StatusTooManyRequests, false, "リクエスト過多 / Too Many Requests", "認可リクエストが短時間に集中しています。しばらく待ってから再度お試しください。", "")
+		return
+	}
 	q := r.URL.Query()
 	clientID := strings.TrimSpace(q.Get("client_id"))
 	redirectURI := strings.TrimSpace(q.Get("redirect_uri"))

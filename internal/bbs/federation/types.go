@@ -474,6 +474,9 @@ type CapsListResponse struct {
 	Caps []bbs.Cap `json:"caps"`
 }
 
+// CreateThreadRequest carries a delegated thread creation payload from a trusted peer.
+// Trust boundary: GuildID and SlipContext are self-reported by the peer authenticated via its
+// shared peer bearer token and are not independently verifiable by Origin.
 type CreateThreadRequest struct {
 	GuildID     snowflake.ID    `json:"guild_id"`
 	Title       string          `json:"title"`
@@ -489,6 +492,8 @@ type CreateThreadResponse struct {
 	Post   bbs.Post   `json:"post"`
 }
 
+// CreatePostRequest carries a delegated reply payload from a trusted peer.
+// Trust boundary: GuildID and SlipContext are self-reported by the authenticated peer.
 type CreatePostRequest struct {
 	GuildID     snowflake.ID    `json:"guild_id"`
 	RawName     string          `json:"raw_name"`
@@ -504,6 +509,8 @@ type CreatePostResponse struct {
 	BackwardRefs []uint32   `json:"backward_refs,omitempty"`
 }
 
+// CreateReportRequest carries a delegated post report payload from a trusted peer.
+// Trust boundary: GuildID is self-reported by the authenticated peer.
 type CreateReportRequest struct {
 	GuildID snowflake.ID `json:"guild_id"`
 	Reason  string       `json:"reason"`
