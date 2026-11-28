@@ -16,11 +16,11 @@ require (
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
-	github.com/markusmobius/go-dateparser v1.2.4
+	github.com/markusmobius/go-dateparser v1.4.8
 	github.com/shopspring/decimal v1.4.0
 	github.com/spf13/cobra v1.10.2
 	github.com/tj/go-naturaldate v1.3.0
-	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546
+	golang.org/x/exp v0.0.0-20260908205506-85c1c2202aba
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/mysql v1.6.0
@@ -65,6 +65,7 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.20.3 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
+	github.com/markusmobius/go-dateutil/v2 v2.9.1 // indirect
 	github.com/mattn/go-runewidth v0.0.31 // indirect
 	github.com/mattn/go-sqlite3 v1.14.28 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
@@ -77,10 +78,10 @@ require (
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/supranational/blst v0.3.16 // indirect
-	github.com/tetratelabs/wazero v1.9.0 // indirect
+	github.com/tetratelabs/wazero v1.12.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
-	github.com/wasilibs/go-re2 v1.10.0 // indirect
+	github.com/wasilibs/go-re2 v1.12.0 // indirect
 	github.com/wasilibs/wazero-helpers v0.0.0-20250123031827-cd30c44769bb // indirect
 	github.com/xo/terminfo v1.0.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
