@@ -48,8 +48,17 @@ import (
 	"github.com/sabafly/gobot/internal/ratelimit"
 )
 
+// Definition returns the static command specification without requiring runtime dependencies.
+func Definition() components.CommandDefinition {
+	return generic.DefinitionFromCommand(components.CommandCategoryModeration, buildCommand)
+}
+
 func Command(c *components.Components) components.Command {
-	return (&generic.Command{
+	return buildCommand().SetComponent(c)
+}
+
+func buildCommand() *generic.Command {
+	return &generic.Command{
 		Namespace: "role",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
@@ -946,7 +955,7 @@ func Command(c *components.Components) components.Command {
 				}
 			}
 			return nil
-		}}).SetComponent(c)
+		}}
 }
 
 func UpdateRolePanel(ctx context.Context, place *models.RolePanelPlaced, locale discord.Locale, client *bot.Client, c *components.Components) {

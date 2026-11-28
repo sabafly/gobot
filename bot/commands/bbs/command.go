@@ -230,6 +230,16 @@ func (s *System) guildLocale(ctx context.Context, e interface {
 }
 
 // Command returns the public /bbs command, message context menus, routes, event hooks, and dat-ochi scheduler.
+// Definition returns the static command specification for /bbs without requiring runtime dependencies.
+func Definition() components.CommandDefinition {
+	return components.CommandDefinition{
+		Name:     "bbs",
+		Category: components.CommandCategoryBBS,
+		Private:  false,
+		Commands: commandCreates,
+	}
+}
+
 func Command(sys *System) components.Command {
 	return &bbsCommand{sys: sys}
 }
@@ -243,6 +253,10 @@ func (c *bbsCommand) Name() string { return "bbs" }
 func (c *bbsCommand) IsPrivate() bool { return false }
 
 func (c *bbsCommand) Create() []discord.ApplicationCommandCreate {
+	return commandCreates()
+}
+
+func commandCreates() []discord.ApplicationCommandCreate {
 	guildCtx := []discord.InteractionContextType{discord.InteractionContextTypeGuild}
 	slipChoices := []discord.ApplicationCommandOptionChoiceString{
 		{

@@ -65,8 +65,17 @@ const (
 	WordSuffixRuleDelete  = "delete"
 )
 
+// Definition returns the static command specification without requiring runtime dependencies.
+func Definition() components.CommandDefinition {
+	return generic.DefinitionFromCommand(components.CommandCategoryModeration, buildCommand)
+}
+
 func Command(c *components.Components) *generic.Command {
-	return (&generic.Command{
+	return buildCommand().SetComponent(c)
+}
+
+func buildCommand() *generic.Command {
+	return &generic.Command{
 		Namespace: "message",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
@@ -959,7 +968,7 @@ func Command(c *components.Components) *generic.Command {
 			}
 			return nil
 		},
-	}).SetComponent(c)
+	}
 }
 
 func messageSuffixMessageCreateHandler(w *models.WordSuffix, u *models.User, e *events.GuildMessageCreate, c *components.Components) errors.Error {

@@ -37,8 +37,17 @@ import (
 	"github.com/sabafly/gobot/internal/i18n"
 )
 
+// Definition returns the static command specification without requiring runtime dependencies.
+func Definition() components.CommandDefinition {
+	return generic.DefinitionFromCommand(components.CommandCategoryAdmin, buildCommand)
+}
+
 func Command(c *components.Components) *generic.Command {
-	return (&generic.Command{
+	return buildCommand().SetComponent(c)
+}
+
+func buildCommand() *generic.Command {
+	return &generic.Command{
 		Namespace: "debug",
 		Private:   true,
 		CommandCreate: []discord.ApplicationCommandCreate{
@@ -187,5 +196,5 @@ func Command(c *components.Components) *generic.Command {
 				return nil
 			}),
 		},
-	}).SetComponent(c)
+	}
 }

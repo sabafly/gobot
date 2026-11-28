@@ -106,8 +106,17 @@ func CurrencyNameConfigHandler(c *components.Components, event *events.Applicati
 	return nil
 }
 
+// Definition returns the static command specification without requiring runtime dependencies.
+func Definition() components.CommandDefinition {
+	return generic.DefinitionFromCommand(components.CommandCategoryEconomy, buildCommand)
+}
+
 func Command(c *components.Components) components.Command {
-	return (&generic.Command{
+	return buildCommand().SetComponent(c)
+}
+
+func buildCommand() *generic.Command {
+	return &generic.Command{
 		Namespace: "currency",
 		Schedulers: []components.Scheduler{
 			{
@@ -603,7 +612,7 @@ func Command(c *components.Components) components.Command {
 			}
 			return nil
 		},
-	}).SetComponent(c)
+	}
 }
 
 func inGuildRanking(c *components.Components, locale discord.Locale, client *bot.Client, guildID snowflake.ID, limit int, skip int, userID *snowflake.ID) (string, error) {

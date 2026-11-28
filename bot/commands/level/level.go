@@ -39,8 +39,17 @@ import (
 	"github.com/sabafly/gobot/internal/discordutil"
 )
 
+// Definition returns the static command specification without requiring runtime dependencies.
+func Definition() components.CommandDefinition {
+	return generic.DefinitionFromCommand(components.CommandCategoryGeneral, buildCommand)
+}
+
 func Command(c *components.Components) components.Command {
-	return (&generic.Command{
+	return buildCommand().SetComponent(c)
+}
+
+func buildCommand() *generic.Command {
+	return &generic.Command{
 		Namespace: "level",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
@@ -340,7 +349,7 @@ func Command(c *components.Components) components.Command {
 			"level:up_message_modal": upMessageModalHandler,
 		},
 		EventHandler: eventHandler,
-	}).SetComponent(c)
+	}
 }
 
 func addXp(ctx context.Context, xp uint64, client *bot.Client, m *models.Member, g *models.Guild, channelID snowflake.ID, username string, ignoreCooldown bool, db *gorm.DB) (*models.Member, error) {

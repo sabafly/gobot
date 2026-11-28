@@ -42,8 +42,17 @@ func deleteSlotLock(id uuid.UUID) {
 	delete(slotLocks, id)
 }
 
+// Definition returns the static command specification without requiring runtime dependencies.
+func Definition() components.CommandDefinition {
+	return generic.DefinitionFromCommand(components.CommandCategoryGames, buildCommand)
+}
+
 func Command(c *components.Components) components.Command {
-	return (&generic.Command{
+	return buildCommand().SetComponent(c)
+}
+
+func buildCommand() *generic.Command {
+	return &generic.Command{
 		Namespace: "play",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
@@ -743,5 +752,5 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 		},
-	}).SetComponent(c)
+	}
 }

@@ -49,8 +49,17 @@ var (
 	upLock   sync.Mutex
 )
 
+// Definition returns the static command specification without requiring runtime dependencies.
+func Definition() components.CommandDefinition {
+	return generic.DefinitionFromCommand(components.CommandCategoryModeration, buildCommand)
+}
+
 func Command(c *components.Components) components.Command {
-	return (&generic.Command{
+	return buildCommand().SetComponent(c)
+}
+
+func buildCommand() *generic.Command {
+	return &generic.Command{
 		Namespace: "setting",
 		CommandCreate: []discord.ApplicationCommandCreate{
 			discord.SlashCommandCreate{
@@ -628,7 +637,7 @@ func Command(c *components.Components) components.Command {
 				},
 			},
 		},
-	}).SetComponent(c)
+	}
 }
 
 func bumpHandler(c *components.Components, g *models.Guild, event *events.GuildMessageCreate) error {

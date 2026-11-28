@@ -52,18 +52,8 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 
+	"github.com/sabafly/gobot/bot/commands"
 	bbsCmd "github.com/sabafly/gobot/bot/commands/bbs"
-	"github.com/sabafly/gobot/bot/commands/bet"
-	"github.com/sabafly/gobot/bot/commands/currency"
-	"github.com/sabafly/gobot/bot/commands/debug"
-	"github.com/sabafly/gobot/bot/commands/level"
-	"github.com/sabafly/gobot/bot/commands/message"
-	"github.com/sabafly/gobot/bot/commands/permission"
-	"github.com/sabafly/gobot/bot/commands/ping"
-	"github.com/sabafly/gobot/bot/commands/play"
-	"github.com/sabafly/gobot/bot/commands/role"
-	"github.com/sabafly/gobot/bot/commands/setting"
-	"github.com/sabafly/gobot/bot/commands/user"
 	"github.com/sabafly/gobot/bot/components"
 	"github.com/sabafly/gobot/bot/components/generic"
 	"github.com/sabafly/gobot/internal/admin"
@@ -182,24 +172,7 @@ func run() error {
 		slog.Error("BBSシステムの初期化に失敗したためBBSコマンドを無効化します", slog.Any("error", err))
 	}
 
-	cmds := []components.Command{
-		debug.Command(component),
-		ping.Command(component),
-		message.Command(component),
-		role.Command(component),
-		level.Command(component),
-		permission.Command(component),
-		setting.Command(component),
-		role.ImportCommand(component),
-		currency.Command(component),
-		play.Command(component),
-		bet.Command(component),
-		user.Command(component),
-	}
-	if bbsSys != nil {
-		cmds = append(cmds, bbsCmd.Command(bbsSys), bbsCmd.AdminCommand(bbsSys))
-	}
-	component.AddCommands(cmds...)
+	component.AddCommands(commands.BuildRuntimeCommands(component, bbsSys)...)
 
 	ready := make(chan *events.Ready)
 
