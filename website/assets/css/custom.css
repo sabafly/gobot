@@ -1,0 +1,65 @@
+/* Keep text-only Hextra cards top-aligned even when neighboring cards wrap to more lines. */
+.hextra-card:not(:has(.hextra-card-image)) > div {
+  margin-top: 0;
+}
+
+/* Multi-column site footer */
+.gobot-footer-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 2rem;
+  padding-top: 2.5rem;
+  padding-bottom: 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .gobot-footer-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.gobot-footer-heading {
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--hx-color-gray-900);
+}
+
+.dark .gobot-footer-heading {
+  color: var(--hx-color-gray-100);
+}
+
+.gobot-footer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.gobot-footer-list a {
+  color: var(--hx-color-gray-600);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.gobot-footer-list a:hover {
+  color: var(--hx-color-gray-900);
+}
+
+.dark .gobot-footer-list a {
+  color: var(--hx-color-gray-400);
+}
+
+.dark .gobot-footer-list a:hover {
+  color: var(--hx-color-gray-100);
+}
+
+/* Mobile-only space before responsive line break */
+@media (min-width: 640px) {
+  .gobot-mobile-space {
+    display: none;
+  }
+}

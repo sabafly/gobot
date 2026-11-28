@@ -30,3 +30,9 @@ dist/
 
 .docusaurus
 node_modules
+
+# Website (Hugo + generated command docs)
+website/content/docs/commands/
+website/public/
+website/resources/
+website/.hugo_build.lock

@@ -1,0 +1,167 @@
+name: Website
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'website/**'
+      - 'bot/**'
+      - 'cmd/docgen/**'
+      - 'locales/**'
+      - '.github/workflows/website.yml'
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - 'website/**'
+      - 'bot/**'
+      - 'cmd/docgen/**'
+      - 'locales/**'
+      - '.github/workflows/website.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: website-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: '0.170.1'
+          extended: true
+
+      - name: Generate command reference docs
+        run: go run ./cmd/docgen --out website/content/docs/commands
+
+      - name: Build Hugo site (Production)
+        if: github.event_name != 'pull_request'
+        working-directory: website
+        run: hugo --minify
+
+      - name: Build Hugo site (Preview)
+        if: github.event_name == 'pull_request'
+        working-directory: website
+        run: hugo --minify --baseURL "/"
+
+      - name: Upload built site
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+        uses: actions/upload-artifact@v4
+        with:
+          name: website-public
+          path: website/public
+          retention-days: 1
+
+  preview:
+    needs: build
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      deployments: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check Cloudflare secrets
+        id: secrets
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "$CF_TOKEN" ] && [ -n "$CF_ACCOUNT" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID is not set; skipping preview deployment."
+          fi
+
+      - name: Download built site
+        if: steps.secrets.outputs.configured == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: website-public
+          path: website/public
+
+      - name: Upload preview version to Cloudflare Workers
+        id: wrangler
+        if: steps.secrets.outputs.configured == 'true'
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: website
+          command: "versions upload --preview-alias pr-${{ github.event.pull_request.number }} --tag pr-${{ github.event.pull_request.number }}"
+
+      - name: Comment preview URL on PR
+        if: steps.secrets.outputs.configured == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WRANGLER_OUT: ${{ steps.wrangler.outputs.command-output }}
+          DEPLOY_URL: ${{ steps.wrangler.outputs.deployment-url }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          ALIAS_URL="$(printf '%s\n' "$WRANGLER_OUT" | grep -Eo 'https://pr-[0-9]+-[a-zA-Z0-9._-]+\.workers\.dev' | head -n 1 || true)"
+          VERSION_URL="$(printf '%s\n' "$WRANGLER_OUT" | grep -Eo 'https://[a-zA-Z0-9._-]+\.workers\.dev' | head -n 1 || true)"
+          PREVIEW_URL="${ALIAS_URL:-${DEPLOY_URL:-$VERSION_URL}}"
+          if [ -z "$PREVIEW_URL" ]; then
+            echo "::warning::Could not extract preview URL from wrangler output."
+            exit 0
+          fi
+          SHORT_SHA="${COMMIT_SHA:0:7}"
+          BODY="$(printf '<!-- website-preview-comment -->\n### Website Preview\n\n- **Preview URL**: %s\n- **Commit**: `%s`' "$PREVIEW_URL" "$SHORT_SHA")"
+          EXISTING_ID="$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" --jq '.[] | select(.body | contains("<!-- website-preview-comment -->")) | .id' | head -n 1 || true)"
+          if [ -n "$EXISTING_ID" ]; then
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${EXISTING_ID}" -f body="$BODY"
+          else
+            gh pr comment "$PR_NUMBER" --body "$BODY"
+          fi
+
+  deploy:
+    needs: build
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Download built site
+        uses: actions/download-artifact@v4
+        with:
+          name: website-public
+          path: website/public
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: website
+          command: deploy

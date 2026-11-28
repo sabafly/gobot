@@ -1,0 +1,113 @@
+baseURL: https://gobot.sabafly.net/
+title: gobot
+enableRobotsTXT: true
+enableGitInfo: false
+enableEmoji: true
+
+defaultContentLanguage: ja
+defaultContentLanguageInSubdir: false
+
+module:
+  imports:
+    - path: github.com/imfing/hextra
+
+markup:
+  goldmark:
+    renderer:
+      unsafe: true
+  highlight:
+    noClasses: false
+
+languages:
+  ja:
+    label: 日本語
+    locale: ja
+    weight: 1
+    title: gobot
+    params:
+      description: 匿名掲示板・サーバー管理・通貨・ゲームを備えた多機能 Discord Bot
+    menu:
+      main:
+        - name: ドキュメント
+          pageRef: /docs
+          weight: 1
+        - name: コマンド一覧
+          pageRef: /docs/commands
+          weight: 2
+        - name: 利用規約・ポリシー
+          pageRef: /bbs
+          weight: 3
+        - name: 検索
+          weight: 4
+          params:
+            type: search
+        - name: GitHub
+          weight: 5
+          url: https://github.com/sabafly/gobot
+          params:
+            icon: github
+        - name: Discord
+          weight: 6
+          url: https://discord.gg/hnNBD8QNmB
+          params:
+            icon: discord
+  en:
+    label: English
+    locale: en
+    weight: 2
+    title: gobot
+    params:
+      description: A versatile Discord bot featuring Anonymous BBS, server management, economy, and games
+    menu:
+      main:
+        - name: Docs
+          pageRef: /docs
+          weight: 1
+        - name: Commands
+          pageRef: /docs/commands
+          weight: 2
+        - name: Legal
+          pageRef: /bbs
+          weight: 3
+        - name: Search
+          weight: 4
+          params:
+            type: search
+        - name: GitHub
+          weight: 5
+          url: https://github.com/sabafly/gobot
+          params:
+            icon: github
+        - name: Discord
+          weight: 6
+          url: https://discord.gg/hnNBD8QNmB
+          params:
+            icon: discord
+
+params:
+  navbar:
+    displayTitle: true
+    displayLogo: true
+    logo:
+      path: img/logo.svg
+      dark: img/logo.svg
+      width: 28
+      height: 28
+
+  theme:
+    default: system
+    displayToggle: true
+
+  search:
+    enable: true
+    type: flexsearch
+
+  footer:
+    displayCopyright: true
+    displayPoweredBy: false
+
+  page:
+    width: normal
+
+  editURL:
+    enable: false
