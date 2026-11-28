@@ -235,12 +235,22 @@ func renderCommandPage(def components.CommandDefinition, lang docLang, weight in
 			} else {
 				fmt.Fprintf(&b, "## Message Command: %s\n\nRight-click a message → **Apps** → **%s**.\n\n", c.Name, localizeText(c.Name, c.NameLocalizations, lang.Locale))
 			}
+			var defaultPerms discord.Permissions
+			if c.DefaultMemberPermissions.OK && c.DefaultMemberPermissions.Value != nil {
+				defaultPerms = *c.DefaultMemberPermissions.Value
+			}
+			renderPermissionsLine(&b, defaultPerms, def.Permissions["m/"+c.Name], lang)
 		case discord.UserCommandCreate:
 			if lang.Code == "ja" {
 				fmt.Fprintf(&b, "## ユーザーコマンド: %s\n\nユーザーを右クリック →「アプリ」→「**%s**」から実行できます。\n\n", c.Name, localizeText(c.Name, c.NameLocalizations, lang.Locale))
 			} else {
 				fmt.Fprintf(&b, "## User Command: %s\n\nRight-click a user → **Apps** → **%s**.\n\n", c.Name, localizeText(c.Name, c.NameLocalizations, lang.Locale))
 			}
+			var defaultPerms discord.Permissions
+			if c.DefaultMemberPermissions.OK && c.DefaultMemberPermissions.Value != nil {
+				defaultPerms = *c.DefaultMemberPermissions.Value
+			}
+			renderPermissionsLine(&b, defaultPerms, def.Permissions["u/"+c.Name], lang)
 		}
 	}
 	return b.String()
@@ -315,21 +325,45 @@ func renderSlashCommand(b *strings.Builder, cmd discord.SlashCommandCreate, perm
 }
 
 func renderPermissionsLine(b *strings.Builder, cmdDefault discord.Permissions, meta components.CommandPermissionMeta, lang docLang) {
-	discordPerm := cmdDefault | meta.DiscordPermission
-	var parts []string
-	if discordPerm != 0 {
-		parts = append(parts, formatDiscordPermissions(discordPerm)...)
+	if cmdDefault != 0 {
+		defaultParts := formatDiscordPermissions(cmdDefault)
+		if len(defaultParts) > 0 {
+			if lang.Code == "ja" {
+				fmt.Fprintf(b, "**デフォルトの Discord 権限**: %s\n\n", strings.Join(defaultParts, ", "))
+			} else {
+				fmt.Fprintf(b, "**Default Discord Permissions**: %s\n\n", strings.Join(defaultParts, ", "))
+			}
+		}
 	}
+
+	var discordParts []string
+	if meta.DiscordPermission != 0 {
+		discordParts = formatDiscordPermissions(meta.DiscordPermission)
+	}
+	var nodeParts []string
 	for _, node := range meta.Permissions {
-		parts = append(parts, fmt.Sprintf("`%s`", node))
+		nodeParts = append(nodeParts, fmt.Sprintf("`%s`", node))
 	}
-	if len(parts) == 0 {
-		return
-	}
-	if lang.Code == "ja" {
-		fmt.Fprintf(b, "**必要な権限**: %s\n\n", strings.Join(parts, ", "))
-	} else {
-		fmt.Fprintf(b, "**Required Permissions**: %s\n\n", strings.Join(parts, ", "))
+
+	switch {
+	case len(discordParts) > 0 && len(nodeParts) > 0:
+		if lang.Code == "ja" {
+			fmt.Fprintf(b, "**必要な権限**: %s（権限ノードが明示的に拒否されていない場合）または %s\n\n", strings.Join(discordParts, ", "), strings.Join(nodeParts, ", "))
+		} else {
+			fmt.Fprintf(b, "**Required Permissions**: %s (unless explicitly denied) or %s\n\n", strings.Join(discordParts, ", "), strings.Join(nodeParts, ", "))
+		}
+	case len(discordParts) > 0:
+		if lang.Code == "ja" {
+			fmt.Fprintf(b, "**必要な権限**: %s\n\n", strings.Join(discordParts, ", "))
+		} else {
+			fmt.Fprintf(b, "**Required Permissions**: %s\n\n", strings.Join(discordParts, ", "))
+		}
+	case len(nodeParts) > 0:
+		if lang.Code == "ja" {
+			fmt.Fprintf(b, "**必要な権限**: %s\n\n", strings.Join(nodeParts, ", "))
+		} else {
+			fmt.Fprintf(b, "**Required Permissions**: %s\n\n", strings.Join(nodeParts, ", "))
+		}
 	}
 }
 
