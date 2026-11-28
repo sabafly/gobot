@@ -174,7 +174,17 @@ func renderIndex(defs []components.CommandDefinition, lang docLang) string {
 		byCat[def.Category] = append(byCat[def.Category], def)
 	}
 
-	for _, cat := range categoryOrder {
+	cats := slices.Clone(categoryOrder)
+	var extraCats []components.CommandCategory
+	for cat := range byCat {
+		if !slices.Contains(cats, cat) {
+			extraCats = append(extraCats, cat)
+		}
+	}
+	slices.Sort(extraCats)
+	cats = append(cats, extraCats...)
+
+	for _, cat := range cats {
 		items := byCat[cat]
 		if len(items) == 0 {
 			continue
@@ -187,7 +197,7 @@ func renderIndex(defs []components.CommandDefinition, lang docLang) string {
 		}
 		for _, def := range items {
 			creates := def.Commands()
-			summary := primarySummary(creates, lang.Locale)
+			summary := primarySummary(creates, lang)
 			slug := sanitizeSlug(def.Name)
 			link := fmt.Sprintf("./%s/", slug)
 			displayName := displayCommandTitle(def, creates)
@@ -201,7 +211,7 @@ func renderIndex(defs []components.CommandDefinition, lang docLang) string {
 func renderCommandPage(def components.CommandDefinition, lang docLang, weight int) string {
 	creates := def.Commands()
 	title := displayCommandTitle(def, creates)
-	summary := primarySummary(creates, lang.Locale)
+	summary := primarySummary(creates, lang)
 
 	var b strings.Builder
 	fmt.Fprintf(&b, "---\ntitle: %q\nweight: %d\ndescription: %q\n---\n\n", title, weight, summary)
@@ -221,15 +231,15 @@ func renderCommandPage(def components.CommandDefinition, lang docLang, weight in
 			renderSlashCommand(&b, c, def.Permissions, lang)
 		case discord.MessageCommandCreate:
 			if lang.Code == "ja" {
-				fmt.Fprintf(&b, "## メッセージコマンド: %s\n\nメッセージを右クリック →「アプリ」→「**%s**」から実行できます。\n\n", c.Name, localizeName(c.Name, c.NameLocalizations, lang.Locale))
+				fmt.Fprintf(&b, "## メッセージコマンド: %s\n\nメッセージを右クリック →「アプリ」→「**%s**」から実行できます。\n\n", c.Name, localizeText(c.Name, c.NameLocalizations, lang.Locale))
 			} else {
-				fmt.Fprintf(&b, "## Message Command: %s\n\nRight-click a message → **Apps** → **%s**.\n\n", c.Name, localizeName(c.Name, c.NameLocalizations, lang.Locale))
+				fmt.Fprintf(&b, "## Message Command: %s\n\nRight-click a message → **Apps** → **%s**.\n\n", c.Name, localizeText(c.Name, c.NameLocalizations, lang.Locale))
 			}
 		case discord.UserCommandCreate:
 			if lang.Code == "ja" {
-				fmt.Fprintf(&b, "## ユーザーコマンド: %s\n\nユーザーを右クリック →「アプリ」→「**%s**」から実行できます。\n\n", c.Name, localizeName(c.Name, c.NameLocalizations, lang.Locale))
+				fmt.Fprintf(&b, "## ユーザーコマンド: %s\n\nユーザーを右クリック →「アプリ」→「**%s**」から実行できます。\n\n", c.Name, localizeText(c.Name, c.NameLocalizations, lang.Locale))
 			} else {
-				fmt.Fprintf(&b, "## User Command: %s\n\nRight-click a user → **Apps** → **%s**.\n\n", c.Name, localizeName(c.Name, c.NameLocalizations, lang.Locale))
+				fmt.Fprintf(&b, "## User Command: %s\n\nRight-click a user → **Apps** → **%s**.\n\n", c.Name, localizeText(c.Name, c.NameLocalizations, lang.Locale))
 			}
 		}
 	}
@@ -237,7 +247,7 @@ func renderCommandPage(def components.CommandDefinition, lang docLang, weight in
 }
 
 func renderSlashCommand(b *strings.Builder, cmd discord.SlashCommandCreate, perms map[string]components.CommandPermissionMeta, lang docLang) {
-	desc := localizeDesc(cmd.Description, cmd.DescriptionLocalizations, lang.Locale)
+	desc := localizeText(cmd.Description, cmd.DescriptionLocalizations, lang.Locale)
 	fmt.Fprintf(b, "## `/%s`\n\n", cmd.Name)
 	if desc != "" {
 		b.WriteString(desc + "\n\n")
@@ -275,7 +285,7 @@ func renderSlashCommand(b *strings.Builder, cmd discord.SlashCommandCreate, perm
 	for _, sc := range subCommands {
 		route := fmt.Sprintf("/%s/%s", cmd.Name, sc.Name)
 		fmt.Fprintf(b, "### `/%s %s`\n\n", cmd.Name, sc.Name)
-		if d := localizeDesc(sc.Description, sc.DescriptionLocalizations, lang.Locale); d != "" {
+		if d := localizeText(sc.Description, sc.DescriptionLocalizations, lang.Locale); d != "" {
 			b.WriteString(d + "\n\n")
 		}
 		renderPermissionsLine(b, defaultPerms, perms[route], lang)
@@ -285,7 +295,7 @@ func renderSlashCommand(b *strings.Builder, cmd discord.SlashCommandCreate, perm
 	}
 
 	for _, grp := range subGroups {
-		grpDesc := localizeDesc(grp.Description, grp.DescriptionLocalizations, lang.Locale)
+		grpDesc := localizeText(grp.Description, grp.DescriptionLocalizations, lang.Locale)
 		fmt.Fprintf(b, "### `/%s %s`\n\n", cmd.Name, grp.Name)
 		if grpDesc != "" {
 			b.WriteString(grpDesc + "\n\n")
@@ -293,7 +303,7 @@ func renderSlashCommand(b *strings.Builder, cmd discord.SlashCommandCreate, perm
 		for _, sc := range grp.Options {
 			route := fmt.Sprintf("/%s/%s/%s", cmd.Name, grp.Name, sc.Name)
 			fmt.Fprintf(b, "#### `/%s %s %s`\n\n", cmd.Name, grp.Name, sc.Name)
-			if d := localizeDesc(sc.Description, sc.DescriptionLocalizations, lang.Locale); d != "" {
+			if d := localizeText(sc.Description, sc.DescriptionLocalizations, lang.Locale); d != "" {
 				b.WriteString(d + "\n\n")
 			}
 			renderPermissionsLine(b, defaultPerms, perms[route], lang)
@@ -358,29 +368,29 @@ func extractOptionInfo(opt discord.ApplicationCommandOption, loc discord.Locale)
 		for _, ch := range o.Choices {
 			choices = append(choices, fmt.Sprintf("`%s`", ch.Value))
 		}
-		return o.Name, "String", o.Required, localizeDesc(o.Description, o.DescriptionLocalizations, loc), choices
+		return o.Name, "String", o.Required, localizeText(o.Description, o.DescriptionLocalizations, loc), choices
 	case discord.ApplicationCommandOptionInt:
 		for _, ch := range o.Choices {
 			choices = append(choices, fmt.Sprintf("`%d`", ch.Value))
 		}
-		return o.Name, "Integer", o.Required, localizeDesc(o.Description, o.DescriptionLocalizations, loc), choices
+		return o.Name, "Integer", o.Required, localizeText(o.Description, o.DescriptionLocalizations, loc), choices
 	case discord.ApplicationCommandOptionFloat:
 		for _, ch := range o.Choices {
 			choices = append(choices, fmt.Sprintf("`%g`", ch.Value))
 		}
-		return o.Name, "Number", o.Required, localizeDesc(o.Description, o.DescriptionLocalizations, loc), choices
+		return o.Name, "Number", o.Required, localizeText(o.Description, o.DescriptionLocalizations, loc), choices
 	case discord.ApplicationCommandOptionBool:
-		return o.Name, "Boolean", o.Required, localizeDesc(o.Description, o.DescriptionLocalizations, loc), nil
+		return o.Name, "Boolean", o.Required, localizeText(o.Description, o.DescriptionLocalizations, loc), nil
 	case discord.ApplicationCommandOptionUser:
-		return o.Name, "User", o.Required, localizeDesc(o.Description, o.DescriptionLocalizations, loc), nil
+		return o.Name, "User", o.Required, localizeText(o.Description, o.DescriptionLocalizations, loc), nil
 	case discord.ApplicationCommandOptionChannel:
-		return o.Name, "Channel", o.Required, localizeDesc(o.Description, o.DescriptionLocalizations, loc), nil
+		return o.Name, "Channel", o.Required, localizeText(o.Description, o.DescriptionLocalizations, loc), nil
 	case discord.ApplicationCommandOptionRole:
-		return o.Name, "Role", o.Required, localizeDesc(o.Description, o.DescriptionLocalizations, loc), nil
+		return o.Name, "Role", o.Required, localizeText(o.Description, o.DescriptionLocalizations, loc), nil
 	case discord.ApplicationCommandOptionMentionable:
-		return o.Name, "Mentionable", o.Required, localizeDesc(o.Description, o.DescriptionLocalizations, loc), nil
+		return o.Name, "Mentionable", o.Required, localizeText(o.Description, o.DescriptionLocalizations, loc), nil
 	case discord.ApplicationCommandOptionAttachment:
-		return o.Name, "Attachment", o.Required, localizeDesc(o.Description, o.DescriptionLocalizations, loc), nil
+		return o.Name, "Attachment", o.Required, localizeText(o.Description, o.DescriptionLocalizations, loc), nil
 	default:
 		return opt.OptionName(), fmt.Sprintf("Type(%d)", opt.Type()), false, "", nil
 	}
@@ -419,25 +429,32 @@ func displayCommandTitle(def components.CommandDefinition, creates []discord.App
 	return def.Name
 }
 
-func primarySummary(creates []discord.ApplicationCommandCreate, loc discord.Locale) string {
+func primarySummary(creates []discord.ApplicationCommandCreate, lang docLang) string {
 	for _, c := range creates {
 		if sc, ok := c.(discord.SlashCommandCreate); ok {
-			return localizeDesc(sc.Description, sc.DescriptionLocalizations, loc)
+			return localizeText(sc.Description, sc.DescriptionLocalizations, lang.Locale)
+		}
+	}
+	for _, c := range creates {
+		switch mc := c.(type) {
+		case discord.MessageCommandCreate:
+			name := localizeText(mc.Name, mc.NameLocalizations, lang.Locale)
+			if lang.Code == "ja" {
+				return fmt.Sprintf("メッセージコマンド（%s）", name)
+			}
+			return fmt.Sprintf("Message command (%s)", name)
+		case discord.UserCommandCreate:
+			name := localizeText(mc.Name, mc.NameLocalizations, lang.Locale)
+			if lang.Code == "ja" {
+				return fmt.Sprintf("ユーザーコマンド（%s）", name)
+			}
+			return fmt.Sprintf("User command (%s)", name)
 		}
 	}
 	return ""
 }
 
-func localizeDesc(fallback string, locs map[discord.Locale]string, target discord.Locale) string {
-	if locs != nil {
-		if v := strings.TrimSpace(locs[target]); v != "" {
-			return v
-		}
-	}
-	return strings.TrimSpace(fallback)
-}
-
-func localizeName(fallback string, locs map[discord.Locale]string, target discord.Locale) string {
+func localizeText(fallback string, locs map[discord.Locale]string, target discord.Locale) string {
 	if locs != nil {
 		if v := strings.TrimSpace(locs[target]); v != "" {
 			return v
