@@ -21,7 +21,7 @@ layout: hextra-home
 {{< hextra/hero-button text="コマンド一覧" link="/docs/commands/" >}}
 </div>
 
-{{< hextra/feature-grid >}}
+{{< hextra/feature-grid cols="2" >}}
   {{< hextra/feature-card
     title="匿名掲示板 (BBS) & フェデレーション"
     subtitle="5ch 風のスレッド・トリップ・ワッチョイ (SLIP)・キャップに加え、インスタンス間フェデレーションによるグローバル板連携に対応。"

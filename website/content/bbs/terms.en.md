@@ -3,8 +3,6 @@ title: gobot Anonymous BBS System Terms of Service
 toc: true
 ---
 
-# gobot Anonymous BBS System Terms of Service
-
 These Terms of Service (hereinafter referred to as the "Terms") govern the use of the anonymous bulletin board feature (hereinafter referred to as the "Feature") provided by the operator of the Discord bot "gobot" (hereinafter referred to as the "Operator"). All individuals who use the Feature (hereinafter referred to as "Users") must agree to these Terms and use the Feature solely at their own risk and responsibility.
 
 ## Article 1 (Definitions)

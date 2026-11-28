@@ -3,8 +3,6 @@ title: gobot Anonymous BBS Community Guidelines
 toc: true
 ---
 
-# gobot Anonymous BBS Community Guidelines
-
 These Guidelines establish the standards of conduct required to keep the gobot Anonymous BBS safe and enjoyable. All users must comply with these Guidelines in addition to the Terms of Service and the Discord Community Guidelines.
 
 ## 1. Basic Etiquette

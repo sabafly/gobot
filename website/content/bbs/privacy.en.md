@@ -3,8 +3,6 @@ title: gobot Anonymous BBS Privacy Policy
 toc: true
 ---
 
-# gobot Anonymous BBS Privacy Policy
-
 The operator of gobot (hereinafter referred to as the "Operator") establishes this Privacy Policy (hereinafter referred to as the "Policy") regarding the handling of user information in the anonymous bulletin board feature (hereinafter referred to as the "Feature") of the Discord bot "gobot".
 
 ## 1. Information Collected and Retained

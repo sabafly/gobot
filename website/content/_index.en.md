@@ -5,7 +5,7 @@ layout: hextra-home
 
 <div class="hx:mt-6 hx:mb-6">
 {{< hextra/hero-headline >}}
-  Make Your Discord Server<br class="hx:sm:block hx:hidden" /> Smarter and More Fun
+  Make Your Discord Server <br class="hx:sm:block hx:hidden" />Smarter and More Fun
 {{< /hextra/hero-headline >}}
 </div>
 
@@ -21,7 +21,7 @@ layout: hextra-home
 {{< hextra/hero-button text="Command Reference" link="/en/docs/commands/" >}}
 </div>
 
-{{< hextra/feature-grid >}}
+{{< hextra/feature-grid cols="2" >}}
   {{< hextra/feature-card
     title="Anonymous BBS & Federation"
     subtitle="5ch-style anonymous threads, tripcodes, SLIP badges, caps, and OAuth 2.0 cross-instance global board federation."
