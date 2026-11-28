@@ -558,6 +558,7 @@ func initBBSFederation(
 				AllowCaps:       p.AllowCaps,
 				RedirectURIs:    p.RedirectURIs,
 				AllowedBoardIDs: p.AllowedBoardIDs,
+				SlipLabel:       p.SlipLabel,
 			})
 		}
 		srvCfg := federation.ServerConfig{

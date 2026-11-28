@@ -274,6 +274,7 @@ func (BBSBan) TableName() string { return "bbs_bans" }
 type BBSReport struct {
 	ID             uuid.UUID     `gorm:"type:varchar(36);primaryKey"`
 	Scope          string        `gorm:"type:varchar(16);not null;index"`
+	OriginPeer     string        `gorm:"type:varchar(64);not null;default:'';index"`
 	GuildID        snowflake.ID  `gorm:"not null;index"`
 	PostID         uuid.UUID     `gorm:"type:varchar(36);not null;index"`
 	ThreadID       uuid.UUID     `gorm:"type:varchar(36);not null;index"`

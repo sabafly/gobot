@@ -105,6 +105,9 @@ func (s *reportsState) rebuildDetail(theme ui.Theme) {
 		kvLine(theme, "Reporter", reporterStr),
 		kvLine(theme, "Created", rep.CreatedAt.Local().Format("2006-01-02 15:04:05")),
 	}
+	if rep.OriginPeer != "" {
+		lines = append(lines, kvLine(theme, "Origin Peer", rep.OriginPeer))
+	}
 	if rep.HandledBy != nil {
 		lines = append(lines, kvLine(theme, "Handled By", ui.FormatIDWithName(rep.HandledByName, *rep.HandledBy)))
 	}

@@ -229,6 +229,7 @@ func toBBSReportDTO(r bbs.Report) BBSReportDTO {
 	return BBSReportDTO{
 		ID:             r.ID.String(),
 		Scope:          string(r.Scope),
+		OriginPeer:     r.OriginPeer,
 		GuildID:        r.GuildID.String(),
 		PostID:         r.PostID.String(),
 		ThreadID:       r.ThreadID.String(),

@@ -123,6 +123,7 @@ type ConfigBBSFederationPeer struct {
 	AllowCaps       bool     `yaml:"allow_caps"`
 	RedirectURIs    []string `yaml:"redirect_uris"`
 	AllowedBoardIDs []string `yaml:"allowed_board_ids"`
+	SlipLabel       string   `yaml:"slip_label"`
 }
 
 type ConfigBBSFederationClient struct {

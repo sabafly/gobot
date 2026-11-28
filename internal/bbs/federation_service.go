@@ -379,7 +379,7 @@ func (s *Service) CreatePostFromFederation(
 // CreateReportFromFederation records a user report on a native global board post via federation.
 func (s *Service) CreateReportFromFederation(
 	ctx context.Context,
-	_ string,
+	peerID string,
 	guildID snowflake.ID,
 	reporterID snowflake.ID,
 	postID uuid.UUID,
@@ -414,6 +414,7 @@ func (s *Service) CreateReportFromFederation(
 	report := &Report{
 		ID:             uuidv7.New(),
 		Scope:          ScopeGlobal,
+		OriginPeer:     strings.TrimSpace(peerID),
 		GuildID:        guildID,
 		PostID:         post.ID,
 		ThreadID:       thread.ID,

@@ -450,6 +450,7 @@ type Ban struct {
 type Report struct {
 	ID             uuid.UUID
 	Scope          Scope
+	OriginPeer     string
 	GuildID        snowflake.ID
 	PostID         uuid.UUID
 	ThreadID       uuid.UUID
@@ -566,6 +567,8 @@ type SlipEventDefinition struct {
 
 // SlipContext supplies anonymous Discord user, member, and guild traits used to derive playful SLIP nicknames and KOROKORO hashes.
 type SlipContext struct {
+	BaseNicknameOverride string `json:"-"`
+
 	MemberNick string
 	GlobalName string
 	Username   string
