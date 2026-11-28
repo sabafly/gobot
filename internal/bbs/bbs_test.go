@@ -524,11 +524,25 @@ func TestPolicyManager(t *testing.T) {
 	if pm.NeedsConsent(&bbs.UserConsent{PolicyVersion: "v2"}) {
 		t.Fatal("matching consent version must pass")
 	}
-	if doc := pm.GetDocument(bbs.PolicyDocTerms, "ja"); !strings.Contains(doc, "利用規約") {
-		t.Fatalf("expected Japanese terms doc, got %q", doc)
+	if pm.TermsURL != bbs.DefaultTermsURL || pm.GuidelinesURL != bbs.DefaultGuidelinesURL || pm.PrivacyPolicyURL != bbs.DefaultPrivacyPolicyURL {
+		t.Fatalf("expected default policy URLs, got terms=%q guidelines=%q privacy=%q", pm.TermsURL, pm.GuidelinesURL, pm.PrivacyPolicyURL)
 	}
-	if doc := pm.GetDocument(bbs.PolicyDocPrivacy, "en-US"); !strings.Contains(doc, "Privacy Policy") {
-		t.Fatalf("expected English privacy doc, got %q", doc)
+	customPM := bbs.NewPolicyManager(bbs.PolicyConfig{
+		TermsURL:         "https://custom.example.com/terms",
+		GuidelinesURL:    "https://custom.example.com/guidelines",
+		PrivacyPolicyURL: "https://custom.example.com/privacy",
+	})
+	if customPM.TermsURL != "https://custom.example.com/terms" || customPM.GuidelinesURL != "https://custom.example.com/guidelines" || customPM.PrivacyPolicyURL != "https://custom.example.com/privacy" {
+		t.Fatalf("expected custom policy URLs, got %+v", customPM)
+	}
+	if err := bbs.ValidatePolicyConfig(bbs.PolicyConfig{TermsURL: "javascript:alert(1)"}); !errors.Is(err, bbs.ErrInvalidInput) {
+		t.Fatalf("expected ErrInvalidInput for invalid terms_url, got %v", err)
+	}
+	if err := bbs.ValidatePolicyConfig(bbs.PolicyConfig{TermsURL: "https://:443/terms"}); !errors.Is(err, bbs.ErrInvalidInput) {
+		t.Fatalf("expected ErrInvalidInput for empty-hostname terms_url, got %v", err)
+	}
+	if err := bbs.ValidatePolicyConfig(bbs.PolicyConfig{TermsURL: "https://example.com:8443/terms"}); err != nil {
+		t.Fatalf("expected hostname+port terms_url to pass, got %v", err)
 	}
 	if err := bbs.ValidatePolicyConfig(bbs.PolicyConfig{Version: strings.Repeat("a", bbs.MaxPolicyVersionLen)}); err != nil {
 		t.Fatalf("expected %d-char policy version to pass validation: %v", bbs.MaxPolicyVersionLen, err)

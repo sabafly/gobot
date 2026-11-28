@@ -137,18 +137,7 @@ func (s *System) ensureRemoteDelegation(
 
 func (s *System) handleConsentViewDoc(e *handler.ComponentEvent) error {
 	loc := e.Locale()
-	kind := bbscore.PolicyDocKind(e.Vars["doc"])
-	switch kind {
-	case bbscore.PolicyDocTerms, bbscore.PolicyDocGuidelines, bbscore.PolicyDocPrivacy:
-	default:
-		s.replyComponentError(e,
-			i18n.TranslateText(loc, "components.bbs.errors.title.invalid_input"),
-			i18n.TranslateText(loc, "components.bbs.consent.doc.invalid"),
-		)
-		return nil
-	}
-
-	msg := discordsync.RenderPolicyDocumentView(s.Service.Policy, kind, loc)
+	msg := discordsync.RenderPolicyLinksView(s.Service.Policy, loc)
 	sr := discordsync.NewSafeResponder(e.ID().Time())
 	_ = sr.RespondMessageCreate(e, msg)
 	return nil

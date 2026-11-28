@@ -610,14 +610,6 @@ func (m *oauthManager) loadVerifiedConsentTx(r *http.Request, txID string) (pend
 	return *tx, peer, true
 }
 
-func detectConsentLang(r *http.Request) string {
-	al := strings.ToLower(r.Header.Get("Accept-Language"))
-	if strings.HasPrefix(al, "en") {
-		return "en"
-	}
-	return "ja"
-}
-
 func (m *oauthManager) handleConsentGet(w http.ResponseWriter, r *http.Request) {
 	txID := strings.TrimSpace(r.URL.Query().Get("tx"))
 	tx, peer, ok := m.loadVerifiedConsentTx(r, txID)
@@ -629,7 +621,6 @@ func (m *oauthManager) handleConsentGet(w http.ResponseWriter, r *http.Request) 
 }
 
 func (m *oauthManager) renderConsentForm(w http.ResponseWriter, r *http.Request, tx pendingOAuthTx, peer PeerConfig, errMsg string) {
-	lang := detectConsentLang(r)
 	pm := m.srv.svc.Policy
 	userCaps := m.srv.svc.ListAvailableCaps(r.Context(), tx.DiscordUserID, uuid.Nil)
 	showCapsOption := peer.AllowCaps && slices.Contains(tx.RequestedScopes, bbs.FederationScopeCaps) && len(userCaps) > 0
@@ -654,9 +645,6 @@ func (m *oauthManager) renderConsentForm(w http.ResponseWriter, r *http.Request,
 		"TermsURL":       pm.TermsURL,
 		"GuidelinesURL":  pm.GuidelinesURL,
 		"PrivacyURL":     pm.PrivacyPolicyURL,
-		"TermsDoc":       pm.GetDocument(bbs.PolicyDocTerms, lang),
-		"GuidelinesDoc":  pm.GetDocument(bbs.PolicyDocGuidelines, lang),
-		"PrivacyDoc":     pm.GetDocument(bbs.PolicyDocPrivacy, lang),
 		"AllowWrite":     slices.Contains(tx.RequestedScopes, bbs.FederationScopeWrite),
 		"AllowReport":    slices.Contains(tx.RequestedScopes, bbs.FederationScopeReport),
 		"ShowCapsOption": showCapsOption,
@@ -1161,16 +1149,12 @@ var consentPageTmpl = template.Must(template.New("fed_consent").Parse(`<!DOCTYPE
 
     {{if or .TermsURL .GuidelinesURL .PrivacyURL}}
     <div class="links">
-      外部参照リンク:
+      ポリシー文書（別タブで開きます）:
       {{if .TermsURL}}<a href="{{.TermsURL}}" target="_blank" rel="noopener noreferrer">利用規約</a>{{end}}
       {{if .GuidelinesURL}}<a href="{{.GuidelinesURL}}" target="_blank" rel="noopener noreferrer">ガイドライン</a>{{end}}
       {{if .PrivacyURL}}<a href="{{.PrivacyURL}}" target="_blank" rel="noopener noreferrer">プライバシーポリシー</a>{{end}}
     </div>
     {{end}}
-
-    <details><summary>利用規約（クリックして開く）</summary><pre>{{.TermsDoc}}</pre></details>
-    <details><summary>コミュニティガイドライン（クリックして開く）</summary><pre>{{.GuidelinesDoc}}</pre></details>
-    <details><summary>プライバシーポリシー（クリックして開く）</summary><pre>{{.PrivacyDoc}}</pre></details>
 
     <form method="post" action="{{.ActionURL}}">
       <input type="hidden" name="tx" value="{{.TxID}}" />

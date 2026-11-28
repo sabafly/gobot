@@ -849,27 +849,27 @@ func computeBackwardStartIndex(
 
 func isValidHTTPURL(raw string) bool {
 	u, err := url.Parse(strings.TrimSpace(raw))
-	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != "" && u.Hostname() != ""
 }
 
-func consentURLButtons(pm *bbs.PolicyManager, locale discord.Locale) []discord.InteractiveComponent {
+// ConsentURLButtons builds Discord link buttons for configured legal policy URLs.
+func ConsentURLButtons(pm *bbs.PolicyManager, locale discord.Locale) []discord.InteractiveComponent {
 	if pm == nil {
 		return nil
 	}
 	termsLabel := TruncateRunes(i18n.TranslateText(locale, "components.bbs.consent.btn.terms"), MaxButtonLabelRunes)
 	guideLabel := TruncateRunes(i18n.TranslateText(locale, "components.bbs.consent.btn.guidelines"), MaxButtonLabelRunes)
 	privacyLabel := TruncateRunes(i18n.TranslateText(locale, "components.bbs.consent.btn.privacy"), MaxButtonLabelRunes)
-	webSuffix := i18n.TranslateText(locale, "components.bbs.consent.btn.web_suffix")
 
 	var urlButtons []discord.InteractiveComponent
 	if isValidHTTPURL(pm.TermsURL) {
-		urlButtons = append(urlButtons, discord.NewLinkButton(TruncateRunes(termsLabel+webSuffix, MaxButtonLabelRunes), strings.TrimSpace(pm.TermsURL)))
+		urlButtons = append(urlButtons, discord.NewLinkButton(termsLabel, strings.TrimSpace(pm.TermsURL)))
 	}
 	if isValidHTTPURL(pm.GuidelinesURL) {
-		urlButtons = append(urlButtons, discord.NewLinkButton(TruncateRunes(guideLabel+webSuffix, MaxButtonLabelRunes), strings.TrimSpace(pm.GuidelinesURL)))
+		urlButtons = append(urlButtons, discord.NewLinkButton(guideLabel, strings.TrimSpace(pm.GuidelinesURL)))
 	}
 	if isValidHTTPURL(pm.PrivacyPolicyURL) {
-		urlButtons = append(urlButtons, discord.NewLinkButton(TruncateRunes(privacyLabel+webSuffix, MaxButtonLabelRunes), strings.TrimSpace(pm.PrivacyPolicyURL)))
+		urlButtons = append(urlButtons, discord.NewLinkButton(privacyLabel, strings.TrimSpace(pm.PrivacyPolicyURL)))
 	}
 	return urlButtons
 }
@@ -938,26 +938,17 @@ func RenderConsentModal(pm *bbs.PolicyManager, locale discord.Locale, actionToke
 	)
 }
 
-// RenderConsentGate builds the ephemeral policy consent UI (zero emojis) with version-bound modal launcher CustomID.
+// RenderConsentGate builds the ephemeral policy consent UI (zero emojis) with URL link buttons and version-bound modal launcher CustomID.
 func RenderConsentGate(pm *bbs.PolicyManager, locale discord.Locale, actionToken string) discord.MessageCreate {
 	title := i18n.TranslateText(locale, "components.bbs.consent.title")
 	summary := i18n.TranslateText(locale, "components.bbs.consent.summary")
 	openLabel := TruncateRunes(i18n.TranslateText(locale, "components.bbs.consent.btn.open_modal"), MaxButtonLabelRunes)
-	termsLabel := TruncateRunes(i18n.TranslateText(locale, "components.bbs.consent.btn.terms"), MaxButtonLabelRunes)
-	guideLabel := TruncateRunes(i18n.TranslateText(locale, "components.bbs.consent.btn.guidelines"), MaxButtonLabelRunes)
-	privacyLabel := TruncateRunes(i18n.TranslateText(locale, "components.bbs.consent.btn.privacy"), MaxButtonLabelRunes)
 
 	if actionToken == "" {
 		actionToken = "none"
 	}
 
-	docRow := discord.NewActionRow(
-		discord.NewSecondaryButton(termsLabel, "/bbs/consent/view/terms"),
-		discord.NewSecondaryButton(guideLabel, "/bbs/consent/view/guidelines"),
-		discord.NewSecondaryButton(privacyLabel, "/bbs/consent/view/privacy"),
-	)
-
-	urlButtons := consentURLButtons(pm, locale)
+	urlButtons := ConsentURLButtons(pm, locale)
 
 	subComps := []discord.ContainerSubComponent{
 		discord.NewTextDisplay(title),
@@ -965,7 +956,6 @@ func RenderConsentGate(pm *bbs.PolicyManager, locale discord.Locale, actionToken
 		discord.NewTextDisplay(summary),
 		discord.NewTextDisplayf("-# policy_version: %s", pm.CurrentVersion),
 		discord.NewLargeSeparator(),
-		docRow,
 	}
 	if len(urlButtons) > 0 {
 		subComps = append(subComps, discord.NewActionRow(urlButtons...))
@@ -980,43 +970,22 @@ func RenderConsentGate(pm *bbs.PolicyManager, locale discord.Locale, actionToken
 	).WithEphemeral(true).WithAllowedMentions(&discord.AllowedMentions{})
 }
 
-// RenderPolicyDocumentView builds an ephemeral policy document viewer with buttons to switch between the 3 legal documents.
-func RenderPolicyDocumentView(pm *bbs.PolicyManager, kind bbs.PolicyDocKind, locale discord.Locale) discord.MessageCreate {
-	var titleKey string
-	switch kind {
-	case bbs.PolicyDocTerms:
-		titleKey = "components.bbs.consent.btn.terms"
-	case bbs.PolicyDocGuidelines:
-		titleKey = "components.bbs.consent.btn.guidelines"
-	case bbs.PolicyDocPrivacy:
-		titleKey = "components.bbs.consent.btn.privacy"
-	default:
-		titleKey = "components.bbs.consent.btn.terms"
-		kind = bbs.PolicyDocTerms
-	}
-
-	titleText := TruncateRunes(i18n.TranslateText(locale, titleKey), 200)
-	docText := TruncateRunes(strings.TrimSpace(pm.GetDocument(kind, string(locale))), 3400)
-	if docText == "" {
-		docText = "-"
-	}
-
-	termsBtn := discord.NewSecondaryButton(TruncateRunes(i18n.TranslateText(locale, "components.bbs.consent.btn.terms"), MaxButtonLabelRunes), "/bbs/consent/view/terms")
-	termsBtn.Disabled = kind == bbs.PolicyDocTerms
-	guideBtn := discord.NewSecondaryButton(TruncateRunes(i18n.TranslateText(locale, "components.bbs.consent.btn.guidelines"), MaxButtonLabelRunes), "/bbs/consent/view/guidelines")
-	guideBtn.Disabled = kind == bbs.PolicyDocGuidelines
-	privacyBtn := discord.NewSecondaryButton(TruncateRunes(i18n.TranslateText(locale, "components.bbs.consent.btn.privacy"), MaxButtonLabelRunes), "/bbs/consent/view/privacy")
-	privacyBtn.Disabled = kind == bbs.PolicyDocPrivacy
+// RenderPolicyLinksView builds an ephemeral policy link panel pointing to the external legal document URLs.
+func RenderPolicyLinksView(pm *bbs.PolicyManager, locale discord.Locale) discord.MessageCreate {
+	title := i18n.TranslateText(locale, "components.bbs.consent.title")
+	summary := i18n.TranslateText(locale, "components.bbs.consent.summary")
 
 	subComps := []discord.ContainerSubComponent{
-		discord.NewTextDisplayf("### ■ %s", titleText),
+		discord.NewTextDisplay(title),
 		discord.NewSmallSeparator(),
-		discord.NewTextDisplay(docText),
-		discord.NewLargeSeparator(),
-		discord.NewActionRow(termsBtn, guideBtn, privacyBtn),
+		discord.NewTextDisplay(summary),
+		discord.NewTextDisplayf("-# policy_version: %s", pm.CurrentVersion),
 	}
-	if urlButtons := consentURLButtons(pm, locale); len(urlButtons) > 0 {
-		subComps = append(subComps, discord.NewActionRow(urlButtons...))
+	if urlButtons := ConsentURLButtons(pm, locale); len(urlButtons) > 0 {
+		subComps = append(subComps,
+			discord.NewLargeSeparator(),
+			discord.NewActionRow(urlButtons...),
+		)
 	}
 
 	return discord.NewMessageCreateV2(

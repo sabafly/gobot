@@ -21,24 +21,20 @@ package bbs
 
 import (
 	"crypto/sha256"
-	"embed"
 	"encoding/hex"
+	"fmt"
+	"net/url"
 	"strings"
 	"unicode/utf8"
 )
 
-//go:embed legal/*.md
-var legalFS embed.FS
-
-type PolicyDocKind string
-
 const (
-	PolicyDocTerms      PolicyDocKind = "terms"
-	PolicyDocGuidelines PolicyDocKind = "guidelines"
-	PolicyDocPrivacy    PolicyDocKind = "privacy"
+	DefaultTermsURL         = "https://gobot.sabafly.net/bbs/terms"
+	DefaultGuidelinesURL    = "https://gobot.sabafly.net/bbs/guidelines"
+	DefaultPrivacyPolicyURL = "https://gobot.sabafly.net/bbs/privacy"
 )
 
-// PolicyConfig configures policy versioning and optional external document links.
+// PolicyConfig configures policy versioning and external document links.
 type PolicyConfig struct {
 	Version          string
 	TermsURL         string
@@ -46,16 +42,33 @@ type PolicyConfig struct {
 	PrivacyPolicyURL string
 }
 
-// ValidatePolicyConfig ensures configured policy metadata satisfies persistence length limits.
+func isValidPolicyURL(raw string) bool {
+	u, err := url.Parse(strings.TrimSpace(raw))
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != "" && u.Hostname() != ""
+}
+
+// ValidatePolicyConfig ensures configured policy metadata satisfies persistence length limits and URL format.
 func ValidatePolicyConfig(cfg PolicyConfig) error {
 	ver := strings.TrimSpace(cfg.Version)
 	if len(ver) > MaxPolicyVersionLen || utf8.RuneCountInString(ver) > MaxPolicyVersionLen {
 		return ErrInvalidPolicyVersion
 	}
+	for _, entry := range []struct {
+		name string
+		val  string
+	}{
+		{"terms_url", cfg.TermsURL},
+		{"guidelines_url", cfg.GuidelinesURL},
+		{"privacy_policy_url", cfg.PrivacyPolicyURL},
+	} {
+		if strings.TrimSpace(entry.val) != "" && !isValidPolicyURL(entry.val) {
+			return fmt.Errorf("%w: invalid %s", ErrInvalidInput, entry.name)
+		}
+	}
 	return nil
 }
 
-// PolicyManager serves embedded policy documents and checks consent version compliance.
+// PolicyManager manages policy version compliance and external legal document URLs.
 type PolicyManager struct {
 	CurrentVersion   string
 	TermsURL         string
@@ -63,17 +76,29 @@ type PolicyManager struct {
 	PrivacyPolicyURL string
 }
 
-// NewPolicyManager initializes a PolicyManager with fallback version defaults.
+// NewPolicyManager initializes a PolicyManager with fallback version and URL defaults.
 func NewPolicyManager(cfg PolicyConfig) *PolicyManager {
 	ver := strings.TrimSpace(cfg.Version)
 	if ver == "" {
 		ver = DefaultPolicyVersion
 	}
+	termsURL := strings.TrimSpace(cfg.TermsURL)
+	if termsURL == "" {
+		termsURL = DefaultTermsURL
+	}
+	guidelinesURL := strings.TrimSpace(cfg.GuidelinesURL)
+	if guidelinesURL == "" {
+		guidelinesURL = DefaultGuidelinesURL
+	}
+	privacyURL := strings.TrimSpace(cfg.PrivacyPolicyURL)
+	if privacyURL == "" {
+		privacyURL = DefaultPrivacyPolicyURL
+	}
 	return &PolicyManager{
 		CurrentVersion:   ver,
-		TermsURL:         strings.TrimSpace(cfg.TermsURL),
-		GuidelinesURL:    strings.TrimSpace(cfg.GuidelinesURL),
-		PrivacyPolicyURL: strings.TrimSpace(cfg.PrivacyPolicyURL),
+		TermsURL:         termsURL,
+		GuidelinesURL:    guidelinesURL,
+		PrivacyPolicyURL: privacyURL,
 	}
 }
 
@@ -83,28 +108,6 @@ func (m *PolicyManager) NeedsConsent(consent *UserConsent) bool {
 		return true
 	}
 	return consent.PolicyVersion != m.CurrentVersion
-}
-
-// GetDocument returns the embedded markdown text for the requested document and language.
-func (m *PolicyManager) GetDocument(kind PolicyDocKind, locale string) string {
-	lang := normalizePolicyLocale(locale)
-	filename := "legal/" + string(kind) + "_" + lang + ".md"
-	data, err := legalFS.ReadFile(filename)
-	if err != nil {
-		data, err = legalFS.ReadFile("legal/" + string(kind) + "_ja.md")
-		if err != nil {
-			return ""
-		}
-	}
-	return string(data)
-}
-
-func normalizePolicyLocale(locale string) string {
-	l := strings.ToLower(strings.TrimSpace(locale))
-	if strings.HasPrefix(l, "en") {
-		return "en"
-	}
-	return "ja"
 }
 
 // PolicyVersionToken encodes a policy version string into a route-safe token for component CustomIDs.
@@ -127,5 +130,5 @@ func PolicyVersionToken(version string) string {
 		}
 	}
 	sum := sha256.Sum256([]byte(v))
-	return "h_" + hex.EncodeToString(sum[:8])
+	return "v_" + hex.EncodeToString(sum[:8])
 }
