@@ -1,0 +1,85 @@
+{{- $ctx := .context -}}
+{{- $isEn := eq $ctx.Site.Language.Lang "en" -}}
+{{- $docsPrefix := cond $isEn "/en/docs/" "/docs/" -}}
+{{- $bbsPrefix := cond $isEn "/en/bbs/" "/bbs/" -}}
+
+<div class="hx:grid hx:grid-cols-1 hx:sm:grid-cols-3 hx:gap-8 hx:pt-10 hx:pb-4 hx:text-sm">
+  <div>
+    <h3 class="hx:font-semibold hx:text-gray-900 hx:dark:text-gray-100 hx:mb-3">
+      {{- if $isEn -}}Documentation{{- else -}}ドキュメント{{- end -}}
+    </h3>
+    <ul class="hx:space-y-2">
+      <li>
+        <a href="{{ (printf "%s" $docsPrefix) | relURL }}" class="hx:text-gray-600 hx:hover:text-gray-900 hx:dark:text-gray-400 hx:dark:hover:text-gray-100">
+          {{- if $isEn -}}Docs Home{{- else -}}ドキュメントトップ{{- end -}}
+        </a>
+      </li>
+      <li>
+        <a href="{{ (printf "%sgetting-started/" $docsPrefix) | relURL }}" class="hx:text-gray-600 hx:hover:text-gray-900 hx:dark:text-gray-400 hx:dark:hover:text-gray-100">
+          {{- if $isEn -}}Getting Started{{- else -}}導入ガイド{{- end -}}
+        </a>
+      </li>
+      <li>
+        <a href="{{ (printf "%scommands/" $docsPrefix) | relURL }}" class="hx:text-gray-600 hx:hover:text-gray-900 hx:dark:text-gray-400 hx:dark:hover:text-gray-100">
+          {{- if $isEn -}}Command Reference{{- else -}}コマンド一覧{{- end -}}
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div>
+    <h3 class="hx:font-semibold hx:text-gray-900 hx:dark:text-gray-100 hx:mb-3">
+      {{- if $isEn -}}Legal &amp; Policies{{- else -}}利用規約・ポリシー{{- end -}}
+    </h3>
+    <ul class="hx:space-y-2">
+      <li>
+        <a href="{{ "/terms-of-service/" | relURL }}" class="hx:text-gray-600 hx:hover:text-gray-900 hx:dark:text-gray-400 hx:dark:hover:text-gray-100">
+          {{- if $isEn -}}Terms of Service (JA){{- else -}}サービス利用規約{{- end -}}
+        </a>
+      </li>
+      <li>
+        <a href="{{ "/privacy-policy/" | relURL }}" class="hx:text-gray-600 hx:hover:text-gray-900 hx:dark:text-gray-400 hx:dark:hover:text-gray-100">
+          {{- if $isEn -}}Privacy Policy (JA){{- else -}}プライバシーポリシー{{- end -}}
+        </a>
+      </li>
+      <li>
+        <a href="{{ (printf "%sterms/" $bbsPrefix) | relURL }}" class="hx:text-gray-600 hx:hover:text-gray-900 hx:dark:text-gray-400 hx:dark:hover:text-gray-100">
+          {{- if $isEn -}}BBS Terms of Service{{- else -}}BBS 利用規約{{- end -}}
+        </a>
+      </li>
+      <li>
+        <a href="{{ (printf "%sguidelines/" $bbsPrefix) | relURL }}" class="hx:text-gray-600 hx:hover:text-gray-900 hx:dark:text-gray-400 hx:dark:hover:text-gray-100">
+          {{- if $isEn -}}BBS Community Guidelines{{- else -}}BBS コミュニティガイドライン{{- end -}}
+        </a>
+      </li>
+      <li>
+        <a href="{{ (printf "%sprivacy/" $bbsPrefix) | relURL }}" class="hx:text-gray-600 hx:hover:text-gray-900 hx:dark:text-gray-400 hx:dark:hover:text-gray-100">
+          {{- if $isEn -}}BBS Privacy Policy{{- else -}}BBS プライバシーポリシー{{- end -}}
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div>
+    <h3 class="hx:font-semibold hx:text-gray-900 hx:dark:text-gray-100 hx:mb-3">
+      {{- if $isEn -}}Community{{- else -}}コミュニティ{{- end -}}
+    </h3>
+    <ul class="hx:space-y-2">
+      <li>
+        <a href="https://discord.gg/hnNBD8QNmB" target="_blank" rel="noopener noreferrer" class="hx:text-gray-600 hx:hover:text-gray-900 hx:dark:text-gray-400 hx:dark:hover:text-gray-100">
+          {{- if $isEn -}}Discord Server{{- else -}}公式 Discord サーバー{{- end -}}
+        </a>
+      </li>
+      <li>
+        <a href="https://github.com/sabafly/gobot" target="_blank" rel="noopener noreferrer" class="hx:text-gray-600 hx:hover:text-gray-900 hx:dark:text-gray-400 hx:dark:hover:text-gray-100">
+          GitHub
+        </a>
+      </li>
+      <li>
+        <a href="https://discord.com/api/oauth2/authorize?client_id=1083042729996603412&permissions=8&scope=bot%20applications.commands" target="_blank" rel="noopener noreferrer" class="hx:text-gray-600 hx:hover:text-gray-900 hx:dark:text-gray-400 hx:dark:hover:text-gray-100">
+          {{- if $isEn -}}Invite gobot{{- else -}}Bot をサーバーに招待{{- end -}}
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>

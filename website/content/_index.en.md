@@ -5,7 +5,7 @@ layout: hextra-home
 
 <div class="hx:mt-6 hx:mb-6">
 {{< hextra/hero-headline >}}
-  Make Your Discord Server <br class="hx:sm:block hx:hidden" />Smarter and More Fun
+  Make Your Discord Server<span class="hx:sm:hidden">&nbsp;</span><br class="hx:sm:block hx:hidden" />Smarter and More Fun
 {{< /hextra/hero-headline >}}
 </div>
 
@@ -43,11 +43,3 @@ layout: hextra-home
     link="https://github.com/sabafly/gobot"
   >}}
 {{< /hextra/feature-grid >}}
-
-<div class="hx:mt-14 hx:text-sm hx:text-gray-500">
-  <a href="/terms-of-service/">Terms of Service (JA)</a> ·
-  <a href="/privacy-policy/">Privacy Policy (JA)</a> ·
-  <a href="/en/bbs/terms/">BBS Terms</a> ·
-  <a href="/en/bbs/guidelines/">BBS Guidelines</a> ·
-  <a href="/en/bbs/privacy/">BBS Privacy Policy</a>
-</div>

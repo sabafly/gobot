@@ -1,0 +1,4 @@
+/* Keep text-only Hextra cards top-aligned even when neighboring cards wrap to more lines. */
+.hextra-card:not(:has(.hextra-card-image)) > div {
+  margin-top: 0;
+}

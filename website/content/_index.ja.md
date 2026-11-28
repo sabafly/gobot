@@ -43,11 +43,3 @@ layout: hextra-home
     link="https://github.com/sabafly/gobot"
   >}}
 {{< /hextra/feature-grid >}}
-
-<div class="hx:mt-14 hx:text-sm hx:text-gray-500">
-  <a href="/terms-of-service/">サービス利用規約</a> ·
-  <a href="/privacy-policy/">プライバシーポリシー</a> ·
-  <a href="/bbs/terms/">BBS 利用規約</a> ·
-  <a href="/bbs/guidelines/">BBS コミュニティガイドライン</a> ·
-  <a href="/bbs/privacy/">BBS プライバシーポリシー</a>
-</div>
