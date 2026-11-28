@@ -1251,11 +1251,7 @@ func (c *bbsCommand) handlePolicy(_ discord.SlashCommandInteractionData, e *hand
 			"agreed_at":       consent.AgreedAt.In(bbscore.JSTLocation).Format("2006/01/02 15:04:05"),
 		})),
 		discord.NewLargeSeparator(),
-		discord.NewActionRow(
-			discord.NewSecondaryButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.consent.btn.terms"), discordsync.MaxButtonLabelRunes), "/bbs/consent/view/terms"),
-			discord.NewSecondaryButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.consent.btn.guidelines"), discordsync.MaxButtonLabelRunes), "/bbs/consent/view/guidelines"),
-			discord.NewSecondaryButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.consent.btn.privacy"), discordsync.MaxButtonLabelRunes), "/bbs/consent/view/privacy"),
-		),
+		discord.NewActionRow(discordsync.ConsentURLButtons(pm, loc)...),
 		discord.NewActionRow(
 			discord.NewDangerButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.cmd.policy.revoke_btn"), discordsync.MaxButtonLabelRunes), "/bbs/consent/revoke"),
 		),

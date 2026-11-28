@@ -593,9 +593,9 @@ func TestRenderer_ZeroEmoji_MediaGallery_And_ReaderPagination(t *testing.T) {
 		t.Fatalf("unexpected consent modal CustomID: %q", consentModal.CustomID)
 	}
 
-	docView := discordsync.RenderPolicyDocumentView(pm, bbs.PolicyDocTerms, discord.LocaleJapanese)
+	docView := discordsync.RenderPolicyLinksView(pm, discord.LocaleJapanese)
 	if err := v.ValidateMessageCreate(docView); err != nil {
-		t.Fatalf("policy doc view validation failed: %v", err)
+		t.Fatalf("policy links view validation failed: %v", err)
 	}
 	assertNoEmojiInLayout(t, docView.Components)
 
@@ -1006,7 +1006,7 @@ func TestRenderer_I18n_JapaneseAndEnglish(t *testing.T) {
 				CanReply:          true,
 				ShowGlobalModNote: true,
 			}, loc),
-			discordsync.RenderPolicyDocumentView(pm, bbs.PolicyDocTerms, loc),
+			discordsync.RenderPolicyLinksView(pm, loc),
 		}
 		for i, m := range msgs {
 			if err := v.ValidateMessageCreate(m); err != nil {
@@ -1018,14 +1018,18 @@ func TestRenderer_I18n_JapaneseAndEnglish(t *testing.T) {
 			}
 		}
 
-		// Verify current doc switch button is disabled in RenderPolicyDocumentView
+		// Verify RenderPolicyLinksView renders 3 URL link buttons
 		docView := msgs[len(msgs)-1]
 		docContainer := docView.Components[0].(discord.ContainerComponent)
-		docSwitchRow := docContainer.Components[4].(discord.ActionRowComponent)
-		if !docSwitchRow.Components[0].(discord.ButtonComponent).Disabled ||
-			docSwitchRow.Components[1].(discord.ButtonComponent).Disabled ||
-			docSwitchRow.Components[2].(discord.ButtonComponent).Disabled {
-			t.Fatalf("expected only current policy doc button to be disabled in %s", loc)
+		docLinkRow := docContainer.Components[len(docContainer.Components)-1].(discord.ActionRowComponent)
+		if len(docLinkRow.Components) != 3 {
+			t.Fatalf("expected 3 policy link buttons in %s, got %d", loc, len(docLinkRow.Components))
+		}
+		for idx, comp := range docLinkRow.Components {
+			btn, ok := comp.(discord.ButtonComponent)
+			if !ok || btn.Style != discord.ButtonStyleLink || btn.URL == "" {
+				t.Fatalf("expected link button at index %d in %s, got %#v", idx, loc, comp)
+			}
 		}
 
 		modal := discordsync.RenderConsentModal(pm, loc, "tok123")
