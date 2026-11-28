@@ -138,9 +138,7 @@ func (sub *Subscriber) connectOnce(ctx context.Context, client *bot.Client) bool
 		}
 		sub.mu.Lock()
 		sub.lastEpoch = caps.InstanceEpoch
-		if caps.LatestSeq > sub.lastSeq {
-			sub.lastSeq = caps.LatestSeq
-		}
+		sub.lastSeq = caps.LatestSeq
 		sub.needSync = false
 		sub.mu.Unlock()
 	} else if capsChanged {
@@ -158,6 +156,7 @@ func (sub *Subscriber) connectOnce(ctx context.Context, client *bot.Client) bool
 	scanner.Buffer(make([]byte, 0, 64*1024), maxSSETokenBytes)
 
 	var evName, evID, evData strings.Builder
+	resyncRequested := false
 	dispatchFrame := func() bool {
 		if evData.Len() == 0 && evName.Len() == 0 && evID.Len() == 0 {
 			return true
@@ -177,6 +176,7 @@ func (sub *Subscriber) connectOnce(ctx context.Context, client *bot.Client) bool
 		case "resync":
 			// Close the current stream and let the next connectOnce run resyncMountedBoards
 			// before subscribing to avoid overflowing the SSE buffer during catch-up.
+			resyncRequested = true
 			sub.mu.Lock()
 			sub.needSync = true
 			sub.mu.Unlock()
@@ -258,7 +258,7 @@ func (sub *Subscriber) connectOnce(ctx context.Context, client *bot.Client) bool
 	if err := scanner.Err(); err != nil && ctx.Err() == nil {
 		slog.Warn("bbs federation SSE stream ended with error", "remote", sub.provider.RemoteKey(), "err", err)
 	}
-	return true
+	return !resyncRequested
 }
 
 func (sub *Subscriber) hasActiveMountsForBoard(ctx context.Context, boardID uuid.UUID) bool {

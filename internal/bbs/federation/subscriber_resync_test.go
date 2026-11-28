@@ -230,3 +230,141 @@ func TestSubscriber_ResyncPreservesMountExcludedByAllowedBoardIDs(t *testing.T) 
 		t.Fatal("expected mount for actually deleted allowed board to be deactivated")
 	}
 }
+
+func TestSubscriber_EpochChangeResetsLastSeq(t *testing.T) {
+	store := newSubscriberTestStore(t)
+	reg := bbs.NewProviderRegistry(store.Key())
+	reg.Register(store)
+	svc := bbs.NewService(reg, store, bbs.NewIdentityGenerator([]byte("test-secret-key-32-bytes-long!!!")), bbs.NewPolicyManager(bbs.PolicyConfig{}), nil)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	fakeOrigin := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/v1/bbs/federation/capabilities":
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(CapabilitiesResponse{
+				ProtocolVersion: ProtocolVersion,
+				InstanceEpoch:   "epoch-new",
+				LatestSeq:       3,
+				PeerID:          "peer-a",
+				PolicyVersion:   "2026-01-01",
+			})
+		case "/api/v1/bbs/federation/events":
+			w.Header().Set("Content-Type", "text/event-stream")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("event: ready\ndata: {\"epoch\":\"epoch-new\",\"latest_seq\":3}\n\n"))
+			if f, ok := w.(http.Flusher); ok {
+				f.Flush()
+			}
+			cancel()
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer fakeOrigin.Close()
+
+	rp, err := NewRemoteProvider(RemoteProviderDeps{
+		Config: RemoteConfig{
+			Key:     "prod",
+			Label:   "Prod",
+			BaseURL: fakeOrigin.URL,
+			Token:   "tok",
+		},
+		Store: store,
+	})
+	if err != nil {
+		t.Fatalf("NewRemoteProvider failed: %v", err)
+	}
+	reg.Register(rp)
+
+	sub := NewSubscriber(rp, svc, nil)
+	sub.mu.Lock()
+	sub.lastEpoch = "epoch-old"
+	sub.lastSeq = 500
+	sub.needSync = false
+	sub.mu.Unlock()
+
+	sub.connectOnce(ctx, nil)
+
+	sub.mu.Lock()
+	gotEpoch := sub.lastEpoch
+	gotSeq := sub.lastSeq
+	gotNeedSync := sub.needSync
+	sub.mu.Unlock()
+
+	if gotEpoch != "epoch-new" {
+		t.Fatalf("expected lastEpoch=epoch-new, got %q", gotEpoch)
+	}
+	if gotSeq != 3 {
+		t.Fatalf("expected lastSeq to reset to 3 after epoch change, got %d", gotSeq)
+	}
+	if gotNeedSync {
+		t.Fatal("expected needSync=false after resync")
+	}
+}
+
+func TestSubscriber_ResyncEventClosesStreamWithBackoff(t *testing.T) {
+	store := newSubscriberTestStore(t)
+	reg := bbs.NewProviderRegistry(store.Key())
+	reg.Register(store)
+	svc := bbs.NewService(reg, store, bbs.NewIdentityGenerator([]byte("test-secret-key-32-bytes-long!!!")), bbs.NewPolicyManager(bbs.PolicyConfig{}), nil)
+
+	fakeOrigin := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/v1/bbs/federation/capabilities":
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(CapabilitiesResponse{
+				ProtocolVersion: ProtocolVersion,
+				InstanceEpoch:   "epoch-1",
+				LatestSeq:       10,
+				PeerID:          "peer-a",
+				PolicyVersion:   "2026-01-01",
+			})
+		case "/api/v1/bbs/federation/events":
+			w.Header().Set("Content-Type", "text/event-stream")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("event: resync\ndata: {\"epoch\":\"epoch-1\",\"latest_seq\":50,\"reason\":\"overflow\"}\n\n"))
+			if f, ok := w.(http.Flusher); ok {
+				f.Flush()
+			}
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer fakeOrigin.Close()
+
+	rp, err := NewRemoteProvider(RemoteProviderDeps{
+		Config: RemoteConfig{
+			Key:     "prod",
+			Label:   "Prod",
+			BaseURL: fakeOrigin.URL,
+			Token:   "tok",
+		},
+		Store: store,
+	})
+	if err != nil {
+		t.Fatalf("NewRemoteProvider failed: %v", err)
+	}
+	reg.Register(rp)
+
+	sub := NewSubscriber(rp, svc, nil)
+	sub.mu.Lock()
+	sub.lastEpoch = "epoch-1"
+	sub.lastSeq = 10
+	sub.needSync = false
+	sub.mu.Unlock()
+
+	connectedCleanly := sub.connectOnce(context.Background(), nil)
+	if connectedCleanly {
+		t.Fatal("expected connectOnce to return false on server resync event so reconnect backoff applies")
+	}
+
+	sub.mu.Lock()
+	gotNeedSync := sub.needSync
+	sub.mu.Unlock()
+	if !gotNeedSync {
+		t.Fatal("expected needSync=true after receiving server resync event")
+	}
+}
