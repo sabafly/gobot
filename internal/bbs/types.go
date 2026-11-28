@@ -220,21 +220,19 @@ type Board struct {
 // Thread represents a discussion thread within a board.
 // Author Discord IDs are intentionally omitted from this public/guild DTO.
 type Thread struct {
-	ID              uuid.UUID
-	BoardID         uuid.UUID
-	ProviderKey     string
-	ExternalID      string
-	Title           string
-	Status          ThreadStatus
-	ResCount        uint32
-	Rules           BoardRules
-	ExtDat          string
-	OwnerPosterHash string
-	OwnerAnonID     string
-	BumpedAt        time.Time
-	ArchivedAt      *time.Time
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	ID          uuid.UUID
+	BoardID     uuid.UUID
+	ProviderKey string
+	ExternalID  string
+	Title       string
+	Status      ThreadStatus
+	ResCount    uint32
+	Rules       BoardRules
+	ExtDat      string
+	BumpedAt    time.Time
+	ArchivedAt  *time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 // Post represents an anonymous reply inside a thread.
@@ -249,7 +247,6 @@ type Post struct {
 	SlipText    string
 	AnonID      string
 	PosterHash  string
-	IsOP        bool
 	Body        string
 	Abone       bool
 	AboneReason string
@@ -530,13 +527,11 @@ type ThreadFilter struct {
 
 // CreateThreadRecord is passed from Service to ThreadProvider.
 type CreateThreadRecord struct {
-	BoardID         uuid.UUID
-	Title           string
-	Rules           BoardRules
-	ExtDat          string
-	OwnerPosterHash string
-	OwnerAnonID     string
-	FirstPost       CreatePostRecord
+	BoardID   uuid.UUID
+	Title     string
+	Rules     BoardRules
+	ExtDat    string
+	FirstPost CreatePostRecord
 }
 
 // CreatePostRecord is passed from Service to PostProvider.
@@ -548,7 +543,6 @@ type CreatePostRecord struct {
 	SlipText     string
 	AnonID       string
 	PosterHash   string
-	IsOP         bool
 	Body         string
 	AuthorUserID snowflake.ID
 }

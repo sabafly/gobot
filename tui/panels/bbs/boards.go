@@ -197,7 +197,6 @@ func (s *boardsState) rebuildDetail(theme ui.Theme) {
 			kvLine(theme, "Title", th.Title),
 			kvLine(theme, "Status", th.Status),
 			kvLine(theme, "Res Count", fmt.Sprintf("%d / %d", th.ResCount, th.Rules.MaxRes)),
-			kvLine(theme, "Owner AnonID", th.OwnerAnonID),
 			kvLine(theme, "Bumped", th.BumpedAt.Local().Format("2006-01-02 15:04:05")),
 			kvLine(theme, "Created", th.CreatedAt.Local().Format("2006-01-02 15:04:05")),
 			"",
@@ -219,7 +218,7 @@ func (s *boardsState) rebuildDetail(theme ui.Theme) {
 		}
 		lines := []string{
 			kvLine(theme, "Post ID", post.ID),
-			kvLine(theme, "Res #", fmt.Sprintf("%d (OP=%v)", post.ResNumber, post.IsOP)),
+			kvLine(theme, "Res #", fmt.Sprintf("%d", post.ResNumber)),
 			kvLine(theme, "Name", strings.TrimSpace(strings.Join([]string{post.Name, post.Trip, post.Cap}, " "))),
 			kvLine(theme, "AnonID", post.AnonID),
 			kvLine(theme, "SLIP", post.SlipText),

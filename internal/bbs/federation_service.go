@@ -178,12 +178,10 @@ func (s *Service) CreateThreadFromFederation(
 	}
 
 	thread, post, err := p.CreateThread(ctx, CreateThreadRecord{
-		BoardID:         board.ID,
-		Title:           title,
-		Rules:           parsed.ThreadRules,
-		ExtDat:          parsed.ExtDat,
-		OwnerPosterHash: parsed.PosterHash,
-		OwnerAnonID:     parsed.AnonID,
+		BoardID: board.ID,
+		Title:   title,
+		Rules:   parsed.ThreadRules,
+		ExtDat:  parsed.ExtDat,
 		FirstPost: CreatePostRecord{
 			Name:         parsed.DisplayName,
 			Trip:         parsed.Trip,
@@ -191,7 +189,6 @@ func (s *Service) CreateThreadFromFederation(
 			SlipText:     parsed.SlipText,
 			AnonID:       parsed.AnonID,
 			PosterHash:   parsed.PosterHash,
-			IsOP:         true,
 			Body:         parsed.CleanBody,
 			AuthorUserID: input.UserID,
 		},
@@ -328,7 +325,6 @@ func (s *Service) CreatePostFromFederation(
 		return nil, nil, nil, nil, ErrRateLimited
 	}
 
-	isOP := thread.OwnerPosterHash != "" && parsed.PosterHash == thread.OwnerPosterHash
 	post, updatedThread, err := p.CreatePost(ctx, CreatePostRecord{
 		ThreadID:     thread.ID,
 		Name:         parsed.DisplayName,
@@ -337,7 +333,6 @@ func (s *Service) CreatePostFromFederation(
 		SlipText:     parsed.SlipText,
 		AnonID:       parsed.AnonID,
 		PosterHash:   parsed.PosterHash,
-		IsOP:         isOP,
 		Body:         parsed.CleanBody,
 		AuthorUserID: input.UserID,
 	})

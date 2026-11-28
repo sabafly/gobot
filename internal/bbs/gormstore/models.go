@@ -20,11 +20,39 @@
 package gormstore
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/disgoorg/snowflake/v2"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
+
+// DropLegacyOPColumns drops deprecated thread-owner tracking columns if present on existing databases.
+func DropLegacyOPColumns(db *gorm.DB) error {
+	if db == nil {
+		return nil
+	}
+	migrator := db.Migrator()
+	targets := []struct {
+		model  any
+		table  string
+		column string
+	}{
+		{model: &BBSThread{}, table: "bbs_threads", column: "owner_poster_hash"},
+		{model: &BBSThread{}, table: "bbs_threads", column: "owner_anon_id"},
+		{model: &BBSPost{}, table: "bbs_posts", column: "is_op"},
+	}
+	for _, t := range targets {
+		if !migrator.HasTable(t.model) || !migrator.HasColumn(t.model, t.column) {
+			continue
+		}
+		if err := migrator.DropColumn(t.model, t.column); err != nil {
+			return fmt.Errorf("drop legacy column %s.%s: %w", t.table, t.column, err)
+		}
+	}
+	return nil
+}
 
 // Models returns all GORM models managed by the BBS subsystem for AutoMigrate.
 func Models() []any {
@@ -154,8 +182,6 @@ type BBSThread struct {
 	DatOchiIdleHours   int        `gorm:"not null;default:1200"`
 	DatOchiLowResHours int        `gorm:"not null;default:240"`
 	ExtDat             string     `gorm:"type:varchar(191)"`
-	OwnerPosterHash    string     `gorm:"type:varchar(32);not null"`
-	OwnerAnonID        string     `gorm:"type:varchar(32);not null"`
 	BumpedAt           time.Time  `gorm:"not null;index"`
 	ArchivedAt         *time.Time `gorm:""`
 	CreatedAt          time.Time  `gorm:"not null"`
@@ -190,7 +216,6 @@ type BBSPost struct {
 	SlipText     string       `gorm:"type:varchar(96)"`
 	AnonID       string       `gorm:"type:varchar(32)"`
 	PosterHash   string       `gorm:"type:varchar(32);not null;index"`
-	IsOP         bool         `gorm:"not null;default:false"`
 	Body         string       `gorm:"type:text;not null"`
 	Abone        bool         `gorm:"not null;default:false"`
 	AboneReason  string       `gorm:"type:varchar(255)"`

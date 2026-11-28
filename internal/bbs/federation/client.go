@@ -347,8 +347,7 @@ func (c *Client) OpenEventsStream(ctx context.Context, afterSeq uint64, clientEp
 }
 
 func asAPIError(err error) (*APIError, bool) {
-	var apiErr *APIError
-	if errors.As(err, &apiErr) {
+	if apiErr, ok := errors.AsType[*APIError](err); ok {
 		return apiErr, true
 	}
 	return nil, false

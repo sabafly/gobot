@@ -724,12 +724,10 @@ func (s *Service) CreateThread(ctx context.Context, input CreateThreadInput) (*B
 	}
 
 	thread, post, err := p.CreateThread(ctx, CreateThreadRecord{
-		BoardID:         board.ID,
-		Title:           title,
-		Rules:           parsed.ThreadRules,
-		ExtDat:          parsed.ExtDat,
-		OwnerPosterHash: parsed.PosterHash,
-		OwnerAnonID:     parsed.AnonID,
+		BoardID: board.ID,
+		Title:   title,
+		Rules:   parsed.ThreadRules,
+		ExtDat:  parsed.ExtDat,
 		FirstPost: CreatePostRecord{
 			Name:         parsed.DisplayName,
 			Trip:         parsed.Trip,
@@ -737,7 +735,6 @@ func (s *Service) CreateThread(ctx context.Context, input CreateThreadInput) (*B
 			SlipText:     parsed.SlipText,
 			AnonID:       parsed.AnonID,
 			PosterHash:   parsed.PosterHash,
-			IsOP:         true,
 			Body:         parsed.CleanBody,
 			AuthorUserID: input.UserID,
 		},
@@ -879,7 +876,6 @@ func (s *Service) CreatePost(ctx context.Context, input CreatePostInput) (*Board
 		return nil, nil, nil, nil, ErrRateLimited
 	}
 
-	isOP := thread.OwnerPosterHash != "" && parsed.PosterHash == thread.OwnerPosterHash
 	post, updatedThread, err := p.CreatePost(ctx, CreatePostRecord{
 		ThreadID:     thread.ID,
 		Name:         parsed.DisplayName,
@@ -888,7 +884,6 @@ func (s *Service) CreatePost(ctx context.Context, input CreatePostInput) (*Board
 		SlipText:     parsed.SlipText,
 		AnonID:       parsed.AnonID,
 		PosterHash:   parsed.PosterHash,
-		IsOP:         isOP,
 		Body:         parsed.CleanBody,
 		AuthorUserID: input.UserID,
 	})

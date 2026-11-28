@@ -606,7 +606,6 @@ func TestRenderer_ZeroEmoji_MediaGallery_And_ReaderPagination(t *testing.T) {
 		ResNumber: 1,
 		Name:      "風吹けば名無し",
 		AnonID:    "abcd1234",
-		IsOP:      true,
 		Body:      "画像テスト https://example.com/a!pic.png",
 		CreatedAt: time.Now(),
 	}
@@ -952,7 +951,6 @@ func TestRenderer_I18n_JapaneseAndEnglish(t *testing.T) {
 			SlipText:   "abcd-efgh",
 			AnonID:     "xyz12345",
 			PosterHash: "hash001",
-			IsOP:       true,
 			Body:       "Hello >>1",
 			CreatedAt:  time.Now(),
 		},
@@ -1197,7 +1195,6 @@ func TestRenderer_ExtDatBudget_And_LinkExpandedPagination(t *testing.T) {
 		ResNumber: 1,
 		Name:      "名無し",
 		AnonID:    "abcd1234",
-		IsOP:      true,
 		Body:      strings.Repeat("あ", 1800),
 		CreatedAt: time.Now(),
 	}
@@ -1342,13 +1339,27 @@ func TestRenderPostHeader_TripAndCap(t *testing.T) {
 		t.Fatalf("unexpected named cap+trip header: %q", capNamedHeader)
 	}
 
-	// 5. All headers pass RenderPostMessageCreate validation and zero-emoji check.
+	// 5. All headers pass RenderPostMessageCreate validation, zero-emoji check, and omit legacy (>>1) OP tag.
 	for _, p := range []bbs.Post{spoofPost, capOnlyPost, capEmptyTripPost, capNamedPost} {
+		if h := discordsync.RenderPostHeader(p, rules, discord.LocaleJapanese); strings.Contains(h, "(>>1)") {
+			t.Fatalf("expected RenderPostHeader to omit legacy (>>1) badge, got %q", h)
+		}
 		mc := discordsync.RenderPostMessageCreate(p, thread, nil, discord.LocaleJapanese)
 		if err := v.ValidateMessageCreate(mc); err != nil {
 			t.Fatalf("RenderPostMessageCreate validation failed for res %d: %v", p.ResNumber, err)
 		}
 		assertNoEmojiInLayout(t, mc.Components)
+	}
+	res2Header := discordsync.RenderPostHeader(bbs.Post{
+		ID:        uuid.New(),
+		ThreadID:  thread.ID,
+		ResNumber: 2,
+		AnonID:    "87654321",
+		Body:      "2レス目",
+		CreatedAt: now,
+	}, rules, discord.LocaleJapanese)
+	if !strings.Contains(res2Header, " ID:87654321") || strings.Contains(res2Header, "(>>1)") {
+		t.Fatalf("unexpected res 2 header format: %q", res2Header)
 	}
 }
 

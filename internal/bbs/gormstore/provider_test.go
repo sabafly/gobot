@@ -140,8 +140,8 @@ func TestGormStore_CRUD_Concurrency_Archive_Abone_Ban(t *testing.T) {
 	if err != nil {
 		t.Fatalf("CreateThread failed: %v", err)
 	}
-	if firstPost.ResNumber != 1 || !firstPost.IsOP {
-		t.Fatalf("expected OP res 1, got %+v", firstPost)
+	if firstPost.ResNumber != 1 {
+		t.Fatalf("expected first post res 1, got %+v", firstPost)
 	}
 
 	// Concurrent CreatePost directly via provider (bypassing per-user cooldown)
@@ -1505,5 +1505,185 @@ func TestUpdateBoard_MaxResAndDatOchiRules(t *testing.T) {
 		if _, err := svc.UpdateBoard(ctx, board.ID, tc); !errors.Is(err, bbs.ErrInvalidBoardRules) {
 			t.Fatalf("case %d expected ErrInvalidBoardRules, got %v", i, err)
 		}
+	}
+}
+
+type legacyBBSThread struct {
+	ID                 uuid.UUID          `gorm:"type:varchar(36);primaryKey"`
+	BoardID            uuid.UUID          `gorm:"type:varchar(36);not null;index"`
+	Board              gormstore.BBSBoard `gorm:"foreignKey:BoardID;constraint:OnDelete:CASCADE;"`
+	ProviderKey        string             `gorm:"type:varchar(64);not null"`
+	ExternalID         string             `gorm:"type:varchar(191)"`
+	Title              string             `gorm:"type:varchar(128);not null"`
+	Status             string             `gorm:"type:varchar(16);not null;index"`
+	ResCount           uint32             `gorm:"not null;default:0"`
+	DefaultName        string             `gorm:"type:varchar(64);not null"`
+	HideID             bool               `gorm:"not null;default:false"`
+	SLIPLevel          int                `gorm:"column:slip_level;not null;default:0"`
+	MaxRes             uint32             `gorm:"not null;default:1000"`
+	DatOchiIdleHours   int                `gorm:"not null;default:1200"`
+	DatOchiLowResHours int                `gorm:"not null;default:240"`
+	ExtDat             string             `gorm:"type:varchar(191)"`
+	OwnerPosterHash    string             `gorm:"type:varchar(32);not null"`
+	OwnerAnonID        string             `gorm:"type:varchar(32);not null"`
+	BumpedAt           time.Time          `gorm:"not null;index"`
+	ArchivedAt         *time.Time         `gorm:""`
+	CreatedAt          time.Time          `gorm:"not null"`
+	UpdatedAt          time.Time          `gorm:"not null"`
+}
+
+func (legacyBBSThread) TableName() string { return "bbs_threads" }
+
+type legacyBBSPost struct {
+	ID           uuid.UUID       `gorm:"type:varchar(36);primaryKey"`
+	ThreadID     uuid.UUID       `gorm:"type:varchar(36);not null;uniqueIndex:idx_bbs_thread_res"`
+	Thread       legacyBBSThread `gorm:"foreignKey:ThreadID;constraint:OnDelete:CASCADE;"`
+	ResNumber    uint32          `gorm:"not null;uniqueIndex:idx_bbs_thread_res"`
+	Name         string          `gorm:"type:varchar(64);not null"`
+	Trip         string          `gorm:"type:varchar(32)"`
+	Cap          string          `gorm:"type:varchar(64)"`
+	SlipText     string          `gorm:"type:varchar(96)"`
+	AnonID       string          `gorm:"type:varchar(32)"`
+	PosterHash   string          `gorm:"type:varchar(32);not null;index"`
+	IsOP         bool            `gorm:"not null;default:false"`
+	Body         string          `gorm:"type:text;not null"`
+	Abone        bool            `gorm:"not null;default:false"`
+	AboneReason  string          `gorm:"type:varchar(255)"`
+	AuthorUserID snowflake.ID    `gorm:"not null;index"`
+	CreatedAt    time.Time       `gorm:"not null"`
+}
+
+func (legacyBBSPost) TableName() string { return "bbs_posts" }
+
+func TestDropLegacyOPColumns_MigratesExistingTables(t *testing.T) {
+	ctx := context.Background()
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatalf("failed to open sqlite: %v", err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatalf("failed to get sql.DB: %v", err)
+	}
+	sqlDB.SetMaxOpenConns(1)
+	t.Cleanup(func() {
+		_ = sqlDB.Close()
+	})
+
+	baseModels := gormstore.Models()
+	legacyModels := make([]any, 0, len(baseModels))
+	for _, m := range baseModels {
+		switch m.(type) {
+		case *gormstore.BBSThread:
+			legacyModels = append(legacyModels, &legacyBBSThread{})
+		case *gormstore.BBSPost:
+			legacyModels = append(legacyModels, &legacyBBSPost{})
+		default:
+			legacyModels = append(legacyModels, m)
+		}
+	}
+	if err := db.AutoMigrate(legacyModels...); err != nil {
+		t.Fatalf("legacy AutoMigrate failed: %v", err)
+	}
+
+	now := time.Now()
+	guildID := snowflake.ID(15001)
+	userID := snowflake.ID(25001)
+	catID := uuid.New()
+	boardID := uuid.New()
+	legacyThID := uuid.New()
+	legacyPostID := uuid.New()
+
+	if err := db.Create(&gormstore.BBSCategory{
+		ID: catID, Scope: string(bbs.ScopeLocal), GuildID: &guildID, ProviderKey: bbs.DefaultProviderKey,
+		Slug: "legacy-cat", Name: "レガシーカテゴリ", CreatedAt: now, UpdatedAt: now,
+	}).Error; err != nil {
+		t.Fatalf("insert legacy category failed: %v", err)
+	}
+	if err := db.Create(&gormstore.BBSBoard{
+		ID: boardID, CategoryID: catID, Scope: string(bbs.ScopeLocal), GuildID: &guildID, ProviderKey: bbs.DefaultProviderKey,
+		Slug: "legacy-board", Name: "レガシー板", DefaultName: "名無し", MaxRes: 1000, DatOchiIdleHours: 1200, DatOchiLowResHours: 240,
+		CreatedAt: now, UpdatedAt: now,
+	}).Error; err != nil {
+		t.Fatalf("insert legacy board failed: %v", err)
+	}
+	if err := db.Create(&legacyBBSThread{
+		ID: legacyThID, BoardID: boardID, ProviderKey: bbs.DefaultProviderKey, Title: "既存スレ", Status: string(bbs.ThreadStatusActive),
+		ResCount: 1, DefaultName: "名無し", MaxRes: 1000, DatOchiIdleHours: 1200, DatOchiLowResHours: 240,
+		OwnerPosterHash: "legacyhash0001", OwnerAnonID: "LEGACY01", BumpedAt: now, CreatedAt: now, UpdatedAt: now,
+	}).Error; err != nil {
+		t.Fatalf("insert legacy thread failed: %v", err)
+	}
+	if err := db.Create(&legacyBBSPost{
+		ID: legacyPostID, ThreadID: legacyThID, ResNumber: 1, Name: "名無し", AnonID: "LEGACY01",
+		PosterHash: "legacyhash0001", IsOP: true, Body: "既存レス", AuthorUserID: userID, CreatedAt: now,
+	}).Error; err != nil {
+		t.Fatalf("insert legacy post failed: %v", err)
+	}
+
+	if err := db.AutoMigrate(gormstore.Models()...); err != nil {
+		t.Fatalf("current AutoMigrate failed: %v", err)
+	}
+	if err := gormstore.DropLegacyOPColumns(db); err != nil {
+		t.Fatalf("first DropLegacyOPColumns failed: %v", err)
+	}
+	if err := gormstore.DropLegacyOPColumns(db); err != nil {
+		t.Fatalf("second (idempotent) DropLegacyOPColumns failed: %v", err)
+	}
+
+	m := db.Migrator()
+	if m.HasColumn(&gormstore.BBSThread{}, "owner_poster_hash") {
+		t.Fatal("expected bbs_threads.owner_poster_hash to be dropped")
+	}
+	if m.HasColumn(&gormstore.BBSThread{}, "owner_anon_id") {
+		t.Fatal("expected bbs_threads.owner_anon_id to be dropped")
+	}
+	if m.HasColumn(&gormstore.BBSPost{}, "is_op") {
+		t.Fatal("expected bbs_posts.is_op to be dropped")
+	}
+
+	store := gormstore.New(db)
+	reg := bbs.NewProviderRegistry(bbs.DefaultProviderKey)
+	reg.Register(store)
+	svc := bbs.NewService(
+		reg,
+		store,
+		bbs.NewIdentityGenerator([]byte("legacy-drop-test-secret")),
+		bbs.NewPolicyManager(bbs.PolicyConfig{Version: "2026-11-25"}),
+		[]snowflake.ID{snowflake.ID(9999)},
+	)
+
+	// Existing rows remain readable.
+	gotTh, err := store.GetThread(ctx, legacyThID)
+	if err != nil || gotTh.Title != "既存スレ" {
+		t.Fatalf("expected existing thread preserved, got %+v err=%v", gotTh, err)
+	}
+	gotPosts, err := store.ListPosts(ctx, legacyThID, 0, 10)
+	if err != nil || len(gotPosts) != 1 || gotPosts[0].Body != "既存レス" {
+		t.Fatalf("expected existing post preserved, got %+v err=%v", gotPosts, err)
+	}
+
+	// Creating a new thread and post succeeds after dropping NOT NULL legacy columns.
+	if _, err := svc.SetupGuild(ctx, bbs.GuildSetupInput{GuildID: guildID, Enabled: true, ActorUserID: userID}); err != nil {
+		t.Fatalf("SetupGuild failed: %v", err)
+	}
+	if _, err := svc.AcceptPolicy(ctx, userID); err != nil {
+		t.Fatalf("AcceptPolicy failed: %v", err)
+	}
+	_, newTh, newOP, err := svc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: boardID, GuildID: guildID, UserID: userID, Title: "新規スレ", RawBody: "新規1レス",
+	})
+	if err != nil || newTh == nil || newOP == nil {
+		t.Fatalf("CreateThread after DropLegacyOPColumns failed: %v", err)
+	}
+	replyUser := snowflake.ID(25002)
+	if _, err := svc.AcceptPolicy(ctx, replyUser); err != nil {
+		t.Fatalf("AcceptPolicy replyUser failed: %v", err)
+	}
+	_, _, replyPost, _, err := svc.CreatePost(ctx, bbs.CreatePostInput{
+		ThreadID: newTh.ID, GuildID: guildID, UserID: replyUser, RawBody: ">>1 テスト",
+	})
+	if err != nil || replyPost == nil || replyPost.ResNumber != 2 {
+		t.Fatalf("CreatePost after DropLegacyOPColumns failed: post=%+v err=%v", replyPost, err)
 	}
 }

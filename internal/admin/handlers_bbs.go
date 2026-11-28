@@ -23,6 +23,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"maps"
 	"net/http"
 	"strconv"
 	"strings"
@@ -38,9 +39,7 @@ func (s *Server) recordBBSAuditError(r *http.Request, auth authContext, action, 
 		return
 	}
 	payload := make(map[string]any, len(detail)+1)
-	for k, v := range detail {
-		payload[k] = v
-	}
+	maps.Copy(payload, detail)
 	if err != nil {
 		payload["error"] = err.Error()
 	}
@@ -193,20 +192,18 @@ func toBBSBoardMountDTO(m bbs.BoardMount) BBSBoardMountDTO {
 
 func toBBSThreadDTO(t bbs.Thread) BBSThreadDTO {
 	return BBSThreadDTO{
-		ID:              t.ID.String(),
-		BoardID:         t.BoardID.String(),
-		ProviderKey:     t.ProviderKey,
-		ExternalID:      t.ExternalID,
-		Title:           t.Title,
-		Status:          string(t.Status),
-		ResCount:        t.ResCount,
-		Rules:           toBBSBoardRulesDTO(t.Rules),
-		OwnerAnonID:     t.OwnerAnonID,
-		OwnerPosterHash: t.OwnerPosterHash,
-		BumpedAt:        t.BumpedAt,
-		ArchivedAt:      t.ArchivedAt,
-		CreatedAt:       t.CreatedAt,
-		UpdatedAt:       t.UpdatedAt,
+		ID:          t.ID.String(),
+		BoardID:     t.BoardID.String(),
+		ProviderKey: t.ProviderKey,
+		ExternalID:  t.ExternalID,
+		Title:       t.Title,
+		Status:      string(t.Status),
+		ResCount:    t.ResCount,
+		Rules:       toBBSBoardRulesDTO(t.Rules),
+		BumpedAt:    t.BumpedAt,
+		ArchivedAt:  t.ArchivedAt,
+		CreatedAt:   t.CreatedAt,
+		UpdatedAt:   t.UpdatedAt,
 	}
 }
 
@@ -221,7 +218,6 @@ func toBBSPostDTO(p bbs.Post) BBSPostDTO {
 		SlipText:    p.SlipText,
 		AnonID:      p.AnonID,
 		PosterHash:  p.PosterHash,
-		IsOP:        p.IsOP,
 		Body:        p.Body,
 		Abone:       p.Abone,
 		AboneReason: p.AboneReason,

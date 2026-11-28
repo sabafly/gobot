@@ -107,7 +107,7 @@ func (s *Syncer) mountThreadMutex(mountID, threadID uuid.UUID) *sync.Mutex {
 	copy(buf[:16], mountID[:])
 	copy(buf[16:], threadID[:])
 	var acc uint64
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		acc ^= binary.LittleEndian.Uint64(buf[i*8 : (i+1)*8])
 	}
 	return &s.mountThreadLocks[acc%uint64(len(s.mountThreadLocks))]

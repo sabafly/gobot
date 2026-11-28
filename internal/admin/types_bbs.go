@@ -151,20 +151,18 @@ type BBSThreadFilter struct {
 }
 
 type BBSThreadDTO struct {
-	ID              string           `json:"id"`
-	BoardID         string           `json:"board_id"`
-	ProviderKey     string           `json:"provider_key"`
-	ExternalID      string           `json:"external_id"`
-	Title           string           `json:"title"`
-	Status          string           `json:"status"`
-	ResCount        uint32           `json:"res_count"`
-	Rules           BBSBoardRulesDTO `json:"rules"`
-	OwnerAnonID     string           `json:"owner_anon_id"`
-	OwnerPosterHash string           `json:"owner_poster_hash"`
-	BumpedAt        time.Time        `json:"bumped_at"`
-	ArchivedAt      *time.Time       `json:"archived_at,omitempty"`
-	CreatedAt       time.Time        `json:"created_at"`
-	UpdatedAt       time.Time        `json:"updated_at"`
+	ID          string           `json:"id"`
+	BoardID     string           `json:"board_id"`
+	ProviderKey string           `json:"provider_key"`
+	ExternalID  string           `json:"external_id"`
+	Title       string           `json:"title"`
+	Status      string           `json:"status"`
+	ResCount    uint32           `json:"res_count"`
+	Rules       BBSBoardRulesDTO `json:"rules"`
+	BumpedAt    time.Time        `json:"bumped_at"`
+	ArchivedAt  *time.Time       `json:"archived_at,omitempty"`
+	CreatedAt   time.Time        `json:"created_at"`
+	UpdatedAt   time.Time        `json:"updated_at"`
 }
 
 type BBSThreadsResponse struct {
@@ -181,7 +179,6 @@ type BBSPostDTO struct {
 	SlipText    string    `json:"slip_text"`
 	AnonID      string    `json:"anon_id"`
 	PosterHash  string    `json:"poster_hash"`
-	IsOP        bool      `json:"is_op"`
 	Body        string    `json:"body"`
 	Abone       bool      `json:"abone"`
 	AboneReason string    `json:"abone_reason"`

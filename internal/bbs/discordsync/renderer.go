@@ -250,9 +250,6 @@ func RenderPostHeader(post bbs.Post, threadRules bbs.BoardRules, locale discord.
 	fmt.Fprintf(&b, "%d :%s:%s", post.ResNumber, namePart.String(), FormatTimestamp5ch(post.CreatedAt, locale))
 	if post.AnonID != "" {
 		fmt.Fprintf(&b, " ID:%s", post.AnonID)
-		if post.IsOP {
-			b.WriteString(" (>>1)")
-		}
 	}
 	return b.String()
 }

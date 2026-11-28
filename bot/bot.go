@@ -265,13 +265,11 @@ func run() error {
 		if fedRuntime.server != nil {
 			fedRuntime.server.SetDiscordClient(client)
 			fedSrv := fedRuntime.server
-			fedWG.Add(1)
-			go func() {
-				defer fedWG.Done()
+			fedWG.Go(func() {
 				if serveErr := fedSrv.ListenAndServe(ctx); serveErr != nil {
 					slog.Error("BBSフェデレーションサーバーでエラーが発生しました", slog.Any("error", serveErr))
 				}
-			}()
+			})
 		}
 		if fedRuntime.callbackServer != nil && fedRuntime.callbackServer.Enabled() {
 			cbSrv := fedRuntime.callbackServer
@@ -288,13 +286,11 @@ func run() error {
 					)
 				}
 			})
-			fedWG.Add(1)
-			go func() {
-				defer fedWG.Done()
+			fedWG.Go(func() {
 				if serveErr := cbSrv.ListenAndServe(ctx); serveErr != nil {
 					slog.Error("BBSフェデレーションコールバックサーバーでエラーが発生しました", slog.Any("error", serveErr))
 				}
-			}()
+			})
 		}
 	}
 
@@ -309,11 +305,9 @@ func run() error {
 	if fedRuntime != nil {
 		for _, sub := range fedRuntime.subscribers {
 			s := sub
-			fedWG.Add(1)
-			go func() {
-				defer fedWG.Done()
+			fedWG.Go(func() {
 				s.Run(ctx, client)
-			}()
+			})
 		}
 	}
 

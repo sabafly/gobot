@@ -231,7 +231,7 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 				Threads: []admin.BBSThreadDTO{{
 					ID: "33333333-3333-3333-3333-333333333333", BoardID: "44444444-4444-4444-4444-444444444444",
 					Title: "日本語スレッドタイトル", Status: "active", ResCount: 2,
-					Rules: admin.BBSBoardRulesDTO{MaxRes: 1000}, OwnerAnonID: "OPID1234", BumpedAt: now, CreatedAt: now, UpdatedAt: now,
+					Rules: admin.BBSBoardRulesDTO{MaxRes: 1000}, BumpedAt: now, CreatedAt: now, UpdatedAt: now,
 				}},
 			})
 		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/bbs/threads/33333333-3333-3333-3333-333333333333":
@@ -241,7 +241,7 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 				},
 				Posts: []admin.BBSPostDTO{{
 					ID: "22222222-2222-2222-2222-222222222222", ThreadID: "33333333-3333-3333-3333-333333333333",
-					ResNumber: 1, Name: "名無しさん", AnonID: "AbCdEfGh", Body: "長い日本語の投稿テキストです\n二行目も綺麗に表示されます", IsOP: true, CreatedAt: now,
+					ResNumber: 1, Name: "名無しさん", AnonID: "AbCdEfGh", Body: "長い日本語の投稿テキストです\n二行目も綺麗に表示されます", CreatedAt: now,
 				}},
 			})
 		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/bbs/threads/33333333-3333-3333-3333-333333333333/archive":
