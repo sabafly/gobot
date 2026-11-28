@@ -31,6 +31,7 @@ import (
 	"math"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"slices"
 	"strconv"
@@ -115,8 +116,8 @@ func (l *oauthRateLimiter) Allow(key string, now time.Time) (bool, time.Duration
 		elapsed := now.Sub(b.lastSeen).Seconds()
 		if elapsed > 0 {
 			b.tokens = min(l.burst, b.tokens+elapsed*l.ratePerSec)
+			b.lastSeen = now
 		}
-		b.lastSeen = now
 	}
 
 	if b.tokens >= 1.0 {
@@ -128,15 +129,55 @@ func (l *oauthRateLimiter) Allow(key string, now time.Time) (bool, time.Duration
 	return false, time.Duration(waitSec) * time.Second
 }
 
-func oauthClientIP(r *http.Request) string {
+func (m *oauthManager) clientIP(r *http.Request) string {
 	if r == nil {
 		return ""
 	}
-	addr := strings.TrimSpace(r.RemoteAddr)
-	if host, _, err := net.SplitHostPort(addr); err == nil && host != "" {
-		return host
+	peerHost := strings.TrimSpace(r.RemoteAddr)
+	if host, _, err := net.SplitHostPort(peerHost); err == nil && host != "" {
+		peerHost = host
 	}
-	return addr
+	peerHost = strings.Trim(peerHost, "[]")
+	var trusted []netip.Prefix
+	if m != nil && m.srv != nil {
+		trusted = m.srv.cfg.ParsedTrustedProxies
+	}
+	if len(trusted) == 0 {
+		return peerHost
+	}
+	peerAddr, err := netip.ParseAddr(peerHost)
+	if err != nil {
+		return peerHost
+	}
+	peerAddr = peerAddr.Unmap()
+	if !ipInPrefixes(peerAddr, trusted) {
+		return peerAddr.String()
+	}
+
+	xffVals := r.Header.Values("X-Forwarded-For")
+	if len(xffVals) == 0 {
+		return peerAddr.String()
+	}
+	var hops []string
+	for _, hdr := range xffVals {
+		for part := range strings.SplitSeq(hdr, ",") {
+			hops = append(hops, strings.TrimSpace(part))
+		}
+	}
+	for _, hop := range slices.Backward(hops) {
+		if hop == "" {
+			return peerAddr.String()
+		}
+		hopAddr, err := netip.ParseAddr(hop)
+		if err != nil {
+			return peerAddr.String()
+		}
+		hopAddr = hopAddr.Unmap()
+		if !ipInPrefixes(hopAddr, trusted) {
+			return hopAddr.String()
+		}
+	}
+	return peerAddr.String()
 }
 
 type pendingOAuthTx struct {
@@ -317,7 +358,7 @@ func redirectOAuthError(w http.ResponseWriter, r *http.Request, redirectURI, err
 }
 
 func (m *oauthManager) handleAuthorize(w http.ResponseWriter, r *http.Request) {
-	if ok, retryAfter := m.authLimiter.Allow(oauthClientIP(r), time.Now().UTC()); !ok {
+	if ok, retryAfter := m.authLimiter.Allow(m.clientIP(r), time.Now().UTC()); !ok {
 		secs := max(int(math.Ceil(retryAfter.Seconds())), 1)
 		w.Header().Set("Retry-After", strconv.Itoa(secs))
 		renderStatusPage(w, http.StatusTooManyRequests, false, "リクエスト過多 / Too Many Requests", "認可リクエストが短時間に集中しています。しばらく待ってから再度お試しください。", "")

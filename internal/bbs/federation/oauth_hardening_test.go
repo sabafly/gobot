@@ -282,3 +282,126 @@ func TestRemoteProvider_ListRemoteAvailableCaps_ScopeCheckedUnderLock(t *testing
 		t.Fatalf("expected stored token to remain intact, got err=%v", err)
 	}
 }
+
+func TestOAuthRateLimiter_DoesNotRewindLastSeen(t *testing.T) {
+	limiter := newOAuthRateLimiter(2, 1.0)
+	t0 := time.Date(2026, 11, 28, 12, 0, 10, 0, time.UTC)
+
+	if ok, _ := limiter.Allow("client-1", t0); !ok {
+		t.Fatal("first request at t0 should be allowed")
+	}
+	if ok, _ := limiter.Allow("client-1", t0); !ok {
+		t.Fatal("second request at t0 should be allowed")
+	}
+	// Out-of-order earlier timestamp must NOT rewind lastSeen.
+	earlier := t0.Add(-5 * time.Second)
+	if ok, _ := limiter.Allow("client-1", earlier); ok {
+		t.Fatal("request at earlier timestamp must be rejected when bucket is empty")
+	}
+	// Calling again at t0 must still be rejected (no artificial refill from rewound lastSeen).
+	if ok, _ := limiter.Allow("client-1", t0); ok {
+		t.Fatal("request at t0 after earlier timestamp must not receive refilled tokens")
+	}
+}
+
+func TestOAuthAuthorize_TrustedProxiesRateLimit(t *testing.T) {
+	store := newInternalTestStore(t)
+	reg := bbs.NewProviderRegistry(store.Key())
+	reg.Register(store)
+	svc := bbs.NewService(reg, store, bbs.NewIdentityGenerator([]byte("test-secret-key-32-bytes-long!!!")), bbs.NewPolicyManager(bbs.PolicyConfig{}), nil)
+	hub := NewEventHub(64)
+
+	// Invalid trusted_proxies entry must fail closed.
+	if _, err := NewServer(ServerDeps{
+		Config: ServerConfig{
+			Enabled:        true,
+			ListenAddr:     "127.0.0.1:0",
+			PublicURL:      "https://origin.example.com",
+			TrustedProxies: []string{"not-an-ip"},
+		},
+		Service: svc,
+		Hub:     hub,
+	}); err == nil {
+		t.Fatal("expected NewServer to reject invalid trusted_proxies entry")
+	}
+
+	srv, err := NewServer(ServerDeps{
+		Config: ServerConfig{
+			Enabled:        true,
+			ListenAddr:     "127.0.0.1:0",
+			PublicURL:      "https://origin.example.com",
+			TrustedProxies: []string{"127.0.0.1", "10.0.0.0/8"},
+			OAuth: OAuthConfig{
+				ClientID:     "discord-client",
+				ClientSecret: "discord-secret",
+			},
+			Peers: []PeerConfig{
+				{
+					ID:           "peer-a",
+					Token:        "peer-tok-a",
+					AllowWrite:   true,
+					RedirectURIs: []string{"https://listener.example.com/api/v1/bbs/federation/client/callback"},
+				},
+			},
+		},
+		Service: svc,
+		Hub:     hub,
+	})
+	if err != nil {
+		t.Fatalf("NewServer failed: %v", err)
+	}
+	srv.oauth.authLimiter = newOAuthRateLimiter(1, 0.01)
+
+	reqURL := "/api/v1/bbs/federation/oauth/authorize?client_id=peer-a&redirect_uri=" +
+		url.QueryEscape("https://listener.example.com/api/v1/bbs/federation/client/callback") +
+		"&response_type=code&scope=bbs.write&state=st&code_challenge=" +
+		ComputePKCES256("test-verifier-123456789012345678901234567890123") +
+		"&code_challenge_method=S256"
+
+	// Behind trusted proxy (127.0.0.1 -> 10.0.0.2): client A gets limited independently of client B.
+	reqA1 := httptest.NewRequest(http.MethodGet, reqURL, nil)
+	reqA1.RemoteAddr = "127.0.0.1:40000"
+	reqA1.Header.Set("X-Forwarded-For", "198.51.100.1, 10.0.0.2")
+	recA1 := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(recA1, reqA1)
+	if recA1.Code != http.StatusFound {
+		t.Fatalf("client A first request expected 302, got %d", recA1.Code)
+	}
+
+	reqA2 := httptest.NewRequest(http.MethodGet, reqURL, nil)
+	reqA2.RemoteAddr = "127.0.0.1:40001"
+	reqA2.Header.Set("X-Forwarded-For", "198.51.100.1, 10.0.0.2")
+	recA2 := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(recA2, reqA2)
+	if recA2.Code != http.StatusTooManyRequests {
+		t.Fatalf("client A second request expected 429, got %d", recA2.Code)
+	}
+
+	reqB := httptest.NewRequest(http.MethodGet, reqURL, nil)
+	reqB.RemoteAddr = "127.0.0.1:40002"
+	reqB.Header.Set("X-Forwarded-For", "198.51.100.2, 10.0.0.2")
+	recB := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(recB, reqB)
+	if recB.Code != http.StatusFound {
+		t.Fatalf("client B behind same trusted proxy expected 302, got %d", recB.Code)
+	}
+
+	// Untrusted peer spoofing X-Forwarded-For must be keyed by RemoteAddr, not the spoofed header.
+	reqUntrusted1 := httptest.NewRequest(http.MethodGet, reqURL, nil)
+	reqUntrusted1.RemoteAddr = "203.0.113.50:50000"
+	reqUntrusted1.Header.Set("X-Forwarded-For", "198.51.100.99")
+	recU1 := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(recU1, reqUntrusted1)
+	if recU1.Code != http.StatusFound {
+		t.Fatalf("untrusted first request expected 302, got %d", recU1.Code)
+	}
+
+	reqUntrusted2 := httptest.NewRequest(http.MethodGet, reqURL, nil)
+	reqUntrusted2.RemoteAddr = "203.0.113.50:50001"
+	reqUntrusted2.Header.Set("X-Forwarded-For", "198.51.100.100")
+	recU2 := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(recU2, reqUntrusted2)
+	if recU2.Code != http.StatusTooManyRequests {
+		t.Fatalf("untrusted second request with spoofed XFF expected 429, got %d", recU2.Code)
+	}
+}
