@@ -27,6 +27,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -128,7 +129,19 @@ func (sub *Subscriber) connectOnce(ctx context.Context, client *bot.Client) bool
 	}
 	sub.mu.Unlock()
 
-	if capsChanged && !needResync {
+	if needResync {
+		// Perform catch-up BEFORE opening the SSE stream so slow HTTP resyncs cannot
+		// overflow the Origin subscriber buffer and trigger a reconnect/resync loop.
+		sub.resyncMountedBoards(ctx, client, caps.AllowedBoardIDs)
+		if ctx.Err() != nil {
+			return false
+		}
+		sub.mu.Lock()
+		sub.lastEpoch = caps.InstanceEpoch
+		sub.lastSeq = caps.LatestSeq
+		sub.needSync = false
+		sub.mu.Unlock()
+	} else if capsChanged {
 		sub.refreshMountedGuides(ctx, client)
 	}
 
@@ -139,23 +152,11 @@ func (sub *Subscriber) connectOnce(ctx context.Context, client *bot.Client) bool
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	if needResync {
-		sub.resyncMountedBoards(ctx, client)
-		if ctx.Err() == nil {
-			sub.mu.Lock()
-			sub.lastEpoch = caps.InstanceEpoch
-			if caps.LatestSeq > sub.lastSeq {
-				sub.lastSeq = caps.LatestSeq
-			}
-			sub.needSync = false
-			sub.mu.Unlock()
-		}
-	}
-
 	scanner := bufio.NewScanner(resp.Body)
 	scanner.Buffer(make([]byte, 0, 64*1024), maxSSETokenBytes)
 
 	var evName, evID, evData strings.Builder
+	resyncRequested := false
 	dispatchFrame := func() bool {
 		if evData.Len() == 0 && evName.Len() == 0 && evID.Len() == 0 {
 			return true
@@ -173,22 +174,13 @@ func (sub *Subscriber) connectOnce(ctx context.Context, client *bot.Client) bool
 
 		switch name {
 		case "resync":
-			var meta struct {
-				Epoch     string `json:"epoch"`
-				LatestSeq uint64 `json:"latest_seq"`
-			}
-			_ = json.Unmarshal([]byte(dataStr), &meta)
-			sub.resyncMountedBoards(ctx, client)
+			// Close the current stream and let the next connectOnce run resyncMountedBoards
+			// before subscribing to avoid overflowing the SSE buffer during catch-up.
+			resyncRequested = true
 			sub.mu.Lock()
-			if meta.Epoch != "" {
-				sub.lastEpoch = meta.Epoch
-			}
-			if meta.LatestSeq > 0 {
-				sub.lastSeq = meta.LatestSeq
-			}
-			sub.needSync = false
+			sub.needSync = true
 			sub.mu.Unlock()
-			return true
+			return false
 		case "ready":
 			var meta struct {
 				Epoch     string `json:"epoch"`
@@ -266,7 +258,7 @@ func (sub *Subscriber) connectOnce(ctx context.Context, client *bot.Client) bool
 	if err := scanner.Err(); err != nil && ctx.Err() == nil {
 		slog.Warn("bbs federation SSE stream ended with error", "remote", sub.provider.RemoteKey(), "err", err)
 	}
-	return true
+	return !resyncRequested
 }
 
 func (sub *Subscriber) hasActiveMountsForBoard(ctx context.Context, boardID uuid.UUID) bool {
@@ -358,7 +350,7 @@ func (sub *Subscriber) refreshBoardMountsGuides(ctx context.Context, client *bot
 	}
 }
 
-func (sub *Subscriber) resyncMountedBoards(ctx context.Context, client *bot.Client) {
+func (sub *Subscriber) resyncMountedBoards(ctx context.Context, client *bot.Client, allowedBoardIDs []uuid.UUID) {
 	if sub.svc == nil || sub.svc.Store == nil {
 		return
 	}
@@ -375,6 +367,11 @@ func (sub *Subscriber) resyncMountedBoards(ctx context.Context, client *bot.Clie
 			return
 		}
 		if m.ProviderKey != sub.provider.Key() {
+			continue
+		}
+		if len(allowedBoardIDs) > 0 && !slices.Contains(allowedBoardIDs, m.BoardID) {
+			slog.Warn("bbs federation board currently excluded by origin allowed_board_ids; preserving mount",
+				"remote", sub.provider.RemoteKey(), "board_id", m.BoardID, "mount_id", m.ID)
 			continue
 		}
 		board, bErr := sub.provider.GetBoard(ctx, m.BoardID)
