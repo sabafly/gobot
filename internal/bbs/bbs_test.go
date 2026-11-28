@@ -538,6 +538,12 @@ func TestPolicyManager(t *testing.T) {
 	if err := bbs.ValidatePolicyConfig(bbs.PolicyConfig{TermsURL: "javascript:alert(1)"}); !errors.Is(err, bbs.ErrInvalidInput) {
 		t.Fatalf("expected ErrInvalidInput for invalid terms_url, got %v", err)
 	}
+	if err := bbs.ValidatePolicyConfig(bbs.PolicyConfig{TermsURL: "https://:443/terms"}); !errors.Is(err, bbs.ErrInvalidInput) {
+		t.Fatalf("expected ErrInvalidInput for empty-hostname terms_url, got %v", err)
+	}
+	if err := bbs.ValidatePolicyConfig(bbs.PolicyConfig{TermsURL: "https://example.com:8443/terms"}); err != nil {
+		t.Fatalf("expected hostname+port terms_url to pass, got %v", err)
+	}
 	if err := bbs.ValidatePolicyConfig(bbs.PolicyConfig{Version: strings.Repeat("a", bbs.MaxPolicyVersionLen)}); err != nil {
 		t.Fatalf("expected %d-char policy version to pass validation: %v", bbs.MaxPolicyVersionLen, err)
 	}

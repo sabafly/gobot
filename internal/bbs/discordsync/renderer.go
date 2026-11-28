@@ -849,7 +849,7 @@ func computeBackwardStartIndex(
 
 func isValidHTTPURL(raw string) bool {
 	u, err := url.Parse(strings.TrimSpace(raw))
-	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != "" && u.Hostname() != ""
 }
 
 // ConsentURLButtons builds Discord link buttons for configured legal policy URLs.

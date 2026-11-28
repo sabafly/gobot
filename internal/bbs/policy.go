@@ -44,7 +44,7 @@ type PolicyConfig struct {
 
 func isValidPolicyURL(raw string) bool {
 	u, err := url.Parse(strings.TrimSpace(raw))
-	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != ""
+	return err == nil && (u.Scheme == "http" || u.Scheme == "https") && u.Host != "" && u.Hostname() != ""
 }
 
 // ValidatePolicyConfig ensures configured policy metadata satisfies persistence length limits and URL format.
