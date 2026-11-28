@@ -107,12 +107,12 @@ jobs:
       - name: Upload preview version to Cloudflare Workers
         id: wrangler
         if: steps.secrets.outputs.configured == 'true'
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: website
-          command: versions upload --preview-alias pr-${{ github.event.pull_request.number }} --message "PR #${{ github.event.pull_request.number }} (${{ github.sha }})"
+          command: "versions upload --preview-alias pr-${{ github.event.pull_request.number }} --tag pr-${{ github.event.pull_request.number }}"
 
       - name: Comment preview URL on PR
         if: steps.secrets.outputs.configured == 'true'
@@ -159,7 +159,7 @@ jobs:
           path: website/public
 
       - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
