@@ -206,10 +206,11 @@ type GuildsResponse struct {
 }
 
 type GuildDetailResponse struct {
-	Guild            GuildSummary `json:"guild"`
-	AvailableLocales []string     `json:"available_locales"`
-	BBSForumDefault  *bool        `json:"bbs_forum_default,omitempty"`
-	BBSModLogChannel string       `json:"bbs_mod_log_channel,omitempty"`
+	Guild                GuildSummary `json:"guild"`
+	AvailableLocales     []string     `json:"available_locales"`
+	BBSForumDefault      *bool        `json:"bbs_forum_default,omitempty"`
+	BBSModLogChannel     string       `json:"bbs_mod_log_channel,omitempty"`
+	BBSModLogChannelName string       `json:"bbs_mod_log_channel_name,omitempty"`
 }
 
 type UpdateGuildRequest struct {
@@ -238,6 +239,7 @@ type AuditLogEntry struct {
 	Action       string    `json:"action"`
 	ResourceType string    `json:"resource_type"`
 	ResourceID   string    `json:"resource_id"`
+	ResourceName string    `json:"resource_name,omitempty"`
 	Summary      string    `json:"summary"`
 	DetailJSON   string    `json:"detail_json"`
 	Status       string    `json:"status"`

@@ -756,6 +756,7 @@ func (s *Server) collectGuildDetail(ctx context.Context, gid snowflake.ID) (Guil
 
 	var bbsForumDefault *bool
 	var bbsModLog string
+	var bbsModLogName string
 	if s.db != nil && s.db.DB != nil {
 		gdb := s.db.DB.WithContext(ctx)
 		if gdb.Migrator().HasTable(&models.Guild{}) {
@@ -777,6 +778,9 @@ func (s *Server) collectGuildDetail(ctx context.Context, gid snowflake.ID) (Guil
 				bbsForumDefault = &v
 				if cfg.ModLogChannelID != nil {
 					bbsModLog = cfg.ModLogChannelID.String()
+					if names := s.resolveChannelNames([]snowflake.ID{*cfg.ModLogChannelID}); len(names) > 0 {
+						bbsModLogName = names[*cfg.ModLogChannelID]
+					}
 				}
 			}
 		}
@@ -789,10 +793,11 @@ func (s *Server) collectGuildDetail(ctx context.Context, gid snowflake.ID) (Guil
 	}
 	summary.EffectiveLocale = string(s.resolveGuildLocale(ctx, gid, summary.LocaleOverride, summary.PreferredLocale))
 	return GuildDetailResponse{
-		Guild:            summary,
-		AvailableLocales: availableLocaleCodes(),
-		BBSForumDefault:  bbsForumDefault,
-		BBSModLogChannel: bbsModLog,
+		Guild:                summary,
+		AvailableLocales:     availableLocaleCodes(),
+		BBSForumDefault:      bbsForumDefault,
+		BBSModLogChannel:     bbsModLog,
+		BBSModLogChannelName: bbsModLogName,
 	}, found, nil
 }
 
@@ -917,8 +922,68 @@ func (s *Server) handleListAuditLogs(w http.ResponseWriter, r *http.Request, _ a
 		writeError(w, http.StatusInternalServerError, "audit_list_failed", err.Error())
 		return
 	}
+
+	var guildIDs, userIDs []snowflake.ID
+	var catIDs, boardIDs, threadIDs []uuid.UUID
+	for _, row := range rows {
+		rid := strings.TrimSpace(row.ResourceID)
+		if rid == "" {
+			continue
+		}
+		switch row.ResourceType {
+		case "guild":
+			if id, pErr := snowflake.Parse(rid); pErr == nil && id != 0 {
+				guildIDs = append(guildIDs, id)
+			}
+		case "user":
+			if id, pErr := snowflake.Parse(rid); pErr == nil && id != 0 {
+				userIDs = append(userIDs, id)
+			}
+		case "bbs_category":
+			if id, pErr := uuid.Parse(rid); pErr == nil {
+				catIDs = append(catIDs, id)
+			}
+		case "bbs_board":
+			if id, pErr := uuid.Parse(rid); pErr == nil {
+				boardIDs = append(boardIDs, id)
+			}
+		case "bbs_thread":
+			if id, pErr := uuid.Parse(rid); pErr == nil {
+				threadIDs = append(threadIDs, id)
+			}
+		}
+	}
+	guildNames := s.resolveGuildNames(r.Context(), guildIDs)
+	userNames := s.resolveUserNames(r.Context(), userIDs, nil, false)
+	catNames, boardNames, threadNames := s.resolveBBSNames(r.Context(), catIDs, boardIDs, threadIDs)
+
 	entries := make([]AuditLogEntry, 0, len(rows))
 	for _, row := range rows {
+		var resName string
+		if rid := strings.TrimSpace(row.ResourceID); rid != "" {
+			switch row.ResourceType {
+			case "guild":
+				if id, pErr := snowflake.Parse(rid); pErr == nil {
+					resName = guildNames[id]
+				}
+			case "user":
+				if id, pErr := snowflake.Parse(rid); pErr == nil {
+					resName = userNames[id]
+				}
+			case "bbs_category":
+				if id, pErr := uuid.Parse(rid); pErr == nil {
+					resName = catNames[id]
+				}
+			case "bbs_board":
+				if id, pErr := uuid.Parse(rid); pErr == nil {
+					resName = boardNames[id]
+				}
+			case "bbs_thread":
+				if id, pErr := uuid.Parse(rid); pErr == nil {
+					resName = threadNames[id]
+				}
+			}
+		}
 		entries = append(entries, AuditLogEntry{
 			ID:           row.ID.String(),
 			ActorUserID:  row.ActorUserID.String(),
@@ -927,6 +992,7 @@ func (s *Server) handleListAuditLogs(w http.ResponseWriter, r *http.Request, _ a
 			Action:       row.Action,
 			ResourceType: row.ResourceType,
 			ResourceID:   row.ResourceID,
+			ResourceName: resName,
 			Summary:      row.Summary,
 			DetailJSON:   row.DetailJSON,
 			Status:       row.Status,

@@ -105,7 +105,6 @@ func DefaultTheme() Theme {
 		SelectedBgColor:  selectedBg,
 
 		Header: lipgloss.NewStyle().
-			Background(headerBg).
 			Foreground(text).
 			Padding(0, 1).
 			Bold(true),
@@ -158,7 +157,6 @@ func DefaultTheme() Theme {
 			Foreground(text).
 			Bold(true),
 		Footer: lipgloss.NewStyle().
-			Background(headerBg).
 			Foreground(muted).
 			Padding(0, 1),
 		ToastInfo: lipgloss.NewStyle().
@@ -176,19 +174,16 @@ func DefaultTheme() Theme {
 		ModalBox: lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(accent).
-			Background(headerBg).
 			Foreground(text).
 			Padding(1, 2),
 		ModalDanger: lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(errCol).
-			Background(headerBg).
 			Foreground(text).
 			Padding(1, 2),
 		HelpBox: lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(cyan).
-			Background(headerBg).
 			Foreground(text).
 			Padding(1, 2),
 		SubTab: lipgloss.NewStyle().
@@ -211,18 +206,46 @@ func DefaultTheme() Theme {
 			Padding(0, 1),
 		ButtonActive: lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(accent).
-			Background(selectedBg).
-			Foreground(text).
+			BorderForeground(cyan).
+			Foreground(cyan).
 			Bold(true).
 			Padding(0, 1),
 		ButtonDanger: lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(errCol).
-			Background(lipgloss.Color("#7F1D1D")).
-			Foreground(text).
+			Foreground(errCol).
 			Bold(true).
 			Padding(0, 1),
+	}
+}
+
+// RenderSubTabBar renders a standardized single-line subtab switcher bar across panels.
+func RenderSubTabBar(theme Theme, labels []string, activeIdx, width int) string {
+	parts := make([]string, 0, len(labels))
+	for i, lbl := range labels {
+		st := theme.SubTab
+		if i == activeIdx {
+			st = theme.SubTabActive
+		}
+		parts = append(parts, st.Render(lbl))
+	}
+	bar := strings.Join(parts, " ") + "  " + theme.MutedText.Render("[←/→ or [/]] subtab")
+	return TruncateWidth(bar, width)
+}
+
+// FormatIDWithName formats an identifier with its human-readable name as "Name (ID)", falling back gracefully.
+func FormatIDWithName(name, id string) string {
+	name = strings.TrimSpace(name)
+	id = strings.TrimSpace(id)
+	switch {
+	case name != "" && id != "":
+		return fmt.Sprintf("%s (%s)", name, id)
+	case name != "":
+		return name
+	case id != "":
+		return id
+	default:
+		return "-"
 	}
 }
 

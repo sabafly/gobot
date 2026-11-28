@@ -78,11 +78,11 @@ func (s *bansState) rebuildDetail(theme ui.Theme) {
 	}
 	guildStr := "(global)"
 	if b.GuildID != nil && *b.GuildID != "" {
-		guildStr = *b.GuildID
+		guildStr = ui.FormatIDWithName(b.GuildName, *b.GuildID)
 	}
 	targetUID := "(hidden or unset)"
 	if b.TargetUserID != nil && *b.TargetUserID != "" {
-		targetUID = *b.TargetUserID
+		targetUID = ui.FormatIDWithName(b.TargetUserName, *b.TargetUserID)
 	}
 	expStr := "Permanent"
 	if b.ExpiresAt != nil {
@@ -91,11 +91,11 @@ func (s *bansState) rebuildDetail(theme ui.Theme) {
 	lines := []string{
 		kvLine(theme, "Ban ID", b.ID),
 		kvLine(theme, "Scope", b.Scope),
-		kvLine(theme, "Guild ID", guildStr),
+		kvLine(theme, "Guild", guildStr),
 		kvLine(theme, "Poster Hash", b.PosterHash),
-		kvLine(theme, "Target UID", targetUID),
+		kvLine(theme, "Target User", targetUID),
 		kvLine(theme, "Expires", expStr),
-		kvLine(theme, "Created By", b.CreatedBy),
+		kvLine(theme, "Created By", ui.FormatIDWithName(b.CreatedByName, b.CreatedBy)),
 		kvLine(theme, "Created", b.CreatedAt.Local().Format("2006-01-02 15:04:05")),
 		"",
 		theme.CardTitle.Render("Reason"),
@@ -162,6 +162,18 @@ func (p *Panel) updateBans(msg tea.Msg, ctx ui.PanelContext) tea.Cmd {
 			p.bans.selectedID = p.bans.items[p.bans.selectedIdx].ID
 			p.bans.rebuildDetail(p.theme)
 		}
+	case "g", "home":
+		if len(p.bans.items) > 0 && p.bans.selectedIdx != 0 {
+			p.bans.selectedIdx = 0
+			p.bans.selectedID = p.bans.items[0].ID
+			p.bans.rebuildDetail(p.theme)
+		}
+	case "G", "end":
+		if len(p.bans.items) > 0 && p.bans.selectedIdx != len(p.bans.items)-1 {
+			p.bans.selectedIdx = len(p.bans.items) - 1
+			p.bans.selectedID = p.bans.items[p.bans.selectedIdx].ID
+			p.bans.rebuildDetail(p.theme)
+		}
 	case "J", "pgdown":
 		p.bans.detailVP.PageDown()
 	case "K", "pgup":
@@ -172,21 +184,21 @@ func (p *Panel) updateBans(msg tea.Msg, ctx ui.PanelContext) tea.Cmd {
 		return p.fetchBansCmd(ctx.Client)
 	case "r":
 		p.bans.loading = true
-		return p.fetchBansCmd(ctx.Client)
+		return tea.Batch(p.fetchStatsCmd(ctx.Client), p.fetchBansCmd(ctx.Client))
 	case "n":
 		if !ctx.HasPerm(admin.PermBBSModerate) {
 			return ui.ShowToastCmd(ui.ToastWarn, "Requires bbs.moderate permission")
 		}
-		return p.formModal.Open("ban.create", "Create Ban", "Specify Post ID, Target User ID, or Poster Hash", []FormField{
-			{Key: "scope", Label: "Scope", Kind: FieldCycle, Options: []string{"local", "global"}, Value: "local"},
-			{Key: "guild_id", Label: "Guild ID (local)", Kind: FieldText, Placeholder: "Discord Guild ID", CharLimit: 32},
-			{Key: "post_id", Label: "Post ID", Kind: FieldText, Placeholder: "Optional Post UUID", CharLimit: 40},
-			{Key: "target_user_id", Label: "Target UID", Kind: FieldText, Placeholder: "Optional Discord User ID", CharLimit: 32},
-			{Key: "target_poster_hash", Label: "Poster Hash", Kind: FieldText, Placeholder: "Optional Poster Hash", CharLimit: 64},
-			{Key: "duration_hours", Label: "Hours (0=perm)", Kind: FieldText, Value: "24", CharLimit: 8},
-			{Key: "reason", Label: "Reason", Kind: FieldText, Placeholder: "Ban reason", CharLimit: 200},
+		return p.openForm("ban.create", "Create Ban", "Specify Post ID, Target User ID, or Poster Hash", []ui.FormField{
+			{Key: "scope", Label: "Scope", Kind: ui.FieldCycle, Options: []string{"local", "global"}, Value: "local"},
+			{Key: "guild_id", Label: "Guild ID (local)", Kind: ui.FieldText, Placeholder: "Discord Guild ID", CharLimit: 32},
+			{Key: "post_id", Label: "Post ID", Kind: ui.FieldText, Placeholder: "Optional Post UUID", CharLimit: 40},
+			{Key: "target_user_id", Label: "Target UID", Kind: ui.FieldText, Placeholder: "Optional Discord User ID", CharLimit: 32},
+			{Key: "target_poster_hash", Label: "Poster Hash", Kind: ui.FieldText, Placeholder: "Optional Poster Hash", CharLimit: 64},
+			{Key: "duration_hours", Label: "Hours (0=perm)", Kind: ui.FieldText, Value: "24", CharLimit: 8},
+			{Key: "reason", Label: "Reason", Kind: ui.FieldText, Placeholder: "Ban reason", CharLimit: 200},
 		}, nil)
-	case "D":
+	case "D", "delete":
 		if !ctx.HasPerm(admin.PermBBSModerate) {
 			return ui.ShowToastCmd(ui.ToastWarn, "Requires bbs.moderate permission")
 		}

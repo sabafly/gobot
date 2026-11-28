@@ -129,8 +129,15 @@ func TestAdminServer_BBSManagement_EndToEnd_RBAC_And_ConfigReload(t *testing.T) 
 
 	guildID := snowflake.ID(777001)
 	posterUID := snowflake.ID(333001)
+	reporterUID := snowflake.ID(444001)
 	if err := db.DB.Create(&models.Guild{ID: guildID, Name: "BBSGuild"}).Error; err != nil {
 		t.Fatalf("create guild failed: %v", err)
+	}
+	if err := db.DB.Create(&models.User{ID: posterUID, Name: "PosterUser"}).Error; err != nil {
+		t.Fatalf("create poster user failed: %v", err)
+	}
+	if err := db.DB.Create(&models.User{ID: reporterUID, Name: "ReporterUser"}).Error; err != nil {
+		t.Fatalf("create reporter user failed: %v", err)
 	}
 
 	comp := components.New(ctx, components.Config{LocaleDir: "../../locales"}, db)
@@ -216,7 +223,6 @@ func TestAdminServer_BBSManagement_EndToEnd_RBAC_And_ConfigReload(t *testing.T) 
 	viewCli := loginClient(t, ts.URL, "view")
 
 	// Seed a guild thread/post/report directly so moderation endpoints operate on real data.
-	reporterUID := snowflake.ID(444001)
 	if _, err := bbsSvc.SetupGuild(ctx, bbs.GuildSetupInput{GuildID: guildID, Enabled: true, ActorUserID: snowflake.ID(1001)}); err != nil {
 		t.Fatalf("SetupGuild failed: %v", err)
 	}
@@ -239,12 +245,12 @@ func TestAdminServer_BBSManagement_EndToEnd_RBAC_And_ConfigReload(t *testing.T) 
 	cat, err := superCli.CreateBBSCategory(ctx, admin.CreateBBSCategoryRequest{
 		Scope: "local", GuildID: guildID.String(), Slug: "chat", Name: "雑談", SortOrder: 2,
 	})
-	if err != nil || cat.Name != "雑談" {
+	if err != nil || cat.Name != "雑談" || cat.GuildName != "BBSGuild" {
 		t.Fatalf("CreateBBSCategory failed: %+v err=%v", cat, err)
 	}
 	updName := "総合雑談"
 	catUpd, err := superCli.UpdateBBSCategory(ctx, cat.ID, admin.UpdateBBSCategoryRequest{Name: &updName})
-	if err != nil || catUpd.Name != "総合雑談" {
+	if err != nil || catUpd.Name != "総合雑談" || catUpd.GuildName != "BBSGuild" {
 		t.Fatalf("UpdateBBSCategory failed: %+v err=%v", catUpd, err)
 	}
 
@@ -252,7 +258,7 @@ func TestAdminServer_BBSManagement_EndToEnd_RBAC_And_ConfigReload(t *testing.T) 
 		CategoryID: cat.ID, Slug: "lounge", Name: "ラウンジ", Description: "まったり",
 		Rules: admin.BBSBoardRulesDTO{DefaultName: "通りすがり", HideID: false, SLIPLevel: 1, MaxRes: 500, DatOchiIdleHours: 24},
 	})
-	if err != nil || board.Scope != "local" || board.Name != "ラウンジ" {
+	if err != nil || board.Scope != "local" || board.Name != "ラウンジ" || board.CategoryName != "総合雑談" || board.GuildName != "BBSGuild" {
 		t.Fatalf("CreateBBSBoard failed: %+v err=%v", board, err)
 	}
 	lockedTrue := true
@@ -290,7 +296,10 @@ func TestAdminServer_BBSManagement_EndToEnd_RBAC_And_ConfigReload(t *testing.T) 
 	}
 
 	ins, err := modCli.InspectBBSReport(ctx, rep.ID.String())
-	if err != nil || ins.AuthorUserID != posterUID.String() || ins.Post == nil {
+	if err != nil || ins.AuthorUserID != posterUID.String() || ins.Post == nil ||
+		ins.Report.GuildName != "BBSGuild" || ins.Report.BoardName != "ラウンジ" ||
+		ins.Report.ThreadTitle != "管理画面テストスレ" || ins.Report.ReporterName != "ReporterUser" ||
+		ins.AuthorUserName != "PosterUser" {
 		t.Fatalf("InspectBBSReport failed: %+v err=%v", ins, err)
 	}
 	auditList, err := superCli.ListAuditLogs(ctx, admin.AuditFilter{Action: "bbs.report.inspect"})
@@ -301,18 +310,21 @@ func TestAdminServer_BBSManagement_EndToEnd_RBAC_And_ConfigReload(t *testing.T) 
 	ban, err := modCli.CreateBBSBan(ctx, admin.CreateBBSBanRequest{
 		Scope: "local", GuildID: guildID.String(), PostID: p1.ID.String(), Reason: "ルール違反", DurationHours: 12,
 	})
-	if err != nil || ban.TargetUserID == nil || *ban.TargetUserID != posterUID.String() {
+	if err != nil || ban.TargetUserID == nil || *ban.TargetUserID != posterUID.String() ||
+		ban.TargetUserName != "PosterUser" || ban.GuildName != "BBSGuild" || ban.CreatedByName != "BBS Mod (@bbsmod)" {
 		t.Fatalf("CreateBBSBan failed: %+v err=%v", ban, err)
 	}
 
-	// Viewer MUST NOT see TargetUserID on ListBBSBans; Moderator sees it.
+	// Viewer MUST NOT see TargetUserID or TargetUserName on ListBBSBans; Moderator sees both.
 	viewBans, err := viewCli.ListBBSBans(ctx, admin.BBSBanFilter{})
-	if err != nil || len(viewBans.Bans) != 1 || viewBans.Bans[0].TargetUserID != nil {
-		t.Fatalf("expected TargetUserID redacted for viewer, got %+v err=%v", viewBans, err)
+	if err != nil || len(viewBans.Bans) != 1 || viewBans.Bans[0].TargetUserID != nil || viewBans.Bans[0].TargetUserName != "" ||
+		viewBans.Bans[0].GuildName != "BBSGuild" || viewBans.Bans[0].CreatedByName != "BBS Mod (@bbsmod)" {
+		t.Fatalf("expected TargetUserID and TargetUserName redacted for viewer, got %+v err=%v", viewBans, err)
 	}
 	modBans, err := modCli.ListBBSBans(ctx, admin.BBSBanFilter{})
-	if err != nil || len(modBans.Bans) != 1 || modBans.Bans[0].TargetUserID == nil || *modBans.Bans[0].TargetUserID != posterUID.String() {
-		t.Fatalf("expected TargetUserID visible for moderator, got %+v err=%v", modBans, err)
+	if err != nil || len(modBans.Bans) != 1 || modBans.Bans[0].TargetUserID == nil || *modBans.Bans[0].TargetUserID != posterUID.String() ||
+		modBans.Bans[0].TargetUserName != "PosterUser" || modBans.Bans[0].CreatedByName != "BBS Mod (@bbsmod)" {
+		t.Fatalf("expected TargetUserID and TargetUserName visible for moderator, got %+v err=%v", modBans, err)
 	}
 
 	aboned, err := modCli.AboneBBSPost(ctx, p1.ID.String(), "モデレーション削除")
@@ -326,7 +338,7 @@ func TestAdminServer_BBSManagement_EndToEnd_RBAC_And_ConfigReload(t *testing.T) 
 	resolved, err := modCli.ResolveBBSReport(ctx, rep.ID.String(), admin.ResolveBBSReportRequest{
 		Status: "resolved", ResolutionNote: "対応完了",
 	})
-	if err != nil || resolved.Status != "resolved" || resolved.ResolutionNote != "対応完了" {
+	if err != nil || resolved.Status != "resolved" || resolved.ResolutionNote != "対応完了" || resolved.HandledByName != "BBS Mod (@bbsmod)" {
 		t.Fatalf("ResolveBBSReport failed: %+v err=%v", resolved, err)
 	}
 
@@ -338,10 +350,15 @@ func TestAdminServer_BBSManagement_EndToEnd_RBAC_And_ConfigReload(t *testing.T) 
 	}
 
 	// 4. Caps & SLIP Events live CRUD via API + conflict/not-found/validation errors + live memory reflection.
-	if _, err := superCli.CreateBBSCap(ctx, admin.SaveBBSCapRequest{
+	createdCap, err := superCli.CreateBBSCap(ctx, admin.SaveBBSCapRequest{
 		ID: "staff", Name: "スタッフ ★", Description: "公式", Users: []string{posterUID.String()},
-	}); err != nil {
-		t.Fatalf("CreateBBSCap failed: %v", err)
+	})
+	if err != nil || createdCap.UserNames[posterUID.String()] != "PosterUser" {
+		t.Fatalf("CreateBBSCap failed or missing user name: %+v err=%v", createdCap, err)
+	}
+	capsList, err := superCli.ListBBSCaps(ctx)
+	if err != nil || len(capsList.Caps) != 1 || capsList.Caps[0].UserNames[posterUID.String()] != "PosterUser" {
+		t.Fatalf("ListBBSCaps missing user name: %+v err=%v", capsList, err)
 	}
 	if _, err := superCli.CreateBBSCap(ctx, admin.SaveBBSCapRequest{
 		ID: "STAFF", Name: "重複",

@@ -80,14 +80,14 @@ func (s *categoriesState) rebuildDetail(theme ui.Theme) {
 	}
 	guildStr := "(global)"
 	if cat.GuildID != nil && *cat.GuildID != "" {
-		guildStr = *cat.GuildID
+		guildStr = ui.FormatIDWithName(cat.GuildName, *cat.GuildID)
 	}
 	lines := []string{
 		kvLine(theme, "Category ID", cat.ID),
 		kvLine(theme, "Name", cat.Name),
 		kvLine(theme, "Slug", cat.Slug),
 		kvLine(theme, "Scope", cat.Scope),
-		kvLine(theme, "Guild ID", guildStr),
+		kvLine(theme, "Guild", guildStr),
 		kvLine(theme, "Provider", cat.ProviderKey),
 		kvLine(theme, "Sort Order", fmt.Sprintf("%d", cat.SortOrder)),
 		kvLine(theme, "Created", cat.CreatedAt.Local().Format("2006-01-02 15:04:05")),
@@ -168,6 +168,18 @@ func (p *Panel) updateCategories(msg tea.Msg, ctx ui.PanelContext) tea.Cmd {
 			p.categories.selectedID = p.categories.items[p.categories.selectedIdx].ID
 			p.categories.rebuildDetail(p.theme)
 		}
+	case "g", "home":
+		if len(p.categories.items) > 0 && p.categories.selectedIdx != 0 {
+			p.categories.selectedIdx = 0
+			p.categories.selectedID = p.categories.items[0].ID
+			p.categories.rebuildDetail(p.theme)
+		}
+	case "G", "end":
+		if len(p.categories.items) > 0 && p.categories.selectedIdx != len(p.categories.items)-1 {
+			p.categories.selectedIdx = len(p.categories.items) - 1
+			p.categories.selectedID = p.categories.items[p.categories.selectedIdx].ID
+			p.categories.rebuildDetail(p.theme)
+		}
 	case "J", "pgdown":
 		p.categories.detailVP.PageDown()
 	case "K", "pgup":
@@ -178,32 +190,32 @@ func (p *Panel) updateCategories(msg tea.Msg, ctx ui.PanelContext) tea.Cmd {
 		return p.fetchCategoriesCmd(ctx.Client)
 	case "r":
 		p.categories.loading = true
-		return p.fetchCategoriesCmd(ctx.Client)
+		return tea.Batch(p.fetchStatsCmd(ctx.Client), p.fetchCategoriesCmd(ctx.Client))
 	case "n":
 		if !ctx.HasPerm(admin.PermBBSAdmin) {
 			return ui.ShowToastCmd(ui.ToastWarn, "Requires bbs.admin permission")
 		}
-		return p.formModal.Open("category.create", "Create Category", "Create a new global or local BBS category", []FormField{
-			{Key: "scope", Label: "Scope", Kind: FieldCycle, Options: []string{"global", "local"}, Value: "global"},
-			{Key: "guild_id", Label: "Guild ID (local)", Kind: FieldText, Placeholder: "Discord Guild ID", CharLimit: 32},
-			{Key: "slug", Label: "Slug", Kind: FieldText, Placeholder: "news", CharLimit: 64},
-			{Key: "name", Label: "Name", Kind: FieldText, Placeholder: "ニュース速報", CharLimit: 64},
-			{Key: "description", Label: "Description", Kind: FieldText, Placeholder: "Optional summary", CharLimit: 256},
-			{Key: "sort_order", Label: "Sort Order", Kind: FieldText, Value: "0", CharLimit: 8},
+		return p.openForm("category.create", "Create Category", "Create a new global or local BBS category", []ui.FormField{
+			{Key: "scope", Label: "Scope", Kind: ui.FieldCycle, Options: []string{"global", "local"}, Value: "global"},
+			{Key: "guild_id", Label: "Guild ID (local)", Kind: ui.FieldText, Placeholder: "Discord Guild ID", CharLimit: 32},
+			{Key: "slug", Label: "Slug", Kind: ui.FieldText, Placeholder: "news", CharLimit: 64},
+			{Key: "name", Label: "Name", Kind: ui.FieldText, Placeholder: "ニュース速報", CharLimit: 64},
+			{Key: "description", Label: "Description", Kind: ui.FieldText, Placeholder: "Optional summary", CharLimit: 256},
+			{Key: "sort_order", Label: "Sort Order", Kind: ui.FieldText, Value: "0", CharLimit: 8},
 		}, nil)
 	case "e":
 		if !ctx.HasPerm(admin.PermBBSAdmin) {
 			return ui.ShowToastCmd(ui.ToastWarn, "Requires bbs.admin permission")
 		}
 		if cat, ok := p.categories.selected(); ok {
-			return p.formModal.Open("category.edit", "Edit Category", cat.ID, []FormField{
-				{Key: "name", Label: "Name", Kind: FieldText, Value: cat.Name, CharLimit: 64},
-				{Key: "slug", Label: "Slug", Kind: FieldText, Value: cat.Slug, CharLimit: 64},
-				{Key: "description", Label: "Description", Kind: FieldText, Value: cat.Description, CharLimit: 256},
-				{Key: "sort_order", Label: "Sort Order", Kind: FieldText, Value: strconv.Itoa(cat.SortOrder), CharLimit: 8},
+			return p.openForm("category.edit", "Edit Category", cat.ID, []ui.FormField{
+				{Key: "name", Label: "Name", Kind: ui.FieldText, Value: cat.Name, CharLimit: 64},
+				{Key: "slug", Label: "Slug", Kind: ui.FieldText, Value: cat.Slug, CharLimit: 64},
+				{Key: "description", Label: "Description", Kind: ui.FieldText, Value: cat.Description, CharLimit: 256},
+				{Key: "sort_order", Label: "Sort Order", Kind: ui.FieldText, Value: strconv.Itoa(cat.SortOrder), CharLimit: 8},
 			}, cat)
 		}
-	case "D":
+	case "D", "delete":
 		if !ctx.HasPerm(admin.PermBBSAdmin) {
 			return ui.ShowToastCmd(ui.ToastWarn, "Requires bbs.admin permission")
 		}

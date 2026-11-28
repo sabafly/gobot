@@ -109,3 +109,28 @@ func NewRealCursorInput(placeholder string, width int) textinput.Model {
 	}
 	return ti
 }
+
+// SetInputWidth updates a textinput display width and forces internal horizontal
+// scroll offsets to resynchronize with the current cursor position.
+func SetInputWidth(in *textinput.Model, width int) {
+	if in == nil {
+		return
+	}
+	width = max(width, 1)
+	if in.Width() == width {
+		return
+	}
+	pos := in.Position()
+	val := in.Value()
+	in.SetWidth(width)
+	if val == "" {
+		in.SetCursor(0)
+		return
+	}
+	// Reset internal offset/offsetRight before re-applying value and cursor so
+	// shrinking width never leaves offsetRight wider than the visible viewport.
+	in.SetValue("")
+	in.SetWidth(width)
+	in.SetValue(val)
+	in.SetCursor(pos)
+}

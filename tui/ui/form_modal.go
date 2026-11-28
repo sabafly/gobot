@@ -17,17 +17,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package bbs
+package ui
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-
-	"github.com/sabafly/gobot/tui/ui"
 )
 
 // FieldKind classifies input controls inside a FormModal.
@@ -64,6 +63,20 @@ type FormModal struct {
 	FocusIdx int
 	Payload  any
 	ErrText  string
+
+	lastWidth  int
+	lastHeight int
+	lastInputW int
+}
+
+// SetSize records the host viewport dimensions so Open and Update size text inputs accurately before View runs.
+func (m *FormModal) SetSize(width, height int, theme Theme) {
+	m.lastWidth = width
+	m.lastHeight = height
+	if width > 0 {
+		_, _, inputW, _, _ := m.layoutMetrics(width, height, theme)
+		m.lastInputW = inputW
+	}
 }
 
 // Open initializes and displays the form modal, returning the initial focus blink command if any.
@@ -76,6 +89,11 @@ func (m *FormModal) Open(tag, title, subtitle string, fields []FormField, payloa
 	m.ErrText = ""
 	m.FocusIdx = 0
 
+	initW := m.lastInputW
+	if initW <= 0 {
+		initW = 42
+	}
+
 	prepared := make([]FormField, len(fields))
 	copy(prepared, fields)
 	for i := range prepared {
@@ -86,9 +104,10 @@ func (m *FormModal) Open(tag, title, subtitle string, fields []FormField, payloa
 			if limit <= 0 {
 				limit = 256
 			}
-			in := ui.NewRealCursorInput(f.Placeholder, limit)
+			in := NewRealCursorInput(f.Placeholder, initW)
+			in.CharLimit = limit
+			SetInputWidth(&in, initW)
 			in.SetValue(f.Value)
-			in.SetWidth(42)
 			in.Blur()
 			f.input = in
 		case FieldCycle:
@@ -119,7 +138,6 @@ func (m *FormModal) Open(tag, title, subtitle string, fields []FormField, payloa
 	}
 	m.Fields = prepared
 
-	// Focus first editable field.
 	for i := range m.Fields {
 		if !m.Fields[i].ReadOnly {
 			m.FocusIdx = i
@@ -228,10 +246,12 @@ func (m *FormModal) Update(msg tea.Msg) (submitted bool, canceled bool, tag stri
 		}
 	}
 
-	// Forward remaining events (including non-key IME composition / blink msgs) to focused textinput.
 	if m.FocusIdx >= 0 && m.FocusIdx < len(m.Fields) {
 		f := &m.Fields[m.FocusIdx]
 		if f.Kind == FieldText && !f.ReadOnly {
+			if m.lastInputW > 0 {
+				SetInputWidth(&f.input, m.lastInputW)
+			}
 			var c tea.Cmd
 			f.input, c = f.input.Update(msg)
 			return false, false, "", nil, nil, c
@@ -262,36 +282,44 @@ func (m *FormModal) moveFocus(delta int) tea.Cmd {
 	return nil
 }
 
-func (m *FormModal) layoutMetrics(width, height int, theme ui.Theme) (boxW, labelW, inputW, startIdx, endIdx int) {
+func (m *FormModal) layoutMetrics(width, height int, theme Theme) (boxW, labelW, inputW, startIdx, endIdx int) {
 	boxW = max(min(width-4, 76), 38)
 	if width > 0 && boxW > width {
 		boxW = width
 	}
 	innerW := max(boxW-theme.ModalBox.GetHorizontalFrameSize(), 20)
 	labelW = min(max(innerW*28/100, 12), 18)
-	inputW = max(innerW-labelW-2, 12)
+	// Reserve 2 separator spaces + 1 column for textinput's trailing cursor cell.
+	inputW = max(innerW-labelW-3, 12)
 
-	overheadLines := 4 // title + blank + blank + help footer
+	overheadLines := 4 // Title + blank + blank before footer + footer hint
 	if m.Subtitle != "" {
-		overheadLines += 2
+		overheadLines++ // Subtitle renders as 1 truncated line.
 	}
 	if m.ErrText != "" {
-		overheadLines += 2
+		overheadLines += 2 // Blank + ErrText line.
 	}
+
 	maxFields := len(m.Fields)
 	if height > 0 {
-		maxFields = max((height-theme.ModalBox.GetVerticalFrameSize()-overheadLines)/1, 1)
+		availWithoutScroll := max(height-theme.ModalBox.GetVerticalFrameSize()-overheadLines, 1)
+		if len(m.Fields) > availWithoutScroll {
+			maxFields = max(availWithoutScroll-2, 1) // Reserve up to 2 scroll indicator lines.
+		} else {
+			maxFields = availWithoutScroll
+		}
 	}
+
 	startIdx = 0
-	if m.FocusIdx >= maxFields {
+	if m.FocusIdx >= maxFields && maxFields > 0 {
 		startIdx = m.FocusIdx - maxFields + 1
 	}
 	endIdx = min(len(m.Fields), startIdx+maxFields)
 	return boxW, labelW, inputW, startIdx, endIdx
 }
 
-// Cursor translates the focused text field's hardware/IME cursor to panel coordinates.
-func (m *FormModal) Cursor(width, height int, theme ui.Theme) *tea.Cursor {
+// Cursor translates the focused text field's hardware/IME cursor to host view coordinates.
+func (m *FormModal) Cursor(width, height int, theme Theme) *tea.Cursor {
 	if !m.Active || m.FocusIdx < 0 || m.FocusIdx >= len(m.Fields) {
 		return nil
 	}
@@ -303,7 +331,7 @@ func (m *FormModal) Cursor(width, height int, theme ui.Theme) *tea.Cursor {
 	if m.FocusIdx < startIdx || m.FocusIdx >= endIdx {
 		return nil
 	}
-	f.input.SetWidth(inputW)
+	SetInputWidth(&f.input, inputW)
 	c := f.input.Cursor()
 	if c == nil {
 		return nil
@@ -314,17 +342,19 @@ func (m *FormModal) Cursor(width, height int, theme ui.Theme) *tea.Cursor {
 	placeX := 0
 	placeY := 0
 	if width > renderedW {
-		placeX = (width - renderedW) / 2
+		gapW := width - renderedW
+		placeX = gapW - int(math.Round(float64(gapW)*0.5))
 	}
 	if height > renderedH {
-		placeY = (height - renderedH) / 2
+		gapH := height - renderedH
+		placeY = gapH - int(math.Round(float64(gapH)*0.5))
 	}
 
 	leftFrame := theme.ModalBox.GetBorderLeftSize() + theme.ModalBox.GetPaddingLeft()
 	topFrame := theme.ModalBox.GetBorderTopSize() + theme.ModalBox.GetPaddingTop()
 	headerRows := 2 // Title + blank line
 	if m.Subtitle != "" {
-		headerRows += 2
+		headerRows++ // Subtitle is exactly 1 line.
 	}
 	if startIdx > 0 {
 		headerRows++
@@ -337,20 +367,22 @@ func (m *FormModal) Cursor(width, height int, theme ui.Theme) *tea.Cursor {
 	return &cur
 }
 
-func (m *FormModal) renderBox(boxW, labelW, inputW int, startIdx, endIdx int, theme ui.Theme) string {
-	lines := []string{theme.CardTitle.Render(ui.TruncateWidth(m.Title, max(boxW-8, 12)))}
+func (m *FormModal) renderBox(boxW, labelW, inputW, startIdx, endIdx int, theme Theme) string {
+	innerW := max(boxW-theme.ModalBox.GetHorizontalFrameSize(), 20)
+	lines := []string{theme.CardTitle.Render(TruncateWidth(m.Title, innerW))}
 	if m.Subtitle != "" {
-		lines = append(lines, theme.MutedText.Render(ui.TruncateWidth(m.Subtitle, max(boxW-8, 12))))
+		lines = append(lines, theme.MutedText.Render(TruncateWidth(m.Subtitle, innerW)))
 	}
 	lines = append(lines, "")
 	if startIdx > 0 {
-		lines = append(lines, theme.MutedText.Render(fmt.Sprintf("  ▲ %d more above", startIdx)))
+		lines = append(lines, theme.MutedText.Render(TruncateWidth(fmt.Sprintf("  ▲ %d more above", startIdx), innerW)))
 	}
 
+	valMaxW := max(innerW-labelW-2, 12)
 	for i := startIdx; i < endIdx; i++ {
 		f := &m.Fields[i]
 		focused := i == m.FocusIdx
-		lbl := ui.PadRightWidth(f.Label+":", labelW)
+		lbl := PadRightWidth(f.Label+":", labelW)
 		lblStyle := theme.Label
 		if focused {
 			lblStyle = theme.InputPrompt
@@ -358,11 +390,11 @@ func (m *FormModal) renderBox(boxW, labelW, inputW int, startIdx, endIdx int, th
 		var valView string
 		switch f.Kind {
 		case FieldText:
-			f.input.SetWidth(inputW)
+			SetInputWidth(&f.input, inputW)
 			if f.ReadOnly {
-				valView = theme.MutedText.Render(ui.TruncateWidth(f.input.Value(), inputW))
+				valView = theme.MutedText.Render(TruncateWidth(f.input.Value(), valMaxW))
 			} else {
-				valView = ui.TruncateWidth(f.input.View(), inputW)
+				valView = TruncateWidth(f.input.View(), valMaxW)
 			}
 		case FieldBool:
 			txt := "[ ] No"
@@ -370,9 +402,9 @@ func (m *FormModal) renderBox(boxW, labelW, inputW int, startIdx, endIdx int, th
 				txt = "[x] Yes"
 			}
 			if focused {
-				valView = theme.BadgeInfo.Render(txt)
+				valView = theme.BadgeInfo.Render(TruncateWidth(txt, valMaxW))
 			} else {
-				valView = theme.Value.Render(txt)
+				valView = theme.Value.Render(TruncateWidth(txt, valMaxW))
 			}
 		case FieldCycle:
 			curOpt := f.Value
@@ -381,34 +413,37 @@ func (m *FormModal) renderBox(boxW, labelW, inputW int, startIdx, endIdx int, th
 			}
 			txt := "< " + curOpt + " >"
 			if focused {
-				valView = theme.BadgeInfo.Render(ui.TruncateWidth(txt, inputW))
+				valView = theme.BadgeInfo.Render(TruncateWidth(txt, valMaxW))
 			} else {
-				valView = theme.Value.Render(ui.TruncateWidth(txt, inputW))
+				valView = theme.Value.Render(TruncateWidth(txt, valMaxW))
 			}
 		}
 		lines = append(lines, lblStyle.Render(lbl)+"  "+valView)
 	}
 
 	if endIdx < len(m.Fields) {
-		lines = append(lines, theme.MutedText.Render(fmt.Sprintf("  ▼ %d more below", len(m.Fields)-endIdx)))
+		lines = append(lines, theme.MutedText.Render(TruncateWidth(fmt.Sprintf("  ▼ %d more below", len(m.Fields)-endIdx), innerW)))
 	}
 	if m.ErrText != "" {
-		lines = append(lines, "", theme.BadgeErr.Render(ui.TruncateWidth(m.ErrText, max(boxW-8, 12))))
+		lines = append(lines, "", theme.BadgeErr.Render(TruncateWidth(m.ErrText, innerW)))
 	}
-	lines = append(lines, "", theme.MutedText.Render("[Tab/↑↓] Field  [Space/←→] Toggle  [Enter] Submit  [Esc] Cancel"))
+	lines = append(lines, "", theme.MutedText.Render(TruncateWidth("[Tab/↑↓] Field  [Space/←→] Toggle  [Enter] Submit  [Esc] Cancel", innerW)))
 
 	return theme.ModalBox.Width(boxW).Render(strings.Join(lines, "\n"))
 }
 
 // View renders the form modal centered within width x height.
-func (m *FormModal) View(width, height int, theme ui.Theme) string {
+func (m *FormModal) View(width, height int, theme Theme) string {
 	if !m.Active {
 		return ""
 	}
 	boxW, labelW, inputW, startIdx, endIdx := m.layoutMetrics(width, height, theme)
+	m.lastWidth = width
+	m.lastHeight = height
+	m.lastInputW = inputW
 	box := m.renderBox(boxW, labelW, inputW, startIdx, endIdx, theme)
 	if width > 0 && height > 0 {
-		return ui.ClampBox(lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, box), width, height)
+		return ClampBox(lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, box), width, height)
 	}
 	return box
 }

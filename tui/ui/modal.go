@@ -108,37 +108,45 @@ func (m *ConfirmModal) View(width, height int, theme Theme) string {
 
 	confirmStyle := theme.Button
 	cancelStyle := theme.Button
+	confirmPrefix := ""
+	cancelPrefix := ""
 	if m.FocusConfirm {
+		confirmPrefix = "▶ "
 		if m.Danger {
 			confirmStyle = theme.ButtonDanger
 		} else {
 			confirmStyle = theme.ButtonActive
 		}
 	} else {
+		cancelPrefix = "▶ "
 		cancelStyle = theme.ButtonActive
 	}
 
 	buttons := lipgloss.JoinHorizontal(
 		lipgloss.Center,
-		confirmStyle.Render("[Enter] "+confirmLbl),
+		confirmStyle.Render(confirmPrefix+"[Enter] "+confirmLbl),
 		"  ",
-		cancelStyle.Render("[Esc] "+cancelLbl),
+		cancelStyle.Render(cancelPrefix+"[Esc] "+cancelLbl),
 	)
 
 	maxBoxW := max(min(width-4, 68), 32)
+	if width > 0 && maxBoxW > width {
+		maxBoxW = width
+	}
+	innerW := max(maxBoxW-6, 16)
 	titleStyle := theme.CardTitle
 	if m.Danger {
 		titleStyle = theme.BadgeErr
 	}
 	inner := lipgloss.JoinVertical(
 		lipgloss.Left,
-		titleStyle.Render(m.Title),
+		titleStyle.Render(TruncateWidth(m.Title, innerW)),
 		"",
-		lipgloss.NewStyle().Width(maxBoxW-6).Render(m.Body),
+		lipgloss.NewStyle().Width(innerW).Render(m.Body),
 		"",
 		buttons,
 		"",
-		theme.MutedText.Render("←/→ or Tab: switch  |  y: confirm  |  n/Esc: cancel"),
+		theme.MutedText.Render(TruncateWidth("←/→ or Tab: switch  |  y: confirm  |  n/Esc: cancel", innerW)),
 	)
 
 	boxStyle := theme.ModalBox
@@ -147,7 +155,7 @@ func (m *ConfirmModal) View(width, height int, theme Theme) string {
 	}
 	box := boxStyle.Width(maxBoxW).Render(inner)
 	if width > 0 && height > 0 {
-		return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, box)
+		return ClampBox(lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, box), width, height)
 	}
 	return box
 }
@@ -236,7 +244,10 @@ func (m *SelectModal) View(width, height int, theme Theme) string {
 		return ""
 	}
 	maxBoxW := max(min(width-4, 68), 36)
-	innerW := maxBoxW - 6
+	if width > 0 && maxBoxW > width {
+		maxBoxW = width
+	}
+	innerW := max(maxBoxW-6, 16)
 
 	maxVisible := max(min(height-10, 12), 4)
 	start := 0
@@ -265,16 +276,16 @@ func (m *SelectModal) View(width, height int, theme Theme) string {
 	}
 
 	parts := []string{
-		theme.CardTitle.Render(m.Title),
+		theme.CardTitle.Render(TruncateWidth(m.Title, innerW)),
 	}
 	if m.Subtitle != "" {
 		parts = append(parts, theme.MutedText.Render(TruncateWidth(m.Subtitle, innerW)))
 	}
-	parts = append(parts, "", strings.Join(rows, "\n"), "", theme.MutedText.Render("↑/↓: move  |  Enter: select  |  Esc: cancel"))
+	parts = append(parts, "", strings.Join(rows, "\n"), "", theme.MutedText.Render(TruncateWidth("↑/↓: move  |  Enter: select  |  Esc: cancel", innerW)))
 
 	box := theme.ModalBox.Width(maxBoxW).Render(lipgloss.JoinVertical(lipgloss.Left, parts...))
 	if width > 0 && height > 0 {
-		return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, box)
+		return ClampBox(lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, box), width, height)
 	}
 	return box
 }

@@ -316,11 +316,7 @@ func (s *Server) handleBBSListCategories(w http.ResponseWriter, r *http.Request,
 		writeBBSError(w, err)
 		return
 	}
-	out := make([]BBSCategoryDTO, 0, len(cats))
-	for _, c := range cats {
-		out = append(out, toBBSCategoryDTO(c))
-	}
-	writeJSON(w, http.StatusOK, BBSCategoriesResponse{Categories: out})
+	writeJSON(w, http.StatusOK, BBSCategoriesResponse{Categories: s.enrichBBSCategories(r.Context(), cats)})
 }
 
 func (s *Server) handleBBSCreateCategory(w http.ResponseWriter, r *http.Request, auth authContext) {
@@ -359,7 +355,8 @@ func (s *Server) handleBBSCreateCategory(w http.ResponseWriter, r *http.Request,
 	s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 		"bbs.category.create", "bbs_category", created.ID.String(),
 		"Created BBS category", map[string]any{"name": created.Name, "scope": created.Scope}, "success", s.clientRemoteAddr(r))
-	writeJSON(w, http.StatusCreated, toBBSCategoryDTO(*created))
+	enriched := s.enrichBBSCategories(r.Context(), []bbs.Category{*created})
+	writeJSON(w, http.StatusCreated, enriched[0])
 }
 
 func (s *Server) handleBBSUpdateCategory(w http.ResponseWriter, r *http.Request, auth authContext) {
@@ -389,7 +386,8 @@ func (s *Server) handleBBSUpdateCategory(w http.ResponseWriter, r *http.Request,
 	s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 		"bbs.category.update", "bbs_category", id.String(),
 		"Updated BBS category", map[string]any{"name": updated.Name}, "success", s.clientRemoteAddr(r))
-	writeJSON(w, http.StatusOK, toBBSCategoryDTO(*updated))
+	enriched := s.enrichBBSCategories(r.Context(), []bbs.Category{*updated})
+	writeJSON(w, http.StatusOK, enriched[0])
 }
 
 func (s *Server) handleBBSDeleteCategory(w http.ResponseWriter, r *http.Request, auth authContext) {
@@ -446,11 +444,7 @@ func (s *Server) handleBBSListBoards(w http.ResponseWriter, r *http.Request, _ a
 		writeBBSError(w, err)
 		return
 	}
-	out := make([]BBSBoardDTO, 0, len(boards))
-	for _, b := range boards {
-		out = append(out, toBBSBoardDTO(b))
-	}
-	writeJSON(w, http.StatusOK, BBSBoardsResponse{Boards: out})
+	writeJSON(w, http.StatusOK, BBSBoardsResponse{Boards: s.enrichBBSBoards(r.Context(), boards)})
 }
 
 func (s *Server) handleBBSCreateBoard(w http.ResponseWriter, r *http.Request, auth authContext) {
@@ -511,7 +505,8 @@ func (s *Server) handleBBSCreateBoard(w http.ResponseWriter, r *http.Request, au
 	s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 		"bbs.board.create", "bbs_board", created.ID.String(),
 		"Created BBS board", map[string]any{"name": created.Name, "category_id": created.CategoryID.String()}, "success", s.clientRemoteAddr(r))
-	writeJSON(w, http.StatusCreated, toBBSBoardDTO(*created))
+	enriched := s.enrichBBSBoards(r.Context(), []bbs.Board{*created})
+	writeJSON(w, http.StatusCreated, enriched[0])
 }
 
 func (s *Server) handleBBSUpdateBoard(w http.ResponseWriter, r *http.Request, auth authContext) {
@@ -557,7 +552,8 @@ func (s *Server) handleBBSUpdateBoard(w http.ResponseWriter, r *http.Request, au
 	s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 		"bbs.board.update", "bbs_board", id.String(),
 		"Updated BBS board", map[string]any{"name": updated.Name}, "success", s.clientRemoteAddr(r))
-	writeJSON(w, http.StatusOK, toBBSBoardDTO(*updated))
+	enriched := s.enrichBBSBoards(r.Context(), []bbs.Board{*updated})
+	writeJSON(w, http.StatusOK, enriched[0])
 }
 
 func (s *Server) handleBBSDeleteBoard(w http.ResponseWriter, r *http.Request, auth authContext) {
@@ -593,11 +589,7 @@ func (s *Server) handleBBSListBoardMounts(w http.ResponseWriter, r *http.Request
 		writeBBSError(w, err)
 		return
 	}
-	out := make([]BBSBoardMountDTO, 0, len(mounts))
-	for _, m := range mounts {
-		out = append(out, toBBSBoardMountDTO(m))
-	}
-	writeJSON(w, http.StatusOK, BBSBoardMountsResponse{Mounts: out})
+	writeJSON(w, http.StatusOK, BBSBoardMountsResponse{Mounts: s.enrichBBSBoardMounts(r.Context(), mounts)})
 }
 
 func (s *Server) handleBBSListThreads(w http.ResponseWriter, r *http.Request, _ authContext) {
@@ -780,10 +772,7 @@ func (s *Server) handleBBSListReports(w http.ResponseWriter, r *http.Request, _ 
 		writeBBSError(w, err)
 		return
 	}
-	out := make([]BBSReportDTO, 0, len(reps))
-	for _, rep := range reps {
-		out = append(out, toBBSReportDTO(rep))
-	}
+	out := s.enrichBBSReports(r.Context(), reps)
 	writeJSON(w, http.StatusOK, BBSReportsResponse{Reports: out})
 }
 
@@ -801,17 +790,22 @@ func (s *Server) handleBBSInspectReport(w http.ResponseWriter, r *http.Request, 
 		writeBBSError(w, err)
 		return
 	}
+	enrichedReps := s.enrichBBSReports(r.Context(), []bbs.Report{*rep})
 	resp := BBSReportInspectResponse{
-		Report: toBBSReportDTO(*rep),
+		Report: enrichedReps[0],
 	}
 	if auditInfo != nil {
 		pDTO := toBBSPostDTO(auditInfo.Post)
 		resp.Post = &pDTO
-		if auditInfo.AuthorUserID != 0 {
-			resp.AuthorUserID = auditInfo.AuthorUserID.String()
-		}
+		var guildHints []snowflake.ID
 		if auditInfo.GuildID != 0 {
 			resp.PostGuildID = auditInfo.GuildID.String()
+			resp.PostGuildName = s.resolveGuildNames(r.Context(), []snowflake.ID{auditInfo.GuildID})[auditInfo.GuildID]
+			guildHints = []snowflake.ID{auditInfo.GuildID}
+		}
+		if auditInfo.AuthorUserID != 0 {
+			resp.AuthorUserID = auditInfo.AuthorUserID.String()
+			resp.AuthorUserName = s.resolveUserNames(r.Context(), []snowflake.ID{auditInfo.AuthorUserID}, guildHints, true)[auditInfo.AuthorUserID]
 		}
 		resp.PosterHash = auditInfo.Post.PosterHash
 	}
@@ -849,7 +843,8 @@ func (s *Server) handleBBSResolveReport(w http.ResponseWriter, r *http.Request, 
 	s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 		"bbs.report.resolve", "bbs_report", id.String(),
 		"Resolved BBS report", map[string]any{"status": updated.Status, "note": updated.ResolutionNote}, "success", s.clientRemoteAddr(r))
-	writeJSON(w, http.StatusOK, toBBSReportDTO(*updated))
+	enriched := s.enrichBBSReports(r.Context(), []bbs.Report{*updated})
+	writeJSON(w, http.StatusOK, enriched[0])
 }
 
 func (s *Server) handleBBSListBans(w http.ResponseWriter, r *http.Request, auth authContext) {
@@ -886,15 +881,7 @@ func (s *Server) handleBBSListBans(w http.ResponseWriter, r *http.Request, auth 
 		writeBBSError(w, err)
 		return
 	}
-	canSeeUserID := HasPermission(auth.Principal.Permissions, PermBBSModerate)
-	out := make([]BBSBanDTO, 0, len(bans))
-	for _, b := range bans {
-		dto := toBBSBanDTO(b)
-		if !canSeeUserID {
-			dto.TargetUserID = nil
-		}
-		out = append(out, dto)
-	}
+	out := s.enrichBBSBans(r.Context(), bans, HasPermission(auth.Principal.Permissions, PermBBSModerate))
 	writeJSON(w, http.StatusOK, BBSBansResponse{Bans: out})
 }
 
@@ -949,7 +936,8 @@ func (s *Server) handleBBSCreateBan(w http.ResponseWriter, r *http.Request, auth
 	s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 		"bbs.ban.create", "bbs_ban", created.ID.String(),
 		"Created BBS ban", map[string]any{"scope": created.Scope, "poster_hash": created.PosterHash, "reason": created.Reason}, "success", s.clientRemoteAddr(r))
-	writeJSON(w, http.StatusCreated, toBBSBanDTO(*created))
+	enriched := s.enrichBBSBans(r.Context(), []bbs.Ban{*created}, true)
+	writeJSON(w, http.StatusCreated, enriched[0])
 }
 
 func (s *Server) handleBBSDeleteBan(w http.ResponseWriter, r *http.Request, auth authContext) {
@@ -999,11 +987,7 @@ func (s *Server) handleBBSListCaps(w http.ResponseWriter, r *http.Request, _ aut
 		writeBBSError(w, err)
 		return
 	}
-	out := make([]BBSCapDTO, 0, len(defs))
-	for _, d := range defs {
-		out = append(out, toBBSCapDTO(d))
-	}
-	writeJSON(w, http.StatusOK, BBSCapsResponse{Caps: out})
+	writeJSON(w, http.StatusOK, BBSCapsResponse{Caps: s.enrichBBSCaps(r.Context(), defs)})
 }
 
 func (s *Server) handleBBSCreateCap(w http.ResponseWriter, r *http.Request, auth authContext) {
@@ -1034,7 +1018,7 @@ func (s *Server) handleBBSCreateCap(w http.ResponseWriter, r *http.Request, auth
 	s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 		"bbs.cap.create", "bbs_admin_cap", saved.ID,
 		"Created BBS admin cap", map[string]any{"name": saved.Name}, "success", s.clientRemoteAddr(r))
-	writeJSON(w, http.StatusCreated, toBBSCapDTO(*saved))
+	writeJSON(w, http.StatusCreated, s.enrichBBSCaps(r.Context(), []bbs.CapDefinition{*saved})[0])
 }
 
 func (s *Server) handleBBSUpdateCap(w http.ResponseWriter, r *http.Request, auth authContext) {
@@ -1070,7 +1054,7 @@ func (s *Server) handleBBSUpdateCap(w http.ResponseWriter, r *http.Request, auth
 	s.audit.RecordAction(r.Context(), auth.Session.UserID, auth.Principal.DisplayName, auth.Principal.Role,
 		"bbs.cap.update", "bbs_admin_cap", saved.ID,
 		"Updated BBS admin cap", map[string]any{"name": saved.Name}, "success", s.clientRemoteAddr(r))
-	writeJSON(w, http.StatusOK, toBBSCapDTO(*saved))
+	writeJSON(w, http.StatusOK, s.enrichBBSCaps(r.Context(), []bbs.CapDefinition{*saved})[0])
 }
 
 func (s *Server) handleBBSDeleteCap(w http.ResponseWriter, r *http.Request, auth authContext) {

@@ -43,10 +43,11 @@ const (
 	subTabBoards
 	subTabCategories
 	subTabBans
-	subTabConfig
+	subTabCaps
+	subTabSlip
 )
 
-const numSubTabs = 5
+const numSubTabs = 6
 
 type statsLoadedMsg struct {
 	Resp admin.BBSStatsResponse
@@ -177,15 +178,15 @@ type slipEventDeletedMsg struct {
 	Err error
 }
 
-// Panel implements the BBS administration UI with 5 subtabs covering reports,
-// boards/threads/posts drill-down, categories, bans, and runtime Caps/SLIP config.
+// Panel implements the BBS administration UI with 6 subtabs covering reports,
+// boards/threads/posts drill-down, categories, bans, admin caps, and SLIP events.
 type Panel struct {
 	theme        ui.Theme
 	subTab       subTab
 	stats        *admin.BBSStatsResponse
 	loadingStats bool
 
-	formModal    FormModal
+	formModal    ui.FormModal
 	confirmModal ui.ConfirmModal
 	selectModal  ui.SelectModal
 
@@ -193,7 +194,8 @@ type Panel struct {
 	boards     boardsState
 	categories categoriesState
 	bans       bansState
-	config     configState
+	caps       capsState
+	slip       slipState
 
 	width  int
 	height int
@@ -208,7 +210,8 @@ func NewPanel(theme ui.Theme) *Panel {
 		boards:     newBoardsState(),
 		categories: newCategoriesState(),
 		bans:       newBansState(),
-		config:     newConfigState(),
+		caps:       newCapsState(),
+		slip:       newSlipState(),
 	}
 }
 
@@ -217,6 +220,11 @@ func (p *Panel) Title() string                        { return "BBS" }
 func (p *Panel) RequiredPermission() admin.Permission { return admin.PermBBSRead }
 func (p *Panel) Close()                               {}
 
+func (p *Panel) openForm(tag, title, subtitle string, fields []ui.FormField, payload any) tea.Cmd {
+	p.formModal.SetSize(p.width, p.height, p.theme)
+	return p.formModal.Open(tag, title, subtitle, fields, payload)
+}
+
 func (p *Panel) CapturingInput() bool {
 	return p.formModal.Active || p.confirmModal.Active || p.selectModal.Active ||
 		(p.subTab == subTabBoards && p.boards.level == boardLevelThreads && p.boards.searching)
@@ -224,14 +232,7 @@ func (p *Panel) CapturingInput() bool {
 
 func (p *Panel) Cursor() *tea.Cursor {
 	if p.formModal.Active {
-		bodyH := max(p.height-2, 6)
-		c := p.formModal.Cursor(p.width, bodyH, p.theme)
-		if c == nil {
-			return nil
-		}
-		cur := *c
-		cur.Y += 2
-		return &cur
+		return p.formModal.Cursor(p.width, p.height, p.theme)
 	}
 	if p.confirmModal.Active || p.selectModal.Active {
 		return nil
@@ -241,19 +242,9 @@ func (p *Panel) Cursor() *tea.Cursor {
 		if c == nil {
 			return nil
 		}
-		bName := ""
-		if b, ok := p.boards.selectedBoard(); ok {
-			bName = b.Name
-		}
-		stLbl := p.boards.currentThreadStatus()
-		if stLbl == "" {
-			stLbl = "all"
-		}
-		prefix := fmt.Sprintf("Boards > %s > Threads (%d, status:%s [f])  %s",
-			ui.TruncateWidth(bName, 20), len(p.boards.threads), stLbl, threadSearchPrompt)
 		cur := *c
-		cur.X += lipgloss.Width(prefix)
-		cur.Y += 2
+		cur.X += lipgloss.Width(threadSearchPrompt)
+		cur.Y += 3
 		return &cur
 	}
 	return nil
@@ -261,7 +252,7 @@ func (p *Panel) Cursor() *tea.Cursor {
 
 func (p *Panel) ShortHelp(ctx ui.PanelContext) []key.Binding {
 	bindings := []key.Binding{
-		key.NewBinding(key.WithKeys("[", "]"), key.WithHelp("[/]", "subtab")),
+		key.NewBinding(key.WithKeys("left", "right", "h", "l", "[", "]"), key.WithHelp("←/→,[/]", "subtab")),
 		key.NewBinding(key.WithKeys("j", "k"), key.WithHelp("j/k", "select")),
 		key.NewBinding(key.WithKeys("J", "K"), key.WithHelp("J/K", "scroll")),
 		key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "refresh")),
@@ -289,7 +280,7 @@ func (p *Panel) ShortHelp(ctx ui.PanelContext) []key.Binding {
 				bindings = append(bindings,
 					key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "new")),
 					key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit")),
-					key.NewBinding(key.WithKeys("D"), key.WithHelp("D", "delete")),
+					key.NewBinding(key.WithKeys("D", "delete"), key.WithHelp("D/del", "delete")),
 				)
 			}
 		case boardLevelThreads:
@@ -317,7 +308,7 @@ func (p *Panel) ShortHelp(ctx ui.PanelContext) []key.Binding {
 			bindings = append(bindings,
 				key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "new")),
 				key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit")),
-				key.NewBinding(key.WithKeys("D"), key.WithHelp("D", "delete")),
+				key.NewBinding(key.WithKeys("D", "delete"), key.WithHelp("D/del", "delete")),
 			)
 		}
 	case subTabBans:
@@ -325,16 +316,15 @@ func (p *Panel) ShortHelp(ctx ui.PanelContext) []key.Binding {
 		if ctx.HasPerm(admin.PermBBSModerate) {
 			bindings = append(bindings,
 				key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "ban")),
-				key.NewBinding(key.WithKeys("D"), key.WithHelp("D", "lift")),
+				key.NewBinding(key.WithKeys("D", "delete"), key.WithHelp("D/del", "lift")),
 			)
 		}
-	case subTabConfig:
-		bindings = append(bindings, key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "section")))
+	case subTabCaps, subTabSlip:
 		if ctx.HasPerm(admin.PermBBSAdmin) {
 			bindings = append(bindings,
 				key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "new")),
 				key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit")),
-				key.NewBinding(key.WithKeys("D"), key.WithHelp("D", "delete")),
+				key.NewBinding(key.WithKeys("D", "delete"), key.WithHelp("D/del", "delete")),
 			)
 		}
 	}
@@ -401,10 +391,10 @@ func (p *Panel) Update(msg tea.Msg, ctx ui.PanelContext) (ui.Panel, tea.Cmd) {
 
 	if k, ok := msg.(tea.KeyPressMsg); ok && !p.CapturingInput() {
 		switch k.String() {
-		case "[":
+		case "[", "left", "h":
 			p.subTab = (p.subTab + numSubTabs - 1) % numSubTabs
 			return p, p.onSubTabActivated(ctx)
-		case "]":
+		case "]", "right", "l":
 			p.subTab = (p.subTab + 1) % numSubTabs
 			return p, p.onSubTabActivated(ctx)
 		}
@@ -419,8 +409,10 @@ func (p *Panel) Update(msg tea.Msg, ctx ui.PanelContext) (ui.Panel, tea.Cmd) {
 		return p, p.updateCategories(msg, ctx)
 	case subTabBans:
 		return p, p.updateBans(msg, ctx)
-	case subTabConfig:
-		return p, p.updateConfig(msg, ctx)
+	case subTabCaps:
+		return p, p.updateCaps(msg, ctx)
+	case subTabSlip:
+		return p, p.updateSlip(msg, ctx)
 	}
 	return p, nil
 }
@@ -453,13 +445,14 @@ func (p *Panel) onSubTabActivated(ctx ui.PanelContext) tea.Cmd {
 			p.bans.loading = true
 			return p.fetchBansCmd(ctx.Client)
 		}
-	case subTabConfig:
-		if p.config.section == configSectionCaps && !p.config.loadedCaps && !p.config.loading {
-			p.config.loading = true
+	case subTabCaps:
+		if !p.caps.loaded && !p.caps.loading {
+			p.caps.loading = true
 			return p.fetchCapsCmd(ctx.Client)
 		}
-		if p.config.section == configSectionSlipEvents && !p.config.loadedSlip && !p.config.loading {
-			p.config.loading = true
+	case subTabSlip:
+		if !p.slip.loaded && !p.slip.loading {
+			p.slip.loading = true
 			return p.fetchSlipEventsCmd(ctx.Client)
 		}
 	}
@@ -766,25 +759,25 @@ func (p *Panel) handleAsyncMsg(msg tea.Msg, ctx ui.PanelContext) (tea.Cmd, bool)
 		return tea.Batch(p.fetchBansCmd(ctx.Client), p.fetchStatsCmd(ctx.Client), ui.ShowToastCmd(ui.ToastSuccess, "Ban lifted")), true
 
 	case capsLoadedMsg:
-		p.config.loading = false
-		p.config.loadedCaps = true
+		p.caps.loading = false
+		p.caps.loaded = true
 		if m.Err != nil {
 			if adminclient.IsUnauthorized(m.Err) {
 				return func() tea.Msg { return ui.UnauthorizedMsg{Err: m.Err} }, true
 			}
-			p.config.errMsg = m.Err.Error()
-			p.config.rebuildDetail(p.theme)
+			p.caps.errMsg = m.Err.Error()
+			p.caps.rebuildDetail(p.theme)
 			return nil, true
 		}
-		p.config.errMsg = ""
-		p.config.caps = m.Resp.Caps
-		p.config.capIdx = restoreIdxByID(p.config.selectedCap, len(p.config.caps), func(i int) string { return p.config.caps[i].ID })
-		if c, ok := p.config.selectedCapItem(); ok {
-			p.config.selectedCap = c.ID
+		p.caps.errMsg = ""
+		p.caps.items = m.Resp.Caps
+		p.caps.selectedIdx = restoreIdxByID(p.caps.selectedID, len(p.caps.items), func(i int) string { return p.caps.items[i].ID })
+		if c, ok := p.caps.selected(); ok {
+			p.caps.selectedID = c.ID
 		} else {
-			p.config.selectedCap = ""
+			p.caps.selectedID = ""
 		}
-		p.config.rebuildDetail(p.theme)
+		p.caps.rebuildDetail(p.theme)
 		return nil, true
 
 	case capSavedMsg:
@@ -794,8 +787,8 @@ func (p *Panel) handleAsyncMsg(msg tea.Msg, ctx ui.PanelContext) (tea.Cmd, bool)
 			}
 			return ui.ShowToastCmd(ui.ToastError, "Save cap failed: "+m.Err.Error()), true
 		}
-		p.config.selectedCap = m.Resp.ID
-		p.config.loading = true
+		p.caps.selectedID = m.Resp.ID
+		p.caps.loading = true
 		lbl := "Updated cap "
 		if m.Created {
 			lbl = "Created cap "
@@ -809,29 +802,29 @@ func (p *Panel) handleAsyncMsg(msg tea.Msg, ctx ui.PanelContext) (tea.Cmd, bool)
 			}
 			return ui.ShowToastCmd(ui.ToastError, "Delete cap failed: "+m.Err.Error()), true
 		}
-		p.config.loading = true
+		p.caps.loading = true
 		return tea.Batch(p.fetchCapsCmd(ctx.Client), ui.ShowToastCmd(ui.ToastSuccess, "Deleted cap "+m.ID)), true
 
 	case slipEventsLoadedMsg:
-		p.config.loading = false
-		p.config.loadedSlip = true
+		p.slip.loading = false
+		p.slip.loaded = true
 		if m.Err != nil {
 			if adminclient.IsUnauthorized(m.Err) {
 				return func() tea.Msg { return ui.UnauthorizedMsg{Err: m.Err} }, true
 			}
-			p.config.errMsg = m.Err.Error()
-			p.config.rebuildDetail(p.theme)
+			p.slip.errMsg = m.Err.Error()
+			p.slip.rebuildDetail(p.theme)
 			return nil, true
 		}
-		p.config.errMsg = ""
-		p.config.slipEvents = m.Resp.Events
-		p.config.slipIdx = restoreIdxByID(p.config.selectedSlip, len(p.config.slipEvents), func(i int) string { return p.config.slipEvents[i].ID })
-		if ev, ok := p.config.selectedSlipItem(); ok {
-			p.config.selectedSlip = ev.ID
+		p.slip.errMsg = ""
+		p.slip.items = m.Resp.Events
+		p.slip.selectedIdx = restoreIdxByID(p.slip.selectedID, len(p.slip.items), func(i int) string { return p.slip.items[i].ID })
+		if ev, ok := p.slip.selected(); ok {
+			p.slip.selectedID = ev.ID
 		} else {
-			p.config.selectedSlip = ""
+			p.slip.selectedID = ""
 		}
-		p.config.rebuildDetail(p.theme)
+		p.slip.rebuildDetail(p.theme)
 		return nil, true
 
 	case slipEventSavedMsg:
@@ -841,8 +834,8 @@ func (p *Panel) handleAsyncMsg(msg tea.Msg, ctx ui.PanelContext) (tea.Cmd, bool)
 			}
 			return ui.ShowToastCmd(ui.ToastError, "Save SLIP event failed: "+m.Err.Error()), true
 		}
-		p.config.selectedSlip = m.Resp.ID
-		p.config.loading = true
+		p.slip.selectedID = m.Resp.ID
+		p.slip.loading = true
 		lbl := "Updated SLIP event "
 		if m.Created {
 			lbl = "Created SLIP event "
@@ -856,7 +849,7 @@ func (p *Panel) handleAsyncMsg(msg tea.Msg, ctx ui.PanelContext) (tea.Cmd, bool)
 			}
 			return ui.ShowToastCmd(ui.ToastError, "Delete SLIP event failed: "+m.Err.Error()), true
 		}
-		p.config.loading = true
+		p.slip.loading = true
 		return tea.Batch(p.fetchSlipEventsCmd(ctx.Client), ui.ShowToastCmd(ui.ToastSuccess, "Deleted SLIP event "+m.ID)), true
 	}
 	return nil, false
@@ -1035,6 +1028,16 @@ func (p *Panel) View(width, height int) string {
 		p.width = width
 		p.height = height
 		p.resizeViewports(width, max(bodyH-1, 5))
+		p.formModal.SetSize(width, height, p.theme)
+	}
+
+	switch {
+	case p.formModal.Active:
+		return ui.ClampBox(p.formModal.View(width, height, p.theme), width, height)
+	case p.confirmModal.Active:
+		return ui.ClampBox(p.confirmModal.View(width, height, p.theme), width, height)
+	case p.selectModal.Active:
+		return ui.ClampBox(p.selectModal.View(width, height, p.theme), width, height)
 	}
 
 	statsTxt := p.theme.MutedText.Render("loading stats...")
@@ -1049,48 +1052,22 @@ func (p *Panel) View(width, height int) string {
 		}
 	}
 	header := ui.TruncateWidth(p.theme.CardTitle.Render("BBS Management")+"  "+statsTxt, width)
-
-	tabs := []struct {
-		id    subTab
-		label string
-	}{
-		{subTabReports, "Reports"},
-		{subTabBoards, "Boards"},
-		{subTabCategories, "Categories"},
-		{subTabBans, "Bans"},
-		{subTabConfig, "Config"},
-	}
-	tabParts := make([]string, 0, len(tabs))
-	for _, tb := range tabs {
-		st := p.theme.SubTab
-		if p.subTab == tb.id {
-			st = p.theme.SubTabActive
-		}
-		tabParts = append(tabParts, st.Render(tb.label))
-	}
-	subTabBar := ui.TruncateWidth(strings.Join(tabParts, " ")+"  "+p.theme.MutedText.Render("[[/]] switch"), width)
+	subTabBar := ui.RenderSubTabBar(p.theme, []string{"Reports", "Boards", "Categories", "Bans", "Caps", "SLIP"}, int(p.subTab), width)
 
 	var body string
-	switch {
-	case p.formModal.Active:
-		body = p.formModal.View(width, bodyH, p.theme)
-	case p.confirmModal.Active:
-		body = p.confirmModal.View(width, bodyH, p.theme)
-	case p.selectModal.Active:
-		body = p.selectModal.View(width, bodyH, p.theme)
-	default:
-		switch p.subTab {
-		case subTabReports:
-			body = p.viewReports(width, bodyH)
-		case subTabBoards:
-			body = p.viewBoards(width, bodyH)
-		case subTabCategories:
-			body = p.viewCategories(width, bodyH)
-		case subTabBans:
-			body = p.viewBans(width, bodyH)
-		case subTabConfig:
-			body = p.viewConfig(width, bodyH)
-		}
+	switch p.subTab {
+	case subTabReports:
+		body = p.viewReports(width, bodyH)
+	case subTabBoards:
+		body = p.viewBoards(width, bodyH)
+	case subTabCategories:
+		body = p.viewCategories(width, bodyH)
+	case subTabBans:
+		body = p.viewBans(width, bodyH)
+	case subTabCaps:
+		body = p.viewCaps(width, bodyH)
+	case subTabSlip:
+		body = p.viewSlip(width, bodyH)
 	}
 
 	out := lipgloss.JoinVertical(lipgloss.Left, header, subTabBar, body)
@@ -1112,17 +1089,20 @@ func (p *Panel) splitDimensions(width, paneH int) (split bool, listW, detailW, i
 }
 
 func (p *Panel) resizeViewports(width, paneH int) {
+	ui.SetInputWidth(&p.boards.searchInput, max(width-lipgloss.Width(threadSearchPrompt)-30, 12))
 	_, _, detailW, innerH := p.splitDimensions(width, paneH)
 	p.syncDetailViewport(&p.reports.detailVP, detailW, innerH)
 	p.syncDetailViewport(&p.boards.detailVP, detailW, innerH)
 	p.syncDetailViewport(&p.categories.detailVP, detailW, innerH)
 	p.syncDetailViewport(&p.bans.detailVP, detailW, innerH)
-	p.syncDetailViewport(&p.config.detailVP, detailW, innerH)
+	p.syncDetailViewport(&p.caps.detailVP, detailW, innerH)
+	p.syncDetailViewport(&p.slip.detailVP, detailW, innerH)
 	p.reports.rebuildDetail(p.theme)
 	p.boards.rebuildDetail(p.theme)
 	p.categories.rebuildDetail(p.theme)
 	p.bans.rebuildDetail(p.theme)
-	p.config.rebuildDetail(p.theme)
+	p.caps.rebuildDetail(p.theme)
+	p.slip.rebuildDetail(p.theme)
 }
 
 func (p *Panel) syncDetailViewport(vp *viewport.Model, detailW, innerH int) {

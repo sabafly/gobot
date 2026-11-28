@@ -32,13 +32,16 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/cache"
 	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/rest"
 	"github.com/disgoorg/snowflake/v2"
+	"github.com/google/uuid"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
@@ -496,13 +499,20 @@ func TestAdminServer_OAuthFlow_RBAC_CommonEndpoints(t *testing.T) {
 	var auditList admin.AuditListResponse
 	_ = json.Unmarshal(auditRaw, &auditList)
 	var actions []string
+	var sawGuildResName bool
 	for _, e := range auditList.Entries {
 		actions = append(actions, e.Action)
+		if e.Action == "guild.update" && e.ResourceType == "guild" && e.ResourceID == guildID.String() && e.ResourceName == "NonCommunity" {
+			sawGuildResName = true
+		}
 	}
 	for _, want := range []string{"auth.login_denied", "auth.login", "guild.update", "ops.reload_locales"} {
 		if !slices.Contains(actions, want) {
 			t.Fatalf("expected audit action %q in %v", want, actions)
 		}
+	}
+	if !sawGuildResName {
+		t.Fatalf("expected guild.update audit entry to carry ResourceName='NonCommunity', got %+v", auditList.Entries)
 	}
 
 	// 4. Viewer RBAC enforcement & session visibility.
@@ -1464,5 +1474,258 @@ func TestAdminServer_SecurityAndConsistencyFixes(t *testing.T) {
 	}
 	if !seenSeq11 || !seenSeq260 || backlogCount != 250 {
 		t.Fatalf("expected 250 SSE backlog entries (11..260), got count=%d seen11=%v seen260=%v", backlogCount, seenSeq11, seenSeq260)
+	}
+}
+
+func TestAdminServer_NameResolution_CacheDBAndRestFallback(t *testing.T) {
+	ctx := context.Background()
+	db := newTestAdminDB(t)
+	discordMock := newMockDiscordOAuthServer(t, "oauth-test-secret")
+	defer discordMock.Close()
+
+	var knownCalls, unknownCalls atomic.Int32
+	restMock := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case strings.Contains(r.URL.Path, "/users/555901"):
+			knownCalls.Add(1)
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"id":          "555901",
+				"username":    "restuser",
+				"global_name": "Rest Display",
+			})
+		case strings.Contains(r.URL.Path, "/users/555902"):
+			unknownCalls.Add(1)
+			http.Error(w, `{"message":"Unknown User","code":10013}`, http.StatusNotFound)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer restMock.Close()
+
+	guildID := snowflake.ID(888001)
+	chID := snowflake.ID(555001)
+	posterUID := snowflake.ID(555901)
+	unknownUID := snowflake.ID(555902)
+	reporterUID := snowflake.ID(444001)
+
+	if err := db.DB.Create(&models.Guild{ID: guildID, Name: "NonCommunity"}).Error; err != nil {
+		t.Fatalf("create guild failed: %v", err)
+	}
+	if err := db.DB.Create(&models.User{ID: reporterUID, Name: "ReporterDB"}).Error; err != nil {
+		t.Fatalf("create user failed: %v", err)
+	}
+
+	comp := components.New(ctx, components.Config{LocaleDir: "../../locales"}, db)
+	store := gormstore.New(db.DB)
+	reg := bbs.NewProviderRegistry(bbs.DefaultProviderKey)
+	reg.Register(store)
+	bbsSvc := bbs.NewService(reg, store, bbs.NewIdentityGenerator([]byte("admin-name-test-secret-32bytes!")), bbs.NewPolicyManager(bbs.PolicyConfig{Version: "2026-01"}), []snowflake.ID{snowflake.ID(1001)})
+	bbsSync := discordsync.NewSyncer(bbsSvc)
+
+	client := &bot.Client{
+		ApplicationID: snowflake.ID(999000),
+		Caches:        cache.New(cache.WithCaches(cache.FlagsAll)),
+		Rest:          rest.New(rest.NewClient("Bot test", rest.WithURL(restMock.URL), rest.WithHTTPClient(restMock.Client()))),
+	}
+	client.Caches.AddGuild(discord.CacheGuild{
+		ID:              guildID,
+		Name:            "NonCommunity",
+		PreferredLocale: "en-US",
+	})
+	var modCh discord.GuildTextChannel
+	if err := json.Unmarshal([]byte(`{"id":"555001","type":0,"guild_id":"888001","name":"mod-log"}`), &modCh); err != nil {
+		t.Fatalf("unmarshal GuildTextChannel failed: %v", err)
+	}
+	client.Caches.AddChannel(modCh)
+
+	if _, err := bbsSvc.SetupGuild(ctx, bbs.GuildSetupInput{
+		GuildID:         guildID,
+		Enabled:         true,
+		ModLogChannelID: &chID,
+		ActorUserID:     snowflake.ID(1001),
+	}); err != nil {
+		t.Fatalf("SetupGuild failed: %v", err)
+	}
+	cat, err := bbsSvc.CreateCategory(ctx, bbs.CreateCategoryInput{
+		Scope: bbs.ScopeLocal, GuildID: &guildID, Slug: "news", Name: "ニュース",
+	})
+	if err != nil {
+		t.Fatalf("CreateCategory failed: %v", err)
+	}
+	board, err := bbsSvc.CreateBoard(ctx, bbs.CreateBoardInput{
+		CategoryID: cat.ID, Scope: bbs.ScopeLocal, GuildID: &guildID, Slug: "vip", Name: "VIP板",
+	})
+	if err != nil {
+		t.Fatalf("CreateBoard failed: %v", err)
+	}
+	if _, err := bbsSvc.AcceptPolicy(ctx, posterUID); err != nil {
+		t.Fatalf("AcceptPolicy poster failed: %v", err)
+	}
+	if _, err := bbsSvc.AcceptPolicy(ctx, reporterUID); err != nil {
+		t.Fatalf("AcceptPolicy reporter failed: %v", err)
+	}
+	_, th1, post1, err := bbsSvc.CreateThread(ctx, bbs.CreateThreadInput{
+		BoardID: board.ID, GuildID: guildID, UserID: posterUID, Title: "Test Thread", RawBody: "Body",
+	})
+	if err != nil {
+		t.Fatalf("CreateThread failed: %v", err)
+	}
+	mount := &bbs.BoardMount{
+		ID:        uuid.New(),
+		BoardID:   board.ID,
+		GuildID:   guildID,
+		ChannelID: chID,
+		Locale:    "ja",
+		Active:    true,
+		CreatedAt: time.Now(),
+	}
+	if err := bbsSvc.Store.CreateBoardMount(ctx, mount); err != nil {
+		t.Fatalf("CreateBoardMount failed: %v", err)
+	}
+	tmID := uuid.New()
+	if err := bbsSvc.Store.CreateThreadAndPostMirror(ctx, &bbs.ThreadMirror{
+		ID:              tmID,
+		ThreadID:        th1.ID,
+		BoardMountID:    mount.ID,
+		GuildID:         guildID,
+		DiscordThreadID: snowflake.ID(666001),
+		CreatedAt:       time.Now(),
+	}, &bbs.PostMirror{
+		ID:               uuid.New(),
+		PostID:           post1.ID,
+		ThreadMirrorID:   tmID,
+		GuildID:          guildID,
+		DiscordMessageID: snowflake.ID(666002),
+		CreatedAt:        time.Now(),
+	}); err != nil {
+		t.Fatalf("CreateThreadAndPostMirror failed: %v", err)
+	}
+	rep, err := bbsSvc.CreateReport(ctx, guildID, reporterUID, post1.ID, "Check REST resolution")
+	if err != nil {
+		t.Fatalf("CreateReport failed: %v", err)
+	}
+	if _, err := bbsSvc.CreateAdminCap(ctx, bbs.CapDefinition{
+		ID: "unkcap", Name: "UnknownCap", Users: []snowflake.ID{unknownUID},
+	}); err != nil {
+		t.Fatalf("CreateAdminCap failed: %v", err)
+	}
+
+	srv, err := admin.NewServer(admin.ServerDeps{
+		Config: components.Config{LocaleDir: "../../locales"},
+		AdminConfig: components.ConfigAdmin{
+			Enabled:   true,
+			PublicURL: "http://127.0.0.1:8080",
+			OAuth:     components.ConfigAdminOAuth{ClientID: "999000", ClientSecret: "oauth-test-secret"},
+			Users:     []components.ConfigAdminUser{{UserID: snowflake.ID(1001), Role: admin.RoleSuperAdmin}},
+		},
+		DB:                 db,
+		Components:         comp,
+		Client:             client,
+		BBSService:         bbsSvc,
+		BBSSyncer:          bbsSync,
+		LogHub:             admin.NewLogHub(32),
+		OAuthAPIBase:       discordMock.URL,
+		OAuthAuthorizeBase: discordMock.URL + "/oauth2/authorize",
+		OAuthHTTPClient:    discordMock.Client(),
+	})
+	if err != nil {
+		t.Fatalf("NewServer failed: %v", err)
+	}
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+
+	sessStore := admin.NewSessionStore(db.DB)
+	tok, _, err := sessStore.Create(ctx, snowflake.ID(1001), "superop", "Super Op", admin.RoleSuperAdmin, "test", time.Hour)
+	if err != nil {
+		t.Fatalf("create session failed: %v", err)
+	}
+
+	// 1. Guild detail resolves cached channel name.
+	st, gdRaw := doJSONReq(t, http.MethodGet, ts.URL+"/api/v1/guilds/"+guildID.String(), tok, nil)
+	if st != http.StatusOK {
+		t.Fatalf("get guild failed: %d %s", st, gdRaw)
+	}
+	var gd admin.GuildDetailResponse
+	_ = json.Unmarshal(gdRaw, &gd)
+	if gd.BBSModLogChannel != chID.String() || gd.BBSModLogChannelName != "mod-log" {
+		t.Fatalf("expected BBSModLogChannelName='mod-log', got %+v", gd)
+	}
+
+	// 1b. Board mounts resolve cached channel & guild names.
+	st, mntRaw := doJSONReq(t, http.MethodGet, ts.URL+"/api/v1/bbs/boards/"+board.ID.String()+"/mounts", tok, nil)
+	if st != http.StatusOK {
+		t.Fatalf("list board mounts failed: %d %s", st, mntRaw)
+	}
+	var mntResp admin.BBSBoardMountsResponse
+	_ = json.Unmarshal(mntRaw, &mntResp)
+	if len(mntResp.Mounts) != 1 || mntResp.Mounts[0].GuildName != "NonCommunity" || mntResp.Mounts[0].ChannelName != "mod-log" {
+		t.Fatalf("unexpected board mount name resolution: %+v", mntResp.Mounts)
+	}
+
+	// 2. ListBBSReports resolves DB reporter name without hitting REST.
+	st, repsRaw := doJSONReq(t, http.MethodGet, ts.URL+"/api/v1/bbs/reports", tok, nil)
+	if st != http.StatusOK {
+		t.Fatalf("list reports failed: %d %s", st, repsRaw)
+	}
+	var repsResp admin.BBSReportsResponse
+	_ = json.Unmarshal(repsRaw, &repsResp)
+	if len(repsResp.Reports) != 1 || repsResp.Reports[0].ReporterName != "ReporterDB" {
+		t.Fatalf("unexpected reports name resolution: %+v", repsResp.Reports)
+	}
+	if knownCalls.Load() != 0 {
+		t.Fatalf("expected 0 REST calls on ListBBSReports, got %d", knownCalls.Load())
+	}
+
+	// 3. InspectBBSReport uses REST once and caches positive lookup across subsequent Inspect & list endpoints.
+	st, insRaw := doJSONReq(t, http.MethodGet, ts.URL+"/api/v1/bbs/reports/"+rep.ID.String()+"/inspect", tok, nil)
+	if st != http.StatusOK {
+		t.Fatalf("inspect report failed: %d %s", st, insRaw)
+	}
+	var insResp admin.BBSReportInspectResponse
+	_ = json.Unmarshal(insRaw, &insResp)
+	if insResp.AuthorUserName != "Rest Display (@restuser)" || insResp.PostGuildID != guildID.String() || insResp.PostGuildName != "NonCommunity" {
+		t.Fatalf("unexpected inspect name resolution: %+v", insResp)
+	}
+	if knownCalls.Load() != 1 {
+		t.Fatalf("expected 1 REST call on first inspect, got %d", knownCalls.Load())
+	}
+
+	// Repeated inspect hits cache (no second REST call).
+	st, _ = doJSONReq(t, http.MethodGet, ts.URL+"/api/v1/bbs/reports/"+rep.ID.String()+"/inspect", tok, nil)
+	if st != http.StatusOK || knownCalls.Load() != 1 {
+		t.Fatalf("expected cached REST lookup (count=1), got status=%d calls=%d", st, knownCalls.Load())
+	}
+
+	// ListBBSBans (allowREST=false) reuses the cached REST name for target_user_name!
+	st, banCreateRaw := doJSONReq(t, http.MethodPost, ts.URL+"/api/v1/bbs/bans", tok, admin.CreateBBSBanRequest{
+		Scope: "local", GuildID: guildID.String(), TargetUserID: posterUID.String(), Reason: "Cache share check", DurationHours: 1,
+	})
+	if st != http.StatusCreated {
+		t.Fatalf("create ban failed: %d %s", st, banCreateRaw)
+	}
+	st, bansRaw := doJSONReq(t, http.MethodGet, ts.URL+"/api/v1/bbs/bans", tok, nil)
+	if st != http.StatusOK {
+		t.Fatalf("list bans failed: %d %s", st, bansRaw)
+	}
+	var bansResp admin.BBSBansResponse
+	_ = json.Unmarshal(bansRaw, &bansResp)
+	if len(bansResp.Bans) != 1 || bansResp.Bans[0].TargetUserName != "Rest Display (@restuser)" || knownCalls.Load() != 1 {
+		t.Fatalf("expected cached TargetUserName without extra REST call, got %+v calls=%d", bansResp.Bans, knownCalls.Load())
+	}
+
+	// 4. ListBBSCaps performs REST once for unknown UID (404) and caches negative miss.
+	st, capsRaw := doJSONReq(t, http.MethodGet, ts.URL+"/api/v1/bbs/config/caps", tok, nil)
+	if st != http.StatusOK || unknownCalls.Load() != 1 {
+		t.Fatalf("expected 200 and 1 REST 404 call on ListBBSCaps, got status=%d calls=%d body=%s", st, unknownCalls.Load(), capsRaw)
+	}
+	var capsResp admin.BBSCapsResponse
+	_ = json.Unmarshal(capsRaw, &capsResp)
+	if len(capsResp.Caps) != 1 || len(capsResp.Caps[0].UserNames) != 0 {
+		t.Fatalf("expected empty UserNames for 404 user, got %+v", capsResp.Caps)
+	}
+	st, _ = doJSONReq(t, http.MethodGet, ts.URL+"/api/v1/bbs/config/caps", tok, nil)
+	if st != http.StatusOK || unknownCalls.Load() != 1 {
+		t.Fatalf("expected cached negative lookup (count=1), got status=%d calls=%d", st, unknownCalls.Load())
 	}
 }

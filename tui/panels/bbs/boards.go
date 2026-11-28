@@ -126,15 +126,15 @@ func (s *boardsState) rebuildDetail(theme ui.Theme) {
 		}
 		guildStr := "(global)"
 		if b.GuildID != nil && *b.GuildID != "" {
-			guildStr = *b.GuildID
+			guildStr = ui.FormatIDWithName(b.GuildName, *b.GuildID)
 		}
 		lines := []string{
 			kvLine(theme, "Board ID", b.ID),
-			kvLine(theme, "Category ID", b.CategoryID),
+			kvLine(theme, "Category", ui.FormatIDWithName(b.CategoryName, b.CategoryID)),
 			kvLine(theme, "Name", b.Name),
 			kvLine(theme, "Slug", b.Slug),
 			kvLine(theme, "Scope", b.Scope),
-			kvLine(theme, "Guild ID", guildStr),
+			kvLine(theme, "Guild", guildStr),
 			kvLine(theme, "Locked", fmt.Sprintf("%v", b.Locked)),
 			kvLine(theme, "Default Name", b.Rules.DefaultName),
 			kvLine(theme, "Hide ID", fmt.Sprintf("%v", b.Rules.HideID)),
@@ -152,7 +152,14 @@ func (s *boardsState) rebuildDetail(theme ui.Theme) {
 				lines = append(lines, theme.MutedText.Render("(not mounted in any Discord channel)"))
 			} else {
 				for _, m := range mounts {
-					lines = append(lines, fmt.Sprintf("- guild=%s ch=%s locale=%s forum=%v active=%v", m.GuildID, m.ChannelID, m.Locale, m.IsForum, m.Active))
+					chName := strings.TrimSpace(m.ChannelName)
+					if chName != "" && !strings.HasPrefix(chName, "#") {
+						chName = "#" + chName
+					}
+					lines = append(lines, fmt.Sprintf("- guild=%s ch=%s locale=%s forum=%v active=%v",
+						ui.FormatIDWithName(m.GuildName, m.GuildID),
+						ui.FormatIDWithName(chName, m.ChannelID),
+						m.Locale, m.IsForum, m.Active))
 				}
 			}
 		} else {
@@ -173,9 +180,13 @@ func (s *boardsState) rebuildDetail(theme ui.Theme) {
 			s.detailVP.SetContent(ui.WrapViewportText(theme.MutedText.Render(msg), wrapW))
 			return
 		}
+		boardName := ""
+		if b, okB := s.selectedBoard(); okB {
+			boardName = b.Name
+		}
 		lines := []string{
 			kvLine(theme, "Thread ID", th.ID),
-			kvLine(theme, "Board ID", th.BoardID),
+			kvLine(theme, "Board", ui.FormatIDWithName(boardName, th.BoardID)),
 			kvLine(theme, "Title", th.Title),
 			kvLine(theme, "Status", th.Status),
 			kvLine(theme, "Res Count", fmt.Sprintf("%d / %d", th.ResCount, th.Rules.MaxRes)),
@@ -374,35 +385,37 @@ func (p *Panel) updateBoards(msg tea.Msg, ctx ui.PanelContext) tea.Cmd {
 	return nil
 }
 
+func (p *Panel) selectBoardIdx(idx int, ctx ui.PanelContext) tea.Cmd {
+	if idx < 0 || idx >= len(p.boards.items) || idx == p.boards.selectedIdx {
+		return nil
+	}
+	p.boards.selectedIdx = idx
+	b := p.boards.items[idx]
+	p.boards.selectedID = b.ID
+	p.boards.rebuildDetail(p.theme)
+	if _, ok := p.boards.mountsByID[b.ID]; !ok && ctx.Client != nil {
+		return p.fetchBoardMountsCmd(ctx.Client, b.ID)
+	}
+	return nil
+}
+
 func (p *Panel) updateBoardsRoot(k tea.KeyPressMsg, ctx ui.PanelContext) tea.Cmd {
 	switch k.String() {
 	case "j", "down":
-		if p.boards.selectedIdx < len(p.boards.items)-1 {
-			p.boards.selectedIdx++
-			b := p.boards.items[p.boards.selectedIdx]
-			p.boards.selectedID = b.ID
-			p.boards.rebuildDetail(p.theme)
-			if _, ok := p.boards.mountsByID[b.ID]; !ok && ctx.Client != nil {
-				return p.fetchBoardMountsCmd(ctx.Client, b.ID)
-			}
-		}
+		return p.selectBoardIdx(p.boards.selectedIdx+1, ctx)
 	case "k", "up":
-		if p.boards.selectedIdx > 0 {
-			p.boards.selectedIdx--
-			b := p.boards.items[p.boards.selectedIdx]
-			p.boards.selectedID = b.ID
-			p.boards.rebuildDetail(p.theme)
-			if _, ok := p.boards.mountsByID[b.ID]; !ok && ctx.Client != nil {
-				return p.fetchBoardMountsCmd(ctx.Client, b.ID)
-			}
-		}
+		return p.selectBoardIdx(p.boards.selectedIdx-1, ctx)
+	case "g", "home":
+		return p.selectBoardIdx(0, ctx)
+	case "G", "end":
+		return p.selectBoardIdx(len(p.boards.items)-1, ctx)
 	case "J", "pgdown":
 		p.boards.detailVP.PageDown()
 	case "K", "pgup":
 		p.boards.detailVP.PageUp()
 	case "r":
 		p.boards.loading = true
-		return p.fetchBoardsCmd(ctx.Client)
+		return tea.Batch(p.fetchStatsCmd(ctx.Client), p.fetchBoardsCmd(ctx.Client))
 	case "enter":
 		if b, ok := p.boards.selectedBoard(); ok {
 			p.boards.level = boardLevelThreads
@@ -420,40 +433,40 @@ func (p *Panel) updateBoardsRoot(k tea.KeyPressMsg, ctx ui.PanelContext) tea.Cmd
 		if !ctx.HasPerm(admin.PermBBSAdmin) {
 			return ui.ShowToastCmd(ui.ToastWarn, "Requires bbs.admin permission")
 		}
-		catField := FormField{Key: "category", Label: "Category", Kind: FieldText, Placeholder: "Category UUID", CharLimit: 40}
+		catField := ui.FormField{Key: "category", Label: "Category", Kind: ui.FieldText, Placeholder: "Category UUID", CharLimit: 40}
 		if len(p.categories.items) > 0 {
 			opts := make([]string, 0, len(p.categories.items))
 			for _, c := range p.categories.items {
 				opts = append(opts, c.Name+" | "+c.ID)
 			}
-			catField = FormField{Key: "category", Label: "Category", Kind: FieldCycle, Options: opts, Value: opts[0]}
+			catField = ui.FormField{Key: "category", Label: "Category", Kind: ui.FieldCycle, Options: opts, Value: opts[0]}
 		}
-		return p.formModal.Open("board.create", "Create Board", "Inherits Scope/Guild from selected category", []FormField{
+		return p.openForm("board.create", "Create Board", "Inherits Scope/Guild from selected category", []ui.FormField{
 			catField,
-			{Key: "slug", Label: "Slug", Kind: FieldText, Placeholder: "vip", CharLimit: 64},
-			{Key: "name", Label: "Name", Kind: FieldText, Placeholder: "雑談板", CharLimit: 80},
-			{Key: "description", Label: "Description", Kind: FieldText, Placeholder: "Optional description", CharLimit: 256},
-			{Key: "default_name", Label: "Default Name", Kind: FieldText, Value: "名無しさん", CharLimit: 32},
-			{Key: "hide_id", Label: "Hide ID", Kind: FieldBool, BoolVal: false},
-			{Key: "slip_level", Label: "SLIP (0/1/2)", Kind: FieldCycle, Options: []string{"0", "1", "2"}, Value: "0"},
-			{Key: "max_res", Label: "Max Res", Kind: FieldText, Value: "1000", CharLimit: 6},
-			{Key: "dat_ochi_idle", Label: "Idle Ochi (h)", Kind: FieldText, Value: "1200", CharLimit: 6},
+			{Key: "slug", Label: "Slug", Kind: ui.FieldText, Placeholder: "vip", CharLimit: 64},
+			{Key: "name", Label: "Name", Kind: ui.FieldText, Placeholder: "雑談板", CharLimit: 80},
+			{Key: "description", Label: "Description", Kind: ui.FieldText, Placeholder: "Optional description", CharLimit: 256},
+			{Key: "default_name", Label: "Default Name", Kind: ui.FieldText, Value: "名無しさん", CharLimit: 32},
+			{Key: "hide_id", Label: "Hide ID", Kind: ui.FieldBool, BoolVal: false},
+			{Key: "slip_level", Label: "SLIP (0/1/2)", Kind: ui.FieldCycle, Options: []string{"0", "1", "2"}, Value: "0"},
+			{Key: "max_res", Label: "Max Res", Kind: ui.FieldText, Value: "1000", CharLimit: 6},
+			{Key: "dat_ochi_idle", Label: "Idle Ochi (h)", Kind: ui.FieldText, Value: "1200", CharLimit: 6},
 		}, nil)
 	case "e":
 		if !ctx.HasPerm(admin.PermBBSAdmin) {
 			return ui.ShowToastCmd(ui.ToastWarn, "Requires bbs.admin permission")
 		}
 		if b, ok := p.boards.selectedBoard(); ok {
-			return p.formModal.Open("board.edit", "Edit Board", b.ID, []FormField{
-				{Key: "name", Label: "Name", Kind: FieldText, Value: b.Name, CharLimit: 80},
-				{Key: "description", Label: "Description", Kind: FieldText, Value: b.Description, CharLimit: 256},
-				{Key: "default_name", Label: "Default Name", Kind: FieldText, Value: b.Rules.DefaultName, CharLimit: 32},
-				{Key: "hide_id", Label: "Hide ID", Kind: FieldBool, BoolVal: b.Rules.HideID},
-				{Key: "slip_level", Label: "SLIP (0/1/2)", Kind: FieldCycle, Options: []string{"0", "1", "2"}, Value: strconv.Itoa(b.Rules.SLIPLevel)},
-				{Key: "locked", Label: "Locked", Kind: FieldBool, BoolVal: b.Locked},
+			return p.openForm("board.edit", "Edit Board", b.ID, []ui.FormField{
+				{Key: "name", Label: "Name", Kind: ui.FieldText, Value: b.Name, CharLimit: 80},
+				{Key: "description", Label: "Description", Kind: ui.FieldText, Value: b.Description, CharLimit: 256},
+				{Key: "default_name", Label: "Default Name", Kind: ui.FieldText, Value: b.Rules.DefaultName, CharLimit: 32},
+				{Key: "hide_id", Label: "Hide ID", Kind: ui.FieldBool, BoolVal: b.Rules.HideID},
+				{Key: "slip_level", Label: "SLIP (0/1/2)", Kind: ui.FieldCycle, Options: []string{"0", "1", "2"}, Value: strconv.Itoa(b.Rules.SLIPLevel)},
+				{Key: "locked", Label: "Locked", Kind: ui.FieldBool, BoolVal: b.Locked},
 			}, b)
 		}
-	case "D":
+	case "D", "delete":
 		if !ctx.HasPerm(admin.PermBBSAdmin) {
 			return ui.ShowToastCmd(ui.ToastWarn, "Requires bbs.admin permission")
 		}
@@ -491,7 +504,7 @@ func (p *Panel) updateBoardThreads(k tea.KeyPressMsg, ctx ui.PanelContext) tea.C
 	case "r":
 		if b, ok := p.boards.selectedBoard(); ok {
 			p.boards.loading = true
-			return p.fetchThreadsCmd(ctx.Client, b.ID)
+			return tea.Batch(p.fetchStatsCmd(ctx.Client), p.fetchThreadsCmd(ctx.Client, b.ID))
 		}
 	case "j", "down":
 		if p.boards.threadIdx < len(p.boards.threads)-1 {
@@ -502,6 +515,18 @@ func (p *Panel) updateBoardThreads(k tea.KeyPressMsg, ctx ui.PanelContext) tea.C
 	case "k", "up":
 		if p.boards.threadIdx > 0 {
 			p.boards.threadIdx--
+			p.boards.selectedThreadID = p.boards.threads[p.boards.threadIdx].ID
+			p.boards.rebuildDetail(p.theme)
+		}
+	case "g", "home":
+		if len(p.boards.threads) > 0 && p.boards.threadIdx != 0 {
+			p.boards.threadIdx = 0
+			p.boards.selectedThreadID = p.boards.threads[0].ID
+			p.boards.rebuildDetail(p.theme)
+		}
+	case "G", "end":
+		if len(p.boards.threads) > 0 && p.boards.threadIdx != len(p.boards.threads)-1 {
+			p.boards.threadIdx = len(p.boards.threads) - 1
 			p.boards.selectedThreadID = p.boards.threads[p.boards.threadIdx].ID
 			p.boards.rebuildDetail(p.theme)
 		}
@@ -539,7 +564,7 @@ func (p *Panel) updateBoardPosts(k tea.KeyPressMsg, ctx ui.PanelContext) tea.Cmd
 	case "r":
 		if th, ok := p.boards.selectedThread(); ok {
 			p.boards.loading = true
-			return p.fetchThreadDetailCmd(ctx.Client, th.ID)
+			return tea.Batch(p.fetchStatsCmd(ctx.Client), p.fetchThreadDetailCmd(ctx.Client, th.ID))
 		}
 	case "j", "down":
 		if p.boards.threadDetail != nil && p.boards.postIdx < len(p.boards.threadDetail.Posts)-1 {
@@ -551,6 +576,16 @@ func (p *Panel) updateBoardPosts(k tea.KeyPressMsg, ctx ui.PanelContext) tea.Cmd
 			p.boards.postIdx--
 			p.boards.rebuildDetail(p.theme)
 		}
+	case "g", "home":
+		if p.boards.threadDetail != nil && len(p.boards.threadDetail.Posts) > 0 && p.boards.postIdx != 0 {
+			p.boards.postIdx = 0
+			p.boards.rebuildDetail(p.theme)
+		}
+	case "G", "end":
+		if p.boards.threadDetail != nil && len(p.boards.threadDetail.Posts) > 0 && p.boards.postIdx != len(p.boards.threadDetail.Posts)-1 {
+			p.boards.postIdx = len(p.boards.threadDetail.Posts) - 1
+			p.boards.rebuildDetail(p.theme)
+		}
 	case "J", "pgdown":
 		p.boards.detailVP.PageDown()
 	case "K", "pgup":
@@ -560,8 +595,8 @@ func (p *Panel) updateBoardPosts(k tea.KeyPressMsg, ctx ui.PanelContext) tea.Cmd
 			return ui.ShowToastCmd(ui.ToastWarn, "Requires bbs.moderate permission")
 		}
 		if post, ok := p.boards.selectedPost(); ok {
-			return p.formModal.Open("post.abone", fmt.Sprintf("Abone Post #%d", post.ResNumber), shortID(post.ID), []FormField{
-				{Key: "reason", Label: "Reason", Kind: FieldText, Value: "モデレーター対応", CharLimit: 120},
+			return p.openForm("post.abone", fmt.Sprintf("Abone Post #%d", post.ResNumber), shortID(post.ID), []ui.FormField{
+				{Key: "reason", Label: "Reason", Kind: ui.FieldText, Value: "モデレーター対応", CharLimit: 120},
 			}, post)
 		}
 	case "b":
@@ -577,12 +612,12 @@ func (p *Panel) updateBoardPosts(k tea.KeyPressMsg, ctx ui.PanelContext) tea.Cmd
 					defGuild = *b.GuildID
 				}
 			}
-			return p.formModal.Open("post.ban", fmt.Sprintf("Ban Poster (Res #%d)", post.ResNumber), "Target Post "+shortID(post.ID), []FormField{
-				{Key: "scope", Label: "Scope", Kind: FieldCycle, Options: []string{"local", "global"}, Value: defScope},
-				{Key: "guild_id", Label: "Guild ID (local)", Kind: FieldText, Value: defGuild, CharLimit: 32},
-				{Key: "post_id", Label: "Post ID", Kind: FieldText, Value: post.ID, ReadOnly: true},
-				{Key: "duration_hours", Label: "Hours (0=perm)", Kind: FieldText, Value: "24", CharLimit: 8},
-				{Key: "reason", Label: "Reason", Kind: FieldText, Value: "荒らし行為", CharLimit: 200},
+			return p.openForm("post.ban", fmt.Sprintf("Ban Poster (Res #%d)", post.ResNumber), "Target Post "+shortID(post.ID), []ui.FormField{
+				{Key: "scope", Label: "Scope", Kind: ui.FieldCycle, Options: []string{"local", "global"}, Value: defScope},
+				{Key: "guild_id", Label: "Guild ID (local)", Kind: ui.FieldText, Value: defGuild, CharLimit: 32},
+				{Key: "post_id", Label: "Post ID", Kind: ui.FieldText, Value: post.ID, ReadOnly: true},
+				{Key: "duration_hours", Label: "Hours (0=perm)", Kind: ui.FieldText, Value: "24", CharLimit: 8},
+				{Key: "reason", Label: "Reason", Kind: ui.FieldText, Value: "荒らし行為", CharLimit: 200},
 			}, nil)
 		}
 	}
@@ -590,10 +625,14 @@ func (p *Panel) updateBoardPosts(k tea.KeyPressMsg, ctx ui.PanelContext) tea.Cmd
 }
 
 func (p *Panel) viewBoards(width, bodyH int) string {
-	var crumb string
+	var toolbar string
+	paneH := max(bodyH-1, 5)
 	switch p.boards.level {
 	case boardLevelBoards:
-		crumb = p.theme.MutedText.Render(fmt.Sprintf("Boards (%d)  [Enter] Open Threads", len(p.boards.items)))
+		toolbar = ui.TruncateWidth(
+			p.theme.MutedText.Render(fmt.Sprintf("Boards (%d)  [Enter] Open Threads", len(p.boards.items))),
+			width,
+		)
 	case boardLevelThreads:
 		bName := ""
 		if b, ok := p.boards.selectedBoard(); ok {
@@ -603,10 +642,27 @@ func (p *Panel) viewBoards(width, bodyH int) string {
 		if stLbl == "" {
 			stLbl = "all"
 		}
+		crumb := p.theme.MutedText.Render(
+			fmt.Sprintf("Boards > %s > Threads (%d, status:%s [f])  [Esc] Back", ui.TruncateWidth(bName, 24), len(p.boards.threads), stLbl),
+		)
 		prompt := p.theme.InputPrompt.Render(threadSearchPrompt)
-		p.boards.searchInput.SetWidth(max(width-lipgloss.Width(threadSearchPrompt)-42, 12))
-		crumb = fmt.Sprintf("Boards > %s > Threads (%d, status:%s [f])  %s%s",
-			ui.TruncateWidth(bName, 20), len(p.boards.threads), stLbl, prompt, p.boards.searchInput.View())
+		ui.SetInputWidth(&p.boards.searchInput, max(width-lipgloss.Width(threadSearchPrompt)-30, 12))
+		searchSuffix := ""
+		if p.boards.searching {
+			searchSuffix = "  " + p.theme.MutedText.Render("(Enter apply, Esc cancel)")
+		} else if p.boards.appliedQuery != "" {
+			searchSuffix = "  " + p.theme.MutedText.Render("(active; [c] clear)")
+		}
+		searchLine := prompt + p.boards.searchInput.View() + searchSuffix
+		if lipgloss.Width(searchLine) > width {
+			avail := max(width-lipgloss.Width(prompt)-lipgloss.Width(searchSuffix), 1)
+			searchLine = prompt + ui.TruncateWidth(p.boards.searchInput.View(), avail) + searchSuffix
+			if lipgloss.Width(searchLine) > width {
+				searchLine = ui.TruncateWidth(searchLine, max(width, 1))
+			}
+		}
+		toolbar = ui.TruncateWidth(crumb, width) + "\n" + searchLine
+		paneH = max(bodyH-2, 5)
 	case boardLevelPosts:
 		thTitle := ""
 		if th, ok := p.boards.selectedThread(); ok {
@@ -616,11 +672,11 @@ func (p *Panel) viewBoards(width, bodyH int) string {
 		if p.boards.threadDetail != nil {
 			cnt = len(p.boards.threadDetail.Posts)
 		}
-		crumb = p.theme.MutedText.Render(fmt.Sprintf("Boards > ... > %s > Posts (%d)  [Esc] Back", ui.TruncateWidth(thTitle, 28), cnt))
+		toolbar = ui.TruncateWidth(
+			p.theme.MutedText.Render(fmt.Sprintf("Boards > ... > %s > Posts (%d)  [Esc] Back", ui.TruncateWidth(thTitle, 28), cnt)),
+			width,
+		)
 	}
-	toolbar := ui.TruncateWidth(crumb, width)
-
-	paneH := max(bodyH-1, 5)
 	split, listW, detailW, innerH := p.splitDimensions(width, paneH)
 	innerW := max(listW-4, 18)
 

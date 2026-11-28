@@ -104,6 +104,7 @@ type Server struct {
 	trustedProxies   []netip.Prefix
 	authStartLimiter *ipRateLimiter
 	authPollLimiter  *ipRateLimiter
+	nameCache        *nameResolverCache
 	mux              *http.ServeMux
 }
 
@@ -507,6 +508,7 @@ func NewServer(deps ServerDeps) (*Server, error) {
 		trustedProxies:   trustedProxies,
 		authStartLimiter: newIPRateLimiter(10, float64(10)/60.0, 4096),
 		authPollLimiter:  newIPRateLimiter(60, 2.0, 4096),
+		nameCache:        newNameResolverCache(),
 		mux:              http.NewServeMux(),
 	}
 	s.registerRoutes()

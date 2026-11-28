@@ -39,6 +39,7 @@ type BBSCategoryDTO struct {
 	ID          string    `json:"id"`
 	Scope       string    `json:"scope"`
 	GuildID     *string   `json:"guild_id,omitempty"`
+	GuildName   string    `json:"guild_name,omitempty"`
 	ProviderKey string    `json:"provider_key"`
 	Slug        string    `json:"slug"`
 	Name        string    `json:"name"`
@@ -83,17 +84,19 @@ type BBSBoardRulesDTO struct {
 }
 
 type BBSBoardDTO struct {
-	ID          string           `json:"id"`
-	CategoryID  string           `json:"category_id"`
-	Scope       string           `json:"scope"`
-	GuildID     *string          `json:"guild_id,omitempty"`
-	ProviderKey string           `json:"provider_key"`
-	Slug        string           `json:"slug"`
-	Name        string           `json:"name"`
-	Description string           `json:"description"`
-	Rules       BBSBoardRulesDTO `json:"rules"`
-	Locked      bool             `json:"locked"`
-	CreatedAt   time.Time        `json:"created_at"`
+	ID           string           `json:"id"`
+	CategoryID   string           `json:"category_id"`
+	CategoryName string           `json:"category_name,omitempty"`
+	Scope        string           `json:"scope"`
+	GuildID      *string          `json:"guild_id,omitempty"`
+	GuildName    string           `json:"guild_name,omitempty"`
+	ProviderKey  string           `json:"provider_key"`
+	Slug         string           `json:"slug"`
+	Name         string           `json:"name"`
+	Description  string           `json:"description"`
+	Rules        BBSBoardRulesDTO `json:"rules"`
+	Locked       bool             `json:"locked"`
+	CreatedAt    time.Time        `json:"created_at"`
 }
 
 type BBSBoardsResponse struct {
@@ -120,14 +123,16 @@ type UpdateBBSBoardRequest struct {
 }
 
 type BBSBoardMountDTO struct {
-	ID        string    `json:"id"`
-	BoardID   string    `json:"board_id"`
-	GuildID   string    `json:"guild_id"`
-	ChannelID string    `json:"channel_id"`
-	Locale    string    `json:"locale"`
-	IsForum   bool      `json:"is_forum"`
-	Active    bool      `json:"active"`
-	CreatedAt time.Time `json:"created_at"`
+	ID          string    `json:"id"`
+	BoardID     string    `json:"board_id"`
+	GuildID     string    `json:"guild_id"`
+	GuildName   string    `json:"guild_name,omitempty"`
+	ChannelID   string    `json:"channel_id"`
+	ChannelName string    `json:"channel_name,omitempty"`
+	Locale      string    `json:"locale"`
+	IsForum     bool      `json:"is_forum"`
+	Active      bool      `json:"active"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 type BBSBoardMountsResponse struct {
@@ -208,14 +213,19 @@ type BBSReportDTO struct {
 	ID             string    `json:"id"`
 	Scope          string    `json:"scope"`
 	GuildID        string    `json:"guild_id"`
+	GuildName      string    `json:"guild_name,omitempty"`
 	PostID         string    `json:"post_id"`
 	ThreadID       string    `json:"thread_id"`
+	ThreadTitle    string    `json:"thread_title,omitempty"`
 	BoardID        string    `json:"board_id"`
+	BoardName      string    `json:"board_name,omitempty"`
 	ReporterUserID string    `json:"reporter_user_id"`
+	ReporterName   string    `json:"reporter_name,omitempty"`
 	Reason         string    `json:"reason"`
 	Status         string    `json:"status"`
 	BanID          *string   `json:"ban_id,omitempty"`
 	HandledBy      *string   `json:"handled_by,omitempty"`
+	HandledByName  string    `json:"handled_by_name,omitempty"`
 	ResolutionNote string    `json:"resolution_note"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
@@ -226,11 +236,13 @@ type BBSReportsResponse struct {
 }
 
 type BBSReportInspectResponse struct {
-	Report       BBSReportDTO `json:"report"`
-	Post         *BBSPostDTO  `json:"post,omitempty"`
-	AuthorUserID string       `json:"author_user_id,omitempty"`
-	PostGuildID  string       `json:"post_guild_id,omitempty"`
-	PosterHash   string       `json:"poster_hash,omitempty"`
+	Report         BBSReportDTO `json:"report"`
+	Post           *BBSPostDTO  `json:"post,omitempty"`
+	AuthorUserID   string       `json:"author_user_id,omitempty"`
+	AuthorUserName string       `json:"author_user_name,omitempty"`
+	PostGuildID    string       `json:"post_guild_id,omitempty"`
+	PostGuildName  string       `json:"post_guild_name,omitempty"`
+	PosterHash     string       `json:"poster_hash,omitempty"`
 }
 
 type ResolveBBSReportRequest struct {
@@ -245,15 +257,18 @@ type BBSBanFilter struct {
 }
 
 type BBSBanDTO struct {
-	ID           string     `json:"id"`
-	Scope        string     `json:"scope"`
-	GuildID      *string    `json:"guild_id,omitempty"`
-	PosterHash   string     `json:"poster_hash"`
-	TargetUserID *string    `json:"target_user_id,omitempty"`
-	Reason       string     `json:"reason"`
-	CreatedBy    string     `json:"created_by"`
-	ExpiresAt    *time.Time `json:"expires_at,omitempty"`
-	CreatedAt    time.Time  `json:"created_at"`
+	ID             string     `json:"id"`
+	Scope          string     `json:"scope"`
+	GuildID        *string    `json:"guild_id,omitempty"`
+	GuildName      string     `json:"guild_name,omitempty"`
+	PosterHash     string     `json:"poster_hash"`
+	TargetUserID   *string    `json:"target_user_id,omitempty"`
+	TargetUserName string     `json:"target_user_name,omitempty"`
+	Reason         string     `json:"reason"`
+	CreatedBy      string     `json:"created_by"`
+	CreatedByName  string     `json:"created_by_name,omitempty"`
+	ExpiresAt      *time.Time `json:"expires_at,omitempty"`
+	CreatedAt      time.Time  `json:"created_at"`
 }
 
 type BBSBansResponse struct {
@@ -271,11 +286,12 @@ type CreateBBSBanRequest struct {
 }
 
 type BBSCapDTO struct {
-	ID             string   `json:"id"`
-	Name           string   `json:"name"`
-	Description    string   `json:"description"`
-	GrantOperators bool     `json:"grant_operators"`
-	Users          []string `json:"users"`
+	ID             string            `json:"id"`
+	Name           string            `json:"name"`
+	Description    string            `json:"description"`
+	GrantOperators bool              `json:"grant_operators"`
+	Users          []string          `json:"users"`
+	UserNames      map[string]string `json:"user_names,omitempty"`
 }
 
 type BBSCapsResponse struct {

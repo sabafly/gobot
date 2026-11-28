@@ -141,25 +141,29 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/bbs/reports":
 			_ = json.NewEncoder(w).Encode(admin.BBSReportsResponse{
 				Reports: []admin.BBSReportDTO{{
-					ID: "11111111-1111-1111-1111-111111111111", Scope: "local", GuildID: guildStr,
+					ID: "11111111-1111-1111-1111-111111111111", Scope: "local", GuildID: guildStr, GuildName: "BBS Guild",
 					PostID: "22222222-2222-2222-2222-222222222222", ThreadID: "33333333-3333-3333-3333-333333333333",
-					BoardID: "44444444-4444-4444-4444-444444444444", ReporterUserID: "5555",
+					ThreadTitle: "日本語スレッドタイトル",
+					BoardID:     "44444444-4444-4444-4444-444444444444", BoardName: "VIP板テスト",
+					ReporterUserID: "5555", ReporterName: "ReporterHanako",
 					Reason: "日本語スパム通報", Status: "open", CreatedAt: now, UpdatedAt: now,
 				}},
 			})
 		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/bbs/reports/11111111-1111-1111-1111-111111111111/inspect":
 			_ = json.NewEncoder(w).Encode(admin.BBSReportInspectResponse{
 				Report: admin.BBSReportDTO{
-					ID: "11111111-1111-1111-1111-111111111111", Scope: "local", GuildID: guildStr,
+					ID: "11111111-1111-1111-1111-111111111111", Scope: "local", GuildID: guildStr, GuildName: "BBS Guild",
 					PostID: "22222222-2222-2222-2222-222222222222", Reason: "日本語スパム通報", Status: "open", CreatedAt: now, UpdatedAt: now,
 				},
 				Post: &admin.BBSPostDTO{
 					ID: "22222222-2222-2222-2222-222222222222", ResNumber: 3, AnonID: "AbCdEfGh",
 					Body: "対象投稿の本文です", CreatedAt: now,
 				},
-				AuthorUserID: "999888777",
-				PostGuildID:  guildStr,
-				PosterHash:   "deadbeefcafe",
+				AuthorUserID:   "999888777",
+				AuthorUserName: "AuthorTaro",
+				PostGuildID:    guildStr,
+				PostGuildName:  "BBS Guild",
+				PosterHash:     "deadbeefcafe",
 			})
 		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/bbs/reports/11111111-1111-1111-1111-111111111111/resolve":
 			var req admin.ResolveBBSReportRequest
@@ -188,7 +192,8 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 			_ = json.NewEncoder(w).Encode(admin.BBSBoardsResponse{
 				Boards: []admin.BBSBoardDTO{{
 					ID: "44444444-4444-4444-4444-444444444444", CategoryID: "55555555-5555-5555-5555-555555555555",
-					Scope: "local", GuildID: &guildStr, Slug: "vip", Name: "VIP板テスト",
+					CategoryName: "ニュース",
+					Scope:        "local", GuildID: &guildStr, GuildName: "BBS Guild", Slug: "vip", Name: "VIP板テスト",
 					Rules: admin.BBSBoardRulesDTO{DefaultName: "名無し", MaxRes: 1000, DatOchiIdleHours: 1200}, CreatedAt: now,
 				}},
 			})
@@ -196,7 +201,7 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 			_ = json.NewEncoder(w).Encode(admin.BBSBoardMountsResponse{
 				Mounts: []admin.BBSBoardMountDTO{{
 					ID: "66666666-6666-6666-6666-666666666666", BoardID: "44444444-4444-4444-4444-444444444444",
-					GuildID: guildStr, ChannelID: "777001", Locale: "ja", Active: true, CreatedAt: now,
+					GuildID: guildStr, GuildName: "BBS Guild", ChannelID: "777001", ChannelName: "bbs-lounge", Locale: "ja", Active: true, CreatedAt: now,
 				}},
 			})
 		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/bbs/boards":
@@ -240,8 +245,9 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/bbs/bans":
 			_ = json.NewEncoder(w).Encode(admin.BBSBansResponse{
 				Bans: []admin.BBSBanDTO{{
-					ID: "77777777-7777-7777-7777-777777777777", Scope: "local", GuildID: &guildStr,
-					PosterHash: "deadbeef1234", TargetUserID: &uidStr, Reason: "テストBAN", CreatedBy: "1001", CreatedAt: now,
+					ID: "77777777-7777-7777-7777-777777777777", Scope: "local", GuildID: &guildStr, GuildName: "BBS Guild",
+					PosterHash: "deadbeef1234", TargetUserID: &uidStr, TargetUserName: "TargetJiro", Reason: "テストBAN",
+					CreatedBy: "1001", CreatedByName: "Super Op", CreatedAt: now,
 				}},
 			})
 		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/bbs/bans":
@@ -258,7 +264,7 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 			_ = json.NewEncoder(w).Encode(map[string]any{"deleted": true})
 		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/bbs/config/caps":
 			_ = json.NewEncoder(w).Encode(admin.BBSCapsResponse{
-				Caps: []admin.BBSCapDTO{{ID: "admin", Name: "管理人 ★", GrantOperators: true, Users: []string{"1001"}}},
+				Caps: []admin.BBSCapDTO{{ID: "admin", Name: "管理人 ★", GrantOperators: true, Users: []string{"1001"}, UserNames: map[string]string{"1001": "Super Op"}}},
 			})
 		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/bbs/config/caps":
 			var req admin.SaveBBSCapRequest
@@ -309,8 +315,11 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 	p, cmd = p.Update(tea.KeyPressMsg{Code: 'i', Text: "i"}, sCtx)
 	p, _ = pumpPanelCmd(t, p, sCtx, cmd, 200*time.Millisecond)
 	vReport := p.View(120, 32)
-	if !strings.Contains(vReport, "999888777") || !strings.Contains(vReport, "deadbeefcafe") {
-		t.Fatalf("expected report inspect details rendered, got:\n%s", vReport)
+	if !strings.Contains(vReport, "AuthorTaro (999888777)") || !strings.Contains(vReport, "deadbeefcafe") || !strings.Contains(vReport, "ReporterHanako (5555)") {
+		t.Fatalf("expected report inspect & name details rendered, got:\n%s", vReport)
+	}
+	if !strings.Contains(vReport, "Caps") || !strings.Contains(vReport, "SLIP") {
+		t.Fatalf("expected 6 flat subtabs including Caps and SLIP in subtab bar, got:\n%s", vReport)
 	}
 
 	p, cmd = p.Update(tea.KeyPressMsg{Code: 'v', Text: "v"}, sCtx)
@@ -318,13 +327,25 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 	if !p.CapturingInput() {
 		t.Fatal("expected CapturingInput() == true when resolve FormModal is active")
 	}
-	// Tab moves to Resolution Note FieldText -> Cursor() should be non-nil!
+	// Tab moves to Resolution Note FieldText -> Cursor() should align with rendered input cell!
 	p, _ = p.Update(tea.KeyPressMsg{Code: tea.KeyTab}, sCtx)
-	_ = p.View(120, 32)
-	if p.Cursor() == nil {
+	p, _ = p.Update(tea.KeyPressMsg{Text: "対処済み"}, sCtx)
+	vForm := p.View(120, 32)
+	formCur := p.Cursor()
+	if formCur == nil {
 		t.Fatal("expected non-nil Cursor() inside FormModal FieldText")
 	}
-	p, _ = p.Update(tea.KeyPressMsg{Text: "対処済み"}, sCtx)
+	formLines := strings.Split(vForm, "\n")
+	if formCur.Y < 0 || formCur.Y >= len(formLines) || !strings.Contains(ansi.Strip(formLines[formCur.Y]), "Resolution Note") {
+		t.Fatalf("expected FormModal Cursor() on Resolution Note row, got cur=%+v\n%s", formCur, vForm)
+	}
+	if rowPlain := ansi.Strip(formLines[formCur.Y]); !strings.Contains(rowPlain, "対処済み") {
+		t.Fatalf("expected typed text on cursor row %q", rowPlain)
+	}
+	// Verify cursor X aligns right after the typed value (accounting for padding inside the box).
+	if wAtCur := ansi.StringWidth(ansi.Strip(ansi.Truncate(formLines[formCur.Y], formCur.X, ""))); wAtCur != formCur.X {
+		t.Fatalf("expected clean cell column at cur.X=%d, got %d", formCur.X, wAtCur)
+	}
 	p, cmd = p.Update(tea.KeyPressMsg{Code: tea.KeyEnter}, sCtx)
 	p, _ = pumpPanelCmd(t, p, sCtx, cmd, 200*time.Millisecond)
 	mu.Lock()
@@ -338,18 +359,20 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 	p, cmd = p.Update(tea.KeyPressMsg{Code: ']', Text: "]"}, sCtx)
 	p, _ = pumpPanelCmd(t, p, sCtx, cmd, 200*time.Millisecond)
 	vBoards := p.View(120, 32)
-	if !strings.Contains(vBoards, "VIP板テスト") || !strings.Contains(vBoards, "777001") {
-		t.Fatalf("expected Boards list + mount detail, got:\n%s", vBoards)
+	if !strings.Contains(vBoards, "VIP板テスト") || !strings.Contains(vBoards, "#bbs-lounge (777001)") {
+		t.Fatalf("expected Boards list + mount detail with channel name, got:\n%s", vBoards)
 	}
 
 	// Enter -> Threads level.
 	p, cmd = p.Update(tea.KeyPressMsg{Code: tea.KeyEnter}, sCtx)
 	p, _ = pumpPanelCmd(t, p, sCtx, cmd, 200*time.Millisecond)
-	// Search '/' with Japanese keyword.
+	// Search '/' with Japanese keyword and verify separated search bar Cursor() on row 3.
 	p, cmd = p.Update(tea.KeyPressMsg{Code: '/', Text: "/"}, sCtx)
 	_ = cmd
-	if !p.CapturingInput() || p.Cursor() == nil {
-		t.Fatal("expected CapturingInput() and Cursor() during thread search")
+	_ = p.View(120, 32)
+	thCur := p.Cursor()
+	if !p.CapturingInput() || thCur == nil || thCur.Y != 3 {
+		t.Fatalf("expected CapturingInput() and Cursor().Y==3 during thread search, got %+v", thCur)
 	}
 	p, _ = p.Update(tea.KeyPressMsg{Text: "検索ワード"}, sCtx)
 	p, cmd = p.Update(tea.KeyPressMsg{Code: tea.KeyEnter}, sCtx)
@@ -415,9 +438,12 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 		t.Fatalf("expected created category, got %+v", createdCats)
 	}
 
-	// 5. Bans subtab (']'): create + lift ban.
-	p, cmd = p.Update(tea.KeyPressMsg{Code: ']', Text: "]"}, sCtx)
+	// 5. Bans subtab ('l'): verify names + create + lift ban.
+	p, cmd = p.Update(tea.KeyPressMsg{Code: 'l', Text: "l"}, sCtx)
 	p, _ = pumpPanelCmd(t, p, sCtx, cmd, 200*time.Millisecond)
+	if vBans := p.View(120, 32); !strings.Contains(vBans, "TargetJiro (7001)") || !strings.Contains(vBans, "Super Op (1001)") {
+		t.Fatalf("expected Bans view to render target/creator names, got:\n%s", vBans)
+	}
 	p, _ = p.Update(tea.KeyPressMsg{Code: 'n', Text: "n"}, sCtx)
 	p, _ = p.Update(tea.KeyPressMsg{Code: tea.KeyTab}, sCtx) // guild_id
 	p, _ = p.Update(tea.KeyPressMsg{Text: guildStr}, sCtx)
@@ -436,9 +462,12 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 		t.Fatalf("expected lift ban call, got %v", deletedBanIDs)
 	}
 
-	// 6. Config subtab (']'): create Cap, switch section ('s'), create SLIP Event.
+	// 6. Caps subtab (']'): verify user name resolution + create Cap; then SLIP subtab ('right'): create SLIP Event.
 	p, cmd = p.Update(tea.KeyPressMsg{Code: ']', Text: "]"}, sCtx)
 	p, _ = pumpPanelCmd(t, p, sCtx, cmd, 200*time.Millisecond)
+	if vCaps := p.View(120, 32); !strings.Contains(vCaps, "Super Op (1001)") {
+		t.Fatalf("expected Caps view to render user name, got:\n%s", vCaps)
+	}
 	p, _ = p.Update(tea.KeyPressMsg{Code: 'n', Text: "n"}, sCtx)
 	p, _ = p.Update(tea.KeyPressMsg{Text: "mod"}, sCtx)
 	p, _ = p.Update(tea.KeyPressMsg{Code: tea.KeyTab}, sCtx)
@@ -448,7 +477,7 @@ func TestBBSPanel_AllSubtabs_Forms_IME_RBAC_AndBounds(t *testing.T) {
 	if len(createdCaps) != 1 || createdCaps[0].ID != "mod" {
 		t.Fatalf("expected created cap mod, got %+v", createdCaps)
 	}
-	p, cmd = p.Update(tea.KeyPressMsg{Code: 's', Text: "s"}, sCtx)
+	p, cmd = p.Update(tea.KeyPressMsg{Code: tea.KeyRight}, sCtx)
 	p, _ = pumpPanelCmd(t, p, sCtx, cmd, 200*time.Millisecond)
 	p, _ = p.Update(tea.KeyPressMsg{Code: 'n', Text: "n"}, sCtx)
 	p, _ = p.Update(tea.KeyPressMsg{Text: "summer"}, sCtx)

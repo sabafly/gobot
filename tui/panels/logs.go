@@ -355,7 +355,7 @@ func (p *LogsPanel) View(width, height int) string {
 		p.height = height
 		p.vp.SetWidth(width)
 		p.vp.SetHeight(max(height-2, 1))
-		p.searchInput.SetWidth(max(width-lipgloss.Width(logsFilterPromptText)-22, 16))
+		ui.SetInputWidth(&p.searchInput, max(width-lipgloss.Width(logsFilterPromptText)-22, 16))
 		p.rebuildContent()
 	}
 

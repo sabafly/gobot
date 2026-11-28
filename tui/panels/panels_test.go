@@ -387,7 +387,9 @@ func TestGuildsPanel_SearchCursor_ViewerVsAdminWrite(t *testing.T) {
 				eff = curOverride
 			}
 			_ = json.NewEncoder(w).Encode(admin.GuildDetailResponse{
-				AvailableLocales: []string{"en-US", "ja"},
+				AvailableLocales:     []string{"en-US", "ja"},
+				BBSModLogChannel:     "555001",
+				BBSModLogChannelName: "mod-log",
 				Guild: admin.GuildSummary{
 					ID:              "777001",
 					Name:            "テスト鯖",
@@ -451,6 +453,14 @@ func TestGuildsPanel_SearchCursor_ViewerVsAdminWrite(t *testing.T) {
 	if gp.selectModal.Active || len(emitted) == 0 {
 		t.Fatal("expected viewer 'l' press to warn instead of opening locale select modal")
 	}
+
+	if vGuild := p.View(100, 26); !strings.Contains(vGuild, "#mod-log (555001)") {
+		t.Fatalf("expected Guilds detail to show #mod-log (555001), got:\n%s", vGuild)
+	}
+	for _, k := range []string{"g", "G", "J", "K"} {
+		p, _ = p.Update(tea.KeyPressMsg{Code: rune(k[0]), Text: k}, viewerCtx)
+	}
+	_ = p.View(100, 26)
 
 	// 2. Japanese search cursor calculation.
 	p, _ = p.Update(tea.KeyPressMsg{Code: '/', Text: "/"}, viewerCtx)
@@ -521,6 +531,7 @@ func TestOpsAuditPanel_Permissions_AuditFilterCursor_And_SessionRevoke(t *testin
 						Action:       "guild.update",
 						ResourceType: "guild",
 						ResourceID:   "777001",
+						ResourceName: "BBS Guild",
 						Summary:      "Updated locale",
 						DetailJSON:   `{"locale_override":"ja"}`,
 						Status:       "success",
@@ -533,13 +544,14 @@ func TestOpsAuditPanel_Permissions_AuditFilterCursor_And_SessionRevoke(t *testin
 			_ = json.NewEncoder(w).Encode(admin.SessionsResponse{
 				Sessions: []admin.SessionInfo{
 					{
-						ID:         "sess-cur",
-						UserID:     "1001",
-						Username:   "superop",
-						Role:       admin.RoleSuperAdmin,
-						Current:    true,
-						LastUsedAt: time.Now(),
-						ExpiresAt:  time.Now().Add(time.Hour),
+						ID:          "sess-cur",
+						UserID:      "1001",
+						Username:    "superop",
+						DisplayName: "Super Op",
+						Role:        admin.RoleSuperAdmin,
+						Current:     true,
+						LastUsedAt:  time.Now(),
+						ExpiresAt:   time.Now().Add(time.Hour),
 					},
 				},
 			})
@@ -562,16 +574,20 @@ func TestOpsAuditPanel_Permissions_AuditFilterCursor_And_SessionRevoke(t *testin
 		t.Fatalf("expected viewer to default to subTabAudit, got %v", opViewer.subTab)
 	}
 	auditRendered := pv.View(100, 26)
-	if !strings.Contains(auditRendered, "guild.update") || !strings.Contains(auditRendered, `"locale_override": "ja"`) {
-		t.Fatalf("expected audit list and formatted DetailJSON, got:\n%s", auditRendered)
+	if !strings.Contains(auditRendered, "guild.update") || !strings.Contains(auditRendered, `"locale_override": "ja"`) || !strings.Contains(auditRendered, "BBS Guild (777001)") {
+		t.Fatalf("expected audit list, ResourceName (ID), and formatted DetailJSON, got:\n%s", auditRendered)
 	}
 	pv, _ = pv.Update(tea.KeyPressMsg{Code: '/', Text: "/"}, viewerCtx)
 	pv, _ = pv.Update(tea.KeyPressMsg{Text: "ops."}, viewerCtx)
-	if cur := pv.Cursor(); cur == nil || cur.Y != 1 || cur.X != lipgloss.Width(auditFilterPrompt)+4 {
-		t.Fatalf("expected audit filter cursor at X=%d Y=1, got %+v", lipgloss.Width(auditFilterPrompt)+4, cur)
+	if cur := pv.Cursor(); cur == nil || cur.Y != 2 || cur.X != lipgloss.Width(auditFilterPrompt)+4 {
+		t.Fatalf("expected audit filter cursor at X=%d Y=2, got %+v", lipgloss.Width(auditFilterPrompt)+4, cur)
 	}
 	pv, _ = pv.Update(tea.KeyPressMsg{Code: tea.KeyEsc}, viewerCtx)
-	pv, _ = pv.Update(tea.KeyPressMsg{Code: '[', Text: "["}, viewerCtx)
+	// Verify 'h'/'left' switches Audit Logs -> Ops.
+	pv, _ = pv.Update(tea.KeyPressMsg{Code: 'h', Text: "h"}, viewerCtx)
+	if opViewer.subTab != subTabOps {
+		t.Fatalf("expected 'h' to switch to subTabOps, got %v", opViewer.subTab)
+	}
 	if !strings.Contains(pv.View(100, 26), "Permission required: ops.execute") {
 		t.Fatal("expected Ops tab to show ops.execute permission notice for viewer")
 	}
@@ -597,11 +613,16 @@ func TestOpsAuditPanel_Permissions_AuditFilterCursor_And_SessionRevoke(t *testin
 		t.Fatal("expected reload-locales POST endpoint called")
 	}
 
-	// Switch to Sessions tab (Ops -> Audit -> Sessions via ']' twice).
-	pa, _ = pa.Update(tea.KeyPressMsg{Code: ']', Text: "]"}, superCtx)
-	pa, _ = pa.Update(tea.KeyPressMsg{Code: ']', Text: "]"}, superCtx)
+	// Switch to Sessions tab (Ops -> Audit -> Sessions via 'right' and 'l') and verify name formatting.
+	pa, cmd = pa.Update(tea.KeyPressMsg{Code: tea.KeyRight}, superCtx)
+	pa, _ = pumpPanelCmd(t, pa, superCtx, cmd, 150*time.Millisecond)
+	pa, cmd = pa.Update(tea.KeyPressMsg{Code: 'l', Text: "l"}, superCtx)
+	pa, _ = pumpPanelCmd(t, pa, superCtx, cmd, 150*time.Millisecond)
 	if opAdmin.subTab != subTabSessions {
 		t.Fatalf("expected subTabSessions, got %v", opAdmin.subTab)
+	}
+	if vSess := pa.View(120, 26); !strings.Contains(vSess, "Super Op (@superop) (1001)") {
+		t.Fatalf("expected session view to include DisplayName (@username) (UserID), got:\n%s", vSess)
 	}
 	pa, _ = pa.Update(tea.KeyPressMsg{Code: 'x', Text: "x"}, superCtx)
 	pa, cmd = pa.Update(tea.KeyPressMsg{Code: 'y', Text: "y"}, superCtx)

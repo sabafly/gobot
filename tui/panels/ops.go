@@ -162,13 +162,13 @@ func (p *OpsAuditPanel) Cursor() *tea.Cursor {
 	}
 	cur := *c
 	cur.X += lipgloss.Width(auditFilterPrompt)
-	cur.Y += 1
+	cur.Y += 2
 	return &cur
 }
 
 func (p *OpsAuditPanel) ShortHelp(ctx ui.PanelContext) []key.Binding {
 	base := []key.Binding{
-		key.NewBinding(key.WithKeys("[", "]"), key.WithHelp("[/]", "subtab")),
+		key.NewBinding(key.WithKeys("left", "right", "[", "]"), key.WithHelp("←/→,[/]", "subtab")),
 	}
 	switch p.subTab {
 	case subTabOps:
@@ -181,6 +181,8 @@ func (p *OpsAuditPanel) ShortHelp(ctx ui.PanelContext) []key.Binding {
 	case subTabAudit:
 		if ctx.HasPerm(admin.PermAuditRead) {
 			base = append(base,
+				key.NewBinding(key.WithKeys("j", "k"), key.WithHelp("j/k", "select")),
+				key.NewBinding(key.WithKeys("J", "K"), key.WithHelp("J/K", "scroll")),
 				key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "filter")),
 				key.NewBinding(key.WithKeys("n", "p"), key.WithHelp("n/p", "page")),
 				key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "refresh")),
@@ -189,7 +191,7 @@ func (p *OpsAuditPanel) ShortHelp(ctx ui.PanelContext) []key.Binding {
 	case subTabSessions:
 		base = append(base,
 			key.NewBinding(key.WithKeys("j", "k"), key.WithHelp("j/k", "select")),
-			key.NewBinding(key.WithKeys("x"), key.WithHelp("x", "revoke")),
+			key.NewBinding(key.WithKeys("x", "delete"), key.WithHelp("x/del", "revoke")),
 			key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "refresh")),
 		)
 	}
@@ -353,6 +355,10 @@ func (p *OpsAuditPanel) Update(msg tea.Msg, ctx ui.PanelContext) (ui.Panel, tea.
 				if p.opsIdx > 0 {
 					p.opsIdx--
 				}
+			case "g", "home":
+				p.opsIdx = 0
+			case "G", "end":
+				p.opsIdx = len(defaultOpsActions) - 1
 			case "enter":
 				act := defaultOpsActions[p.opsIdx]
 				p.confirmModal.Open(opsConfirmActionTag, act.Title, act.Description, "Execute", act.Danger, act)
@@ -403,6 +409,22 @@ func (p *OpsAuditPanel) Update(msg tea.Msg, ctx ui.PanelContext) (ui.Panel, tea.
 					p.auditIdx--
 					p.rebuildAuditDetail()
 				}
+			case "g", "home":
+				if len(p.auditEntries) > 0 && p.auditIdx != 0 {
+					p.auditIdx = 0
+					p.rebuildAuditDetail()
+				}
+			case "G", "end":
+				if len(p.auditEntries) > 0 && p.auditIdx != len(p.auditEntries)-1 {
+					p.auditIdx = len(p.auditEntries) - 1
+					p.rebuildAuditDetail()
+				}
+			case "J", "pgdown":
+				p.auditVP.PageDown()
+				return p, nil
+			case "K", "pgup":
+				p.auditVP.PageUp()
+				return p, nil
 			}
 			var cmd tea.Cmd
 			p.auditVP, cmd = p.auditVP.Update(msg)
@@ -421,6 +443,12 @@ func (p *OpsAuditPanel) Update(msg tea.Msg, ctx ui.PanelContext) (ui.Panel, tea.
 				if p.sessionIdx > 0 {
 					p.sessionIdx--
 				}
+			case "g", "home":
+				p.sessionIdx = 0
+			case "G", "end":
+				if len(p.sessions) > 0 {
+					p.sessionIdx = len(p.sessions) - 1
+				}
 			case "x", "delete":
 				if len(p.sessions) > 0 && p.sessionIdx >= 0 && p.sessionIdx < len(p.sessions) {
 					sess := p.sessions[p.sessionIdx]
@@ -428,10 +456,15 @@ func (p *OpsAuditPanel) Update(msg tea.Msg, ctx ui.PanelContext) (ui.Panel, tea.
 					if sess.Current {
 						warn = "\nThis is YOUR current session — you will be logged out."
 					}
+					userLabel := "@" + sess.Username
+					if sess.DisplayName != "" && sess.DisplayName != sess.Username {
+						userLabel = fmt.Sprintf("%s (@%s)", sess.DisplayName, sess.Username)
+					}
+					userLabel = ui.FormatIDWithName(userLabel, sess.UserID)
 					p.confirmModal.Open(
 						opsConfirmRevokeTag,
 						"Revoke Operator Session",
-						fmt.Sprintf("User: @%s (%s)\nSession ID: %s%s", sess.Username, sess.Role, sess.ID, warn),
+						fmt.Sprintf("User: %s\nRole: %s\nSession ID: %s%s", userLabel, sess.Role, sess.ID, warn),
 						"Revoke",
 						true,
 						sess,
@@ -460,7 +493,7 @@ func (p *OpsAuditPanel) View(width, height int) string {
 	if p.width != width || p.height != height {
 		p.width = width
 		p.height = height
-		p.auditInput.SetWidth(max(width-lipgloss.Width(auditFilterPrompt)-24, 16))
+		ui.SetInputWidth(&p.auditInput, max(width-lipgloss.Width(auditFilterPrompt)-28, 16))
 		auditViewH := max(height-2, 4)
 		bodyH := max(auditViewH-2, 4)
 		detailW := width - 2
@@ -476,40 +509,29 @@ func (p *OpsAuditPanel) View(width, height int) string {
 	}
 
 	if p.confirmModal.Active {
-		return p.confirmModal.View(width, height, p.theme)
+		return ui.ClampBox(p.confirmModal.View(width, height, p.theme), width, height)
 	}
 
-	tabs := []struct {
-		id    opsSubTab
-		label string
-	}{
-		{subTabOps, "Ops"},
-		{subTabAudit, "Audit Logs"},
-		{subTabSessions, "Sessions"},
+	statusBadge := p.theme.BadgeOK.Render("Ready")
+	if p.runningOp {
+		statusBadge = p.theme.BadgeInfo.Render("Executing...")
+	} else if (p.subTab == subTabAudit && p.loadingAudit) || (p.subTab == subTabSessions && p.loadingSessions) {
+		statusBadge = p.theme.BadgeInfo.Render("Loading...")
 	}
-	var tabParts []string
-	for _, tb := range tabs {
-		st := p.theme.SubTab
-		if p.subTab == tb.id {
-			st = p.theme.SubTabActive
-		}
-		tabParts = append(tabParts, st.Render(tb.label))
-	}
-	topBar := ui.TruncateWidth(
-		lipgloss.JoinHorizontal(lipgloss.Center, tabParts...)+"   "+p.theme.MutedText.Render("[/] subtabs"),
-		width,
-	)
+	header := ui.TruncateWidth(p.theme.CardTitle.Render("Ops & Audit")+"  "+statusBadge, width)
+	subTabBar := ui.RenderSubTabBar(p.theme, []string{"Ops", "Audit Logs", "Sessions"}, int(p.subTab), width)
 
+	bodyH := max(height-2, 4)
 	var body string
 	switch p.subTab {
 	case subTabOps:
-		body = p.renderOpsView(width, max(height-2, 4))
+		body = p.renderOpsView(width, bodyH)
 	case subTabAudit:
-		body = p.renderAuditView(width, max(height-2, 4))
+		body = p.renderAuditView(width, bodyH)
 	case subTabSessions:
-		body = p.renderSessionsView(width, max(height-2, 4))
+		body = p.renderSessionsView(width, bodyH)
 	}
-	return lipgloss.JoinVertical(lipgloss.Left, topBar, body)
+	return ui.ClampBox(lipgloss.JoinVertical(lipgloss.Left, header, subTabBar, body), width, height)
 }
 
 func (p *OpsAuditPanel) renderOpsView(width, height int) string {
@@ -554,9 +576,19 @@ func (p *OpsAuditPanel) renderAuditView(width, height int) string {
 		)
 	}
 	prompt := p.theme.InputPrompt.Render(auditFilterPrompt)
-	filterLine := prompt + p.auditInput.View()
+	searchSuffix := ""
+	if p.filteringAudit {
+		searchSuffix = "  " + p.theme.MutedText.Render("(Enter apply, Esc cancel)")
+	} else if p.appliedAction != "" {
+		searchSuffix = "  " + p.theme.MutedText.Render("(active; [c] clear)")
+	}
+	filterLine := prompt + p.auditInput.View() + searchSuffix
 	if lipgloss.Width(filterLine) > width {
-		filterLine = prompt + ui.TruncateWidth(p.auditInput.View(), max(width-lipgloss.Width(prompt), 1))
+		avail := max(width-lipgloss.Width(prompt)-lipgloss.Width(searchSuffix), 1)
+		filterLine = prompt + ui.TruncateWidth(p.auditInput.View(), avail) + searchSuffix
+		if lipgloss.Width(filterLine) > width {
+			filterLine = ui.TruncateWidth(filterLine, max(width, 1))
+		}
 	}
 
 	split := width >= 88
@@ -597,9 +629,13 @@ func (p *OpsAuditPanel) renderAuditView(width, height int) string {
 		))
 		for i := start; i < end; i++ {
 			e := p.auditEntries[i]
+			actorCol := e.ActorName
+			if actorCol == "" {
+				actorCol = e.ActorUserID
+			}
 			row := ui.PadRightWidth(e.CreatedAt.Local().Format("15:04:05"), 9) + " " +
 				ui.PadRightWidth(e.Action, actW) + " " +
-				ui.PadRightWidth(e.ActorName, 11) + " " +
+				ui.PadRightWidth(actorCol, 11) + " " +
 				ui.PadRightWidth(e.Status, 5)
 			st := p.theme.TableRow
 			if i == p.auditIdx {
@@ -628,7 +664,7 @@ func (p *OpsAuditPanel) renderSessionsView(width, height int) string {
 	innerW := max(cardW-4, 24)
 	lines := []string{
 		p.theme.CardTitle.Render(fmt.Sprintf("Operator Sessions (%d)", len(p.sessions))),
-		p.theme.MutedText.Render("[x] Revoke selected session  [r] Refresh"),
+		p.theme.MutedText.Render("[x/del] Revoke selected session  [r] Refresh"),
 	}
 	if p.sessionsErr != "" {
 		lines = append(lines, p.theme.BadgeErr.Render("Error: "+p.sessionsErr))
@@ -659,8 +695,13 @@ func (p *OpsAuditPanel) renderSessionsView(width, height int) string {
 			if s.Current {
 				cur = "*"
 			}
+			userDisp := "@" + s.Username
+			if s.DisplayName != "" && s.DisplayName != s.Username {
+				userDisp = s.DisplayName + " (@" + s.Username + ")"
+			}
+			userCol := ui.FormatIDWithName(userDisp, s.UserID)
 			line := ui.PadRightWidth(cur, 3) + " " +
-				ui.PadRightWidth("@"+s.Username, userW) + " " +
+				ui.PadRightWidth(userCol, userW) + " " +
 				ui.PadRightWidth(s.Role, 13) + " " +
 				ui.PadRightWidth(s.LastUsedAt.Local().Format("01-02 15:04"), 12) + " " +
 				ui.PadRightWidth(s.ExpiresAt.Local().Format("01-02 15:04"), 12)
@@ -696,9 +737,9 @@ func (p *OpsAuditPanel) rebuildAuditDetail() {
 	p.auditVP.SetContent(ui.WrapViewportText(strings.Join([]string{
 		kv("ID", e.ID),
 		kv("Time", e.CreatedAt.Local().Format("2006-01-02 15:04:05")),
-		kv("Actor", fmt.Sprintf("%s (%s / %s)", e.ActorName, e.ActorRole, e.ActorUserID)),
+		kv("Actor", fmt.Sprintf("%s (%s)", ui.FormatIDWithName(e.ActorName, e.ActorUserID), e.ActorRole)),
 		kv("Action", e.Action),
-		kv("Resource", fmt.Sprintf("%s %s", e.ResourceType, e.ResourceID)),
+		kv("Resource", strings.TrimSpace(e.ResourceType+" "+ui.FormatIDWithName(e.ResourceName, e.ResourceID))),
 		kv("Status", e.Status),
 		kv("Remote", e.RemoteAddr),
 		kv("Summary", e.Summary),

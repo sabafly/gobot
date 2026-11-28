@@ -94,15 +94,15 @@ func (s *reportsState) rebuildDetail(theme ui.Theme) {
 		kvLine(theme, "Report ID", rep.ID),
 		kvLine(theme, "Status", rep.Status),
 		kvLine(theme, "Scope", rep.Scope),
-		kvLine(theme, "Guild ID", rep.GuildID),
-		kvLine(theme, "Board ID", rep.BoardID),
-		kvLine(theme, "Thread ID", rep.ThreadID),
+		kvLine(theme, "Guild", ui.FormatIDWithName(rep.GuildName, rep.GuildID)),
+		kvLine(theme, "Board", ui.FormatIDWithName(rep.BoardName, rep.BoardID)),
+		kvLine(theme, "Thread", ui.FormatIDWithName(rep.ThreadTitle, rep.ThreadID)),
 		kvLine(theme, "Post ID", rep.PostID),
-		kvLine(theme, "Reporter ID", rep.ReporterUserID),
+		kvLine(theme, "Reporter", ui.FormatIDWithName(rep.ReporterName, rep.ReporterUserID)),
 		kvLine(theme, "Created", rep.CreatedAt.Local().Format("2006-01-02 15:04:05")),
 	}
 	if rep.HandledBy != nil {
-		lines = append(lines, kvLine(theme, "Handled By", *rep.HandledBy))
+		lines = append(lines, kvLine(theme, "Handled By", ui.FormatIDWithName(rep.HandledByName, *rep.HandledBy)))
 	}
 	if rep.ResolutionNote != "" {
 		lines = append(lines, kvLine(theme, "Resolution", rep.ResolutionNote))
@@ -115,13 +115,13 @@ func (s *reportsState) rebuildDetail(theme ui.Theme) {
 		ins := s.inspect
 		lines = append(lines, "", theme.CardTitle.Render("Operator Inspection (Audited)"))
 		if ins.AuthorUserID != "" {
-			lines = append(lines, kvLine(theme, "Author UID", ins.AuthorUserID))
+			lines = append(lines, kvLine(theme, "Author", ui.FormatIDWithName(ins.AuthorUserName, ins.AuthorUserID)))
 		}
 		if ins.PosterHash != "" {
 			lines = append(lines, kvLine(theme, "Poster Hash", ins.PosterHash))
 		}
 		if ins.PostGuildID != "" {
-			lines = append(lines, kvLine(theme, "Origin Guild", ins.PostGuildID))
+			lines = append(lines, kvLine(theme, "Origin Guild", ui.FormatIDWithName(ins.PostGuildName, ins.PostGuildID)))
 		}
 		if ins.Post != nil {
 			p := ins.Post
@@ -203,6 +203,18 @@ func (p *Panel) updateReports(msg tea.Msg, ctx ui.PanelContext) tea.Cmd {
 			p.reports.selectedID = p.reports.items[p.reports.selectedIdx].ID
 			p.reports.rebuildDetail(p.theme)
 		}
+	case "g", "home":
+		if len(p.reports.items) > 0 && p.reports.selectedIdx != 0 {
+			p.reports.selectedIdx = 0
+			p.reports.selectedID = p.reports.items[0].ID
+			p.reports.rebuildDetail(p.theme)
+		}
+	case "G", "end":
+		if len(p.reports.items) > 0 && p.reports.selectedIdx != len(p.reports.items)-1 {
+			p.reports.selectedIdx = len(p.reports.items) - 1
+			p.reports.selectedID = p.reports.items[p.reports.selectedIdx].ID
+			p.reports.rebuildDetail(p.theme)
+		}
 	case "J", "pgdown":
 		p.reports.detailVP.PageDown()
 	case "K", "pgup":
@@ -217,7 +229,7 @@ func (p *Panel) updateReports(msg tea.Msg, ctx ui.PanelContext) tea.Cmd {
 		return p.fetchReportsCmd(ctx.Client)
 	case "r":
 		p.reports.loading = true
-		return p.fetchReportsCmd(ctx.Client)
+		return tea.Batch(p.fetchStatsCmd(ctx.Client), p.fetchReportsCmd(ctx.Client))
 	case "i":
 		if !ctx.HasPerm(admin.PermBBSModerate) {
 			return ui.ShowToastCmd(ui.ToastWarn, "Requires bbs.moderate permission")
@@ -232,9 +244,9 @@ func (p *Panel) updateReports(msg tea.Msg, ctx ui.PanelContext) tea.Cmd {
 			return ui.ShowToastCmd(ui.ToastWarn, "Requires bbs.moderate permission")
 		}
 		if rep, ok := p.reports.selected(); ok {
-			return p.formModal.Open("report.resolve", "Resolve Report", "Report "+shortID(rep.ID), []FormField{
-				{Key: "status", Label: "Status", Kind: FieldCycle, Options: []string{"resolved", "dismissed"}, Value: "resolved"},
-				{Key: "note", Label: "Resolution Note", Kind: FieldText, Placeholder: "Action taken / note", CharLimit: 240},
+			return p.openForm("report.resolve", "Resolve Report", "Report "+shortID(rep.ID), []ui.FormField{
+				{Key: "status", Label: "Status", Kind: ui.FieldCycle, Options: []string{"resolved", "dismissed"}, Value: "resolved"},
+				{Key: "note", Label: "Resolution Note", Kind: ui.FieldText, Placeholder: "Action taken / note", CharLimit: 240},
 			}, rep.ID)
 		}
 	case "d":
@@ -242,8 +254,8 @@ func (p *Panel) updateReports(msg tea.Msg, ctx ui.PanelContext) tea.Cmd {
 			return ui.ShowToastCmd(ui.ToastWarn, "Requires bbs.moderate permission")
 		}
 		if rep, ok := p.reports.selected(); ok {
-			return p.formModal.Open("report.dismiss", "Dismiss Report", "Report "+shortID(rep.ID), []FormField{
-				{Key: "note", Label: "Resolution Note", Kind: FieldText, Placeholder: "Dismissal reason", CharLimit: 240},
+			return p.openForm("report.dismiss", "Dismiss Report", "Report "+shortID(rep.ID), []ui.FormField{
+				{Key: "note", Label: "Resolution Note", Kind: ui.FieldText, Placeholder: "Dismissal reason", CharLimit: 240},
 			}, rep.ID)
 		}
 	case "a":
@@ -251,8 +263,8 @@ func (p *Panel) updateReports(msg tea.Msg, ctx ui.PanelContext) tea.Cmd {
 			return ui.ShowToastCmd(ui.ToastWarn, "Requires bbs.moderate permission")
 		}
 		if rep, ok := p.reports.selected(); ok {
-			return p.formModal.Open("report.abone", "Abone Reported Post", "Post "+shortID(rep.PostID), []FormField{
-				{Key: "reason", Label: "Abone Reason", Kind: FieldText, Value: "モデレーター対応", CharLimit: 120},
+			return p.openForm("report.abone", "Abone Reported Post", "Post "+shortID(rep.PostID), []ui.FormField{
+				{Key: "reason", Label: "Abone Reason", Kind: ui.FieldText, Value: "モデレーター対応", CharLimit: 120},
 			}, rep.PostID)
 		}
 	case "b":
@@ -260,12 +272,12 @@ func (p *Panel) updateReports(msg tea.Msg, ctx ui.PanelContext) tea.Cmd {
 			return ui.ShowToastCmd(ui.ToastWarn, "Requires bbs.moderate permission")
 		}
 		if rep, ok := p.reports.selected(); ok {
-			return p.formModal.Open("report.ban", "Ban Reported Poster", "Post "+shortID(rep.PostID), []FormField{
-				{Key: "scope", Label: "Scope", Kind: FieldCycle, Options: []string{"local", "global"}, Value: rep.Scope},
-				{Key: "guild_id", Label: "Guild ID", Kind: FieldText, Value: rep.GuildID, CharLimit: 32},
-				{Key: "post_id", Label: "Post ID", Kind: FieldText, Value: rep.PostID, ReadOnly: true},
-				{Key: "duration_hours", Label: "Hours (0=perm)", Kind: FieldText, Value: "24", CharLimit: 8},
-				{Key: "reason", Label: "Reason", Kind: FieldText, Value: rep.Reason, CharLimit: 200},
+			return p.openForm("report.ban", "Ban Reported Poster", "Post "+shortID(rep.PostID), []ui.FormField{
+				{Key: "scope", Label: "Scope", Kind: ui.FieldCycle, Options: []string{"local", "global"}, Value: rep.Scope},
+				{Key: "guild_id", Label: "Guild ID", Kind: ui.FieldText, Value: rep.GuildID, CharLimit: 32},
+				{Key: "post_id", Label: "Post ID", Kind: ui.FieldText, Value: rep.PostID, ReadOnly: true},
+				{Key: "duration_hours", Label: "Hours (0=perm)", Kind: ui.FieldText, Value: "24", CharLimit: 8},
+				{Key: "reason", Label: "Reason", Kind: ui.FieldText, Value: rep.Reason, CharLimit: 200},
 			}, nil)
 		}
 	}

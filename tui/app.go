@@ -560,7 +560,9 @@ func (a *App) logoutCmd() tea.Cmd {
 
 func (a *App) renderHeader(width int) string {
 	userStr := "@" + a.principal.Username
-	if a.principal.Username == "" {
+	if a.principal.DisplayName != "" && a.principal.DisplayName != a.principal.Username {
+		userStr = fmt.Sprintf("%s (@%s)", a.principal.DisplayName, a.principal.Username)
+	} else if a.principal.Username == "" {
 		userStr = a.principal.UserID
 	}
 	left := fmt.Sprintf("gobot admin  |  %s  |  %s [%s]", a.baseURL, userStr, a.principal.Role)
@@ -667,7 +669,7 @@ func (a *App) renderHelpOverlay(width, height int) string {
 	}
 	lines = append(lines, "", a.theme.MutedText.Render("User Permissions: "+joinPerms(a.principal.Permissions)))
 	box := a.theme.HelpBox.Width(boxW).Render(strings.Join(lines, "\n"))
-	return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, box)
+	return ui.ClampBox(lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, box), width, height)
 }
 
 func joinPerms(perms []admin.Permission) string {

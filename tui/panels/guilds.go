@@ -118,6 +118,7 @@ func (p *GuildsPanel) Cursor() *tea.Cursor {
 func (p *GuildsPanel) ShortHelp(ctx ui.PanelContext) []key.Binding {
 	bindings := []key.Binding{
 		key.NewBinding(key.WithKeys("j", "k"), key.WithHelp("j/k", "select")),
+		key.NewBinding(key.WithKeys("J", "K"), key.WithHelp("J/K", "scroll")),
 		key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "search")),
 		key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "refresh")),
 	}
@@ -292,6 +293,26 @@ func (p *GuildsPanel) Update(msg tea.Msg, ctx ui.PanelContext) (ui.Panel, tea.Cm
 				p.rebuildDetail()
 				return p, p.fetchGuildDetailCmd(ctx.Client, p.selectedID)
 			}
+		case "g", "home":
+			if len(p.guilds) > 0 && p.selectedIdx != 0 {
+				p.selectedIdx = 0
+				p.selectedID = p.guilds[0].ID
+				p.loadingDetail = true
+				p.rebuildDetail()
+				return p, p.fetchGuildDetailCmd(ctx.Client, p.selectedID)
+			}
+		case "G", "end":
+			if len(p.guilds) > 0 && p.selectedIdx != len(p.guilds)-1 {
+				p.selectedIdx = len(p.guilds) - 1
+				p.selectedID = p.guilds[p.selectedIdx].ID
+				p.loadingDetail = true
+				p.rebuildDetail()
+				return p, p.fetchGuildDetailCmd(ctx.Client, p.selectedID)
+			}
+		case "J", "pgdown":
+			p.detailVP.PageDown()
+		case "K", "pgup":
+			p.detailVP.PageUp()
 		case "l":
 			g, ok := p.selectedGuild()
 			if !ok {
@@ -361,7 +382,7 @@ func (p *GuildsPanel) View(width, height int) string {
 	if p.width != width || p.height != height {
 		p.width = width
 		p.height = height
-		p.searchInput.SetWidth(max(width-lipgloss.Width(guildsSearchPrompt)-24, 16))
+		ui.SetInputWidth(&p.searchInput, max(width-lipgloss.Width(guildsSearchPrompt)-28, 16))
 		p.detailVP.SetWidth(max(detailW-4, 20))
 		p.detailVP.SetHeight(max(detailInnerH-1, 1))
 		p.rebuildDetail()
@@ -383,9 +404,19 @@ func (p *GuildsPanel) View(width, height int) string {
 	header := ui.TruncateWidth(p.theme.CardTitle.Render("Guilds")+"  "+status, width)
 
 	prompt := p.theme.InputPrompt.Render(guildsSearchPrompt)
-	filterLine := prompt + p.searchInput.View()
+	searchSuffix := ""
+	if p.searching {
+		searchSuffix = "  " + p.theme.MutedText.Render("(Enter apply, Esc cancel)")
+	} else if p.appliedQuery != "" {
+		searchSuffix = "  " + p.theme.MutedText.Render("(active; [c] clear)")
+	}
+	filterLine := prompt + p.searchInput.View() + searchSuffix
 	if lipgloss.Width(filterLine) > width {
-		filterLine = prompt + ui.TruncateWidth(p.searchInput.View(), max(width-lipgloss.Width(prompt), 1))
+		avail := max(width-lipgloss.Width(prompt)-lipgloss.Width(searchSuffix), 1)
+		filterLine = prompt + ui.TruncateWidth(p.searchInput.View(), avail) + searchSuffix
+		if lipgloss.Width(filterLine) > width {
+			filterLine = ui.TruncateWidth(filterLine, max(width, 1))
+		}
 	}
 
 	listView := p.renderGuildList(listW, listInnerH)
@@ -491,9 +522,13 @@ func (p *GuildsPanel) rebuildDetail() {
 	if d.BBSForumDefault != nil {
 		forumDef = fmt.Sprintf("%v", *d.BBSForumDefault)
 	}
-	modLog := d.BBSModLogChannel
-	if modLog == "" {
-		modLog = "-"
+	modLog := "-"
+	if d.BBSModLogChannel != "" {
+		chName := strings.TrimSpace(d.BBSModLogChannelName)
+		if chName != "" && !strings.HasPrefix(chName, "#") {
+			chName = "#" + chName
+		}
+		modLog = ui.FormatIDWithName(chName, d.BBSModLogChannel)
 	}
 	lines := []string{
 		kv("Guild ID", g.ID),
@@ -508,7 +543,7 @@ func (p *GuildsPanel) rebuildDetail() {
 		kv("Forum Default", forumDef),
 		kv("Mod Log Ch", modLog),
 		"",
-		p.theme.MutedText.Render("Shortcuts: [l] set locale override  [b] toggle BBS"),
+		p.theme.MutedText.Render("Shortcuts: [l] set locale override  [b] toggle BBS  [J/K] scroll"),
 	}
 	p.detailVP.SetContent(ui.WrapViewportText(strings.Join(lines, "\n"), wrapW))
 }
