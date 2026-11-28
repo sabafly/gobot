@@ -45,6 +45,9 @@ func Models() []any {
 		&BBSSystemSecret{},
 		&BBSAdminCap{},
 		&BBSSlipEvent{},
+		&BBSFederationGrant{},
+		&BBSFederationRefreshToken{},
+		&BBSFederationUserToken{},
 	}
 }
 
@@ -122,7 +125,7 @@ func (BBSBoard) TableName() string { return "bbs_boards" }
 type BBSBoardMount struct {
 	ID               uuid.UUID     `gorm:"type:varchar(36);primaryKey"`
 	BoardID          uuid.UUID     `gorm:"type:varchar(36);not null;index"`
-	Board            BBSBoard      `gorm:"foreignKey:BoardID;constraint:OnDelete:CASCADE;"`
+	ProviderKey      string        `gorm:"type:varchar(64);not null;default:'native';index"`
 	GuildID          snowflake.ID  `gorm:"not null;index"`
 	ChannelID        snowflake.ID  `gorm:"not null;uniqueIndex"`
 	Locale           string        `gorm:"type:varchar(16);not null;default:'ja'"`
@@ -164,13 +167,13 @@ func (BBSThread) TableName() string { return "bbs_threads" }
 type BBSThreadMirror struct {
 	ID               uuid.UUID     `gorm:"type:varchar(36);primaryKey"`
 	ThreadID         uuid.UUID     `gorm:"type:varchar(36);not null;index"`
-	Thread           BBSThread     `gorm:"foreignKey:ThreadID;constraint:OnDelete:CASCADE;"`
 	BoardMountID     uuid.UUID     `gorm:"type:varchar(36);not null;index"`
 	BoardMount       BBSBoardMount `gorm:"foreignKey:BoardMountID;constraint:OnDelete:CASCADE;"`
 	GuildID          snowflake.ID  `gorm:"not null;index"`
 	DiscordThreadID  snowflake.ID  `gorm:"not null;uniqueIndex"`
 	ControlMessageID *snowflake.ID `gorm:""`
 	SyncedUpToRes    uint32        `gorm:"not null;default:0"`
+	ArchivedSynced   bool          `gorm:"not null;default:false"`
 	CreatedAt        time.Time     `gorm:"not null"`
 }
 
@@ -200,10 +203,11 @@ func (BBSPost) TableName() string { return "bbs_posts" }
 type BBSPostMirror struct {
 	ID               uuid.UUID       `gorm:"type:varchar(36);primaryKey"`
 	PostID           uuid.UUID       `gorm:"type:varchar(36);not null;index"`
-	Post             BBSPost         `gorm:"foreignKey:PostID;constraint:OnDelete:CASCADE;"`
+	ThreadID         uuid.UUID       `gorm:"type:varchar(36);not null;default:'';index:idx_bbs_post_mirror_thread_res_guild,priority:1"`
+	ResNumber        uint32          `gorm:"not null;default:0;index:idx_bbs_post_mirror_thread_res_guild,priority:2"`
 	ThreadMirrorID   uuid.UUID       `gorm:"type:varchar(36);not null;index"`
 	ThreadMirror     BBSThreadMirror `gorm:"foreignKey:ThreadMirrorID;constraint:OnDelete:CASCADE;"`
-	GuildID          snowflake.ID    `gorm:"not null;index"`
+	GuildID          snowflake.ID    `gorm:"not null;index;index:idx_bbs_post_mirror_thread_res_guild,priority:3"`
 	DiscordMessageID snowflake.ID    `gorm:"not null;uniqueIndex"`
 	CreatedAt        time.Time       `gorm:"not null"`
 }
@@ -212,7 +216,6 @@ func (BBSPostMirror) TableName() string { return "bbs_post_mirrors" }
 
 type BBSPostReference struct {
 	ThreadID uuid.UUID `gorm:"type:varchar(36);primaryKey"`
-	Thread   BBSThread `gorm:"foreignKey:ThreadID;constraint:OnDelete:CASCADE;"`
 	FromRes  uint32    `gorm:"primaryKey;autoIncrement:false"`
 	ToRes    uint32    `gorm:"primaryKey;autoIncrement:false;index"`
 }
@@ -222,7 +225,6 @@ func (BBSPostReference) TableName() string { return "bbs_post_references" }
 type BBSThreadWatch struct {
 	ID        uuid.UUID    `gorm:"type:varchar(36);primaryKey"`
 	ThreadID  uuid.UUID    `gorm:"type:varchar(36);not null;uniqueIndex:idx_bbs_watch_thread_user"`
-	Thread    BBSThread    `gorm:"foreignKey:ThreadID;constraint:OnDelete:CASCADE;"`
 	UserID    snowflake.ID `gorm:"not null;uniqueIndex:idx_bbs_watch_thread_user"`
 	Locale    string       `gorm:"type:varchar(16);not null;default:'ja'"`
 	CreatedAt time.Time    `gorm:"not null"`
@@ -249,7 +251,6 @@ type BBSReport struct {
 	Scope          string        `gorm:"type:varchar(16);not null;index"`
 	GuildID        snowflake.ID  `gorm:"not null;index"`
 	PostID         uuid.UUID     `gorm:"type:varchar(36);not null;index"`
-	Post           BBSPost       `gorm:"foreignKey:PostID;constraint:OnDelete:CASCADE;"`
 	ThreadID       uuid.UUID     `gorm:"type:varchar(36);not null;index"`
 	BoardID        uuid.UUID     `gorm:"type:varchar(36);not null;index"`
 	ReporterUserID snowflake.ID  `gorm:"not null"`
@@ -289,3 +290,50 @@ type BBSSlipEvent struct {
 }
 
 func (BBSSlipEvent) TableName() string { return "bbs_slip_events" }
+
+type BBSFederationGrant struct {
+	ID              uuid.UUID    `gorm:"type:varchar(36);primaryKey"`
+	FamilyID        uuid.UUID    `gorm:"type:varchar(36);not null;index"`
+	PeerID          string       `gorm:"type:varchar(64);not null;index"`
+	UserID          snowflake.ID `gorm:"not null;index"`
+	Scopes          string       `gorm:"type:varchar(255);not null;default:''"`
+	PolicyVersion   string       `gorm:"type:varchar(64);not null"`
+	AccessTokenHash string       `gorm:"type:varchar(64);not null;uniqueIndex"`
+	AccessExpiresAt time.Time    `gorm:"not null"`
+	RevokedAt       *time.Time   `gorm:""`
+	CreatedAt       time.Time    `gorm:"not null"`
+	UpdatedAt       time.Time    `gorm:"not null"`
+}
+
+func (BBSFederationGrant) TableName() string { return "bbs_federation_grants" }
+
+type BBSFederationRefreshToken struct {
+	ID        uuid.UUID    `gorm:"type:varchar(36);primaryKey"`
+	GrantID   uuid.UUID    `gorm:"type:varchar(36);not null;index"`
+	FamilyID  uuid.UUID    `gorm:"type:varchar(36);not null;index"`
+	PeerID    string       `gorm:"type:varchar(64);not null;index"`
+	UserID    snowflake.ID `gorm:"not null;index"`
+	TokenHash string       `gorm:"type:varchar(64);not null;uniqueIndex"`
+	UsedAt    *time.Time   `gorm:""`
+	RevokedAt *time.Time   `gorm:""`
+	ExpiresAt time.Time    `gorm:"not null"`
+	CreatedAt time.Time    `gorm:"not null"`
+}
+
+func (BBSFederationRefreshToken) TableName() string { return "bbs_federation_refresh_tokens" }
+
+type BBSFederationUserToken struct {
+	ID               uuid.UUID    `gorm:"type:varchar(36);primaryKey"`
+	RemoteKey        string       `gorm:"type:varchar(64);not null;uniqueIndex:idx_bbs_fed_user_tok_remote_user"`
+	UserID           snowflake.ID `gorm:"not null;uniqueIndex:idx_bbs_fed_user_tok_remote_user"`
+	AccessTokenEnc   string       `gorm:"type:text;not null"`
+	AccessExpiresAt  time.Time    `gorm:"not null"`
+	RefreshTokenEnc  string       `gorm:"type:text;not null"`
+	RefreshExpiresAt time.Time    `gorm:"not null"`
+	Scopes           string       `gorm:"type:varchar(255);not null;default:''"`
+	PolicyVersion    string       `gorm:"type:varchar(64);not null"`
+	CreatedAt        time.Time    `gorm:"not null"`
+	UpdatedAt        time.Time    `gorm:"not null"`
+}
+
+func (BBSFederationUserToken) TableName() string { return "bbs_federation_user_tokens" }

@@ -22,6 +22,7 @@ package bbs
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -83,6 +84,21 @@ type Provider interface {
 	PostProvider
 }
 
+// FederatedProvider is optionally implemented by cross-instance remote BBS providers.
+type FederatedProvider interface {
+	Provider
+	RemoteKey() string
+	DisplayLabel() string
+	CanReport() bool
+	CanUseCaps() bool
+	HasUserDelegation(ctx context.Context, userID snowflake.ID) (bool, error)
+	RevokeUserDelegation(ctx context.Context, userID snowflake.ID) error
+	CreateRemoteThread(ctx context.Context, input CreateThreadInput) (*Board, *Thread, *Post, error)
+	CreateRemotePost(ctx context.Context, input CreatePostInput) (*Board, *Thread, *Post, []uint32, error)
+	CreateRemoteReport(ctx context.Context, guildID, reporterID snowflake.ID, postID uuid.UUID, reason string) (*Report, error)
+	ListRemoteAvailableCaps(ctx context.Context, userID snowflake.ID, boardID uuid.UUID) ([]Cap, error)
+}
+
 // ProviderRegistry resolves backend providers by key (e.g., "native" or 3rd-party adapters).
 type ProviderRegistry struct {
 	mu         sync.RWMutex
@@ -99,6 +115,11 @@ func NewProviderRegistry(defaultKey string) *ProviderRegistry {
 		providers:  make(map[string]Provider),
 		defaultKey: defaultKey,
 	}
+}
+
+// DefaultKey returns the configured default provider key.
+func (r *ProviderRegistry) DefaultKey() string {
+	return r.defaultKey
 }
 
 // Register adds or replaces a provider implementation.
@@ -131,7 +152,7 @@ func (r *ProviderRegistry) Default() Provider {
 	return p
 }
 
-// All returns all registered providers with the default provider placed first.
+// All returns all registered providers deterministically, with the default provider placed first.
 func (r *ProviderRegistry) All() []Provider {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
@@ -139,16 +160,21 @@ func (r *ProviderRegistry) All() []Provider {
 	if def, ok := r.providers[r.defaultKey]; ok {
 		out = append(out, def)
 	}
-	for k, p := range r.providers {
+	otherKeys := make([]string, 0, len(r.providers))
+	for k := range r.providers {
 		if k == r.defaultKey {
 			continue
 		}
-		out = append(out, p)
+		otherKeys = append(otherKeys, k)
+	}
+	slices.Sort(otherKeys)
+	for _, k := range otherKeys {
+		out = append(out, r.providers[k])
 	}
 	return out
 }
 
-// Store persists Discord mounts, mirrors, opt-in state, consents, references, watches, bans, and reports.
+// Store persists Discord mounts, mirrors, opt-in state, consents, references, watches, bans, reports, and federation tokens.
 type Store interface {
 	// Guild configuration
 	GetGuildConfig(ctx context.Context, guildID snowflake.ID) (*GuildConfig, error)
@@ -177,9 +203,11 @@ type Store interface {
 	GetThreadMirrorByDiscordThread(ctx context.Context, discordThreadID snowflake.ID) (*ThreadMirror, error)
 	GetThreadMirrorByMountAndThread(ctx context.Context, mountID, threadID uuid.UUID) (*ThreadMirror, error)
 	ListThreadMirrorsByThread(ctx context.Context, threadID uuid.UUID) ([]ThreadMirror, error)
+	ListThreadMirrorsByMount(ctx context.Context, mountID uuid.UUID) ([]ThreadMirror, error)
 	UpdateThreadMirror(ctx context.Context, mirror *ThreadMirror) error
 	AdvanceThreadMirrorSync(ctx context.Context, id uuid.UUID, syncedUpTo uint32) error
 	UpdateThreadMirrorControl(ctx context.Context, id uuid.UUID, controlMsgID *snowflake.ID) error
+	MarkThreadMirrorArchivedSynced(ctx context.Context, id uuid.UUID) (bool, error)
 	DeleteThreadMirror(ctx context.Context, id uuid.UUID) error
 
 	// Post mirrors
@@ -233,4 +261,21 @@ type Store interface {
 	UpsertSlipEvent(ctx context.Context, def SlipEventDefinition) error
 	DeleteSlipEvent(ctx context.Context, id string) error
 	SeedSlipEventsIfEmpty(ctx context.Context, defs []SlipEventDefinition) ([]SlipEventDefinition, error)
+
+	// Federation Origin OAuth grants & refresh tokens
+	CreateFederationGrantWithRefresh(ctx context.Context, grant *FederationGrant, refresh *FederationRefreshToken) error
+	GetFederationGrantByAccessHash(ctx context.Context, accessTokenHash string) (*FederationGrant, error)
+	GetFederationGrant(ctx context.Context, id uuid.UUID) (*FederationGrant, error)
+	ListActiveFederationGrantsByUser(ctx context.Context, userID snowflake.ID, now time.Time) ([]FederationGrant, error)
+	RotateFederationRefreshToken(ctx context.Context, peerID, oldRefreshHash, newAccessHash string, newAccessExp time.Time, newRefresh *FederationRefreshToken, now time.Time) (grant *FederationGrant, reused bool, err error)
+	RevokeFederationGrant(ctx context.Context, grantID uuid.UUID, userID snowflake.ID, now time.Time) error
+	RevokeFederationGrantsByPeerAndUser(ctx context.Context, peerID string, userID snowflake.ID, now time.Time) error
+	RevokeAllFederationGrantsByUser(ctx context.Context, userID snowflake.ID, now time.Time) error
+
+	// Federation Listener encrypted user tokens
+	GetFederationUserToken(ctx context.Context, remoteKey string, userID snowflake.ID) (*FederationUserToken, error)
+	ListFederationUserTokensByUser(ctx context.Context, userID snowflake.ID) ([]FederationUserToken, error)
+	UpsertFederationUserToken(ctx context.Context, tok *FederationUserToken) error
+	DeleteFederationUserToken(ctx context.Context, remoteKey string, userID snowflake.ID) error
+	DeleteAllFederationUserTokensByUser(ctx context.Context, userID snowflake.ID) error
 }

@@ -140,6 +140,13 @@ func (s *System) handlePostMenuButton(e *handler.ComponentEvent) error {
 			}
 		}
 	}
+	var hideReport bool
+	if p, pErr := s.Service.Registry.Get(board.ProviderKey); pErr == nil && p != nil {
+		canReply = canReply && p.Capabilities().CanCreatePost
+		if fp, ok := p.(bbscore.FederatedProvider); ok && !fp.CanReport() {
+			hideReport = true
+		}
+	}
 
 	isAdmin := s.hasGuildAdmin(e.Ctx, e.Member(), guildID, e.User(), e.Client())
 	canLocalMod := isAdmin && board.Scope == bbscore.ScopeLocal && board.GuildID != nil && *board.GuildID == *guildID
@@ -150,6 +157,7 @@ func (s *System) handlePostMenuButton(e *handler.ComponentEvent) error {
 		Thread:            *thread,
 		Post:              *post,
 		CanReply:          canReply,
+		HideReport:        hideReport,
 		CanLocalMod:       canLocalMod,
 		ShowGlobalModNote: showGlobalModNote,
 	}, loc)
@@ -178,7 +186,8 @@ func (s *System) handleReportPostButton(e *handler.ComponentEvent) error {
 		return nil
 	}
 
-	if _, _, _, _, err := s.loadPostForGuild(e.Ctx, *guildID, postID); err != nil {
+	board, _, _, _, err := s.loadPostForGuild(e.Ctx, *guildID, postID)
+	if err != nil {
 		errTitle := i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed")
 		if errors.Is(err, bbscore.ErrUnauthorized) {
 			errTitle = i18n.TranslateText(loc, "components.bbs.errors.title.permission")
@@ -196,6 +205,18 @@ func (s *System) handleReportPostButton(e *handler.ComponentEvent) error {
 			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
 			describeBBSError(loc, err),
 		)
+		return nil
+	}
+	if p, pErr := s.Service.Registry.Get(board.ProviderKey); pErr == nil {
+		if fp, ok := p.(bbscore.FederatedProvider); ok && !fp.CanReport() {
+			s.replyComponentError(e,
+				i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+				describeBBSError(loc, bbscore.ErrFederationReadOnly),
+			)
+			return nil
+		}
+	}
+	if !s.ensureRemoteDelegation(e, *board, fmt.Sprintf("/bbs/report/post/%s", postID)) {
 		return nil
 	}
 
@@ -232,6 +253,28 @@ func (s *System) handleReportThreadButton(e *handler.ComponentEvent) error {
 		)
 		return nil
 	}
+	if th, tErr := s.Service.GetThread(e.Ctx, threadID); tErr == nil && th != nil {
+		if b, bErr := s.Service.GetBoard(e.Ctx, th.BoardID); bErr == nil && b != nil {
+			if p, pErr := s.Service.Registry.Get(b.ProviderKey); pErr == nil {
+				if fp, ok := p.(bbscore.FederatedProvider); ok && !fp.CanReport() {
+					s.replyComponentError(e,
+						i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+						describeBBSError(loc, bbscore.ErrFederationReadOnly),
+					)
+					return nil
+				}
+			}
+			if !s.ensureRemoteDelegation(e, *b, fmt.Sprintf("/bbs/report/thread/%s", threadID)) {
+				return nil
+			}
+		}
+	} else if tErr != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.fetch_failed"),
+			describeBBSError(loc, tErr),
+		)
+		return nil
+	}
 	modal := buildReportThreadModal(loc, threadID)
 	sr := discordsync.NewSafeResponder(e.ID().Time())
 	if err := sr.RespondModal(e, modal); err != nil {
@@ -259,6 +302,14 @@ func (s *System) handleReportPostModal(e *handler.ModalEvent) error {
 	}
 	report, err := s.Service.CreateReport(e.Ctx, *guildID, e.User().ID, postID, e.Data.Text("reason"))
 	if err != nil {
+		if errors.Is(err, bbscore.ErrFederationAuthRequired) {
+			if p, pErr := s.Service.GetPost(e.Ctx, postID); pErr == nil && p != nil {
+				if th, tErr := s.Service.GetThread(e.Ctx, p.ThreadID); tErr == nil && th != nil {
+					s.respondFederationAuthPrompt(e, e.ID().Time(), loc, th.ProviderKey, e.User().ID, e.ApplicationID(), e.Token(), fmt.Sprintf("/bbs/report/post/%s", postID))
+					return nil
+				}
+			}
+		}
 		s.replyModalError(e,
 			i18n.TranslateText(loc, "components.bbs.report.failed"),
 			describeBBSError(loc, err),
@@ -297,6 +348,12 @@ func (s *System) handleReportThreadModal(e *handler.ModalEvent) error {
 	}
 	report, err := s.Service.CreateReport(e.Ctx, *guildID, e.User().ID, posts[0].ID, e.Data.Text("reason"))
 	if err != nil {
+		if errors.Is(err, bbscore.ErrFederationAuthRequired) {
+			if th, tErr := s.Service.GetThread(e.Ctx, threadID); tErr == nil && th != nil {
+				s.respondFederationAuthPrompt(e, e.ID().Time(), loc, th.ProviderKey, e.User().ID, e.ApplicationID(), e.Token(), fmt.Sprintf("/bbs/report/thread/%s", threadID))
+				return nil
+			}
+		}
 		s.replyModalError(e, reportFail, describeBBSError(loc, err))
 		return nil
 	}

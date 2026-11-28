@@ -379,6 +379,18 @@ func (s *Service) AbonePostByAdmin(ctx context.Context, postID uuid.UUID, reason
 	if err != nil {
 		return nil, nil, err
 	}
+	if board, bErr := s.GetBoard(ctx, thread.BoardID); bErr == nil && s.isNativeGlobalBoard(board) {
+		pCopy := *aboned
+		tCopy := *thread
+		s.emitEvent(Event{
+			Type:     EventPostAboned,
+			BoardID:  board.ID,
+			ThreadID: thread.ID,
+			PostID:   aboned.ID,
+			Thread:   &tCopy,
+			Post:     &pCopy,
+		})
+	}
 	return aboned, thread, nil
 }
 
@@ -399,6 +411,18 @@ func (s *Service) ArchiveThreadByAdmin(ctx context.Context, threadID uuid.UUID) 
 	archived, err := p.ArchiveThread(ctx, threadID)
 	if err != nil {
 		return nil, nil, err
+	}
+	if s.isNativeGlobalBoard(board) {
+		bCopy := *board
+		tCopy := *archived
+		s.emitEvent(Event{
+			Type:      EventThreadArchived,
+			BoardID:   board.ID,
+			ThreadID:  archived.ID,
+			Board:     &bCopy,
+			Thread:    &tCopy,
+			HitMaxRes: archived.ResCount >= archived.Rules.Normalize().MaxRes,
+		})
 	}
 	return board, archived, nil
 }

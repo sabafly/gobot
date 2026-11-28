@@ -112,8 +112,19 @@ func RenderError(locale discord.Locale, title string, body string) discord.Messa
 	return mc.WithEphemeral(true)
 }
 
+// BoardGuideOptions customizes board guide badges and read-only states for federated remotes.
+type BoardGuideOptions struct {
+	ProviderLabel string
+	ReadOnly      bool
+}
+
 // RenderBoardGuide creates the pinned board panel / guide post in a board channel.
 func RenderBoardGuide(board bbs.Board, mountID uuid.UUID, locale discord.Locale) discord.MessageCreate {
+	return RenderBoardGuideWithOptions(board, mountID, BoardGuideOptions{}, locale)
+}
+
+// RenderBoardGuideWithOptions creates the pinned board panel / guide post with optional federation badge and read-only state.
+func RenderBoardGuideWithOptions(board bbs.Board, mountID uuid.UUID, opts BoardGuideOptions, locale discord.Locale) discord.MessageCreate {
 	scopeKey := "components.bbs.board_guide.scope.local"
 	color := ColorLocalBoard
 	if board.Scope == bbs.ScopeGlobal {
@@ -121,6 +132,9 @@ func RenderBoardGuide(board bbs.Board, mountID uuid.UUID, locale discord.Locale)
 		color = ColorGlobalBoard
 	}
 	scopeBadge := i18n.TranslateText(locale, scopeKey)
+	if lbl := strings.TrimSpace(bbs.ClearFormat(opts.ProviderLabel)); lbl != "" {
+		scopeBadge = fmt.Sprintf("%s [%s]", scopeBadge, lbl)
+	}
 
 	idKey := "components.bbs.board_guide.id.shown"
 	if board.Rules.HideID {
@@ -156,19 +170,29 @@ func RenderBoardGuide(board bbs.Board, mountID uuid.UUID, locale discord.Locale)
 		"max_res":      rules.MaxRes,
 	})
 
-	container := discord.NewContainer(
+	newThreadBtn := discord.NewPrimaryButton(createBtnLabel, fmt.Sprintf("/bbs/thread/new/%s", mountID))
+	newThreadBtn.Disabled = opts.ReadOnly
+
+	subComps := []discord.ContainerSubComponent{
 		discord.NewTextDisplayf("## %s %s", scopeBadge, bbs.ClearFormat(board.Name)),
 		discord.NewTextDisplay(TruncateRunes(desc, 1500)),
 		discord.NewSmallSeparator(),
 		discord.NewTextDisplay(ruleLine),
+	}
+	if opts.ReadOnly {
+		subComps = append(subComps, discord.NewTextDisplay(i18n.TranslateText(locale, "components.bbs.board_guide.read_only_note")))
+	}
+	subComps = append(subComps,
 		discord.NewLargeSeparator(),
 		discord.NewActionRow(
-			discord.NewPrimaryButton(createBtnLabel, fmt.Sprintf("/bbs/thread/new/%s", mountID)),
+			newThreadBtn,
 			discord.NewSecondaryButton(listBtnLabel, fmt.Sprintf("/bbs/board/threads/%s", mountID)),
 			discord.NewSecondaryButton(policyBtnLabel, "/bbs/consent/view/terms"),
 		),
 		discord.NewTextDisplayf("-# board:%s mount:%s", board.ID, mountID),
-	).WithAccentColor(color)
+	)
+
+	container := discord.NewContainer(subComps...).WithAccentColor(color)
 
 	return discord.NewMessageCreateV2(container).WithAllowedMentions(&discord.AllowedMentions{})
 }
@@ -327,6 +351,7 @@ type PostActionMenuOptions struct {
 	Thread            bbs.Thread
 	Post              bbs.Post
 	CanReply          bool
+	HideReport        bool
 	CanLocalMod       bool
 	ShowGlobalModNote bool
 }
@@ -375,10 +400,12 @@ func RenderPostActionMenu(opts PostActionMenuOptions, locale discord.Locale) dis
 			fmt.Sprintf("/bbs/post/reply/%s", opts.Post.ID),
 		))
 	}
-	userBtns = append(userBtns, discord.NewDangerButton(
+	reportBtn := discord.NewDangerButton(
 		TruncateRunes(i18n.TranslateText(locale, "components.bbs.post_menu.btn.report"), MaxButtonLabelRunes),
 		fmt.Sprintf("/bbs/report/post/%s", opts.Post.ID),
-	))
+	)
+	reportBtn.Disabled = opts.HideReport
+	userBtns = append(userBtns, reportBtn)
 
 	subComps := []discord.ContainerSubComponent{
 		discord.NewTextDisplay(titleText),
@@ -446,28 +473,101 @@ func RenderLazyCatchupBanner(threadID uuid.UUID, omittedFrom, omittedTo uint32, 
 	).WithAllowedMentions(&discord.AllowedMentions{})
 }
 
+// ThreadControlPanelOptions configures whether reply/report buttons are enabled on the floating control panel.
+type ThreadControlPanelOptions struct {
+	CanPost   bool
+	CanReport bool
+}
+
 // RenderThreadControlPanel creates the floating action panel placed at the bottom of active threads.
 func RenderThreadControlPanel(mirrorID uuid.UUID, thread bbs.Thread, locale discord.Locale) discord.MessageCreate {
+	return RenderThreadControlPanelWithOptions(mirrorID, thread, ThreadControlPanelOptions{
+		CanPost:   true,
+		CanReport: true,
+	}, locale)
+}
+
+// RenderThreadControlPanelWithOptions builds the thread bottom control panel respecting remote read-only states.
+func RenderThreadControlPanelWithOptions(mirrorID uuid.UUID, thread bbs.Thread, opts ThreadControlPanelOptions, locale discord.Locale) discord.MessageCreate {
 	titleText := i18n.TranslateText(locale, "components.bbs.control_panel.title", map[string]any{
 		"title": TruncateRunes(bbs.ClearFormat(thread.Title), 60),
 		"count": thread.ResCount,
 	})
-	postBtn := TruncateRunes(i18n.TranslateText(locale, "components.bbs.control_panel.btn.post"), MaxButtonLabelRunes)
-	watchBtn := TruncateRunes(i18n.TranslateText(locale, "components.bbs.control_panel.btn.watch"), MaxButtonLabelRunes)
-	readerBtn := TruncateRunes(i18n.TranslateText(locale, "components.bbs.control_panel.btn.reader"), MaxButtonLabelRunes)
-	reportBtn := TruncateRunes(i18n.TranslateText(locale, "components.bbs.control_panel.btn.report"), MaxButtonLabelRunes)
+	postBtnLabel := TruncateRunes(i18n.TranslateText(locale, "components.bbs.control_panel.btn.post"), MaxButtonLabelRunes)
+	watchBtnLabel := TruncateRunes(i18n.TranslateText(locale, "components.bbs.control_panel.btn.watch"), MaxButtonLabelRunes)
+	readerBtnLabel := TruncateRunes(i18n.TranslateText(locale, "components.bbs.control_panel.btn.reader"), MaxButtonLabelRunes)
+	reportBtnLabel := TruncateRunes(i18n.TranslateText(locale, "components.bbs.control_panel.btn.report"), MaxButtonLabelRunes)
+
+	postBtn := discord.NewPrimaryButton(postBtnLabel, fmt.Sprintf("/bbs/post/new/%s", mirrorID))
+	postBtn.Disabled = !opts.CanPost
+	reportBtn := discord.NewDangerButton(reportBtnLabel, fmt.Sprintf("/bbs/report/thread/%s", thread.ID))
+	reportBtn.Disabled = !opts.CanReport
 
 	container := discord.NewContainer(
 		discord.NewTextDisplay(titleText),
 		discord.NewSmallSeparator(),
 		discord.NewActionRow(
-			discord.NewPrimaryButton(postBtn, fmt.Sprintf("/bbs/post/new/%s", mirrorID)),
-			discord.NewSecondaryButton(watchBtn, fmt.Sprintf("/bbs/watch/toggle/%s", thread.ID)),
-			discord.NewSecondaryButton(readerBtn, fmt.Sprintf("/bbs/reader/%s/1", thread.ID)),
-			discord.NewDangerButton(reportBtn, fmt.Sprintf("/bbs/report/thread/%s", thread.ID)),
+			postBtn,
+			discord.NewSecondaryButton(watchBtnLabel, fmt.Sprintf("/bbs/watch/toggle/%s", thread.ID)),
+			discord.NewSecondaryButton(readerBtnLabel, fmt.Sprintf("/bbs/reader/%s/1", thread.ID)),
+			reportBtn,
 		),
 	)
 	return discord.NewMessageCreateV2(container).WithAllowedMentions(&discord.AllowedMentions{})
+}
+
+// RenderFederationAuthPrompt prompts the user to authorize and agree to an external Origin instance via browser OAuth2.
+func RenderFederationAuthPrompt(label, authorizeURL, continueCustomID string, locale discord.Locale) discord.MessageCreate {
+	title := i18n.TranslateText(locale, "components.bbs.federation.auth.title", map[string]any{
+		"remote": bbs.ClearFormat(label),
+	})
+	body := i18n.TranslateText(locale, "components.bbs.federation.auth.body", map[string]any{
+		"remote": bbs.ClearFormat(label),
+	})
+	authBtnLabel := TruncateRunes(i18n.TranslateText(locale, "components.bbs.federation.auth.btn_authorize", map[string]any{
+		"remote": bbs.ClearFormat(label),
+	}), MaxButtonLabelRunes)
+
+	btns := []discord.InteractiveComponent{
+		discord.NewLinkButton(authBtnLabel, authorizeURL),
+	}
+	if continueCustomID != "" {
+		contLabel := TruncateRunes(i18n.TranslateText(locale, "components.bbs.federation.auth.btn_continue"), MaxButtonLabelRunes)
+		btns = append(btns, discord.NewSecondaryButton(contLabel, continueCustomID))
+	}
+
+	return discord.NewMessageCreateV2(
+		discord.NewContainer(
+			discord.NewTextDisplay(title),
+			discord.NewSmallSeparator(),
+			discord.NewTextDisplay(body),
+			discord.NewLargeSeparator(),
+			discord.NewActionRow(btns...),
+		).WithAccentColor(ColorGlobalBoard),
+	).WithEphemeral(true).WithAllowedMentions(&discord.AllowedMentions{})
+}
+
+// RenderFederationAuthCompleted updates the ephemeral prompt once browser OAuth callback completes.
+func RenderFederationAuthCompleted(label, continueCustomID string, locale discord.Locale) discord.MessageUpdate {
+	title := i18n.TranslateText(locale, "components.bbs.federation.auth.completed_title")
+	body := i18n.TranslateText(locale, "components.bbs.federation.auth.completed_body", map[string]any{
+		"remote": bbs.ClearFormat(label),
+	})
+	subComps := []discord.ContainerSubComponent{
+		discord.NewTextDisplay(title),
+		discord.NewSmallSeparator(),
+		discord.NewTextDisplay(body),
+	}
+	if continueCustomID != "" {
+		contLabel := TruncateRunes(i18n.TranslateText(locale, "components.bbs.federation.auth.btn_continue"), MaxButtonLabelRunes)
+		subComps = append(subComps,
+			discord.NewLargeSeparator(),
+			discord.NewActionRow(discord.NewPrimaryButton(contLabel, continueCustomID)),
+		)
+	}
+	return discord.NewMessageUpdateV2(
+		discord.NewContainer(subComps...).WithAccentColor(ColorGlobalBoard),
+	).WithAllowedMentions(&discord.AllowedMentions{})
 }
 
 // RenderOver1000Message builds the classic 1001 Over 1000 Thread notice.

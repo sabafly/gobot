@@ -42,6 +42,7 @@ import (
 	"github.com/sabafly/gobot/bot/components/generic"
 	bbscore "github.com/sabafly/gobot/internal/bbs"
 	"github.com/sabafly/gobot/internal/bbs/discordsync"
+	"github.com/sabafly/gobot/internal/bbs/federation"
 	"github.com/sabafly/gobot/internal/i18n"
 )
 
@@ -69,12 +70,19 @@ type pendingAction struct {
 	ExpiresAt time.Time
 }
 
+// FederationAuthCoordinator coordinates Listener-side OAuth2 authorization prompts from Discord interactions.
+type FederationAuthCoordinator interface {
+	Enabled() bool
+	BeginUserAuth(ctx context.Context, providerKey string, userID, appID snowflake.ID, interactionToken, continueCustomID string, locale discord.Locale) (authorizeURL, providerLabel string, err error)
+}
+
 // System coordinates Discord BBS command/component handlers, services, and syncer.
 type System struct {
-	Components *components.Components
-	Service    *bbscore.Service
-	Syncer     *discordsync.Syncer
-	LogChannel *snowflake.ID
+	Components     *components.Components
+	Service        *bbscore.Service
+	Syncer         *discordsync.Syncer
+	FederationAuth FederationAuthCoordinator
+	LogChannel     *snowflake.ID
 
 	pendingMu sync.Mutex
 	pending   map[string]pendingAction
@@ -535,6 +543,7 @@ func (c *bbsCommand) RegisterRoutes(r handler.Router) {
 
 	r.Component("/bbs/consent/revoke", c.sys.handleConsentRevoke)
 	r.Component("/bbs/consent/view/{doc}", c.sys.handleConsentViewDoc)
+	r.Component("/bbs/federation/revoke", c.sys.handleFederationRevokeSelect)
 	r.Component("/bbs/consent/open/{version}/{token}", c.sys.handleConsentOpenModal)
 	r.Modal("/bbs/consent/modal/{version}/{token}", c.sys.handleConsentModal)
 	r.Component("/bbs/consent/accept/{version}/{token}", c.sys.handleConsentOpenModal)
@@ -940,7 +949,7 @@ func (c *bbsCommand) handleBoardList(_ discord.SlashCommandInteractionData, e *h
 		}
 		lines = append(lines, i18n.TranslateText(loc, "components.bbs.cmd.board.list_entry", map[string]any{
 			"scope":      i18n.TranslateText(loc, scopeKey),
-			"name":       b.Name,
+			"name":       formatBoardDisplayName(c.sys.Service, *b, loc),
 			"channel_id": m.ChannelID,
 			"mode":       i18n.TranslateText(loc, modeKey),
 			"max_res":    b.Rules.Normalize().MaxRes,
@@ -1092,7 +1101,7 @@ func (c *bbsCommand) handleGlobalList(_ discord.SlashCommandInteractionData, e *
 	}
 	var lines []string
 	for _, b := range boards {
-		line := "- " + b.Name + " (ID: " + b.ID.String() + ")"
+		line := "- " + formatBoardDisplayName(c.sys.Service, b, loc) + " (ID: " + b.ID.String() + ")"
 		if b.Description != "" {
 			line += " -- " + discordsync.TruncateRunes(b.Description, 60)
 		}
@@ -1215,37 +1224,152 @@ func (c *bbsCommand) handlePolicy(_ discord.SlashCommandInteractionData, e *hand
 	consent, err := c.sys.Service.CheckConsent(e.Ctx, e.User().ID)
 	pm := c.sys.Service.Policy
 
+	var originGrants []bbscore.FederationGrant
+	var remoteTokens []bbscore.FederationUserToken
+	if c.sys.Service.Store != nil {
+		originGrants, _ = c.sys.Service.Store.ListActiveFederationGrantsByUser(e.Ctx, e.User().ID, time.Now().UTC())
+		remoteTokens, _ = c.sys.Service.Store.ListFederationUserTokensByUser(e.Ctx, e.User().ID)
+	}
+	fedSubComponents := buildFederationPolicyComponents(c.sys.Service, loc, originGrants, remoteTokens)
+
 	if err != nil {
 		msg := discordsync.RenderConsentGate(pm, loc, "none")
+		if len(fedSubComponents) > 0 {
+			msg.Components = append(msg.Components, discord.NewContainer(fedSubComponents...).WithAccentColor(discordsync.ColorNotice))
+		}
 		sr := discordsync.NewSafeResponder(e.ID().Time())
 		_ = sr.RespondMessageCreate(e, msg)
 		return nil
 	}
 
+	subComponents := []discord.ContainerSubComponent{
+		discord.NewTextDisplay(i18n.TranslateText(loc, "components.bbs.cmd.policy.status_title")),
+		discord.NewSmallSeparator(),
+		discord.NewTextDisplay(i18n.TranslateText(loc, "components.bbs.cmd.policy.status_body", map[string]any{
+			"agreed_version":  consent.PolicyVersion,
+			"current_version": pm.CurrentVersion,
+			"agreed_at":       consent.AgreedAt.In(bbscore.JSTLocation).Format("2006/01/02 15:04:05"),
+		})),
+		discord.NewLargeSeparator(),
+		discord.NewActionRow(
+			discord.NewSecondaryButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.consent.btn.terms"), discordsync.MaxButtonLabelRunes), "/bbs/consent/view/terms"),
+			discord.NewSecondaryButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.consent.btn.guidelines"), discordsync.MaxButtonLabelRunes), "/bbs/consent/view/guidelines"),
+			discord.NewSecondaryButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.consent.btn.privacy"), discordsync.MaxButtonLabelRunes), "/bbs/consent/view/privacy"),
+		),
+		discord.NewActionRow(
+			discord.NewDangerButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.cmd.policy.revoke_btn"), discordsync.MaxButtonLabelRunes), "/bbs/consent/revoke"),
+		),
+	}
+	subComponents = append(subComponents, fedSubComponents...)
+
 	msg := discord.NewMessageCreateV2(
-		discord.NewContainer(
-			discord.NewTextDisplay(i18n.TranslateText(loc, "components.bbs.cmd.policy.status_title")),
-			discord.NewSmallSeparator(),
-			discord.NewTextDisplay(i18n.TranslateText(loc, "components.bbs.cmd.policy.status_body", map[string]any{
-				"agreed_version":  consent.PolicyVersion,
-				"current_version": pm.CurrentVersion,
-				"agreed_at":       consent.AgreedAt.In(bbscore.JSTLocation).Format("2006/01/02 15:04:05"),
-			})),
-			discord.NewLargeSeparator(),
-			discord.NewActionRow(
-				discord.NewSecondaryButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.consent.btn.terms"), discordsync.MaxButtonLabelRunes), "/bbs/consent/view/terms"),
-				discord.NewSecondaryButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.consent.btn.guidelines"), discordsync.MaxButtonLabelRunes), "/bbs/consent/view/guidelines"),
-				discord.NewSecondaryButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.consent.btn.privacy"), discordsync.MaxButtonLabelRunes), "/bbs/consent/view/privacy"),
-			),
-			discord.NewActionRow(
-				discord.NewDangerButton(discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.cmd.policy.revoke_btn"), discordsync.MaxButtonLabelRunes), "/bbs/consent/revoke"),
-			),
-		).WithAccentColor(discordsync.ColorNotice),
+		discord.NewContainer(subComponents...).WithAccentColor(discordsync.ColorNotice),
 	).WithEphemeral(true).WithAllowedMentions(&discord.AllowedMentions{})
 
 	sr := discordsync.NewSafeResponder(e.ID().Time())
 	_ = sr.RespondMessageCreate(e, msg)
 	return nil
+}
+
+func formatBoardDisplayName(svc *bbscore.Service, b bbscore.Board, loc discord.Locale) string {
+	if b.ProviderKey == "" || b.ProviderKey == bbscore.DefaultProviderKey {
+		return b.Name
+	}
+	label := strings.TrimPrefix(b.ProviderKey, federation.RemoteKeyPrefix)
+	readOnly := false
+	if svc != nil && svc.Registry != nil {
+		if p, err := svc.Registry.Get(b.ProviderKey); err == nil && p != nil {
+			if fp, ok := p.(bbscore.FederatedProvider); ok {
+				if l := strings.TrimSpace(fp.DisplayLabel()); l != "" {
+					label = l
+				}
+				caps := fp.Capabilities()
+				if !caps.CanCreatePost && !fp.CanReport() {
+					readOnly = true
+				}
+			}
+		}
+	}
+	prefix := "[" + label + "]"
+	if readOnly {
+		prefix += " " + i18n.TranslateText(loc, "components.bbs.federation.label_readonly")
+	}
+	return prefix + " " + b.Name
+}
+
+func buildFederationPolicyComponents(
+	svc *bbscore.Service,
+	loc discord.Locale,
+	originGrants []bbscore.FederationGrant,
+	remoteTokens []bbscore.FederationUserToken,
+) []discord.ContainerSubComponent {
+	if len(originGrants) == 0 && len(remoteTokens) == 0 {
+		return nil
+	}
+	var out []discord.ContainerSubComponent
+	var revokeOpts []discord.StringSelectMenuOption
+
+	if len(originGrants) > 0 {
+		lines := []string{i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_origin_header")}
+		for _, g := range originGrants {
+			lines = append(lines, i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_origin_entry", map[string]any{
+				"peer_id":        g.PeerID,
+				"scopes":         strings.Join(g.Scopes, ", "),
+				"policy_version": g.PolicyVersion,
+			}))
+			if len(revokeOpts) < discordsync.MaxSelectOptions {
+				optLabel := discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_revoke_origin_prefix", map[string]any{
+					"peer_id": g.PeerID,
+				}), 100)
+				revokeOpts = append(revokeOpts, discord.NewStringSelectMenuOption(optLabel, "origin:"+g.ID.String()))
+			}
+		}
+		out = append(out, discord.NewLargeSeparator(), discord.NewTextDisplay(strings.Join(lines, "\n")))
+	}
+
+	if len(remoteTokens) > 0 {
+		lines := []string{i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_remote_header")}
+		for _, tok := range remoteTokens {
+			label := tok.RemoteKey
+			if svc != nil && svc.Registry != nil {
+				if p, err := svc.Registry.Get(federation.RemoteKeyPrefix + tok.RemoteKey); err == nil && p != nil {
+					if fp, ok := p.(bbscore.FederatedProvider); ok {
+						if l := strings.TrimSpace(fp.DisplayLabel()); l != "" {
+							label = l
+						}
+					}
+				}
+			}
+			lines = append(lines, i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_remote_entry", map[string]any{
+				"label":          label,
+				"remote_key":     tok.RemoteKey,
+				"scopes":         strings.Join(tok.Scopes, ", "),
+				"policy_version": tok.PolicyVersion,
+			}))
+			if len(revokeOpts) < discordsync.MaxSelectOptions {
+				optLabel := discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_revoke_remote_prefix", map[string]any{
+					"label":      label,
+					"remote_key": tok.RemoteKey,
+				}), 100)
+				revokeOpts = append(revokeOpts, discord.NewStringSelectMenuOption(optLabel, federation.RemoteKeyPrefix+tok.RemoteKey))
+			}
+		}
+		out = append(out, discord.NewLargeSeparator(), discord.NewTextDisplay(strings.Join(lines, "\n")))
+	}
+
+	if len(revokeOpts) > 0 {
+		out = append(out,
+			discord.NewSmallSeparator(),
+			discord.NewActionRow(
+				discord.NewStringSelectMenu(
+					"/bbs/federation/revoke",
+					discordsync.TruncateRunes(i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_revoke_placeholder"), 150),
+					revokeOpts...,
+				),
+			),
+		)
+	}
+	return out
 }
 
 func (c *bbsCommand) autocompleteLocalCategories(e *handler.AutocompleteEvent) error {
@@ -1320,15 +1444,17 @@ func (c *bbsCommand) autocompleteSubscribedGlobalBoards(e *handler.AutocompleteE
 }
 
 func (c *bbsCommand) respondBoardChoices(e *handler.AutocompleteEvent, boards []bbscore.Board) error {
+	loc := e.Locale()
 	q := strings.ToLower(strings.TrimSpace(e.Data.Focused().String()))
 	var choices []discord.AutocompleteChoice
 	for _, b := range boards {
 		if len(choices) >= discordsync.MaxAutocompleteChoices {
 			break
 		}
-		if q == "" || strings.Contains(strings.ToLower(b.Name), q) || strings.Contains(strings.ToLower(b.Slug), q) {
+		displayName := formatBoardDisplayName(c.sys.Service, b, loc)
+		if q == "" || strings.Contains(strings.ToLower(b.Name), q) || strings.Contains(strings.ToLower(b.Slug), q) || strings.Contains(strings.ToLower(displayName), q) {
 			choices = append(choices, discord.AutocompleteChoiceString{
-				Name:  discordsync.TruncateRunes(b.Name, 90),
+				Name:  discordsync.TruncateRunes(displayName, 90),
 				Value: b.ID.String(),
 			})
 		}
@@ -1438,6 +1564,12 @@ func describeBBSError(locale discord.Locale, err error) string {
 		return i18n.TranslateText(locale, "components.bbs.errors.consent_required")
 	case errors.Is(err, bbscore.ErrStalePolicyVersion):
 		return i18n.TranslateText(locale, "components.bbs.consent.stale_version")
+	case errors.Is(err, bbscore.ErrFederationReadOnly):
+		return i18n.TranslateText(locale, "components.bbs.errors.federation_read_only")
+	case errors.Is(err, bbscore.ErrFederationUnavailable):
+		return i18n.TranslateText(locale, "components.bbs.errors.federation_unavailable")
+	case errors.Is(err, bbscore.ErrFederationAuthRequired):
+		return i18n.TranslateText(locale, "components.bbs.errors.federation_auth_required")
 	case errors.Is(err, bbscore.ErrBanned):
 		return i18n.TranslateText(locale, "components.bbs.errors.banned")
 	case errors.Is(err, bbscore.ErrRateLimited):

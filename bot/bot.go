@@ -32,6 +32,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -68,6 +69,7 @@ import (
 	"github.com/sabafly/gobot/internal/admin"
 	"github.com/sabafly/gobot/internal/bbs"
 	"github.com/sabafly/gobot/internal/bbs/discordsync"
+	"github.com/sabafly/gobot/internal/bbs/federation"
 	"github.com/sabafly/gobot/internal/bbs/gormstore"
 	"github.com/sabafly/gobot/internal/discordutil"
 	"github.com/sabafly/gobot/internal/emoji"
@@ -175,7 +177,7 @@ func run() error {
 	component := components.New(ctx, *config, gormDB)
 	component.Version = version
 
-	bbsSys, err := initBBSSystem(component, config, gormDB)
+	bbsSys, fedRuntime, err := initBBSSystemWithFederation(component, config, gormDB)
 	if err != nil {
 		slog.Error("BBSシステムの初期化に失敗したためBBSコマンドを無効化します", slog.Any("error", err))
 	}
@@ -258,6 +260,44 @@ func run() error {
 		}
 	}
 
+	var fedWG sync.WaitGroup
+	if fedRuntime != nil {
+		if fedRuntime.server != nil {
+			fedRuntime.server.SetDiscordClient(client)
+			fedSrv := fedRuntime.server
+			fedWG.Add(1)
+			go func() {
+				defer fedWG.Done()
+				if serveErr := fedSrv.ListenAndServe(ctx); serveErr != nil {
+					slog.Error("BBSフェデレーションサーバーでエラーが発生しました", slog.Any("error", serveErr))
+				}
+			}()
+		}
+		if fedRuntime.callbackServer != nil && fedRuntime.callbackServer.Enabled() {
+			cbSrv := fedRuntime.callbackServer
+			cbSrv.SetOnAuthComplete(func(cbCtx context.Context, req federation.BeginAuthRequest, providerLabel string) {
+				if req.ApplicationID == 0 || req.InteractionToken == "" {
+					return
+				}
+				upd := discordsync.RenderFederationAuthCompleted(providerLabel, req.ContinueCustomID, req.Locale)
+				if _, uErr := client.Rest.UpdateInteractionResponse(req.ApplicationID, req.InteractionToken, upd, rest.WithCtx(cbCtx)); uErr != nil {
+					slog.Warn("BBSフェデレーション連携完了メッセージの更新に失敗しました",
+						slog.String("provider_key", req.ProviderKey),
+						slog.Any("user_id", req.UserID),
+						slog.Any("error", uErr),
+					)
+				}
+			})
+			fedWG.Add(1)
+			go func() {
+				defer fedWG.Done()
+				if serveErr := cbSrv.ListenAndServe(ctx); serveErr != nil {
+					slog.Error("BBSフェデレーションコールバックサーバーでエラーが発生しました", slog.Any("error", serveErr))
+				}
+			}()
+		}
+	}
+
 	if err := client.OpenShardManager(ctx); err != nil {
 		return fmt.Errorf("discord ゲートウェイを開けません: %w", err)
 	}
@@ -265,6 +305,17 @@ func run() error {
 
 	<-ready
 	slog.Info("bots are now ready")
+
+	if fedRuntime != nil {
+		for _, sub := range fedRuntime.subscribers {
+			s := sub
+			fedWG.Add(1)
+			go func() {
+				defer fedWG.Done()
+				s.Run(ctx, client)
+			}()
+		}
+	}
 
 	// set default webhook
 	discordutil.WebhookDefaultName = "gobot-webhook"
@@ -295,6 +346,7 @@ func run() error {
 	if adminDone != nil {
 		<-adminDone
 	}
+	fedWG.Wait()
 
 	return nil
 }
@@ -333,8 +385,13 @@ func initAdminServer(
 }
 
 func initBBSSystem(component *components.Components, config *components.Config, gormDB *database.DB) (*bbsCmd.System, error) {
+	sys, _, err := initBBSSystemWithFederation(component, config, gormDB)
+	return sys, err
+}
+
+func initBBSSystemWithFederation(component *components.Components, config *components.Config, gormDB *database.DB) (*bbsCmd.System, *bbsFederationRuntime, error) {
 	if gormDB == nil || gormDB.DB == nil {
-		return nil, fmt.Errorf("BBS用のデータベース接続が初期化されていません")
+		return nil, nil, fmt.Errorf("BBS用のデータベース接続が初期化されていません")
 	}
 	store := gormstore.New(gormDB.DB)
 	secret := os.Getenv("BBS_SECRET_KEY")
@@ -347,14 +404,14 @@ func initBBSSystem(component *components.Components, config *components.Config, 
 	} else {
 		var rnd [32]byte
 		if _, err := rand.Read(rnd[:]); err != nil {
-			return nil, fmt.Errorf("BBSシステムシークレットの乱数生成に失敗しました: %w", err)
+			return nil, nil, fmt.Errorf("BBSシステムシークレットの乱数生成に失敗しました: %w", err)
 		}
 		persisted, err := store.GetOrCreateSystemSecret(context.Background(), "default_hmac_secret", rnd[:])
 		if err != nil {
-			return nil, fmt.Errorf("BBSシステムシークレットの取得・保存に失敗しました: %w", err)
+			return nil, nil, fmt.Errorf("BBSシステムシークレットの取得・保存に失敗しました: %w", err)
 		}
 		if len(persisted) == 0 {
-			return nil, fmt.Errorf("BBSシステムシークレットが空です")
+			return nil, nil, fmt.Errorf("BBSシステムシークレットが空です")
 		}
 		secretBytes = persisted
 		slog.Warn("BBS_SECRET_KEY and config.bbs.secret_key are empty; using DB-persisted auto-generated key (recommend configuring fixed secret)",
@@ -380,7 +437,7 @@ func initBBSSystem(component *components.Components, config *components.Config, 
 		PrivacyPolicyURL: config.BBS.PrivacyPolicyURL,
 	}
 	if err := bbs.ValidatePolicyConfig(policyCfg); err != nil {
-		return nil, fmt.Errorf("BBSポリシー設定が不正です: %w", err)
+		return nil, nil, fmt.Errorf("BBSポリシー設定が不正です: %w", err)
 	}
 	registry := bbs.NewProviderRegistry(bbs.DefaultProviderKey)
 	registry.Register(store)
@@ -398,7 +455,7 @@ func initBBSSystem(component *components.Components, config *components.Config, 
 		})
 	}
 	if err := svc.LoadOrSeedAdminCaps(context.Background(), capDefs); err != nil {
-		return nil, fmt.Errorf("BBSキャップ設定が不正です: %w", err)
+		return nil, nil, fmt.Errorf("BBSキャップ設定が不正です: %w", err)
 	}
 	slipEvents := make([]bbs.SlipEventDefinition, 0, len(config.BBS.SlipEvents))
 	for _, ev := range config.BBS.SlipEvents {
@@ -411,7 +468,7 @@ func initBBSSystem(component *components.Components, config *components.Config, 
 		})
 	}
 	if err := svc.LoadOrSeedSlipEvents(context.Background(), slipEvents); err != nil {
-		return nil, fmt.Errorf("BBS SLIPイベント設定が不正です: %w", err)
+		return nil, nil, fmt.Errorf("BBS SLIPイベント設定が不正です: %w", err)
 	}
 	syncer := discordsync.NewSyncer(svc)
 	syncer.CanSendDM = func(ctx context.Context, uid snowflake.ID) bool {
@@ -429,5 +486,167 @@ func initBBSSystem(component *components.Components, config *components.Config, 
 			syncer.ScheduleRefreshGuildBoardGuides(component.Ctx(), client, guildID, resolvedLocale)
 		})
 	}
-	return bbsCmd.NewSystem(component, svc, syncer, config.BBS.OperatorLogChannel), nil
+
+	fedRuntime, err := initBBSFederation(config.BBS.Federation, store, registry, svc, syncer, secretBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	sys := bbsCmd.NewSystem(component, svc, syncer, config.BBS.OperatorLogChannel)
+	if fedRuntime != nil && fedRuntime.callbackServer != nil && fedRuntime.callbackServer.Enabled() {
+		sys.FederationAuth = &bbsFederationAuthAdapter{cb: fedRuntime.callbackServer}
+	}
+	return sys, fedRuntime, nil
+}
+
+type bbsFederationRuntime struct {
+	server         *federation.Server
+	callbackServer *federation.CallbackServer
+	subscribers    []*federation.Subscriber
+}
+
+type bbsFederationAuthAdapter struct {
+	cb *federation.CallbackServer
+}
+
+func (a *bbsFederationAuthAdapter) Enabled() bool {
+	return a != nil && a.cb != nil && a.cb.Enabled()
+}
+
+func (a *bbsFederationAuthAdapter) BeginUserAuth(
+	ctx context.Context,
+	providerKey string,
+	userID, appID snowflake.ID,
+	interactionToken, continueCustomID string,
+	locale discord.Locale,
+) (string, string, error) {
+	if a == nil || a.cb == nil {
+		return "", "", bbs.ErrFederationReadOnly
+	}
+	return a.cb.BeginUserAuth(ctx, federation.BeginAuthRequest{
+		ProviderKey:      providerKey,
+		UserID:           userID,
+		ApplicationID:    appID,
+		InteractionToken: interactionToken,
+		ContinueCustomID: continueCustomID,
+		Locale:           locale,
+	})
+}
+
+func initBBSFederation(
+	fedCfg components.ConfigBBSFederation,
+	store bbs.Store,
+	registry *bbs.ProviderRegistry,
+	svc *bbs.Service,
+	syncer *discordsync.Syncer,
+	secretBytes []byte,
+) (*bbsFederationRuntime, error) {
+	runtime := &bbsFederationRuntime{}
+
+	var cipher *federation.TokenCipher
+	if fedCfg.Client.Enabled || len(fedCfg.Remotes) > 0 {
+		var err error
+		cipher, err = federation.NewTokenCipher(secretBytes)
+		if err != nil {
+			return nil, fmt.Errorf("BBSフェデレーション暗号化キーの初期化に失敗しました: %w", err)
+		}
+	}
+
+	if fedCfg.Server.Enabled {
+		peers := make([]federation.PeerConfig, 0, len(fedCfg.Server.Peers))
+		for _, p := range fedCfg.Server.Peers {
+			peers = append(peers, federation.PeerConfig{
+				ID:              p.ID,
+				Name:            p.Name,
+				Token:           p.Token,
+				AllowWrite:      p.AllowWrite,
+				AllowReport:     p.AllowReport,
+				AllowCaps:       p.AllowCaps,
+				RedirectURIs:    p.RedirectURIs,
+				AllowedBoardIDs: p.AllowedBoardIDs,
+			})
+		}
+		srvCfg := federation.ServerConfig{
+			Enabled:        true,
+			ListenAddr:     fedCfg.Server.ListenAddr,
+			PublicURL:      fedCfg.Server.PublicURL,
+			BasePath:       fedCfg.Server.BasePath,
+			TrustedProxies: fedCfg.Server.TrustedProxies,
+			BufferSize:     fedCfg.Server.EventBufferSize,
+			AccessTTL:      time.Duration(fedCfg.Server.AccessTokenTTLMinutes) * time.Minute,
+			RefreshTTL:     time.Duration(fedCfg.Server.RefreshTokenTTLDays) * 24 * time.Hour,
+			OAuth: federation.OAuthConfig{
+				ClientID:     fedCfg.Server.OAuth.ClientID,
+				ClientSecret: fedCfg.Server.OAuth.ClientSecret,
+			},
+			Peers: peers,
+		}
+		hub := federation.NewEventHub(srvCfg.BufferSize)
+		svc.SetEventSink(hub)
+		fedSrv, err := federation.NewServer(federation.ServerDeps{
+			Config:  srvCfg,
+			Service: svc,
+			Syncer:  syncer,
+			Hub:     hub,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("BBSフェデレーションサーバーの初期化に失敗しました: %w", err)
+		}
+		runtime.server = fedSrv
+	}
+
+	if fedCfg.Client.Enabled {
+		cliCfg := federation.ClientConfig{
+			Enabled:        true,
+			ListenAddr:     fedCfg.Client.ListenAddr,
+			PublicURL:      fedCfg.Client.PublicURL,
+			BasePath:       fedCfg.Client.BasePath,
+			TrustedProxies: fedCfg.Client.TrustedProxies,
+		}
+		cbSrv, err := federation.NewCallbackServer(federation.CallbackServerDeps{
+			Config: cliCfg,
+			Store:  store,
+			Cipher: cipher,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("BBSフェデレーションコールバックサーバーの初期化に失敗しました: %w", err)
+		}
+		runtime.callbackServer = cbSrv
+	}
+
+	seenRemotes := make(map[string]struct{}, len(fedCfg.Remotes))
+	for _, r := range fedCfg.Remotes {
+		cleanKey := strings.TrimSpace(r.Key)
+		if _, dup := seenRemotes[cleanKey]; dup {
+			return nil, fmt.Errorf("BBSフェデレーションリモートキーが重複しています: %q", cleanKey)
+		}
+		seenRemotes[cleanKey] = struct{}{}
+
+		remCfg := federation.RemoteConfig{
+			Key:      r.Key,
+			Label:    r.Label,
+			BaseURL:  r.BaseURL,
+			PeerID:   r.PeerID,
+			Token:    r.Token,
+			ReadOnly: r.ReadOnly,
+			CacheTTL: time.Duration(r.CacheTTLSeconds) * time.Second,
+			Timeout:  time.Duration(r.TimeoutSeconds) * time.Second,
+		}
+		rp, err := federation.NewRemoteProvider(federation.RemoteProviderDeps{
+			Config:          remCfg,
+			Store:           store,
+			Cipher:          cipher,
+			CallbackEnabled: runtime.callbackServer != nil && runtime.callbackServer.Enabled(),
+		})
+		if err != nil {
+			return nil, fmt.Errorf("BBSフェデレーションリモート %q の初期化に失敗しました: %w", r.Key, err)
+		}
+		registry.Register(rp)
+		if runtime.callbackServer != nil {
+			runtime.callbackServer.RegisterRemote(rp)
+		}
+		runtime.subscribers = append(runtime.subscribers, federation.NewSubscriber(rp, svc, syncer))
+	}
+
+	return runtime, nil
 }

@@ -63,6 +63,9 @@ func NewDB(dsn string) (*DB, error) {
 	if err := db.AutoMigrate(migrateModels...); err != nil {
 		return nil, err
 	}
+	if err := gormstore.DropCrossProviderForeignKeys(db); err != nil {
+		return nil, err
+	}
 
 	if db.Name() == "mysql" {
 		// Ensure currency_season_users.points_earned is signed (bigint(20)) instead of unsigned

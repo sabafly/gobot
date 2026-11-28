@@ -68,6 +68,9 @@ type Service struct {
 
 	threadLocks [256]sync.Mutex
 	guildLocks  [64]sync.Mutex
+
+	eventSinkMu sync.RWMutex
+	eventSink   EventSink
 }
 
 // NewService constructs a Service with standard anti-spam rate limits.
@@ -130,9 +133,23 @@ func (s *Service) userHasAdminCap(userID snowflake.ID, def CapDefinition) bool {
 }
 
 // ListAvailableCaps returns caps held by userID that can be used when posting on boardID.
-func (s *Service) ListAvailableCaps(_ context.Context, userID snowflake.ID, _ uuid.UUID) []Cap {
+func (s *Service) ListAvailableCaps(ctx context.Context, userID snowflake.ID, boardID uuid.UUID) []Cap {
 	if userID == 0 {
 		return nil
+	}
+	if boardID != uuid.Nil {
+		if b, err := s.GetBoard(ctx, boardID); err == nil && b != nil {
+			if p, pErr := s.Registry.Get(b.ProviderKey); pErr == nil {
+				if fp, ok := p.(FederatedProvider); ok {
+					caps, rErr := fp.ListRemoteAvailableCaps(ctx, userID, boardID)
+					if rErr != nil {
+						slog.Warn("bbs failed to fetch remote caps", "provider", fp.Key(), "board_id", boardID, "err", rErr)
+						return nil
+					}
+					return caps
+				}
+			}
+		}
 	}
 	s.capMu.RLock()
 	defs := s.adminCaps
@@ -285,9 +302,25 @@ func (s *Service) AcceptPolicyVersion(ctx context.Context, userID snowflake.ID, 
 	return s.AcceptPolicy(ctx, userID)
 }
 
-// RevokePolicy withdraws user consent and removes active thread watch subscriptions.
+// RevokePolicy withdraws user consent, removes active thread watches, and cascades federation delegation revocation.
 func (s *Service) RevokePolicy(ctx context.Context, userID snowflake.ID) error {
-	return s.Store.DeleteUserConsent(ctx, userID)
+	if err := s.Store.DeleteUserConsent(ctx, userID); err != nil {
+		return err
+	}
+	if err := s.Store.RevokeAllFederationGrantsByUser(ctx, userID, time.Now().UTC()); err != nil {
+		slog.Warn("bbs failed to revoke origin federation grants on policy revoke", "user_id", userID, "err", err)
+	}
+	for _, p := range s.Registry.All() {
+		if fp, ok := p.(FederatedProvider); ok {
+			if rErr := fp.RevokeUserDelegation(ctx, userID); rErr != nil {
+				slog.Warn("bbs failed to revoke remote user delegation on policy revoke", "provider", fp.Key(), "user_id", userID, "err", rErr)
+			}
+		}
+	}
+	if err := s.Store.DeleteAllFederationUserTokensByUser(ctx, userID); err != nil {
+		slog.Warn("bbs failed to delete listener federation user tokens on policy revoke", "user_id", userID, "err", err)
+	}
+	return nil
 }
 
 // CreateCategory validates scope/inputs and creates a local or global category via its provider.
@@ -324,17 +357,23 @@ func (s *Service) CreateCategory(ctx context.Context, input CreateCategoryInput)
 }
 
 // ListCategories returns categories matching the given scope/guild filter across providers.
+// Non-default remote providers are fault-isolated so unreachable remotes do not break local listings.
 func (s *Service) ListCategories(ctx context.Context, filter CategoryFilter) ([]Category, error) {
 	providers := s.Registry.All()
 	if len(providers) == 0 {
 		return nil, ErrProviderNotFound
 	}
+	defaultKey := s.Registry.DefaultKey()
 	var out []Category
 	seen := make(map[uuid.UUID]struct{})
 	for _, p := range providers {
 		cats, err := p.ListCategories(ctx, filter)
 		if err != nil {
 			if errors.Is(err, ErrUnsupportedOperation) {
+				continue
+			}
+			if p.Key() != defaultKey {
+				slog.Warn("bbs remote ListCategories skipped due to error", "provider", p.Key(), "err", err)
 				continue
 			}
 			return nil, err
@@ -356,14 +395,25 @@ func (s *Service) GetCategory(ctx context.Context, id uuid.UUID) (*Category, err
 	if len(providers) == 0 {
 		return nil, ErrProviderNotFound
 	}
+	defaultKey := s.Registry.DefaultKey()
+	var remoteErr error
 	for _, p := range providers {
 		cat, err := p.GetCategory(ctx, id)
 		if err == nil {
 			return cat, nil
 		}
 		if !errors.Is(err, ErrNotFound) && !errors.Is(err, ErrUnsupportedOperation) {
+			if p.Key() != defaultKey {
+				if remoteErr == nil {
+					remoteErr = err
+				}
+				continue
+			}
 			return nil, err
 		}
+	}
+	if remoteErr != nil {
+		return nil, fmt.Errorf("%w: %v", ErrFederationUnavailable, remoteErr)
 	}
 	return nil, ErrNotFound
 }
@@ -440,30 +490,47 @@ func (s *Service) GetBoard(ctx context.Context, boardID uuid.UUID) (*Board, erro
 	if len(providers) == 0 {
 		return nil, ErrProviderNotFound
 	}
+	defaultKey := s.Registry.DefaultKey()
+	var remoteErr error
 	for _, p := range providers {
 		b, err := p.GetBoard(ctx, boardID)
 		if err == nil {
 			return b, nil
 		}
 		if !errors.Is(err, ErrNotFound) && !errors.Is(err, ErrUnsupportedOperation) {
+			if p.Key() != defaultKey {
+				if remoteErr == nil {
+					remoteErr = err
+				}
+				continue
+			}
 			return nil, err
 		}
+	}
+	if remoteErr != nil {
+		return nil, fmt.Errorf("%w: %v", ErrFederationUnavailable, remoteErr)
 	}
 	return nil, ErrNotFound
 }
 
 // ListBoards returns boards matching filter across registered providers.
+// Non-default remote providers are fault-isolated so unreachable remotes do not break local listings.
 func (s *Service) ListBoards(ctx context.Context, filter BoardFilter) ([]Board, error) {
 	providers := s.Registry.All()
 	if len(providers) == 0 {
 		return nil, ErrProviderNotFound
 	}
+	defaultKey := s.Registry.DefaultKey()
 	var out []Board
 	seen := make(map[uuid.UUID]struct{})
 	for _, p := range providers {
 		boards, err := p.ListBoards(ctx, filter)
 		if err != nil {
 			if errors.Is(err, ErrUnsupportedOperation) {
+				continue
+			}
+			if p.Key() != defaultKey {
+				slog.Warn("bbs remote ListBoards skipped due to error", "provider", p.Key(), "err", err)
 				continue
 			}
 			return nil, err
@@ -510,7 +577,19 @@ func (s *Service) UpdateBoard(ctx context.Context, boardID uuid.UUID, input Upda
 	if err != nil {
 		return nil, err
 	}
-	return p.UpdateBoard(ctx, boardID, input)
+	updated, err := p.UpdateBoard(ctx, boardID, input)
+	if err != nil {
+		return nil, err
+	}
+	if s.isNativeGlobalBoard(updated) {
+		bCopy := *updated
+		s.emitEvent(Event{
+			Type:    EventBoardUpdated,
+			BoardID: updated.ID,
+			Board:   &bCopy,
+		})
+	}
+	return updated, nil
 }
 
 // DeleteBoard deletes a board.
@@ -523,7 +602,18 @@ func (s *Service) DeleteBoard(ctx context.Context, boardID uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	return p.DeleteBoard(ctx, boardID)
+	if err := p.DeleteBoard(ctx, boardID); err != nil {
+		return err
+	}
+	if s.isNativeGlobalBoard(b) {
+		bCopy := *b
+		s.emitEvent(Event{
+			Type:    EventBoardDeleted,
+			BoardID: b.ID,
+			Board:   &bCopy,
+		})
+	}
+	return nil
 }
 
 // CreateThread validates opt-in, consent, bans, rate limit, and opens a new thread with >>1.
@@ -535,12 +625,9 @@ func (s *Service) CreateThread(ctx context.Context, input CreateThreadInput) (*B
 		return nil, nil, nil, err
 	}
 
-	title := SanitizeSingleLine(input.Title)
-	if title == "" || strings.TrimSpace(ClearFormat(title)) == "" || utf8.RuneCountInString(title) > MaxTitleRunes {
-		return nil, nil, nil, ErrInvalidTitleLength
-	}
-	if utf8.RuneCountInString(SanitizeSingleLine(input.RawName)) > MaxNameRunes {
-		return nil, nil, nil, ErrInvalidNameLength
+	title, err := validateBasicThreadInput(input.Title, input.RawName, input.RawBody)
+	if err != nil {
+		return nil, nil, nil, err
 	}
 
 	board, err := s.GetBoard(ctx, input.BoardID)
@@ -556,6 +643,16 @@ func (s *Service) CreateThread(ctx context.Context, input CreateThreadInput) (*B
 	p, err := s.Registry.Get(board.ProviderKey)
 	if err != nil {
 		return nil, nil, nil, err
+	}
+	if fp, ok := p.(FederatedProvider); ok {
+		if !fp.Capabilities().CanCreateThread {
+			return nil, nil, nil, ErrFederationReadOnly
+		}
+		if SanitizeSingleLine(input.CapID) == "" && !s.checkThreadRateLimit(input.UserID) {
+			return nil, nil, nil, ErrRateLimited
+		}
+		input.Title = title
+		return fp.CreateRemoteThread(ctx, input)
 	}
 	if !p.Capabilities().CanCreateThread {
 		return nil, nil, nil, ErrUnsupportedOperation
@@ -633,6 +730,21 @@ func (s *Service) CreateThread(ctx context.Context, input CreateThreadInput) (*B
 	}
 
 	s.recordPostReferences(ctx, thread.ID, 1, parsed.CleanBody, parsed.ThreadRules.MaxRes)
+	if s.isNativeGlobalBoard(board) {
+		bCopy := *board
+		tCopy := *thread
+		pCopy := *post
+		s.emitEvent(Event{
+			Type:       EventThreadCreated,
+			BoardID:    board.ID,
+			ThreadID:   thread.ID,
+			PostID:     post.ID,
+			Board:      &bCopy,
+			Thread:     &tCopy,
+			Post:       &pCopy,
+			OccurredAt: now,
+		})
+	}
 	return board, thread, post, nil
 }
 
@@ -644,8 +756,8 @@ func (s *Service) CreatePost(ctx context.Context, input CreatePostInput) (*Board
 	if _, err := s.CheckConsent(ctx, input.UserID); err != nil {
 		return nil, nil, nil, nil, err
 	}
-	if utf8.RuneCountInString(SanitizeSingleLine(input.RawName)) > MaxNameRunes {
-		return nil, nil, nil, nil, ErrInvalidNameLength
+	if err := validateBasicPostInput(input.RawName, input.RawBody); err != nil {
+		return nil, nil, nil, nil, err
 	}
 
 	thread, err := s.GetThread(ctx, input.ThreadID)
@@ -665,6 +777,21 @@ func (s *Service) CreatePost(ctx context.Context, input CreatePostInput) (*Board
 	p, err := s.Registry.Get(board.ProviderKey)
 	if err != nil {
 		return nil, nil, nil, nil, err
+	}
+	if fp, ok := p.(FederatedProvider); ok {
+		if !fp.Capabilities().CanCreatePost {
+			return nil, nil, nil, nil, ErrFederationReadOnly
+		}
+		if thread.Status != ThreadStatusActive {
+			return nil, nil, nil, nil, ErrThreadArchived
+		}
+		if thread.ResCount >= thread.Rules.Normalize().MaxRes {
+			return nil, nil, nil, nil, ErrMaxResReached
+		}
+		if SanitizeSingleLine(input.CapID) == "" && !s.checkPostRateLimit(input.UserID) {
+			return nil, nil, nil, nil, ErrRateLimited
+		}
+		return fp.CreateRemotePost(ctx, input)
 	}
 	if !p.Capabilities().CanCreatePost {
 		return nil, nil, nil, nil, ErrUnsupportedOperation
@@ -757,6 +884,33 @@ func (s *Service) CreatePost(ctx context.Context, input CreatePostInput) (*Board
 	if refErr != nil {
 		slog.Warn("bbs failed to list referencing res", "thread_id", thread.ID, "res_number", post.ResNumber, "err", refErr)
 	}
+	if s.isNativeGlobalBoard(board) {
+		bCopy := *board
+		tCopy := *updatedThread
+		pCopy := *post
+		s.emitEvent(Event{
+			Type:         EventPostCreated,
+			BoardID:      board.ID,
+			ThreadID:     updatedThread.ID,
+			PostID:       post.ID,
+			Board:        &bCopy,
+			Thread:       &tCopy,
+			Post:         &pCopy,
+			BackwardRefs: slices.Clone(backwardRefs),
+			OccurredAt:   now,
+		})
+		if updatedThread.Status == ThreadStatusArchived {
+			s.emitEvent(Event{
+				Type:       EventThreadArchived,
+				BoardID:    board.ID,
+				ThreadID:   updatedThread.ID,
+				Board:      &bCopy,
+				Thread:     &tCopy,
+				HitMaxRes:  post.ResNumber >= maxRes,
+				OccurredAt: now,
+			})
+		}
+	}
 	return board, updatedThread, post, backwardRefs, nil
 }
 
@@ -779,14 +933,25 @@ func (s *Service) GetThread(ctx context.Context, threadID uuid.UUID) (*Thread, e
 	if len(providers) == 0 {
 		return nil, ErrProviderNotFound
 	}
+	defaultKey := s.Registry.DefaultKey()
+	var remoteErr error
 	for _, p := range providers {
 		th, err := p.GetThread(ctx, threadID)
 		if err == nil {
 			return th, nil
 		}
 		if !errors.Is(err, ErrNotFound) && !errors.Is(err, ErrUnsupportedOperation) {
+			if p.Key() != defaultKey {
+				if remoteErr == nil {
+					remoteErr = err
+				}
+				continue
+			}
 			return nil, err
 		}
+	}
+	if remoteErr != nil {
+		return nil, fmt.Errorf("%w: %v", ErrFederationUnavailable, remoteErr)
 	}
 	return nil, ErrNotFound
 }
@@ -797,14 +962,25 @@ func (s *Service) GetPost(ctx context.Context, postID uuid.UUID) (*Post, error) 
 	if len(providers) == 0 {
 		return nil, ErrProviderNotFound
 	}
+	defaultKey := s.Registry.DefaultKey()
+	var remoteErr error
 	for _, p := range providers {
 		post, err := p.GetPost(ctx, postID)
 		if err == nil {
 			return post, nil
 		}
 		if !errors.Is(err, ErrNotFound) && !errors.Is(err, ErrUnsupportedOperation) {
+			if p.Key() != defaultKey {
+				if remoteErr == nil {
+					remoteErr = err
+				}
+				continue
+			}
 			return nil, err
 		}
+	}
+	if remoteErr != nil {
+		return nil, fmt.Errorf("%w: %v", ErrFederationUnavailable, remoteErr)
 	}
 	return nil, ErrNotFound
 }
@@ -867,7 +1043,23 @@ func (s *Service) AbonePostGlobal(ctx context.Context, operatorID snowflake.ID, 
 	if err != nil {
 		return nil, err
 	}
-	return p.AbonePost(ctx, postID, SanitizeSingleLine(reason))
+	aboned, err := p.AbonePost(ctx, postID, SanitizeSingleLine(reason))
+	if err != nil {
+		return nil, err
+	}
+	if board, bErr := s.GetBoard(ctx, thread.BoardID); bErr == nil && s.isNativeGlobalBoard(board) {
+		pCopy := *aboned
+		tCopy := *thread
+		s.emitEvent(Event{
+			Type:     EventPostAboned,
+			BoardID:  board.ID,
+			ThreadID: thread.ID,
+			PostID:   aboned.ID,
+			Thread:   &tCopy,
+			Post:     &pCopy,
+		})
+	}
+	return aboned, nil
 }
 
 // ArchiveThreadLocal archives a local board thread owned by guildID.
@@ -970,6 +1162,14 @@ func (s *Service) CreateReport(ctx context.Context, guildID snowflake.ID, report
 	}
 	if board.Scope == ScopeLocal && (board.GuildID == nil || *board.GuildID != guildID) {
 		return nil, fmt.Errorf("%w: local post guild mismatch", ErrUnauthorized)
+	}
+	if p, pErr := s.Registry.Get(board.ProviderKey); pErr == nil {
+		if fp, ok := p.(FederatedProvider); ok {
+			if !fp.CanReport() {
+				return nil, ErrFederationReadOnly
+			}
+			return fp.CreateRemoteReport(ctx, guildID, reporterID, postID, reason)
+		}
 	}
 	now := time.Now()
 	report := &Report{

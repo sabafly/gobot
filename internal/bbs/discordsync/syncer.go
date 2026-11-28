@@ -21,6 +21,7 @@ package discordsync
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -86,11 +87,12 @@ type Syncer struct {
 	LocaleRefreshDebounce time.Duration
 	LocaleRefreshTimeout  time.Duration
 
-	anchorMu        sync.Mutex
-	anchorQ         map[snowflake.ID]*anchorQueue
-	localeRefreshMu sync.Mutex
-	localeRefresh   map[snowflake.ID]*guildLocaleRefreshState
-	threadEditLocks [64]sync.Mutex
+	anchorMu         sync.Mutex
+	anchorQ          map[snowflake.ID]*anchorQueue
+	localeRefreshMu  sync.Mutex
+	localeRefresh    map[snowflake.ID]*guildLocaleRefreshState
+	threadEditLocks  [64]sync.Mutex
+	mountThreadLocks [128]sync.Mutex
 }
 
 func (s *Syncer) threadEditMutex(discordThreadID snowflake.ID) *sync.Mutex {
@@ -98,6 +100,44 @@ func (s *Syncer) threadEditMutex(discordThreadID snowflake.ID) *sync.Mutex {
 	v ^= v >> 22
 	idx := v % uint64(len(s.threadEditLocks))
 	return &s.threadEditLocks[idx]
+}
+
+func (s *Syncer) mountThreadMutex(mountID, threadID uuid.UUID) *sync.Mutex {
+	var buf [32]byte
+	copy(buf[:16], mountID[:])
+	copy(buf[16:], threadID[:])
+	var acc uint64
+	for i := 0; i < 4; i++ {
+		acc ^= binary.LittleEndian.Uint64(buf[i*8 : (i+1)*8])
+	}
+	return &s.mountThreadLocks[acc%uint64(len(s.mountThreadLocks))]
+}
+
+func (s *Syncer) boardGuideOptions(board bbs.Board) BoardGuideOptions {
+	var opts BoardGuideOptions
+	if s != nil && s.Service != nil && s.Service.Registry != nil {
+		if p, err := s.Service.Registry.Get(board.ProviderKey); err == nil && p != nil {
+			if fp, ok := p.(bbs.FederatedProvider); ok {
+				opts.ProviderLabel = fp.DisplayLabel()
+			}
+			opts.ReadOnly = !p.Capabilities().CanCreateThread
+		}
+	}
+	return opts
+}
+
+func (s *Syncer) threadControlPanelOptions(board bbs.Board) ThreadControlPanelOptions {
+	opts := ThreadControlPanelOptions{CanPost: true, CanReport: true}
+	if s != nil && s.Service != nil && s.Service.Registry != nil {
+		if p, err := s.Service.Registry.Get(board.ProviderKey); err == nil && p != nil {
+			caps := p.Capabilities()
+			opts.CanPost = caps.CanCreatePost
+			if fp, ok := p.(bbs.FederatedProvider); ok {
+				opts.CanReport = fp.CanReport()
+			}
+		}
+	}
+	return opts
 }
 
 // ResolveGuildLocale returns the guild's preferred Discord locale from cache, falling back cleanly.
@@ -324,18 +364,23 @@ func (s *Syncer) ProvisionBoardChannel(
 		return nil, plan, err
 	}
 
+	mountProvKey := board.ProviderKey
+	if mountProvKey == "" {
+		mountProvKey = bbs.DefaultProviderKey
+	}
 	mount := &bbs.BoardMount{
-		ID:        uuidv7.New(),
-		BoardID:   board.ID,
-		GuildID:   guildID,
-		ChannelID: ch.ID(),
-		Locale:    string(resolvedLocale),
-		IsForum:   plan.UseForum,
-		Active:    true,
-		CreatedAt: time.Now(),
+		ID:          uuidv7.New(),
+		BoardID:     board.ID,
+		ProviderKey: mountProvKey,
+		GuildID:     guildID,
+		ChannelID:   ch.ID(),
+		Locale:      string(resolvedLocale),
+		IsForum:     plan.UseForum,
+		Active:      true,
+		CreatedAt:   time.Now(),
 	}
 
-	guideMsg := RenderBoardGuide(board, mount.ID, resolvedLocale)
+	guideMsg := RenderBoardGuideWithOptions(board, mount.ID, s.boardGuideOptions(board), resolvedLocale)
 	if err := s.Validator.ValidateMessageCreate(guideMsg); err != nil {
 		if delErr := client.Rest.DeleteChannel(ch.ID()); delErr != nil {
 			slog.Warn("bbs failed to cleanup orphan channel after guide validation error", "channel_id", ch.ID(), "err", delErr)
@@ -426,6 +471,30 @@ func (s *Syncer) PublishThread(
 	firstPost bbs.Post,
 	locale discord.Locale,
 ) (snowflake.ID, snowflake.ID, error) {
+	return s.publishThreadInternal(ctx, client, &sourceMountID, board, thread, firstPost, locale)
+}
+
+// FanoutThread idempotently mirrors a newly created thread across all active local mounts for board.
+func (s *Syncer) FanoutThread(
+	ctx context.Context,
+	client *bot.Client,
+	board bbs.Board,
+	thread bbs.Thread,
+	firstPost bbs.Post,
+	locale discord.Locale,
+) {
+	_, _, _ = s.publishThreadInternal(ctx, client, nil, board, thread, firstPost, locale)
+}
+
+func (s *Syncer) publishThreadInternal(
+	ctx context.Context,
+	client *bot.Client,
+	sourceMountID *uuid.UUID,
+	board bbs.Board,
+	thread bbs.Thread,
+	firstPost bbs.Post,
+	locale discord.Locale,
+) (snowflake.ID, snowflake.ID, error) {
 	mounts, err := s.Service.Store.ListActiveBoardMountsByBoard(ctx, board.ID)
 	if err != nil {
 		return 0, 0, err
@@ -436,7 +505,7 @@ func (s *Syncer) PublishThread(
 	var sourceMatched bool
 	var otherMounts []bbs.BoardMount
 	for _, m := range mounts {
-		if m.ID == sourceMountID {
+		if sourceMountID != nil && m.ID == *sourceMountID {
 			sourceMatched = true
 			chID, mID, err := s.mirrorNewThreadToMount(ctx, client, m, board, thread, firstPost, locale)
 			if err != nil {
@@ -448,16 +517,23 @@ func (s *Syncer) PublishThread(
 			otherMounts = append(otherMounts, m)
 		}
 	}
-	if !sourceMatched && srcErr == nil {
+	if sourceMountID != nil && !sourceMatched && srcErr == nil {
 		srcErr = ErrSourceMountInactive
 	}
 
 	if len(otherMounts) > 0 {
-		go s.fanout(otherMounts, func(m bbs.BoardMount) {
-			if _, _, err := s.mirrorNewThreadToMount(s.backgroundCtx(), client, m, board, thread, firstPost, locale); err != nil {
-				slog.Warn("bbs fanout thread mirror failed", "mount_id", m.ID, "guild_id", m.GuildID, "err", err)
-			}
-		})
+		fanFn := func() {
+			s.fanout(otherMounts, func(m bbs.BoardMount) {
+				if _, _, err := s.mirrorNewThreadToMount(s.backgroundCtx(), client, m, board, thread, firstPost, locale); err != nil {
+					slog.Warn("bbs fanout thread mirror failed", "mount_id", m.ID, "guild_id", m.GuildID, "err", err)
+				}
+			})
+		}
+		if sourceMountID != nil {
+			go fanFn()
+		} else {
+			fanFn()
+		}
 	}
 	if srcErr != nil {
 		return 0, 0, srcErr
@@ -492,6 +568,18 @@ func (s *Syncer) mirrorNewThreadToMountLocked(
 	locale discord.Locale,
 	probeSeq uint64,
 ) (snowflake.ID, snowflake.ID, error) {
+	mtLock := s.mountThreadMutex(mount.ID, thread.ID)
+	mtLock.Lock()
+	defer mtLock.Unlock()
+
+	if existing, err := s.Service.Store.GetThreadMirrorByMountAndThread(ctx, mount.ID, thread.ID); err == nil && existing != nil {
+		var firstMsgID snowflake.ID
+		if pm, pErr := s.Service.Store.GetPostMirrorByPostAndGuild(ctx, firstPost.ID, mount.GuildID); pErr == nil && pm != nil {
+			firstMsgID = pm.DiscordMessageID
+		}
+		return existing.DiscordThreadID, firstMsgID, nil
+	}
+
 	mountLocale := s.resolveMountLocaleWithFallback(ctx, client, mount, locale)
 
 	msgCreate := RenderPostMessageCreate(firstPost, thread, nil, mountLocale)
@@ -562,6 +650,8 @@ func (s *Syncer) mirrorNewThreadToMountLocked(
 	postMirror := &bbs.PostMirror{
 		ID:               uuidv7.New(),
 		PostID:           firstPost.ID,
+		ThreadID:         thread.ID,
+		ResNumber:        firstPost.ResNumber,
 		ThreadMirrorID:   mirror.ID,
 		GuildID:          mount.GuildID,
 		DiscordMessageID: firstMsgID,
@@ -577,7 +667,7 @@ func (s *Syncer) mirrorNewThreadToMountLocked(
 	if createdTextThread {
 		s.repositionBoardTextGuide(ctx, client, mount, board, mountLocale)
 	}
-	s.scheduleControlPanel(client, mirror, thread, mountLocale)
+	s.scheduleControlPanel(client, mirror, board, thread, mountLocale)
 	return discordThreadID, firstMsgID, nil
 }
 
@@ -587,6 +677,32 @@ func (s *Syncer) PublishPost(
 	ctx context.Context,
 	client *bot.Client,
 	sourceMountID uuid.UUID,
+	board bbs.Board,
+	thread bbs.Thread,
+	post bbs.Post,
+	backwardRefs []uint32,
+	locale discord.Locale,
+) (snowflake.ID, snowflake.ID, error) {
+	return s.publishPostInternal(ctx, client, &sourceMountID, board, thread, post, backwardRefs, locale)
+}
+
+// FanoutPost idempotently mirrors a reply across all active local mounts, notifies watchers, and handles archives.
+func (s *Syncer) FanoutPost(
+	ctx context.Context,
+	client *bot.Client,
+	board bbs.Board,
+	thread bbs.Thread,
+	post bbs.Post,
+	backwardRefs []uint32,
+	locale discord.Locale,
+) {
+	_, _, _ = s.publishPostInternal(ctx, client, nil, board, thread, post, backwardRefs, locale)
+}
+
+func (s *Syncer) publishPostInternal(
+	ctx context.Context,
+	client *bot.Client,
+	sourceMountID *uuid.UUID,
 	board bbs.Board,
 	thread bbs.Thread,
 	post bbs.Post,
@@ -603,7 +719,7 @@ func (s *Syncer) PublishPost(
 	var sourceMatched bool
 	var otherMounts []bbs.BoardMount
 	for _, m := range mounts {
-		if m.ID == sourceMountID {
+		if sourceMountID != nil && m.ID == *sourceMountID {
 			sourceMatched = true
 			tID, mID, err := s.mirrorPostToMount(ctx, client, m, board, thread, post, backwardRefs, locale)
 			if err != nil {
@@ -615,7 +731,7 @@ func (s *Syncer) PublishPost(
 			otherMounts = append(otherMounts, m)
 		}
 	}
-	if !sourceMatched && srcErr == nil {
+	if sourceMountID != nil && !sourceMatched && srcErr == nil {
 		srcErr = ErrSourceMountInactive
 	}
 
@@ -623,7 +739,7 @@ func (s *Syncer) PublishPost(
 
 	if len(otherMounts) > 0 || thread.Status == bbs.ThreadStatusArchived {
 		hitMaxRes := post.ResNumber >= thread.Rules.Normalize().MaxRes
-		go func() {
+		fanoutFn := func() {
 			if len(otherMounts) > 0 {
 				s.fanout(otherMounts, func(m bbs.BoardMount) {
 					if _, _, err := s.mirrorPostToMount(s.backgroundCtx(), client, m, board, thread, post, backwardRefs, locale); err != nil {
@@ -634,7 +750,12 @@ func (s *Syncer) PublishPost(
 			if thread.Status == bbs.ThreadStatusArchived {
 				s.SyncArchive(s.backgroundCtx(), client, board, thread, hitMaxRes)
 			}
-		}()
+		}
+		if sourceMountID != nil {
+			go fanoutFn()
+		} else {
+			fanoutFn()
+		}
 	}
 
 	if srcErr != nil {
@@ -735,6 +856,9 @@ func (s *Syncer) mirrorPostToMount(
 	if err != nil {
 		return 0, 0, err
 	}
+	if existingPM, pmErr := s.Service.Store.GetPostMirrorByPostAndGuild(ctx, post.ID, mount.GuildID); pmErr == nil && existingPM != nil {
+		return mirror.DiscordThreadID, existingPM.DiscordMessageID, nil
+	}
 
 	mountLocale := s.resolveMountLocaleWithFallback(ctx, client, mount, locale)
 
@@ -747,10 +871,17 @@ func (s *Syncer) mirrorPostToMount(
 	var sent *discord.Message
 	latestThread := thread
 	var sendMirrorErr error
+	var alreadyMirrored bool
 	func() {
 		muLock := s.threadEditMutex(mirror.DiscordThreadID)
 		muLock.Lock()
 		defer muLock.Unlock()
+
+		if existingPM, pmErr := s.Service.Store.GetPostMirrorByPostAndGuild(ctx, post.ID, mount.GuildID); pmErr == nil && existingPM != nil {
+			alreadyMirrored = true
+			sent = &discord.Message{ID: existingPM.DiscordMessageID}
+			return
+		}
 
 		sendErr := WithUnarchiveRetry(client, mirror.DiscordThreadID, func() error {
 			var cErr error
@@ -773,6 +904,8 @@ func (s *Syncer) mirrorPostToMount(
 		if dbErr := s.Service.Store.CreatePostMirror(ctx, &bbs.PostMirror{
 			ID:               uuidv7.New(),
 			PostID:           post.ID,
+			ThreadID:         thread.ID,
+			ResNumber:        post.ResNumber,
 			ThreadMirrorID:   mirror.ID,
 			GuildID:          mount.GuildID,
 			DiscordMessageID: sent.ID,
@@ -797,10 +930,13 @@ func (s *Syncer) mirrorPostToMount(
 	if sendMirrorErr != nil {
 		return 0, 0, sendMirrorErr
 	}
+	if alreadyMirrored {
+		return mirror.DiscordThreadID, sent.ID, nil
+	}
 
 	// Schedule debounced floating control panel move only if thread remains active.
 	if latestThread.Status == bbs.ThreadStatusActive {
-		s.scheduleControlPanel(client, mirror, latestThread, mountLocale)
+		s.scheduleControlPanel(client, mirror, board, latestThread, mountLocale)
 	}
 
 	// Pace forward-anchor updates (without GET) up to MaxForwardAnchorEditsPerPost.
@@ -811,8 +947,9 @@ func (s *Syncer) mirrorPostToMount(
 	return mirror.DiscordThreadID, sent.ID, nil
 }
 
-func (s *Syncer) scheduleControlPanel(client *bot.Client, mirror *bbs.ThreadMirror, thread bbs.Thread, locale discord.Locale) {
+func (s *Syncer) scheduleControlPanel(client *bot.Client, mirror *bbs.ThreadMirror, board bbs.Board, thread bbs.Thread, locale discord.Locale) {
 	mirrorCopy := *mirror
+	boardCopy := board
 	s.Debouncer.Schedule(mirror.ID, func() {
 		ctx := s.backgroundCtx()
 		if s.Guard.IsThrottled(time.Now()) {
@@ -833,7 +970,7 @@ func (s *Syncer) scheduleControlPanel(client *bot.Client, mirror *bbs.ThreadMirr
 		if err != nil || latestThread.Status != bbs.ThreadStatusActive {
 			return
 		}
-		panelMsg := RenderThreadControlPanel(latestMirror.ID, *latestThread, locale)
+		panelMsg := RenderThreadControlPanelWithOptions(latestMirror.ID, *latestThread, s.threadControlPanelOptions(boardCopy), locale)
 		if err := s.Validator.ValidateMessageCreate(panelMsg); err != nil {
 			return
 		}
@@ -1072,28 +1209,35 @@ func (s *Syncer) SyncArchive(ctx context.Context, client *bot.Client, board bbs.
 		if fresh, gErr := s.Service.Store.GetThreadMirror(ctx, mirror.ID); gErr == nil && fresh != nil {
 			latestMirror = *fresh
 		}
-		_ = WithUnarchiveRetry(client, latestMirror.DiscordThreadID, func() error {
-			if latestMirror.ControlMessageID != nil {
-				delErr := client.Rest.DeleteMessage(latestMirror.DiscordThreadID, *latestMirror.ControlMessageID)
-				if delErr == nil || IsJSONError(delErr, JSONErrUnknownMessage) || IsJSONError(delErr, JSONErrUnknownChannel) || HTTPStatusCode(delErr) == 404 {
-					_ = s.Service.Store.UpdateThreadMirrorControl(ctx, latestMirror.ID, nil)
-				} else {
-					s.Guard.RecordError(uuid.Nil, delErr, time.Now())
-					slog.Warn("bbs failed to delete control panel during archive sync", "mirror_id", latestMirror.ID, "msg_id", *latestMirror.ControlMessageID, "err", delErr)
+		if latestMirror.ControlMessageID != nil || !latestMirror.ArchivedSynced {
+			_ = WithUnarchiveRetry(client, latestMirror.DiscordThreadID, func() error {
+				if latestMirror.ControlMessageID != nil {
+					delErr := client.Rest.DeleteMessage(latestMirror.DiscordThreadID, *latestMirror.ControlMessageID)
+					if delErr == nil || IsJSONError(delErr, JSONErrUnknownMessage) || IsJSONError(delErr, JSONErrUnknownChannel) || HTTPStatusCode(delErr) == 404 {
+						_ = s.Service.Store.UpdateThreadMirrorControl(ctx, latestMirror.ID, nil)
+					} else {
+						s.Guard.RecordError(uuid.Nil, delErr, time.Now())
+						slog.Warn("bbs failed to delete control panel during archive sync", "mirror_id", latestMirror.ID, "msg_id", *latestMirror.ControlMessageID, "err", delErr)
+					}
 				}
-			}
-			if hitMaxRes {
-				overMsg := RenderOver1000Message(thread, mountLocale)
-				if err := s.Validator.ValidateMessageCreate(overMsg); err == nil {
-					_, _ = client.Rest.CreateMessage(latestMirror.DiscordThreadID, overMsg)
+				if !latestMirror.ArchivedSynced {
+					if transitioned, mErr := s.Service.Store.MarkThreadMirrorArchivedSynced(ctx, latestMirror.ID); mErr == nil && !transitioned {
+						return nil
+					}
+					if hitMaxRes {
+						overMsg := RenderOver1000Message(thread, mountLocale)
+						if err := s.Validator.ValidateMessageCreate(overMsg); err == nil {
+							_, _ = client.Rest.CreateMessage(latestMirror.DiscordThreadID, overMsg)
+						}
+					}
+					archMsg := RenderArchivedNotice(mountLocale)
+					if err := s.Validator.ValidateMessageCreate(archMsg); err == nil {
+						_, _ = client.Rest.CreateMessage(latestMirror.DiscordThreadID, archMsg)
+					}
 				}
-			}
-			archMsg := RenderArchivedNotice(mountLocale)
-			if err := s.Validator.ValidateMessageCreate(archMsg); err == nil {
-				_, _ = client.Rest.CreateMessage(latestMirror.DiscordThreadID, archMsg)
-			}
-			return nil
-		})
+				return nil
+			})
+		}
 		isForum := mount.IsForum
 		if !hasMount {
 			if mRow, mErr := s.Service.Store.GetBoardMount(ctx, mirror.BoardMountID); mErr == nil && mRow != nil {
@@ -1107,7 +1251,7 @@ func (s *Syncer) SyncArchive(ctx context.Context, client *bot.Client, board bbs.
 	}
 }
 
-// RunDatOchiCheck archives stale threads across all registered providers and syncs Discord locks.
+// RunDatOchiCheck archives stale threads across moderate-capable providers and syncs Discord locks.
 func (s *Syncer) RunDatOchiCheck(ctx context.Context, client *bot.Client) error {
 	now := time.Now()
 	if s.Service != nil {
@@ -1117,19 +1261,18 @@ func (s *Syncer) RunDatOchiCheck(ctx context.Context, client *bot.Client) error 
 		return nil
 	}
 	for _, p := range s.Service.Registry.All() {
+		if !p.Capabilities().CanModerate {
+			continue
+		}
 		stale, err := p.ListStaleThreads(ctx, now)
 		if err != nil {
 			slog.Error("bbs failed to list stale threads", "provider", p.Key(), "err", err)
 			continue
 		}
 		for _, th := range stale {
-			archived, err := p.ArchiveThread(ctx, th.ID)
+			board, archived, err := s.Service.ArchiveStaleThread(ctx, th.ID)
 			if err != nil {
 				slog.Warn("bbs failed to archive stale thread", "thread_id", th.ID, "err", err)
-				continue
-			}
-			board, err := s.Service.GetBoard(ctx, archived.BoardID)
-			if err != nil {
 				continue
 			}
 			s.SyncArchive(ctx, client, *board, *archived, archived.ResCount >= archived.Rules.Normalize().MaxRes)
@@ -1154,24 +1297,16 @@ func (s *Syncer) HandleMessageUpdate(ctx context.Context, client *bot.Client, ev
 	if err != nil {
 		return
 	}
-	post, err := s.Service.GetPost(ctx, pm.PostID)
+	aboned, thread, err := s.Service.AbonePostSystem(ctx, pm.PostID, "media_scan_flagged")
 	if err != nil {
-		return
-	}
-	thread, err := s.Service.GetThread(ctx, post.ThreadID)
-	if err != nil {
-		return
-	}
-	aboned, err := s.Service.AbonePostGlobal(ctx, client.ApplicationID, post.ID, "media_scan_flagged")
-	if err != nil {
-		// Fallback to direct provider abone when ApplicationID is not in Operators slice.
-		if p, pErr := s.Service.Registry.Get(thread.ProviderKey); pErr == nil {
-			if direct, dErr := p.AbonePost(ctx, post.ID, "media_scan_flagged"); dErr == nil {
-				aboned = direct
-			}
+		if errors.Is(err, bbs.ErrUnsupportedOperation) {
+			slog.Debug("bbs skipping media scan abone on non-moderatable provider post", "post_id", pm.PostID)
+			return
 		}
+		slog.Warn("bbs failed to execute media scan abone", "post_id", pm.PostID, "err", err)
+		return
 	}
-	if aboned != nil {
+	if aboned != nil && thread != nil {
 		if syncErr := s.SyncAbone(ctx, client, *aboned, *thread); syncErr != nil {
 			slog.Warn("bbs failed to sync flagged media abone", "post_id", aboned.ID, "err", syncErr)
 		}
@@ -1225,7 +1360,7 @@ func (s *Syncer) RefreshBoardGuide(ctx context.Context, client *bot.Client, guil
 			slog.Warn("bbs failed to sync mount locale", "mount_id", latestMount.ID, "err", uErr)
 		}
 	}
-	guide := RenderBoardGuide(*latestBoard, latestMount.ID, mLoc)
+	guide := RenderBoardGuideWithOptions(*latestBoard, latestMount.ID, s.boardGuideOptions(*latestBoard), mLoc)
 	mu := discord.MessageUpdate{
 		Components:      &guide.Components,
 		Flags:           &guide.Flags,
@@ -1267,7 +1402,7 @@ func (s *Syncer) repositionBoardTextGuide(ctx context.Context, client *bot.Clien
 	if freshBoard, bErr := s.Service.GetBoard(ctx, board.ID); bErr == nil && freshBoard != nil {
 		latestBoard = *freshBoard
 	}
-	guideMsg := RenderBoardGuide(latestBoard, latestMount.ID, locale)
+	guideMsg := RenderBoardGuideWithOptions(latestBoard, latestMount.ID, s.boardGuideOptions(latestBoard), locale)
 	if err := s.Validator.ValidateMessageCreate(guideMsg); err != nil {
 		return
 	}
@@ -1306,8 +1441,10 @@ func (s *Syncer) notifyWatchers(
 	if err != nil || len(watches) == 0 {
 		return
 	}
-	audit, err := s.Service.Store.GetAuditPostInfo(ctx, post.ID)
-	if err != nil {
+	var authorUserID snowflake.ID
+	if audit, err := s.Service.Store.GetAuditPostInfo(ctx, post.ID); err == nil && audit != nil {
+		authorUserID = audit.AuthorUserID
+	} else if err != nil && !errors.Is(err, bbs.ErrNotFound) {
 		return
 	}
 
@@ -1319,7 +1456,7 @@ func (s *Syncer) notifyWatchers(
 	// Access GORM DB from native store via database helper if available, or check user DM via DB if attached.
 	now := time.Now()
 	for _, w := range watches {
-		if w.UserID == audit.AuthorUserID {
+		if authorUserID != 0 && w.UserID == authorUserID {
 			continue
 		}
 		if _, cErr := s.Service.CheckConsent(ctx, w.UserID); cErr != nil {

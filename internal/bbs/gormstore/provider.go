@@ -661,9 +661,14 @@ func (p *Provider) CreateBoardMount(ctx context.Context, mount *bbs.BoardMount) 
 	if loc == "" {
 		loc = "ja"
 	}
+	provKey := mount.ProviderKey
+	if provKey == "" {
+		provKey = bbs.DefaultProviderKey
+	}
 	row := BBSBoardMount{
 		ID:               mount.ID,
 		BoardID:          mount.BoardID,
+		ProviderKey:      provKey,
 		GuildID:          mount.GuildID,
 		ChannelID:        mount.ChannelID,
 		Locale:           loc,
@@ -729,9 +734,14 @@ func (p *Provider) UpdateBoardMount(ctx context.Context, mount *bbs.BoardMount) 
 	if loc == "" {
 		loc = "ja"
 	}
+	provKey := mount.ProviderKey
+	if provKey == "" {
+		provKey = bbs.DefaultProviderKey
+	}
 	row := BBSBoardMount{
 		ID:               mount.ID,
 		BoardID:          mount.BoardID,
+		ProviderKey:      provKey,
 		GuildID:          mount.GuildID,
 		ChannelID:        mount.ChannelID,
 		Locale:           loc,
@@ -775,6 +785,7 @@ func (p *Provider) CreateThreadMirror(ctx context.Context, mirror *bbs.ThreadMir
 		DiscordThreadID:  mirror.DiscordThreadID,
 		ControlMessageID: mirror.ControlMessageID,
 		SyncedUpToRes:    mirror.SyncedUpToRes,
+		ArchivedSynced:   mirror.ArchivedSynced,
 		CreatedAt:        mirror.CreatedAt,
 	}
 	return p.session(ctx).Create(&row).Error
@@ -794,6 +805,12 @@ func (p *Provider) CreateThreadAndPostMirror(ctx context.Context, threadMirror *
 	if postMirror.ThreadMirrorID == uuid.Nil {
 		postMirror.ThreadMirrorID = threadMirror.ID
 	}
+	if postMirror.ThreadID == uuid.Nil {
+		postMirror.ThreadID = threadMirror.ThreadID
+	}
+	if postMirror.ResNumber == 0 {
+		postMirror.ResNumber = 1
+	}
 	if postMirror.CreatedAt.IsZero() {
 		postMirror.CreatedAt = now
 	}
@@ -810,6 +827,8 @@ func (p *Provider) CreateThreadAndPostMirror(ctx context.Context, threadMirror *
 	pmRow := BBSPostMirror{
 		ID:               postMirror.ID,
 		PostID:           postMirror.PostID,
+		ThreadID:         postMirror.ThreadID,
+		ResNumber:        postMirror.ResNumber,
 		ThreadMirrorID:   postMirror.ThreadMirrorID,
 		GuildID:          postMirror.GuildID,
 		DiscordMessageID: postMirror.DiscordMessageID,
@@ -859,6 +878,18 @@ func (p *Provider) ListThreadMirrorsByThread(ctx context.Context, threadID uuid.
 	return out, nil
 }
 
+func (p *Provider) ListThreadMirrorsByMount(ctx context.Context, mountID uuid.UUID) ([]bbs.ThreadMirror, error) {
+	var rows []BBSThreadMirror
+	if err := p.session(ctx).Where("board_mount_id = ?", mountID).Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	out := make([]bbs.ThreadMirror, len(rows))
+	for i := range rows {
+		out[i] = *toDomainThreadMirror(&rows[i])
+	}
+	return out, nil
+}
+
 func (p *Provider) UpdateThreadMirror(ctx context.Context, mirror *bbs.ThreadMirror) error {
 	row := BBSThreadMirror{
 		ID:               mirror.ID,
@@ -868,6 +899,7 @@ func (p *Provider) UpdateThreadMirror(ctx context.Context, mirror *bbs.ThreadMir
 		DiscordThreadID:  mirror.DiscordThreadID,
 		ControlMessageID: mirror.ControlMessageID,
 		SyncedUpToRes:    mirror.SyncedUpToRes,
+		ArchivedSynced:   mirror.ArchivedSynced,
 		CreatedAt:        mirror.CreatedAt,
 	}
 	return p.session(ctx).Save(&row).Error
@@ -883,6 +915,16 @@ func (p *Provider) UpdateThreadMirrorControl(ctx context.Context, id uuid.UUID, 
 	return p.session(ctx).Model(&BBSThreadMirror{}).
 		Where("id = ?", id).
 		Update("control_message_id", controlMsgID).Error
+}
+
+func (p *Provider) MarkThreadMirrorArchivedSynced(ctx context.Context, id uuid.UUID) (bool, error) {
+	res := p.session(ctx).Model(&BBSThreadMirror{}).
+		Where("id = ? AND archived_synced = ?", id, false).
+		Update("archived_synced", true)
+	if res.Error != nil {
+		return false, res.Error
+	}
+	return res.RowsAffected > 0, nil
 }
 
 func (p *Provider) DeleteThreadMirror(ctx context.Context, id uuid.UUID) error {
@@ -901,6 +943,8 @@ func (p *Provider) CreatePostMirror(ctx context.Context, mirror *bbs.PostMirror)
 	row := BBSPostMirror{
 		ID:               mirror.ID,
 		PostID:           mirror.PostID,
+		ThreadID:         mirror.ThreadID,
+		ResNumber:        mirror.ResNumber,
 		ThreadMirrorID:   mirror.ThreadMirrorID,
 		GuildID:          mirror.GuildID,
 		DiscordMessageID: mirror.DiscordMessageID,
@@ -926,6 +970,13 @@ func (p *Provider) GetPostMirrorByPostAndGuild(ctx context.Context, postID uuid.
 }
 
 func (p *Provider) GetPostMirrorByResAndGuild(ctx context.Context, threadID uuid.UUID, resNumber uint32, guildID snowflake.ID) (*bbs.PostMirror, error) {
+	var row BBSPostMirror
+	if err := p.session(ctx).Where("thread_id = ? AND res_number = ? AND guild_id = ?", threadID, resNumber, guildID).First(&row).Error; err == nil {
+		return toDomainPostMirror(&row), nil
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+	// Fallback for legacy native rows created prior to thread_id/res_number backfill.
 	var post BBSPost
 	if err := p.session(ctx).Where("thread_id = ? AND res_number = ?", threadID, resNumber).First(&post).Error; err != nil {
 		return nil, mapErr(err)
@@ -1321,9 +1372,14 @@ func toDomainPost(r *BBSPost) *bbs.Post {
 }
 
 func toDomainBoardMount(r *BBSBoardMount) *bbs.BoardMount {
+	provKey := r.ProviderKey
+	if provKey == "" {
+		provKey = bbs.DefaultProviderKey
+	}
 	return &bbs.BoardMount{
 		ID:               r.ID,
 		BoardID:          r.BoardID,
+		ProviderKey:      provKey,
 		GuildID:          r.GuildID,
 		ChannelID:        r.ChannelID,
 		Locale:           r.Locale,
@@ -1344,6 +1400,7 @@ func toDomainThreadMirror(r *BBSThreadMirror) *bbs.ThreadMirror {
 		DiscordThreadID:  r.DiscordThreadID,
 		ControlMessageID: r.ControlMessageID,
 		SyncedUpToRes:    r.SyncedUpToRes,
+		ArchivedSynced:   r.ArchivedSynced,
 		CreatedAt:        r.CreatedAt,
 	}
 }
@@ -1352,6 +1409,8 @@ func toDomainPostMirror(r *BBSPostMirror) *bbs.PostMirror {
 	return &bbs.PostMirror{
 		ID:               r.ID,
 		PostID:           r.PostID,
+		ThreadID:         r.ThreadID,
+		ResNumber:        r.ResNumber,
 		ThreadMirrorID:   r.ThreadMirrorID,
 		GuildID:          r.GuildID,
 		DiscordMessageID: r.DiscordMessageID,

@@ -255,12 +255,26 @@ func (s *System) handleNewThreadButton(e *handler.ComponentEvent) error {
 		)
 		return nil
 	}
-	boardName := ""
-	if b, bErr := s.Service.GetBoard(e.Ctx, mount.BoardID); bErr == nil {
-		boardName = b.Name
+	board, err := s.Service.GetBoard(e.Ctx, mount.BoardID)
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, err),
+		)
+		return nil
+	}
+	if p, pErr := s.Service.Registry.Get(board.ProviderKey); pErr == nil && !p.Capabilities().CanCreateThread {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, bbscore.ErrFederationReadOnly),
+		)
+		return nil
+	}
+	if !s.ensureRemoteDelegation(e, *board, fmt.Sprintf("/bbs/thread/new/%s", mountID)) {
+		return nil
 	}
 	caps := s.Service.ListAvailableCaps(e.Ctx, e.User().ID, mount.BoardID)
-	modal := buildNewThreadModal(loc, mountID, boardName, caps)
+	modal := buildNewThreadModal(loc, mountID, board.Name, caps)
 	sr := discordsync.NewSafeResponder(e.ID().Time())
 	if err := sr.RespondModal(e, modal); err != nil {
 		slog.Warn("bbs failed to open new thread modal", "err", err)
@@ -315,6 +329,12 @@ func (s *System) handleNewThreadModal(e *handler.ModalEvent) error {
 		Now:         time.Now(),
 	})
 	if err != nil {
+		if errors.Is(err, bbscore.ErrFederationAuthRequired) {
+			if b, bErr := s.Service.GetBoard(e.Ctx, mount.BoardID); bErr == nil && b != nil {
+				s.respondFederationAuthPrompt(e, e.ID().Time(), loc, b.ProviderKey, e.User().ID, e.ApplicationID(), e.Token(), fmt.Sprintf("/bbs/thread/new/%s", mountID))
+				return nil
+			}
+		}
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, failTitle, describeBBSError(loc, err)))
 		return nil
 	}
@@ -404,6 +424,21 @@ func (s *System) handleNewPostButton(e *handler.ComponentEvent) error {
 			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
 			describeBBSError(loc, err),
 		)
+		return nil
+	}
+	board, err := s.Service.GetBoard(e.Ctx, thread.BoardID)
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, err),
+		)
+		return nil
+	}
+	if p, pErr := s.Service.Registry.Get(board.ProviderKey); pErr == nil && !p.Capabilities().CanCreatePost {
+		s.replyComponentError(e, cannotPostTitle, describeBBSError(loc, bbscore.ErrFederationReadOnly))
+		return nil
+	}
+	if !s.ensureRemoteDelegation(e, *board, fmt.Sprintf("/bbs/post/new/%s", mirrorID)) {
 		return nil
 	}
 	caps := s.Service.ListAvailableCaps(e.Ctx, e.User().ID, thread.BoardID)
@@ -503,6 +538,13 @@ func (s *System) handleReplyPostButton(e *handler.ComponentEvent) error {
 		)
 		return nil
 	}
+	if p, pErr := s.Service.Registry.Get(board.ProviderKey); pErr == nil && !p.Capabilities().CanCreatePost {
+		s.replyComponentError(e, cannotPostTitle, describeBBSError(loc, bbscore.ErrFederationReadOnly))
+		return nil
+	}
+	if !s.ensureRemoteDelegation(e, *board, fmt.Sprintf("/bbs/post/reply/%s", postID)) {
+		return nil
+	}
 
 	caps := s.Service.ListAvailableCaps(e.Ctx, e.User().ID, thread.BoardID)
 	sr := discordsync.NewSafeResponder(e.ID().Time())
@@ -559,6 +601,12 @@ func (s *System) handleNewPostModal(e *handler.ModalEvent) error {
 		Now:         time.Now(),
 	})
 	if err != nil {
+		if errors.Is(err, bbscore.ErrFederationAuthRequired) {
+			if b, bErr := s.Service.GetBoard(e.Ctx, mount.BoardID); bErr == nil && b != nil {
+				s.respondFederationAuthPrompt(e, e.ID().Time(), loc, b.ProviderKey, e.User().ID, e.ApplicationID(), e.Token(), fmt.Sprintf("/bbs/post/new/%s", mirrorID))
+				return nil
+			}
+		}
 		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc, failTitle, describeBBSError(loc, err)))
 		return nil
 	}

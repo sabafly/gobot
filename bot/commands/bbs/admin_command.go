@@ -1137,6 +1137,9 @@ func (c *adminCommand) autocompleteGlobalBoards(e *handler.AutocompleteEvent) er
 		if len(choices) >= discordsync.MaxAutocompleteChoices {
 			break
 		}
+		if b.ProviderKey != "" && b.ProviderKey != bbscore.DefaultProviderKey {
+			continue
+		}
 		if q == "" || strings.Contains(strings.ToLower(b.Name), q) {
 			choices = append(choices, discord.AutocompleteChoiceString{
 				Name:  discordsync.TruncateRunes(b.Name, 90),

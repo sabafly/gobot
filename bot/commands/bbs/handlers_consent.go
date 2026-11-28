@@ -20,9 +20,11 @@
 package bbs
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/disgoorg/disgo/discord"
@@ -33,14 +35,19 @@ import (
 
 	bbscore "github.com/sabafly/gobot/internal/bbs"
 	"github.com/sabafly/gobot/internal/bbs/discordsync"
+	"github.com/sabafly/gobot/internal/bbs/federation"
 	"github.com/sabafly/gobot/internal/i18n"
 )
 
-type modalRespondEvent interface {
-	Modal(modalCreate discord.ModalCreate, opts ...rest.RequestOpt) error
+type messageRespondEvent interface {
 	CreateMessage(messageCreate discord.MessageCreate, opts ...rest.RequestOpt) error
 	UpdateInteractionResponse(messageUpdate discord.MessageUpdate, opts ...rest.RequestOpt) (*discord.Message, error)
 	CreateFollowupMessage(messageCreate discord.MessageCreate, opts ...rest.RequestOpt) (*discord.Message, error)
+}
+
+type modalRespondEvent interface {
+	Modal(modalCreate discord.ModalCreate, opts ...rest.RequestOpt) error
+	messageRespondEvent
 }
 
 func (s *System) respondConsentModal(
@@ -64,6 +71,68 @@ func (s *System) respondConsentModal(
 			describeBBSError(loc, err),
 		))
 	}
+}
+
+func (s *System) respondFederationAuthPrompt(
+	e messageRespondEvent,
+	createdAt time.Time,
+	loc discord.Locale,
+	providerKey string,
+	userID, appID snowflake.ID,
+	interactionToken, continueCustomID string,
+) {
+	sr := discordsync.NewSafeResponder(createdAt)
+	if s.FederationAuth == nil || !s.FederationAuth.Enabled() {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, bbscore.ErrFederationReadOnly),
+		))
+		return
+	}
+	authURL, label, err := s.FederationAuth.BeginUserAuth(context.Background(), providerKey, userID, appID, interactionToken, continueCustomID, loc)
+	if err != nil {
+		_ = sr.RespondMessageCreate(e, discordsync.RenderError(loc,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, err),
+		))
+		return
+	}
+	_ = sr.RespondMessageCreate(e, discordsync.RenderFederationAuthPrompt(label, authURL, continueCustomID, loc))
+}
+
+// ensureRemoteDelegation verifies that userID has an active OAuth delegation if board belongs to a FederatedProvider.
+// Returns true if execution may proceed immediately, or false if an error/auth prompt response was sent.
+func (s *System) ensureRemoteDelegation(
+	e *handler.ComponentEvent,
+	board bbscore.Board,
+	continueCustomID string,
+) bool {
+	loc := e.Locale()
+	p, err := s.Service.Registry.Get(board.ProviderKey)
+	if err != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, err),
+		)
+		return false
+	}
+	fp, ok := p.(bbscore.FederatedProvider)
+	if !ok {
+		return true
+	}
+	hasDelegation, dErr := fp.HasUserDelegation(e.Ctx, e.User().ID)
+	if dErr != nil {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.errors.title.unavailable"),
+			describeBBSError(loc, dErr),
+		)
+		return false
+	}
+	if hasDelegation {
+		return true
+	}
+	s.respondFederationAuthPrompt(e, e.ID().Time(), loc, fp.Key(), e.User().ID, e.ApplicationID(), e.Token(), continueCustomID)
+	return false
 }
 
 func (s *System) handleConsentViewDoc(e *handler.ComponentEvent) error {
@@ -277,4 +346,106 @@ func (s *System) handleConsentRoleDeprecated(e *handler.ComponentEvent) error {
 		discordsync.ColorNotice,
 	).WithEphemeral(true))
 	return nil
+}
+
+func (s *System) handleFederationRevokeSelect(e *handler.ComponentEvent) error {
+	if s.Service == nil || s.Service.Store == nil {
+		return nil
+	}
+	loc := e.Locale()
+	sr := discordsync.NewSafeResponder(e.ID().Time())
+	vals := e.StringSelectMenuInteractionData().Values
+	if len(vals) == 0 {
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_revoke_failed"),
+			i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_invalid_select"),
+		)
+		return nil
+	}
+	selected := vals[0]
+
+	switch {
+	case strings.HasPrefix(selected, "origin:"):
+		rawID := strings.TrimPrefix(selected, "origin:")
+		grantID, err := uuid.Parse(rawID)
+		if err != nil {
+			s.replyComponentError(e,
+				i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_revoke_failed"),
+				i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_invalid_select"),
+			)
+			return nil
+		}
+		grant, err := s.Service.Store.GetFederationGrant(e.Ctx, grantID)
+		if err != nil || grant == nil || grant.UserID != e.User().ID {
+			if err == nil {
+				err = bbscore.ErrNotFound
+			}
+			s.replyComponentError(e,
+				i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_revoke_failed"),
+				describeBBSError(loc, err),
+			)
+			return nil
+		}
+		if err := s.Service.Store.RevokeFederationGrant(e.Ctx, grantID, e.User().ID, time.Now().UTC()); err != nil {
+			s.replyComponentError(e,
+				i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_revoke_failed"),
+				describeBBSError(loc, err),
+			)
+			return nil
+		}
+		_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(loc,
+			i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_revoked_title"),
+			i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_revoked_origin_body", map[string]any{
+				"peer_id": grant.PeerID,
+			}),
+			discordsync.ColorNotice,
+		).WithEphemeral(true))
+		return nil
+
+	case strings.HasPrefix(selected, federation.RemoteKeyPrefix):
+		remoteKey := strings.TrimPrefix(selected, federation.RemoteKeyPrefix)
+		if strings.TrimSpace(remoteKey) == "" {
+			s.replyComponentError(e,
+				i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_revoke_failed"),
+				i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_invalid_select"),
+			)
+			return nil
+		}
+		label := remoteKey
+		var revokeErr error
+		if p, pErr := s.Service.Registry.Get(federation.RemoteKeyPrefix + remoteKey); pErr == nil && p != nil {
+			if fp, ok := p.(bbscore.FederatedProvider); ok {
+				if l := strings.TrimSpace(fp.DisplayLabel()); l != "" {
+					label = l
+				}
+				revokeErr = fp.RevokeUserDelegation(e.Ctx, e.User().ID)
+			} else {
+				revokeErr = s.Service.Store.DeleteFederationUserToken(e.Ctx, remoteKey, e.User().ID)
+			}
+		} else {
+			revokeErr = s.Service.Store.DeleteFederationUserToken(e.Ctx, remoteKey, e.User().ID)
+		}
+		if revokeErr != nil {
+			s.replyComponentError(e,
+				i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_revoke_failed"),
+				describeBBSError(loc, revokeErr),
+			)
+			return nil
+		}
+		_ = sr.RespondMessageCreate(e, discordsync.RenderNotice(loc,
+			i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_revoked_title"),
+			i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_revoked_remote_body", map[string]any{
+				"label": label,
+			}),
+			discordsync.ColorNotice,
+		).WithEphemeral(true))
+		return nil
+
+	default:
+		s.replyComponentError(e,
+			i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_revoke_failed"),
+			i18n.TranslateText(loc, "components.bbs.cmd.policy.federation_invalid_select"),
+		)
+		return nil
+	}
 }

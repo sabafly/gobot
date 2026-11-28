@@ -22,6 +22,8 @@ package bbs
 import (
 	"errors"
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 	"unicode/utf8"
 
@@ -48,6 +50,10 @@ const (
 	CapSelectNoneValue     = "__none__"
 	MaxSlipEventIDRunes    = 64
 	MaxSlipEventLabelRunes = 24
+
+	FederationScopeWrite  = "write"
+	FederationScopeReport = "report"
+	FederationScopeCaps   = "caps"
 )
 
 type Scope string
@@ -105,6 +111,10 @@ var (
 	ErrProviderNotFound     = errors.New("bbs: provider not found")
 	ErrUnsupportedOperation = errors.New("bbs: operation not supported by provider")
 	ErrAlreadyExists        = errors.New("bbs: resource already exists")
+
+	ErrFederationReadOnly     = errors.New("bbs: federated board is read-only")
+	ErrFederationUnavailable  = errors.New("bbs: federated server unavailable")
+	ErrFederationAuthRequired = errors.New("bbs: federated user authorization required")
 
 	ErrInvalidCategoryName   = fmt.Errorf("%w: invalid category name", ErrInvalidInput)
 	ErrInvalidBoardName      = fmt.Errorf("%w: invalid board name", ErrInvalidInput)
@@ -288,10 +298,93 @@ type UserConsent struct {
 	AgreedAt      time.Time
 }
 
+// ParseFederationScopes splits a space- or comma-delimited OAuth scope string into normalized unique tokens.
+func ParseFederationScopes(raw string) []string {
+	raw = strings.ReplaceAll(raw, ",", " ")
+	fields := strings.Fields(raw)
+	if len(fields) == 0 {
+		return nil
+	}
+	out := make([]string, 0, len(fields))
+	for _, f := range fields {
+		f = strings.ToLower(strings.TrimSpace(f))
+		if f != "" && !slices.Contains(out, f) {
+			out = append(out, f)
+		}
+	}
+	return out
+}
+
+// JoinFederationScopes serializes a slice of OAuth scope tokens canonically.
+func JoinFederationScopes(scopes []string) string {
+	return strings.Join(ParseFederationScopes(strings.Join(scopes, " ")), " ")
+}
+
+// FederationGrant stores an active OAuth 2.0 user delegation grant on the Origin instance.
+type FederationGrant struct {
+	ID              uuid.UUID
+	FamilyID        uuid.UUID
+	PeerID          string
+	UserID          snowflake.ID
+	Scopes          []string
+	PolicyVersion   string
+	AccessTokenHash string
+	AccessExpiresAt time.Time
+	RevokedAt       *time.Time
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+}
+
+// HasScope reports whether grant includes the requested OAuth scope.
+func (g *FederationGrant) HasScope(scope string) bool {
+	if g == nil || scope == "" {
+		return false
+	}
+	return slices.Contains(g.Scopes, strings.ToLower(strings.TrimSpace(scope)))
+}
+
+// FederationRefreshToken stores a rotatable one-time OAuth 2.0 refresh token on the Origin instance.
+type FederationRefreshToken struct {
+	ID        uuid.UUID
+	GrantID   uuid.UUID
+	FamilyID  uuid.UUID
+	PeerID    string
+	UserID    snowflake.ID
+	TokenHash string
+	UsedAt    *time.Time
+	RevokedAt *time.Time
+	ExpiresAt time.Time
+	CreatedAt time.Time
+}
+
+// FederationUserToken stores a user's encrypted Origin access & refresh tokens on the Listener instance.
+type FederationUserToken struct {
+	ID               uuid.UUID
+	RemoteKey        string
+	UserID           snowflake.ID
+	AccessTokenEnc   string
+	AccessExpiresAt  time.Time
+	RefreshTokenEnc  string
+	RefreshExpiresAt time.Time
+	Scopes           []string
+	PolicyVersion    string
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+}
+
+// HasScope reports whether tok includes the requested OAuth scope.
+func (t *FederationUserToken) HasScope(scope string) bool {
+	if t == nil || scope == "" {
+		return false
+	}
+	return slices.Contains(t.Scopes, strings.ToLower(strings.TrimSpace(scope)))
+}
+
 // BoardMount maps a board to a Discord channel in a subscribed/owning guild.
 type BoardMount struct {
 	ID               uuid.UUID
 	BoardID          uuid.UUID
+	ProviderKey      string
 	GuildID          snowflake.ID
 	ChannelID        snowflake.ID
 	Locale           string
@@ -311,6 +404,7 @@ type ThreadMirror struct {
 	DiscordThreadID  snowflake.ID
 	ControlMessageID *snowflake.ID
 	SyncedUpToRes    uint32
+	ArchivedSynced   bool
 	CreatedAt        time.Time
 }
 
@@ -318,6 +412,8 @@ type ThreadMirror struct {
 type PostMirror struct {
 	ID               uuid.UUID
 	PostID           uuid.UUID
+	ThreadID         uuid.UUID
+	ResNumber        uint32
 	ThreadMirrorID   uuid.UUID
 	GuildID          snowflake.ID
 	DiscordMessageID snowflake.ID

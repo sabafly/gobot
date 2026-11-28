@@ -87,6 +87,61 @@ type ConfigBBS struct {
 	PrivacyPolicyURL   string               `yaml:"privacy_policy_url"`
 	Caps               []ConfigBBSCap       `yaml:"caps"`
 	SlipEvents         []ConfigBBSSlipEvent `yaml:"slip_events"`
+	Federation         ConfigBBSFederation  `yaml:"federation"`
+}
+
+type ConfigBBSFederation struct {
+	Server  ConfigBBSFederationServer   `yaml:"server"`
+	Client  ConfigBBSFederationClient   `yaml:"client"`
+	Remotes []ConfigBBSFederationRemote `yaml:"remotes"`
+}
+
+type ConfigBBSFederationServer struct {
+	Enabled               bool                      `yaml:"enabled"`
+	ListenAddr            string                    `yaml:"listen_addr"`
+	PublicURL             string                    `yaml:"public_url"`
+	BasePath              string                    `yaml:"base_path"`
+	TrustedProxies        []string                  `yaml:"trusted_proxies"`
+	EventBufferSize       int                       `yaml:"event_buffer_size"`
+	AccessTokenTTLMinutes int                       `yaml:"access_token_ttl_minutes"`
+	RefreshTokenTTLDays   int                       `yaml:"refresh_token_ttl_days"`
+	OAuth                 ConfigBBSFederationOAuth  `yaml:"oauth"`
+	Peers                 []ConfigBBSFederationPeer `yaml:"peers"`
+}
+
+type ConfigBBSFederationOAuth struct {
+	ClientID     string `yaml:"client_id"`
+	ClientSecret string `yaml:"client_secret"`
+}
+
+type ConfigBBSFederationPeer struct {
+	ID              string   `yaml:"id"`
+	Name            string   `yaml:"name"`
+	Token           string   `yaml:"token"`
+	AllowWrite      bool     `yaml:"allow_write"`
+	AllowReport     *bool    `yaml:"allow_report"`
+	AllowCaps       bool     `yaml:"allow_caps"`
+	RedirectURIs    []string `yaml:"redirect_uris"`
+	AllowedBoardIDs []string `yaml:"allowed_board_ids"`
+}
+
+type ConfigBBSFederationClient struct {
+	Enabled        bool     `yaml:"enabled"`
+	ListenAddr     string   `yaml:"listen_addr"`
+	PublicURL      string   `yaml:"public_url"`
+	BasePath       string   `yaml:"base_path"`
+	TrustedProxies []string `yaml:"trusted_proxies"`
+}
+
+type ConfigBBSFederationRemote struct {
+	Key             string `yaml:"key"`
+	Label           string `yaml:"label"`
+	BaseURL         string `yaml:"base_url"`
+	PeerID          string `yaml:"peer_id"`
+	Token           string `yaml:"token"`
+	ReadOnly        bool   `yaml:"read_only"`
+	CacheTTLSeconds int    `yaml:"cache_ttl_seconds"`
+	TimeoutSeconds  int    `yaml:"timeout_seconds"`
 }
 
 type ConfigBBSSlipEvent struct {
